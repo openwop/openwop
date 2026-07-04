@@ -58,8 +58,13 @@ When a host operating in deferred mode expands a chain tile, in place of RFC 001
    - `sensitive` — the host MUST set `sensitive: true` when the parameter is known to carry secret-class material; see §Security.
 2. **Rewrite tokens to spec'd bindings.** The host MUST replace every `{{params.x}}` occurrence with a portable runtime binding per §"Rewrite targets" below. The persisted `config`/`inputs` MUST NOT retain any `{{params.*}}` token.
 3. **Preserve the portability invariant.** After rewrite, the expanded fragment MUST contain only (a) concrete typeIds, (b) PromptTemplate `{{varName}}` slots backed by declared `variables[]`, and (c) PortValue references — all of which any conformant host resolves. A host MUST NOT persist a workflow whose `config`/`inputs` contain `{{params.*}}` tokens under any mode.
+4. **Fence deferred variables as untrusted.** A deferred-materialized variable interpolated into a PromptTemplate MUST compose with `bindingTrust: "untrusted"`, yielding aggregate `contentTrust: "untrusted"` and `<UNTRUSTED>…</UNTRUSTED>` fencing per `SECURITY/threat-model-prompt-injection.md`. This obligation is **unconditional**: a host MUST NOT attempt to distinguish the author-supplied `defaultValue` (author-trusted) from a per-run `configurable` override (untrusted) at compose time — threading binding provenance is error-prone, and the fence is cheap. Every deferred-variable prompt binding is treated as untrusted. (This differs from expansion-time substitution, where the value is baked in at author time and carries author trust.)
 
 Steps 3, 6, 7, 8, 9 of RFC 0013 §"Expansion semantics" (typeId validation, id rewrite, splice, capability propagation, persist) apply unchanged.
+
+### Override key + variable naming
+
+The materialized variable's internal name uses the `${chainIdSlug}_${expansionId}_${p}` prefix for collision-safety (mirroring RFC 0013 step 6). But the **normative per-run override key is the bare parameter name** (`productIdea`), NOT the prefixed internal name — otherwise a portable workflow's `configurable` overrides would silently no-op across hosts that prefix differently (risk R6). To bind the two, deferred expansion MUST auto-generate (or extend) the parent workflow's `configurableSchema` with a mapping from each bare parameter name to its materialized variable, so callers pass `{"configurable": {"productIdea": "…"}}` and the host resolves it to the prefixed variable. The author is not required to hand-author this mapping.
 
 ### Rewrite targets
 
@@ -67,11 +72,12 @@ For each `{{params.x}}` token, the host MUST choose the portable target by posit
 
 | Token position | Portable rewrite target |
 | --- | --- |
-| Inside a prompt body the host composes as a PromptTemplate (`config.systemPromptRef` / `userPromptRef` / `additionalPromptRefs` → `PromptTemplate.text`, per `prompts.md`) | Rewrite `{{params.x}}` → the PromptTemplate placeholder `{{v}}` where `v` is the materialized variable name, and declare a matching `PromptVariable` with `source: "variable"` so it resolves via `ctx.variables.get(v)` at node-execution time. |
+| Inside a prompt body the host composes as a PromptTemplate (`config.systemPromptRef` / `userPromptRef` / `additionalPromptRefs` → `PromptTemplate.text`, per `prompts.md`) | Rewrite `{{params.x}}` → the PromptTemplate placeholder `{{v}}` where `v` is the materialized variable name, and declare a matching `PromptVariable` with `source: "variable"` (and `bindingTrust: "untrusted"`, step 4) so it resolves via `ctx.variables.get(v)` at node-execution time. |
+| An **inline** prompt body (`config.systemPrompt` string, not a `*PromptRef`) | An inline body has no `{{varName}}` interpolation surface. To defer it, the host MUST lift the inline body into a host-resident PromptTemplate (moving it under a `*PromptRef`) and then apply the prompt-body rewrite above. A host that will not lift the body MUST resolve the token at expansion time instead. |
 | A **whole-value** `config`/`inputs` token (the string is exactly `{{params.x}}`) | Bind the input/config key to a **variable-sourced PortValue** (a PortValue referencing the materialized variable), NOT a raw string token. The typed variable value flows through unchanged, composing with the WCP2 whole-value-typed rule (RFC 0013 amendment 2026-07-04). |
 | An **embedded** token in a non-prompt plain `config` string (surrounding text) | The host MUST resolve it at expansion time (RFC 0013 literal substitution) — there is no portable runtime string-interpolation surface for arbitrary `config` strings in v1. Deferred mode does NOT invent one. |
 
-The third row is the deliberate boundary of v1 deferral: only prompt bodies (which have a spec'd `{{varName}}` interpolation) and whole-value bindings (which have PortValue variable refs) can be deferred portably. Embedded tokens in arbitrary non-prompt config remain expansion-time. A general runtime string-interpolation construct over `WorkflowNode.config` is explicitly out of scope (Unresolved Q3).
+The last row is the deliberate boundary of v1 deferral: only prompt bodies (which have a spec'd `{{varName}}` interpolation) and whole-value bindings (which have PortValue variable refs) can be deferred portably. **Embedded non-prompt tokens are expansion-time-only by construction, not by omission** — no conformant host has a general config-string interpolation engine (only prompt composition does `{{varName}}`), so such a token has no portable runtime home. A general runtime string-interpolation construct over `WorkflowNode.config` is a separate future RFC (Unresolved Q3); chains SHOULD model per-run-overridable values as whole-value bindings rather than embedding them in mixed config text. A consequence worth stating plainly: **deferral is inherently partial** — a chain that mixes prompt/whole-value params (deferrable) with embedded non-prompt config params (frozen at expansion) will have some parameters overridable per run and others not.
 
 ### Per-run override
 
@@ -130,7 +136,7 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 **New scenarios (land with `Accepted`):**
 
 1. `workflow-chain-deferred-parameters.test.ts` (server-free) — deferred expansion of a chain materializes `variables[]` with `defaultValue` = author input + `type` copied from the parameter schema; every `{{params.*}}` token is rewritten (prompt token → `{{varName}}` + `source:"variable"`; whole-value token → variable-sourced PortValue); the persisted fragment contains **zero** `{{params.*}}` tokens; a typed (object/number) whole-value param composes with the WCP2 raw-typed rule. Gated logically on the deferred mode; runs unconditionally as spec-corpus logic.
-2. Host-side leg in `workflow-chain-host-expansion.test.ts` gated on `capabilities.workflowChainPacks.deferredParameters.supported: true` — a deferred expansion round-trips, a `POST /v1/runs` `configurable` override changes the resolved value, and a `:fork` replays the same bound value (determinism). Hosts without the flag are skipped, not failed.
+2. Host-side leg in `workflow-chain-host-expansion.test.ts` gated on `capabilities.workflowChainPacks.deferredParameters.supported: true` — a deferred expansion round-trips; a `POST /v1/runs` `configurable` override **keyed on the bare parameter name** changes the resolved value; a `:fork` replays the same bound value (determinism); and a deferred variable interpolated into a prompt composes with `contentTrust: "untrusted"` (step 4 unconditional fence). Hosts without the flag are skipped, not failed.
 
 **Capability gating.** New host legs gate on `workflowChainPacks.deferredParameters.supported` per `conformance/coverage.md` §"Capability-gated scenarios".
 
@@ -144,10 +150,13 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 
 ## Unresolved questions
 
-1. **Variable-name collision policy.** The `${chainIdSlug}_${expansionId}_${p}` scheme mirrors RFC 0013 step 6 node-id rewriting, but `configurable` override keys are author-facing — should the RFC define a friendlier alias (e.g. a `configurableSchema` mapping from the bare param name to the prefixed variable) so run-time callers pass `productIdea`, not the prefixed form? Leaning yes; deferred to `Active`.
-2. **`sensitive` inference.** How does the host know a chain parameter carries secret-class material to set `sensitive: true`? Options: a new OPTIONAL `parameters.properties.<p>.x-openwop-sensitive` manifest hint, or leave it host-judgment with a `SHOULD`. Needs a decision before the redaction invariant can be tightened from `SHOULD` to `MUST`.
-3. **Embedded tokens in non-prompt config.** v1 deferral resolves these at expansion time (no portable target). Is a general runtime string-interpolation construct over `config` worth a future RFC, or should chains be guided to model such values as whole-value bindings? Deferred to a follow-up.
-4. **`configurableSchema` authoring.** Should deferred expansion auto-generate/extend the parent workflow's `configurableSchema` so the materialized variables are override-validated, or is that the author's responsibility? Interacts with Q1.
+1. **`sensitive` inference.** How does the host know a chain parameter carries secret-class material to set `sensitive: true`? Options: a new OPTIONAL `parameters.properties.<p>.x-openwop-sensitive` manifest hint, or leave it host-judgment with a `SHOULD`. Needs a decision before the redaction invariant can be tightened from `SHOULD` to `MUST`. *(Only open question remaining before `Active`.)*
+
+**Resolved in review (openwop-app-1 Track-A host review, 2026-07-04):**
+
+- ~~Variable-name / override-key policy~~ → **resolved**: the normative override key is the **bare parameter name**; the `${slug}_${expansionId}_` prefix stays internal; deferred expansion MUST auto-generate the `configurableSchema` bare→prefixed mapping (§"Override key + variable naming"). This also resolves the former `configurableSchema`-authoring question (auto-generate, not author-authored).
+- ~~Inline vs `*PromptRef` prompt bodies~~ → **resolved**: deferred mode MUST lift an inline `config.systemPrompt` body into a host-resident PromptTemplate to defer it, else resolve at expansion time (§"Rewrite targets"). Confirmed against a reference host whose `{{varName}}` interpolation runs only through `*PromptRef` composition.
+- ~~Embedded tokens in non-prompt config~~ → **resolved as a boundary, not a gap**: expansion-time-only by construction; a general config-templating engine is a separate future RFC; chains SHOULD use whole-value bindings for per-run values (§"Rewrite targets").
 
 ## Implementation notes (non-normative)
 
@@ -162,7 +171,8 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 - [ ] At least one server-free conformance scenario (`workflow-chain-deferred-parameters.test.ts`) + one capability-gated host leg.
 - [ ] CHANGELOG entry under the appropriate `[Unreleased]` / version.
 - [ ] One reference host implements deferred mode and passes the gated scenario, OR the RFC explicitly defers reference-host implementation to a named follow-up.
-- [ ] Unresolved Q1 (name/alias) + Q2 (`sensitive` inference) resolved before `Active`.
+- [ ] Unresolved Q1 (`sensitive` inference) resolved before `Active` (override-key, inline-lift, and embedded-boundary questions resolved in the 2026-07-04 host review).
+- [ ] Conformance asserts a deferred-variable prompt binding composes with `contentTrust: "untrusted"` (unconditional fence, step 4).
 
 ## References
 
