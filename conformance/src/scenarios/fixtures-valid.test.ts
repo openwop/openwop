@@ -110,6 +110,12 @@ describe('fixtures: node-pack-manifest schema validity', () => {
   ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
   const schema = JSON.parse(readFileSync(PACK_MANIFEST_SCHEMA_PATH, 'utf8'));
   const validate = ajv.compile(schema);
+  // A `pack-manifests/` fixture may be a node pack OR a `kind: "workflow-chain"`
+  // pack (RFC 0013) — pick the schema by `kind`, exactly as the registry does.
+  const chainSchema = JSON.parse(
+    readFileSync(join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json'), 'utf8'),
+  );
+  const validateChain = ajv.compile(chainSchema);
 
   const files = readdirSync(PACK_MANIFEST_FIXTURES_DIR)
     .filter((f) => f.endsWith('.json'))
@@ -120,17 +126,22 @@ describe('fixtures: node-pack-manifest schema validity', () => {
   });
 
   for (const file of files) {
-    it(`pack-manifests/${file} validates against node-pack-manifest.schema.json`, () => {
+    it(`pack-manifests/${file} validates against its kind's manifest schema`, () => {
       const data = JSON.parse(
         readFileSync(join(PACK_MANIFEST_FIXTURES_DIR, file), 'utf8'),
-      );
-      const ok = validate(data);
-      const errors = (validate.errors ?? [])
+      ) as { kind?: string };
+      const isChain = data.kind === 'workflow-chain';
+      const v = isChain ? validateChain : validate;
+      const schemaName = isChain
+        ? 'workflow-chain-pack-manifest.schema.json'
+        : 'node-pack-manifest.schema.json';
+      const ok = v(data);
+      const errors = (v.errors ?? [])
         .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
         .join('\n');
       expect(
         ok,
-        `Fixture pack-manifests/${file} fails node-pack-manifest schema:\n${errors}`,
+        `Fixture pack-manifests/${file} fails ${schemaName}:\n${errors}`,
       ).toBe(true);
     });
   }
