@@ -362,6 +362,63 @@ workflow edges. Conformance: `workflow-chain-pack-manifest-validation.test.ts`
 gains a positive (object condition validates) + negative (string condition
 rejected) case.
 
+### Amendment (2026-07-04) — `{{params.*}}` substitution timing adjudication + two edge-rule safety-fixes
+
+An architect (Track B) review reconciled the `{{params.*}}` substitution
+contract with a downstream reference host (openwop-app, its ADR 0163/0237) that
+resolves `{{params.*}}` at **run time** from a per-run variable bag rather than
+at expansion time.
+
+**Timing verdict (upheld, not relaxed).** Expansion-time substitution remains a
+`MUST` (§Proposal step 4; `workflow-chain-packs.md` §"Parameter substitution").
+Deferring resolution by leaving app-private `{{params.*}}` tokens in the
+persisted `config`/`inputs` is **non-conformant**: `WorkflowNode.config` holds
+pre-execution constants and `inputs` holds PortValue references, and no `{{...}}`
+runtime interpolation is defined over them (the only spec'd runtime `{{varName}}`
+surface is `prompts.md` §"Variable interpolation", scoped to PromptTemplate
+`text`). A workflow persisted with unresolved tokens would ship
+`"{{params.productIdea}}"` verbatim to any other conformant host, breaking this
+RFC's central portability invariant. The request to relax the `MUST` to bless
+app-private deferral was therefore **rejected**. openwop-app's re-parameterizable
+goal is served by re-expansion from the `metadata.expandedFrom` marker
+(§Round-trip note), not by runtime tokens. A **portable** deferral mode
+(materialize `parameters` → `variables[]` + rewrite to the spec'd PromptTemplate
+`{{varName}}` binding, capability-gated, replay-safe) is captured as open spec
+gap **WCP4** for a follow-up additive RFC — cross-ref openwop-app ADR 0237.
+
+**Two edge-rule safety-fixes (land now, timing-independent).**
+
+1. **Whole-value vs embedded tokens.** A `config`/`inputs` string that is
+   *exactly* one `{{params.<name>}}` token MUST resolve to the **raw typed
+   value** of the bound parameter (object / array / number / boolean survive as
+   their JSON type); an *embedded* token in surrounding text MUST do literal
+   string coercion. The prior wording ("non-string values pass through
+   unchanged") only covered non-string *inputs*, leaving a string token bound to
+   a typed param silently corrupted to `"[object Object]"`.
+
+2. **`inputs` preservation.** Expansion and registration MUST preserve a present
+   `node.inputs` (PortValue references) verbatim — only `{{params.*}}` tokens in
+   its string leaves are substituted. Authors MAY still omit `inputs`; the rule
+   constrains what happens to an `inputs` that *is* present.
+
+3. **Parameter-distinct persisted identity** (§Expansion semantics step 6).
+   Because expansion-time substitution bakes the author-supplied parameters into
+   `config`/`inputs`, a host that keys the persisted definition on an identity
+   derived from the expansion MUST make that identity distinguish expansions that
+   differ only in parameter values (unique `expansionId` per drop, or fold the
+   canonical params into the id). A deterministic id keyed on `chainId` alone
+   collides across param-sets and silently overwrites the prior drop. Surfaced by
+   openwop-app (ADR 0237) whose `deterministicExpansionId` was called with an
+   empty param set — benign while params weren't frozen, a data-loss hazard the
+   moment a Path-A host freezes them.
+
+**Classification: safety-fix.** Both edge rules pin previously under-specified
+behavior with no conformant dependence on the gap (published examples used only
+string params + omitted `inputs`); the spec-authoritative expansion library
+already preserved `inputs`, and its whole-value handling was corrected in the
+same change. Conformance: `workflow-chain-expansion.test.ts` gains whole-value
+typed-resolution, embedded-coercion, and `inputs`-preservation cases.
+
 ## References
 
 - **Inventory motivating this RFC:** [`docs/CANVAS-PACKS-INVENTORY.md`](../docs/CANVAS-PACKS-INVENTORY.md) v3 closure (2026-05-13). The 55 editor presets dropped from Phase B–C scope are the concrete population this RFC addresses.

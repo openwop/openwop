@@ -126,17 +126,33 @@ export class ChainUnresolvableTypeIdError extends Error {
 
 const PARAM_PATTERN = /\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
 /** A value that is EXACTLY a single `{{params.<name>}}` token (whole-value),
- *  distinct from a token embedded in a larger string. Whole-value tokens are
- *  the only non-prompt position deferrable to a variable-sourced PortValue
- *  (WCP2 raw-typed rule); an embedded non-prompt token has no runtime `{{}}`
- *  construct and MUST resolve at expansion time. */
+ *  distinct from a token embedded in a larger string. Under expansion-time
+ *  substitution a whole-value token resolves to the RAW TYPED parameter value
+ *  rather than a string coercion (WCP2 raw-typed rule); under deferred mode it
+ *  is the only non-prompt position deferrable to a variable-sourced PortValue.
+ *  An embedded non-prompt token has no runtime `{{}}` construct and MUST resolve
+ *  at expansion time. */
 const WHOLE_VALUE_PATTERN = /^\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}$/;
 
-/** Recursive literal substitution of `{{params.<name>}}` placeholders in
- *  any string field. Non-string values pass through unchanged; nested
- *  arrays/objects are walked. */
+/** Recursive substitution of `{{params.<name>}}` placeholders in any string
+ *  field. Two cases per `workflow-chain-packs.md` §"Parameter substitution":
+ *    - WHOLE-VALUE: a string that is exactly one `{{params.x}}` token resolves
+ *      to the RAW typed parameter value (object / array / number / boolean
+ *      survive as their JSON type instead of being stringified).
+ *    - EMBEDDED: one or more tokens inside surrounding text do literal string
+ *      substitution.
+ *  Non-string values pass through unchanged; nested arrays/objects are walked. */
 function substitute(value: unknown, params: Record<string, unknown>): unknown {
   if (typeof value === 'string') {
+    const whole = WHOLE_VALUE_PATTERN.exec(value);
+    if (whole) {
+      // Whole-value token — return the raw typed value so a param typed
+      // `object` / `array` / `number` / `boolean` reaches the node config
+      // intact. `undefined` (undeclared param) collapses to the empty string,
+      // matching the embedded-token convention below.
+      const v = params[whole[1] as string];
+      return v === undefined ? '' : v;
+    }
     return value.replace(PARAM_PATTERN, (_match, name: string) => {
       const v = params[name];
       // Per the spec, parameter values are validated against the chain's
