@@ -1,12 +1,18 @@
 /**
  * Workflow-chain pack expansion — live-host gate (RFC 0013 Phase 3).
  *
- * Capability-gated scenario. Skips when the host doesn't advertise
- * `capabilities.workflowChainPacks.supported: true`. Asserts the host's
- * vendor-prefixed expansion endpoint (`POST /v1/host/sample/workflow-
- * chain:expand` — vendor prefix per `host-extensions.md` §"Canonical
- * prefixes") returns expanded fragments equivalent to the spec-
- * authoritative `expandChain()` reference library.
+ * Capability-gated scenario. **RFC 0013 erratum (2026-07-05):** gates on the
+ * OPTIONAL test-seam sub-flag `capabilities.workflowChainPacks.hostExpansionSeam:
+ * true` — NOT on the semantic `workflowChainPacks.supported` claim, which is
+ * witnessed server-free by `workflow-chain-expansion.test.ts`. This decouples a
+ * host's honest `supported` / RFC 0124 `deferredParameters` advertisement from
+ * this scenario's `vendor.openwop.workflow-chain-sample` fixture (never bundled
+ * into `@openwop/openwop-conformance`, so no host has been handed it — the
+ * scenario soft-skips everywhere until a serving host advertises the seam).
+ * Asserts the host's vendor-prefixed expansion endpoint (`POST /v1/host/sample/
+ * workflow-chain:expand` — vendor prefix per `host-extensions.md` §"Canonical
+ * prefixes") returns expanded fragments equivalent to the spec-authoritative
+ * `expandChain()` reference library.
  *
  * Why this exists: the four server-free chain scenarios
  * (manifest-validation, signature-verification, expansion,
@@ -39,7 +45,7 @@ import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 
-const PROFILE = 'workflowChainPacks';
+const PROFILE = 'workflowChainPacks.hostExpansionSeam';
 const SAMPLE_PACK = 'vendor.openwop.workflow-chain-sample';
 const CHAIN_1_NODE = 'vendor.openwop.workflow-chain-sample.summarize-text';
 const CHAIN_2_NODE = 'vendor.openwop.workflow-chain-sample.fetch-and-summarize';
@@ -47,18 +53,25 @@ const EXPAND_PATH = '/v1/host/sample/workflow-chain:expand';
 
 interface ChainCaps {
   supported?: boolean;
+  hostExpansionSeam?: boolean;
 }
 
+// RFC 0013 erratum (2026-07-05): this live-host scenario witnesses the OPTIONAL
+// `POST /v1/host/sample/workflow-chain:expand` TEST SEAM, gated on its own
+// `workflowChainPacks.hostExpansionSeam` sub-flag — NOT on the semantic
+// `workflowChainPacks.supported` claim (which is witnessed server-free by
+// `workflow-chain-expansion.test.ts`). This decouples the RFC 0124
+// `deferredParameters` flip from the unpublished RFC 0013 sample-pack fixture.
 async function isExpansionAdvertised(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
   const caps =
     (disco.json as { capabilities?: { workflowChainPacks?: ChainCaps } }).capabilities
       ?.workflowChainPacks ?? {};
-  return caps.supported === true;
+  return caps.hostExpansionSeam === true;
 }
 
 describe('workflow-chain-host-expansion: live host wraps expansion algorithm correctly', () => {
-  it('host discovery advertises workflowChainPacks.supported when expansion is implemented', async () => {
+  it('host discovery advertises workflowChainPacks.hostExpansionSeam when the expand seam is served', async () => {
     loadEnv();
     if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
 
@@ -69,9 +82,10 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       caps,
       driver.describe(
         'capabilities.md §workflowChainPacks',
-        'host advertising the capability MUST set `supported: true` in the discovery block',
+        'a host serving the RFC 0013 host-expansion test seam MUST set `hostExpansionSeam: true` (and, being a chain-pack consumer, `supported: true`) in the discovery block',
       ),
     ).toBeDefined();
+    expect(caps?.hostExpansionSeam).toBe(true);
     expect(caps?.supported).toBe(true);
   });
 
