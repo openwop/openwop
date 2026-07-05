@@ -1881,6 +1881,10 @@
           },
           "required": ["supported"],
           "additionalProperties": false
+        },
+        "hostExpansionSeam": {
+          "type": "boolean",
+          "description": "RFC 0013 erratum (2026-07-05). OPTIONAL. A **conformance-only test seam** advertisement (category: test harness, cf. `observability.testSeams` — NOT a product capability): when `true`, the host serves `POST /v1/host/sample/workflow-chain:expand` returning the `vendor.openwop.workflow-chain-sample` v1.0.0 expansion that `conformance/src/scenarios/workflow-chain-host-expansion.test.ts` asserts against. Absent/`false` ⇒ that live-host expansion scenario soft-skips; the semantic `workflowChainPacks.supported` claim is witnessed by the server-free `workflow-chain-expansion.test.ts` legs. This flag is DISTINCT from `deferredParameters` (RFC 0124), which is witnessed through its own `POST /v1/host/sample/chain/deferred-expand` seam — so a host MAY advertise `supported` / `deferredParameters.supported` without standing up the RFC 0013 sample-pack seam it was never handed a published fixture for. Advertising `supported:true` no longer conscripts a host into the RFC 0013 host-expansion scenario."
         }
       },
       "required": ["supported"],
