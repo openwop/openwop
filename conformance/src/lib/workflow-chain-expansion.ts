@@ -54,10 +54,25 @@ export interface FragmentNode {
   inputs?: Record<string, unknown>;
 }
 
+/** A fan-in / error-routing rule mirrored from `WorkflowEdge.triggerRule`
+ *  (workflow-definition.schema.json). RFC 0125. */
+export type TriggerRule =
+  | 'all_success'
+  | 'any_success'
+  | 'all_complete'
+  | 'none_failed'
+  | 'any_failed';
+
 export interface FragmentEdge {
   from: string;
   to: string;
-  condition?: string;
+  /** Edge condition — an `EdgeCondition` object (RFC 0013 amendment #818).
+   *  Carried through expansion opaquely; typed `unknown` since the lib does
+   *  not evaluate it. */
+  condition?: unknown;
+  /** Fan-in / error-routing rule (RFC 0125). Carried through expansion onto
+   *  the resulting WorkflowEdge so the scheduler honors it. */
+  triggerRule?: TriggerRule;
 }
 
 /** Per-expansion context the caller supplies. */
@@ -90,7 +105,7 @@ export interface ExpandedFragment {
     inputs?: Record<string, unknown>;
     capabilities?: ReadonlyArray<string>;
   }>;
-  edges: ReadonlyArray<{ from: string; to: string; condition?: string }>;
+  edges: ReadonlyArray<{ from: string; to: string; condition?: unknown; triggerRule?: TriggerRule }>;
   /** Map of original-fragment-id → rewritten-id, so the caller can
    *  wire the parent workflow's adjacent edges into the expansion. */
   idMap: ReadonlyMap<string, string>;
@@ -110,9 +125,13 @@ export class ChainUnresolvableTypeIdError extends Error {
 }
 
 const PARAM_PATTERN = /\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
-/** Matches a string that is EXACTLY one `{{params.<name>}}` token with no
- *  surrounding text — the "whole-value" case that resolves to the raw typed
- *  parameter value rather than a string coercion. */
+/** A value that is EXACTLY a single `{{params.<name>}}` token (whole-value),
+ *  distinct from a token embedded in a larger string. Under expansion-time
+ *  substitution a whole-value token resolves to the RAW TYPED parameter value
+ *  rather than a string coercion (WCP2 raw-typed rule); under deferred mode it
+ *  is the only non-prompt position deferrable to a variable-sourced PortValue.
+ *  An embedded non-prompt token has no runtime `{{}}` construct and MUST resolve
+ *  at expansion time. */
 const WHOLE_VALUE_PATTERN = /^\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}$/;
 
 /** Recursive substitution of `{{params.<name>}}` placeholders in any string
@@ -224,8 +243,272 @@ export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): Expand
       to: rewriteEdgeRef(e.to, fragmentNodeIds, prefix),
     };
     if (e.condition !== undefined) out.condition = e.condition;
+    // RFC 0125: carry the fan-in/error-routing rule onto the expanded
+    // WorkflowEdge so the scheduler honors it (mirrors the `condition`
+    // pass-through; without this the field is silently dropped at expansion).
+    if (e.triggerRule !== undefined) out.triggerRule = e.triggerRule;
     return out;
   });
 
   return { nodes: expandedNodes, edges: expandedEdges, idMap };
+}
+
+// ---------------------------------------------------------------------------
+// RFC 0124 (WCP4) — Portable per-run parameter deferral.
+//
+// The DEFERRED expansion mode: instead of freezing `{{params.*}}` values into
+// persisted `config`/`inputs` at drop time (the RFC 0013 default), the host
+// materializes the chain's `parameters` into top-level workflow `variables[]`
+// (author value → `defaultValue`) and rewrites each token into an already-spec'd
+// RUNTIME binding — so the persisted fragment carries ZERO `{{params.*}}` tokens
+// yet every parameter stays overridable per run via `configurable`. This is the
+// spec-authoritative reference for `spec/v1/workflow-chain-packs.md`
+// §"Deferred-parameter expansion (RFC 0124)".
+// ---------------------------------------------------------------------------
+
+/** The parameter JSON Schema fragment (`chain.parameters`), narrowed to the
+ *  fields deferred expansion reads: each property's `type`, `description`, and
+ *  the RFC 0124 `x-openwop-sensitive` extension key. */
+export interface ParameterSchema {
+  properties?: Record<
+    string,
+    { type?: string; description?: string; 'x-openwop-sensitive'?: boolean }
+  >;
+}
+
+/** Host capability context deferred expansion needs (RFC 0124 §Capability
+ *  gating). The prompt-bearing rewrite path requires `prompts.variableSources`
+ *  to include `variable`; a `source:"secret"` sensitive lift requires
+ *  `capabilities.secrets.supported`. */
+export interface DeferredHostContext {
+  /** `capabilities.prompts.variableSources` includes `"variable"`. */
+  promptVariableSource: boolean;
+  /** `capabilities.secrets.supported`. */
+  secretsSupported: boolean;
+}
+
+export interface DeferredExpansionContext {
+  expansionId: string;
+  /** Author-supplied parameter values (already validated) → `defaultValue` seeds. */
+  params: Record<string, unknown>;
+  /** The chain's `parameters` JSON Schema (type + `x-openwop-sensitive` per property). */
+  parameterSchema: ParameterSchema;
+  isTypeIdResolvable: (typeId: string) => boolean;
+  host: DeferredHostContext;
+}
+
+/** A materialized top-level `WorkflowVariable` (subset — the fields deferred
+ *  expansion sets). A NON-sensitive parameter materializes here with its author
+ *  value as `defaultValue`. A sensitive parameter does NOT (its value never
+ *  lands in the run-scoped bag); it is bound as a `source:"secret"` prompt
+ *  variable instead. */
+export interface MaterializedVariable {
+  name: string;
+  type: string;
+  description?: string;
+  defaultValue?: unknown;
+  sensitive?: boolean;
+}
+
+/** A rewritten prompt-template variable slot (RFC 0027). `source:"variable"`
+ *  resolves from the run bag; `source:"secret"` resolves a BYOK secret at
+ *  compose time, redacted in `prompt.composed` (RFC 0124 §Security). */
+export interface PromptVariableBinding {
+  name: string;
+  source: 'variable' | 'secret';
+}
+
+export interface DeferredExpandedFragment {
+  nodes: ExpandedFragment['nodes'];
+  edges: ExpandedFragment['edges'];
+  idMap: ReadonlyMap<string, string>;
+  /** Materialized top-level `variables[]` (non-sensitive params only). */
+  variables: ReadonlyArray<MaterializedVariable>;
+  /** Prompt-site variable bindings introduced by the rewrite. */
+  promptVariables: ReadonlyArray<PromptVariableBinding>;
+  /** Auto-generated `configurableSchema` mapping the BARE param name (the
+   *  normative override key) to its type, so a per-run `configurable` keyed on
+   *  the bare name resolves (R6 cross-host key stability). */
+  configurableSchema: { properties: Record<string, { type: string }> };
+}
+
+/** Thrown when a `x-openwop-sensitive` parameter cannot be securely deferred:
+ *  it resolves to a non-prompt position (whole-value `node.inputs`, embedded
+ *  non-prompt `config`), or the host lacks `secrets`/deferred support. Wire
+ *  code `sensitive_param_not_deferrable` (HTTP 422) per
+ *  `workflow-chain-packs.md` §"Error codes" (RFC 0124 §Security). */
+export class SensitiveParamNotDeferrableError extends Error {
+  readonly code = 'sensitive_param_not_deferrable';
+  readonly httpStatus = 422;
+  constructor(readonly param: string, readonly reason: string) {
+    super(`sensitive_param_not_deferrable: '${param}' — ${reason}`);
+    this.name = 'SensitiveParamNotDeferrableError';
+  }
+}
+
+/** The prompt-bearing `config` fields a token in which is a "prompt position"
+ *  (lifted to a PromptTemplate `{{varName}}` slot). Everything else in `config`
+ *  is a non-prompt position. */
+const PROMPT_CONFIG_FIELDS: ReadonlySet<string> = new Set(['systemPrompt', 'userPrompt']);
+
+/**
+ * Deferred-mode expansion (RFC 0124). Rewrites every `{{params.<name>}}` token
+ * into a spec'd runtime binding and materializes non-sensitive parameters into
+ * top-level `variables[]`, leaving ZERO `{{params.*}}` tokens in the persisted
+ * fragment. Sensitive parameters (`x-openwop-sensitive`) are handled per
+ * §Security: prompt-body → `source:"secret"`; anywhere else → fail closed.
+ *
+ * @throws SensitiveParamNotDeferrableError when a sensitive parameter is in a
+ *   non-prompt position, or the host lacks `secrets` support.
+ * @throws ChainUnresolvableTypeIdError when any node typeId fails resolution.
+ */
+export function expandChainDeferred(
+  chain: WorkflowChain,
+  ctx: DeferredExpansionContext,
+): DeferredExpandedFragment {
+  for (const node of chain.dag.nodes) {
+    if (!ctx.isTypeIdResolvable(node.typeId)) {
+      throw new ChainUnresolvableTypeIdError(node.typeId, chain.chainId);
+    }
+  }
+
+  const props = ctx.parameterSchema.properties ?? {};
+  const isSensitive = (name: string): boolean => props[name]?.['x-openwop-sensitive'] === true;
+  const typeOf = (name: string): string => props[name]?.type ?? 'string';
+
+  const prefix = computePrefix(chain.chainId, ctx.expansionId);
+  const fragmentNodeIds = new Set(chain.dag.nodes.map((n) => n.id));
+  const idMap = new Map<string, string>();
+  for (const id of fragmentNodeIds) idMap.set(id, `${prefix}${id}`);
+
+  const usedParams = new Set<string>();
+  const promptVariables = new Map<string, PromptVariableBinding>();
+
+  /** Rewrite a prompt-position string: each embedded `{{params.x}}` → a
+   *  PromptTemplate `{{x}}` slot. A sensitive param binds `source:"secret"`
+   *  (requires host secrets support), else `source:"variable"`. If the host
+   *  does not advertise the `variable` prompt source at all, the deferred
+   *  prompt path is unavailable — the caller falls back to expansion-time
+   *  substitution (G5); we surface that by returning `null`. */
+  function rewritePrompt(text: string): string | null {
+    if (!ctx.host.promptVariableSource) return null; // G5 fallback → expansion-time
+    return text.replace(PARAM_PATTERN, (_m, name: string) => {
+      usedParams.add(name);
+      if (isSensitive(name)) {
+        if (!ctx.host.secretsSupported) {
+          throw new SensitiveParamNotDeferrableError(name, 'host lacks capabilities.secrets support');
+        }
+        promptVariables.set(name, { name, source: 'secret' });
+      } else {
+        promptVariables.set(name, { name, source: 'variable' });
+      }
+      return `{{${name}}}`;
+    });
+  }
+
+  /** Rewrite a config object: prompt fields → PromptTemplate slots; a token in
+   *  any NON-prompt config field is embedded-non-prompt → sensitive fails
+   *  closed, non-sensitive resolves at expansion time (author-trusted). */
+  function rewriteConfig(config: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(config)) {
+      if (typeof v === 'string' && PROMPT_CONFIG_FIELDS.has(k) && PARAM_PATTERN.test(v)) {
+        PARAM_PATTERN.lastIndex = 0;
+        const rewritten = rewritePrompt(v);
+        out[k] = rewritten === null ? substitute(v, ctx.params) : rewritten;
+        continue;
+      }
+      PARAM_PATTERN.lastIndex = 0;
+      if (typeof v === 'string' && PARAM_PATTERN.test(v)) {
+        // embedded non-prompt token
+        PARAM_PATTERN.lastIndex = 0;
+        let m: RegExpExecArray | null;
+        while ((m = PARAM_PATTERN.exec(v)) !== null) {
+          if (isSensitive(m[1])) {
+            throw new SensitiveParamNotDeferrableError(m[1], `embedded non-prompt config field '${k}'`);
+          }
+        }
+        out[k] = substitute(v, ctx.params); // author-trusted expansion-time resolution
+      } else {
+        out[k] = substitute(v, ctx.params);
+      }
+    }
+    return out;
+  }
+
+  /** Rewrite an inputs object: a WHOLE-VALUE `{{params.x}}` → a variable-sourced
+   *  PortValue (WCP2 raw-typed); a sensitive whole-value fails closed (no
+   *  plaintext-bag path for a secret). Embedded input tokens follow the same
+   *  non-prompt rule as config. */
+  function rewriteInputs(inputs: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(inputs)) {
+      const whole = typeof v === 'string' ? WHOLE_VALUE_PATTERN.exec(v) : null;
+      if (whole) {
+        const name = whole[1];
+        if (isSensitive(name)) {
+          throw new SensitiveParamNotDeferrableError(name, `whole-value node input '${k}'`);
+        }
+        usedParams.add(name);
+        out[k] = { source: 'variable', variable: name }; // variable-sourced PortValue
+        continue;
+      }
+      PARAM_PATTERN.lastIndex = 0;
+      if (typeof v === 'string' && PARAM_PATTERN.test(v)) {
+        PARAM_PATTERN.lastIndex = 0;
+        let m: RegExpExecArray | null;
+        while ((m = PARAM_PATTERN.exec(v)) !== null) {
+          if (isSensitive(m[1])) {
+            throw new SensitiveParamNotDeferrableError(m[1], `embedded non-prompt input '${k}'`);
+          }
+        }
+        out[k] = substitute(v, ctx.params);
+      } else {
+        out[k] = substitute(v, ctx.params);
+      }
+    }
+    return out;
+  }
+
+  const expandedNodes = chain.dag.nodes.map((n) => {
+    const out: ExpandedFragment['nodes'][number] = { id: `${prefix}${n.id}`, typeId: n.typeId };
+    if (n.name !== undefined) out.name = n.name;
+    if (n.position !== undefined) out.position = n.position;
+    if (n.config !== undefined) out.config = rewriteConfig(n.config);
+    if (n.inputs !== undefined) out.inputs = rewriteInputs(n.inputs);
+    if (chain.capabilities && chain.capabilities.length > 0) out.capabilities = [...chain.capabilities];
+    return out;
+  });
+
+  const expandedEdges = (chain.dag.edges ?? []).map((e) => {
+    const out: ExpandedFragment['edges'][number] = {
+      from: rewriteEdgeRef(e.from, fragmentNodeIds, prefix),
+      to: rewriteEdgeRef(e.to, fragmentNodeIds, prefix),
+    };
+    if (e.condition !== undefined) out.condition = e.condition;
+    if (e.triggerRule !== undefined) out.triggerRule = e.triggerRule;
+    return out;
+  });
+
+  // Materialize NON-sensitive used params into top-level variables[]; build the
+  // bare-param → type configurableSchema for the override key.
+  const variables: MaterializedVariable[] = [];
+  const configurableSchema: { properties: Record<string, { type: string }> } = { properties: {} };
+  for (const name of usedParams) {
+    configurableSchema.properties[name] = { type: typeOf(name) };
+    if (isSensitive(name)) continue; // sensitive value never lands in the bag
+    const v: MaterializedVariable = { name, type: typeOf(name) };
+    if (props[name]?.description !== undefined) v.description = props[name]!.description;
+    if (name in ctx.params) v.defaultValue = ctx.params[name];
+    variables.push(v);
+  }
+
+  return {
+    nodes: expandedNodes,
+    edges: expandedEdges,
+    idMap,
+    variables,
+    promptVariables: [...promptVariables.values()],
+    configurableSchema,
+  };
 }

@@ -419,6 +419,55 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     expect(at(fragment.edges, 1, 'fragment.edges').from).toBe('vendor_acme_twoStep_e3_second');
     expect(at(fragment.edges, 1, 'fragment.edges').to).toBe('parent-downstream');
   });
+
+  it('preserves edge `condition` and `triggerRule` onto the expanded WorkflowEdge (RFC 0013 amendment #818 + RFC 0125)', () => {
+    // A fragment edge carrying content-routing (`condition`) + fan-in
+    // (`triggerRule`) MUST survive expansion — otherwise the scheduler never
+    // sees them and the fields are silently ignored (the failure mode the
+    // RFC 0013 `condition` amendment and RFC 0125 both call out).
+    const withEdgeFields: WorkflowChain = {
+      ...MULTI_NODE,
+      dag: {
+        ...MULTI_NODE.dag,
+        edges: [
+          {
+            from: 'first',
+            to: 'second',
+            condition: { type: 'equals', left: 'status', right: 'ok' },
+            triggerRule: 'all_complete',
+          },
+        ],
+      },
+    };
+    const fragment = expandChain(withEdgeFields, {
+      expansionId: 'e4',
+      params: {},
+      isTypeIdResolvable: RESOLVE_ALL,
+    });
+    const edge = at(fragment.edges, 0, 'fragment.edges');
+    expect(edge.from).toBe('vendor_acme_twoStep_e4_first');
+    expect(edge.to).toBe('vendor_acme_twoStep_e4_second');
+    expect(
+      edge.condition,
+      'Per RFC 0013 amendment (2026-07-03): a present `FragmentEdge.condition` MUST be carried onto the expanded WorkflowEdge (not dropped at expansion).',
+    ).toEqual({ type: 'equals', left: 'status', right: 'ok' });
+    expect(
+      edge.triggerRule,
+      'Per RFC 0125 / workflow-chain-packs.md §"Expansion semantics": expansion MUST preserve `FragmentEdge.triggerRule` onto the resulting WorkflowEdge so the scheduler honors the fan-in / error-routing rule.',
+    ).toBe('all_complete');
+  });
+
+  it('omits triggerRule on the expanded edge when the fragment edge declares none (default all_success semantics)', () => {
+    const fragment = expandChain(MULTI_NODE, {
+      expansionId: 'e5',
+      params: {},
+      isTypeIdResolvable: RESOLVE_ALL,
+    });
+    expect(
+      at(fragment.edges, 0, 'fragment.edges').triggerRule,
+      'When a fragment edge declares no `triggerRule`, the expanded edge MUST NOT carry one — omission is identical to the `all_success` default (preserves wire-shape minimality + prior behavior).',
+    ).toBeUndefined();
+  });
 });
 
 describe('category: workflow-chain expansion — capability propagation', () => {

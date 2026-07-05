@@ -1,52 +1,79 @@
 /**
  * Workflow-chain pack expansion — live-host gate (RFC 0013 Phase 3).
  *
- * Capability-gated scenario. Skips when the host doesn't advertise
- * `capabilities.workflowChainPacks.supported: true`. Asserts the host's
- * vendor-prefixed expansion endpoint (`POST /v1/host/sample/workflow-
- * chain:expand` — vendor prefix per `host-extensions.md` §"Canonical
- * prefixes") returns expanded fragments equivalent to the spec-
- * authoritative `expandChain()` reference library.
+ * Capability-gated scenario. **RFC 0013 erratum (2026-07-05):** gates on the
+ * OPTIONAL test-seam sub-flag `capabilities.workflowChainPacks.hostExpansionSeam:
+ * true` — NOT on the semantic `workflowChainPacks.supported` claim, which is
+ * witnessed server-free by `workflow-chain-expansion.test.ts`. This decouples a
+ * host's honest `supported` / RFC 0124 `deferredParameters` advertisement from
+ * this scenario's `vendor.openwop.workflow-chain-sample` fixture.
  *
- * Why this exists: the four server-free chain scenarios
- * (manifest-validation, signature-verification, expansion,
- * unresolvable-typeid) cover the pure logic. This scenario proves a
- * reference host wraps the algorithm correctly — fetch + verify +
- * locate + expand — and emits the same wire shape any consumer
- * implementing the spec would. Without it, the RFC's "reference host
- * implements expansion" acceptance criterion cannot be verified
- * end-to-end against an actual deployment.
+ * **A-lite follow-up (2026-07-05):** the `vendor.openwop.workflow-chain-sample`
+ * pack is now **bundled into the conformance package** at
+ * `fixtures/pack-manifests/workflow-chain-sample.pack.json` (host-syncable), and
+ * this scenario **LOADS it + derives the expected expansion from the
+ * spec-authoritative reference library** (`expandChain()`) instead of hardcoding
+ * expected strings — so the published pack is the single source of truth and the
+ * assertions can't drift from it. A serving host resolves the SAME bundled pack
+ * and MUST produce the SAME expansion the reference library computes.
+ *
+ * Asserts the host's vendor-prefixed expansion endpoint (`POST /v1/host/sample/
+ * workflow-chain:expand` — vendor prefix per `host-extensions.md` §"Canonical
+ * prefixes") returns expanded fragments equivalent to `expandChain()` for the
+ * same pack + parameters + host-chosen `expansionId`.
  *
  * Coverage:
- *   1. Discovery advertises the capability (precondition for the rest).
- *   2. Positive — 1-node chain expands; substituted config + rewritten
- *      id + propagated capabilities match the pure-library output for
- *      the same input.
- *   3. Positive — 2-node chain with edges expands; edge endpoints
- *      reference the rewritten ids.
+ *   1. Discovery advertises `hostExpansionSeam` (precondition for the rest).
+ *   2. Positive — 1-node chain expands; host output == reference expansion
+ *      (substituted config + rewritten id + propagated `cacheable`).
+ *   3. Positive — 2-node chain with edges expands; host output == reference
+ *      expansion (rewritten edge endpoints + propagated `side-effectful`).
  *   4. Negative — unknown packName → 404 `pack_not_found`.
  *   5. Negative — known pack, unknown chainId → 404 `chain_not_found`.
  *   6. Negative — malformed body (no chainId) → 422 `invalid_request`.
  *
  * @see spec/v1/workflow-chain-packs.md §"Expansion semantics (normative)"
- * @see capabilities.md §workflowChainPacks
+ * @see conformance/src/lib/workflow-chain-expansion.ts (the reference library)
  * @see RFCS/0013-workflow-chain-packs.md (Phase 3)
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { FIXTURES_DIR } from '../lib/paths.js';
+import { expandChain, type WorkflowChain } from '../lib/workflow-chain-expansion.js';
 
-const PROFILE = 'workflowChainPacks';
-const SAMPLE_PACK = 'vendor.openwop.workflow-chain-sample';
+const PROFILE = 'workflowChainPacks.hostExpansionSeam';
+const EXPAND_PATH = '/v1/host/sample/workflow-chain:expand';
+
+// The pack fixture is bundled with the conformance package (ships in `files`),
+// so a host can sync the IDENTICAL pack and this scenario loads it as the
+// contract source of truth (no hardcoded expansion).
+interface SamplePack {
+  name: string;
+  version: string;
+  chains: Array<WorkflowChain>;
+}
+const PACK = JSON.parse(
+  readFileSync(join(FIXTURES_DIR, 'pack-manifests', 'workflow-chain-sample.pack.json'), 'utf8'),
+) as SamplePack;
+const SAMPLE_PACK = PACK.name; // vendor.openwop.workflow-chain-sample
 const CHAIN_1_NODE = 'vendor.openwop.workflow-chain-sample.summarize-text';
 const CHAIN_2_NODE = 'vendor.openwop.workflow-chain-sample.fetch-and-summarize';
-const EXPAND_PATH = '/v1/host/sample/workflow-chain:expand';
+
+function chainById(chainId: string): WorkflowChain {
+  const c = PACK.chains.find((x) => x.chainId === chainId);
+  if (!c) throw new Error(`fixture missing chain ${chainId}`);
+  return c;
+}
 
 interface ChainCaps {
   supported?: boolean;
+  hostExpansionSeam?: boolean;
 }
 
 async function isExpansionAdvertised(): Promise<boolean> {
@@ -54,11 +81,20 @@ async function isExpansionAdvertised(): Promise<boolean> {
   const caps =
     (disco.json as { capabilities?: { workflowChainPacks?: ChainCaps } }).capabilities
       ?.workflowChainPacks ?? {};
-  return caps.supported === true;
+  return caps.hostExpansionSeam === true;
+}
+
+interface ExpandResponse {
+  expansionId: string;
+  chainId: string;
+  packName: string;
+  packVersion: string;
+  nodes: Array<{ id: string; typeId: string; config?: Record<string, unknown>; capabilities?: string[] }>;
+  edges: Array<{ from: string; to: string }>;
 }
 
 describe('workflow-chain-host-expansion: live host wraps expansion algorithm correctly', () => {
-  it('host discovery advertises workflowChainPacks.supported when expansion is implemented', async () => {
+  it('host discovery advertises workflowChainPacks.hostExpansionSeam when the expand seam is served', async () => {
     loadEnv();
     if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
 
@@ -69,99 +105,89 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       caps,
       driver.describe(
         'capabilities.md §workflowChainPacks',
-        'host advertising the capability MUST set `supported: true` in the discovery block',
+        'a host serving the RFC 0013 host-expansion test seam MUST set `hostExpansionSeam: true` (and, being a chain-pack consumer, `supported: true`) in the discovery block',
       ),
     ).toBeDefined();
+    expect(caps?.hostExpansionSeam).toBe(true);
     expect(caps?.supported).toBe(true);
   });
 
-  it('positive — 1-node chain expansion via the host returns substituted config + rewritten id', async () => {
+  it('positive — 1-node chain expansion matches the reference library for the bundled pack', async () => {
     if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
 
-    const res = await driver.post(EXPAND_PATH, {
-      packName: SAMPLE_PACK,
-      chainId: CHAIN_1_NODE,
-      parameters: {
-        sourceText: 'The quick brown fox jumps over the lazy dog.',
-        targetLength: 'one-sentence',
-        tone: 'casual',
-      },
-    });
-
-    expect(res.status).toBe(200);
-    const body = res.json as {
-      expansionId: string;
-      chainId: string;
-      packName: string;
-      packVersion: string;
-      nodes: Array<{
-        id: string;
-        typeId: string;
-        config?: { systemPrompt?: string };
-        capabilities?: string[];
-      }>;
-      edges: Array<unknown>;
+    const parameters = {
+      sourceText: 'The quick brown fox jumps over the lazy dog.',
+      targetLength: 'one-sentence',
+      tone: 'casual',
     };
+    const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, chainId: CHAIN_1_NODE, parameters });
+    expect(res.status).toBe(200);
+    const body = res.json as ExpandResponse;
 
     expect(body.chainId).toBe(CHAIN_1_NODE);
     expect(body.packName).toBe(SAMPLE_PACK);
-    expect(body.packVersion).toBe('1.0.0');
-    expect(body.nodes).toHaveLength(1);
-    expect(body.edges).toHaveLength(0);
+    expect(body.packVersion).toBe(PACK.version);
     expect(typeof body.expansionId).toBe('string');
     expect(body.expansionId.length).toBeGreaterThan(0);
 
+    // Derive the expected fragment from the reference library using the HOST's
+    // own expansionId — the host MUST reproduce the same algorithm output.
+    const expected = expandChain(chainById(CHAIN_1_NODE), {
+      expansionId: body.expansionId,
+      params: parameters,
+      isTypeIdResolvable: () => true,
+    });
+
+    expect(body.nodes).toHaveLength(expected.nodes.length);
+    expect(body.edges).toHaveLength(expected.edges.length);
+
     const node = body.nodes[0]!;
-    // Step 6: id rewriting — chainId's dots become underscores +
-    // expansionId suffix + original fragment id.
-    expect(node.id).toMatch(
-      /^vendor_openwop_workflow-chain-sample_summarize-text_[a-f0-9]+_summarize-call$/,
-    );
-    expect(node.typeId).toBe('core.ai.callPrompt');
-
-    // Step 5: literal substitution.
-    const sysPrompt = node.config?.systemPrompt ?? '';
-    expect(sysPrompt).toContain('a one-sentence summary');
-    expect(sysPrompt).toContain('a casual tone');
-    expect(sysPrompt).toContain('The quick brown fox jumps over the lazy dog.');
-
-    // Step 8: capability propagation.
-    expect(node.capabilities).toEqual(['cacheable']);
+    const ref = expected.nodes[0]!;
+    expect(
+      node.id,
+      driver.describe('workflow-chain-packs.md §Expansion semantics', 'host rewrites the node id exactly as the reference library (chainId dots → underscores + expansionId prefix)'),
+    ).toBe(ref.id);
+    expect(node.typeId).toBe(ref.typeId);
+    expect(
+      node.config?.systemPrompt,
+      driver.describe('workflow-chain-packs.md §Expansion semantics', 'host performs the same literal {{params.*}} substitution as the reference library'),
+    ).toBe((ref.config as { systemPrompt?: string } | undefined)?.systemPrompt);
+    expect(
+      node.capabilities,
+      driver.describe('workflow-chain-packs.md §Capability propagation', 'chain capabilities propagate to the expanded node'),
+    ).toEqual(ref.capabilities);
   });
 
-  it('positive — 2-node chain with edges expands with rewritten edge endpoints', async () => {
+  it('positive — 2-node chain matches the reference library (edge rewrite + capability propagation)', async () => {
     if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
 
-    const res = await driver.post(EXPAND_PATH, {
-      packName: SAMPLE_PACK,
-      chainId: CHAIN_2_NODE,
-      parameters: {
-        url: 'https://example.com/article',
-        targetLength: 'executive-summary',
-      },
-    });
+    const parameters = { url: 'https://example.com/article', targetLength: 'executive-summary' };
+    const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, chainId: CHAIN_2_NODE, parameters });
     expect(res.status).toBe(200);
+    const body = res.json as ExpandResponse;
 
-    const body = res.json as {
-      expansionId: string;
-      nodes: Array<{ id: string; typeId: string; capabilities?: string[] }>;
-      edges: Array<{ from: string; to: string }>;
-    };
-    expect(body.nodes).toHaveLength(2);
-    expect(body.edges).toHaveLength(1);
+    const expected = expandChain(chainById(CHAIN_2_NODE), {
+      expansionId: body.expansionId,
+      params: parameters,
+      isTypeIdResolvable: () => true,
+    });
 
-    // Both expanded nodes get the same prefix; the edge's `from`/`to`
-    // refer to fragment node ids and so get rewritten with the same
-    // prefix (port suffix preserved).
+    expect(body.nodes).toHaveLength(expected.nodes.length); // 2
+    expect(body.edges).toHaveLength(expected.edges.length); // 1
+
     const edge = body.edges[0]!;
-    const prefix = `vendor_openwop_workflow-chain-sample_fetch-and-summarize_${body.expansionId}_`;
-    expect(edge.from).toBe(`${prefix}fetch.body`);
-    expect(edge.to).toBe(`${prefix}summarize.sourceText`);
+    const refEdge = expected.edges[0]!;
+    expect(
+      { from: edge.from, to: edge.to },
+      driver.describe('workflow-chain-packs.md §Expansion semantics', 'host rewrites fragment-internal edge endpoints (port suffix preserved) exactly as the reference library'),
+    ).toEqual({ from: refEdge.from, to: refEdge.to });
 
-    // side-effectful capability propagated to BOTH expanded nodes.
-    for (const node of body.nodes) {
-      expect(node.capabilities, `node ${node.id} inherits chain capability`).toEqual(['side-effectful']);
-    }
+    // side-effectful capability propagated to BOTH expanded nodes (per the ref).
+    const refCaps = expected.nodes.map((n) => n.capabilities);
+    expect(
+      body.nodes.map((n) => n.capabilities),
+      driver.describe('workflow-chain-packs.md §Capability propagation', 'chain capability propagates uniformly to every expanded node'),
+    ).toEqual(refCaps);
   });
 
   it('negative — unknown pack returns 404 pack_not_found', async () => {
@@ -192,10 +218,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
 
     // Missing chainId.
-    const res = await driver.post(EXPAND_PATH, {
-      packName: SAMPLE_PACK,
-      parameters: {},
-    });
+    const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, parameters: {} });
     expect(res.status).toBe(422);
     expect((res.json as { error: string }).error).toBe('invalid_request');
   });

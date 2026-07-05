@@ -111,7 +111,7 @@
       "type": "object",
       "required": ["id", "typeId", "name", "position", "config", "inputs"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1, "description": "Node identifier, unique within the workflow. Intentionally has NO `maxLength` — RFC 0013 chain expansion mints ids of the form `${chainIdSlug}_${expansionId}_${fragmentId}` where `chainIdSlug` is an unbounded reverse-DNS string, so an expanded node id can exceed any short cap. A host MUST NOT reject or truncate a node id by length (no host-imposed `maxLength` stricter than this schema)." },
         "typeId": {
           "type": "string",
           "description": "Canonical node type ID (e.g., 'core.ai.callPrompt', 'core.chat.approvalGate'). Reserved prefixes: 'core.*' for spec-canonical, 'vendor.<org>.*' for third-party.",

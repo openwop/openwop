@@ -11,8 +11,8 @@
 | JSON Schemas | 75 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 382 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 122 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 384 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 125 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.48.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.52.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -31,7 +31,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 113 |
+| Accepted | 116 |
 | Active | 8 |
 | Draft | 1 |
 
@@ -159,6 +159,9 @@
 | RFC 0120 | Connection-pack provider `apiHosts` - declared credential-egress allow-list | Accepted |
 | RFC 0121 | Subscription-reuse provider auth mode - adds `"subscription"` to the `aiProviders.authModes` closed enum (RFC 0067), so a host can honestly advertise that a provider's credential may be supplied by reusing an existing personal consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key or a host-owned OAuth client | Active |
 | RFC 0122 | Self-hosted runner (remote-driven local execution) | Accepted |
+| RFC 0124 | Portable per-run parameter deferral for workflow-chain packs (WCP4) | Accepted |
+| RFC 0125 | Chain-pack `FragmentEdge.triggerRule` - mirror `WorkflowEdge.triggerRule` onto chain fragment edges | Accepted |
+| RFC 0126 | Data-parallel `core.dispatch` - per-item input fan-out | Accepted |
 
 ## SDK Helper Coverage
 

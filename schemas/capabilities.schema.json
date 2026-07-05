@@ -1869,6 +1869,22 @@
         "supported": {
           "type": "boolean",
           "description": "Whether the host's workflow editor implements chain expansion at author time. `false` (or omission) signals the host does NOT consume workflow-chain packs."
+        },
+        "deferredParameters": {
+          "type": "object",
+          "description": "RFC 0124 (WCP4, `Active`). OPTIONAL. When `supported: true`, the host offers a capability-gated deferred-parameter expansion mode in ADDITION to expansion-time substitution (which remains the default and floor): at drop time it materializes the chain's `parameters` into top-level workflow `variables[]` (author value as `defaultValue`) and rewrites `{{params.<name>}}` into a spec'd runtime binding (PromptTemplate `{{varName}}` with `source:\"variable\"`, or a variable-sourced PortValue), so chain parameters stay overridable per run via `configurable` while the persisted definition keeps ZERO `{{params.*}}` tokens. A parameter marked `x-openwop-sensitive` MUST be deferred or the expansion fail-closed (`sensitive_param_not_deferrable`, 422) — never frozen into persisted `config`. Omission (or `supported:false`) signals the host does NOT offer deferred mode. No host may advertise `supported:true` until RFC 0124 is `Accepted`. See `workflow-chain-packs.md` §\"Deferred-parameter expansion\".",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Whether the host offers the deferred-parameter expansion mode. Requires `capabilities.prompts.supported: true` with `variable` in `prompts.variableSources` for the prompt-bearing rewrite path."
+            }
+          },
+          "required": ["supported"],
+          "additionalProperties": false
+        },
+        "hostExpansionSeam": {
+          "type": "boolean",
+          "description": "RFC 0013 erratum (2026-07-05). OPTIONAL. A **conformance-only test seam** advertisement (category: test harness, cf. `observability.testSeams` — NOT a product capability): when `true`, the host serves `POST /v1/host/sample/workflow-chain:expand` returning the `vendor.openwop.workflow-chain-sample` v1.0.0 expansion that `conformance/src/scenarios/workflow-chain-host-expansion.test.ts` asserts against. Absent/`false` ⇒ that live-host expansion scenario soft-skips; the semantic `workflowChainPacks.supported` claim is witnessed by the server-free `workflow-chain-expansion.test.ts` legs. This flag is DISTINCT from `deferredParameters` (RFC 0124), which is witnessed through its own `POST /v1/host/sample/chain/deferred-expand` seam — so a host MAY advertise `supported` / `deferredParameters.supported` without standing up the RFC 0013 sample-pack seam it was never handed a published fixture for. Advertising `supported:true` no longer conscripts a host into the RFC 0013 host-expansion scenario."
         }
       },
       "required": ["supported"],
