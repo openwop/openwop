@@ -8,11 +8,11 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 58 | `spec/v1/*.md` |
-| JSON Schemas | 75 | `schemas/*.schema.json` |
+| JSON Schemas | 76 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 386 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 127 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 128 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 118 |
-| Active | 8 |
+| Active | 9 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -164,6 +164,7 @@
 | RFC 0126 | Data-parallel `core.dispatch` - per-item input fan-out | Accepted |
 | RFC 0127 | Streaming & CDC trigger sources | Accepted |
 | RFC 0128 | Purpose-propagation - permitted-use labels on cross-host synced data | Accepted |
+| RFC 0129 | Data-residency - regional advertisement + honor-or-reject run constraint | Active |
 
 ## SDK Helper Coverage
 
@@ -181,7 +182,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 8 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 9 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121, RFC 0129) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

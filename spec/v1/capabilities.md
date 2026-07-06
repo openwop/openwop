@@ -557,6 +557,42 @@ honors the RFC 0128 §3 propagation rules MAY advertise `purposePropagation.supp
 subset + `[]` fail-closed with a positive control) gates on `purposePropagation.supported` and
 soft-skips when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
 
+### `dataResidency`
+
+RFC 0129 (`Active`). When present, the host advertises the opaque operator **region codes** it can
+pin a run to and performs **admission control** on an OPTIONAL `residency.region` attached to a
+`POST /v1/runs` request: accept iff the requested region is in `regions[]`, else reject
+`residency_unavailable` and create no run.
+
+```json
+"dataResidency": { "supported": true, "regions": ["eu", "us"] }
+```
+
+**Field shape:** OPTIONAL `object`. When present, `supported` (`const: true`) and `regions`
+(non-empty string array) are REQUIRED; the block is omitted entirely by a host that offers no
+residency pinning. Region codes are the host's own vocabulary — the spec freezes **no** global
+region registry (that would be unfalsifiable and operator-fragmenting). A host MUST advertise a
+code only if it can process a run entirely within it.
+
+**This family advertises the admission *decision*, not physical *location*.** Whether an accepted
+region-pinned run's data physically remains in-region is unobservable over the wire and is a
+declared operator SHOULD backed by attestation/audit (RFC 0129 §4) — **not** a wire `MUST` and
+**not** conformance-gated. This is the same honesty boundary `purposePropagation` (§4 internal use)
+and the trigger bridge (no `deliveryGuarantee` advert) draw: the wire enforces only what a
+conformance run can refute.
+
+**A.2 — Truthful advertisement (normative).** A host that advertises `dataResidency` MUST
+honor-or-reject per RFC 0129 §3 — accept an advertised region, reject an unadvertised one with
+`residency_unavailable` (HTTP one of `400`/`404`/`422`), and MUST NOT silently accept-and-ignore.
+Advertising `regions[]` while accepting an unadvertised region (a hollow advert) is a dishonest
+capability claim; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it. A host that does NOT advertise
+`dataResidency` MAY ignore or reject a `residency` constraint but MUST NOT claim to honor it.
+
+**Conformance.** The capability-shape probe is always-on (server-free); the behavioral
+`data-residency-admission` scenario (advertised-region accept; unadvertised-region reject with
+`residency_unavailable` + no run created) gates on `dataResidency` being advertised and soft-skips
+when absent (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+
 ### `observability`
 
 Optional v1 observability advertisement. See `observability.md`.

@@ -486,6 +486,24 @@
         }
       }
     },
+    "dataResidency": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0129 (`Active`). Data-residency — the host advertises the operator region codes it can pin a run to, and honors-or-rejects an OPTIONAL `residency.region` on run-creation (`POST /v1/runs`): accept iff the requested region is in `regions[]`, else reject `residency_unavailable` (never silently accept-and-ignore). This family advertises the ADMISSION decision only (falsifiable over the wire) — it does NOT assert that the run's data physically remains in-region (unobservable; declared operator intent under RFC 0129 §4, not conformance-gated). A host MUST advertise a region in `regions[]` only if it can actually process a run entirely within it. Absent block ⇒ the host makes no residency promise and MAY ignore or reject a `residency` constraint (but MUST NOT claim to honor it).",
+      "required": ["supported", "regions"],
+      "properties": {
+        "supported": {
+          "const": true,
+          "description": "RFC 0129. Present-and-true when the host performs region admission control per §3. The block is omitted entirely when the host offers no residency pinning."
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "RFC 0129. Opaque operator region codes the host can pin a run to (e.g. `\"eu\"`, `\"us\"`, `\"eu-west-1\"`). No closed registry — codes are the host's own vocabulary (a global region enum would be unfalsifiable). A host MUST advertise a code here only if it can process a run entirely within it; a run-create `residency.region` not in this list MUST be rejected `residency_unavailable`."
+        }
+      }
+    },
     "credentials": {
       "type": "object",
       "description": "RFC 0046 (`Draft`). Portable credential resolution + lifecycle contract — sibling to `secrets`, first-class store-at-rest + workspace sharing + two-key-overlap rotation. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, channels, any run.* event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`). Supersedes the informal BYOK annex; the `secrets` advertisement stays valid.",
