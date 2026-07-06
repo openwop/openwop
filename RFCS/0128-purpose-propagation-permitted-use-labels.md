@@ -105,9 +105,15 @@ A host that advertises `purposePropagation.supported: true`:
   envelope-less MUST would be structurally unsatisfiable.)*
 - **MAY** narrow the label (remove purposes) on an onward hop — narrowing is always safe. It
   **MUST NOT** widen it (add purposes the sender did not grant). Widening is the testable
-  violation. A **derived output** that combines records carrying different labels **SHOULD**
-  carry the **intersection** of the contributing labels — the only composition that never widens
-  any input's grant.
+  violation.
+- **Derived outputs** (one record combining multiple labelled inputs — a join, a merge, an
+  aggregate): the output **MUST NOT** carry a purpose absent from any contributing *labelled*
+  input. This is the multi-input application of the same never-widen rule, and it is equally
+  testable (feed the host `["analytics","marketing-email"]` + `["analytics"]`, assert the onward
+  label ⊆ `["analytics"]`) — transformation does not launder a grant. The output **SHOULD** carry
+  exactly the **intersection** of the contributing labels (narrowing further is always safe).
+  *Unlabelled* inputs assert no constraint and do not tighten the intersection; a `[]`-labelled
+  input forces the derived output to `[]` — no-onward-use is contagious through a join.
 - **MUST** treat `permittedPurposes: []` as "no onward use permitted" — a conformant host does not
   forward `[]`-labelled data to a further sink at all.
 
