@@ -199,10 +199,36 @@ In the reverse direction (OpenWOP host as A2A agent), the host's existing scope/
 
 ---
 
+## Purpose-propagation labels (RFC 0128)
+
+> **Status: additive (2026-07-06, [RFC 0128](../../RFCS/0128-purpose-propagation-permitted-use-labels.md) `Active`).**
+
+A sender MAY attach a **`metadata.openwop.permittedPurposes`** label (`string[]` of opaque
+purpose strings) to an A2A Message whose parts carry subject data — the A2A leg of the RFC 0128
+cross-host permitted-use contract (the trigger leg rides `TriggerEvent.permittedPurposes`,
+`trigger-event.schema.json`). Semantics:
+
+- **Absent ⇒ unlabelled** (no constraint asserted). **`[]` ⇒ no onward use permitted** — these
+  are NOT the same.
+- A host advertising `capabilities.purposePropagation` **MUST** re-emit the label on any onward
+  OpenWOP-envelope hop of the same data (a further A2A forward, a trigger/sync event to an
+  OpenWOP peer), **MAY** narrow it, **MUST NOT** widen it; a derived output combining labelled
+  inputs **MUST NOT** carry a purpose absent from any contributing labelled input. It **MUST NOT**
+  forward `[]`-labelled data onward at all. Full rules: RFC 0128 §3.
+- The label carries purpose *categories* only — never subject identifiers or consent records; the
+  strings are opaque and map to the receiving host's local purpose vocabulary.
+- The capability advertises label **propagation** only. Whether the receiver's own internal use
+  honors the label is declared intent under its local governance (RFC 0128 §4) — deliberately not
+  a wire promise. A host that does not advertise the capability treats the label as unknown
+  metadata (additive; no breakage).
+
+This is the first field in the `metadata.openwop.*` namespace with a **normative** shape — see
+the amended note below.
+
 ## What OpenWOP does NOT specify about A2A
 
 - **A2A wire format details.** A2A is canonically defined at `https://a2a-protocol.org/latest/specification/` and `https://github.com/a2aproject/A2A`; openwop doesn't re-specify it.
-- **The `metadata.openwop.*` extension shape.** Host-implementation choice. A future spec annex MAY codify a recommended shape if multiple hosts converge on a pattern.
+- **The `metadata.openwop.*` extension shape** — with one exception: `metadata.openwop.permittedPurposes` is normative per RFC 0128 (§"Purpose-propagation labels" above). The rest of the namespace stays host-implementation choice; a future spec annex MAY codify further fields if multiple hosts converge on a pattern.
 - **Push notification HMAC details.** A2A v1 spec §4.3.3 (prose-only) defines the push delivery contract; openwop defers to it. openwop's own webhook spec (`webhooks.md`) is independent.
 - **AgentCard signing.** openwop MAY require signed cards in `a2a.invoke` node config (host-specific); it doesn't mandate the signing algorithm.
 - **Error taxonomy mapping.** A2A `VersionNotSupportedError` and similar protocol-level errors stay inside the A2A layer; they don't surface as openwop `RunEvent` errors. openwop errors stay inside the run; they project to A2A `FAILED` with `metadata.openwop.error`.

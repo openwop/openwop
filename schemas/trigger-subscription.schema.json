@@ -8,7 +8,7 @@
   "required": ["subscriptionId", "source", "state"],
   "properties": {
     "subscriptionId": { "type": "string", "minLength": 1, "description": "Stable host-unique id for the subscription. Correlates the §C delivery events + the management surface." },
-    "source": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"], "description": "Which trigger source backs the subscription. Channels beyond these (Slack/Discord/SMS) bridge as a vendor extension by registering a subscription of the closest source kind (§E)." },
+    "source": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form", "stream", "change"], "description": "Which trigger source backs the subscription. Channels beyond these (Slack/Discord/SMS) bridge as a vendor extension by registering a subscription of the closest source kind (§E)." },
     "state": { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "The §B state. `active`: accepting + delivering; `paused`: retained, not delivering (operator-held); `failed`: delivery failing past policy (the webhooks.md circuit-breaker generalized); `dead-lettered`: terminal, deliveries routed to the RFC 0053 sink." },
     "dedupEnabled": { "type": "boolean", "description": "When true, the host de-duplicates inbound events by `dedupKey` within the retention window (§C-1; the idempotency.md Layer-1 model applied to inbound triggers)." },
     "retryPolicy": {

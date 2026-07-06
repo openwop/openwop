@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0128                                                            |
 | **Title**         | Purpose-propagation — permitted-use labels on cross-host synced data |
-| **Status**        | `Draft` (open questions resolved 2026-07-06 — ready for comment)  |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | openwop-app maintainers                                         |
 | **Created**       | 2026-07-06                                                      |
-| **Updated**       | 2026-07-06                                                      |
+| **Updated**       | 2026-07-06 (Draft→Active — bootstrap steward waiver, 7-day window waived; wire-shape-only additive + reference-implementer review CLEAN on the CDP bus (§3(a) scoped to OpenWOP-envelope hops, derived-output rule tightened). §1 amended for schema fidelity at surface-landing (carriers = A2A `metadata.openwop.permittedPurposes` + top-level `TriggerEvent.permittedPurposes`). Accepted path: tier-2 (MyndHyve) MUST be attempted first per the 2026-07-06 architect ruling — see the gap register G4) |
 | **Affects**       | `spec/v1/a2a-integration.md` (A2A message metadata carrier), `spec/v1/trigger-bridge.md`, `spec/v1/capabilities.md`, `schemas/capabilities.schema.json`, `schemas/trigger-event.schema.json`, conformance `purpose-propagation-*` scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |
@@ -50,20 +50,24 @@ operator/governance side of that line.
 
 ### 1. The `permittedPurposes` label (additive, OPTIONAL)
 
-A sender MAY attach a `permittedPurposes` label to data-bearing wire surfaces:
+A sender MAY attach a `permittedPurposes` label (`string[]`) to data-bearing wire surfaces.
+The concrete carriers (amended 2026-07-06 for schema fidelity — the original draft sketched a
+generic `metadata` object neither surface actually has):
+
+- **A2A leg:** `metadata.openwop.permittedPurposes` on the A2A Message — the established
+  `metadata.openwop.*` host-extension namespace (`spec/v1/a2a-integration.md`), of which this is
+  the first field with a normative shape.
+- **Trigger/sync leg:** a top-level OPTIONAL `permittedPurposes` property on the `TriggerEvent`
+  envelope (`trigger-event.schema.json`) — the envelope is the in-run payload itself and has no
+  `metadata` sub-object.
 
 ```diff
-   // the A2A message metadata (spec/v1/a2a-integration.md) and trigger-event.schema.json metadata
-   "metadata": {
-     "type": "object",
-     "properties": {
-+      "permittedPurposes": {
-+        "type": "array",
-+        "items": { "type": "string" },
-+        "description": "Declared uses the receiver is permitted to make of the accompanying data. Opaque strings; a host maps them to its local purpose vocabulary. An empty array means 'no downstream use permitted'; absence means 'unlabelled' (no constraint asserted)."
-+      }
-     }
-   }
+   // trigger-event.schema.json (the A2A leg is prose-normative in a2a-integration.md)
++  "permittedPurposes": {
++    "type": "array",
++    "items": { "type": "string" },
++    "description": "Declared uses the receiver is permitted to make of the accompanying data. Opaque strings; a host maps them to its local purpose vocabulary. An empty array means 'no downstream use permitted'; absence means 'unlabelled' (no constraint asserted)."
++  }
 ```
 
 - **Type:** `string[]`. **Optionality:** OPTIONAL. **Default:** absent ⇒ *unlabelled* (the sender

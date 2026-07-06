@@ -75,6 +75,29 @@ The external-event ingestion path is a network ingress and a replay-injection ve
 
 **Replay determinism.** A delivered `TriggerEvent` is cached in the run's start payload (the run's input snapshot), exactly as RFC 0006 §C requires for nondeterministic inputs. At replay the host MUST replay the cached `TriggerEvent`, MUST NOT re-accept or re-fetch the external event, and a re-delivery of the same `dedupKey` within the retention window is a no-op returning the prior `runId` (§C-1).
 
+### §F.5 — Streaming & CDC sources (RFC 0127)
+
+> **Status: additive over §F (2026-07-06, [RFC 0127](../../RFCS/0127-streaming-and-cdc-trigger-sources.md) `Active`).** Two further externally-originated sources: **`stream`** (a message consumed from a streaming broker — Kafka / Kinesis / Pub-Sub) and **`change`** (a change-data-capture record from a warehouse/database changelog). Both are OPTIONAL: a host that consumes neither omits them from `sources[]` / `ingestion.externalSources[]` (the §D "any one durable source" floor is unchanged).
+
+Both sources reuse §F.1–§F.4 verbatim — the `TriggerEvent` envelope, the SSRF guard, the
+content-free `trigger.*` events, and the §C-1 ≥24h dedup floor; only the `source` vocabulary and
+two per-source sub-objects grow:
+
+- A `stream` event carries a `stream` sub-object (`topic` / `partition` / `offset` / `key` /
+  `message`); its dedup key SHOULD derive from `(topic, partition, offset)` and MUST be stable
+  across redelivery of the same broker message, however derived.
+- A `change` event carries a `change` sub-object in which **`op` (`"insert" | "update" |
+  "delete"`) is REQUIRED** — one `change` source with an operation discriminator, not per-verb
+  sources (RFC 0127 resolved Q1). Its dedup key SHOULD derive from `(table, changelog-id)`.
+- **Direction inverts:** unlike `webhook`/`email`/`form`, the host is the *consumer* — there is
+  no inbound ingest URL. A §F.2 registration for `stream`/`change` returns an **empty `binding`**
+  (`{}`); the broker/warehouse *connection* is a credential-brokered egress (RFC 0095), never a
+  wire field. Any fetch the ingestion path performs (e.g. resolving a schema-registry reference)
+  MUST pass the §F.4 SSRF guard.
+- **No delivery-guarantee advertisement.** The wire promises the §C-1 dedup floor, not
+  at-least-once/exactly-once semantics — a `deliveryGuarantee` claim would be unfalsifiable by a
+  conformance run (RFC 0127 resolved Q2).
+
 ## §G — `paused` semantics
 
 Pausing a webhook stops delivery. Pausing a _schedule_ **skips** ticks (no catch-up); resume starts fresh (honoring the RFC 0052 §B missed-tick "skip" policy, not queue-and-replay).

@@ -9,7 +9,7 @@
   "properties": {
     "source": {
       "type": "string",
-      "enum": ["webhook", "email", "form"],
+      "enum": ["webhook", "email", "form", "stream", "change"],
       "description": "The external source this subscription ingests. MUST appear in the host's `capabilities.triggerBridge.ingestion.externalSources[]`."
     },
     "workflowId": {
