@@ -4,7 +4,7 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0128                                                            |
 | **Title**         | Purpose-propagation — permitted-use labels on cross-host synced data |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Draft` (open questions resolved 2026-07-06 — ready for comment)  |
 | **Author(s)**     | openwop-app maintainers                                         |
 | **Created**       | 2026-07-06                                                      |
 | **Updated**       | 2026-07-06                                                      |
@@ -91,13 +91,23 @@ A sender MAY attach a `permittedPurposes` label to data-bearing wire surfaces:
 
 A host that advertises `purposePropagation.supported: true`:
 
-- **MUST** preserve and **re-emit** a received `permittedPurposes` label on **any onward hop** of
-  the same data (a sync to a further sink, an A2A forward). This is the **observable** promise:
-  a conformance run sends a labelled record through a two-hop chain and asserts the label
-  survives the second hop unchanged (or narrowed — see below). *(This is the honesty gate.)*
+- **MUST** preserve and **re-emit** a received `permittedPurposes` label on any onward hop of the
+  same data **that uses an OpenWOP envelope** — an A2A forward, or a trigger/sync event to another
+  OpenWOP host (the two carriers §1 names). This is the **observable** promise: a conformance run
+  sends a labelled record through a two-hop chain and asserts the label survives the second hop
+  unchanged (or narrowed — see below). *(This is the honesty gate.)*
+- For an onward hop to a **non-OpenWOP destination** (e.g. a reverse-ETL sync to an ESP or a raw
+  webhook sink), there is no OpenWOP envelope to carry the label; the host **SHOULD** map the
+  label into the destination's own schema where one exists. This leg is deliberately **not**
+  conformance-tested — the destination's wire is outside the protocol, so a MUST here would be
+  unfalsifiable (the same §4 logic that scopes internal use). *(Scoped 2026-07-06 on
+  reference-implementer review: the primary CDP reverse-ETL path is exactly this leg, and an
+  envelope-less MUST would be structurally unsatisfiable.)*
 - **MAY** narrow the label (remove purposes) on an onward hop — narrowing is always safe. It
   **MUST NOT** widen it (add purposes the sender did not grant). Widening is the testable
-  violation.
+  violation. A **derived output** that combines records carrying different labels **SHOULD**
+  carry the **intersection** of the contributing labels — the only composition that never widens
+  any input's grant.
 - **MUST** treat `permittedPurposes: []` as "no onward use permitted" — a conformant host does not
   forward `[]`-labelled data to a further sink at all.
 
@@ -149,11 +159,19 @@ The host reads `permittedPurposes` on ingest, maps it through `consentService`, 
 `destination-sync` egress and A2A forwards. No host code advertising `purposePropagation` ships
 before this RFC reaches `Accepted`.
 
+## Resolved questions
+
+1. **No provenance hint on the label.** The label stays a bare purpose set. Provenance (granting
+   host, consent basis) is subject-linkable and would push subject-identifiable data onto a label
+   that travels cross-host; the audit trail belongs in the host's local governance decision log
+   (openwop-app ADR 0268's `governanceDecisionLog` is the reference shape), not the wire.
+   *(Resolved 2026-07-06 — reference-implementer review concurred with the proposed answer.)*
+2. **Mint `capabilities.purposePropagation` as a new family.** Survey confirmed (steward +
+   reference implementer independently) that no consent/governance/purpose capability family
+   exists in `capabilities.md` to ride — there is nothing to fold into. Consolidate later only if
+   a governance family is ever introduced. *(Resolved 2026-07-06.)*
+
 ## Open questions
 
-1. Should the label additionally carry a **provenance** hint (the granting host / consent basis)
-   so a downstream auditor can trace the grant, or does that leak subject-linkable data? (Proposed:
-   no — keep the label a bare purpose set; provenance is an audit-log concern, not a wire label.)
-2. Should `capabilities.purposePropagation` ride an existing governance/consent capability family
-   rather than mint a new top-level family, if a suitable one exists at authoring time? (Proposed:
-   mint the family; fold it in if a governance family is later consolidated.)
+None — the two questions above are resolved, and the 2026-07-06 reference-implementer review
+(CLEAN, no blocking findings) is folded into §3. The RFC is ready for the comment window.
