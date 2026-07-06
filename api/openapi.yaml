@@ -211,6 +211,15 @@ paths:
                     inputs:
                       type: object
                       description: Workflow inputs (consumed by triggers/nodes).
+                    residency:
+                      # RFC 0129 — OPTIONAL data-residency constraint. Closed shape
+                      # lives in the referenced schema (RFC 0094 §A forbids a closed
+                      # `additionalProperties:false` branch inside this allOf; the
+                      # $ref keeps the constraint out of the composition). A host
+                      # advertising `capabilities.dataResidency` MUST honor-or-reject
+                      # (accept iff region in advertised regions[], else
+                      # `residency_unavailable`, create no run). Absent ⇒ no constraint.
+                      $ref: '../schemas/residency.schema.json'
                     tenantId:
                       type: string
                       description: Tenant scoping. Server typically defaults from API key.
