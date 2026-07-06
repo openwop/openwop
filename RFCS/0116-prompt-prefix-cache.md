@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------- |
 | **RFC**           | 0116                                                                 |
 | **Title**         | Portable Prompt-Prefix Cache (`cachePrefixId`)                       |
-| **Status**        | `Active`                                                             |
+| **Status**        | `Accepted`                                                           |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                       |
 | **Created**       | 2026-06-26                                                           |
-| **Updated**       | 2026-06-26                                                           |
+| **Updated**       | 2026-07-06 (`Active → Accepted` — **single-witness** bootstrap steward waiver + maintainer autonomy grant. tier-1 reference host openwop-app advertises `aiProviders.promptPrefixCache {supported:true, providers:["anthropic"]}` live + serves the prefix-cache probe seam. **Steward-curl-verified** on `app.openwop.dev/api` (`POST /v1/host/openwop-app/aiProviders/prefix-cache-probe`): tenant-A prefix `probe-prefix-1` first call → `{cacheWriteTokens:1000, cacheHit:false}` (write); tenant-A same prefix → `{cacheReadTokens:1000, cacheHit:true}` (hit); **tenant-B same prefix → `{cacheReadTokens:0, cacheHit:false}` (MISS)** — the `prompt-prefix-cache-cross-tenant-isolation` protocol-tier invariant, falsifiable: a `cachePrefixId` collision across tenants does NOT hit, proving `(tenant, cachePrefixId)` keying with no cross-tenant leak. Cost-hint contract (`cacheReadTokens`/`cacheWriteTokens`) observed on the wire. The Anthropic provider call is mocked → RFC 0108 production-dark tier: the cache-KEY isolation is real; the provider routing is dark. Invariant was already protocol-tier (no graduation). Tier-2 (second host advertising `promptPrefixCache`) witness carried forward.) · 2026-06-26 |
 | **Affects**       | `spec/v1/ai-envelope.md`, `spec/v1/provider-policy.md`, `schemas/capabilities.schema.json`, `schemas/run-event-payloads.schema.json`, `SECURITY/invariants.yaml`, `SECURITY/threat-model-provider-policy.md`, conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                    |
 | **Supersedes**    | —                                                                    |
