@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 122 |
-| Active | 6 |
+| Accepted | 123 |
+| Active | 5 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -150,7 +150,7 @@
 | RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Active |
 | RFC 0112 | Compact Tool Projection | Accepted |
 | RFC 0113 | Memory Injection Budget | Accepted |
-| RFC 0114 | A2UI Surface Deltas | Active |
+| RFC 0114 | A2UI Surface Deltas | Accepted |
 | RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Accepted |
 | RFC 0116 | Portable Prompt-Prefix Cache (`cachePrefixId`) | Accepted |
 | RFC 0117 | Front-End Plugin Packs (Sandboxed UI Extensions) | Accepted |
@@ -183,7 +183,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 6 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0121, RFC 0123) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0121, RFC 0123) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
