@@ -9,3 +9,15 @@ Companion to `0127-streaming-and-cdc-trigger-sources.md`. Open questions, deferr
 | G3 | Conformance | Server-free seam for `stream`/`change` — the existing `trigger-bridge-delivery` scenario drives `ingestExternalEvent` via a host seam. Confirm the seam accepts `source:"stream"` / `source:"change"` (with `op`) without a real broker, and that the gated leg cannot soft-skip into a vacuous pass (the RFC 0100 vacuous-witness trap). | Conformance Architect | Extend the seam contract + scenario; non-vacuity bar = a real `trigger.delivery.attempted` for BOTH new sources. | Scenario authoring |
 | G4 | Acceptance | Second witness — MyndHyve cannot witness honestly without operating a real broker/CDC consumer (RFC 0099 honesty rule). Architect ruling 2026-07-06: single-witness path approved (0124-G6 analog); second witness = first host operating a real streaming/CDC consumer. | Compatibility Architect | Named carry-forward at `Accepted`; INTEROP-MATRIX cells stay honest until a consumer host exists. | — (carry-forward) |
 | G5 | Proposal §4 | **RESOLVED 2026-07-06** — SHOULD kept; the stability floor landed as prose in `trigger-bridge.md` §F.5: the dedup key MUST be stable across redelivery of the same broker message, however derived. | Spec Architect | — | — |
+
+## Sweep at `Accepted` (2026-07-06)
+
+Single-witness graduation (tier-1 reference host openwop-app rev `00411-77q`) under the bootstrap steward waiver; steward-curl-verified on the wire.
+
+| ID | Disposition | Evidence / carry-forward home |
+|---|---|---|
+| G1 | **RESOLVED** | Five schema surfaces extended in lockstep (PR #835); SDK `source` is an open string (no union). |
+| G2 | **RESOLVED** | `op` REQUIRED lives in the `ChangeEvent` $def (schema-enforced) + conformance op-required negative. |
+| G3 | **RESOLVED** | Non-vacuity met: `trigger-stream-cdc-sources.test.ts` drove BOTH sources through `/v1/host/sample/trigger-bridge/{ingest,deliver}`, no soft-skips; steward curl confirmed. |
+| G4 | **CARRIED FORWARD** | Second witness = the first host operating a real streaming/CDC consumer. Tier-2 MyndHyve lacks a broker/CDC consumer (0124-G6 analog); the openwop-app witness rides the conformance seam. Named open gap. |
+| G5 | **RESOLVED** | Dedup-key SHOULD + stability floor pinned in `trigger-bridge.md` §F.5. |
