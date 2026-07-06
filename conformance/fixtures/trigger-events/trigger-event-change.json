@@ -1,0 +1,17 @@
+{
+  "source": "change",
+  "subscriptionId": "sub_13",
+  "deliveryId": "dlv_a7b8",
+  "dedupKey": "contacts:lsn:0/1C4F9D0",
+  "receivedAt": "2026-07-06T12:01:00Z",
+  "verified": true,
+  "contentTrust": "untrusted",
+  "permittedPurposes": ["analytics"],
+  "change": {
+    "op": "update",
+    "table": "contacts",
+    "changelogId": "0/1C4F9D0",
+    "before": { "id": 77, "tier": "free" },
+    "after": { "id": 77, "tier": "pro" }
+  }
+}

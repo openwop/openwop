@@ -1,0 +1,16 @@
+{
+  "source": "stream",
+  "subscriptionId": "sub_12",
+  "deliveryId": "dlv_e5f6",
+  "dedupKey": "events:3:88412",
+  "receivedAt": "2026-07-06T12:00:00Z",
+  "verified": true,
+  "contentTrust": "untrusted",
+  "stream": {
+    "topic": "events",
+    "partition": 3,
+    "offset": "88412",
+    "key": "user_77",
+    "message": { "type": "page_view", "path": "/pricing" }
+  }
+}
