@@ -14,6 +14,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **Conformance `1.53.0 → 1.53.1` — `purpose-propagation` behavioral legs seam-gated, not advertisement-gated.** The RFC 0128 two-hop legs gated on `capabilities.purposePropagation.supported`, which made a non-vacuous graduation witness impossible (RFC 0128 is `Active`; `capabilities.md` prohibits the advert until `Accepted`, so an honest-off host could only soft-skip). Re-gated onto seam availability (`POST /v1/host/sample/purpose-propagation/forward` non-404), matching RFC 0122's `self-hosted-runner` seam-gated pattern (witnessed non-vacuously with `supported:false`). The host witnesses honest-off; non-vacuity is the live seam + steward curl, not the advert. No scenario-count change.
+
 ### Added
 
 - **Conformance `1.52.0 → 1.53.0` — gated scenarios for RFC 0127 + RFC 0128 (the CDP Track-2 graduation bars).** `trigger-stream-cdc-sources.test.ts`: always-on stream/change envelope probes (`op` REQUIRED negative, §F.1 exactly-one extension, registration + capabilities vocabulary pins) + gated behavioral legs on the existing `trigger-bridge/{ingest,deliver}` seams (schema-valid delivered envelopes, SR-1 body-canary content-freeness, `(topic,partition,offset)` dedup effectively-once). `purpose-propagation.test.ts`: always-on label + `purposePropagation` family shape probes + gated two-hop legs via the new `POST /v1/host/sample/purpose-propagation/forward` seam (onward ⊆ received; derived merge ⊆ intersection of labelled inputs; unlabelled adds no constraint; `[]` fail-closed dropped with an unlabelled positive control — the suite plays hops A and C around the host at B). Both soft-skip pre-implementation and become REQUIRED once the surface is advertised (advertise-only-what-you-honor). Two new fixtures (`trigger-event-stream`, `trigger-event-change` + label) cataloged. Scenario files 384 → 386.
