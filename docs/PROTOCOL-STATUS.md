@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 119 |
-| Active | 9 |
+| Accepted | 121 |
+| Active | 7 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -153,9 +153,9 @@
 | RFC 0114 | A2UI Surface Deltas | Active |
 | RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Accepted |
 | RFC 0116 | Portable Prompt-Prefix Cache (`cachePrefixId`) | Active |
-| RFC 0117 | Front-End Plugin Packs (Sandboxed UI Extensions) | Active |
+| RFC 0117 | Front-End Plugin Packs (Sandboxed UI Extensions) | Accepted |
 | RFC 0118 | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`) | Accepted |
-| RFC 0119 | Front-End Plugin Isolation as a Mechanism-Neutral Property (amends RFC 0117) | Active |
+| RFC 0119 | Front-End Plugin Isolation as a Mechanism-Neutral Property (amends RFC 0117) | Accepted |
 | RFC 0120 | Connection-pack provider `apiHosts` - declared credential-egress allow-list | Accepted |
 | RFC 0121 | Subscription-reuse provider auth mode - adds `"subscription"` to the `aiProviders.authModes` closed enum (RFC 0067), so a host can honestly advertise that a provider's credential may be supplied by reusing an existing personal consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key or a host-owned OAuth client | Active |
 | RFC 0122 | Self-hosted runner (remote-driven local execution) | Accepted |
@@ -183,7 +183,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 9 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121, RFC 0123) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 7 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0121, RFC 0123) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
