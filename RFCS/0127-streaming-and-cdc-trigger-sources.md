@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0127                                                            |
 | **Title**         | Streaming & CDC trigger sources                                 |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | openwop-app maintainers                                         |
 | **Created**       | 2026-07-05                                                      |
-| **Updated**       | 2026-07-06 (Draft→Active — bootstrap steward waiver, 7-day window waived; wire-shape-only additive + reference-implementer review CLEAN on the CDP bus. §2/§3 amended for schema fidelity at surface-landing. Accepted path: single-witness approved per the 2026-07-06 architect ruling — see the gap register G4 carry-forward) |
+| **Updated**       | 2026-07-06 (`Active → Accepted` — **single-witness** graduation (bootstrap steward waiver), **tier-1 reference-host evidence** (openwop-app, Cloud Run rev `openwop-app-backend-00411-77q`): both `stream` and `change` sources ingest non-vacuously through the RFC 0083 four-state machine with a schema-valid `TriggerEvent` envelope and a content-free `trigger.delivery.attempted` (SR-1), witnessed by `@openwop/openwop-conformance@1.53.1` `trigger-stream-cdc-sources.test.ts` under `OPENWOP_REQUIRE_BEHAVIOR=true` and **steward-curl-verified** on the wire (stream `(topic,partition,offset)` + change `op` present; body-canary absent from the durable event). Host advertises **honest-off** — `stream`/`change` stay OUT of `triggerBridge.sources[]`/`ingestion.externalSources[]` until it operates a real broker/CDC consumer. Register swept; **G4 carried forward** = second witness is the first host operating a real streaming/CDC consumer (tier-2 MyndHyve lacks the surface — 0124-G6 analog). Draft→Active earlier the same day; §2/§3 amended for schema fidelity at surface-landing) |
 | **Affects**       | `spec/v1/trigger-bridge.md`, `spec/v1/capabilities.md`, `schemas/trigger-subscription.schema.json`, `schemas/trigger-event.schema.json`, conformance `trigger-bridge-*` scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |

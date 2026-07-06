@@ -549,9 +549,8 @@ enforces purpose limits" is an over-claim the corpus explicitly disavows.
 (re-emit / narrow-only / never-widen / `[]` fail-closed) on its onward OpenWOP-envelope hops.
 Advertising without honoring is a dishonest capability claim per
 [§Truthful advertisement](#truthful-advertisement); `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it.
-Because RFC 0128 is `Active` (not yet `Accepted`), **no host may advertise
-`purposePropagation.supported: true` until RFC 0128 reaches `Accepted`** — reference hosts wire
-the behavior behind the gate in the interim.
+RFC 0128 is `Accepted` (2026-07-06, single-witness — openwop-app reference host); a host that
+honors the RFC 0128 §3 propagation rules MAY advertise `purposePropagation.supported: true`.
 
 **Conformance.** The capability-shape probe is always-on (server-free); the behavioral
 `purpose-propagation-onward` scenario (two-hop label survive/narrow + never-widen + derived-output

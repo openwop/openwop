@@ -11,3 +11,17 @@ Companion to `0128-purpose-propagation-permitted-use-labels.md`. Open questions,
 | G4 | Acceptance | Tier-2 witness — architect ruling 2026-07-06: MyndHyve MUST be attempted first (it already carries both label surfaces: A2A from the 0100 arc, trigger-event metadata from 0083/0099); an honest opt-out downgrades to single-witness + this row carried forward as the named gap. | Steward | Coordinate the MyndHyve arm; record attempt-or-opt-out in the sweep. | `Accepted` |
 | G5 | Proposal §3 | **RESOLVED 2026-07-06** (tightened on implementer review) — derived outputs: MUST NOT carry a purpose absent from any contributing labelled input (multi-input never-widen, conformance-testable — transformation does not launder a grant, partially closing R4); SHOULD carry exactly the intersection; unlabelled inputs assert no constraint; a `[]` input is contagious through a join. Landed as a dedicated §3 bullet. | Spec Architect | — | — |
 | G6 | Conformance | Observing the `[]` fail-closed rule — asserting "does NOT forward" is a negative assertion; the scenario needs a bounded observation window + a positive control (an unlabelled twin record that DOES arrive) so the non-arrival is evidence, not a timeout artifact. | Conformance Architect | Pattern the scenario on the existing fail-closed legs (0120 off-allow-list, 0126 unadvertised-capability). | Scenario authoring |
+
+## Sweep at `Accepted` (2026-07-06)
+
+Single-witness graduation (tier-1 reference host openwop-app rev `00411-77q`, advertising `purposePropagation`) under the bootstrap steward waiver + maintainer call; steward-curl-verified all four §3 legs on the wire.
+
+| ID | Disposition | Evidence / carry-forward home |
+|---|---|---|
+| G1 | **RESOLVED** | No provenance hint (bare purpose set); folded into RFC §Resolved Q1. |
+| G2 | **RESOLVED** | Minted `capabilities.purposePropagation`; no existing family to ride. |
+| G2a | **RESOLVED** | §3(a) scoped to OpenWOP-envelope hops; non-OpenWOP destinations = field-mapping SHOULD. |
+| G3 | **RESOLVED** | Two-hop harness = the `/v1/host/sample/purpose-propagation/forward` seam; `purpose-propagation.test.ts` seam-gated (1.53.1), 4 legs non-vacuous + steward curl. |
+| G4 | **CARRIED FORWARD** | Tier-2 (MyndHyve) witness deferred — no MyndHyve session on the CDP bus this cycle; maintainer elected single-witness + this named gap (2026-07-06 evidence-tier ruling). MyndHyve has the A2A + trigger-event carriers, so it remains the natural tier-2 witness when available. |
+| G5 | **RESOLVED** | Derived-output rule = multi-input MUST-NOT-widen + intersection SHOULD; conformance leg verifies. |
+| G6 | **RESOLVED** | `[]`-fail-closed observed via bounded window + unlabelled positive control; steward curl confirmed `blocked` dropped / `control` forwarded. |
