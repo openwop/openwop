@@ -559,7 +559,7 @@ soft-skips when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
 
 ### `dataResidency`
 
-RFC 0129 (`Active`). When present, the host advertises the opaque operator **region codes** it can
+RFC 0129 (`Accepted`). When present, the host advertises the opaque operator **region codes** it can
 pin a run to and performs **admission control** on an OPTIONAL `residency.region` attached to a
 `POST /v1/runs` request: accept iff the requested region is in `regions[]`, else reject
 `residency_unavailable` and create no run.
