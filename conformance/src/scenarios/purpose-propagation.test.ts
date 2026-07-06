@@ -20,12 +20,17 @@
  *      - the `capabilities.purposePropagation` family shape: `supported`
  *        REQUIRED, `additionalProperties:false`.
  *
- *   B. Capability-gated behavioral legs via the two-hop seam
+ *   B. SEAM-gated behavioral legs via the two-hop seam
  *      `POST /v1/host/sample/purpose-propagation/forward` (the suite plays
  *      hop A — the labelled sender — and hop C — the onward receiver — around
- *      the host at B). Soft-skips when the seam is unwired (404/405);
- *      REQUIRED once `purposePropagation.supported` is advertised
- *      (advertise-only-what-you-honor):
+ *      the host at B). Soft-skips ONLY when the seam is unwired (404/405) —
+ *      deliberately NOT gated on `capabilities.purposePropagation.supported`,
+ *      so the graduation witness runs on a host that is honest-OFF (advert
+ *      prohibited until RFC 0128 is `Accepted`) yet serves the seam behind its
+ *      feature flag. This mirrors RFC 0122's `self-hosted-runner` seam-gated
+ *      legs (witnessed non-vacuously with `selfHostedRunner.supported:false`).
+ *      Non-vacuity is proven by the seam being live + assertions running, and
+ *      by the steward's independent curl — not by the advert:
  *      1. survive/narrow — a forwarded label arrives ⊆ what B received;
  *      2. never-widen — strictly no purpose beyond the input set;
  *      3. derived output — a merge of two labelled inputs arrives ⊆ their
@@ -48,8 +53,6 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
-import { behaviorGate } from '../lib/behavior-gate.js';
-import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const SEAM = '/v1/host/sample/purpose-propagation/forward';
@@ -103,20 +106,25 @@ describe('purpose-propagation: label schema (always-on, server-free)', () => {
   });
 });
 
-describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (capability-gated)', () => {
+describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (seam-gated)', () => {
   async function seamPost(body: Record<string, unknown>): Promise<ForwardResponse | null> {
     const res = await driver.post(SEAM, body);
     if (res.status === 404 || res.status === 405) return null; // seam unwired — soft-skip
     return (res.json as ForwardResponse | undefined) ?? {};
   }
 
-  async function gate(): Promise<boolean> {
-    const fam = await readCapabilityFamily<{ supported?: boolean }>('purposePropagation');
-    return behaviorGate('purposePropagation', fam?.supported === true);
-  }
+  // SEAM-gated, NOT advertisement-gated (matches self-hosted-runner.test.ts). The
+  // behavioral legs drive the `purpose-propagation/forward` seam and soft-skip on a
+  // 404 (seam unwired). They deliberately do NOT gate on
+  // `capabilities.purposePropagation.supported`, because the graduation witness runs
+  // on a host that is honest-OFF (the advert is prohibited until RFC 0128 is
+  // `Accepted`, `capabilities.md` §purposePropagation) yet serves the seam behind its
+  // feature flag — exactly how RFC 0122's `self-hosted-runner` scenario witnessed
+  // non-vacuously with `selfHostedRunner.supported:false`. Non-vacuity is proven by
+  // the seam being live (assertions run against real onward/dropped output), verified
+  // by the steward's independent curl, NOT by an advertised capability.
 
   it('a forwarded label survives ⊆ the received set (re-emit; MAY narrow, MUST NOT widen)', async () => {
-    if (!(await gate())) return;
     const input = ['analytics', 'marketing-email'];
     const res = await seamPost({ mode: 'forward', records: [{ id: 'r1', permittedPurposes: input, data: { k: 1 } }] });
     if (res === null) return;
@@ -135,7 +143,6 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (capabi
   });
 
   it('a derived (merged) output arrives ⊆ the intersection of contributing labelled inputs', async () => {
-    if (!(await gate())) return;
     const res = await seamPost({
       mode: 'merge',
       records: [
@@ -155,7 +162,6 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (capabi
   });
 
   it('an unlabelled input adds no constraint to a merge', async () => {
-    if (!(await gate())) return;
     const res = await seamPost({
       mode: 'merge',
       records: [
@@ -173,7 +179,6 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (capabi
   });
 
   it('[]-labelled data is fail-closed dropped from onward emission (positive control: unlabelled twin forwards)', async () => {
-    if (!(await gate())) return;
     const res = await seamPost({
       mode: 'forward',
       records: [

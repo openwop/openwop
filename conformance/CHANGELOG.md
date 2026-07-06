@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.53.1] — 2026-07-06 — fix: purpose-propagation behavioral legs are seam-gated, not advertisement-gated
+
+`purpose-propagation.test.ts`'s four two-hop behavioral legs gated on `capabilities.purposePropagation.supported` being advertised. That made a non-vacuous graduation witness impossible: RFC 0128 is `Active`, and `capabilities.md` §purposePropagation prohibits advertising `purposePropagation.supported:true` until it reaches `Accepted` — so under `OPENWOP_REQUIRE_BEHAVIOR=true` an honest-off host could only soft-skip (vacuous), yet an advertising host would breach the pre-Accepted prohibition. Re-gated the legs onto **seam availability** (the `POST /v1/host/sample/purpose-propagation/forward` seam returning non-404) instead of the advert — matching how RFC 0122's `self-hosted-runner.test.ts` behavioral legs are seam-gated and witnessed non-vacuously with `selfHostedRunner.supported:false`. The host now witnesses honest-OFF: the seam runs behind its feature flag, the assertions execute against real onward/dropped output, and non-vacuity is proven by the live seam + the steward's independent curl. No scenario-count change (386); schema-probe layer + RFC 0127 scenario unchanged.
+
 ## [1.53.0] — 2026-07-06 — RFC 0127 streaming/CDC trigger sources + RFC 0128 purpose-propagation labels (CDP Track-2)
 
 Adds `trigger-stream-cdc-sources.test.ts` + `purpose-propagation.test.ts` (suite 384 → 386) for the two `Active` CDP Track-2 RFCs.
