@@ -1,0 +1,11 @@
+# RFC 0127 — Risk Register
+
+Companion to `0127-streaming-and-cdc-trigger-sources.md`. Likelihood × Impact (H/M/L). Critical/High risks carry a named mitigation owner.
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| R1 | **Dishonest `stream`/`change` advert** — a host advertises the new sources without behaviorally ingesting them (the exact mislabel-as-`webhook` dishonesty this RFC exists to remove, inverted). | M | H | **High** | RFC 0099 honesty rule + the gated `trigger-bridge-delivery` leg under `OPENWOP_REQUIRE_BEHAVIOR=true`: advertise-only-what-you-honor, non-vacuous for both sources (gap G3). | Conformance Architect | Open |
+| R2 | **CDC row body leakage** — warehouse/DB change rows routinely carry PII; if `metadata.triggerData` (the row body) ever reaches `trigger.*` events or webhook fan-out, SR-1 is breached at CDP scale. | L | H | **Med** | Existing RFC 0099 closed-allowlist payload builder already excludes `triggerData`; the always-on redaction invariant tests cover the new sources with zero new mechanism. Verify in the witness run. | Security Architect | Open |
+| R3 | **Delivery-semantics over-assumption** — integrators read `stream` and assume exactly-once delivery; the wire only promises the ≥24h dedup floor (resolved Q2 deliberately added no `deliveryGuarantee` advert — unfalsifiable). | M | M | **Med** | Prose already states at-least-once normalization + dedup-key guidance (§4); revisit only if a concrete conformance gap shows the dedup floor is insufficient. | Spec Architect | Open |
+| R4 | **Source-enum growth pressure** — every broker/warehouse product lobbies for its own source value (`kafka`, `kinesis`, `snowflake-cdc`, …), fragmenting the closed enum. | M | L | **Low** | `stream`/`change` are deliberately broker-agnostic categories (mirrors the one-`change`-source + `op` ruling in resolved Q1); product identity belongs in `metadata`, never the enum. | Spec Architect | Open |
+| R5 | **Author-is-witness** — the RFC author (openwop-app) is also the sole graduation witness under the single-witness path. | M | M | **Med** | Mandatory per architect ruling 2026-07-06: steward authors the gated conformance scenarios (test author ≠ impl author) and independently drives + curl-verifies the witness run. No self-certification. | Steward | Open |
