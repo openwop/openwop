@@ -518,6 +518,46 @@ RFC 0122 (`Active`). When `supported: true`, the host routes a run's per-step mo
 
 **Conformance.** The `self-hosted-runner-*` schema probes (dispatch/result frame + registration + capability shape) are always-on (server-free); the behavioral `self-hosted-runner` scenario gates on `selfHostedRunner.supported` and soft-skips when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`), driving the `POST /v1/host/sample/runner/*` seam to assert subject-first match, at-most-once dispatch, credential non-transit, and `runner_unavailable` on liveness loss.
 
+### `purposePropagation`
+
+RFC 0128 (`Active`). When `supported: true`, the host reads and **re-emits** `permittedPurposes`
+labels — opaque purpose strings a sender attaches to subject data via the A2A
+`metadata.openwop.permittedPurposes` extension ([`a2a-integration.md`](./a2a-integration.md)
+§"Purpose-propagation labels") or the `TriggerEvent.permittedPurposes` field
+([`trigger-event.schema.json`](../../schemas/trigger-event.schema.json)) — on any onward
+OpenWOP-envelope hop of the same data, narrowing at most and never widening; a `[]` label is
+honored as "no onward use permitted" (not forwarded at all). Full propagation rules: RFC 0128 §3.
+
+```json
+"purposePropagation": { "supported": true, "propagatesOnward": true }
+```
+
+**Field shape:** OPTIONAL `object`. When present, `supported: boolean` is REQUIRED.
+`propagatesOnward` distinguishes hosts that read labels but have no onward-hop surface at all; a
+host *with* onward hops that advertises `supported: true` MUST also propagate. Hosts that neither
+read nor forward the label omit the block entirely (an incoming label is then ignored as unknown
+metadata — additive, no breakage).
+
+**This family advertises label *propagation*, not purpose *enforcement*.** Whether the host's own
+internal use of the data honors the declared purposes is the receiver's local-governance
+responsibility (RFC 0128 §4) — deliberately a `SHOULD`/declared-intent, not a wire promise,
+because internal use is not observable over the wire. Reading `supported: true` as "the receiver
+enforces purpose limits" is an over-claim the corpus explicitly disavows.
+
+**A.2 — Truthful advertisement (normative).** A host MUST NOT advertise
+`purposePropagation.supported: true` unless it actually honors the RFC 0128 §3 propagation rules
+(re-emit / narrow-only / never-widen / `[]` fail-closed) on its onward OpenWOP-envelope hops.
+Advertising without honoring is a dishonest capability claim per
+[§Truthful advertisement](#truthful-advertisement); `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it.
+Because RFC 0128 is `Active` (not yet `Accepted`), **no host may advertise
+`purposePropagation.supported: true` until RFC 0128 reaches `Accepted`** — reference hosts wire
+the behavior behind the gate in the interim.
+
+**Conformance.** The capability-shape probe is always-on (server-free); the behavioral
+`purpose-propagation-onward` scenario (two-hop label survive/narrow + never-widen + derived-output
+subset + `[]` fail-closed with a positive control) gates on `purposePropagation.supported` and
+soft-skips when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+
 ### `observability`
 
 Optional v1 observability advertisement. See `observability.md`.

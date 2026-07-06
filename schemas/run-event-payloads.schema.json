@@ -1739,7 +1739,7 @@
       "required": ["subscriptionId", "source", "fromState", "toState"],
       "properties": {
         "subscriptionId": { "type": "string", "minLength": 1, "description": "The TriggerSubscription this state change is for." },
-        "source":         { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"], "description": "The subscription source." },
+        "source":         { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form", "stream", "change"], "description": "The subscription source." },
         "fromState":      { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "Prior state." },
         "toState":        { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "New state." },
         "reason":         { "type": "string", "enum": ["retry-exhausted", "operator-paused", "signature-invalid", "backpressure", "source-removed", "provenance-unevaluable"], "description": "MAY — a machine-stable reason code (a CLOSED enum — a free-form reason is a leak vector that would let a host spill an inbound URL/host/header into it). The load-bearing field is `toState`." }

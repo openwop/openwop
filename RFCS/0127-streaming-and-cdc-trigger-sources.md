@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0127                                                            |
 | **Title**         | Streaming & CDC trigger sources                                 |
-| **Status**        | `Draft` (open questions resolved 2026-07-06 — ready for comment)  |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | openwop-app maintainers                                         |
 | **Created**       | 2026-07-05                                                      |
-| **Updated**       | 2026-07-06                                                      |
+| **Updated**       | 2026-07-06 (Draft→Active — bootstrap steward waiver, 7-day window waived; wire-shape-only additive + reference-implementer review CLEAN on the CDP bus. §2/§3 amended for schema fidelity at surface-landing. Accepted path: single-witness approved per the 2026-07-06 architect ruling — see the gap register G4 carry-forward) |
 | **Affects**       | `spec/v1/trigger-bridge.md`, `spec/v1/capabilities.md`, `schemas/trigger-subscription.schema.json`, `schemas/trigger-event.schema.json`, conformance `trigger-bridge-*` scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |
@@ -61,31 +61,40 @@ Both are OPTIONAL sources: a host that consumes neither simply omits them from
 `capabilities.triggerBridge.sources[]` (the RFC 0083 §D "any one durable source" profile is
 unchanged — `stream`/`change` are additional durable sources, not required ones).
 
-### 2. `TriggerEvent` envelope — unchanged shape, two source values
+### 2. `TriggerEvent` envelope — same pattern, two per-source sub-objects
 
-A streamed/CDC event uses the **existing** RFC 0099 `TriggerEvent` envelope verbatim
-(content-free on the wire — identifiers + normalized metadata only; the message/row body
-lives in `metadata.triggerData` and is redacted out of `trigger.*` events, SR-1). No new
-fields on the envelope itself. `metadata.triggerData` for a `change` event MUST include an
-`op` field (`"insert" | "update" | "delete"`); for a `stream` event it MAY include the
-broker `partition`/`offset` for at-least-once dedup keying.
+A streamed/CDC event uses the **existing** RFC 0099 `TriggerEvent` envelope pattern: the
+envelope IS the in-run `ctx.triggerData` payload, it carries exactly the per-source sub-object
+matching its `source` (RFC 0099 §F.1), and it never appears on the durable event log — the
+`trigger.*` events stay content-free (SR-1). Two new `$defs` in `trigger-event.schema.json`:
 
-### 3. Ingestion advertisement (additive sub-block)
+- **`StreamEvent`** (present iff `source == "stream"`): `topic` / `partition` / `offset` /
+  `key` / `message` — the broker coordinates MAY feed at-least-once dedup keying.
+- **`ChangeEvent`** (present iff `source == "change"`): **`op` (`"insert" | "update" |
+  "delete"`) is REQUIRED** (schema-enforced), plus `table` / `changelogId` / `before` / `after`
+  row images.
 
-`capabilities.triggerBridge.ingestion` (RFC 0099) gains two OPTIONAL booleans mirroring the
-existing per-source advertisements — a host MUST advertise a source in `ingestion` **only
-when it behaviorally ingests it** (the RFC 0099 honesty rule):
+*(Amended 2026-07-06 for schema fidelity: the original draft placed `op` in a
+`metadata.triggerData` bag that does not exist on the wire — the envelope's per-source
+sub-object is the real home, and it makes the `op` requirement schema-expressible.)*
+
+### 3. Ingestion advertisement (additive enum values)
+
+`capabilities.triggerBridge.ingestion.externalSources[]` (RFC 0099 §F.3 — the real advert is an
+array, not per-source booleans; amended 2026-07-06 for schema fidelity) gains the two values —
+a host MUST list a source there **only when it behaviorally ingests it** (the RFC 0099 honesty
+rule):
 
 ```diff
    "ingestion": {
-     "webhook": true,
-     "email": true,
--    "form": true
-+    "form": true,
-+    "stream": true,
-+    "change": true
+-    "externalSources": ["webhook", "email", "form"]
++    "externalSources": ["webhook", "email", "form", "stream", "change"]
    }
 ```
+
+Direction inverts for the new sources: the host is the *consumer* — there is no inbound ingest
+URL, so a §F.2 registration for `stream`/`change` returns an empty `binding` (`{}`); the
+broker/warehouse connection is a credential-brokered egress (RFC 0095), never a wire field.
 
 ### 4. Dedup, SSRF, replay — reused verbatim
 
@@ -100,7 +109,7 @@ when it behaviorally ingests it** (the RFC 0099 honesty rule):
 
 ### Positive example
 
-`capabilities.triggerBridge = { supported: true, sources: ["webhook","schedule","queue","email","form","stream","change"], ingestion: { webhook:true, email:true, form:true, stream:true, change:true }, dedup:true }` — a CDP host that consumes a Kafka topic **and** a warehouse CDC feed, both landed as durable runs.
+`capabilities.triggerBridge = { supported: true, sources: ["webhook","schedule","queue","email","form","stream","change"], ingestion: { externalSources: ["webhook","email","form","stream","change"] }, dedup:true }` — a CDP host that consumes a Kafka topic **and** a warehouse CDC feed, both landed as durable runs.
 
 ### Negative example
 

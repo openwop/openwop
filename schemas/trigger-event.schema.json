@@ -2,15 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/trigger-event.schema.json",
   "title": "TriggerEvent",
-  "description": "RFC 0099 §F.1. The normalized external-event envelope a host hands a started run as `ctx.triggerData` when an externally-originated event (`webhook`/`email`/`form`) is delivered to an `active` TriggerSubscription (RFC 0083). This is an IN-RUN payload only — it never appears on the durable event log; the `trigger.delivery.attempted` event stays content-free (RFC 0083 §C / SECURITY `trigger-ingestion-content-redaction`). A TriggerEvent carries exactly the per-source sub-object matching its `source`. All content is `untrusted` (SECURITY `threat-model-prompt-injection.md`).",
+  "description": "RFC 0099 §F.1. The normalized external-event envelope a host hands a started run as `ctx.triggerData` when an externally-originated event (`webhook`/`email`/`form`/`stream`/`change`) is delivered to an `active` TriggerSubscription (RFC 0083). This is an IN-RUN payload only — it never appears on the durable event log; the `trigger.delivery.attempted` event stays content-free (RFC 0083 §C / SECURITY `trigger-ingestion-content-redaction`). A TriggerEvent carries exactly the per-source sub-object matching its `source`. All content is `untrusted` (SECURITY `threat-model-prompt-injection.md`).",
   "type": "object",
   "additionalProperties": false,
   "required": ["source", "subscriptionId", "deliveryId", "receivedAt"],
   "properties": {
     "source": {
       "type": "string",
-      "enum": ["webhook", "email", "form"],
-      "description": "Which external source originated the event. A TriggerEvent MUST carry exactly the per-source sub-object matching this value and MUST NOT carry the others (RFC 0099 §F.1)."
+      "enum": ["webhook", "email", "form", "stream", "change"],
+      "description": "Which external source originated the event. A TriggerEvent MUST carry exactly the per-source sub-object matching this value and MUST NOT carry the others (RFC 0099 §F.1; `stream`/`change` per RFC 0127)."
     },
     "subscriptionId": {
       "type": "string",
@@ -40,23 +40,38 @@
       "enum": ["untrusted"],
       "description": "Always `untrusted`. Inbound external content reaching an LLM node MUST be wrapped per `threat-model-prompt-injection.md` §UNTRUSTED; a TriggerEvent MUST NOT directly advance a HITL approval gate (the `prompt-injection-mcp-no-approval` invariant generalizes)."
     },
+    "permittedPurposes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "RFC 0128 — OPTIONAL declared uses the receiver is permitted to make of the accompanying data. Opaque purpose strings mapped to the host's local vocabulary; carries purpose categories only, never subject identifiers or consent records. Absent ⇒ unlabelled (no constraint asserted); `[]` ⇒ no onward use permitted (NOT the same as absent). A host advertising `purposePropagation` MUST honor the RFC 0128 §3 propagation rules for this label."
+    },
     "webhook": { "$ref": "#/$defs/WebhookEvent" },
     "email": { "$ref": "#/$defs/EmailEvent" },
-    "form": { "$ref": "#/$defs/FormEvent" }
+    "form": { "$ref": "#/$defs/FormEvent" },
+    "stream": { "$ref": "#/$defs/StreamEvent" },
+    "change": { "$ref": "#/$defs/ChangeEvent" }
   },
   "allOf": [
     {
       "description": "RFC 0099 §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others.",
       "if": { "properties": { "source": { "const": "webhook" } } },
-      "then": { "not": { "anyOf": [{ "required": ["email"] }, { "required": ["form"] }] } }
+      "then": { "not": { "anyOf": [{ "required": ["email"] }, { "required": ["form"] }, { "required": ["stream"] }, { "required": ["change"] }] } }
     },
     {
       "if": { "properties": { "source": { "const": "email" } } },
-      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["form"] }] } }
+      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["form"] }, { "required": ["stream"] }, { "required": ["change"] }] } }
     },
     {
       "if": { "properties": { "source": { "const": "form" } } },
-      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["email"] }] } }
+      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["email"] }, { "required": ["stream"] }, { "required": ["change"] }] } }
+    },
+    {
+      "if": { "properties": { "source": { "const": "stream" } } },
+      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["email"] }, { "required": ["form"] }, { "required": ["change"] }] } }
+    },
+    {
+      "if": { "properties": { "source": { "const": "change" } } },
+      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["email"] }, { "required": ["form"] }, { "required": ["stream"] }] } }
     }
   ],
   "$defs": {
@@ -96,6 +111,31 @@
       "properties": {
         "fields": { "type": "object", "additionalProperties": true, "description": "The submitted field map." },
         "files": { "type": "array", "items": { "$ref": "#/$defs/AttachmentRef" } }
+      }
+    },
+    "StreamEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Present iff `source == \"stream\"` (RFC 0127). One message consumed from a streaming broker (Kafka / Kinesis / Pub-Sub); the host is the consumer and each delivered message normalizes to one TriggerEvent. The broker connection is a credential-brokered egress (RFC 0095), never a wire field.",
+      "properties": {
+        "topic": { "type": "string", "description": "The broker topic/stream/subscription name the message was consumed from." },
+        "partition": { "type": "integer", "minimum": 0, "description": "Broker partition/shard, where the broker has one. With `offset`, feeds the RFC 0127 §4 dedup-key guidance `(topic, partition, offset)`." },
+        "offset": { "type": "string", "description": "Broker offset / sequence number as an opaque string (brokers disagree on integer width)." },
+        "key": { "type": "string", "description": "The message key, where the broker has one." },
+        "message": { "description": "The consumed message payload — parsed JSON, or a string for non-JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`." }
+      }
+    },
+    "ChangeEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op"],
+      "description": "Present iff `source == \"change\"` (RFC 0127). One change-data-capture record from a warehouse/database changelog. `op` is REQUIRED. The warehouse connection is a credential-brokered egress (RFC 0095), never a wire field.",
+      "properties": {
+        "op": { "type": "string", "enum": ["insert", "update", "delete"], "description": "The change operation. REQUIRED (RFC 0127 §2 / resolved Q1 — one `change` source with an `op` discriminator, not per-verb sources)." },
+        "table": { "type": "string", "description": "The source table/collection/entity name. With `changelogId`, feeds the RFC 0127 §4 dedup-key guidance `(table, changelog-id)`." },
+        "changelogId": { "type": "string", "description": "The changelog position/LSN/row-version as an opaque string." },
+        "before": { "description": "The pre-image row where the feed provides one (typically `update`/`delete`). Parsed JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`." },
+        "after": { "description": "The post-image row where the feed provides one (typically `insert`/`update`). Parsed JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`." }
       }
     },
     "AttachmentRef": {
@@ -143,6 +183,39 @@
         "method": "POST",
         "headers": { "X-Event-Type": "issue.created" },
         "body": { "issue": { "id": 42, "title": "Bug" } }
+      }
+    },
+    {
+      "source": "stream",
+      "subscriptionId": "sub_12",
+      "deliveryId": "dlv_e5f6",
+      "dedupKey": "events:3:88412",
+      "receivedAt": "2026-07-06T12:00:00Z",
+      "verified": true,
+      "contentTrust": "untrusted",
+      "stream": {
+        "topic": "events",
+        "partition": 3,
+        "offset": "88412",
+        "key": "user_77",
+        "message": { "type": "page_view", "path": "/pricing" }
+      }
+    },
+    {
+      "source": "change",
+      "subscriptionId": "sub_13",
+      "deliveryId": "dlv_a7b8",
+      "dedupKey": "contacts:lsn:0/1C4F9D0",
+      "receivedAt": "2026-07-06T12:01:00Z",
+      "verified": true,
+      "contentTrust": "untrusted",
+      "permittedPurposes": ["analytics"],
+      "change": {
+        "op": "update",
+        "table": "contacts",
+        "changelogId": "0/1C4F9D0",
+        "before": { "id": 77, "tier": "free" },
+        "after": { "id": 77, "tier": "pro" }
       }
     }
   ]
