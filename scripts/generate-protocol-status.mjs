@@ -249,19 +249,48 @@ function staleStatusFindings(rfcs) {
   }
 
   // (4a) RFC status counts: cross-check README's per-status claims against parsed rfcs metadata.
+  // The count regexes tolerate a trailing annotation after the number — the banner writes
+  // "(124 — including …)", not a bare "(124)". An anchored `\)` here previously made the
+  // Accepted/Active/Draft checks silently skip (m === null) while the hand-typed counts drifted
+  // out of sync with the generated table. `token` is the literal that must be present in the
+  // banner; if it IS present but the tolerant regex still fails to capture a number, that is
+  // itself a finding — so a future banner reword can never re-open the silent-skip hole.
   const acceptedCount = rfcs.filter((r) => r.status === 'Accepted').length;
   const activeCount = rfcs.filter((r) => r.status === 'Active').length;
   const draftCount = rfcs.filter((r) => r.status === 'Draft').length;
+  const activeIds = rfcs.filter((r) => r.status === 'Active').map((r) => r.id).sort();
+  const draftIds = rfcs.filter((r) => r.status === 'Draft').map((r) => r.id).sort();
   const rfcChecks = [
-    { label: 'RFCs excluding template', re: /\((\d+)\s+RFCs\s+excluding\s+template\)/, actual: rfcs.length },
-    { label: 'Accepted RFCs', re: /are\s+`Accepted`\s+\((\d+)\)/, actual: acceptedCount },
-    { label: 'Active RFCs', re: /are\s+`Active`\s+\((\d+)\)/, actual: activeCount },
-    { label: 'Draft RFCs', re: /are\s+`Draft`\s+\((\d+)\)/, actual: draftCount },
+    { label: 'RFCs excluding template', token: 'RFCs excluding template', re: /\((\d+)\s+RFCs\s+excluding\s+template\)/, actual: rfcs.length },
+    { label: 'Accepted RFCs', token: 'are `Accepted` (', re: /are\s+`Accepted`\s+\((\d+)(?=[\s)])/, actual: acceptedCount },
+    { label: 'Active RFCs', token: 'are `Active` (', re: /are\s+`Active`\s+\((\d+)(?=[\s)])/, actual: activeCount },
+    { label: 'Draft RFCs', token: 'are `Draft` (', re: /are\s+`Draft`\s+\((\d+)(?=[\s)])/, actual: draftCount },
   ];
   for (const check of rfcChecks) {
     const m = readmeText.match(check.re);
-    if (m && Number(m[1]) !== check.actual) {
-      findings.push(`README.md: claims "${m[1]}" ${check.label} but actual is ${check.actual}.`);
+    if (m) {
+      if (Number(m[1]) !== check.actual) {
+        findings.push(`README.md: claims "${m[1]}" ${check.label} but actual is ${check.actual}.`);
+      }
+    } else if (readmeText.includes(check.token)) {
+      findings.push(`README.md: ${check.label} count phrase is present ("${check.token}") but its number could not be parsed — the banner format changed; update this check in scripts/generate-protocol-status.mjs.`);
+    }
+  }
+
+  // (4b) Enumerated Active/Draft RFC id lists in the banner must equal the actual sets.
+  // The banner prints e.g. "`Active` (4 — RFC 0035, RFC 0043, …)"; a stale list (an RFC that
+  // graduated to Accepted but was left in the Active enumeration) is exactly the drift a bare
+  // count check cannot see — the count and the id list can disagree independently.
+  const idListChecks = [
+    { label: 'Active', ids: activeIds, re: /are\s+`Active`\s+\(([^)]*)\)/ },
+    { label: 'Draft', ids: draftIds, re: /are\s+`Draft`\s+\(([^)]*)\)/ },
+  ];
+  for (const check of idListChecks) {
+    const m = readmeText.match(check.re);
+    if (!m) continue;
+    const listed = [...m[1].matchAll(/RFC\s+(\d{4})/g)].map((x) => x[1]).sort();
+    if (listed.join(',') !== check.ids.join(',')) {
+      findings.push(`README.md: enumerated \`${check.label}\` RFC list is [${listed.join(', ')}] but actual ${check.label} RFCs are [${check.ids.join(', ')}].`);
     }
   }
 
