@@ -179,6 +179,21 @@ through the same signed-tarball + Ed25519 + SRI pipeline (`node-packs.md` §Sign
     `egress-credential-audience-bound` MUST — `apiHosts` may only **narrow** the destination set,
     never **widen** it past what RFC 0079 already permits.
 
+16. **`provider.vendor` — catalog grouping (RFC 0123, presentational).** A connection pack
+    **MAY** set an optional `provider.vendor` string — the commercial vendor / ecosystem the
+    connector belongs to (e.g. `"Microsoft 365"`, `"Google"`, `"Workday"`). It is
+    **presentational metadata only** and gates no capability, appears in no capability
+    advertisement, and changes no auth, replay, or fork behavior. A host or registry that
+    renders a connector catalog **SHOULD** group connectors sharing an identical `vendor`
+    string under one heading, and **MUST** fall back to the provider's `displayName` for a
+    connector whose `vendor` is absent (so nothing is ever hidden by the grouping). A host
+    **MAY** ignore `vendor` entirely and render a flat list; doing so is conformant.
+    `vendor` **MUST NOT** be treated as, or substituted for, `provider.id` — the RFC 0047
+    resolution key is unchanged; `vendor` (who-sells-it) and `category` (capability axis)
+    are orthogonal and neither substitutes for the other. `vendor` is **free-form** (not an
+    enum) so a new vendor is a data change, never a schema change; producers **SHOULD** use
+    the vendor's common product/brand name.
+
 ## Capability
 
 A host advertises connection-pack support via `capabilities.connections.packsSupported: boolean`
