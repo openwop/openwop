@@ -4,11 +4,11 @@
 | ----------------- | ----- |
 | **RFC**           | 0131 |
 | **Title**         | Distinguish a composable, task-scoped **Skill** from a top-level **assistant** agent, first-class on the agent manifest — an additive optional `AgentManifest.role` plus a schema-encoded **Skill profile** (a `role:"skill"` manifest MUST declare `handoff` and constrain `memoryShape` to scratchpad-only) that keeps sub-agent dispatch stateless and replay-clean |
-| **Status**        | `Draft` |
+| **Status**        | `Accepted` |
 | **Author(s)**     | David Tufts (@davidscotttufts) |
 | **Created**       | 2026-07-07 |
-| **Updated**       | 2026-07-07 (`Draft` — revised per steward review: `role` is **explicit opt-in** (absent ⇒ unconstrained, no inference-from-`handoff`); the Skill profile is a **JSON-Schema `if/then` validation reject**, not a `degraded[]` projection — `degraded[]` keeps its RFC 0072 §C "host lacks a capability" meaning) |
-| **Affects**       | `schemas/agent-manifest.schema.json` (additive optional `role` + a conditional `if role==="skill"` subschema) · `spec/v1/agent-runtime.md` (the `role` field + the Skill profile) / `spec/v1/agent-memory.md` (the `memoryShape` constraint) · `SECURITY/invariants.yaml` (the reject invariant) · conformance scenarios · SDKs · `CHANGELOG.md` · `INTEROP-MATRIX.md` |
+| **Updated**       | 2026-07-07 (`Draft → Accepted` — all acceptance criteria landed in the same PR: the additive `role` + `if role==="skill"` conditional in `agent-manifest.schema.json`; the field prose in `node-packs.md` §`agents[]` + the memory constraint in `agent-memory.md` §D with the verbatim §D-vs-§C reject/degrade contrast; the `agent-skill-profile-stateless` invariant in `SECURITY/threat-model-node-packs.md` + `SECURITY/invariants.yaml`; the always-on `agent-manifest-role-profile.test.ts`; `CHANGELOG.md` [1.4.0] + `INTEROP-MATRIX.md`. Revised earlier per steward review: `role` is **explicit opt-in** (absent ⇒ unconstrained, no inference-from-`handoff`); the Skill profile is a **JSON-Schema `if/then` validation reject**, not a `degraded[]` projection — `degraded[]` keeps its RFC 0072 §C "host lacks a capability" meaning. `Draft → Accepted` under the bootstrap single-maintainer comment-window waiver — `CONTRIBUTING.md` §"Bootstrap-phase notes", the RFC 0109/0110/0123 precedent.) |
+| **Affects**       | `schemas/agent-manifest.schema.json` (additive optional `role` + a conditional `if role==="skill"` subschema) · `spec/v1/node-packs.md` §`agents[]` (the `role` field) / `spec/v1/agent-memory.md` §D (the `memoryShape` constraint, adjacent to §C with the reject-vs-degrade contrast) · `SECURITY/threat-model-node-packs.md` + `SECURITY/invariants.yaml` (the reject invariant `agent-skill-profile-stateless`) · conformance scenarios · SDKs · `CHANGELOG.md` · `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` (the optional `role` field) + `safety-fix` (the Skill profile — a schema conjunction that binds **only** manifests that opt in with `role:"skill"`, of which there are zero today) |
 | **Supersedes**    | — |
 | **Superseded by** | — |
@@ -78,6 +78,15 @@ Normatively, a `role: "skill"` manifest MUST:
 
 A registry/host validating the manifest against the schema **MUST reject** a `role:"skill"` manifest that violates (1) or (2) at publish/install — it is an internally-contradictory (malformed) manifest, an *author error*, not a runtime condition. This does **not** use, extend, or overload the RFC 0072 §C `degraded[]` inventory marker (whose sole meaning stays "the host lacks a capability a well-formed agent optionally wants"). No `capabilities.*` advertisement is introduced — schema validation is universal, so "is the profile enforced?" is never a per-host discoverability question.
 
+### §B vs the existing §C — *reject* vs *degrade* (normative placement + contrast)
+
+This constraint lands in `agent-memory.md` as a new subsection **§D**, sited **adjacent to the existing §C** ("`memoryShape` enforcement + degraded projection", RFC 0080, `agent-memory.md` §C), carrying the following contrast verbatim so the two enforcement mechanisms are normatively distinct — not merely implied by the schema — and a future author cannot reconflate them (the `role` field itself is documented in `node-packs.md` §`agents[]`, which cross-links here):
+
+- **§C — runtime *degrade*.** A *well-formed* manifest declares a `memoryShape` dimension the **host** cannot satisfy → the host surfaces `memoryDegraded` / `degradedMemoryDimensions` on the RFC 0072/0074 inventory entry (the RFC 0072 §C `degraded[]` philosophy). The manifest is **valid**; the *host* is the limiting party; the signal is a **runtime tier**, observable on `GET /v1/agents`.
+- **§B — publish/install *reject*.** A manifest declares a `memoryShape` inconsistent with **its own** `role:"skill"` → it is **malformed** (an RFC 0003 §C author error) and **fails schema validation** before it is ever published or installed. No host is involved; the *manifest* is the defect; there is **no runtime tier** and nothing to advertise.
+
+The two are disjoint by construction: §C is "a host lacks a capability a *valid* agent wants"; §D is "the manifest contradicts itself." A `role:"skill"` manifest that would violate the profile **cannot reach the inventory at all**, so it can never appear as §C-degraded — the reject strictly precedes any degrade evaluation. The `role` field definition in `node-packs.md` §`agents[]` **MUST** cross-link to this §D block in `agent-memory.md` so a reader arriving from the field lands on the reject/degrade boundary.
+
 ### Examples
 
 **Skill (explicit; valid).**
@@ -122,7 +131,7 @@ An assistant MAY ship `handoff` for cross-host interop; its conversation + long-
 1. **Default — RESOLVED: explicit, never inferred.** Absent `role` = unconstrained; `role:"skill"` opts in.
 2. **Enum — RESOLVED: `["skill","assistant"]`, optional, absent = unconstrained.** `agent` is not an enum value (that is the overloaded word the RFC removes).
 3. **Scope — RESOLVED: per-*agent*.** `role` is on the `AgentManifest` (agentId-scoped), like `memoryShape`/`handoff`. A crew pack ships several skill agents; internal orchestration is an RFC 0037 concern.
-4. **Open:** should a future minor *lint* new manifests to require an explicit `role` (a publish-time nudge, not a wire break)?
+4. **Deferred (not folded into 0131), by design.** A future-minor *lint* nudging new manifests toward an explicit `role` is a **publish-time DX affordance, not a wire/normative change** — folding it back here would re-import the "two compat classes in one RFC" smell this revision cleaned out (0131 is now cleanly additive-field + safety-fix-reject). It also carries a latent trap: if the nudge ever hardens from "nudge" to "require `role`," that is a **future breaking change** owing its own comment window. So it is recorded here as explicitly deferred to a standalone future-minor RFC when there is appetite — not silently dropped.
 
 ## Implementation notes (non-normative)
 
@@ -130,11 +139,11 @@ Reference host: ADR 0312 lands the marketplace label (Phase 0, non-normative —
 
 ## Acceptance criteria
 
-- [ ] `schemas/agent-manifest.schema.json` gains the additive optional `role` **and** the `if role==="skill"` conditional (§B); a manifest without `role` stays valid.
-- [ ] `spec/v1/agent-runtime.md` (the field) + `spec/v1/agent-memory.md` (the memory constraint) state the Skill profile normatively; no `degraded[]` change.
-- [ ] `SECURITY/invariants.yaml` row for the skill-profile reject.
-- [ ] `agent-manifest-role-profile.test.ts` (always-on) passes non-vacuously (validate + reject cases above).
-- [ ] `CHANGELOG.md` + `INTEROP-MATRIX.md` updated.
+- [x] `schemas/agent-manifest.schema.json` gains the additive optional `role` **and** the `if role==="skill"` conditional (§B); a manifest without `role` stays valid.
+- [x] `spec/v1/node-packs.md` §`agents[]` (the field) + `spec/v1/agent-memory.md` §D (the memory constraint, **placed adjacent to the existing §C** with the verbatim **§D-vs-§C reject/degrade contrast**, cross-linked from the `node-packs.md` field def) state the Skill profile normatively; no `degraded[]` change.
+- [x] `SECURITY/threat-model-node-packs.md` + `SECURITY/invariants.yaml` row (`agent-skill-profile-stateless`) for the skill-profile reject.
+- [x] `agent-manifest-role-profile.test.ts` (always-on) passes non-vacuously (validate + reject cases above).
+- [x] `CHANGELOG.md` [1.4.0] + `INTEROP-MATRIX.md` updated.
 
 ## References
 

@@ -151,6 +151,17 @@ When a host advertises a manifest agent (RFC 0072/0074 `GET /v1/agents`) whose `
 2. A degraded agent MAY still dispatch at the RFC 0070 floor (degradation is permitted), but the degradation MUST be **observable** — a silent satisfied-looking inventory entry for an agent whose `longTerm: true` can't be honored is non-conformant.
 3. This reuses the RFC 0072 §C `degraded[]` per-dependency-visibility philosophy, applied to the memory dimensions. `forget` (§A retention) is a host-managed mutation **outside** the replay envelope: a replayed run re-reads the log-recorded snapshot, not live memory (`replay.md` §"Recorded-fact events").
 
+### §D — The Skill-profile `memoryShape` constraint (RFC 0131): *reject* vs the §C *degrade*
+
+RFC 0131 adds an explicit, optional `AgentManifest.role` (`node-packs.md` §`agents[]`). A manifest that opts in with `role: "skill"` MUST constrain `memoryShape` to **scratchpad-only** — `conversation` and `longTerm` MUST be `false` or absent (persistent + multi-turn memory belong to the composing assistant/roster agent, RFC 0039; a stateful worker undermines the pure task→return contract and replay determinism, RFC 0041). This constraint is encoded in `agent-manifest.schema.json` as an `if role==="skill"` conditional and is enforced by **schema validation**, not a runtime host behavior.
+
+This §D constraint and the §C degraded projection above are **two distinct mechanisms** — do not conflate them:
+
+- **§C — runtime *degrade*.** A *well-formed* manifest declares a `memoryShape` dimension the **host** cannot satisfy → the host surfaces `memoryDegraded` / `degradedMemoryDimensions` on the RFC 0072/0074 inventory entry (the RFC 0072 §C `degraded[]` philosophy). The manifest is **valid**; the *host* is the limiting party; the signal is a **runtime tier**, observable on `GET /v1/agents`.
+- **§D — publish/install *reject*.** A manifest declares a `memoryShape` inconsistent with **its own** `role: "skill"` → it is **malformed** (an RFC 0003 §C author error) and **fails schema validation** before it is ever published or installed (`pack_validation_failed`). No host is involved; the *manifest* is the defect; there is **no runtime tier** and nothing to advertise.
+
+The two are disjoint by construction: §C is "a host lacks a capability a *valid* agent wants"; §D is "the manifest contradicts itself." A `role: "skill"` manifest that would violate §D **cannot reach the inventory at all**, so it can never appear as §C-degraded — the reject strictly precedes any degrade evaluation. `role` is EXPLICIT, never inferred (`handoff` presence does not imply `skill`); an absent `role` or `role: "assistant"` is unconstrained and no profile binds it. SECURITY invariant: `agent-skill-profile-stateless`.
+
 ## Scheduled distillation — "dreams" (RFC 0062, `Active`)
 
 **Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already has the halves — RFC 0012 defines host-managed _compaction_ (lossy distillation + the `memory.compacted` event) and RFC 0052 defines _scheduled_ run initiation — but nothing binds them, pins a token budget, or defines the index. Distillation composes them; it does **not** invent a parallel event.
