@@ -160,10 +160,10 @@ The seam returns the host's own accounting of what it fed the model that iterati
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`multi-agent-execution.md` §contextBudget + `host-sample-test-seams.md` seam).
-- [ ] `capabilities.schema.json` + `run-event-payloads.schema.json` updated.
-- [ ] `context-budget-transcript-bound.test.ts` + `context-summarization-replay.test.ts` in `@openwop/openwop-conformance`.
-- [ ] CHANGELOG entry under the next minor.
+- [x] Spec text merged (`multi-agent-execution.md` §contextBudget + `host-sample-test-seams.md` seam) — landed with the `Active` surface 2026-06-26 (CHANGELOG `[Unreleased]`).
+- [x] `capabilities.schema.json` + `run-event-payloads.schema.json` updated — `contextBudget` (capabilities) + `context.summarized` (run-event-payloads) both on `main`.
+- [x] `context-budget-transcript-bound.test.ts` + `context-summarization-replay.test.ts` in `@openwop/openwop-conformance` — both present; capability-gated + driver-based, so they exercise non-vacuously only against a host advertising `contextBudget` on a real orchestrator loop.
+- [x] CHANGELOG entry under the next minor — `[Unreleased]` "RFCs 0111 / 0114 / 0116 — token-economy surfaces (`Active`, 2026-06-26)".
 - [x] A reference host advertises `contextBudget` and passes both scenarios non-vacuously, **or the RFC explicitly defers reference-host implementation** — this RFC takes the deferral: no current steward reference host runs a real orchestrator-loop model turn to witness against (the mock supervisor MUST NOT advertise `contextBudget` per §"Scope"). Both conformance scenarios soft-skip on non-advertising hosts; the non-vacuous witness comes from a host that runs real orchestrator turns (the `Active → Accepted` graduation gate).
 
 ## References
