@@ -12,7 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                     |
 | **Supersedes**    | —                                                                     |
 | **Superseded by** | —                                                                     |
-| **Amended by**    | [RFC 0119](./0119-isolation-model-mechanism-neutrality.md) — generalizes the `isolation` advertisement from a single browser mechanism (`cross-origin-iframe`) to a categorical, mechanism-neutral model (additive); §Isolation + §Host-RPC reframed to the property + a transport-agnostic channel binding. |
+| **Amended by**    | [RFC 0119](./0119-isolation-model-mechanism-neutrality.md) — generalizes the `isolation` advertisement from a single browser mechanism (`cross-origin-iframe`) to a categorical, mechanism-neutral model (additive); §Isolation + §Host-RPC reframed to the property + a transport-agnostic channel binding. · [RFC 0130](./0130-canvas-preview-plugin-surface.md) — adds the `canvas-preview` surface (plugin-rendered live preview inside a host-owned canvas editor), the OPTIONAL `canvasTypes` manifest field, and three core `ui-plugin/1` methods (`host.documentChanged`, `host.selectionChanged` events; `host.announce` request) — additive. |
 
 ## Summary
 
