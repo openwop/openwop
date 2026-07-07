@@ -35,7 +35,12 @@ and validates against [`frontend-plugin-manifest.schema.json`](../../schemas/fro
 - **`pluginId`** — stable identity within the pack; a host enables/disables by this id in its
   own admin surface.
 - **`surface`** — one of `artifact-viewer` (renders a typed RFC 0071 artifact), `route` (a
-  standalone admin/tool page), or `settings-panel` (a configuration panel).
+  standalone admin/tool page), `settings-panel` (a configuration panel), or `canvas-preview`
+  (RFC 0130 — the live document preview mounted INSIDE a host-owned canvas editor; the host
+  keeps the editor chrome, the plugin renders only the preview).
+- **`canvasTypes`** (OPTIONAL; `canvas-preview` only, RFC 0130) — the host canvas type id(s)
+  this preview renders. A host mounts the plugin only for matching canvas documents and MUST
+  ignore ids it does not recognize; absent/empty means never auto-mounted.
 - **`entry`** — pack-relative path to the opaque entry bundle loaded in the sandbox. The path
   MUST NOT contain `..` or a leading `/` (the schema pattern forbids both).
 - **`hostApi`** — the closed allowlist of `ui-plugin/1` methods this plugin is permitted to
@@ -102,6 +107,9 @@ The v1 method set:
 | `artifact.write` | plugin→host | Persist an edit to the **host-owned working copy** (never the immutable source). REQUIRES `params.version` (§Concurrency). |
 | `host.toast` | plugin→host | Surface a transient host notification. |
 | `host.navigate` | plugin→host | Request the host navigate to a host-owned route. |
+| `host.announce` | plugin→host | RFC 0130. Relay `params.message` (text only; `politeness` `polite`(default)/`assertive`) to the mounting editor's accessibility live region — the sandbox is invisible to the host page's assistive tech. Hosts MUST length-cap (SHOULD ≤ 400 chars, truncating) and SHOULD rate-limit, refusing excess with an ordinary error response on the existing channel. Returns `{}`. |
+| `host.documentChanged` | host→plugin event | RFC 0130 (`canvas-preview`). Emitted when the edited document changes (edit/undo/redo/restore); `data.content` is the serialized document, same encoding as `artifact.read`. Hosts SHOULD debounce; plugins MUST treat the latest event as authoritative and MUST NOT assume every intermediate state arrives. |
+| `host.selectionChanged` | host→plugin event | RFC 0130 (`canvas-preview`). Emitted on editor selection change; `data.selection` is `{ kind, collection?, index?, path?, frameId? }` with host-defined `kind` — advisory highlighting only; plugins MUST tolerate unknown kinds/absent fields. |
 
 ## Concurrency (optimistic, `version` token)
 

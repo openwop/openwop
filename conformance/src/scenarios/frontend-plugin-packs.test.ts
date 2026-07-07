@@ -105,6 +105,30 @@ describe('frontend-plugin manifest: schema layer (always-on, server-free)', () =
     const m = { ...validManifest(), uiPlugins: [] };
     expect(validate(m), 'a frontend-plugin pack MUST declare at least one uiPlugins[] entry').toBe(false);
   });
+
+  it('a canvas-preview entry with canvasTypes + host.announce validates (RFC 0130)', () => {
+    const m = validManifest();
+    (m.uiPlugins as Array<Record<string, unknown>>)[0] = {
+      pluginId: 'gantt-preview',
+      surface: 'canvas-preview',
+      canvasTypes: ['canvas.gantt'],
+      entry: 'ui/preview.html',
+      hostApi: ['artifact.read', 'host.announce'],
+    };
+    expect(
+      validate(m),
+      `frontend-plugin-packs.md §The pack (RFC 0130) — a canvas-preview entry MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+    ).toBe(true);
+  });
+
+  it('a surface outside the closed set is still rejected (RFC 0130 keeps the enum closed)', () => {
+    const m = validManifest();
+    (m.uiPlugins as Array<Record<string, unknown>>)[0].surface = 'omni-panel';
+    expect(
+      validate(m),
+      'frontend-plugin-packs.md §The pack — the surface enum stays closed; an unknown surface MUST NOT validate',
+    ).toBe(false);
+  });
 });
 
 describe('ui-plugin/1 message: schema layer (always-on, server-free)', () => {

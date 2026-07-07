@@ -1811,14 +1811,14 @@
         },
         "surfaces": {
           "type": "array",
-          "description": "Plugin surfaces this host renders. A pack's `uiPlugins[].surface` not in this set is installable-but-inert (§Degradation).",
-          "items": { "type": "string", "enum": ["artifact-viewer", "route", "settings-panel"] },
+          "description": "Plugin surfaces this host renders. A pack's `uiPlugins[].surface` not in this set is installable-but-inert (§Degradation). `canvas-preview` (RFC 0130) mounts inside a host-owned canvas editor.",
+          "items": { "type": "string", "enum": ["artifact-viewer", "route", "settings-panel", "canvas-preview"] },
           "uniqueItems": true
         },
         "hostApi": {
           "type": "array",
           "description": "The `ui-plugin/1` host-RPC methods this host honors. A plugin call to a method not in this set (regardless of the plugin's declared `hostApi`) MUST be rejected with `method_not_allowed` (`frontend-plugin-rpc-allowlist`). A host advertising `artifact.write` MUST enforce the `version`-token optimistic concurrency (RFC 0117 §Concurrency).",
-          "items": { "type": "string", "enum": ["artifact.read", "artifact.write", "host.toast", "host.navigate"] },
+          "items": { "type": "string", "enum": ["artifact.read", "artifact.write", "host.toast", "host.navigate", "host.announce"] },
           "uniqueItems": true
         },
         "maxEntryBytes": { "type": "integer", "minimum": 1, "description": "Per-plugin entry-bundle byte ceiling the host will load." }

@@ -64,8 +64,8 @@
         },
         "surface": {
           "type": "string",
-          "description": "Which host surface this plugin renders into. `artifact-viewer` renders a typed artifact (RFC 0071) in a sandbox; `route` mounts a standalone admin/tool page; `settings-panel` contributes a configuration panel. A host degrades a `surface` it does not advertise to nothing (§Degradation).",
-          "enum": ["artifact-viewer", "route", "settings-panel"]
+          "description": "Which host surface this plugin renders into. `artifact-viewer` renders a typed artifact (RFC 0071) in a sandbox; `route` mounts a standalone admin/tool page; `settings-panel` contributes a configuration panel; `canvas-preview` renders the live document preview inside a host-owned canvas editor (RFC 0130). A host degrades a `surface` it does not advertise to nothing (§Degradation).",
+          "enum": ["artifact-viewer", "route", "settings-panel", "canvas-preview"]
         },
         "entry": {
           "type": "string",
@@ -77,8 +77,14 @@
           "description": "The closed allowlist of `ui-plugin/1` host-RPC methods this plugin is permitted to call. The host MUST reject (with an `error` response, never silent execution) any method not in BOTH this declared list AND the host's `capabilities.uiPlugins.hostApi` set (`frontend-plugin-rpc-allowlist`). The plugin holds no credentials; every method is host-mediated and authz-checked.",
           "items": {
             "type": "string",
-            "enum": ["artifact.read", "artifact.write", "host.toast", "host.navigate"]
+            "enum": ["artifact.read", "artifact.write", "host.toast", "host.navigate", "host.announce"]
           },
+          "uniqueItems": true
+        },
+        "canvasTypes": {
+          "type": "array",
+          "description": "OPTIONAL; meaningful only for `surface: \"canvas-preview\"` (RFC 0130): the host canvas type id(s) this preview renders. A host mounts the plugin only for matching canvas documents and MUST ignore entries it does not recognize; absent/empty means never auto-mounted.",
+          "items": { "type": "string", "maxLength": 128 },
           "uniqueItems": true
         },
         "connectSrc": {
