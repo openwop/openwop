@@ -65,6 +65,11 @@
           "type": "string",
           "enum": ["communication", "docs", "crm", "dev", "storage", "email-calendar", "ticketing", "data-warehouse", "marketing", "finance", "hr", "esignature", "support", "project-management", "payments", "other"]
         },
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0123. OPTIONAL. The commercial vendor / ecosystem this connector belongs to (e.g. \"Microsoft 365\", \"Google\", \"Workday\"). Presentational grouping ONLY — it is NOT the resolution key (RFC 0047 `provider` still resolves auth). Free-form (not an enum) so a new vendor needs no schema change; a host/registry groups connectors sharing a `vendor` under one heading and MUST fall back to the provider `displayName` when it is absent."
+        },
         "auth": {
           "type": "object",
           "required": ["kind"],

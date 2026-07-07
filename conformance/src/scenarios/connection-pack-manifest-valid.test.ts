@@ -22,6 +22,10 @@
  *   6. Positive — a SemVer prerelease `version` (`1.0.0-alpha.1`) is
  *      schema-VALID: prerelease *precedence* (clause 6, SemVer §11) is a
  *      host resolution concern, not a manifest-shape constraint.
+ *   7. Positive — a string `provider.vendor` validates (RFC 0123 clause 16).
+ *   8. Positive — a manifest OMITTING `provider.vendor` still validates
+ *      (vendor is OPTIONAL — back-compat).
+ *   9. Negative — a non-string `provider.vendor` (an array) is rejected.
  *
  * Behavioral resolution legs live in `connection-provider-resolution.test.ts`
  * (capability-gated on `capabilities.connections.packsSupported`).
@@ -117,6 +121,35 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     expect(
       validate(m),
       `connection-packs.md §Manifest clause 6: prerelease ordering is resolution-time SemVer §11, not manifest shape. Errors: ${JSON.stringify(validate.errors)}`,
+    ).toBe(true);
+  });
+
+  // RFC 0123 — presentational provider.vendor grouping (§Manifest clause 16).
+  it('positive: a provider.vendor string validates (RFC 0123)', () => {
+    const m = fixture();
+    m.provider.vendor = 'Google';
+    expect(
+      validate(m),
+      `connection-packs.md §Manifest clause 16 (RFC 0123): a string provider.vendor MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+    ).toBe(true);
+  });
+
+  it('positive: a manifest OMITTING provider.vendor still validates (back-compat, RFC 0123)', () => {
+    const m = fixture();
+    expect('vendor' in m.provider, 'the base fixture omits vendor').toBe(false);
+    expect(
+      validate(m),
+      `connection-packs.md §Manifest clause 16 (RFC 0123): vendor is OPTIONAL — a manifest without it MUST remain valid. Errors: ${JSON.stringify(validate.errors)}`,
+    ).toBe(true);
+  });
+
+  it('negative: a non-string provider.vendor is rejected (RFC 0123)', () => {
+    const m = fixture();
+    (m.provider as Record<string, unknown>).vendor = ['Google'];
+    const errs = failsWith(m, 'type');
+    expect(
+      errs.some((e) => e.instancePath === '/provider/vendor'),
+      'connection-packs.md §Manifest clause 16 (RFC 0123): provider.vendor MUST be a string — an array MUST be rejected',
     ).toBe(true);
   });
 });
