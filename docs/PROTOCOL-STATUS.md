@@ -11,8 +11,8 @@
 | JSON Schemas | 76 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 387 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 130 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 388 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 131 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -31,7 +31,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 125 |
+| Accepted | 126 |
 | Active | 4 |
 | Draft | 1 |
 
@@ -167,6 +167,7 @@
 | RFC 0128 | Purpose-propagation - permitted-use labels on cross-host synced data | Accepted |
 | RFC 0129 | Data-residency - regional advertisement + honor-or-reject run constraint | Accepted |
 | RFC 0130 | Canvas Preview Plugin Surface (amends RFC 0117) | Accepted |
+| RFC 0131 | Distinguish a composable, task-scoped **Skill** from a top-level **assistant** agent, first-class on the agent manifest - an additive optional `AgentManifest.role` plus a schema-encoded **Skill profile** (a `role:"skill"` manifest MUST declare `handoff` and constrain `memoryShape` to scratchpad-only) that keeps sub-agent dispatch stateless and replay-clean | Accepted |
 
 ## SDK Helper Coverage
 

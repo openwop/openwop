@@ -57,9 +57,14 @@
       "items": { "type": "string", "minLength": 1 },
       "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /v1/agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
     },
+    "role": {
+      "type": "string",
+      "enum": ["skill", "assistant"],
+      "description": "RFC 0131. The manifest's kind — EXPLICIT, never inferred from other fields (`handoff` presence does NOT imply `skill`; an assistant may carry a typed entry contract for cross-host interop). `skill`: a composable, task-scoped capability invoked via `handoff` (task→return) and composed by an assistant/roster agent — stateless and replay-clean; declaring this value OPTS IN to the Skill profile (the `allOf` conditional below: MUST declare `handoff`, MUST constrain `memoryShape` to scratchpad-only). `assistant`: a top-level conversational agent a client talks to and that composes skills — no profile binds it. OPTIONAL; when ABSENT the manifest is UNCONSTRAINED — no profile binds it and its meaning is exactly today's (byte- and behavior-identical). Advisory about kind only — never widens `toolAllowlist`, `requiresCapabilities`, or any scope. See `node-packs.md` §`agents[]` (the field) and `agent-memory.md` §B (the memoryShape constraint + the §C-vs-§B reject/degrade contrast)."
+    },
     "memoryShape": {
       "type": "object",
-      "description": "Declares which memory backends the agent reads/writes. Hosts that advertise `capabilities.agents.memoryBackends` MAY filter manifests during install based on these flags. The full memory-shape contract lands in RFC 0004 (Phase 3); RFC 0003 only declares the descriptor field and reserves `longTerm: true` as the redaction-harness trigger.",
+      "description": "Declares which memory backends the agent reads/writes. Hosts that advertise `capabilities.agents.memoryBackends` MAY filter manifests during install based on these flags. The full memory-shape contract lands in RFC 0004 (Phase 3); RFC 0003 only declares the descriptor field and reserves `longTerm: true` as the redaction-harness trigger. RFC 0131: a `role: \"skill\"` manifest MUST constrain `conversation`/`longTerm` to `false`/absent (the Skill profile — persistent + multi-turn memory belong to the composing assistant/roster agent, RFC 0039; a stateful worker undermines replay determinism, RFC 0041).",
       "additionalProperties": false,
       "properties": {
         "scratchpad": {
@@ -130,5 +135,22 @@
   "oneOf": [
     { "required": ["systemPrompt"], "not": { "required": ["systemPromptRef"] } },
     { "required": ["systemPromptRef"], "not": { "required": ["systemPrompt"] } }
+  ],
+  "allOf": [
+    {
+      "$comment": "RFC 0131 §B — the Skill profile. Binds ONLY manifests that opt in with `role: \"skill\"` (absent/`assistant` ⇒ unconstrained). A `role:\"skill\"` manifest MUST declare `handoff` and MUST NOT declare `memoryShape.conversation` or `memoryShape.longTerm` as `true` (scratchpad-only). A violation is a malformed manifest (RFC 0003 §C — an author error caught at publish/install validation), NOT an RFC 0072 §C `degraded[]` runtime tier.",
+      "if": { "properties": { "role": { "const": "skill" } }, "required": ["role"] },
+      "then": {
+        "required": ["handoff"],
+        "properties": {
+          "memoryShape": {
+            "properties": {
+              "conversation": { "const": false },
+              "longTerm": { "const": false }
+            }
+          }
+        }
+      }
+    }
   ]
 }

@@ -633,6 +633,29 @@ invariants:
       `toolAllowlist` — for hosts advertising `agents.liveRuntime`;
       it soft-skips elsewhere, so the invariant stays reference-impl tier.
 
+  - id: agent-skill-profile-stateless
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/agent-manifest-role-profile.test.ts
+    note: |
+      RFC 0131 §B. A `role: "skill"` `AgentManifest` MUST declare `handoff`
+      and MUST NOT declare `memoryShape.conversation`/`memoryShape.longTerm`
+      as `true` (scratchpad-only). The enforcing gate is the schema-encoded
+      `if role==="skill"` conditional in `agent-manifest.schema.json`: a
+      violating skill manifest FAILS validation at publish/install
+      (`pack_validation_failed`) — a malformed manifest (RFC 0003 §C author
+      error), NOT an RFC 0072 §C `degraded[]` runtime tier (whose "the host
+      lacks a capability a well-formed agent wants" meaning is deliberately
+      NOT overloaded). Keeps a composable, task-scoped skill stateless and
+      replay-clean (RFC 0041); persistent + multi-turn memory belong to the
+      composing assistant/roster agent (RFC 0039). `role` is EXPLICIT, never
+      inferred — an absent `role` (or `role: "assistant"`) is unconstrained,
+      so no pre-existing manifest changes validity. The always-on test is the
+      public witness (validate skill/assistant/no-role cases; reject the
+      stateful skill + the handoff-less skill + a bad enum value).
+
   - id: agent-pack-handoff-schema-enforcement
     tier: protocol
     severity: high
