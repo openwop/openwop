@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [Unreleased]
+
+- **Registry and extension-policy (RFC 0043 `Accepted`, 2026-07-07).** Graduates `Active → Accepted` the one-stop governance policy that consolidates the project's *non-wire* stability surface: extension-namespace reservation + policing, pack-registry submission/deprecation/yank/key-rotation, profile/event/kind/capability name reservation against squatting, and the IPR posture. `additive` — policy text only, **no wire-shape, schema, OpenAPI, or conformance change** (the `openwop:check` gate is unaffected). The policy has been live and cited as authoritative from normative spec (`host-extensions.md` §"Canonical prefixes", `registry-operations.md` policy layer, `docs/governance/registry-policy.md`) since 2026-06-11; its only landing gate — a 7-day public comment window — was **waived** under the bootstrap-phase steward waiver (`CONTRIBUTING.md` §"Bootstrap-phase notes"; same mechanism as RFC 0121), with no unresolved objections on the additive policy. Working-group ratification remains a **future-action gate, not a blocker** (gated on the `GOVERNANCE.md` tripwire per RFC 0038, WG-revisitable). The five §Unresolved policy questions (DNS-ownership path, 72-hour yank window, no-trademark posture, 14-day patent-disclosure SLA, `openwop.*`/`host.*` OTel namespace) stand at their proposed bootstrap defaults and are WG-revisitable — none was a graduation blocker. Corpus RFC counts move `Accepted 126 → 127 / Active 4 → 3 / Draft 1 (0038)`.
+
 ## [1.4.0] — 2026-07-07 — agent-manifest `role` + the Skill profile (RFC 0131 `Accepted`)
 
 Distinguishes a composable, task-scoped **Skill** from a top-level **assistant** agent, first-class on the agent manifest. One RFC reaches `Accepted`; wire shape additive per `COMPATIBILITY.md` §2.1 plus a schema-encoded safety-fix that binds only opt-in manifests. RFC counts move `Accepted → +1` (0131).

@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 126 |
-| Active | 4 |
+| Accepted | 127 |
+| Active | 3 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -79,7 +79,7 @@
 | RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Accepted |
 | RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Accepted |
 | RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Accepted |
-| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Active |
+| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Accepted |
 | RFC 0044 | `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement - supports canonical (`clarification` / `approval`) and vendor-extension (`x-host-<host>-<kind>`) interrupt-kind names without forcing cross-cutting rename on hosts with entrenched kinds | Accepted |
 | RFC 0045 | A manifest-first `connector` block that lets a pack declare itself a named integration exposing typed **actions** (reusing the existing trigger model), each bound to an RFC 0047 `auth` declaration + RFC 0046 `requiredCredentials`, with standardized idempotency / retry / rate-limit metadata - the n8n/Make "connector" abstraction, expressed the openwop way | Accepted |
 | RFC 0046 | `host.credentials` capability - a portable credential resolution + lifecycle contract (store-at-rest, workspace sharing, two-key-overlap rotation, redaction-everywhere) | Accepted |
@@ -185,7 +185,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

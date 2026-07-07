@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 124 · Active 4 · Draft 1** (129 RFCs, excluding the `0000` template; Active = 0035, 0043, 0111, 0121; Draft = 0038 Parked).
+Current tally: **Accepted 127 · Active 3 · Draft 1** (131 RFCs, excluding the `0000` template; Active = 0035, 0111, 0121; Draft = 0038 Parked).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -113,7 +113,7 @@ Current tally: **Accepted 124 · Active 4 · Draft 1** (129 RFCs, excluding the 
 | [0040](./0040-multi-agent-cross-host-causation.md)                   | Multi-agent execution model `version: 3` — cross-host causation linking                                                              | `Accepted`           |
 | [0041](./0041-multi-agent-replay-under-nondeterminism.md)            | Multi-agent execution model `version: 4` — replay determinism under nondeterministic models                                          | `Accepted`           |
 | [0042](./0042-experimental-capability-tier.md)                       | Experimental capability tier                                                                                                         | `Accepted`           |
-| [0043](./0043-registry-and-extension-policy.md)                      | Registry and extension-policy                                                                                                        | `Active`             |
+| [0043](./0043-registry-and-extension-policy.md)                      | Registry and extension-policy                                                                                                        | `Accepted`             |
 | [0044](./0044-confidence-escalation-interrupt-kind-advertisement.md) | Confidence-escalation interrupt-kind advertisement (clarification to RFC 0039 §A)                                                    | `Accepted`           |
 | [0045](./0045-connector-pack-manifest-action-model.md)               | Connector pack manifest & action model                                                                                               | `Accepted`           |
 | [0046](./0046-host-credentials-capability.md)                        | host.credentials capability — credential vault, encryption, sharing & rotation                                                       | `Accepted`           |
