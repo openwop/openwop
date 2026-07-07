@@ -167,7 +167,7 @@
 | RFC 0128 | Purpose-propagation - permitted-use labels on cross-host synced data | Accepted |
 | RFC 0129 | Data-residency - regional advertisement + honor-or-reject run constraint | Accepted |
 | RFC 0130 | Canvas Preview Plugin Surface (amends RFC 0117) | Active |
-| RFC 0131 | Distinguish a composable, task-scoped **Skill** from a top-level **assistant** agent, first-class on the agent manifest - an additive optional `AgentManifest.role` plus a normative *Skill profile* (handoff required, `memoryShape <= scratchpad`) that keeps sub-agent dispatch stateless and replay-clean | Draft |
+| RFC 0131 | Distinguish a composable, task-scoped **Skill** from a top-level **assistant** agent, first-class on the agent manifest - an additive optional `AgentManifest.role` plus a schema-encoded **Skill profile** (a `role:"skill"` manifest MUST declare `handoff` and constrain `memoryShape` to scratchpad-only) that keeps sub-agent dispatch stateless and replay-clean | Draft |
 
 ## SDK Helper Coverage
 
