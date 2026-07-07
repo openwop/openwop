@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0130 |
 | **Title** | Canvas Preview Plugin Surface (amends RFC 0117) |
-| **Status** | Active |
+| **Status** | Accepted |
 | **Author(s)** | OpenWOP maintainers (steward: David Tufts) |
 | **Created** | 2026-07-07 |
-| **Updated** | 2026-07-07 — `Draft → Active`: steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus (the RFC 0117/0119 precedent); wire shape locked. |
+| **Updated** | 2026-07-07 — `Active → Accepted`: tier-1 reference-host evidence (single-witness bootstrap, the RFC 0117/0119 precedent) — openwop-app mounts `canvas-preview` as the pack canvas editor's center panel behind the `ui-plugins`+`canvas-packs` toggles (openwop-app#1481, ADR 0310 Phase E): advert `surfaces ⊇ ["canvas-preview"]` + `hostApi ⊇ ["host.announce"]` from the single-source dispatcher module, witness plugin pack `community.openwop.checklist-preview` (live `host.documentChanged` re-render, `host.selectionChanged` highlight, rate-limited/length-capped `host.announce` into dual live regions), with served-projection / hostApi-gate / rate-limit+cap regression tests. Earlier the same day — `Draft → Active`: steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus; wire shape locked. |
 | **Affects** | `RFCS/0117-frontend-plugin-packs.md` (header `Amended by`), `spec/v1/frontend-plugin-packs.md`, `schemas/frontend-plugin-manifest.schema.json`, `schemas/capabilities.schema.json`, `conformance/src/scenarios/frontend-plugin-packs.test.ts` (capability-gated) |
 | **Compatibility** | Additive (new closed-enum values, one new OPTIONAL manifest field, new `ui-plugin/1` methods under the existing unknown-method tolerance — `COMPATIBILITY.md` §4) |
 | **Amends** | RFC 0117 — adds a fourth sandboxed surface (`canvas-preview`) and three core RPC methods (`host.selectionChanged`, `host.documentChanged`, `host.announce`) |
@@ -92,9 +92,9 @@ The reference host (openwop-app) mounts `canvas-preview` as the center panel of 
 - [x] `schemas/capabilities.schema.json`: `uiPlugins.surfaces` + `uiPlugins.hostApi` enums updated.
 - [x] `spec/v1/frontend-plugin-packs.md` documents the surface + the three methods.
 - [x] `RFCS/0117-frontend-plugin-packs.md` header gains the `Amended by` row.
-- [ ] Reference host mounts the surface behind a feature toggle with a witness plugin pack, advertising `canvas-preview`/`host.announce` only where honored.
-- [ ] Capability-gated conformance scenario extended.
-- [ ] `Active → Accepted` flip names its implementation-evidence tier.
+- [x] Reference host mounts the surface behind a feature toggle with a witness plugin pack, advertising `canvas-preview`/`host.announce` only where honored (openwop-app#1481).
+- [x] Capability-gated conformance scenario extended (+2 always-on schema-layer scenarios; the isolation probes apply per-surface).
+- [x] `Active → Accepted` flip names its implementation-evidence tier (tier-1 single-witness bootstrap, above).
 
 ## References
 
