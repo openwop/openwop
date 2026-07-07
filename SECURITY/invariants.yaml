@@ -195,6 +195,13 @@ invariants:
       asserts the "subscription" enum value is present + a subscription provider
       appears in `byok`; the Active→Accepted behavioral leg (OPENWOP_REQUIRE_BEHAVIOR)
       asserts a tenant-scope binding is rejected with `credential_scope_forbidden`.
+      COVERAGE BOUNDARY: "MUST NOT be resolvable at tenant/workspace scope" binds the
+      STORAGE/resolve tenant, not just the request `scope` field. The black-box leg
+      proves only the request-scope REJECTION; where an accepted `scope:"user"` bind
+      is actually stored is host-test territory (a host can pass the wire rail yet
+      write the personal credential to a shared-workspace row — see
+      docs/KNOWN-LIMITS.md "Behavior tests too coarse"). Enforce BOTH: reject the
+      request scope AND bind storage to the caller's own user tenant.
 
   - id: runner-credential-non-transit
     tier: protocol
