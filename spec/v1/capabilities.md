@@ -593,6 +593,65 @@ capability claim; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it. A host that does
 `residency_unavailable` + no run created) gates on `dataResidency` being advertised and soft-skips
 when absent (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
 
+### `anonymousActor`
+
+RFC 0132 (`Active`). When present, the host honors **anonymous-actor authorization** on a
+**public agent surface** — an operator-configured entry point exposed to callers who
+authenticated no identity (an embeddable chat widget, a marketing-site assistant, a logged-out
+visitor). The anonymous actor is a new `principal` kind (`run-snapshot.owner.principalKind:
+"anonymous"`, see `auth.md` §"Anonymous actors") that is opaque, origin-bound, ephemeral,
+non-cross-linkable, and non-PII, whose authority is a **default-deny, explicit per-surface tool
+grant** — never a role, never the default-on tool baseline.
+
+```json
+"anonymousActor": { "supported": true, "tiers": ["read"], "failClosed": true }
+```
+
+```json
+"anonymousActor": { "supported": true, "tiers": ["read", "bounded-write-egress"],
+                    "writeEgressControls": ["hitl"], "failClosed": true }
+```
+
+**Field shape:** OPTIONAL `object`. When present, `supported` (`const: true`) and `tiers`
+(non-empty subset of `["read", "bounded-write-egress"]`) are REQUIRED; the block is **omitted
+entirely** by a host that runs no tool-enabled public surface (never `supported: false`).
+`writeEgressControls` (non-empty subset of `["hitl", "rate-limit-session-cap"]`) is REQUIRED
+**iff** `bounded-write-egress ∈ tiers` and MUST be absent otherwise — a control-less write/egress
+tier is the fail-open shape this family forbids. `failClosed` is `const: true`: an anon tool call
+whose grant is absent, unresolvable, or errors MUST deny (there is no fail-open anonymous mode).
+
+**The two tiers.** `read`: tools tenant-scoped to the surface's tenant, **no egress, no
+secret/BYOK reach**. `bounded-write-egress`: a tool that mutates durable state or performs
+outbound egress, permitted for an anon actor **only** behind a mandatory control (a per-action
+HITL/approval gate, RFC 0051 — the action suspends pending a human decision — **or** a hard
+rate-limit **and** a per-session action cap), over the RFC 0076 §B / RFC 0079 SSRF-guarded,
+audience-bound egress path, never attaching a tenant credential out-of-audience (default posture
+`downgraded`/`denied`). An anon actor never becomes a confused deputy for a tenant credential, and
+never escalates its grant over a session.
+
+**Truthful advertisement (normative).** A host MUST list a tier in `tiers` only if it behaviorally
+honors it per RFC 0132 §C; advertising `bounded-write-egress` without enforcing a control is a
+dishonest capability claim and `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it. A host that omits
+`anonymousActor` supports no anonymous-actor authorization and any public surface it runs is out of
+this family's scope (e.g. a no-tools single-turn public gateway needs no advertisement). The
+surface→tool allowlist and the capability-token that binds a surface to the actor are **host-owned
+config** — not on the wire; the effective grant for a live anon session is witnessed through the
+RFC 0078 tool-catalog read scoped to the anon principal (which fails empty).
+
+**Audit.** Every anon tool call emits the RFC 0049 `authorization.decided { principal, action,
+resource, allowed, reason }` event (no new event type) attributable to the opaque anon-session
+`principal`, carrying no PII or credential material; denials carry a machine-stable `reason`
+(`anon-not-granted`, `anon-write-ungated`, `anon-egress-denied`).
+
+**Conformance.** The capability-shape probe (`anonymous-actor-shape.test.ts`) is always-on
+(server-free): it validates the advert shape + the §B.2 conditional, `owner.principalKind`, and the
+`authorization.decided` audit reuse. The five behavioral scenarios (`anonymous-actor-default-deny`,
+`-no-secret-reach`, `-egress-guarded`, `-write-gated`, `-audit-opaque`) gate on
+`anonymousActor.supported` and soft-skip until a reference host wires a tool-enabled public surface
+(hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`). The five SECURITY invariants land at
+reference-impl tier at `Active` and graduate to protocol tier at `Active → Accepted` once witnessed
+non-vacuously.
+
 ### `observability`
 
 Optional v1 observability advertisement. See `observability.md`.

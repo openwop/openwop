@@ -504,6 +504,47 @@
         }
       }
     },
+    "anonymousActor": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0132 (`Active`). Anonymous-actor authorization for public agent surfaces — an opaque, origin-bound, ephemeral, non-cross-linkable, non-PII principal (`run-snapshot.owner.principalKind: \"anonymous\"`) whose authority is a DEFAULT-DENY, explicit per-surface tool grant, never the default-on tool baseline (§C.1). Two tiers: `read` (tenant-scoped, no egress, no secret/BYOK reach — §C.2) and `bounded-write-egress` (writes/egress permitted ONLY behind a mandatory HITL/approval gate (RFC 0051) OR a hard rate-limit + per-session cap, over the RFC 0076 §B / RFC 0079 SSRF-guarded audience-bound egress path, never attaching a tenant credential out-of-audience — §C.3). Every anon tool call emits `authorization.decided` (RFC 0049) attributable to the opaque session id, carrying no PII/credential (§D). The block is OMITTED ENTIRELY when unsupported (const-true `supported`, `dataResidency`-style — never `supported: false`). Absent ⇒ the host runs no tool-enabled public surface under RFC 0132 (e.g. a no-tools single-turn public gateway needs no advertisement).",
+      "required": ["supported", "tiers"],
+      "properties": {
+        "supported": {
+          "const": true,
+          "description": "RFC 0132. Present-and-true when the host honors anonymous-actor authorization per §C. The block is omitted entirely when the host runs no tool-enabled public surface (never `supported: false`)."
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["read", "bounded-write-egress"] },
+          "description": "RFC 0132 §B. The anon capability tiers this host BEHAVIORALLY honors (truthful-advertisement — a tier the host does not enforce per §C is a dishonest claim; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it). `read`: tenant-scoped reads, no egress, no secrets (§C.2). `bounded-write-egress`: writes/egress ONLY behind a §C.3 control."
+        },
+        "writeEgressControls": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["hitl", "rate-limit-session-cap"] },
+          "description": "RFC 0132 §B. REQUIRED and non-empty IFF `bounded-write-egress` ∈ `tiers`; MUST be absent otherwise. The mandatory control(s) the host enforces before an anon write/egress: `hitl` = a per-action approval gate (RFC 0051 — the action suspends pending a human decision); `rate-limit-session-cap` = a hard per-IP/per-window rate limit AND a per-session action cap. A `bounded-write-egress` tier with no advertised control is the fail-open shape §B.2 forbids."
+        },
+        "failClosed": {
+          "const": true,
+          "description": "RFC 0132. An anon tool call whose grant is absent, unresolvable, or errors MUST deny (never default-allow). There is no fail-open anonymous mode. Mirrors `capabilities.authorization.failClosed`."
+        }
+      },
+      "allOf": [
+        {
+          "$comment": "RFC 0132 §B.2 — writeEgressControls is REQUIRED and non-empty when bounded-write-egress is advertised, and MUST be absent otherwise (a control-less write/egress tier is the fail-open shape this RFC forbids).",
+          "if": {
+            "properties": { "tiers": { "contains": { "const": "bounded-write-egress" } } },
+            "required": ["tiers"]
+          },
+          "then": { "required": ["writeEgressControls"] },
+          "else": { "not": { "required": ["writeEgressControls"] } }
+        }
+      ]
+    },
     "credentials": {
       "type": "object",
       "description": "RFC 0046 (`Draft`). Portable credential resolution + lifecycle contract — sibling to `secrets`, first-class store-at-rest + workspace sharing + two-key-overlap rotation. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, channels, any run.* event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`). Supersedes the informal BYOK annex; the `secrets` advertisement stays valid.",

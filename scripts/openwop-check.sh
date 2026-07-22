@@ -70,7 +70,8 @@ echo "[1/6] Conformance suite (typecheck + server-free scenarios)..."
     src/scenarios/artifact-type-pack-manifest-validation.test.ts \
     src/scenarios/artifact-schema-compile-bounded.test.ts \
     src/scenarios/chat-card-pack-manifest-validation.test.ts \
-    src/scenarios/x-openwop-form-pack-manifest.test.ts
+    src/scenarios/x-openwop-form-pack-manifest.test.ts \
+    src/scenarios/anonymous-actor-shape.test.ts
 )
 echo
 
