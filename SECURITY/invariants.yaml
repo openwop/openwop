@@ -1839,6 +1839,101 @@ invariants:
       credentialAttached:false; provenance-unevaluable → denied fail-closed) — the
       RFC 0035 sandbox-invariant precedent.
 
+  # ===== Anonymous-actor authorization (RFC 0132) =====
+  # All five are BEHAVIORAL guarantees requiring a live tool-enabled public
+  # surface (no host ships one yet), so they land at reference-impl tier at
+  # Draft → Active and each GRADUATES to protocol tier at RFC 0132's
+  # Active → Accepted once a reference host (openwop-app) wires the surface and
+  # passes the gated scenario non-vacuously under OPENWOP_REQUIRE_BEHAVIOR=true
+  # — the RFC 0079 `egress-credential-audience-bound` precedent above. The
+  # always-on anonymous-actor-shape.test.ts proves the wire contract today.
+
+  - id: anon-actor-no-default-baseline
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/anonymous-actor-default-deny.test.ts
+    note: |
+      RFC 0132 §C.1. An anonymous actor (owner.principalKind:"anonymous") MUST be
+      granted ONLY the tools explicitly listed in the resolved public-surface
+      allowlist — never a default-on / default-granted tool baseline, never a tool
+      granted to authenticated agents by default, never a tool absent from the
+      surface's explicit grant. The effective granted set is witnessed through the
+      RFC 0078 tool-catalog read scoped to the anon principal, which fails EMPTY
+      when the surface grants nothing (never a baseline); a call to a non-granted
+      tool MUST resolve to authorization.decided{allowed:false,reason:
+      "anon-not-granted"} with no dispatch. Behavioral (needs a live public
+      surface) → reference-impl at Draft→Active; graduates to protocol when
+      anonymous-actor-default-deny.test.ts passes non-vacuously against a host.
+
+  - id: anon-actor-no-secret-reach
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/anonymous-actor-no-secret-reach.test.ts
+    note: |
+      RFC 0132 §C.2/§C.3. An anonymous-actor tool call (either tier) MUST NOT
+      resolve, return, or otherwise reach any secret / BYOK credential material,
+      and MUST NOT reach cross-tenant data (SR-1 + CTI-1 parity). A read-tier tool
+      is tenant-scoped to the surface's tenant; a cross-tenant read fails closed
+      (run_forbidden / an empty result — never another tenant's data). Behavioral
+      → reference-impl at Draft→Active; graduates to protocol when
+      anonymous-actor-no-secret-reach.test.ts passes non-vacuously (a planted BYOK
+      canary in the surface tenant never surfaces; a cross-tenant read fails closed).
+
+  - id: anon-actor-egress-ssrf-guarded
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/anonymous-actor-egress-guarded.test.ts
+    note: |
+      RFC 0132 §C.3 (composes RFC 0079 egress-credential-audience-bound + RFC 0076
+      §B safeFetch). An anon-initiated egress MUST ride the host's SSRF-guarded,
+      audience-bound egress path; a host-issued or tenant BYOK credential MUST NOT
+      attach to an anon egress whose destination is not in the credential's
+      provenance audiences — the egress is denied (reason: out-of-audience) or
+      downgraded (proceeds anonymously). The default posture is downgraded/denied;
+      an anon actor never becomes a confused deputy for a tenant credential.
+      Behavioral → reference-impl at Draft→Active; graduates to protocol when
+      anonymous-actor-egress-guarded.test.ts passes non-vacuously against a host.
+
+  - id: anon-actor-write-egress-gated
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/anonymous-actor-write-gated.test.ts
+    note: |
+      RFC 0132 §C.3. An anon bounded-write/egress tool (one that mutates durable
+      state or performs outbound egress) MUST be behind a mandatory control: a
+      per-action HITL/approval gate (RFC 0051 — the action suspends pending a human
+      decision) OR a hard rate-limit AND a per-session action cap. A host MUST
+      advertise which control(s) it uses (capabilities.anonymousActor
+      .writeEgressControls) and MUST NOT permit an ungated anon write/egress; an
+      anon write/egress with no resolvable control MUST be denied (reason:
+      "anon-write-ungated"). Behavioral → reference-impl at Draft→Active; graduates
+      to protocol when anonymous-actor-write-gated.test.ts passes non-vacuously.
+
+  - id: anon-actor-audit-opaque
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/anonymous-actor-audit-opaque.test.ts
+    note: |
+      RFC 0132 §A/§D (RFC 0048 identifier-opacity + SR-1). The anon-session
+      principal MUST be opaque, origin-bound, ephemeral, non-cross-linkable, and
+      non-PII (no IP address, email, device fingerprint, or third-party identity),
+      and MUST NOT be resolvable to an authenticated principal, a workspace, or
+      another anon session. Every anon tool call emits the RFC 0049
+      authorization.decided record (no new event minted) carrying the opaque anon
+      id and NO PII / credential material. Behavioral → reference-impl at
+      Draft→Active; graduates to protocol when anonymous-actor-audit-opaque.test.ts
+      passes non-vacuously against a host.
+
   - id: budget-no-pricing-leak
     tier: protocol
     severity: high

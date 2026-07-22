@@ -40,7 +40,12 @@
       "properties": {
         "tenant": { "type": "string", "minLength": 1, "description": "Top-level isolation boundary." },
         "workspace": { "type": "string", "minLength": 1, "description": "Optional sub-tenant within the tenant (RFC 0048 workspace)." },
-        "principal": { "type": "string", "minLength": 1, "description": "Acting identity (user or agent) — opaque id, never PII." }
+        "principal": { "type": "string", "minLength": 1, "description": "Acting identity (user or agent) — opaque id, never PII." },
+        "principalKind": {
+          "type": "string",
+          "enum": ["user", "agent", "anonymous"],
+          "description": "RFC 0132. The kind of the acting principal. OPTIONAL and EXPLICIT — absent ⇒ unconstrained (today's RFC 0048 behavior; a host that does not distinguish kinds omits it). `anonymous` ⇒ the RFC 0132 §A anonymous-actor rules and the §C default-deny per-surface grant bind: the `principal` id MUST be opaque, origin-bound, ephemeral, non-cross-linkable, non-PII, and never inherit a role or a default-on tool baseline. A host that advertises `capabilities.anonymousActor` and dispatches through a public surface MUST set `anonymous` on the resulting run. Resolves RFC 0048 §Unresolved-Q1 for the anonymous case."
+        }
       },
       "additionalProperties": false
     },

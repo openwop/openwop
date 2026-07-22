@@ -64,6 +64,7 @@ Set on every span emitted during a run's lifecycle:
 | `openwop.protocol_version` | string | SHOULD   | Server's openwop protocol version         |
 | `openwop.tenant_id`        | string | MAY      | Tenant/workspace scoping (if applicable)  |
 | `openwop.scope_id`         | string | MAY      | Project/scope correlation (if applicable) |
+| `openwop.actor.kind`       | string | MAY      | RFC 0132. The acting principal's kind (`user` / `agent` / `anonymous`), mirroring `run-snapshot.owner.principalKind`. Content-free — a dashboard signal, not PII. A host MAY set `anonymous` on anon-authorized spans (public-surface dispatch); absent ⇒ unconstrained (today's behavior). |
 
 ### Node-level attributes
 

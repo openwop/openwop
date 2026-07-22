@@ -108,6 +108,19 @@ The protocol does not prescribe _how_ a host derives these (API key, OIDC token,
 
 RBAC (RFC 0049), enterprise SSO/provisioning (RFC 0050), and approval gates (RFC 0051) all bind to this triple.
 
+### Anonymous actors (RFC 0132)
+
+RFC 0048 §Unresolved-Q1 deferred a principal-**kind** discriminator. RFC 0132 resolves it for the anonymous case by adding an OPTIONAL `principalKind` sibling to the `owner` triple (`run-snapshot.schema.json`), enum `["user", "agent", "anonymous"]`. It is **EXPLICIT, never inferred**: an absent value keeps today's RFC 0048 behavior; a host that does not distinguish kinds omits it.
+
+An **anonymous actor** (`principalKind: "anonymous"`) represents a caller who authenticated **no identity** against this host — a visitor on a **public agent surface** (an embeddable widget, a marketing-site assistant). Each property is normative:
+
+- **Opaque + non-PII.** The `principal` id MUST be an opaque, host-minted string that neither is nor embeds PII (no IP address, email, device fingerprint, or third-party identity) — the §"Identifier opacity" rule applied with no exception, because there is no user behind it to key on.
+- **Origin-bound + ephemeral.** The id MUST be scoped to a single public-surface session, MUST NOT be a stable long-lived handle, MUST NOT be reused to correlate two sessions, and MUST NOT be caller-supplied or caller-influenced (host-minted).
+- **Non-cross-linkable.** The id MUST NOT be resolvable — by the host or any wire consumer — to an authenticated `principal`, a `workspace`, or any other anon session. It is a leaf: it owns its session and nothing else.
+- **Never an authority source.** An anon actor's authority is **solely** the RFC 0132 §C default-deny per-surface tool grant. It MUST NOT inherit any role (RFC 0049), any RBAC scope, or any default-on tool baseline; a host MUST NOT resolve a role for it and MUST NOT default-allow any action.
+
+A host that advertises `capabilities.anonymousActor` (see `capabilities.md` §`anonymousActor`) and dispatches through a public surface MUST set `owner.principalKind: "anonymous"` on the resulting run so the authorization is observable and auditable. The `user`/`agent` values are, for now, a passive marker (RFC 0132 §Unresolved-Q1); only `anonymous` binds behavior.
+
 ## Role-based authorization (RFC 0049)
 
 A host MAY advertise `capabilities.authorization` to bind an RFC 0048 `principal`'s **role** to **scopes** and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key **scope grammar** (the §Authorization scope vocabulary above) — roles resolve _to_ scopes; no new grammar is introduced.
