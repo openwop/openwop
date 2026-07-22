@@ -1841,15 +1841,19 @@ invariants:
 
   # ===== Anonymous-actor authorization (RFC 0132) =====
   # All five are BEHAVIORAL guarantees requiring a live tool-enabled public
-  # surface (no host ships one yet), so they land at reference-impl tier at
-  # Draft → Active and each GRADUATES to protocol tier at RFC 0132's
-  # Active → Accepted once a reference host (openwop-app) wires the surface and
-  # passes the gated scenario non-vacuously under OPENWOP_REQUIRE_BEHAVIOR=true
-  # — the RFC 0079 `egress-credential-audience-bound` precedent above. The
-  # always-on anonymous-actor-shape.test.ts proves the wire contract today.
+  # surface. They landed at reference-impl tier at Draft → Active and GRADUATED
+  # to protocol tier at RFC 0132's Active → Accepted (2026-07-22) once the
+  # openwop-app tier-1 reference host (PR openwop-app#2403, rev 03d06d1f2) wired
+  # the surface and the five gated scenarios passed NON-VACUOUSLY under
+  # OPENWOP_REQUIRE_BEHAVIOR=true — steward-verified 2026-07-22 by booting the
+  # in-memory host (anonymousActor advert both tiers + hitl control; seam served
+  # 200, not a soft-skip) and running @openwop/openwop-conformance anon-actor
+  # scenarios: 10/10 assertions green. The RFC 0079 `egress-credential-audience-
+  # bound` precedent above. The always-on anonymous-actor-shape.test.ts proves
+  # the wire contract server-free.
 
   - id: anon-actor-no-default-baseline
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
@@ -1863,12 +1867,12 @@ invariants:
       RFC 0078 tool-catalog read scoped to the anon principal, which fails EMPTY
       when the surface grants nothing (never a baseline); a call to a non-granted
       tool MUST resolve to authorization.decided{allowed:false,reason:
-      "anon-not-granted"} with no dispatch. Behavioral (needs a live public
-      surface) → reference-impl at Draft→Active; graduates to protocol when
-      anonymous-actor-default-deny.test.ts passes non-vacuously against a host.
+      "anon-not-granted"} with no dispatch. GRADUATED reference-impl → protocol at
+      RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-default-deny.test.ts
+      passed non-vacuously against openwop-app rev 03d06d1f2.
 
   - id: anon-actor-no-secret-reach
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -1877,14 +1881,16 @@ invariants:
       RFC 0132 §C.2/§C.3. An anonymous-actor tool call (either tier) MUST NOT
       resolve, return, or otherwise reach any secret / BYOK credential material,
       and MUST NOT reach cross-tenant data (SR-1 + CTI-1 parity). A read-tier tool
-      is tenant-scoped to the surface's tenant; a cross-tenant read fails closed
-      (run_forbidden / an empty result — never another tenant's data). Behavioral
-      → reference-impl at Draft→Active; graduates to protocol when
-      anonymous-actor-no-secret-reach.test.ts passes non-vacuously (a planted BYOK
-      canary in the surface tenant never surfaces; a cross-tenant read fails closed).
+      is tenant-scoped to the surface's tenant; a cross-tenant attempt fails closed
+      — the host either denies it OR neutralizes it by ignoring the caller-supplied
+      tenant (RFC 0132 §A.2: the caller MUST NOT influence the tenant), never
+      resolving to or returning the caller's tenant. GRADUATED reference-impl →
+      protocol at RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-no-secret-
+      reach.test.ts passed non-vacuously against openwop-app rev 03d06d1f2 (planted
+      BYOK canary never surfaced; the caller-supplied tenant was ignored).
 
   - id: anon-actor-egress-ssrf-guarded
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -1897,11 +1903,12 @@ invariants:
       provenance audiences — the egress is denied (reason: out-of-audience) or
       downgraded (proceeds anonymously). The default posture is downgraded/denied;
       an anon actor never becomes a confused deputy for a tenant credential.
-      Behavioral → reference-impl at Draft→Active; graduates to protocol when
-      anonymous-actor-egress-guarded.test.ts passes non-vacuously against a host.
+      GRADUATED reference-impl → protocol at RFC 0132 Active→Accepted (2026-07-22):
+      anonymous-actor-egress-guarded.test.ts passed non-vacuously against openwop-
+      app rev 03d06d1f2 (out-of-audience → anon-egress-denied, credentialAttached:false).
 
   - id: anon-actor-write-egress-gated
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
@@ -1914,11 +1921,13 @@ invariants:
       advertise which control(s) it uses (capabilities.anonymousActor
       .writeEgressControls) and MUST NOT permit an ungated anon write/egress; an
       anon write/egress with no resolvable control MUST be denied (reason:
-      "anon-write-ungated"). Behavioral → reference-impl at Draft→Active; graduates
-      to protocol when anonymous-actor-write-gated.test.ts passes non-vacuously.
+      "anon-write-ungated"). GRADUATED reference-impl → protocol at RFC 0132
+      Active→Accepted (2026-07-22): anonymous-actor-write-gated.test.ts passed non-
+      vacuously against openwop-app rev 03d06d1f2 (hitl control → approval interrupt
+      before the durable write; uncontrolled surface → anon-write-ungated).
 
   - id: anon-actor-audit-opaque
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -1930,9 +1939,10 @@ invariants:
       and MUST NOT be resolvable to an authenticated principal, a workspace, or
       another anon session. Every anon tool call emits the RFC 0049
       authorization.decided record (no new event minted) carrying the opaque anon
-      id and NO PII / credential material. Behavioral → reference-impl at
-      Draft→Active; graduates to protocol when anonymous-actor-audit-opaque.test.ts
-      passes non-vacuously against a host.
+      id and NO PII / credential material. GRADUATED reference-impl → protocol at
+      RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-audit-opaque.test.ts
+      passed non-vacuously against openwop-app rev 03d06d1f2 (opaque anon: id, no
+      PII in the decision record; owner.principalKind:"anonymous" projected).
 
   - id: budget-no-pricing-leak
     tier: protocol

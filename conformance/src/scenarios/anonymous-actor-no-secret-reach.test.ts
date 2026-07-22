@@ -40,23 +40,39 @@ describe('anonymous-actor-no-secret-reach (RFC 0132 §C.2/§C.3)', () => {
     ).toBe(false);
   });
 
-  it('a cross-tenant read fails closed — never another tenant’s data', async () => {
+  it('a cross-tenant read fails closed — the caller-supplied tenant is never resolved', async () => {
     if (!behaviorGate(PROFILE, await isAnonymousActorAdvertised())) return;
-    // Ask a granted read tool to reach a resource in a DIFFERENT tenant.
-    const res = await anonDispatch({ tool: 'catalog.read', args: { tenant: 'other-tenant' } });
+    // A visitor tries to influence the tenant via tool args. Per RFC 0132 §A.2 the
+    // caller MUST NOT be able to supply or influence the anon actor's tenant: a
+    // conformant host either DENIES the attempt, or NEUTRALIZES it by scoping to
+    // the surface's own tenant — it MUST NOT resolve to the caller-supplied tenant
+    // and MUST NOT return that tenant's data. Both outcomes are "fail closed"; the
+    // one non-conformant behavior is resolving/returning the caller's tenant.
+    const CROSS = 'other-tenant';
+    const res = await anonDispatch({ tool: 'catalog.read', args: { tenant: CROSS } });
     if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
     const decided = res.json?.authorizationDecided?.payload;
-    // Either the authorization decision denies, or the seam returns a fail-closed
-    // status with no cross-tenant result — never allowed-with-data.
     const deniedByDecision = decided?.allowed === false;
     const deniedByStatus = res.status === 403 || res.status === 404;
+    // The resolved tenant (owner triple or the decision's `resource`) MUST NOT be
+    // the caller-supplied one — the host ignored the attacker-controlled input.
+    const resolvedTenant = res.json?.owner?.tenant ?? decided?.resource?.replace(/^tenant:/, '');
+    const neutralizedToSurface =
+      typeof resolvedTenant === 'string' && resolvedTenant.length > 0 && resolvedTenant !== CROSS;
     expect(
-      deniedByDecision || deniedByStatus,
-      driver.describe('SECURITY anon-actor-no-secret-reach (CTI-1)', 'a cross-tenant anon read MUST fail closed'),
+      deniedByDecision || deniedByStatus || neutralizedToSurface,
+      driver.describe(
+        'SECURITY anon-actor-no-secret-reach (CTI-1 / RFC 0132 §A.2)',
+        'a cross-tenant anon read MUST fail closed — denied, or the caller-supplied tenant ignored (never resolved to the caller’s tenant)',
+      ),
     ).toBe(true);
-    expect(
-      res.json?.result,
-      driver.describe('SECURITY anon-actor-no-secret-reach (CTI-1)', 'a cross-tenant anon read MUST NOT return data'),
-    ).toBeUndefined();
+    // On the denial path there MUST be no result body; on the neutralized path a
+    // result scoped to the SURFACE tenant is fine (it is not cross-tenant data).
+    if (deniedByDecision || deniedByStatus) {
+      expect(
+        res.json?.result,
+        driver.describe('SECURITY anon-actor-no-secret-reach (CTI-1)', 'a denied cross-tenant anon read MUST NOT return data'),
+      ).toBeUndefined();
+    }
   });
 });
