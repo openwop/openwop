@@ -4,14 +4,32 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0133                                                                                                                                                                  |
 | **Title**         | Workflow-chain composition — sub-chains and produced variables                                                                                                        |
-| **Status**        | `Draft`                                                                                                                                                                |
+| **Status**        | `Accepted`                                                                                                                                                              |
 | **Author(s)**     | openwop-app maintainers                                                                                                                                                |
 | **Created**       | 2026-07-22                                                                                                                                                              |
-| **Updated**       | 2026-07-22                                                                                                                                                              |
+| **Updated**       | 2026-07-23                                                                                                                                                              |
 | **Affects**       | `spec/v1/workflow-chain-packs.md`, `schemas/workflow-chain-pack-manifest.schema.json`, `schemas/workflow-definition.schema.json` (no change; referenced), registry index, conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                      |
 | **Superseded by** | —                                                                                                                                                                      |
+
+## Status history
+
+- **2026-07-22 `Draft`** — authored from the host side.
+- **2026-07-23 `Draft → Accepted`** — reference-impl witnessed. Both capabilities
+  are additive host-ext extensions of RFC 0013 (workflow-chain packs are
+  non-normative host-ext — the runtime dispatches only concrete `WorkflowDefinition`s,
+  `core.subWorkflow`/`core.dispatch`/the run-variable bag the executor already runs),
+  so acceptance is a **reference-impl-tier** witness, not a new protocol MUST-NOT.
+  The schema deltas (§3) and the normative expansion + closed-world rules landed in
+  `schemas/workflow-chain-pack-manifest.schema.json` + `spec/v1/workflow-chain-packs.md`,
+  and the **openwop-app tier-1 reference host** implemented + tested both capabilities
+  (`workflowChainPackLoader` co-registration + `producedVariables→variables[]` + the
+  load-time closed-world validation; from-chain co-registration) — merged as
+  **openwop-app#2423**, with 12 dedicated cases (all six load rejections, sibling-cycle
+  detection, co-registration + deterministic tenant-scoped child id + `sub_chain_unsupported`
+  refuse-not-flatten) green alongside all 41 workflow-chain suites (292 tests). Every
+  new field is optional; existing chain packs validate + expand byte-identically.
 
 ## Summary
 
