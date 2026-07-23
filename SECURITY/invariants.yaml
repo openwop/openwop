@@ -1944,6 +1944,63 @@ invariants:
       passed non-vacuously against openwop-app rev 03d06d1f2 (opaque anon: id, no
       PII in the decision record; owner.principalKind:"anonymous" projected).
 
+  - id: sub-chain-expansion-bounded
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/chain-subchain-cycle-rejected.test.ts
+    note: |
+      RFC 0133 §"Sub-chain composition" — bounded recursion. A workflow-chain
+      pack MAY declare `subChains[]` a host co-expands into co-registered child
+      workflows at `POST …/workflows/from-chain`. A host MUST bound that
+      co-expansion so a malicious or malformed pack cannot cause denial of
+      service via unbounded recursion: a chain that transitively composes itself
+      MUST be rejected with `sub_chain_cycle`, AND nesting depth MUST be capped by
+      a host `maxSubChainDepth` (advertised as
+      `capabilities.workflowChainPacks.subChains.maxDepth`, RECOMMENDED default 8)
+      — a breach fails closed with the DISTINCT code `sub_chain_max_depth_exceeded`
+      (so an operator sees which bound fired; a depth breach is not a cycle). This is the
+      workflow-chain analog of `artifact-schema-compile-bounded` (RFC 0071). Server-
+      free floor: `chain-subchain-cycle-rejected.test.ts` drives the reference
+      library (`expandChainTree`) and asserts BOTH a self-referential chain and a
+      depth-bound breach reject non-vacuously while an acyclic tree within the
+      bound expands cleanly — the public test. The behavioral end-to-end form (a
+      reference host rejects an over-bounds `from-chain` at instantiate time) is
+      capability-gated on `capabilities.workflowChainPacks.subChains.supported`
+      and host-pending until a reference host wires runtime child dispatch.
+
+  - id: sub-chain-child-tenant-scoped
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/chain-subchain-sibling.test.ts
+      - conformance/src/scenarios/chain-subchain-fanout.test.ts
+    note: |
+      RFC 0133 §1.3 step 2 (CTI-1 parity). When a host co-registers a child chain
+      during parent instantiation, the child workflow MUST be owned by — and
+      reachable only from — the SAME tenant as the parent (`recordOwnership` for
+      the parent's tenant). CRITICAL id-derivation corollary: `registerWorkflow` is
+      a GLOBAL by-id registry, so the deterministic child id MUST be TENANT-SCOPED —
+      derived from `(tenantId, childChainId, version)`, NOT from a tenant-less
+      `(parentExpansionId, childChainId)`. A tenant-less id lets two tenants
+      instantiating the same parent→child collide on ONE global workflow id
+      (cross-tenant overwrite/leak). A co-registered child MUST NOT be registered
+      under, or become reachable from, any other tenant, and two tenants
+      instantiating the same pack MUST NEVER converge on a shared child workflow
+      (no cross-tenant workflow aliasing). This applies the existing cross-tenant-
+      isolation guarantee to the new co-registration path.
+      Reference-impl-tier OVERALL (the ownership + reachability half is a property of
+      the host's `from-chain` co-registration + workflow store): the capability-gated
+      `chain-subchain-fanout.test.ts` is its behavioral home and soft-skips until a
+      reference host advertises `capabilities.workflowChainPacks.subChains.supported`.
+      The ID-SCOPING half IS witnessed server-free now: `chain-subchain-sibling.test.ts`
+      asserts `mintChildWorkflowId` yields DISTINCT ids for distinct tenants (no
+      collision) and converges in-tenant. Graduates reference-impl → protocol when a
+      host witnesses cross-tenant child isolation non-vacuously (RFC 0079 / RFC 0132
+      graduation precedent).
+
   - id: budget-no-pricing-leak
     tier: protocol
     severity: high

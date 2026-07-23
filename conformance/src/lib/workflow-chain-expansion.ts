@@ -43,6 +43,33 @@ export interface WorkflowChain {
   dag: { nodes: ReadonlyArray<FragmentNode>; edges?: ReadonlyArray<FragmentEdge> };
   outputs?: Record<string, { type: string; description: string }>;
   capabilities?: ReadonlyArray<'streamable' | 'cacheable' | 'side-effectful' | 'mcp-exportable'>;
+  /** RFC 0133 §1. Child chains this chain composes at run time. A node
+   *  references one via `config.subChainRef`; the host co-registers it as
+   *  its own workflow and dispatches it as a child run. Optional — a chain
+   *  with none behaves exactly as under RFC 0013. */
+  subChains?: ReadonlyArray<SubChainRef>;
+  /** RFC 0133 §2. Run-scoped values a node writes to the executor's variable
+   *  bag and downstream nodes read via a `{ type:"variable" }` input binding.
+   *  Distinct from author-time `parameters`; carry NO author-time value. */
+  producedVariables?: ReadonlyArray<ProducedVariable>;
+}
+
+/** RFC 0133 §1.1. A reference to a child chain the parent composes. `ref` is
+ *  EITHER a sibling `chainId` string (a chain in the SAME pack) OR an object
+ *  naming an externally published chain (resolved + signature-verified like any
+ *  pack dependency). */
+export interface SubChainRef {
+  ref: string | { packName: string; chainId: string; version: string };
+}
+
+/** RFC 0133 §2.2. A run-scoped variable a chain declares: written by one node
+ *  (`producedBy`) and read by others by `name`. `type` is a JSON-Schema type
+ *  token for validation/inspection. Run-scoped — no author-time value. */
+export interface ProducedVariable {
+  name: string;
+  producedBy: string;
+  type: string;
+  description?: string;
 }
 
 export interface FragmentNode {
@@ -511,4 +538,319 @@ export function expandChainDeferred(
     promptVariables: [...promptVariables.values()],
     configurableSchema,
   };
+}
+
+// ---------------------------------------------------------------------------
+// RFC 0133 — Workflow-chain composition: sub-chains + produced variables.
+//
+// Two additive extensions to the RFC 0013 model, each usable alone:
+//
+//   §1 SUB-CHAINS — a chain declares child chains it composes (`subChains[]`)
+//      and references them from a runtime dispatch node via `config.subChainRef`.
+//      Unlike RFC 0013's author-time inline splice, a referenced sub-chain is
+//      CO-INSTANTIATED as its own registered workflow and dispatched by the
+//      parent at run time (the parent genuinely holds the child). Expansion
+//      mints a DETERMINISTIC, TENANT-SCOPED child id from (tenantId, childChainId, version) so
+//      a repeat instantiation converges and a shared child registers once, then
+//      rewrites the referencing node's `config.subChainRef` → `config.workflowId`
+//      (the field the runtime already reads). Recursion is bounded by a cycle
+//      check + `maxSubChainDepth` (DoS guard — SECURITY `sub-chain-expansion-bounded`).
+//
+//   §2 PRODUCED VARIABLES — a chain declares run-scoped values a node writes to
+//      the executor's variable bag (`producedVariables[]`), emitted on expansion
+//      into `WorkflowDefinition.variables[]`. Any `{ type:"variable" }` input
+//      read is validated closed-world against the declared set (+ materialized
+//      params); an undeclared read is a `variable_undeclared` manifest error.
+//
+// @see spec/v1/workflow-chain-packs.md §"Sub-chain composition (RFC 0133)"
+//   + §"Produced (run-scoped) variables (RFC 0133)"
+// @see RFCS/0133-workflow-chain-composition.md
+// ---------------------------------------------------------------------------
+
+/** RECOMMENDED default recursion bound for sub-chain co-expansion (RFC 0133
+ *  §1.3 — confirms UQ3). A host MAY advertise a different `maxDepth` via
+ *  `capabilities.workflowChainPacks.subChains.maxDepth`. */
+export const DEFAULT_MAX_SUB_CHAIN_DEPTH = 8;
+
+/** Thrown when a `config.subChainRef` (or a `subChains[].ref`) names a sibling
+ *  chainId that is not present in the same pack, or an external ref that fails
+ *  resolution/verification. Wire code `sub_chain_unresolved` (HTTP 400) per
+ *  `workflow-chain-packs.md` §"Error codes" (RFC 0133). */
+export class SubChainUnresolvedError extends Error {
+  readonly code = 'sub_chain_unresolved';
+  readonly httpStatus = 400;
+  constructor(readonly ref: string, readonly chainId: string) {
+    super(`sub_chain_unresolved: '${ref}' referenced from chain '${chainId}'`);
+    this.name = 'SubChainUnresolvedError';
+  }
+}
+
+/** Thrown when a chain transitively composes itself (a cycle in the compose
+ *  graph). Wire code `sub_chain_cycle` (HTTP 400) per `workflow-chain-packs.md`
+ *  §"Error codes" (RFC 0133). Together with `SubChainDepthExceededError` it is a
+ *  public test for SECURITY invariant `sub-chain-expansion-bounded`. */
+export class SubChainCycleError extends Error {
+  readonly code = 'sub_chain_cycle';
+  readonly httpStatus = 400;
+  constructor(readonly chainId: string, readonly detail: string) {
+    super(`sub_chain_cycle: chain '${chainId}' — ${detail}`);
+    this.name = 'SubChainCycleError';
+  }
+}
+
+/** Thrown when co-expansion nesting exceeds `maxSubChainDepth` — the DoS depth
+ *  backstop, DISTINCT from an actual cycle so an operator sees WHICH bound fired.
+ *  Wire code `sub_chain_max_depth_exceeded` (HTTP 400) per `workflow-chain-packs.md`
+ *  §"Error codes" (RFC 0133). A public test for `sub-chain-expansion-bounded`. */
+export class SubChainDepthExceededError extends Error {
+  readonly code = 'sub_chain_max_depth_exceeded';
+  readonly httpStatus = 400;
+  constructor(readonly chainId: string, readonly maxDepth: number) {
+    super(`sub_chain_max_depth_exceeded: chain '${chainId}' exceeds maxSubChainDepth ${maxDepth}`);
+    this.name = 'SubChainDepthExceededError';
+  }
+}
+
+/** Thrown when a node input binding `{ type:"variable", variableName }` reads a
+ *  name that is neither a declared `producedVariables[].name` nor a materialized
+ *  parameter — the closed-world guard that closes the "reads a value nothing
+ *  produces" hole. Wire code `variable_undeclared` (HTTP 400) per
+ *  `workflow-chain-packs.md` §"Error codes" (RFC 0133). */
+export class VariableUndeclaredError extends Error {
+  readonly code = 'variable_undeclared';
+  readonly httpStatus = 400;
+  constructor(readonly variableName: string, readonly chainId: string) {
+    super(`variable_undeclared: '${variableName}' read in chain '${chainId}'`);
+    this.name = 'VariableUndeclaredError';
+  }
+}
+
+/** Thrown when a `producedVariables[].producedBy` names a node id that does not
+ *  exist in the same fragment — a malformed producer declaration (the value would
+ *  be produced by nothing). Distinct from `variable_undeclared` (a bad READER) so
+ *  an operator sees which side is malformed. Wire code `produced_var_producer_unknown`
+ *  (HTTP 400) per `workflow-chain-packs.md` §"Error codes" (RFC 0133). */
+export class ProducedVarProducerUnknownError extends Error {
+  readonly code = 'produced_var_producer_unknown';
+  readonly httpStatus = 400;
+  constructor(readonly variableName: string, readonly producedBy: string, readonly chainId: string) {
+    super(`produced_var_producer_unknown: '${variableName}' producedBy unknown node '${producedBy}' in chain '${chainId}'`);
+    this.name = 'ProducedVarProducerUnknownError';
+  }
+}
+
+/** The canonical `subChains[].ref` chainId — a string ref is the sibling
+ *  chainId; an object ref's `chainId` is the external chain's id. */
+function refChainId(ref: SubChainRef['ref']): string {
+  return typeof ref === 'string' ? ref : ref.chainId;
+}
+
+/** Deterministic child workflow id minted from **(tenantId, childChainId, version)**
+ *  per RFC 0133 §1.3 step 2. TENANT-SCOPED by construction: the `registerWorkflow`
+ *  registry is global by-id, so a tenant-less id would let two tenants instantiating
+ *  the same parent→child COLLIDE on one global workflow (a cross-tenant isolation
+ *  break — SECURITY `sub-chain-child-tenant-scoped`). Keying on `tenantId` also makes
+ *  the dedup correct ACROSS PARENTS within a tenant: a child chain composed by two
+ *  different parents in the same tenant registers exactly once (a repeat instantiation
+ *  converges). `version` distinguishes `lesson-batch@1` from `lesson-batch@2`. Dots +
+ *  unsafe chars are slugged (storage-key safety). */
+export function mintChildWorkflowId(tenantId: string, childChainId: string, version: string): string {
+  const slug = (s: string): string => s.replace(/[^0-9A-Za-z._-]/g, '_').replace(/\./g, '_');
+  return `wfc_${slug(tenantId)}__${slug(childChainId)}__${slug(version)}`;
+}
+
+/** A child chain co-registered as its own workflow during parent expansion. */
+export interface CoRegisteredChild {
+  /** Deterministic minted id (see `mintChildWorkflowId`). */
+  childWorkflowId: string;
+  /** The composed chain's `chainId`. */
+  chainId: string;
+  /** The child's own expanded fragment (registered as a standalone workflow). */
+  fragment: ExpandedFragment;
+}
+
+export interface ChainTreeExpansion {
+  /** The parent fragment — every `config.subChainRef` rewritten to the minted
+   *  child `config.workflowId`. */
+  parent: ExpandedFragment;
+  /** Every co-registered child, deduplicated by `childWorkflowId` (a child
+   *  referenced twice registers once). */
+  children: ReadonlyArray<CoRegisteredChild>;
+}
+
+export interface CoExpansionContext {
+  /** Unique tag for this parent instantiation — seeds the parent node-id prefix
+   *  (per-drop node-id uniqueness). Does NOT seed the child workflow id (that is
+   *  tenant-scoped — see `tenantId`). */
+  parentExpansionId: string;
+  /** The instantiating tenant. The deterministic CHILD workflow id is scoped to
+   *  this tenant so two tenants never collide on the global by-id registry
+   *  (SECURITY `sub-chain-child-tenant-scoped`) and a child shared across parents
+   *  within the tenant dedups to one registration. */
+  tenantId: string;
+  params: Record<string, unknown>;
+  isTypeIdResolvable: (typeId: string) => boolean;
+  /** Sibling chains available in the SAME pack, keyed by `chainId`. External
+   *  refs (object form) are resolved host-side and supplied here too when the
+   *  host wants them co-expanded in-process; a ref absent from this map is
+   *  `sub_chain_unresolved`. */
+  siblingChains: ReadonlyMap<string, WorkflowChain>;
+  /** Recursion bound (default `DEFAULT_MAX_SUB_CHAIN_DEPTH`). */
+  maxDepth?: number;
+}
+
+/** Collect every distinct `config.subChainRef` reachable from a chain's nodes. */
+function subChainRefsInNodes(chain: WorkflowChain): string[] {
+  const refs: string[] = [];
+  for (const n of chain.dag.nodes) {
+    const r = n.config?.['subChainRef'];
+    if (typeof r === 'string' && !refs.includes(r)) refs.push(r);
+  }
+  return refs;
+}
+
+/**
+ * Co-expand a parent chain and every sub-chain it composes (RFC 0133 §1.3).
+ * Resolves each `config.subChainRef` to a sibling chain, recursively co-expands
+ * it, mints a deterministic child workflow id, and rewrites the referencing
+ * node's `config.subChainRef` → `config.workflowId`. Bounded by a cycle check
+ * and `maxDepth`.
+ *
+ * @throws SubChainUnresolvedError when a ref names no sibling chain.
+ * @throws SubChainCycleError on a compose cycle or a depth-bound breach.
+ * @throws ChainUnresolvableTypeIdError when any node typeId fails resolution.
+ */
+export function expandChainTree(
+  root: WorkflowChain,
+  ctx: CoExpansionContext,
+): ChainTreeExpansion {
+  const maxDepth = ctx.maxDepth ?? DEFAULT_MAX_SUB_CHAIN_DEPTH;
+  const children = new Map<string, CoRegisteredChild>();
+
+  // DFS over the compose graph with an on-stack set for cycle detection.
+  const onStack = new Set<string>();
+
+  const expandOne = (chain: WorkflowChain, depth: number): ExpandedFragment => {
+    if (depth > maxDepth) {
+      throw new SubChainDepthExceededError(chain.chainId, maxDepth);
+    }
+    if (onStack.has(chain.chainId)) {
+      throw new SubChainCycleError(chain.chainId, 'chain transitively composes itself');
+    }
+    onStack.add(chain.chainId);
+
+    // Validate declared subChains[] resolve, and recurse into each referenced
+    // sibling BEFORE rewriting the parent so child ids exist to splice in.
+    const declared = new Set((chain.subChains ?? []).map((s) => refChainId(s.ref)));
+    for (const ref of subChainRefsInNodes(chain)) {
+      // A node ref MUST be a declared subChains[] entry (RFC 0133 §1.2).
+      if (!declared.has(ref)) throw new SubChainUnresolvedError(ref, chain.chainId);
+      const sibling = ctx.siblingChains.get(ref);
+      if (!sibling) throw new SubChainUnresolvedError(ref, chain.chainId);
+      // Tenant-scoped, version-pinned deterministic child id (§1.3 step 2).
+      const childId = mintChildWorkflowId(ctx.tenantId, ref, sibling.version);
+      if (!children.has(childId)) {
+        // Recurse first; the child fragment is registered under the minted id.
+        const childFragment = expandOne(sibling, depth + 1);
+        children.set(childId, { childWorkflowId: childId, chainId: ref, fragment: childFragment });
+      }
+    }
+
+    // Expand this chain's own fragment (reuses the RFC 0013 algorithm), then
+    // rewrite each subChainRef node: `config.subChainRef` → `config.workflowId`
+    // (the minted child id the runtime dispatches).
+    const expansionId = chain.chainId === root.chainId
+      ? ctx.parentExpansionId
+      : `${ctx.parentExpansionId}_${chain.chainId.replace(/\./g, '_')}`;
+    const fragment = expandChain(chain, {
+      expansionId,
+      params: ctx.params,
+      isTypeIdResolvable: ctx.isTypeIdResolvable,
+    });
+    const rewrittenNodes = fragment.nodes.map((n) => {
+      const ref = (n.config as Record<string, unknown> | undefined)?.['subChainRef'];
+      if (typeof ref !== 'string') return n;
+      const refVersion = ctx.siblingChains.get(ref)?.version ?? '0.0.0';
+      const { subChainRef: _drop, ...restConfig } = n.config as Record<string, unknown>;
+      return { ...n, config: { ...restConfig, workflowId: mintChildWorkflowId(ctx.tenantId, ref, refVersion) } };
+    });
+
+    onStack.delete(chain.chainId);
+    return { nodes: rewrittenNodes, edges: fragment.edges, idMap: fragment.idMap };
+  };
+
+  const parent = expandOne(root, 0);
+  return { parent, children: [...children.values()] };
+}
+
+/** Emit a chain's declared `producedVariables[]` as run-scoped `variables[]`
+ *  entries (name + type, NO value) for the expanded `WorkflowDefinition`
+ *  (RFC 0133 §2.3). The executor's existing variable bag carries them exactly
+ *  as in a hand-authored workflow — no new runtime surface. */
+export function emitProducedVariables(
+  chain: WorkflowChain,
+): ReadonlyArray<{ name: string; type: string }> {
+  return (chain.producedVariables ?? []).map((p) => ({ name: p.name, type: p.type }));
+}
+
+/** Walk a value for `{ type:"variable", variableName }` input bindings, collecting
+ *  every referenced variable name. */
+function collectVariableReads(value: unknown, out: Set<string>): void {
+  if (Array.isArray(value)) {
+    for (const v of value) collectVariableReads(v, out);
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if (obj['type'] === 'variable' && typeof obj['variableName'] === 'string') {
+      out.add(obj['variableName']);
+    }
+    for (const v of Object.values(obj)) collectVariableReads(v, out);
+  }
+}
+
+/**
+ * Closed-world validation of a chain's run-variable reads (RFC 0133 §2.2). Every
+ * `{ type:"variable", variableName }` binding in any node's `inputs` MUST reference
+ * a declared `producedVariables[].name` OR a materialized parameter name. An
+ * undeclared read throws `VariableUndeclaredError` — closing the "reads a value
+ * nothing produces" hole.
+ *
+ * @param materializedParams parameter names the host materialized as variables
+ *   (deferred mode, RFC 0124); empty for expansion-time substitution.
+ * @throws VariableUndeclaredError on the first undeclared variable read.
+ */
+export function validateVariableReads(
+  chain: WorkflowChain,
+  materializedParams: ReadonlySet<string> = new Set(),
+): void {
+  // Producer-existence (RFC 0133 §2.2): every producedVariables[].producedBy MUST
+  // name a real node id in the fragment — a producedBy naming a non-existent node
+  // is a malformed producer (the value would be written by nothing).
+  const nodeIds = new Set(chain.dag.nodes.map((n) => n.id));
+  for (const p of chain.producedVariables ?? []) {
+    if (!nodeIds.has(p.producedBy)) {
+      throw new ProducedVarProducerUnknownError(p.name, p.producedBy, chain.chainId);
+    }
+  }
+
+  // Disjointness (RFC 0133 §2.2): a producedVariables name MUST NOT collide with a
+  // `parameters` property name — the author-time and run-scoped channels are disjoint.
+  const paramNames = new Set<string>(materializedParams);
+  const paramProps = (chain.parameters as { properties?: Record<string, unknown> } | undefined)?.properties;
+  if (paramProps) for (const k of Object.keys(paramProps)) paramNames.add(k);
+  for (const p of chain.producedVariables ?? []) {
+    if (paramNames.has(p.name)) throw new VariableUndeclaredError(p.name, chain.chainId);
+  }
+
+  const declared = new Set<string>(materializedParams);
+  for (const p of chain.producedVariables ?? []) declared.add(p.name);
+  const reads = new Set<string>();
+  for (const n of chain.dag.nodes) {
+    if (n.inputs !== undefined) collectVariableReads(n.inputs, reads);
+    if (n.config !== undefined) collectVariableReads(n.config, reads);
+  }
+  for (const name of reads) {
+    if (!declared.has(name)) throw new VariableUndeclaredError(name, chain.chainId);
+  }
 }

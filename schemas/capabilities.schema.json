@@ -1960,6 +1960,24 @@
         "hostExpansionSeam": {
           "type": "boolean",
           "description": "RFC 0013 erratum (2026-07-05). OPTIONAL. A **conformance-only test seam** advertisement (category: test harness, cf. `observability.testSeams` — NOT a product capability): when `true`, the host serves `POST /v1/host/sample/workflow-chain:expand` returning the `vendor.openwop.workflow-chain-sample` v1.0.0 expansion that `conformance/src/scenarios/workflow-chain-host-expansion.test.ts` asserts against. Absent/`false` ⇒ that live-host expansion scenario soft-skips; the semantic `workflowChainPacks.supported` claim is witnessed by the server-free `workflow-chain-expansion.test.ts` legs. This flag is DISTINCT from `deferredParameters` (RFC 0124), which is witnessed through its own `POST /v1/host/sample/chain/deferred-expand` seam — so a host MAY advertise `supported` / `deferredParameters.supported` without standing up the RFC 0013 sample-pack seam it was never handed a published fixture for. Advertising `supported:true` no longer conscripts a host into the RFC 0013 host-expansion scenario."
+        },
+        "subChains": {
+          "type": "object",
+          "description": "RFC 0133 (workflow-chain composition, `Active`). OPTIONAL. When `supported: true`, the host's `POST …/workflows/from-chain` implements RUNTIME sub-chain composition per `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\": for each `config.subChainRef` reachable from a parent chain, it resolves the referenced chain (sibling or external), recursively expands + co-registers it as its own owned workflow (deterministic TENANT-SCOPED id from `(tenantId, childChainId, version)` — two tenants never collide on the global registry, a shared child registers once across parents in a tenant, a repeat instantiation converges), rewrites the referencing node's `subChainRef` → the minted child `config.workflowId`, and dispatches the child as a child run (`core.subWorkflow` / `core.dispatch` child-run); the `from-chain` response carries `{ workflowId, subChainWorkflowIds[], nodeCount }`. Bounded by a cycle check (`sub_chain_cycle`) + a depth cap (`sub_chain_max_depth_exceeded`). A host that does NOT advertise this block MUST refuse a `subChains`-bearing chain at author/instantiate time with `sub_chain_unsupported` (422) — it never silently flattens. `producedVariables` (RFC 0133 §2) needs NO flag: it is pure variable emission under the base `workflowChainPacks.supported`. Conformance scenarios `chain-subchain-fanout.test.ts` + `chain-subchain-unsupported-refused.test.ts` gate on this flag; the server-free `chain-subchain-sibling` / `chain-subchain-cycle-rejected` / `chain-produced-var-roundtrip` legs run unconditionally against the reference library.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Whether the host implements runtime sub-chain co-registration + child dispatch. `false` (or omission of this block) signals the host does NOT compose sub-chains and MUST refuse a `subChains`-bearing chain with `sub_chain_unsupported`."
+            },
+            "maxDepth": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 8,
+              "description": "RFC 0133 §1.3 (resolves UQ3). RECOMMENDED default 8. The maximum sub-chain nesting depth the host co-expands; exceeding it fails closed with the DISTINCT code `sub_chain_max_depth_exceeded` (the DoS depth backstop, alongside the `sub_chain_cycle` self-composition check — SECURITY `sub-chain-expansion-bounded`)."
+            }
+          },
+          "required": ["supported"],
+          "additionalProperties": false
         }
       },
       "required": ["supported"],
