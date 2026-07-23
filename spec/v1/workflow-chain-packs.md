@@ -157,11 +157,11 @@ When a workflow author drops a workflow-chain tile (`chainId`) onto a canvas, th
 6. **Rewrite node ids for collision avoidance.** Generate a per-expansion id prefix (e.g., `${chainIdSlug}_${expansionId}_`, where `chainIdSlug` is the `chainId` with dots replaced by underscores and hyphens preserved) and apply it to every `dag.nodes[].id` plus every reference to those ids in `dag.edges[]`. Hosts SHOULD make `expansionId` unique within the parent workflow (random 4-hex suffix is sufficient). **Expanded ids are unbounded.** Because `chainIdSlug` derives from a reverse-DNS `chainId` with no length bound, an expanded node/edge id can exceed any short cap — and `WorkflowNode.id` in [`workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json) intentionally has **no `maxLength`** (only `minLength: 1`). A host therefore MUST NOT reject or truncate an expanded id by length, and MUST NOT impose an internal `id` length cap stricter than the schema; doing so rejects wire-valid workflows (the schema is the contract). **Edge-field preservation.** Rewriting an edge MUST preserve its non-id fields onto the resulting `WorkflowEdge` — a present `condition` (RFC 0013 amendment 2026-07-03) and a present `triggerRule` (RFC 0125) MUST be carried through verbatim. Dropping them at expansion silently discards content-routing / fan-in semantics the chain author declared (the scheduler reads `triggerRule` from the target's incoming edge; if expansion drops it, the field is never honored). Omitting `triggerRule` on the fragment edge yields an expanded edge with no `triggerRule` — identical to the `all_success` default. **Carry vs honor.** This preservation rule constrains only *carrying* the field through expansion; *evaluating* the fan-in rule is governed by the existing `WorkflowEdge.triggerRule` semantics in `workflow-definition.schema.json`, unchanged by RFC 0125 — so a minimal host that implements only `all_success` fan-in is not *newly* non-conformant for not evaluating `all_complete`; it MUST simply not DROP the field at expansion. **Parameter-distinct identity.** Because expansion-time substitution bakes the author-supplied parameter values into `config`/`inputs` (step 5), a host that persists the expanded definition under an identity *derived from* the expansion (a deterministic `expansionId`, workflow key, or content hash) MUST ensure that identity distinguishes expansions differing only in parameter values — either by making `expansionId` genuinely unique per drop, or by folding the canonical parameter values into the id derivation. A deterministic identity keyed on `chainId` alone MUST NOT be used to key the persisted definition: two drops of the same chain with different parameters would map to the same key and the second would silently overwrite the first.
 7. **Splice into the parent workflow.** Append the expanded nodes + edges to the parent's `nodes[]` / `edges[]`. Connect the chain's entry/exit nodes to the parent's adjacent nodes (the host editor's UI controls which adjacency).
 8. **Propagate capabilities.** When the chain declares top-level `capabilities[]`, copy that array into every expanded `WorkflowNode.capabilities` so existing capability gates (e.g., `side-effectful` gating) apply to the expanded nodes.
-9. **Persist the expansion.** Save the resulting expanded workflow JSON to the host's workflow store. **The chain reference is NOT preserved at runtime** — dispatching hosts see only the concrete `core.*` (or published-vendor) typeIds the expansion produced.
+9. **Persist the expansion.** Save the resulting expanded workflow JSON to the host's workflow store. **In the RFC 0013 inline mode the chain reference is NOT preserved at runtime** — dispatching hosts see only the concrete `core.*` (or published-vendor) typeIds the expansion produced. **Exception — RFC 0133 sub-chain composition.** A chain that declares `subChains[]` and references them via `config.subChainRef` is the opt-in exception: the referenced child chain is co-registered as its own workflow and its reference IS preserved at runtime (the parent dispatches the child as a child run). See §"Sub-chain composition (RFC 0133)". This mode is capability-gated (`capabilities.workflowChainPacks.subChains`) — a host that does not advertise it MUST refuse a `subChains`-bearing chain with `sub_chain_unsupported`, never flatten it.
 
 ### What hosts dispatch
 
-The runtime engine sees a normal `WorkflowDefinition` with no workflow-chain-pack-specific surface. No new dispatch semantics are required; **a workflow author can switch hosts without their workflows breaking, because the expanded JSON references only typeIds the destination host's pack registry can resolve via existing node-pack discovery**. This is the key invariant that lets this RFC be additive.
+In the RFC 0013 inline mode the runtime engine sees a normal `WorkflowDefinition` with no workflow-chain-pack-specific surface. No new dispatch semantics are required; **a workflow author can switch hosts without their workflows breaking, because the expanded JSON references only typeIds the destination host's pack registry can resolve via existing node-pack discovery**. This is the key invariant that lets this RFC be additive. **RFC 0133 sub-chain composition preserves that property with one refinement:** the parent's expanded JSON references a co-registered child workflow through the *existing* `core.subWorkflow` / `core.dispatch` (child-run) framework nodes — still a normal `WorkflowDefinition`, still no NEW dispatch primitive — so a destination host that also implements runtime child dispatch (`capabilities.workflowChainPacks.subChains.supported: true`) runs it unchanged, and one that does not refuses at instantiate time (`sub_chain_unsupported`, 422) rather than mis-dispatching.
 
 ### Round-trip note
 
@@ -191,9 +191,69 @@ In deferred mode, in place of step 5 (literal substitution) the host MUST:
 
 ---
 
+## Sub-chain composition (RFC 0133)
+
+Expansion-time inline splicing (above) flattens a chain into the parent at author time. A chain MAY instead declare **child chains it composes at run time** — realizing "workflows can hold workflows." This section is normative; RFC 0133 is the source.
+
+**Manifest.** A `WorkflowChain` MAY carry an optional `subChains[]`. Each entry's `ref` is EITHER a string naming a **sibling** `chainId` in the same pack's `chains[]`, OR an object `{ packName, chainId, version }` naming an externally published chain (resolved + signature-verified like any pack dependency, per `node-packs.md` §Signing). A node dispatches a declared sub-chain using the existing runtime composition nodes with a new `config.subChainRef` in place of a hard-coded `config.workflowId`:
+
+```jsonc
+{ "id": "build-0", "typeId": "core.subWorkflow",
+  "config": { "subChainRef": "lesson-batch" },
+  "inputs": { /* mapped to the child's parameters/inputs */ } }
+```
+
+- `config.subChainRef` MUST match a `subChains[].ref` (a sibling `chainId`, or the `chainId` of an external ref). A concrete `config.workflowId` inside a fragment remains INVALID — a chain MUST NOT pin a host-specific workflow id (the manifest schema enforces this with a `not` guard).
+- The same applies to `core.dispatch` with `workerDispatchModel: "child-run"`: its worker target is a `subChainRef` (or a list thereof), giving the **parallel child fan-out** shape (RFC 0118's fan-out expressed at the chain layer).
+
+**Co-expansion + co-registration (host-side, normative).** When a host instantiates a parent chain (`POST …/workflows/from-chain`), it MUST:
+
+1. Expand the parent fragment into a `WorkflowDefinition` as in §"Expansion semantics".
+2. For each distinct `subChainRef` reachable from the parent's nodes: resolve the referenced chain (sibling or external — a ref that resolves to nothing is `sub_chain_unresolved`), **recursively expand and register it as its own workflow** (with `recordOwnership` for the **same tenant** as the parent — a co-registered child MUST NOT be owned by, or reachable from, any other tenant), minting a **deterministic** id from **`(tenantId, childChainId, version)`**. The id MUST be **tenant-scoped**: `registerWorkflow` is a global by-id registry, so a tenant-less id would let two tenants instantiating the same parent→child collide on one global workflow — a cross-tenant isolation break (SECURITY `sub-chain-child-tenant-scoped`). Keying on `tenantId` also makes the dedup correct **across parents within a tenant** (a child chain composed by two different parents registers exactly once; a repeat instantiation converges), and `version` distinguishes `chain@1` from `chain@2`.
+3. Rewrite each referencing node's `config.subChainRef` to the minted child workflow id under the field the runtime already reads (`config.workflowId` for `core.subWorkflow`; the worker target for `core.dispatch`). The child reference IS preserved at runtime — the parent dispatches the child as a child run.
+4. Register the parent workflow. Parent and every co-registered child are owned + builder-editable.
+
+**`from-chain` response (RFC 0133).** When a host instantiates a `subChains`-bearing chain, the `POST …/workflows/from-chain` response MUST carry the parent `workflowId`, the list of co-registered child workflow ids `subChainWorkflowIds` (the minted, tenant-scoped child ids — deduplicated), and `nodeCount` (the parent's expanded node count):
+
+```jsonc
+{ "workflowId": "wf-parent-…",
+  "subChainWorkflowIds": ["wfc_tenant-a__lesson-batch__1_0_0"],
+  "nodeCount": 3 }
+```
+
+`subChainWorkflowIds` is empty for a chain with no `subChains`. A caller uses it to open/edit the co-registered children (they are owned workflows, not opaque inline nodes).
+
+**Bounded recursion (MUST).** A chain that transitively composes itself MUST be rejected with `sub_chain_cycle`. Recursion depth MUST additionally be bounded by a host `maxSubChainDepth` (advertised as `capabilities.workflowChainPacks.subChains.maxDepth`, RECOMMENDED default **8**); a nesting that exceeds it fails closed with the **distinct** code `sub_chain_max_depth_exceeded` (so an operator sees which backstop fired — a depth breach is not a cycle). Together the cycle check and the depth bound guarantee co-expansion terminates on adversarial input (SECURITY invariant `sub-chain-expansion-bounded`).
+
+**External-ref version pinning (SHOULD).** When a `subChainRef` resolves to an *external* published chain, co-registration SHOULD pin the resolved concrete version into the parent's ownership record, so a later re-instantiation (or a `:fork`) reproduces the same child (RFC 0133 §Unresolved #1, resolved: pin).
+
+**Capability gating (MUST).** Runtime sub-chain composition is advertised via `capabilities.workflowChainPacks.subChains.supported: true` (see `capabilities.md`). A host that does not advertise it MUST refuse a `subChains`-bearing chain at author/instantiate time with `sub_chain_unsupported` (HTTP `422`) — it MUST NOT silently flatten a runtime child into the parent (flattening erases the child as an editable unit and changes run semantics).
+
+---
+
+## Produced (run-scoped) variables (RFC 0133)
+
+RFC 0013 replaced a fragment's `variables` with author-time `parameters`. A chain MAY additionally declare a **separate, run-scoped** channel for values produced *during* the run.
+
+**Prefer edges (MUST).** Where a node exposes a value on a **typed output port**, chains MUST pass it via an explicit `edge` (`sourceOutput` → `targetInput`) — the chain-native dataflow. `producedVariables` is ONLY for values a node writes to the **run variable bag** with no typed output port (as some framework/feature nodes do).
+
+**Manifest.** A `WorkflowChain` MAY declare `producedVariables[]`, each `{ name, producedBy, type, description? }`:
+
+```jsonc
+{ "name": "plan", "producedBy": "generate", "type": "object",
+  "description": "the generated plan the decompose node consumes" }
+```
+
+- `name` is the bag key; `producedBy` MUST be a `nodes[].id` in the same fragment; `type` is a JSON-Schema type token. `producedVariables` are **run-scoped** — they carry NO author-time value (that is what `parameters` are for); the manifest distinguishes the two. A `producedVariables[].name` MUST NOT collide with a `parameters` property name — the author-time and run-scoped channels MUST be **disjoint** (a shared name is ambiguous at read time); a collision is a `variable_undeclared` manifest error.
+- Any node input binding `{ type:"variable", variableName:"plan" }` MUST reference a declared `producedVariables[].name` OR a materialized parameter name. An undeclared variable read is a `variable_undeclared` manifest error (closed-world validation — closing the "reads a value nothing produces" hole).
+
+**Expansion (MUST).** On expansion the host MUST emit the declared `producedVariables` into the resulting `WorkflowDefinition.variables[]` as run-scoped entries (name + type, no value), so the executor's **existing** variable bag carries them exactly as in a hand-authored workflow. No new runtime surface is introduced — this only lets the pack format declare run variables. `producedVariables` requires no capability flag beyond the base `workflowChainPacks.supported`: it is inert variable emission, not runtime child dispatch.
+
+---
+
 ## Capability gating
 
-Hosts that implement workflow-chain pack expansion advertise this via `Capabilities.workflowChainPacks.supported: true` (see `capabilities.md`). The conformance suite uses this flag to scope chain-specific scenarios — hosts that don't implement expansion MUST be skipped from those tests, not failed.
+Hosts that implement workflow-chain pack expansion advertise this via `Capabilities.workflowChainPacks.supported: true` (see `capabilities.md`). The conformance suite uses this flag to scope chain-specific scenarios — hosts that don't implement expansion MUST be skipped from those tests, not failed. **Runtime sub-chain composition (RFC 0133)** is a separate opt-in sub-flag `Capabilities.workflowChainPacks.subChains.supported: true`; a host MAY implement inline expansion without runtime child dispatch, in which case it refuses a `subChains`-bearing chain with `sub_chain_unsupported`.
 
 Workflow-chain-pack consumers (registries, conformance scenarios, host editors) MUST inspect `kind` BEFORE assuming dispatch semantics. A registry that returns a pack entry with `kind: "workflow-chain"` is signaling that the pack is NOT directly dispatchable.
 
@@ -331,6 +391,12 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 | `chain_parameter_invalid`   | Host editor expansion             | Author-supplied parameter values fail the chain's `parameters` schema. `details.path` carries the failing JSON-pointer. |
 | `pack_signature_invalid`    | Host editor expansion             | Pack signature verification failed (same surface as node packs; reused unchanged from `node-packs.md`).                 |
 | `sensitive_param_not_deferrable` | Host editor expansion (RFC 0124) | HTTP `422`. A recognizing host cannot securely defer an `x-openwop-sensitive` parameter — it resolves to a non-prompt position (whole-value `node.inputs`, embedded `config`), or a frozen position, or the host lacks deferred / `capabilities.secrets` support. A sensitive parameter is deferrable ONLY in a prompt-body position (→ `source:"secret"`); the host MUST refuse the expansion rather than freeze the secret or bag it as plaintext. |
+| `sub_chain_unresolved`      | Registry validation + host co-expansion (RFC 0133) | HTTP `400`. A `config.subChainRef` (or a `subChains[].ref`) names a sibling `chainId` not present in the pack's `chains[]`, OR an external ref that fails resolution / signature verification. `details.ref` carries the offending value. |
+| `sub_chain_cycle`           | Registry validation + host co-expansion (RFC 0133) | HTTP `400`. A chain transitively composes itself. `details.chainId` carries the offending chain. (SECURITY `sub-chain-expansion-bounded`.) |
+| `sub_chain_max_depth_exceeded` | Host co-expansion (RFC 0133) | HTTP `400`. Co-expansion nesting exceeds the host's `maxSubChainDepth` — the DoS depth backstop, DISTINCT from `sub_chain_cycle` so an operator sees which bound fired. `details.chainId` + `details.maxDepth`. (SECURITY `sub-chain-expansion-bounded`.) |
+| `sub_chain_unsupported`     | Host editor / `from-chain` instantiation (RFC 0133) | HTTP `422`. A host that does NOT advertise `capabilities.workflowChainPacks.subChains.supported` was asked to instantiate a `subChains`-bearing chain. The host MUST refuse rather than silently flatten the runtime child. |
+| `variable_undeclared`       | Registry validation + host expansion (RFC 0133) | HTTP `400`. A node input binding `{ type:"variable", variableName }` reads a name that is neither a declared `producedVariables[].name` nor a materialized parameter (closed-world validation), OR a `producedVariables[].name` collides with a `parameters` property name (the two channels MUST be disjoint). `details.variableName` carries the offending name. |
+| `chain_fragment_pins_workflow_id` | Host load / expansion (RFC 0133) | HTTP `400`. A chain fragment node pins a concrete host-specific `config.workflowId` (forbidden — a chain MUST reference a composed child via `config.subChainRef`, never a pinned id). The manifest schema also rejects this at validation time via a `not` guard on `config`; a host performing runtime (rather than schema) validation emits this code at load. |
 
 ---
 
@@ -350,6 +416,14 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 
 **Gating rule.** Host-conformance scenarios MUST gate on `capabilities.workflowChainPacks.supported: true`; hosts that don't advertise the capability MUST be skipped, not failed. **Server-free scenarios** (all four above) validate the spec corpus itself and run unconditionally — the schema and reference library are the spec regardless of which hosts implement them.
 
+**RFC 0133 — composition scenarios.** Five scenarios cover sub-chain composition + produced variables (reference library extended at [`conformance/src/lib/workflow-chain-expansion.ts`](../../conformance/src/lib/workflow-chain-expansion.ts) — `expandChainTree` / `emitProducedVariables` / `validateVariableReads`):
+
+6. `chain-subchain-sibling.test.ts` (server-free) — a pack with a parent chain + a sibling child chain; `expandChainTree` co-registers both, mints a deterministic child id, rewrites the parent's `config.subChainRef` → the child's `config.workflowId`; a child referenced twice registers once.
+7. `chain-subchain-cycle-rejected.test.ts` (server-free) — a self-referential chain fails with `sub_chain_cycle`; a nesting past `maxDepth` fails with the same code (the `sub-chain-expansion-bounded` bounded-recursion public test).
+8. `chain-produced-var-roundtrip.test.ts` (server-free) — a chain declaring `producedVariables` emits them into `variables[]` (name + type, no value); an undeclared `{ type:"variable" }` read fails with `variable_undeclared`.
+9. `chain-subchain-fanout.test.ts` (capability-gated on `workflowChainPacks.subChains.supported`) — a `core.dispatch` child-run over a `subChainRef` worker; N child runs collected. Soft-skips until a reference host wires runtime child dispatch.
+10. `chain-subchain-unsupported-refused.test.ts` (capability-gated) — a host WITHOUT `subChains.supported` refuses a `subChains`-bearing chain with `sub_chain_unsupported` (422), never flattening.
+
 ---
 
 ## Compatibility
@@ -361,6 +435,7 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 - New `Capabilities.workflowChainPacks` block — optional; hosts that omit it are signaling "I do not expand workflow-chain packs," and conformance scenarios skip cleanly.
 - No existing workflow JSON shape changes (the expanded result uses the existing `WorkflowDefinition` schema).
 - No existing dispatch surface changes (the runtime sees concrete `core.*`/vendor typeIds it already resolves).
+- **RFC 0133 additive extensions.** `subChains`, `producedVariables`, and `config.subChainRef` are all OPTIONAL; a chain declaring none expands byte-identically to RFC 0013. Sub-chain composition dispatches through the *existing* `core.subWorkflow` / `core.dispatch` framework nodes (no new dispatch primitive), and child ids are minted at `from-chain` instantiate time (baked into the persisted parent before any run) so the run event log gains no new non-determinism and `:fork` replays byte-identically. A host without runtime child dispatch refuses at instantiate time (`sub_chain_unsupported`) rather than mis-dispatching. RFC 0133 amends this doc's §"Expansion semantics" step 9 + §"What hosts dispatch" to name the opt-in runtime-child mode; the RFC 0013 inline mode is unchanged.
 
 ---
 
@@ -368,7 +443,8 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 
 | #    | Gap                                | Notes                                                                                                                                                                                                                                                                                                                     |
 | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WCP1 | Chain-to-chain composition         | Can `dag.nodes[].typeId` reference another chain pack? Currently restricted to node-pack typeIds. If chain-to-chain is allowed: at what depth does expansion recurse? How are circular references detected? **Recommended: disallow in v1**; revisit in a follow-up RFC.                                                  |
+| WCP1 | Chain-to-chain composition         | ~~Can `dag.nodes[].typeId` reference another chain pack?~~ **Resolved by RFC 0133** (`Active`): a chain composes child chains via `subChains[]` + `config.subChainRef` (RUNTIME child dispatch, not inline typeId reference); recursion is bounded by a cycle check (`sub_chain_cycle`) + `maxSubChainDepth` (default 8). See §"Sub-chain composition (RFC 0133)".                                                  |
+| WCP5 | Co-registered child ownership lifecycle (RFC 0133) | When a parent chain is deleted, are co-registered children deleted too, or reference-counted (a child shared by two parents)? **Recommended (RFC 0133 §Unresolved #2, carried forward):** reference-count by deterministic child id — delete a child when its last parent is deleted. Host-side lifecycle, not a wire-shape concern; tracked in [`docs/KNOWN-LIMITS.md`](../../docs/KNOWN-LIMITS.md).                                                  |
 | WCP2 | Versioning across chain references | When a chain references `core.ai.callPrompt@1.0.0`, what happens if a future `core.ai.callPrompt@2.0.0` ships with a breaking config-schema change? **Recommended: chain MUST pin to a specific version per referenced typeId** (config snapshot at chain author-time), with a `min` / `max` range as future enhancement. |
 | WCP3 | Reference-host implementation      | Phase 3 of RFC 0013 — one openwop reference host (the in-memory host is the natural fit) implements expansion in its workflow editor. Tracked separately; this spec defines the contract whether or not a reference exists yet.                                                                                           |
 | WCP4 | Portable per-run parameter deferral | Some hosts (e.g., openwop-app, ADR 0237) want chain parameters to stay overridable per-run rather than frozen at drop time. Expansion-time substitution (this spec) forbids leaving `{{params.*}}` tokens in the persisted definition because they are not a spec'd runtime construct and break cross-host portability. A **portable** deferral mode would have expansion materialize the chain's `parameters` into top-level workflow `variables[]` and rewrite `{{params.x}}` into a spec'd runtime binding (for prompt-bearing config, the PromptTemplate `{{varName}}` with `source: "variable"` per `prompts.md` §"Variable interpolation"), gated behind a new capability with replay/event-log determinism for the run-scoped variable bag. **Recommended: a follow-up additive RFC**, not a relaxation of the expansion-time MUST. |

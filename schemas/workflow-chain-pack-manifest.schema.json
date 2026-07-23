@@ -106,6 +106,76 @@
           },
           "uniqueItems": true,
           "description": "Capability traits to propagate to every expanded node. Hosts MUST copy this array into each expanded `WorkflowNode.capabilities` so existing capability gates apply uniformly."
+        },
+        "subChains": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SubChainRef" },
+          "description": "RFC 0133 §1.1. OPTIONAL. Child chains this chain composes at RUN TIME. Each entry names a chain (a sibling `chainId` in this pack, or an externally published chain) that a node references via `config.subChainRef`. Unlike RFC 0013's author-time inline splice, a referenced sub-chain is co-instantiated as its own registered workflow and dispatched by the parent as a child run (both parent and child stay owned + builder-editable). A host without runtime child dispatch MUST refuse instantiation with `sub_chain_unsupported` (422) rather than flatten. Requires `capabilities.workflowChainPacks.subChains.supported: true`. See `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\"."
+        },
+        "producedVariables": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ProducedVariable" },
+          "description": "RFC 0133 §2.2. OPTIONAL. Run-scoped values a node writes to the executor's variable bag during the run and downstream nodes read by name via a `{ type:\"variable\", variableName }` input binding — where the value is NOT an author-time `parameter` and rides no typed output port. Prefer edges (a typed `sourceOutput`→`targetInput` hand-off) wherever a node exposes a value on a port; `producedVariables` is only for values written to the run bag with no typed port. On expansion the host emits these into `WorkflowDefinition.variables[]` as run-scoped entries (name + type, no value). Any `{ type:\"variable\" }` read of an UNDECLARED name (not here and not a materialized parameter) is a `variable_undeclared` manifest error. See `workflow-chain-packs.md` §\"Produced (run-scoped) variables (RFC 0133)\"."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubChainRef": {
+      "type": "object",
+      "required": ["ref"],
+      "description": "RFC 0133 §1.1. A reference to a child chain the parent composes. `ref` is EITHER a string naming a SIBLING `chainId` in this pack's `chains[]`, OR an object naming an externally published chain (resolved + signature-verified like any pack dependency). A sibling `ref` that matches no `chainId`, or an external `ref` that fails resolution/verification, is `sub_chain_unresolved`. A chain that transitively composes itself is `sub_chain_cycle`.",
+      "properties": {
+        "ref": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "A sibling `chainId` in the same pack's `chains[]`.",
+              "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "object",
+              "required": ["packName", "chainId", "version"],
+              "description": "An externally published chain, resolved + signature-verified like any pack dependency.",
+              "properties": {
+                "packName": { "type": "string", "minLength": 1, "maxLength": 256 },
+                "chainId": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9._-]*$", "minLength": 1, "maxLength": 256 },
+                "version": {
+                  "type": "string",
+                  "description": "Semver range for the external chain. Co-registration SHOULD pin the resolved version into the parent's ownership record for reproducibility (RFC 0133 §Unresolved #1, resolved: pin)."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ProducedVariable": {
+      "type": "object",
+      "required": ["name", "producedBy", "type"],
+      "description": "RFC 0133 §2.2. A run-scoped variable a chain declares: written by one node and read by others via a `{ type:\"variable\", variableName }` input binding. Run-scoped — carries NO author-time value (that is what `parameters` are for); the manifest distinguishes the two.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The variable-bag key downstream nodes read via `{ type:\"variable\", variableName:\"<name>\" }`."
+        },
+        "producedBy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The `nodes[].id` (within this same fragment) that writes the value."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array"],
+          "description": "JSON-Schema type token for validation/inspection."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-line description of the produced value's meaning."
         }
       },
       "additionalProperties": false
@@ -171,9 +241,17 @@
         },
         "config": {
           "type": "object",
-          "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time.",
+          "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time. RFC 0133: a `core.subWorkflow` / `core.dispatch` (child-run) node MAY carry `subChainRef: string` — a declared `subChains[].ref` (sibling `chainId` or external ref) the host rewrites to the minted child `workflowId` at co-expansion time (§1.3 step 3). A concrete `config.workflowId` inside a fragment remains INVALID — a chain MUST NOT pin a host-specific workflow id (the `not` guard below enforces it).",
           "additionalProperties": true,
-          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement happens at the expansion step, not at manifest-validation time."
+          "not": { "required": ["workflowId"] },
+          "properties": {
+            "subChainRef": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+              "description": "RFC 0133 §1.2. A declared `subChains[].ref` this node dispatches as a child run. The host rewrites it to the minted child `config.workflowId` at co-expansion time. MUST match a `subChains[].ref` (sibling `chainId` or external ref's `chainId`), else `sub_chain_unresolved`."
+            }
+          },
+          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement happens at the expansion step, not at manifest-validation time. The `not: { required: ['workflowId'] }` guard is the ONE closed constraint: RFC 0133 forbids pinning a concrete host-specific workflow id inside a portable chain fragment (use `subChainRef` instead)."
         },
         "inputs": {
           "type": "object",

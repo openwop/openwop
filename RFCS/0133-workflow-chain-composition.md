@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0133                                                                                                                                                                  |
 | **Title**         | Workflow-chain composition — sub-chains and produced variables                                                                                                        |
-| **Status**        | `Draft`                                                                                                                                                                |
+| **Status**        | `Active`                                                                                                                                                               |
 | **Author(s)**     | openwop-app maintainers                                                                                                                                                |
 | **Created**       | 2026-07-22                                                                                                                                                              |
-| **Updated**       | 2026-07-22                                                                                                                                                              |
+| **Updated**       | 2026-07-22 (Draft → Active: wire shapes LOCKED; schema + spec + reference-library + 5 conformance scenarios + 2 SECURITY invariants landed. Graduates Active → Accepted on the reference-host witness — openwop-app is redoing its impl against this final spec and will witness the 5 scenarios non-vacuously. See §"Status note".)                                    |
 | **Affects**       | `spec/v1/workflow-chain-packs.md`, `schemas/workflow-chain-pack-manifest.schema.json`, `schemas/workflow-definition.schema.json` (no change; referenced), registry index, conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                      |
@@ -247,13 +247,52 @@ New capability-gated scenarios under `conformance/` (chain-composition profile):
 
 ## Unresolved questions
 
-1. **External sub-chain versioning + trust.** An external `subChainRef` pulls another
-   pack into the trust + version-pin surface. Should co-registration pin the resolved
-   version into the parent's ownership record for reproducibility? (Leaning yes.)
-2. **Child ownership lifecycle.** When a parent is deleted, are co-registered
-   children deleted too, or reference-counted (a child shared by two parents)?
-   Proposed: reference-count by deterministic id; delete when the last parent goes.
-3. **`maxSubChainDepth` default** — 8 proposed; confirm against real nesting depth.
+_Register sweep at `Accepted` (per `RFCS/README.md` §"Companion gap & risk registers"): every row below is closed or transferred to a tracked surface; the companion registers are [`0133-workflow-chain-composition.gaps.md`](./0133-workflow-chain-composition.gaps.md) + [`0133-workflow-chain-composition.risks.md`](./0133-workflow-chain-composition.risks.md)._
+
+1. **External sub-chain versioning + trust — RESOLVED (pin).** An external `subChainRef`
+   pulls another pack into the trust + version-pin surface. Co-registration **SHOULD pin
+   the resolved concrete version into the parent's ownership record** for reproducibility,
+   so a later re-instantiation or `:fork` reproduces the same child. Encoded normatively in
+   `workflow-chain-packs.md` §"Sub-chain composition (RFC 0133)" (External-ref version
+   pinning) and in the schema `SubChainRef.ref.version` description.
+2. **Child ownership lifecycle — CARRIED FORWARD (tracked).** When a parent is deleted, are
+   co-registered children deleted too, or reference-counted (a child shared by two parents)?
+   **RECOMMENDED: reference-count by deterministic id; delete a child when its last parent is
+   deleted.** This is a host-side lifecycle concern, not a wire-shape concern, so it is carried
+   forward as a named open gap — WCP5 in `workflow-chain-packs.md` §"Open spec gaps" +
+   [`docs/KNOWN-LIMITS.md`](../docs/KNOWN-LIMITS.md).
+3. **`maxSubChainDepth` default — RESOLVED (8).** Confirmed **RECOMMENDED default 8**, encoded
+   as `capabilities.workflowChainPacks.subChains.maxDepth` (`default: 8`) and
+   `DEFAULT_MAX_SUB_CHAIN_DEPTH` in the reference library; a breach fails closed with
+   `sub_chain_cycle` (the DoS backstop, AND-composed with the cycle check).
+
+## Status note (honest evidence boundary)
+
+**Draft → Active (2026-07-22).** The wire shapes are LOCKED (maintainer-accepted) and the full
+spec-side surface has landed; graduation to **Accepted** is gated on the reference-host witness,
+which is in flight (openwop-app is redoing its impl against this final spec and will witness the
+5 scenarios non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+
+- **Landed + witnessed server-free now (non-vacuous):** the schema deltas, the `expandChainTree` /
+  `emitProducedVariables` / `validateVariableReads` reference library, and the three server-free
+  scenarios (`chain-subchain-sibling`, `chain-subchain-cycle-rejected`, `chain-produced-var-roundtrip`).
+  The protocol-tier SECURITY invariant `sub-chain-expansion-bounded` is fully witnessed by
+  `chain-subchain-cycle-rejected.test.ts` (self-composition rejects `sub_chain_cycle`; depth breach
+  rejects the distinct `sub_chain_max_depth_exceeded`). The **id-scoping** half of
+  `sub-chain-child-tenant-scoped` is also server-free-witnessed (`chain-subchain-sibling.test.ts`:
+  distinct tenants ⇒ distinct child ids).
+- **Host-pending (the Active → Accepted gate):** end-to-end runtime child dispatch +
+  `from-chain` co-registration on a live host — the `chain-subchain-fanout` +
+  `chain-subchain-unsupported-refused` scenarios are capability-gated on
+  `capabilities.workflowChainPacks.subChains.supported` and soft-skip until openwop-app wires it;
+  the reference-impl-tier `sub-chain-child-tenant-scoped` (ownership/reachability half) **graduates
+  reference-impl → protocol** when a host witnesses cross-tenant child isolation non-vacuously
+  (RFC 0079 / RFC 0132 graduation precedent). Tracked in `docs/KNOWN-LIMITS.md`.
+
+**Path to Accepted:** openwop-app advertises `capabilities.workflowChainPacks.subChains {supported:true,
+maxDepth:8}`, implements `from-chain` co-registration (tenant-scoped child id, `subChainWorkflowIds[]`
+response, `sub_chain_unsupported` refuse-not-flatten), and the 5 scenarios pass non-vacuously —
+its rev + pass-counts are the graduation evidence.
 
 ## Implementation notes (non-normative)
 
@@ -267,15 +306,24 @@ to become chains, per `docs/builtin-workflow-migration-audit.md`.
 
 ## Acceptance criteria
 
-- [ ] `schemas/workflow-chain-pack-manifest.schema.json` gains the optional
-  `subChains`, `producedVariables`, and `config.subChainRef` fields; existing chain
-  manifests still validate unchanged.
-- [ ] `spec/v1/workflow-chain-packs.md` documents §1 + §2 with the normative
-  expansion + co-registration + closed-world variable rules.
-- [ ] The 5 conformance scenarios pass against a reference implementation; a
-  no-runtime-child-dispatch host passes `chain.subchain.unsupported-refused`.
-- [ ] A worked example (the Challenge Factory + `lesson-batch` as a two-chain pack)
-  is added under `examples/workflow-chain-packs/`.
+- [x] `schemas/workflow-chain-pack-manifest.schema.json` gains the optional
+  `subChains`, `producedVariables`, and `config.subChainRef` fields (+ the `config`
+  `not`-guard forbidding a concrete `workflowId`); existing chain manifests still
+  validate unchanged (verified by `spec-corpus-validity` + the `chain-subchain-fanout §A` legs).
+- [x] `spec/v1/workflow-chain-packs.md` documents §1 + §2 with the normative
+  expansion + co-registration + closed-world variable rules (+ §"Expansion semantics"
+  step 9 / §"What hosts dispatch" amended for the opt-in runtime-child mode).
+- [x] The **3 server-free** conformance scenarios pass (`chain-subchain-sibling`,
+  `chain-subchain-cycle-rejected`, `chain-produced-var-roundtrip`); the **2 capability-gated**
+  scenarios (`chain-subchain-fanout`, `chain-subchain-unsupported-refused`) are authored and
+  soft-skip until a reference host wires runtime child dispatch (host-pending — see §"Status note").
+- [x] `capabilities.workflowChainPacks.subChains` advertised; `sub_chain_unresolved` /
+  `sub_chain_cycle` / `sub_chain_unsupported` / `variable_undeclared` registered in
+  §"Error codes"; SECURITY invariants `sub-chain-expansion-bounded` (protocol) +
+  `sub-chain-child-tenant-scoped` (reference-impl) landed.
+- [ ] A worked example (the Challenge Factory + `lesson-batch` as a two-chain pack) lands as
+  a conformance fixture + in [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples)
+  (`examples/` was extracted to that repo — carried forward, host-pending).
 
 ## References
 

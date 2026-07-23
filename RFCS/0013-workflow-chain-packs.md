@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` — introduces a new pack kind alongside the existing node-pack format; no existing surface changes           |
 | **Supersedes**    | —                                                                                                                      |
 | **Superseded by** | —                                                                                                                      |
+| **Amended by**    | [RFC 0133](./0133-workflow-chain-composition.md) — adds opt-in RUNTIME sub-chain composition (`subChains[]` + `config.subChainRef`) + run-scoped `producedVariables`; qualifies this RFC's "chain reference NOT preserved at runtime" (spec §Expansion step 9) + "no new dispatch semantics" (§What hosts dispatch) for the new co-registered-child mode. The inline expansion mode is unchanged. |
 
 ## Summary
 
