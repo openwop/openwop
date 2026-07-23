@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0134                                                                                                                                                                  |
 | **Title**         | Edge conditions — `truthy` / `falsy` operators                                                                                                                        |
-| **Status**        | `Active`                                                                                                                                                                |
+| **Status**        | `Accepted`                                                                                                                                                                |
 | **Author(s)**     | openwop-app maintainers                                                                                                                                                |
 | **Created**       | 2026-07-23                                                                                                                                                              |
-| **Updated**       | 2026-07-23 (Draft → Active: wire schema + spec + conformance landed; Active → Accepted gate is the openwop-app reference-host witness of the §B host-mapping leg — RFC 0132/0133 precedent) |
+| **Updated**       | 2026-07-23 (Draft → Active: wire schema + spec + conformance landed; Active → Accepted 2026-07-23: openwop-app tier-1 reference host mapped the operators + witnessed `edge-condition-truthy-falsy` §B non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` — rev `c8854cb5`, PR openwop-app#2438) |
 | **Affects**       | `schemas/workflow-definition.schema.json` (§EdgeCondition), `schemas/workflow-chain-pack-manifest.schema.json` (§EdgeCondition, inlined), `spec/v1/workflow-definition.md`, conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                      |
