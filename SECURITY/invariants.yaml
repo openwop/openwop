@@ -1971,7 +1971,7 @@ invariants:
       and host-pending until a reference host wires runtime child dispatch.
 
   - id: sub-chain-child-tenant-scoped
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -1995,11 +1995,15 @@ invariants:
       the host's `from-chain` co-registration + workflow store): the capability-gated
       `chain-subchain-fanout.test.ts` is its behavioral home and soft-skips until a
       reference host advertises `capabilities.workflowChainPacks.subChains.supported`.
-      The ID-SCOPING half IS witnessed server-free now: `chain-subchain-sibling.test.ts`
-      asserts `mintChildWorkflowId` yields DISTINCT ids for distinct tenants (no
-      collision) and converges in-tenant. Graduates reference-impl → protocol when a
-      host witnesses cross-tenant child isolation non-vacuously (RFC 0079 / RFC 0132
-      graduation precedent).
+      The ID-SCOPING half is witnessed server-free by `chain-subchain-sibling.test.ts`
+      (asserts `mintChildWorkflowId` yields DISTINCT ids for distinct tenants, no
+      collision, converges in-tenant); the ownership/reachability half is witnessed on
+      the host. GRADUATED reference-impl → protocol at RFC 0133 Active→Accepted
+      (2026-07-23): openwop-app tier-1 reference host rev `e199bd96c` (PR openwop-app#2429)
+      passed `chain-subchain-fanout` §B non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`
+      (advertised `subChains {supported:true,maxDepth:8}`, co-registered children with a
+      deterministic tenant-scoped id, refuse-not-flatten in the negative posture) — RFC
+      0079 / RFC 0132 graduation precedent.
 
   - id: budget-no-pricing-leak
     tier: protocol
