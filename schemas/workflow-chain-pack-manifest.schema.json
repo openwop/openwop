@@ -106,55 +106,9 @@
           },
           "uniqueItems": true,
           "description": "Capability traits to propagate to every expanded node. Hosts MUST copy this array into each expanded `WorkflowNode.capabilities` so existing capability gates apply uniformly."
-        },
-        "subChains": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/SubChainRef" },
-          "description": "RFC 0133 §1 — child chains this chain composes at RUNTIME. A fragment node references one via `config.subChainRef`; on instantiation the host co-expands + co-registers the child as its own workflow and rewrites the reference to the minted child id (so the parent holds a runtime child — `core.subWorkflow` / `core.dispatch` child-run). Cycle- and depth-guarded; a host without runtime child dispatch MUST refuse (`sub_chain_unsupported`), never flatten."
-        },
-        "producedVariables": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/ProducedVariable" },
-          "description": "RFC 0133 §2 — run-PRODUCED variables: a value a node writes to the run variable bag that a downstream node reads via `{ \"type\": \"variable\", \"variableName\": \"…\" }`. Distinct from author-time `parameters`. The host emits them into the expanded `WorkflowDefinition.variables[]` as run-scoped (name+type, NO defaultValue). Explicit output→input edges remain PREFERRED; this is the declared channel for nodes that write the bag without a typed output port. Any `{type:variable}` read MUST reference a declared name here or a materialized parameter (`variable_undeclared`)."
         }
       },
       "additionalProperties": false
-    },
-    "SubChainRef": {
-      "type": "object",
-      "required": ["ref"],
-      "additionalProperties": false,
-      "description": "RFC 0133 §1.1 — a reference to a composed child chain: a sibling `chainId` string in the same pack, or an external published chain.",
-      "properties": {
-        "ref": {
-          "oneOf": [
-            { "type": "string", "description": "A sibling chainId in this pack's `chains[]`." },
-            {
-              "type": "object",
-              "required": ["packName", "chainId", "version"],
-              "additionalProperties": false,
-              "description": "An external published chain (resolved + signature-verified like any pack dependency).",
-              "properties": {
-                "packName": { "type": "string" },
-                "chainId": { "type": "string" },
-                "version": { "type": "string" }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "ProducedVariable": {
-      "type": "object",
-      "required": ["name", "producedBy", "type"],
-      "additionalProperties": false,
-      "description": "RFC 0133 §2 — a run-scoped variable a fragment node produces and others consume by name.",
-      "properties": {
-        "name": { "type": "string", "minLength": 1, "description": "The run-bag key. MUST NOT collide with a parameter name." },
-        "producedBy": { "type": "string", "minLength": 1, "description": "The `id` of the fragment node that writes this value." },
-        "type": { "type": "string", "description": "JSON Schema type token (`string`/`number`/`boolean`/`object`/`array`)." },
-        "description": { "type": "string" }
-      }
     },
     "ChainOutput": {
       "type": "object",
@@ -217,9 +171,9 @@
         },
         "config": {
           "type": "object",
-          "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time. RFC 0133 §1.2: a dispatch node composes a child chain via `config.subChainRef` (a declared `subChains[]` ref); a fragment node MUST NOT pin a concrete `config.workflowId` (host-specific — rejected at load with `chain_fragment_pins_workflow_id`).",
+          "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time.",
           "additionalProperties": true,
-          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement (incl. the RFC 0133 subChainRef/workflowId rules) happens at the load/expansion step, not at manifest-validation time."
+          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement happens at the expansion step, not at manifest-validation time."
         },
         "inputs": {
           "type": "object",

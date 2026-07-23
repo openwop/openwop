@@ -191,56 +191,6 @@ In deferred mode, in place of step 5 (literal substitution) the host MUST:
 
 ---
 
-## Composition — sub-chains and produced variables (RFC 0133)
-
-Two OPTIONAL, additive capabilities. A chain using neither behaves exactly as
-above; every field here is optional and existing packs are unaffected.
-
-### Sub-chains (runtime child chains)
-
-A `WorkflowChain` MAY declare `subChains[]` — child chains it composes. Each entry
-is `{ "ref": <string | {packName, chainId, version}> }`: a **sibling** `chainId`
-in the same pack, or an **external** published chain. A fragment node references a
-declared sub-chain via `config.subChainRef` (a runtime dispatch node —
-`core.subWorkflow` or a `core.dispatch` child-run). A fragment node MUST NOT pin a
-concrete `config.workflowId` (host-specific).
-
-**Expansion (normative).** When a host instantiates a chain that declares
-`subChains`, it MUST:
-
-1. Expand the parent fragment into a `WorkflowDefinition` (per §Expansion above).
-2. For each distinct `subChainRef` reachable from the parent's nodes, resolve the
-   referenced chain, **recursively expand it, and register it as its own workflow**
-   (owned by the same tenant) with a **deterministic** id derived from the tenant +
-   the child chain id — so a repeat instantiation converges and a child shared by
-   two parents registers once. Children MUST be registered **before** the parent
-   (so the parent's rewritten reference always resolves; a mid-way failure then
-   leaves at worst an unreferenced child, never a parent → missing child).
-3. Rewrite each referencing node's `config.subChainRef` to the minted child
-   workflow id under the field the runtime reads (`core.subWorkflow.config.workflowId`
-   / the `core.dispatch` worker target). The child reference IS preserved at
-   runtime (unlike an author-time inline chain) — the parent dispatches the child.
-
-A host MUST bound recursion depth and reject a sub-chain **cycle** (a chain that
-transitively composes itself). A host WITHOUT runtime child dispatch MUST refuse
-(`sub_chain_unsupported`) rather than silently flatten.
-
-### Produced variables
-
-RFC 0013 replaced a fragment's `variables` with author-time `parameters`. A chain
-MAY additionally declare `producedVariables[]` (`{name, producedBy, type,
-description?}`) — a value the `producedBy` node writes to the run variable bag that
-a downstream node reads via `{ "type": "variable", "variableName": "…" }`. Explicit
-output→input **edges are PREFERRED**; `producedVariables` is the declared channel
-for a node that writes the bag without a typed output port. The host MUST emit each
-declared entry into the expanded `WorkflowDefinition.variables[]` as **run-scoped**
-(name + type, NO `defaultValue`). Closed-world (checked at load): every
-`{type:"variable"}` read MUST reference a declared `producedVariables` name or a
-materialized parameter, and a `producedVariables` name MUST NOT collide with a
-parameter (`variable_undeclared` / a producer/collision reject at publish/install).
-
----
-
 ## Capability gating
 
 Hosts that implement workflow-chain pack expansion advertise this via `Capabilities.workflowChainPacks.supported: true` (see `capabilities.md`). The conformance suite uses this flag to scope chain-specific scenarios — hosts that don't implement expansion MUST be skipped from those tests, not failed.
