@@ -625,6 +625,20 @@ export class VariableUndeclaredError extends Error {
   }
 }
 
+/** Thrown when a `producedVariables[].producedBy` names a node id that does not
+ *  exist in the same fragment — a malformed producer declaration (the value would
+ *  be produced by nothing). Distinct from `variable_undeclared` (a bad READER) so
+ *  an operator sees which side is malformed. Wire code `produced_var_producer_unknown`
+ *  (HTTP 400) per `workflow-chain-packs.md` §"Error codes" (RFC 0133). */
+export class ProducedVarProducerUnknownError extends Error {
+  readonly code = 'produced_var_producer_unknown';
+  readonly httpStatus = 400;
+  constructor(readonly variableName: string, readonly producedBy: string, readonly chainId: string) {
+    super(`produced_var_producer_unknown: '${variableName}' producedBy unknown node '${producedBy}' in chain '${chainId}'`);
+    this.name = 'ProducedVarProducerUnknownError';
+  }
+}
+
 /** The canonical `subChains[].ref` chainId — a string ref is the sibling
  *  chainId; an object ref's `chainId` is the external chain's id. */
 function refChainId(ref: SubChainRef['ref']): string {
@@ -810,6 +824,16 @@ export function validateVariableReads(
   chain: WorkflowChain,
   materializedParams: ReadonlySet<string> = new Set(),
 ): void {
+  // Producer-existence (RFC 0133 §2.2): every producedVariables[].producedBy MUST
+  // name a real node id in the fragment — a producedBy naming a non-existent node
+  // is a malformed producer (the value would be written by nothing).
+  const nodeIds = new Set(chain.dag.nodes.map((n) => n.id));
+  for (const p of chain.producedVariables ?? []) {
+    if (!nodeIds.has(p.producedBy)) {
+      throw new ProducedVarProducerUnknownError(p.name, p.producedBy, chain.chainId);
+    }
+  }
+
   // Disjointness (RFC 0133 §2.2): a producedVariables name MUST NOT collide with a
   // `parameters` property name — the author-time and run-scoped channels are disjoint.
   const paramNames = new Set<string>(materializedParams);

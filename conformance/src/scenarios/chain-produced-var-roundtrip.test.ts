@@ -27,6 +27,7 @@ import {
   emitProducedVariables,
   validateVariableReads,
   VariableUndeclaredError,
+  ProducedVarProducerUnknownError,
   type WorkflowChain,
 } from '../lib/workflow-chain-expansion.js';
 
@@ -93,6 +94,24 @@ describe('chain-produced-var-roundtrip: run-scoped variables (RFC 0133 §2, serv
     } catch (e) {
       expect((e as VariableUndeclaredError).code, why(SPEC, 'wire code variable_undeclared')).toBe('variable_undeclared');
       expect((e as VariableUndeclaredError).variableName, why(SPEC, 'names the offending variable')).toBe('plan');
+    }
+  });
+
+  it('rejects a producedVariables whose producedBy names a NON-EXISTENT node (produced_var_producer_unknown)', () => {
+    const badProducer: WorkflowChain = {
+      ...PLAN_GEN,
+      producedVariables: [{ name: 'plan', producedBy: 'ghost', type: 'object' }],
+    };
+    expect(
+      () => validateVariableReads(badProducer),
+      why(SPEC, '§2.2 — producedBy MUST be a real fragment node'),
+    ).toThrow(ProducedVarProducerUnknownError);
+    try {
+      validateVariableReads(badProducer);
+    } catch (e) {
+      expect((e as ProducedVarProducerUnknownError).code, why(SPEC, 'distinct wire code')).toBe(
+        'produced_var_producer_unknown',
+      );
     }
   });
 
