@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0133                                                                                                                                                                  |
 | **Title**         | Workflow-chain composition — sub-chains and produced variables                                                                                                        |
-| **Status**        | `Active`                                                                                                                                                               |
+| **Status**        | `Accepted`                                                                                                                                                             |
 | **Author(s)**     | openwop-app maintainers                                                                                                                                                |
 | **Created**       | 2026-07-22                                                                                                                                                              |
-| **Updated**       | 2026-07-22 (Draft → Active: wire shapes LOCKED; schema + spec + reference-library + 5 conformance scenarios + 2 SECURITY invariants landed. Graduates Active → Accepted on the reference-host witness — openwop-app is redoing its impl against this final spec and will witness the 5 scenarios non-vacuously. See §"Status note".)                                    |
+| **Updated**       | 2026-07-23 (Active → Accepted: openwop-app tier-1 reference host witnessed the 5 conformance scenarios non-vacuously — rev `e199bd96c`, PR openwop-app#2429, `@openwop/openwop-conformance@1.56.0` under `OPENWOP_REQUIRE_BEHAVIOR=true`: 22/22 tests, both capability-gated §B legs non-vacuous. `sub-chain-child-tenant-scoped` graduated reference-impl → protocol. See §"Status note".)                                    |
 | **Affects**       | `spec/v1/workflow-chain-packs.md`, `schemas/workflow-chain-pack-manifest.schema.json`, `schemas/workflow-definition.schema.json` (no change; referenced), registry index, conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                      |
@@ -268,31 +268,29 @@ _Register sweep at `Accepted` (per `RFCS/README.md` §"Companion gap & risk regi
 
 ## Status note (honest evidence boundary)
 
-**Draft → Active (2026-07-22).** The wire shapes are LOCKED (maintainer-accepted) and the full
-spec-side surface has landed; graduation to **Accepted** is gated on the reference-host witness,
-which is in flight (openwop-app is redoing its impl against this final spec and will witness the
-5 scenarios non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+**Draft → Active (2026-07-22) → Accepted (2026-07-23).** The wire shapes are LOCKED, the full
+spec-side surface landed at `Active`, and the reference-host witness that gates `Accepted` is now
+in hand.
 
-- **Landed + witnessed server-free now (non-vacuous):** the schema deltas, the `expandChainTree` /
+- **Witnessed server-free (non-vacuous):** the schema deltas, the `expandChainTree` /
   `emitProducedVariables` / `validateVariableReads` reference library, and the three server-free
   scenarios (`chain-subchain-sibling`, `chain-subchain-cycle-rejected`, `chain-produced-var-roundtrip`).
   The protocol-tier SECURITY invariant `sub-chain-expansion-bounded` is fully witnessed by
   `chain-subchain-cycle-rejected.test.ts` (self-composition rejects `sub_chain_cycle`; depth breach
-  rejects the distinct `sub_chain_max_depth_exceeded`). The **id-scoping** half of
-  `sub-chain-child-tenant-scoped` is also server-free-witnessed (`chain-subchain-sibling.test.ts`:
-  distinct tenants ⇒ distinct child ids).
-- **Host-pending (the Active → Accepted gate):** end-to-end runtime child dispatch +
-  `from-chain` co-registration on a live host — the `chain-subchain-fanout` +
-  `chain-subchain-unsupported-refused` scenarios are capability-gated on
-  `capabilities.workflowChainPacks.subChains.supported` and soft-skip until openwop-app wires it;
-  the reference-impl-tier `sub-chain-child-tenant-scoped` (ownership/reachability half) **graduates
-  reference-impl → protocol** when a host witnesses cross-tenant child isolation non-vacuously
-  (RFC 0079 / RFC 0132 graduation precedent). Tracked in `docs/KNOWN-LIMITS.md`.
-
-**Path to Accepted:** openwop-app advertises `capabilities.workflowChainPacks.subChains {supported:true,
-maxDepth:8}`, implements `from-chain` co-registration (tenant-scoped child id, `subChainWorkflowIds[]`
-response, `sub_chain_unsupported` refuse-not-flatten), and the 5 scenarios pass non-vacuously —
-its rev + pass-counts are the graduation evidence.
+  rejects the distinct `sub_chain_max_depth_exceeded`).
+- **Witnessed on the tier-1 reference host (Active → Accepted gate — SATISFIED 2026-07-23):**
+  end-to-end runtime child dispatch + `from-chain` co-registration on **openwop-app rev `e199bd96c`**
+  (PR openwop-app#2429, ADR 0471). Against `@openwop/openwop-conformance@1.56.0` under
+  `OPENWOP_REQUIRE_BEHAVIOR=true`, all **5 scenarios / 22 tests PASS**, and the two capability-gated
+  §B legs (`chain-subchain-fanout`, `chain-subchain-unsupported-refused`) ran **NON-VACUOUSLY** — the
+  host advertised `capabilities.workflowChainPacks.subChains {supported:true, maxDepth:8}` and the
+  fanout §B asserted `subChains.supported===true` for real; in the negative posture
+  (`OPENWOP_CHAIN_SUBCHAINS=0`) the host honestly omitted the block and the refusal assertion ran
+  (`sub_chain_unsupported`, 2/2). Host-side behavioral coverage 15/15 (producedVariables emit, all 7
+  load codes, cycle + `sub_chain_max_depth_exceeded`, co-registration + deterministic tenant-scoped
+  id + refuse-not-flatten). On this witness, `sub-chain-child-tenant-scoped` **graduated reference-impl
+  → protocol** (RFC 0079 / RFC 0132 precedent). Second-host (non-steward) adoption remains tracked in
+  `docs/KNOWN-LIMITS.md` as a strengthening, not a gate.
 
 ## Implementation notes (non-normative)
 
