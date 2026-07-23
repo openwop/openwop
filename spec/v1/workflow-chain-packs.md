@@ -127,6 +127,25 @@ A subset of `schemas/workflow-definition.schema.json`. Differences from a top-le
 | `nodes[]`                            | Required. Each node's `typeId` MUST reference a published node-pack typeId OR a reserved `core.*` typeId. Each fragment node mirrors the shape of a top-level `WorkflowNode` (per `schemas/workflow-definition.schema.json#/$defs/WorkflowNode`) with relaxed `required[]` — chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes. The `FragmentNode` definition in `workflow-chain-pack-manifest.schema.json` SHOULD be kept in sync as `WorkflowNode` evolves. |
 | `edges[]`                            | Required when `nodes.length > 1`. Same shape as in a top-level workflow definition — including an optional `condition` (the `EdgeCondition` object `{type, left, right}`) for content routing, and an optional `triggerRule` (RFC 0125) — the same enum as `WorkflowEdge.triggerRule` (`all_success` \| `any_success` \| `all_complete` \| `none_failed` \| `any_failed`, default `all_success`) — for fan-in / error-routing / best-effort completion. Hosts that honor edge `condition`/`triggerRule` on top-level workflows MUST honor them on expanded chain edges identically. Both fields MUST survive expansion (see §Expansion semantics step 6). `condition` (does this edge participate?) and `triggerRule` (how does the target aggregate its incoming edges?) are orthogonal and compose on the same edge. |
 
+#### Edge-condition operators (RFC 0134)
+
+An `EdgeCondition.type` is one of `expression`, `equals`, `notEquals`, `contains`,
+`regex`, **`truthy`**, or **`falsy`**. `equals`/`notEquals`/`contains`/`regex` compare
+the value resolved at `left` against `right`; `expression` evaluates `expression`.
+
+**`truthy` / `falsy` (RFC 0134)** take a `left` path and **NO `right`** operand: a
+`truthy` edge contributes to its target iff the value at `left` is truthy (not one of
+`false`, `null`, `undefined`, `0`, `NaN`, `""`, or absent); `falsy` is its exact
+complement (contributes iff `left` resolves to one of those, or is absent). A host that
+evaluates edge conditions **MUST** honor `truthy`/`falsy` with these semantics, **MUST**
+ignore a `right` if present on them (meaningless, not an error), and **MUST** reject a
+`truthy`/`falsy` condition whose `left` is missing/empty (`chain_edge_condition_invalid`
+at expansion — never a silently dead edge). `left` is **required** for every operator
+except `expression`. These operators are the natural predicate for a boolean gate output
+(e.g. an approval gate's `approved`): `truthy`→proceed, `falsy`→reject — and, unlike
+`equals true`/`notEquals true`, they evaluate a *skipped* upstream (output absent) as
+falsy, which is what reject-safe fan-in wiring depends on.
+
 ### Parameter substitution
 
 String fields in the chain's `dag` MAY contain `{{params.<name>}}` placeholders. Hosts MUST resolve these at **expansion time** — when the author drops the tile — by substituting the author-supplied parameter values literally. Substitution MUST recurse into nested string values within `config` and `inputs`; non-string values pass through unchanged.

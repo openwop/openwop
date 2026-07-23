@@ -11,8 +11,8 @@
 | JSON Schemas | 76 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 399 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 133 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 400 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 134 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 129 |
-| Active | 3 |
+| Active | 4 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -170,6 +170,7 @@
 | RFC 0131 | Distinguish a composable, task-scoped **Skill** from a top-level **assistant** agent, first-class on the agent manifest - an additive optional `AgentManifest.role` plus a schema-encoded **Skill profile** (a `role:"skill"` manifest MUST declare `handoff` and constrain `memoryShape` to scratchpad-only) that keeps sub-agent dispatch stateless and replay-clean | Accepted |
 | RFC 0132 | An anonymous-actor principal kind for public agent surfaces - an opaque, origin-bound, non-PII actor whose authority is a per-surface tool grant (default-deny, never the default-on baseline), with a read tier and a mandatorily-gated bounded-write/egress tier | Accepted |
 | RFC 0133 | Workflow-chain composition - sub-chains and produced variables | Accepted |
+| RFC 0134 | Edge conditions - `truthy` / `falsy` operators | Active |
 
 ## SDK Helper Coverage
 
@@ -187,7 +188,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0134) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

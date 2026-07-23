@@ -197,10 +197,11 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["expression", "equals", "notEquals", "contains", "regex"]
+          "enum": ["expression", "equals", "notEquals", "contains", "regex", "truthy", "falsy"],
+          "description": "Operator. `equals`/`notEquals`/`contains` compare `left` to `right`; `regex` matches `left` against `right`; `expression` evaluates `expression`. RFC 0134: `truthy`/`falsy` test the resolved value at `left` for JS-style truthiness and take NO `right` operand (the edge contributes iff `left` is truthy — resp. falsy/absent). `left` is required for all operators except `expression`."
         },
-        "left": { "type": "string", "description": "Left operand path (e.g., 'status', 'output.approved')." },
-        "right": { "description": "Right operand value (any JSON value)." },
+        "left": { "type": "string", "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`." },
+        "right": { "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134) — a host MUST ignore it there, not error." },
         "expression": { "type": "string", "description": "Used when type='expression'." }
       },
       "additionalProperties": false

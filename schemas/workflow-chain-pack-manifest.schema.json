@@ -289,14 +289,15 @@
     },
     "EdgeCondition": {
       "type": "object",
-      "description": "Edge condition — identical to workflow-definition.schema.json §EdgeCondition (RFC 0013 §edges: 'same shape as a top-level workflow definition'). Inlined here so the manifest schema is self-contained for pack-loader validators.",
+      "description": "Edge condition — identical to workflow-definition.schema.json §EdgeCondition (RFC 0013 §edges: 'same shape as a top-level workflow definition'). Inlined here so the manifest schema is self-contained for pack-loader validators. RFC 0134 added `truthy`/`falsy` (kept in sync with the top-level def).",
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["expression", "equals", "notEquals", "contains", "regex"]
+          "enum": ["expression", "equals", "notEquals", "contains", "regex", "truthy", "falsy"],
+          "description": "RFC 0134: `truthy`/`falsy` test the resolved value at `left` for truthiness and take NO `right` operand; `left` is required for all operators except `expression`."
         },
-        "left": { "type": "string", "description": "Left operand path (e.g., 'status', 'output.approved')." },
-        "right": { "description": "Right operand value (any JSON value)." },
+        "left": { "type": "string", "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`." },
+        "right": { "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134)." },
         "expression": { "type": "string", "description": "Used when type='expression'." }
       },
       "additionalProperties": false
