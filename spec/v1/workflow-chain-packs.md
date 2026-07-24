@@ -112,6 +112,26 @@ Each entry in `chains[]`:
 | `dag`          | WorkflowDefinitionFragment | yes      | The fragment to splice (§WorkflowDefinitionFragment below).                                                                                                                                                                                                                                                                          |
 | `outputs`      | map                        | no       | Declared outputs the chain surfaces to the parent workflow. Keys are output names; values declare `{ type: string, description: string }`.                                                                                                                                                                                           |
 | `capabilities` | string array               | no       | Capability traits to propagate to every expanded node. Values from the existing `nodes[].capabilities` enum (`streamable` / `cacheable` / `side-effectful` / `mcp-exportable`). Hosts MUST copy these into each expanded `WorkflowNode.capabilities` so existing capability checks (e.g., side-effect gating) cover expanded chains. |
+| `internal`     | boolean                    | no       | RFC 0135 — marks a composition-only fragment. See §"Chain visibility (RFC 0135)" below. Absent ⇒ `false`.                                                                                                                                                                                                                            |
+
+### Chain visibility (RFC 0135)
+
+Sub-chain composition (RFC 0133) creates chains that exist **only to be composed** —
+a child fragment a sibling parent dispatches — which are otherwise indistinguishable
+from directly-runnable templates. The OPTIONAL boolean `internal` marks them:
+
+- A host that presents loaded chains as **instantiable templates** (a builder
+  gallery, a run picker, a template-catalog listing) **MUST omit** chains with
+  `internal: true` from that default listing. A host **MAY** offer an explicit
+  opt-in view that includes them (an author/admin/debug surface).
+- `internal` **MUST NOT** change any non-presentational behavior: the chain still
+  loads and validates; resolve-by-id, expansion, `from-chain` instantiation, and
+  RFC 0133 sub-chain composition treat an internal chain exactly like any other.
+- `internal` is **advisory-presentational**, **NOT an authorization boundary** — a
+  host **MUST NOT** treat it as access control. A caller naming an internal chain's
+  id directly is served whatever the existing authorization would serve.
+- Absent ⇒ `false`. A non-boolean value fails manifest validation like any other
+  type violation.
 
 ---
 

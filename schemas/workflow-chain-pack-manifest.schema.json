@@ -86,6 +86,10 @@
           "type": "string",
           "description": "One-paragraph description of what the chain produces. Surfaced in host editor tile hover-text."
         },
+        "internal": {
+          "type": "boolean",
+          "description": "RFC 0135 — when true, this chain is a composition-only fragment (typically an RFC 0133 sub-chain child): hosts MUST omit it from default template-gallery/picker listings while keeping it loadable, resolvable by id, composable, and expandable exactly like any other chain. Presentational/discovery semantics only — NOT an authorization boundary (a host MUST NOT treat it as access control). Absent ⇒ false (listed). See workflow-chain-packs.md §\"Chain visibility (RFC 0135)\"."
+        },
         "parameters": {
           "type": "object",
           "description": "JSON Schema 2020-12 fragment describing the parameter values the host editor MUST collect from the author at drop time. Authors-supplied values are validated against this schema before expansion proceeds; invalid input MUST be rejected with `chain_parameter_invalid`. RECOGNIZED EXTENSION KEY (RFC 0124 / WCP4): a property MAY carry `x-openwop-sensitive: true` to declare the parameter secret-class. A host that recognizes it MUST NOT expansion-time-freeze that parameter (plaintext secret-at-rest leak, SR-1) and MUST NOT materialize it as a plaintext `source:\"variable\"` binding (the value would land in the run-scoped bag / `RunSnapshot.variables` — the same SR-1 leak one layer down). Instead, per the 2026-07-04 §Security amendment: it is deferrable ONLY in a prompt-body position, where it MUST be materialized as a `source:\"secret\"` `PromptVariable` (BYOK-resolved via `capabilities.secrets`, redacted to `[REDACTED:<secretId>]` in `prompt.composed`, never bagged); in ANY other position (whole-value `node.inputs`, embedded non-prompt `config`, or a host lacking deferred / `secrets` support) it MUST fail closed with `sensitive_param_not_deferrable` (422). Per-run supply is a `credentialRef` secret reference, never plaintext. See `workflow-chain-packs.md` §\"Deferred-parameter expansion\" / RFC 0124 §Security.",
