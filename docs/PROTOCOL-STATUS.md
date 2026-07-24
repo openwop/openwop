@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 130 |
-| Active | 4 |
+| Accepted | 131 |
+| Active | 3 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -171,7 +171,7 @@
 | RFC 0132 | An anonymous-actor principal kind for public agent surfaces - an opaque, origin-bound, non-PII actor whose authority is a per-surface tool grant (default-deny, never the default-on baseline), with a read tier and a mandatorily-gated bounded-write/egress tier | Accepted |
 | RFC 0133 | Workflow-chain composition - sub-chains and produced variables | Accepted |
 | RFC 0134 | Edge conditions - `truthy` / `falsy` operators | Accepted |
-| RFC 0135 | Workflow-chain gallery visibility - `internal` chains | Active |
+| RFC 0135 | Workflow-chain gallery visibility - `internal` chains | Accepted |
 
 ## SDK Helper Coverage
 
@@ -189,7 +189,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0135) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
