@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 401 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 135 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 136 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -33,7 +33,7 @@
 |---|---:|
 | Accepted | 131 |
 | Active | 3 |
-| Draft | 1 |
+| Draft | 2 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -172,6 +172,7 @@
 | RFC 0133 | Workflow-chain composition - sub-chains and produced variables | Accepted |
 | RFC 0134 | Edge conditions - `truthy` / `falsy` operators | Accepted |
 | RFC 0135 | Workflow-chain gallery visibility - `internal` chains | Accepted |
+| RFC 0136 | `WorkflowVariable.format` - a presentational hint for run inputs | Draft |
 
 ## SDK Helper Coverage
 
@@ -188,7 +189,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0136) — advance with schema/conformance proof or defer.
 - 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
