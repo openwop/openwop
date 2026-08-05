@@ -196,6 +196,17 @@ The objection to weigh was redundancy: `additionalProperties: false` already rej
 **A5 — Host-side storage/wire translation. AFFIRMED, and now stated in the spec.**
 The host stores its own field names and translates at the pack boundary rather than migrating stored rows — because migrating would coerce a stored multi-line field to single-line (silent data loss) and hard-fail host logic keyed on an internal type name, on tenant data, triggered by an ordinary save. This does **not** violate the single-vocabulary ruling. That ruling prohibits two divergent vocabularies *on the wire*; an internal representation with an anti-corruption layer is one wire vocabulary plus a private implementation detail. The host's own falsifying test is the right one: *does anything outside the host observe the internal names?* If not, there is one wire contract. Because a second host would reasonably ask the same question, this is now explicit in `form-content-packs.md` §"Host storage is out of scope" rather than left to inference.
 
+**A6 — The `Active → Accepted` gate was unsatisfiable as written. FIXED (2026-08-05).**
+The reference host went to run the gate and reported, correctly, that it could not: every leg this RFC shipped in `form-content-packs.test.ts` is **server-free** (corpus assertions, schema validation, the cross-kind vocabulary check). `--base-url <host>` would run them, go green, and prove nothing — the identical green appears against a host that never implemented RFC 0137, including one that advertises `host.forms.contentPacks` and does nothing. Asking for a "non-vacuous run" of a suite with no host-touching leg was an incoherent request, and the honest move was the host's: report the vacuity rather than post the green.
+
+`form-content-instantiation.test.ts` now carries the behavioral half, gated on the advertisement **and** the `POST /v1/host/sample/formcontent/instantiate` seam (soft-skipping cleanly on both, so a non-implementing host stays v1-compliant). It asserts, over the wire, the three numbered §Instantiation rules plus F2: instantiation goes through the host's normal create path with no pack-bound routing destination (#1/F2); an unrecognized `vendor.*` / `x-` type **degrades to a plain text input rather than failing** (#2); and pack-authored fields stay fully editable (#3).
+
+Its non-vacuity was verified against a stub host before merge, in the discipline the reference host itself modelled: a host that **refuses** a `vendor.*` type — precisely the non-conformance corrected in §A(clarification) — reds exactly leg #2; one that locks pack fields reds exactly #3; one that returns a pack-bound routing destination reds exactly F2; an unadvertised host passes all four by soft-skip. Each sabotage isolates one leg, so the suite cannot go green by over-refusing or by refusing everything.
+
+**F1 is deliberately excluded from the wire leg.** Its observable — a `contentTrust` tag on a composed prompt — is not visible to a black-box client for a kind that composes no prompt of its own. Asserting it over HTTP would reproduce the exact vacuity this fix removes, so it remains a host-side guarantee backed by the always-on corpus legs and the invariant.
+
+**Standing lesson.** A capability-gated *schema* leg and a capability-gated *behavioral* leg are not interchangeable, and "capability-gated" in an acceptance criterion should name the file that touches the host. The general form of this mistake — a green suite that never exercises the real path — showed up three times in one day across both sessions: seven passing tests for a function never called from the loader; a wiring test that passed on `isError: true` from an unregistered tool; and this RFC's own gate. It is the same failure every time: asserting about a component instead of about the path.
+
 ## Acceptance criteria
 
 - [x] Spec text merged (`spec/v1/form-content-packs.md`; `registry-operations.md` §"Validation flow" #3/#7 + §"Type-ID indexing"; `host-capabilities.md` §host.forms).
@@ -204,7 +215,8 @@ The host stores its own field names and translates at the pack boundary rather t
 - [x] SECURITY invariant `form-content-pack-string-trust-boundary` + threat-model update.
 - [x] `CHANGELOG.md` entry under `[Unreleased]`.
 - [ ] Reference registry denormalizes `templates[].templateId` and serves a published form-content pack (`openwop-registry#43`).
-- [ ] Reference host implements `host.forms.contentPacks` + the F1 trust boundary and passes the capability-gated legs **non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` — the `Active → Accepted` gate.
+- [x] **A behavioral conformance leg that can actually witness the host exists** (`form-content-instantiation.test.ts`). Added 2026-08-05 after the reference host found that the `Active → Accepted` gate as originally written was **unsatisfiable**: every leg shipped with this RFC was server-free, so `OPENWOP_REQUIRE_BEHAVIOR=true` had nothing host-touching to make non-vacuous. See §"Amendment record" A6.
+- [ ] Reference host implements `host.forms.contentPacks` + the F1 trust boundary and passes `form-content-instantiation.test.ts` **non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` — the `Active → Accepted` gate.
 
 ## References
 
