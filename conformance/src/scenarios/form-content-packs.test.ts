@@ -266,6 +266,102 @@ describe('form-content-packs: source manifest contract (RFC 0137, server-free)',
   });
 });
 
+describe('form-content-packs: a template carries NO submission routing (RFC 0137 §F2, invariant)', () => {
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  const sourceSchema = readSchema('form-content-pack-manifest.schema.json') as {
+    $defs: { FormTemplate: { properties: Record<string, unknown>; additionalProperties?: boolean } };
+  };
+  const validate = ajv.compile(sourceSchema);
+  const formDoc = V1_DIR ? readFileSync(join(V1_DIR, 'form-content-packs.md'), 'utf8') : '';
+
+  const withTemplateKey = (key: string, value: unknown): Record<string, unknown> => ({
+    name: 'core.openwop.forms.starters',
+    version: '1.0.0',
+    kind: 'form-content',
+    engines: { openwop: '>=1.1.0 <2.0.0' },
+    templates: [
+      {
+        templateId: 'core.openwop.form.rsvp',
+        version: '1.0.0',
+        label: 'RSVP',
+        title: 'RSVP',
+        fields: [{ id: 'a', type: 'text', label: 'A' }],
+        [key]: value,
+      },
+    ],
+  });
+
+  it('FormTemplate declares NO routing-shaped property and is closed', () => {
+    const props = Object.keys(sourceSchema.$defs.FormTemplate.properties);
+    for (const banned of ['intakeBinding', 'destination', 'webhook', 'webhookUrl', 'listId', 'mailbox', 'crmObject', 'routing', 'submitTo']) {
+      expect(props, why('form-content-packs.md §No submission routing', `FormTemplate MUST NOT declare a \`${banned}\` property`)).not.toContain(banned);
+    }
+    expect(
+      sourceSchema.$defs.FormTemplate.additionalProperties,
+      why('form-content-packs.md §No submission routing', 'FormTemplate is closed, so an undeclared routing key is rejected'),
+    ).toBe(false);
+  });
+
+  it('a template attempting to carry routing config is REJECTED', () => {
+    for (const [key, value] of [
+      ['intakeBinding', { listId: 'abc' }],
+      ['destination', 'https://attacker.example/collect'],
+      ['webhookUrl', 'https://attacker.example/hook'],
+    ] as Array<[string, unknown]>) {
+      expect(
+        validate(withTemplateKey(key, value)),
+        why('form-content-packs.md §No submission routing', `a pack MUST NOT bind a submission destination via \`${key}\``),
+      ).toBe(false);
+    }
+  });
+
+  it.skipIf(V1_DIR === null)('the spec binds FUTURE routing surfaces to operator consent, not pack declaration', () => {
+    expect(
+      /MUST NOT let a pack bind a destination unilaterally|routing MUST be a host-side decision/i.test(formDoc),
+      why('form-content-packs.md §No submission routing', 'a later routing RFC MUST keep the decision host-side, behind operator consent'),
+    ).toBe(true);
+  });
+});
+
+describe('form-content-packs: identifier uniqueness + resource bounds (RFC 0137 amendment)', () => {
+  const formDoc = V1_DIR ? readFileSync(join(V1_DIR, 'form-content-packs.md'), 'utf8') : '';
+  const sourceSchema = readSchema('form-content-pack-manifest.schema.json') as {
+    properties: { templates: { maxItems: number } };
+    $defs: {
+      FormTemplate: { properties: { fields: { maxItems: number } } };
+      FormField: { properties: { label: { maxLength: number }; options: { maxItems: number } } };
+    };
+  };
+
+  it.skipIf(V1_DIR === null)('duplicate `fields[].id` is a normative refusal, framed as data integrity', () => {
+    expect(
+      /each `fields\[\]\.id` MUST be unique within its template/i.test(formDoc),
+      why('form-content-packs.md §Unique identifiers', 'duplicate field ids MUST be refused'),
+    ).toBe(true);
+    expect(
+      /silently overwrite/i.test(formDoc),
+      why('form-content-packs.md §Unique identifiers', 'the rationale is silent data loss, not style'),
+    ).toBe(true);
+  });
+
+  it('resource bounds admit real-world content (long consent labels, a country list)', () => {
+    expect(
+      sourceSchema.$defs.FormField.properties.label.maxLength,
+      why('form-content-pack-manifest.schema.json', 'a lawful consent label is legitimately long-form'),
+    ).toBeGreaterThanOrEqual(1000);
+    expect(
+      sourceSchema.$defs.FormField.properties.options.maxItems,
+      why('form-content-pack-manifest.schema.json', 'a country list is ~195 entries — the cap must clear it'),
+    ).toBeGreaterThanOrEqual(250);
+  });
+
+  it('outer resource caps exist on both arrays (render-bomb guard, not product policy)', () => {
+    expect(sourceSchema.properties.templates.maxItems, why('form-content-pack-manifest.schema.json', 'templates[] carries an outer cap')).toBeGreaterThan(0);
+    expect(sourceSchema.$defs.FormTemplate.properties.fields.maxItems, why('form-content-pack-manifest.schema.json', 'fields[] carries an outer cap')).toBeGreaterThan(0);
+  });
+});
+
 describe('form-content-packs: the field vocabulary is SHARED with chat-card packs, not forked (RFC 0137 R2)', () => {
   const formSchema = readSchema('form-content-pack-manifest.schema.json') as {
     $defs: { FormField: { properties: { type: { pattern: string } } } };

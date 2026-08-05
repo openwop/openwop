@@ -385,6 +385,36 @@ invariants:
       `host.forms.contentPacks` and host-pending until a host wires template
       instantiation (the `Active → Accepted` gate).
 
+  - id: form-content-template-no-submission-routing
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/form-content-packs.test.ts
+    note: |
+      RFC 0137 §F2 "No submission routing". A form-content template describes a
+      form's SHAPE; it MUST NOT describe where the resulting submissions go.
+      `form-content-pack-manifest.schema.json#/$defs/FormTemplate` declares no
+      destination / binding / webhook / list-id / mailbox / CRM-object property
+      and rejects one via `additionalProperties: false`; a host MUST refuse to
+      install a pack attempting to carry one and MUST NOT infer a destination
+      from any other template field (`category` is a grouping hint, not a
+      routing target). Structurally identical to
+      `org-position-no-authority-escalation` (RFC 0087): the guarantee is that
+      the schema carries no such field AND rejects one, which is assertable
+      server-free.
+      Why it is not redundant with `additionalProperties: false` alone: the
+      invariant binds FUTURE evolution as well as today's shape. Should a later
+      RFC introduce a routing surface, routing MUST remain a host-side decision
+      made by the operator behind explicit consent at install/instantiation —
+      a pack MUST NOT bind a destination unilaterally. Where a tenant's
+      submissions are delivered is a decision about the OPERATOR's data,
+      frequently personal data carrying legal obligations; a third-party pack
+      author does not acquire that authority by shipping a signed manifest, and
+      a signature confers authorship, not authority (cf.
+      `form-content-pack-string-trust-boundary`).
+      Verified always-on + server-free by `form-content-packs.test.ts`.
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high
