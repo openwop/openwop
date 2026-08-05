@@ -78,9 +78,16 @@ export async function readFormContentCap(): Promise<unknown> {
   // Root first (RFC 0073 MUST); the `capabilities` wrapper is the deprecated
   // legacy fallback, tolerated only through the v1.x migration window.
   const caps = doc?.capabilities && typeof doc.capabilities === 'object' ? (doc.capabilities as Record<string, unknown>) : undefined;
-  const direct = doc?.['host.forms.contentPacks'] ?? caps?.['host.forms.contentPacks'];
+  // RFC 0137 G16 (resolved 2026-08-05): the canonical discovery key is the PLAIN
+  // family name at the document root. capabilities.schema.json declares 82 properties
+  // and ZERO dotted host.* keys, and already declares five host capabilities plainly
+  // (fs, kvStorage, tableStorage, queueBus, scheduling), each mapping to a §host.<name>
+  // section. The `host.` prefix is the capability IDENTIFIER (peerDependencies,
+  // error.capability), not the discovery key. Order: plain-root → dotted-root →
+  // plain-wrapper → dotted-wrapper (root before wrapper per RFC 0073).
+  const direct = doc?.['forms.contentPacks'] ?? doc?.['host.forms.contentPacks'] ?? caps?.['forms.contentPacks'] ?? caps?.['host.forms.contentPacks'];
   if (direct !== undefined) return direct;
-  const forms = doc?.['host.forms'] ?? caps?.['host.forms'];
+  const forms = doc?.['forms'] ?? doc?.['host.forms'] ?? caps?.['forms'] ?? caps?.['host.forms'];
   return forms && typeof forms === 'object' ? (forms as Record<string, unknown>)['contentPacks'] : null;
 }
 

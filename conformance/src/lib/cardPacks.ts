@@ -29,10 +29,17 @@ export async function readCardPacksCap(): Promise<Record<string, unknown> | null
   const res = await driver.get('/.well-known/openwop');
   const doc = res.json as DiscoveryDoc | undefined;
   const caps = doc?.capabilities && typeof doc.capabilities === 'object' ? (doc.capabilities as Record<string, unknown>) : undefined;
-  // Accept either a discrete `host.chat.cardPacks` key or a `cardPacks` facet under `host.chat`.
-  const direct = caps?.['host.chat.cardPacks'] ?? doc?.['host.chat.cardPacks'];
+  // RFC 0137 G16 (resolved 2026-08-05): the canonical discovery key is the PLAIN
+  // family name at the document root. capabilities.schema.json declares 82 properties
+  // and ZERO dotted host.* keys, and already declares five host capabilities plainly
+  // (fs, kvStorage, tableStorage, queueBus, scheduling), each mapping to a §host.<name>
+  // section. The `host.` prefix is the capability IDENTIFIER (peerDependencies,
+  // error.capability), not the discovery key. Order: plain-root → dotted-root →
+  // plain-wrapper → dotted-wrapper (root before wrapper per RFC 0073).
+  // Accept either a discrete cardPacks key or a `cardPacks` facet under the chat block.
+  const direct = doc?.['chat.cardPacks'] ?? doc?.['host.chat.cardPacks'] ?? caps?.['chat.cardPacks'] ?? caps?.['host.chat.cardPacks'];
   if (direct && typeof direct === 'object') return direct as Record<string, unknown>;
-  const chat = caps?.['host.chat'] ?? doc?.['host.chat'];
+  const chat = doc?.['chat'] ?? doc?.['host.chat'] ?? caps?.['chat'] ?? caps?.['host.chat'];
   const facet = chat && typeof chat === 'object' ? (chat as Record<string, unknown>)['cardPacks'] : undefined;
   return facet && typeof facet === 'object' ? (facet as Record<string, unknown>) : null;
 }
