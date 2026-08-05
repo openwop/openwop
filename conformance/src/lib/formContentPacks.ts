@@ -51,16 +51,36 @@ export interface InstantiateResult {
 
 /**
  * Reads `host.forms.contentPacks` from discovery; null when unadvertised.
+ *
+ * **The key is the DOTTED `host.forms`, at the DOCUMENT ROOT.** Two normative
+ * rules pin this and a host must satisfy both:
+ *
+ *   - `host-capabilities.md` §"How a capability is consumed" step 1 — a host
+ *     advertises `host.<name>: { supported: true, … }`. The literal key carries
+ *     the `host.` prefix; a bare `forms` is a different (undefined) key.
+ *   - `capabilities.md` §"Document-root layout (normative — RFC 0073)" — every
+ *     capability family MUST appear at the **document root**. A top-level
+ *     `capabilities` wrapper is a "deprecated legacy shape", and a host serving
+ *     families exclusively under the wrapper "is non-conformant and is graded as
+ *     such".
+ *
+ * So the canonical advertisement is a root-level `"host.forms": { … }`. Per RFC
+ * 0073, clients SHOULD read the root FIRST and MAY fall back to the wrapper, so
+ * that is the order here — the wrapper fallback exists only for the v1.x
+ * migration window and retires at v2.0.
+ *
  * Accepts either a discrete `host.forms.contentPacks` key or a `contentPacks`
  * facet under a `host.forms` block (mirrors how `host.chat.cardPacks` is read).
  */
 export async function readFormContentCap(): Promise<unknown> {
   const res = await driver.get('/.well-known/openwop');
   const doc = res.json as DiscoveryDoc | undefined;
+  // Root first (RFC 0073 MUST); the `capabilities` wrapper is the deprecated
+  // legacy fallback, tolerated only through the v1.x migration window.
   const caps = doc?.capabilities && typeof doc.capabilities === 'object' ? (doc.capabilities as Record<string, unknown>) : undefined;
-  const direct = caps?.['host.forms.contentPacks'] ?? doc?.['host.forms.contentPacks'];
+  const direct = doc?.['host.forms.contentPacks'] ?? caps?.['host.forms.contentPacks'];
   if (direct !== undefined) return direct;
-  const forms = caps?.['host.forms'] ?? doc?.['host.forms'];
+  const forms = doc?.['host.forms'] ?? caps?.['host.forms'];
   return forms && typeof forms === 'object' ? (forms as Record<string, unknown>)['contentPacks'] : null;
 }
 
