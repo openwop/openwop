@@ -2,7 +2,7 @@
 
 > Categorized snapshot of the signed packs published at [`packs.openwop.dev`](https://packs.openwop.dev) as of **2026-06-24**. Grouped by domain (not alphabetical) so workflow authors can find what they need by use case; the live [`/v1/index.json`](https://packs.openwop.dev/v1/index.json) is the authoritative, complete list (the grouped tables below are a curated view and may lag the registry). Authoring guide: [`docs/AUTHORING-CANVAS-PACKS.md`](AUTHORING-CANVAS-PACKS.md). Architecture rationale: [`docs/CANVAS-PACKS-INVENTORY.md`](CANVAS-PACKS-INVENTORY.md).
 
-**Catalog status:** 155 packs published (as of 2026-08-05). All signed under one of four keychains (`openwop-registry-root` for framework + community packs, `myndhyve-internal-1` for `vendor.myndhyve.*`, `vendor.openwop.*` for the rust-hello demo, `openwop-team-1` for `vendor.openwop-app.*`). Catalog updates on each merged pack-publishing PR.
+**Catalog status:** 156 packs published (as of 2026-08-05). All signed under one of four keychains (`openwop-registry-root` for framework + community packs, `myndhyve-internal-1` for `vendor.myndhyve.*`, `vendor.openwop.*` for the rust-hello demo, `openwop-team-1` for `vendor.openwop-app.*`). Catalog updates on each merged pack-publishing PR.
 
 ---
 
