@@ -493,6 +493,33 @@ A pack MAY declare `peerDependencies: { "host.artifactTypes": "supported" }`; th
 
 ---
 
+## §host.forms
+
+**Capability flag:** `host.forms.contentPacks: supported`
+
+**Used by:** form-content packs (`kind: "form-content"`, RFC 0137 — see [`form-content-packs.md`](./form-content-packs.md)).
+
+Like `host.artifactTypes`, this capability adds **no `ctx.forms.*` method**. It is an advertisement that the host resolves **registered form templates** from installed `kind: "form-content"` packs and instantiates them into ordinary, editable forms through its own normal create path.
+
+```jsonc
+"host.forms": { "contentPacks": true }
+```
+
+**Behavior (normative).** When a host advertises `host.forms.contentPacks: supported` and a registered template is instantiated, it MUST follow `form-content-packs.md` §"Instantiation":
+
+- The host MUST create the form through the **same path** that serves a form its own user authored by hand. A form-content pack MUST NOT cause the host to accept a form, field, or submission surface it would not otherwise accept.
+- The host MUST map each `fields[].type` to a control of the corresponding data kind, and MUST degrade an unrecognized (`vendor.*` / `x-`-prefixed) type to a plain text input rather than failing the instantiation. The type vocabulary is the RFC 0071 portable subset shared with chat-card packs (`chat-card-packs.md` §"Input fields"), NOT a form-specific one.
+- The instantiated form MUST remain fully editable; the host MUST NOT treat a pack-authored field as immutable or privileged relative to a hand-added one.
+- The host MUST NOT execute anything from the pack — the kind carries no `runtime` and a manifest declaring one is rejected at publication.
+- Submitted values MUST be sanitized, validated, and authorized exactly as hand-typed input to the same create path.
+- Pack-authored `label` / `title` / `description` / `category` / `options[]` are **untrusted** and MUST be escaped for the target surface; prompt segments interpolated from them (or from values collected through the template) MUST propagate `meta.contentTrust: "untrusted"` per `form-content-packs.md` §"Trust boundary" (invariant `form-content-pack-string-trust-boundary`). A signature proves authorship, not content safety.
+
+A host that does not advertise this flag does not load form-content packs; template resolution stays implementation-defined.
+
+A pack MAY declare `peerDependencies: { "host.forms.contentPacks": "supported" }`; the registry refuses registration against a host that does not advertise it.
+
+---
+
 ## §host.chat
 
 **Capability flag:** `host.chat: supported`

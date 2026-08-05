@@ -7,12 +7,12 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 58 | `spec/v1/*.md` |
-| JSON Schemas | 76 | `schemas/*.schema.json` |
+| Spec prose documents | 59 | `spec/v1/*.md` |
+| JSON Schemas | 77 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 401 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 136 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 402 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 137 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.58.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.59.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 131 |
-| Active | 3 |
+| Active | 4 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -173,6 +173,7 @@
 | RFC 0134 | Edge conditions - `truthy` / `falsy` operators | Accepted |
 | RFC 0135 | Workflow-chain gallery visibility - `internal` chains | Accepted |
 | RFC 0136 | `WorkflowVariable.format` - a presentational hint for run inputs | Draft |
+| RFC 0137 | Form-content packs - `kind: "form-content"` distributes form templates; field types reuse the RFC 0071 portable subset | Active |
 
 ## SDK Helper Coverage
 
@@ -190,7 +191,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0136) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0137) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
