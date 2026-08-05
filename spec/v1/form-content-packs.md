@@ -88,6 +88,32 @@ A field MAY carry an optional `format` constraining its value: spec-reserved `em
 
 ---
 
+## Unique identifiers (normative)
+
+Each `templates[].templateId` MUST be unique within the pack, and each `fields[].id` MUST be unique within its template. A registry MUST refuse a pack violating either at `PUT` (`pack_kind_invalid`), and a host MUST refuse to install one.
+
+This is a **data-integrity** requirement, not a style rule. Two fields sharing an `id` silently overwrite one another in the submission value bag: the earlier value is lost, no error is raised, and the loss is invisible until someone reads a submission that is missing an answer the user gave.
+
+JSON Schema cannot express uniqueness-by-property for an array of objects (`uniqueItems` compares whole objects, so two fields with the same `id` but different labels are "unique" to it). The requirement is therefore normative prose backed by a registry/host check — the same treatment every peer pack kind gives its own id arrays (`nodes[].typeId`, `artifactTypes[].artifactTypeId`, `cards[].cardTypeId`, `chains[].chainId`).
+
+## No submission routing (normative — F2)
+
+A form template describes a form's **shape**. It MUST NOT describe where the resulting submissions go.
+
+- A `FormTemplate` MUST NOT carry submission-routing configuration of any kind — no destination, binding, webhook, list id, mailbox, CRM object, or equivalent. The schema declares no such property and `additionalProperties: false` rejects one.
+- A host MUST refuse to install a pack that attempts to carry one, and MUST NOT infer a routing destination from any other template field (`category` is a grouping hint, not a destination — see its schema description).
+- Should a future RFC introduce a routing surface, it MUST NOT let a pack bind a destination unilaterally: routing MUST be a host-side decision, made by the operator, gated by explicit operator consent at install or instantiation time.
+
+Where a tenant's submissions are delivered is a decision about the **operator's** data — frequently personal data with legal obligations attached. A third-party pack author does not get to make that decision by shipping a signed manifest, and a signature does not confer that authority (see §"Trust boundary"). Enforced as the `form-content-template-no-submission-routing` SECURITY invariant; asserted server-free in `form-content-packs.test.ts`.
+
+## Host storage is out of scope (non-normative)
+
+This document constrains the **wire**. It does not constrain how a host stores forms internally.
+
+A host MAY keep its own internal field representation and translate at the pack boundary — an anti-corruption layer — rather than migrating stored rows to the wire vocabulary. That is explicitly **not** the forked-vocabulary failure this kind exists to prevent: the prohibition in §"Field types" is against two divergent vocabularies *on the wire*. The test is whether anything outside the host observes the internal names; if the only wire-facing surface speaks the portable subset, there is one wire vocabulary and the host is conformant.
+
+Translation is often the *safer* choice. Coercing stored rows into the portable subset can silently change semantics (a stored multi-line field collapsing to single-line) or hard-fail host logic keyed on an internal type name — a real migration hazard on tenant data, with no upside on the wire. Per `positioning.md`, storage is a host-product concern.
+
 ## Instantiation (normative)
 
 When a host advertises `host.forms.contentPacks: supported` and a registered template is instantiated:

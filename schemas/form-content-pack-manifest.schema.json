@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/form-content-pack-manifest.schema.json",
   "title": "FormContentPackManifest",
-  "description": "Manifest for a published OpenWOP form-content pack — `pack.json` at the pack root with `kind: \"form-content\"`. Peer to the node / workflow-chain / prompt / artifact-type / card pack manifests; disjoint via the `kind` discriminator. See `spec/v1/form-content-packs.md` for the canonical contract and RFC 0137 for the rationale.\n\nA form-content pack distributes **form templates**: a named, versioned set of typed input fields a host instantiates into an ordinary, fully editable form through its normal create path. It is purely declarative — no `runtime`, no executor bytecode, no entry point. The pack contributes the *shape* of a form; it does not define a submission surface, a handler, or any behavior the host would not otherwise accept.\n\n**Field types are the RFC 0071 portable subset, not a second vocabulary.** `fields[].type` reuses the closed portable subset defined in `chat-card-packs.md` §\"Input fields — a closed portable subset\" (RFC 0071 Phase 2, gap G9 resolved 2026-05-27) verbatim, including its `vendor.<org>.<kind>` / `x-<kind>` extension escape hatch. Two declarative pack kinds that both collect typed user input MUST agree on what a field type means.",
+  "description": "Manifest for a published OpenWOP form-content pack — `pack.json` at the pack root with `kind: \"form-content\"`. Peer to the node / workflow-chain / prompt / artifact-type / card pack manifests; disjoint via the `kind` discriminator. See `spec/v1/form-content-packs.md` for the canonical contract and RFC 0137 for the rationale.\n\nA form-content pack distributes **form templates**: a named, versioned set of typed input fields a host instantiates into an ordinary, fully editable form through its normal create path. It is purely declarative — no `runtime`, no executor bytecode, no entry point. The pack contributes the *shape* of a form; it does not define a submission surface, a handler, or any behavior the host would not otherwise accept.\n\n**A template carries NO submission routing, and MUST NOT gain any.** There is deliberately no `intakeBinding` / destination / webhook / list-id property on `FormTemplate`, and `additionalProperties: false` rejects one. Where a tenant's form submissions go is a decision about the OPERATOR's data; a third-party pack author does not get to make it by shipping a manifest. Enforced as the `form-content-template-no-submission-routing` SECURITY invariant — see `form-content-packs.md` §\"No submission routing\".\n\n**The wire vocabulary governs the WIRE, not host storage.** A host MAY store fields under any internal representation it likes and translate at the pack boundary; the spec constrains what crosses the wire, not what sits in a host's database (`positioning.md`).\n\n**Field types are the RFC 0071 portable subset, not a second vocabulary.** `fields[].type` reuses the closed portable subset defined in `chat-card-packs.md` §\"Input fields — a closed portable subset\" (RFC 0071 Phase 2, gap G9 resolved 2026-05-27) verbatim, including its `vendor.<org>.<kind>` / `x-<kind>` extension escape hatch. Two declarative pack kinds that both collect typed user input MUST agree on what a field type means.",
   "type": "object",
   "required": ["name", "version", "kind", "engines", "templates"],
   "additionalProperties": false,
@@ -55,8 +55,9 @@
     "templates": {
       "type": "array",
       "minItems": 1,
+      "maxItems": 100,
       "items": { "$ref": "#/$defs/FormTemplate" },
-      "description": "Form template definitions this pack contributes. Each MUST have a unique `templateId` within the pack."
+      "description": "Form template definitions this pack contributes. Each MUST have a unique `templateId` within the pack — duplicates MUST be refused at registry `PUT` / install (`form-content-packs.md` §\"Unique identifiers\"); JSON Schema cannot express uniqueness-by-property, so this is a normative prose requirement, as it is for every peer pack kind. `maxItems` is an OUTER resource bound against a render bomb, not product policy — a host MAY enforce a tighter limit locally."
     },
     "signing": { "$ref": "#/$defs/Signing" }
   },
@@ -103,8 +104,9 @@
         "fields": {
           "type": "array",
           "minItems": 1,
+          "maxItems": 200,
           "items": { "$ref": "#/$defs/FormField" },
-          "description": "Typed fields the template contributes, in presentation order. Each MUST have a unique `id` within the template."
+          "description": "Typed fields the template contributes, in presentation order. Each MUST have a unique `id` within the template — duplicates MUST be refused (`form-content-packs.md` §\"Unique identifiers\"). Two fields sharing an `id` silently overwrite one another in the submission value bag, losing data with no error, so this is a data-integrity requirement rather than a style rule. `maxItems` is an OUTER resource bound; a host MAY enforce a tighter limit locally."
         }
       }
     },
@@ -133,8 +135,8 @@
         "label": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 200,
-          "description": "Human-readable field label. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\"."
+          "maxLength": 1000,
+          "description": "Human-readable field label. Bounded at 1000 rather than 200 because a lawful consent label (GDPR/marketing opt-in) is legitimately long-form. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\"."
         },
         "description": {
           "type": "string",
@@ -151,7 +153,7 @@
         "options": {
           "type": "array",
           "items": { "type": "string", "maxLength": 200 },
-          "maxItems": 200,
+          "maxItems": 250,
           "description": "Choices for `type: \"select\"` / `\"multiselect\"`. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\". Mirrors `chat-card-pack-manifest.schema.json` `InputField.options`."
         }
       }
