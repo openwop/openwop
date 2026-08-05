@@ -69,7 +69,7 @@ Distinct from the spec-corpus schemas above. These live inside a pack's tarball 
 - `$schema: "https://json-schema.org/draft/2020-12/schema"` — same as spec corpus.
 - `$id` MUST use the **registry-canonical, version-bearing** form: `https://packs.openwop.dev/<pack-name>/<version>/<file-name>.schema.json`. The version segment MUST match `pack.json.version`. This keeps `$id` immutable across pack version bumps — caching tools that key on `$id` see distinct documents per pack version (per JSON Schema 2020-12 `$id` immutability semantics).
 - `additionalProperties: false` on every object — same discipline as spec corpus.
-- Pack `version` bump: regenerate every `$id` in the pack's `schemas/` directory to the new version. `scripts/precheck-packs.mjs` SHOULD catch drift; pack authors MAY also wire a regen step into their release script.
+- Pack `version` bump: regenerate every `$id` in the pack's `schemas/` directory to the new version. The registry repo's `scripts/check-pack-schema-ids.mjs` enforces this (run locally via `npm run check`, and in `packs-check` CI); `--fix` regenerates them. **Correction (2026-08-05):** this line previously said `scripts/precheck-packs.mjs` SHOULD catch drift — it does not check `$id` at all, and the only enforcement lived in an inline heredoc inside a CI workflow, so it could not be run locally. A routine version bump then left `main` red for four days.
 
 ### OpenAPI / AsyncAPI
 
