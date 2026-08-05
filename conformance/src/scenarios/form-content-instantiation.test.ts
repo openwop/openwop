@@ -13,8 +13,23 @@
  * what `OPENWOP_REQUIRE_BEHAVIOR=true` is supposed to make non-vacuous.
  *
  * Gated on the `host.forms.contentPacks` advertisement AND the host-sample
- * instantiate seam; soft-skips when either is absent, so a host that does not
- * implement RFC 0137 skips cleanly and stays v1-compliant.
+ * instantiate seam, so a host that does not implement RFC 0137 skips cleanly and
+ * stays v1-compliant.
+ *
+ * **The advertisement gate is `behaviorGate`, not a bare `return`.** That is the
+ * difference between a skip you can see and one you cannot: under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true` an unadvertised capability FAILS with a message
+ * naming the profile, instead of quietly skipping to green. A host that
+ * mis-spells its advertisement — serving `capabilities.forms.contentPacks`
+ * instead of a root-level `"host.forms"` — otherwise gets four silent skips and a
+ * green run that witnesses nothing. That is the exact vacuity this scenario
+ * exists to prevent, so the gate must be loud in strict mode.
+ *
+ * The canonical advertisement is a ROOT-LEVEL dotted `"host.forms": { … }`:
+ * `host-capabilities.md` §"How a capability is consumed" pins the `host.`-prefixed
+ * key, and `capabilities.md` §"Document-root layout (normative — RFC 0073)" pins
+ * the document root — a `capabilities` wrapper is a deprecated legacy shape and a
+ * host serving families only under it "is non-conformant and is graded as such".
  *
  * What is asserted over the wire (each maps to a numbered §Instantiation rule):
  *
@@ -41,6 +56,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 import {
   readFormContentCap,
   formContentSupported,
@@ -55,13 +71,16 @@ import {
  * `…form.basic` uses only portable-subset types; `…form.extended` additionally
  * declares one `vendor.*` field the host is not expected to recognize.
  */
+/** Profile name for the strict-mode gate (`OPENWOP_REQUIRE_BEHAVIOR=true`). */
+const PROFILE = 'host.forms.contentPacks';
+
 const BASIC_TEMPLATE = 'vendor.conformance.form.basic';
 const EXTENDED_TEMPLATE = 'vendor.conformance.form.extended';
 const VENDOR_FIELD_ID = 'vendorExtended';
 
 describe('form-content-instantiation: a host instantiates a registered template (RFC 0137 §Instantiation)', () => {
   it('#1 instantiation goes through the host NORMAL create path', async () => {
-    if (!formContentSupported(await readFormContentCap())) return; // unadvertised — soft-skip
+    if (!behaviorGate(PROFILE, formContentSupported(await readFormContentCap()))) return;
     const res = await instantiateTemplate(BASIC_TEMPLATE);
     if (res === null) return; // seam absent — soft-skip
 
@@ -87,7 +106,7 @@ describe('form-content-instantiation: a host instantiates a registered template 
   });
 
   it('#1/F2 the instantiated form carries NO pack-bound submission destination', async () => {
-    if (!formContentSupported(await readFormContentCap())) return;
+    if (!behaviorGate(PROFILE, formContentSupported(await readFormContentCap()))) return;
     const res = await instantiateTemplate(BASIC_TEMPLATE);
     if (res === null) return;
 
@@ -107,7 +126,7 @@ describe('form-content-instantiation: a host instantiates a registered template 
   });
 
   it('#2 an unrecognized vendor.* field type DEGRADES to plain text, and does NOT fail the instantiation', async () => {
-    if (!formContentSupported(await readFormContentCap())) return;
+    if (!behaviorGate(PROFILE, formContentSupported(await readFormContentCap()))) return;
     const res = await instantiateTemplate(EXTENDED_TEMPLATE);
     if (res === null) return;
 
@@ -131,7 +150,7 @@ describe('form-content-instantiation: a host instantiates a registered template 
   });
 
   it('#3 pack-authored fields are FULLY EDITABLE — no privilege over a hand-added field', async () => {
-    if (!formContentSupported(await readFormContentCap())) return;
+    if (!behaviorGate(PROFILE, formContentSupported(await readFormContentCap()))) return;
     const res = await instantiateTemplate(BASIC_TEMPLATE);
     if (res === null) return;
 
