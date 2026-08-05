@@ -104,6 +104,8 @@ A form template describes a form's **shape**. It MUST NOT describe where the res
 - A host MUST refuse to install a pack that attempts to carry one, and MUST NOT infer a routing destination from any other template field (`category` is a grouping hint, not a destination — see its schema description).
 - Should a future RFC introduce a routing surface, it MUST NOT let a pack bind a destination unilaterally: routing MUST be a host-side decision, made by the operator, gated by explicit operator consent at install or instantiation time.
 
+**This constrains the pack, not the host.** A host is free to route submissions anywhere its operator configures — an intake binding, a CRM list, a queue, a workflow trigger. The requirement is that the *destination is chosen by the operator*, never declared by a pack author and never derived from pack-authored content. A form instantiated from a template MUST therefore begin with whatever routing the host's own create path gives a hand-authored form (typically none), and the operator configures it afterward exactly as they would for any other form.
+
 Where a tenant's submissions are delivered is a decision about the **operator's** data — frequently personal data with legal obligations attached. A third-party pack author does not get to make that decision by shipping a signed manifest, and a signature does not confer that authority (see §"Trust boundary"). Enforced as the `form-content-template-no-submission-routing` SECURITY invariant; asserted server-free in `form-content-packs.test.ts`.
 
 ## Host storage is out of scope (non-normative)
@@ -120,6 +122,16 @@ When a host advertises `host.forms.contentPacks: supported` and a registered tem
 
 1. The host MUST create the form through its **normal create path** — the same path that serves a form the host's own user authored by hand. A form-content pack MUST NOT cause the host to accept a form, field, or submission surface it would not otherwise accept.
 2. The host MUST map each `fields[].type` to a control of the corresponding data kind, and MUST degrade an unrecognized (`vendor.*` / `x-`-prefixed) type to a plain text input rather than failing the instantiation.
+
+   **Degrade applies to *extensions*, not to malformed values.** The two cases are distinct and a host MUST treat them differently:
+
+   | `fields[].type` value | Schema | Host behavior |
+   | --- | --- | --- |
+   | A portable-subset member (`text`, `longtext`, …) | valid | Map to a control of that data kind. |
+   | A `vendor.<org>.<kind>` / `x-<kind>` extension the host does not recognize | valid | **MUST degrade** to a plain text input. Failing here would break forward compatibility — the extension is well-formed and simply belongs to another host. |
+   | Anything else (e.g. `emial`, `textarea`, `email`) | **invalid** — the `type` pattern admits only the subset and the two extension prefixes | **MUST refuse.** The pack is malformed, not extended. A bare unknown is a typo or a widget name, and silently coercing it to text would discard exactly what the author declared (a mistyped `select` losing its closed option set to a free-text box is a real hazard on a public form). |
+
+   A host MUST NOT collapse these into one rule in either direction: refusing a well-formed extension makes the host non-conformant, and degrading a malformed value hides an authoring error the schema already caught.
 3. The resulting form MUST be **fully editable** by the instantiating user. A template is a starting point, not a locked contract: the host MUST NOT treat a pack-authored field as immutable or privileged relative to a hand-added one.
 4. The host MUST NOT execute anything from the pack. There is no entry point, no handler, and no runtime; a manifest carrying `runtime` is rejected at publication.
 5. Submitted values are ordinary user input and MUST be sanitized, validated, and authorized exactly as hand-typed input to the same create path.
