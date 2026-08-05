@@ -351,6 +351,40 @@ invariants:
       seam; capability-gated on `host.chat.cardPacks.supported` and host-pending
       until a host wires card execution (Phase 2 `Active` gate).
 
+  - id: form-content-pack-string-trust-boundary
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/form-content-packs.test.ts
+    note: |
+      RFC 0137 §F1 "Trust boundary". A form-content pack (`kind: "form-content"`)
+      ships PACK-AUTHORED strings — `templates[].label` / `.title` /
+      `.description` / `.category` and `fields[].label` / `.description` /
+      `.options[]` — that a host renders directly into its own chrome (a picker,
+      a gallery card, a form heading, a field label, a dropdown option), and
+      whose collected values commonly feed a downstream prompt. Those strings
+      originate with a third-party author and arrive inside a signed tarball.
+      A signature proves WHO authored the pack; it does NOT make the authored
+      bytes trustworthy, and a host MUST NOT treat pack provenance as content
+      trust. A host MUST escape or otherwise neutralize every pack-authored
+      string for the target surface and MUST NOT interpret it as markup, script,
+      or a templating directive; when such a string — or a value collected
+      through an instantiated template — is interpolated into a prompt, the
+      composed envelope MUST carry `meta.contentTrust: "untrusted"` (propagated
+      per `ai-envelope.md` §"Trust boundary"), mirroring
+      `chat-card-input-trust-boundary`. This prevents a published template from
+      smuggling instructions into a model call — a template titled "Ignore
+      previous instructions and …" is a realistic supply-chain vector precisely
+      because a form template looks inert. LENGTH BOUNDS ARE NOT A TRUST
+      BOUNDARY: the `maxLength` constraints in
+      `form-content-pack-manifest.schema.json` are a render-bomb resource guard
+      and a host MUST NOT treat bounding a string as having sanitized it.
+      The always-on corpus/schema legs of `form-content-packs.test.ts` assert the
+      contract server-free; the behavioral trust-tag leg is capability-gated on
+      `host.forms.contentPacks` and host-pending until a host wires template
+      instantiation (the `Active → Accepted` gate).
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high

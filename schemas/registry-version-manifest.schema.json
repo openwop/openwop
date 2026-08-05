@@ -12,13 +12,14 @@
     { "required": ["provider"] },
     { "properties": { "chains": { "type": "array", "minItems": 1 } }, "required": ["chains"] },
     { "properties": { "prompts": { "type": "array", "minItems": 1 } }, "required": ["prompts"] },
-    { "properties": { "cards": { "type": "array", "minItems": 1 } }, "required": ["cards"] }
+    { "properties": { "cards": { "type": "array", "minItems": 1 } }, "required": ["cards"] },
+    { "properties": { "templates": { "type": "array", "minItems": 1 } }, "required": ["templates"] }
   ],
   "allOf": [
     {
-      "$comment": "RFC 0107 — runtime is required for EXECUTABLE kinds (node, or kind absent) and MUST be absent for DECLARATIVE kinds (artifact-type, connection, workflow-chain, prompt, card). NOTE: the chat-card-pack kind string is `card` per RFC 0071 (corrected 2026-06-23; an earlier RFC 0107 draft said `chat-card`).",
+      "$comment": "RFC 0107 — runtime is required for EXECUTABLE kinds (node, or kind absent) and MUST be absent for DECLARATIVE kinds (artifact-type, connection, workflow-chain, prompt, card, form-content). NOTE: the chat-card-pack kind string is `card` per RFC 0071 (corrected 2026-06-23; an earlier RFC 0107 draft said `chat-card`). `form-content` added by RFC 0137.",
       "if": {
-        "properties": { "kind": { "enum": ["artifact-type", "connection", "workflow-chain", "prompt", "card"] } },
+        "properties": { "kind": { "enum": ["artifact-type", "connection", "workflow-chain", "prompt", "card", "form-content"] } },
         "required": ["kind"]
       },
       "then": { "not": { "required": ["runtime"] } },
@@ -58,9 +59,9 @@
     },
     "kind": {
       "type": "string",
-      "enum": ["node", "artifact-type", "connection", "workflow-chain", "prompt", "card"],
+      "enum": ["node", "artifact-type", "connection", "workflow-chain", "prompt", "card", "form-content"],
       "default": "node",
-      "description": "Pack-kind discriminator (RFC 0107). ABSENT ≡ `node` (the original, executable kind — backward compatible). Executable kinds (`node`) carry `runtime` + `nodes[]`/`agents[]`. DECLARATIVE kinds carry their own payload and NO `runtime`: `artifact-type` → `artifactTypes[]` (RFC 0075); `connection` → `provider` (RFC 0095); `workflow-chain` → `chains[]` (RFC 0013); `prompt` → `prompts[]`; `card` → `cards[]` (the chat-card pack, RFC 0071 — kind string is `card`, NOT `chat-card`; an earlier RFC 0107 draft used `chat-card`, corrected 2026-06-23). The registry's runtime-support check (registry-operations.md §Validation flow #7) is skipped for declarative kinds."
+      "description": "Pack-kind discriminator (RFC 0107). ABSENT ≡ `node` (the original, executable kind — backward compatible). Executable kinds (`node`) carry `runtime` + `nodes[]`/`agents[]`. DECLARATIVE kinds carry their own payload and NO `runtime`: `artifact-type` → `artifactTypes[]` (RFC 0075); `connection` → `provider` (RFC 0095); `workflow-chain` → `chains[]` (RFC 0013); `prompt` → `prompts[]`; `card` → `cards[]` (the chat-card pack, RFC 0071 — kind string is `card`, NOT `chat-card`; an earlier RFC 0107 draft used `chat-card`, corrected 2026-06-23); `form-content` → `templates[]` (RFC 0137). The registry's runtime-support check (registry-operations.md §Validation flow #7) is skipped for declarative kinds."
     },
     "artifactTypes": {
       "type": "array",
@@ -85,6 +86,11 @@
     "cards": {
       "type": "array",
       "description": "Present iff `kind == \"card\"` (the chat-card pack, RFC 0071; the registry denormalizes `cards[].cardTypeId` into the per-pack index). Carried loosely; source schema authoritative.",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "templates": {
+      "type": "array",
+      "description": "Present iff `kind == \"form-content\"` (RFC 0137). Form templates the pack contributes (each: `templateId`, `version`, `label`, `title`, `fields[]`). Carried loosely here per the RFC 0107 G1 pattern — `form-content-pack-manifest.schema.json` is the authoritative source contract, and the registry denormalizes `templates[].templateId` into the per-pack index for discovery (`registry-operations.md` §\"Type-ID indexing\").",
       "items": { "type": "object", "additionalProperties": true }
     },
     "runtime": {
