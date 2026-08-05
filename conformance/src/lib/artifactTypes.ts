@@ -33,13 +33,34 @@ interface DiscoveryDoc {
 }
 
 /** Reads `host.artifactTypes` from discovery (capabilities block or top-level); null when unadvertised. */
+/**
+ * Capability-key lookup order (RFC 0137 G16, resolved 2026-08-05).
+ *
+ * The canonical discovery key for a `host.*` capability family is the PLAIN
+ * family name at the document root — NOT the dotted identifier. Evidence:
+ * `schemas/capabilities.schema.json` declares 82 properties and **zero** dotted
+ * `host.*` keys, and five host capabilities are already declared plainly there —
+ * `fs`, `kvStorage`, `tableStorage`, `queueBus`, `scheduling` — each mapping to a
+ * `§host.<name>` section in `host-capabilities.md` (`§host.fs` ↔ `fs`, and so on).
+ * The `host.` prefix is the capability IDENTIFIER notation used in prose headings,
+ * pack `peerDependencies`, and `error.capability` — not the discovery-document key.
+ *
+ * These helpers previously read the dotted key ONLY, which made them the outlier
+ * against five established precedents and rendered a schema-following host
+ * INVISIBLE to the scenario — a silent soft-skip to green.
+ *
+ * Order: plain at root (canonical) → dotted at root → plain under the deprecated
+ * `capabilities` wrapper → dotted under the wrapper. Root before wrapper per
+ * `capabilities.md` §"Document-root layout (normative — RFC 0073)"; the wrapper
+ * arms retire with the migration window at v2.0.
+ */
 export async function readArtifactTypesCap(): Promise<Record<string, unknown> | null> {
   const res = await driver.get('/.well-known/openwop');
   const doc = res.json as DiscoveryDoc | undefined;
-  const fromCaps = doc?.capabilities && typeof doc.capabilities === 'object'
-    ? (doc.capabilities as Record<string, unknown>)['host.artifactTypes']
+  const caps = doc?.capabilities && typeof doc.capabilities === 'object'
+    ? (doc.capabilities as Record<string, unknown>)
     : undefined;
-  const cap = fromCaps ?? doc?.['host.artifactTypes'];
+  const cap = doc?.['artifactTypes'] ?? doc?.['host.artifactTypes'] ?? caps?.['artifactTypes'] ?? caps?.['host.artifactTypes'];
   return cap && typeof cap === 'object' ? (cap as Record<string, unknown>) : null;
 }
 
