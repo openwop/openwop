@@ -101,6 +101,20 @@ describe('form-content-packs: contract present in the corpus (RFC 0137, server-f
     ).toBe(true);
   });
 
+  it.skipIf(V1_DIR === null)('the spec distinguishes DEGRADE (well-formed extension) from REFUSE (malformed value)', () => {
+    expect(
+      /Degrade applies to \*extensions\*, not to malformed values/i.test(formDoc),
+      why('form-content-packs.md §Instantiation', 'MUST-degrade is scoped to vendor.*/x- extensions, not bare unknowns'),
+    ).toBe(true);
+    expect(
+      /MUST NOT collapse these into one rule in either direction/i.test(formDoc),
+      why(
+        'form-content-packs.md §Instantiation',
+        'refusing a well-formed extension breaks forward compat; degrading a malformed value hides an authoring error',
+      ),
+    ).toBe(true);
+  });
+
   it.skipIf(V1_DIR === null)('form-content-packs.md forbids minting a second field-type vocabulary', () => {
     expect(
       /MUST NOT\W{0,4}\s*define its own field-type vocabulary/i.test(formDoc),
@@ -314,6 +328,13 @@ describe('form-content-packs: a template carries NO submission routing (RFC 0137
         why('form-content-packs.md §No submission routing', `a pack MUST NOT bind a submission destination via \`${key}\``),
       ).toBe(false);
     }
+  });
+
+  it.skipIf(V1_DIR === null)('the spec scopes the routing ban to the PACK, leaving operator-configured routing free', () => {
+    expect(
+      /This constrains the pack, not the host/i.test(formDoc),
+      why('form-content-packs.md §No submission routing', 'a host MAY route wherever its OPERATOR configures; only pack-declared routing is banned'),
+    ).toBe(true);
   });
 
   it.skipIf(V1_DIR === null)('the spec binds FUTURE routing surfaces to operator consent, not pack declaration', () => {
