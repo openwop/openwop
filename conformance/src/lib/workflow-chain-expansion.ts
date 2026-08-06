@@ -280,6 +280,32 @@ export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): Expand
   return { nodes: expandedNodes, edges: expandedEdges, idMap };
 }
 
+// ─── End of the MIRRORED CORE ───────────────────────────────────────────────
+//
+// Everything ABOVE this line is the base chain-expansion algorithm every host
+// that loads workflow-chain packs implements, and it is mirrored verbatim by
+// the in-memory reference host (`examples/hosts/in-memory/src/
+// workflow-chain-expansion.ts`, in the `openwop-examples` repo), which cannot
+// import this package under its zero-runtime-deps policy. That mirror is
+// enforced byte-for-byte by `scripts/check-workflow-chain-expansion-sync.mjs`.
+//
+// Everything BELOW is CAPABILITY-GATED surface added after the mirror was
+// established, and is deliberately NOT mirrored:
+//
+//   • RFC 0124 deferred-parameter expansion (`expandChainDeferred` and its
+//     types) — the host-side deferral path.
+//   • RFC 0133 sub-chain co-expansion + produced variables (`expandChainTree`,
+//     `mintChildWorkflowId`, the `SubChain*` / `VariableUndeclared` errors) —
+//     gated on `capabilities.workflowChainPacks.subChains`. A host that does
+//     not advertise it MUST REFUSE a `subChains`-bearing chain with
+//     `sub_chain_unsupported`, never silently flatten — so a minimal host is
+//     required to reject this surface, not to implement it.
+//
+// Do NOT move the sentinel to "fix" a drift failure. If a change belongs to the
+// base algorithm every host must share, it goes above and the mirror follows.
+// If it is gated on an advertised capability, it goes below.
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ---------------------------------------------------------------------------
 // RFC 0124 (WCP4) — Portable per-run parameter deferral.
 //
@@ -292,6 +318,7 @@ export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): Expand
 // spec-authoritative reference for `spec/v1/workflow-chain-packs.md`
 // §"Deferred-parameter expansion (RFC 0124)".
 // ---------------------------------------------------------------------------
+
 
 /** The parameter JSON Schema fragment (`chain.parameters`), narrowed to the
  *  fields deferred expansion reads: each property's `type`, `description`, and
