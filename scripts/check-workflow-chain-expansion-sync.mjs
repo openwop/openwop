@@ -52,7 +52,21 @@ const HOST_PATH = resolve(EXAMPLES_ROOT, 'examples/hosts/in-memory/src/workflow-
 //   END:   either EOF (conformance) or the `// ─── Host-side I/O
 //          wrapper` banner (host).
 const START_RE = /export class ChainUnresolvableTypeIdError/;
-const END_RE = /\/\/ ─── Host-side I\/O wrapper/;
+// The compared region ends at whichever sentinel the file carries:
+//   • conformance — `// ─── End of the MIRRORED CORE`, which closes the base
+//     algorithm and opens the CAPABILITY-GATED surfaces (RFC 0124 deferred
+//     parameters, RFC 0133 sub-chain co-expansion) that a minimal host is NOT
+//     obliged to mirror. RFC 0133 in fact requires a host that does not
+//     advertise `workflowChainPacks.subChains` to REFUSE that surface rather
+//     than implement it, so demanding a byte-mirror of it was incoherent.
+//   • host — `// ─── Host-side I/O wrapper`, unchanged.
+//
+// Before this scope was pinned, the conformance side ran to EOF and the gate
+// compared 33 KB against 4.5 KB — 6 shared declarations versus 32 — so it
+// reported permanent drift for surfaces the mirror was never meant to carry.
+// It failed 40 consecutive scheduled runs on `main` (from at least 2026-07-11)
+// and was, in practice, unactionable.
+const END_RES = [/\/\/ ─── End of the MIRRORED CORE/, /\/\/ ─── Host-side I\/O wrapper/];
 
 function extractAlgorithm(text, label) {
   const startMatch = START_RE.exec(text);
@@ -61,8 +75,9 @@ function extractAlgorithm(text, label) {
     process.exit(2);
   }
   const startIdx = startMatch.index;
-  const endMatch = END_RE.exec(text.slice(startIdx));
-  const endIdx = endMatch ? startIdx + endMatch.index : text.length;
+  const rest = text.slice(startIdx);
+  const ends = END_RES.map((re) => re.exec(rest)).filter(Boolean).map((m) => m.index);
+  const endIdx = ends.length > 0 ? startIdx + Math.min(...ends) : text.length;
   return text.slice(startIdx, endIdx).trimEnd();
 }
 
