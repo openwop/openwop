@@ -4,7 +4,13 @@
   "title": "WorkflowChainPackManifest",
   "description": "Manifest for a published OpenWOP workflow-chain pack — `pack.json` at the pack root with `kind: \"workflow-chain\"`. Distinct from node-pack-manifest.schema.json. See workflow-chain-packs.md for the canonical contract and RFC 0013 for the rationale. Chain packs are workflow-edit-time abstractions: a host editor expands each declared chain inline into the parent workflow at author time, so the dispatching runtime sees only concrete `core.*` (or published-vendor) typeIds.",
   "type": "object",
-  "required": ["name", "version", "kind", "engines", "chains"],
+  "required": [
+    "name",
+    "version",
+    "kind",
+    "engines",
+    "chains"
+  ],
   "properties": {
     "name": {
       "type": "string",
@@ -23,19 +29,38 @@
       "const": "workflow-chain",
       "description": "Pack kind discriminator. MUST be the literal string `\"workflow-chain\"` for this schema. Manifests carrying `kind: \"node\"` (or omitting `kind`) validate against `node-pack-manifest.schema.json` instead."
     },
-    "description": { "type": "string", "maxLength": 1024 },
-    "author": { "type": "string" },
-    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`)." },
-    "homepage": { "type": "string", "format": "uri" },
-    "repository": { "type": "string", "format": "uri" },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri"
+    },
     "keywords": {
       "type": "array",
-      "items": { "type": "string", "maxLength": 64 },
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
       "maxItems": 50
     },
     "engines": {
       "type": "object",
-      "required": ["openwop"],
+      "required": [
+        "openwop"
+      ],
       "properties": {
         "openwop": {
           "type": "string",
@@ -47,22 +72,35 @@
     },
     "dependencies": {
       "type": "object",
-      "additionalProperties": { "type": "string" },
+      "additionalProperties": {
+        "type": "string"
+      },
       "description": "Other node packs whose typeIds this pack's chains reference. Map of pack name → semver range. The host editor uses this map at expansion time to verify referenced typeIds resolve."
     },
     "chains": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/WorkflowChain" },
+      "items": {
+        "$ref": "#/$defs/WorkflowChain"
+      },
       "description": "Chains the pack contributes. Each MUST have a unique `chainId` within the pack."
     },
-    "signing": { "$ref": "#/$defs/Signing" }
+    "signing": {
+      "$ref": "#/$defs/Signing"
+    }
   },
   "additionalProperties": false,
   "$defs": {
     "WorkflowChain": {
       "type": "object",
-      "required": ["chainId", "version", "label", "description", "parameters", "dag"],
+      "required": [
+        "chainId",
+        "version",
+        "label",
+        "description",
+        "parameters",
+        "dag"
+      ],
       "description": "A single workflow-chain entry — a pre-configured DAG fragment + parameter schema that the host editor expands inline at author time. See workflow-chain-packs.md §Chain entry shape.",
       "properties": {
         "chainId": {
@@ -96,37 +134,57 @@
           "additionalProperties": true,
           "$comment": "Open by design — this field IS a JSON Schema document, so it must accept any of the 30+ JSON Schema 2020-12 keywords (`type`, `properties`, `required`, `oneOf`, `allOf`, etc.). Strict closure would require importing the JSON Schema meta-schema."
         },
-        "dag": { "$ref": "#/$defs/WorkflowDefinitionFragment" },
+        "dag": {
+          "$ref": "#/$defs/WorkflowDefinitionFragment"
+        },
         "outputs": {
           "type": "object",
-          "additionalProperties": { "$ref": "#/$defs/ChainOutput" },
+          "additionalProperties": {
+            "$ref": "#/$defs/ChainOutput"
+          },
           "description": "Declared outputs the chain surfaces to the parent workflow. Keys are output names; values declare type + description."
         },
         "capabilities": {
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["streamable", "cacheable", "side-effectful", "mcp-exportable"]
+            "enum": [
+              "streamable",
+              "cacheable",
+              "side-effectful",
+              "mcp-exportable"
+            ]
           },
           "uniqueItems": true,
           "description": "Capability traits to propagate to every expanded node. Hosts MUST copy this array into each expanded `WorkflowNode.capabilities` so existing capability gates apply uniformly."
         },
         "subChains": {
           "type": "array",
-          "items": { "$ref": "#/$defs/SubChainRef" },
+          "items": {
+            "$ref": "#/$defs/SubChainRef"
+          },
           "description": "RFC 0133 §1.1. OPTIONAL. Child chains this chain composes at RUN TIME. Each entry names a chain (a sibling `chainId` in this pack, or an externally published chain) that a node references via `config.subChainRef`. Unlike RFC 0013's author-time inline splice, a referenced sub-chain is co-instantiated as its own registered workflow and dispatched by the parent as a child run (both parent and child stay owned + builder-editable). A host without runtime child dispatch MUST refuse instantiation with `sub_chain_unsupported` (422) rather than flatten. Requires `capabilities.workflowChainPacks.subChains.supported: true`. See `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\"."
         },
         "producedVariables": {
           "type": "array",
-          "items": { "$ref": "#/$defs/ProducedVariable" },
+          "items": {
+            "$ref": "#/$defs/ProducedVariable"
+          },
           "description": "RFC 0133 §2.2. OPTIONAL. Run-scoped values a node writes to the executor's variable bag during the run and downstream nodes read by name via a `{ type:\"variable\", variableName }` input binding — where the value is NOT an author-time `parameter` and rides no typed output port. Prefer edges (a typed `sourceOutput`→`targetInput` hand-off) wherever a node exposes a value on a port; `producedVariables` is only for values written to the run bag with no typed port. On expansion the host emits these into `WorkflowDefinition.variables[]` as run-scoped entries (name + type, no value). Any `{ type:\"variable\" }` read of an UNDECLARED name (not here and not a materialized parameter) is a `variable_undeclared` manifest error. See `workflow-chain-packs.md` §\"Produced (run-scoped) variables (RFC 0133)\"."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+        }
+      }
     },
     "SubChainRef": {
       "type": "object",
-      "required": ["ref"],
+      "required": [
+        "ref"
+      ],
       "description": "RFC 0133 §1.1. A reference to a child chain the parent composes. `ref` is EITHER a string naming a SIBLING `chainId` in this pack's `chains[]`, OR an object naming an externally published chain (resolved + signature-verified like any pack dependency). A sibling `ref` that matches no `chainId`, or an external `ref` that fails resolution/verification, is `sub_chain_unresolved`. A chain that transitively composes itself is `sub_chain_cycle`.",
       "properties": {
         "ref": {
@@ -140,11 +198,24 @@
             },
             {
               "type": "object",
-              "required": ["packName", "chainId", "version"],
+              "required": [
+                "packName",
+                "chainId",
+                "version"
+              ],
               "description": "An externally published chain, resolved + signature-verified like any pack dependency.",
               "properties": {
-                "packName": { "type": "string", "minLength": 1, "maxLength": 256 },
-                "chainId": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9._-]*$", "minLength": 1, "maxLength": 256 },
+                "packName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "chainId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
                 "version": {
                   "type": "string",
                   "description": "Semver range for the external chain. Co-registration SHOULD pin the resolved version into the parent's ownership record for reproducibility (RFC 0133 §Unresolved #1, resolved: pin)."
@@ -159,7 +230,11 @@
     },
     "ProducedVariable": {
       "type": "object",
-      "required": ["name", "producedBy", "type"],
+      "required": [
+        "name",
+        "producedBy",
+        "type"
+      ],
       "description": "RFC 0133 §2.2. A run-scoped variable a chain declares: written by one node and read by others via a `{ type:\"variable\", variableName }` input binding. Run-scoped — carries NO author-time value (that is what `parameters` are for); the manifest distinguishes the two.",
       "properties": {
         "name": {
@@ -174,7 +249,13 @@
         },
         "type": {
           "type": "string",
-          "enum": ["string", "number", "boolean", "object", "array"],
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ],
           "description": "JSON-Schema type token for validation/inspection."
         },
         "description": {
@@ -186,7 +267,10 @@
     },
     "ChainOutput": {
       "type": "object",
-      "required": ["type", "description"],
+      "required": [
+        "type",
+        "description"
+      ],
       "properties": {
         "type": {
           "type": "string",
@@ -201,18 +285,24 @@
     },
     "WorkflowDefinitionFragment": {
       "type": "object",
-      "required": ["nodes"],
+      "required": [
+        "nodes"
+      ],
       "description": "Subset of workflow-definition.schema.json. `id`/`name`/`version`/`triggers`/`settings`/`metadata` MUST be omitted (host generates per-expansion); `variables` is replaced by the chain's top-level `parameters`. See workflow-chain-packs.md §WorkflowDefinitionFragment.",
       "properties": {
         "nodes": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/FragmentNode" },
+          "items": {
+            "$ref": "#/$defs/FragmentNode"
+          },
           "description": "Nodes in the fragment. Every node's `typeId` MUST reference a published node-pack typeId or a reserved `core.*` typeId."
         },
         "edges": {
           "type": "array",
-          "items": { "$ref": "#/$defs/FragmentEdge" },
+          "items": {
+            "$ref": "#/$defs/FragmentEdge"
+          },
           "description": "Edges between fragment nodes. Required when `nodes.length > 1`."
         }
       },
@@ -221,7 +311,10 @@
     "FragmentNode": {
       "type": "object",
       "description": "Mirror of `workflow-definition.schema.json#/$defs/WorkflowNode` with relaxed `required[]` (chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes). Maintenance note: when fields are added to `WorkflowNode` in `workflow-definition.schema.json`, mirror the addition here so chain packs can express the same shapes. Drift here means chain-pack authors can't use new node features.",
-      "required": ["id", "typeId"],
+      "required": [
+        "id",
+        "typeId"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -234,12 +327,18 @@
           "minLength": 1,
           "maxLength": 256
         },
-        "name": { "type": "string" },
+        "name": {
+          "type": "string"
+        },
         "position": {
           "type": "object",
           "properties": {
-            "x": { "type": "number" },
-            "y": { "type": "number" }
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
           },
           "additionalProperties": false
         },
@@ -247,7 +346,11 @@
           "type": "object",
           "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time. RFC 0133: a `core.subWorkflow` / `core.dispatch` (child-run) node MAY carry `subChainRef: string` — a declared `subChains[].ref` (sibling `chainId` or external ref) the host rewrites to the minted child `workflowId` at co-expansion time (§1.3 step 3). A concrete `config.workflowId` inside a fragment remains INVALID — a chain MUST NOT pin a host-specific workflow id (the `not` guard below enforces it).",
           "additionalProperties": true,
-          "not": { "required": ["workflowId"] },
+          "not": {
+            "required": [
+              "workflowId"
+            ]
+          },
           "properties": {
             "subChainRef": {
               "type": "string",
@@ -268,7 +371,10 @@
     },
     "FragmentEdge": {
       "type": "object",
-      "required": ["from", "to"],
+      "required": [
+        "from",
+        "to"
+      ],
       "properties": {
         "from": {
           "type": "string",
@@ -284,7 +390,13 @@
         },
         "triggerRule": {
           "type": "string",
-          "enum": ["all_success", "any_success", "all_complete", "none_failed", "any_failed"],
+          "enum": [
+            "all_success",
+            "any_success",
+            "all_complete",
+            "none_failed",
+            "any_failed"
+          ],
           "default": "all_success",
           "description": "Optional fan-in / error-routing rule — the SAME shape and enum as a top-level workflow edge's `triggerRule` (workflow-definition.schema.json §WorkflowEdge). Governs how the target node fires given its incoming edges: `all_success` (default — every incoming edge's source succeeded), `any_success`, `all_complete` (fire when all sources have finished regardless of success — best-effort completion), `none_failed`, `any_failed`. Additive (RFC 0125): omitting it is identical to `all_success`, the implicit prior behavior. Mirrors the RFC 0013 2026-07-03 `condition` amendment's WorkflowEdge→FragmentEdge move. Expansion MUST carry this value onto the resulting `WorkflowEdge` so the scheduler honors it (see `workflow-chain-packs.md` §\"Expansion semantics\")."
         }
@@ -297,12 +409,28 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["expression", "equals", "notEquals", "contains", "regex", "truthy", "falsy"],
+          "enum": [
+            "expression",
+            "equals",
+            "notEquals",
+            "contains",
+            "regex",
+            "truthy",
+            "falsy"
+          ],
           "description": "RFC 0134: `truthy`/`falsy` test the resolved value at `left` for truthiness and take NO `right` operand; `left` is required for all operators except `expression`."
         },
-        "left": { "type": "string", "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`." },
-        "right": { "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134)." },
-        "expression": { "type": "string", "description": "Used when type='expression'." }
+        "left": {
+          "type": "string",
+          "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`."
+        },
+        "right": {
+          "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134)."
+        },
+        "expression": {
+          "type": "string",
+          "description": "Used when type='expression'."
+        }
       },
       "additionalProperties": false
     },
@@ -320,10 +448,18 @@
         },
         "method": {
           "type": "string",
-          "enum": ["manual", "sigstore"]
+          "enum": [
+            "manual",
+            "sigstore"
+          ]
         }
       },
       "additionalProperties": false
+    }
+  },
+  "patternProperties": {
+    "^(x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
     }
   }
 }

@@ -4,7 +4,13 @@
   "title": "ArtifactTypePackManifest",
   "description": "Manifest for a published OpenWOP artifact-type pack — `pack.json` at the pack root with `kind: \"artifact-type\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003), `workflow-chain-pack-manifest.schema.json` (RFC 0013), and `prompt-pack-manifest.schema.json` (RFC 0028); disjoint from all three via the `kind` discriminator. See `spec/v1/artifact-type-packs.md` for the canonical contract and RFC 0071 for the rationale.\n\nArtifact-type packs distribute typed artifact definitions — the JSON Schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce — via the same signed-tarball + Ed25519 + SRI pipeline that already serves node, workflow-chain, and prompt packs. When a host installs an artifact-type pack and advertises `host.artifactTypes: { supported: true }`, it validates produced artifacts of the declared `artifactTypeId`s against their `schemaRef` before emitting `artifact.created`.",
   "type": "object",
-  "required": ["name", "version", "kind", "engines", "artifactTypes"],
+  "required": [
+    "name",
+    "version",
+    "kind",
+    "engines",
+    "artifactTypes"
+  ],
   "additionalProperties": false,
   "properties": {
     "kind": {
@@ -24,19 +30,38 @@
       "description": "Pack-level SemVer 2.0.0.",
       "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
     },
-    "description": { "type": "string", "maxLength": 1024 },
-    "author": { "type": "string" },
-    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`, `MIT`)." },
-    "homepage": { "type": "string", "format": "uri" },
-    "repository": { "type": "string", "format": "uri" },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`, `MIT`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri"
+    },
     "keywords": {
       "type": "array",
-      "items": { "type": "string", "maxLength": 64 },
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
       "maxItems": 50
     },
     "engines": {
       "type": "object",
-      "required": ["openwop"],
+      "required": [
+        "openwop"
+      ],
       "properties": {
         "openwop": {
           "type": "string",
@@ -47,26 +72,37 @@
     },
     "dependencies": {
       "type": "object",
-      "additionalProperties": { "type": "string" },
+      "additionalProperties": {
+        "type": "string"
+      },
       "description": "Other packs this pack depends on. Map of pack name → semver range. Resolved transitively at workflow-register time."
     },
     "peerDependencies": {
       "type": "object",
-      "additionalProperties": { "type": "string" },
+      "additionalProperties": {
+        "type": "string"
+      },
       "description": "Engine-supplied capabilities the pack consumes (e.g., `{ \"host.artifactTypes\": \"supported\" }`). Resolved against the host's advertised capabilities at register time."
     },
     "artifactTypes": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/ArtifactType" },
+      "items": {
+        "$ref": "#/$defs/ArtifactType"
+      },
       "description": "Typed artifact definitions this pack contributes. Each MUST have a unique `artifactTypeId` within the pack."
     },
-    "signing": { "$ref": "#/$defs/Signing" }
+    "signing": {
+      "$ref": "#/$defs/Signing"
+    }
   },
   "$defs": {
     "ArtifactType": {
       "type": "object",
-      "required": ["artifactTypeId", "schemaRef"],
+      "required": [
+        "artifactTypeId",
+        "schemaRef"
+      ],
       "additionalProperties": false,
       "properties": {
         "artifactTypeId": {
@@ -88,14 +124,19 @@
         },
         "validation": {
           "type": "string",
-          "enum": ["open", "closed"],
+          "enum": [
+            "open",
+            "closed"
+          ],
           "description": "RFC 0075. Strictness contract of the artifact's `schemaRef` schema. `closed` ⇒ closed-world (`additionalProperties: false`); a consumer MAY rely on the absence of unknown fields. `open` (recommended for AI/LLM-produced artifacts) ⇒ the schema tolerates extra fields to absorb model drift; consumers MUST ignore unknown fields per COMPATIBILITY.md §2.1. Absent ⇒ `open` (the forward-compatible default). The `additionalProperties:false` requirement on `schemaRef` was relaxed MUST → SHOULD by RFC 0075: a closed-world artifact contract contradicts the protocol's own forward-compat mandate and the first AI-native adopter cannot meet it."
         },
         "displayName": {
           "type": "string",
           "description": "Human-readable label for artifact-management UIs. Non-normative."
         },
-        "rendering": { "$ref": "#/$defs/RenderingHint" },
+        "rendering": {
+          "$ref": "#/$defs/RenderingHint"
+        },
         "exportFormats": {
           "type": "array",
           "items": {
@@ -109,7 +150,11 @@
         },
         "syncOn": {
           "type": "string",
-          "enum": ["completion", "approval", "manual"],
+          "enum": [
+            "completion",
+            "approval",
+            "manual"
+          ],
           "description": "When the host registers the artifact as durable. Mirrors `node-pack-manifest.schema.json#/$defs/PackNode/properties/artifact/properties/syncOn`. Default `completion`."
         },
         "supportsCheckpoint": {
@@ -124,6 +169,11 @@
           "type": "boolean",
           "description": "True if the artifact's schema supports structural diffing (informs run-diff tooling per rest-endpoints.md §:diff). Non-normative."
         }
+      },
+      "patternProperties": {
+        "^(x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+        }
       }
     },
     "RenderingHint": {
@@ -133,13 +183,33 @@
       "properties": {
         "display": {
           "type": "string",
-          "enum": ["markdown", "code", "image", "audio", "file"],
+          "enum": [
+            "markdown",
+            "code",
+            "image",
+            "audio",
+            "file"
+          ],
           "description": "How a consumer SHOULD render the artifact when it recognizes the value."
         },
-        "mimeType": { "type": "string", "maxLength": 255 },
-        "lang": { "type": "string", "maxLength": 64, "description": "Language hint for `display: code`." },
-        "alt": { "type": "string", "maxLength": 1024, "description": "Accessibility text for image/audio/file." },
-        "title": { "type": "string", "maxLength": 255 }
+        "mimeType": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "lang": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Language hint for `display: code`."
+        },
+        "alt": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Accessibility text for image/audio/file."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 255
+        }
       }
     },
     "Signing": {
@@ -147,14 +217,28 @@
       "description": "Optional signing metadata. See node-packs.md §signing.",
       "additionalProperties": false,
       "properties": {
-        "publicKeyRef": { "type": "string", "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)." },
-        "signatureRef": { "type": "string", "description": "Path to the detached signature over `pack.json`." },
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        },
+        "signatureRef": {
+          "type": "string",
+          "description": "Path to the detached signature over `pack.json`."
+        },
         "method": {
           "type": "string",
-          "enum": ["manual", "sigstore"],
+          "enum": [
+            "manual",
+            "sigstore"
+          ],
           "description": "Signing method. `manual` uses publicKeyRef + signatureRef; `sigstore` uses a Sigstore bundle at `pack.json.sigstore`."
         }
       }
+    }
+  },
+  "patternProperties": {
+    "^(x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
     }
   }
 }

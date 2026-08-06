@@ -4,7 +4,13 @@
   "title": "ConnectionPackManifest",
   "description": "RFC 0095. Manifest for a published OpenWOP connection pack — `pack.json` at the pack root with `kind: \"connection\"`. Peer to and disjoint from `node-pack-manifest.schema.json` (RFC 0003), `prompt-pack-manifest.schema.json` (RFC 0028), and `workflow-chain-pack-manifest.schema.json` (RFC 0013) via the `kind` discriminator. A connection pack is a portable PROVIDER definition — the authorize/token/revoke endpoints, the read/write OAuth scope catalog, and how the integration is reached (an MCP server, an OpenAPI surface, or a core integration node). It carries NO secret: the OAuth client credential is a host concern (RFC 0047), supplied out of band. When installed, it makes an RFC 0045 connector's `auth.provider` / an RFC 0047 `host.oauth` provider string resolve against `provider.id` instead of host-locked code. See `spec/v1/connection-packs.md`.",
   "type": "object",
-  "required": ["name", "version", "kind", "engines", "provider"],
+  "required": [
+    "name",
+    "version",
+    "kind",
+    "engines",
+    "provider"
+  ],
   "additionalProperties": false,
   "properties": {
     "name": {
@@ -24,34 +30,77 @@
       "const": "connection",
       "description": "Pack kind discriminator. MUST be the literal string `\"connection\"` for this schema."
     },
-    "description": { "type": "string", "maxLength": 1024 },
-    "author": { "type": "string" },
-    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`)." },
-    "homepage": { "type": "string", "format": "uri" },
-    "repository": { "type": "string", "format": "uri" },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri"
+    },
     "keywords": {
       "type": "array",
-      "items": { "type": "string", "maxLength": 64 },
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
       "maxItems": 50
     },
     "engines": {
       "type": "object",
-      "required": ["openwop"],
+      "required": [
+        "openwop"
+      ],
       "additionalProperties": false,
       "properties": {
-        "openwop": { "type": "string", "description": "SemVer range of the openwop spec version this pack targets." }
+        "openwop": {
+          "type": "string",
+          "description": "SemVer range of the openwop spec version this pack targets."
+        }
       }
     },
     "provider": {
       "type": "object",
       "description": "The portable provider definition. Exactly one per connection pack.",
-      "required": ["id", "displayName", "category", "auth", "reach"],
+      "required": [
+        "id",
+        "displayName",
+        "category",
+        "auth",
+        "reach"
+      ],
       "additionalProperties": false,
       "allOf": [
         {
           "$comment": "RFC 0120 UQ1: apiHosts is REQUIRED when reach is openapi (a credentialed REST/OpenAPI egress surface). A pure metadata / mcp / integration provider MAY omit it. The runtime binding-site validator (spec §Manifest item 13) is the complementary check for credentialed-egress paths the manifest cannot see.",
-          "if": { "required": ["reach"], "properties": { "reach": { "required": ["openapi"] } } },
-          "then": { "required": ["apiHosts"] }
+          "if": {
+            "required": [
+              "reach"
+            ],
+            "properties": {
+              "reach": {
+                "required": [
+                  "openapi"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "apiHosts"
+            ]
+          }
         }
       ],
       "properties": {
@@ -60,10 +109,30 @@
           "pattern": "^[a-z][a-z0-9-]*$",
           "description": "Stable provider id an RFC 0045/0047 `provider` string resolves to, e.g. `github`."
         },
-        "displayName": { "type": "string", "minLength": 1 },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
         "category": {
           "type": "string",
-          "enum": ["communication", "docs", "crm", "dev", "storage", "email-calendar", "ticketing", "data-warehouse", "marketing", "finance", "hr", "esignature", "support", "project-management", "payments", "other"]
+          "enum": [
+            "communication",
+            "docs",
+            "crm",
+            "dev",
+            "storage",
+            "email-calendar",
+            "ticketing",
+            "data-warehouse",
+            "marketing",
+            "finance",
+            "hr",
+            "esignature",
+            "support",
+            "project-management",
+            "payments",
+            "other"
+          ]
         },
         "vendor": {
           "type": "string",
@@ -72,14 +141,36 @@
         },
         "auth": {
           "type": "object",
-          "required": ["kind"],
+          "required": [
+            "kind"
+          ],
           "additionalProperties": false,
           "properties": {
-            "kind": { "type": "string", "enum": ["oauth2", "api_key", "bearer", "basic"] },
-            "authFlow": { "type": "string", "enum": ["pkce", "client_credentials", "manual", "none"] },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "oauth2",
+                "api_key",
+                "bearer",
+                "basic"
+              ]
+            },
+            "authFlow": {
+              "type": "string",
+              "enum": [
+                "pkce",
+                "client_credentials",
+                "manual",
+                "none"
+              ]
+            },
             "scopeModel": {
               "type": "string",
-              "enum": ["groups", "coarse", "capabilities"],
+              "enum": [
+                "groups",
+                "coarse",
+                "capabilities"
+              ],
               "default": "groups",
               "description": "`groups` = read/write scope groups (Google/Jira/Graph). `coarse` = a single read-vs-write toggle (Stripe Connect read_only/read_write). `capabilities` = consent is a static developer-portal capability set, not per-request scopes (Notion)."
             },
@@ -88,9 +179,21 @@
               "additionalProperties": false,
               "description": "Fixed, manifest-declared https endpoints (RFC 0095 §B.3). Never derived from runtime user input — not an SSRF surface.",
               "properties": {
-                "authorize": { "type": "string", "format": "uri", "pattern": "^https://" },
-                "token": { "type": "string", "format": "uri", "pattern": "^https://" },
-                "revoke": { "type": "string", "format": "uri", "pattern": "^https://" }
+                "authorize": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                },
+                "token": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                },
+                "revoke": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                }
               }
             },
             "scopes": {
@@ -98,8 +201,18 @@
               "additionalProperties": false,
               "description": "Read/write scope groups. `write` is requested as a SEPARATE re-consent step (RFC 0095 §B.4).",
               "properties": {
-                "read": { "type": "array", "items": { "$ref": "#/$defs/ScopeGroup" } },
-                "write": { "type": "array", "items": { "$ref": "#/$defs/ScopeGroup" } }
+                "read": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ScopeGroup"
+                  }
+                },
+                "write": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ScopeGroup"
+                  }
+                }
               }
             },
             "instanceUrlTemplate": {
@@ -117,50 +230,89 @@
           "properties": {
             "mcp": {
               "type": "object",
-              "required": ["server"],
+              "required": [
+                "server"
+              ],
               "additionalProperties": false,
               "properties": {
                 "server": {
                   "type": "object",
-                  "required": ["url", "transport"],
+                  "required": [
+                    "url",
+                    "transport"
+                  ],
                   "additionalProperties": false,
                   "properties": {
-                    "url": { "type": "string", "format": "uri", "pattern": "^https://" },
-                    "transport": { "type": "string", "enum": ["http", "sse"] }
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "pattern": "^https://"
+                    },
+                    "transport": {
+                      "type": "string",
+                      "enum": [
+                        "http",
+                        "sse"
+                      ]
+                    }
                   }
                 }
               }
             },
             "openapi": {
               "type": "object",
-              "required": ["ref"],
+              "required": [
+                "ref"
+              ],
               "additionalProperties": false,
               "properties": {
-                "ref": { "type": "string", "description": "URL or in-pack path of the OpenAPI document for core.openwop.http.openapi-call." }
+                "ref": {
+                  "type": "string",
+                  "description": "URL or in-pack path of the OpenAPI document for core.openwop.http.openapi-call."
+                }
               }
             },
             "integration": {
               "type": "object",
-              "required": ["node"],
+              "required": [
+                "node"
+              ],
               "additionalProperties": false,
               "properties": {
-                "node": { "type": "string", "description": "A core.openwop.integration.* node typeId." }
+                "node": {
+                  "type": "string",
+                  "description": "A core.openwop.integration.* node typeId."
+                }
               }
             }
           }
         },
         "consumerNodes": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "The core node typeIds that consume this provider's credential (e.g. core.openwop.mcp.invoke-tool)."
         },
-        "docsUrl": { "type": "string", "format": "uri" },
+        "docsUrl": {
+          "type": "string",
+          "format": "uri"
+        },
         "apiHosts": {
           "type": "array",
           "description": "RFC 0120. API host(s) a host MAY send this provider's resolved credential to for connector egress (RFC 0045). Each entry is a bare registrable hostname — lowercase ASCII, >=2 labels, TLD label beginning with a letter; no scheme, port, path, wildcard, or IP literal. Matched by dot-anchored suffix containment (request host == entry OR ends with '.'+entry); eTLD+1 is the floor and a pack MAY list a tighter exact host (e.g. googleads.googleapis.com). Omitted => no credential-bearing connector egress is reachable (fails closed). REQUIRED when reach is openapi (see the provider-level allOf).",
-          "items": { "type": "string", "format": "hostname", "pattern": "^(?!-)[a-z0-9-]{1,63}(\\.[a-z0-9-]{1,63})*\\.[a-z][a-z0-9-]*$" },
+          "items": {
+            "type": "string",
+            "format": "hostname",
+            "pattern": "^(?!-)[a-z0-9-]{1,63}(\\.[a-z0-9-]{1,63})*\\.[a-z][a-z0-9-]*$"
+          },
           "uniqueItems": true,
           "minItems": 1
+        }
+      },
+      "patternProperties": {
+        "^(x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
         }
       }
     }
@@ -168,13 +320,34 @@
   "$defs": {
     "ScopeGroup": {
       "type": "object",
-      "required": ["key", "label", "scopes"],
+      "required": [
+        "key",
+        "label",
+        "scopes"
+      ],
       "additionalProperties": false,
       "properties": {
-        "key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" },
-        "label": { "type": "string", "minLength": 1 },
-        "scopes": { "type": "array", "items": { "type": "string" }, "description": "The provider's raw scope strings, e.g. `https://www.googleapis.com/auth/drive.readonly`." }
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]*$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The provider's raw scope strings, e.g. `https://www.googleapis.com/auth/drive.readonly`."
+        }
       }
+    }
+  },
+  "patternProperties": {
+    "^(x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
     }
   }
 }
