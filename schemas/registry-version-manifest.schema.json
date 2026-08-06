@@ -199,5 +199,10 @@
       "description": "Optional URL with deprecation / yank rationale + remediation."
     }
   },
+  "patternProperties": {
+    "^(x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. This is the PUBLICATION contract: without the hatch here a pack carrying a root-level extension would validate against its source manifest and then be rejected at registry `PUT` \u2014 the same split-brain RFC 0138 exists to close. Per-item entry objects are already carried loosely (RFC 0107 G1), so this covers the root. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+    }
+  },
   "additionalProperties": false
 }

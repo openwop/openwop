@@ -42,6 +42,8 @@ A host MAY use any vendor-prefixed namespace for fields not covered above. Recom
 
 A client receiving an unknown vendor-prefixed field MUST treat it as opaque. Hosts MUST NOT depend on clients understanding their extension namespace.
 
+> **On pack manifests (RFC 0138).** This MUST is only satisfiable where the schema admits such a field. Pack manifests carry an `^(x-|vendor\.)` escape hatch on the manifest root and each kind's entry object for exactly that reason — see [`node-packs.md`](./node-packs.md) §"Vendor extensions on pack manifests". Note also that a **host-internal** pack registry namespace is `private.<host>.*` per the table above, not a bare product prefix.
+
 ---
 
 ## What stays in the protocol

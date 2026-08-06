@@ -415,6 +415,36 @@ invariants:
       `form-content-pack-string-trust-boundary`).
       Verified always-on + server-free by `form-content-packs.test.ts`.
 
+  - id: pack-manifest-extension-opaque
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-manifest-extensions.test.ts
+    note: |
+      RFC 0138. Pack manifests carry an `^(x-|vendor\.)` host-extension escape
+      hatch on the manifest root and each kind's entry object, so that
+      `host-extensions.md` §"Vendor-prefixed namespaces" — "a client receiving an
+      unknown vendor-prefixed field MUST treat it as opaque" — is satisfiable at
+      all. Before RFC 0138 `additionalProperties: false` made such a field
+      impossible to carry, so the corpus mandated a behavior for a case it
+      structurally forbade.
+      An extension value is PACK-AUTHORED content and is therefore UNTRUSTED,
+      exactly as `form-content-pack-string-trust-boundary` treats pack-authored
+      strings: a signature proves authorship, not content safety. A consumer that
+      does not recognize an extension property MUST NOT render it, execute it,
+      interpret it as markup or a templating directive, use it to select a code
+      path, or persist it into a surface where it will later be interpreted.
+      Retaining raw bytes for round-trip fidelity is permitted; ACTING on them is
+      not. "Ignore" means ignore — the hatch MUST NOT become a rendering or
+      execution channel, which would be strictly worse than having no hatch.
+      Extension properties are also NOT a capability-negotiation channel: a host
+      MUST NOT infer support from their presence, nor make handling of a
+      canonical field depend on one.
+      Verified always-on + server-free by `pack-manifest-extensions.test.ts`,
+      which asserts every manifest admits the hatch, still rejects a misspelled
+      canonical field, and that the corpus states the opacity rule normatively.
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high

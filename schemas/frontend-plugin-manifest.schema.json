@@ -51,6 +51,11 @@
       "items": { "$ref": "#/$defs/uiPlugin" }
     }
   },
+  "patternProperties": {
+    "^(x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+    }
+  },
   "$defs": {
     "uiPlugin": {
       "type": "object",
@@ -92,6 +97,11 @@
           "description": "OPTIONAL explicit `connect-src` CSP exceptions the plugin needs (e.g., a font CDN). Absent → the host serves the plugin under a DENY-EGRESS CSP (`frontend-plugin-egress`): no network egress beyond the host-RPC channel. Any entry here is part of the front-end-review checkpoint (`registry-operations.md`) a reviewer audits; a host MAY refuse a pack whose exceptions it will not grant.",
           "items": { "type": "string", "format": "uri" },
           "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^(x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
         }
       }
     }
