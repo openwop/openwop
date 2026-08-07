@@ -472,3 +472,23 @@ The behavioral leg drives the conformance-only seam (RFC 0101 mints no normative
 | Scenario file                          | Spec doc / RFC                                                                                                                          | Gating capability                                                                                                            |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `interrupt-approver-routing.test.ts`   | `spec/v1/interrupt.md` §"Portable approver routing" (RFC 0104); the `interrupt.approverRouting` capability + the `approverGroupRefs` / `approverRoleRefs` / `audience` advisory fields on the approval `InterruptPayload` | always-on schema + `notifyTargets` reference-rule legs; advertisement-coherence leg gated on `capabilities.interrupt.approverRouting.supported` (soft-skip when unadvertised) |
+
+### Extension opacity is verified DIFFERENTIALLY, and only at install (RFC 0139)
+
+`pack-manifest-extension-opacity.test.ts` witnesses RFC 0138's "ignore means ignore" clause against a host. The load-bearing assertion is **not** that an extension-bearing manifest installs — a host that stashes the blob and interprets it later passes that trivially. It is that the host's registration projection is **identical** with and without an unrecognized `vendor.conformance.*` extension.
+
+Measured against stub hosts: a violating stub that routes an unrecognized extension into a derived facet **passes the presence legs (1, 2, 5) and fails only the differential legs (3, 4)**. A suite built from presence assertions alone would have reported it green.
+
+**What a green run does NOT prove.** The differential covers **install-time** sinks. A host that stores an extension and interprets it at a later moment the seam never reaches still passes. No finite suite closes that; it is recorded as RFC 0139 gap G3 rather than papered over. The leg also runs on the artifact-type seam only — the one kind with a real host behind it (gap G2) — and does not witness `artifact.created` (RFC 0138 gap G8), because this seam emits no run events.
+
+### Advertise-and-skip now fails in strict mode (RFC 0139, the G14 flip)
+
+`artifact-type-pack-install`, `artifact-type-store-without-render`, and `chat-card-pack-execution` previously used a bare `return` for both the unadvertised-capability and seam-absent cases. They reported green while exercising nothing.
+
+| Advertised | Seam wired | Default | Strict |
+|---|---|---|---|
+| No | — | skip | fail (pre-existing) |
+| Yes | Yes | run | run |
+| **Yes** | **No** | **skip** | **FAIL (new)** |
+
+Advertise-and-skip is the only combination that can lie. Measured: a stub advertising both capabilities and serving no seam gives **9 passed** in default mode and **9 failed** under `OPENWOP_REQUIRE_BEHAVIOR=true`. Before the flip, the strict column read 9 passed. Hosts that deliberately do not implement a capability should advertise honestly or use `OPENWOP_OPTED_OUT_PROFILES`.

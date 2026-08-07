@@ -11,8 +11,8 @@
 | JSON Schemas | 77 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 404 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 138 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 405 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 139 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.63.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.64.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 132 |
-| Active | 4 |
+| Active | 5 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -175,6 +175,7 @@
 | RFC 0136 | `WorkflowVariable.format` - a presentational hint for run inputs | Draft |
 | RFC 0137 | Form-content packs - `kind: "form-content"` distributes form templates; field types reuse the RFC 0071 portable subset | Accepted |
 | RFC 0138 | Vendor-extension hatch on pack manifests | Active |
+| RFC 0139 | Host-side witness for pack-manifest extension opacity | Active |
 
 ## SDK Helper Coverage
 
@@ -192,7 +193,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0136) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0138) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0138, RFC 0139) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

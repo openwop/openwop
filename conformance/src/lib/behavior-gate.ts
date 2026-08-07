@@ -156,3 +156,20 @@ export function experimentalGate(
   }
   return behaviorGate(profileName, advertised);
 }
+
+/**
+ * `behaviorGate` for a value that is `null` when a host-sample seam is absent.
+ *
+ * Combines the gate with a TypeScript type predicate, because
+ * `behaviorGate(P, x !== null)` gates correctly but does NOT narrow `x` — and
+ * the alternative, sprinkling `!` at every use site, silently discards the
+ * null-safety that made the check worth writing.
+ *
+ * Semantics are exactly `behaviorGate`'s: an absent seam skips in default mode
+ * and FAILS under `OPENWOP_REQUIRE_BEHAVIOR=true`, because a host that
+ * advertises a capability and serves no seam has made a claim the suite cannot
+ * check. (RFC 0139 §"The G14 flip".)
+ */
+export function behaviorGatePresent<T>(profileName: string, value: T | null | undefined): value is T {
+  return behaviorGate(profileName, value !== null && value !== undefined) && value !== null && value !== undefined;
+}
