@@ -115,3 +115,55 @@ export function sampleArtifactTypePack() {
   };
   return { artifactTypeId, manifest, schema };
 }
+
+/**
+ * Recursively strips `^(x-|vendor\.)` properties from a value, so two
+ * registration projections can be compared for equality *modulo* the
+ * extensions themselves (RFC 0139 §"The differential-install contract").
+ *
+ * A host that echoes the submitted manifest back inside its projection would
+ * otherwise always differ — trivially, and for a reason that proves nothing.
+ * Stripping is recursive because the echo can be nested at any depth.
+ */
+export function stripExtensions(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripExtensions);
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (/^(x-|vendor\.)/.test(k)) continue;
+      out[k] = stripExtensions(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+/** Deep-clones a manifest and hangs `extras` off its first `artifactTypes[]` entry AND its root. */
+export function withExtensions(manifest: unknown, extras: Record<string, unknown>): unknown {
+  const m = JSON.parse(JSON.stringify(manifest)) as Record<string, unknown>;
+  Object.assign(m, extras);
+  const types = m['artifactTypes'];
+  if (Array.isArray(types) && types.length > 0 && types[0] && typeof types[0] === 'object') {
+    Object.assign(types[0] as Record<string, unknown>, extras);
+  }
+  return m;
+}
+
+/**
+ * Stable stringify for projection comparison — key order must not decide the
+ * verdict, or leg 3 would red on a host that serialises its map differently
+ * between two calls and we would report an opacity violation that isn't one.
+ */
+export function canonicalJson(value: unknown): string {
+  const walk = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(walk);
+    if (v !== null && typeof v === 'object') {
+      const o = v as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(o).sort()) out[k] = walk(o[k]);
+      return out;
+    }
+    return v;
+  };
+  return JSON.stringify(walk(value));
+}

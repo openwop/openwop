@@ -13,10 +13,21 @@
  * @see spec/v1/artifact-type-packs.md §host.artifactTypes
  * @see spec/v1/host-capabilities.md §host.artifactTypes
  * @see RFCS/0071-artifact-type-and-chat-card-packs.md
+ *
+ * **RFC 0139 — G14 flip.** These legs previously used a bare `return` for both
+ * the unadvertised-capability and seam-absent cases, so they reported GREEN
+ * while exercising nothing — a host advertising the capability with no seam
+ * passed invisibly. They now use `behaviorGate`: unadvertised stays a skip in
+ * default mode, but **advertise-and-skip FAILS** under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true`. Advertise-and-skip is the only combination
+ * that can lie.
  */
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
+
+const PROFILE = 'openwop-artifact-type-packs';
 import {
   readArtifactTypesCap,
   artifactTypesSupported,
@@ -28,15 +39,17 @@ import {
 describe('artifact-type-store-without-render: store-only hosts must not fail the run (RFC 0071)', () => {
   it('a stored-but-unrendered artifact completes the run', async () => {
     const cap = await readArtifactTypesCap();
-    if (!artifactTypesSupported(cap)) return; // unadvertised — soft-skip
+    if (!behaviorGate(PROFILE, artifactTypesSupported(cap))) return;
     // Only meaningful for a host that stores but does NOT render.
-    if (cap?.['store'] !== true || cap?.['render'] !== false) return; // not a store-without-render host — soft-skip
+    // NOT a behaviorGate: this is a SHAPE precondition, not advertise-and-skip. A host that
+    // renders is not failing to implement anything — this scenario simply does not apply to it.
+    if (cap?.['store'] !== true || cap?.['render'] !== false) return; // scenario inapplicable
 
     const { artifactTypeId, manifest, schema } = sampleArtifactTypePack();
-    if ((await installArtifactTypePack(manifest, { [artifactTypeId]: schema })) === null) return;
+    if (!behaviorGate(PROFILE, (await installArtifactTypePack(manifest, { [artifactTypeId]: schema })) !== null)) return;
 
     const produced = await produceArtifact(artifactTypeId, { title: 'Stored', body: 'Not rendered here' });
-    if (produced === null) return; // seam absent — soft-skip
+    if (!behaviorGatePresent(PROFILE, produced)) return; // seam absent: skip default, FAIL strict
 
     expect(
       produced.json['stored'],
