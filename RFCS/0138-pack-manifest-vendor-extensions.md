@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                                                                                                                                                                                                           |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                     |
 | **Created**       | 2026-08-06                                                                                                                                                                                                                                         |
-| **Updated**       | 2026-08-06                                                                                                                                                                                                                                         |
+| **Updated**       | 2026-08-07                                                                                                                                                                                                                                         |
 | **Affects**       | `spec/v1/node-packs.md`, `spec/v1/host-extensions.md`, all 8 pack-manifest schemas + `schemas/registry-version-manifest.schema.json`, `SECURITY/invariants.yaml`, `SECURITY/threat-model-node-packs.md`, `conformance/src/scenarios/pack-manifest-extensions.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                                                                                                                                                                                                             |
 | **Supersedes**    | —                                                                                                                                                                                                                                                  |
@@ -183,13 +183,44 @@ The schema change is mechanical; the prose is the substance. The single-highest-
 
 Sequencing: the hatch is inert until a host publishes an extended pack, so nothing depends on host uptake. The requesting host can migrate `community.openwop.canvas-checklist` as soon as the schemas ship.
 
-### On the persisted-`artifactTypeId` constraint raised alongside this RFC
+### On the `artifactTypeId` constraint raised alongside this RFC
 
-The requesting host raised a related but **separate** blocker: the canonical namespace pattern applies to `artifactTypeId` too, and `RunArtifactRecord.artifactTypeId` is a persisted field, so migrating `doc.one-pager` / `brand.kit` to reverse-DNS form would edit durable data.
+> **Corrected 2026-08-07.** The original text of this section offered a **backfill** as one of three legitimate migration strategies. **That was wrong, and following it would break replay on any conformant host.** The correction below supersedes it. The error is preserved in git history rather than silently rewritten; the reasoning that produced it is worth reading in §"Why the original position was wrong".
 
-**This RFC does not solve that, and should not be read as doing so.** The extension hatch is about *unknown property names*; the `artifactTypeId` constraint is about the *value* of a canonical, required, persisted field. They are different problems that happen to block the same migration.
+The requesting host raised a related but **separate** blocker: the canonical namespace pattern applies to `artifactTypeId` too, and migrating `doc.one-pager` / `brand.kit` to reverse-DNS form would edit durable data.
 
-The position this RFC takes: a data migration of persisted `artifactTypeId` values is a **host-side** concern, and one this protocol will not require. A host may legitimately (a) migrate durable rows behind a backfill, (b) keep an alias map from legacy ids to canonical ones at its own boundary, or (c) publish under canonical ids while continuing to serve legacy ids internally. None of these needs protocol surface. What the protocol *does* owe that host is an explicit statement that its legacy ids were never wire-conformant, so option (c) is a host-internal compatibility shim and not a conformance claim — which is a prose gap worth its own RFC, filed by whoever owns RFC 0071. Recorded here so the constraint is answered rather than silently inherited.
+**This RFC does not solve that, and should not be read as doing so.** The extension hatch is about *unknown property names*; the `artifactTypeId` constraint is about the *value* of a canonical, required field. They are different problems that happen to block the same migration.
+
+#### The constraint is protocol-wide, not host-local
+
+`artifact-type-packs.md` §"Manifest fields" states plainly that `artifactTypeId` **is the value** that `WorkflowNode.artifactType`, `nodes[].artifact.typeId`, and **`artifact.created.artifactType`** reference. `artifact.created` is a protocol run-event: `run-event-payloads.schema.json` `$defs/artifactCreated` carries `artifactType` as a payload field.
+
+So an `artifactTypeId` value does not merely sit in a host's tables — **it is written into the run-event log**, which `replay.md` §"Determinism guarantees" treats as fixed history. A host that rewrites historical `artifact.created.artifactType` values to migrate a namespace is rewriting the event log, and `POST /v1/runs/{runId}:fork` against a pre-migration checkpoint is no longer replaying what happened.
+
+**Therefore a backfill is not available to any conformant host** — not as a matter of that host's engineering preference, but because the protocol requires the log to be fixed. This is a stronger constraint than the reporting host claimed for itself, and it generalizes.
+
+#### The position, corrected
+
+A host carrying non-conformant legacy `artifactTypeId` values MAY:
+
+- **(a) Keep a read-side alias map** — canonical → native, resolved on lookup, never rewriting a stored or emitted id. Because historical events are immutable, such a map is **permanent, not transitional**; a host that plans to delete it later has misunderstood the constraint.
+- **(b) Publish under canonical ids while continuing to resolve legacy ids internally**, which is (a) with the direction chosen for forward compatibility.
+
+**Not available: rewriting historical values**, for the replay reason above.
+
+**The failure mode that makes (a) dangerous to half-implement.** Aliasing the *lookup* helpers but not the *validation* path yields a canonical id that reports `registered: true` and then falls into the unregistered escape hatch — an artifact that is silently untyped on a green run. That is worse than the non-conformant name it was meant to fix, because the non-conformant name at least fails visibly. Any host implementing (a) MUST resolve the alias everywhere registration is decided, validation included.
+
+#### Why the original position was wrong
+
+The error was reasoning about `artifactTypeId` from its *storage* — the host described it as living in "a persisted field", and this RFC accepted that framing and answered a database question. The right question was where the value travels on the wire. One grep of `run-event-payloads.schema.json` would have shown it in an event payload and made the replay constraint immediate.
+
+This is the same failure this RFC's conformance section already documents in a different guise: reasoning about a component (a table) instead of the path a value actually takes (produce → event → log → replay).
+
+#### What the protocol still owes
+
+An explicit statement that legacy ids were never wire-conformant, so an alias map is a host-internal compatibility shim and **not** a conformance claim — plus the replay constraint above stated normatively, since it is currently only derivable by composing three documents. That is a prose gap for whoever owns RFC 0071 (gap **G5**). Recorded here so the constraint is answered rather than silently inherited.
+
+**Coverage note:** the fact this correction rests on — that `artifact.created` carries `artifactType` — is exercised only by `artifact-type-pack-install.test.ts`, which is one of the three G14 scenarios that still **bare-`return` soft-skip**. So it passes green against a host that never emits the event. Nothing pins it always-on. Handed to RFC 0071's owners with G14.
 
 ## Acceptance criteria
 
