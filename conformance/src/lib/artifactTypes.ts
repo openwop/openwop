@@ -11,6 +11,15 @@
  *     → 2xx { installed: true, artifactTypeIds: string[] }
  *
  *   POST /v1/host/sample/artifacttypes/produce
+ *
+ *   POST /v1/host/sample/artifacttypes/runproduce        (RFC 0142)
+ *     body: { artifactTypeId: string }
+ *     → 2xx { runId } — a REAL run through the host's normal execution path
+ *       producing one artifact of the given registered type; the store-emission
+ *       witness then reads the standard /v1/runs/{runId}/events/poll.
+ *       Unlike install/produce (which route persistRunArtifact and emit
+ *       nothing by design), this seam exists precisely because artifact.created
+ *       emission is a property of real runs.
  *     body: { artifactTypeId: string, payload: unknown }
  *     → 2xx {
  *         artifactId: string,
