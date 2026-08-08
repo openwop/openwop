@@ -492,3 +492,12 @@ Measured against stub hosts: a violating stub that routes an unrecognized extens
 | **Yes** | **No** | **skip** | **FAIL (new)** |
 
 Advertise-and-skip is the only combination that can lie. Measured: a stub advertising both capabilities and serving no seam gives **9 passed** in default mode and **9 failed** under `OPENWOP_REQUIRE_BEHAVIOR=true`. Before the flip, the strict column read 9 passed. Hosts that deliberately do not implement a capability should advertise honestly or use `OPENWOP_OPTED_OUT_PROFILES`.
+
+### Open seams — `artifacttypes/runproduce` (RFC 0142)
+
+`POST /v1/host/sample/artifacttypes/runproduce` `{artifactTypeId}` → `{runId}` — starts a **REAL run**, through the host's normal execution path, producing one artifact of the given registered type. Host-extension test surface: env-gated, never production, never advertised in discovery. The witness then reads the **standard** `GET /v1/runs/{runId}/events/poll` and asserts `artifact.created` is present with the bound `artifactType` and `registered: true` — the evidence is the event log itself, which is what the `store` MUST is about.
+
+**Why this leg gates differently from everything else artifact-type:** the corpus's only emission MUST hangs off the **`store`** facet (`artifact-type-packs.md`: "a host advertising `store: true` MUST do so"), while every other leg gates on `supported`, which carries no emission obligation. So: `store` absent/false at BOTH scopes (the facet is per-type-scoped) ⇒ **inapplicable, plain return in both modes** — `store` is optional and strict mode must not coerce the advertisement; `store: true` + seam absent ⇒ `behaviorGate` (skip default, FAIL strict); `store: true` + seam present ⇒ the witness runs. Measured against stub hosts: an honest stub passes; a stub that persists without emitting reds the presence assertion; a stub emitting the **wrong** `artifactType` also reds — the leg discriminates payload correctness, not mere event presence.
+
+**The gap this closes was symmetric.** A `store: true` host emitting nothing was undetectable — and so was a host emitting *correctly*: the reference host emitted `artifact.created` from its documents pack for months and no leg ever credited it. Leg A of the same file pins, always-on and server-free, that `artifactCreated` **requires** `artifactType` — the fact RFC 0138's replay correction and RFC 0141's rewrite prohibition rest on, previously exercised only by a formerly-soft-skipping leg.
+
