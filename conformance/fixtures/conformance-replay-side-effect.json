@@ -1,0 +1,66 @@
+{
+  "id": "conformance-replay-side-effect",
+  "name": "Conformance: Replay Side-Effect Suppression",
+  "version": "1.0",
+  "description": "RFC 0140 fixture for `replay-side-effect-suppression.test.ts`. A `core.delay` gate followed by a node the host classifies as SIDE-EFFECTING. The test starts a run, cancels it mid-delay so the effect node never reaches a terminal outcome, then forks `mode:\"replay\"` — a host advertising `replay.sideEffectSuppression: \"recorded-outcome\"` MUST fail that node closed with `replay_source_missing` (replay.md §\"Side-effect suppression in replay\" requirement 3) rather than executing it. `core.conformance.side-effect` is a conformance-RESERVED typeId (same pattern as `core.conformance.mock-agent`): a host advertising the capability MUST map it to a node its replay classifier treats as side-effecting. The node's actual effect is irrelevant to the assertion — what matters is that the host would refuse to perform it during a replay. Hosts that do not advertise the capability need not supply this fixture; the scenario skips.",
+  "nodes": [
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Wait",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {
+        "delayMs": {
+          "type": "variable",
+          "variableName": "delayMs"
+        }
+      }
+    },
+    {
+      "id": "effect",
+      "typeId": "core.conformance.side-effect",
+      "name": "Side Effect",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "wait-effect",
+      "sourceNodeId": "wait",
+      "targetNodeId": "effect"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [
+    {
+      "name": "delayMs",
+      "type": "number",
+      "description": "Sleep duration before the side-effecting node (1..60000 ms). The test sets this long enough to cancel mid-flight so `effect` never records a terminal outcome.",
+      "required": true,
+      "defaultValue": 30000
+    }
+  ],
+  "metadata": {
+    "tags": [
+      "conformance"
+    ]
+  },
+  "settings": {
+    "timeout": 60000
+  }
+}

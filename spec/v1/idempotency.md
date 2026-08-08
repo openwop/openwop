@@ -97,6 +97,15 @@ Where:
 
 The `providerKey` is supplied by the executor or the activity wrapper; it MUST be stable across retries of the same side effect.
 
+> **Layer 2 does not survive a fork (RFC 0140).** `runId` is part of the key, and
+> `POST /v1/runs/{runId}:fork` mints a new one — so every key computed during a
+> replay differs from its counterpart in the source run, and this cache can never
+> deduplicate across a fork. That is by design: Layer 2 exists to make *retries
+> within a run* safe, not to stop a replay from re-performing an effect. Suppressing
+> a replay's external effects is a separate mechanism — see `replay.md`
+> §"Side-effect suppression in replay".
+
+
 ### Engine guarantees
 
 The engine MUST:

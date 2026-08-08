@@ -600,6 +600,43 @@
       },
       "additionalProperties": false
     },
+    "replay": {
+      "type": "object",
+      "description": "Replay / fork surface (`spec/v1/replay.md`; profile `openwop-replay-fork`). DECLARED FOR THE FIRST TIME BY RFC 0140 — hosts have emitted this block since the fork endpoint shipped, but it was never in this schema and validated only via the root's `additionalProperties: true`. The pre-existing fields are declared here exactly as already emitted and consumed, so no host's current document is invalidated; `additionalProperties` stays permissive for the same reason.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements `POST /v1/runs/{runId}:fork`."
+        },
+        "modes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["replay", "branch"] },
+          "uniqueItems": true,
+          "description": "Fork modes the host implements. `replay` = deterministic re-execution; `branch` = divergent execution with an optional `runOptionsOverlay`. A host supporting only `branch` still satisfies the `openwop-replay-fork` predicate."
+        },
+        "fork": {
+          "type": "boolean",
+          "description": "Legacy spelling retained for existing consumers; `modes` is authoritative."
+        },
+        "retention": {
+          "type": "object",
+          "properties": {
+            "windowSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How long a run stays fork-eligible (`replay.md` §\"Retention and garbage collection\"). OPTIONAL — the spec requires hosts to document retention, not to advertise the window."
+            }
+          },
+          "description": "OPTIONAL retention metadata."
+        },
+        "sideEffectSuppression": {
+          "type": "string",
+          "enum": ["recorded-outcome", "none"],
+          "default": "none",
+          "description": "RFC 0140. How the host prevents a `mode:\"replay\"` fork from re-firing external side effects. `recorded-outcome`: a side-effecting node does NOT execute during a replay — the host reproduces the source run's recorded terminal outcome for the same `(nodeId, attempt)`, or fails the node closed with `replay_source_missing`. The guarantee is WHOLE-RUN: a host MUST NOT advertise it if any class of side-effecting node can still fire during a replay (a partial guarantee would violate `replay.md` §C.2 observable-state equivalence for the unsuppressed classes). `none` (default; absent means this) — the host makes no such guarantee and a replay MAY re-fire effects. Scoped to `replay` mode; `branch` is a new execution whose effects the operator asked for."
+        }
+      }
+    },
     "oauth": {
       "type": "object",
       "description": "RFC 0047 (`Draft`). Host performs OAuth 2.0 grants (authorization-code + refresh) on a user's behalf for connector nodes, stores the acquired token as a `host.credentials` (RFC 0046) entry, refreshes it transparently, and resolves it into the node sandbox as a bearer token. Token material NEVER crosses the wire (SECURITY invariant `credential-payload-redaction`). Distinct from `auth` host-authentication profiles (RFC 0010 = who is the caller; this = what third-party token a node holds).",

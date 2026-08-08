@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0140                                                                                                                                                                                                                                                     |
 | **Title**         | Replay side-effect suppression — an additive `replay.sideEffectSuppression` capability, the normative MUST it gates, and the `replay_source_missing` typed failure                                                                                        |
-| **Status**        | `Draft`                                                                                                                                                                                                                                                  |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                  |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                           |
 | **Created**       | 2026-08-08                                                                                                                                                                                                                                               |
-| **Updated**       | 2026-08-08                                                                                                                                                                                                                                               |
+| **Updated**       | 2026-08-08 (Draft → **Active**: §A schema, §B/§E/§F spec text, and the conformance scenario landed together; **Active → Accepted** same day on the openwop-app reference-host witness — advert flipped, scenario 2/2 green, and non-vacuity proven by TWO separate sabotages rather than one; see §"Implementation record".)                                                                                                                                                                                                                                               |
 | **Affects**       | `schemas/capabilities.schema.json` (additive `replay.sideEffectSuppression`) · `spec/v1/replay.md` (new §"Side-effect suppression", plus a status-line correction) · `spec/v1/idempotency.md` (a cross-reference) · new conformance scenario · RFC 0011 / RFC 0009 composition |
 | **Compatibility** | `additive`                                                                                                                                                                                                                                               |
 | **Supersedes**    | —                                                                                                                                                                                                                                                        |
@@ -68,6 +68,15 @@ guarantee, not an implementation detail, by exactly the argument RFC 0053
 ## Proposal
 
 ### §A — `capabilities.schema.json`: `replay.sideEffectSuppression` (additive)
+
+> **Implementation note (2026-08-08).** The diff below assumed an existing
+> `replay` block to extend. **There was none** — `capabilities.schema.json`
+> declared no `replay` property at all, and every host's `{supported, modes,
+> fork, retention}` advert validated purely via the document root's
+> `additionalProperties: true`. §A therefore *declares the block for the first
+> time*, carrying the pre-existing fields exactly as already emitted and
+> consumed, with `additionalProperties` left permissive so no host's current
+> document is newly invalidated.
 
 ```diff
      "replay": {
@@ -196,6 +205,21 @@ The counting endpoint is the crux: an event-log-only assertion cannot
 distinguish "suppressed" from "fired and recorded identically," which is exactly
 the failure mode this RFC exists to prevent.
 
+> **Correction (2026-08-08, during implementation).** The paragraph above is too
+> strong, and the shipped scenario is built on the gap it missed. The claim holds
+> for the **happy** path — a node replayed from its recorded outcome is indeed
+> log-indistinguishable from one that re-fired and recorded the same thing. It
+> does **not** hold for the **fail-closed** path: a suppressing host reaching a
+> side-effecting node with *no* recorded source outcome MUST emit
+> `replay_source_missing` (§B.3), whereas a non-suppressing host executes the
+> node and completes it. That asymmetry is unforgeable, so
+> `replay-side-effect-suppression.test.ts` asserts on it and needs **no
+> out-of-band effect counter and no operator instrumentation** — a materially
+> cheaper witness than this section anticipated. The out-of-band counter remains
+> the only way to witness the happy path, and is recorded as a known limit rather
+> than shipped: it would require the operator-configured fake-peer dance that
+> `conformance-a2a-task-roundtrip` uses.
+
 ## Alternatives considered
 
 1. **Do nothing.** Leaves every host to discover the Layer-2 disjoint-key
@@ -261,15 +285,15 @@ work:
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`replay.md` §B + §F, `idempotency.md` §E).
-- [ ] `capabilities.schema.json` updated (§A).
-- [ ] `replay-side-effect-suppression.test.ts` in `@openwop/openwop-conformance`,
-      capability-gated.
-- [ ] CHANGELOG entry under the appropriate v1.x version.
+- [x] Spec text merged (`replay.md` §B + §F, `idempotency.md` §E). — 2026-08-08
+- [x] `capabilities.schema.json` updated (§A) — and the `replay` block declared for the first time. — 2026-08-08
+- [x] `replay-side-effect-suppression.test.ts` in `@openwop/openwop-conformance`,
+      capability-gated, plus the `conformance-replay-side-effect` fixture + catalog entry. — 2026-08-08
+- [x] CHANGELOG entry under `[Unreleased]`. — 2026-08-08
 - [x] Reference host implements the behavior (openwop-app ADR 0341 + ADR 0531;
       the fail-closed backstop and its pack-boundary tripwire are tested).
-- [ ] Reference host advertises `sideEffectSuppression: "recorded-outcome"` and
-      passes the new scenario.
+- [x] Reference host advertises `sideEffectSuppression: "recorded-outcome"` and
+      passes the new scenario. — 2026-08-08, openwop-app
 
 ## References
 
@@ -281,3 +305,45 @@ work:
 - openwop-app ADR 0326 (executor durability), ADR 0341 (side-effecting node
   classification), ADR 0531 (run-scoped effect guard — the reference
   implementation of §B.3)
+
+## Implementation record (2026-08-08)
+
+Landed in one pass; `Draft → Active → Accepted` the same day, with the host
+witness taken before the promotion rather than promised after it.
+
+| Criterion | Evidence |
+|---|---|
+| §A schema | `capabilities.schema.json` — and the `replay` block **declared for the first time** (see the §A implementation note) |
+| §B/§E/§F spec text | `replay.md` §"Side-effect suppression in replay"; `idempotency.md` §Layer 2 note; status-line claim made true |
+| Conformance | `replay-side-effect-suppression.test.ts` + `conformance-replay-side-effect` fixture + catalog entry; suite `1.64.0 → 1.65.0` |
+| CHANGELOG | `[Unreleased]` |
+| Reference host implements | openwop-app ADR 0341 + ADR 0531 (openwop-app#3048) |
+| Reference host advertises + passes | `replay: { …, sideEffectSuppression: "recorded-outcome" }`; **2/2 green** |
+
+### Non-vacuity: two sabotages, because there are two mechanisms
+
+A green scenario proves nothing on its own, and one combined sabotage would have
+proven less than it appeared to. Each suppression path was disabled separately:
+
+| Sabotage | Result | What it establishes |
+|---|---|---|
+| Remove the ADR 0341 classifier entry **and** the module's `sideEffecting` flag **and** bypass the guarded seam | **RED** — requirement 1 fires (`the side-effecting node MUST NOT complete during a replay`) | The assertion is load-bearing; a non-suppressing host is caught. |
+| Remove the classifier entry **and** the module flag, leaving ONLY the ADR 0531 seam backstop | **GREEN** | The backstop alone carries the guarantee — coverage does **not** depend on the typeId allowlist being complete. |
+
+The second row is the one that matters for §B.4. The whole-run guarantee is only
+honest if a host can make it without enumerating every side-effecting node in its
+catalogue, and that is now **measured** on the reference host rather than argued:
+with the allowlist entry gone, the run still fails closed.
+
+### Known limits, restated plainly
+
+- The **happy path** (a node replayed from its recorded outcome) remains weakly
+  witnessed — it is log-indistinguishable from a re-fire, which is why the
+  fail-closed leg carries the weight. An out-of-band effect counter is the only
+  way to close it and would require the operator-configured fake-peer setup
+  `conformance-a2a-task-roundtrip` uses; not shipped.
+- The scenario exercises the reserved fixture node, not a host's whole catalogue.
+  §B.4 is asserted normatively, not measured exhaustively.
+- `core.conformance.side-effect` is host-mapped, so the suite measures a
+  cooperating host. Consistent with every other host-sample seam; not an
+  adversarial control.
