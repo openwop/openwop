@@ -1,6 +1,8 @@
 # OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+>
+> **Known gap (2026-08-08):** this line previously claimed coverage of "idempotency requirements on side-effecting nodes". **No such section exists** — the claim was removed rather than left as a promissory note. v1 specifies no constraint on whether a replayed run re-fires its external effects, and `idempotency.md` Layer 2 cannot supply one (its key includes `runId`, which a fork changes, so a fork's key space is disjoint from its source's by construction). [RFC 0140](../../RFCS/0140-replay-side-effect-suppression.md) proposes the missing surface.
 
 ---
 
