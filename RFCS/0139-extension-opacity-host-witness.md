@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0139                                                                                                                                                                                                     |
 | **Title**         | Host-side witness for pack-manifest extension opacity                                                                                                                                                    |
-| **Status**        | `Active`                                                                                                                                                                                                  |
+| **Status**        | `Accepted`                                                                                                                                                                                                  |
 | **Author(s)**     | David Tufts (@davidscotttufts), with the openwop-app reference host                                                                                                                                      |
 | **Created**       | 2026-08-07                                                                                                                                                                                               |
-| **Updated**       | 2026-08-07                                                                                                                                                                                               |
+| **Updated**       | 2026-08-08                                                                                                                                                                                               |
 | **Affects**       | `spec/v1/node-packs.md`, `conformance/coverage.md`, `conformance/src/lib/artifactTypes.ts`, `conformance/src/scenarios/{pack-manifest-extension-opacity,artifact-type-pack-install,artifact-type-store-without-render,chat-card-pack-execution}.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — with a suite-version consequence, see §Compatibility                                                                                                             |
 | **Supersedes**    | —                                                                                                                                                                                                        |
@@ -180,12 +180,55 @@ That prefix guard is also why leg 3 is safe to run twice against a live registry
 
 ## Acceptance criteria
 
-- [ ] Differential-install contract stated normatively in `spec/v1/node-packs.md`
-- [ ] `pack-manifest-extension-opacity.test.ts` landed, gated on `behaviorGate`
-- [ ] The three G14 scenarios flipped from bare `return` to `behaviorGate`, seam-absence included
-- [ ] `conformance/coverage.md` documents the differential and what it does not discriminate
-- [ ] CHANGELOG entry; suite minor bump with the three-way pin
-- [ ] **Reference host wires the extended seam and reports per-leg results, including which assertions it does NOT discriminate** — the reporting standard agreed with the host, and the standard that would have surfaced G8 before RFC 0138's correction was written on top of an unpinned fact
+- [x] Differential-install contract stated normatively in `spec/v1/node-packs.md`
+- [x] `pack-manifest-extension-opacity.test.ts` landed, gated on `behaviorGate`
+- [x] The three G14 scenarios flipped from bare `return` to `behaviorGate`, seam-absence included
+- [x] `conformance/coverage.md` documents the differential and what it does not discriminate
+- [x] CHANGELOG entry; suite minor bump with the three-way pin
+- [x] **Reference host wires the extended seam and reports per-leg results, including which assertions it does NOT discriminate** — the reporting standard agreed with the host, and the standard that would have surfaced G8 before RFC 0138's correction was written on top of an unpinned fact
+
+## Acceptance witness (2026-08-08)
+
+`Accepted` on the openwop-app tier-1 reference host — openwop-app#3042 (`e04fdc20`) plus the two follow-up fixes below. **Five legs, five passes**, from a clean `npm i -D @openwop/openwop-conformance@1.64.0` under `OPENWOP_REQUIRE_BEHAVIOR=true`:
+
+```
+✓ src/scenarios/pack-manifest-extension-opacity.test.ts  (5 tests) 133ms
+✓ src/scenarios/pack-manifest-extensions.test.ts        (19 tests)  36ms
+```
+
+### Why this is non-vacuous
+
+The host reported it could not see per-leg green lines (vitest prints only failures by name) and inferred execution from `(5 tests)` carrying **no skip count**. **That inference is not sound in general and the record should not rest on it:** these legs gate with `if (!behaviorGate(...)) return;`, and a bare `return` is a vitest **pass**, not a skip — so a gated leg produces no skip count either. `behaviorGate` also skips silently in strict mode when a profile is both unadvertised *and* listed in `OPENWOP_OPTED_OUT_PROFILES`.
+
+**The load-bearing evidence is the sabotage, not the skip count.** Disabling the host's canonical manifest validation at the seam (`if (mv && !mv(manifest))` → `if (false)`) reddened **leg 5 and nothing else**. A skipped leg cannot red under sabotage, so leg 5 provably executed; legs 1–4 share the identical gate and capability, so they executed too.
+
+### Defects this RFC's legs found in a host that had already passed its own mirror
+
+The host shipped four of its own tests asserting the same properties, all green. Reading the seam's code path against these legs found two defects the mirror could not:
+
+| # | Defect | How found |
+|---|---|---|
+| 1 | **Leg 5 was red.** The loader performed no manifest-schema validation — it picked fields by name and never checked `artifact-type-pack-manifest.schema.json`, so a misspelled canonical field registered cleanly and the seam returned 200. | Verified from source |
+| 2 | **Leg 3 had a stale-registry false-pass.** `registered` was computed by querying the process-global registry rather than this install's outcome; since legs 3–4 install the same id twice, a rejected second install left install #1's entry answering, yielding 200 and a stale projection identical to baseline — **green while the extension changed behavior.** | Derived from the code path, confirmed by the host (`registry.set(...)`, overwrite on success, no delete on failure) |
+
+Defect 2 is the differential's own failure mode reintroduced one layer up, in the harness meant to detect it.
+
+**Fix boundary, host's ruling, accepted.** Validation landed at the **seam**, not the loader: the canonical schema governs a *published* pack, none of the host's in-tree packs validate today, and loader enforcement would reject them at boot. The seam only ever installs `vendor.conformance.*`, which the suite authors canonically. Leg 5's subject is the reader that handles a published third-party pack, so enforcing where the canonical contract actually applies is the correct reading rather than a workaround. That the host's own in-tree packs do not validate is a real gap, but RFC 0071's, not this RFC's.
+
+### Method note — N fixes need N sabotages
+
+While fixing defect 2 the host wrote a test, saw it pass, and nearly reported it. Sabotaging each fix **separately** showed that reverting the defect-2 fix left the test **green**: leg 5's new validator rejected the manifest before the defect-2 code path was reached, so the route was unreachable. One combined sabotage would have shipped a test that proved nothing.
+
+This generalises and is worth stating: verifying that *the suite* reds is weaker than verifying that *each individual fix* is load-bearing. Adopted as the standard for future acceptance witnesses.
+
+### What the witness does NOT cover — disclosed by the host, unprompted
+
+1. **`registrationSource` is weakly discriminating.** Every pack install yields `'pack'`, so it would not catch an extension influencing provenance. Present in the projection for completeness, not because it is load-bearing.
+2. **Symmetric rejection is tested on one break shape** (unresolvable `schemaRef`). An extension that rescued or doomed a pack under a *different* invalid manifest is uncovered.
+3. **Install-time sinks only** (gap G3), **artifact-type only** (G2), and **not an adversarial control** (risk R3) — unchanged from the `Active` text.
+4. **`artifact.created` (RFC 0138 gap G8) remains unwitnessed.** The seam emits no run events. Both parties declined to fold it in rather than satisfy it with a leg that cannot cover it.
+
+The gap that *was* closed by this run is loader-vs-seam: the host's own four tests exercise the loader, while these five drive the HTTP seam.
 
 ## References
 
