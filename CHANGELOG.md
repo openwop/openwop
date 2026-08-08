@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [Unreleased]
+
+---
+
 ## [1.5.0] — 2026-08-08 — the trust-boundary + replay-integrity cycle (RFC 0132–0142)
 
 Locks down who may act (anonymous actors), what content may be trusted (pack-authored strings, card inputs, vendor extensions), and what a replay may touch (nothing outside the recorded outcome). Nine RFCs reach `Accepted` (0043, 0132, 0133, 0134, 0135, 0137, 0139, 0140, 0141), two land `Active` (0138, 0142), and the conformance suite's own honesty was a first-class deliverable: gates that skipped silently now fail loudly. All wire shapes additive per `COMPATIBILITY.md` §2.1. RFC counts move to **Accepted 135 / Active 5**.
