@@ -299,7 +299,11 @@ For a fork with `mode: "replay"`:
    system) — MUST NOT perform that effect.
 2. The host MUST resolve such a node's outcome from the source run's recorded
    terminal outcome for the same `(nodeId, attempt)`. The Nth attempt of a node
-   in the replay resolves to the Nth recorded outcome in the source.
+   in the replay resolves to the Nth recorded outcome in the source. The lookup
+   is keyed on `(sourceRunId, nodeId, attempt)` — **never** on the fork's own
+   `runId`, which is exactly why Layer 2 cannot serve it. §"Replay-from-event-log
+   internals" item 4 states the same keying from the implementation side; the two
+   are one requirement described at two levels, not two mechanisms.
 3. If the source run has no recorded outcome for that `(nodeId, attempt)`, the
    host MUST fail the node closed with `error.code: "replay_source_missing"`
    (below). It MUST NOT perform the effect, and MUST NOT substitute a
