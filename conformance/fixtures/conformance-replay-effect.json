@@ -1,0 +1,19 @@
+{
+  "id": "conformance-replay-effect",
+  "name": "Conformance: Replay Effect",
+  "version": "1.0",
+  "description": "Terminal node performs ONE host-observable external side effect (`conformance.effect.emit`), counted at the host's effect seam. RFC 0140: the suite starts this run, reads the count, forks `mode:\"replay\"`, and asserts the count did NOT move. Spec: replay.md §\"Side-effect suppression in replay\".",
+  "nodes": [
+    { "id": "start", "typeId": "core.noop", "name": "Start", "position": { "x": 0, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "effect", "typeId": "conformance.effect.emit", "name": "Emit Effect", "position": { "x": 200, "y": 0 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "start-effect", "sourceNodeId": "start", "targetNodeId": "effect" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 10000 }
+}

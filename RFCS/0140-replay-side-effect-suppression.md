@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0140                                                                                                                                                                                                                                                     |
 | **Title**         | Replay side-effect suppression — repairing an unconditional MUST that rests on an impossible mechanism, plus the additive `replay.sideEffectSuppression` assurance declaration and the `replay_source_missing` typed failure                              |
-| **Status**        | `Draft`                                                                                                                                                                                                                                                  |
+| **Status**        | `Active`                                                                                                                                                                                                                                                 |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                           |
 | **Created**       | 2026-08-08                                                                                                                                                                                                                                               |
-| **Updated**       | 2026-08-08                                                                                                                                                                                                                                               |
+| **Updated**       | 2026-08-08 — `Draft → Active`. Comment window waived per `CONTRIBUTING.md` §"Bootstrap-phase notes" (additive, 7-day window, zero external reviewers). `Active → Accepted` is blocked on gap G1: no host implements §B.4(b)'s default-deny effect-seam guard yet, so no host may honestly advertise `recorded-outcome`. |
 | **Affects**       | `schemas/capabilities.schema.json` (first-ever declaration of the root `replay` block, incl. additive `sideEffectSuppression`) · `spec/v1/replay.md` (new §"Side-effect suppression in replay"; caveat-1 repair; internals item 4 reconciliation; status-line correction) · `spec/v1/idempotency.md` (a cross-reference) · `spec/v1/rest-endpoints.md` (`replay_source_missing` registration) · `spec/v1/host-sample-test-seams.md` (effect-counting seam) · new conformance scenario + fixture · RFC 0011 / RFC 0009 / RFC 0041 composition |
 | **Compatibility** | `additive` (no `MUST` relaxed — see §Compatibility)                                                                                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                                                                                                        |
@@ -356,14 +356,14 @@ shape below is the target, and the gap is tracked in this RFC's risk register.
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`replay.md` §B + §D caution + §F's three corrections,
+- [x] Spec text merged (`replay.md` §B + §D caution + §F's three corrections,
       `idempotency.md` §E, `rest-endpoints.md` §C registration).
-- [ ] `capabilities.schema.json` updated (§A — the `replay` block declared).
-- [ ] Effect-counting host-sample seam specified in `host-sample-test-seams.md`.
-- [ ] `replay-side-effect-suppression.test.ts` + fixture in
-      `@openwop/openwop-conformance`, capability-gated; `coverage.md` documents the
-      honesty limit of a host-attested counter.
-- [ ] CHANGELOG entry under the appropriate v1.x version.
+- [x] `capabilities.schema.json` updated (§A — the `replay` block declared).
+- [x] Effect-counting host-sample seam specified in `host-sample-test-seams.md`.
+- [x] `replay-side-effect-suppression.test.ts` + fixtures in
+      `@openwop/openwop-conformance` (suite `1.64.0 → 1.65.0`), capability-gated;
+      `coverage.md` documents the honesty limit of a host-attested counter.
+- [x] CHANGELOG entry under the appropriate v1.x version.
 - [ ] Reference host implements §B.4(b)'s default-deny effect-seam guard
       (§B.1/§B.2 already land via ADR 0326 P3b + ADR 0341).
 - [ ] Reference host advertises `sideEffectSuppression: "recorded-outcome"` and

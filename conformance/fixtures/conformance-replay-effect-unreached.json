@@ -1,0 +1,36 @@
+{
+  "id": "conformance-replay-effect-unreached",
+  "name": "Conformance: Replay Effect Unreached",
+  "version": "1.0",
+  "description": "A long delay guards the side-effecting node, so a run cancelled mid-delay reaches terminal `cancelled` with NO recorded outcome for `effect`. RFC 0140: replaying that source run reaches a side-effecting node the source never recorded, which MUST fail closed with `replay_source_missing` and MUST NOT fire the effect. Spec: replay.md §\"Side-effect suppression in replay\" rule 3.",
+  "nodes": [
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Wait",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {
+        "delayMs": { "type": "variable", "variableName": "delayMs" }
+      }
+    },
+    { "id": "effect", "typeId": "conformance.effect.emit", "name": "Emit Effect", "position": { "x": 200, "y": 0 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "wait-effect", "sourceNodeId": "wait", "targetNodeId": "effect" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "delayMs",
+      "type": "number",
+      "description": "Sleep duration (1..60000 ms). The conformance test sets this long enough to issue :cancel before the delay elapses, so `effect` is never reached in the source run.",
+      "required": true,
+      "defaultValue": 30000
+    }
+  ],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 120000 }
+}

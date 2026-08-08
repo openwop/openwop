@@ -116,6 +116,8 @@ All fixtures MUST advertise:
 | Envelope Recovery Applied                 | `conformance-envelope-recovery-applied`                                                         | RFC 0032 §B.6 lenient-parse — mock returns a markdown-fenced JSON envelope (`json\\n...\\n`). Host's `dispatchStructured()` lenient-parse fallback (`tryLenientParse()`) strips the fence, emits exactly one `envelope.recovery.applied` with `path: 'markdown-fence'`, and accepts the parsed value WITHOUT counting against the retry budget per RFC 0033 §D.                                                                                                                                                                                                                                                                                           | `completed`                                                                         | ≤ 10s                        |
 | Envelope NL-to-Format Engaged             | `conformance-envelope-nl-to-format-engaged`                                                     | RFC 0032 §B.5 NL-to-Format fallback — mock returns natural-language prose on the first 3 attempts (exhausting the retry budget); the host detects the NL shape after exhaustion, emits exactly one `envelope.nlToFormat.engaged { originalEnvelopeType, fallbackCalls: 1 }`, then fires ONE additional dispatch with a corrective coercion fragment. The 4th program entry returns valid JSON; the schema validates; the run terminates `completed`.                                                                                                                                                                                                      | `completed`                                                                         | ≤ 10s                        |
 | Phase 4 Replay Divergence                 | `conformance-phase4-replay-divergence`                                                          | RFC 0041 §B — single `core.ai.structuredOutput` node against mock provider. Conformance scenario pre-seeds a 2-entry program via the existing mock-AI program seam: entry [0] returns a valid envelope (original run consumes); entry [1] returns `stopReason: 'safety'` + `refusalText` (`:fork mode: replay` consumes). Phase 4 hosts advertising `multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true` MUST emit `replay.divergedAtRefusal` + fail replay with `error.code: 'replay_diverged_at_refusal'`. Silent substitution is non-conformant. Pairs with `replay-divergence-at-refusal.test.ts`.                           | original: `completed`; replay: `failed` (`error.code='replay_diverged_at_refusal'`) | ≤ 10s                        |
+| Replay Effect                             | `conformance-replay-effect`                                                                     | RFC 0140 — `core.noop` → `conformance.effect.emit`. The terminal node performs ONE host-observable external side effect, counted at the host's effect seam (`GET /v1/host/sample/replay/effect-count`). `replay-side-effect-suppression.test.ts` runs it, forks `mode:"replay"`, and asserts the count did NOT move. The event log alone cannot witness this: a node that fires and records identically is byte-indistinguishable from one correctly suppressed.                                                                                                                | `completed`                                                                         | ≤ 10s                        |
+| Replay Effect Unreached                   | `conformance-replay-effect-unreached`                                                           | RFC 0140 rule 3 — `core.delay` → `conformance.effect.emit`. The suite cancels the run mid-delay so the source terminates with NO recorded outcome for `effect`. Replaying it re-executes the pure delay live (rule 4), reaches `effect`, and MUST fail closed with `replay_source_missing` while firing nothing. Also the non-vacuity pin for the counter: a seam returning a constant reds here.                                                                                                                                                              | source: `cancelled`; replay: `failed` (`node.failed error.code='replay_source_missing'`) | ≤ 60s (input-controlled)     |
 | Phase 4 Nondeterministic Tool             | `conformance-phase4-nondet-tool`                                                                | RFC 0041 §C — two-node workflow (`core.noop` proxied as a nondeterministic tool → `core.ai.structuredOutput`). Used by `replay-observable-sequence-determinism.test.ts` to verify that across original + replay runs, the observable `RunEventDoc` sequence prefix is identical up to and including the nondeterministic-tool node's `node.completed` event. The host's replay path MUST replay the original event log entries (rather than re-executing the tool) for nodes whose `core.tool.*` config carries `nondeterministic: true`. Phase 4 hosts advertising `multiAgent.executionModel.replayDeterminism.supported: true` honor this contract.    | original + replay: `completed`; observable prefixes equal up to the nondet boundary | ≤ 10s                        |
 
 The `messages`-mode stream fixture (AI token streaming) is covered by the deterministic mock-provider surface in `spec/v1/run-options.md`. Hosts that do not advertise `Capabilities.testing.mockProviders` skip-equivalent on those scenarios.
@@ -215,6 +217,34 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
   3. Server emits `run.cancelled` within 5s.
   4. Subsequent `GET /v1/runs/{runId}` MUST return `status: "cancelled"`.
 - **Terminal status**: `cancelled`.
+
+### `conformance-replay-effect`
+
+- **Purpose**: RFC 0140 — witness that a `mode: "replay"` fork does not re-fire an external side effect (`replay.md` §"Side-effect suppression in replay" rule 1).
+- **Inputs**: none.
+- **Topology**: `core.noop` (`start`) → `conformance.effect.emit` (`effect`). `conformance.effect.emit` is a node type reserved for the conformance suite, whose only job is to perform exactly one host-observable external effect and have the host count it at the effect seam — the same seam rule 5(b) requires the default-deny guard to sit on.
+- **Expected behavior**:
+  1. Run reaches `completed`; `GET /v1/host/sample/replay/effect-count?runId=<source>` returns `effectCount: 1`.
+  2. `POST /v1/runs/{runId}:fork { fromSeq: 0, mode: "replay" }` returns `201` and the new run reaches terminal.
+  3. The replay run's `effectCount` MUST be `0`, and the source's MUST still be `1`.
+- **Terminal status**: `completed` (both source and replay).
+- **Duration bound**: ≤ 10s.
+- **Why the event log is insufficient**: a side-effecting node that fires during a replay and records its outcome identically to the source produces an event log byte-indistinguishable from correct suppression. The count is the only discriminator.
+
+### `conformance-replay-effect-unreached`
+
+- **Purpose**: RFC 0140 rule 3 — witness the fail-closed path when the source run has no recorded outcome for a side-effecting node.
+- **Inputs**:
+  - `delayMs` (integer, required, 1 ≤ value ≤ 60000) — long enough for the conformance test to cancel before `effect` is reached.
+- **Topology**: `core.delay` (`wait`) → `conformance.effect.emit` (`effect`).
+- **Expected behavior**:
+  1. Run starts; the client cancels mid-delay; the run reaches `cancelled` with `effectCount: 0` — `effect` was never reached, so the source recorded no outcome for it.
+  2. `POST /v1/runs/{runId}:fork { fromSeq: 0, mode: "replay" }` returns `201` — `replay_source_missing` is a NODE failure, not a fork rejection.
+  3. The replay re-executes the pure `core.delay` live (rule 4) and reaches `effect`, which MUST emit `node.failed` with `error.code: "replay_source_missing"`.
+  4. The replay's `effectCount` MUST be `0` — failing closed MUST NOT execute the effect.
+- **Terminal status**: source `cancelled`; replay `failed`.
+- **Duration bound**: ≤ 60s (input-controlled).
+- **Non-vacuity role**: this fixture pins the counter from the opposite end to `conformance-replay-effect`. Together they make a constant-valued seam impossible — a constant `0` reds leg 1 there, a constant `1` reds step 4 here.
 
 ### `conformance-capability-missing`
 
@@ -474,6 +504,8 @@ conformance/
     conformance-multi-node.json
     conformance-idempotent.json
     conformance-cancellable.json
+    conformance-replay-effect.json
+    conformance-replay-effect-unreached.json
 ```
 
 Each JSON is a valid `WorkflowDefinition` per `../schemas/workflow-definition.schema.json`. Servers MUST treat them as opaque blobs to seed verbatim — do not transform field names or strip fields.
