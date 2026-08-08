@@ -294,6 +294,57 @@ function staleStatusFindings(rfcs) {
     }
   }
 
+  // (4c) `RFCS/README.md` §"Status index" must match the corpus, row for row.
+  // This table went ungated from 2026-06-11 until 2026-08-08 and drifted to
+  // claiming 132 RFCs against a true 142, with 0134-0139 missing outright and
+  // 0140 shown as `Draft` after it had reached `Accepted`. A doc that says
+  // "TODO: generate me" and is never checked will always end up here; the fix
+  // is the check, not another pass of hand-editing.
+  const rfcsReadme = read('RFCS/README.md');
+  const indexedRows = [...rfcsReadme.matchAll(/^\|\s*\[(\d{4})\]\([^)]*\)\s*\|.*\|\s*`?(\w[\w-]*)`?\s*\|\s*$/gm)]
+    .map((m) => ({ id: m[1], status: m[2] }));
+  if (indexedRows.length === 0) {
+    findings.push('RFCS/README.md: §"Status index" table has no parseable rows — run `node scripts/generate-protocol-status.mjs --write`.');
+  } else {
+    const indexedIds = indexedRows.map((r) => r.id).sort();
+    const actualIds = rfcs.map((r) => r.id).sort();
+    if (indexedIds.join(',') !== actualIds.join(',')) {
+      const missing = actualIds.filter((id) => !indexedIds.includes(id));
+      const extra = indexedIds.filter((id) => !actualIds.includes(id));
+      findings.push(
+        `RFCS/README.md: §"Status index" table does not cover the corpus` +
+          (missing.length ? ` — missing [${missing.join(', ')}]` : '') +
+          (extra.length ? ` — lists nonexistent [${extra.join(', ')}]` : '') + '.',
+      );
+    }
+    const byId = new Map(rfcs.map((r) => [r.id, r.status]));
+    for (const row of indexedRows) {
+      const actual = byId.get(row.id);
+      if (actual && actual !== row.status) {
+        findings.push(`RFCS/README.md: RFC ${row.id} is listed as \`${row.status}\` but its header says \`${actual}\`.`);
+      }
+    }
+    // The tally sentence drifts independently of the rows it summarises — and it
+    // is the number a human actually reads. Checking rows alone let a sabotaged
+    // tally pass, which is the same partial-coverage mistake this whole change
+    // exists to fix, so it is checked separately rather than assumed to follow.
+    const tallyMatch = rfcsReadme.match(/Current tally:\s*\*\*([^*]+)\*\*\s*\((\d+) RFCs/);
+    if (!tallyMatch) {
+      findings.push('RFCS/README.md: §"Status index" tally sentence is missing or unparseable.');
+    } else {
+      if (Number(tallyMatch[2]) !== rfcs.length) {
+        findings.push(`RFCS/README.md: tally claims ${tallyMatch[2]} RFCs but the corpus has ${rfcs.length}.`);
+      }
+      const counts = {};
+      for (const r of rfcs) counts[r.status] = (counts[r.status] ?? 0) + 1;
+      for (const [, label, num] of tallyMatch[1].matchAll(/(\w[\w-]*)\s+(\d+)/g)) {
+        if ((counts[label] ?? 0) !== Number(num)) {
+          findings.push(`RFCS/README.md: tally claims ${label} ${num} but the corpus has ${counts[label] ?? 0}.`);
+        }
+      }
+    }
+  }
+
   // (4) Legacy known-bad-string rules for the files that haven't been refactored yet.
   const legacyRules = [
     {
@@ -485,6 +536,84 @@ function syncReadmeCounts() {
   }
   text = syncReadmeRfcEnumerations(text, rfcs);
   fs.writeFileSync(path.join(root, 'README.md'), text);
+
+  fs.writeFileSync(path.join(root, 'RFCS/README.md'), renderRfcsReadmeIndex(read('RFCS/README.md'), rfcs));
+}
+
+/**
+ * Rewrites `RFCS/README.md` §"Status index" — the tally sentence and the
+ * per-RFC table — from the parsed corpus.
+ *
+ * This table carried a TODO asking to be generated since 2026-06-11 and was
+ * never gated, so it rotted exactly as you would predict: at the time this
+ * landed it claimed `Accepted 129 · Active 3 · Draft 1` across 132 RFCs against
+ * a true 135/5/2 across 142, was missing rows for 0134-0139 entirely, and still
+ * showed RFC 0140 as `Draft` describing a Motivation that RFC had since
+ * withdrawn as false.
+ *
+ * NOT a regenerate-from-scratch. The Title cells here are hand-written prose
+ * summaries — often a full paragraph of design rationale — not the RFC's short
+ * `**Title**` header field. Rebuilding them from `**Title**` would silently
+ * destroy the most useful thing in the file. So each row's Title cell is
+ * preserved VERBATIM, keyed by RFC id; only the mechanically-derivable Status
+ * cell is rewritten, rows for vanished ids are dropped, and a newly-added RFC
+ * gets a row seeded from its `**Title**` field for a human to enrich later.
+ *
+ * Preserved cells are emitted raw rather than through `tableRow()`/`ascii()`:
+ * the existing summaries contain em-dashes and `⇒`, and normalising them would
+ * churn hundreds of lines on the first write for no gain.
+ */
+function renderRfcsReadmeIndex(text, rfcs) {
+  const heading = '## Status index';
+  const start = text.indexOf(heading);
+  if (start < 0) return text; // section renamed — leave it and let the check report
+  const after = text.indexOf('\n## ', start + heading.length);
+  const end = after < 0 ? text.length : after + 1;
+
+  const block = text.slice(start, end);
+
+  // Preserve each existing row's Title cell, keyed by id.
+  const existingTitle = new Map();
+  for (const line of block.split('\n')) {
+    const m = line.match(/^\|\s*\[(\d{4})\]\([^)]*\)\s*\|\s*(.*?)\s*\|\s*`?\w[\w-]*`?\s*\|\s*$/);
+    if (m) existingTitle.set(m[1], m[2]);
+  }
+
+  const counts = {};
+  for (const r of rfcs) counts[r.status] = (counts[r.status] ?? 0) + 1;
+  const order = ['Accepted', 'Active', 'Draft', 'Withdrawn', 'Superseded'];
+  const tally = order.filter((s) => counts[s]).map((s) => `${s} ${counts[s]}`).join(' · ');
+
+  // Preserve per-id annotations in the enumerations (`0038 Parked`), same rule
+  // as syncReadmeRfcEnumerations() — an annotation is hand-written signal.
+  const enumerate = (label) => {
+    const prev = new Map();
+    const m = block.match(new RegExp(label + ' = ([^;)]*)'));
+    if (m) for (const e of m[1].split(/,\s*/)) {
+      const idm = e.match(/(\d{4})/);
+      if (idm) prev.set(idm[1], e.trim());
+    }
+    const ids = rfcs.filter((r) => r.status === label).map((r) => r.id).sort();
+    return ids.map((id) => prev.get(id) ?? id).join(', ');
+  };
+
+  const lines = [
+    heading,
+    '',
+    '<!-- GENERATED by scripts/generate-protocol-status.mjs. Do not hand-edit the tally or the Status column; run `node scripts/generate-protocol-status.mjs --write`. Title cells ARE hand-written and are preserved verbatim across regeneration — edit those freely. -->',
+    '',
+    `Current tally: **${tally}** (${rfcs.length} RFCs, excluding the \`0000\` template; Active = ${enumerate('Active')}; Draft = ${enumerate('Draft')}).`,
+    '',
+    '| RFC | Title | Status |',
+    '| --- | --- | --- |',
+  ];
+  for (const rfc of rfcs) {
+    const title = existingTitle.get(rfc.id) ?? rfc.title;
+    lines.push(`| [${rfc.id}](./${path.basename(rfc.rel)}) | ${title} | \`${rfc.status}\` |`);
+  }
+  lines.push('');
+
+  return text.slice(0, start) + lines.join('\n') + text.slice(end);
 }
 
 /**
