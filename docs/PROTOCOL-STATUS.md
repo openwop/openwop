@@ -176,7 +176,7 @@
 | RFC 0137 | Form-content packs - `kind: "form-content"` distributes form templates; field types reuse the RFC 0071 portable subset | Accepted |
 | RFC 0138 | Vendor-extension hatch on pack manifests | Active |
 | RFC 0139 | Host-side witness for pack-manifest extension opacity | Accepted |
-| RFC 0140 | Replay side-effect suppression - an additive `replay.sideEffectSuppression` capability, the normative MUST it gates, and the `replay_source_missing` typed failure | Draft |
+| RFC 0140 | Replay side-effect suppression - repairing an unconditional MUST that rests on an impossible mechanism, plus the additive `replay.sideEffectSuppression` assurance declaration and the `replay_source_missing` typed failure | Draft |
 
 ## SDK Helper Coverage
 

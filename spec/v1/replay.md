@@ -1,8 +1,8 @@
 # OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.3 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, side-effect suppression on replayed side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 >
-> **Known gap (2026-08-08):** this line previously claimed coverage of "idempotency requirements on side-effecting nodes". **No such section exists** — the claim was removed rather than left as a promissory note. v1 specifies no constraint on whether a replayed run re-fires its external effects, and `idempotency.md` Layer 2 cannot supply one (its key includes `runId`, which a fork changes, so a fork's key space is disjoint from its source's by construction). [RFC 0140](../../RFCS/0140-replay-side-effect-suppression.md) proposes the missing surface.
+> **Correction (2026-08-08):** an earlier revision of this line carried a "Known gap" note asserting that no side-effecting-node section existed and that "v1 specifies no constraint on whether a replayed run re-fires its external effects". Both claims were **wrong**: §"Determinism guarantees" caveat 1 has always been exactly that constraint. What was actually defective was the *mechanism* it delegated to — `idempotency.md` Layer 2, whose key includes `runId`, which a fork changes. [RFC 0140](../../RFCS/0140-replay-side-effect-suppression.md) keeps the requirement and replaces the delegation; see §"Side-effect suppression in replay".
 
 ---
 
@@ -109,7 +109,7 @@ Status codes:
 
 An OpenWOP-compliant server MUST guarantee determinism of replay subject to the following caveats:
 
-1. **Side-effecting nodes** — every NodeModule that calls an external API (LLM, payment, message) MUST consult the durable invocation log (see `idempotency.md` §"Layer 2: Activity-level idempotency"). On replay, the cached response is returned — the external system is NOT called twice.
+1. **Side-effecting nodes** — a node that performs an external side effect (a payment, a message, an outbound call) MUST NOT execute that effect during a replay: the external system is NOT called twice. The normative mechanism is §"Side-effect suppression in replay" — the host resolves the **source** run's recorded outcome, or fails the node closed. This caveat previously delegated to `idempotency.md` §"Layer 2: Activity-level idempotency"; that delegation was inoperative, because the Layer-2 key includes `runId` and a fork mints a new one, so a fork's key space is disjoint from its source's by construction (RFC 0140). LLM-calling nodes remain served by the invocation log via the content-addressed secondary key in §"LLM cache-key recipe" §C, which does survive a fork.
 2. **`ctx.interrupt(payload)`** — every interrupt with key `K` short-circuits to the persisted `interrupt.resolved` value. The external system is NOT prompted again.
 3. **`ctx.getVersion(changeId, min, max)`** — pinned values from the original run are preserved (events `< fromSeq` are fixed history). The branch the original run took is the branch the replay takes.
 4. **Time-dependent code** — if a NodeModule reads `Date.now()` directly (not via the engine's logical clock), replay is non-deterministic. NodeModules MUST consume time via `ctx.now()` if available, or accept non-determinism.
@@ -118,6 +118,8 @@ An OpenWOP-compliant server MUST guarantee determinism of replay subject to the 
 ### `branch` mode
 
 `branch` mode is NOT deterministic by design — the caller is changing inputs/config. Determinism guarantees apply only to the events `< fromSeq` that are inherited as fixed history.
+
+> **Caution — a branch re-fires external effects.** §"Side-effect suppression in replay" is scoped to `mode: "replay"` only. A `branch` fork re-executes side-effecting nodes live for sequences `>= fromSeq`, so branching past an already-executed payment or notification will perform it again. This is by design — a branch is a new execution with caller-supplied inputs, so its effects are effects the operator asked for — but it is easy to miss. A host SHOULD surface it in any operator-facing fork UI.
 
 ### Failure surfaces
 
@@ -128,6 +130,42 @@ If a `replay` mode fork diverges from the original (a node produces a different 
 3. Surface this event in `debug` stream mode and via OTel span attribute `openwop.replay.diverged: true`.
 
 The replayed run continues to completion or further divergence; the `replay.diverged` event is informational, not blocking.
+
+---
+
+## Side-effect suppression in replay
+
+> RFC 0140. This section is the normative mechanism behind §"Determinism guarantees" caveat 1. The requirement is unconditional; the capability described at the end declares *how a host discharges it* so a peer can interrogate it, and is **not** an opt-out.
+
+An **external side effect** is any operation observable outside the run's own event log — an outbound network call, a message or notification delivered to a person, a payment, a write to a third-party system.
+
+**1 — Do not execute.** For a fork with `mode: "replay"`, a node that performs an external side effect MUST NOT execute that effect.
+
+**2 — Resolve from the source, not the fork.** The host MUST resolve the node's outcome from the **source** run's recorded terminal outcome for the same `(nodeId, attempt)`. The Nth attempt of a node in the replay resolves to the Nth recorded outcome in the source. Hosts MUST NOT rely on `idempotency.md` Layer 2 for this: the Layer-2 key includes `runId`, and `POST /v1/runs/{runId}:fork` mints a new one, so a replayed run's keys never collide with its source's.
+
+**3 — Fail closed on a missing record.** If the source run has no recorded outcome for that `(nodeId, attempt)` — because the source diverged upstream, failed early, or never reached the node — the host MUST fail the node closed with `error.code: "replay_source_missing"` (see `rest-endpoints.md` §"Common error codes"). It MUST NOT execute the effect, and MUST NOT substitute a synthesized or empty success. The fork request itself still returns `201`; this is a node failure in the run event log.
+
+**4 — Pure and LLM nodes re-execute live.** Non-side-effecting nodes — pure computation, and LLM calls served from the invocation log via the content-addressed secondary key in §"LLM cache-key recipe" §C — continue to re-execute live. This is **required, not merely permitted**: §`replay` defines the mode as re-executing sequences `>= fromSeq` against current code and emitting `replay.diverged` on mismatch, so short-circuiting pure nodes would make divergence detection vacuously green — a broken guarantee that reports success.
+
+**5 — Whole-run, via two mechanisms.** A host MUST NOT advertise `replay.sideEffectSuppression: "recorded-outcome"` unless **both** hold:
+
+- **(a) Classification** short-circuits known side-effecting nodes *before* they execute, per rule 2. This keeps a replay **correct** — it reproduces the right observable output.
+- **(b) A default-deny guard at every host effect seam** fails the node closed per rule 3 when a node reaches an effect seam during a replay. This keeps a replay **safe**.
+
+(a) alone MUST NOT be advertised as `recorded-outcome`. Classification is a moving target — a retargeted node type, a pack node that cannot self-declare, or a newly-added integration silently leaves the classified set — and the failure is invisible: the replay looks green and the effect fires. The seam guard is what makes the claim whole-run without requiring a host to enumerate every effect in its catalogue. Because pure nodes never reach an effect seam, (b) does not disturb rule 4.
+
+**6 — Cross-host dispatch needs no separate rule.** A dispatch to a peer host (RFC 0007) is an outbound network call, hence an external side effect under this section. During a replay the dispatching node therefore reproduces its recorded outcome under rule 2 and **never contacts the peer at all** — so the peer's own advertisement does not affect the calling host's guarantee.
+
+### Capability
+
+`replay.sideEffectSuppression` (`capabilities.schema.json`) declares the mechanism:
+
+| Value | Meaning |
+| --- | --- |
+| `recorded-outcome` | The host implements rules 1–5. The gated conformance scenario runs. |
+| `none` (default; absent ⇒ this) | The host declares **no** mechanism. This is **not** permission to re-fire — caveat 1 binds every host unconditionally — it means the guarantee is unprobeable on this host, so the gated scenario soft-skips. |
+
+**Truthful advertisement (normative).** A host MUST NOT advertise `recorded-outcome` unless it actually honors rules 1–5. Advertising without honoring them is a dishonest capability claim and is non-conformant; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail the gated scenario. Because RFC 0140 is not yet `Accepted`, no host may advertise `recorded-outcome` until it is.
 
 ---
 
@@ -259,8 +297,8 @@ An engine implementation typically reuses its existing run-recovery machinery (a
 1. `RunEventLogIO.read(sourceRunId, { fromSequence: 0, limit: fromSeq })` — load events `< fromSeq`.
 2. `fold(events) → ProjectedRunState` — derive initial state.
 3. New run is initialized with that state, copy-on-write into the new run's event log.
-4. For `replay`, executor invocations consult the durable invocation log (`idempotency.md` §"Layer 2: Activity-level idempotency") keyed on `(sourceRunId, ...)` for side-effect dedup.
-5. For `branch`, executor invocations create new invocation log entries keyed on `(newRunId, ...)`.
+4. For `replay`, side-effecting nodes are resolved from the **source** run's recorded outcomes per §"Side-effect suppression in replay" — keyed on `(sourceRunId, nodeId, attempt)`, never on the fork's own `runId`. LLM invocations additionally consult the durable invocation log via the content-addressed key in §"LLM cache-key recipe" §C.
+5. For `branch`, executor invocations create new invocation log entries keyed on `(newRunId, ...)`, and side-effecting nodes execute live (§`branch` mode caution).
 
 ---
 
@@ -363,6 +401,8 @@ RFC 0056 annotations are a per-run side-resource, **not** event-log entries — 
 | RP3 | ✅ Closed by §"Determinism scoring" for advisory replay reports.                            | v1.x annex  |
 | RP4 | ✅ Closed by §"Retention and garbage collection".                                           | v1.x annex  |
 | RP5 | ✅ Closed by §"Privacy and replay".                                                         | v1.x annex  |
+| RP6 | ✅ Closed by §"Side-effect suppression in replay" (RFC 0140), which repairs caveat 1's inoperative delegation to `idempotency.md` Layer 2. | v1.x annex  |
+| RP7 | Effect suppression for `mode: "branch"` — deliberately out of scope (RFC 0140 §D); needs a distinct capability value if demand appears. | future v1.x |
 
 ## References
 

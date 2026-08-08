@@ -2115,6 +2115,31 @@
         }
       }
     },
+    "replay": {
+      "type": "object",
+      "description": "RFC 0011 — Replay / fork surface (`spec/v1/replay.md`). This block is the predicate source for the `openwop-replay-fork` profile (`spec/v1/profiles.md`). Declared first in RFC 0140; previously it rode on the document root's `additionalProperties: true`. Left OPEN per `COMPATIBILITY.md` §2.1 (RFC 0094): the discovery document is a server-emitted shape, so it MUST NOT be closed. Every field is optional — a host that omits the block makes no replay claim.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements `POST /v1/runs/{runId}:fork` per `replay.md`. The `openwop-replay-fork` profile requires this AND a non-empty `modes`."
+        },
+        "modes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["replay", "branch"] },
+          "uniqueItems": true,
+          "description": "Fork modes the host honors. `replay` = deterministic re-execution from `fromSeq`; `branch` = divergent execution with an optional `runOptionsOverlay`. A host supporting only `branch` still satisfies the profile predicate. This is the AUTHORITATIVE list."
+        },
+        "fork": {
+          "type": "boolean",
+          "description": "LEGACY spelling of the advert limitation, retained for existing consumers. `modes` is authoritative; a client MUST NOT infer mode support from this flag."
+        },
+        "sideEffectSuppression": {
+          "enum": ["recorded-outcome", "none"],
+          "default": "none",
+          "description": "RFC 0140. DECLARES the mechanism by which the host discharges `replay.md` §\"Determinism guarantees\" caveat 1 for a `mode:\"replay\"` fork. `recorded-outcome`: a side-effecting node does NOT execute during a replay — the host reproduces the source run's recorded terminal outcome for the same (nodeId, attempt), or fails the node closed with `replay_source_missing`, AND a default-deny guard at every host effect seam fails closed for anything the classifier missed (`replay.md` §\"Side-effect suppression in replay\" rule 5 — classification alone MUST NOT be advertised as `recorded-outcome`). `none` (default, absent ⇒ this): the host declares NO mechanism. THIS IS NOT PERMISSION TO RE-FIRE — caveat 1 binds every host unconditionally — it means the guarantee is unprobeable on this host, so the gated conformance scenario soft-skips. Truthful advertisement: advertising `recorded-outcome` without honoring the rules is non-conformant and MUST fail under `OPENWOP_REQUIRE_BEHAVIOR=true`; no host may advertise it until RFC 0140 reaches `Accepted`."
+        }
+      }
+    },
     "eventLog": {
       "type": "object",
       "description": "RFC 0036 — Event-log multi-engine advertisement. Optional v1.",

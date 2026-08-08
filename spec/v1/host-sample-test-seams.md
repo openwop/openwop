@@ -596,6 +596,23 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 
   A host advertising the capability MUST enforce, on `exchange`: (1) a `role: 'agent'` turn that omits `speakerId` is rejected `validation_error` (the §Spec attribution MUST); (2) a turn whose `speakerId` is NOT in the conversation's declared `participants` roster is rejected `validation_error` (the §Spec membership MUST, RFC 0005 §E turn-validation path); and on `open`: (3) a `participants` array exceeding the request's or the host's advertised `maxParticipants` is rejected `validation_error` (the §Spec maxParticipants MUST). RFC 0005 §E pins the error *code* (`validation_error`), not the HTTP status — a host MAY use `400` or `422`; the conformance leg asserts on `error.code` and tolerates either. A roster-valid, attributed agent turn MUST be accepted. `multi-party-conversation-behavioral.test.ts` drives all four (one positive + three rejections) via `behaviorGate('openwop-multi-party-conversation', …)`; the always-on `multi-party-conversation-shape.test.ts` covers the schema-expressible facts server-free regardless of this seam. **This is the RFC 0101 → behavioral-conformance bar** (reference impl: the postgres example host). A host whose multi-party enforcement is bound to a product flow rather than a generic open (e.g. openwop-app ADR 0040's advisory-board council, which keys roster enforcement on a board group) MAY instead witness via its own host-side behavioral test + an `INTEROP-MATRIX.md` row — the RFC 0086 dual-staging — but the reference seam ensures the behavioral MUSTs have at least one suite-executable, host-agnostic witness.
 
+### 20. Replay effect counter — `GET /v1/host/sample/replay/effect-count?runId=…` (RFC 0140)
+
+| Field                     | Value                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `GET /v1/host/sample/replay/effect-count?runId={runId}`                              |
+| Capability gate           | `capabilities.replay.sideEffectSuppression: "recorded-outcome"` (RFC 0140)            |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | RFC 0140 §Conformance / [`replay.md`](./replay.md) §"Side-effect suppression in replay" |
+
+OPTIONAL. `replay.md` §"Side-effect suppression in replay" turns on a fact the run event log **cannot** express: whether an external effect actually left the host. An event-log assertion cannot distinguish "the node was suppressed" from "the node fired and was recorded identically" — and that second case is precisely the failure this surface exists to detect. The seam exposes the host's own count of effects that reached an effect seam, so a harness can assert the count did not move across a replay.
+
+- **Request:** `runId` identifies the run whose effects are counted. A host MUST count an effect against the run whose node performed it — a replayed run that (incorrectly) fires an effect increments the **replay's** count, not the source's.
+- **Response 200:** `{ "runId": string, "effectCount": integer }`. `effectCount` is **monotonic non-decreasing** for a given `runId` and counts effects **attempted at the seam**, not effects that succeeded upstream — a fired-then-failed outbound call still counts, because the observable escape already happened.
+- **The counter MUST sit at the same effect seam as the rule-5(b) default-deny guard.** A counter placed anywhere else measures a different thing than the guard protects, and a green scenario would prove nothing about the guard.
+- **404 / 403:** seam not wired — the gated scenario (`replay-side-effect-suppression.test.ts`) soft-skips its behavioral legs (hard-fails under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+- **Non-vacuity (RFC 0140):** the witness is non-vacuous only if the counter is a function of real execution. The scenario constrains it from both ends: leg 1 requires the **source** run to have incremented it (a constant-zero counter reds), and leg 4 requires a `replay_source_missing` failure with **no** increment (a constant-one counter reds). What the seam cannot prove is coverage — it counts the paths the host routes through the counted seam, so a leak through an uncounted path is invisible to the suite *and* to the counter. That limit is recorded in `conformance/coverage.md` and is the reason rule 5 requires a default-deny guard rather than an enumeration.
+
 ## Open spec gaps
 
 - Capability flag for the prompt resolver seam is implicit (always-on when `prompts.supported: true`). A future minor revision MAY add `capabilities.prompts.testSeams.promptResolve` if hosts want to advertise the seam without committing to the full RFC 0029 behavior.
@@ -608,6 +625,7 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 - `host-capabilities.md` §"`capabilities.observability.testSeams`" — the OTel scrape + debug-bundle export capability sub-block
 - `observability.md` §"OTel collector test seam (RFC 0034)" — the canonical RFC 0034 §B normative text the OTel + debug-bundle seams implement
 - `replay.md` §"LLM cache-key recipe" — the canonical recipe the §4 LLM cache-key seam computes
+- `replay.md` §"Side-effect suppression in replay" — the RFC 0140 rules the §20 effect-counter seam witnesses
 - `prompts.md` §"Resolution chain (normative)" — the canonical RFC 0029 resolver semantics the §1 seam exposes
 
 ### 13. Channel-presence snapshot — `POST /v1/host/sample/channel-presence/snapshot` (RFC 0110)

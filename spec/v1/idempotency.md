@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `invocationId` (Layer 2). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `invocationId` (Layer 2), including Layer 2's scope boundary at a fork. Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -78,7 +78,9 @@ The server MUST add `openwop-Idempotent-Replay: true` to any response that was s
 
 ## Layer 2: Activity-level idempotency
 
-Inside a workflow run, a node executor often makes external API calls (LLM, payment, message). When the node is retried (executor returns retryable error, run is replayed from event log, sub-workflow is re-entered), the executor MUST NOT make duplicate side-effect calls.
+Inside a workflow run, a node executor often makes external API calls (LLM, payment, message). When the node is retried (executor returns retryable error, sub-workflow is re-entered), the executor MUST NOT make duplicate side-effect calls.
+
+> **Scope — Layer 2 is a within-run mechanism.** An earlier revision of this paragraph also listed "run is replayed from event log" among the triggers Layer 2 covers. It does not; see the note below.
 
 ### Idempotency key composition
 
@@ -96,6 +98,8 @@ Where:
 - `providerKey`: a stable identifier for the side effect being made (e.g., `'openai:chat:completions'`, `'stripe:create-charge'`, `'send-email'`)
 
 The `providerKey` is supplied by the executor or the activity wrapper; it MUST be stable across retries of the same side effect.
+
+> **Layer 2 does not survive a fork.** The key includes `runId`, and `POST /v1/runs/{runId}:fork` mints a new one, so a replayed run's keys never collide with its source's — the Layer-2 cache provably cannot deduplicate across a fork, however correctly it is implemented. Cross-fork side-effect suppression is a separate mechanism: see `replay.md` §"Side-effect suppression in replay" (RFC 0140), under which a replayed side-effecting node resolves the **source** run's recorded outcome or fails closed with `replay_source_missing`. LLM-calling nodes are the exception that still works across a fork, via the content-addressed secondary key in `replay.md` §"LLM cache-key recipe" §C.
 
 ### Engine guarantees
 
@@ -230,6 +234,7 @@ Hosts that do NOT advertise the `multiRegion` block retain the existing best-eff
 | I2  | Garbage-collection guarantees / minimum TTL — currently RECOMMENDED 24h Layer 1 / 14d Layer 2; SHOULD be MUST after telemetry | future      |
 | I3  | Streaming response handling — Layer 2 currently doesn't cache; conformance suite should validate this is "safe" not "broken"  | P2-F4       |
 | I4  | Idempotency key entropy lower bound — currently no MUST; consider 128 bits                                                    | future v1.x |
+| I5  | ✅ Layer-2 scope at a fork — closed by the §"Layer 2" note added 2026-08-08 (RFC 0140); cross-fork suppression lives in `replay.md`. | closed      |
 
 ## References
 
