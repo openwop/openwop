@@ -106,6 +106,21 @@ The protocol already carries three artifact references that, until now, lacked a
 
 A host that does **not** advertise `host.artifactTypes` treats every `artifactType` as today: an opaque string, never schema-validated. The `registered` field defaults to `true`, preserving the pre-RFC-0071 semantics in which every artifact was effectively accepted without registry validation.
 
+### Legacy identifiers and migration (normative — RFC 0141)
+
+Hosts that predate this document commonly carry artifact-type identifiers that do not match the canonical reverse-DNS pattern — a bare `prd`, a `doc.one-pager`, a `canvas.checklist`. This section states their status and the one migration constraint that is easy to violate catastrophically.
+
+**Legacy identifiers were never wire-conformant.** The `artifactTypeId` pattern in §"The `ArtifactType` declaration" is definitional, not aspirational, and this document grants **no grandfather clause**: a value outside the pattern has never been a conformant published identifier, however long a host has shipped it. Such values are simply *unregistered* under the tier model above — a legitimate, permanent, first-class status. A host is under **no obligation to migrate** them.
+
+**A host that does migrate MUST NOT rewrite history.** `artifactTypeId` is the value `artifact.created.artifactType` references, `artifact.created` is a run event, and [`replay.md`](./replay.md) §"Determinism guarantees" treats the run-event log as fixed history. Therefore a host **MUST NOT** rewrite historical `artifact.created.artifactType` values (or any other event-carried occurrence of an artifact-type identifier) as part of an identifier migration. A rewrite either breaks `POST /v1/runs/{runId}:fork` determinism, or — if the old values are left in place while the registry forgets them — leaves a replayed run emitting an identifier the registry no longer knows, silently demoting a typed artifact to unregistered on a green run. Both outcomes are worse than the non-conformant name, which at least fails visibly.
+
+**The conformant migration shape is a read-side alias.** A host MAY maintain a host-internal alias map from canonical identifiers to its legacy ones (or the inverse), consulted on lookup and **never** rewriting a stored or emitted identifier. Because historical events are immutable, such a map is **permanent, not transitional** — a host planning to delete it later has misunderstood the constraint. A host that aliases MUST resolve the alias **everywhere registration is decided, schema validation included**: aliasing only the lookup helpers yields an identifier that reports `registered: true` and then falls into the unregistered escape hatch — a silently untyped artifact behind a green result, the exact failure the rewrite prohibition exists to prevent, reintroduced one layer up.
+
+**An alias map is a host-internal compatibility shim, not a conformance claim.** A host serving legacy identifiers through an alias is not thereby "conformant under its old names" — the legacy spellings remain non-conformant on the wire; the *canonical* spellings the alias resolves are what a conformant peer may rely on. A host MUST NOT advertise or imply otherwise.
+
+> **Why this section exists.** Before RFC 0141, the rewrite prohibition was real but only derivable by composing three documents (this one, `run-event-payloads.schema.json`, and `replay.md`) — and a merged RFC briefly recommended a backfill before being corrected (RFC 0138, corrected 2026-08-07). A constraint that is only compositionally derivable will be re-derived wrongly; this states it in one place. See also RFC 0140, which hardens the same fixed-history premise from the side-effect direction.
+
+
 ## Host capability — `host.artifactTypes`
 
 Following the contract pattern in `host-capabilities.md` §"The contract pattern", a host advertises store / render / export support **independently per host**, so a host that can persist an artifact but not render it is expressible:

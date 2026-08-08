@@ -11,8 +11,8 @@
 | JSON Schemas | 77 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 405 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 140 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 406 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 141 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.64.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.65.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -31,7 +31,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 133 |
+| Accepted | 134 |
 | Active | 4 |
 | Draft | 3 |
 
@@ -177,6 +177,7 @@
 | RFC 0138 | Vendor-extension hatch on pack manifests | Active |
 | RFC 0139 | Host-side witness for pack-manifest extension opacity | Accepted |
 | RFC 0140 | Replay side-effect suppression - an additive `replay.sideEffectSuppression` capability, the normative MUST it gates, and the `replay_source_missing` typed failure | Draft |
+| RFC 0141 | Legacy artifact-type identifiers - never-conformant status and the replay migration constraint | Accepted |
 
 ## SDK Helper Coverage
 
