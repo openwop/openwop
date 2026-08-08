@@ -15,6 +15,37 @@
 
 ## Summary
 
+> **CORRECTION (2026-08-08), filed the same day this RFC reached `Accepted`.**
+> This RFC's Motivation asserted that "v1 specifies nothing about what a
+> `mode:"replay"` fork does to the outside world." **That is false**, and the
+> error survived into the merged spec text. `replay.md` §"Determinism
+> guarantees" caveat 1 has always carried an unconditional MUST: a node calling
+> an external API MUST consult the durable invocation log, so "the external
+> system is NOT called twice."
+>
+> Three consequences, corrected in place below rather than rewritten away:
+>
+> 1. **The gap is narrower than claimed.** v1 already MUSTs the guarantee; what
+>    it does wrong is name a mechanism (the Layer-2 invocation log) that
+>    **cannot span a fork**. Requirement real, mechanism unworkable across a
+>    fork, conformance coverage nil. The disjoint-key argument below is correct
+>    about the *mechanism* and wrong about the *requirement*.
+> 2. **§F was a doc-honesty regression.** It deleted the status line's
+>    "idempotency requirements on side-effecting nodes" as a false promise.
+>    Caveat 1 *is* that requirement. The claim is restored.
+> 3. **The compatibility class was wrong.** As drafted, `none` meant "a replay
+>    MAY re-fire effects", which relaxes caveat 1's unconditional MUST —
+>    breaking per `COMPATIBILITY.md` §2.2, not additive. Fixed by redefining the
+>    capability as an **assurance advertisement**: `none` means "no mechanism
+>    declared; the host remains bound by caveat 1", never permission to re-fire.
+>    With that, the change is additive again.
+>
+> Found by **openwop-1** during an independent architect pass, after this RFC
+> had already merged. Recorded here because the reasoning trail is the point,
+> and because the failure mode — grepping for a *section* about side effects and
+> reading past a *caveat* that said exactly that — is the same class of defect
+> this RFC's own conformance section warns about.
+
 `replay.md` promises deterministic re-execution but says nothing about what a
 replay does to the *outside world*: nothing in v1 stops a replayed run from
 sending the email, charging the card, or posting the webhook a second time. The
@@ -33,9 +64,14 @@ Every host that implements `POST /v1/runs/{runId}:fork` with `mode: "replay"`
 has this problem, and the spec currently leaves each of them to discover it
 privately.
 
-**The gap is real and the spec already half-admits it.** `replay.md`'s status
+~~**The gap is real and the spec already half-admits it.** `replay.md`'s status
 line advertises "idempotency requirements on side-effecting nodes" — but the
-document has no such section. Its §-list runs Determinism guarantees → LLM
+document has no such section.~~
+
+**Corrected (2026-08-08):** it does. §"Determinism guarantees" caveat 1 is that
+section, in the form of a caveat rather than a heading — which is precisely why
+a grep for a *section* missed it. The status line was accurate and has been
+restored. Its §-list runs Determinism guarantees → LLM
 cache-key recipe → RFC 0041 Phase 4 → Replay-from-event-log internals. A reader
 following that status line finds nothing. That is a doc-honesty defect
 independent of the normative gap, and this RFC fixes both.
@@ -170,7 +206,12 @@ updated in the same change rather than left as a promissory note.
 
 ## Compatibility
 
-**Additive.** The guarantees:
+**Additive — but only after the correction above.** As originally drafted this
+was **breaking**: `none` was documented as "a replay MAY re-fire effects", which
+relaxes caveat 1's unconditional MUST (`COMPATIBILITY.md` §2.2: *"Existing MUST
+requirements MUST NOT be relaxed"*). Redefining the capability as an assurance
+advertisement — `none` = "no declared mechanism, caveat 1 still binds" — removes
+the relaxation. The guarantees:
 
 - `sideEffectSuppression` is a new optional property on an existing optional
   capability block. Absent ⇒ `"none"` ⇒ exactly today's specified behavior, so

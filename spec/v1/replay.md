@@ -1,8 +1,8 @@
 # OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, side-effect suppression in replay (RFC 0140), and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, idempotency requirements on side-effecting nodes, side-effect suppression in replay (RFC 0140), and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 >
-> **RFC 0140 (2026-08-08):** §"Side-effect suppression in replay" closes what this line previously mis-advertised. Until then the status line claimed "idempotency requirements on side-effecting nodes" and **no such section existed**; v1 specified no constraint on whether a replayed run re-fires its external effects. It now does, gated on the `replay.sideEffectSuppression` capability.
+> **Correction (2026-08-08), superseding the note this line carried earlier today.** RFC 0140 originally removed "idempotency requirements on side-effecting nodes" from the status line above, on the grounds that no such section existed. **That was wrong** — §"Determinism guarantees" caveat 1 has always carried it, as an unconditional MUST. The claim was true; deleting it was the regression, and it is restored. What v1 actually lacked is narrower and is what RFC 0140 supplies: caveat 1 names the Layer-2 invocation log as the mechanism, and that mechanism **cannot** span a fork (its key includes `runId`, which a fork changes), so the requirement was real, its named mechanism unworkable across a fork, and its conformance coverage nil.
 
 ---
 
@@ -254,11 +254,19 @@ Scenarios verifying §A + §B + §C gate on `capabilities.multiAgent.executionMo
 
 ## Side-effect suppression in replay (RFC 0140, normative)
 
-`replay` mode re-executes a workflow. Without a constraint, that re-execution
-re-performs the workflow's **external effects** — it sends the email again,
-charges the card again, posts the webhook again.
+> **Correction (2026-08-08).** This section originally opened by claiming v1
+> placed no constraint on a replay's external effects. **That was false.**
+> §"Determinism guarantees" caveat 1 has always required, unconditionally, that
+> a node calling an external API consult the durable invocation log so "the
+> external system is NOT called twice." The requirement predates RFC 0140 and is
+> **not relaxed by it**. What follows refines *how* a host demonstrates
+> compliance; it does not create the obligation, and a host that advertises
+> nothing is still bound by caveat 1.
 
-**Layer-2 idempotency cannot prevent this, by construction.** `idempotency.md`
+Caveat 1 states the obligation. The difficulty is that it names a mechanism —
+the Layer-2 invocation log — that **cannot deliver it across a fork**.
+
+**Why the named mechanism cannot span a fork.** `idempotency.md`
 §"Layer 2" derives the engine dedup key from `(runId, nodeId, attempt,
 providerKey)`, and §"Response" above specifies that a fork returns a **new
 `runId`**. Every Layer-2 key computed during a replay therefore differs from its
@@ -268,12 +276,18 @@ mechanism.
 
 Hosts advertise it via `replay.sideEffectSuppression` (`capabilities.md`):
 
+`replay.sideEffectSuppression` is an **assurance advertisement** — a declared,
+probeable mechanism — **not** permission to re-fire:
+
 | Value | Meaning |
 | --- | --- |
-| `recorded-outcome` | The host suppresses external effects during a `replay` fork, per the requirements below. |
-| `none` (default; **absent means this**) | The host makes no such guarantee. A replay MAY re-fire effects. |
+| `recorded-outcome` | The host declares the mechanism below: a side-effecting node does not execute during a replay; the host reproduces the source run's recorded outcome for the same `(nodeId, attempt)` or fails the node closed. Probeable by conformance. |
+| `none` (default; **absent means this**) | **No mechanism is declared.** The host remains bound by §"Determinism guarantees" caveat 1 exactly as before; conformance simply has nothing to probe and soft-skips. This is NOT a licence to re-fire effects. |
 
-### Requirements when `sideEffectSuppression: "recorded-outcome"`
+A host MUST NOT read `none` as permission to call the external system twice.
+Caveat 1 is unconditional and this capability does not gate it.
+
+### Requirements when a host declares `sideEffectSuppression: "recorded-outcome"`
 
 For a fork with `mode: "replay"`:
 
