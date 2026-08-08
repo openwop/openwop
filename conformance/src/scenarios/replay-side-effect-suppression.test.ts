@@ -57,6 +57,16 @@ const UNREACHED_WORKFLOW_ID = 'conformance-replay-effect-unreached';
 const SKIP_NO_EFFECT_FIXTURE = !isFixtureAdvertised(EFFECT_WORKFLOW_ID);
 const SKIP_NO_UNREACHED_FIXTURE = !isFixtureAdvertised(UNREACHED_WORKFLOW_ID);
 
+/**
+ * How long the unreached fixture's `core.delay` waits, and therefore the floor
+ * on the replay's own runtime: the replay re-executes that pure node LIVE (rule
+ * 4), so it cannot reach terminal sooner. Every downstream budget must exceed
+ * this with room to spare — a poll timeout equal to the delay can never observe
+ * terminal and would report a suppression failure that is really a timeout.
+ */
+const DELAY_MS = 30_000;
+const REPLAY_TERMINAL_BUDGET_MS = DELAY_MS + 45_000;
+
 /** True when the host declares the mechanism AND advertises the `replay` mode it applies to. */
 async function suppressionProbeable(): Promise<boolean> {
   const cap = await readReplayCap();
@@ -138,14 +148,21 @@ describe.skipIf(SKIP_NO_UNREACHED_FIXTURE)('replay side-effect suppression: fail
 
     // Build a source run that terminates WITHOUT recording an outcome for the
     // side-effecting node: start it behind a long delay, then cancel mid-flight.
-    const sourceRunId = await startRun(UNREACHED_WORKFLOW_ID, { delayMs: 30_000 });
-    const cancel = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:cancel`, {});
-    if (cancel.status < 200 || cancel.status >= 300) {
-      // Cancellation is how this scenario manufactures an unrecorded node. A
-      // host that cannot cancel cannot be probed this way — skip rather than
-      // report a suppression failure that is really a cancellation failure.
-      return;
-    }
+    const sourceRunId = await startRun(UNREACHED_WORKFLOW_ID, { delayMs: DELAY_MS });
+    // `/cancel`, NOT `:cancel` — the colon form is the `:fork` convention and
+    // does not exist for cancellation (`rest-endpoints.md` §Endpoints,
+    // `api/openapi.yaml` `/v1/runs/{runId}/cancel`). Getting this wrong 404s,
+    // which the guard below turns into a bare `return` — a vitest PASS, not a
+    // skip — so leg 4 would soft-skip on EVERY host and strict mode would not
+    // catch it.
+    const cancel = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}/cancel`, {});
+    expect(
+      cancel.status >= 200 && cancel.status < 300,
+      driver.describe(
+        'rest-endpoints.md POST /v1/runs/{runId}/cancel',
+        'cancelling an in-flight run MUST be accepted — this leg cannot manufacture an unrecorded node without it',
+      ),
+    ).toBe(true);
     const sourceTerminal = await pollUntilTerminal(sourceRunId, { timeoutMs: 15_000 });
     expect(sourceTerminal.status, driver.describe(
       'rest-endpoints.md POST /v1/runs/{runId}:cancel',
@@ -167,7 +184,7 @@ describe.skipIf(SKIP_NO_UNREACHED_FIXTURE)('replay side-effect suppression: fail
     const replayRunId = fork.runId;
     if (typeof replayRunId !== 'string') return;
 
-    await pollUntilTerminal(replayRunId, { timeoutMs: 30_000 });
+    await pollUntilTerminal(replayRunId, { timeoutMs: REPLAY_TERMINAL_BUDGET_MS });
 
     // The pure `core.delay` node re-executes live (rule 4), so the replay
     // reaches `effect` — for which the source recorded nothing.
@@ -186,5 +203,5 @@ describe.skipIf(SKIP_NO_UNREACHED_FIXTURE)('replay side-effect suppression: fail
       'replay.md §"Side-effect suppression in replay" rule 3',
       'failing closed MUST NOT execute the effect',
     )).toBe(0);
-  }, 90_000);
+  }, REPLAY_TERMINAL_BUDGET_MS + 30_000);
 });

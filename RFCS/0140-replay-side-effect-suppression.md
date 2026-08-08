@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0140                                                                                                                                                                                                                                                     |
 | **Title**         | Replay side-effect suppression — repairing an unconditional MUST that rests on an impossible mechanism, plus the additive `replay.sideEffectSuppression` assurance declaration and the `replay_source_missing` typed failure                              |
-| **Status**        | `Active`                                                                                                                                                                                                                                                 |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                               |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                           |
 | **Created**       | 2026-08-08                                                                                                                                                                                                                                               |
-| **Updated**       | 2026-08-08 — `Draft → Active`. Comment window waived per `CONTRIBUTING.md` §"Bootstrap-phase notes" (additive, 7-day window, zero external reviewers). `Active → Accepted` is blocked on gap G1: no host implements §B.4(b)'s default-deny effect-seam guard yet, so no host may honestly advertise `recorded-outcome`. |
+| **Updated**       | 2026-08-08 — `Draft → Active → Accepted`. Comment window waived per `CONTRIBUTING.md` §"Bootstrap-phase notes" (additive, 7-day window, zero external reviewers). Graduated on **tier-1 single-witness** evidence (`GOVERNANCE.md` §"Acceptance evidence tiers"): openwop-app reference host `a3531892`, suite 1.65.0, `OPENWOP_REQUIRE_BEHAVIOR=true`, eight per-fix sabotages — see §"Acceptance witness". Gaps G8/G9 carried forward as named open gaps. |
 | **Affects**       | `schemas/capabilities.schema.json` (first-ever declaration of the root `replay` block, incl. additive `sideEffectSuppression`) · `spec/v1/replay.md` (new §"Side-effect suppression in replay"; caveat-1 repair; internals item 4 reconciliation; status-line correction) · `spec/v1/idempotency.md` (a cross-reference) · `spec/v1/rest-endpoints.md` (`replay_source_missing` registration) · `spec/v1/host-sample-test-seams.md` (effect-counting seam) · new conformance scenario + fixture · RFC 0011 / RFC 0009 / RFC 0041 composition |
 | **Compatibility** | `additive` (no `MUST` relaxed — see §Compatibility)                                                                                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                                                                                                        |
@@ -329,12 +329,14 @@ rather than left implicit. The counter is placed at the **same** effect seam tha
 3. **Does the cross-host case need a propagation rule?** **No** — see §B.5. A
    dispatch is itself a side effect, so a replay never reaches the peer.
 
-## Implementation notes (non-normative) — target design
+## Implementation notes (non-normative)
 
-The reference host (openwop-app) implements **§B.1/§B.2 only** today, via ADR 0326
-(P3b, source-run invocation-log fallback) and ADR 0341 (side-effecting node
-classification + `replay_source_missing`). §B.4(b) is **not yet built** there; the
-shape below is the target, and the gap is tracked in this RFC's risk register.
+The reference host (openwop-app) implements this across ADR 0326 (P3b, source-run
+invocation-log fallback), ADR 0341 (side-effecting node classification +
+`replay_source_missing`), and ADR 0531 (the run-scoped fail-closed effect guard),
+extended by ADR 0533, which widened the guard from 3 call sites to the egress
+dispatcher covering ~20 node-reachable outbound paths. The shape is worth copying
+because the naive single-mechanism version does not work.
 
 - **Two mechanisms, not one.** A typeId classifier short-circuits known
   side-effecting nodes *before* they run, so the replay reproduces the correct
@@ -345,10 +347,18 @@ shape below is the target, and the gap is tracked in this RFC's risk register.
   `executor/sideEffects.ts` documents exactly this, having once had 55 chain nodes
   silently fall out of protection when a typeId was retargeted, because pack
   `.mjs` nodes cannot self-declare.
+- **Guard the shared chokepoint, not the convenience wrapper.** ADR 0533's finding:
+  guarding openwop-app's `guardedEgressFetch` alone left `safeFetch` and MCP tool
+  invocation open, because six modules call the underlying fetch directly and only
+  pass the dispatcher. Guarding the *dispatcher getter* covered ~20 paths at once.
+  Payment and cross-host dispatch seams that use a bare client with no shared
+  helper still need individual guards. A source-scan tripwire test is worth adding,
+  since the guarantee rests on no call site bypassing the shared path.
 - **The backstop needs run-scoped ambient state** — e.g. an `AsyncLocalStorage`
   context established around every node execution. Note this does not survive a
   process/worker boundary: a host that sandboxes node execution out-of-process must
-  re-establish the context on the host side of that boundary.
+  re-establish the context on the host side of that boundary. Widening the seam set
+  makes that failure mode *larger*, not smaller.
 - **Effects already idempotent by deterministic key need no guard.** Where a write
   derives its row key deterministically from run-invariant inputs, a replay is
   already a correct no-op, and adding a fail-closed guard would turn correct
@@ -364,11 +374,85 @@ shape below is the target, and the gap is tracked in this RFC's risk register.
       `@openwop/openwop-conformance` (suite `1.64.0 → 1.65.0`), capability-gated;
       `coverage.md` documents the honesty limit of a host-attested counter.
 - [x] CHANGELOG entry under the appropriate v1.x version.
-- [ ] Reference host implements §B.4(b)'s default-deny effect-seam guard
-      (§B.1/§B.2 already land via ADR 0326 P3b + ADR 0341).
-- [ ] Reference host advertises `sideEffectSuppression: "recorded-outcome"` and
+- [x] Reference host implements §B.4(b)'s default-deny effect-seam guard
+      (ADR 0531, widened to the egress dispatcher by ADR 0533; §B.1/§B.2 land via
+      ADR 0326 P3b + ADR 0341).
+- [x] Reference host advertises `sideEffectSuppression: "recorded-outcome"` and
       passes the new scenario **non-vacuously** (per RFC 0139's adopted standard:
-      N fixes need N sabotages).
+      N fixes need N sabotages) — see §"Acceptance witness".
+
+## Acceptance witness (2026-08-08)
+
+**Evidence tier: tier-1** (steward reference host), single-witness under the
+bootstrap waiver — the `GOVERNANCE.md` §"Acceptance evidence tiers" rule 70
+naming requirement. Host: openwop-app, `rfc-0140-effect-seam-guard` →
+`a3531892`, incorporating openwop-app#3048 (ADR 0531) and #3053. Suite
+`@openwop/openwop-conformance` 1.65.0, `OPENWOP_REQUIRE_BEHAVIOR=true`.
+
+**Observed:** source run `effectCount: 1`; the `mode: "replay"` fork reached
+`completed` reproducing the source's recorded output with `effectCount: 0`; the
+cancelled-source replay emitted `node.failed { nodeId: "effect", error.code:
+"replay_source_missing" }` with `effectCount: 0`. Legs 1–3 in 277 ms, leg 4 in
+30,035 ms — the latter is the fixture's own live-re-executed `core.delay`, and is
+the positive evidence that leg 4 actually ran rather than soft-skipping.
+
+**Non-vacuity — eight separate sabotages, one per fix**, per the RFC 0139
+standard. Redness is reported per leg because a combined sabotage can mask a leg
+that never executes:
+
+| Sabotage | Legs 1–3 | Leg 4 |
+| --- | --- | --- |
+| Counter pinned to `0` | **red** | pass |
+| Counter pinned to `1` | **red** | **red** |
+| Node unclassified (only) | pass | pass |
+| Guard disabled (only) | pass | pass |
+| Node unclassified **and** guard disabled | **red** | **red** |
+| `replay_source_missing` path removed | pass | **red** |
+| Advertisement removed | **red** | **red** |
+| `nodeId` omitted from `node.failed` | pass | **red** |
+
+**The honest finding: classification and the guard mask each other in this
+scenario.** `conformance.effect.emit` is both classified side-effecting *and*
+routed through a guarded seam, so disabling either alone leaves the scenario
+green — only disabling both reds it. The conformance suite therefore does **not**
+independently witness §B.4(b); the guard's independent evidence is the host's own
+`test/run-effect-context.test.ts`, which drives an *unclassified* node into a
+replay. This is inherent to the fixture pair (a fixture whose node is unclassified
+would not be suppressed on a conformant host either) and is recorded rather than
+smoothed over. Carried forward as gap G8.
+
+**Two suite defects the witness found, both in this RFC's own scenario**, both
+fixed before graduation:
+
+1. The scenario drove `POST /v1/runs/{runId}:cancel`. The colon form is the
+   `:fork` convention; cancellation is `/cancel`. The host correctly 404'd, the
+   scenario's status guard hit a bare `return` — **which is a vitest pass, not a
+   skip** — so leg 4 soft-skipped on *every* host and `OPENWOP_REQUIRE_BEHAVIOR`
+   could not catch it. The guard is now an assertion.
+2. Once fixed, leg 4's `pollUntilTerminal` budget equalled the fixture's own
+   `delayMs`, so terminal was unobservable by construction. Budgets are now
+   derived from the delay constant rather than hard-coded independently.
+
+**A host defect the witness found:** `node.failed` payloads omitted `nodeId` at
+all seven emission sites, though `run-event-payloads.schema.json` §`nodeFailed`
+requires it *in the payload*. Every in-tree consumer read it off the envelope
+instead, so nothing noticed. Fixed host-side.
+
+**What this witness does NOT cover** — disclosed rather than implied:
+
+- **Coverage of the seam set.** The counter observes only paths routed through
+  the guarded seam. openwop-app's webhook fan-out (`deliverToSubscribers`),
+  `s3Blob.put`, and `openSearchSearch` are **known-unguarded**; the webhook case
+  is a real residual, because it is host-level fan-out with no node to fail
+  closed and its throws are swallowed by the event-log subscriber — a guard there
+  would suppress silently. Tracked as gap G9.
+- **§B.4(b) via conformance** — see the masking finding above.
+- **Out-of-process pack execution.** `AsyncLocalStorage` does not cross a worker
+  boundary, and the widened seam set makes that gap larger, not smaller.
+- **`branch`-mode forks** — deliberately out of scope (§D).
+- **Provider/LLM dispatch paths are deliberately unguarded** (§B.3 rule 4):
+  guarding them would fail-close the nodes the spec *requires* to stay live and
+  make RFC 0041 divergence detection vacuously green.
 
 ## References
 
