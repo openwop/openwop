@@ -456,10 +456,19 @@ function syncReadmeCounts() {
 
   // [regex with (prefix)(\d+)(suffix), replacement value]. Each pattern mirrors
   // a check in staleStatusFindings(); only the middle \d+ run is rewritten.
+  //
+  // The three RFC-status suffixes are `(\s|\))`, NOT `(\))`. They used to require
+  // the count to be followed immediately by a closing paren — but the banner has
+  // always written `are `Accepted` (133 — including RFC 0099 …)`, i.e. the count
+  // is followed by a SPACE and a long prose annotation. So those three rules
+  // never matched anything, `--write` silently left the counts stale, and every
+  // RFC status flip became a hand-edit and a guaranteed merge conflict for any
+  // branch open at the time. `--check` caught the drift and told you to run
+  // `--write`, which then didn't fix it — the worst combination.
   const rules = [
-    [/(are\s+`Accepted`\s+\()\d+(\))/g, rfcs.filter((r) => r.status === 'Accepted').length],
-    [/(are\s+`Active`\s+\()\d+(\))/g, rfcs.filter((r) => r.status === 'Active').length],
-    [/(are\s+`Draft`\s+\()\d+(\))/g, rfcs.filter((r) => r.status === 'Draft').length],
+    [/(are\s+`Accepted`\s+\()\d+(\s|\))/g, rfcs.filter((r) => r.status === 'Accepted').length],
+    [/(are\s+`Active`\s+\()\d+(\s|\))/g, rfcs.filter((r) => r.status === 'Active').length],
+    [/(are\s+`Draft`\s+\()\d+(\s|\))/g, rfcs.filter((r) => r.status === 'Draft').length],
     [/(\()\d+(\s+RFCs\s+excluding\s+template\))/g, rfcs.length],
     [/(\b)\d+(\s+conformance\s+scenario\s+files\b)/g, scenarios.length],
     [/(\b)\d+(\s+prose\s+specs\b)/g, specDocs.length],
@@ -474,7 +483,57 @@ function syncReadmeCounts() {
   for (const [re, value] of rules) {
     text = text.replace(re, (_match, prefix, suffix) => `${prefix}${value}${suffix}`);
   }
+  text = syncReadmeRfcEnumerations(text, rfcs);
   fs.writeFileSync(path.join(root, 'README.md'), text);
+}
+
+/**
+ * Rewrites the banner's enumerated `Active` / `Draft` RFC id lists in place,
+ * mirroring check (4b) in staleStatusFindings().
+ *
+ * Counts and id lists drift independently, so a count-only sync left the second
+ * half of the same sentence to be hand-edited — the single most conflict-prone
+ * string in the corpus, because every RFC status flip touches it and every open
+ * branch collides on it.
+ *
+ * Each entry carries a hand-written annotation (`RFC 0038 Parked`, `RFC 0136
+ * workflow-variable \`format\``), so this is NOT a regenerate-from-scratch: an
+ * RFC still in the set keeps its existing entry verbatim, one that left is
+ * dropped, and one that arrived is appended bare as `RFC NNNN` for a human to
+ * annotate later. Losing an annotation would be a silent downgrade of the
+ * banner, which is why the map is keyed on id rather than rebuilt positionally.
+ *
+ * The separator between count and list is sliced from the existing text rather
+ * than assumed: the README's dashes are not clean em-dashes, and hard-coding one
+ * would corrupt the byte sequence on every write.
+ */
+function syncReadmeRfcEnumerations(text, rfcs) {
+  for (const label of ['Active', 'Draft']) {
+    const ids = rfcs.filter((r) => r.status === label).map((r) => r.id).sort();
+    // Same shape as staleStatusFindings() check (4b), so the writer and the
+    // checker cannot disagree about what they are looking at.
+    const re = new RegExp('(are\\s+`' + label + '`\\s+\\()([^)]*)(\\))');
+    const m = text.match(re);
+    if (!m) continue;
+
+    const inner = m[2];
+    const head = inner.match(/^(\s*)(\d+)/);
+    const firstRfc = inner.search(/RFC\s+\d{4}/);
+    if (!head || firstRfc < 0) continue; // shape we don't recognise — leave it for the check to report
+
+    const lead = head[1];
+    const separator = inner.slice(lead.length + head[2].length, firstRfc);
+
+    const byId = new Map();
+    for (const entry of inner.slice(firstRfc).split(/,\s*/)) {
+      const idMatch = entry.match(/RFC\s+(\d{4})/);
+      if (idMatch) byId.set(idMatch[1], entry.trim());
+    }
+
+    const rebuilt = ids.map((id) => byId.get(id) ?? `RFC ${id}`).join(', ');
+    text = text.replace(re, () => `${m[1]}${lead}${ids.length}${separator}${rebuilt}${m[3]}`);
+  }
+  return text;
 }
 
 function main() {
