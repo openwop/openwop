@@ -1,8 +1,8 @@
 # OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, side-effect suppression in replay (RFC 0140), and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 >
-> **Known gap (2026-08-08):** this line previously claimed coverage of "idempotency requirements on side-effecting nodes". **No such section exists** — the claim was removed rather than left as a promissory note. v1 specifies no constraint on whether a replayed run re-fires its external effects, and `idempotency.md` Layer 2 cannot supply one (its key includes `runId`, which a fork changes, so a fork's key space is disjoint from its source's by construction). [RFC 0140](../../RFCS/0140-replay-side-effect-suppression.md) proposes the missing surface.
+> **RFC 0140 (2026-08-08):** §"Side-effect suppression in replay" closes what this line previously mis-advertised. Until then the status line claimed "idempotency requirements on side-effecting nodes" and **no such section existed**; v1 specified no constraint on whether a replayed run re-fires its external effects. It now does, gated on the `replay.sideEffectSuppression` capability.
 
 ---
 
@@ -251,6 +251,81 @@ This rules out bit-equivalent execution determinism as a contract — it would r
 Scenarios verifying §A + §B + §C gate on `capabilities.multiAgent.executionModel.version >= 4 && capabilities.multiAgent.executionModel.replayDeterminism.supported: true`. Hosts at earlier versions skip cleanly.
 
 ---
+
+## Side-effect suppression in replay (RFC 0140, normative)
+
+`replay` mode re-executes a workflow. Without a constraint, that re-execution
+re-performs the workflow's **external effects** — it sends the email again,
+charges the card again, posts the webhook again.
+
+**Layer-2 idempotency cannot prevent this, by construction.** `idempotency.md`
+§"Layer 2" derives the engine dedup key from `(runId, nodeId, attempt,
+providerKey)`, and §"Response" above specifies that a fork returns a **new
+`runId`**. Every Layer-2 key computed during a replay therefore differs from its
+counterpart in the source run, so the Layer-2 cache — correct as it is for
+retries *within* a run — never collides across a fork. Suppression is a separate
+mechanism.
+
+Hosts advertise it via `replay.sideEffectSuppression` (`capabilities.md`):
+
+| Value | Meaning |
+| --- | --- |
+| `recorded-outcome` | The host suppresses external effects during a `replay` fork, per the requirements below. |
+| `none` (default; **absent means this**) | The host makes no such guarantee. A replay MAY re-fire effects. |
+
+### Requirements when `sideEffectSuppression: "recorded-outcome"`
+
+For a fork with `mode: "replay"`:
+
+1. A node that performs an **external side effect** — any operation observable
+   outside the run's own event log (an outbound network call, a message or
+   notification delivered to a person, a payment, a write to a third-party
+   system) — MUST NOT perform that effect.
+2. The host MUST resolve such a node's outcome from the source run's recorded
+   terminal outcome for the same `(nodeId, attempt)`. The Nth attempt of a node
+   in the replay resolves to the Nth recorded outcome in the source.
+3. If the source run has no recorded outcome for that `(nodeId, attempt)`, the
+   host MUST fail the node closed with `error.code: "replay_source_missing"`
+   (below). It MUST NOT perform the effect, and MUST NOT substitute a
+   synthesized or empty success.
+4. The guarantee is **whole-run**. A host MUST NOT advertise `recorded-outcome`
+   if any class of side-effecting node in its catalogue can still fire during a
+   replay. A partial guarantee is not a weaker promise but an incorrect one: a
+   node that fires live derives its outcome from a fresh external call, and that
+   outcome flows into `RunSnapshot.variables`, violating §C.2's requirement that
+   observable state be byte-equivalent at each event-log index.
+
+Nodes that are **not** side-effecting — pure computation, and LLM calls served
+from the Layer-2 invocation log per §"LLM cache-key recipe" — MUST continue to
+re-execute live. This is required, not merely permitted: §"Two modes" defines
+`replay` as re-execution against current code with `replay.diverged` on
+mismatch, so short-circuiting pure nodes would make divergence detection
+vacuously green.
+
+### `replay_source_missing` (normative)
+
+A node failed under requirement 3 MUST carry `error.code:
+"replay_source_missing"` in its `node.failed` payload. This is a node-failure
+code in the run event log, not an HTTP error-envelope code — the fork request
+itself still returns `201`.
+
+```json
+{ "type": "node.failed", "nodeId": "send-invoice",
+  "payload": { "error": { "code": "replay_source_missing",
+    "message": "the source run has no recorded outcome for this node" } } }
+```
+
+A node **with** a recorded source outcome instead reaches `node.completed`
+carrying that outcome's outputs, and no outbound call occurs.
+
+### Scope: `replay` mode only
+
+These requirements do not constrain `mode: "branch"`. A branch is a new
+execution with caller-supplied inputs exploring a real alternative, so its
+effects are effects the operator asked for; a replay re-executes fixed history,
+so its effects are duplicates by definition. A host MAY suppress branch effects
+too, but MUST NOT report that as `sideEffectSuppression`.
+
 
 ## Replay-from-event-log internals
 
