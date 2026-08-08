@@ -119,6 +119,8 @@ An OpenWOP-compliant server MUST guarantee determinism of replay subject to the 
 
 `branch` mode is NOT deterministic by design — the caller is changing inputs/config. Determinism guarantees apply only to the events `< fromSeq` that are inherited as fixed history.
 
+> **Caution — a branch re-fires external effects.** §"Side-effect suppression in replay" is scoped to `mode: "replay"` only. A `branch` fork re-executes side-effecting nodes live for sequences `>= fromSeq`, so branching past an already-executed payment or notification will perform it again. This is by design — a branch is a new execution with caller-supplied inputs, so its effects are effects the operator asked for — but it is easy to miss, and a host advertising `sideEffectSuppression: "recorded-outcome"` makes no claim about it. A host SHOULD surface this in any operator-facing fork UI.
+
 ### Failure surfaces
 
 If a `replay` mode fork diverges from the original (a node produces a different event than the original at the same sequence), the engine MUST:
@@ -308,6 +310,30 @@ For a fork with `mode: "replay"`:
    node that fires live derives its outcome from a fresh external call, and that
    outcome flows into `RunSnapshot.variables`, violating §C.2's requirement that
    observable state be byte-equivalent at each event-log index.
+5. **The whole-run guarantee requires two mechanisms, not one.** A host MUST NOT
+   advertise `recorded-outcome` unless **both** hold:
+   - **(a) Classification** short-circuits known side-effecting nodes *before*
+     they execute, per requirement 2. This keeps a replay **correct** — it
+     reproduces the right observable output.
+   - **(b) A default-deny guard at every host effect seam** fails the node
+     closed per requirement 3 when a node reaches an effect seam during a
+     replay. This keeps a replay **safe**.
+
+   (a) alone MUST NOT be advertised as `recorded-outcome`. Classification is a
+   moving target — a retargeted node type, a pack node that cannot self-declare,
+   or a newly-added integration silently leaves the classified set — and the
+   failure is invisible: the replay looks green and the effect fires. The seam
+   guard is what makes the claim whole-run without requiring a host to enumerate
+   every effect in its catalogue, and it converts a silent correctness loss into
+   a visible `replay_source_missing`. Because pure nodes never reach an effect
+   seam, (b) does not disturb the live-re-execution rule below.
+6. **Cross-host dispatch needs no separate rule.** A dispatch to a peer host
+   (RFC 0007) is an outbound network call, hence an external side effect under
+   requirement 1. During a replay the dispatching node therefore reproduces its
+   recorded outcome under requirement 2 and **never contacts the peer at all**,
+   so the peer's own advertisement does not affect the calling host's guarantee.
+   A calling host does not need to interrogate a peer's `sideEffectSuppression`
+   before replaying a run that dispatched to it.
 
 Nodes that are **not** side-effecting — pure computation, and LLM calls served
 from the Layer-2 invocation log per §"LLM cache-key recipe" — MUST continue to
@@ -348,7 +374,7 @@ An engine implementation typically reuses its existing run-recovery machinery (a
 1. `RunEventLogIO.read(sourceRunId, { fromSequence: 0, limit: fromSeq })` — load events `< fromSeq`.
 2. `fold(events) → ProjectedRunState` — derive initial state.
 3. New run is initialized with that state, copy-on-write into the new run's event log.
-4. For `replay`, executor invocations consult the durable invocation log (`idempotency.md` §"Layer 2: Activity-level idempotency") keyed on `(sourceRunId, ...)` for side-effect dedup.
+4. For `replay`, side-effecting nodes are resolved from the **source** run's recorded outcomes per §"Side-effect suppression in replay" — keyed on `(sourceRunId, nodeId, attempt)`, never on the fork's own `runId`. LLM invocations additionally consult the durable invocation log via the content-addressed key in §"LLM cache-key recipe" §C. (This item previously cited `idempotency.md` §"Layer 2" as the basis; that mechanism cannot span a fork — see the §"Side-effect suppression in replay" preamble — though the `(sourceRunId, …)` keying it described was already correct.)
 5. For `branch`, executor invocations create new invocation log entries keyed on `(newRunId, ...)`.
 
 ---
