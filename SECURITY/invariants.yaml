@@ -415,6 +415,33 @@ invariants:
       `form-content-pack-string-trust-boundary`).
       Verified always-on + server-free by `form-content-packs.test.ts`.
 
+  - id: tool-result-trust-monotone
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/tool-result-trust-monotone.test.ts
+    note: |
+      RFC 0143 — the general rule the corpus's ~ten point-invariants instance.
+      Trust over content is a meet-semilattice (`untrusted ⊏ trusted`). A tool
+      result is content entering model context and is `untrusted` unless the host
+      has a SPECIFIC, NAMED basis for `trusted` — "a tool ran and returned" is NOT
+      a basis (registry silence ⇒ untrusted, fail-closed). The `contentTrust` of
+      any composed prompt segment MUST be the MEET of its inputs' trust: one
+      untrusted input ⇒ untrusted segment, and no transformation (summarize,
+      format, extract, store-then-recall) may raise it. Persisting untrusted
+      content and recalling it does not launder it (closes FRMD-F1-1). Satisfiable
+      by (a) dynamic coarse-grained propagation OR (b) conservative static reader
+      classification; value-granular taint is NOT required. Carve-out: a
+      structurally-isolated reader (RFC 0035 sandbox, no egress, no model-context
+      path) MAY omit the tag — trust by reader posture. A `missing ⇒ trusted`
+      default at a composition site is the violation. `ai-envelope.md` §"Trust
+      boundary" (MCP/A2A) and `prompt-composed-trust-marker` (compose boundary) are
+      named instances. Always-on server-free legs verify a fencing invariant
+      exists for every §4 content-ingress surface (completeness — no unfenced
+      ingress), that the meet rule is stated normatively, and that the instances
+      cross-reference the general rule; the dynamic-propagation-through-storage
+      behavior is host-witnessed (openwop-app memory lane).
   - id: pack-manifest-extension-opaque
     tier: protocol
     severity: high

@@ -691,7 +691,7 @@ Implementations MAY cache outcomes in memory for in-process replays; they MUST c
 
 ## Trust boundary
 
-When a node consumes content from an untrusted source (MCP tool result per `mcp-integration.md`, A2A inbound message per `a2a-integration.md`), any envelope it subsequently emits whose payload incorporates that content MUST carry `meta.contentTrust: 'untrusted'`.
+When a node consumes content from an untrusted source (MCP tool result per `mcp-integration.md`, A2A inbound message per `a2a-integration.md`), any envelope it subsequently emits whose payload incorporates that content MUST carry `meta.contentTrust: 'untrusted'`. This is a **named instance** of the general monotone-composition rule (`SECURITY/threat-model-prompt-injection.md` §2a, RFC 0143): the emitted envelope's trust is the meet of its inputs' trust, so one untrusted input taints the envelope, and no transformation raises it.
 
 The engine MUST propagate `meta.contentTrust = 'untrusted'` to all `RunEventDoc`s emitted as a consequence of the envelope (setting `RunEventDoc.contentTrust = 'untrusted'`). Downstream LLM nodes that re-consume these events MUST treat the content as untrusted input per the prompt-injection-mitigation rules in `SECURITY/threat-model-prompt-injection.md`.
 

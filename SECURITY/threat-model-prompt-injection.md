@@ -46,6 +46,17 @@ Trust transitions:
 - **T3: LLM → Envelope.** LLM output is parsed as a typed envelope; freeform text outside an envelope is discarded (engine layer).
 - **T4: Envelope → Action.** Each envelope type triggers a specific action via the engine. No envelope can trigger an action outside its type.
 
+## 2a. Trust is monotone through composition (normative — RFC 0143)
+
+The surface-specific rules in §4–§5 are instances of one principle. Trust over content is a two-element meet-semilattice `untrusted ⊏ trusted` with meet `⊓` (`untrusted ⊓ anything = untrusted`).
+
+- **Untrusted by default.** Content entering model context carries `contentTrust: "untrusted"` unless the host has a **specific, named basis** for `"trusted"`. **A tool having executed and returned is NOT a basis.** For a built-in/registered tool the basis is a per-tool `contentTrust` decision recorded at registration; registry silence is `untrusted` (fail-closed).
+- **Monotone composition (the meet rule).** The `contentTrust` of any prompt segment composed from one or more inputs MUST be the **meet** of its inputs' trust: if **any** contributing input is `untrusted`, the segment is `untrusted`. No transformation — summarization, formatting, extraction, translation, or a store-then-recall round trip — may raise a segment's trust above the meet of its inputs. `ai-envelope.md` §"Trust boundary" (MCP / A2A) and the `prompt-composed-trust-marker` invariant (compose boundary) are **named instances** of this rule.
+- **No laundering through storage.** Persisting untrusted content and later recalling it does not launder it: a value written to durable state while `untrusted` MUST be `untrusted` on recall, unless the reader is structurally isolated (below). This closes the `FRMD-F1-1` laundering path — untrusted content → tool → "result" → prompt with the tag dropped in transit.
+- **Two conforming strategies, neither privileged.** A host MAY satisfy the meet by **(a) dynamic coarse-grained propagation** (carry a trust bit at per-turn / per-summary / per-segment granularity, take the meet at each boundary — over-tagging is conformant, coarser is safer) OR **(b) conservative static reader classification** (a reader of a store writable outside the operator's trust boundary is untrusted). **Value-granular taint through arbitrary durable state is NOT required** — the floor is the coarse-grained meet.
+- **Structurally-isolated readers (carve-out).** A host MAY omit the persisted trust tag for content whose **only** reader is structurally isolated — sandboxed, no network egress, no path to model context or a side-effecting tool (e.g. behind the RFC 0035 sandbox contract). Trust is then enforced by **reader posture**, not a tag. Narrow: structural isolation only, never conventional; a reader that can reach model context or egress is not isolated and the no-laundering rule applies.
+- **The fail-open default is the violation.** A composition site that treats **missing** `contentTrust` as `"trusted"` violates untrusted-by-default: absence of a trust decision is `untrusted`, never `trusted`.
+
 ## 3. Adversaries
 
 | ID  | Adversary                                        | Capability                                                                                    |
