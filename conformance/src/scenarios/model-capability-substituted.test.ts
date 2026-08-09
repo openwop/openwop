@@ -79,7 +79,15 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
         Array.isArray(mc.advertised),
         driver.describe('RFCS/0031-envelope-variants-and-model-capabilities.md §E', 'modelCapabilities.advertised MUST be an array of capability identifiers'),
       ).toBe(true);
-      const SPEC_RESERVED = ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'];
+      // RFC 0031 §C's five, PLUS the four modality identifiers RFC 0055 §A
+      // promoted into the formal vocabulary (Accepted 2026-05-26; registered in
+      // `capabilities.schema.json` advertised.description + the RFC 0031 §C
+      // table). A host advertising `vision-input` etc. is conformant; the
+      // pre-0055 five-element list rejected it. (Suite defect, fixed 2026-08-09.)
+      const SPEC_RESERVED = [
+        'structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling',
+        'vision-input', 'audio-input', 'audio-output', 'image-output',
+      ];
       for (const id of mc.advertised as unknown[]) {
         expect(typeof id, 'each advertised identifier MUST be a string').toBe('string');
         const idStr = String(id);
@@ -89,7 +97,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
           isReserved || isHostExt,
           driver.describe(
             'RFCS/0031-envelope-variants-and-model-capabilities.md §C',
-            `advertised identifier "${idStr}" MUST be spec-reserved (structured-output, discriminator-enum, long-context, reasoning, function-calling) or match the x-host-<host>-<key> extension pattern`,
+            `advertised identifier "${idStr}" MUST be spec-reserved (RFC 0031: structured-output, discriminator-enum, long-context, reasoning, function-calling; RFC 0055: vision-input, audio-input, audio-output, image-output) or match the x-host-<host>-<key> extension pattern`,
           ),
         ).toBe(true);
       }

@@ -36,6 +36,12 @@ type Manifest = Record<string, unknown> & { provider: Record<string, unknown> };
 function withReach(reach: Record<string, unknown>): Manifest {
   const m = JSON.parse(readFileSync(FIXTURE_PATH, 'utf8')) as Manifest;
   m.provider.reach = reach;
+  // openapi reach REQUIRES provider.apiHosts (RFC 0120 §A, schema
+  // provider/allOf/0/then/required); other modes MUST NOT carry it. Set it here
+  // so the manifest validates against a live corpus root, not just the vendored
+  // snapshot. (Suite defect, fixed 2026-08-09.)
+  if ('openapi' in reach) m.provider.apiHosts = ['api.github.com'];
+  else delete m.provider.apiHosts;
   return m;
 }
 
