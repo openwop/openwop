@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 135 |
-| Active | 5 |
+| Accepted | 136 |
+| Active | 4 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -174,7 +174,7 @@
 | RFC 0135 | Workflow-chain gallery visibility - `internal` chains | Accepted |
 | RFC 0136 | `WorkflowVariable.format` - a presentational hint for run inputs | Draft |
 | RFC 0137 | Form-content packs - `kind: "form-content"` distributes form templates; field types reuse the RFC 0071 portable subset | Accepted |
-| RFC 0138 | Vendor-extension hatch on pack manifests | Active |
+| RFC 0138 | Vendor-extension hatch on pack manifests | Accepted |
 | RFC 0139 | Host-side witness for pack-manifest extension opacity | Accepted |
 | RFC 0140 | Replay side-effect suppression - an additive `replay.sideEffectSuppression` capability, the normative MUST it gates, and the `replay_source_missing` typed failure | Accepted |
 | RFC 0141 | Legacy artifact-type identifiers - never-conformant status and the replay migration constraint | Accepted |
@@ -196,7 +196,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0136) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0138, RFC 0142) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0142) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
