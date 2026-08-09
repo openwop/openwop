@@ -126,7 +126,7 @@ Hosts that predate this document commonly carry artifact-type identifiers that d
 Following the contract pattern in `host-capabilities.md` §"The contract pattern", a host advertises store / render / export support **independently per host**, so a host that can persist an artifact but not render it is expressible:
 
 ```json
-"host.artifactTypes": {
+"artifactTypes": {
   "supported": true,
   "store": true,
   "render": false,
@@ -146,7 +146,7 @@ The independence of `store` and `render` is the cross-host negotiation this surf
 **Per-type facets (RFC 0075 / P1-1).** Capability is genuinely _per-type_: a real host validates some types, store-only relays others, renders a subset, and exports different formats per type — a single host-global object cannot express a heterogeneous fleet (forcing an adopter to advertise only the intersection). A host MAY therefore declare a `types` map whose entries override the global object for a given `artifactTypeId`; the global object is the default/fallback for any type not listed. A per-type entry carries `{ validated, validation, schemaVersion, store, render, export }`:
 
 ```jsonc
-"host.artifactTypes": {
+"artifactTypes": {
   "supported": true, "store": true, "render": true, "export": ["pdf"],     // defaults (fallback)
   "types": {
     "vendor.myndhyve.prd":   { "validated": true,  "validation": "open",   "schemaVersion": 1, "render": true },
@@ -169,7 +169,7 @@ A pack MAY declare `peerDependencies: { "host.artifactTypes": "supported" }`; th
 
 **Negative — schema validation.** An `artifactTypeId` of `core.openwop.cad.model` published from a non-core account (reserved scope); a `rendering.display` value of `"3d-viewport"` (not in the closed enum); an `artifactTypes[]` of length 0.
 
-**Store-without-render (negotiation).** A host advertising `host.artifactTypes: { supported: true, store: true, render: false }` runs a workflow whose terminal node declares `artifact.typeId: "vendor.acme.cad.model"`. The host validates the payload against the registered schema, persists it, emits `artifact.created` with `registered: true`, and completes the run — it does not fail for lack of a CAD renderer.
+**Store-without-render (negotiation).** A host advertising `"artifactTypes": { "supported": true, "store": true, "render": false }` runs a workflow whose terminal node declares `artifact.typeId: "vendor.acme.cad.model"`. The host validates the payload against the registered schema, persists it, emits `artifact.created` with `registered: true`, and completes the run — it does not fail for lack of a CAD renderer.
 
 ## Resolved design decisions
 

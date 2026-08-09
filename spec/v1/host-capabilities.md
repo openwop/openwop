@@ -18,7 +18,7 @@ External hosts implementing openwop use this document to know exactly what to wi
 
 Every `host.*` capability follows the same wire pattern:
 
-1. **Discovery.** The host advertises `host.<name>: { supported: true, ... }` in `/.well-known/openwop`'s `agents` block or top-level (per `capabilities.md` §"Network-handshake shape" extension rules).
+1. **Discovery.** The host advertises `"<name>": { "supported": true, ... }` in `/.well-known/openwop`'s `agents` block or top-level (per `capabilities.md` §"Network-handshake shape" extension rules). **The discovery-document key is the PLAIN family name** — `"artifactTypes"`, not `"host.artifactTypes"` (RFC 0137 gap G16, applied corpus-wide by RFC 0144). The dotted `host.<name>` form throughout this document is the capability **identifier**: the spelling used in pack `peerDependencies`, in `error.capability`, and in these `§` headings. Identifier and key are different surfaces; a host that emits the dotted form as a document key is carrying a migration mirror, not the canonical shape.
 2. **Registration.** The pack registry refuses to register a pack at `workflow-register` time if the host doesn't advertise the pack's declared `peerDependencies` capabilities.
 3. **Dispatch.** At node execution, the executor reads from `ctx.<name>.<method>(...)`. The host has wired the named property to a method that satisfies this spec.
 4. **Failure.** If `ctx.<name>` is absent (host advertised but didn't wire), or the named method is missing, executors MUST throw with `error.code = "host_capability_missing"` and `error.capability = "host.<name>"` (or `"host.<name>.<method>"` for granular misses).
@@ -458,7 +458,7 @@ ctx.canvas.crossInvoke({
 Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` method**: it is an advertisement that changes how the host treats the artifact references already on the wire (`nodes[].artifact.typeId`, `WorkflowNode.artifactType`, `artifact.created.artifactType`). The facets are negotiated together, not dispatched independently:
 
 ```jsonc
-"host.artifactTypes": {
+"artifactTypes": {
   "supported": true,
   "store":  true,           // persists registered artifacts + emits artifact.created
   "render": false,          // advisory; the spec defines no rendering surface
@@ -476,7 +476,7 @@ Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` meth
 **Per-type facets (`types`, RFC 0075).** Capability is per-type. A host MAY declare a `types` map keyed by `artifactTypeId`; each entry overrides the global object and carries `{ validated, validation, schemaVersion, store, render, export }`. The global object is the fallback for any type not listed (`types` absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).
 
 ```jsonc
-"host.artifactTypes": {
+"artifactTypes": {
   "supported": true, "store": true, "render": true, "export": ["pdf"],
   "types": {
     "vendor.myndhyve.prd":   { "validated": true,  "validation": "open",   "schemaVersion": 1, "render": true },
@@ -502,7 +502,7 @@ A pack MAY declare `peerDependencies: { "host.artifactTypes": "supported" }`; th
 Like `host.artifactTypes`, this capability adds **no `ctx.forms.*` method**. It is an advertisement that the host resolves **registered form templates** from installed `kind: "form-content"` packs and instantiates them into ordinary, editable forms through its own normal create path.
 
 ```jsonc
-"host.forms": { "contentPacks": true }
+"forms": { "contentPacks": true }
 ```
 
 **Behavior (normative).** When a host advertises `host.forms.contentPacks: supported` and a registered template is instantiated, it MUST follow `form-content-packs.md` §"Instantiation":

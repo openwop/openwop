@@ -1773,6 +1773,66 @@
         }
       }
     },
+    "artifactTypes": {
+      "type": "object",
+      "description": "RFC 0071, amended by RFC 0075; declared by RFC 0144. Host artifact-type surface — an advertisement (no `ctx.artifactTypes.*` method) that changes how the host treats the artifact references already on the wire (`nodes[].artifact.typeId`, `WorkflowNode.artifactType`, `artifact.created.artifactType`). Carries the corpus's only emission MUST: a host advertising `store: true` MUST persist registered artifacts and emit `artifact.created`. See `host-capabilities.md` §host.artifactTypes and `artifact-type-packs.md` §\"Host capability\". The discovery key is the PLAIN family name at the document root (RFC 0137 G16); `host.artifactTypes` is the capability IDENTIFIER used in pack `peerDependencies`, not this key.",
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host honors registered artifact types — validates an artifact whose type is registered (pack-installed or host-native) against that type's schema before emitting `artifact.created`, setting `registered: true` + `registrationSource`. Unregistered types stay accepted unvalidated with `registered: false`." },
+        "store": { "type": "boolean", "description": "`true` ⇒ the host persists artifacts of registered types AND emits `artifact.created`. Advertising this is a commitment to emit; RFC 0142 leg B is the witness." },
+        "render": { "type": "boolean", "description": "Advisory — the spec defines no rendering surface. A host advertising `false` for a type it can `store` MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer (the store-without-render negotiation guarantee)." },
+        "export": { "type": "array", "items": { "type": "string" }, "description": "Export-format identifiers the host can materialize, drawn from declared `exportFormats`. Advisory." },
+        "types": {
+          "type": "object",
+          "description": "RFC 0075 per-type facets, keyed by `artifactTypeId`. Each entry overrides the global object for that type; the global object is the fallback for any type not listed (absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "validated": { "type": "boolean", "description": "The runtime validation guarantee — `true` ⇒ the host validates this type before emit, so emits `registered: true`. Decoupled from `schemaVersions`, which is a version DECLARATION only." },
+              "validation": { "type": "string", "enum": ["open", "closed"], "description": "Mirrors `ArtifactType.validation`, surfacing schema strictness in discovery so a consumer needn't fetch the schema. Default `\"open\"` per `COMPATIBILITY.md` §2.1." },
+              "schemaVersion": { "type": "integer", "minimum": 0 },
+              "store": { "type": "boolean" },
+              "render": { "type": "boolean" },
+              "export": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "forms": {
+      "type": "object",
+      "description": "RFC 0137; declared by RFC 0144. Host form-content-pack surface — like `artifactTypes` it adds no `ctx.forms.*` method; it advertises that the host resolves registered form templates from installed `kind: \"form-content\"` packs and instantiates them through its own normal create path. See `host-capabilities.md` §host.forms and `form-content-packs.md`. The discovery key is the PLAIN family name at the document root (RFC 0137 G16); a host may additionally carry a deprecated dotted `\"host.forms\"` mirror during migration — root `additionalProperties` stays `true` so that document remains valid.",
+      "additionalProperties": false,
+      "properties": {
+        "contentPacks": { "type": "boolean", "description": "`true` ⇒ the host instantiates registered form templates. Normative consequences (`form-content-packs.md` §\"Instantiation\"): create through the SAME path a hand-authored form uses; degrade an unrecognized field type to a plain text input rather than failing; keep the instantiated form fully editable; execute nothing from the pack; sanitize/validate/authorize submissions exactly as hand-typed input. Pack-authored strings are UNTRUSTED and MUST propagate `meta.contentTrust: \"untrusted\"` into interpolated prompt segments (invariant `form-content-pack-string-trust-boundary`) — a signature proves authorship, not content safety." }
+      }
+    },
+    "aiEnvelope": {
+      "type": "object",
+      "description": "Declared by RFC 0144. Host typed-envelope generation surface (`ctx.aiEnvelope.generate`), routing the call through the host's BYOK provider layer. Opinionated about envelope shape, unlike the lower-level `aiProviders` capability which returns raw model output. See `host-capabilities.md` §host.aiEnvelope and `ai-envelope.md`.",
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "`true` ⇒ `ctx.aiEnvelope.generate` is exposed. Absent/`false` ⇒ packs binding this surface fail with `host_capability_missing`." },
+        "await": { "type": "boolean", "description": "`true` ⇒ `ctx.aiEnvelope.await` is ALSO exposed. `generate` is required whenever the family is advertised; `await` is required only when this sub-flag is." }
+      }
+    },
+    "promptLibrary": {
+      "type": "object",
+      "description": "Declared by RFC 0144. Host prompt-lookup surface (`ctx.promptLibrary.get`), returning a prompt pinned to a specific version so replay stays deterministic. Consumed by `core.ai.callPrompt`. See `host-capabilities.md` §host.promptLibrary.",
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "`true` ⇒ `ctx.promptLibrary.get(promptId)` resolves a `{ promptId, systemPrompt, version, envelopeType? }` record. The returned `version` MUST pin the prompt text for replay." }
+      }
+    },
+    "agentRuntime": {
+      "type": "object",
+      "description": "Declared by RFC 0144. The heavyweight swarm/consensus SUPERSET of the agent surface — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute over RFC 0002/0003/0007 primitives. Advertising it IMPLIES `agents.manifestRuntime` (RFC 0070 §B), since `spawn({ manifestId })` instantiates a manifest agent; hosts needing only single-agent or crew dispatch advertise that floor and omit this family. Per-tool authorization, rate limiting, and the content-free tool-call audit trail live in the top-level `toolHooks` block, NOT under this family. See `host-capabilities.md` §host.agentRuntime.",
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "`true` ⇒ `ctx.agentRuntime.*` is exposed AND `agents.manifestRuntime` is implied (RFC 0070 §B). A multi-tenant host additionally advertises `agents.manifestRuntime.installScope: 'tenant'` (RFC 0074) so `GET /v1/agents` scopes to the caller's owner triple." }
+      }
+    },
     "deadLetter": {
       "type": "object",
       "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
