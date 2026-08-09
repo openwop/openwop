@@ -4,7 +4,7 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0143                                                                                                                                                                                    |
 | **Title**         | Tool-result trust is untrusted-by-default and monotone through composition                                                                                                             |
-| **Status**        | `Active`                                                                                                                                                                               |
+| **Status**        | `Accepted`                                                                                                                                                                               |
 | **Author(s)**     | David Tufts (@davidscotttufts), with the openwop-app reference host                                                                                                                    |
 | **Created**       | 2026-08-09                                                                                                                                                                             |
 | **Updated**       | 2026-08-09                                                                                                                                                                             |
@@ -104,7 +104,22 @@ The completeness leg composes with, does not duplicate, the point-invariants: th
 - [x] `ai-envelope.md` §"Trust boundary" cites the general rule as its instance
 - [x] `tool-result-trust-monotone` invariant row + the completeness/meet/instance conformance legs, non-vacuity sabotage-verified
 - [x] CHANGELOG entry; suite minor bump with the three-way pin
-- [ ] Reference host witnesses strategy (a) through the durable-store hop with a per-leg non-discrimination report — the `Active → Accepted` gate
+- [x] Reference host witnesses strategy (a) through the durable-store hop with a per-leg non-discrimination report — see §"Acceptance witness"
+
+## Acceptance witness (2026-08-09)
+
+`Accepted` on the openwop-app tier-1 reference host, both halves witnessed:
+
+**Behavioral — strategy (a) through the durable-store hop.** openwop-app#3074 (`e035ecae3`), `test/g13-trust-monotone-witness.test.ts`, 4 legs against the **real** `createSubjectMemoryPort` (durable rows + vector index, not a mock). Source-verified by the steward:
+- untrusted ingress → dispatch → the persisted turn summary carries `derived-from-untrusted` **asserted on the durable row** (`listMemoryEntries` by `MEMORY_UNTRUSTED_TAG`), and a later no-untrusted-ingress turn recalls it inside `BEGIN/END UNTRUSTED CONTENT` while a trusted control stays outside — the `ai-envelope.md:694` gap (§2a "no laundering through storage") closed against real storage;
+- **clause 5 (`missing ⇒ trusted` is the violation) fixed at the compose layer** — the `routes/prompts.ts:301` `bindingTrust: undefined` fail-open now derives from the binding's declared `source` (`variable`/`context` fail **closed** to untrusted; explicit entry wins), so every caller inherits it (leg C witnesses the derivation; a control leg proves no over-fence);
+- **the meet is monotone** — the recall path carries `consumedUntrusted` with no transformation raising it; three sabotages each isolate exactly one assertion, restore → 4/4.
+
+**Corpus — the completeness + prose legs run non-vacuously on the host.** At suite `1.68.0` (openwop-app#3086), `tool-result-trust-monotone.test.ts` runs **8/8 green** against this host with the sabotage matrix holding (renaming a floor invariant reds the completeness leg; softening `MUST be the meet` reds the prose leg).
+
+**Disclosed non-discriminations (RFC gaps G2/G3), in the witness docblock verbatim.** (i) The fail-closed asymmetry does not observe the happy path — under-derivation of `consumedUntrusted` stays green here, carried by strategy-(b) classification, not this leg. (ii) A tag-and-fence-everything host would also pass — bounded by the row-tag + trusted-control, not eliminated. (iii) G3 — "structurally isolated" is exercised only via the RFC 0035 sandbox shape. **A new vacuity class surfaced in the making and worth the record:** an assertion window delimited by a token the asserted content can itself contain is vacuously satisfiable (the host's first `indexOf('Task:')` window matched the summary's own prefix; a sabotage caught it). This is the same family as RFC 0142's `driver.describe`-loads-env vacuity — a check that passes for a reason unrelated to what it claims to test.
+
+Evidence tier: tier-1 reference host, source-verified commit + a suite run from the published `1.68.0`. Bootstrap steward waiver per the standing governance note.
 
 ## References
 
