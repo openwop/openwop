@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0138                                                                                                                                                                                                                                               |
 | **Title**         | Vendor-extension hatch on pack manifests                                                                                                                                                                                                           |
-| **Status**        | `Active`                                                                                                                                                                                                                                           |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                           |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                     |
 | **Created**       | 2026-08-06                                                                                                                                                                                                                                         |
-| **Updated**       | 2026-08-07                                                                                                                                                                                                                                         |
+| **Updated**       | 2026-08-08                                                                                                                                                                                                                                         |
 | **Affects**       | `spec/v1/node-packs.md`, `spec/v1/host-extensions.md`, all 8 pack-manifest schemas + `schemas/registry-version-manifest.schema.json`, `SECURITY/invariants.yaml`, `SECURITY/threat-model-node-packs.md`, `conformance/src/scenarios/pack-manifest-extensions.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                                                                                                                                                                                                             |
 | **Supersedes**    | —                                                                                                                                                                                                                                                  |
@@ -229,7 +229,18 @@ An explicit statement that legacy ids were never wire-conformant, so an alias ma
 - [x] Conformance scenario covering the new surface, non-vacuity sabotage-verified
 - [x] SECURITY invariant `pack-manifest-extension-opaque` + threat-model row, landing in the same PR as the MUST-NOT it enforces
 - [x] CHANGELOG entry
-- [ ] Reference host implements — the requesting host has stated it will implement the host side once this RFC number lands
+- [x] Reference host implements — witnessed, see §"Acceptance witness"
+
+## Acceptance witness (2026-08-08)
+
+`Accepted` on the openwop-app tier-1 reference host, two complementary halves:
+
+1. **The motivating migration shipped.** openwop-app#3026 (`54eaad2b`) + #3030 (`c972960a`) migrated both shipped artifact-type packs to the canonical shape **with the load-bearing `x-openwop-app.canvas` extension retained** — the exact pack whose structural illegality motivated this RFC. Measured result on the host's side: both packs reduced to `artifactTypeId` namespace as their only remaining canonical deviation (addressed separately by RFC 0141). The hatch did what it exists to do: the feature survived the migration.
+2. **The hatch's own legs ran against the live host.** The RFC 0139 acceptance run (from a clean `npm i -D @openwop/openwop-conformance@1.64.0`, `OPENWOP_REQUIRE_BEHAVIOR=true`) exercised this RFC's contract end-to-end over HTTP: an extension-bearing manifest installs (leg 1), the unextended baseline installs (leg 2), and a misspelled canonical field is **rejected by the host, not merely by the schema** (leg 5) — the narrowness clause, sabotage-verified on the host's side (disabling the seam validator reddened exactly that leg). Non-vacuity carried by the sabotage, not a skip count, per the RFC 0139 record.
+
+The behavioral MUST-ignore guarantee is witnessed to the depth RFC 0139 defines — install-time sinks via the differential — and no further; the stated limits in RFC 0139 §Conformance (later-moment interpretation, one kind/one host, cooperating-host seams) bound this acceptance identically. The `pack-manifest-extension-opaque` invariant remains corpus-enforced with the host-side witness now attached.
+
+Evidence tier: tier-1 reference host, source-verified commits + a suite run from published npm — the same tier as RFC 0139's and RFC 0141's acceptances. Bootstrap steward waiver applied per the standing governance note.
 
 ## References
 

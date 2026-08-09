@@ -13,6 +13,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0138 `Active → Accepted` — the vendor-extension hatch is host-witnessed (2026-08-08).** No wire-shape, schema, or normative change — a graduation on evidence that already existed on both halves. **(1) The motivating migration shipped:** openwop-app migrated both artifact-type packs to canonical shape with the load-bearing `x-openwop-app.canvas` extension **retained** (#3026/#3030) — the pack whose structural illegality created the RFC survived with its feature intact. **(2) The hatch's own legs ran against the live host** in the RFC 0139 acceptance run (clean npm `1.64.0`, strict mode): extended manifest accepted, baseline accepted, misspelled canonical field rejected **by the host** — narrowness sabotage-verified host-side. Witness depth is exactly RFC 0139's stated bounds (install-time sinks, one kind, cooperating seams) — no more is claimed. Counts: `Accepted 135 → 136`, `Active 5 → 4` (0035, 0111, 0121, 0142).
+
 ---
 
 ## [1.5.0] — 2026-08-08 — the trust-boundary + replay-integrity cycle (RFC 0132–0142)
