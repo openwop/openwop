@@ -135,3 +135,26 @@ export function signPayload(
     algorithmHeader: 'v1',
   };
 }
+
+/**
+ * Discover a tenant the calling bearer provably OWNS, by creating a probe run
+ * and reading `owner.tenantId` off its snapshot (RFC 0048). A host that scopes
+ * webhook subscriptions by tenant membership (RFC 0093) 403s a `tenantId` the
+ * bearer is not a member of — so a hard-coded tenant is wrong; the only portable
+ * owned tenant is the one on a run the bearer just created. Returns `undefined`
+ * for a single-tenant host (which omits `owner.tenantId`) or when no probe
+ * fixture is available — callers then omit `tenantId`, which single-tenant hosts
+ * accept. (RFC 0093 / webhooks.md §Register; suite defect fixed 2026-08-09.)
+ */
+export async function discoverOwnedTenant(
+  driver: { post: (p: string, b: unknown) => Promise<{ status: number; json: unknown }>; get: (p: string) => Promise<{ status: number; json: unknown }> },
+  probeWorkflowId = 'conformance-noop',
+): Promise<string | undefined> {
+  const create = await driver.post('/v1/runs', { workflowId: probeWorkflowId });
+  if (create.status !== 201) return undefined;
+  const runId = (create.json as { runId?: string } | null)?.runId;
+  if (typeof runId !== 'string') return undefined;
+  const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
+  const owner = (snap.json as { owner?: { tenantId?: unknown } } | null)?.owner;
+  return typeof owner?.tenantId === 'string' ? owner.tenantId : undefined;
+}

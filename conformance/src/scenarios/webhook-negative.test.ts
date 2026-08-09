@@ -22,6 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
 
 async function isWebhookSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
@@ -40,10 +41,11 @@ describe('webhook-negative: SSRF guard rejects private destinations', () => {
     // Spec-complete except for the private URL, so validation passes and the
     // request reaches the SSRF guard. `{ url }` alone 400s `validation_error`
     // (missing `events`) before the guard runs. (Suite defect, fixed 2026-08-09.)
+    const ownedTenant = await discoverOwnedTenant(driver);
     const reg = await driver.post('/v1/webhooks', {
       url: 'http://127.0.0.1:65535/',
       events: ['run.completed'],
-      tenantId: 'conformance-tenant',
+      ...(ownedTenant ? { tenantId: ownedTenant } : {}),
     });
     if (reg.status === 201) {
       // Host accepted — SSRF guard not implemented or bypassed.
