@@ -200,7 +200,15 @@ The `host.*` namespace is reserved for **capability surfaces** that node packs c
 
 - **`spec/v1/host-capabilities.md`** — canonical reference for every `host.<name>` capability: methods, signatures, required vs optional, failure modes.
 
-A host advertising `host.<name>: supported` in `/.well-known/openwop` MUST honor that contract. A pack declaring `peerDependencies: { "host.<name>": "supported" }` consumes it. The pack registry validates the relationship at workflow-register time.
+A host advertising the `<name>` capability in `/.well-known/openwop` MUST honor that contract. A pack declaring `peerDependencies: { "host.<name>": "supported" }` consumes it. The pack registry validates the relationship at workflow-register time.
+
+**Identifier vs. document key (RFC 0137 G16).** `host.<name>` is the capability **identifier** — the spelling in pack `peerDependencies`, in `error.capability`, and in `host-capabilities.md`'s `§` headings. The **discovery-document key is the plain family name at the document root**: `"artifactTypes"`, never `"host.artifactTypes"`. Hosts that emit the dotted form as a document key are carrying a migration mirror; root `additionalProperties` stays `true` so those documents remain valid, but the plain key is canonical.
+
+### Which capabilities the core schema declares (RFC 0144)
+
+A `§host.<name>` section in `host-capabilities.md` **MUST** be declared as a property of `schemas/capabilities.schema.json` when that section states a normative requirement (MUST / MUST NOT) binding the **shape or content of a wire artifact** — a discovery-document field, an event payload, a request or response body. A section that only describes a host-side `ctx.*` method surface, or a product concept a pack may bind to, is an **extension namespace**: hosts MAY advertise it, clients MUST tolerate its absence, and it **MUST NOT** be declared in the core schema.
+
+This is a rule, not a list, so a later sweep re-derives the same partition instead of re-litigating it. Two consequences worth stating: a family's *declaredness* is decided by what its own section requires, not by how widely it is implemented; and adding a wire-shape MUST to an undeclared section obligates declaring it in the same change.
 
 The 14 surfaces specified in v1: `host.aiEnvelope`, `host.promptLibrary`, `host.canvas`, `host.chat`, `host.brand`, `host.kanban`, `host.webResearch`, `host.agentRuntime`, `host.coordination`, `host.dataIntegration`, `host.launchStudio`, `host.entities`, `host.messaging`, `host.mcp`.
 
