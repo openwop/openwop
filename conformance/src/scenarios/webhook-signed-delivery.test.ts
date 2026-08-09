@@ -29,6 +29,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
 
 interface DeliveredRequest {
   readonly headers: Record<string, string>;
@@ -93,10 +94,14 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // The pre-fix `{ url }`-only body 400s on validation before delivery can occur.
     // (Suite defect, fixed 2026-08-09.) The delivered run's tenant must match this
     // subscription's tenantId — verified end-to-end against the openwop-app host.
+    // Derive a tenant the bearer OWNS from a probe run's snapshot — a hard-coded
+    // tenantId is 403'd by a host that scopes subscriptions by membership
+    // (RFC 0093). Single-tenant hosts return undefined ⇒ omit tenantId.
+    const ownedTenant = await discoverOwnedTenant(driver);
     const reg = await driver.post('/v1/webhooks', {
       url: receiver.url,
       events: ['run.completed'],
-      tenantId: 'conformance-tenant',
+      ...(ownedTenant ? { tenantId: ownedTenant } : {}),
     });
 
     // SSRF guard skip: if the host rejects loopback destinations,
