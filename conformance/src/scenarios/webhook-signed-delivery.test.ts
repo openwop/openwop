@@ -163,20 +163,35 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
       'webhooks.md §"Signature algorithm versioning"',
       'every delivery MUST set X-openwop-Signature-Algorithm: v1',
     )).toBe('v1');
-    expect(first.headers['x-openwop-subscription-id']).toBe(sub.subscriptionId);
+    // Header names + signature format per webhooks.md v1.1 §"Delivery headers"
+    // (the SSoT). The pre-fix scenario asserted `x-openwop-subscription-id`,
+    // `x-openwop-signature-timestamp`, and a BARE-HEX `x-openwop-signature` —
+    // three names/shapes that appear in NO spec file or RFC. webhooks.md
+    // specifies `X-openwop-Webhook-Id`, `X-openwop-Timestamp`, and
+    // `X-openwop-Signature: sha256={hex}`. (Suite↔spec divergence fixed 2026-08-09.)
+    expect(
+      first.headers['x-openwop-webhook-id'],
+      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Webhook-Id MUST carry the subscription id'),
+    ).toBe(sub.subscriptionId);
 
-    const timestamp = first.headers['x-openwop-signature-timestamp'];
-    expect(typeof timestamp).toBe('string');
-    expect((timestamp ?? '').length).toBeGreaterThan(0);
+    const timestamp = first.headers['x-openwop-timestamp'];
+    expect(
+      typeof timestamp === 'string' && timestamp.length > 0,
+      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Timestamp MUST be a Unix-seconds integer string'),
+    ).toBe(true);
 
-    const signature = first.headers['x-openwop-signature'];
+    const signature = first.headers['x-openwop-signature'] ?? '';
+    expect(
+      signature.startsWith('sha256='),
+      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST carry the `sha256=` prefix'),
+    ).toBe(true);
     const expected = createHmac('sha256', sub.secret)
       .update(`${timestamp}.${first.body}`, 'utf8')
       .digest('hex');
-    expect(signature, driver.describe(
-      'webhooks.md §"Signature scheme"',
-      'X-openwop-Signature MUST be HMAC-SHA256(secret, `${timestamp}.${rawBody}`) hex',
-    )).toBe(expected);
+    expect(
+      signature.replace('sha256=', ''),
+      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST be sha256=HMAC-SHA256(secret, `${X-openwop-Timestamp}.${rawBody}`)'),
+    ).toBe(expected);
 
     // Body should parse as JSON with a run event shape.
     const event = JSON.parse(first.body) as { type?: unknown; runId?: unknown };
