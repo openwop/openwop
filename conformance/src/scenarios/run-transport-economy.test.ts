@@ -202,8 +202,18 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: Content-Encoding round-trips 
         : undefined;
 
     for (const enc of encodings) {
-      // Manually set Accept-Encoding so undici returns the raw compressed
-      // bytes (it only auto-decompresses encodings it negotiated itself).
+      // Set Accept-Encoding to the target so the host tags Content-Encoding.
+      // NOTE (suite defect, fixed 2026-08-09): the prior code assumed a manual
+      // Accept-Encoding makes undici return RAW compressed bytes. It does not —
+      // Node's global fetch (undici) AUTO-DECOMPRESSES `gzip`/`br`/`zstd`
+      // regardless of who set the header, so `res.arrayBuffer()` already yields
+      // the identity body and feeding it to `gunzipSync` throws
+      // "Decompression failed". (`zstd` passed only because undici did not yet
+      // recognise it.) We therefore decode-tolerantly: attempt the declared
+      // decode, and if it throws OR the bytes already equal identity, treat the
+      // body as already-decompressed by undici. The Content-Encoding header
+      // assertion below still proves the host advertised and tagged the
+      // encoding; the byte-compare proves the round-trip is lossless.
       const res = await fetch(url, { headers: { ...auth, 'Accept-Encoding': enc } });
       expect(res.status).toBe(200);
       const contentEncoding = res.headers.get('content-encoding');
@@ -215,15 +225,28 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: Content-Encoding round-trips 
         ),
       ).toBe(enc);
 
-      const compressedBytes = Buffer.from(await res.arrayBuffer());
+      const responseBytes = Buffer.from(await res.arrayBuffer());
       const decode = enc === 'gzip' ? gunzipSync : enc === 'br' ? brotliDecompressSync : zstdDecode;
       if (!decode) {
         // zstd decode unavailable in this runtime: negotiation already
         // asserted above; skip only the byte-compare for this encoding.
-        expect(compressedBytes.length).toBeGreaterThan(0);
+        expect(responseBytes.length).toBeGreaterThan(0);
         continue;
       }
-      const decoded = Buffer.from(decode(compressedBytes));
+      // Tolerate undici auto-decompression: if the body already equals identity,
+      // it was decoded in transit; otherwise it is raw and we decode it here.
+      let decoded: Buffer;
+      if (responseBytes.equals(identityBytes)) {
+        decoded = responseBytes;
+      } else {
+        try {
+          decoded = Buffer.from(decode(responseBytes));
+        } catch {
+          // Not decompressible ⇒ already decompressed by undici to something
+          // other than identity ⇒ genuine mismatch; surface it as the raw body.
+          decoded = responseBytes;
+        }
+      }
       expect(
         decoded.equals(identityBytes),
         driver.describe(

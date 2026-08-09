@@ -89,7 +89,15 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     activeServer = receiver.server;
 
     // Register the webhook.
-    const reg = await driver.post('/v1/webhooks', { url: receiver.url });
+    // webhooks.md §Register: `events` + `tenantId` are REQUIRED (empty events → 400).
+    // The pre-fix `{ url }`-only body 400s on validation before delivery can occur.
+    // (Suite defect, fixed 2026-08-09.) The delivered run's tenant must match this
+    // subscription's tenantId — verified end-to-end against the openwop-app host.
+    const reg = await driver.post('/v1/webhooks', {
+      url: receiver.url,
+      events: ['run.completed'],
+      tenantId: 'conformance-tenant',
+    });
 
     // SSRF guard skip: if the host rejects loopback destinations,
     // honor the operator contract and skip rather than fail.

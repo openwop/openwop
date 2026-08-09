@@ -37,7 +37,14 @@ describe('webhook-negative: SSRF guard rejects private destinations', () => {
       console.warn('[webhook-negative] host does not advertise webhook support; skipping');
       return;
     }
-    const reg = await driver.post('/v1/webhooks', { url: 'http://127.0.0.1:65535/' });
+    // Spec-complete except for the private URL, so validation passes and the
+    // request reaches the SSRF guard. `{ url }` alone 400s `validation_error`
+    // (missing `events`) before the guard runs. (Suite defect, fixed 2026-08-09.)
+    const reg = await driver.post('/v1/webhooks', {
+      url: 'http://127.0.0.1:65535/',
+      events: ['run.completed'],
+      tenantId: 'conformance-tenant',
+    });
     if (reg.status === 201) {
       // Host accepted — SSRF guard not implemented or bypassed.
       // Soft-skip; this is acceptable per spec.
