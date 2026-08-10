@@ -42,7 +42,7 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 import { readArtifactTypesCap } from '../lib/artifactTypes.js';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 
 const PROFILE = 'openwop-artifact-type-store';
 
@@ -68,6 +68,49 @@ describe('artifact-type-store-emission: the payload fact is pinned always-on (RF
     expect(
       Object.keys(ac?.properties ?? {}).includes('registered'),
       why('run-event-payloads.schema.json §artifactCreated', 'the registered flag the store-tier validation promise is reported through is present'),
+    ).toBe(true);
+  });
+});
+
+describe('artifact-type-store-emission: what `store: true` claims is stated normatively (RFC 0142 scope ruling)', () => {
+  // Leg B can pass against a host on which only ONE path emits, if the seam happens to route
+  // through that path. What forecloses that is not a test but the scope of the advert itself,
+  // so the scope has to live in the document a host implements against — and be pinned, or a
+  // later edit quietly restores the permissive reading and leg B goes back to certifying a
+  // host the facet describes falsely.
+  const doc = V1_DIR ? readFileSync(join(V1_DIR, 'artifact-type-packs.md'), 'utf8') : '';
+
+  it.skipIf(V1_DIR === null)('the claim is quantified over artifacts of the type, not over the host\'s paths', () => {
+    expect(
+      /\*\*every\*\* path by which the host persists an artifact carrying that registered `artifactTypeId` MUST emit `artifact\.created`/.test(doc),
+      why(
+        'artifact-type-packs.md §"Sub-flags"',
+        'EVERY production path emits, not at least one — the permissive reading lets a host wire the leg-B seam through its single emitting path and pass while most of its production stays silent',
+      ),
+    ).toBe(true);
+    expect(
+      /MUST NOT advertise `store: true` for that type/.test(doc),
+      why('artifact-type-packs.md §"Sub-flags"', 'a host with a silent persistence path for the type is forbidden from advertising it, rather than merely discouraged'),
+    ).toBe(true);
+  });
+
+  it.skipIf(V1_DIR === null)('the obligation is scoped to REGISTERED types, so the unregistered tier does not falsify an advert', () => {
+    expect(
+      /a path that persists only unregistered artifacts[^.]*is outside this facet and does not falsify the advert/.test(doc),
+      why(
+        'artifact-type-packs.md §"Sub-flags"',
+        'the narrowing is normative, not a courtesy — without it a host holds back an honest advert on account of a path the facet never bound',
+      ),
+    ).toBe(true);
+  });
+
+  it.skipIf(V1_DIR === null)('per-type is named as the instrument, including the case it cannot rescue', () => {
+    expect(
+      /cannot be advertised `store: true` at all until one of those two facts changes/.test(doc),
+      why(
+        'artifact-type-packs.md §"Sub-flags"',
+        'a single type produced through both an emitting and a non-emitting path is not advertisable — per-type resolves a heterogeneous fleet, not a heterogeneous type',
+      ),
     ).toBe(true);
   });
 });
