@@ -473,7 +473,7 @@ Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` meth
 - A host advertising `render: false` for a type it can `store` MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer — the cross-host store-without-render negotiation guarantee.
 - The host MUST bound third-party schema compilation per `artifact-type-packs.md` §"Bounded schema compilation" (`artifact-schema-compile-bounded` invariant).
 
-**Per-type facets (`types`, RFC 0075).** Capability is per-type. A host MAY declare a `types` map keyed by `artifactTypeId`; each entry overrides the global object and carries `{ validated, validation, schemaVersion, store, render, export }`. The global object is the fallback for any type not listed (`types` absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).
+**Per-type facets (`types`, RFC 0075).** Capability is per-type. A host MAY declare a `types` map keyed by `artifactTypeId`; each entry overrides the global object and carries `{ validated, validation, schemaVersion, store, render, export, registrationSource }`. The global object is the fallback for any type not listed (`types` absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).
 
 ```jsonc
 "artifactTypes": {
