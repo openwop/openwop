@@ -110,6 +110,13 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   'api/openapi.yaml',
   'api/asyncapi.yaml',
   'schemas/README.md',
+  // The contract copies a host is told to depend on instead of hand-vendoring
+  // (conformance/README.md §"Resolving the contract"). Pinned by path because a
+  // packaging change that dropped them would silently push hosts back to copying
+  // files, which is the staleness RFC 0145 G2 is about.
+  'schemas/capabilities.schema.json',
+  'schemas/run-event-payloads.schema.json',
+  'schemas/workflow-definition.schema.json',
   'fixtures.md',
   'coverage.md',
 ]);

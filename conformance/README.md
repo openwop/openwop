@@ -186,6 +186,26 @@ Current source tree: 411 scenario files. Use [`coverage.md`](./coverage.md) for 
 
 ---
 
+## Resolving the contract: depend on this package, don't hand-copy it
+
+The published tarball vendors the canonical `schemas/` and `api/` directories. **A host validating its own discovery document, events, or manifests should read them from the installed `@openwop/openwop-conformance` package rather than copying files into its own tree.**
+
+The reason is not convenience — it is that **a hand-copied schema goes stale silently, in both directions**. A real instance: a host validated its `/.well-known/openwop` document against a vendored `capabilities.schema.json` carrying 81 properties while the corpus had 88. Its check was green, and it had been validating against a contract that predated the very declaration it was checking. Nothing warned it, and nothing could have — a file copy has no version.
+
+Depending on the package instead makes staleness a **lockfile fact**. The suite version *is* the contract version: it appears in `package.json`, in the lockfile, in `npm outdated`, and in whatever dependency bot the host runs. Falling behind stops being invisible and becomes a diff.
+
+```jsonc
+// stale and silent — the copy has no version
+import caps from './vendor/capabilities.schema.json';
+
+// stale and VISIBLE — the version is in your lockfile
+import caps from '@openwop/openwop-conformance/schemas/capabilities.schema.json';
+```
+
+**What this does not fix.** A host that keeps hand-copying gets no warning, and the corpus cannot see a host's local files — so this narrows the failure rather than eliminating it. Tracked as RFC 0145 G2.
+
+The presence of these files at stable paths in the tarball is enforced by `scripts/check-npm-pack-contents.sh`, so a packaging change cannot quietly withdraw the contract copy a host depends on.
+
 ## Repo layout
 
 ```text
