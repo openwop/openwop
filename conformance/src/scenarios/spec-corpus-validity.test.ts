@@ -515,8 +515,20 @@ function extractLocalMarkdownLinks(markdown: string): string[] {
 
 // ── Scenarios ───────────────────────────────────────────────────────────
 
+/**
+ * Provenance stamp written into the VENDORED `schemas/` at prepack (RFC 0145 G2).
+ * It never exists in the repo tree, but it DOES exist when this suite runs from the
+ * published package — where `SCHEMAS_DIR` points at the vendored copy that carries it.
+ * "Written only into the tarball" and "invisible to this gate" are therefore NOT the
+ * same claim, and the difference only shows up for a consumer, never locally.
+ * It is data about the contract, not a schema, so it is excluded by name rather than
+ * by extension — the `.json` suffix is what makes it readable, and what would
+ * otherwise feed it to Ajv.
+ */
+const CORPUS_STAMP = 'CORPUS-STAMP.json';
+
 describe('spec-corpus: JSON Schemas compile under Ajv2020', () => {
-  const schemaFiles = listJsonFiles(SCHEMAS_DIR);
+  const schemaFiles = listJsonFiles(SCHEMAS_DIR).filter((f) => f !== CORPUS_STAMP);
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
 

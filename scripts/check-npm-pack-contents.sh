@@ -95,7 +95,7 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.71.0', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '1.71.1', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
@@ -114,6 +114,10 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   // (conformance/README.md §"Resolving the contract"). Pinned by path because a
   // packaging change that dropped them would silently push hosts back to copying
   // files, which is the staleness RFC 0145 G2 is about.
+  // The provenance stamp a host compares its hand-copied contract against
+  // (RFC 0145 G2). It rides INSIDE schemas/ because the directory is what gets
+  // copied — package.json's version does not survive `cp -R schemas/ vendor/`.
+  'schemas/CORPUS-STAMP.json',
   'schemas/capabilities.schema.json',
   'schemas/run-event-payloads.schema.json',
   'schemas/workflow-definition.schema.json',

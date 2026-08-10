@@ -202,6 +202,14 @@ import caps from './vendor/capabilities.schema.json';
 import caps from '@openwop/openwop-conformance/schemas/capabilities.schema.json';
 ```
 
+**If you must vendor a copy, the copy now carries its own provenance.** The tarball's `schemas/` contains `CORPUS-STAMP.json`:
+
+```jsonc
+{ "suiteVersion": "1.71.1", "corpusCommit": "984ced5f…" }
+```
+
+It lives **inside** `schemas/` on purpose: `package.json`'s version is what a `cp -R schemas/ vendor/` throws away, and the stamp is what survives it. Comparing your vendored stamp against the one in your installed `@openwop/openwop-conformance` is a plain file read — no network, no sibling checkout, no pinning a branch. The stamp exists only in the published tarball, never in the repo tree, and carries no timestamp so the tarball stays reproducible.
+
 **What this does not fix.** A host that keeps hand-copying gets no warning, and the corpus cannot see a host's local files — so this narrows the failure rather than eliminating it. Tracked as RFC 0145 G2.
 
 The presence of these files at stable paths in the tarball is enforced by `scripts/check-npm-pack-contents.sh`, so a packaging change cannot quietly withdraw the contract copy a host depends on.
