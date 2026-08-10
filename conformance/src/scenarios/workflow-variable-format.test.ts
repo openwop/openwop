@@ -112,6 +112,23 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
       cite('§Deferred-parameter expansion', 'the `format` MUST is scoped to deferred mode, not universal'),
     ).toBe(true);
   });
+
+  it('A5 — the RFC forbids `format` participating in a `configurable` validation decision', () => {
+    const rfc = readFileSync(join(SCHEMAS_DIR, '..', 'RFCS', '0136-workflow-variable-format.md'), 'utf8');
+    expect(
+      /configurableSchema/.test(rfc),
+      cite('RFC 0136', 'names the configurableSchema propagation path'),
+    ).toBe(true);
+    // The trap: run-options.md §1 makes validating `configurable` against
+    // `configurableSchema` a MUST with `validation_error` on failure. A format-asserting
+    // validator reading a propagated `format` would reject a run on a mismatch — which is
+    // requirement 3 violated through a surface requirement 3 never named. Requirement 8
+    // closes it: annotation permitted, assertion forbidden.
+    expect(
+      /requirement 3[\s\S]{0,600}(back door|surface-independent)/i.test(rfc),
+      cite('RFC 0136 req 8', 'states requirement 3 is surface-independent'),
+    ).toBe(true);
+  });
 });
 
 describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gated)', () => {

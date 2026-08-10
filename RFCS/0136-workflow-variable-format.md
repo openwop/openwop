@@ -107,6 +107,20 @@ Recognised values (the closed set for v1 — extending it is a further RFC):
    destination host may recognise it. Under expansion-time substitution (the floor) the
    requirement does not apply and cannot — that mode freezes parameters into `config`
    and mints no `WorkflowVariable` to carry a hint.
+8. **`format` MUST NOT participate in a `configurable` validation decision.** A host
+   MAY carry `format` into a workflow's `configurableSchema` as an **annotation** — it
+   is a JSON Schema 2020-12 document where `format` is legal, and `run-options.md` §2
+   surfaces it on `GET /v1/workflows/{workflowId}` for clients to pre-flight against,
+   which is a legitimate place for the hint to reach a run-input form. But
+   `run-options.md` §1 makes validating `RunOptions.configurable` against that schema a
+   **MUST**, with rejection via `validation_error` on failure — so a host whose
+   validator treats `format` as an **assertion** (the default in several common
+   libraries, though JSON Schema 2020-12 itself specifies annotation-only) would reject
+   a run on a `format` mismatch, **violating requirement 3 through the back door**.
+   Requirement 3 is absolute and surface-independent: a `format` mismatch MUST NOT
+   fail a run no matter which schema the `format` was read from. A host that cannot
+   guarantee annotation-only treatment MUST NOT propagate `format` into
+   `configurableSchema`.
 
 ### Why advisory rather than validating
 
@@ -191,6 +205,18 @@ expansion" step-1 copy list, which already enumerates `type` / `defaultValue` /
 `WorkflowChain.parameters` is `type: object, additionalProperties: true` — a free-form
 JSON Schema fragment — so `format` was **already legal** there and **no schema change
 was required** for step 2. The RFC's own framing of step 2 was accurate.
+
+**Amended 2026-08-10 after a host-side finding.** The reference host reported that
+`format` is dropped at **two** sites, not one: `variables[]` materialization *and*
+`configurableSchema`, and proposed carrying it to both so the field would be
+"enforced". **The observation is right and the conclusion inverts the design.**
+`format` is never enforced — requirement 3 forbids it — and `configurableSchema` is
+precisely the surface where propagation could accidentally enforce it, because
+`run-options.md` §1 makes validating `configurable` against that schema a MUST with
+`validation_error` on failure. Carrying `format` there and letting a format-asserting
+validator see it converts an advisory hint into a run-rejection path. Landed as
+requirement 8: annotation permitted, assertion forbidden, and forbidden to propagate
+at all by a host that cannot guarantee the former.
 
 **3. Does `sensitive: true` interact with `format`?**
 **Ruled: no interaction, and now stated rather than implied** (requirement 6). The
