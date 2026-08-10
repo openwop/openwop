@@ -178,6 +178,9 @@ docker-compose.override.yml
 .claude/scheduled_tasks.lock
 .claude/sessions/
 .claude/logs/
+# Per-developer agent memory. Its canonical home is ~/.claude/projects/<slug>/memory/;
+# a copy under the repo is an accidental commit of one developer's notes, not corpus.
+.claude/projects/
 /data/
 
 # ── Per-developer planning notes ─────────────────────────────────────────────
