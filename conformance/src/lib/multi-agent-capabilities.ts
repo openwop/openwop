@@ -37,6 +37,13 @@ interface AgentCaps {
   memoryBackends: ReadonlySet<string>;
   orchestrator: boolean;
   dispatch: boolean;
+  /** RFC 0070 §B / RFC 0003 §D. `agents.manifestRuntime.handoffValidation`:
+   *  the host validates inbound task payloads against `handoff.taskSchemaRef`
+   *  before dispatch and outbound results against `handoff.returnSchemaRef`
+   *  before persistence. When false/absent, manifests carrying handoff
+   *  schemas are dispatched with OPAQUE payloads by design — so a scenario
+   *  asserting a rejection MUST gate on this, not on coarse `supported`. */
+  handoffValidation: boolean;
   reasoning:
     | {
         verbosity: 'summary' | 'full' | 'off' | undefined;
@@ -104,6 +111,15 @@ export function setMultiAgentCapabilities(c: DiscoveryPayload | null | undefined
       memoryBackends: asStringSet(a.memoryBackends),
       orchestrator: asBoolean(a.orchestrator),
       dispatch: asBoolean(a.dispatch),
+      // RFC 0070 §B — nested read of `agents.manifestRuntime.handoffValidation`
+      // (default false per capabilities.schema.json). A host advertising
+      // `agents.supported: true` may still dispatch opaque payloads unless this
+      // is true; keeping it distinct from `supported` is what lets HV-1b/1c gate
+      // honestly instead of reddening a conformant opaque-dispatch host.
+      handoffValidation: (() => {
+        const mr = a.manifestRuntime;
+        return !!mr && typeof mr === 'object' && asBoolean((mr as Record<string, unknown>).handoffValidation);
+      })(),
       reasoning,
     };
   } else {
@@ -169,6 +185,18 @@ export function isOrchestratorSupported(): boolean {
 /** Phase 6 — host implements `core.dispatch` + CP-2. */
 export function isDispatchSupported(): boolean {
   return _agentCaps?.dispatch === true;
+}
+
+/** RFC 0070 §B / RFC 0003 §D — host validates handoff task/return payloads
+ *  against the manifest's `handoff.*SchemaRef` (`agents.manifestRuntime
+ *  .handoffValidation: true`). A host without this dispatches opaque payloads
+ *  by design, so the HV-1b/HV-1c rejection legs MUST gate on it — asserting a
+ *  rejection against an opaque-dispatch host is a false red (the conformance-tier
+ *  form of "a normative claim asserted without gating on the capability that
+ *  declares its enforcement surface"). HV-1a (valid → completes) does NOT gate
+ *  on it: a valid payload completes whether or not validation runs. */
+export function hasHandoffValidation(): boolean {
+  return _agentCaps?.handoffValidation === true;
 }
 
 /** Diagnostic — returns the cached state or `null` if not yet set. */
