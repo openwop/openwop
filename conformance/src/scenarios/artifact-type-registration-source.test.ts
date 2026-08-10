@@ -13,10 +13,14 @@
  * discovery document, and a third value is not a hint to ignore but a host claiming a
  * provenance the protocol does not define. Leg A2 pins that asymmetry.
  *
- * NOT BUILT (carried as RFC 0145 G1): a leg asserting a host's advertised
- * `registrationSource` matches what it emits on `artifact.created` (requirement 3). It needs
- * a host that advertises the facet AND emits a matching artifact; against a host advertising
- * nothing it would be vacuously green, which is the failure mode this suite keeps finding.
+ * LEG B (RFC 0145 G1) closes the gap this file originally carried open. It asserts a host's
+ * advertised `registrationSource` matches what it emits on `artifact.created` (requirement 3).
+ * It was deliberately NOT built at first: against a corpus where no host advertised the facet
+ * it would have gone green by finding nothing. A host now advertises it, so the leg has
+ * something real to compare and can no longer pass vacuously.
+ *
+ * PROFILE = 'openwop-artifact-type-store' is shared with RFC 0142 ON PURPOSE — see the gating
+ * note on leg B for why this leg deliberately does NOT add its own advertise-and-skip gate.
  *
  * @see schemas/capabilities.schema.json §artifactTypes.types
  * @see spec/v1/artifact-type-packs.md §"Per-type facets" + §"Schema distribution"
@@ -29,6 +33,9 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
+import { driver } from '../lib/driver.js';
+import { behaviorGatePresent } from '../lib/behavior-gate.js';
+import { readArtifactTypesCap } from '../lib/artifactTypes.js';
 
 const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 const CAPS = join(SCHEMAS_DIR, 'capabilities.schema.json');
@@ -129,5 +136,85 @@ describe('artifact-type-registration-source (RFC 0145, always-on)', () => {
       /serving stays a SHOULD for them/.test(doc),
       why('§Schema distribution', 'serving stays a SHOULD for pack-backed types'),
     ).toBe(true);
+  });
+});
+
+const PROFILE = 'openwop-artifact-type-store';
+
+/** True when this type emits at all — `store` at per-type scope, else the capability default. */
+function emitsForType(cap: Record<string, unknown> | null, id: string): boolean {
+  if (!cap) return false;
+  const entry = (cap['types'] as Record<string, unknown> | undefined)?.[id];
+  if (entry && typeof entry === 'object' && 'store' in (entry as Record<string, unknown>)) {
+    return (entry as Record<string, unknown>)['store'] === true;
+  }
+  return cap['store'] === true;
+}
+
+/**
+ * First per-type id advertising `registrationSource` AND emitting, else null.
+ *
+ * BOTH conditions are required, and the second is the subtle one: `registrationSource` is
+ * meaningful on a type the host never emits for (a consumer still learns which schema-resolution
+ * regime applies), but requirement 3 is a statement about AGREEMENT BETWEEN TWO SURFACES, and a
+ * type with no emission has only one. Asserting against it would red a host that is telling the
+ * truth on every surface it actually has.
+ */
+function comparableType(cap: Record<string, unknown> | null): { id: string; advertised: string } | null {
+  const types = cap?.['types'];
+  if (!types || typeof types !== 'object') return null;
+  for (const [id, t] of Object.entries(types as Record<string, unknown>)) {
+    if (!t || typeof t !== 'object') continue;
+    const advertised = (t as Record<string, unknown>)['registrationSource'];
+    if (typeof advertised !== 'string') continue;
+    if (!emitsForType(cap, id)) continue;
+    return { id, advertised };
+  }
+  return null;
+}
+
+describe('artifact-type-registration-source: the advert agrees with the event (RFC 0145 leg B, requirement 3)', () => {
+  it('the emitted registrationSource equals the advertised one for that type', async () => {
+    const cap = await readArtifactTypesCap();
+    const target = comparableType(cap);
+    // INAPPLICABLE, not gated. `registrationSource` is OPTIONAL (requirement 2) and strict mode
+    // must not coerce a host into advertising it — the same call RFC 0142 makes for `store`.
+    if (target === null) return;
+
+    const started = await driver.post('/v1/host/sample/artifacttypes/runproduce', {
+      artifactTypeId: target.id,
+    });
+    // DELIBERATELY NOT a behaviorGate on seam presence. Reaching here means the type advertises
+    // `store`, so `store: true` + no seam is ALREADY strict-red under RFC 0142 leg B — the
+    // scenario that owns that enforcement. Gating again here would double-report one defect,
+    // and gating on the seam for a 0145 advert would coerce hosts into wiring 0142's host-sample
+    // surface in order to advertise a facet that has nothing to do with it.
+    if (started.status === 404 || started.status === 405) return; // seam absent — 0142 reports it
+    expect(
+      started.status >= 200 && started.status < 300,
+      driver.describe('coverage.md §"Open seams"', 'runproduce starts a real run producing one artifact of the requested registered type'),
+    ).toBe(true);
+    const runId = (started.json as Record<string, unknown> | undefined)?.['runId'];
+    if (!behaviorGatePresent(PROFILE, typeof runId === 'string' ? runId : null)) return;
+
+    const events = await driver.get(`/v1/runs/${runId}/events/poll?timeout=5`);
+    expect(
+      events.status,
+      driver.describe('run-events surface', 'the run event log is readable over the standard poll endpoint'),
+    ).toBe(200);
+    const list = ((events.json as Record<string, unknown>)?.['events'] ?? []) as Array<Record<string, unknown>>;
+    const created = list.filter((e) => e['type'] === 'artifact.created');
+    // Emission itself is RFC 0142's MUST, reported by its own leg. Reaching here without an
+    // event means that leg is already red; don't restate its finding as a 0145 failure.
+    if (created.length === 0) return;
+
+    const payload = (created[0]?.['payload'] ?? created[0]?.['data'] ?? {}) as Record<string, unknown>;
+    expect(
+      payload['registrationSource'],
+      driver.describe(
+        'RFC 0145 requirement 3',
+        `the host advertises registrationSource: "${target.advertised}" for ${target.id}, so that is the value it MUST emit — an advert of one provenance against an event carrying another (or carrying none, which asserts UNSPECIFIED provenance and therefore disagrees) is a false advertisement, not a permitted divergence`,
+      ),
+    ).toBe(target.advertised);
   });
 });
