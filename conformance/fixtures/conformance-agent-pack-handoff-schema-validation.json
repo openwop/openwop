@@ -2,7 +2,7 @@
   "id": "conformance-agent-pack-handoff-schema-validation",
   "name": "Conformance: Agent Pack Handoff Schema Validation",
   "version": "1.0",
-  "description": "Phase 2 / HV-1. The fixture itself is a no-op workflow — the scenario verifies host behavior at the agent-dispatch surface for `core.openwop.agent-examples.structured-fixture` (the canonical handoff-schema fixture agent). The agent's manifest carries `handoff.taskSchemaRef` + `handoff.returnSchemaRef`; the host MUST validate dispatch payloads against the task schema (RFC 0003 §D) BEFORE invoking the agent, and return payloads against the return schema BEFORE persistence. The test drives the dispatch surface directly with three scenario branches (valid-task / invalid-task / mock-return-violation) per agentPackHandoffSchemaValidation.test.ts.",
+  "description": "Phase 2 / HV-1. A real workflow whose `metadata.requiresAgentId` binds `core.openwop.agent-examples.structured-fixture` (the canonical handoff-schema fixture agent, whose manifest carries `handoff.taskSchemaRef` + `handoff.returnSchemaRef`). The workflow executor fires the handoff gate off that binding BEFORE any node runs (RFC 0003 §D), so the single `core.identity` node is deliberately trivial — the gate, not the node, is under test. The host MUST validate run inputs against the task schema before dispatch and the agent's return against the return schema before persistence. Driven by plain `POST /v1/runs { workflowId, inputs }` with three branches (valid task → completed; invalid task → `handoff_task_schema_violation`; `scenario: mock-return-violation` → `handoff_return_schema_violation`) per agentPackHandoffSchemaValidation.test.ts.",
   "nodes": [
     {
       "id": "noop",
@@ -24,7 +24,7 @@
     "tags": ["conformance", "multi-agent", "phase-2", "handoff-validation"],
     "requiresInstalledPack": "core.openwop.agent-examples",
     "requiresAgentId": "core.openwop.agent-examples.structured-fixture",
-    "notes": "Test invokes the agent-dispatch surface directly with three scenarios per inputs.scenario; the workflow is a noop placeholder so it validates against workflow-definition.schema.json without requiring a dispatch typeId not yet in the in-tree node catalog."
+    "notes": "The gate is a no-op unless the host RESOLVES `requiresAgentId` off its agent registry with compiled handoff validators — i.e. `core.openwop.agent-examples` must be MOUNTED. A host that cannot resolve the agent MUST NOT advertise this fixture (the scenario skips on `isFixtureAdvertised`); a host that mounts the pack but does not advertise `agents.manifestRuntime.handoffValidation` runs HV-1a only (HV-1b/1c gate on that capability). The `core.identity` node is deliberately trivial: the gate fires pre-node off `requiresAgentId`, NOT off any dispatch typeId."
   },
   "settings": { "timeout": 5000 }
 }
