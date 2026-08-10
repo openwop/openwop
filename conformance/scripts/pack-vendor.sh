@@ -32,4 +32,30 @@ rm -rf api schemas
 cp -R ../api ./api
 cp -R ../schemas ./schemas
 
-echo "pack-vendor.sh: vendored api/ + schemas/ for npm pack"
+# ── Corpus stamp (RFC 0145 G2) ───────────────────────────────────────────────
+# Write the provenance of this vendored copy INSIDE schemas/, because the
+# directory is what gets copied. The tarball already carries the version in
+# package.json — and that is exactly what a `cp -R schemas/ vendor/` throws
+# away, which is how a host ends up validating against a contract it can no
+# longer identify. A stamp inside the directory survives the copy, so a host
+# can compare its vendored stamp against the installed package's stamp with a
+# plain file read: no network, no sibling checkout, no pinning a branch.
+#
+# WRITTEN AT PREPACK ONLY, NEVER INTO THE REPO TREE. `schemas/` in the repo is
+# enumerated by spec-corpus-validity against schemas/README.md; a stray
+# non-schema JSON sitting there would red that gate. This file only ever exists
+# inside conformance/schemas/, which postpack removes wholesale.
+#
+# NO TIMESTAMP: it would make the tarball non-reproducible for no benefit.
+# Both fields are deterministic given the commit being packed.
+SUITE_VERSION=$(node -p "require('./package.json').version")
+CORPUS_COMMIT=$(git -C .. rev-parse HEAD 2>/dev/null || echo unknown)
+cat > ./schemas/CORPUS-STAMP.json <<STAMP
+{
+  "_comment": "Provenance of this vendored schemas/ copy. See conformance/README.md \u00a7\"Resolving the contract\". Compare against the stamp in your installed @openwop/openwop-conformance to detect a stale hand-copied contract.",
+  "suiteVersion": "${SUITE_VERSION}",
+  "corpusCommit": "${CORPUS_COMMIT}"
+}
+STAMP
+
+echo "pack-vendor.sh: vendored api/ + schemas/ for npm pack (stamp ${SUITE_VERSION} @ ${CORPUS_COMMIT})"
