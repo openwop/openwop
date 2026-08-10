@@ -35,6 +35,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { dirname, join, relative, resolve as pathResolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -386,7 +387,40 @@ function extractReadmeDocumentIndex(readme: string): string {
   return readme.slice(start, end);
 }
 
-function listMarkdownFilesRecursive(dir: string, repoRoot: string = dir): string[] {
+/**
+ * The set of `.md` paths git TRACKS under `repoRoot`, or `null` when git can't answer
+ * (no repo, no git binary — the published-tarball layout, a vendored corpus, a Docker
+ * stage without git).
+ *
+ * WHY THIS EXISTS. The link checker used to walk the filesystem, so its verdict depended
+ * on whatever untracked residue a working tree happened to carry. A real instance: a peer
+ * host's conformance run reported a broken link in `plans/…` — a directory DELETED in
+ * `937a9d85` and since gitignored, whose files survive as untracked leftovers in any tree
+ * that predates the removal. CI (a clean checkout) has never seen it and never could.
+ *
+ * A gate that passes in CI and fails on a developer's machine for reasons invisible to
+ * both is a gate people learn to discount, which is how a gate stops being run. Tracked
+ * files are the corpus; everything else is the developer's business.
+ */
+function listTrackedMarkdown(repoRoot: string): Set<string> | null {
+  const res = spawnSync('git', ['-C', repoRoot, 'ls-files', '-z', '--', '*.md'], {
+    encoding: 'utf8',
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  if (res.error !== undefined || res.status !== 0 || typeof res.stdout !== 'string') return null;
+  const rels = res.stdout.split('\0').filter((r) => r !== '');
+  // An empty tracked set is indistinguishable from "git answered about the wrong tree";
+  // treat it as unknown rather than as "the corpus has no Markdown", which would silently
+  // turn the whole link check into a no-op.
+  if (rels.length === 0) return null;
+  return new Set(rels.map((r) => pathResolve(repoRoot, r)));
+}
+
+function listMarkdownFilesRecursive(
+  dir: string,
+  repoRoot: string = dir,
+  tracked: Set<string> | null = null,
+): string[] {
   const ignoredDirs = new Set([
     '.git',
     'node_modules',
@@ -423,11 +457,15 @@ function listMarkdownFilesRecursive(dir: string, repoRoot: string = dir): string
       const child = join(dir, entry.name);
       const repoRelChild = relative(repoRoot, child);
       if (prunedRepoRelative.has(repoRelChild)) continue;
-      files.push(...listMarkdownFilesRecursive(child, repoRoot));
+      files.push(...listMarkdownFilesRecursive(child, repoRoot, tracked));
       continue;
     }
     if (entry.isFile() && entry.name.endsWith('.md')) {
-      files.push(join(dir, entry.name));
+      const full = join(dir, entry.name);
+      // `tracked === null` ⇒ git couldn't answer; fall back to the filesystem walk rather
+      // than skipping the check entirely. A noisier gate beats a silently absent one.
+      if (tracked !== null && !tracked.has(pathResolve(full))) continue;
+      files.push(full);
     }
   }
 
@@ -1244,7 +1282,8 @@ describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve
   // describe.skipIf skips test execution but still evaluates the body for registration; default
   // to '.' so dirname() never receives null in the published-tarball layout.
   const repoRoot = README_PATH === null ? '.' : dirname(README_PATH);
-  const markdownFiles = README_PATH === null ? [] : listMarkdownFilesRecursive(repoRoot);
+  const markdownFiles =
+    README_PATH === null ? [] : listMarkdownFilesRecursive(repoRoot, repoRoot, listTrackedMarkdown(repoRoot));
 
   it('finds Markdown files to check', () => {
     expect(markdownFiles.length, 'repo checkout should contain Markdown docs').toBeGreaterThan(0);
