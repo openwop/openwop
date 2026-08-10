@@ -11,7 +11,7 @@
 | JSON Schemas | 77 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 409 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 410 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 144 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.68.2 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.69.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,8 +32,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 137 |
-| Active | 5 |
-| Draft | 2 |
+| Active | 6 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -172,7 +172,7 @@
 | RFC 0133 | Workflow-chain composition - sub-chains and produced variables | Accepted |
 | RFC 0134 | Edge conditions - `truthy` / `falsy` operators | Accepted |
 | RFC 0135 | Workflow-chain gallery visibility - `internal` chains | Accepted |
-| RFC 0136 | `WorkflowVariable.format` - a presentational hint for run inputs | Draft |
+| RFC 0136 | `WorkflowVariable.format` - a presentational hint for run inputs | Active |
 | RFC 0137 | Form-content packs - `kind: "form-content"` distributes form templates; field types reuse the RFC 0071 portable subset | Accepted |
 | RFC 0138 | Vendor-extension hatch on pack manifests | Accepted |
 | RFC 0139 | Host-side witness for pack-manifest extension opacity | Accepted |
@@ -197,8 +197,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0136) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0142, RFC 0144) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 6 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0136, RFC 0142, RFC 0144) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0136                                                                                                                                                                   |
 | **Title**         | `WorkflowVariable.format` — a presentational hint for run inputs                                                                                                        |
-| **Status**        | `Draft`                                                                                                                                                                |
-| **Author(s)**     | openwop-app maintainers                                                                                                                                                |
+| **Status**        | `Active`                                                                                                                                                                |
+| **Author(s)**     | openwop-app maintainers (corpus half + question rulings: David Tufts / @davidscotttufts)                                                                                                                                                |
 | **Created**       | 2026-08-01                                                                                                                                                             |
-| **Updated**       | 2026-08-01                                                                                                                                                             |
+| **Updated**       | 2026-08-10 — `Draft → Active`; corpus half (steps 1–3) landed, three open questions resolved into normative text. 2026-08-01 — filed `Draft`.                                                                                                                                                             |
 | **Affects**       | `schemas/workflow-definition.schema.json` (§WorkflowVariable), `schemas/workflow-chain-pack-manifest.schema.json` (chain `parameters`), conformance scenarios            |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                      |
@@ -91,6 +91,36 @@ Recognised values (the closed set for v1 — extending it is a further RFC):
    (`emailTemplateId` is not an email address).
 5. `format` MUST survive `:fork` and replay verbatim, like every other
    `WorkflowVariable` property. It is authoring-time data and is never re-derived.
+6. **`format` is orthogonal to `sensitive`.** A variable MAY carry both. `sensitive`
+   masks the **value** on server-emitted surfaces (`variable.changed`,
+   `state.snapshot`, `RunSnapshot.variables` — `observability.md` §Privacy
+   classification); `format` describes the **field** in the definition, which is not a
+   masked surface. A host MUST NOT suppress, alter, or refuse a `format` because the
+   variable is `sensitive`, and MUST NOT infer sensitivity from a `format`.
+7. **Chain-parameter propagation is scoped to deferred mode.** A host expanding a
+   workflow-chain pack in **deferred-parameter mode** (RFC 0124,
+   `capabilities.workflowChainPacks.deferredParameters.supported: true`) MUST copy a
+   string parameter's JSON-Schema `format` verbatim onto the `WorkflowVariable` it
+   materializes, alongside `type` / `defaultValue` / `required`
+   (`workflow-chain-packs.md` §"Deferred-parameter expansion" step 1). The copy is
+   verbatim and unvalidated: an unrecognised `format` is still copied, because the
+   destination host may recognise it. Under expansion-time substitution (the floor) the
+   requirement does not apply and cannot — that mode freezes parameters into `config`
+   and mints no `WorkflowVariable` to carry a hint.
+8. **`format` MUST NOT participate in a `configurable` validation decision.** A host
+   MAY carry `format` into a workflow's `configurableSchema` as an **annotation** — it
+   is a JSON Schema 2020-12 document where `format` is legal, and `run-options.md` §2
+   surfaces it on `GET /v1/workflows/{workflowId}` for clients to pre-flight against,
+   which is a legitimate place for the hint to reach a run-input form. But
+   `run-options.md` §1 makes validating `RunOptions.configurable` against that schema a
+   **MUST**, with rejection via `validation_error` on failure — so a host whose
+   validator treats `format` as an **assertion** (the default in several common
+   libraries, though JSON Schema 2020-12 itself specifies annotation-only) would reject
+   a run on a `format` mismatch, **violating requirement 3 through the back door**.
+   Requirement 3 is absolute and surface-independent: a `format` mismatch MUST NOT
+   fail a run no matter which schema the `format` was read from. A host that cannot
+   guarantee annotation-only treatment MUST NOT propagate `format` into
+   `configurableSchema`.
 
 ### Why advisory rather than validating
 
@@ -145,30 +175,67 @@ A scenario asserting:
   and completes (requirement 3) — the assertion that keeps `format` advisory;
 - `format` survives `:fork` (requirement 5).
 
-## Open questions
+## Resolved questions
 
-1. Should the recognised-value table be closed (as proposed) or open to any
-   JSON-Schema `format` token? Closed is proposed so hosts have a bounded set to
-   implement and conformance can enumerate it. An open set makes requirement 2
-   (unknown ⇒ plain text) carry all the weight.
-2. Should chain-pack `parameters` — already a JSON Schema, where `format` is
-   *already legal* and simply dropped during expansion — be normatively required to
-   propagate `format` into the minted `WorkflowVariable`? The reference host intends
-   to; whether that is a MUST for all hosts is worth settling before Accepted.
-3. Does `sensitive: true` interact with `format`? A masked value arguably should not
-   advertise its shape. Proposed answer: no interaction, because masking is about the
-   VALUE and `format` describes the FIELD — but it deserves an explicit line in the
-   spec text rather than silence.
+All three were settled against the corpus before the `Active` flip rather than carried
+into it; each ruling is now normative text, not a register row.
+
+**1. Closed recognised-value table, or open to any JSON-Schema `format` token?**
+**Ruled: the wire is OPEN; the table is a recognition registry, not a validation
+constraint.** The question conflated two axes. A workflow definition is a
+**client-submitted** shape, which `COMPATIBILITY.md` §"Schema closure" (RFC 0094) keeps
+**closed** (`additionalProperties: false` on `WorkflowVariable` — the very fact that
+motivates this RFC). Declaring `format` as an `enum` on a closed shape would make an
+unrecognised value a hard `POST /v1/workflows` validation failure — which directly
+contradicts requirement 2 ("An unknown `format` MUST NOT be an error"). The schema
+therefore declares `format` as a plain `string`, and the six-row table is the set hosts
+are expected to *recognise*, not the set the wire *accepts*. Requirement 2 does carry
+the weight, as the question anticipated — and conformance leg A2 is exactly the test
+that keeps it carrying it.
+
+**2. Is chain-parameter `format` propagation a MUST for all hosts?**
+**Ruled: a MUST, but scoped to deferred-parameter mode — it cannot be universal.** The
+premise that hosts mint a `WorkflowVariable` from a chain parameter is only true in
+RFC 0124's capability-gated deferred mode. Expansion-time substitution — "the default
+and the floor" per `workflow-chain-packs.md` — freezes parameter values into node
+`config` and creates no variable at all, so on a floor host there is no object for
+`format` to propagate *into*. Landed as requirement 7 and in the §"Deferred-parameter
+expansion" step-1 copy list, which already enumerates `type` / `defaultValue` /
+`required`; `format` joins that list. Confirmed against the schema:
+`WorkflowChain.parameters` is `type: object, additionalProperties: true` — a free-form
+JSON Schema fragment — so `format` was **already legal** there and **no schema change
+was required** for step 2. The RFC's own framing of step 2 was accurate.
+
+**Amended 2026-08-10 after a host-side finding.** The reference host reported that
+`format` is dropped at **two** sites, not one: `variables[]` materialization *and*
+`configurableSchema`, and proposed carrying it to both so the field would be
+"enforced". **The observation is right and the conclusion inverts the design.**
+`format` is never enforced — requirement 3 forbids it — and `configurableSchema` is
+precisely the surface where propagation could accidentally enforce it, because
+`run-options.md` §1 makes validating `configurable` against that schema a MUST with
+`validation_error` on failure. Carrying `format` there and letting a format-asserting
+validator see it converts an advisory hint into a run-rejection path. Landed as
+requirement 8: annotation permitted, assertion forbidden, and forbidden to propagate
+at all by a host that cannot guarantee the former.
+
+**3. Does `sensitive: true` interact with `format`?**
+**Ruled: no interaction, and now stated rather than implied** (requirement 6). The
+proposed answer was right and the reason is precise: `sensitive` is a masking directive
+over **values** on server-emitted surfaces, while `format` is a descriptor of the
+**field** in the client-submitted definition — a surface `sensitive` never masks. A
+`format: "email"` next to `sensitive: true` discloses nothing that the already-visible
+`name` (`recipientEmail`) and `description` do not. Conformance leg A3 pins that the two
+compose on one variable.
 
 ## Implementation plan
 
 | Step | Where | Gate |
 | --- | --- | --- |
-| 1 | `schemas/workflow-definition.schema.json` — add the property | `npm run openwop:check` |
-| 2 | `schemas/workflow-chain-pack-manifest.schema.json` — allow it on chain `parameters` | schema check |
-| 3 | Conformance scenario per §Conformance | scenario green, capability-gated |
-| 4 | Reference host (openwop-app): propagate `format` chain-param → `WorkflowVariable`, honour it in the run-inputs form | `npm run ci` |
-| 5 | Witness the scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` | Draft → Active → Accepted |
+| 1 ✅ | `schemas/workflow-definition.schema.json` — add the property (open `string`, no enum, per resolved Q1) | `npm run openwop:check` green |
+| 2 ✅ | **No schema change needed** — chain `parameters` is `additionalProperties: true`, so `format` was already legal. Landed instead as the deferred-mode propagation MUST in `workflow-chain-packs.md` §"Deferred-parameter expansion" step 1 (resolved Q2). | schema check green |
+| 3 ✅ | `workflow-variable-format.test.ts` — 4 always-on corpus legs + 2 capability-gated host legs; suite `1.68.2 → 1.69.0` | 4/4 corpus legs green; host legs gate on `workflowChainPacks.deferredParameters` |
+| 4 ⏳ | Reference host (openwop-app): propagate `format` chain-param → `WorkflowVariable`, honour it in the run-inputs form | `npm run ci` |
+| 5 ⏳ | Witness the scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` | Draft → Active → Accepted |
 
 Status advances to `Accepted` only after step 5, per the RFC 0134 precedent — the
 reference host must implement and witness before the wire claim is honest.
