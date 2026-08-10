@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 137 |
-| Active | 7 |
+| Accepted | 138 |
+| Active | 6 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -178,7 +178,7 @@
 | RFC 0139 | Host-side witness for pack-manifest extension opacity | Accepted |
 | RFC 0140 | Replay side-effect suppression - an additive `replay.sideEffectSuppression` capability, the normative MUST it gates, and the `replay_source_missing` typed failure | Accepted |
 | RFC 0141 | Legacy artifact-type identifiers - never-conformant status and the replay migration constraint | Accepted |
-| RFC 0142 | The `store`-gated `artifact.created` emission witness | Active |
+| RFC 0142 | The `store`-gated `artifact.created` emission witness | Accepted |
 | RFC 0143 | Tool-result trust is untrusted-by-default and monotone through composition | Accepted |
 | RFC 0144 | Which host capability families the core schema declares | Active |
 | RFC 0145 | `registrationSource` as a per-type artifact capability facet | Active |
@@ -199,7 +199,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 7 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0136, RFC 0142, RFC 0144, RFC 0145) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 6 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0136, RFC 0144, RFC 0145) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
