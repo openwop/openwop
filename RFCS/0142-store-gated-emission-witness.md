@@ -69,6 +69,20 @@ The leg then reads the standard **`GET /v1/runs/{runId}/events/poll`** — the s
 | `store: true` advertised, seam absent | `behaviorGate`: skip default, **FAIL strict** — advertise-and-skip is the only combination that can lie |
 | `store: true` advertised, seam present | run the witness |
 
+### What `store: true` claims — the scope ruling (2026-08-10)
+
+Leg B could not be witnessed without answering a question the facet's one-sentence definition left implicit, raised by the reference host while wiring the seam: **a host with two persistence paths, one emitting and one not — does `store: true` for a type mean *every* production path emits, or *at least one*?**
+
+**Ruling: every path.** `artifact-type-packs.md` §"Sub-flags": *"The host persists artifacts of registered types and emits `artifact.created`. A host advertising `store: true` MUST do so."* The sentence is universally quantified over **artifacts of registered types** — not over the host's paths to them, and not over *some* artifacts — and "MUST do so" binds the conjunction *persists **and** emits*. This is the plain reading of existing text, not a tightening of it; the §Compatibility claim below that this RFC adds, relaxes and reinterprets no MUST survives the ruling intact, which a tightening would have broken and which would then have needed its own RFC.
+
+**Why the permissive reading fails, in this RFC's own terms.** Under "at least one," a host wires the leg-B seam through its single emitting path, passes, and leaves most of its production silently non-emitting — a leg green by construction against a host the facet describes falsely. That is the advertise-and-skip shape this RFC exists to make unreachable, re-entering through the seam rather than through the gate.
+
+**The obligation is scoped to registered types, which is narrower than it first reads.** §"Binding" attaches emission to registered types, and the unregistered tier is permanent and first-class. So the test is not *"does every path emit?"* but *"does every path that persists an artifact carrying a **registered** `artifactTypeId` emit?"* A path persisting only unregistered artifacts is outside the facet and cannot falsify the advert — not a loophole, the unregistered tier working as designed. A host holding back its advert on account of such a path is being conservative for a reason that does not apply.
+
+**Per-type is the instrument, with one case it cannot rescue.** A heterogeneous host advertises per type (RFC 0075 / P1-1) rather than a false union or a false intersection — the same argument that made the facet set per-type, and the reason the gating table above checks `store` at both scopes. The case per-type cannot reach is a **single type** produced through both an emitting and a non-emitting path; there the type is simply not advertisable until one of those facts changes, because the advert is a promise about the type, not a description of the host's best path to it.
+
+The ruling is stated normatively in `artifact-type-packs.md` §"Sub-flags" — recording it only here would leave a normative reading in an RFC's discussion while the document a host actually implements against stayed silent, which is the defect RFC 0144 exists to close.
+
 ### What this does NOT do
 
 - **No new protocol surface.** The seam is host-sample test surface; the events endpoint already exists; the MUST already exists. Conformance-only.
