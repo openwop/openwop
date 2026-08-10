@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0142                                                                                                                                          |
 | **Title**         | The `store`-gated `artifact.created` emission witness                                                                                         |
-| **Status**        | `Active`                                                                                                                                      |
+| **Status**        | `Accepted`                                                                                                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts), with the openwop-app reference host                                                                           |
 | **Created**       | 2026-08-08                                                                                                                                    |
-| **Updated**       | 2026-08-08                                                                                                                                    |
+| **Updated**       | 2026-08-10                                                                                                                                    |
 | **Affects**       | `conformance/src/scenarios/artifact-type-store-emission.test.ts`, `conformance/coverage.md` §"Open seams", `conformance/src/lib/artifactTypes.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — conformance-only; no schema, endpoint, event, or prose-MUST change                                   |
 | **Supersedes**    | —                                                                                                                                             |
@@ -99,8 +99,29 @@ The ruling is stated normatively in `artifact-type-packs.md` §"Sub-flags" — r
 
 ## Acceptance criteria
 
-- [ ] Leg A green in CI (unconditional)
-- [ ] Leg B witnessed non-vacuously by a host **advertising `store: true`**, with a per-leg report including what the seam does not discriminate. The reference host emits correctly today but does not advertise; acceptance waits for a host willing to make the advertisement honestly — it MUST NOT be manufactured by advertising solely to graduate this RFC.
+- [x] Leg A green in CI (unconditional)
+- [x] Leg B witnessed non-vacuously by a host **advertising `store: true`**, with a per-leg report including what the seam does not discriminate — openwop-app, 2026-08-10, advert `cbfbf9d4a` (#3111), witness `a8f58396e` (#3115), suite `1.68.2`. **The anti-manufacture clause is satisfied on the strongest available evidence: the leg went RED first.** See §"Witness" below.
+
+**Status: `Accepted` (2026-08-10).**
+
+## Witness
+
+**Host:** openwop-app (steward-affiliated reference host, evidence tier 2 per `GOVERNANCE.md` §71–74). **Suite:** `1.68.2`. **Advert:** `cbfbf9d4a` (#3111) — `store: true` per-type for `doc.*`. **Result:** `1 failed | 1 passed` → `2 passed` after `a8f58396e` (#3115).
+
+**Leg B failed before it passed, on a live wire defect.** `$defs.artifactCreated` requires `['artifactId','artifactType']`; the host emitted `artifactTypeId` and **neither required field** — so every `artifact.created` it had produced since its RFC 0071 support shipped was off-contract. `artifactType`'s presence in the fixed event log is what RFC 0138's replay correction rests on, so this was not cosmetic.
+
+**Why nothing caught it earlier, which is the finding worth keeping.** The host's own `artifact-created-emission.test.ts` existed *specifically* to prove emission, and asserted `payload.artifactTypeId` — **the field the code happened to emit**. It was green for its entire life while the wire claim was false. A test written against the implementation cannot detect the implementation being wrong about the contract; only a leg that compares a real emission to its canonical schema can. That is leg B's whole thesis, and it was vindicated on first contact with a host that advertises.
+
+**The anti-manufacture clause is satisfied, not merely asserted.** An advert made in order to graduate an RFC passes immediately; this one failed. The advertised set was additionally derived from **measured reachability** — an enumeration of which `artifactTypeId`s actually reach an `outputs.artifact` envelope — rather than from the identifier prefix as a convention, and anchored on the binding rule at the host's `documentsService.ts:507`. The adversarial half is the part that earns it: `core.trigger.artifact` accepts a **caller-supplied** `artifactTypeId`, the one input that could route any registered type (`doc.*` included) into the non-emitting path and falsify the advert for reasons no static list would show; it was checked specifically because it could break the claim, and returns the id flat rather than under `outputs.artifact`, so the envelope detector never sees it. Under §"What `store: true` claims", only an adversarial check against caller-controlled input can establish that *every* holds.
+
+**What this witness does NOT discriminate** (reported by the host, recorded verbatim in substance):
+
+1. **One path only.** The seam drives the documents-generation path. The host also persists via an `outputs.artifact` envelope that does not emit; no leg here would notice. This is exactly why `store` is advertised per-type for `doc.*` and why a host-global `store: true` would be false — the per-type instrument doing the work §"What `store: true` claims" describes.
+2. **Canned prose.** The emitting node drafts through a deterministic mock provider under the same env gate. The run, persistence, validation and emission are real; only the generated text is fixed. Nothing on the artifact path is stubbed.
+3. **Version scope.** Suite `1.68.2` covers legs A and B and says **nothing** about the RFC 0145 legs added in `1.70.0`. Two facts reported rather than one green.
+4. **Registered-type tier.** `doc.board-agenda` is host-registered; a pack-registered type through the same seam is untested here.
+
+**Blast radius measured with a control rather than asserted:** full conformance with the fix, 31 failed / 2489 passed; the same suite with the change reverted, 30 failed. The single difference was a broken-local-link failure in a `plans/` file — traced to **untracked, gitignored residue** in a working tree predating `937a9d85`, not to either repo's tracked corpus, and surfacing a separate defect in the link checker (it walks the filesystem rather than the git index). Every other failure is identical and pre-existing.
 
 ## Alternatives considered
 
@@ -120,3 +141,5 @@ The ruling is stated normatively in `artifact-type-packs.md` §"Sub-flags" — r
 - RFC 0138 gap G8 (both scopings) — closed by this RFC's legs A (fact pinned) and B (MUST reachable)
 - openwop-app discriminator run (2026-08-08): live both-direction demonstration — bound template emits `{artifactType, registered: true}`; unbound template completes silently; live discovery carries no `store` facet at either scope
 - RFC 0139 — the gating precedent (advertise-and-skip fails strict; shape preconditions stay non-gates)
+- openwop-app `cbfbf9d4a` (#3111) — the honest per-type advert, derived from measured reachability
+- openwop-app `a8f58396e` (#3115) — the emission fix leg B forced, and the in-repo test rewritten to validate against `$defs.artifactCreated` rather than against the code
