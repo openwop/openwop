@@ -1,0 +1,143 @@
+# RFC 0150: Effect Identity, Replay, and Split-Brain Safety
+
+| Field | Value |
+| --- | --- |
+| **RFC** | 0150 |
+| **Title** | Effect Identity, Replay, and Split-Brain Safety |
+| **Status** | `Draft` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-08-11 |
+| **Updated** | 2026-08-11 |
+| **Affects** | `spec/v1/{idempotency,replay,version-negotiation,observability}.md`, capability and event schemas, conformance vectors, SDK helpers, RFCs 0036/0041/0140 |
+| **Compatibility** | `safety-fix` per `COMPATIBILITY.md` §3 |
+| **Supersedes** | Retry-attempt-dependent activity identity, incomplete LLM cache recipe, and conflicting multi-region winner prose |
+| **Superseded by** | — |
+
+## Summary
+
+This RFC separates stable logical effect identity from retry attempts, versions the replay semantic-request digest, and replaces conflicting split-brain winner rules with fenced effect ownership. It also pins Layer-1 idempotency to authenticated tenant and endpoint scope and defines recoverable pending claims. Existing histories retain their recipe version; hosts migrate through explicit dual-read/version-pinned handling rather than silently reinterpreting keys.
+
+## Motivation
+
+The current Layer-2 formula hashes `attempt`, so a retry receives a different invocation ID, while later prose requires an identical ID. The replay cache recipe excludes inputs such as `max_tokens`, `stop`, and `seed`, permitting semantically different requests to collide, and combines JCS with a fallback NFC rule JCS does not perform. Multi-region prose names both lexicographic-lowest and last-writer-wins recovery; cancellation cannot undo effects already committed by the loser.
+
+## Proposal
+
+### §A — Layer-1 scope and pending claims
+
+The Layer-1 cache key **MUST** be `(authenticatedTenantId, canonicalEndpointId, callerIdempotencyKey)`. Tenant identity **MUST** come from authenticated context, never the body. A record **MUST** persist `requestDigest`, state (`pending|completed|retryable-failure|terminal-failure`), lease owner/expiry, and terminal response metadata. A crashed or expired pending owner **MAY** be reclaimed atomically. A different request digest under the same scoped key **MUST** fail with the canonical mismatch error and **MUST NOT** return a cached body.
+
+### §B — Logical effect identity v2
+
+```text
+logicalInvocationId = base64url(sha256(
+  "openwop:activity:v2\0" ||
+  tenantId || "\0" || runId || "\0" || nodeId || "\0" ||
+  logicalInvocationOrdinal || "\0" || providerKey
+))
+```
+
+`logicalInvocationOrdinal` is assigned once when the logical activity is created and **MUST NOT** change across transport/provider retries. `attempt` is separate telemetry and **MUST NOT** participate in the v2 logical ID. Different logical invocations **MUST** use different ordinals even if their inputs match. Providers supporting an idempotency header **MUST** receive the stable logical ID or a documented deterministic derivative.
+
+### §C — Semantic request digest v2
+
+The replay digest **MUST** cover the complete semantic provider request after policy resolution: provider and model identity, messages/content parts, tools and tool-choice, response schema/format, temperature/top-p, maximum output bound, stop conditions, seed, safety/policy settings that can alter output, and all provider-specific outcome-affecting options. Transport-only fields such as timeout, trace ID, retry count, and credential handle are excluded.
+
+Bytes are RFC 8785 JCS over the v2 object followed by SHA-256. Implementations **MUST NOT** add Unicode normalization outside JCS. Unknown provider options **MUST** be placed in a closed, namespaced `providerOptions` object before hashing; silently dropping them is nonconformant.
+
+```json
+{
+  "recipe": "openwop-semantic-request-v2",
+  "provider": "example",
+  "model": "model-1",
+  "request": { "messages": [], "maxOutputTokens": 256, "stop": ["END"], "seed": 7 },
+  "providerOptions": { "vendor.example.reasoningEffort": "high" }
+}
+```
+
+Changing `seed`, `stop`, output bound, tool schema, or provider option **MUST** change the digest.
+
+### §D — Fenced multi-region effect ownership
+
+Run-record reconciliation and permission to issue effects are separate. Lexicographic run-ID reconciliation **MAY** select a surviving record, but **MUST NOT** authorize effects.
+
+A host claiming multi-region effect safety **MUST** obtain a monotonically increasing fencing token from a linearizable ownership service before issuing an external effect. The effect adapter **MUST** reject a stale token or use the stable logical invocation ID at a provider that guarantees duplicate suppression. If neither property is available, the host **MUST NOT** claim strict multi-region effect safety and **MUST** classify the effect as `at-least-once-risk`.
+
+The canonical recovery strategies are:
+
+- `single-region` — no cross-region guarantee;
+- `reconciled-records` — records converge but effects may remain at-least-once;
+- `fenced-effects` — records converge and every effect is fenced or provider-idempotent.
+
+`last-writer-wins` is removed from the normative strategy vocabulary through the safety-fix migration. Conflict events **MUST** record winner, loser, strategy, and opaque effect IDs without content.
+
+### §E — Versioning and history
+
+Runs **MUST** stamp `activityIdentityRecipe` and `semanticRequestRecipe`. Existing histories remain `v1`; readers **MUST NOT** recompute v1 IDs with v2 rules. A host MAY dual-read v1/v2 cache records during migration but **MUST** write v2 only after enabling the new recipe. Forks inherit source recipe stamps for recorded history and use the target host's selected recipe only for new branch effects.
+
+### §F — Security and observability
+
+Add invariants:
+
+- `idempotency-key-tenant-endpoint-scoped`;
+- `logical-effect-id-retry-stable`;
+- `replay-semantic-digest-complete`; and
+- `multi-region-stale-owner-no-effect`.
+
+Keys/digests **MUST NOT** incorporate raw credentials. Logs and spans **MUST NOT** expose caller keys or request content; they MAY expose truncated keyed hashes. Metrics include conflict, reclaim, stale-fence rejection, and suppression counts with bounded attributes.
+
+## Compatibility
+
+This is a correctness safety-fix requiring a 90-day public window. New recipe stamps and capability values are additive; retiring contradictory v1 computation is the safety break. Migration tooling inventories persisted v1 records, adds stamps, tests dual-read, and refuses silent reinterpretation. Suite vectors cover legacy detection and v2 behavior. The CHANGELOG uses a correctness/security section and an advisory ID if security triage classifies cross-tenant or duplicate-effect impact as CVE-class.
+
+## Conformance
+
+New scenarios:
+
+- `idempotency-tenant-endpoint-scope.test.ts`;
+- `idempotency-pending-lease-recovery.test.ts`;
+- `activity-id-retry-stability.test.ts`;
+- `replay-semantic-request-digest-v2.test.ts` with cross-language fixtures;
+- `replay-recipe-history-pinning.test.ts`;
+- `multi-region-effect-ownership.test.ts`; and
+- `multi-region-stale-fence-rejected.test.ts`.
+
+Shape/digest vectors are always-on. Live pending recovery and multi-region behavior gate on their advertised profile, but an advertising host **MUST** execute them in strict certification. Reference hosts include SQLite scope tests and Postgres partition/fencing tests. `INTEROP-MATRIX.md` records recipe and recovery strategy.
+
+## Alternatives considered
+
+1. Keep `attempt` in the ID and retry with attempt zero. Rejected: it conflates two concepts and fails nested retries.
+2. Hash only a portable provider subset. Rejected: omitted semantic inputs can replay the wrong result.
+3. Resolve split brain by cancelling the loser. Rejected: cancellation does not undo committed effects.
+4. Require distributed transactions with every provider. Rejected: unrealistic; fencing/provider idempotency plus compensation is composable.
+5. Do nothing. Rejected: duplicates and incorrect replay are correctness failures.
+
+## Unresolved questions
+
+1. Which deployed hosts persist v1 recipe keys and at what volume?
+2. What canonical endpoint identifier handles aliases and host-extension routes?
+3. Which provider options are semantic versus transport-specific?
+4. Is a linearizable fence mandatory for `fenced-effects`, or may a provider's strong idempotency contract independently qualify?
+5. What retention period applies to migrated v1 cache records?
+
+## Implementation notes (non-normative)
+
+Publish cross-language golden vectors before host changes. Implement Layer-1 scope migrations before exposing new recipes. Compensation in RFC 0151 is defense for partial failure, not a substitute for duplicate prevention. This RFC is SR-3 under RFC 0147.
+
+## Acceptance criteria
+
+- [ ] Corrected normative formulas and recipe stamps merged.
+- [ ] Cross-language v2 vectors pass in TypeScript, Python, and Go.
+- [ ] Layer-1 scope and pending lease scenarios pass on SQLite and Postgres hosts.
+- [ ] Partition tests prove stale owners cannot issue effects under `fenced-effects`.
+- [ ] v1 inventory, migrator, dual-read tests, and version runbook published.
+- [ ] Threat models, invariants, OTel vocabulary, CHANGELOG, and interop matrix updated.
+
+## References
+
+- RFCs 0036, 0041, 0140, and 0147 Workstream 3
+- `spec/v1/idempotency.md`
+- `spec/v1/replay.md`
+- RFC 8785 JSON Canonicalization Scheme
+- Temporal durable execution and Worker Versioning
+
