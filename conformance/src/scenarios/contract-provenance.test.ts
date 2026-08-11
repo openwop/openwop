@@ -22,6 +22,22 @@
  * host implementing corpus X from one merely claiming X — the same self-report limit as
  * RFC 0145 requirement 3. Asserting it would be theatre.
  *
+ * THE CONSUMER HALF (RFC 0146 G3). A provenance nobody reads is a field, not a mechanism, so
+ * this suite reads it: leg C compares a host's advertised revision against the suite's OWN
+ * `schemas/CORPUS-STAMP.json` and REPORTS the drift. It is the second half of G3 — the first
+ * being a host that advertises.
+ *
+ * IT REPORTS AND NEVER FAILS, and that is requirement 3, not timidity. v1.x revisions are
+ * additive, so a host on an older corpus is CONFORMANT; a leg that reddened it would convert
+ * an advisory disclosure into an upgrade mandate inside a version line where being behind is
+ * legal. The same call the RFC 0144 G1 arm-witness leg makes for dotted-at-root.
+ *
+ * THE STAMP ONLY EXISTS IN THE PUBLISHED LAYOUT. It is written at prepack into the vendored
+ * `schemas/`, never into the repo tree — so a repo-layout run has nothing to compare against
+ * and the leg is INAPPLICABLE there. That asymmetry already bit once: when the stamp landed,
+ * "written only into the tarball" and "visible to the gate" turned out to be different claims,
+ * and only forcing the published layout revealed it. Verified the same way here.
+ *
  * @see schemas/capabilities.schema.json §contractProvenance
  * @see RFCS/0146-contract-provenance-advertisement.md
  */
@@ -99,14 +115,73 @@ describe('contract-provenance (RFC 0146, always-on)', () => {
     ).toBe(false);
   });
 
-  it('A4 — the RFC states the advisory rule, which is what stops this becoming an upgrade mandate', () => {
-    const rfc = readFileSync(
-      join(SCHEMAS_DIR, '..', 'RFCS', '0146-contract-provenance-advertisement.md'),
-      'utf8',
-    );
+  // `RFCS/` is NOT shipped in the published tarball, so this leg is repo-layout only. Reading
+  // it unconditionally made the scenario ENOENT for every adopter running from the package —
+  // passing locally and reddening for a reason that has nothing to do with the host under
+  // test, which is worse than a no-op. Third instance of this asymmetry in this corpus; the
+  // first two were the CORPUS-STAMP gate and the link-checker's filesystem walk.
+  const rfcText = ((): string | null => {
+    try {
+      return readFileSync(
+        join(SCHEMAS_DIR, '..', 'RFCS', '0146-contract-provenance-advertisement.md'),
+        'utf8',
+      );
+    } catch {
+      return null;
+    }
+  })();
+
+  it.skipIf(rfcText === null)('A4 — the RFC states the advisory rule, which is what stops this becoming an upgrade mandate', () => {
+    const rfc = rfcText ?? '';
     expect(
       /MUST NOT reject a request, refuse interop, or fail a run solely because/.test(rfc),
       why('RFC 0146 req 3', 'a consumer MUST NOT reject on a mismatch — v1.x revisions are additive, so a host on an older revision is CONFORMANT and the field detects drift rather than creating an error'),
+    ).toBe(true);
+  });
+});
+
+/** The suite's OWN provenance, from the vendored stamp — present only in the published layout. */
+function suiteStamp(): { suiteVersion?: string; corpusCommit?: string } | null {
+  try {
+    return JSON.parse(readFileSync(join(SCHEMAS_DIR, 'CORPUS-STAMP.json'), 'utf8')) as {
+      suiteVersion?: string;
+      corpusCommit?: string;
+    };
+  } catch {
+    // Repo layout: no stamp is written into the tree, so there is nothing to compare against.
+    return null;
+  }
+}
+
+describe('contract-provenance: the suite READS the advert — the consumer half (RFC 0146 G3)', () => {
+  it('compares the advertised revision against the suite\'s own, and reports drift', async () => {
+    const mine = suiteStamp();
+    if (mine === null) return; // repo layout — inapplicable, see the docblock
+
+    const res = await driver.get('/.well-known/openwop');
+    if (res.status !== 200 || res.json === null || res.json === undefined) return;
+    const adv = (res.json as Record<string, unknown>)['contractProvenance'] as
+      | { suiteVersion?: string; corpusCommit?: string }
+      | undefined;
+    if (adv === undefined) return; // silent host — absent means UNSPECIFIED (req 1), not stale
+
+    const same = adv.corpusCommit !== undefined && adv.corpusCommit === mine.corpusCommit;
+    console.log(
+      `  [contract-provenance] host: suite=${adv.suiteVersion ?? '?'} commit=${(adv.corpusCommit ?? '?').slice(0, 12)} | ` +
+        `this suite: suite=${mine.suiteVersion ?? '?'} commit=${(mine.corpusCommit ?? '?').slice(0, 12)} | ` +
+        `${same ? 'SAME corpus revision' : 'DIFFERENT corpus revision — the host implements a revision this suite was not cut from'}`,
+    );
+
+    // NO ASSERTION ON EQUALITY, deliberately. Requirement 3: a consumer MUST NOT reject or
+    // fail solely because a host's provenance differs from its own — additive means older is
+    // CONFORMANT. What IS asserted is that a host making the claim makes a well-formed one,
+    // because an unparseable provenance is useless to every consumer, not just this one.
+    expect(
+      typeof adv.corpusCommit === 'string' || typeof adv.suiteVersion === 'string',
+      driver.describe(
+        'RFC 0146 req 1 + req 4',
+        'an advertised contractProvenance carries at least one of suiteVersion / corpusCommit — an object conveying neither is indistinguishable from silence while looking like an answer',
+      ),
     ).toBe(true);
   });
 });
