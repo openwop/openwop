@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0136                                                                                                                                                                   |
 | **Title**         | `WorkflowVariable.format` — a presentational hint for run inputs                                                                                                        |
-| **Status**        | `Active`                                                                                                                                                                |
+| **Status**        | `Accepted`                                                                                                                                                                |
 | **Author(s)**     | openwop-app maintainers (corpus half + question rulings: David Tufts / @davidscotttufts)                                                                                                                                                |
 | **Created**       | 2026-08-01                                                                                                                                                             |
-| **Updated**       | 2026-08-10 — `Draft → Active`; corpus half (steps 1–3) landed, three open questions resolved into normative text. 2026-08-01 — filed `Draft`.                                                                                                                                                             |
+| **Updated**       | 2026-08-11 — `Active → Accepted`; reference-host propagation (openwop-app#3131) + non-vacuous witness under `OPENWOP_REQUIRE_BEHAVIOR=true` (see §"Acceptance witness"). 2026-08-10 — `Draft → Active`; corpus half (steps 1–3) landed, three open questions resolved into normative text. 2026-08-01 — filed `Draft`.                                                                                                                                                             |
 | **Affects**       | `schemas/workflow-definition.schema.json` (§WorkflowVariable), `schemas/workflow-chain-pack-manifest.schema.json` (chain `parameters`), conformance scenarios            |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                      |
 | **Supersedes**    | —                                                                                                                                                                      |
@@ -234,8 +234,17 @@ compose on one variable.
 | 1 ✅ | `schemas/workflow-definition.schema.json` — add the property (open `string`, no enum, per resolved Q1) | `npm run openwop:check` green |
 | 2 ✅ | **No schema change needed** — chain `parameters` is `additionalProperties: true`, so `format` was already legal. Landed instead as the deferred-mode propagation MUST in `workflow-chain-packs.md` §"Deferred-parameter expansion" step 1 (resolved Q2). | schema check green |
 | 3 ✅ | `workflow-variable-format.test.ts` — 4 always-on corpus legs + 2 capability-gated host legs; suite `1.68.2 → 1.69.0` | 4/4 corpus legs green; host legs gate on `workflowChainPacks.deferredParameters` |
-| 4 ⏳ | Reference host (openwop-app): propagate `format` chain-param → `WorkflowVariable`, honour it in the run-inputs form | `npm run ci` |
-| 5 ⏳ | Witness the scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` | Draft → Active → Accepted |
+| 4 ✅ | Reference host (openwop-app): propagate `format` chain-param → `WorkflowVariable` (openwop-app#3131), disambiguated from the provider-hint `WorkflowVariable.format`; NOT copied into `configurableSchema` | `npm run ci` |
+| 5 ✅ | Witness the scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` — **done 2026-08-11** (see §"Acceptance witness") | Draft → Active → **Accepted** |
 
 Status advances to `Accepted` only after step 5, per the RFC 0134 precedent — the
 reference host must implement and witness before the wire claim is honest.
+
+## Acceptance witness
+
+**Witnessed 2026-08-11 on the openwop-app reference host** (`@openwop/openwop-conformance@1.72.2`, `OPENWOP_REQUIRE_BEHAVIOR=true`): the §B host legs of `workflow-variable-format.test.ts` ran green **and non-vacuously**, both sabotage-proven.
+
+- **B1 (req 7 — deferred-mode `format` propagation).** The host mints a chain parameter's declared `format` onto the materialized `WorkflowVariable`; the leg drives the RFC 0124 deferred-expand seam (openwop-app#3133 extended it to return the minted `variables[]`) and asserts `format` present iff minted — `email`→`email`, an unrecognised value copied verbatim (req 2), a non-string param omitting it (req 1). **Sabotage:** disabling the step-4 `format` copy in the host's chain loader reds B1 alone (`expected undefined to be 'email'`), leaving A + B2 green.
+- **B2 (req 3 — `format` is advisory, not validating).** The leg runs the vendored fixture `conformance-workflow-variable-format-advisory` (a variable declaring `format:"email"` with an off-format `defaultValue`) via `POST /v1/runs` — the portable pre-registered pattern, since registration is "`POST /v1/workflows` or equivalent" (`capabilities.md`) and the create path is not a mandated portable surface. The run reaches `completed`; a value/format mismatch does not fail it. **Sabotage:** wiring a `format` assertion into the host's run-variable seeding reds B2 alone (`expected [200,201] to include 500`), leaving A + B1 green.
+
+The propagation MUST (`WorkflowVariable.format` copied from the chain parameter, not into `configurableSchema`) is a spec-MUST the reference host had been silently violating before #3131 — the witness is the honest close, not a rubber-stamp. Full suite 2529/0. The §B legs began as advert-tautologies (`expect(deferred).toBe(true)`) and B2 later passed vacuously by soft-skipping a non-mandated endpoint; each was caught by running-and-proving (sabotage + a run-log check), never by a green. Cited: openwop-app#3131 (propagation) + #3133 (seam) + conformance #931 (B1 drive) / #932 (B2 fixture) + this run.
