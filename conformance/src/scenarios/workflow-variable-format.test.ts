@@ -9,15 +9,25 @@
  *      an unknown hint into a hard `POST /v1/workflows` failure); `format` composes with
  *      `sensitive` on one variable; and `workflow-chain-packs.md` documents the
  *      deferred-mode propagation as a mode-scoped MUST.
- *   B. Capability-gated host leg — a host that mints variables from chain parameters
- *      (`workflowChainPacks.deferredParameters`) copies a parameter's `format` verbatim
- *      onto the materialized `WorkflowVariable`, and a run whose value does not match its
- *      declared `format` is still accepted (requirement 3 — the assertion that keeps
- *      `format` advisory rather than validating).
+ *   B. Capability-gated host legs (`workflowChainPacks.deferredParameters.supported`) —
+ *      real behavioral drives, not advert re-checks:
+ *        B1 drives the RFC 0124 deferred-expand seam
+ *        (`POST /v1/host/sample/chain/deferred-expand`) and asserts the minted
+ *        `variables[]` carry `format` per the "present iff minted" contract — a string
+ *        param's `format` copied verbatim (req 7), an unrecognised value copied too
+ *        (req 2), a non-string param minting no `format` (req 1). Soft-skips (404 /
+ *        absent `variables`) on a host that advertises the flag but hasn't wired the
+ *        seam's `variables[]` extension.
+ *        B2 is seam-free: it registers a workflow whose variable declares `format:"email"`
+ *        with an off-format `defaultValue`, runs it, and asserts the run COMPLETES — a
+ *        value mismatch MUST NOT fail the run (requirement 3, `format` advisory not
+ *        validating). A format-validating host reds.
  *
  * NON-VACUITY: leg A2 is the one that would silently pass if `format` were declared as an
  * enum — it asserts that a value OUTSIDE the recognised table validates. Sabotage: adding
- * `"enum": [...]` to the schema property reds A2 alone and leaves A1 green.
+ * `"enum": [...]` to the schema property reds A2 alone and leaves A1 green. B1 reds on a
+ * host that mints the variable but drops `format` (step-4-unwired); B2 reds on a host that
+ * validates a variable value against its advisory `format`.
  *
  * @see schemas/workflow-definition.schema.json §WorkflowVariable
  * @see spec/v1/workflow-chain-packs.md §"Deferred-parameter expansion (RFC 0124)" step 1
@@ -32,6 +42,7 @@ import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { driver } from '../lib/driver.js';
 
 const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
 const WORKFLOW_DEF = join(SCHEMAS_DIR, 'workflow-definition.schema.json');
@@ -132,24 +143,99 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
 });
 
 describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gated)', () => {
-  it('B1 — a host minting variables from chain parameters copies `format` verbatim', async () => {
-    const wcp = await readCapabilityFamily<{ deferredParameters?: { supported?: boolean } }>('workflowChainPacks');
+  // RFC 0124's deferred-expand witness seam (referenced from capabilities.md §deferredParameters).
+  const DEFERRED_EXPAND_SEAM = '/v1/host/sample/chain/deferred-expand';
+
+  // Gate open only when a reachable host advertises deferredParameters. A missing base URL
+  // (server-free) makes the discovery fetch throw — treat that as "no host" and skip, so
+  // these host legs never error the full-suite run; the server-free gate covers §A.
+  async function deferredParamsGateOpen(): Promise<boolean> {
+    let wcp: { deferredParameters?: { supported?: boolean } } | undefined;
+    try {
+      wcp = await readCapabilityFamily<{ deferredParameters?: { supported?: boolean } }>('workflowChainPacks');
+    } catch {
+      return false;
+    }
     const deferred = wcp?.deferredParameters?.supported === true;
-    if (!behaviorGate('workflowChainPacks.deferredParameters.supported', deferred)) return;
-    // Behavioral leg — exercised once a host implements RFC 0136 step 4: a chain whose
-    // `parameters` declares `format: "email"` on a string parameter expands in deferred
-    // mode, and the materialized WorkflowVariable carries `format: "email"` verbatim.
-    // Propagation is a MUST only here — the expansion-time floor mints no variable.
-    expect(deferred, 'host advertising deferredParameters propagates RFC 0136 `format`').toBe(true);
+    return behaviorGate('workflowChainPacks.deferredParameters.supported', deferred);
+  }
+
+  it('B1 — deferred expansion mints `format` onto the WorkflowVariable: string copied (req 7), unknown copied (req 2), non-string omits it (req 1)', async () => {
+    if (!(await deferredParamsGateOpen())) return;
+
+    // Drive the RFC 0124 deferred-expand seam with a chain whose parameters exercise all
+    // three propagation rules in one expansion; assert the minted variables[] carry (or omit)
+    // `format` per the "present iff minted" contract.
+    const res = await driver.post(DEFERRED_EXPAND_SEAM, {
+      chain: {
+        parameters: {
+          type: 'object',
+          properties: {
+            email: { type: 'string', format: 'email' },
+            note: { type: 'string', format: 'vendor.acme.freeform' },
+            count: { type: 'number' },
+          },
+        },
+      },
+    });
+    // A host advertising deferredParameters but not yet serving the variables[]-returning
+    // seam extension soft-skips (404), as does a host with the seam disabled in this boot.
+    if (res.status === 404) return;
+    expect(res.status, cite('§Deferred-parameter expansion', 'the deferred-expand seam returns 200')).toBe(200);
+    const variables = (res.json as { variables?: Array<{ name: string; type?: string; format?: string }> }).variables;
+    if (!Array.isArray(variables)) return; // seam present but not returning variables[] yet — soft-skip
+    const fmt = (n: string): string | undefined => variables.find((v) => v.name === n)?.format;
+
+    expect(fmt('email'), cite('§WorkflowVariable', 'req 7: a string param\'s recognised `format` is minted verbatim')).toBe('email');
+    expect(fmt('note'), cite('§WorkflowVariable', 'req 2: an UNRECOGNISED `format` is minted verbatim, never dropped')).toBe('vendor.acme.freeform');
+    expect(fmt('count'), cite('§WorkflowVariable', 'req 1: a NON-STRING param mints no `format`')).toBeUndefined();
   });
 
-  it('B2 — a value that does not match its declared `format` is still accepted (requirement 3)', async () => {
-    const wcp = await readCapabilityFamily<{ deferredParameters?: { supported?: boolean } }>('workflowChainPacks');
-    const deferred = wcp?.deferredParameters?.supported === true;
-    if (!behaviorGate('workflowChainPacks.deferredParameters.supported', deferred)) return;
-    // The assertion that keeps `format` advisory: a run supplying "not-an-email" for a
-    // variable declared `format: "email"` MUST be accepted and complete. A host that
-    // validates against `format` reds here — which is the point.
-    expect(deferred, 'host MUST NOT reject a run on a `format` mismatch').toBe(true);
+  it('B2 — a run whose variable value does not match its declared `format` is accepted and completes (req 3: `format` is advisory, not validating)', async () => {
+    if (!(await deferredParamsGateOpen())) return;
+
+    // Seam-free: a fully-valid workflow whose variable declares `format: "email"` but carries
+    // an off-format `defaultValue`. `format` is advisory (open string, RFC 0136 req 3) — the
+    // host MUST NOT reject the definition or fail the run on the mismatch. A format-validating
+    // host reds here.
+    const wf = {
+      id: 'conformance-0136-format-advisory',
+      name: 'RFC 0136 format-advisory witness',
+      version: '1.0',
+      nodes: [{ id: 'n1', typeId: 'core.identity', name: 'noop', position: { x: 0, y: 0 }, config: {}, inputs: {} }],
+      edges: [],
+      triggers: [{ id: 'manual', type: 'manual', enabled: true }],
+      variables: [{ name: 'recipientEmail', type: 'string', format: 'email', defaultValue: 'not-an-email' }],
+      metadata: { tags: ['conformance', 'rfc-0136'] },
+      settings: { timeout: 5000 },
+    };
+    const create = await driver.post('/v1/workflows', wf);
+    if (create.status === 404) return; // host exposes no workflow-registration surface — soft-skip
+    expect(
+      [200, 201],
+      cite('POST /v1/workflows', 'req 3: a definition whose variable value violates its advisory `format` is accepted, not rejected'),
+    ).toContain(create.status);
+    const created = create.json as { workflowId?: string; id?: string };
+    const workflowId = created.workflowId ?? created.id ?? wf.id;
+
+    const run = await driver.post('/v1/runs', { workflowId });
+    if (run.status === 404) return;
+    expect([200, 201], cite('POST /v1/runs', 'the run is accepted despite the off-format variable value')).toContain(run.status);
+    const runId = (run.json as { runId: string }).runId;
+
+    let snap: { status: string } | undefined;
+    for (let i = 0; i < 40; i++) {
+      const r = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
+      const body = r.json as { status: string };
+      if (['completed', 'failed', 'waiting-approval'].includes(body.status)) {
+        snap = body;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    expect(
+      snap?.status,
+      cite('§WorkflowVariable', 'req 3: the run COMPLETES — `format` is advisory, a value mismatch MUST NOT fail the run'),
+    ).toBe('completed');
   });
 });
