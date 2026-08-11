@@ -11,6 +11,23 @@
       "description": "openwop protocol version the server speaks (e.g., `1.0`). Independent of `engineVersion` (which gates persisted-doc compatibility per version-negotiation.md).",
       "minLength": 1
     },
+    "contractProvenance": {
+      "type": "object",
+      "description": "RFC 0146 (`Active`). Which corpus revision this host's contract handling corresponds to — the copy it validates and serves against. OPTIONAL; absent \u21d2 UNSPECIFIED provenance, neither current nor stale, and a consumer MUST NOT infer a version from its absence. ADVISORY: a consumer MUST NOT reject a request, refuse interop, or fail a run solely because this differs from its own — v1.x corpus revisions are additive, so a host on an older revision is conformant and this field detects drift rather than making drift an error. Nothing else on the wire answers this: `protocolVersion` is `1.0` across the entire v1 line (the drift happens inside that value) and `schemaVersions` is per-envelope-type. NOT an integrity check — `corpusCommit` says WHICH contract, never whether the copy was modified.",
+      "properties": {
+        "suiteVersion": {
+          "type": "string",
+          "description": "A published `@openwop/openwop-conformance` version, e.g. `1.73.0`. Mirrors `schemas/CORPUS-STAMP.json` so a host depending on the package can echo its own stamp rather than hand-maintaining a constant.",
+          "minLength": 1
+        },
+        "corpusCommit": {
+          "type": "string",
+          "description": "Full 40-character commit SHA of the openwop repository. A vendor build identifier does NOT belong here — `implementation` already exists for that.",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      },
+      "additionalProperties": false
+    },
     "supportedEnvelopes": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
