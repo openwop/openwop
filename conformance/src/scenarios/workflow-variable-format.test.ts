@@ -18,10 +18,14 @@
  *        (req 2), a non-string param minting no `format` (req 1). Soft-skips (404 /
  *        absent `variables`) on a host that advertises the flag but hasn't wired the
  *        seam's `variables[]` extension.
- *        B2 is seam-free: it registers a workflow whose variable declares `format:"email"`
- *        with an off-format `defaultValue`, runs it, and asserts the run COMPLETES — a
- *        value mismatch MUST NOT fail the run (requirement 3, `format` advisory not
- *        validating). A format-validating host reds.
+ *        B2 runs the vendored fixture `conformance-workflow-variable-format-advisory`
+ *        (a workflow whose variable declares `format:"email"` with an off-format
+ *        `defaultValue`) via `POST /v1/runs` — the portable pre-registered pattern, NOT a
+ *        `POST /v1/workflows` create (registration is "POST /v1/workflows or equivalent",
+ *        capabilities.md, so the create path is not a mandated portable surface). It asserts
+ *        the run COMPLETES — a value/format mismatch MUST NOT fail the run (requirement 3,
+ *        `format` advisory not validating). Gated on fixture advertisement; a
+ *        format-validating host reds.
  *
  * NON-VACUITY: leg A2 is the one that would silently pass if `format` were declared as an
  * enum — it asserts that a value OUTSIDE the recognised table validates. Sabotage: adding
@@ -42,6 +46,7 @@ import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { driver } from '../lib/driver.js';
 
 const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
@@ -191,36 +196,23 @@ describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gat
     expect(fmt('count'), cite('§WorkflowVariable', 'req 1: a NON-STRING param mints no `format`')).toBeUndefined();
   });
 
-  it('B2 — a run whose variable value does not match its declared `format` is accepted and completes (req 3: `format` is advisory, not validating)', async () => {
-    if (!(await deferredParamsGateOpen())) return;
+  const B2_FIXTURE = 'conformance-workflow-variable-format-advisory';
 
-    // Seam-free: a fully-valid workflow whose variable declares `format: "email"` but carries
-    // an off-format `defaultValue`. `format` is advisory (open string, RFC 0136 req 3) — the
-    // host MUST NOT reject the definition or fail the run on the mismatch. A format-validating
-    // host reds here.
-    const wf = {
-      id: 'conformance-0136-format-advisory',
-      name: 'RFC 0136 format-advisory witness',
-      version: '1.0',
-      nodes: [{ id: 'n1', typeId: 'core.identity', name: 'noop', position: { x: 0, y: 0 }, config: {}, inputs: {} }],
-      edges: [],
-      triggers: [{ id: 'manual', type: 'manual', enabled: true }],
-      variables: [{ name: 'recipientEmail', type: 'string', format: 'email', defaultValue: 'not-an-email' }],
-      metadata: { tags: ['conformance', 'rfc-0136'] },
-      settings: { timeout: 5000 },
-    };
-    const create = await driver.post('/v1/workflows', wf);
-    if (create.status === 404) return; // host exposes no workflow-registration surface — soft-skip
+  it('B2 — a run whose variable value does not match its declared `format` is accepted and completes (req 3: `format` is advisory, not validating)', async () => {
+    // Portable pre-registered-workflow pattern (cf. agentPackHandoffSchemaValidation): the
+    // fixture `conformance-workflow-variable-format-advisory` carries a variable declaring
+    // `format:"email"` with an off-format `defaultValue`, run via POST /v1/runs — NO create
+    // endpoint, since registration is "POST /v1/workflows or equivalent" (capabilities.md)
+    // and the create path is not a mandated portable surface. Gate on fixture advertisement:
+    // req 3 is universal (not deferred-mode-specific), so it rides the host loading the fixture.
+    if (!isFixtureAdvertised(B2_FIXTURE)) return;
+
+    const run = await driver.post('/v1/runs', { workflowId: B2_FIXTURE });
+    if (run.status === 404) return; // no run surface — soft-skip
     expect(
       [200, 201],
-      cite('POST /v1/workflows', 'req 3: a definition whose variable value violates its advisory `format` is accepted, not rejected'),
-    ).toContain(create.status);
-    const created = create.json as { workflowId?: string; id?: string };
-    const workflowId = created.workflowId ?? created.id ?? wf.id;
-
-    const run = await driver.post('/v1/runs', { workflowId });
-    if (run.status === 404) return;
-    expect([200, 201], cite('POST /v1/runs', 'the run is accepted despite the off-format variable value')).toContain(run.status);
+      cite('POST /v1/runs', 'req 3: a run whose variable value violates its advisory `format` is accepted, not rejected'),
+    ).toContain(run.status);
     const runId = (run.json as { runId: string }).runId;
 
     let snap: { status: string } | undefined;
