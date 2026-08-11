@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [Unreleased]
+
+---
+
 ## [1.6.0] — 2026-08-11 — the enforcement-surface + host-witness cycle (RFC 0136, 0138, 0142–0145)
 
 Closes the capability-declaration and witness-discipline arc opened after 1.5.0: six RFCs reach `Accepted`, each on a **non-vacuous** reference-host witness (openwop-app under `OPENWOP_REQUIRE_BEHAVIOR=true`), and the corpus's recurring defect — *a normative claim whose enforcement surface was never declared* — is closed at the capability-discovery layer. Every conformance change this cycle was validated by running-and-proving (sabotage + run-log checks), never by a green. All wire shapes additive per `COMPATIBILITY.md` §2.1.
