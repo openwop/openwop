@@ -4,16 +4,16 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | **RFC**           | 0144                                                                                                                         |
 | **Title**         | Which host capability families the core schema declares                                                                        |
-| **Status**        | `Active`                                                                                                                      |
+| **Status**        | `Accepted`                                                                                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts), with the openwop-app reference host                                                          |
 | **Created**       | 2026-08-09                                                                                                                   |
-| **Updated**       | 2026-08-09                                                                                                                   |
+| **Updated**       | 2026-08-10                                                                                                                   |
 | **Affects**       | `schemas/capabilities.schema.json`, `spec/v1/host-extensions.md` §"Canonical prefixes", `spec/v1/host-capabilities.md`, `spec/v1/artifact-type-packs.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — five optional properties declared on an already-open object; five prose examples corrected to the spelling hosts already emit |
 | **Supersedes**    | —                                                                                                                            |
 | **Superseded by** | —                                                                                                                            |
 
-> **Status note.** `Active`: the corpus change lands with this RFC — five declarations, the §A rule, and the prose corrections are on `main`, and the wire shape is locked. `Accepted` waits on a host witness: a discovery document that advertises one of the five at the plain root and validates against the declared shape. RFC 0142's leg B is the intended vehicle. Same posture as RFC 0142, which stays `Active` pending a `store: true` host.
+> **Status note.** `Accepted` (2026-08-10). The corpus change (five declarations, the §A rule, the prose corrections) landed with the `Active` cut; the wire shape was locked then. `Accepted` waited on one thing — a host witness that a declared family, advertised at the plain root, **validates against the declared shape** — and that witness now exists. See §"Acceptance witness". (Note the witness is the discovery-doc *validation*, distinct from RFC 0142's leg-B *emission* witness they share a subject with; see the witness section for the attribution.)
 
 ## Summary
 
@@ -108,10 +108,16 @@ No new scenario. The declarations are exercised by `spec-corpus-validity` (every
 
 ## Acceptance criteria
 
-- [ ] Five families declared plainly; `spec-corpus-validity` and the full `openwop:check` green
-- [ ] Five quoted-key snippets corrected and the two prose/pattern statements restated; the ten identifier occurrences unchanged (verifiable: `grep -c '"host\.' spec/v1/` differs by exactly five, no `peerDependencies` line touched)
-- [ ] The §A rule present in `host-extensions.md` and consistent with the declared/undeclared partition above
-- [ ] A host advertising at least one newly declared family validates against the schema — the reference host's `artifactTypes` (plain, per its `discovery.ts`) is the intended first witness, via RFC 0142's leg B
+- [x] Five families declared plainly; `spec-corpus-validity` and the full `openwop:check` green — `artifactTypes`, `aiEnvelope`, `agentRuntime`, `forms`, `promptLibrary` each declared at the plain root in `schemas/capabilities.schema.json`.
+- [x] Five quoted-key snippets corrected and the two prose/pattern statements restated; the ten identifier occurrences unchanged.
+- [x] The §A rule present in `host-extensions.md` §"`host.*` capability surfaces" and consistent with the declared/undeclared partition above.
+- [x] A host advertising at least one newly declared family validates against the schema — witnessed on the openwop-app reference host (see §"Acceptance witness").
+
+## Acceptance witness
+
+**Witnessed 2026-08-10 on the openwop-app reference host.** The host advertises `artifactTypes` (and `forms`) at the **plain document root** (`discovery.ts:1406`, RFC 0137 G16) and its emitted `artifactTypes` block **validates against `capabilities.schema.json`'s declared shape by Ajv 2020** (`additionalProperties: false` on the family body) — its `test/artifact-types-advert-conformance.test.ts` runs **3/3 green**, and that file caught a *real* prior advert defect before this witness (an extra `schemaEndpoint` key + a non-object `types` map, since fixed), which is what makes the green non-vacuous rather than tautological. The `@openwop/openwop-conformance@1.70.2` suite runs **2527 passed / 0 failed** against the host under `OPENWOP_REQUIRE_BEHAVIOR=true`, including every `artifact-type-*` shape scenario.
+
+**Attribution (kept honest).** The `store: true` / `artifact.created` substrate this family's subject sits on — RFC 0142's leg-B *emission* witness — was landed by a **separate** openwop-app session (host PRs #3111 advertising per-type `store`, #3115 emitting `artifact.created` off-contract). This RFC's witness is the **discovery-document validation** property, which is independent of that posture: a host need not take the `store: true` posture to witness that its *declared* `artifactTypes` block validates against the schema. RFC 0142 (the emission witness) reached `Accepted` separately (#920); this RFC rides on the shared subject but is credited for the validation half only.
 
 ## Alternatives considered
 
