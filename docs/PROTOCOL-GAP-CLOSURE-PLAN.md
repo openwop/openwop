@@ -346,6 +346,27 @@ The phased-delivery details below are preserved in their original 2026-05-10 for
 - ✅ Audit-log integrity annex in `auth-profiles.md` (`openwop-audit-log-integrity` profile with hash-chain + signed checkpoints + `/v1/audit/verify`).
 - ✅ Conformance scenario stubs landed: `pause-resume.test.ts`, `rate-limit-envelope.test.ts`, `append-ordering.test.ts`, `configurable-schema.test.ts`, `webhook-sig-algorithm.test.ts`, `audit-log-integrity.test.ts`, `multi-region-idempotency.test.ts`. Scenarios capability-gate when the host doesn't advertise the relevant surface so suite passes are not regressed for v1.0 hosts.
 
+## Track 14: Protocol Integrity And Standards Readiness — opened 2026-08-11
+
+**Goal:** close the correctness, certification, current-interop, compensation, identity, implementability, governance, audit, and independent-adoption gaps identified by the 2026-08-11 industry assessment before OpenWOP makes an A-grade or industry-standard claim.
+
+**RFC program:**
+
+- RFC 0147 — umbrella gates, sequencing, claim restrictions, and exit criteria.
+- RFC 0148 — non-vacuous requirement-level certification evidence.
+- RFC 0149 — OpenAPI/discovery/example/version reconciliation.
+- RFC 0150 — retry-stable effect identity, replay digest v2, and fenced split-brain effects.
+- RFC 0151 — additive Saga compensation and partial-failure profile.
+- RFC 0152 — A2A 1.0 exact-version composition.
+- RFC 0153 — MCP 2026-07-28 exact-version composition.
+- RFC 0154 — workload identity, delegation, telemetry mapping, and provenance.
+- RFC 0155 — discovery-core/core-standard naming and extension registry.
+- RFC 0156 — cross-org governance, external audit, Tier-3 evidence, and claims policy.
+
+**Sequencing:** RFCs 0148–0150 are the safety-critical first tranche. RFCs 0151–0154 depend on that evidence/effect foundation. RFCs 0155–0156 define the stable-core and standards-credibility gates. All ten RFCs remain Draft until their own gap registers permit Active review.
+
+**Acceptance:** every RFC 0147 checkbox is closed; all Critical/High program risks are closed or explicitly accepted by cross-organization governance; the corrected suite, external audit, and Tier-3 host evidence are public and current.
+
 ## Sequencing And Phasing
 
 The 13 tracks are not all equally urgent. The sequencing below stack-ranks by _adoption impact_ rather than spec size. Phases are loose calendar buckets, not commitments — each track lists its own acceptance signal.
