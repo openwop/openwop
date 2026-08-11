@@ -1,0 +1,27 @@
+{
+  "id": "conformance-workflow-variable-format-advisory",
+  "name": "Conformance: WorkflowVariable.format is advisory (RFC 0136)",
+  "version": "1.0",
+  "description": "RFC 0136 requirement 3 witness. A single-node workflow whose variable `recipientEmail` declares `format: \"email\"` but carries an off-format `defaultValue` (\"not-an-email\"). `format` is an ADVISORY presentational hint, never a validation constraint — a host MUST NOT reject the definition or fail the run on the value/format mismatch. The scenario runs this fixture via POST /v1/runs (the portable pre-registered-workflow pattern, no host-specific create endpoint) and asserts the run reaches `completed`; a host that validates a variable value against its advisory `format` reds. Vendored (not created via POST /v1/workflows) because registration is 'POST /v1/workflows or equivalent' per capabilities.md — the create path is not a mandated portable surface.",
+  "nodes": [
+    {
+      "id": "n1",
+      "typeId": "core.identity",
+      "name": "Noop (format-advisory witness)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "recipientEmail", "type": "string", "format": "email", "defaultValue": "not-an-email" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0136", "workflow-variable-format"]
+  },
+  "settings": { "timeout": 5000 }
+}
