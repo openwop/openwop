@@ -353,19 +353,19 @@ The external audit should review RFC 0148 and RFC 0150 designs before implementa
 
 ## Acceptance criteria
 
-- [ ] Workstreams 1–3 are implemented; affected prior conformance bundles are inventoried, invalidated where necessary, and reissued.
-- [ ] OpenAPI resolves every operation correctly and normative discovery examples are mechanically validated.
-- [ ] Idempotency, replay digest, canonicalization, and split-brain semantics are internally consistent and pass cross-language/adversarial vectors.
-- [ ] A capability-gated compensation profile and non-vacuous reference implementation pass crash, retry, partial-failure, and operator-recovery scenarios.
-- [ ] A2A 1.0 and MCP 2026-07-28 profiles pass against real upstream peers; legacy profiles are explicitly named and time-bounded.
-- [ ] Workload identity/delegation, observability mapping, and provenance guidance land with threat-model and invariant coverage.
-- [ ] Core/profile naming and the versioned extension registry make unqualified conformance claims unambiguous.
-- [ ] The external security audit completes; all Critical/High findings are remediated and retested.
-- [ ] At least two independent maintainers are appointed and the working-group charter activates.
-- [ ] At least one Tier-3 host passes the corrected strict core-standard suite and one current interop profile.
-- [ ] `INTEROP-MATRIX.md`, `SECURITY.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `COMPATIBILITY.md`, `ROADMAP.md`, `docs/KNOWN-LIMITS.md`, `docs/PROTOCOL-STATUS.md`, and `CHANGELOG.md` reflect the evidence accurately.
-- [ ] Every child RFC's gap and risk registers receive an acceptance sweep.
-- [ ] A new independent assessment finds no Critical open gap and scores every weighted protocol dimension at B or higher, with the overall result at A- or better.
+- [ ] Workstreams 1–3 are implemented; affected prior conformance bundles are inventoried, invalidated where necessary, and reissued. (Partially landed — RFC 0148 §C floor enforcement and the bundle inventory; RFC 0149 §A/§B/§C/§E; RFC 0150 §A/§B/§D/§E. Carried: 0148's requirement ledger and bundle v2, 0149 §D's example extraction, 0150 §C. Reissue is blocked on `openwop-examples`, whose bundle is formally invalidated and unowned.)
+- [ ] OpenAPI resolves every operation correctly and normative discovery examples are mechanically validated. (Resolution landed — 44 operations were resolving to `/v1/v1/*` and discovery to `/v1/.well-known/openwop`; fixed with a gate. "Mechanically validated" is carried: a fenced example is still prose to every validator in the corpus, which is RFC 0149 §D's extraction clause.)
+- [ ] Idempotency, replay digest, canonicalization, and split-brain semantics are internally consistent and pass cross-language/adversarial vectors. (Idempotency and split-brain landed — RFC 0150 §B retired the `attempt`-bearing identity and §D separated record reconciliation from effect authorization. Replay digest and canonicalization are carried (§C), and the cross-language vectors live in `openwop-sdks`.)
+- [ ] A capability-gated compensation profile and non-vacuous reference implementation pass crash, retry, partial-failure, and operator-recovery scenarios. (Carried — RFC 0151 has no implementation at all; see its acceptance criteria.)
+- [ ] A2A 1.0 and MCP 2026-07-28 profiles pass against real upstream peers; legacy profiles are explicitly named and time-bounded. (Carried and externally gated — RFCs 0152/0153 have no implementation, and the peer requirement needs reachable upstream implementations that are not corpus deliverables.)
+- [ ] Workload identity/delegation, observability mapping, and provenance guidance land with threat-model and invariant coverage. (Carried — RFC 0154 has no implementation; its provenance half also spans `openwop-sdks` and `openwop-registry`.)
+- [ ] Core/profile naming and the versioned extension registry make unqualified conformance claims unambiguous. (Carried — RFC 0155 gap G6. The motivating ambiguity is now demonstrated rather than argued, but neither the rename nor `extensions.json` has landed.)
+- [ ] The external security audit completes; all Critical/High findings are remediated and retested. (Externally gated — the engagement is unscheduled; `SECURITY/external-audit-findings.json` records the pre-completion state.)
+- [ ] At least two independent maintainers are appointed and the working-group charter activates. (Externally gated — `MAINTAINERS.md` lists one maintainer. Appointing others is not something this repository can deliver.)
+- [ ] At least one Tier-3 host passes the corrected strict core-standard suite and one current interop profile. (Externally gated — no Tier-3 host exists; the `ROADMAP.md` tripwire has not fired.)
+- [ ] `INTEROP-MATRIX.md`, `SECURITY.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `COMPATIBILITY.md`, `ROADMAP.md`, `docs/KNOWN-LIMITS.md`, `docs/PROTOCOL-STATUS.md`, and `CHANGELOG.md` reflect the evidence accurately. (Carried — CHANGELOG and `docs/PROTOCOL-STATUS.md` track each landing, but the governance and interop documents have not been swept against the current evidence.)
+- [ ] Every child RFC's gap and risk registers receive an acceptance sweep. (Carried — registers are being updated as each section lands (G7-G10 opened this way), but no sweep across all ten has run.)
+- [ ] A new independent assessment finds no Critical open gap and scores every weighted protocol dimension at B or higher, with the overall result at A- or better. (Externally gated — requires an independent assessor, and is the item RFC 0147 §A.10 most directly forbids treating as satisfied by this RFC's own `Accepted` status.)
 
 ## References
 

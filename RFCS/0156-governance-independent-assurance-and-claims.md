@@ -111,13 +111,13 @@ This RFC depends on external decisions and should remain Draft until named candi
 
 ## Acceptance criteria
 
-- [ ] Two independent maintainers appointed and RFC 0038 activated.
-- [ ] Bootstrap waivers retired and high-risk retrospective ledger resolved.
-- [ ] External audit completed; Critical/High findings remediated and retested.
-- [ ] Tier-3 host publishes valid core-standard v2 evidence plus one current interop profile.
-- [ ] Assurance manifest and claims CI gate land across public surfaces.
-- [ ] Security SLA source and recurring review cadence are operational.
-- [ ] Governance, security, contributing, compatibility, roadmap, matrix, status, and CHANGELOG documents agree.
+- [ ] Two independent maintainers appointed and RFC 0038 activated. (Externally gated — `MAINTAINERS.md` lists one maintainer, and appointing others is not a corpus deliverable.)
+- [ ] Bootstrap waivers retired and high-risk retrospective ledger resolved. (Carried, and currently moving the wrong way: the bootstrap waiver mechanism was exercised again on 2026-08-12 to flip RFCs 0147-0156. Retiring it depends on the maintainer item above.)
+- [ ] External audit completed; Critical/High findings remediated and retested. (Externally gated — the engagement is unscheduled.)
+- [ ] Tier-3 host publishes valid core-standard v2 evidence plus one current interop profile. (Externally gated — no Tier-3 host, and the v2 bundle schema does not exist yet either.)
+- [ ] Assurance manifest and claims CI gate land across public surfaces. (Carried — `check-doc-pack-claims.mjs` gates some claim language today, but there is no assurance manifest.)
+- [ ] Security SLA source and recurring review cadence are operational. (Carried.)
+- [ ] Governance, security, contributing, compatibility, roadmap, matrix, status, and CHANGELOG documents agree. (Carried — no drift is known today, but nothing gates it, so "agree" is currently an assertion rather than a checked property.)
 
 ## References
 

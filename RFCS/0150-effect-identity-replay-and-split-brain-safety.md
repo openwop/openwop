@@ -135,12 +135,12 @@ Publish cross-language golden vectors before host changes. Implement Layer-1 sco
 
 ## Acceptance criteria
 
-- [ ] Corrected normative formulas and recipe stamps merged.
-- [ ] Cross-language v2 vectors pass in TypeScript, Python, and Go.
-- [ ] Layer-1 scope and pending lease scenarios pass on SQLite and Postgres hosts.
-- [ ] Partition tests prove stale owners cannot issue effects under `fenced-effects`.
-- [ ] v1 inventory, migrator, dual-read tests, and version runbook published.
-- [ ] Threat models, invariants, OTel vocabulary, CHANGELOG, and interop matrix updated.
+- [ ] Corrected normative formulas and recipe stamps merged. (§B effect identity and §D recovery vocabulary landed in `idempotency.md` v1.3. §C's semantic-digest recipe stamp is carried.)
+- [ ] Cross-language v2 vectors pass in TypeScript, Python, and Go. (Carried — the vectors live in `openwop-sdks`, a separate repository, and cross-language disagreement is precisely what they exist to surface.)
+- [ ] Layer-1 scope and pending lease scenarios pass on SQLite and Postgres hosts. (Carried — §A's keyspace `MUST NOT` landed with a tier-1 host's merged fix as witness, but the pending-lease scenarios are unwritten and the reference hosts live in `openwop-examples`.)
+- [ ] Partition tests prove stale owners cannot issue effects under `fenced-effects`. (Carried — gap register row for §D. The existing `simulate-partition` seam covers record convergence only; proving effect fencing needs an observable effect sink, which is itself the record-vs-effect conflation §D exists to end.)
+- [ ] v1 inventory, migrator, dual-read tests, and version runbook published. (Inventory landed — `docs/EFFECT-IDENTITY-V1-INVENTORY.md`, and it found the migrator has nothing to operate on: zero hosts implement the v1 recipe. Runbook landed in `version-negotiation.md`. Dual-read tests are carried and currently untestable for the same reason the migrator is unneeded.)
+- [ ] Threat models, invariants, OTel vocabulary, CHANGELOG, and interop matrix updated. (Invariants and CHANGELOG landed — three new invariants across §A/§B/§D. OTel vocabulary and interop matrix are carried.)
 
 ## References
 
