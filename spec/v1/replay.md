@@ -162,10 +162,29 @@ interface LLMCacheKeyInput {
   topP?: number;
   topK?: number;
   responseFormat?: { type: 'text' | 'json' | 'tool_call'; schema?: Record<string, unknown> };
+
+  // ── Added by RFC 0150 §C (recipe v2) ──────────────────────────────────────
+  maxOutputTokens?: number;  // decides whether the response is truncated
+  stop?: readonly string[];  // decides where generation halts
+  seed?: number;             // its entire purpose is to change the output
+  safetySettings?: Record<string, unknown>;   // any policy that can alter output
+  providerOptions?: Record<string, unknown>;  // closed, namespaced; see §B
 }
 ```
 
-Fields NOT in this set MUST NOT influence the cache key — including but not limited to: `max_tokens`, `stop`, `stream`, `metadata`, `user`, `seed`, request IDs, trace context, tenant id, run id.
+The canonical object is stamped `recipe: "openwop-semantic-request-v2"`, so a digest computed under the retired v1 rules is **distinguishable** rather than silently comparable.
+
+**Transport-only fields MUST NOT influence the digest:** timeout, trace context, request and correlation IDs, retry counters, credential handles, tenant id, run id, and host metadata. The test is whether the field can change what the model returns — not whether it appears in the HTTP request.
+
+> **v1 excluded `max_tokens`, `stop`, and `seed`, and that was the defect (RFC 0150 §C).**
+> This section previously read: *"Fields NOT in this set MUST NOT influence the cache key —
+> including but not limited to: `max_tokens`, `stop`, `stream`, `metadata`, `user`, `seed`…"*
+> Every one of those three **changes the completion**. Two requests differing only in `stop`
+> produce different text; `seed` exists to change output; the output bound decides whether a
+> response is truncated. Keying them identically does not cause a cache *miss* — it causes a
+> **wrong hit**, returning a response the caller never asked for, and doing so deterministically
+> rather than intermittently. `stream`, `metadata`, and `user` remain excluded because they are
+> transport or bookkeeping and cannot alter the completion.
 
 ### §B Computation
 
@@ -177,7 +196,12 @@ Hosts MUST compute the cache key as follows:
    - For each tool, sort `parameters.properties` keys ascending recursively (RFC 8785 JCS over the tool definition).
    - Preserve `messages[]` order — order is semantically significant and MUST NOT be reordered.
    - Preserve `messages[i].content` shape verbatim (string or array of content blocks) without coalescing.
-2. **Canonicalize to bytes** via RFC 8785 JCS (JSON Canonicalization Scheme). Hosts that don't have JCS available MUST emit JSON with: object keys sorted lexicographically (recursively); no whitespace; no trailing commas; UTF-8 NFC for all strings; numbers serialized per IEEE 754 round-trip.
+   - Place any provider option not named above into a closed, namespaced `providerOptions` object (`vendor.<provider>.<option>`) **before** hashing. **Silently dropping an unknown option is nonconformant** — a dropped option that alters output is exactly the collision this recipe exists to prevent, and dropping it is indistinguishable from the option never having been set.
+2. **Canonicalize to bytes** via RFC 8785 JCS (JSON Canonicalization Scheme). Hosts without a JCS library MUST emit JSON with: object keys sorted lexicographically (recursively); no whitespace; no trailing commas; numbers serialized per IEEE 754 round-trip.
+
+   **Implementations MUST NOT apply Unicode normalization outside JCS.** JCS does not perform NFC, so a fallback that adds it produces **different bytes for the same input** whenever a string is not already normalized — which breaks the cross-host portability §D asserts as a normative invariant.
+
+   > **The two routes this step offered used to be mutually incompatible (RFC 0150 §C).** The no-JCS fallback prescribed Unicode NFC for every string, which JCS itself does not do — so a host with a JCS library and a host without one computed different digests for the same request whenever any string was not already normalized. Both were following the same sentence.
 3. **Hash** the canonical bytes with SHA-256.
 4. **Encode** as lowercase hex.
 
@@ -187,7 +211,7 @@ The resulting 64-character hex string is the **LLM cache key** for that invocati
 
 The LLM cache key is the _content-addressable_ identity of the provider request. It composes with `idempotency.md` Layer 2 as follows:
 
-- The Layer-2 `invocationId` is `sha256(runId || ':' || nodeId || ':' || attempt || ':' || providerKey)` (per `idempotency.md` §"Layer 2: Activity-level idempotency").
+- The Layer-2 identity is `logicalInvocationId`, a domain-separated digest over `(tenantId, runId, nodeId, logicalInvocationOrdinal, providerKey)` per `idempotency.md` §"Idempotency key composition". It deliberately excludes the retry counter: the `attempt`-bearing composition this section used to quote was retired by RFC 0150 §B as a safety-fix, because a key that changes per retry cannot deduplicate the retry it exists for.
 - The LLM cache key is computed in addition, and is the dedup key inside the Layer-2 store for provider-call nodes.
 - A Layer-2 lookup that hits on `invocationId` returns the cached response unconditionally; the LLM cache key is the secondary lookup used when a fresh run computes the same provider request as a different (or no) prior run — enabling cross-run sharing of provider responses where the host opts in.
 
