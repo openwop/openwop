@@ -220,7 +220,7 @@ Conformance: `replay-divergence-at-refusal.test.ts` (advertisement-shape probe l
 | Field                     | Value                                                                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Method + path             | `POST /v1/host/sample/test/multi-region/simulate-partition`                                                                         |
-| Capability gate           | `capabilities.idempotency.multiRegion.supported: true` OR `capabilities.idempotency.crossRegion ∈ {best-effort, strict}` (RFC 0036) |
+| Capability gate           | `capabilities.idempotency.multiRegion.supported: true` OR `capabilities.idempotency.crossRegion ∈ {reconciled-records, fenced-effects}` (RFC 0036, revised by RFC 0150 §D) |
 | Env gate (reference impl) | `OPENWOP_TEST_MULTI_REGION_SIMULATOR=true`                                                                                          |
 | Introduced                | RFC 0036 §C — closes the CF-12 / OPS-5 multi-region simulation gap named in `docs/KNOWN-LIMITS.md`                                  |
 

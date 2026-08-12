@@ -331,6 +331,44 @@ preimage; see `idempotency.md` §"Layer 2 does not survive a fork".
 
 ---
 
+## Multi-region effect-posture vocabulary
+
+> Safety-fix (RFC 0150 §D), `idempotency.md` v1.3. Affects only hosts that advertise
+> `capabilities.idempotency.crossRegion` or the `multiRegion` sub-block.
+
+Unlike the Layer-2 identity change above, this **is** a wire change: the advertised enum
+values differ, so a host and a client can disagree across a deploy.
+
+| Old value | New value | Why |
+| --- | --- | --- |
+| `crossRegion: "best-effort"` | `"reconciled-records"` | Same meaning, honest name — it always described *record* convergence |
+| `crossRegion: "strict"` | *(removed)* | A read-visibility latency claim in an effect-safety slot; see `idempotency.md` §"Recovery postures" |
+| — | `crossRegion: "fenced-effects"` | New, strictly stronger: every effect fenced or provider-idempotent |
+| `partitionRecoveryStrategy: "last-writer-wins"` / `"first-writer-wins"` | `"lexicographic-min-run-id"` | Time-ordered rules cannot produce a reproducible survivor without a shared clock |
+
+The operator sequence:
+
+1. **Do not map `strict` to `fenced-effects`.** A host previously advertising `strict` has
+   evidence of bounded read-visibility and **no** evidence of fencing. Re-advertise as
+   `reconciled-records` unless the fencing requirement in `idempotency.md`
+   §"Reconciliation does not authorize effects" is actually met, and keep the latency claim
+   where it belongs — in `multiRegion.replicationLagBoundMs`, which is unchanged.
+2. **Roll clients before hosts.** A client validating discovery against the old closed enum
+   rejects `reconciled-records` and `fenced-effects`. This is the reverse of the usual
+   ordering, because the *host's* document is what changes shape.
+3. **Re-derive the recovery strategy, do not translate it.** A host that implemented
+   `last-writer-wins` was not conforming — the annex has always MUSTed lex-min(runId), and a
+   clock-ordered winner contradicts it. Advertising `lexicographic-min-run-id` is a claim
+   about the resolver, so verify the resolver first rather than renaming the advertisement.
+4. **Classify what you cannot fence.** A host that can offer neither a fencing token nor a
+   duplicate-suppressing provider **MUST** classify affected effects `at-least-once-risk`
+   rather than silently advertising the lower posture and leaving the risk unnamed.
+
+No `protocolVersion` bump: the enum is an optional capability value, and hosts that
+advertise no `crossRegion` at all are unaffected in both directions.
+
+---
+
 ## Open spec gaps
 
 | #   | Gap                                                                                                                                                                                                                                                 | Owner       |

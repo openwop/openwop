@@ -2216,17 +2216,17 @@
             "partitionRecoveryStrategy": {
               "type": "string",
               "anyOf": [
-                { "enum": ["last-writer-wins", "first-writer-wins"] },
+                { "enum": ["lexicographic-min-run-id"] },
                 { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
               ],
-              "description": "Deterministic resolution rule for conflicting idempotency-key records when a partition healed. `last-writer-wins` / `first-writer-wins` are spec-reserved categorical rules; vendor strategies use `^x-host-<host>-<key>$`. Conformance asserts deterministic resolution actually applies; it does NOT prescribe which strategy a host picks."
+              "description": "RFC 0150 §D — deterministic resolution rule for conflicting idempotency-key records after a partition heals. `lexicographic-min-run-id` is the rule spec/v1/idempotency.md §'Guarantees under partition' MUSTs: the lower runId wins, deterministic without coordination. Vendor strategies use `^x-host-<host>-<key>$` and MUST still satisfy the reproducible-survivor requirement. The time-ordered `last-writer-wins` / `first-writer-wins` values were REMOVED as a safety-fix: under a partition there is no shared clock, so both regions believe they wrote last, which cannot satisfy the annex MUST that re-running the same conflict input produces the same survivor — and both select a different survivor than the lex-min rule the same document requires. Resolving a RECORD never authorizes an EFFECT; see `crossRegion`."
             }
           }
         },
         "crossRegion": {
           "type": "string",
-          "enum": ["single-region", "best-effort", "strict"],
-          "description": "RFC 0036 — categorical multi-region idempotency posture (the canonical conformance-checked surface per spec/v1/idempotency.md §'Multi-region idempotency (annex)'). `single-region`: the host runs in one region and makes no cross-region claim (it MAY still implement the convergence resolver, demonstrable via the multi-region simulator seam). `best-effort`: cross-region reconciliation converges eventually under the annex's lex-min(runId) rule. `strict`: cross-region read-visibility is bounded by `multiRegion.replicationLagBoundMs`. When `best-effort` or `strict`, the host MUST emit the `openwop.idempotency.cross_region_conflicts_total` operator metric. The `multiRegion` sub-block above is the optional granular companion."
+          "enum": ["single-region", "reconciled-records", "fenced-effects"],
+          "description": "RFC 0036, revised by RFC 0150 §D — categorical multi-region idempotency posture (the canonical conformance-checked surface per spec/v1/idempotency.md §'Multi-region idempotency (annex)'). The ladder is about EFFECTS, not replication latency. `single-region`: the host runs in one region and makes no cross-region claim (it MAY still implement the convergence resolver, demonstrable via the multi-region simulator seam). `reconciled-records`: cross-region reconciliation converges eventually under the annex's lex-min(runId) rule, and external effects MAY remain at-least-once — converging on which RECORD survives says nothing about how many times an effect was issued. `fenced-effects`: records converge AND every external effect is either fenced by a monotonic token from a linearizable ownership service or issued to a provider that guarantees duplicate suppression. When `reconciled-records` or `fenced-effects`, the host MUST emit the `openwop.idempotency.cross_region_conflicts_total` operator metric. The `multiRegion` sub-block above is the optional granular companion. REMOVED as a safety-fix: `best-effort` (renamed to `reconciled-records`, which states the effect caveat the old name hid) and `strict`, which promised only that read-visibility was bounded by `multiRegion.replicationLagBoundMs` — a LATENCY claim occupying the top slot of a ladder implementers read as effect safety. A host replicating synchronously at 0 ms can still issue duplicate effects from two regions, because knowing what the other region wrote is not being authorized to act. That latency bound already has its own field, so no information is lost."
         }
       }
     },

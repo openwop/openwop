@@ -822,11 +822,11 @@ When `supported: true`, host implements `POST /v1/runs/{runId}:pause` and `:resu
   "supported": true,
   "layer1RetentionSeconds": 86400,
   "layer2RetentionSeconds": 1209600,
-  "crossRegion": "best-effort"
+  "crossRegion": "reconciled-records"
 }
 ```
 
-`crossRegion` is a closed enum: `"single-region" | "best-effort" | "strict"`. Default value when the block is advertised but the field is omitted MUST be treated as `"single-region"` per `idempotency.md` §"Multi-region idempotency".
+`crossRegion` is a closed enum: `"single-region" | "reconciled-records" | "fenced-effects"` (RFC 0150 §D). The ladder is about **external effects**, not replication latency: `reconciled-records` means the records converge while effects MAY remain at-least-once; only `fenced-effects` claims every effect is fenced or provider-idempotent. Default value when the block is advertised but the field is omitted MUST be treated as `"single-region"` per `idempotency.md` §"Multi-region idempotency". The former `"best-effort"` and `"strict"` values were removed as a safety-fix — see `idempotency.md` §"Recovery postures".
 
 ### `webhooks.signatureAlgorithms` (Track 13)
 

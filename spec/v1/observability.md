@@ -491,7 +491,7 @@ Gated on `capabilities.orchestrator.supported: true`.
 
 ### Idempotency / cross-region metrics
 
-Gated on `capabilities.idempotency.crossRegion ∈ {"best-effort","strict"}`.
+Gated on `capabilities.idempotency.crossRegion ∈ {"reconciled-records","fenced-effects"}` (RFC 0150 §D; formerly `{"best-effort","strict"}`).
 
 #### `openwop.idempotency.cross_region_conflicts_total`
 
