@@ -27,6 +27,14 @@ The current Layer-2 formula hashes `attempt`, so a retry receives a different in
 
 The Layer-1 cache key **MUST** be `(authenticatedTenantId, canonicalEndpointId, callerIdempotencyKey)`. Tenant identity **MUST** come from authenticated context, never the body. A record **MUST** persist `requestDigest`, state (`pending|completed|retryable-failure|terminal-failure`), lease owner/expiry, and terminal response metadata. A crashed or expired pending owner **MAY** be reclaimed atomically. A different request digest under the same scoped key **MUST** fail with the canonical mismatch error and **MUST NOT** return a cached body.
 
+A host **MUST NOT** store host-generated identifiers — internal locks, scheduler fire-once slots, or any key the host mints for itself — in the Layer-1 idempotency store. Caller-supplied and host-generated identifiers **MUST NOT** share a keyspace, whatever the caller's lane is keyed by.
+
+**This does not follow from the tuple above, which is why it is stated separately.** The tuple constrains key *composition* and record *shape*; it does not make the store *exclusive*. A host can key its HTTP lane exactly as required and still keep daemon keys in the same table under a bare primary key, because those keys never entered the tuple's keyspace at all. Reported by a tier-1 host that had precisely this shape: because `Idempotency-Key` is caller-controlled and validated nowhere, any authenticated tenant could send `Idempotency-Key: schedule-fire:<jobId>:<slot>`, win the scheduler's row, and make a scheduled job **skip**. That is privilege escalation through an unvalidated header, not a storage-layout preference.
+
+**The failure semantics make separation forced rather than tidy.** §A already requires the caller lane to distinguish `retryable-failure`, so a failed attempt releases and a retry may re-execute. A fire-once daemon slot needs the opposite: releasing it on failure lets another instance re-fire work the first may have half-performed. Two concepts with contradictory release rules cannot correctly share one table, so a host that merges them is wrong for a second, independent reason.
+
+Key handling is already covered by §F — logs and spans **MUST NOT** expose caller keys and **MAY** expose truncated keyed hashes. That matters more than it looks here: the key is caller-controlled and routinely embeds customer identifiers, because clients derive it from their own domain objects. A per-boot-salted truncated digest is a conforming implementation of §F, and one is deployed.
+
 ### §B — Logical effect identity v2
 
 ```text
@@ -80,6 +88,7 @@ Runs **MUST** stamp `activityIdentityRecipe` and `semanticRequestRecipe`. Existi
 Add invariants:
 
 - `idempotency-key-tenant-endpoint-scoped`;
+- `idempotency-store-no-host-generated-keys` — a caller-supplied `Idempotency-Key` **MUST NOT** be able to name, claim, or suppress a host-generated lock. **Witness is not black-box:** "shares no keyspace" is a storage-layout property no wire probe can see. The observable projection is that a caller-supplied key MUST NOT affect an operation the caller did not initiate, which needs a host-sample seam to exercise; absent one this lands reference-impl tier, and saying so is preferable to a scenario that passes without executing (RFC 0148 §A). Recorded as gap G8;
 - `logical-effect-id-retry-stable`;
 - `replay-semantic-digest-complete`; and
 - `multi-region-stale-owner-no-effect`.
