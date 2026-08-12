@@ -129,12 +129,12 @@ Implement after RFC 0150's effect identities. Start with reverse-completion and 
 
 ## Acceptance criteria
 
-- [ ] Spec, policy schema, capability, events, and API/AsyncAPI projections land.
-- [ ] Reverse-unwind, retry, crash, partial/manual, approval, replay, and isolation scenarios pass.
-- [ ] Effect IDs compose with RFC 0150.
-- [ ] Threat models and invariants land.
-- [ ] One reference host demonstrates non-vacuous recovery from a mid-unwind crash.
-- [ ] SDK types, fixtures catalog, interop matrix, and CHANGELOG update.
+- [ ] Spec, policy schema, capability, events, and API/AsyncAPI projections land. (Carried — nothing has landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Reverse-unwind, retry, crash, partial/manual, approval, replay, and isolation scenarios pass. (Carried — depends on the spec and schema above, none of which exist.)
+- [ ] Effect IDs compose with RFC 0150. (Carried, and now the one item with a concrete dependency: RFC 0150 §B landed `logicalInvocationId`, so the composition target is fixed. §C's semantic digest is not, so the composition cannot be specified end-to-end yet.)
+- [ ] Threat models and invariants land. (Carried with the spec above.)
+- [ ] One reference host demonstrates non-vacuous recovery from a mid-unwind crash. (Carried — reference hosts live in `openwop-examples`, and there is no compensation surface for one to implement.)
+- [ ] SDK types, fixtures catalog, interop matrix, and CHANGELOG update. (Carried with the spec above.)
 
 ## References
 

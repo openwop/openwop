@@ -130,12 +130,12 @@ Reuse the synthetic OIDC issuer and mTLS harness where possible. Keep proof veri
 
 ## Acceptance criteria
 
-- [ ] Identity/delegation schemas, capability profile, and auth prose land.
-- [ ] Verification, fail-closed authorization, sender constraint, and negative chain tests pass.
-- [ ] OTel mapping is versioned and optional.
-- [ ] Release/suite/SDK/pack provenance attestations verify from a clean checkout.
-- [ ] Threat models, invariants, audit events, fixtures, interop matrix, and CHANGELOG update.
-- [ ] External auditor reviews the identity and provenance implementation.
+- [ ] Identity/delegation schemas, capability profile, and auth prose land. (Carried — nothing has landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Verification, fail-closed authorization, sender constraint, and negative chain tests pass. (Carried — depends on the schemas above.)
+- [ ] OTel mapping is versioned and optional. (Carried with the schemas above.)
+- [ ] Release/suite/SDK/pack provenance attestations verify from a clean checkout. (Carried — attestation generation spans this repo, `openwop-sdks`, and `openwop-registry`, so it cannot land here alone.)
+- [ ] Threat models, invariants, audit events, fixtures, interop matrix, and CHANGELOG update. (Carried with the schemas above.)
+- [ ] External auditor reviews the identity and provenance implementation. (Externally gated — the audit engagement is unscheduled; `SECURITY/external-audit-findings.json` records the pre-completion state.)
 
 ## References
 
