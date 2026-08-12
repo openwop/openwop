@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.3 (2026-08-12).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.4 (2026-08-12).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -143,6 +143,39 @@ is served the first tenant's cached provider response.
 > within a run* safe, not to stop a replay from re-performing an effect. Suppressing
 > a replay's external effects is a separate mechanism — see `replay.md`
 > §"Side-effect suppression in replay".
+
+### The identity is run-scoped, and what that costs
+
+`runId` is in the preimage, so a Layer-2 identity is **run-scoped**. The fork note above is
+one face of that; this is the other, and it is the one with teeth.
+
+An effect issued **outside any run** has no `runId`, so it cannot produce a Layer-2 identity
+at all — and therefore can never collide with one. Layer 2 deduplicates retries of a node's
+effect against each other. It does **not** deduplicate a node's effect against the same
+logical effect issued through an operator route, an admin action, or a scheduled job.
+
+Where a node's side effect is **also reachable outside any run**, Layer-2 identity is
+therefore **insufficient on its own**, and the host **MUST additionally key** that effect on
+an identity derived from the business operation — stable across every entry point, and
+containing no `runId`, `nodeId`, or ordinal.
+
+This matters because §"Why this exists" requires Layer 2 "for any node executor that
+performs an external side effect", and a host reading that literally would use the
+composition above and stop. For an effect only a node can perform, that is correct. For one
+an operator can also perform, it means an agent refunding order *X* inside a run does not
+deduplicate against an operator who refunded order *X* through the API thirty seconds
+earlier — two refunds for one logical operation, which is exactly the duplicate-effect class
+this layer exists to prevent, on the highest-stakes path it touches.
+
+The business identity does not replace the Layer-2 identity; it constrains a wider scope.
+A host MAY use the business key alone where the effect is always cross-entry-point, and
+**SHOULD** document which scope each of its effects is keyed at, because the two are not
+interchangeable and the failure is silent in both directions.
+
+> Reported by a tier-1 host from a shipped node pack rather than proposed in the abstract:
+> a `refund-order` node and three non-run entry points reach one `refundOrder`
+> implementation, which is keyed on business identity **deliberately** — because for that
+> effect, run scope is the wrong scope.
 
 
 ### Engine guarantees
