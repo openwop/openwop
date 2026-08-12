@@ -105,6 +105,10 @@ echo
 # this repo, so the guard can't run in this server-free local gate.
 echo "[4/6] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
+# RFC 0155 §B — the core-standard manifest is DERIVED, so it can go stale the
+# moment the corpus moves. Checking it here is the "generated from or checked
+# against" half of §B; without it the manifest would assert a floor nobody runs.
+node "$SPEC_ROOT/scripts/generate-core-standard-manifest.mjs" --check
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 node "$SPEC_ROOT/scripts/check-capability-declaration-classes.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the

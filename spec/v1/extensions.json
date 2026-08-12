@@ -1,0 +1,102 @@
+{
+  "$comment": [
+    "RFC 0155 \u00a7C \u2014 versioned extension registry.",
+    "",
+    "Closed records for the normative extensions this corpus defines. `maturity` is",
+    "one of experimental|draft|stable|deprecated, and \u00a7C sets a hard bar for stable:",
+    "normative prose, schemas, non-vacuous conformance, SDK support where applicable,",
+    "and at least one Tier-3 implementation.",
+    "",
+    "This registry is NOT complete for the whole corpus. It covers the extensions the",
+    "RFC 0147 program introduces or names, backfilled from each RFC's own status and",
+    "its landed/carried annotations. Extensions predating the program are unlisted,",
+    "and unlisted means UNCOVERED rather than compliant \u2014 the same distinction",
+    "RFC 0148 \u00a7C drew between an empty floor and an unwritten one.",
+    "",
+    "NOTE: every record here is at most `draft`. \u00a7C gates `stable` on a Tier-3",
+    "implementation, and no Tier-3 host exists \u2014 the `ROADMAP.md` tripwire has not",
+    "fired. That ceiling is a fact about adoption, not about the maturity of the work,",
+    "and the registry states it instead of quietly promoting anything."
+  ],
+  "rfc": "0155 \u00a7C",
+  "extensions": [
+    {
+      "id": "openwop-compensation-v1",
+      "maturity": "draft",
+      "owningRfc": "0151",
+      "capabilityPath": "compensation.supported",
+      "dependsOn": [
+        "openwop-core-standard"
+      ],
+      "securityTier": "high",
+      "minimumSuiteVersion": null,
+      "evidenceTier": null,
+      "note": "RFC 0151 is `Accepted` with ZERO implementation \u2014 no spec prose, no schema, no conformance. `draft` not `experimental`: the shape is specified in the RFC, nothing implements it."
+    },
+    {
+      "id": "openwop-a2a-1-0",
+      "maturity": "draft",
+      "owningRfc": "0152",
+      "capabilityPath": "a2a.protocolVersion",
+      "dependsOn": [
+        "openwop-core-standard"
+      ],
+      "securityTier": "high",
+      "minimumSuiteVersion": null,
+      "evidenceTier": null,
+      "note": "RFC 0152 `Accepted`, nothing landed. Stable additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable."
+    },
+    {
+      "id": "openwop-mcp-2026-07-28",
+      "maturity": "draft",
+      "owningRfc": "0153",
+      "capabilityPath": "mcp.protocolVersion",
+      "dependsOn": [
+        "openwop-core-standard"
+      ],
+      "securityTier": "high",
+      "minimumSuiteVersion": null,
+      "evidenceTier": null,
+      "note": "RFC 0153 `Accepted`, nothing landed. Same external gate as 0152: a pinned upstream peer at the current revision."
+    },
+    {
+      "id": "openwop-workload-identity-v1",
+      "maturity": "draft",
+      "owningRfc": "0154",
+      "capabilityPath": "workloadIdentity.supported",
+      "dependsOn": [
+        "openwop-core-standard"
+      ],
+      "securityTier": "high",
+      "minimumSuiteVersion": null,
+      "evidenceTier": null,
+      "note": "RFC 0154 `Accepted`, nothing landed. Provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone."
+    },
+    {
+      "id": "openwop-effect-identity-v2",
+      "maturity": "draft",
+      "owningRfc": "0150",
+      "capabilityPath": "idempotency.supported",
+      "dependsOn": [
+        "openwop-core-standard"
+      ],
+      "securityTier": "high",
+      "minimumSuiteVersion": "1.86.0",
+      "evidenceTier": null,
+      "note": "RFC 0150 \u00a7B/\u00a7C/\u00a7D landed with normative prose, conformance, invariants, and golden vectors \u2014 the richest evidence any extension here has. Still `draft`, not `stable`: \u00a7C requires at least one Tier-3 implementation for stable, and none exists. **No extension in this corpus can currently reach `stable` for that reason**, which is a fact about adoption rather than about the work, and is recorded here rather than worked around."
+    },
+    {
+      "id": "openwop-multi-region-fenced-effects",
+      "maturity": "draft",
+      "owningRfc": "0150",
+      "capabilityPath": "idempotency.crossRegion",
+      "dependsOn": [
+        "openwop-core-standard"
+      ],
+      "securityTier": "high",
+      "minimumSuiteVersion": "1.78.0",
+      "evidenceTier": null,
+      "note": "RFC 0150 \u00a7D vocabulary landed, but no host implements fencing and the witness is corpus-structural (gap G10)."
+    }
+  ]
+}

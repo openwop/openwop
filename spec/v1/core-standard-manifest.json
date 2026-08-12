@@ -1,0 +1,409 @@
+{
+  "profile": "openwop-core-standard",
+  "rfc": "0155 §B",
+  "provenance": {
+    "suite": {
+      "package": "@openwop/openwop-conformance",
+      "version": "1.87.0"
+    },
+    "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
+  },
+  "floor": {
+    "requiredScenarios": [
+      "audit-log-verification.test.ts",
+      "auth.test.ts",
+      "discovery.test.ts",
+      "eventOrdering.test.ts",
+      "failure-path.test.ts",
+      "idempotency-key-determinism.test.ts",
+      "idempotency.test.ts",
+      "runs-lifecycle.test.ts",
+      "webhook-negative.test.ts"
+    ],
+    "requiredAnyPrefix": [
+      "interrupt-"
+    ]
+  },
+  "requirementIds": [
+    "openwop.floor.any.interrupt-",
+    "openwop.floor.audit-log-verification",
+    "openwop.floor.auth",
+    "openwop.floor.discovery",
+    "openwop.floor.eventOrdering",
+    "openwop.floor.failure-path",
+    "openwop.floor.idempotency",
+    "openwop.floor.idempotency-key-determinism",
+    "openwop.floor.runs-lifecycle",
+    "openwop.floor.webhook-negative"
+  ],
+  "openapiOperations": [
+    "bulkCancelRuns",
+    "cancelRun",
+    "createAnnotation",
+    "createContentPage",
+    "createPromptTemplate",
+    "createRun",
+    "createTriggerSubscription",
+    "deletePromptTemplate",
+    "deleteTestPackVersion",
+    "deleteWorkspaceFile",
+    "diffRun",
+    "forkRun",
+    "getA2ATaskState",
+    "getAgent",
+    "getAgentOrgChart",
+    "getAgentOrgChartDepartment",
+    "getAgentRosterEntry",
+    "getArtifact",
+    "getCapabilities",
+    "getContentPage",
+    "getContentSettings",
+    "getEvalSummary",
+    "getOpenApiSpec",
+    "getPromptTemplate",
+    "getRun",
+    "getRunAncestry",
+    "getTestPackSignature",
+    "getTestPackTarball",
+    "getTool",
+    "getWorkflow",
+    "getWorkspaceFile",
+    "inspectInterruptByToken",
+    "listAgentDeployments",
+    "listAgentRoster",
+    "listAgents",
+    "listAnnotations",
+    "listContentPages",
+    "listPromptTemplates",
+    "listTools",
+    "listWorkspaceFiles",
+    "pauseRun",
+    "pollRunEvents",
+    "putContentSection",
+    "putContentSettings",
+    "putTestPackTarball",
+    "putWorkspaceFile",
+    "registerWebhook",
+    "renderPromptTemplate",
+    "resolveInterruptByRun",
+    "resolveInterruptByToken",
+    "resumeRun",
+    "streamRunEvents",
+    "transitionAgentDeployment",
+    "unregisterWebhook",
+    "updatePromptTemplate",
+    "verifyAuditLog"
+  ],
+  "asyncapiMessages": [],
+  "schemas": [
+    {
+      "file": "schemas/a2a-task-state.schema.json",
+      "$id": "https://openwop.dev/spec/v1/a2a-task-state.schema.json"
+    },
+    {
+      "file": "schemas/a2ui-surface-delta-frame.schema.json",
+      "$id": "https://openwop.dev/spec/v1/a2ui-surface-delta-frame.schema.json"
+    },
+    {
+      "file": "schemas/agent-deployment-transition.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-deployment-transition.schema.json"
+    },
+    {
+      "file": "schemas/agent-deployment.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-deployment.schema.json"
+    },
+    {
+      "file": "schemas/agent-eval-suite.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-eval-suite.schema.json"
+    },
+    {
+      "file": "schemas/agent-inventory-response.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-inventory-response.schema.json"
+    },
+    {
+      "file": "schemas/agent-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-manifest.schema.json"
+    },
+    {
+      "file": "schemas/agent-org-chart.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-org-chart.schema.json"
+    },
+    {
+      "file": "schemas/agent-ref.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-ref.schema.json"
+    },
+    {
+      "file": "schemas/agent-roster-entry.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-roster-entry.schema.json"
+    },
+    {
+      "file": "schemas/agent-roster-response.schema.json",
+      "$id": "https://openwop.dev/spec/v1/agent-roster-response.schema.json"
+    },
+    {
+      "file": "schemas/ai-envelope.schema.json",
+      "$id": "https://openwop.dev/spec/v1/ai-envelope.schema.json"
+    },
+    {
+      "file": "schemas/annotation-create.schema.json",
+      "$id": "https://openwop.dev/spec/v1/annotation-create.schema.json"
+    },
+    {
+      "file": "schemas/annotation.schema.json",
+      "$id": "https://openwop.dev/spec/v1/annotation.schema.json"
+    },
+    {
+      "file": "schemas/artifact-type-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/artifact-type-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/audit-verify-result.schema.json",
+      "$id": "https://openwop.dev/spec/v1/audit-verify-result.schema.json"
+    },
+    {
+      "file": "schemas/budget-policy.schema.json",
+      "$id": "https://openwop.dev/spec/v1/budget-policy.schema.json"
+    },
+    {
+      "file": "schemas/capabilities.schema.json",
+      "$id": "https://openwop.dev/spec/v1/capabilities.schema.json"
+    },
+    {
+      "file": "schemas/channel-presence-payload.schema.json",
+      "$id": "https://openwop.dev/spec/v1/channel-presence-payload.schema.json"
+    },
+    {
+      "file": "schemas/channel-written-payload.schema.json",
+      "$id": "https://openwop.dev/spec/v1/channel-written-payload.schema.json"
+    },
+    {
+      "file": "schemas/chat-card-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/chat-card-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/compact-tool-descriptor.schema.json",
+      "$id": "https://openwop.dev/spec/v1/compact-tool-descriptor.schema.json"
+    },
+    {
+      "file": "schemas/conformance-certification-bundle.schema.json",
+      "$id": "https://openwop.dev/spec/v1/conformance-certification-bundle.schema.json"
+    },
+    {
+      "file": "schemas/connection-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/connection-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/conversation-event.schema.json",
+      "$id": "https://openwop.dev/spec/v1/conversation-event.schema.json"
+    },
+    {
+      "file": "schemas/conversation-turn.schema.json",
+      "$id": "https://openwop.dev/spec/v1/conversation-turn.schema.json"
+    },
+    {
+      "file": "schemas/core-conformance-mock-agent-config.schema.json",
+      "$id": "https://openwop.dev/spec/v1/core-conformance-mock-agent-config.schema.json"
+    },
+    {
+      "file": "schemas/credential-provenance.schema.json",
+      "$id": "https://openwop.dev/spec/v1/credential-provenance.schema.json"
+    },
+    {
+      "file": "schemas/credential-reference.schema.json",
+      "$id": "https://openwop.dev/spec/v1/credential-reference.schema.json"
+    },
+    {
+      "file": "schemas/debug-bundle.schema.json",
+      "$id": "https://openwop.dev/spec/v1/debug-bundle.schema.json"
+    },
+    {
+      "file": "schemas/dispatch-config.schema.json",
+      "$id": "https://openwop.dev/spec/v1/dispatch-config.schema.json"
+    },
+    {
+      "file": "schemas/error-envelope.schema.json",
+      "$id": "https://openwop.dev/spec/v1/error-envelope.schema.json"
+    },
+    {
+      "file": "schemas/eval-summary.schema.json",
+      "$id": "https://openwop.dev/spec/v1/eval-summary.schema.json"
+    },
+    {
+      "file": "schemas/export-bundle.schema.json",
+      "$id": "https://openwop.dev/spec/v1/export-bundle.schema.json"
+    },
+    {
+      "file": "schemas/form-content-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/form-content-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/frontend-plugin-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/frontend-plugin-manifest.schema.json"
+    },
+    {
+      "file": "schemas/goal.schema.json",
+      "$id": "https://openwop.dev/spec/v1/goal.schema.json"
+    },
+    {
+      "file": "schemas/heartbeat-evaluated.schema.json",
+      "$id": "https://openwop.dev/spec/v1/heartbeat-evaluated.schema.json"
+    },
+    {
+      "file": "schemas/heartbeat-state-changed.schema.json",
+      "$id": "https://openwop.dev/spec/v1/heartbeat-state-changed.schema.json"
+    },
+    {
+      "file": "schemas/localized-content-language-settings.schema.json",
+      "$id": "https://openwop.dev/spec/v1/localized-content-language-settings.schema.json"
+    },
+    {
+      "file": "schemas/localized-content-page-response.schema.json",
+      "$id": "https://openwop.dev/spec/v1/localized-content-page-response.schema.json"
+    },
+    {
+      "file": "schemas/localized-content-page.schema.json",
+      "$id": "https://openwop.dev/spec/v1/localized-content-page.schema.json"
+    },
+    {
+      "file": "schemas/localized-content-section.schema.json",
+      "$id": "https://openwop.dev/spec/v1/localized-content-section.schema.json"
+    },
+    {
+      "file": "schemas/memory-entry.schema.json",
+      "$id": "https://openwop.dev/spec/v1/memory-entry.schema.json"
+    },
+    {
+      "file": "schemas/memory-list-options.schema.json",
+      "$id": "https://openwop.dev/spec/v1/memory-list-options.schema.json"
+    },
+    {
+      "file": "schemas/node-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/node-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/orchestrator-decision.schema.json",
+      "$id": "https://openwop.dev/spec/v1/orchestrator-decision.schema.json"
+    },
+    {
+      "file": "schemas/org-chart-responsibility-view.schema.json",
+      "$id": "https://openwop.dev/spec/v1/org-chart-responsibility-view.schema.json"
+    },
+    {
+      "file": "schemas/pack-lockfile.schema.json",
+      "$id": "https://openwop.dev/spec/v1/pack-lockfile.schema.json"
+    },
+    {
+      "file": "schemas/prompt-kind.schema.json",
+      "$id": "https://openwop.dev/spec/v1/prompt-kind.schema.json"
+    },
+    {
+      "file": "schemas/prompt-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/prompt-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/prompt-ref.schema.json",
+      "$id": "https://openwop.dev/spec/v1/prompt-ref.schema.json"
+    },
+    {
+      "file": "schemas/prompt-template.schema.json",
+      "$id": "https://openwop.dev/spec/v1/prompt-template.schema.json"
+    },
+    {
+      "file": "schemas/proposal.schema.json",
+      "$id": "https://openwop.dev/spec/v1/proposal.schema.json"
+    },
+    {
+      "file": "schemas/registry-version-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/registry-version-manifest.schema.json"
+    },
+    {
+      "file": "schemas/residency.schema.json",
+      "$id": "https://openwop.dev/spec/v1/residency.schema.json"
+    },
+    {
+      "file": "schemas/run-ancestry-response.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-ancestry-response.schema.json"
+    },
+    {
+      "file": "schemas/run-diff-response.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-diff-response.schema.json"
+    },
+    {
+      "file": "schemas/run-event-payloads.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json"
+    },
+    {
+      "file": "schemas/run-event.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-event.schema.json"
+    },
+    {
+      "file": "schemas/run-options.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-options.schema.json"
+    },
+    {
+      "file": "schemas/run-orchestrator-decided-event.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-orchestrator-decided-event.schema.json"
+    },
+    {
+      "file": "schemas/run-snapshot.schema.json",
+      "$id": "https://openwop.dev/spec/v1/run-snapshot.schema.json"
+    },
+    {
+      "file": "schemas/security-advisory.schema.json",
+      "$id": "https://openwop.dev/spec/v1/security-advisory.schema.json"
+    },
+    {
+      "file": "schemas/self-hosted-runner-dispatch-frame.schema.json",
+      "$id": "https://openwop.dev/spec/v1/self-hosted-runner-dispatch-frame.schema.json"
+    },
+    {
+      "file": "schemas/self-hosted-runner-registration.schema.json",
+      "$id": "https://openwop.dev/spec/v1/self-hosted-runner-registration.schema.json"
+    },
+    {
+      "file": "schemas/self-hosted-runner-result-frame.schema.json",
+      "$id": "https://openwop.dev/spec/v1/self-hosted-runner-result-frame.schema.json"
+    },
+    {
+      "file": "schemas/suspend-request.schema.json",
+      "$id": "https://openwop.dev/spec/v1/suspend-request.schema.json"
+    },
+    {
+      "file": "schemas/tool-descriptor.schema.json",
+      "$id": "https://openwop.dev/spec/v1/tool-descriptor.schema.json"
+    },
+    {
+      "file": "schemas/trigger-event.schema.json",
+      "$id": "https://openwop.dev/spec/v1/trigger-event.schema.json"
+    },
+    {
+      "file": "schemas/trigger-subscription-registration.schema.json",
+      "$id": "https://openwop.dev/spec/v1/trigger-subscription-registration.schema.json"
+    },
+    {
+      "file": "schemas/trigger-subscription.schema.json",
+      "$id": "https://openwop.dev/spec/v1/trigger-subscription.schema.json"
+    },
+    {
+      "file": "schemas/ui-plugin-message.schema.json",
+      "$id": "https://openwop.dev/spec/v1/ui-plugin-message.schema.json"
+    },
+    {
+      "file": "schemas/workflow-chain-pack-manifest.schema.json",
+      "$id": "https://openwop.dev/spec/v1/workflow-chain-pack-manifest.schema.json"
+    },
+    {
+      "file": "schemas/workflow-definition.schema.json",
+      "$id": "https://openwop.dev/spec/v1/workflow-definition.schema.json"
+    },
+    {
+      "file": "schemas/workspace-file-create.schema.json",
+      "$id": "https://openwop.dev/spec/v1/workspace-file-create.schema.json"
+    },
+    {
+      "file": "schemas/workspace-file.schema.json",
+      "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
+    }
+  ],
+  "digest": "7a867d2c446dd68a936e33e746e181a3542c73bfd59a4468eebce2a65d6c9997"
+}
