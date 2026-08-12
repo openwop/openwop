@@ -33,6 +33,12 @@ The canonical OpenAPI server URL ends in `/v1` while versioned paths also begin 
 
 All canonical versioned paths remain `/v1/*`; `/.well-known/openwop` remains unversioned. A corpus gate **MUST** resolve every server/path pair and prove exactly one `/v1` segment for versioned operations. SDK operation URLs and AsyncAPI bindings **MUST** match the resolved OpenAPI path.
 
+**Landed 2026-08-11** as `openapi-resolved-paths.test.ts` (suite `1.74.0`) plus the one-line `servers[].url` correction. The gate was written first and observed red against the uncorrected document, then green after it — 44 versioned path keys resolved to `/v1/v1/*` before the fix.
+
+The red run surfaced a second consequence this section had not anticipated: **`/.well-known/openwop` is a path key in the same document**, so the duplicated base resolved it to `/v1/.well-known/openwop`. A client generated from the canonical contract could not perform discovery at all, which is a worse failure than a mis-resolved operation because discovery is the bootstrap — every capability decision downstream depends on it. The gate therefore asserts unversioned resolution for `/.well-known/*` as a distinct leg, since a base path that silently versions the discovery route is the same defect pointing the other way.
+
+Classified **editorial** rather than safety-fix on the evidence that nothing which ever worked can break: the doubled prefix names routes no host serves, and the reference SDKs already issue `/v1/runs` against a bare base URL, so the SDKs and the OpenAPI document disagreed and the SDKs were correct. Resolves UQ1.
+
 ### §B — Discovery examples and authoring validation
 
 Every OpenWOP discovery example **MUST** place canonical capability families at document root. A top-level property named `capabilities` in an OpenWOP discovery example **MUST** fail authoring CI. Server-emitted discovery remains open at runtime for additive v1 fields. Authoring lint **MUST** reject:
@@ -95,7 +101,7 @@ All are server-free and always-on. Fixtures cover valid root discovery, wrapper,
 
 ## Unresolved questions
 
-1. Which generators or clients have implemented a workaround for `/v1/v1`?
+1. ~~Which generators or clients have implemented a workaround for `/v1/v1`?~~ **Resolved 2026-08-11** — none. The reference SDKs issue `/v1/*` against a bare base URL, so they never consumed the OpenAPI server value; no host serves the doubled route; and no workaround was found in the corpus or the SDK repositories. This is what made the correction editorial.
 2. What edit-distance rule avoids false positives for legitimate extension names?
 3. Is a temporary `1.0.0` normalization warning required for any deployed host?
 4. Which stale lifecycle statements are intentional historical notes rather than defects?
