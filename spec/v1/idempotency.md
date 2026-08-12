@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.2 (2026-08-12).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.3 (2026-08-12).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -225,6 +225,57 @@ For Layer 1 (HTTP `Idempotency-Key`) under multi-region replication:
    - The losing run's `Idempotency-Key` cache entry is updated to point at the winning `runId`.
    - Subsequent retries with that key return the winning run.
 
+### Reconciliation does not authorize effects
+
+Run-record reconciliation and permission to issue an external effect are **separate
+questions**, and the convergence rule above answers only the first.
+
+Lexicographic run-ID reconciliation **MAY** select a surviving record, but it **MUST NOT
+authorize effects**. Picking a survivor is a statement about which row is canonical *after*
+the fact; it says nothing about how many times a charge was posted, a message sent, or a
+completion billed while the partition was open. Two regions that each executed the effect
+have already executed it twice, and cancelling the losing run does not un-send anything.
+
+A host claiming multi-region **effect** safety **MUST**, before issuing an external effect,
+obtain a monotonically increasing **fencing token** from a linearizable ownership service.
+The effect adapter **MUST** then either reject a stale token, or issue the effect to a
+provider that guarantees duplicate suppression under the stable `logicalInvocationId`
+(§"Idempotency key composition"). One of those two properties **MUST** hold at the moment
+the effect is issued.
+
+If neither is available, the host **MUST NOT** claim `fenced-effects`, and **MUST** classify
+the effect as `at-least-once-risk` in its own operator surface. The classification is
+required rather than optional because an unquantified duplicate-effect risk is the one
+operators cannot plan around: an effect known to be at-least-once can be made safe
+downstream by a reconciliation job or a business-level dedup, while an effect *believed* to
+be exactly-once cannot, because nobody writes the compensating control.
+
+### Recovery postures
+
+`capabilities.idempotency.crossRegion` is a closed enum of three postures, and the ladder is
+about **effects**, not replication latency:
+
+| Value | Records | External effects |
+| --- | --- | --- |
+| `single-region` | No cross-region claim | No cross-region claim |
+| `reconciled-records` | Converge under lex-min(runId) | **MAY remain at-least-once** |
+| `fenced-effects` | Converge under lex-min(runId) | Every effect fenced or provider-idempotent |
+
+Hosts advertising `reconciled-records` or `fenced-effects` **MUST** emit
+`openwop.idempotency.cross_region_conflicts_total`.
+
+> **`best-effort` and `strict` were removed (RFC 0150 §D, safety-fix).** `best-effort` is
+> renamed `reconciled-records`, which states the effect caveat the old name concealed — it
+> always meant *records* converge, and a reader could be forgiven for hearing a best effort
+> at not duplicating effects. `strict` is removed outright rather than renamed: it promised
+> only that read-visibility was bounded by `multiRegion.replicationLagBoundMs`, which is a
+> **latency** claim that happened to occupy the top slot of a ladder implementers read as
+> effect safety. A host replicating synchronously at 0 ms can still issue duplicate effects
+> from two regions, because knowing what the other region wrote is not the same as being
+> authorized to act. Renaming it to `fenced-effects` would have promoted every existing
+> `strict` advertisement into a claim no host has substantiated. Its latency content is not
+> lost — `multiRegion.replicationLagBoundMs` already carries it, and always did.
+
 ### Operator surface
 
 Hosts SHOULD expose:
@@ -232,11 +283,24 @@ Hosts SHOULD expose:
 - `openwop.idempotency.cross_region_conflicts_total` — counter, labeled by `(tenant, route, region_pair)`.
 - `openwop.idempotency.partition_seconds` — gauge of estimated cache divergence in seconds.
 
-### Why "best-effort under partition"
+### Why records converge but effects may not
 
-Strict cross-region idempotency requires synchronous replication on every request, which adds inter-region RTT to every mutation. The annex chooses availability + observable convergence over strict consistency. Hosts that need strict cross-region dedup MUST advertise a stricter `capabilities.idempotency.crossRegion: "strict"` value and pay the latency cost; the default value remains `"best-effort"`.
+Bounding cross-region replication requires synchronous replication on every request, which
+adds inter-region RTT to every mutation. The annex chooses availability plus observable
+convergence over synchronous consistency, and `reconciled-records` is the honest name for
+that trade: the records converge, and the effects issued while the partition was open did
+not un-issue themselves.
+
+Paying the replication cost does **not** buy effect safety on its own — that is what the
+removal of `strict` records. Effect safety costs a *different* thing: a linearizable
+ownership service on the path of every effect, or a provider that suppresses duplicates.
+Hosts that need it advertise `fenced-effects` and pay for a fencing check per effect. The
+default posture remains `reconciled-records`.
 
 ### Capability advertisement
+
+The `crossRegion` value is one of `single-region`, `reconciled-records`, or `fenced-effects`
+(§"Recovery postures"):
 
 ```json
 {
@@ -244,26 +308,32 @@ Strict cross-region idempotency requires synchronous replication on every reques
     "supported": true,
     "layer1RetentionSeconds": 86400,
     "layer2RetentionSeconds": 1209600,
-    "crossRegion": "single-region" | "best-effort" | "strict",
+    "crossRegion": "reconciled-records",
     "multiRegion": {
       "supported": true,
       "replicationLagBoundMs": 5000,
-      "partitionRecoveryStrategy": "last-writer-wins"
+      "partitionRecoveryStrategy": "lexicographic-min-run-id"
     }
   }
 }
 ```
 
-Clients SHOULD inspect `capabilities.idempotency.crossRegion` before relying on multi-region guarantees.
+Clients SHOULD inspect `capabilities.idempotency.crossRegion` before relying on multi-region guarantees. A client that requires exactly-once external effects **MUST** check for `fenced-effects` specifically; `reconciled-records` does not provide it.
 
 ### `multiRegion` sub-block (RFC 0036, normative when `multiRegion.supported: true`)
 
-Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21). The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "strict"` SHOULD also advertise `multiRegion.supported: true` with `replicationLagBoundMs: 0` (synchronous replication). A host that advertises `crossRegion: "best-effort"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
+Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21), revised by RFC 0150 §D. The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "fenced-effects"` SHOULD also advertise `multiRegion.supported: true`. A host that advertises `crossRegion: "reconciled-records"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
+
+`replicationLagBoundMs` is a **record read-visibility** bound and nothing more. It is not an
+input to the effect-safety posture: a `0` bound does not make a host `fenced-effects`, and a
+non-zero bound does not prevent one. This is the separation that removing `strict` restored —
+the two used to be conflated in a single enum value.
 
 When `multiRegion.supported: true`:
 
 - An Idempotency-Key write succeeding in region A MUST be read-visible in region B after waiting `replicationLagBoundMs + safetyMargin`.
-- After a partition healed leaves two regions with conflicting idempotency-key records for the same key, the host MUST resolve the conflict deterministically using the advertised `partitionRecoveryStrategy`. The resolution rule MUST be observable: re-running the same conflict input MUST produce the same survivor.
+- After a partition healed leaves two regions with conflicting idempotency-key records for the same key, the host MUST resolve the conflict deterministically using the advertised `partitionRecoveryStrategy`. The resolution rule MUST be observable: re-running the same conflict input MUST produce the same survivor. A **time-ordered** rule cannot satisfy this — under a partition there is no shared clock, so each region believes it wrote last — which is why `last-writer-wins` and `first-writer-wins` were removed from the vocabulary rather than only the first of the pair.
+- Resolving a record **MUST NOT** be treated as authorizing an effect (§"Reconciliation does not authorize effects").
 - Conformance asserts both contracts via `multi-region-idempotency.test.ts` against the host's multi-region test simulator (per RFC 0036 §C).
 
 Hosts that do NOT advertise the `multiRegion` block retain the existing best-effort posture documented above.

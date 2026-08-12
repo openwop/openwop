@@ -3,8 +3,18 @@
  *
  * Verifies that hosts advertising the multi-region idempotency annex
  * surface a valid `capabilities.idempotency.crossRegion` value AND, when
- * claiming `'best-effort'` or `'strict'`, expose the operator-tier
- * metric names per `idempotency.md` §"Operator surface".
+ * claiming `'reconciled-records'` or `'fenced-effects'`, expose the
+ * operator-tier metric names per `idempotency.md` §"Operator surface".
+ *
+ * RFC 0150 §D revised the vocabulary. `best-effort` became
+ * `reconciled-records` — it always meant the RECORDS converge, and the old
+ * name invited hearing "a best effort at not duplicating effects". `strict`
+ * was removed rather than renamed: it promised only that read-visibility was
+ * bounded by `multiRegion.replicationLagBoundMs`, a LATENCY claim sitting at
+ * the top of a ladder implementers read as effect safety. `fenced-effects`
+ * takes that slot and means something different and stronger, so promoting
+ * old `strict` advertisements into it by rename would have asserted evidence
+ * no host produced.
  *
  * The annex's partition-replay convergence rule cannot be exercised
  * black-box (it requires multi-region host deployment under a real
@@ -22,7 +32,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
-const ALLOWED = new Set(['single-region', 'best-effort', 'strict']);
+const ALLOWED = new Set(['single-region', 'reconciled-records', 'fenced-effects']);
 const REQUIRED_METRICS_WHEN_MULTI_REGION = [
   'openwop.idempotency.cross_region_conflicts_total',
 ];
@@ -53,7 +63,7 @@ describe('multi-region-idempotency: capability shape', () => {
 
     expect(ALLOWED.has(idem.crossRegion), driver.describe(
       'idempotency.md §"Multi-region idempotency" §"Capability advertisement"',
-      'crossRegion MUST be one of {"single-region","best-effort","strict"}',
+      'crossRegion MUST be one of {"single-region","reconciled-records","fenced-effects"}',
     )).toBe(true);
 
     if (idem.layer1RetentionSeconds !== undefined) {
@@ -70,7 +80,7 @@ describe('multi-region-idempotency: capability shape', () => {
     const observability = capabilityFamily<ObservabilityCaps>(disco.json, 'observability');
     const crossRegion = idem?.crossRegion;
 
-    if (crossRegion !== 'best-effort' && crossRegion !== 'strict') {
+    if (crossRegion !== 'reconciled-records' && crossRegion !== 'fenced-effects') {
       // Single-region hosts have no conflicts to count — skip.
       return;
     }
@@ -130,13 +140,13 @@ describe('multi-region-idempotency: granular multiRegion advertisement shape (RF
       }
       if (mr.partitionRecoveryStrategy !== undefined) {
         const s = mr.partitionRecoveryStrategy as string;
-        const isCategorical = s === 'last-writer-wins' || s === 'first-writer-wins';
+        const isCategorical = s === 'lexicographic-min-run-id';
         const isExtension = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(s);
         expect(
           isCategorical || isExtension,
           driver.describe(
             'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
-            'partitionRecoveryStrategy MUST be one of {last-writer-wins, first-writer-wins} OR match ^x-host-<host>-<key>$',
+            'partitionRecoveryStrategy MUST be `lexicographic-min-run-id` OR match ^x-host-<host>-<key>$ (RFC 0150 §D removed the time-ordered rules: with no shared clock under a partition, each region believes it wrote last, so neither can produce the reproducible survivor the annex requires)',
           ),
         ).toBe(true);
       }

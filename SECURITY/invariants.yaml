@@ -1399,6 +1399,55 @@ invariants:
       prove it would be the vacuous-witness pattern RFC 0148 §A exists to
       close. Recorded as gap G9.
 
+  - id: multi-region-stale-owner-no-effect
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/multi-region-effect-vocabulary.test.ts
+    note: |
+      RFC 0150 §D. Run-record reconciliation MUST NOT be treated as
+      authorizing an external effect. Lexicographic run-ID reconciliation
+      MAY select a surviving record; it says nothing about how many times
+      a charge was posted or a message sent while the partition was open,
+      and cancelling the losing run does not un-send anything.
+      A host claiming multi-region effect safety MUST obtain a
+      monotonically increasing fencing token from a linearizable ownership
+      service before issuing an effect, and the adapter MUST either reject
+      a stale token or issue to a provider guaranteeing duplicate
+      suppression under the stable `logicalInvocationId`. Absent either,
+      the host MUST NOT claim `fenced-effects` and MUST classify the
+      effect `at-least-once-risk` — required rather than optional because
+      an effect KNOWN to be at-least-once can be made safe downstream,
+      while one BELIEVED exactly-once cannot, since nobody writes the
+      compensating control.
+      Two vocabulary defects removed as safety-fixes in the same pass.
+      (1) `crossRegion: "strict"` promised only that read-visibility was
+      bounded by `multiRegion.replicationLagBoundMs` — a LATENCY claim
+      occupying the top slot of a ladder implementers read as effect
+      safety. A host replicating at 0 ms can still issue duplicate effects
+      from two regions. Removed rather than renamed to `fenced-effects`,
+      because a rename would have promoted every existing `strict`
+      advertisement into a claim no host substantiated; the latency
+      content is not lost, `replicationLagBoundMs` already carries it.
+      (2) `partitionRecoveryStrategy` offered `last-writer-wins` and
+      `first-writer-wins`, both time-ordered. Under a partition there is
+      no shared clock, so each region believes it wrote last, which cannot
+      satisfy the annex MUST that "re-running the same conflict input MUST
+      produce the same survivor" — and both select a different survivor
+      than the lex-min(runId) rule the same document requires. The schema
+      was advertising strategies that violate two MUSTs already in force.
+      RFC 0150 §D names only `last-writer-wins`; removing that alone would
+      have left the identical defect under a different label, so both went
+      and `lexicographic-min-run-id` was added to name the required rule.
+      Witness tier is corpus-structural, labelled as such: the scenario
+      reads the schema and the prose, not a host. Whether an engine
+      actually fences before issuing an effect needs a partition
+      simulator plus an observable effect sink; the existing
+      `POST /v1/host/sample/test/multi-region/simulate-partition` seam
+      covers record convergence only. Recorded as an open row in RFC
+      0150's gap register.
+
   # ===== Agent memory (Phase I.1) =====
 
   - id: agent-memory-cti-1
