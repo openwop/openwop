@@ -51,6 +51,12 @@
 
 import { expect } from 'vitest';
 import { loadEnv } from './env.js';
+import { recordRequirement } from './requirement-ledger.js';
+
+/** RFC 0148 §A requirement ID for a capability-gated profile decision. */
+export function profileRequirementId(profileName: string): string {
+  return `openwop.profile.${profileName}`;
+}
 
 /**
  * Returns true if the scenario should proceed with assertions (advertised),
@@ -69,18 +75,38 @@ export function behaviorGate(profileName: string, advertised: boolean): boolean 
   const optedOut = env.optedOutProfiles.has(profileName);
 
   if (advertised && optedOut) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[${profileName}] both ADVERTISED by the host AND listed in OPENWOP_OPTED_OUT_PROFILES — ` +
-        `opt-out is ignored. Remove from the env var to clear this warning.`,
+    // RFC 0148 §B: "A host MUST NOT both advertise and opt out of the same
+    // profile." This was a `console.warn` that then proceeded as advertised —
+    // and a MUST NOT enforced by a warning is not enforced. Nothing consumes the
+    // warning, nothing fails on it, and the certification bundle produced from
+    // that run records a pass.
+    //
+    // The two claims are opposite in kind: advertising says the host implements
+    // the profile, opting out says the operator declares it does not. A run
+    // where both hold has no defensible reading, and resolving it in favour of
+    // advertisement extracted MORE certification claim from a MORE
+    // contradictory input.
+    throw new Error(
+      `RFC 0148 §B: [${profileName}] is BOTH advertised by the host AND listed in ` +
+        `OPENWOP_OPTED_OUT_PROFILES. A host MUST NOT both advertise and opt out of the same ` +
+        `profile — the two are contradictory claims and neither can be trusted while both ` +
+        `stand. Remove it from OPENWOP_OPTED_OUT_PROFILES, or stop advertising it.`,
     );
   }
 
   if (advertised) return true;
 
   if (optedOut) {
-    // Honest opt-out: the operator declared the host does not implement
-    // this profile. Skip in BOTH default and strict mode.
+    // Honest opt-out: the operator declared the host does not implement this
+    // profile. Skip in BOTH default and strict mode. Recorded as `skipped`
+    // rather than left silent — RFC 0148 §A resolves an unrecorded requirement
+    // to `blocked`, so without this an opted-out profile and a never-run profile
+    // would be the same observable.
+    recordRequirement(
+      profileRequirementId(profileName),
+      'skipped',
+      'operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES',
+    );
     // eslint-disable-next-line no-console
     console.warn(
       `[${profileName}] honest opt-out (OPENWOP_OPTED_OUT_PROFILES); skipping`,
@@ -98,7 +124,16 @@ export function behaviorGate(profileName: string, advertised: boolean): boolean 
     // expect.toBe(true) throws; we won't reach here.
   }
 
-  // Default-mode soft-skip.
+  // Default-mode soft-skip. Recorded as `inapplicable`: the host does not
+  // advertise the profile and the operator made no declaration, so the
+  // requirement does not apply to this discovery set. That is a different claim
+  // from `blocked` ("we could not check"), and it is certifiable where blocked
+  // is not — RFC 0148 §A.
+  recordRequirement(
+    profileRequirementId(profileName),
+    'inapplicable',
+    'profile not advertised in the captured discovery set',
+  );
   // eslint-disable-next-line no-console
   console.warn(
     `[${profileName}] profile not advertised; skipping (set OPENWOP_REQUIRE_BEHAVIOR=true to fail)`,
