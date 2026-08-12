@@ -1448,6 +1448,45 @@ invariants:
       covers record convergence only. Recorded as an open row in RFC
       0150's gap register.
 
+  - id: discovery-canonical-family-no-shadow
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/discovery-canonical-family-no-shadow.test.ts
+    note: |
+      RFC 0149 §E. A vendor extension MUST NOT shadow a canonical
+      capability family. RFC 0073 puts canonical families at the document
+      root and `host-extensions.md` §"Canonical prefixes" puts vendor
+      surface under `x-host-<vendor>-*`, `vendor.<org>.*`, or
+      `private.<host>.*`; together those make discovery negotiable,
+      because a consumer reads the root for what the protocol defines and
+      treats a namespaced key as opaque.
+      Nothing forbade a canonical family name appearing INSIDE the
+      namespaced region — `vendor.acme.auth`, or an `x-host-acme-*` object
+      carrying its own `interrupts`. A consumer that merges vendor surface
+      over the root before negotiating then reads a vendor's `auth` block
+      as THE auth contract. `host-extensions.md` already tells clients to
+      treat extension surface as opaque, but that binds the CONSUMER; it
+      does not stop a host from publishing the collision, and the consumer
+      that gets the merge order wrong is exactly the one the rule exists
+      to protect.
+      Second clause, separate and unconditional: no discovery example may
+      carry credentials or tenant data. Discovery is served credential-free
+      to anonymous callers (RFC 0100 requires `agentCardUrl` to GET-resolve
+      without credentials), so a real-shaped secret in an example sits in
+      the most-copied, least-guarded artifact in the corpus.
+      Structural and server-free — it reads the schema and the fenced
+      examples, never a host. The family list is READ from
+      `capabilities.schema.json` rather than hand-listed, so a new family
+      is covered the day it lands.
+      The corpus was already clean when this landed, which makes it a
+      guardrail rather than a repair — and therefore one that MUST be
+      shown able to fail. Sabotage-verified: injecting
+      `"vendor.acme.suite": { "auth": ... }` reds the shadow leg with its
+      file:line and the colliding key, and injecting an `sk-`-prefixed
+      value reds the credential leg with the truncated match.
+
   # ===== Agent memory (Phase I.1) =====
 
   - id: agent-memory-cti-1
