@@ -1932,14 +1932,12 @@ Sandbox is a **meta-capability**: it governs how OTHER host capabilities (`host.
 
 ```jsonc
 {
-  "capabilities": {
-    "sandbox": {
-      "supported": true,
-      "isolationModel": "wasm",            // or "process" | "container" | "vm" | "x-host-<host>-<key>"
-      "allowedHostCalls": ["host.fs", "host.kvStorage"],
-      "memoryLimitBytes": 67108864,         // 64 MiB
-      "wallClockLimitMs": 10000             // 10 s
-    }
+  "sandbox": {
+    "supported": true,
+    "isolationModel": "wasm",            // or "process" | "container" | "vm" | "x-host-<host>-<key>"
+    "allowedHostCalls": ["host.fs", "host.kvStorage"],
+    "memoryLimitBytes": 67108864,         // 64 MiB
+    "wallClockLimitMs": 10000             // 10 s
   }
 }
 ```

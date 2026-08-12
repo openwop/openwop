@@ -813,12 +813,10 @@ Hosts that implement either seam advertise it under `/.well-known/openwop`:
 
 ```jsonc
 {
-  "capabilities": {
-    "observability": {
-      "testSeams": {
-        "otelScrape": true,
-        "debugBundleExport": true
-      }
+  "observability": {
+    "testSeams": {
+      "otelScrape": true,
+      "debugBundleExport": true
     }
   }
 }

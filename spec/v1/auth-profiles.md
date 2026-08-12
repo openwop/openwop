@@ -157,16 +157,14 @@ As of RFC 0010 (2026-05-11), auth-profile metadata has a **formal schema locatio
 
 ```json
 {
-  "capabilities": {
-    "auth": {
-      "profiles": ["openwop-auth-api-key-rotation", "openwop-auth-oauth2-client-credentials", "openwop-auth-oidc-user-bearer"],
-      "rotation": { "supported": true, "minGraceSeconds": 86400 },
-      "oauth2": {
-        "supported": true,
-        "issuer": "https://issuer.example.com/",
-        "audience": "https://api.example.com/openwop",
-        "supportedAlgorithms": ["RS256", "ES256"]
-      }
+  "auth": {
+    "profiles": ["openwop-auth-api-key-rotation", "openwop-auth-oauth2-client-credentials", "openwop-auth-oidc-user-bearer"],
+    "rotation": { "supported": true, "minGraceSeconds": 86400 },
+    "oauth2": {
+      "supported": true,
+      "issuer": "https://issuer.example.com/",
+      "audience": "https://api.example.com/openwop",
+      "supportedAlgorithms": ["RS256", "ES256"]
     }
   }
 }
@@ -253,16 +251,14 @@ The audit-signing Ed25519 key:
 
 ```json
 {
-  "capabilities": {
-    "auth": {
-      "profiles": ["openwop-audit-log-integrity", ...],
-      "auditLogIntegrity": {
-        "hashChain": true,
-        "checkpointSignatureAlgorithm": "ed25519",
-        "checkpointPublicKey": "MCowBQYDK2VwAyEA...",
-        "checkpointIntervalEntries": 1000,
-        "checkpointIntervalSeconds": 300
-      }
+  "auth": {
+    "profiles": ["openwop-audit-log-integrity", ...],
+    "auditLogIntegrity": {
+      "hashChain": true,
+      "checkpointSignatureAlgorithm": "ed25519",
+      "checkpointPublicKey": "MCowBQYDK2VwAyEA...",
+      "checkpointIntervalEntries": 1000,
+      "checkpointIntervalSeconds": 300
     }
   }
 }
