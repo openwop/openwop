@@ -72,6 +72,12 @@ When a host advertises a capability, every required behavioral assertion for tha
 
 The schema **MUST** use a `oneOf` discriminator on `bundleVersion`. Version 2 `requirements` **MUST** be closed objects. `witnessSha256` **MUST** cover the normalized reporter record, not response bodies or secrets. The bundle **MUST** include suite/corpus provenance and the captured discovery digest. A verifier **MUST** reject duplicates, missing floor requirements, contradictory dispositions, mismatched totals, or `blocked`/`skipped` requirements inside a claimed profile floor.
 
+A verifier **MUST** distinguish a profile with *no floor requirements* from a profile whose floor is *not yet specified*. An undefined floor set **MUST NOT** satisfy the floor condition: a claimed profile with no floor definition is **unprovable**, and the verifier **MUST** reject the claim rather than treat an empty check as a passed one.
+
+This is not hypothetical. `PROFILE_FLOOR_SCENARIOS` currently defines a floor for `openwop-core-standard` alone, and `verifyBundleProfile()` computes `floorProven` from `missingFloor.length === 0 && prefixOk`, both of which are vacuously true when the floor is `undefined`. The single published v1 bundle claims five profiles, none of which has a floor definition, lists three `stream-modes*` scenarios in `results.failed` while claiming `openwop-stream-sse` and `openwop-stream-poll`, and still verifies as `valid: true`. This is a **third** vacuity mode alongside the two in §"Motivation": those let an unexecuted assertion count as a pass, whereas this lets an entire profile claim verify against nothing. See `docs/CERTIFICATION-BUNDLE-INVENTORY.md`.
+
+Enforcing this distinction implements `conformance-certification.md` §B(2) as already written rather than changing it, so it does not depend on this RFC's safety-fix migration window. Defining floor sets for the remaining claimable profiles (deferred by RFC 0089 G1/G2) is additive and is a precondition for any host claiming them.
+
 Positive: every core-standard floor requirement has `executed-pass`, and optional MCP requirements are `inapplicable` because MCP is absent from captured discovery.
 
 Negative: a host advertises MCP, the MCP test returns because its seam is absent, and the bundle lists the scenario as passed. The v2 verifier rejects the bundle because the requirement is `blocked` or lacks a witness.
@@ -112,7 +118,7 @@ These runner-integrity scenarios are always-on and **MUST NOT** capability-skip.
 ## Unresolved questions
 
 1. Should `witnessSha256` cover a canonical assertion transcript or a signed runner event?
-2. Which historic bundles are publicly reachable and who owns invalidation notices?
+2. ~~Which historic bundles are publicly reachable~~ (**resolved 2026-08-11**: exactly one, inventoried and invalidated in `docs/CERTIFICATION-BUNDLE-INVENTORY.md`) and who owns invalidation notices?
 3. Should bundle signing land here or in RFC 0154's provenance work?
 4. What stable registry owns `requirementId` values and aliases after editorial renames?
 
@@ -136,5 +142,7 @@ Replace boolean gates with a reporter-aware API that calls the test framework's 
 - RFC 0147 Workstream 1
 - `conformance/src/lib/behavior-gate.ts`
 - `conformance/src/cli.ts` `scenarioStatesFromReport()`
+- `conformance/src/lib/profiles.ts` `PROFILE_FLOOR_SCENARIOS`, `verifyBundleProfile()`
+- `docs/CERTIFICATION-BUNDLE-INVENTORY.md` — the §D inventory
 - `COMPATIBILITY.md` §3
 
