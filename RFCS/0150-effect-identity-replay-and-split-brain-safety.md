@@ -114,7 +114,7 @@ Shape/digest vectors are always-on. Live pending recovery and multi-region behav
 
 ## Unresolved questions
 
-1. Which deployed hosts persist v1 recipe keys and at what volume?
+1. ~~Which deployed hosts persist v1 recipe keys and at what volume?~~ **Resolved 2026-08-12** (`docs/EFFECT-IDENTITY-V1-INVENTORY.md`): **none.** No host implements the Layer-2 recipe — the three reference hosts contain zero `invocationId` occurrences, and openwop-app references it only in a comment citing this spec. Migration cost is zero, which takes §E's dual-read machinery off the critical path *while that holds*; the moment any host implements Layer-2 as written it acquires the defect. The survey also found the one production provider-idempotency path (openwop-app → Stripe refunds) derives keys from stable business identifiers with **no `attempt` component** — it independently implements §B's principle, having had to, because following the spec would have produced duplicate refunds. That is adoption evidence for §B rather than argument (new gap G7).
 2. What canonical endpoint identifier handles aliases and host-extension routes?
 3. Which provider options are semantic versus transport-specific?
 4. Is a linearizable fence mandatory for `fenced-effects`, or may a provider's strong idempotency contract independently qualify?
