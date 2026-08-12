@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0154 |
 | **Title** | Workload Identity, Delegation, Telemetry, and Provenance Assurance |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** workload identity, delegation, the OTel mapping, and artifact attestations.) |
 | **Affects** | `spec/v1/{auth,auth-profiles,observability,capabilities}.md`, NEW identity/delegation schemas, capability schema, run-event audit projection, certification/release/pack provenance, security threat models and invariants |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |

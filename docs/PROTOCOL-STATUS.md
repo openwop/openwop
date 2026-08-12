@@ -31,9 +31,9 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 141 |
+| Accepted | 151 |
 | Active | 4 |
-| Draft | 11 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -183,16 +183,16 @@
 | RFC 0144 | Which host capability families the core schema declares | Accepted |
 | RFC 0145 | `registrationSource` as a per-type artifact capability facet | Accepted |
 | RFC 0146 | `contractProvenance` - which corpus revision a host implements against | Active |
-| RFC 0147 | Protocol Integrity and Standards-Readiness Program | Draft |
-| RFC 0148 | Non-Vacuous Conformance and Certification Evidence | Draft |
-| RFC 0149 | Machine-Contract and Version Reconciliation | Draft |
-| RFC 0150 | Effect Identity, Replay, and Split-Brain Safety | Draft |
-| RFC 0151 | Compensation and Partial-Failure Profile | Draft |
-| RFC 0152 | A2A 1.0 Versioned Composition | Draft |
-| RFC 0153 | MCP 2026-07-28 Versioned Composition | Draft |
-| RFC 0154 | Workload Identity, Delegation, Telemetry, and Provenance Assurance | Draft |
-| RFC 0155 | Core Profile and Extension Discipline | Draft |
-| RFC 0156 | Governance, Independent Assurance, and Claims Policy | Draft |
+| RFC 0147 | Protocol Integrity and Standards-Readiness Program | Accepted |
+| RFC 0148 | Non-Vacuous Conformance and Certification Evidence | Accepted |
+| RFC 0149 | Machine-Contract and Version Reconciliation | Accepted |
+| RFC 0150 | Effect Identity, Replay, and Split-Brain Safety | Accepted |
+| RFC 0151 | Compensation and Partial-Failure Profile | Accepted |
+| RFC 0152 | A2A 1.0 Versioned Composition | Accepted |
+| RFC 0153 | MCP 2026-07-28 Versioned Composition | Accepted |
+| RFC 0154 | Workload Identity, Delegation, Telemetry, and Provenance Assurance | Accepted |
+| RFC 0155 | Core Profile and Extension Discipline | Accepted |
+| RFC 0156 | Governance, Independent Assurance, and Claims Policy | Accepted |
 
 ## SDK Helper Coverage
 
@@ -209,7 +209,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 11 RFCs still `Draft` (RFC 0038, RFC 0147, RFC 0148, RFC 0149, RFC 0150, RFC 0151, RFC 0152, RFC 0153, RFC 0154, RFC 0155, RFC 0156) — advance with schema/conformance proof or defer.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
 - 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0146) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

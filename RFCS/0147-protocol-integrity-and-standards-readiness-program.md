@@ -4,10 +4,10 @@
 | ----------------- | ----- |
 | **RFC**           | 0147 |
 | **Title**         | Protocol Integrity and Standards-Readiness Program |
-| **Status**        | `Draft` |
+| **Status**        | `Accepted` |
 | **Author(s)**     | David Tufts (@davidscotttufts) |
 | **Created**       | 2026-08-11 |
-| **Updated**       | 2026-08-11 |
+| **Updated**       | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** umbrella program opened; `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 14 records the dependency order; all nine child RFCs filed and Accepted. **Carried forward, not closed:** every workstream's implementation, the external security audit, a second maintainer, and a Tier-3 host. Per this RFC's own §A.10 its Accepted status **MUST NOT** be cited as evidence that the gaps it names are closed.) |
 | **Affects**       | `conformance/`, `api/openapi.yaml`, `api/asyncapi.yaml`, `schemas/`, `spec/v1/{idempotency,replay,capabilities,profiles,core-standard-profile,version-negotiation,mcp-integration,a2a-integration,auth,auth-profiles,observability,multi-agent-execution}.md`, `COMPATIBILITY.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `SECURITY.md`, `INTEROP-MATRIX.md`, SDKs, reference hosts |
 | **Compatibility** | Umbrella `safety-fix` program per `COMPATIBILITY.md` §3; each child RFC MUST classify its own surface as `safety-fix`, `additive`, or `breaking` |
 | **Supersedes**    | — |
