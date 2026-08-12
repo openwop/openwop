@@ -78,6 +78,14 @@ This is not hypothetical. `PROFILE_FLOOR_SCENARIOS` currently defines a floor fo
 
 Enforcing this distinction implements `conformance-certification.md` §B(2) as already written rather than changing it, so it does not depend on this RFC's safety-fix migration window. Defining floor sets for the remaining claimable profiles (deferred by RFC 0089 G1/G2) is additive and is a precondition for any host claiming them.
 
+**Landed 2026-08-12** (suite `1.75.0`, `certification-floor-enforcement.test.ts`, sabotage-verified). Two design points settled in the process:
+
+*The floors were transcribed, not invented.* `profiles.md` §"Claiming vs passing" already says a host claims a profile "by satisfying its predicate AND passing the conformance scenarios labelled with the profile tag", and its per-profile sections already name those scenarios — `stream-modes*.test.ts` for the streaming profiles, `pack-registry*.test.ts` for node-packs. `PROFILE_FLOOR_SCENARIOS` was an incomplete transcription of normative prose. That is what makes this implementation rather than design, and it means three of the published bundle's claims are **positively contradicted** by prose as already written, not merely unprovable.
+
+*An empty floor and an unwritten floor MUST be distinguishable.* `openwop-core` and `openwop-fixtures` are discovery-payload-only by `profiles.md`, so no runtime floor is the correct answer for them. Representing that as an absent key is precisely the defect; it is now an explicit `discoveryOnly` marker, so an empty floor is a decision on record and an absent key means unprovable. A verdict carries `floorUnspecified` to keep "the corpus has no floor for this" distinct from "the host failed its floor" — both invalid, but only the first is a gap in the corpus.
+
+`openwop-replay-fork` is deliberately left unspecified: `profiles.md` says its scenarios "pass on whichever mode the host advertises", a discovery-conditional floor a flat required-list cannot express. Forcing it would either fail an honest single-mode host or reintroduce the vacuity.
+
 Positive: every core-standard floor requirement has `executed-pass`, and optional MCP requirements are `inapplicable` because MCP is absent from captured discovery.
 
 Negative: a host advertises MCP, the MCP test returns because its seam is absent, and the bundle lists the scenario as passed. The v2 verifier rejects the bundle because the requirement is `blocked` or lacks a witness.
