@@ -2193,6 +2193,31 @@
         }
       }
     },
+    "compensation": {
+      "type": "object",
+      "description": "RFC 0151 §A — generic compensation (Saga) contract. OPTIONAL; absent means the host offers no generic compensation contract, NOT that it never compensates — a workflow can always model an inverse action as an ordinary node. What this advertises is that the HOST orders, persists, and retries the unwind, so a client can rely on it rather than hand-rolling one. Compensation is a second effect, not an undo: it can fail, can be partially applied, and can itself require approval, which is why the profile is security-tier high (RFC 0147 R9).",
+      "additionalProperties": false,
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "profileVersion": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$",
+          "description": "RFC 0151. Participates in the inverse-action identity, so a profile bump cannot silently collide with identities minted under the previous ordering rules."
+        },
+        "orderingModels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["reverse-completion", "dependency-graph"] },
+          "description": "RFC 0151 §A. A host that advertises compensation MUST implement `reverse-completion` and MAY additionally implement `dependency-graph`. `dependency-graph` MUST be a DAG and preserve reverse dependency order."
+        },
+        "manualIntervention": {
+          "type": "boolean",
+          "description": "RFC 0151 §C — the host can record `manual-intervention-required` rather than silently abandoning an unwind. Cancelling the parent MUST NOT abandon an active compensation: it continues, pauses for authorized intervention, or records this state."
+        }
+      }
+    },
     "idempotency": {
       "type": "object",
       "description": "RFC 0036 — Multi-region idempotency contract. Optional v1 advertisement. The existing `crossRegion: 'single-region'|'best-effort'|'strict'` categorical claim lives under `capabilities.idempotency.crossRegion` per spec/v1/idempotency.md §'Multi-region idempotency (annex)'. The `multiRegion` sub-block here gives a granular advertisement that hosts SHOULD pair with the categorical `crossRegion` claim.",

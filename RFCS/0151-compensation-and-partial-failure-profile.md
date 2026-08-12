@@ -129,7 +129,7 @@ Implement after RFC 0150's effect identities. Start with reverse-completion and 
 
 ## Acceptance criteria
 
-- [ ] Spec, policy schema, capability, events, and API/AsyncAPI projections land. (Carried — nothing has landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Spec, policy schema, capability, events, and API/AsyncAPI projections land. (Capability family and node-level `compensation` declaration landed in `capabilities.schema.json` and `workflow-definition.schema.json`, with `compensation-profile.test.ts` — **shape only**. Carried: §D events, the API/AsyncAPI projections, and spec prose.)
 - [ ] Reverse-unwind, retry, crash, partial/manual, approval, replay, and isolation scenarios pass. (Carried — depends on the spec and schema above, none of which exist.)
 - [ ] Effect IDs compose with RFC 0150. (Carried, and now the one item with a concrete dependency: RFC 0150 §B landed `logicalInvocationId`, so the composition target is fixed. §C's semantic digest is not, so the composition cannot be specified end-to-end yet.)
 - [ ] Threat models and invariants land. (Carried with the spec above.)
