@@ -1,0 +1,236 @@
+{
+  "$comment": [
+    "RFC 0150 §C — golden vectors for the semantic request digest v2.",
+    "",
+    "These are the NORMATIVE cross-language vectors. An SDK implementing the digest",
+    "MUST reproduce every `digest` below from its `input`. They exist because §C's",
+    "acceptance criterion is that TypeScript, Python, and Go agree — and three",
+    "independent readings of prose is exactly how they would fail to.",
+    "",
+    "Each vector pins one rule, and several come in pairs whose whole purpose is the",
+    "relationship between them: tools sorted vs reversed MUST match, message order",
+    "reversed MUST NOT, and the two Unicode forms MUST NOT — because JCS does not",
+    "apply NFC and a fallback that adds it silently breaks cross-host agreement.",
+    "",
+    "`canonical` is the exact JCS byte string hashed. It is included so a failing",
+    "implementation can diff the preimage rather than stare at two hashes."
+  ],
+  "recipe": "openwop-semantic-request-v2",
+  "spec": "spec/v1/replay.md §\"LLM cache-key recipe\"",
+  "rfc": "RFC 0150 §C",
+  "hash": "sha256, lowercase hex, over the JCS-canonical UTF-8 bytes of `canonical`",
+  "vectors": [
+    {
+      "id": "minimal",
+      "why": "The floor: provider, model, one message. Anything simpler is not a request.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}]}}",
+      "digest": "c92498949e9cc0e38bb2887e88e55b6936932e219b8344f0a7059b1de960073d"
+    },
+    {
+      "id": "stop-changes-digest",
+      "why": "v1 EXCLUDED `stop`. Two requests differing only here produce different text, so they must not share a digest.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "stop": [
+          "END"
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"stop\":[\"END\"]}}",
+      "digest": "2103c61f7b0e1e05c6535e562f52335649beae49e266b8264e60bc93c169dd87"
+    },
+    {
+      "id": "seed-changes-digest",
+      "why": "v1 EXCLUDED `seed`. Its entire purpose is to change the output.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "seed": 7
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"seed\":7}}",
+      "digest": "fb942dce9de88688c89d048499f4a4e5a19427775da08d0d5a7ad709c10b42d0"
+    },
+    {
+      "id": "max-output-changes-digest",
+      "why": "v1 EXCLUDED the output bound. It decides whether the response is truncated.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "maxOutputTokens": 256
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"maxOutputTokens\":256,\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}]}}",
+      "digest": "96f74b752619868e3b7fad15f093c03b86b223974ea3e2b89a1831d22a4845ad"
+    },
+    {
+      "id": "tools-sorted-by-name",
+      "why": "Tool order is not semantic; the recipe sorts by name so two orderings agree.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "tools": [
+          {
+            "name": "zeta",
+            "parameters": {}
+          },
+          {
+            "name": "alpha",
+            "parameters": {}
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"tools\":[{\"name\":\"alpha\",\"parameters\":{}},{\"name\":\"zeta\",\"parameters\":{}}]}}",
+      "digest": "afb590dd7bf6c78915852e15318fd4c9d6d6e0d473288283f413e5e425ba0cd6"
+    },
+    {
+      "id": "tools-reversed-same-digest",
+      "why": "Same tools, opposite input order. MUST equal the previous vector.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "tools": [
+          {
+            "name": "alpha",
+            "parameters": {}
+          },
+          {
+            "name": "zeta",
+            "parameters": {}
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"tools\":[{\"name\":\"alpha\",\"parameters\":{}},{\"name\":\"zeta\",\"parameters\":{}}]}}",
+      "digest": "afb590dd7bf6c78915852e15318fd4c9d6d6e0d473288283f413e5e425ba0cd6"
+    },
+    {
+      "id": "message-order-is-semantic",
+      "why": "Message order IS semantic and MUST NOT be sorted — this must differ from a reordered twin.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "a"
+          },
+          {
+            "role": "assistant",
+            "content": "b"
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"a\",\"role\":\"user\"},{\"content\":\"b\",\"role\":\"assistant\"}]}}",
+      "digest": "06eb9873af60fb5c98222161bafdaec8f13a0f59b7b2c62a608a82a09520a74a"
+    },
+    {
+      "id": "message-order-reversed",
+      "why": "The reordered twin. MUST differ from the previous vector.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "assistant",
+            "content": "b"
+          },
+          {
+            "role": "user",
+            "content": "a"
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"b\",\"role\":\"assistant\"},{\"content\":\"a\",\"role\":\"user\"}]}}",
+      "digest": "896b9d814f5d9fe5da72fa50e2d2ea9751d9e2b78da324729dcfbd3c8bb09109"
+    },
+    {
+      "id": "provider-options-carried",
+      "why": "Unknown provider options are namespaced and hashed, never dropped.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "providerOptions": {
+          "vendor.anthropic.reasoningEffort": "high"
+        }
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"providerOptions\":{\"vendor.anthropic.reasoningEffort\":\"high\"},\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}]}}",
+      "digest": "fa34555d16eb6fedb2c587a4c4ac7e2cbeec8d0e8be0299b60910fe79c4055bf"
+    },
+    {
+      "id": "non-ascii-not-normalized",
+      "why": "JCS does not apply NFC. The decomposed form MUST NOT hash equal to the composed form.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "é"
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"é\",\"role\":\"user\"}]}}",
+      "digest": "7365573baec75c4eeda16eed9d60a17aa18cd44871f652d7dd25e602941956e9"
+    },
+    {
+      "id": "non-ascii-composed",
+      "why": "The composed twin (U+00E9). MUST differ from the decomposed vector above.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "é"
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"é\",\"role\":\"user\"}]}}",
+      "digest": "a4a0d2077fa984fe50411e671a77ee4cdab81911cf6bffe33b4f680c696b01af"
+    }
+  ]
+}
