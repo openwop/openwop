@@ -29,7 +29,37 @@ Neither holds. **42% maintained it, 25% never used it.** A blanket gate on unche
 
 **The 34 partial RFCs are the signal worth having.** In those, someone was actively ticking boxes and stopped. That is materially more likely to mark a real unresolved item than the 35 where nobody ticked anything, and the shape of the distribution shows it: `0027` has 13 ticked and 1 not; `0040` has 9 and 1; `0041` has 11 and 2. Those trailing items are the plausible blockers. By contrast `0002` (3 ticked, 4 not) and `0007` (1 ticked, 6 not) look like ticking that was abandoned rather than completed.
 
-## Recommended rule, and its precondition
+## Triage result (2026-08-12) — the earlier hypothesis was wrong
+
+The section above proposed that the 34 partial RFCs were the triage set because "someone was actively ticking and stopped", making their trailing items "the plausible blockers". **Reading them shows that is not what happened**, and the correction matters because it changes the rule.
+
+The five highest-signal cases — `0027` (13 ticked / 1 not), `0028` (10/2), `0029` (9/2), `0040` (9/1), `0041` (11/2) — have eight trailing items between them. Every one is **deliberately** unticked *and annotated with why*:
+
+- `0027`, `0028`, `0029`: "(Will land alongside the first non-steward advertisement.)" — an external adoption gate.
+- `0028`, `0029`: "First non-steward host advertises … MAY be waived under bootstrap-phase waiver. (Path-to-Accepted.)"
+- `0040`: "(Follow-up — … documentation strengthening, **not normative gate-blockers**.)"
+- `0041`: "At least one reference host advertises `version: 4` … (Path-to-Accepted.)"
+
+These are not forgotten bookkeeping. They are open items whose authors recorded the reason inline — which *is* §D's "explicitly carried" mechanism, just carried in a parenthetical rather than a register row.
+
+## The signal §D actually wants
+
+Re-measuring on that basis, across all unticked acceptance items in `Accepted` RFCs:
+
+| | Count |
+|---|---:|
+| Annotated — carries a reason, gate, or follow-up pointer | 150 |
+| **Bare** — no explanation at all | 200 |
+
+And the bare ones are not blockers either. They are dominated by items that are self-evidently *done*: `0003` — "Spec text merged (this file)", "CHANGELOG entry under v1.0"; `0004` — "Spec text merged". They cluster in the 35 RFCs where nobody ticked anything, which is consistent with the checkbox being abandoned as bookkeeping rather than used as a blocker list.
+
+So the useful distinction is **not** ticked-vs-unticked, and **not** partial-vs-complete. It is **annotated vs bare**:
+
+> An unticked acceptance item MUST carry its reason — an external gate, a follow-up note, or a pointer to a gap register / `docs/KNOWN-LIMITS.md` row. An unticked item with no explanation is indistinguishable from an item nobody checked.
+
+That is machine-checkable, and it is what §D's own wording ("not explicitly carried to a register/known-limit") is reaching for. It flags 200 items today — still too many to gate retroactively — but the forward-looking form is enforceable immediately: **a new RFC MUST annotate any acceptance item it leaves unticked.**
+
+## Superseded recommendation
 
 A gate that works **going forward without a corpus-wide sweep**:
 
@@ -38,6 +68,8 @@ A gate that works **going forward without a corpus-wide sweep**:
 This is enforceable immediately for new RFCs, needs no retro-fix of the 35 never-ticked ones, and converts the 34 partial RFCs into a bounded triage backlog instead of a wall of CI failures. Ticking nothing stays legal — it means "this RFC did not use the mechanism" — while ticking *some* becomes a claim the gate can hold you to.
 
 **Precondition before the gate can apply to existing RFCs:** triage the 34. Each unticked item is either a real open blocker (→ gap register row), or an item that was completed and never ticked (→ tick it). That is 34 documents of review, not 141.
+
+*(Superseded by the triage above: the 34 turned out to be annotated external gates, not a blocker backlog, so the tick-any-tick-all rule targets the wrong property. The annotated-vs-bare rule replaces it. This paragraph is kept so the reasoning that produced it stays legible.)*
 
 ## What this does not settle
 
