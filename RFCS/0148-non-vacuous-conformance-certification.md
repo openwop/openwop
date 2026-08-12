@@ -138,7 +138,7 @@ Replace boolean gates with a reporter-aware API that calls the test framework's 
 
 - [ ] Spec and bundle-v2 schema merged. (Carried — gap register. No bundle-v2 schema exists yet; §C's floor enforcement landed against the v1 shape.)
 - [ ] Runner records requirement-level dispositions and rejects unclassified returns. (Ledger landed — `requirement-ledger.ts` with the five §A dispositions, absence resolving to `blocked`, and reason-required non-passes. Carried: wiring each floor scenario to record its disposition, and the runner-level rejection of unclassified returns.) (Carried — depends on §A's requirement ledger, which is unbuilt. `requirement-citation-report.mjs` measured the corpus; the runner is untouched.)
-- [ ] Strict mode fails advertised missing behavior. (Carried — §B strict-mode dispositions are unimplemented.)
+- [ ] Strict mode fails advertised missing behavior. (§B's advertise-vs-opt-out `MUST NOT` now throws rather than warning, and gate decisions record `skipped` / `inapplicable` ledger dispositions. Carried: failing on a *missing seam* mid-scenario, which needs per-assertion instrumentation beyond the profile gate.)
 - [ ] New scenarios and fixtures pass, including sabotage tests. (Partially landed — `certification-floor-enforcement.test.ts` is sabotage-verified. The §A/§B scenario set is carried.)
 - [ ] Historic bundle inventory and invalidation/reissue record published. (Inventory landed — `docs/CERTIFICATION-BUNDLE-INVENTORY.md`. Reissue is carried and blocked on `openwop-examples`, whose committed bundle is formally invalidated and currently unowned.)
 - [ ] Reference hosts publish valid v2 bundles. (Carried — blocked on the v2 schema above, and on `openwop-examples` regenerating against a passing run.)
