@@ -1363,6 +1363,42 @@ invariants:
       third-party `core.openwop.http` reimplementations verify wire
       agreement on a fixed set of (runId, nodeId, payload) inputs.
 
+  - id: logical-effect-id-retry-stable
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/effect-identity-composition.test.ts
+    note: |
+      RFC 0150 §B. The Layer-2 logical effect identity MUST NOT
+      incorporate the retry counter. `spec/v1/idempotency.md` §"Idempotency
+      key composition" specified
+      `sha256(runId ':' nodeId ':' attempt ':' providerKey)` through v1.1,
+      so every retry hashed to a NEW key: the invocation log never hit,
+      the injected `Idempotency-Key` differed from the one the provider
+      had already seen, and the provider's own dedup was defeated along
+      with the engine's. The composition guaranteed a duplicate side
+      effect — a duplicate charge, send, or completion — on exactly the
+      retry path Layer 2 exists to protect.
+      This is the SAME defect as `idempotency-key-deterministic` above,
+      one layer down. That one was caught in the `core.openwop.http` node
+      pack and fixed at 1.1.2; the protocol's own Layer-2 formula kept it
+      for another eight months because both halves of the contradiction
+      were prose — the formula, and the §"Composition" paragraph promising
+      that a retried call's identity "is identical". Nothing in the corpus
+      parsed the formula or cross-read the two.
+      Retired as a safety-fix per `COMPATIBILITY.md §3`; v1.2 specifies the
+      domain-separated, tenant-bound v2 composition over
+      `logicalInvocationOrdinal`, which is assigned once per logical
+      activity and MUST NOT change across retries.
+      Witness tier is corpus-structural, and deliberately labelled as such:
+      the scenario reads the normative composition, it does not observe a
+      host. Whether a given engine actually reuses the identity across an
+      internal retry is not black-box visible — the injected header is seen
+      by the provider, not by the caller — so a wire probe claiming to
+      prove it would be the vacuous-witness pattern RFC 0148 §A exists to
+      close. Recorded as gap G9.
+
   # ===== Agent memory (Phase I.1) =====
 
   - id: agent-memory-cti-1

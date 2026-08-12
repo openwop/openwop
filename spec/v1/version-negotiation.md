@@ -286,6 +286,51 @@ A deployment **channel** (`AgentRef.channel`, e.g. `stable` / `canary` / the res
 
 ---
 
+## Layer-2 effect identity v2
+
+> Safety-fix (RFC 0150 §B), `idempotency.md` v1.2. Applies to every host that performs
+> external side effects — there is no capability to gate it on, because the composition it
+> replaces was never optional.
+
+Through `idempotency.md` v1.1 the Layer-2 identity was
+`sha256(runId ':' nodeId ':' attempt ':' providerKey)`. Because `attempt` is the retry
+counter, that key changed on every retry, and the deduplication the layer promises could
+never fire. v1.2 replaces it with the domain-separated, tenant-bound composition over
+`logicalInvocationOrdinal` — see [`idempotency.md`](./idempotency.md) §"Idempotency key
+composition".
+
+This is **not** one of the four version axes above. The identity is engine-internal: it
+never appears on the wire between a caller and a host, it is not stamped on an event, and no
+client negotiates it. A host may therefore migrate unilaterally, without deploy
+coordination and without a `protocolVersion` bump.
+
+The operator sequence:
+
+1. **Upgrade.** Compute v2 identities for logical activities created after the upgrade. Do
+   not recompute identities for activities already in flight — an in-flight activity that
+   changes identity mid-retry is the very failure being fixed.
+2. **Leave the old entries alone.** v1 entries in the invocation log **MUST NOT** be
+   rewritten or back-filled. They expire under their existing TTL (§"Engine guarantees"
+   recommends 14 days). The `openwop:activity:v2` domain tag is what makes coexistence safe:
+   a v1 and a v2 identity for the same effect cannot collide.
+3. **Expect one window of reduced dedup.** Activities that started under v1 and retry after
+   the upgrade get a v2 identity and miss the log, so the effect is re-performed once. This
+   is bounded by the longest single activity's retry horizon, not by the TTL. Operators who
+   cannot accept even that window should drain in-flight activities before upgrading —
+   the same drain pattern as V5 below.
+4. **Do not mix within a deployment.** Two engine instances serving the same tenant **MUST**
+   agree on the composition version, or a retry that lands on the other instance computes a
+   different identity and re-performs the effect. Roll all instances before resuming
+   retries, or accept the same one-window cost above.
+
+Replay is unaffected. The identity was never a recorded fact — it is recomputed from
+`(tenantId, runId, nodeId, ordinal, providerKey)`, all of which a replay already has — so
+`POST /v1/runs/{runId}:fork` against a historical checkpoint behaves exactly as before.
+Layer 2 still does not survive a fork, for the unchanged reason that `runId` is in the
+preimage; see `idempotency.md` §"Layer 2 does not survive a fork".
+
+---
+
 ## Open spec gaps
 
 | #   | Gap                                                                                                                                                                                                                                                 | Owner       |

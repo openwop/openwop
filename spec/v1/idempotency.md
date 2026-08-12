@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `invocationId` (Layer 2). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2 (2026-08-12).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -11,7 +11,7 @@ Workflow execution is full of operations that can be retried — externally (cal
 openwop defines a two-layer contract:
 
 1. **HTTP-layer idempotency** — caller-supplied `Idempotency-Key` on mutating requests, dedup'd by the server.
-2. **Activity-layer idempotency** — engine-internal dedup of side effects within a node's execution, using a deterministic key derived from `(runId, nodeId, attempt, providerKey)`.
+2. **Activity-layer idempotency** — engine-internal dedup of side effects within a node's execution, using a deterministic key derived from `(tenantId, runId, nodeId, logicalInvocationOrdinal, providerKey)`.
 
 Implementations MUST support layer 1 for any spec-defined mutating endpoint. Implementations MUST support layer 2 for any node executor that performs an external side effect (API call, DB write, message publication).
 
@@ -82,20 +82,59 @@ Inside a workflow run, a node executor often makes external API calls (LLM, paym
 
 ### Idempotency key composition
 
-The engine constructs a per-side-effect idempotency key as:
+The engine constructs one **logical effect identity** per side effect. It identifies the
+*effect the workflow intends*, not the attempt that happens to be carrying it, so every
+retry of that effect resolves to the same value:
 
 ```text
-invocationId = sha256(runId || ':' || nodeId || ':' || attempt || ':' || providerKey)
+logicalInvocationId = base64url(sha256(
+  "openwop:activity:v2\0" ||
+  tenantId || "\0" || runId || "\0" || nodeId || "\0" ||
+  logicalInvocationOrdinal || "\0" || providerKey
+))
 ```
 
 Where:
 
-- `runId`: the run ID
-- `nodeId`: the node ID within the run
-- `attempt`: zero-based retry attempt counter for the side effect
-- `providerKey`: a stable identifier for the side effect being made (e.g., `'openai:chat:completions'`, `'stripe:create-charge'`, `'send-email'`)
+- `openwop:activity:v2`: a domain-separation tag, so a Layer-2 identity cannot collide with any other digest the engine computes, and a future v3 composition cannot collide with this one.
+- `tenantId`: the authenticated tenant the run belongs to.
+- `runId`: the run ID.
+- `nodeId`: the node ID within the run.
+- `logicalInvocationOrdinal`: a counter over the *logical* side effects a node performs, assigned once when the logical activity is created.
+- `providerKey`: a stable identifier for the side effect being made (e.g., `'openai:chat:completions'`, `'stripe:create-charge'`, `'send-email'`).
 
-The `providerKey` is supplied by the executor or the activity wrapper; it MUST be stable across retries of the same side effect.
+Fields are joined with a NUL separator (`\0`) and the digest is `base64url`-encoded without
+padding. NUL is not representable in any of the field values, so the encoding is injective:
+no two distinct field tuples can produce the same preimage.
+
+The `providerKey` is supplied by the executor or the activity wrapper; it MUST be stable
+across retries of the same side effect.
+
+`logicalInvocationOrdinal` **MUST NOT** change across transport or provider retries of the
+same logical activity. Two distinct logical invocations **MUST** receive different ordinals
+even when every other input matches — a node that calls the same provider twice on purpose
+is performing two effects, and they MUST NOT deduplicate against each other.
+
+The retry counter **MUST NOT** participate in the identity. `attempt` remains useful
+telemetry and hosts SHOULD keep recording it, but an identity that varies per attempt is not
+an identity: it hands every retry a fresh key, so the invocation log below never hits, the
+injected `Idempotency-Key` differs from the one the provider already saw, and the provider's
+own deduplication is defeated along with the engine's. A composition carrying `attempt`
+guarantees the duplicate side effect that Layer 2 exists to prevent, on exactly the retry
+path it was written for.
+
+`tenantId` is in the preimage because without it two tenants that collide on
+`(runId, nodeId, ordinal, providerKey)` share an invocation-log entry, and the second tenant
+is served the first tenant's cached provider response.
+
+> **Migration from the v1 composition.** Through v1.0 this section specified
+> `sha256(runId ':' nodeId ':' attempt ':' providerKey)`. That composition is retired: it
+> could not satisfy the guarantee stated in §"Composition: how the layers compose" below,
+> and a host implementing it exactly as written performs duplicate effects. Hosts MUST
+> compute the v2 identity for logical activities created after upgrade. Entries already in
+> the invocation log under a v1 key MAY be left to expire under their TTL; they cannot
+> collide with a v2 identity, which is what the domain tag is for. See
+> `version-negotiation.md` §"Layer-2 effect identity v2" for the operator runbook.
 
 > **Layer 2 does not survive a fork (RFC 0140).** `runId` is part of the key, and
 > `POST /v1/runs/{runId}:fork` mints a new one — so every key computed during a
@@ -110,14 +149,14 @@ The `providerKey` is supplied by the executor or the activity wrapper; it MUST b
 
 The engine MUST:
 
-1. Persist the result of each `(invocationId)` to a durable invocation log before returning it to the executor.
-2. On a retry that produces the same `invocationId`, return the persisted result without re-invoking the side effect.
+1. Persist the result of each `(logicalInvocationId)` to a durable invocation log before returning it to the executor.
+2. On a retry that produces the same `logicalInvocationId`, return the persisted result without re-invoking the side effect.
 3. Persist failures as well as successes — a 4xx from a payment provider should not be retried as if it never happened.
 4. Apply a TTL on invocation log entries (recommended 14 days; configurable).
 
 ### Provider header injection
 
-When the side effect is an HTTP call to a provider that supports `Idempotency-Key`, the engine SHOULD inject the `invocationId` as the `Idempotency-Key` request header. Known providers:
+When the side effect is an HTTP call to a provider that supports `Idempotency-Key`, the engine SHOULD inject the `logicalInvocationId` as the `Idempotency-Key` request header, or a documented deterministic derivative of it where the provider constrains the key's length or alphabet. The value injected MUST be stable across retries for the same logical activity — that stability is the whole point of the injection, since a per-attempt value defeats the provider's deduplication as thoroughly as it defeats the engine's. Known providers:
 
 - OpenAI: `Idempotency-Key` (top-level)
 - Anthropic: not yet exposed; safe to inject anyway
@@ -154,9 +193,9 @@ Server  — Create run, persist run.started event
 Engine  — Execute node N1
         │   side effect: OpenAI chat completion
         ▼
-Engine  — Layer 2: invocationId = sha256(runId:N1:0:openai-chat)
-        │   InvocationLog lookup: miss → call provider with invocationId as Idempotency-Key
-        │   Persist response under invocationId
+Engine  — Layer 2: logicalInvocationId over (tenant, runId, N1, ordinal 0, openai-chat)
+        │   InvocationLog lookup: miss → call provider with it as Idempotency-Key
+        │   Persist response under logicalInvocationId
         ▼
 Engine  — Side effect succeeded, advance to N2
         │
@@ -166,7 +205,7 @@ Server  — Persist response in Layer 1 idempotency cache, return to caller
 
 If the caller retries `POST /v1/runs` with the same Layer-1 key, the Layer-1 cache replays the original response — the run isn't created twice and the executor isn't invoked again.
 
-If the engine retries the OpenAI call internally (transient 503), Layer 2's `invocationId` is identical, so the second call either short-circuits (cache hit) or hits OpenAI's own idempotency cache via the injected header.
+If the engine retries the OpenAI call internally (transient 503), Layer 2's `logicalInvocationId` is identical — the retry is a second *attempt* at the same logical activity, and `attempt` is not one of its inputs — so the second call either short-circuits (cache hit) or hits OpenAI's own idempotency cache via the injected header.
 
 ---
 
