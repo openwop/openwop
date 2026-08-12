@@ -1,0 +1,79 @@
+# Requirement Registry Feasibility (RFC 0148 gap G3)
+
+> **Status: Measurement (non-normative), 2026-08-11.** RFC 0148 §A requires every normative conformance assertion in a certifiable profile to carry a stable `requirementId`. Gap G3 proposes generating that registry from existing scenario metadata. This document reports what the corpus actually contains, so the ID scheme is chosen against measurements rather than against an assumption. It commits to no scheme.
+
+Reproduce with `node conformance/scripts/requirement-citation-report.mjs`. Every number below is that tool's output, not a hand count.
+
+## Why this had to be measured first
+
+RFC 0148 §A is the instrument the rest of the RFC 0147 program depends on: under §A.5 of RFC 0147, no child RFC reaches `Accepted` on shape-only evidence for a behavioral requirement, which means the requirement ledger has to exist before any downstream flip is creditable. G3 assumed the registry could be generated from `driver.describe()` call sites. If that assumption is wrong, the cost of §A changes by an order of magnitude, and so does the program's critical path.
+
+It is mostly right, with one hard exception.
+
+## What the corpus contains
+
+413 scenario files carry **1,544** `driver.describe(specSection, requirement)` call sites.
+
+| | Count | Share |
+|---|---:|---:|
+| Extractable — both arguments are string literals | 1,355 | 87.8% |
+| Not extractable | 189 | 12.2% |
+
+A line-oriented regex finds only 501 of these, because roughly two thirds span multiple lines. The report uses the TypeScript AST for that reason; a scan that silently undercounts the corpus would understate exactly what the registry must cover.
+
+### The 12% that cannot be generated
+
+| Shape | Count |
+|---|---:|
+| `StringLiteral, TemplateExpression` | 168 |
+| `Identifier, StringLiteral` | 15 |
+| `Identifier, TemplateExpression` | 3 |
+| `StringLiteral, BinaryExpression` | 2 |
+| `StringLiteral, Identifier` | 1 |
+
+**The 168 template-expression requirements are the hard core, and they are not merely inconvenient.** Their requirement text is interpolated at run time — it embeds a value from the host under test. Two runs against two hosts produce two different strings for the same requirement, so *no text-derived identifier can be stable for them by construction*. They need an identifier from source position or from an explicit annotation. Any G3 design that derives IDs purely from citation text silently omits 11% of the corpus, which is the same class of gap RFC 0148 exists to close.
+
+## The obstacle G3 did not anticipate: six addressing conventions
+
+Citations do not agree on how to name the document they cite.
+
+| Form | Count | Example |
+|---|---:|---|
+| bare `<doc>.md` | 652 | `idempotency.md §"Cache key composition"` |
+| prose `RFC NNNN` | 261 | `RFC 0062 §B` |
+| `RFCS/<nnnn>-<slug>.md` | 155 | `RFCS/0032-envelope-reliability.md §C` |
+| `<name>.schema.json` | 127 | `run-event-payloads.schema.json` |
+| `spec/v1/<doc>.md` | 97 | `spec/v1/prompts.md §Discovery` |
+| `SECURITY/<doc>.md` | 39 | `SECURITY/threat-model-secret-leakage.md §SR-1` |
+| `api/` \| `schemas/` \| `conformance/` | 6 | |
+| unclassified | 18 | `SECURITY invariant deployment-promotion-fail-closed` |
+
+The same document is reachable three ways — `prompts.md`, `spec/v1/prompts.md`, and (for RFC-defined surfaces) `RFC 0027`. An ID derived from the citation string would therefore mint **different IDs for the same requirement** depending on which convention its author happened to use, and would churn whenever a citation is normalized. **Normalizing the addressing convention is a prerequisite for a text-derived ID scheme, not a follow-up to it.**
+
+This overlaps RFC 0149 §D, which already requires the corpus generator to fail on lifecycle incoherence and to extract normative examples. Citation normalization is the same kind of corpus-wide sweep and is cheaper done once.
+
+## What is favourable
+
+- **Collisions are rare.** Only 23 `(section, requirement)` pairs repeat, covering 53 call sites out of 1,355. Disambiguation is a small, bounded problem — not a reason to reject text-derived IDs.
+- **Most citations are already anchored.** 1,158 of 1,355 (85%) carry a `§` section anchor, so `<doc>#<section>` is a viable ID prefix for the large majority. 197 lack one and would need an anchor added or an explicit ID.
+- **Scale is tractable.** 1,325 distinct requirements across 54 documents is a registry a person can review once and a gate can hold thereafter.
+
+## Implications for G3
+
+1. **Generation is viable for ~88%, and the remaining 12% must be explicit.** The registry should be generated *and* accept hand-authored entries, rather than being purely one or the other. The 168 interpolated requirements need identifiers that do not derive from their text.
+2. **Normalize citation addressing first.** Otherwise the generated IDs encode an authoring accident, and the first normalization pass churns the whole registry — including the alias file meant to make renames explicit.
+3. **The alias policy is what makes drift visible.** Since IDs derived from prose change when prose is edited, the check mode has to fail on an ID that disappears without a recorded alias. That converts an editorial reword from a silent evidence break into a deliberate, reviewable act — which is the property §A actually needs.
+4. **This does not block the other workstreams.** Nothing in RFCs 0149–0156 needs the registry to *start*; they need it before their terminal `Accepted` flip. The sequencing in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 14 holds.
+
+## Open questions this measurement does not settle
+
+- Which identifier source do the 168 interpolated sites use — stable source position, or a required explicit `requirementId` argument? Source position churns on edit; an explicit argument is 168 hand edits.
+- Does citation normalization land in RFC 0149 §D's sweep or in RFC 0148's own migration?
+- Do the 18 unclassified `SECURITY invariant <id>` citations address `SECURITY/invariants.yaml` rows directly, in which case they already have stable IDs and should reuse them rather than mint new ones?
+
+## References
+
+- RFC 0148 §A and gap register G3, G5
+- RFC 0147 §A.5 — no `Accepted` on shape-only behavioral evidence
+- RFC 0149 §D — corpus-wide lifecycle and example extraction
+- `conformance/scripts/requirement-citation-report.mjs`
