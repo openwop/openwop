@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0153 |
 | **Title** | MCP 2026-07-28 Versioned Composition |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the MCP 2026-07-28 profile, callback-to-MRTR migration, and validation against a real upstream peer.) |
 | **Affects** | `spec/v1/mcp-integration.md`, `schemas/capabilities.schema.json`, MCP projection schemas, fake and real peer harnesses, RFC 0020, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` current profile with legacy 2025-06-18 deprecation |
 | **Supersedes** | Unqualified MCP support and 2025-06-18 as the current composition profile |

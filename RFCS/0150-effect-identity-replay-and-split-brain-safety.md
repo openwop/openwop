@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0150 |
 | **Title** | Effect Identity, Replay, and Split-Brain Safety |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** §A keyspace separation — a caller-controlled `Idempotency-Key` could name a host-internal lock; MUST NOT added with a tier-1 host's merged fix as witness (#950). §E v1 inventory: no host implements the Layer-2 recipe, so migration cost is zero (#947). **Carried forward, not closed:** §B logical effect identity v2, §C semantic request digest v2, §D fenced multi-region ownership, and the cross-language golden vectors. **These are wire changes**: `COMPATIBILITY.md` §3 governs landing them, and that is an implementation gate, not a status one. Gaps G2/G3/G4/G5/G6/G7/G8 open.) |
 | **Affects** | `spec/v1/{idempotency,replay,version-negotiation,observability}.md`, capability and event schemas, conformance vectors, SDK helpers, RFCs 0036/0041/0140 |
 | **Compatibility** | `safety-fix` per `COMPATIBILITY.md` §3 |
 | **Supersedes** | Retry-attempt-dependent activity identity, incomplete LLM cache recipe, and conflicting multi-region winner prose |

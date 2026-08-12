@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0152 |
 | **Title** | A2A 1.0 Versioned Composition |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the A2A 1.0 profile, its legacy-deprecation window, and validation against a real upstream peer.) |
 | **Affects** | `spec/v1/a2a-integration.md`, `schemas/capabilities.schema.json`, A2A projection schemas, conformance fake/real peers, RFC 0100, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` A2A 1.0 profile with legacy 0.3 deprecation |
 | **Supersedes** | Unqualified A2A support and A2A 0.3 as the current profile |

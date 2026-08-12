@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0155 |
 | **Title** | Core Profile and Extension Discipline |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text plus §A's motivating defect made concrete — the published bundle claims `openwop-core` while failing six `interrupt-*` scenarios, and RFC 0148 G6 gave `openwop-core` an explicit `discoveryOnly` marker (#949). **Carried forward, not closed:** §B's `core-standard-manifest.json` and §C's `extensions.json` — neither has a schema, generator, or conformance coverage yet (gap G6).) |
 | **Affects** | `spec/v1/{profiles,core-standard-profile,agent-platform-profile,capabilities}.md`, NEW `spec/v1/extensions.json`, certification profiles, badges, `INTEROP-MATRIX.md`, compatibility and roadmap docs |
 | **Compatibility** | `additive` aliases/registry in v1; legacy name removal deferred to v2 |
 | **Supersedes** | Unqualified use of discovery-only `openwop-core` as a meaningful runtime-conformance claim |

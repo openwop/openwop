@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0151 |
 | **Title** | Compensation and Partial-Failure Profile |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the entire compensation and partial-failure profile — schema, prose, conformance, and host implementation.) |
 | **Affects** | NEW `spec/v1/compensation.md`, NEW `schemas/compensation-policy.schema.json`, `schemas/{workflow-definition,run-event-payloads,capabilities}.schema.json`, OpenAPI run control, AsyncAPI run events, replay/idempotency/interrupt/dead-letter specs |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |

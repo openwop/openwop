@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0149 |
 | **Title** | Machine-Contract and Version Reconciliation |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** §A canonical URL resolution — 44 operations resolved `/v1/v1/*`, plus discovery itself; fixed with `openapi-resolved-paths.test.ts` (#942). §B wrapper lint with all eight normative examples unwrapped, `capability-example-root-layout.test.ts` (#945). §D feasibility measured and the checkbox hypothesis corrected (#946, #948). Suite `1.76.0`. **Carried forward, not closed:** §C `protocolVersion` major.minor grammar, §D's lifecycle gate (measured; the annotated-vs-bare rule is recommended, not enforced), and §E's `discovery-canonical-family-no-shadow` invariant.) |
 | **Affects** | `api/openapi.yaml`, `api/asyncapi.yaml`, `schemas/capabilities.schema.json`, `spec/v1/{capabilities,version-negotiation,profiles}.md`, normative examples, corpus generators and SDK parity gates |
 | **Compatibility** | `safety-fix` for machine-contract defects; editorial/additive for examples and authoring lint |
 | **Supersedes** | Contradictory base-path, discovery-wrapper, and protocol-version examples |

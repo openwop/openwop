@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0148 |
 | **Title** | Non-Vacuous Conformance and Certification Evidence |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-11 |
+| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** §C floor enforcement — undefined floor is now unprovable, floors transcribed from `profiles.md`, `certification-floor-enforcement.test.ts` sabotage-verified (#944); §D v1 bundle inventory with the one published bundle `invalidated` (#941); G3 registry feasibility measured (#943). Suite `1.75.0`. **Carried forward, not closed:** §A requirement-execution ledger, §B strict-mode dispositions, and the bundle-v2 schema. Gaps G1/G3/G5/G7 remain open in the register.) |
 | **Affects** | `spec/v1/conformance-certification.md`, `schemas/conformance-certification-bundle.schema.json`, `conformance/src/{cli.ts,lib/behavior-gate.ts,lib/profiles.ts,scenarios/}`, RFC 0089, `INTEROP-MATRIX.md` |
 | **Compatibility** | `safety-fix` per `COMPATIBILITY.md` §3 |
 | **Supersedes** | RFC 0089 bundle-version-1 validity rule where it permits file-level pass aggregation |
