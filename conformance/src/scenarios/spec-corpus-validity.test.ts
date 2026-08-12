@@ -1576,16 +1576,30 @@ describe.skipIf(RFC0089_BUNDLE_PATH === null || !existsSync(RFC0089_BUNDLE_PATH)
     expect(ok, JSON.stringify(validate.errors)).toBe(true);
   });
 
-  it('verifyBundle ACCEPTS the committed reference bundle — every claimed profile re-derives + is floor-proven (§B)', () => {
+  it('verifyBundle REJECTS the committed reference bundle — it is `invalidated` (RFC 0148 §D)', () => {
+    // This assertion was inverted on 2026-08-12. It previously asserted the
+    // bundle was ACCEPTED, commented "the host honestly claims ONLY profiles its
+    // discovery document derives, none of which it fails a floor scenario for."
+    // That comment was false: the bundle claims `openwop-stream-sse` while all
+    // three `stream-modes*` scenarios sit in its own `results.failed`. The old
+    // assertion passed only because those profiles had no floor definition, so
+    // `floorProven` came out vacuously true — a test defending a claim the
+    // bundle's own failure list contradicts.
+    //
+    // The bundle is now marked `invalidated` in
+    // `docs/CERTIFICATION-BUNDLE-INVENTORY.md`; reissue requires bundle v2.
+    // Until then the correct expectation is rejection, and the reasons are
+    // asserted individually so a future reissue cannot turn this green for the
+    // wrong cause.
     const bundle = readJson(bundlePath) as Parameters<typeof verifyBundle>[0];
     const r = verifyBundle(bundle);
-    // The host honestly claims ONLY profiles its discovery document derives, none
-    // of which it fails a floor scenario for — so verifyBundle MUST accept it.
-    const offending = r.verdicts.filter((v) => !v.valid);
-    expect(
-      r.valid,
-      `verifyBundle rejected claimed profile(s): ${JSON.stringify(offending)}`,
-    ).toBe(true);
+    expect(r.valid, 'the committed v1 bundle is invalidated, not merely historical').toBe(false);
+
+    const sse = r.verdicts.find((v) => v.profile === 'openwop-stream-sse');
+    expect(sse?.floorProven, 'profiles.md §openwop-stream-sse: predicate AND those scenarios pass').toBe(false);
+    expect(sse?.missingFloor, 'its own results.failed lists the stream-modes scenarios').toContain(
+      'stream-modes.test.ts',
+    );
   });
 
   it('discovery.sha256 is the canonical-JSON SHA-256 of the captured discovery.document', () => {

@@ -57,9 +57,23 @@ The failure list also includes `version-negotiation.test.ts`, `route-coverage.te
 
 The bundle claims `openwop-core`. The floor set exists for `openwop-core-standard`. These are different names, and the bundle's `interrupt-*` failures would have violated `openwop-core-standard`'s `requiredAnyPrefix: ['interrupt-']` had that profile been claimed. This is RFC 0155's "`openwop-core` can mean discovery-only compatibility" ambiguity appearing in shipped evidence rather than in the abstract.
 
+## Refinement after the floor fix (2026-08-12)
+
+Findings 1 and 2 were written before floor sets existed for these profiles. With the G6 fix landed — an undefined floor is unprovable, and the floors `profiles.md` already defined in prose are transcribed — the verdict is sharper than "all five unprovable", and part of it is *better* than first reported:
+
+| Claim | Verdict | Why |
+|---|---|---|
+| `openwop-core` | **valid** | `profiles.md` §`openwop-core` is a pure discovery predicate; the predicate is the whole claim |
+| `openwop-fixtures` | **valid** | `profiles.md` §`openwop-fixtures`: "discovery-payload-only" |
+| `openwop-stream-sse` | **invalid** | floor `stream-modes.test.ts`, `stream-modes-buffer.test.ts`, `stream-modes-mixed.test.ts` — all three in this bundle's own `results.failed` |
+| `openwop-stream-poll` | **invalid** | floor `stream-modes.test.ts` — failed |
+| `openwop-node-packs` | **invalid** | floor `pack-registry.test.ts` — failed |
+
+`verifyBundle()` now returns `valid: false` overall. So two claims are genuinely substantiated and **three are positively contradicted by normative prose as already written**, rather than all five being merely unprovable. That is a stronger statement than the original finding, not a weaker one: the streaming and pack claims are not unproven, they are *wrong*.
+
 ## Disposition
 
-Bundle 1 is marked **`invalidated`** per RFC 0148 §D. Its claims are not withdrawn as *false* — they are withdrawn as *unsubstantiated*: no floor was checked (Finding 1), two claims are contradicted by the bundle's own failure list (Finding 2), and 43 recorded passes carry no execution witness (Finding 3). It is retained in place, with this document as the machine-readable-adjacent reason, per §D's "MAY retain invalidated bundles with a machine-readable reason".
+Bundle 1 is marked **`invalidated`** per RFC 0148 §D. Three of its five profile claims are contradicted by `profiles.md`'s own "predicate AND those scenarios pass" rule (see the refinement table); the remaining two are substantiated but cannot carry a bundle on their own. Separately, 43 recorded passes carry no execution witness (Finding 3), so even the valid claims rest on a results list that cannot distinguish an executed assertion from an early return. It is retained in place, with this document as the machine-readable-adjacent reason, per §D's "MAY retain invalidated bundles with a machine-readable reason".
 
 Reissue requires bundle v2 (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked` dispositions with witnesses), and it requires floor sets to exist for every profile a host intends to claim.
 
@@ -69,7 +83,7 @@ Three consequences the RFC as drafted does not yet capture:
 
 1. **The blast radius is one artifact, not a corpus.** §D's inventory-and-invalidate obligation is satisfied by this document plus one disposition. `INTEROP-MATRIX.md` cites no bundles, so no host row needs restating. The migration burden §D anticipated is close to zero — which removes it from the critical path.
 2. **A verifier-side vacuity needs naming in §C.** §C already says a verifier `MUST` reject "missing floor requirements", but the concrete defect is narrower and worth stating outright: *an undefined floor set MUST NOT satisfy the floor condition.* A profile with no floor definition is unprovable, not proven.
-3. **Part of this is enforceable today.** Making `verifyBundleProfile()` treat an undefined floor as unprovable enforces `conformance-certification.md` §B(2) as already written, rather than changing it — so it does not depend on the 90-day safety-fix window that §C's bundle-v2 format does. Defining floor sets for the claimable profiles is likewise additive.
+3. **Part of this is enforceable today** — and was enforced on 2026-08-12. Making `verifyBundleProfile()` treat an undefined floor as unprovable enforces `conformance-certification.md` §B(2) and `profiles.md` §"Claiming vs passing" as already written, rather than changing them, so it did not depend on the 90-day safety-fix window that §C's bundle-v2 format still needs. The floor sets were **transcribed from `profiles.md`, not invented** — that prose already names the scenarios for `openwop-stream-sse`, `openwop-stream-poll`, and `openwop-node-packs`, and already declares `openwop-core` and `openwop-fixtures` discovery-only. `PROFILE_FLOOR_SCENARIOS` was an incomplete transcription of normative text, which is why the fix is implementation rather than design.
 
 ## References
 

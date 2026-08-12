@@ -452,6 +452,14 @@ export interface ProfileFloor {
   readonly required: readonly string[];
   /** Prefix groups where ≥1 matching passed scenario satisfies the group. */
   readonly requiredAnyPrefix?: readonly string[];
+  /**
+   * The profile is discovery-payload-only: its predicate IS the whole claim and
+   * it has no runtime floor. This flag exists so an EMPTY floor is a decision on
+   * record rather than an absence — an absent key means "not yet transcribed",
+   * which `verifyBundleProfile()` treats as unprovable (RFC 0148 §C). Conflating
+   * the two is what let five undefined-floor claims verify as proven.
+   */
+  readonly discoveryOnly?: true;
 }
 
 export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
@@ -469,6 +477,49 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
     ],
     requiredAnyPrefix: ['interrupt-'],
   },
+
+  // ── Floors TRANSCRIBED from `profiles.md`, not invented here ────────────────
+  // `profiles.md` §"Claiming vs passing" already states the rule normatively:
+  // "A host CLAIMS a profile by satisfying its predicate AND passing the
+  // conformance scenarios labelled with the profile tag." Each per-profile
+  // section then names its scenarios. This map was an incomplete transcription
+  // of that prose, and every profile it omitted verified as floor-proven
+  // against nothing (RFC 0148 §C, gap G6).
+
+  // `profiles.md` §`openwop-core` is a pure discovery-payload predicate — it
+  // names no runtime scenario, so the predicate IS the whole claim.
+  'openwop-core': { required: [], discoveryOnly: true },
+
+  // `profiles.md` §`openwop-fixtures`: "The profile is discovery-payload-only —
+  // it confirms the host claims SOME fixture, not that any specific fixture is
+  // wired."
+  'openwop-fixtures': { required: [], discoveryOnly: true },
+
+  // `profiles.md` §`openwop-stream-sse`: "A host passes `openwop-stream-sse`
+  // when discovery passes the predicate AND those scenarios pass."
+  'openwop-stream-sse': {
+    required: ['stream-modes.test.ts', 'stream-modes-buffer.test.ts', 'stream-modes-mixed.test.ts'],
+  },
+
+  // `profiles.md` §`openwop-stream-poll`: "Conformance scenarios in
+  // `stream-modes.test.ts` exercise polling."
+  'openwop-stream-poll': { required: ['stream-modes.test.ts'] },
+
+  // `profiles.md` §`openwop-node-packs`: "a host passes `openwop-node-packs`
+  // when it passes those scenarios."
+  'openwop-node-packs': { required: ['pack-registry.test.ts', 'pack-registry-publish.test.ts'] },
+
+  // ── Deliberately NOT transcribed ───────────────────────────────────────────
+  // `openwop-replay-fork` cannot be expressed by this model. `profiles.md`
+  // §`openwop-replay-fork` says "Hosts MAY support either or both modes; the
+  // conformance scenarios pass on whichever mode the host advertises" — a floor
+  // conditional on the advertised mode, which a flat `required[]` cannot state.
+  // Forcing it would either over-require (failing an honest single-mode host) or
+  // under-require (the vacuity this fix removes). It stays unspecified, and is
+  // therefore unprovable, until the model can express a discovery-conditional
+  // floor. Same for `openwop-interrupts`, `openwop-secrets`,
+  // `openwop-provider-policy`, `openwop-memory`, and `openwop-trigger-bridge`,
+  // whose prose sections do not yet name a settled floor set.
 };
 
 /** Is `profile` derivable from a discovery document? Maps a profile name to its predicate (RFC 0089 §B(1)). */
@@ -496,6 +547,14 @@ export interface BundleProfileVerdict {
   readonly floorProven: boolean;
   readonly valid: boolean;
   readonly missingFloor: readonly string[];
+  /**
+   * True when no floor set is defined for this profile, so §B(2) cannot be
+   * evaluated at all. Distinct from `floorProven: false` with a populated
+   * `missingFloor`, which means the floor WAS evaluated and the bundle failed
+   * it. Both are invalid; only this one is a gap in the corpus rather than a
+   * defect in the host.
+   */
+  readonly floorUnspecified: boolean;
 }
 
 const scenarioBasename = (id: string): string => id.split('/').pop() ?? id;
@@ -507,11 +566,29 @@ const scenarioBasename = (id: string): string => id.split('/').pop() ?? id;
 export function verifyBundleProfile(bundle: CertificationBundleLike, profile: string): BundleProfileVerdict {
   const derivable = profileDerivable(bundle.discovery.document, profile);
   const floor = PROFILE_FLOOR_SCENARIOS[profile];
+
+  // An UNDEFINED floor set makes §B(2) unevaluable, so the claim is unprovable —
+  // never proven. Reading the old code, `missingFloor` fell to `[]` and
+  // `prefixOk` to `[].every(...)` === true, so `floorProven` came out TRUE for
+  // every profile this map omitted: the verifier reported a claim as floor-proven
+  // having checked nothing. An empty floor that is a real decision says so with
+  // `discoveryOnly` (RFC 0148 §C, gap G6).
+  if (floor === undefined) {
+    return { profile, derivable, floorProven: false, valid: false, missingFloor: [], floorUnspecified: true };
+  }
+
   const passed = new Set(bundle.results.passed.map(scenarioBasename));
-  const missingFloor = floor ? floor.required.filter((r) => !passed.has(scenarioBasename(r))) : [];
-  const prefixOk = (floor?.requiredAnyPrefix ?? []).every((p) => [...passed].some((s) => s.startsWith(p)));
+  const missingFloor = floor.required.filter((r) => !passed.has(scenarioBasename(r)));
+  const prefixOk = (floor.requiredAnyPrefix ?? []).every((p) => [...passed].some((s) => s.startsWith(p)));
   const floorProven = missingFloor.length === 0 && prefixOk;
-  return { profile, derivable, floorProven, valid: derivable && floorProven, missingFloor };
+  return {
+    profile,
+    derivable,
+    floorProven,
+    valid: derivable && floorProven,
+    missingFloor,
+    floorUnspecified: false,
+  };
 }
 
 /** Verify every profile in `bundle.claimedProfiles`; the bundle is valid iff all claims are valid. */
