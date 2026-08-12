@@ -57,6 +57,57 @@ export function expectedCacheKey(input: Record<string, unknown>): string {
   return createHash('sha256').update(canonicalize(projectRecipe(input)), 'utf8').digest('hex');
 }
 
+/** RFC 0150 §C recipe stamp. Present in the preimage so a v1 digest and a v2
+ *  digest for the same request cannot be mistaken for each other. */
+export const SEMANTIC_REQUEST_RECIPE_V2 = 'openwop-semantic-request-v2';
+
+/**
+ * RFC 0150 §C — project to the **v2** semantic request.
+ *
+ * The difference from v1 is not additive tidying. v1 EXCLUDED `maxOutputTokens`,
+ * `stop`, and `seed`, and every one of them changes the completion — so two
+ * requests that produce different text hashed to the same key. That is a wrong
+ * hit rather than a miss, which is why v2 is a safety-fix and not a refinement.
+ *
+ * Transport-only fields are still excluded. The test is whether a field can
+ * change what the model returns, not whether it appears in the HTTP request.
+ */
+export function projectSemanticRequestV2(raw: Record<string, unknown>): Record<string, unknown> {
+  const request: Record<string, unknown> = { messages: raw.messages };
+  if (Array.isArray(raw.tools) && raw.tools.length > 0) {
+    request.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  for (const k of ['temperature', 'topP', 'topK', 'maxOutputTokens', 'seed'] as const) {
+    if (typeof raw[k] === 'number') request[k] = raw[k];
+  }
+  if (Array.isArray(raw.stop)) request.stop = raw.stop;
+  if (raw.responseFormat !== undefined && typeof raw.responseFormat === 'object') {
+    request.responseFormat = raw.responseFormat;
+  }
+  if (raw.safetySettings !== undefined && typeof raw.safetySettings === 'object') {
+    request.safetySettings = raw.safetySettings;
+  }
+  const out: Record<string, unknown> = {
+    recipe: SEMANTIC_REQUEST_RECIPE_V2,
+    provider: raw.provider,
+    model: raw.model,
+    request,
+  };
+  // Carried, never dropped: a dropped option that alters output is
+  // indistinguishable from one that was never set.
+  if (raw.providerOptions !== undefined && typeof raw.providerOptions === 'object') {
+    out.providerOptions = raw.providerOptions;
+  }
+  return out;
+}
+
+/** RFC 0150 §C — SHA-256 over the JCS-canonical v2 object, lowercase hex. */
+export function semanticRequestDigestV2(input: Record<string, unknown>): string {
+  return createHash('sha256')
+    .update(canonicalize(projectSemanticRequestV2(input)), 'utf8')
+    .digest('hex');
+}
+
 /** Drive the host's `POST /v1/host/sample/test/llm-cache-key` test seam.
  *  Returns the host's emitted cacheKey when the seam responds 200; status
  *  alone when the seam returns 404 (host doesn't expose the seam → caller
