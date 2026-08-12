@@ -112,7 +112,7 @@ All are server-free and always-on. Fixtures cover valid root discovery, wrapper,
 1. ~~Which generators or clients have implemented a workaround for `/v1/v1`?~~ **Resolved 2026-08-11** — none. The reference SDKs issue `/v1/*` against a bare base URL, so they never consumed the OpenAPI server value; no host serves the doubled route; and no workaround was found in the corpus or the SDK repositories. This is what made the correction editorial.
 2. What edit-distance rule avoids false positives for legitimate extension names?
 3. Is a temporary `1.0.0` normalization warning required for any deployed host?
-4. Which stale lifecycle statements are intentional historical notes rather than defects?
+4. Which stale lifecycle statements are intentional historical notes rather than defects? **Measured 2026-08-12** (`docs/RFC-LIFECYCLE-COHERENCE.md`): the acceptance-checkbox signal is *inconsistent, not absent* — of 141 `Accepted` RFCs, 42% ticked every box, 25% ticked none, 24% ticked some. A blanket gate would fail 69 RFCs, mostly for an authoring convention, and a gate that fires 69 times on its first run gets disabled rather than fixed. The **34 partial** RFCs are the real triage set: someone was ticking and stopped. Proposed forward-looking rule — *an RFC that ticks any box MUST tick all before `Accepted`, or carry the item to a register / known-limit* — which needs no retro-fix of the 35 never-ticked. Still open: whether any trailing item is material, and the "Stable spec describes its RFC as pending" half, whose phrasing search returned no hits (recorded as unproven, not clean).
 
 ## Implementation notes (non-normative)
 
