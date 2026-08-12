@@ -38,7 +38,10 @@ externalDocs:
   url: https://openwop.dev/spec/v1/
 
 servers:
-  - url: https://{host}/v1
+  # No `/v1` here: the version segment lives in the path keys below, so a
+  # server base carrying it too resolves every operation to `/v1/v1/*` and
+  # the unversioned discovery route to `/v1/.well-known/openwop` (RFC 0149 §A).
+  - url: https://{host}
     description: openwop-compliant server
     variables:
       host:
