@@ -19,6 +19,41 @@ The four are decoupled because they evolve at different rates and have different
 
 ---
 
+## Protocol version grammar
+
+`protocolVersion` in `/.well-known/openwop` identifies the **spec** the host speaks. It is
+distinct from all four axes above, which describe persisted documents and run-local branch
+pins rather than the wire contract.
+
+It **MUST** be ASCII `<major>.<minor>` matching:
+
+```text
+^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
+```
+
+No leading zero except zero itself. `1.0` and `1.12` are valid; `1`, `1.0.0`, `v1.0`, and
+`01.0` are not.
+
+- The integer **major** is the hard compatibility boundary.
+- The integer **minor** is the additive contract level.
+- **Patch does not exist on this axis.** It belongs to suite and SDK versions, which move
+  independently of the spec.
+
+Hosts **MUST** advertise the highest protocol minor they implement. Consumers **MUST**
+reject a different unsupported major, and **MUST** tolerate a higher minor under v1 additive
+rules while capability-gating any optional behavior it might carry.
+
+> **Why a pattern and not just prose (RFC 0149 §C).** The field was specified three
+> incompatible ways at once: `capabilities.schema.json` constrained it to `minLength: 1`,
+> the suite's core predicate tested `startsWith('1.')`, and prose called it semver while
+> every example showed two components. So `"v1.0"`, `"1.0.0"`, and `"banana"` all validated,
+> and `"1.0.0"` additionally *derived* `openwop-core`. Comparison needs an integer major and
+> an integer minor; neither can be extracted from a string nothing constrains, which left
+> two hosts advertising `"1.0"` and `"1.0.0"` with no way for a consumer to tell a patch
+> convention from a typo from a different protocol. Closes gap V2.
+
+---
+
 ## Engine version
 
 ### Stamping
@@ -374,7 +409,7 @@ advertise no `crossRegion` at all are unaffected in both directions.
 | #   | Gap                                                                                                                                                                                                                                                 | Owner       |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | V1  | Schema codemod registry (`WorkflowSchemaMigrator`) — auto-upgrade older runs on read                                                                                                                                                                | future      |
-| V2  | Concrete `protocolVersion` semver semantics — what counts as a major bump vs minor                                                                                                                                                                  | future      |
+| V2  | ✅ Concrete `protocolVersion` grammar and comparison semantics — closed by RFC 0149 §C (this doc §"Protocol version grammar", 2026-08-12). Not semver: `<major>.<minor>`, patch belongs to the suite/SDK axes.                                          | closed      |
 | V3  | `minClientVersion` enforcement — currently advisory in spec; may become MUST                                                                                                                                                                        | future v1.x |
 | V4  | Multi-region replication and split-brain version skew (region A on N, region B on N-1)                                                                                                                                                              | future      |
 | V5  | Pinned-version migration tooling — currently the only path is "drain runs holding the deprecated pin". A registered codemod surface (e.g., "rewrite the `version.pinned` event in place when reading") would let `min` bumps proceed without drains | future v1.x |

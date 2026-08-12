@@ -84,6 +84,14 @@ function isNonNegativeInteger(value: unknown): value is number {
 }
 
 /**
+ * RFC 0149 §C — `protocolVersion` is ASCII `<major>.<minor>`, no leading zero
+ * except zero itself. Kept identical to the `pattern` in
+ * `schemas/capabilities.schema.json`; `protocol-version-grammar.test.ts` asserts
+ * the two agree, so this cannot drift into being the looser of the pair again.
+ */
+const PROTOCOL_VERSION_GRAMMAR = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
+
+/**
  * `openwop-core` predicate. Every other profile implies `openwop-core`. A host
  * that fails this predicate is not openwop-compatible.
  *
@@ -91,7 +99,13 @@ function isNonNegativeInteger(value: unknown): value is number {
  */
 export function isCore(c: DiscoveryPayload): boolean {
   if (typeof c.protocolVersion !== 'string') return false;
-  if (!c.protocolVersion.startsWith('1.')) return false;
+  // RFC 0149 §C. `startsWith('1.')` admitted `1.0.0` and `1.banana` while
+  // rejecting `1`, so the predicate deciding whether a host is openwop-compatible
+  // at all was looser than the schema every host validates against. The major is
+  // the hard boundary; a higher minor stays core under v1 additive rules.
+  const version = PROTOCOL_VERSION_GRAMMAR.exec(c.protocolVersion);
+  if (version === null) return false;
+  if (version[1] !== '1') return false;
   if (!Array.isArray(c.supportedEnvelopes)) return false;
   if (!c.supportedEnvelopes.every((entry) => typeof entry === 'string')) return false;
   if (typeof c.schemaVersions !== 'object' || c.schemaVersions === null) return false;

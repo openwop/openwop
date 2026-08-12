@@ -8,8 +8,8 @@
   "properties": {
     "protocolVersion": {
       "type": "string",
-      "description": "openwop protocol version the server speaks (e.g., `1.0`). Independent of `engineVersion` (which gates persisted-doc compatibility per version-negotiation.md).",
-      "minLength": 1
+      "description": "RFC 0149 §C — openwop protocol version the server speaks, as ASCII `<major>.<minor>` with no leading zero except zero itself. `1.0` and `1.12` are valid; `1`, `1.0.0`, `v1.0`, and `01.0` are not. The integer major is the hard compatibility boundary and the integer minor is the additive contract level; PATCH belongs to suite and SDK versions, not the spec version. Previously constrained only by `minLength: 1`, which admitted `v1.0`, `1.0.0`, and `banana` — a negotiation the wire could not decide, since neither integer can be extracted from an unconstrained string. Independent of `engineVersion` (which gates persisted-doc compatibility per version-negotiation.md).",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
     },
     "contractProvenance": {
       "type": "object",
