@@ -201,17 +201,15 @@ Strict cross-region idempotency requires synchronous replication on every reques
 
 ```json
 {
-  "capabilities": {
-    "idempotency": {
+  "idempotency": {
+    "supported": true,
+    "layer1RetentionSeconds": 86400,
+    "layer2RetentionSeconds": 1209600,
+    "crossRegion": "single-region" | "best-effort" | "strict",
+    "multiRegion": {
       "supported": true,
-      "layer1RetentionSeconds": 86400,
-      "layer2RetentionSeconds": 1209600,
-      "crossRegion": "single-region" | "best-effort" | "strict",
-      "multiRegion": {
-        "supported": true,
-        "replicationLagBoundMs": 5000,
-        "partitionRecoveryStrategy": "last-writer-wins"
-      }
+      "replicationLagBoundMs": 5000,
+      "partitionRecoveryStrategy": "last-writer-wins"
     }
   }
 }

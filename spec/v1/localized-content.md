@@ -42,10 +42,8 @@ A host that serves this surface advertises a `content` block in `/.well-known/op
 
 ```json
 {
-  "capabilities": {
-    "i18n": { "supported": true, "defaultLocale": "en", "supportedLocales": ["en", "es", "pt-BR", "fr"] },
-    "content": { "supported": true, "baseLocale": "en", "supportedLocales": ["es", "pt-BR", "fr"] }
-  }
+  "i18n": { "supported": true, "defaultLocale": "en", "supportedLocales": ["en", "es", "pt-BR", "fr"] },
+  "content": { "supported": true, "baseLocale": "en", "supportedLocales": ["es", "pt-BR", "fr"] }
 }
 ```
 

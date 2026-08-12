@@ -238,12 +238,10 @@ Live execution MUST NOT relax any RFC 0072 §D mandatory floor guarantee: (1) `t
 
 ```jsonc
 {
-  "capabilities": {
-    "multiAgent": {
-      "executionModel": {
-        "supported": true,
-        "version": 1
-      }
+  "multiAgent": {
+    "executionModel": {
+      "supported": true,
+      "version": 1
     }
   }
 }

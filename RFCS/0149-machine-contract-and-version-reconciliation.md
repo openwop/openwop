@@ -49,6 +49,14 @@ Every OpenWOP discovery example **MUST** place canonical capability families at 
 
 The runtime schema **MUST NOT** reject an otherwise legal unknown server-emitted property solely because an older client does not recognize it.
 
+**Wrapper lint landed 2026-08-12** as `capability-example-root-layout.test.ts` (suite `1.76.0`), with all eight offending `spec/v1` examples unwrapped. The defect was worse than "some examples are stale": several sat under headings such as *"Capability advertisement (normative)"*, introduced by prose saying hosts "advertise it under `/.well-known/openwop`" — so the corpus taught, in normative voice, a document shape RFC 0073 Phase 4 grades as non-conformant. **No gate caught it because a fenced example is prose to every validator in the corpus**, which is the same blind spot RFC 0149 §D addresses for examples generally.
+
+Classified **editorial**: RFC 0073 already made root layout the normative MUST, so this corrects examples to match a rule that has been in force since Phase 1 rather than changing one. Runtime tolerance is untouched — the lint reads no host, and the wrapper remains a legal server-emitted shape until it retires with the schema's `additionalProperties` tolerance at v2.0.
+
+**The historical carve-out is asserted, not assumed.** Every `RFCS/` example still showing the wrapper is in an RFC numbered below 0073, so those are left as the dated record of what was proposed — rewriting them would make the record lie. The lint tests that boundary, so a *new* post-0073 RFC introducing a wrapper fails and the exemption cannot widen into a licence.
+
+Two further defects surfaced in the same snippets and are **not** fixed here, because both belong to sections still inside their own safety-fix window: `idempotency.md`'s advertisement example is the `partitionRecoveryStrategy: "last-writer-wins"` value RFC 0150 §D retires, and it is fenced as ```json while containing `"crossRegion": "single-region" | "best-effort" | "strict"`, which no JSON parser accepts — an example that cannot parse, which is exactly what §D's extraction requirement is for.
+
 Positive:
 
 ```json
