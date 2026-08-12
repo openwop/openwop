@@ -111,8 +111,8 @@ Backfill the registry mechanically from RFC status/capability declarations, then
 ## Acceptance criteria
 
 - [ ] Canonical/alias profile definitions and deprecation guidance land. (Carried — §A's motivating defect is now demonstrated rather than argued (the published bundle claims `openwop-core` while failing six `interrupt-*` scenarios), and RFC 0148 G6 gave `openwop-core` an explicit `discoveryOnly` marker. The rename itself has not landed.)
-- [ ] Stable core manifest is generated and parity-gated. (Carried — gap G6. No `core-standard-manifest.json`, no generator, no parity gate.)
-- [ ] Extension registry is complete for all current normative extensions. (Carried — gap G6. `spec/v1/extensions.json` does not exist.)
+- [x] Stable core manifest is generated and parity-gated. (`spec/v1/core-standard-manifest.json` + `scripts/generate-core-standard-manifest.mjs`, checked in `openwop:check`; parity asserted against `PROFILE_FLOOR_SCENARIOS` and the requirement registry.)
+- [ ] Extension registry is complete for all current normative extensions. (`spec/v1/extensions.json` exists with six records covering the RFC 0147 program extensions. **Not complete for the whole corpus** — extensions predating the program are unlisted, and unlisted means uncovered rather than compliant.)
 - [ ] Budget and Stable evidence rules are governance-approved. (Externally gated — needs governance review, and UQ1 (is 12/4 the right budget?) is unresolved.)
 - [ ] Certification, badges, SDKs, interop matrix, roadmap, and CHANGELOG update. (Carried with the naming work above.)
 - [ ] At least one Tier-3 host validates the stable-core manifest in practice. (Externally gated — no Tier-3 host exists; the `ROADMAP.md` tripwire has not fired.)
