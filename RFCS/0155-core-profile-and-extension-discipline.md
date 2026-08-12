@@ -21,6 +21,10 @@ This RFC names the existing discovery-only floor `openwop-discovery-core`, reser
 
 The current `openwop-core` predicate checks discovery fields but need not prove run lifecycle, streaming, interrupts, durability, replay, or multi-agent coordination. The stronger core-standard profile has black-box behavior. With 146+ RFCs and a large optional surface, implementers also need a bounded manifest of what is stable, experimental, dependent, and independently evidenced.
 
+**This stopped being hypothetical on 2026-08-11.** The only published v1 certification bundle claims `openwop-core` — not `openwop-core-standard` — while listing six `interrupt-*` scenarios in its own `results.failed`. Had it claimed the executable floor, `openwop-core-standard`'s `requiredAnyPrefix: ['interrupt-']` would have rejected it outright. The one-word difference between the two names is the difference between a claim the evidence contradicts and a claim it does not reach. See `docs/CERTIFICATION-BUNDLE-INVENTORY.md`.
+
+The RFC 0148 G6 fix (2026-08-12) then made the distinction machine-visible rather than merely documented: `openwop-core` now carries an explicit `discoveryOnly` marker in `PROFILE_FLOOR_SCENARIOS`, recording that it has **no runtime floor by design** — the predicate is the whole claim. That is exactly what §A asserts, now asserted by the code a verifier actually runs. An `openwop-core` badge is therefore a statement about a document, not about a running system, and nothing in the current naming says so.
+
 ## Proposal
 
 ### §A — Profile names
