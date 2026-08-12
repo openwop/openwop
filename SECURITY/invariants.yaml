@@ -1484,8 +1484,23 @@ invariants:
       guardrail rather than a repair — and therefore one that MUST be
       shown able to fail. Sabotage-verified: injecting
       `"vendor.acme.suite": { "auth": ... }` reds the shadow leg with its
-      file:line and the colliding key, and injecting an `sk-`-prefixed
-      value reds the credential leg with the truncated match.
+      file:line and the colliding key, and injecting credential material
+      reds the credential leg with the truncated match and the axis that
+      caught it.
+      LIMITATION, stated because the first version of this gate had it and
+      the label did not cover it: credential detection runs on THREE axes
+      with different failure modes, and NONE of them closes the claim.
+      (1) known issuer prefixes — blind to every format not listed;
+      (2) the property NAME claiming to hold a credential, with placeholder
+      exclusion — blind to unconventional names; (3) dense high-entropy
+      material with no word structure — blind to low-entropy secrets and to
+      anything carrying separators. Axis 1 alone is a negative existence
+      claim established by grepping the vocabulary its author chose, which
+      reports clean on the formats nobody thought of in the confident tone
+      of a real check — the vacuous-witness pattern wearing a different hat.
+      The three fail differently; that is the most that can be said, and it
+      is said here rather than implied by a green run. Each axis is
+      independently sabotage-verified.
 
   # ===== Agent memory (Phase I.1) =====
 

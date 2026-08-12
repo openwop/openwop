@@ -88,8 +88,25 @@ function shadowed(value: unknown, families: Set<string>, insideVendor: boolean):
   return hits;
 }
 
-/** Values shaped like real credentials. Placeholders are the point of examples. */
-const SECRET_VALUE = [
+/**
+ * Credential detection runs on THREE axes with different failure modes, because
+ * no one of them is complete and the ways they are incomplete do not overlap.
+ *
+ * A peer put the problem precisely: *a negative existence claim cannot be
+ * established by grepping the vocabulary you would have chosen.* Axis 1 alone —
+ * a hand-picked list of issuer prefixes — reports clean on every credential
+ * format its author did not think of, and reports it in exactly the confident
+ * tone of a real check. That is the vacuous-witness pattern wearing a different
+ * hat: the gate is honest about what it observed and silent about what it
+ * cannot see.
+ *
+ * None of the three closes the claim. Together they fail differently, which is
+ * the most that can be said for them, and it is said here rather than implied by
+ * a green run.
+ */
+
+/** Axis 1 — known issuer prefixes. Blind to any format not listed. */
+const SECRET_PREFIX = [
   /\bsk-[A-Za-z0-9]{16,}/,
   /\bghp_[A-Za-z0-9]{20,}/,
   /\bAKIA[0-9A-Z]{16}\b/,
@@ -98,17 +115,53 @@ const SECRET_VALUE = [
   /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/,
 ];
 
+/** Axis 2 — the property NAME claims to hold a credential. Blind to odd names. */
+const CREDENTIAL_KEY = /secret|password|token|api_?key|credential|private_?key|bearer/i;
+
+/** An example is allowed to say `sk-…` or `<your-key>`; that is what examples are for. */
+function isPlaceholder(v: string): boolean {
+  if (v.length < 16) return true;
+  if (/^https?:\/\//.test(v)) return true;
+  return /\.\.\.|…|<|>|\bexample\b|\bplaceholder\b|\bredacted\b|\byour-|\bchangeme\b|x{4,}/i.test(v);
+}
+
+/**
+ * Axis 3 — dense random-looking material regardless of issuer. Requires no
+ * separators, mixed case, digits, and high Shannon entropy, which is what
+ * distinguishes a credential body from a long dotted identifier or an SRI hash.
+ * Blind to low-entropy secrets and to anything with word structure.
+ */
+function isDenseToken(v: string): boolean {
+  if (!/^[A-Za-z0-9]{24,}$/.test(v)) return false;
+  if (!(/[a-z]/.test(v) && /[A-Z]/.test(v) && /[0-9]/.test(v))) return false;
+  const counts = new Map<string, number>();
+  for (const ch of v) counts.set(ch, (counts.get(ch) ?? 0) + 1);
+  let entropy = 0;
+  for (const c of counts.values()) {
+    const p = c / v.length;
+    entropy -= p * Math.log2(p);
+  }
+  return entropy >= 4.2;
+}
+
 function secrets(value: unknown): string[] {
   const hits: string[] = [];
-  const walk = (v: unknown): void => {
+  const walk = (v: unknown, key: string | null): void => {
     if (typeof v === 'string') {
-      for (const re of SECRET_VALUE) if (re.test(v)) hits.push(v.slice(0, 24));
+      for (const re of SECRET_PREFIX) if (re.test(v)) hits.push(`${v.slice(0, 24)} [issuer-prefix]`);
+      if (key !== null && CREDENTIAL_KEY.test(key) && !isPlaceholder(v)) {
+        hits.push(`${key}=${v.slice(0, 24)} [credential-named]`);
+      }
+      if (isDenseToken(v)) hits.push(`${v.slice(0, 24)} [dense-token]`);
       return;
     }
-    if (v !== null && typeof v === 'object') Object.values(v).forEach(walk);
+    if (Array.isArray(v)) return v.forEach((c) => walk(c, key));
+    if (v !== null && typeof v === 'object') {
+      for (const [k, c] of Object.entries(v)) walk(c, k);
+    }
   };
-  walk(value);
-  return hits;
+  walk(value, null);
+  return [...new Set(hits)];
 }
 
 describe.skipIf(V1_DIR === null)('RFC 0149 §E — canonical families are not shadowed', () => {
