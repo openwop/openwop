@@ -172,4 +172,11 @@ echo "[7/7] Published-layout collection..."
 node "$(dirname "$0")/check-published-layout.mjs"
 echo
 
+# Advisory tail — the gate above validated the WORKING TREE. Nothing so far
+# proves the tree is what you are about to push, and the gap between them is
+# exactly one `git add`. Diagnosis from openwop-app-1: "the gate proves the tree
+# is good, and nothing proves the tree is what you pushed."
+node "$(dirname "$0")/check-tree-matches-head.mjs"
+echo
+
 echo "=== openwop:check OK — spec corpus is internally consistent ==="
