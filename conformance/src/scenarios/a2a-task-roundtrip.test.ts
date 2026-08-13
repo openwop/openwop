@@ -48,6 +48,14 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
+/**
+ * Callback-shaped: the host issues A2A JSON-RPC calls to the suite's fake peer.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host issues A2A JSON-RPC calls to the suite's fake peer";
+
 const ROUNDTRIP_FIXTURE = 'conformance-a2a-task-roundtrip';
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 

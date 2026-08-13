@@ -29,6 +29,14 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
 
+/**
+ * Callback-shaped: the host issues A2A calls to the suite's fake peer, which records the negotiated version header.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host issues A2A calls to the suite's fake peer, which records the negotiated version header";
+
 const PROFILE = 'a2a.versionNegotiation';
 
 interface A2ACaps {

@@ -49,6 +49,14 @@ import {
 } from '../lib/oidc-issuer.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
+/**
+ * Callback-shaped: the host fetches JWKS and discovery from the suite's synthetic OIDC issuer.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host fetches JWKS and discovery from the suite's synthetic OIDC issuer";
+
 interface OIDCCaps {
   supported?: boolean;
   issuers?: string[];

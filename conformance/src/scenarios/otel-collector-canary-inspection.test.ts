@@ -38,6 +38,20 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { OtelCollector } from '../lib/otel-collector.js';
 
+/**
+ * NOT callback-shaped, despite importing the collector.
+ *
+ * This scenario stands up the collector and POSTs synthetic OTLP payloads to
+ * it ITSELF — the suite is both ends. No host is involved, so there is no
+ * connection for a host to originate and nothing to route in a container.
+ *
+ * Stated rather than silently exempted: importing a harness double is the
+ * signal the gate can see, and an unexplained exception is indistinguishable
+ * from an author who forgot.
+ */
+export const HOST_CALLBACK_NOT_REQUIRED =
+  "the suite posts synthetic OTLP payloads to its own collector; no host participates";
+
 const CANARY = 'sk-canary-DO-NOT-LEAK-0f3a9c';
 const REDACTED = '[REDACTED:openwop-conformance-canary-secret]';
 

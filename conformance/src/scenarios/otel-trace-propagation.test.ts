@@ -23,6 +23,14 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 
+/**
+ * Callback-shaped: the host exports OTLP spans to the suite's collector.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host exports OTLP spans to the suite's collector";
+
 const FIXTURE = 'conformance-noop';
 
 /** Build a syntactically-valid traceparent with a known traceId. */

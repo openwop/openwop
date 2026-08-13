@@ -37,6 +37,14 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 
+/**
+ * Callback-shaped: the host exports OTLP metrics to the suite's collector.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host exports OTLP metrics to the suite's collector";
+
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const COST_EMIT_WORKFLOW_ID = 'openwop-smoke-cost-emit';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
