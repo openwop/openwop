@@ -135,3 +135,81 @@ describe.skipIf(RFCS_DIR === null || !existsSync(RFCS_DIR))('RFC 0149 §D — li
     ).toBe(true);
   });
 });
+
+/**
+ * Every non-terminal RFC either carries the **Parked** annotation with a named
+ * tripwire, or is genuinely in flight.
+ *
+ * `RFCS/README.md` §"Parked RFCs" extends the annotation from `Draft` to
+ * `Active`, and the reason is the confusion this corpus has now made in both
+ * directions: **an RFC blocked on the world and an RFC blocked on somebody's
+ * unfinished work look identical from an index.** RFC 0038 was parked on an
+ * external tripwire while three of its acceptance criteria were plain
+ * repository work nobody had done; RFC 0121 sits on an unresolved legal
+ * question and kept re-reading as an open action item.
+ *
+ * What this leg defends is the honesty of the annotation, not its presence. A
+ * Parked RFC MUST name a **falsifiable** tripwire — a condition someone could
+ * check and declare met. "Needs more adoption" is not one. Without this leg the
+ * annotation would be a label anybody could apply to make an index look
+ * finished, which is precisely the move RFC 0147 §A exists to stop: **Parked is
+ * a reason an RFC has not graduated, never a substitute for having graduated.**
+ */
+describe.skipIf(RFCS_DIR === null || !existsSync(RFCS_DIR))('RFCS/README §Parked — a park names its tripwire', () => {
+  const dir = RFCS_DIR as string;
+
+  function nonTerminal(): { file: string; doc: string; status: string }[] {
+    const out: { file: string; doc: string; status: string }[] = [];
+    for (const name of readdirSync(dir).filter((f) => /^\d{4}-.*\.md$/.test(f)).sort()) {
+      if (name.startsWith('0000')) continue; // the template is not an RFC
+      const doc = readFileSync(join(dir, name), 'utf8');
+      const st = statusOf(doc);
+      if (st === 'Draft' || st === 'Active') out.push({ file: name, doc, status: st });
+    }
+    return out;
+  }
+
+  it('the scan finds the non-terminal RFCs it is meant to govern', () => {
+    // Guard: if every RFC were `Accepted` this leg would pass over an empty set,
+    // which is the vacuity RFC 0148 §C found in the floor verifier. If the corpus
+    // ever genuinely reaches zero, delete this leg deliberately rather than
+    // letting it go quiet.
+    expect(
+      nonTerminal().length,
+      'RFCS/README §"Status index" records non-terminal RFCs; a zero here means the scan broke, ' +
+        'not that the corpus finished',
+    ).toBeGreaterThan(0);
+  });
+
+  it('every Parked RFC names a falsifiable tripwire', () => {
+    const offenders: string[] = [];
+    for (const { file, doc } of nonTerminal()) {
+      const statusLine = /^\|\s*\*\*Status\*\*\s*\|[^\n]*$/m.exec(doc)?.[0] ?? '';
+      if (!/\(\*\*Parked\*\*\)/.test(statusLine)) continue;
+      const updated = /^\|\s*\*\*Updated\*\*\s*\|([^\n]*)$/m.exec(doc)?.[1] ?? '';
+      if (!/tripwire/i.test(updated) || updated.length < 80) {
+        offenders.push(`${file}: Parked without a named tripwire in \`Updated\``);
+      }
+    }
+    expect(
+      offenders,
+      'RFCS/README.md §"Parked RFCs" rule 1: a Parked RFC MUST name the condition that un-parks ' +
+        'it, in `Updated`. An unfalsifiable park is a label that makes an index look finished ' +
+        'while nothing was decided — Parked records why an RFC has NOT graduated, and is never a ' +
+        'substitute for having graduated.\n  ' + offenders.join('\n  '),
+    ).toEqual([]);
+  });
+
+  it('no Parked RFC claims to be Accepted', () => {
+    // Rule 2. The annotation confers nothing: an `Active` (**Parked**) RFC is
+    // exactly as unimplemented as an `Active` one, and licenses no advertisement.
+    for (const { file, doc, status } of nonTerminal()) {
+      const statusLine = /^\|\s*\*\*Status\*\*\s*\|[^\n]*$/m.exec(doc)?.[0] ?? '';
+      if (!/\(\*\*Parked\*\*\)/.test(statusLine)) continue;
+      expect(
+        status,
+        `${file}: Parked applies to \`Draft\` and \`Active\` only — it never stands in for \`Accepted\``,
+      ).not.toBe('Accepted');
+    }
+  });
+});
