@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 151 |
-| Active | 4 |
+| Accepted | 152 |
+| Active | 3 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -182,7 +182,7 @@
 | RFC 0143 | Tool-result trust is untrusted-by-default and monotone through composition | Accepted |
 | RFC 0144 | Which host capability families the core schema declares | Accepted |
 | RFC 0145 | `registrationSource` as a per-type artifact capability facet | Accepted |
-| RFC 0146 | `contractProvenance` - which corpus revision a host implements against | Active |
+| RFC 0146 | `contractProvenance` - which corpus revision a host implements against | Accepted |
 | RFC 0147 | Protocol Integrity and Standards-Readiness Program | Accepted |
 | RFC 0148 | Non-Vacuous Conformance and Certification Evidence | Accepted |
 | RFC 0149 | Machine-Contract and Version Reconciliation | Accepted |
@@ -210,7 +210,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0146) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

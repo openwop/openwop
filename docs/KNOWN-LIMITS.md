@@ -108,7 +108,7 @@ is open for a stated reason rather than by neglect. This table did not exist bef
 | 0038 working-group charter | `Draft` (**parked**) | ≥3 independent-org maintainers + ≥2 non-steward conformant hosts. Deliberately idle, not abandoned; authored so ratification is mechanical when the tripwire fires |
 | 0111 context economy | `Active` | a host that runs **real orchestrator-loop model turns**. No steward host does — the mock supervisor is forbidden from advertising `contextBudget` by the RFC's own §Scope |
 | 0121 subscription provider auth | `Active` | legal/ToS clearance (UQ1), re-scoped as an acceptance criterion. **Steward-held** |
-| 0146 contract provenance | `Active` | recent (2026-08-11); consumer half landed, no acceptance-criteria section yet |
+| 0146 contract provenance | **`Accepted` 2026-08-13** | closed — both halves witnessed on the wire; the advertiser is a **tier-1 steward** reference host, which is what the RFC's gate asked for and is narrower than adoption |
 
 **RFC 0111 is the one worth reading carefully, because the checkbox count misleads.**
 All five of its acceptance criteria are ticked, which by the corpus's usual bar would
