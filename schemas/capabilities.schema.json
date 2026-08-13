@@ -3488,6 +3488,10 @@
       "description": "RFC 0036 \u2014 Multi-region idempotency contract. Optional v1 advertisement. The existing `crossRegion: 'single-region'|'best-effort'|'strict'` categorical claim lives under `capabilities.idempotency.crossRegion` per spec/v1/idempotency.md \u00a7'Multi-region idempotency (annex)'. The `multiRegion` sub-block here gives a granular advertisement that hosts SHOULD pair with the categorical `crossRegion` claim.",
       "additionalProperties": true,
       "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Whether the host implements the idempotency contract. Used in `spec/v1/idempotency.md`'s own capability example and throughout the corpus, but UNDECLARED until 2026-08-13 \u2014 it validated only because this family carries `additionalProperties: true`, which meant a typo such as `suported` was accepted silently and a consumer reading it saw nothing advertised. Declaring it does not close the family; it makes the field a contract rather than a convention."
+        },
         "multiRegion": {
           "type": "object",
           "additionalProperties": false,
