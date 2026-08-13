@@ -130,7 +130,7 @@ Implement after RFC 0150's effect identities. Start with reverse-completion and 
 ## Acceptance criteria
 
 - [ ] Spec, policy schema, capability, events, and API/AsyncAPI projections land. (Capability family and node-level `compensation` declaration landed in `capabilities.schema.json` and `workflow-definition.schema.json`, with `compensation-profile.test.ts` — **shape only**. Carried: §D events, the API/AsyncAPI projections, and spec prose.)
-- [ ] Reverse-unwind, retry, crash, partial/manual, approval, replay, and isolation scenarios pass. (Carried — depends on the spec and schema above, none of which exist.)
+- [ ] Reverse-unwind, retry, crash, partial/manual, approval, replay, and isolation scenarios pass. (**The witness now exists**: `compensation-behavior.test.ts` covers plan-before-first-effect, reverse-completion ordering, replay-no-refire, and credential exclusion, capability-gated and strict-mode-failing. Carried: a host that advertises `compensation.supported` and exposes the unwind sample seam — until one does, these resolve to `blocked` per RFC 0148 §A.)
 - [ ] Effect IDs compose with RFC 0150. (Carried, and now the one item with a concrete dependency: RFC 0150 §B landed `logicalInvocationId`, so the composition target is fixed. §C's semantic digest is not, so the composition cannot be specified end-to-end yet.)
 - [ ] Threat models and invariants land. (Carried with the spec above.)
 - [ ] One reference host demonstrates non-vacuous recovery from a mid-unwind crash. (Carried — reference hosts live in `openwop-examples`, and there is no compensation surface for one to implement.)
