@@ -54,7 +54,7 @@ echo
 # block that reads sdk/typescript|python|go sources — it self-skips here now that
 # those sources are absent (the cross-SDK parity it covered is enforced in
 # openwop-sdks via check-sdk-parity.mjs).
-echo "[1/6] Conformance suite (typecheck + server-free scenarios)..."
+echo "[1/7] Conformance suite (typecheck + server-free scenarios)..."
 (
   cd "$SPEC_ROOT/conformance"
   if [[ ! -d node_modules ]]; then
@@ -80,7 +80,7 @@ echo
 # `@latest` resolution forced a remote metadata lookup every gate run,
 # which is what raced the npm cache. The pinned semver tarball is
 # content-addressed; the second invocation hits the cache deterministically.
-echo "[2/6] OpenAPI 3.1 (redocly lint)..."
+echo "[2/7] OpenAPI 3.1 (redocly lint)..."
 (
   cd "$SPEC_ROOT/api"
   npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml
@@ -89,7 +89,7 @@ echo
 
 # 3. AsyncAPI validate. Same pinning as step 2. `@asyncapi/cli@4.1.1` is
 # the last release compatible with Node 22 (5.x requires Node 24+).
-echo "[3/6] AsyncAPI 3.1 (asyncapi validate)..."
+echo "[3/7] AsyncAPI 3.1 (asyncapi validate)..."
 npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/asyncapi.yaml"
 echo
 
@@ -103,7 +103,7 @@ echo
 # zero-deps mirror in the in-memory host) moved to conformance-soak.yml, which
 # checks out openwop-examples for the host source — the host no longer lives in
 # this repo, so the guard can't run in this server-free local gate.
-echo "[4/6] Generated protocol status..."
+echo "[4/7] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 # RFC 0155 §B — the core-standard manifest is DERIVED, so it can go stale the
 # moment the corpus moves. Checking it here is the "generated from or checked
@@ -152,15 +152,24 @@ echo
 # package posture drift, and package content leaks. Scoped to the conformance
 # suite now (the SDKs' publish metadata + the python/go release-surface check
 # moved to the openwop-sdks repo with sdk/).
-echo "[5/6] Publish metadata + package contents..."
+echo "[5/7] Publish metadata + package contents..."
 "$(dirname "$0")/openwop-check-publish-metadata.sh"
 "$(dirname "$0")/check-npm-pack-contents.sh"
 echo
 
 # 6. Security invariants — every protocol-tier MUST-NOT in
 # SECURITY/invariants.yaml has at least one matching public test.
-echo "[6/6] Security invariants..."
+echo "[6/7] Security invariants..."
 "$(dirname "$0")/check-security-invariants.sh"
+echo
+
+# 7. Published-layout collection — every scenario must LOAD in the tarball
+# layout, not just in a repo checkout. Steps 1-6 all run with spec/v1, RFCS/
+# and docs/ sitting above the conformance package; the published package has
+# none of those, and a scenario that reads through them throws at import for
+# every npm consumer while staying green here. Six did.
+echo "[7/7] Published-layout collection..."
+node "$(dirname "$0")/check-published-layout.mjs"
 echo
 
 echo "=== openwop:check OK — spec corpus is internally consistent ==="

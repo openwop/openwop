@@ -31,12 +31,17 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { V1_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 
-const SCHEMAS = V1_DIR === null ? null : pathResolve(V1_DIR as string, '..', '..', 'schemas');
+/**
+ * Schemas ship inside the package; RFC prose does not. The old form derived
+ * BOTH from `V1_DIR` — null in the published tarball — and cast the null away,
+ * so this file threw at import for every consumer installing from npm.
+ */
+const RFCS_DIR = V1_DIR === null ? null : pathResolve(V1_DIR, '..', '..', 'RFCS');
 
 function schema(name: string): Record<string, unknown> {
-  return JSON.parse(readFileSync(join(SCHEMAS as string, name), 'utf8')) as Record<string, unknown>;
+  return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
 
 /**
@@ -49,7 +54,7 @@ function schema(name: string): Record<string, unknown> {
  */
 function nodeValidator() {
   const ajv = new Ajv2020({ strict: false, allErrors: true });
-  for (const file of readdirSync(SCHEMAS as string).filter((f) => f.endsWith('.schema.json'))) {
+  for (const file of readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.schema.json'))) {
     const s = schema(file);
     ajv.addSchema(s, file);
   }
@@ -57,7 +62,7 @@ function nodeValidator() {
   return ajv.compile({ ...(wf.$defs['WorkflowNode'] as object), $defs: wf.$defs });
 }
 
-describe.skipIf(V1_DIR === null)('RFC 0151 §A — compensation capability shape', () => {
+describe('RFC 0151 §A — compensation capability shape', () => {
   const caps = schema('capabilities.schema.json') as {
     properties: Record<string, { properties?: Record<string, unknown>; required?: string[] }>;
   };
@@ -91,7 +96,7 @@ describe.skipIf(V1_DIR === null)('RFC 0151 §A — compensation capability shape
   });
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0151 §B — node compensation declaration', () => {
+describe('RFC 0151 §B — node compensation declaration', () => {
   const validate = nodeValidator();
   // A minimally VALID node — `WorkflowNode` requires `name`, `position`,
   // `config`, and `inputs` independently of this RFC. Building the fixture from
@@ -149,7 +154,7 @@ describe.skipIf(V1_DIR === null)('RFC 0151 §B — node compensation declaration
   });
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0151 — what this file does NOT establish', () => {
+describe.skipIf(RFCS_DIR === null)('RFC 0151 — what this file does NOT establish', () => {
   it('records that behavioral conformance is absent, per RFC 0147 §A.5', () => {
     // Not decoration. RFC 0147 §A.5 forbids `Accepted` on shape-only evidence
     // for a behavioral requirement, and this scenario is shape-only by
@@ -158,7 +163,7 @@ describe.skipIf(V1_DIR === null)('RFC 0151 — what this file does NOT establish
     // violating §A.5, and this leg exists so that reading the conformance suite
     // alone cannot leave a different impression.
     const rfc = readFileSync(
-      join(pathResolve(V1_DIR as string, '..', '..'), 'RFCS', '0151-compensation-and-partial-failure-profile.md'),
+      join(RFCS_DIR as string, '0151-compensation-and-partial-failure-profile.md'),
       'utf8',
     );
     expect(
