@@ -2,6 +2,8 @@
 
 > **Status: drafts ready, not yet sent (2026-05-11; freshness re-confirmed 2026-05-21).** Send all four in week 1 of the recruitment round in parallel. First positive reply gets the steward's full attention; the rest stay warm. 2026-05-21 re-read: 4-tier list (LangGraph / Restate / DBOS / Inngest) still matches the current durable-execution / agent-orchestration landscape; no content drift requiring rewrite. Send-ready.
 >
+> **Freshness re-verified 2026-08-13.** The corpus moved substantially since these drafts were written (2026-05-11): 156 RFCs / 152 `Accepted`, 59 `spec/v1` documents, 168 tracked security invariants, and the conformance suite at `1.99.0`. One stale claim was found and corrected — a SQLite pass rate quoted from a suite ~40 versions old. **A recruitment letter is an outbound claim about the project, and it decays exactly like any other; the fix was to point at a dated measurement rather than re-quote a number that will age again.** These drafts remain **unsent**.
+>
 > **Standards-review urgency note (2026-05-21).** External host recruitment unblocks the vendor-neutral-org migration tripwire AND the external standards-readiness reviewer's gap (3) (multi-agent semantics fully portable — needs cross-host evidence). Both gates close on the same first non-steward implementation. SEC-1 (audit) and GOV-1 (this doc) are the two highest-leverage external-action items.
 
 The vendor-neutral-org migration tripwire in `MAINTAINERS.md` activates when ≥1 maintainer is not affiliated with OpenWOP. The most credible path to that is recruiting one non-steward host implementation: a different team running their own OpenWOP-compliant server, ideally on top of a different durable-execution runtime.
@@ -29,7 +31,7 @@ OpenWOP (<https://github.com/openwop/openwop>) is an open wire-level protocol fo
 I'd like to make that real. An OpenWOP host backed by a LangGraph runtime would:
 
 1. Give every LangGraph user a portable wire contract — workflows defined in LangGraph can run on any OpenWOP-compliant host, including LangSmith / LangGraph Cloud.
-2. Pass the `@openwop/openwop-conformance` suite as evidence; the SQLite reference host currently passes 576 of 661 tests (87%).
+2. Pass the `@openwop/openwop-conformance` suite as evidence — 436 scenario files, published as `@openwop/openwop-conformance@1.99.0`. Per-host pass rates live in each host's `conformance.md` and in `INTEROP-MATRIX.md`, with the suite version and measurement date attached; I'd rather point you at a dated measurement than quote a number in a letter that ages.
 3. Be the first non-steward host in OpenWOP's `INTEROP-MATRIX.md`, which fires our vendor-neutral-org governance migration tripwire and unlocks the path to a working-group governance model.
 
 The adapter would be ~700–1,000 LOC TypeScript modeled on `examples/hosts/sqlite/` (~3,600 LOC at the level of feature coverage required for the SQLite host's full surface; a LangGraph adapter can target a smaller surface — `openwop-core` + interrupts is enough to be useful and adds maybe 1,000 LOC of bridge code over the LangGraph runtime). Single dep on `langgraph`. The big translation chunks: LangGraph's checkpoint store → OpenWOP's `RunEventLogIO`; LangGraph's interrupt → OpenWOP's interrupt protocol (4 kinds, 5-action approval vocab); LangGraph's `Annotated[T, reducer]` → OpenWOP's channels-and-reducers (which OpenWOP borrowed from you).
