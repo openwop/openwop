@@ -75,7 +75,7 @@ The vendor-neutral-org migration tripwire in `ROADMAP.md` activates when this fi
 
 ### External host implementations
 
-Recruitment targets per `docs/recruitment/external-host.md` (drafts ready 2026-05-11; **freshness re-verified 2026-08-13 — content DID drift and was corrected**: three quoted conformance pass rates came from a suite ~40 versions old and now point at dated, re-derivable measurements instead. **Outreach still not sent.** Sending is the remaining act, and it is the tripwire for RFC 0035 and RFC 0038 both — neither is blocked on the world having declined, only on nobody having asked).
+Recruitment targets per `docs/recruitment/external-host.md` (drafts ready 2026-05-11; **freshness re-verified 2026-08-13 — content DID drift and was corrected**: three quoted conformance pass rates came from a suite ~40 versions old and now point at dated, re-derivable measurements instead. **Outreach still not sent** — but as of 2026-08-13 it is **sendable**: `external-host.md` carries **zero unfilled placeholders**, the four scheduling slots that required a Calendly link the steward may not have are now plain "name two or three windows" asks, and every quoted figure points at a dated measurement. Sending is the remaining act and it is the tripwire for RFC 0035 and RFC 0038 both — neither is blocked on the world having declined, only on nobody having asked).
 
 | Target                        | Outreach sent | First reply | Status  | Notes                                                                                                  |
 | ----------------------------- | ------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------ |

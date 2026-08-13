@@ -83,7 +83,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 > 1. The conformance suite is at `@openwop/openwop-conformance@1.99.0` — 436 scenario files, capability-gated so a host is measured only against what it advertises. Per-host results, with suite version and measurement date attached: `INTEROP-MATRIX.md`.
 > 2. The Postgres-host audit module is the next port; engagement-doc §5 preconditions remain stable for the next 60 days.
 >
-> Still happy to walk it on a call. **Three open slots: <window 1>, <window 2>, <window 3>.**
+> Still happy to walk it on a call. **Happy to work around your calendar — name two or three windows and I will send an invite.**
 >
 > Thanks,
 > David
@@ -124,7 +124,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 >
 > One update in case it sharpens the picture: the Postgres reference host has audit-log integrity end-to-end, and the conformance suite is now at `1.99.0`. Current per-host pass rates are in `INTEROP-MATRIX.md` with their measurement date — I'd rather send you a dated figure you can re-derive than one quoted in an email.
 >
-> Still happy to write the first cut as a draft PR. **Three open slots: <window 1>, <window 2>, <window 3>.**
+> Still happy to write the first cut as a draft PR. **Happy to work around your calendar — name two or three windows and I will send an invite.**
 >
 > Thanks,
 > David
@@ -167,7 +167,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 >
 > If a `vendor.<your-org>.<tool>` pack lands on the registry, you're the first external pack author on `INTEROP-MATRIX.md`. Happy to do the wire-translation work for the first manifest.
 >
-> Three open slots: <window 1>, <window 2>, <window 3>.
+> Happy to work around your calendar — name two or three windows and I will send an invite.
 >
 > Thanks,
 > David

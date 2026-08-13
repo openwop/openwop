@@ -42,7 +42,7 @@ I'm happy to:
 - Support someone on your team who wants to own it; I'll handle the spec questions and the conformance gate.
 - Land it under whichever org you prefer; doesn't need to be in the OpenWOP repo.
 
-Even a "we'll watch but not own this" reply is useful — it tells me whether to invest in a steward-owned adapter or wait for community demand. **If interested in a longer conversation, reply with a 30-minute slot from `<your Calendly link>` or propose three windows.**
+Even a "we'll watch but not own this" reply is useful — it tells me whether to invest in a steward-owned adapter or wait for community demand. **If interested in a longer conversation, reply with two or three windows that work for a 30-minute call or propose three windows.**
 
 Thanks,
 David Tufts
@@ -81,7 +81,7 @@ I'm happy to:
 - Land it under your org; doesn't need to be in the OpenWOP repo.
 - Author the conformance evidence + the INTEROP-MATRIX submission.
 
-**If interested, reply with a 30-minute slot from `<your Calendly link>` or propose three windows that work — even a "not now but check back in Q3" reply is useful.**
+**If interested, reply with two or three windows that work for a 30-minute call and I will send an invite — even a "not now but check back in Q3" reply is useful.**
 
 Thanks,
 David Tufts
@@ -119,7 +119,7 @@ I'm happy to:
 - Land it under your org.
 - Author the conformance evidence + INTEROP-MATRIX submission.
 
-**If interested, reply with a 30-minute slot from `<your Calendly link>` or propose three windows. Even a "not a fit right now" reply is useful — it sharpens the recruitment shortlist.**
+**If interested, reply with two or three windows that work for a 30-minute call or propose three windows. Even a "not a fit right now" reply is useful — it sharpens the recruitment shortlist.**
 
 Thanks,
 David Tufts
@@ -153,7 +153,7 @@ The adapter would be ~600-900 LOC TypeScript. The translation: Inngest steps →
 
 Happy to write the first cut as a draft PR against an Inngest-OpenWOP-adapter repo your team owns.
 
-**If interested, reply with a 30-minute slot from `<your Calendly link>` or propose three windows. Even a "interesting but not now" reply helps me sequence the recruitment work.**
+**If interested, reply with two or three windows that work for a 30-minute call or propose three windows. Even a "interesting but not now" reply helps me sequence the recruitment work.**
 
 Thanks,
 David Tufts
