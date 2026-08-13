@@ -131,7 +131,7 @@ Reuse the synthetic OIDC issuer and mTLS harness where possible. Keep proof veri
 ## Acceptance criteria
 
 - [ ] Identity/delegation schemas, capability profile, and auth prose land. (Schema and capability landed — `schemas/workload-identity.schema.json` and `auth.workloadIdentity`, with `workload-identity-profile.test.ts`. **Shape only**; the verify/bind/resolve/fail-closed requirements are behavioral and unproven. Carried: auth prose.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
-- [ ] Verification, fail-closed authorization, sender constraint, and negative chain tests pass. (Carried — depends on the schemas above.)
+- [ ] Verification, fail-closed authorization, sender constraint, and negative chain tests pass. (**The witness now exists**: `workload-identity-behavior.test.ts` plus `host-sample-test-seams.md` §20, covering resolution, audience mismatch, expired delegation, non-retriable closed reason codes, and credential exclusion. Carried: a host that advertises `auth.workloadIdentity` and wires the seam — until one does, these resolve to `blocked` per RFC 0148 §A, because §A's requirements are invisible without it.)
 - [ ] OTel mapping is versioned and optional. (Carried with the schemas above.)
 - [ ] Release/suite/SDK/pack provenance attestations verify from a clean checkout. (Carried — attestation generation spans this repo, `openwop-sdks`, and `openwop-registry`, so it cannot land here alone.)
 - [ ] Threat models, invariants, audit events, fixtures, interop matrix, and CHANGELOG update. (Carried with the schemas above.)

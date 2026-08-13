@@ -722,3 +722,50 @@ OPTIONAL. The runner↔host channel ([`self-hosted-runner.md`](./self-hosted-run
 - **Response 4xx (no owning-subject runner):** `{ "error": { "code": "runner_unavailable", "retriable": true } }`. A dispatch for a subject with no registered runner MUST fail this way and MUST NOT fall back to another subject's runner (subject-first isolation).
 - **404 / 403:** seam not wired — the gated scenario (`self-hosted-runner.test.ts`) soft-skips its behavioral legs.
 - **Non-vacuity (RFC 0122):** the witness is non-vacuous because the router runs the host's **real** subject-first match (registering a runner for subject B and dispatching for subject A yields `runner_unavailable`, proving no cross-subject fallback) and the **real** `{runId, stepId}` result store (a second identical dispatch returns `deduped: true` only if the first result was actually persisted). A credential MUST NOT appear on the dispatch frame, the returned result, or any event/log (`runner-credential-non-transit`; the frame schemas are `additionalProperties:false`).
+
+### 20. Workload-identity resolution driver — `POST /v1/host/sample/test/workload-identity/resolve` (RFC 0154)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/test/workload-identity/resolve`                                |
+| Capability gate           | `capabilities.auth.workloadIdentity.supported: true` (RFC 0154 §A)                    |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | RFC 0154 §A/§B — closes the gap that made §A's requirements unobservable              |
+
+OPTIONAL. RFC 0154 §A's requirements are behavioral and, without this seam, **unobservable
+from the wire**: a host must cryptographically verify the presented identity, bind it to the
+request, resolve it to an OpenWOP principal **before** authorization, and **fail closed**
+when it cannot. None of that is visible in a normal request's response — a call either
+succeeds or 401s, and both outcomes look identical whether the host verified anything or
+simply trusted a header.
+
+That invisibility is the reason the seam exists. RFC 0148 §A resolves an unobservable
+requirement to `blocked`, not to a pass, so **without this endpoint RFC 0154 cannot be
+certified at all** — which is the honest position and is what the gated scenario reports.
+
+The seam drives the host's **real** verification and resolution path. It **MUST NOT** be a
+mock that returns a canned principal: the resolver must be the same one the production
+request path consults, or the witness proves nothing about production.
+
+- **Request:** `{ identity: <WorkloadIdentity>, expectedAudience?: string }` — a
+  [`workload-identity`](../../schemas/workload-identity.schema.json) object. Because that
+  schema is closed and forbids credential material, the seam **cannot** be handed a raw
+  token even by a caller trying to.
+- **Response 200 (resolved):** `{ "principalId": string, "resolved": true }`. `principalId`
+  is the OpenWOP principal the identity mapped to — opaque, and never the presented subject
+  verbatim unless the host genuinely uses it as its principal ID.
+- **Response 4xx (fail closed):** `{ "error": { "code": string, "retriable": false } }` with
+  a closed reason code — `identity_unverified`, `identity_unresolvable`,
+  `audience_mismatch`, `delegation_expired`, or `sender_constraint_missing`. **`retriable`
+  MUST be `false`**: an identity that does not resolve will not resolve on retry, and
+  marking it retriable invites a caller to hammer a failing authorization path.
+- **404 / 403:** seam not wired — `workload-identity-behavior.test.ts` reports the
+  requirement as `blocked` rather than skipping it quietly.
+- **Non-vacuity (RFC 0154 §A):** the witness is non-vacuous because the negative cases
+  cannot be satisfied by a host that merely echoes its input. An identity whose `audience`
+  names a different host MUST yield `audience_mismatch`; an expired `delegation.expiresAt`
+  MUST yield `delegation_expired`; and an identity presented without the sender constraint
+  the host advertises MUST yield `sender_constraint_missing`. A host that returns
+  `resolved: true` for any of those has demonstrated it is **not** checking, which is
+  precisely the confused-deputy failure RFC 0147 R12 names. Identity is not authorization:
+  a `200` here means the identity resolved, **never** that the caller may act.
