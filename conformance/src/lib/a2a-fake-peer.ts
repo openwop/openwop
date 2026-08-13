@@ -70,6 +70,20 @@ export interface A2APeerInvocation {
   readonly rpcMethod: string | null;
   readonly body: unknown;
   readonly timestamp: number;
+  /**
+   * Request headers as received, lowercased.
+   *
+   * Added for RFC 0152 §B, whose central requirement — the sender MUST send
+   * `A2A-Version` and a host MUST NOT silently downgrade an authenticated
+   * request — lives entirely in the headers. Without capturing them the peer
+   * could observe that a call happened but not which version was negotiated,
+   * which is the only part §B is about.
+   *
+   * The absence was itself the blocker: RFC 0152 was being described as needing
+   * a live upstream peer when part of what it needed was for this fake one to
+   * record what it already received.
+   */
+  readonly headers: Readonly<Record<string, string>>;
 }
 
 export class A2AFakePeer {
@@ -186,12 +200,18 @@ export class A2AFakePeer {
         ? String((body as { method: unknown }).method)
         : null;
 
+    const headers: Record<string, string> = {};
+    for (const [k, v] of Object.entries(req.headers)) {
+      if (typeof v === 'string') headers[k.toLowerCase()] = v;
+      else if (Array.isArray(v)) headers[k.toLowerCase()] = v.join(', ');
+    }
     this._invocations.push({
       method: req.method ?? 'GET',
       path: url,
       rpcMethod,
       body,
       timestamp: Date.now(),
+      headers,
     });
 
     // GET /.well-known/agent-card.json  — A2A v0.3 well-known path
