@@ -456,6 +456,64 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
 
+    CompensationRequested:
+      name: compensation.requested
+      title: Compensation plan persisted (RFC 0151 §C/§D)
+      summary: >-
+        The unwind plan is durable. §C requires this BEFORE the first inverse
+        action executes — a host that starts unwinding first cannot resume after
+        a crash, and the crash is when resumption matters.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationStarted:
+      name: compensation.started
+      title: First inverse action started (RFC 0151 §D)
+      summary: Compensation began executing. MUST follow compensation.requested.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationCompleted:
+      name: compensation.completed
+      title: Compensation completed (RFC 0151 §D)
+      summary: Every inverse action in the plan succeeded.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationFailed:
+      name: compensation.failed
+      title: Compensation failed (RFC 0151 §D)
+      summary: >-
+        An inverse action exhausted its retries. Compensation is a second effect,
+        not an undo — it can fail, and the run's compensationStatus records that
+        rather than the run silently reporting success.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationPaused:
+      name: compensation.paused
+      title: Compensation paused for authorized intervention (RFC 0151 §C)
+      summary: >-
+        Cancelling the parent MUST NOT silently abandon an active compensation.
+        It continues, pauses here, or records manual intervention required.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationManualInterventionRequired:
+      name: compensation.manual_intervention_required
+      title: Compensation needs an operator (RFC 0151 §C/§E)
+      summary: >-
+        The host cannot proceed unaided. Recorded explicitly because an unwind
+        that stops without saying so is indistinguishable from one that finished.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
     RunPaused:
       name: run.paused
       title: Run paused
