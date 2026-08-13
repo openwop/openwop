@@ -96,6 +96,32 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 | GOV-7     | Promote a non-steward maintainer when criteria are met.         |
 | GOV-8     | Open vendor-neutral org migration RFC after tripwire fires.     |
 
+### The five RFCs that are actually open (added 2026-08-13)
+
+The RFC 0147 program's ten are all `Accepted`. **Five other RFCs are not**, and each
+is open for a stated reason rather than by neglect. This table did not exist before;
+"which RFCs are open and why" required reading fifteen files.
+
+| RFC | Status | Gate |
+| --- | --- | --- |
+| 0035 sandbox execution contract | `Active` | `INTEROP-MATRIX.md` row lands alongside a reference host that advertises the capability |
+| 0038 working-group charter | `Draft` (**parked**) | ≥3 independent-org maintainers + ≥2 non-steward conformant hosts. Deliberately idle, not abandoned; authored so ratification is mechanical when the tripwire fires |
+| 0111 context economy | `Active` | a host that runs **real orchestrator-loop model turns**. No steward host does — the mock supervisor is forbidden from advertising `contextBudget` by the RFC's own §Scope |
+| 0121 subscription provider auth | `Active` | legal/ToS clearance (UQ1), re-scoped as an acceptance criterion. **Steward-held** |
+| 0146 contract provenance | `Active` | recent (2026-08-11); consumer half landed, no acceptance-criteria section yet |
+
+**RFC 0111 is the one worth reading carefully, because the checkbox count misleads.**
+All five of its acceptance criteria are ticked, which by the corpus's usual bar would
+make it flippable — 35 of 151 `Accepted` RFCs have *zero* boxes ticked. But the fifth
+criterion's own text says the tick covers *deferring reference-host implementation for
+`Active`*, and names the `Active → Accepted` graduation gate as a non-vacuous witness
+from a host running real orchestrator turns. **Counting the boxes says "ready"; reading
+the criterion says "not yet."** The prose is right.
+
+That is the same distinction RFC 0149 §D landed as annotated-vs-bare, arriving from the
+other direction: there, an unticked box needed a reason; here, a *ticked* box carried a
+qualification that the count discards.
+
 ### RFC 0147 program — what this repository cannot close (added 2026-08-13)
 
 The RFC 0147 program shipped its schema, conformance, and governance artifacts across
