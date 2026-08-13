@@ -122,7 +122,7 @@ The promotion from `reference-impl` to `protocol` tier in `SECURITY/invariants.y
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
+- [x] Spec text merged (this file). **Verified 2026-08-13** — the file exists and has since 2026-05-21; this box was self-evidently satisfied and left unticked, which costs a reader the same re-derivation as a ticked-but-unmet one (cf. RFC 0111).
 - [x] `schemas/capabilities.schema.json` extended per §A.
 - [x] `spec/v1/host-capabilities.md` extended with §"Sandbox execution contract" per §B + §C.
 - [x] `spec/v1/rest-endpoints.md` §"Common error codes" gains 4 new codes per §C.
