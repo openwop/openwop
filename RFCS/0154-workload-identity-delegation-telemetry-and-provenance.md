@@ -130,7 +130,7 @@ Reuse the synthetic OIDC issuer and mTLS harness where possible. Keep proof veri
 
 ## Acceptance criteria
 
-- [ ] Identity/delegation schemas, capability profile, and auth prose land. (Carried — nothing has landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Identity/delegation schemas, capability profile, and auth prose land. (Schema and capability landed — `schemas/workload-identity.schema.json` and `auth.workloadIdentity`, with `workload-identity-profile.test.ts`. **Shape only**; the verify/bind/resolve/fail-closed requirements are behavioral and unproven. Carried: auth prose.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
 - [ ] Verification, fail-closed authorization, sender constraint, and negative chain tests pass. (Carried — depends on the schemas above.)
 - [ ] OTel mapping is versioned and optional. (Carried with the schemas above.)
 - [ ] Release/suite/SDK/pack provenance attestations verify from a clean checkout. (Carried — attestation generation spans this repo, `openwop-sdks`, and `openwop-registry`, so it cannot land here alone.)

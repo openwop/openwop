@@ -18,7 +18,7 @@ EXPECTED_NPM_SCOPE="@openwop"
 # `@openwop/openwop-conformance` independently bumps minors as conformance
 # scenarios are added/removed, per `PUBLISHING.md` §"Versioning alignment".
 # Bump this when the next `openwop-conformance/v*` tag rolls.
-EXPECTED_CONFORMANCE_VERSION="1.90.0"
+EXPECTED_CONFORMANCE_VERSION="1.91.0"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
