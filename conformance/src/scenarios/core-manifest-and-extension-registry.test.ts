@@ -45,6 +45,13 @@ interface Extension {
   readonly note?: string;
 }
 
+/** The capability schema, for `capabilityPath` resolution. */
+function caps(): Record<string, unknown> {
+  return JSON.parse(
+    readFileSync(join(V1_DIR as string, '..', '..', 'schemas', 'capabilities.schema.json'), 'utf8'),
+  ) as Record<string, unknown>;
+}
+
 function readJson<T>(name: string): T {
   return JSON.parse(readFileSync(join(V1_DIR as string, name), 'utf8')) as T;
 }
@@ -137,6 +144,42 @@ describe.skipIf(V1_DIR === null)('RFC 0155 §C — extension registry', () => {
       e.dependsOn.filter((d) => !known.has(d)).map((d) => `${e.id} -> ${d}`),
     );
     expect(dangling, 'RFC 0155 §C: `dependsOn` MUST resolve').toEqual([]);
+  });
+
+  it('every capabilityPath resolves against the capability schema', () => {
+    // Fifth axis of the named-list check, and it found four of six broken.
+    // Three were typos introduced when this registry was written —
+    // `a2a.protocolVersion` for `protocolVersions`, the same for MCP, and
+    // `workloadIdentity.supported` omitting its `auth.` parent. The fourth,
+    // `idempotency.supported`, pointed at a field the corpus USES in its own
+    // examples but had never DECLARED; it validated only because that family
+    // carries `additionalProperties: true`, so a typo like `suported` was
+    // accepted silently.
+    //
+    // An extension whose capabilityPath does not resolve is unreachable: a
+    // consumer following the registry to find the flag finds nothing, and the
+    // registry looks complete while pointing at empty space.
+    const schema = caps() as { properties: Record<string, unknown> };
+    const unresolved: string[] = [];
+    for (const e of (registry as NonNullable<typeof registry>).extensions) {
+      let node = schema.properties as Record<string, { properties?: Record<string, unknown> }> | undefined;
+      let ok = true;
+      for (const part of e.capabilityPath.split('.')) {
+        if (node === undefined || !(part in node)) {
+          ok = false;
+          break;
+        }
+        node = node[part]?.properties as typeof node;
+      }
+      if (!ok) unresolved.push(`${e.id} -> ${e.capabilityPath}`);
+    }
+    expect(
+      unresolved,
+      'RFC 0155 §C: `capabilityPath` MUST resolve to a declared property in ' +
+        '`capabilities.schema.json`. An unresolvable path makes the extension unreachable — a ' +
+        'consumer following the registry to find the flag finds nothing, while the registry ' +
+        'still reads as complete.\n  ' + unresolved.join('\n  '),
+    ).toEqual([]);
   });
 
   it('every record names the RFC that owns it', () => {

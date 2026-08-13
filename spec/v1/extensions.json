@@ -37,40 +37,40 @@
       "id": "openwop-a2a-1-0",
       "maturity": "draft",
       "owningRfc": "0152",
-      "capabilityPath": "a2a.protocolVersion",
+      "capabilityPath": "a2a.protocolVersions",
       "dependsOn": [
         "openwop-core-standard"
       ],
       "securityTier": "high",
       "minimumSuiteVersion": null,
       "evidenceTier": null,
-      "note": "RFC 0152 `Accepted`, nothing landed. Stable additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable."
+      "note": "RFC 0152 `Accepted`, nothing landed. Stable additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
     },
     {
       "id": "openwop-mcp-2026-07-28",
       "maturity": "draft",
       "owningRfc": "0153",
-      "capabilityPath": "mcp.protocolVersion",
+      "capabilityPath": "mcp.protocolVersions",
       "dependsOn": [
         "openwop-core-standard"
       ],
       "securityTier": "high",
       "minimumSuiteVersion": null,
       "evidenceTier": null,
-      "note": "RFC 0153 `Accepted`, nothing landed. Same external gate as 0152: a pinned upstream peer at the current revision."
+      "note": "RFC 0153 `Accepted`, nothing landed. Same external gate as 0152: a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
     },
     {
       "id": "openwop-workload-identity-v1",
       "maturity": "draft",
       "owningRfc": "0154",
-      "capabilityPath": "workloadIdentity.supported",
+      "capabilityPath": "auth.workloadIdentity.supported",
       "dependsOn": [
         "openwop-core-standard"
       ],
       "securityTier": "high",
       "minimumSuiteVersion": null,
       "evidenceTier": null,
-      "note": "RFC 0154 `Accepted`, nothing landed. Provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone."
+      "note": "RFC 0154 `Accepted`, nothing landed. Provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`."
     },
     {
       "id": "openwop-effect-identity-v2",
