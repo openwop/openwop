@@ -94,7 +94,7 @@ Generate the translation table from the pinned A2A 1.0 schema where possible. Do
 ## Acceptance criteria
 
 - [ ] A2A 1.0 profile, discovery schema, and complete translation table land. (Discovery schema landed — `protocolVersions`/`preferredVersion`/`profiles` on the `a2a` family, with `versioned-composition-profiles.test.ts`. **Shape only.** Carried: the profile itself and the translation table.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
-- [ ] Version header, downgrade, card/runtime, identity, durable task, streaming, and push tests pass. (Carried — depends on the profile above.)
+- [ ] Version header, downgrade, card/runtime, identity, durable task, streaming, and push tests pass. (**Version-header and downgrade witnesses now exist**: `a2a-version-negotiation.test.ts`, driven against `A2AFakePeer` with header capture. Carried: card/runtime, identity, durable task, streaming, and push — and a host that advertises versions and wires the invoke seam.)
 - [ ] Real upstream A2A 1.0 peer passes in CI. (Carried, and externally gated: it needs a reachable upstream A2A 1.0 peer, which is not a corpus deliverable.)
 - [ ] Legacy 0.3 profile and deprecation runbook published. (Carried — the existing 0.3 handling is unnamed and unbounded in the corpus, which is the defect this item closes.)
 - [ ] Threat models, invariants, SDKs, interop matrix, and CHANGELOG updated. (Carried with the profile above.)
