@@ -30,6 +30,20 @@ export interface McpInvocation {
   readonly method: string;
   readonly params: unknown;
   readonly timestamp: number;
+  /**
+   * Request headers as received, lowercased.
+   *
+   * Added for RFC 0153 §A/§B alongside the identical addition to
+   * `A2AFakePeer`. MCP's revision is negotiated in `MCP-Protocol-Version`, so a
+   * recorder that captures only the JSON-RPC method and params can see that a
+   * call happened and not which revision it was made under — which is the whole
+   * of what §B governs.
+   *
+   * Both fake peers had the same gap, which is worth noting: the omission was
+   * not an oversight in one file but a shared assumption that the interesting
+   * part of a call is its body.
+   */
+  readonly headers: Readonly<Record<string, string>>;
 }
 
 export class McpFakeServer {
@@ -93,10 +107,16 @@ export class McpFakeServer {
     }
 
     if (typeof rpc.method === 'string') {
+      const headers: Record<string, string> = {};
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (typeof v === 'string') headers[k.toLowerCase()] = v;
+        else if (Array.isArray(v)) headers[k.toLowerCase()] = v.join(', ');
+      }
       this._invocations.push({
         method: rpc.method,
         params: rpc.params ?? null,
         timestamp: Date.now(),
+        headers,
       });
     }
 

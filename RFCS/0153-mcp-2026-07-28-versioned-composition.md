@@ -96,7 +96,7 @@ Keep upstream types generated or vendored once with provenance, not copied acros
 ## Acceptance criteria
 
 - [ ] Current profile, discovery schema, and complete mapping land. (Discovery schema landed — date-form `protocolVersions`, `preferredVersion`, `profiles`, and a closed `features` list on the `mcp` family, with `versioned-composition-profiles.test.ts`. **Shape only.** Carried: the profile itself and the mapping.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
-- [ ] Stateless discovery, headers, MRTR, caching, extensions, downgrade, and auth tests pass. (Carried — depends on the profile above.)
+- [ ] Stateless discovery, headers, MRTR, caching, extensions, downgrade, and auth tests pass. (**Header and downgrade witnesses now exist**: `mcp-version-negotiation.test.ts`, driven against `McpFakeServer` with header capture — date-form revision on the wire, negotiated revision must be advertised, unsupported revision fails through the canonical envelope. Carried: MRTR, caching, extensions, auth, and a host that advertises revisions and wires the invoke seam.)
 - [ ] Pinned real MCP current peer passes in CI. (Carried, and externally gated: it needs a pinned upstream MCP peer at the current revision.)
 - [ ] Legacy profile and migration/deprecation runbook publish. (Carried — same shape as RFC 0152: the legacy revision the corpus handles today is neither named nor time-bounded.)
 - [ ] Threat models, invariants, SDKs, interop matrix, and CHANGELOG update. (Carried with the profile above.)
