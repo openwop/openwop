@@ -30,6 +30,14 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 
+/**
+ * Callback-shaped: the host issues MCP calls to the suite's fake server, which records the revision header.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host issues MCP calls to the suite's fake server, which records the revision header";
+
 const PROFILE = 'mcp.versionNegotiation';
 const DATE_FORM = /^\d{4}-\d{2}-\d{2}$/;
 

@@ -35,6 +35,14 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { createSyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
+/**
+ * Callback-shaped: the host fetches the token endpoint on the suite's synthetic OIDC issuer.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host fetches the token endpoint on the suite's synthetic OIDC issuer";
+
 interface OAuth2Caps {
   supported?: boolean;
   issuer?: string;

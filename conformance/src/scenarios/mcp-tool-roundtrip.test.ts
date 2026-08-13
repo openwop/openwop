@@ -66,6 +66,14 @@ import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 
+/**
+ * Callback-shaped: the host issues MCP JSON-RPC calls to the suite's fake server.
+ *
+ * Unwitnessable when the host is in a separate network namespace — see
+ * `../lib/host-callback.ts`. Not host non-conformance; no route.
+ */
+export const REQUIRES_HOST_CALLBACK = "the host issues MCP JSON-RPC calls to the suite's fake server";
+
 const ROUNDTRIP_FIXTURE = 'conformance-mcp-tool-roundtrip';
 
 /**
