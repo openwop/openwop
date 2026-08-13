@@ -145,6 +145,42 @@ Not swept: the SQLite, Python, and Postgres host rows. Their profile claims deri
 per-host `conformance.md` files this program did not audit, and **asserting them corrected
 without checking would be the overclaim this document exists to catch**.
 
+## Named-but-absent conformance scenarios (added 2026-08-13)
+
+Each RFC's §Conformance section lists the scenarios it expects. **Nothing checked
+that the list corresponded to files.** An RFC could name eight scenarios, ship
+none, and read as complete to anyone who trusted the section — which is the same
+shape as the invariant gap below, one artifact over.
+
+Measured by `scripts/rfc-conformance-coverage.mjs`:
+
+| | Count |
+| --- | --- |
+| Present under the named filename | 10 |
+| Covered under a different filename | 21 |
+| **Genuinely absent** | **42** |
+| Total named across RFCs 0147–0156 | 73 |
+
+**The raw file-existence count was misleading in both directions**, which is why
+this is a script with a declared alias table rather than a `grep`. Reporting 52
+"missing" would have overstated the gap — RFC 0151 names
+`compensation-replay-no-refire.test.ts` and the behavior lives as a leg inside
+`compensation-behavior.test.ts`. Reporting them as present would have understated
+it just as badly.
+
+**An alias row is a claim, not a suppression.** Each asserts that the named
+scenario's requirement is exercised by the mapped file, every row is checkable,
+and adding one to silence a finding shows up in the diff.
+
+One is deliberately **not** aliased though a looser reading would allow it:
+`multi-region-effect-ownership.test.ts` → `multi-region-effect-vocabulary`. The
+vocabulary gate proves the corpus stopped advertising a posture it contradicts;
+it does not prove any host fences an effect before issuing one (gap G10).
+Aliasing it would convert a labelled gap into apparent coverage.
+
+A named-but-absent scenario is **not a failing test**. It is a requirement with no
+witness, which RFC 0148 §A resolves to `blocked` rather than to a pass.
+
 ## Named-but-unregistered security invariants (added 2026-08-13)
 
 RFCs 0151–0154 each name invariants in their §Security sections. **Seventeen were
