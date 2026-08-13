@@ -38,6 +38,21 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const PROFILE = 'openwop-workload-identity';
+/**
+ * §B gates on its OWN flag, not on §A's.
+ *
+ * The first draft of this file gated every leg on `workloadIdentity.supported`,
+ * which meant a host that verifies workload identity but does NOT implement
+ * delegation had two options: advertise and hard-fail the §B legs under strict
+ * mode, or advertise nothing and get no witness for the §A behavior it does
+ * have. That is the overclaim-or-silence bind RFC 0155 §A names for
+ * `openwop-core`, reproduced one capability down.
+ *
+ * A tier-1 host caught it by asking whether the scenarios gate per-section or
+ * all-on-`supported`. They gate per-section now. §A-only is an honest,
+ * witnessable posture.
+ */
+const DELEGATION_PROFILE = 'openwop-workload-identity-delegation';
 const SEAM = '/v1/host/sample/test/workload-identity/resolve';
 
 interface AuthCaps {
@@ -45,6 +60,7 @@ interface AuthCaps {
     readonly supported?: boolean;
     readonly schemes?: readonly string[];
     readonly senderConstraint?: readonly string[];
+    readonly delegation?: { readonly supported?: boolean; readonly maxChainDepth?: number };
   };
 }
 
@@ -109,7 +125,9 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
   });
 
   it('an expired delegation is rejected', async () => {
-    if (!behaviorGate(PROFILE, (await caps())?.supported === true)) return;
+    // §B, gated on §B's own flag. A host doing §A-only identity resolution is
+    // not failing this requirement — it has not claimed it.
+    if (!behaviorGate(DELEGATION_PROFILE, (await caps())?.delegation?.supported === true)) return;
     const r = await resolve({
       identity: {
         ...IDENTITY,

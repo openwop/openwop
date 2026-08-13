@@ -3817,6 +3817,24 @@
                 ]
               },
               "description": "RFC 0154 \u00a7A \u2014 proof-of-possession mechanisms. Without a sender constraint a bearer credential is replayable by anyone who observes it, so a host advertising workload identity WITHOUT one is asserting who called, not that the caller held the key."
+            },
+            "delegation": {
+              "type": "object",
+              "description": "RFC 0154 \u00a7B \u2014 delegated actor chains, advertised SEPARATELY from \u00a7A identity resolution. A host can verify workload identity without implementing delegation, and forcing one flag to cover both would make a \u00a7A-only host choose between advertising a capability it does not have and advertising nothing at all. That is the same overclaim-or-silence bind RFC 0155 \u00a7A names for `openwop-core`, and per-section advertisement is how it is avoided: `supported` means \u00a7A resolution, `delegation.supported` means \u00a7B chain verification, and a conformance run gates each section on its own flag.",
+              "additionalProperties": false,
+              "required": [
+                "supported"
+              ],
+              "properties": {
+                "supported": {
+                  "type": "boolean"
+                },
+                "maxChainDepth": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "RFC 0154 \u00a7B \u2014 bounded chain length. Unbounded delegation is unbounded authority laundering: each hop is another party the host is trusting transitively."
+                }
+              }
             }
           }
         }
