@@ -78,6 +78,30 @@ const ALIASES = {
  * move this whole script exists to make visible.
  */
 
+/**
+ * Files an RFC's `**Affects**` row names, that do not exist.
+ *
+ * Third axis of the same question. §Security named invariants that were never
+ * registered; §Conformance named scenarios that were never written; `Affects`
+ * names artifacts the RFC says it touches. All three are lists a reader trusts
+ * and nothing verified.
+ *
+ * This axis came back nearly clean, which is worth as much as the other two
+ * coming back dirty — it is evidence the record is accurate here rather than an
+ * assertion that it is. Brace-expansion entries like `spec/v1/{a,b}.md` are
+ * skipped: expanding them correctly is more machinery than the finding warrants,
+ * and silently mis-expanding one would manufacture a false absence.
+ */
+function absentAffects(rfcFile) {
+  const doc = readFileSync(rfcFile, 'utf8');
+  const row = /^\|\s*\*\*Affects\*\*\s*\|(.*)$/m.exec(doc);
+  if (row === null) return [];
+  return [...row[1].matchAll(/`([^`]+)`/g)]
+    .map((m) => m[1])
+    .filter((f) => !f.includes('{') && !f.includes('}') && f.includes('/'))
+    .filter((f) => !existsSync(join(ROOT, f)));
+}
+
 function namedScenarios(rfcFile) {
   const doc = readFileSync(rfcFile, 'utf8');
   const lines = doc.split('\n');
@@ -106,7 +130,7 @@ for (const f of rfcs) {
     }
     return { named: n, status: 'absent', via: null };
   });
-  report.push({ rfc: f.slice(0, 4), named: named.length, rows });
+  report.push({ rfc: f.slice(0, 4), named: named.length, rows, absentAffects: absentAffects(join(ROOT, 'RFCS', f)) });
 }
 
 if (process.argv.includes('--json')) {
@@ -134,4 +158,10 @@ if (process.argv.includes('--json')) {
     'A named scenario that is absent is not a failing test — it is a requirement with no\n' +
       'witness, which RFC 0148 §A resolves to `blocked` rather than to a pass.',
   );
+  const affects = report.flatMap((r) => r.absentAffects.map((a) => `${r.rfc}: ${a}`));
+  console.log(`\nArtifacts named in \`Affects\` that do not exist: ${affects.length}`);
+  for (const a of affects) console.log(`    ${a}`);
+  if (affects.length === 0) {
+    console.log('    (none — every non-brace-expanded path an RFC claims to affect is present)');
+  }
 }
