@@ -87,6 +87,7 @@
 | `suspend-request.schema.json` | `interrupt.md` | `InterruptPayload` with 8 `kind` discriminators (approval, clarification, external-event, custom, conversation.start, conversation.exchange, conversation.close, low-confidence) |
 | `workflow-chain-pack-manifest.schema.json` | `workflow-chain-packs.md` + RFC 0013 | Manifest for workflow-chain packs (`kind: "workflow-chain"`) — pre-configured DAG fragments expanded inline at workflow-author time. Peer to `node-pack-manifest.schema.json`; disjoint via the `kind` discriminator. |
 | `workflow-definition.schema.json` | `channels-and-reducers.md` + `node-packs.md` | DAG of nodes + edges + triggers + variables + channels |
+| `workload-identity.schema.json` | `auth.md` + RFC 0154 §A/§B | Verified workload identity + delegated actor chain. Closed by design: raw certificates, tokens, proofs, and credentials MUST NOT enter these objects — `subject` is opaque and `proofRef`/`thumbprintRef` are digest references, because these objects reach events, spans, and audit records |
 | `workspace-file.schema.json` | `agent-workspace.md` + `RFCS/0059` | RFC 0059 — a versioned workspace file (`{path, content, version, etag, updatedAt}`); response of `GET/PUT /v1/host/workspace/files/{path}`. |
 | `workspace-file-create.schema.json` | `agent-workspace.md` + `RFCS/0059` | RFC 0059 — `PUT /v1/host/workspace/files/{path}` request body (content + optional contentType; path from the URL, version/etag host-assigned). |
 

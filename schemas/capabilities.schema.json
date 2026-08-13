@@ -3781,6 +3781,44 @@
             }
           },
           "additionalProperties": false
+        },
+        "workloadIdentity": {
+          "type": "object",
+          "description": "RFC 0154 \u00a7A \u2014 workload identity profile `openwop-workload-identity-v1`. A host that advertises this cryptographically verifies the presented workload identity, binds it to the request, and resolves it to an OpenWOP principal BEFORE authorization. Unresolvable identity fails closed. **Identity is not authorization** (RFC 0147 R12): proving which workload called says nothing about what it may do, and treating the two as one is the confused-deputy shape this profile exists to prevent \u2014 tenant, audience, and policy MUST still be re-evaluated at every boundary.",
+          "additionalProperties": false,
+          "required": [
+            "supported"
+          ],
+          "properties": {
+            "supported": {
+              "type": "boolean"
+            },
+            "schemes": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "spiffe",
+                  "mtls-san",
+                  "cloud-subject",
+                  "oauth-client"
+                ]
+              },
+              "description": "RFC 0154 \u00a7A \u2014 closed set of identity schemes the host verifies. Closed because an unrecognized scheme is a verification path nobody implemented, and accepting the NAME without the verification is precisely the failure the profile prevents."
+            },
+            "senderConstraint": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "mtls",
+                  "dpop"
+                ]
+              },
+              "description": "RFC 0154 \u00a7A \u2014 proof-of-possession mechanisms. Without a sender constraint a bearer credential is replayable by anyone who observes it, so a host advertising workload identity WITHOUT one is asserting who called, not that the caller held the key."
+            }
+          }
         }
       },
       "additionalProperties": true
