@@ -4,7 +4,7 @@
   "provenance": {
     "suite": {
       "package": "@openwop/openwop-conformance",
-      "version": "1.91.0"
+      "version": "1.92.0"
     },
     "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
   },
@@ -167,6 +167,10 @@
     {
       "file": "schemas/capabilities.schema.json",
       "$id": "https://openwop.dev/spec/v1/capabilities.schema.json"
+    },
+    {
+      "file": "schemas/certification-bundle-v2.schema.json",
+      "$id": "https://openwop.dev/spec/v1/certification-bundle-v2.schema.json"
     },
     {
       "file": "schemas/channel-presence-payload.schema.json",
@@ -409,5 +413,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "258c87a8135efed65e4a717959d118bd33b1cfe661ed1ebe6491b5115a6e28dc"
+  "digest": "3be3bd8f798676406a958835e6202c6f8a916e231533cfdeb87cc0c03a50e5a0"
 }
