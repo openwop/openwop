@@ -181,6 +181,24 @@ Aliasing it would convert a labelled gap into apparent coverage.
 A named-but-absent scenario is **not a failing test**. It is a requirement with no
 witness, which RFC 0148 §A resolves to `blocked` rather than to a pass.
 
+### Third axis: artifacts named in `Affects`
+
+`scripts/rfc-conformance-coverage.mjs` also checks the `**Affects**` row of each
+RFC. **Two absences, both RFC 0151's** — `spec/v1/compensation.md` and
+`schemas/compensation-policy.schema.json` — and both are already annotated on
+0151's acceptance criteria as carried.
+
+**That near-clean result is worth as much as the other two axes coming back
+dirty.** It is evidence the record is accurate here, rather than an assertion
+that it is. The same method that found 17 unregistered invariants and 42 absent
+scenarios found almost nothing on this axis, which is what a method has to be
+able to do if its findings are to mean anything.
+
+Brace-expansion entries such as `spec/v1/{a,b}.md` are skipped: expanding them
+correctly is more machinery than the finding warrants, and mis-expanding one
+would manufacture a false absence — a gate that invents gaps is no better than
+one that hides them.
+
 ## Named-but-unregistered security invariants (added 2026-08-13)
 
 RFCs 0151–0154 each name invariants in their §Security sections. **Seventeen were
