@@ -223,10 +223,15 @@ function staleStatusFindings(rfcs) {
     { label: 'OpenAPI operations', re: /(\d+)\s+OpenAPI\s+operations\b/, actual: operations.length },
     { label: 'conformance scenario files', re: /(\d+)\s+conformance\s+scenario\s+files\b/, actual: scenarios.length },
   ];
+  // Validate EVERY occurrence — a count can appear in the banner AND in a prose line
+  // (e.g. the "ready for adoption" sentence restates scenario/invariant totals). `.match`
+  // returns only the first, so a duplicated-and-drifted count would slip past the gate.
   for (const check of numericChecks) {
-    const m = readmeText.match(check.re);
-    if (m && Number(m[1]) !== check.actual) {
-      findings.push(`README.md: claims "${m[1]} ${check.label}" but actual is ${check.actual}.`);
+    const g = new RegExp(check.re.source, 'g');
+    for (const m of readmeText.matchAll(g)) {
+      if (Number(m[1]) !== check.actual) {
+        findings.push(`README.md: claims "${m[1]} ${check.label}" but actual is ${check.actual}.`);
+      }
     }
   }
 
@@ -240,11 +245,17 @@ function staleStatusFindings(rfcs) {
     { label: 'protocol-tier', re: /(\d+)\s+protocol-tier\b/, actual: protocolCount },
     { label: 'reference-impl-tier', re: /(\d+)\s+reference-impl-tier\b/, actual: referenceImplCount },
     { label: 'invariants in', re: /(\d+)\s+invariants\s+in\b/, actual: totalInvariants },
+    // The "N SECURITY invariants" prose phrasing (README "ready for adoption" line) is a
+    // different wording from the banner's "N invariants in", so it was previously ungated
+    // and silently rotted (157 vs 163). Gate it against the same actual total.
+    { label: 'SECURITY invariants', re: /(\d+)\s+SECURITY\s+invariants\b/, actual: totalInvariants },
   ];
   for (const check of invariantChecks) {
-    const m = readmeText.match(check.re);
-    if (m && Number(m[1]) !== check.actual) {
-      findings.push(`README.md: claims "${m[1]} ${check.label}" invariants but actual is ${check.actual}.`);
+    const g = new RegExp(check.re.source, 'g');
+    for (const m of readmeText.matchAll(g)) {
+      if (Number(m[1]) !== check.actual) {
+        findings.push(`README.md: claims "${m[1]} ${check.label}" but actual is ${check.actual} invariants.`);
+      }
     }
   }
 
