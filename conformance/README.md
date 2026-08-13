@@ -186,6 +186,66 @@ Current source tree: 436 scenario files. Use [`coverage.md`](./coverage.md) for 
 
 ---
 
+## Where the suite runs changes what it can witness
+
+The suite makes assumptions about its execution context. Two have now been found false, both
+by running it somewhere new rather than by reading it more carefully:
+
+| Assumption | True where | False where |
+| --- | --- | --- |
+| `spec/v1/`, `RFCS/`, `docs/` sit above the package | any repo checkout | the published tarball — prose is not bundled, and `paths.ts` reports `V1_DIR === null` |
+| `127.0.0.1` reaches the suite | the harness process | any host in a separate network namespace |
+
+Neither is a bug in a line of code. Both are properties of *where the code ran*, and both were
+invisible because the suite had only ever run in one place. **An assumption shared by every
+existing execution context is untested by construction.**
+
+### Callback-shaped scenarios need a route back
+
+Some scenarios require the **host to call back into the suite** — an outbound webhook the
+suite receives, an OIDC issuer or a provider endpoint the host fetches. The suite advertises
+those endpoints to the host, and in-process that advertisement is free loopback.
+
+**It stops being free the moment the host is not the harness process.** From a container, VM,
+or remote origin, `127.0.0.1` is *that* environment, so the call never lands. The scenario does
+not fail because the host is non-conformant; it fails because there is no route.
+
+This is a networking property, not a measurement: it holds for any consumer running the suite
+against anything that is not the harness process. Demonstrated so far by
+`aiproviders-selfhosted-honesty` (compat provider), `auth-oidc-user-bearer` (OIDC issuer), and
+`webhook-signed-delivery` (webhook subscriber). **That list is a set of demonstrations, not an
+enumeration** — no attributed count of callback-shaped scenarios exists yet, and publishing a
+figure that merely looks measured is the shape RFC 0148 §C exists to prevent.
+
+**What a consumer running the suite off-process must do:**
+
+- Route the host back to the harness — e.g. `--add-host host.docker.internal:host-gateway` for
+  Docker, which is portable on modern versions including Linux.
+- Bind harness mocks to `0.0.0.0` rather than loopback, and advertise a URL the host can
+  actually resolve.
+- **Assert a floor on collected files**, not just on passes. A run that silently loses files
+  still prints a green count — and a scenario file that fails to load reports *nothing*, which
+  RFC 0148 §A resolves to `blocked` rather than to a pass.
+
+### One assumption that was checked and holds
+
+`process.cwd()` and filesystem writability were the obvious next candidates — the harness
+could plausibly have resolved fixtures relative to the working directory or written freely to
+disk. **Neither is true.** Paths resolve from `import.meta.url`, so the package locates its own
+material regardless of where it is invoked from, and the only writes are the opt-in
+certification bundle at a caller-supplied path. Verified rather than reasoned about: the
+published `1.99.0` tarball, run with `/` as the working directory, collects all 1763 tests and
+passes the offline subset.
+
+**This negative result is worth as much as the two positives.** A method that only ever finds
+problems is confirming a prior rather than measuring, and the same technique that surfaced the
+two assumptions above returned clean here.
+
+**Do not opt callback-shaped profiles out to make an off-process lane green.** Those profiles
+are witnessed in the in-process lane, so suppressing them there would give one host two
+materially different matrices — and a matrix that means different things in different lanes is
+worse than a lane reporting an honest unattributed failure count.
+
 ## Resolving the contract: depend on this package, don't hand-copy it
 
 The published tarball vendors the canonical `schemas/` and `api/` directories. **A host validating its own discovery document, events, or manifests should read them from the installed `@openwop/openwop-conformance` package rather than copying files into its own tree.**
