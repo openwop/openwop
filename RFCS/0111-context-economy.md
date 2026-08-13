@@ -4,10 +4,10 @@
 | ----------------- | ---------------------------------------------------------------------------------------------- |
 | **RFC**           | 0111                                                                                           |
 | **Title**         | Context Economy — Transcript Token Budget & Declared Summarization                             |
-| **Status**        | `Active`                                                                                       |
+| **Status**        | `Active` (**Parked**)                                                                                       |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                  |
 | **Created**       | 2026-06-26                                                                                     |
-| **Updated**       | 2026-06-26                                                                                     |
+| **Updated**       | **Parked 2026-08-13 — tripwire:** a host running **real orchestrator-loop model turns** advertises `contextBudget` and produces a non-vacuous witness. No steward host does; the mock supervisor is forbidden from advertising it by this RFC's own §Scope, and openwop-app confirmed on 2026-08-13 that it runs no real orchestrator turns. **All five acceptance boxes are ticked and the RFC still does not graduate** — criterion 5's tick covers *deferring* reference-host implementation for `Active`, and the same sentence names this tripwire as the `Accepted` gate. Counting the boxes says ready; reading them says not yet. 2026-06-26                                                                                     |
 | **Affects**       | `spec/v1/multi-agent-execution.md`, `spec/v1/host-sample-test-seams.md`, `schemas/capabilities.schema.json`, `schemas/run-event-payloads.schema.json`, conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                               |
 | **Supersedes**    | —                                                                                              |
