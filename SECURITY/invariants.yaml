@@ -1502,6 +1502,95 @@ invariants:
       is said here rather than implied by a green run. Each axis is
       independently sabotage-verified.
 
+  - id: a2a-version-no-silent-downgrade
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/a2a-version-negotiation.test.ts
+    note: |
+      RFC 0152 §B. A host MUST NOT silently downgrade an authenticated
+      request. The danger is that a silent downgrade SUCCEEDS: the caller
+      believes it negotiated 1.0, the peer answered 0.3, and nothing in
+      the response says otherwise. A failure would at least be visible.
+      The scenario permits either honest outcome — refuse, or downgrade
+      explicitly — and forbids only the dishonest one: a host that
+      proceeds MUST report the version it actually negotiated, and the
+      wire `A2A-Version` header MUST match what it reported.
+      Witnessed against `A2AFakePeer`, which had to be extended to record
+      request headers at all: it captured method, path, rpcMethod, and
+      body, and §B lives entirely in the headers.
+
+  - id: mcp-version-no-silent-downgrade
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/mcp-version-negotiation.test.ts
+    note: |
+      RFC 0153 §A/§B, the MCP half of the above. Additionally: the
+      revision on the wire MUST be MCP's date form, because `latest` or
+      `2026-7-28` is unmatchable against a pinned peer and the failure
+      then surfaces at the peer rather than at the handshake meant to
+      prevent it. And the negotiated revision MUST appear in
+      `protocolVersions` — a host negotiating a revision it never
+      advertised has made its own discovery document unreliable, which is
+      worse than advertising nothing, because a consumer read it and
+      decided on a fact that was not true.
+      `McpFakeServer` had the identical header-capture gap as its A2A
+      counterpart; both recorded the call body and discarded the headers.
+
+  - id: compensation-replay-no-refire
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/compensation-behavior.test.ts
+    note: |
+      RFC 0151 §F. Replay defaults MUST use recorded compensation
+      outcomes and MUST NOT re-fire inverse effects. A replay that
+      re-executes them turns a recovery into a second outage — the
+      operator is running replay precisely because something already went
+      wrong, and re-firing compounds it.
+      Capability-gated on `compensation.supported`; resolves to `blocked`
+      per RFC 0148 §A until a host advertises and wires the unwind seam.
+
+  - id: delegation-tenant-audience-bound
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/workload-identity-behavior.test.ts
+    note: |
+      RFC 0154 §B. A delegation MUST be bound to an audience and rejected
+      when that audience is not this host. An identity minted for
+      somewhere else, accepted here, is how a credential valid elsewhere
+      becomes a credential valid here — the confused-deputy path RFC 0147
+      R12 names.
+      The negative leg carries the weight: a host that merely echoes its
+      input satisfies every positive assertion, and only `audience_mismatch`
+      distinguishes a verifier from a passthrough.
+
+  - id: delegation-chain-bounded
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/workload-identity-profile.test.ts
+    note: |
+      RFC 0154 §B, PARTIAL and named as such. The schema enforces a
+      non-empty chain (a delegation context with no chain claims a
+      delegation nobody can inspect) and `maxChainDepth` bounds its
+      length, because unbounded delegation is unbounded authority
+      laundering — each hop is another party the host trusts transitively.
+      NOT covered: acyclicity. RFC 0154 §B's `delegation-chain-bounded-acyclic`
+      also requires cycle rejection, which a JSON Schema cannot express and
+      no behavioral leg currently exercises. This invariant is deliberately
+      registered under the narrower name it can actually substantiate
+      rather than the RFC's fuller one, because registering the fuller
+      name against this evidence would be the overclaim the program exists
+      to stop.
+
   # ===== Agent memory (Phase I.1) =====
 
   - id: agent-memory-cti-1

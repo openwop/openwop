@@ -145,6 +145,48 @@ Not swept: the SQLite, Python, and Postgres host rows. Their profile claims deri
 per-host `conformance.md` files this program did not audit, and **asserting them corrected
 without checking would be the overclaim this document exists to catch**.
 
+## Named-but-unregistered security invariants (added 2026-08-13)
+
+RFCs 0151–0154 each name invariants in their §Security sections. **Seventeen were
+named and none existed in `SECURITY/invariants.yaml`** — found by verifying a claim
+I had just made in a session summary ("every witness the four RFCs need now
+exists"), which was wrong on this axis and on one other.
+
+Five are now registered, each against a test that genuinely exercises it:
+`a2a-version-no-silent-downgrade`, `mcp-version-no-silent-downgrade`,
+`compensation-replay-no-refire`, `delegation-tenant-audience-bound`, and
+`delegation-chain-bounded`.
+
+That last one is registered under a **narrower name than the RFC's**. RFC 0154 §B
+names `delegation-chain-bounded-acyclic`; the schema bounds chain length but
+cannot express acyclicity, and no behavioral leg exercises cycle rejection.
+Registering the fuller name against this evidence would be the overclaim the
+program exists to stop, so the narrower name is registered and the difference is
+recorded here.
+
+**Twelve remain named-but-unregistered**, because no test genuinely exercises them
+and registering an invariant against a test that does not verify it is worse than
+leaving it out — it converts a known gap into an apparent guarantee:
+
+| RFC | Invariant | Why unregistered |
+| --- | --- | --- |
+| 0151 | `compensation-effect-id-retry-stable` | needs a host issuing inverse effects |
+| 0151 | `compensation-tenant-authority-bound` | needs authority checks on a live unwind |
+| 0151 | `compensation-input-recorded-facts-only` | schema constrains shape, not provenance of values |
+| 0152 | `a2a-card-runtime-consistent` | needs agent-card resolution against a live runtime |
+| 0152 | `a2a-peer-no-authority-escalation` | needs a peer attempting escalation |
+| 0153 | `mcp-cache-tenant-scoped` | needs a multi-tenant cache to probe |
+| 0153 | `mcp-extension-no-authority` | needs extension negotiation |
+| 0153 | `mcp-header-body-consistent` | partially covered; the body half is unexercised |
+| 0153 | `mcp-peer-no-authority-escalation` | as 0152 |
+| 0154 | `delegation-no-scope-amplification` | needs a scope decision to observe |
+| 0154 | `delegation-provenance-not-authorization` | the R12 rule; behavioral and unenforceable by schema |
+| 0154 | `provenance-attestation-digest-bound` | §E attestations span `openwop-sdks` and `openwop-registry` |
+
+`scripts/check-security-invariants.sh` gates registered protocol-tier invariants
+only. It cannot see an invariant that was never registered, which is exactly why
+this table exists rather than a passing count.
+
 ## A.10 — MUST NOT cite this RFC's existence or partial implementation as evidence
 
 **Disposition: satisfied, and this document is part of how.**
