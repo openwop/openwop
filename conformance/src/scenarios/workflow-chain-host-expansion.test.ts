@@ -108,8 +108,36 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
         'a host serving the RFC 0013 host-expansion test seam MUST set `hostExpansionSeam: true` (and, being a chain-pack consumer, `supported: true`) in the discovery block',
       ),
     ).toBeDefined();
-    expect(caps?.hostExpansionSeam).toBe(true);
     expect(caps?.supported).toBe(true);
+
+    // `hostExpansionSeam === true` is NOT asserted here, deliberately: this leg
+    // only runs when `isExpansionAdvertised()` already read it as true, so
+    // asserting it again is a tautology that can never fail. It looked like a
+    // check and was a restatement — the same shape as a golden-vector gate
+    // comparing two stored constants.
+    //
+    // What this leg's NAME promises is that the seam is *served*, so that is
+    // what it now verifies. A host advertising the flag while the route 404s
+    // has made its discovery document false, and a consumer that read it
+    // planned against a capability that is not there.
+    //
+    // Found by a tier-1 host running the suite against its release IMAGE: the
+    // seam resolved its fixture manifest through `require.resolve` on a
+    // devDependency at request time, which succeeds in a source tree and fails
+    // under `npm ci --omit=dev`. Advertised, 404ing, **and this leg passed** —
+    // the defect surfaced three legs later as a confusing expansion mismatch
+    // rather than here, where the name says it belongs.
+    const probe = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, chainId: CHAIN_1_NODE, parameters: {} });
+    expect(
+      probe.status,
+      driver.describe(
+        'capabilities.md §workflowChainPacks',
+        `a host advertising \`hostExpansionSeam: true\` MUST serve ${EXPAND_PATH}. Got ${probe.status} — ` +
+          'the discovery document promises a seam the host does not route. Advertising a capability ' +
+          'that 404s is worse than advertising nothing: a consumer that read the flag made a plan ' +
+          'on a fact that was not true.',
+      ),
+    ).not.toBe(404);
   });
 
   it('positive — 1-node chain expansion matches the reference library for the bundled pack', async () => {
