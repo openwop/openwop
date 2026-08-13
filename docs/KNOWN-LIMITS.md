@@ -96,6 +96,35 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 | GOV-7     | Promote a non-steward maintainer when criteria are met.         |
 | GOV-8     | Open vendor-neutral org migration RFC after tripwire fires.     |
 
+### RFC 0147 program — what this repository cannot close (added 2026-08-13)
+
+The RFC 0147 program shipped its schema, conformance, and governance artifacts across
+2026-08-12/13. **Its exit criteria are not met**, and four of the remaining gates are not
+work items at all — they are adoption and governance events:
+
+| Gate | Closes when | Recorded in |
+| --- | --- | --- |
+| §A.5 host witness for RFCs 0151–0154 | a host implements the profiles and executes every normative path in strict mode | each RFC's acceptance criteria |
+| External security audit | an engagement is scheduled and completed | `SECURITY/external-audit-findings.json` (pre-completion) |
+| Second maintainer (**Critical risk R14**) | a person volunteers | `MAINTAINERS.md`, RFC 0147 risk register |
+| Tier-3 host | a non-steward organization adopts | `ROADMAP.md` tripwire |
+
+**Two program invariants are currently violated, and the violations are recorded rather
+than carried quietly** — see [`RFC-0147-SELF-AUDIT.md`](./RFC-0147-SELF-AUDIT.md):
+
+- **§A.5** — RFCs 0151/0152/0153/0154 reached `Accepted` with **no** behavioral evidence.
+  Their schema surface landed 2026-08-12/13 and is labelled shape-only in the RFCs, the
+  CHANGELOG, and the conformance files themselves.
+- **§A.6** — RFCs 0148/0150/0152/0153/0154 are high-risk under that clause and had their
+  comment windows waived under `MAINTAINERS.md` bootstrap language, **which §A.6 says must
+  not shorten them**. The steward waived knowingly; what the clause costs is not the
+  decision but the claim, so those five cannot be cited as having cleared a high-risk
+  review window.
+
+**No extension in `spec/v1/extensions.json` can currently reach `stable`**, because RFC 0155
+§C gates stable on a Tier-3 implementation. That ceiling is a fact about adoption, not about
+the maturity of the work.
+
 ---
 
 ## RFCs not yet `Accepted`

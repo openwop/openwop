@@ -127,11 +127,23 @@ canonical schemas. A fenced example remains prose to most of the corpus.
 
 ## A.9 — Update INTEROP-MATRIX, KNOWN-LIMITS, PROTOCOL-STATUS when evidence changes
 
-**Disposition: partially satisfied.**
+**Disposition: satisfied for this program's evidence.**
 
 `docs/PROTOCOL-STATUS.md` is regenerated on every change and gated. `INTEROP-MATRIX.md`
-and `docs/KNOWN-LIMITS.md` have **not** been swept against the evidence this program
-produced.
+and `docs/KNOWN-LIMITS.md` were swept 2026-08-13.
+
+The sweep found a live inconsistency **this program created**: `INTEROP-MATRIX.md` still
+listed the in-memory host as claiming `openwop-stream-sse` and `openwop-stream-poll` after
+those claims were withdrawn from its bundle (openwop-examples#12) for being contradicted by
+its own `results.failed`. Fixing the bundle without the matrix left the corpus asserting in
+one file what it had retracted in another — which is the same class of defect as the
+`replay.md` staleness RFC 0150 §B introduced and did not catch.
+
+`KNOWN-LIMITS.md` now carries the program's four unclosable gates and both §A violations.
+
+Not swept: the SQLite, Python, and Postgres host rows. Their profile claims derive from
+per-host `conformance.md` files this program did not audit, and **asserting them corrected
+without checking would be the overclaim this document exists to catch**.
 
 ## A.10 — MUST NOT cite this RFC's existence or partial implementation as evidence
 
@@ -155,10 +167,10 @@ above are recorded here rather than left to be discovered.
 | **A.6 high-risk window** | **VIOLATED** |
 | A.7 safety-fix package | satisfied |
 | A.8 example extraction | not satisfied |
-| A.9 doc sweep | partially satisfied |
+| A.9 doc sweep | satisfied (this program's evidence) |
 | A.10 no self-citation | satisfied |
 
-Two violations, three partial, two unsatisfied, three satisfied.
+Two violations, two partial, two unsatisfied, four satisfied.
 
 **The exit criteria in RFC 0147 are not met**, and nothing in this corpus should be read
 as claiming otherwise. Three of the remaining gates — an external audit, a second
