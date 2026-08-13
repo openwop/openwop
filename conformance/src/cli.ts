@@ -50,6 +50,7 @@ interface ParsedArgs {
   readonly implVersion: string | undefined;
   /** RFC 0089 — emit a conformance certification bundle to this path. */
   readonly certify: string | undefined;
+  readonly bundleVersion: '1' | '2';
 }
 
 function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -61,6 +62,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let impl: string | undefined;
   let implVersion: string | undefined;
   let certify: string | undefined;
+  let bundleVersion: '1' | '2' = '1';
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
@@ -103,6 +105,15 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--implementation-version':
         implVersion = nextValue();
         break;
+      case '--bundle-version': {
+        const v = nextValue();
+        if (v !== '1' && v !== '2') {
+          process.stderr.write(`--bundle-version must be 1 or 2 (got '${v}')\n`);
+          process.exit(2);
+        }
+        bundleVersion = v;
+        break;
+      }
       case '--certify':
         certify = nextValue();
         break;
@@ -113,7 +124,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     }
   }
 
-  return { baseUrl, apiKey, offline, filter, help, impl, implVersion, certify };
+  return { baseUrl, apiKey, offline, filter, help, impl, implVersion, certify, bundleVersion };
 }
 
 const HELP_TEXT = `openwop-conformance — run the openwop conformance suite against a server
@@ -134,6 +145,10 @@ Implementation labels (cosmetic — surface in failure messages):
   --impl-version <version>  Implementation version     (env: OPENWOP_IMPLEMENTATION_VERSION)
 
 Certification (RFC 0089):
+  --bundle-version <1|2>  Certification bundle format. Default 1. Version 2 (RFC 0148
+                        §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
+                        file lists, so "we could not check" stops being indistinguishable
+                        from "checked and it holds". See the note it prints.
   --certify <out.json>  Generate a machine-readable conformance certification
                         bundle: fetch /.well-known/openwop (captured verbatim +
                         SHA-256), derive claimedProfiles from it, run the suite
@@ -347,6 +362,109 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       skipped,
     },
   };
+
+  // (d2) RFC 0148 §C — bundle v2.
+  //
+  // v1's `{passed, failed, skipped}` file lists cannot express the distinction
+  // this program exists for. A file counted as `passed` whether its assertions
+  // ran or its runner returned early, and `skipped` flattened three different
+  // claims — operator-excluded, not-applicable, and could-not-check — of which
+  // only the first two are certifiable.
+  //
+  // THE HONEST LIMIT, stated because it changes what a v2 bundle from this
+  // runner means: the runner reads vitest's per-FILE outcome. It does not read
+  // the RFC 0148 §A requirement ledger, because scenarios do not yet record
+  // into it. So a skipped file cannot be split into `skipped` /`inapplicable` /
+  // `blocked` here, and §A's rule is that an unclassifiable requirement resolves
+  // to `blocked` — never to a pass. That is what this emits.
+  //
+  // The consequence is deliberate and correct: a v2 bundle produced today shows
+  // a large `blocked` count and therefore does NOT certify. That is not a defect
+  // in the emitter. It is the true state of the evidence, which v1 was unable to
+  // represent and therefore reported as a clean skip.
+  if (args.bundleVersion === '2') {
+    const scenarioIds = [...passed, ...failed, ...skipped].sort();
+    const manifestSha = createHash('sha256').update(scenarioIds.join('\n'), 'utf8').digest('hex');
+    // Configuration identity per RFC 0147 §A.4: what the run was pointed at, and
+    // the discovery it saw. Two runs against differently-configured hosts are
+    // different evidence, and this is what says so.
+    const configSha = createHash('sha256')
+      .update(`${args.baseUrl}\n${sha256}\n${process.env['OPENWOP_REQUIRE_BEHAVIOR'] ?? ''}`, 'utf8')
+      .digest('hex');
+
+    const requirements = [
+      ...passed.map((f) => ({
+        requirementId: `openwop.scenario.${f.replace(/\.test\.ts$/, '')}`,
+        scenarioId: f,
+        disposition: 'executed-pass' as const,
+      })),
+      ...failed.map((f) => ({
+        requirementId: `openwop.scenario.${f.replace(/\.test\.ts$/, '')}`,
+        scenarioId: f,
+        disposition: 'executed-fail' as const,
+        detail: 'the scenario executed and failed',
+      })),
+      ...skipped.map((f) => ({
+        requirementId: `openwop.scenario.${f.replace(/\.test\.ts$/, '')}`,
+        scenarioId: f,
+        disposition: 'blocked' as const,
+        detail:
+          'runner cannot classify a skipped file: the RFC 0148 §A requirement ledger is not ' +
+          'populated during a run, so skipped/inapplicable/blocked are indistinguishable here. ' +
+          '§A resolves an unclassifiable requirement to `blocked`, never to a pass.',
+      })),
+    ];
+
+    const v2 = {
+      bundleVersion: '2' as const,
+      generatedAt: new Date().toISOString(),
+      generator: { name: '@openwop/openwop-conformance --certify', version },
+      suite: { package: '@openwop/openwop-conformance' as const, version },
+      host,
+      discovery: { url: discoveryUrl, sha256, document },
+      claimedProfiles,
+      results: {
+        totals: {
+          executedPass: passed.length,
+          executedFail: failed.length,
+          skipped: 0,
+          inapplicable: 0,
+          blocked: skipped.length,
+        },
+        requirements,
+      },
+      scenarioManifestSha256: manifestSha,
+      targetConfigurationSha256: configSha,
+    };
+
+    const v2Schema = JSON.parse(
+      readFileSync(join(SCHEMAS_DIR, 'certification-bundle-v2.schema.json'), 'utf8'),
+    ) as Record<string, unknown>;
+    const v2Ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(v2Ajv);
+    const v2Validate = v2Ajv.compile(v2Schema);
+    if (!v2Validate(v2)) {
+      process.stderr.write(
+        'openwop-conformance --certify: assembled v2 bundle FAILED schema validation:\n' +
+          `${JSON.stringify(v2Validate.errors, null, 2)}\n`,
+      );
+      process.exit(2);
+    }
+    writeFileSync(outPath, `${JSON.stringify(v2, null, 2)}\n`);
+    process.stdout.write(
+      `openwop-conformance --certify: wrote bundle v2 to ${outPath}\n` +
+        `  host: ${host.name}@${host.version}\n` +
+        `  executed-pass ${passed.length} / executed-fail ${failed.length} / blocked ${skipped.length}\n` +
+        (skipped.length > 0
+          ? `  NOTE: ${skipped.length} requirement(s) are 'blocked', not 'skipped'. The runner cannot\n` +
+            `  classify a skipped file until scenarios record into the RFC 0148 §A ledger, and §A\n` +
+            `  resolves an unclassifiable requirement to 'blocked' rather than to a pass. A bundle\n` +
+            `  with blocked > 0 does NOT certify — that is the true state of the evidence, not a\n` +
+            `  defect in this emitter.\n`
+          : ''),
+    );
+    process.exit(failed.length > 0 ? 1 : 0);
+  }
 
   // (e) Validate against the bundle schema BEFORE writing.
   const schema = JSON.parse(
