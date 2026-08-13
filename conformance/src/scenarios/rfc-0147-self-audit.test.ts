@@ -46,8 +46,15 @@ const INVARIANTS = [
 
 const DISPOSITIONS = /satisfied|VIOLATED|not satisfied|partially satisfied/;
 
-describe.skipIf(AUDIT === null || !existsSync(AUDIT))('RFC 0147 §A.10 — program self-audit', () => {
-  const doc = readFileSync(AUDIT as string, 'utf8');
+const AUDIT_PRESENT = AUDIT !== null && existsSync(AUDIT);
+
+describe.skipIf(!AUDIT_PRESENT)('RFC 0147 §A.10 — program self-audit', () => {
+  // `describe.skipIf` still EXECUTES this factory — it decides afterwards not to
+  // run the tests it collected. So a read here throws at collection time even
+  // when the suite is destined to skip, and one file's collection error takes
+  // the whole file down rather than skipping it. The audit lives under `docs/`,
+  // which is not bundled, so this is exactly the published-layout path.
+  const doc = AUDIT_PRESENT ? readFileSync(AUDIT as string, 'utf8') : '';
 
   it('the audit exists and is substantive', () => {
     // Guard: a stub file would make every leg below vacuous, and this gate's

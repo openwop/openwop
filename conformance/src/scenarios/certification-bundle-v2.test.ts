@@ -27,16 +27,28 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { join, resolve as pathResolve } from 'node:path';
+import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { V1_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR } from '../lib/paths.js';
 
-const ROOT = V1_DIR === null ? null : pathResolve(V1_DIR as string, '..', '..');
 const HEX = 'a'.repeat(64);
 
+/**
+ * Resolve the schema through `SCHEMAS_DIR`, not through `V1_DIR/../..`.
+ *
+ * The earlier form derived the repo root from the PROSE directory, which is
+ * `null` in the published tarball because prose is not bundled — and then cast
+ * the null away with `as string`. The cast satisfied the compiler and the file
+ * still passed in a repo checkout, so nothing anywhere reported a problem;
+ * installed from npm it threw at import and took the whole suite file down.
+ *
+ * Schemas ARE vendored into the package, so `SCHEMAS_DIR` is non-null in both
+ * layouts. Reading through it does not merely stop the crash — it makes these
+ * legs RUN for consumers, where before they could only have skipped.
+ */
 function validator() {
   const schema = JSON.parse(
-    readFileSync(join(ROOT as string, 'schemas', 'certification-bundle-v2.schema.json'), 'utf8'),
+    readFileSync(join(SCHEMAS_DIR, 'certification-bundle-v2.schema.json'), 'utf8'),
   ) as object;
   return new Ajv2020({ strict: false, allErrors: true }).compile(schema);
 }
@@ -58,7 +70,7 @@ const bundle = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0148 §C — certification bundle v2', () => {
+describe('RFC 0148 §C — certification bundle v2', () => {
   const validate = validator();
 
   it('a well-formed v2 bundle validates', () => {

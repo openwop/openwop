@@ -32,13 +32,19 @@ import { readFileSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { V1_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 
-const ROOT = V1_DIR === null ? null : pathResolve(V1_DIR as string, '..', '..');
+/**
+ * Schemas ship inside the package; RFC prose does not. The two need different
+ * treatment, and collapsing them onto one `ROOT` derived from `V1_DIR` is what
+ * broke this file in the published layout — `V1_DIR` is null there, and the
+ * `as string` cast carried the null straight into `join()`.
+ */
+const RFCS_DIR = V1_DIR === null ? null : pathResolve(V1_DIR, '..', '..', 'RFCS');
 
 function validator() {
   const schema = JSON.parse(
-    readFileSync(join(ROOT as string, 'schemas', 'workload-identity.schema.json'), 'utf8'),
+    readFileSync(join(SCHEMAS_DIR, 'workload-identity.schema.json'), 'utf8'),
   ) as object;
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   addFormats(ajv);
@@ -47,7 +53,7 @@ function validator() {
 
 const DIGEST = `sha256:${'a'.repeat(64)}`;
 
-describe.skipIf(V1_DIR === null)('RFC 0154 §A — workload identity shape', () => {
+describe('RFC 0154 §A — workload identity shape', () => {
   const validate = validator();
 
   it('a verified identity validates', () => {
@@ -98,7 +104,7 @@ describe.skipIf(V1_DIR === null)('RFC 0154 §A — workload identity shape', () 
   });
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0154 §B — delegated actor chain', () => {
+describe('RFC 0154 §B — delegated actor chain', () => {
   const validate = validator();
   const base = { scheme: 'spiffe' as const, subject: 'spiffe://example/planner' };
 
@@ -147,12 +153,12 @@ describe.skipIf(V1_DIR === null)('RFC 0154 §B — delegated actor chain', () =>
   });
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0154 — what this does NOT establish', () => {
+describe.skipIf(RFCS_DIR === null)('RFC 0154 — what this does NOT establish', () => {
   it('the behavioral and external-audit items stay unticked and annotated', () => {
     // §A's real requirements are behavioral — verify, bind, resolve, fail closed
     // — and none is schema-checkable. §A.5 forbids `Accepted` on this evidence.
     const rfc = readFileSync(
-      join(ROOT as string, 'RFCS', '0154-workload-identity-delegation-telemetry-and-provenance.md'),
+      join(RFCS_DIR as string, '0154-workload-identity-delegation-telemetry-and-provenance.md'),
       'utf8',
     );
     for (const needle of [

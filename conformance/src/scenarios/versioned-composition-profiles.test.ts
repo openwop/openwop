@@ -32,13 +32,18 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { V1_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 
-const ROOT = V1_DIR === null ? null : pathResolve(V1_DIR as string, '..', '..');
+/**
+ * Schemas ship inside the package; RFC prose does not. Deriving both from
+ * `V1_DIR` — null in the published tarball — and casting the null away with
+ * `as string` is what took this file down at import when installed from npm.
+ */
+const RFCS_DIR = V1_DIR === null ? null : pathResolve(V1_DIR, '..', '..', 'RFCS');
 
 function caps(): Record<string, unknown> {
   return JSON.parse(
-    readFileSync(join(ROOT as string, 'schemas', 'capabilities.schema.json'), 'utf8'),
+    readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8'),
   ) as Record<string, unknown>;
 }
 
@@ -49,7 +54,7 @@ function familyValidator(family: string) {
   return ajv.compile(schema.properties[family] as object);
 }
 
-describe.skipIf(V1_DIR === null)('RFC 0152 §A — A2A versioned discovery', () => {
+describe('RFC 0152 §A — A2A versioned discovery', () => {
   const validate = familyValidator('a2a');
 
   /**
@@ -116,7 +121,7 @@ describe.skipIf(V1_DIR === null)('RFC 0152 §A — A2A versioned discovery', () 
   });
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0153 §A — MCP versioned discovery', () => {
+describe('RFC 0153 §A — MCP versioned discovery', () => {
   const validate = familyValidator('mcp');
 
   it('a versioned advertisement validates', () => {
@@ -157,7 +162,7 @@ describe.skipIf(V1_DIR === null)('RFC 0153 §A — MCP versioned discovery', () 
   });
 });
 
-describe.skipIf(V1_DIR === null)('RFC 0152 + 0153 — what these do NOT establish', () => {
+describe.skipIf(RFCS_DIR === null)('RFC 0152 + 0153 — what these do NOT establish', () => {
   it('both RFCs keep their upstream-peer acceptance items unticked and annotated', () => {
     // RFC 0147 §A.5 forbids `Accepted` on shape-only evidence for a behavioral
     // requirement. Schema validity is not interop: nothing here speaks to a
@@ -167,7 +172,7 @@ describe.skipIf(V1_DIR === null)('RFC 0152 + 0153 — what these do NOT establis
       ['0152-a2a-1-0-versioned-composition.md', 'Real upstream A2A 1.0 peer passes in CI.'],
       ['0153-mcp-2026-07-28-versioned-composition.md', 'Pinned real MCP current peer passes in CI.'],
     ] as const) {
-      const rfc = readFileSync(join(ROOT as string, 'RFCS', file), 'utf8');
+      const rfc = readFileSync(join(RFCS_DIR as string, file), 'utf8');
       expect(
         new RegExp(`- \\[ \\] ${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\(`).test(rfc),
         `${file}: the upstream-peer item MUST remain unticked and annotated — no peer is contacted ` +
