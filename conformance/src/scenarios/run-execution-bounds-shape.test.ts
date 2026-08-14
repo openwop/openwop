@@ -122,11 +122,54 @@ describe.skipIf(SKIP_TIMEOUT)('run-execution-bounds: run-duration breach (RFC 00
       'run-event-payloads.schema.json §capBreached.kind',
       'cap.breached payload MUST carry kind="run-duration"',
     )).toBe('run-duration');
+    // Three distinct failure modes, asserted separately and WITH THE VALUES.
+    //
+    // The previous form ANDed all three into one boolean over a message that
+    // named none of them, so a failure said only "MUST be strictly greater" —
+    // you could not tell whether `observed` was missing, equal, or smaller. A
+    // tier-1 host hit this intermittently and had to reason out the mechanism
+    // from first principles, because the assertion about observed values did
+    // not report the observed values.
     expect(
-      typeof payload?.observed === 'number' && typeof payload?.limit === 'number' && payload!.observed > payload!.limit,
+      typeof payload?.observed,
       driver.describe(
         'run-event-payloads.schema.json §capBreached.observed',
-        'observed (elapsedMs) MUST be strictly greater than limit (resolved timeout)',
+        `cap.breached MUST carry a numeric \`observed\`; got ${JSON.stringify(payload?.observed)}`,
+      ),
+    ).toBe('number');
+    expect(
+      typeof payload?.limit,
+      driver.describe(
+        'run-event-payloads.schema.json §capBreached.limit',
+        `cap.breached MUST carry a numeric \`limit\`; got ${JSON.stringify(payload?.limit)}`,
+      ),
+    ).toBe('number');
+
+    // `capabilities.md` §"Engine-enforced limits": *"Always strictly greater
+    // than limit."* This is satisfiable and it constrains the host's comparison:
+    // breach when elapsed EXCEEDS the deadline, not when it reaches it. A host
+    // testing `elapsed >= limit` emits `observed === limit` exactly when the
+    // clock lands on the boundary — which is rare, machine-dependent, and
+    // therefore reads as flake rather than as the deterministic defect it is.
+    //
+    // That asymmetry is why the diagnosis belongs in the message: system load
+    // makes elapsed LARGER, so it makes this assertion easier to satisfy, not
+    // harder. An `observed === limit` failure is not a loaded box — it is a
+    // `>=` comparison in the host.
+    const { observed = NaN, limit = NaN } = payload ?? {};
+    expect(
+      observed > limit,
+      driver.describe(
+        'run-event-payloads.schema.json §capBreached.observed',
+        `observed (elapsedMs) MUST be strictly greater than limit (resolved timeout). ` +
+          `Got observed=${observed}, limit=${limit}` +
+          (observed === limit
+            ? '. They are EQUAL, which means the host breached at `elapsed >= limit` rather than ' +
+              '`elapsed > limit`. The limit is not breached until it has been passed. This is ' +
+              'deterministic in the host and only surfaces when the clock lands exactly on the ' +
+              'boundary, so it presents as an intermittent failure — load makes elapsed larger and ' +
+              'therefore makes this assertion PASS more often, not less.'
+            : '.'),
       ),
     ).toBe(true);
   });
