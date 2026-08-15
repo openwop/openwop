@@ -506,11 +506,25 @@ All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in prod
 - SHOULD return `404 Not Found` from every seam unless an env-gate explicitly enables it
 - MUST NOT honor the seams under default deployment configuration
 - MUST document which env-gates were set for the conformance run in the host's `conformance.md` evidence file
-- **MUST apply the same authentication and tenant resolution to an ENABLED seam that the
-  canonical surface applies.** The env-gate governs whether a seam **exists**; it is not a
-  substitute for **who may call it**. An enabled seam that resolves no principal is an
-  unauthenticated control surface on a public origin, and staging keys such as `nodeId` are
-  not secrets — they ship inside chain packs.
+- **MUST require an authenticated, NON-ANONYMOUS principal on an ENABLED seam.** A host that
+  mints an anonymous identity for credential-less callers — a session, a synthetic
+  `anon:<id>` tenant, any principal issued *because* no credential was presented — **MUST NOT
+  treat that identity as satisfying this requirement.** The env-gate governs whether a seam
+  **exists**; it is not a substitute for **who may call it**, and staging keys such as
+  `nodeId` are not secrets: they ship inside chain packs.
+
+  **This clause was weaker for its first twenty minutes and the host it was written for
+  satisfied it while remaining wide open.** It originally read *"MUST apply the same
+  authentication and tenant resolution as the canonical surface"* — which RFC 0132 makes
+  trivially satisfiable, because the canonical surface legitimately admits anonymous actors
+  on public agent surfaces. Auth ran, succeeded, and issued `tenantId: "anon:<sid>"`; the
+  seam applied exactly the canonical treatment; the hole survived the rule.
+  `test-seam-unauthenticated.test.ts` reds that host regardless, because it asserts the
+  observable property rather than the mechanism — **so the prose and its own conformance leg
+  disagreed, and the leg was right.** Corrected on the reporter's wording. A rule that reads
+  like it closes a gap while being satisfiable by construction is the same
+  advertise-what-you-cannot-guarantee shape this section exists to catch, one turn further
+  in.
 - **MUST NOT count two controls that read the same switch as two layers.** An env-gate on
   registration and an in-code guard on the same variable are **one** control with two call
   sites: flipping the variable removes both at once. A defense-in-depth claim requires the
@@ -519,9 +533,15 @@ All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in prod
 > **Why these two were added (2026-08-15).** A tier-1 host's production deployment had the
 > seam env-gate enabled, and a seam answered an **unauthenticated** request from the public
 > internet with real seam JSON. The registration path logged *"test seam ENABLED — NEVER
-> enable in production"* while doing exactly that, and the mock-AI staging endpoint performed
-> no tenant resolution at all. Its second guard was commented as defense-in-depth and read
-> the **same** environment variable as the first.
+> enable in production"* while doing exactly that. Its second guard was commented as
+> defense-in-depth and read the **same** environment variable as the first.
+>
+> **Corrected within the hour, and the correction is what sharpened the rule.** The first
+> report said the staging route performed *no tenant resolution at all*. It does: auth
+> **runs and succeeds**, minting an anonymous session with a synthetic `anon:<id>` tenant.
+> So the seam was applying exactly the canonical surface's treatment — which is why the
+> clause above had to move from *"same as canonical"* to *non-anonymous*, and why the
+> conformance leg asserts the observable `200` rather than the presence of a gate.
 >
 > The corpus was complicit in the shape: it required the seams to be off by default and said
 > nothing about what an *enabled* seam owes its callers, which reads as an assurance it never
