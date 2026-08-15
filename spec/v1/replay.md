@@ -352,6 +352,33 @@ For a fork with `mode: "replay"`:
    replay, past two independent guards, because neither read the manifest. A
    declaration nothing consults is not a contract.
 
+   **How a host discharges this floor — and what does not count.** Requirements
+   1 and 2 are two obligations, not one. A guarded seam that **throws** when a
+   node reaches an effect during a replay satisfies requirement 1 (the effect
+   does not happen) and **does not satisfy requirement 2** (the outcome is not
+   resolved). A throw is therefore a **backstop, not a discharge**: it is the
+   correct thing to do when classification has already failed, and it leaves the
+   replay failing where this section says it must succeed.
+
+   A typeId in the floor is discharged only by **serving the source run's
+   recorded outcome** — by any store, so long as the lookup is keyed on
+   `(sourceRunId, nodeId, attempt)` per requirement 2. An engine fast path and a
+   durable invocation log are the same discharge described at two levels; a
+   log keyed on the fork's own `runId` is **not** one, and misses by
+   construction.
+
+   Requirement 3 is the **only** sanctioned failure, and it is conditioned: no
+   recorded outcome for that `(nodeId, attempt)`, surfaced as
+   `replay_source_missing`. A generic seam error is not that code and does not
+   become it by also being safe.
+
+   A host whose only mechanism for some class is the throw is **safe and
+   non-conformant**: nothing escapes, and `recorded-outcome` claims more than
+   "nothing escapes" — it claims the replay reproduces. Such a host MUST NOT
+   advertise the value (requirement 5). Under `none` the same throw is a sound
+   conservative posture, because caveat 1 binds either way and no reproduction
+   was ever claimed.
+
 5. The guarantee is **whole-run**. A host MUST NOT advertise `recorded-outcome`
    if any class of side-effecting node in its catalogue can still fire during a
    replay. A partial guarantee is not a weaker promise but an incorrect one: a
