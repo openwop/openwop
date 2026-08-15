@@ -236,6 +236,30 @@ describe.skipIf(V1_DIR === null)('replay.md req 4 — the manifest role is a cla
     ).toBe(true);
   });
 
+  it('a throw is named a backstop, not a discharge', () => {
+    // The question a tier-1 host asked after deriving the floor: does a guarded
+    // seam that THROWS discharge requirement 4, or must the replay succeed with
+    // the recorded outcome? Requirements 1 and 2 are two obligations — a throw
+    // satisfies "do not perform" and not "resolve the outcome" — but requirement
+    // 4 did not say so, and the answer decides whether hundreds of typeIds need
+    // classification or only seam coverage. An ambiguity that changes the size
+    // of the work by two orders of magnitude is not a footnote.
+    const doc = replay();
+    expect(
+      doc.includes('backstop, not a discharge'),
+      'replay.md requirement 4 MUST state that a guarded-seam throw is a backstop rather than a ' +
+        'discharge. It satisfies requirement 1 (no effect) and not requirement 2 (resolve the ' +
+        'recorded outcome), and a host reading the floor as "make it throw" ships a replay that ' +
+        'fails where this section says it must succeed.',
+    ).toBe(true);
+    expect(
+      /safe and\s+non-conformant/.test(doc),
+      'replay.md requirement 4 MUST name the posture a throw-only host is in — safe and ' +
+        'non-conformant — because "nothing escapes" is a weaker claim than `recorded-outcome` ' +
+        'makes, and a host that conflates them advertises in good faith and still lies.',
+    ).toBe(true);
+  });
+
   it('the floor direction is stated, not left to inference', () => {
     // The dangerous reading is symmetric: "my classifier disagrees, so the
     // manifest is wrong." The requirement is one-directional and says so.
