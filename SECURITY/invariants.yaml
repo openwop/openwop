@@ -3039,3 +3039,35 @@ invariants:
       schema exposes no credential-bearing field and that `additionalProperties`
       is closed on the envelope; the gated leg asserts an `artifact.read` result
       crossing the boundary carries no resolved BYOK plaintext.
+
+  - id: test-seam-authenticated-when-enabled
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/test-seam-unauthenticated.test.ts
+    note: |
+      `host-sample-test-seams.md` §"Production safety (normative)": an ENABLED
+      seam MUST apply the same authentication and tenant resolution as the
+      canonical surface. The env-gate governs whether a seam EXISTS; it does not
+      govern who may call it, and the corpus previously said nothing about the
+      second — which read as an assurance it never made.
+      Found on a live tier-1 deployment (2026-08-15): the seam env-gate was
+      enabled in production and a seam answered an UNAUTHENTICATED request from
+      the public internet with real seam JSON, while the registration path
+      logged "test seam ENABLED — NEVER enable in production". The mock-AI
+      staging endpoint performed no tenant resolution at all; staging keyed on
+      `nodeId`, which is not a secret — node ids ship inside chain packs.
+      The replay consequence is what makes this protocol-tier rather than
+      operational: a staged mock program makes a replay diverge deliberately, so
+      an unauthenticated caller could switch off the byte-equivalence
+      `replay.md` §C.2 requires — and any host advertising
+      `replay.sideEffectSuppression: "recorded-outcome"` would be claiming a
+      guarantee a stranger can revoke.
+      The companion clause forbids counting two controls that read the same
+      switch as two layers: an env-gate on registration plus an in-code guard on
+      the same variable is ONE control with two call sites.
+      The scenario probes the canonical seam prefix unauthenticated and asserts
+      the shape of the answer — never a 200. A host with no seams enabled
+      answers 404 and passes correctly. It carries a non-zero-probe guard so it
+      cannot pass by having issued no requests.
