@@ -506,6 +506,27 @@ All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in prod
 - SHOULD return `404 Not Found` from every seam unless an env-gate explicitly enables it
 - MUST NOT honor the seams under default deployment configuration
 - MUST document which env-gates were set for the conformance run in the host's `conformance.md` evidence file
+- **MUST apply the same authentication and tenant resolution to an ENABLED seam that the
+  canonical surface applies.** The env-gate governs whether a seam **exists**; it is not a
+  substitute for **who may call it**. An enabled seam that resolves no principal is an
+  unauthenticated control surface on a public origin, and staging keys such as `nodeId` are
+  not secrets — they ship inside chain packs.
+- **MUST NOT count two controls that read the same switch as two layers.** An env-gate on
+  registration and an in-code guard on the same variable are **one** control with two call
+  sites: flipping the variable removes both at once. A defense-in-depth claim requires the
+  layers to fail independently.
+
+> **Why these two were added (2026-08-15).** A tier-1 host's production deployment had the
+> seam env-gate enabled, and a seam answered an **unauthenticated** request from the public
+> internet with real seam JSON. The registration path logged *"test seam ENABLED — NEVER
+> enable in production"* while doing exactly that, and the mock-AI staging endpoint performed
+> no tenant resolution at all. Its second guard was commented as defense-in-depth and read
+> the **same** environment variable as the first.
+>
+> The corpus was complicit in the shape: it required the seams to be off by default and said
+> nothing about what an *enabled* seam owes its callers, which reads as an assurance it never
+> made. This is the same class as a capability advertised and not routed — **a control whose
+> stated purpose exceeds what it does.**
 
 The host-extension namespace `/v1/host/sample/*` is per `host-extensions.md` §"Canonical prefixes" — it is host-private space and does not affect the v1 wire-shape stability contract.
 
