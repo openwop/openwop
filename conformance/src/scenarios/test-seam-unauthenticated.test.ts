@@ -67,11 +67,41 @@ const SEAM_PROBES: readonly string[] = [
 /** 200 is the only unambiguous failure: the seam answered a stranger. */
 const ACCEPTABLE = new Set([401, 403, 404, 405, 501]);
 
+/**
+ * A `200` can arrive from two very different places, and the difference decides
+ * what you should go fix.
+ *
+ * Every seam in `host-sample-test-seams.md` answers with a JSON body — the doc
+ * specifies each one's response shape as an object (`{ released, event }`,
+ * `{ ok: true, packId }`, `{ entries: … }`). **No seam answers with an HTML
+ * document.** So a `200 text/html` is not a seam that talked to a stranger; it
+ * is a static-hosting catch-all — an SPA rewrite in front of the API — matching
+ * a path the backend never saw.
+ *
+ * This was found by probing `app.openwop.dev` (Firebase Hosting, `**` rewrite
+ * to the SPA shell) instead of the backend's own origin. Every probe returned
+ * `200 text/html` with the app's `index.html`, which under the previous message
+ * read as *"an open control surface on a public origin"* — alarming, and wrong.
+ * The same paths on `…-backend-….run.app` return `404 application/json`.
+ *
+ * **Both cases still fail.** Nothing here relaxes the assertion, because the
+ * cheap way to silence a false alarm is to stop failing on `200`, and that would
+ * delete the check. What changes is the diagnosis: an HTML catch-all means the
+ * suite is pointed at the CDN rather than the API origin, which is its own
+ * defect — a run against the wrong origin cannot witness anything about the
+ * host, and every other leg in the suite is equally blind at that base URL.
+ */
+function classify200(contentType: string | null): 'seam' | 'catchall' {
+  return (contentType ?? '').toLowerCase().includes('text/html') ? 'catchall' : 'seam';
+}
+
 describe('test-seam-unauthenticated: an enabled seam still authenticates', () => {
   it('no /v1/host/sample/* seam answers an unauthenticated request with 200', async () => {
     const env = loadEnv();
     const answered: string[] = [];
     let probed = 0;
+    let seamAnswers = 0;
+    let catchAllAnswers = 0;
 
     for (const path of SEAM_PROBES) {
       // node:fetch directly with NO Authorization header — the driver's
@@ -83,8 +113,18 @@ describe('test-seam-unauthenticated: an enabled seam still authenticates', () =>
         continue; // connection-level refusal is a stronger answer than 404
       }
       probed += 1;
-      if (res.status === 200) answered.push(`${path} -> 200`);
-      else if (!ACCEPTABLE.has(res.status)) {
+      if (res.status === 200) {
+        const contentType = res.headers.get('content-type');
+        const kind = classify200(contentType);
+        if (kind === 'seam') seamAnswers += 1;
+        else catchAllAnswers += 1;
+        answered.push(
+          `${path} -> 200 (${contentType ?? 'no content-type'}) — ` +
+            (kind === 'seam'
+              ? 'SEAM ANSWERED A CREDENTIAL-LESS CALLER'
+              : 'HTML body: a static-hosting catch-all, not the API origin'),
+        );
+      } else if (!ACCEPTABLE.has(res.status)) {
         // Not a pass and not the known failure — record it rather than
         // silently tolerating a status nobody reasoned about.
         answered.push(`${path} -> ${res.status} (unexpected; expected one of ${[...ACCEPTABLE].join('/')})`);
@@ -100,17 +140,27 @@ describe('test-seam-unauthenticated: an enabled seam still authenticates', () =>
         'not looking, which is the failure mode it exists to prevent',
     ).toBeGreaterThan(0);
 
+    // The diagnosis is chosen from what the answers actually were. An HTML
+    // catch-all and an open seam are both failures and they are not the same
+    // bug, so the message must not name the wrong one — a check that reports a
+    // security finding for a misrouted base URL trains its reader to distrust it.
+    const diagnosis =
+      seamAnswers === 0 && catchAllAnswers > 0
+        ? 'WRONG ORIGIN, not an open seam. Every 200 above carried an HTML body, and no seam in ' +
+          'host-sample-test-seams.md answers with HTML — so these are a static-hosting rewrite ' +
+          '(an SPA `**` catch-all) matching paths the backend never received. Point ' +
+          'OPENWOP_BASE_URL at the API origin itself. This is still a failure: at this base URL ' +
+          'no leg in the suite is witnessing the host, so a green run here would mean nothing.'
+        : 'An ENABLED seam MUST require an authenticated, NON-ANONYMOUS principal. A host that ' +
+          'mints an anonymous identity for credential-less callers MUST NOT treat it as ' +
+          'satisfying that. The env-gate governs whether a seam EXISTS; it does not govern who ' +
+          'may call it. A seam answering a credential-less request with 200 is an open control ' +
+          'surface on a public origin — and staging keys such as `nodeId` are not secrets, they ' +
+          'ship inside chain packs.';
+
     expect(
       answered,
-      driver.describe(
-        'host-sample-test-seams.md §"Production safety (normative)"',
-        'An ENABLED seam MUST require an authenticated, NON-ANONYMOUS principal. A host that mints ' +
-          'an anonymous identity for credential-less callers MUST NOT treat it as satisfying that. ' +
-          'The env-gate governs whether a seam EXISTS; it does not govern who may call it. A seam ' +
-          'answering a credential-less request with 200 is an open control surface on a public ' +
-          'origin — and staging keys such as `nodeId` are not secrets, they ship inside chain ' +
-          'packs.\n  ' + answered.join('\n  '),
-      ),
+      driver.describe('host-sample-test-seams.md §"Production safety (normative)"', `${diagnosis}\n  ${answered.join('\n  ')}`),
     ).toEqual([]);
   });
 });
