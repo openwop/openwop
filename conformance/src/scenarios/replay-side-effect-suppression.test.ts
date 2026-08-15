@@ -48,6 +48,9 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { V1_DIR } from '../lib/paths.js';
 
 const WORKFLOW_ID = 'conformance-replay-side-effect';
 const EFFECT_NODE = 'effect';
@@ -179,6 +182,68 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
         'replay.md §"Side-effect suppression in replay" requirement 3',
         'a side-effecting node with no recorded source outcome MUST fail closed with replay_source_missing',
       ),
+    ).toBe(true);
+  });
+});
+
+/**
+ * `replay.md` requirement 4 — the manifest declaration is a classification FLOOR.
+ *
+ * A pack manifest may declare `role: "side-effect"`. Until 2026-08-14 the only
+ * stated purpose of that field was that it "drives engine scheduling", so a host
+ * was free to classify side-effecting nodes from a private list and never read
+ * it. A tier-1 host did exactly that and a shipped `core.storage.blob-put` node
+ * performed real object-store `PUT`s **during a replay**, past two independent
+ * guards, because neither consulted the manifest that had declared the node
+ * side-effecting all along.
+ *
+ * Requirement 4 makes the declaration binding: a host's own classifier is a floor
+ * ABOVE it and never a substitute — more nodes may be treated as side-effecting,
+ * never fewer.
+ *
+ * **This is a coherence gate, not a behavioral witness, and the distinction
+ * matters.** Proving a host honours requirement 4 needs that host advertising
+ * `recorded-outcome`, a pack node declaring the role, and an observable external
+ * effect across a replay — none of which the suite can synthesize. What it CAN
+ * do is ensure the declaration and the obligation cannot drift apart: if someone
+ * renames the role value, or drops the requirement, this fails. RFC 0148 §A
+ * resolves the behavioral half to `blocked`, not to a pass.
+ */
+describe.skipIf(V1_DIR === null)('replay.md req 4 — the manifest role is a classification floor', () => {
+  const dir = V1_DIR as string;
+  const replay = () => readFileSync(join(dir, 'replay.md'), 'utf8');
+  const manifest = () =>
+    readFileSync(join(dir, '..', '..', 'schemas', 'node-pack-manifest.schema.json'), 'utf8');
+
+  it('the manifest still offers the role value the requirement binds', () => {
+    // If `side-effect` is renamed or dropped from the taxonomy, requirement 4
+    // binds a value nothing can declare — a rule with no reachable trigger.
+    expect(
+      manifest().includes('side-effect'),
+      'node-pack-manifest.schema.json §role MUST still describe the `side-effect` value that ' +
+        'replay.md requirement 4 makes binding. A requirement whose trigger no longer exists is ' +
+        'not enforcement, it is decoration.',
+    ).toBe(true);
+  });
+
+  it('replay.md binds that declaration, naming the schema it comes from', () => {
+    const doc = replay();
+    expect(
+      /MUST\*{0,2} be treated as side-effecting/.test(doc) && doc.includes('node-pack-manifest.schema.json'),
+      'replay.md §"Requirements when a host declares `sideEffectSuppression: \\"recorded-outcome\\"`" ' +
+        'MUST bind a manifest-declared `role: "side-effect"` to the suppression obligation, and MUST ' +
+        'name the schema the declaration comes from so a reader can find it.',
+    ).toBe(true);
+  });
+
+  it('the floor direction is stated, not left to inference', () => {
+    // The dangerous reading is symmetric: "my classifier disagrees, so the
+    // manifest is wrong." The requirement is one-directional and says so.
+    expect(
+      replay().includes('MUST NOT classify fewer'),
+      'replay.md requirement 4 MUST state the direction: a host classifier may treat MORE nodes as ' +
+        'side-effecting and never fewer. Without the direction, a host that trusts its own list over ' +
+        'the manifest can read the clause as permission to disagree.',
     ).toBe(true);
   });
 });

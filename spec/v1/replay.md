@@ -332,13 +332,33 @@ For a fork with `mode: "replay"`:
    host MUST fail the node closed with `error.code: "replay_source_missing"`
    (below). It MUST NOT perform the effect, and MUST NOT substitute a
    synthesized or empty success.
-4. The guarantee is **whole-run**. A host MUST NOT advertise `recorded-outcome`
+4. A node whose pack manifest declares `role: "side-effect"`
+   (`node-pack-manifest.schema.json`) **MUST** be treated as side-effecting for
+   the purposes of this section. A host's own classifier — a `typeId` allow-list,
+   a module flag, a compiled-in table — is a **floor above** this declaration and
+   never a substitute for it: it may classify additional nodes as side-effecting,
+   and it MUST NOT classify fewer.
+
+   **Why this clause exists.** Requirement 1 defines the obligation *behaviorally*
+   — any operation observable outside the run's own event log — which is the right
+   definition and is not mechanically checkable at classification time. A host
+   therefore needs some concrete signal to decide which nodes qualify, and a pack
+   that has already declared `role: "side-effect"` has supplied one. Before this
+   clause the field's only stated purpose was that it "drives engine scheduling",
+   so a host could consult a private list, miss a pack node that declared itself,
+   and re-execute a live external write during a replay **while the manifest said
+   so all along**. Found in production by a tier-1 host: a shipped
+   `core.storage.blob-put` pack node performed real object-store `PUT`s during
+   replay, past two independent guards, because neither read the manifest. A
+   declaration nothing consults is not a contract.
+
+5. The guarantee is **whole-run**. A host MUST NOT advertise `recorded-outcome`
    if any class of side-effecting node in its catalogue can still fire during a
    replay. A partial guarantee is not a weaker promise but an incorrect one: a
    node that fires live derives its outcome from a fresh external call, and that
    outcome flows into `RunSnapshot.variables`, violating §C.2's requirement that
    observable state be byte-equivalent at each event-log index.
-5. **The whole-run guarantee requires two mechanisms, not one.** A host MUST NOT
+6. **The whole-run guarantee requires two mechanisms, not one.** A host MUST NOT
    advertise `recorded-outcome` unless **both** hold:
    - **(a) Classification** short-circuits known side-effecting nodes *before*
      they execute, per requirement 2. This keeps a replay **correct** — it
@@ -355,7 +375,7 @@ For a fork with `mode: "replay"`:
    every effect in its catalogue, and it converts a silent correctness loss into
    a visible `replay_source_missing`. Because pure nodes never reach an effect
    seam, (b) does not disturb the live-re-execution rule below.
-6. **Cross-host dispatch needs no separate rule.** A dispatch to a peer host
+7. **Cross-host dispatch needs no separate rule.** A dispatch to a peer host
    (RFC 0007) is an outbound network call, hence an external side effect under
    requirement 1. During a replay the dispatching node therefore reproduces its
    recorded outcome under requirement 2 and **never contacts the peer at all**,
