@@ -14,9 +14,14 @@
  *     200  {"maxTokens":null}
  *
  * The registration path logged *"test seam ENABLED — NEVER enable in
- * production"* while doing exactly that, and the mock-AI staging endpoint
- * performed no tenant resolution at all — staging keyed on `nodeId`, which is
+ * production"* while doing exactly that. Staging is keyed on `nodeId`, which is
  * not a secret: node ids ship inside chain packs.
+ *
+ * (An earlier account of this — including the first version of this docblock —
+ * said the staging route performed *no tenant resolution at all*. The reporter
+ * retracted that within the hour: auth **runs and succeeds**, minting an
+ * anonymous session. The corrected mechanism is what makes the weak prose
+ * clause interesting, so it is recorded rather than quietly swapped.)
  *
  * **Why this matters beyond the seam.** A staged mock program makes a replay
  * diverge on purpose, so an unauthenticated caller could switch off the
@@ -29,6 +34,16 @@
  * and asserts the *shape of the answer*: never a `200`. A host with no seams
  * enabled answers `404` and passes correctly, which is the honest outcome
  * rather than a skip.
+ *
+ * **Why this leg asserts the observable property, not the mechanism.** The prose clause
+ * originally required an enabled seam to apply *"the same authentication and tenant
+ * resolution as the canonical surface"* — which RFC 0132 makes trivially satisfiable, since
+ * the canonical surface legitimately admits anonymous actors. The reporting host's auth
+ * **ran and succeeded**, minting `tenantId: "anon:<sid>"`, so the seam applied exactly the
+ * canonical treatment and the hole survived the rule. This leg reds it either way, because
+ * a `200` to a credential-less caller is the thing that matters. **The prose and this leg
+ * disagreed for twenty minutes and the leg was right** — the clause now requires a
+ * non-anonymous principal.
  *
  * Requires a base URL; issues NO credentials by design.
  */
@@ -89,9 +104,10 @@ describe('test-seam-unauthenticated: an enabled seam still authenticates', () =>
       answered,
       driver.describe(
         'host-sample-test-seams.md §"Production safety (normative)"',
-        'An ENABLED seam MUST apply the same authentication and tenant resolution as the canonical ' +
-          'surface. The env-gate governs whether a seam EXISTS; it does not govern who may call it. ' +
-          'A seam answering an unauthenticated request is an open control surface on a public ' +
+        'An ENABLED seam MUST require an authenticated, NON-ANONYMOUS principal. A host that mints ' +
+          'an anonymous identity for credential-less callers MUST NOT treat it as satisfying that. ' +
+          'The env-gate governs whether a seam EXISTS; it does not govern who may call it. A seam ' +
+          'answering a credential-less request with 200 is an open control surface on a public ' +
           'origin — and staging keys such as `nodeId` are not secrets, they ship inside chain ' +
           'packs.\n  ' + answered.join('\n  '),
       ),

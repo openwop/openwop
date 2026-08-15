@@ -3049,15 +3049,23 @@ invariants:
     note: |
       `host-sample-test-seams.md` §"Production safety (normative)": an ENABLED
       seam MUST apply the same authentication and tenant resolution as the
-      canonical surface. The env-gate governs whether a seam EXISTS; it does not
-      govern who may call it, and the corpus previously said nothing about the
-      second — which read as an assurance it never made.
+      canonical surface — STRENGTHENED 2026-08-15 to require an AUTHENTICATED,
+      NON-ANONYMOUS principal. The first wording was trivially satisfiable: RFC
+      0132 sanctions anonymous actors on the canonical surface, so a host minting
+      `anon:<sid>` for credential-less callers applied exactly the canonical
+      treatment and stayed wide open. The conformance leg red that host either
+      way because it asserts the observable property — the prose and its own leg
+      disagreed, and the leg was right. The env-gate governs whether a seam
+      EXISTS; it does not govern who may call it.
       Found on a live tier-1 deployment (2026-08-15): the seam env-gate was
       enabled in production and a seam answered an UNAUTHENTICATED request from
       the public internet with real seam JSON, while the registration path
-      logged "test seam ENABLED — NEVER enable in production". The mock-AI
-      staging endpoint performed no tenant resolution at all; staging keyed on
-      `nodeId`, which is not a secret — node ids ship inside chain packs.
+      logged "test seam ENABLED — NEVER enable in production". Staging is keyed
+      on `nodeId`, which is not a secret — node ids ship inside chain packs.
+      (An earlier account said the route performed no tenant resolution at all;
+      the reporter retracted that within the hour. Auth RUNS and SUCCEEDS,
+      minting an anonymous session — which is precisely why the requirement is
+      non-anonymous rather than "same as canonical".)
       The replay consequence is what makes this protocol-tier rather than
       operational: a staged mock program makes a replay diverge deliberately, so
       an unauthenticated caller could switch off the byte-equivalence
