@@ -36,9 +36,11 @@ export function canonicalize(value: unknown): string {
   return JSON.stringify(value);
 }
 
-/** Project a raw recipe-input object to the closed set of fields per
- *  `replay.md` §A — omit absent optionals (do NOT emit null/default
- *  placeholders), sort tools[] by name. */
+/** @deprecated RETIRED v1 projection (pre RFC 0150 §C). Kept ONLY so a
+ *  reader can see what the retired recipe excluded; no scenario may assert
+ *  against it — `replay-llm-cache-key{,-portable}.test.ts` did until suite
+ *  1.109.0 and thereby contradicted `semantic-digest-v2.test.ts` in the same
+ *  package. Use `projectSemanticRequestV2` / `semanticRequestDigestV2`. */
 export function projectRecipe(raw: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { provider: raw.provider, model: raw.model, messages: raw.messages };
   if (Array.isArray(raw.tools) && raw.tools.length > 0) {
@@ -51,8 +53,7 @@ export function projectRecipe(raw: Record<string, unknown>): Record<string, unkn
   return out;
 }
 
-/** Compute the canonical LLM cache key per `replay.md` §B:
- *  SHA-256(canonicalize(projectRecipe(input))) → lowercase hex. */
+/** @deprecated RETIRED v1 key. See `projectRecipe`. Use `semanticRequestDigestV2`. */
 export function expectedCacheKey(input: Record<string, unknown>): string {
   return createHash('sha256').update(canonicalize(projectRecipe(input)), 'utf8').digest('hex');
 }
