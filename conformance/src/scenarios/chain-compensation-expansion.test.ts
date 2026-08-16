@@ -49,6 +49,7 @@ import {
   expandChainWithCompensation,
   ChainUnresolvableTypeIdError,
   ChainCompensationPolicyConflictError,
+  ChainIrreversibleWithCompensationError,
   type WorkflowChainWithCompensation,
   type ChainCompensationPolicy,
   type FragmentNodeCompensation,
@@ -161,6 +162,33 @@ describe('RFC 0157 — schema: the chain manifest mirrors the compensation shape
     const noTriggers = structuredClone(CHAIN) as unknown as { compensation: Record<string, unknown> };
     noTriggers.compensation = {};
     expect(validate(manifestWith(noTriggers)), 'a policy without triggers is not a policy').toBe(false);
+  });
+
+  it('FragmentNode.irreversibleEffect (RFC 0151 UQ4) is a sibling boolean, mutually exclusive with compensation — in the manifest and in expansion', () => {
+    const validate = manifestValidator();
+    // The `notify` node declares no compensation; stating its effect is irreversible is valid.
+    const irreversible = structuredClone(CHAIN) as unknown as { dag: { nodes: Array<Record<string, unknown>> } };
+    const notifyIdx = irreversible.dag.nodes.findIndex((n) => n['id'] === 'notify');
+    expect(notifyIdx).toBeGreaterThanOrEqual(0);
+    irreversible.dag.nodes[notifyIdx]!['irreversibleEffect'] = true;
+    expect(validate(manifestWith(irreversible)), JSON.stringify(validate.errors)).toBe(true);
+    // Expansion copies it verbatim onto the expanded node (6c) and touches nothing else.
+    const out = expandChainWithCompensation(irreversible as unknown as typeof CHAIN, CTX);
+    const notify = out.nodes.find((n) => n.id.endsWith('_notify')) as { irreversibleEffect?: boolean; compensation?: unknown } | undefined;
+    expect(notify?.irreversibleEffect).toBe(true);
+    expect(notify?.compensation).toBeUndefined();
+    // Both on one node: the schema rejects it AND expansion refuses fail-closed before emitting.
+    const both = structuredClone(CHAIN) as unknown as { dag: { nodes: Array<Record<string, unknown>> } };
+    both.dag.nodes[0]!['irreversibleEffect'] = true; // node 0 (`reserve`) declares a compensation
+    expect(validate(manifestWith(both)), 'compensation.md §B: irreversibleEffect: true + compensation is contradictory').toBe(false);
+    let thrown: unknown;
+    try {
+      expandChainWithCompensation(both as unknown as typeof CHAIN, CTX);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(ChainIrreversibleWithCompensationError);
+    expect((thrown as ChainIrreversibleWithCompensationError).code).toBe('chain_irreversible_with_compensation');
   });
 });
 
