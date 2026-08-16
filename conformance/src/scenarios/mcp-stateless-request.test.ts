@@ -1,0 +1,60 @@
+/**
+ * RFC 0153 §B — the host as a 2026-07-28 MCP server answers a core request
+ * with NO prior `initialize` and NO session header (invariant
+ * `mcp-header-body-consistent`, named by RFC 0153 §E — the agreement half is
+ * witnessed in `mcp-2026-07-28-discover.test.ts`).
+ *
+ * `mcp-integration.md` §B: under the current profile a host MUST NOT require
+ * `initialize` / `notifications/initialized` or any `Mcp-Session-Id` for a core
+ * request; every request self-describes in `_meta`; list results are stable per
+ * caller (not per connection) and carry `resultType` + cache hints (§D).
+ *
+ * Gate: `mcp.profiles ∋ mcp-2026-07-28` and `serverMount.supported`. A
+ * 2025-06-18 host soft-skips (`blocked`). Hard-fails under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true`. Non-vacuity: the leg issues `tools/list`
+ * twice on two independent connections and asserts byte-equal tool lists —
+ * per-connection state would show up as drift.
+ *
+ * @see spec/v1/mcp-integration.md §"MCP 2026-07-28 versioned composition" §B, §D
+ */
+
+import { describe, it, expect } from 'vitest';
+import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
+
+const PROFILE = 'mcp-2026-07-28';
+const META_V = 'io.modelcontextprotocol/protocolVersion';
+const META_C = 'io.modelcontextprotocol/clientCapabilities';
+const META_I = 'io.modelcontextprotocol/clientInfo';
+
+interface McpCaps { readonly supported?: boolean; readonly profiles?: readonly string[]; readonly serverMount?: { supported?: boolean } }
+async function claimsCurrent(): Promise<boolean> {
+  const disco = await driver.get('/.well-known/openwop');
+  const caps = capabilityFamily<McpCaps>(disco.json, 'mcp');
+  return caps?.supported === true && (caps.profiles ?? []).includes(PROFILE) && caps.serverMount?.supported === true;
+}
+async function list() {
+  const res = await driver.post(
+    '/v1/host/sample/mcp',
+    { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: { [META_V]: '2026-07-28', [META_C]: {}, [META_I]: { name: 'openwop-conformance', version: 'suite' } } } },
+    { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' } },
+  );
+  return { status: res.status, body: res.json as { result?: { resultType?: string; tools?: unknown[]; ttlMs?: number; cacheScope?: string }; error?: { code: number } } };
+}
+
+describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — mcp-stateless-request (host as server, gated on mcp.profiles ∋ mcp-2026-07-28)', () => {
+  it('tools/list succeeds with no initialize and no session; result carries resultType + cache hints; two connections agree', async () => {
+    if (!behaviorGate(PROFILE, await claimsCurrent())) return;
+    const a = await list();
+    if (a.status === 404 || a.status === 403) return; // mount not at the sample path — covered by mcp-server-* legs
+    expect(a.status, driver.describe('mcp-integration.md §B', 'a core request MUST succeed without a prior initialize or a session header')).toBe(200);
+    expect(a.body.error, driver.describe('mcp-integration.md §B', `stateless tools/list MUST NOT error: ${JSON.stringify(a.body.error)}`)).toBeUndefined();
+    expect(a.body.result?.resultType, driver.describe('mcp-integration.md §B', 'every current-revision result carries resultType')).toBe('complete');
+    expect(typeof a.body.result?.ttlMs, driver.describe('mcp-integration.md §D', 'tools/list MUST carry ttlMs (>= 0)')).toBe('number');
+    expect((a.body.result?.ttlMs ?? -1) >= 0).toBe(true);
+    expect(['public', 'private'], driver.describe('mcp-integration.md §D', 'cacheScope MUST be public|private')).toContain(a.body.result?.cacheScope);
+    const b = await list();
+    expect(JSON.stringify(b.body.result?.tools), driver.describe('mcp-integration.md §B', 'list results MUST NOT vary per connection — two independent requests from the same caller MUST agree')).toBe(JSON.stringify(a.body.result?.tools));
+  });
+});
