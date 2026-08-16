@@ -62,13 +62,15 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
   it('crossHostCausation (when present) conforms to RFC 0040 §D', async (ctx) => {
     const d = await readDiscovery();
     if (d === null) {
+      softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc === undefined) {
+      softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.crossHostCausation` not advertised by this host (RFC 0040 §D)');
       ctx.skip(); // host doesn't advertise — soft-skip
-      return softSkip('blocked', 'precondition not met — `chc === undefined` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
 
     expect(

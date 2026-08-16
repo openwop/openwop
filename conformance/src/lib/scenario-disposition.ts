@@ -94,7 +94,9 @@ export function fileDisposition(
  *   - a zero-assertion "pass" ⇒ the file's noted reason (`softSkip` /
  *     `seamAbsent`: inapplicable | skipped | blocked) or a behaviorGate reason;
  *   - a zero-assertion "pass" with NO reason ⇒ `blocked` + the marker detail —
- *     an early return can never become a pass.
+ *     an early return can never become a pass;
+ *   - every test `ctx.skip()`ped ⇒ the file's noted reason if it wrote one
+ *     BEFORE skipping (`ctx.skip()` throws), else `blocked` + the marker.
  */
 export function resolveFileRecord(
   states: readonly FileTestState[],
@@ -111,6 +113,18 @@ export function resolveFileRecord(
       disposition = 'blocked';
       detail = UNCLASSIFIED_RETURN_DETAIL;
     }
+  } else if (
+    noted !== null &&
+    gateReason === undefined &&
+    states.length > 0 &&
+    states.every((s) => s === 'skip')
+  ) {
+    // Every test called `ctx.skip()` (vitest reports them as skipped, not as
+    // zero-assertion passes) and the file noted why first. Note-then-skip is
+    // the required order: `ctx.skip()` throws, so a note written after it is
+    // dead code — which is how seven files carried notes the ledger never saw.
+    disposition = noted.kind;
+    detail = noted.reason;
   }
   return detail === undefined ? { disposition } : { disposition, detail };
 }

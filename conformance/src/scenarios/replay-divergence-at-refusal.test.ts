@@ -78,13 +78,15 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
   it('replayDeterminism (when present) conforms to RFC 0041 §D', async (ctx) => {
     const d = await readDiscovery();
     if (d === null) {
+      softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     const rd = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.replayDeterminism;
     if (rd === undefined) {
+      softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.replayDeterminism` not advertised by this host (RFC 0041 §D)');
       ctx.skip(); // optional advertisement — host hasn't opted in
-      return softSkip('blocked', 'precondition not met — `rd === undefined` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
 
     expect(
@@ -192,8 +194,9 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
       { content: validEnv, stopReason: 'end_turn' as const },
     ]);
     if (programStatus === 404) {
+      softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip(); // mock-AI program seam not exposed — soft-skip
-      return softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(programStatus).toBe(200);
 
@@ -201,8 +204,9 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
       workflowId: 'conformance-phase4-replay-divergence',
     });
     if (createRes.status === 404 || createRes.status === 422) {
+      softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip(); // fixture not advertised
-      return softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;
@@ -273,8 +277,9 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
       { content: 'safety-refused-for-conformance', stopReason: 'safety' as const, refusalText: 'safety-refused-for-conformance' },
     ]);
     if (programStatus === 404) {
+      softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(programStatus).toBe(200);
 
@@ -282,8 +287,9 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
       workflowId: 'conformance-phase4-replay-divergence',
     });
     if (createRes.status === 404 || createRes.status === 422) {
+      softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;

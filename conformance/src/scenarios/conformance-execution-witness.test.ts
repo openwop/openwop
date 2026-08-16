@@ -51,6 +51,18 @@ describe('RFC 0148 §A — conformance-execution-witness: the runner record', ()
     expect(resolveFileRecord(['pass'], undefined, 0, { kind: 'skipped', reason: 'operator opt-out' })).toEqual({ disposition: 'skipped', detail: 'operator opt-out' });
   });
 
+  it('every test ctx.skip()ped takes the noted reason when one was written before the skip, else stays the blocked marker', () => {
+    // `ctx.skip()` throws — a `softSkip(...)` AFTER it is dead code. Seven files
+    // carried exactly that dead note and reported as unclassified for a suite minor.
+    expect(resolveFileRecord(['skip', 'skip'], undefined, 0, { kind: 'inapplicable', reason: 'sandbox not advertised' })).toEqual({ disposition: 'inapplicable', detail: 'sandbox not advertised' });
+    expect(resolveFileRecord(['skip'], undefined, 0, { kind: 'blocked', reason: 'simulator seam 404' })).toEqual({ disposition: 'blocked', detail: 'simulator seam 404' });
+    const bare = resolveFileRecord(['skip', 'skip'], undefined, 0, null);
+    expect(bare.disposition).toBe('blocked');
+    expect(bare.detail).toMatch(/every test skipped with no recorded reason/);
+    // A behaviorGate reason still wins over a note — the gate is the more specific record.
+    expect(resolveFileRecord(['skip'], 'inapplicable', 0, { kind: 'blocked', reason: 'x' }).disposition).toBe('inapplicable');
+  });
+
   it('a behaviorGate reason resolves a zero-assertion pass to inapplicable/skipped; a note outranks nothing but never a witnessed pass', () => {
     expect(resolveFileRecord(['pass'], 'inapplicable', 0, null).disposition).toBe('inapplicable');
     expect(resolveFileRecord(['pass'], 'skipped', 0, null).disposition).toBe('skipped');

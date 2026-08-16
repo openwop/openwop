@@ -41,7 +41,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -85,6 +85,7 @@ async function gateOnPhase4(ctx: { skip: () => void }): Promise<boolean> {
   const em = capabilityFamily<{ executionModel?: ExecutionModelCaps }>(d, 'multiAgent')?.executionModel;
   const version = typeof em?.version === 'number' ? em.version : 0;
   if (em?.replayDeterminism?.supported !== true || version < 4) {
+    softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.replayDeterminism.supported` with `version >= 4` not advertised by this host (RFC 0041 §C)');
     ctx.skip();
     return false;
   }
@@ -152,7 +153,8 @@ function stripVolatile(ev: RunEventDoc): unknown {
 async function startFixtureRun(ctx: { skip: () => void }): Promise<string | null> {
   const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
   if (create.status === 404 || create.status === 422) {
-    ctx.skip(); // fixture not advertised by this host
+    seamAbsent(`fixture \`${FIXTURE}\` not registered on this host (POST /v1/runs → ${create.status}) while replayDeterminism is advertised`);
+    ctx.skip();
     return null;
   }
   expect(create.status).toBe(201);
