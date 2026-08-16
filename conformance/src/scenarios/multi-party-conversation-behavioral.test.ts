@@ -38,6 +38,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isMultiPartyConversationSupported } from '../lib/multi-agent-capabilities.js';
@@ -80,7 +81,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
     // ---- Open a 3-agent council via the conformance seam ------------------
     const convId = 'conf:multi-party:council-q1';
     const opened = await openMultiPartyConversation({ conversationId: convId, participants: ROSTER });
-    if (opened.unwired) return; // seam not wired on this host — soft-skip the behavioral leg
+    if (opened.unwired) return seamAbsent('host advertises multiPartyConversation but the open-conversation seam is not wired');
     expect(
       opened.status === 200,
       driver.describe('RFC 0101 §Spec', 'a conforming 3-agent council MUST open (≤ maxParticipants)'),
@@ -88,7 +89,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
 
     // ---- MUST 1: POSITIVE — a roster-valid attributed turn is accepted ----
     const ok = await exchangeMultiPartyTurn({ conversationId: convId, turn: agentTurn('host:advisor-cfo', 1) });
-    if (ok.unwired) return;
+    if (ok.unwired) return seamAbsent('host advertises multiPartyConversation but the conversation seam is not wired');
     expect(
       ok.status === 200,
       driver.describe('RFC 0101 §Spec', "a role:'agent' turn with an in-roster speakerId MUST be accepted"),

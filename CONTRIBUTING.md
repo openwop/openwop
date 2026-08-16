@@ -87,6 +87,7 @@ Distinct from the spec-corpus schemas above. These live inside a pack's tarball 
   - `expect(…, driver.describe('spec.md §section', 'requirement'))` so failure messages cite the requirement.
 - New fixtures go in `conformance/fixtures/` AND must be added to `fixtures.md`'s catalog table + per-fixture contracts. The `spec-corpus-validity.test.ts` round-trip test will fail otherwise.
 - Server-free scenarios (those not requiring `OPENWOP_BASE_URL`) MUST run in <1s. CI gates on this.
+- **Never return early in silence (RFC 0148 §A).** A test that returns before its first `expect` is a pass with zero assertions — an *unclassified return*. Gate a profile with `behaviorGate(profile, advertised)` (records `inapplicable` / `skipped` and fails strict mode on an advertised-missing seam); for every other early return say why with `softSkip(kind, reason)` — `return softSkip('inapplicable', 'host does not advertise X')` — or `return seamAbsent(reason)` when the host advertises a capability but the seam answers 404/403 (`blocked` in default mode, a failure under `OPENWOP_REQUIRE_BEHAVIOR=true`; a 403 is not a pass). The runner records a zero-assertion file with no note as `blocked` with a fixed marker (`UNCLASSIFIED_RETURN_DETAIL`), which certification still treats as unclassified — the bundle row is honest, and the pressure to say why survives.
 
 ### TypeScript reference SDK (`sdk/typescript/`)
 

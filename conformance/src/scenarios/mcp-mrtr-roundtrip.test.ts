@@ -31,6 +31,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -52,7 +53,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     const caps = await mcp();
     if (!behaviorGate('mcp.mrtr.client', caps?.supported === true && (caps.protocolVersions ?? []).includes('2026-07-28'))) return;
     const server = getMcpFakeServer();
-    if (server === null) return; // fake server not started in this run
+    if (server === null) return softSkip('blocked', 'the suite MCP fake server is not started in this run — the client half cannot be driven');
     server.reset();
     const drive = await driver.post('/v1/host/sample/mcp/invoke', {
       serverUrl: server.endpoint(),
@@ -61,8 +62,10 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
       elicitationAnswer: { name: 'Ada' },
     });
     if (drive.status === 404 || drive.status === 403) {
-      expect(drive.status, driver.describe('RFCS/0153 §C', 'a host advertising 2026-07-28 MUST expose the invoke seam so MRTR handling is observable; without it the requirement resolves to `blocked` (RFC 0148 §A)')).not.toBe(404);
-      return;
+      // Advertised mcp-2026-07-28 but the invoke seam answered {drive.status}: not observable here.
+      // Default mode records `blocked` (RFC 0148 §A); OPENWOP_REQUIRE_BEHAVIOR=true fails
+      // an advertised-missing seam (RFC 0148 §B). A 403 is NOT a pass.
+      return seamAbsent(`host advertises mcp-2026-07-28 but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status}`);
     }
     const calls = server.invocations().filter((i) => i.method === 'tools/call');
     expect(calls.length, driver.describe('RFCS/0153 §C', 'the host MUST have called the tool at least once for this leg to mean anything')).toBeGreaterThan(0);
@@ -103,10 +106,10 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
       ],
       edges: [{ from: 'expose', to: 'ask' }],
     });
-    if (reg.status === 404 || reg.status === 403) return; // sample workflow seam not wired
+    if (reg.status === 404 || reg.status === 403) return seamAbsent(`host advertises mcp-2026-07-28 with a server mount but the sample-workflow seam /v1/host/sample/workflows answered ${reg.status}`);
     const hdr = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': TOOL };
     const first = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: TOOL, arguments: {}, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
-    if (first.status === 404) return;
+    if (first.status === 404) return seamAbsent('host advertises an MCP server mount but /v1/host/sample/mcp answered 404');
     const r1 = first.json as { result?: { resultType?: string; inputRequests?: Record<string, { method?: string }>; requestState?: string }; error?: { code: number } };
     expect(r1.error, driver.describe('mcp-integration.md §C.2', `tools/call MUST NOT error: ${JSON.stringify(r1.error)}`)).toBeUndefined();
     expect(r1.result?.resultType, driver.describe('mcp-integration.md §C.2', 'a run reaching waiting-input MUST answer the in-flight tools/call with resultType input_required (not a live callback)')).toBe('input_required');

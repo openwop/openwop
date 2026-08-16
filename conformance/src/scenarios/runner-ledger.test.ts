@@ -34,6 +34,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { readLedgerFile, recordRequirement, resetLedger, snapshot } from '../lib/requirement-ledger.js';
 import { fileDisposition, deriveRequirementDispositions, requirementIdForFile, floorScenarioFiles } from '../lib/scenario-disposition.js';
+import { softSkip, softSkipDisposition, resetSoftSkips, UNCLASSIFIED_RETURN_DETAIL } from '../lib/soft-skip.js';
 import { PROFILE_FLOOR_SCENARIOS } from '../lib/profiles.js';
 import { requirementsFor, requirementIdForScenario, requirementIdForPrefix } from '../lib/requirement-registry.js';
 
@@ -224,12 +225,43 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     expect(strict.rejectUnclassified).toBe(true);
   });
 
+  it('the runner\'s §A resolution of a silent zero-assertion file (blocked + marker) is STILL unclassified for a claimed floor', () => {
+    const l = ledgerAllPassed().map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { requirementId: e.requirementId, disposition: 'blocked' as const, detail: UNCLASSIFIED_RETURN_DETAIL, assertionCount: 0 } : e));
+    const d = deriveRequirementDispositions(reportAllPassed(), l, [profile]);
+    const v = d.verdicts.find((x) => x.profile === profile)!;
+    expect(v.unclassified).toContain(requirementIdForScenario(files[0]!));
+    expect(d.rejectUnclassified).toBe(true);
+    // whereas a blocked row WITH a scenario-authored reason is classified (blocking, not unclassified)
+    const l2 = ledgerAllPassed().map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { requirementId: e.requirementId, disposition: 'blocked' as const, detail: 'seam /v1/host/sample/x not mounted', assertionCount: 0 } : e));
+    const d2 = deriveRequirementDispositions(reportAllPassed(), l2, [profile]);
+    expect(d2.verdicts.find((x) => x.profile === profile)!.unclassified).toEqual([]);
+    expect(d2.rejectUnclassified).toBe(false);
+  });
+
   it('with no ledger at all, every skipped file is blocked and the runner says so (the pre-S6 honest reading)', () => {
     const d = deriveRequirementDispositions(reportAllPassed({ [files[0]!]: 'skipped' }), [], [profile]);
     expect(d.ledgerPresent).toBe(false);
     const row = d.requirements.find((r) => r.requirementId === requirementIdForScenario(files[0]!))!;
     expect(row.disposition).toBe('blocked');
     expect(row.detail).toMatch(/without a ledger/);
+  });
+});
+
+describe('RFC 0148 §A — softSkip notes the reason for an early return, per file', () => {
+  it('notes are keyed to the current test file, worst-first when mixed, and read back with joined reasons', () => {
+    resetSoftSkips();
+    expect(softSkip('inapplicable', 'host does not advertise X')).toBeUndefined();
+    softSkip('inapplicable', 'host does not advertise X'); // de-duplicated
+    let d = softSkipDisposition('runner-ledger.test.ts');
+    expect(d).toEqual({ kind: 'inapplicable', reason: 'host does not advertise X' });
+    softSkip('blocked', 'seam not mounted');
+    d = softSkipDisposition('runner-ledger.test.ts');
+    expect(d?.kind).toBe('blocked');
+    expect(d?.reason).toContain('[blocked] seam not mounted');
+    expect(d?.reason).toContain('[inapplicable] host does not advertise X');
+    expect(softSkipDisposition('some-other-file.test.ts')).toBeNull();
+    resetSoftSkips();
+    expect(softSkipDisposition('runner-ledger.test.ts')).toBeNull();
   });
 });
 

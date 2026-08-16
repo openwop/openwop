@@ -31,6 +31,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readOrgChartCap, getOrgChart, getDepartmentView, AUTHORITY_FIELDS } from '../lib/agentOrgChart.js';
@@ -52,7 +53,7 @@ describe('org-position-no-authority-escalation (RFC 0087 §B, behavioral)', () =
     if (!behaviorGate('openwop-org-position-no-authority', cap?.supported === true)) return;
 
     const chart = await getOrgChart();
-    if (chart === null) return; // advertised but read not served yet — soft-skip
+    if (chart === null) return seamAbsent('host advertises org-position authority but GET /v1/agents/org-chart is not served');
 
     for (const m of chart.members ?? []) {
       expectNoAuthority(m as Record<string, unknown>, 'an org-chart member');

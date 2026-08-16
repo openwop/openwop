@@ -32,6 +32,7 @@ import {
 } from './profiles.js';
 import { CERTIFIABLE, DISPOSITIONS, type Disposition } from './requirement-ledger.js';
 import { requirementIdForPrefix, requirementIdForScenario } from './requirement-registry.js';
+import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 
 /**
  * The BYOK conformance canary (`fixtures.md` §conformance-secrets-roundtrip;
@@ -163,6 +164,16 @@ function isWitnessedPass(row: BundleV2Requirement): boolean {
 }
 
 /**
+ * The emitter's own RFC 0148 §A resolution of a zero-assertion file that noted
+ * no reason: recorded `blocked` with a fixed marker detail. Honest as a row;
+ * for a REQUIRED requirement it is still an unclassified return, and a claim
+ * carrying it is rejected exactly as a vacuous pass would be.
+ */
+function isUnclassifiedReturn(row: BundleV2Requirement): boolean {
+  return row.disposition === 'blocked' && row.detail === UNCLASSIFIED_RETURN_DETAIL;
+}
+
+/**
  * Verify a v2 bundle. Pure; the caller validates against
  * `certification-bundle-v2.schema.json` separately (this function tolerates a
  * schema-invalid document and reports what it can).
@@ -228,6 +239,10 @@ export function verifyBundleV2(bundle: BundleV2Like): BundleV2Verdict {
         profileRejections.push({ kind: 'vacuous-pass', profile, requirementId: id, detail: `${id}: executed-pass with assertionCount ${String(row.assertionCount)} — a witness of nothing` });
         continue;
       }
+      if (isUnclassifiedReturn(row)) {
+        profileRejections.push({ kind: 'unwitnessed-requirement', profile, requirementId: id, detail: `${id}: every test returned early with zero assertions and no recorded reason — an unclassified return the emitter resolved to blocked (RFC 0148 §A); a claim carrying it is rejected` });
+        continue;
+      }
       if (!(CERTIFIABLE as readonly string[]).includes(row.disposition)) notCertifiable.push(id);
     }
     for (const prefix of req.prefixes) {
@@ -243,7 +258,7 @@ export function verifyBundleV2(bundle: BundleV2Like): BundleV2Verdict {
         continue;
       }
       const considered = matching.length > 0 ? matching : [summary as BundleV2Requirement];
-      const vacuous = considered.filter((r) => r.disposition === 'executed-pass' && !isWitnessedPass(r));
+      const vacuous = considered.filter((r) => (r.disposition === 'executed-pass' && !isWitnessedPass(r)) || isUnclassifiedReturn(r));
       if (vacuous.length > 0) {
         profileRejections.push({ kind: 'vacuous-pass', profile, requirementId: id, detail: `${id}: ${vacuous.map((r) => r.scenarioId).join(', ')} executed-pass with no witnessed assertion` });
         continue;

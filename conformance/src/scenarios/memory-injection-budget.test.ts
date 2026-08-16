@@ -28,6 +28,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
@@ -110,7 +111,7 @@ describe('memory-injection-budget (RFC 0113)', () => {
   it('token-bounds the injection read, omits the over-budget entry, and preserves SR-1 + CTI-1', async () => {
     const mem = await readCapabilityFamily<MemoryCap>('memory');
     if (!behaviorGate(PROFILE, mem?.injectionBudget?.supported === true)) return;
-    if (!isFixtureAdvertised(FIXTURE)) return; // fixture-gated soft-skip
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `host does not advertise the ${FIXTURE} conformance fixture`);
 
     const v = await driveFixtureVariables();
     expect(v, 'fixture MUST surface run variables').toBeDefined();
@@ -169,9 +170,9 @@ describe('memory-injection-budget (RFC 0113)', () => {
     if (!advertisesSemanticSearch(mem)) {
       // eslint-disable-next-line no-console
       console.warn(`[${PROFILE}] memory.search semantic not advertised; relevance leg soft-skipped`);
-      return;
+      return softSkip('inapplicable', 'host does not advertise memory.search semantic ranking — the relevance leg does not apply');
     }
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `host does not advertise the ${FIXTURE} conformance fixture`);
 
     const v = await driveFixtureVariables();
     expect(v, 'fixture MUST surface run variables').toBeDefined();
