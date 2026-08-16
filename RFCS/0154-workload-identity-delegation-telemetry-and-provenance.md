@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** workload identity, delegation, the OTel mapping, and artifact attestations.) |
+| **Updated** | 2026-08-16 (§A–§D prose landed: `spec/v1/auth.md` §"Workload identity and delegated actor chain" (verify/bind/resolve/fail-closed, chain-is-provenance rules, sender constraint + token exchange, content-free audit facts + hashed-subject privacy rule (G5)); `spec/v1/observability.md` §"Identity and delegation attributes" — canonical `openwop.*` attributes and a **v0, experimental, optional** GenAI projection labelled with the upstream ref (G3/UQ4: the GenAI conventions moved to `semantic-conventions-genai` and are Development-stability with no tagged release, so no stable version exists to pin); NEW `SECURITY/threat-model-workload-identity.md` (T1–T5, adversaries A1–A9, STRIDE per §). Not landed: §E provenance (cross-repo), the six unregistered invariants, a host advertiser, proof format (G1), DPoP SDK measurement (G2).) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** workload identity, delegation, the OTel mapping, and artifact attestations.) |
 | **Affects** | `spec/v1/{auth,auth-profiles,observability,capabilities}.md`, NEW identity/delegation schemas, capability schema, run-event audit projection, certification/release/pack provenance, security threat models and invariants |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
@@ -121,8 +121,8 @@ Shape and provenance fixture verification are server-free. Behavioral identity t
 1. Which delegation proof formats are mandatory in profile v1?
 2. Is DPoP included at Active or left as an advertised optional sender constraint?
 3. Which in-toto/SLSA predicate becomes the canonical provenance envelope?
-4. Which OTel GenAI convention version is sufficiently stable for the first mapping?
-5. How are privacy deletion requests reconciled with immutable hashed audit identifiers?
+4. ~~Which OTel GenAI convention version is sufficiently stable for the first mapping?~~ **Resolved 2026-08-16: none is.** The GenAI conventions moved to `open-telemetry/semantic-conventions-genai`; the agent/tool attributes are Development-stability with no tagged release, and core `semantic-conventions@v1.44.0` no longer hosts them. The first mapping is therefore v0, experimental, optional, labelled with the upstream ref, and projects no identity/delegation field (`observability.md` §"Identity and delegation attributes"; gap G3 closed as decided).
+5. ~~How are privacy deletion requests reconciled with immutable hashed audit identifiers?~~ **Resolved 2026-08-16:** hashes use a per-tenant, rotatable salt; a deletion request is satisfied by rotating the salt so prior hashes become unlinkable, without editing an append-only log; retention is stated in the host runbook (`auth.md` §D; gap G5).
 
 ## Implementation notes (non-normative)
 
@@ -130,11 +130,11 @@ Reuse the synthetic OIDC issuer and mTLS harness where possible. Keep proof veri
 
 ## Acceptance criteria
 
-- [ ] Identity/delegation schemas, capability profile, and auth prose land. (Schema and capability landed — `schemas/workload-identity.schema.json` and `auth.workloadIdentity`, with `workload-identity-profile.test.ts`. **Shape only**; the verify/bind/resolve/fail-closed requirements are behavioral and unproven. Carried: auth prose.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Identity/delegation schemas, capability profile, and auth prose land. (Schema and capability landed — `schemas/workload-identity.schema.json` and `auth.workloadIdentity`, with `workload-identity-profile.test.ts`. **Shape only**; the verify/bind/resolve/fail-closed requirements are behavioral and unproven. 2026-08-16: auth prose landed — `spec/v1/auth.md` §"Workload identity and delegated actor chain" §A–§D. Carried: a host that advertises the profile.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
 - [ ] Verification, fail-closed authorization, sender constraint, and negative chain tests pass. (**The witness now exists**: `workload-identity-behavior.test.ts` plus `host-sample-test-seams.md` §20, covering resolution, audience mismatch, expired delegation, non-retriable closed reason codes, and credential exclusion. Carried: a host that advertises `auth.workloadIdentity` and wires the seam — until one does, these resolve to `blocked` per RFC 0148 §A, because §A's requirements are invisible without it.)
-- [ ] OTel mapping is versioned and optional. (Carried with the schemas above.)
+- [ ] OTel mapping is versioned and optional. (2026-08-16: landed as `spec/v1/observability.md` §"Identity and delegation attributes (RFC 0154 §D)" — canonical `openwop.*` identity/delegation/authz attributes, all optional and content-free, plus a **v0 experimental** `gen_ai.*` projection that MUST be labelled with `openwop.otel.genai_mapping_version` + `openwop.otel.genai_semconv_ref` and MUST NOT be required by core conformance. No identity/delegation attribute is projected into `gen_ai.*` because upstream has no stable field for them. Carried: revisiting when `semantic-conventions-genai` tags a release with these fields at Stable.)
 - [ ] Release/suite/SDK/pack provenance attestations verify from a clean checkout. (Carried — attestation generation spans this repo, `openwop-sdks`, and `openwop-registry`, so it cannot land here alone.)
-- [ ] Threat models, invariants, audit events, fixtures, interop matrix, and CHANGELOG update. (Carried with the schemas above.)
+- [ ] Threat models, invariants, audit events, fixtures, interop matrix, and CHANGELOG update. (2026-08-16: threat model landed — `SECURITY/threat-model-workload-identity.md`, indexed in `SECURITY.md`; the two registered invariants now point at it. Carried: the six named-but-unregistered §F invariants (each needs a witness), fixtures, interop matrix rows (no advertiser).)
 - [ ] External auditor reviews the identity and provenance implementation. (Externally gated — the audit engagement is unscheduled; `SECURITY/external-audit-findings.json` records the pre-completion state.)
 
 ## References
