@@ -34,6 +34,14 @@
  * extension is `blocked` here (named as such via `seamAbsent`) and keeps its
  * `compensation-behavior` witness — the base and the extension are different
  * claims and are recorded separately.
+ *
+ * Mode matters, and the first host to advertise pointed it out: `seamAbsent`
+ * records `blocked` in DEFAULT mode but THROWS under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true` (RFC 0148 §B — an advertised capability
+ * whose witness seam is missing is a failure in strict certification, not a
+ * disposition). So a host that flips `compensation.supported` on without the
+ * §21 recovery extension is honest-red here in strict runs. Wire the extension
+ * with the advert, or run default mode and read the `blocked` rows.
  */
 
 import { describe, it, expect } from 'vitest';
