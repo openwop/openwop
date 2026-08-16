@@ -803,7 +803,9 @@ request path consults, or the witness proves nothing about production.
   verbatim unless the host genuinely uses it as its principal ID.
 - **Response 4xx (fail closed):** the canonical flat envelope `{ "error": <code>, "message": "…", "details": { "retriable": false } }` (corrected 2026-08-16, S22 — read nested before; tolerated during the window) with
   a closed reason code — `identity_unverified`, `identity_unresolvable`,
-  `audience_mismatch`, `delegation_expired`, or `sender_constraint_missing`. **`retriable`
+  `audience_mismatch`, `delegation_expired`, `sender_constraint_missing`, or (chain bounds,
+  added 2026-08-16 — RFC 0154 §B / `auth.md` §"Bounds") `delegation_chain_too_long`,
+  `delegation_chain_cyclic`, `delegation_scope_amplified`. **`retriable`
   MUST be `false`**: an identity that does not resolve will not resolve on retry, and
   marking it retriable invites a caller to hammer a failing authorization path.
 - **404 / 403:** seam not wired — `workload-identity-behavior.test.ts` reports the
@@ -816,6 +818,14 @@ request path consults, or the witness proves nothing about production.
   `resolved: true` for any of those has demonstrated it is **not** checking, which is
   precisely the confused-deputy failure RFC 0147 R12 names. Identity is not authorization:
   a `200` here means the identity resolved, **never** that the caller may act.
+- **Chain bounds (RFC 0154 §B, `workload-identity-chain-bounds.test.ts`, gated on
+  `auth.workloadIdentity.delegation.supported`):** a `delegation.chain` longer than the
+  advertised `delegation.maxChainDepth` MUST yield `delegation_chain_too_long`; a chain in
+  which a `subject` appears twice MUST yield `delegation_chain_cyclic`; and a chain in which
+  a later hop's `scopes` (OPTIONAL per-hop verified scopes, `workload-identity.schema.json`)
+  contain a scope the previous hop's do not MUST yield `delegation_scope_amplified`. All
+  three are fail-closed refusals of a *verified-looking* chain — a host that resolves any of
+  them has let authority accumulate through hops it trusts transitively (threat model A4).
 
 ### 21. Compensation unwind + replay drivers — `POST /v1/host/sample/test/compensation/{unwind,replay}` (RFC 0151)
 
