@@ -1,6 +1,6 @@
 # SECURITY
 
-> **Status: v1 (2026-05-01).** Vulnerability-disclosure policy for the openwop protocol, reference implementations, conformance suite, and machine-readable contracts. The protocol's normative security requirements are specified in `auth.md`, `idempotency.md`, `webhooks.md`, and per-capability spec docs; this file covers the disclosure process, response SLA, embargo terms, and advisory tracking.
+> **Status: v1 (2026-05-01; swept 2026-08-16 under RFC 0147 criterion 11 — §3 named the single response policy, §8 counts refreshed, §9 audit state made explicit).** Vulnerability-disclosure policy for the openwop protocol, reference implementations, conformance suite, and machine-readable contracts. The protocol's normative security requirements are specified in `auth.md`, `idempotency.md`, `webhooks.md`, and per-capability spec docs; this file covers the disclosure process, response SLA, embargo terms, and advisory tracking.
 
 Profile-specific threat models live under `SECURITY/`, including `threat-model-auth-profiles.md`, `threat-model-secret-leakage.md`, `threat-model-provider-policy.md`, `threat-model-node-packs.md`, and `threat-model-prompt-injection.md`.
 
@@ -47,6 +47,8 @@ The maintainer set commits to:
 The SLA applies to good-faith reports from any reporter. The maintainer set MAY decline to engage with reports that are spam, automated scanner output without proof-of-concept, or known false positives, with a brief explanation to the reporter.
 
 If the SLA cannot be met because the maintainer set is too small or under unusual load, the reporter is notified before the deadline with a revised timeline.
+
+**This table is the single security-response commitment of the project** (RFC 0147 §I). `GOVERNANCE.md` §"Security" and `MAINTAINERS.md` §"Maintainer expectations" defer to it rather than restating it; the maintainer set is currently one person (`MAINTAINERS.md`), so the "revised timeline" clause above is the operationally honest reading of a firm SLA held by a single maintainer — it does not lower the target, it names who is accountable for it and what happens when it slips.
 
 ## 4. Coordinated disclosure
 
@@ -115,18 +117,18 @@ This safe-harbor commitment binds the maintainer set; it does not bind third-par
 
 openwop threat models live at `SECURITY/threat-model-*.md` and cover specific attack surfaces:
 
-- `SECURITY/threat-model-secret-leakage.md` — BYOK secret resolution and redaction invariants (T1–T5 trust boundaries; 48 invariants — the largest surface, covering credential references, memory attribution, workspace, sub-run attestation, and egress policy).
-- `SECURITY/threat-model-prompt-injection.md` — LLM-mediated workflows (indirect injection via artifacts, exfiltration via tool outputs, refine-feedback path manipulation; 22 invariants).
-- `SECURITY/threat-model-node-packs.md` — node-pack supply chain (tampering, signature substitution, sandbox escape; 26 invariants).
-- `SECURITY/threat-model-provider-policy.md` — provider-policy bypass paths across all four modes; 13 invariants.
+- `SECURITY/threat-model-secret-leakage.md` — BYOK secret resolution and redaction invariants (T1–T5 trust boundaries; 78 invariants as of 2026-08-16 — the largest surface, covering credential references, memory attribution, workspace, sub-run attestation, and egress policy).
+- `SECURITY/threat-model-prompt-injection.md` — LLM-mediated workflows (indirect injection via artifacts, exfiltration via tool outputs, refine-feedback path manipulation; 43 invariants as of 2026-08-16).
+- `SECURITY/threat-model-node-packs.md` — node-pack supply chain (tampering, signature substitution, sandbox escape; 30 invariants as of 2026-08-16).
+- `SECURITY/threat-model-provider-policy.md` — provider-policy bypass paths across all four modes; 15 invariants as of 2026-08-16.
 - `SECURITY/threat-model-auth-profiles.md` — OAuth2-CC / OIDC user-bearer / mTLS / API-key-rotation enforcement boundaries (qualitative; its enforcement invariants are tracked under the rows above + the auth tier in `invariants.yaml`).
 - `SECURITY/threat-model-workload-identity.md` — RFC 0154 workload identity, delegated actor chain, sender constraint, content-free audit/telemetry, and artifact provenance (T1–T5; 2 registered + 6 named-unregistered invariants; **no advertiser yet** — every behavioural row is `blocked` per RFC 0148 §A until one exists).
 
-The threat models track invariants in `SECURITY/invariants.yaml`; the CI gate at `scripts/check-security-invariants.sh` (step 8 of `openwop-check.sh`) verifies every protocol-tier MUST-NOT maps to at least one matching conformance test. Reference-impl-tier invariants are verified by the reference impl's CI; advisory invariants are defense-in-depth and don't gate.
+The threat models track invariants in `SECURITY/invariants.yaml` (169 rows as of 2026-08-16: 139 protocol-tier, 28 reference-impl-tier, 2 advisory); the CI gate at `scripts/check-security-invariants.sh` (step 6 of the 7-step `openwop-check.sh`) verifies every protocol-tier MUST-NOT maps to at least one matching conformance test. Reference-impl-tier invariants are verified by the reference impl's CI; advisory invariants are defense-in-depth and don't gate. **What the gate does and does not say (RFC 0148 §A):** the mapping proves a *scenario exists* for the invariant, not that it executed non-vacuously against a given host — a scenario gated on a capability the host does not advertise records `inapplicable`; one whose seam the host has not wired records `blocked`. Per-host execution evidence is the host's certification bundle v2 (`INTEROP-MATRIX.md`), not this gate.
 
 ## 9. External audit
 
-The project intends to commission an external security review before making any "industry standard" claim per `the public security review plan`. The engagement plan lives at [`SECURITY/external-audit-engagement.md`](./SECURITY/external-audit-engagement.md) (drafted 2026-05-10, vendor selection pending). Scope, deliverables, embargo terms, budget range, and the engagement status tracker live in that document.
+The project intends to commission an external security review before making any "industry standard" claim; RFC 0147 §A **bans** that phrase (and "independently validated") from the corpus until the review completes, and RFC 0147 §I makes a completed audit with all Critical/High findings remediated a standards-readiness gate. The engagement plan lives at [`SECURITY/external-audit-engagement.md`](./SECURITY/external-audit-engagement.md) (drafted 2026-05-10; **vendor selection still pending as of 2026-08-16 — the engagement is unscheduled**). Scope, deliverables, embargo terms, budget range, and the engagement status tracker live in that document. The machine-readable findings ledger [`SECURITY/external-audit-findings.json`](./SECURITY/external-audit-findings.json) is committed **empty** (`findings: []`) — it records the pre-completion state and is gated by `scripts/check-audit-findings.mjs` (no open High/Critical finding may block standardization once findings exist). The steward's own pre-audit pass is [`SECURITY/internal-pre-audit-summary.md`](./SECURITY/internal-pre-audit-summary.md); it is steward-authored and is not the external review.
 
 External audit findings are published as advisories under §6 once remediation has shipped.
 

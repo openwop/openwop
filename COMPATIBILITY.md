@@ -69,6 +69,8 @@ A new conformance scenario that fails on a host previously passing `1.x.0` does 
 
 The suite is the test instrument; the spec is the contract. Suite changes MAY be more strict than spec text about edge cases, but MUST NOT be more strict about wire shape than the spec defines.
 
+**Measurement vs. claim (RFC 0148, 2026-08-16).** A recorded `1.x.0` pass is a *measurement* and is preserved as such. A *certification claim* is governed by RFC 0148: certification bundle **v2** (suite ≥ `1.114.0`) records one of five dispositions per requirement with a witnessed assertion count, and bundle **v1** — whose `passed` list counted an early-returning test as a pass and could not tell `skipped` from `inapplicable` from `blocked` — remains parseable but **ceases to substantiate a new certification after the 90-day migration window** that began 2026-08-12 (RFC 0148 §Compatibility, classified `safety-fix` under §3 below). Suites before `1.114.0` are still valid instruments for what they measured; they are not evidence of what they could not observe.
+
 ## 3. The safety-fix exception
 
 The §2.2 list above has one explicit exception: **safety and security fixes.**
@@ -91,6 +93,8 @@ Safety-fix breaks ship with:
 The spec major does **not** bump for safety-fix changes. The spec minor bumps. The suite minor bumps with new scenarios that detect both the vulnerable shape and the fixed shape.
 
 A safety-fix change is the only category that can break v1.x. Everything else goes to v2.
+
+**Safety-fix classifications on record (2026-08-16):** RFC 0148 (certification evidence — bundle v1 sunset, unclassified returns rejected; the wire contract is untouched), RFC 0149 §A/§C (machine-contract defects — the `/v1/v1` base-path duplication and the `protocolVersion` grammar, both repairs of generators/validators rather than moves of any endpoint), and RFC 0150 §B (retiring the `attempt`-bearing idempotency identity). None of the three moved a wire shape a conforming host emitted; each is recorded here because it changed what a *validator* accepts, which §2.2 treats as a break.
 
 ## 4. Behavior-only changes
 
