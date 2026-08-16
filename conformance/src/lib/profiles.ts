@@ -496,6 +496,17 @@ export interface ProfileFloor {
    * the two is what let five undefined-floor claims verify as proven.
    */
   readonly discoveryOnly?: true;
+  /**
+   * The profile's discovery predicate is degenerate (it is `openwop-core`) and
+   * `profiles.md` says the profile is "derivable from which scenarios pass" —
+   * the RUNTIME floor decides whether the host holds it. `--certify` therefore
+   * lists such a profile in `claimedProfiles` only when every floor requirement
+   * recorded a witnessed `executed-pass`; otherwise the host simply does not
+   * hold it, which is not a defect and not a rejection. Without this flag every
+   * core host was "claiming" `openwop-node-packs` on the emitter's behalf and
+   * then being rejected for not shipping a registry it never advertised.
+   */
+  readonly runtimeDerived?: true;
 }
 
 export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
@@ -556,7 +567,10 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
 
   // `profiles.md` §`openwop-node-packs`: "a host passes `openwop-node-packs`
   // when it passes those scenarios."
-  'openwop-node-packs': { required: ['pack-registry.test.ts', 'pack-registry-publish.test.ts'] },
+  // RFC 0025 makes the `/v1/packs/*` read surface unconditional-when-shipped
+  // with NO discovery advert, and `profiles.md` §openwop-node-packs says the
+  // profile "is derivable from which scenarios pass" — so it is runtime-derived.
+  'openwop-node-packs': { required: ['pack-registry.test.ts', 'pack-registry-publish.test.ts'], runtimeDerived: true },
 
   // ── Deliberately NOT transcribed ───────────────────────────────────────────
   // `openwop-replay-fork` cannot be expressed by this model. `profiles.md`

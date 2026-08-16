@@ -189,6 +189,41 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     expect(requirementsFor('openwop-discovery-core')).toEqual([]);
   });
 
+  it('a RUNTIME-DERIVED profile (openwop-node-packs) is HELD only when every floor row is a witnessed pass; otherwise it is not held — not rejected, not blocked', () => {
+    const np = 'openwop-node-packs';
+    const f = PROFILE_FLOOR_SCENARIOS[np]!;
+    expect(f.runtimeDerived, 'profiles.md: node-packs is "derivable from which scenarios pass"').toBe(true);
+    const ids = f.required.map((x) => requirementIdForScenario(x));
+    const rep = new Map<string, 'passed' | 'failed' | 'skipped'>(f.required.map((x) => [x, 'passed' as const]));
+    // (a) held: every row a witnessed pass
+    const held = deriveRequirementDispositions(rep, ids.map((id) => ({ requirementId: id, disposition: 'executed-pass' as const, assertionCount: 4 })), [np]);
+    const vh = held.verdicts.find((v) => v.profile === np)!;
+    expect(vh.runtimeDerived).toBe(true);
+    expect(vh.held).toBe(true);
+    expect(vh.certifiable).toBe(true);
+    // (b) not held: registry absent → the scenario recorded inapplicable-with-reason; publish recorded inapplicable
+    const notHeld = deriveRequirementDispositions(rep, ids.map((id) => ({ requirementId: id, disposition: 'inapplicable' as const, detail: 'host ships no pack registry (probe 404)' })), [np]);
+    const vn = notHeld.verdicts.find((v) => v.profile === np)!;
+    expect(vn.held).toBe(false);
+    expect(vn.certifiable).toBe(false);
+    expect(vn.unclassified, 'a profile the host does not hold is not a rejected claim').toEqual([]);
+    expect([...vn.blocking].sort()).toEqual([...ids].sort());
+    expect(notHeld.rejectUnclassified).toBe(false);
+    // (c) a vacuous pass on a runtime-derived floor is still not a rejection — the emitter drops the claim
+    const vac = deriveRequirementDispositions(rep, ids.map((id) => ({ requirementId: id, disposition: 'executed-pass' as const, assertionCount: 0 })), [np]);
+    const vv = vac.verdicts.find((v) => v.profile === np)!;
+    expect(vv.held).toBe(false);
+    expect(vv.unclassified).toEqual([]);
+    expect(vac.rejectUnclassified).toBe(false);
+    // (d) and a floor-defined NON-runtime-derived profile keeps the strict rule
+    const strictProfile = Object.entries(PROFILE_FLOOR_SCENARIOS).find(([, x]) => x.required.length > 0 && !x.runtimeDerived)![0];
+    const sIds = PROFILE_FLOOR_SCENARIOS[strictProfile]!.required.map((x) => requirementIdForScenario(x));
+    const sRep = new Map<string, 'passed' | 'failed' | 'skipped'>(PROFILE_FLOOR_SCENARIOS[strictProfile]!.required.map((x) => [x, 'passed' as const]));
+    const strict = deriveRequirementDispositions(sRep, sIds.map((id) => ({ requirementId: id, disposition: 'executed-pass' as const, assertionCount: 0 })), [strictProfile]);
+    expect(strict.verdicts[0]?.runtimeDerived).toBe(false);
+    expect(strict.rejectUnclassified).toBe(true);
+  });
+
   it('with no ledger at all, every skipped file is blocked and the runner says so (the pre-S6 honest reading)', () => {
     const d = deriveRequirementDispositions(reportAllPassed({ [files[0]!]: 'skipped' }), [], [profile]);
     expect(d.ledgerPresent).toBe(false);
