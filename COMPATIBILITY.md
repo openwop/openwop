@@ -46,6 +46,14 @@ How a published JSON Schema treats undeclared properties is a compatibility deci
 
 RFC 0094 applies this policy to the central server-emitted shape that violated it — `schemas/run-event.schema.json` is now open, with an `anyOf` vendor-event branch on `type` — and to the `createRun` request composition (closed via `unevaluatedProperties: false`). The full sweep of the remaining server-emitted schemas is a **named follow-up** (RFC 0094 §Unresolved questions), not silently included.
 
+#### Cross-file `$ref` in a published schema (2026-08-16)
+
+Adding a **new cross-file `$ref`** to a published schema (e.g. `workflow-definition.schema.json` gaining `"$ref": "compensation-policy.schema.json"`) is **additive on the wire** and **a suite-minor change for validators**: any consumer that pre-registers a *fixed list* of peer schemas before `compile()` will throw at compile time until it registers the new peer, and a downstream runner that resolves the sibling corpus while pinning an older suite will fail for a change it did not make. Rules:
+
+- A schema author adding a cross-file `$ref` MUST bump the conformance suite minor and MUST list the new peer in the CHANGELOG entry (as #1009 did for `compensation-policy.schema.json`).
+- Consumers SHOULD register schemas by **enumerating the schema directory** rather than by a fixed list; the suite's own validators do (`fixtures-valid.test.ts`, `workflow-primary-output-annotation.test.ts`, since 1.112.0). A fixed list is a claim about the schema graph that nothing keeps true.
+- Where a schema must stay self-contained for downstream fixed-list validators (registry-side manifest validation), prefer an **inline byte-mirror with a conformance leg asserting equality to the source** over a `$ref` — RFC 0157 did this for the chain manifest.
+
 ### 2.2 Never within v1.x
 
 - Existing required fields MUST NOT become optional, MUST NOT be removed, MUST NOT change type.
