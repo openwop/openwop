@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the A2A 1.0 profile, its legacy-deprecation window, and validation against a real upstream peer.) |
+| **Updated** | 2026-08-16 (§C/§D/§E prose landed in `spec/v1/a2a-integration.md` §"A2A 1.0 versioned composition" — pinned to A2A 1.0.0 (2026-03-12): Agent Card projection table, JSON-RPC-at-1.0 interface floor (G4/UQ3), the D.1–D.7 translation tables (operations, Message, Part/Artifact, Task/TaskState with the stored-vocabulary bijection, streaming, configuration/push, errors), identity/no-enumeration rules, `a2a-0.3-legacy` named and time-bounded to 2027-03-12 (UQ1 date), `interop_version_unsupported` error code, seam §22 catalogued. Not landed: a 1.0-shaped fake peer, the seven named scenarios, the two unregistered invariants, a real upstream peer, the 0.3 adopter inventory.) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the A2A 1.0 profile, its legacy-deprecation window, and validation against a real upstream peer.) |
 | **Affects** | `spec/v1/a2a-integration.md`, `schemas/capabilities.schema.json`, A2A projection schemas, conformance fake/real peers, RFC 0100, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` A2A 1.0 profile with legacy 0.3 deprecation |
 | **Supersedes** | Unqualified A2A support and A2A 0.3 as the current profile |
@@ -82,10 +82,10 @@ Shape tests use official A2A 1.0 fixtures. Behavioral acceptance requires at lea
 
 ## Unresolved questions
 
-1. Exact 0.3 adopter population and deprecation date.
+1. Exact 0.3 adopter population and ~~deprecation date~~. **Date resolved 2026-08-16:** 2027-03-12 (`a2a-integration.md` §A). Population still unknown (G1).
 2. Which official A2A SDK/peer becomes the CI real-peer witness?
-3. Which A2A 1.0 interface variants are mandatory for OpenWOP's floor?
-4. How are upstream error details redacted in OpenWOP audit events?
+3. ~~Which A2A 1.0 interface variants are mandatory for OpenWOP's floor?~~ **Resolved 2026-08-16:** the JSON-RPC binding at 1.0 is the floor for the `a2a-1.0` profile; HTTP+JSON and gRPC are optional additional `supportedInterfaces` (`a2a-integration.md` §C; gap G4 closed).
+4. ~~How are upstream error details redacted in OpenWOP audit events?~~ **Resolved 2026-08-16:** they are not redacted in place — they are dropped. Only the closed upstream `reason` (and `supportedVersions[]` for version errors) is projected; the boundary envelope is `interop_version_unsupported` / the D.7 table, and `message` never carries the peer's body (`a2a-integration.md` §D.7).
 
 ## Implementation notes (non-normative)
 
@@ -93,10 +93,10 @@ Generate the translation table from the pinned A2A 1.0 schema where possible. Do
 
 ## Acceptance criteria
 
-- [ ] A2A 1.0 profile, discovery schema, and complete translation table land. (Discovery schema landed — `protocolVersions`/`preferredVersion`/`profiles` on the `a2a` family, with `versioned-composition-profiles.test.ts`. **Shape only.** Carried: the profile itself and the translation table.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
-- [ ] Version header, downgrade, card/runtime, identity, durable task, streaming, and push tests pass. (**Version-header and downgrade witnesses now exist**: `a2a-version-negotiation.test.ts`, driven against `A2AFakePeer` with header capture. Carried: card/runtime, identity, durable task, streaming, and push — and a host that advertises versions and wires the invoke seam.)
+- [ ] A2A 1.0 profile, discovery schema, and complete translation table land. (Discovery schema landed — `protocolVersions`/`preferredVersion`/`profiles` on the `a2a` family, with `versioned-composition-profiles.test.ts`. **Shape only.** 2026-08-16: **the profile prose and translation table landed** — `spec/v1/a2a-integration.md` §"A2A 1.0 versioned composition" §A–§E, D.1–D.7 field-by-field, pinned to A2A 1.0.0. Carried: nothing on this item except that the prose is witnessed only through the §B negotiation legs; §C/§D have no 1.0-shaped peer to run against.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Version header, downgrade, card/runtime, identity, durable task, streaming, and push tests pass. (**Version-header and downgrade witnesses now exist**: `a2a-version-negotiation.test.ts`, driven against `A2AFakePeer` with header capture. Carried: card/runtime, identity, durable task, streaming, and push legs — the suite's fake peer speaks 0.3 wire and cannot witness §C/§D at 1.0 (`a2a-integration.md` §"Conformance (RFC 0152)", gap G6). The invoke seam is now catalogued (`host-sample-test-seams.md` §22) and openwop-app's live origin passes the §A/§B legs.)
 - [ ] Real upstream A2A 1.0 peer passes in CI. (Carried, and externally gated: it needs a reachable upstream A2A 1.0 peer, which is not a corpus deliverable.)
-- [ ] Legacy 0.3 profile and deprecation runbook published. (Carried — the existing 0.3 handling is unnamed and unbounded in the corpus, which is the defect this item closes.)
+- [ ] Legacy 0.3 profile and deprecation runbook published. (2026-08-16: **named and time-bounded** — `a2a-0.3-legacy` is defined as the pre-2026-08-16 body of `a2a-integration.md`; hosts SHOULD NOT advertise it after 2027-03-12 (A2A 1.0.0 published 2026-03-12 + the 12-month window). Carried: the deprecation *runbook* (what a 0.3-only host does on that date) is one paragraph in §A, not a runbook; and the adopter inventory (G1) is unknown.)
 - [ ] Threat models, invariants, SDKs, interop matrix, and CHANGELOG updated. (Carried with the profile above.)
 
 ## References
