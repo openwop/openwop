@@ -23,6 +23,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -46,7 +47,7 @@ async function readAuthorization(): Promise<DiscoveryAuthorization | null> {
 describe('authorization-fail-closed: advertisement shape (RFC 0049 §C)', () => {
   it('failClosed is exactly true when authorization is supported', async () => {
     const authz = await readAuthorization();
-    if (!authz?.supported || authz.failClosed === undefined) return;
+    if (!authz?.supported || authz.failClosed === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!authz?.supported || authz.failClosed === undefined` returned early');
     expect(
       authz.failClosed,
       driver.describe('RFC 0049 §C', 'capabilities.authorization.failClosed MUST be `true`'),
@@ -57,7 +58,7 @@ describe('authorization-fail-closed: advertisement shape (RFC 0049 §C)', () => 
 describe('authorization-fail-closed: absent/unseeded role MUST deny (RFC 0049 §C)', () => {
   it('a decision for an unseeded-role principal resolves allowed=false', async () => {
     const authz = await readAuthorization();
-    if (!authz?.supported) return; // capability-gated
+    if (!authz?.supported) return softSkip('inapplicable', 'capability-gated');
 
     // Seam contract: request an authorization decision for a principal whose
     // role is absent/unseeded. The host MUST fail closed.
@@ -67,7 +68,7 @@ describe('authorization-fail-closed: absent/unseeded role MUST deny (RFC 0049 §
       resource: 'run-conformance-probe',
     });
     // 404 from a host that hasn't wired the seam is a soft-skip.
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const decision = res.json as { allowed?: boolean } | undefined;
     expect(

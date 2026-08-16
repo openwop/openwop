@@ -34,6 +34,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -84,7 +85,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
         '[version-fold] host does not advertise Capabilities.testing.forceEngineVersionRange; ' +
           'skipping (the X-Force-Engine-Version seam is test-keys-only and optional)',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `seam === null` returned early (seam, prior step, or fixture unavailable)');
     }
 
     const candidates = [seam.range.min, ...(seam.current === null ? [] : [seam.current]), seam.range.max];
@@ -104,7 +105,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       if (create.status === 403 && errCode(create.json) === 'force_engine_version_forbidden') {
         // eslint-disable-next-line no-console
         console.warn('[version-fold] API key is production-scoped (403 force_engine_version_forbidden); skipping');
-        return;
+        return softSkip('blocked', '[version-fold] API key is production-scoped (403 force_engine_version_forbidden); skipping (create.status === 403 && errCode(create.json) === \'force_engine_version_forbidden\')');
       }
       expect(
         create.status,
@@ -165,7 +166,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
     if (seam === null) {
       // eslint-disable-next-line no-console
       console.warn('[version-fold] forceEngineVersionRange not advertised; skipping negative leg');
-      return;
+      return softSkip('inapplicable', '[version-fold] forceEngineVersionRange not advertised; skipping negative leg');
     }
 
     const outOfRange = seam.range.max + 1;
@@ -173,7 +174,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
     if (create.status === 403 && errCode(create.json) === 'force_engine_version_forbidden') {
       // eslint-disable-next-line no-console
       console.warn('[version-fold] API key is production-scoped; skipping negative leg');
-      return;
+      return softSkip('blocked', '[version-fold] API key is production-scoped; skipping negative leg (create.status === 403 && errCode(create.json) === \'force_engine_version_forbidden\')');
     }
     expect(
       create.status,

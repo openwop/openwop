@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -37,7 +38,7 @@ describe('wasm-pack-abi-version-rejection: host advertises supported ABI version
     const wasm =
       capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
 
-    if (!wasm?.supported) return;
+    if (!wasm?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm?.supported` returned early');
 
     expect(Array.isArray(wasm.abiVersions), driver.describe(
       'RFCS/0008-wasm-abi.md §H',
@@ -63,7 +64,7 @@ describe('wasm-pack-abi-version-rejection: positive path via misbehaving pack', 
     const wasm =
       capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
 
-    if (!wasm?.supported) return;
+    if (!wasm?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm?.supported` returned early');
 
     if (!Array.isArray(wasm.loadedPacks)) {
       // eslint-disable-next-line no-console
@@ -71,7 +72,7 @@ describe('wasm-pack-abi-version-rejection: positive path via misbehaving pack', 
         '[wasm-pack-abi-version-rejection] host does not advertise capabilities.nodePackRuntimes.wasm.loadedPacks[]; skipping positive path. ' +
           'Hosts MAY advertise loadedPacks[] to surface ABI rejection observably (RFC 0008 §H + Track 7).',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!Array.isArray(wasm.loadedPacks)` returned early');
     }
 
     // Soft-skip when the well-behaved reference pack isn't loaded. If
@@ -84,7 +85,7 @@ describe('wasm-pack-abi-version-rejection: positive path via misbehaving pack', 
         `[wasm-pack-abi-version-rejection] reference pack ${WELL_BEHAVED_PACK_NAME} not in loadedPacks[]; ` +
           'skipping positive path (build examples/packs/rust-hello first or run against a host that ships it).',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm.loadedPacks.includes(WELL_BEHAVED_PACK_NAME)` returned early');
     }
 
     // Core assertion: ABI 999 pack MUST NOT be in loadedPacks[]

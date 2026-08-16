@@ -11,15 +11,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readDistillationCap, invokeDistill } from '../lib/distillation.js';
 
 describe('distillation-token-budget (RFC 0062 §B)', () => {
   it('within budget tokensUsed ≤ tokenBudget; an un-meetable budget fails atomically', async () => {
-    if ((await readDistillationCap())?.supported !== true) return;
+    if ((await readDistillationCap())?.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `(await readDistillationCap())?.supported !== true` returned early');
 
     const ok = await invokeDistill({ memoryRef: 'conformance-distill', tokenBudget: 8000 });
-    if (ok === null) return; // seam absent — soft-skip
+    if (ok === null) return softSkip('blocked', 'seam absent — soft-skip');
     const dist = ok.body.event?.distillation ?? {};
     expect(
       typeof dist.tokenBudget === 'number' && typeof dist.tokensUsed === 'number',
@@ -32,7 +33,7 @@ describe('distillation-token-budget (RFC 0062 §B)', () => {
 
     // A budget too small to distill the corpus MUST fail closed, no partial archive.
     const tooSmall = await invokeDistill({ memoryRef: 'conformance-distill', tokenBudget: 1 });
-    if (tooSmall === null) return;
+    if (tooSmall === null) return softSkip('blocked', 'precondition not met — `tooSmall === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       tooSmall.status >= 400 && tooSmall.body.error === 'token_budget_exceeded',
       driver.describe('RFC 0062 §B', 'an un-meetable budget MUST fail with token_budget_exceeded'),

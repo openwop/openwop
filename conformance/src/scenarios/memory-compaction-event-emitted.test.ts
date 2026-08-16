@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -50,12 +51,12 @@ describe('memory-compaction-event-emitted: canonical memory.compacted payload sh
     if (!(await isCompactionAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-event] capabilities.memory.compaction.supported not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[rfc0012-event] capabilities.memory.compaction.supported not advertised; skipping');
     }
     if (!(await isTestSeamReachable())) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-event] test seam unreachable; skipping');
-      return;
+      return softSkip('blocked', '[rfc0012-event] test seam unreachable; skipping');
     }
 
     const seed = await driver.post('/v1/test/memory/seed', {

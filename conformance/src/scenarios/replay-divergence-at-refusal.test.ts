@@ -45,6 +45,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -78,12 +79,12 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
     const d = await readDiscovery();
     if (d === null) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met â€” `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const rd = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.replayDeterminism;
     if (rd === undefined) {
       ctx.skip(); // optional advertisement â€” host hasn't opted in
-      return;
+      return softSkip('blocked', 'precondition not met â€” `rd === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
     expect(
@@ -180,7 +181,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
   }
 
   it('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=valid + replay=refusal', async (ctx) => {
-    if (!(await gateOnPhase4(ctx))) return;
+    if (!(await gateOnPhase4(ctx))) return softSkip('inapplicable', 'capability or profile not advertised by this host â€” gate `!(await gateOnPhase4(ctx))` returned early');
 
     const NODE_ID = 'structured-call';
     // Original program: valid envelope. Replay program (set after the
@@ -192,7 +193,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
     ]);
     if (programStatus === 404) {
       ctx.skip(); // mock-AI program seam not exposed â€” soft-skip
-      return;
+      return softSkip('blocked', 'precondition not met â€” `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(programStatus).toBe(200);
 
@@ -201,7 +202,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
     });
     if (createRes.status === 404 || createRes.status === 422) {
       ctx.skip(); // fixture not advertised
-      return;
+      return softSkip('blocked', 'precondition not met â€” `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;
@@ -264,7 +265,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
   });
 
   it('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)', async (ctx) => {
-    if (!(await gateOnPhase4(ctx))) return;
+    if (!(await gateOnPhase4(ctx))) return softSkip('inapplicable', 'capability or profile not advertised by this host â€” gate `!(await gateOnPhase4(ctx))` returned early');
 
     const NODE_ID = 'structured-call';
     // Symmetric: original=refusal, replay=valid.
@@ -273,7 +274,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
     ]);
     if (programStatus === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met â€” `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(programStatus).toBe(200);
 
@@ -282,7 +283,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
     });
     if (createRes.status === 404 || createRes.status === 422) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met â€” `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;

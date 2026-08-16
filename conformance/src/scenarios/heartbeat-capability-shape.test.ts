@@ -11,13 +11,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readHeartbeatCap } from '../lib/heartbeat.js';
 
 describe('heartbeat-capability-shape: advertisement (RFC 0060 §A)', () => {
   it('capabilities.heartbeat is absent or a well-formed object', async () => {
     const cap = await readHeartbeatCap();
-    if (cap === null) return; // not advertised — valid
+    if (cap === null) return softSkip('inapplicable', 'not advertised — valid');
     expect(
       typeof cap.supported,
       driver.describe('capabilities.schema.json §heartbeat', 'heartbeat.supported MUST be a boolean when the block is present'),

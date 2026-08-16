@@ -18,6 +18,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 
 interface CommitmentCaps {
@@ -44,14 +45,14 @@ async function commitmentsSupported(): Promise<boolean> {
 
 describe('commitment-fired: fire contract (RFC 0068 §C, capability-gated)', () => {
   it('a fired commitment emits a content-free event with memory provenance, exactly once', async () => {
-    if (!(await commitmentsSupported())) return; // capability absent — gated skip
+    if (!(await commitmentsSupported())) return softSkip('inapplicable', 'capability absent — gated skip');
 
     const res = await driver.post('/v1/host/sample/commitment/fire', {
       memoryRef: 'mem://conformance/commitments',
       condition: 'predicate',
       includeIntentionCanary: true,
     });
-    if (res.status === 404 || res.status === 501) return; // seam not wired — soft-skip
+    if (res.status === 404 || res.status === 501) return softSkip('blocked', 'seam not wired — soft-skip');
 
     expect(res.status, driver.describe('RFC 0068 §C', 'an advertised commitment seam MUST succeed')).toBe(200);
     const r = res.json as FireResult;

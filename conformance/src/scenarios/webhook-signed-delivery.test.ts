@@ -24,6 +24,7 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { createHmac } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
@@ -78,12 +79,12 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     if (!(await isWebhookSupported())) {
       // eslint-disable-next-line no-console
       console.warn('[webhook-signed-delivery] host does not advertise webhook support; skipping');
-      return;
+      return softSkip('inapplicable', '[webhook-signed-delivery] host does not advertise webhook support; skipping');
     }
     if (!isFixtureAdvertised('conformance-noop')) {
       // eslint-disable-next-line no-console
       console.warn('[webhook-signed-delivery] conformance-noop not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[webhook-signed-delivery] conformance-noop not advertised; skipping');
     }
 
     const receiver = await startReceiver();
@@ -114,7 +115,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
           '[webhook-signed-delivery] host SSRF guard rejected the loopback receiver; ' +
             'set OPENWOP_WEBHOOK_ALLOW_PRIVATE=true on the host (or equivalent) to run',
         );
-        return;
+        return softSkip('blocked', 'precondition not met — `body.error === \'webhook_url_rejected\'` returned early (seam, prior step, or fixture unavailable)');
       }
     }
 

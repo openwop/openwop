@@ -19,6 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -69,7 +70,7 @@ describe('metric-emission: canonical openwop.* metrics arrive at the collector',
       console.warn(
         '[metric-emission] collector not started; set OPENWOP_OTEL_COLLECTOR=true to run',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!getCollector()` returned early (seam, prior step, or fixture unavailable)');
     }
     const metricsCaps = await metricsAdvertised();
     if (!metricsCaps?.supported) {
@@ -77,12 +78,12 @@ describe('metric-emission: canonical openwop.* metrics arrive at the collector',
       console.warn(
         '[metric-emission] host does not advertise observability.metrics.supported; skipping',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!metricsCaps?.supported` returned early');
     }
     if (!isFixtureAdvertised(FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(`[metric-emission] ${FIXTURE} not advertised; skipping`);
-      return;
+      return softSkip('inapplicable', '[metric-emission] … not advertised; skipping');
     }
 
     const collector = getCollector()!;

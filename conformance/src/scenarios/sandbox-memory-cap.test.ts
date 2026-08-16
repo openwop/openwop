@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -39,8 +40,8 @@ async function readSandbox(): Promise<{ supported: boolean; memoryLimitBytes?: n
 describe.skipIf(HTTP_SKIP)('sandbox-memory-cap: capability shape + behavioral (RFC 0035 §B)', () => {
   it('memoryLimitBytes MUST be integer ≥ 1 MiB when present (per schema)', async () => {
     const sb = await readSandbox();
-    if (!sb) return; // soft-skip
-    if (sb.memoryLimitBytes === undefined) return; // optional field
+    if (!sb) return softSkip('blocked', 'soft-skip (!sb)');
+    if (sb.memoryLimitBytes === undefined) return softSkip('inapplicable', 'optional field (sb.memoryLimitBytes === undefined)');
 
     expect(
       Number.isInteger(sb.memoryLimitBytes) && sb.memoryLimitBytes >= 1048576,

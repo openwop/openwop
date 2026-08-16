@@ -16,6 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -39,7 +40,7 @@ async function readProfiles(): Promise<string[] | null> {
 describe('auth-scim-profile: advertisement shape (RFC 0050)', () => {
   it('claims openwop-auth-scim as a well-formed profile id when advertised', async () => {
     const profiles = await readProfiles();
-    if (profiles === null || !profiles.includes(SCIM_PROFILE)) return; // profile not claimed
+    if (profiles === null || !profiles.includes(SCIM_PROFILE)) return softSkip('inapplicable', 'profile not claimed');
     expect(
       profiles.includes(SCIM_PROFILE),
       driver.describe('RFC 0050 §B', 'openwop-auth-scim MUST appear verbatim in capabilities.auth.profiles when claimed'),
@@ -52,12 +53,12 @@ describe('auth-scim-profile: provisioning roundtrip (RFC 0050 §B — opt-in)', 
 
   it('provisions a SCIM user → principal (SCIM endpoint required)', async () => {
     const profiles = await readProfiles();
-    if (profiles === null || !profiles.includes(SCIM_PROFILE)) return; // capability-gated
-    if (scimUrl === undefined || scimUrl.length === 0) return; // opt-in: SCIM endpoint not provided
+    if (profiles === null || !profiles.includes(SCIM_PROFILE)) return softSkip('inapplicable', 'capability-gated');
+    if (scimUrl === undefined || scimUrl.length === 0) return softSkip('inapplicable', 'opt-in: SCIM endpoint not provided');
     // A SCIM POST /Users against the operator-supplied endpoint MUST upsert a
     // principal the host can subsequently resolve.
     const res = await driver.post('/v1/host/sample/auth/scim/provision', { scimUrl, op: 'create-user' });
-    if (res.status === 404) return; // seam unwired
+    if (res.status === 404) return softSkip('blocked', 'seam unwired');
     expect(
       res.status,
       driver.describe('RFC 0050 §B', 'a SCIM user provisioning MUST succeed (2xx) and upsert an RFC 0048 principal'),

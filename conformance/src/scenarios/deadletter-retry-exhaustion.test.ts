@@ -22,6 +22,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -36,9 +37,9 @@ async function deadLetterSupported(): Promise<boolean> {
 
 describe('deadletter-retry-exhaustion: retry exhaustion → dead-lettered + fork-eligible (RFC 0053 §C)', () => {
   it('a retry-exhausted run emits run.dead_lettered with attempts', async () => {
-    if (!(await deadLetterSupported())) return; // capability-gated
+    if (!(await deadLetterSupported())) return softSkip('inapplicable', 'capability-gated');
     const res = await driver.post('/v1/host/sample/deadletter/exhaust', { scenario: 'exhaust-retries' });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'seam unwired — soft-skip');
     const body = res.json as { event?: { type?: string; payload?: { attempts?: number; runId?: string } } } | undefined;
     expect(
       body?.event?.type,
@@ -51,9 +52,9 @@ describe('deadletter-retry-exhaustion: retry exhaustion → dead-lettered + fork
   });
 
   it('the dead-lettered run is fork-eligible (RFC 0011)', async () => {
-    if (!(await deadLetterSupported())) return; // capability-gated
+    if (!(await deadLetterSupported())) return softSkip('inapplicable', 'capability-gated');
     const res = await driver.post('/v1/host/sample/deadletter/exhaust', { scenario: 'fork-after-dead-letter' });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'seam unwired — soft-skip');
     const body = res.json as { forkEligible?: boolean } | undefined;
     expect(
       body?.forkEligible,

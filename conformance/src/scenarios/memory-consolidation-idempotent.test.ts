@@ -22,6 +22,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 
 interface ConsolidationCaps {
@@ -41,13 +42,13 @@ async function consolidationSupported(): Promise<boolean> {
 
 describe('memory-consolidation-idempotent: pass contract (RFC 0068 §D, capability-gated)', () => {
   it('a consolidation pass reduces or holds entry count and is idempotent on a stable corpus', async () => {
-    if (!(await consolidationSupported())) return; // capability absent — gated skip
+    if (!(await consolidationSupported())) return softSkip('inapplicable', 'capability absent — gated skip');
 
     const first = await driver.post('/v1/host/sample/memory/consolidate', {
       memoryRef: 'mem://conformance/consolidation',
       includeSecretCanary: true,
     });
-    if (first.status === 404 || first.status === 501) return; // seam not wired — soft-skip
+    if (first.status === 404 || first.status === 501) return softSkip('blocked', 'seam not wired — soft-skip');
 
     expect(first.status, driver.describe('RFC 0068 §D', 'an advertised consolidation seam MUST succeed')).toBe(200);
     const r1 = first.json as ConsolidateResult;
@@ -59,7 +60,7 @@ describe('memory-consolidation-idempotent: pass contract (RFC 0068 §D, capabili
     const second = await driver.post('/v1/host/sample/memory/consolidate', {
       memoryRef: 'mem://conformance/consolidation',
     });
-    if (second.status === 404 || second.status === 501) return;
+    if (second.status === 404 || second.status === 501) return softSkip('blocked', 'precondition not met — `second.status === 404 || second.status === 501` returned early (seam, prior step, or fixture unavailable)');
     const r2 = second.json as ConsolidateResult;
     expect(
       r2.event?.inputCount,

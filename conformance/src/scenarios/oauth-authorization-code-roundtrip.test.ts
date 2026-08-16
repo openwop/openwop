@@ -35,6 +35,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -74,8 +75,8 @@ async function readOAuth(): Promise<DiscoveryOAuth | null> {
 describe('oauth-authorization-code-roundtrip: the grant dance (RFC 0047 §C)', () => {
   it('acquires a token via authorization_code and returns a reference, never the token', async () => {
     const oauth = await readOAuth();
-    if (!oauth?.supported) return; // capability-gated
-    if (!Array.isArray(oauth.grants) || !oauth.grants.includes('authorization_code')) return; // grant-gated
+    if (!oauth?.supported) return softSkip('inapplicable', 'capability-gated');
+    if (!Array.isArray(oauth.grants) || !oauth.grants.includes('authorization_code')) return softSkip('inapplicable', 'grant-gated (!Array.isArray(oauth.grants) || !oauth.grants.includes(\'authorization_code\'))');
 
     // Seam contract: the host performs the full authorization-code roundtrip
     // against the synthetic provider's authUrl/tokenUrl, persists the acquired
@@ -95,7 +96,7 @@ describe('oauth-authorization-code-roundtrip: the grant dance (RFC 0047 §C)', (
       refreshTokenCanary: SYNTHETIC.refreshTokenCanary,
     });
     // A host that hasn't wired the seam soft-skips (Tier-2, host-pending).
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     expect(
       res.status,

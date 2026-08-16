@@ -11,13 +11,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readToolHooksCap } from '../lib/toolHooks.js';
 
 describe('tool-hooks-shape: advertisement (RFC 0064 §A)', () => {
   it('capabilities.toolHooks is absent or a well-formed object', async () => {
     const cap = await readToolHooksCap();
-    if (cap === null) return; // not advertised — valid
+    if (cap === null) return softSkip('inapplicable', 'not advertised — valid');
     expect(
       typeof cap.supported,
       driver.describe('capabilities.schema.json §toolHooks', 'toolHooks.supported MUST be a boolean when the block is present'),

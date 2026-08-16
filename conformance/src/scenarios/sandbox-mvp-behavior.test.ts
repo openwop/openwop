@@ -36,6 +36,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -82,7 +83,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('host-fs-escape — fs access from sandboxed code fails closed', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.fs-escape-read');
     expect(probe.status).toBe(200);
@@ -105,7 +106,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('host-env-leak — process.env access from sandboxed code fails closed', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.env-leak');
     expect(probe.status).toBe(200);
@@ -122,7 +123,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('network-escape — http/net access from sandboxed code fails closed', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.network-escape');
     expect(probe.status).toBe(200);
@@ -139,7 +140,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('host-process-escape — child_process access from sandboxed code fails closed', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.process-escape');
     expect(probe.status).toBe(200);
@@ -153,7 +154,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('sandbox-timeout — runaway loop terminated by wallClockLimitMs', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const start = Date.now();
     const probe = await invoke('misbehave.timeout');
@@ -179,7 +180,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('cross-pack-mutation — fresh vm context per invocation, no state leaks', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const r1 = await invoke('misbehave.cross-pack-mutate');
     const r2 = await invoke('misbehave.cross-pack-mutate');
@@ -205,7 +206,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('capability-gate-respected — host call NOT in allowedHostCalls fails with sandbox_capability_denied', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.capability-gate-violation', {}, []);
     expect(probe.status).toBe(200);
@@ -228,7 +229,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('memory-exceeded — runaway allocation fails with sandbox_memory_exceeded', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.memory-bomb');
     expect(probe.status).toBe(200);
@@ -255,7 +256,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('well-behaved.host-fetch — allowedHostCalls=[fetch] permits the host call', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('well-behaved.host-fetch', {}, ['fetch']);
     expect(probe.status).toBe(200);
@@ -271,7 +272,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
   it('well-behaved.echo — sandboxed code returns args round-trip when no escape attempt', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('well-behaved.echo', { input: 'hello-sandbox' });
     expect(probe.status).toBe(200);

@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -55,9 +56,9 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 describe.skipIf(HTTP_SKIP)('cross-engine-append-ordering: advertisement shape (RFC 0036 §B)', () => {
   it('capabilities.eventLog.crossEngineOrdering (when present) conforms to RFC 0036 §B', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const ceo = capabilityFamily<{ crossEngineOrdering?: { supported?: unknown; orderingModel?: unknown } }>(d, 'eventLog')?.crossEngineOrdering;
-    if (ceo === undefined) return; // host doesn't advertise — soft-skip
+    if (ceo === undefined) return softSkip('inapplicable', 'host doesn\'t advertise — soft-skip');
 
     expect(
       typeof ceo.supported,

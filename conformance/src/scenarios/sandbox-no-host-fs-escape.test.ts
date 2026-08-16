@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -55,7 +56,7 @@ async function readSandboxCaps(): Promise<SandboxCaps | null> {
 describe.skipIf(HTTP_SKIP)('sandbox-no-host-fs-escape: capability shape (RFC 0035 §A)', () => {
   it('capabilities.sandbox (when present) conforms to RFC 0035 §A', async () => {
     const sb = await readSandboxCaps();
-    if (sb === null) return; // host omits the block — soft-skip cleanly
+    if (sb === null) return softSkip('inapplicable', 'host omits the block — soft-skip cleanly (sb === null)');
 
     expect(typeof sb.supported, 'capabilities.sandbox.supported MUST be boolean when present').toBe('boolean');
 

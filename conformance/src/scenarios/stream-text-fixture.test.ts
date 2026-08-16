@@ -32,6 +32,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { subscribe } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
@@ -93,14 +94,14 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
         '[stream-text-fixture] host does not advertise the stream-text mock provider ' +
           '(Capabilities.testing.mockProviders); skipping',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isStreamTextMockAdvertised())` returned early');
     }
 
     const create = await createMockRun('stream-text');
     if (create.status === 403 && errCode(create.json) === 'mock_provider_forbidden') {
       // eslint-disable-next-line no-console
       console.warn('[stream-text-fixture] API key is production-scoped (403 mock_provider_forbidden); skipping');
-      return;
+      return softSkip('inapplicable', '[stream-text-fixture] API key is production-scoped (403 mock_provider_forbidden); skipping');
     }
     expect(
       create.status,
@@ -192,13 +193,13 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
     if (!(await isStreamTextMockAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[stream-text-fixture] stream-text mock not advertised; skipping negative leg');
-      return;
+      return softSkip('inapplicable', '[stream-text-fixture] stream-text mock not advertised; skipping negative leg');
     }
     const create = await createMockRun('does-not-exist');
     if (create.status === 403 && errCode(create.json) === 'mock_provider_forbidden') {
       // eslint-disable-next-line no-console
       console.warn('[stream-text-fixture] API key is production-scoped; skipping negative leg');
-      return;
+      return softSkip('inapplicable', '[stream-text-fixture] API key is production-scoped; skipping negative leg');
     }
     expect(
       create.status,

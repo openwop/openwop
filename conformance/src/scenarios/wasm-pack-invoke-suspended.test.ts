@@ -17,6 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -33,8 +34,8 @@ async function isWasmSupported(): Promise<boolean> {
 
 describe('wasm-pack-invoke-suspended: suspend → resume round-trip', () => {
   it('host either suspends the run or explicitly reports wasm_suspend_not_implemented', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
-    if (!(await isWasmSupported())) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
+    if (!(await isWasmSupported())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isWasmSupported())` returned early');
 
     // The reference rust-hello pack does NOT itself suspend (it always
     // returns `completed`), so against that pack this scenario can only

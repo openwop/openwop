@@ -31,6 +31,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -63,7 +64,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     ]);
     if (probe.status === 404) {
       ctx.skip(); // host doesn't expose the simulator seam
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       probe.status,
@@ -89,7 +90,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     ]);
     if (probe.status === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(probe.status).toBe(200);
     expect(
@@ -115,7 +116,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     ]);
     if (probe.status === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(probe.status).toBe(200);
     const redirects = probe.body.cacheRedirects ?? [];
@@ -144,7 +145,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     ]);
     if (probe.status === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(probe.status).toBe(200);
     expect(
@@ -165,7 +166,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     const p1 = await simulatePartition(claims);
     if (p1.status === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `p1.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(p1.status).toBe(200);
     const p2 = await simulatePartition([claims[2]!, claims[0]!, claims[1]!]);
@@ -190,7 +191,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     ]);
     if (probe.status === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       probe.status,

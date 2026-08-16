@@ -10,20 +10,21 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
 
 describe('tool-hooks-rate-limit (RFC 0064 §D)', () => {
   it('an exhausted (principal, tool) bucket yields status:"rate_limited"', async () => {
     const cap = await readToolHooksCap();
-    if (cap?.perToolRateLimit !== true) return;
+    if (cap?.perToolRateLimit !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.perToolRateLimit !== true` returned early');
     const res = await invokeToolHook({
       principal: 'core.system',
       toolName: 'web.search',
       args: { q: 'x' },
       simulateRateLimitExhausted: true,
     });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       (res.toolReturned ?? {}).status,
       driver.describe('RFC 0064 §D', 'an exhausted token bucket MUST yield status:"rate_limited" without invoking the tool'),

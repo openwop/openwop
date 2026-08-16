@@ -20,6 +20,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -49,7 +50,7 @@ async function readCredentials(): Promise<DiscoveryCredentials | null> {
 describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () => {
   it('capabilities.credentials is either absent or well-formed', async () => {
     const cred = await readCredentials();
-    if (cred === null) return; // host doesn't advertise host.credentials at all
+    if (cred === null) return softSkip('inapplicable', 'host doesn\'t advertise host.credentials at all');
     expect(
       typeof cred.supported,
       driver.describe(
@@ -61,7 +62,7 @@ describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () 
 
   it('scopes is a subset of {user, workspace, tenant} when supported', async () => {
     const cred = await readCredentials();
-    if (!cred?.supported || cred.scopes === undefined) return;
+    if (!cred?.supported || cred.scopes === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cred?.supported || cred.scopes === undefined` returned early');
     expect(
       Array.isArray(cred.scopes),
       driver.describe('RFC 0046 §A', 'capabilities.credentials.scopes MUST be an array'),
@@ -79,7 +80,7 @@ describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () 
 
   it('rotation is one of {none, two-key-overlap} when present', async () => {
     const cred = await readCredentials();
-    if (!cred?.supported || cred.rotation === undefined) return;
+    if (!cred?.supported || cred.rotation === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cred?.supported || cred.rotation === undefined` returned early');
     expect(
       VALID_ROTATION.has(cred.rotation),
       driver.describe(

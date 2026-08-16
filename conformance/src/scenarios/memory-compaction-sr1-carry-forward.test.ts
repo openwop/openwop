@@ -27,6 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -54,12 +55,12 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
     if (!(await isCompactionAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-sr1] capabilities.memory.compaction.supported not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[rfc0012-sr1] capabilities.memory.compaction.supported not advertised; skipping');
     }
     if (!(await isTestSeamReachable())) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-sr1] test seam /v1/test/memory/compact unreachable; skipping (set host\'s OPENWOP_TEST_TRIGGER_COMPACTION=true)');
-      return;
+      return softSkip('blocked', '[rfc0012-sr1] test seam /v1/test/memory/compact unreachable; skipping (set host\'s OPENWOP_TEST_TRIGGER_COMPACTION=true)');
     }
 
     // 1. Seed source entries containing:
@@ -99,7 +100,7 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
     if (typeof event.outputContent !== 'string') {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-sr1] test seam did not return outputContent; the wire-level memory.compacted shape does not surface content so without a host-side seam we cannot verify §D end-to-end. Skipping.');
-      return;
+      return softSkip('blocked', '[rfc0012-sr1] test seam did not return outputContent; the wire-level memory.compacted shape does not surface content so without a host-side seam we cannot verify §D end-to-end. Skipping.');
     }
 
     // The load-bearing assertion: the PERSISTED entry content (what

@@ -61,6 +61,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -186,7 +187,7 @@ describe('mcp-tool-roundtrip: server wire shape', () => {
         '[mcp-tool-roundtrip] no MCP endpoint configured; set OPENWOP_MCP_FAKE_SERVER=true ' +
           'or OPENWOP_MCP_REAL_SERVER_URL=<base-url>',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!probe` returned early (seam, prior step, or fixture unavailable)');
     }
     if (!probe.isReal) getMcpFakeServer()!.reset();
 
@@ -282,14 +283,14 @@ describe('mcp-tool-roundtrip: host-mediated tool invocation', () => {
     if (!server) {
       // eslint-disable-next-line no-console
       console.warn('[mcp-tool-roundtrip] fake server not started; skipping host-mediated test');
-      return;
+      return softSkip('blocked', '[mcp-tool-roundtrip] fake server not started; skipping host-mediated test');
     }
     if (!isFixtureAdvertised(ROUNDTRIP_FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(
         `[mcp-tool-roundtrip] fixture ${ROUNDTRIP_FIXTURE} not advertised; skipping`,
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(ROUNDTRIP_FIXTURE)` returned early');
     }
 
     server.reset();

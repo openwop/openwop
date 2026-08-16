@@ -10,14 +10,15 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readExecutionModelCap, isVersion5, invokeAgentLoop } from '../lib/agentLoop.js';
 
 describe('agent-loop-iteration-monotonic (RFC 0061 §B)', () => {
   it('iteration increments by exactly 1 per orchestrator turn, 1-based', async () => {
-    if (!isVersion5(await readExecutionModelCap())) return;
+    if (!isVersion5(await readExecutionModelCap())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isVersion5(await readExecutionModelCap())` returned early');
     const res = await invokeAgentLoop({ turns: 3 });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     const decisions = res.decisions ?? [];
     expect(
       decisions.length >= 1,

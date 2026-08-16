@@ -20,6 +20,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 
 interface DiscoveryDoc {
@@ -51,8 +52,8 @@ function freshPackName(): string {
 describe('pack-registry-isolation: test catalog MUST NOT bleed into production (RFC 0025 §C.1)', () => {
   it('a pack PUT to /v1/packs-test/{name} MUST NOT appear in GET /v1/packs/{name}', async () => {
     const adv = await getTestModeAdvertisement();
-    if (!adv || !adv.supported) return; // host doesn't advertise the seam
-    if (!adv.isolated) return; // host explicitly disclaims the invariant — no contract to assert
+    if (!adv || !adv.supported) return softSkip('inapplicable', 'host doesn\'t advertise the seam');
+    if (!adv.isolated) return softSkip('blocked', 'host explicitly disclaims the invariant — no contract to assert (!adv.isolated)');
 
     const name = freshPackName();
     const version = '1.0.0';
@@ -71,7 +72,7 @@ describe('pack-registry-isolation: test catalog MUST NOT bleed into production (
     // If the seam returns 404, the test-mode endpoint isn't actually
     // wired up despite the advertisement — pack-registry-publish.test.ts
     // catches that drift in 24 other scenarios; soft-skip here.
-    if (putRes.status === 404) return;
+    if (putRes.status === 404) return softSkip('blocked', 'precondition not met — `putRes.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     // Probe the production namespace. The invariant: a pack written
     // via /v1/packs-test/* MUST NOT be retrievable via /v1/packs/*.

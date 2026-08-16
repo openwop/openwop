@@ -41,6 +41,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -162,10 +163,10 @@ describe.skipIf(HTTP_SKIP)(
   'replay-observable-sequence-determinism: prefix byte-equivalence (RFC 0041 §C)',
   () => {
     it('original and replay event-log prefixes MUST be byte-equivalent (modulo per-event clock + ULID entropy)', async (ctx) => {
-      if (!(await gateOnPhase4(ctx))) return;
+      if (!(await gateOnPhase4(ctx))) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gateOnPhase4(ctx))` returned early');
 
       const sourceRunId = await startFixtureRun(ctx);
-      if (sourceRunId === null) return;
+      if (sourceRunId === null) return softSkip('blocked', 'precondition not met — `sourceRunId === null` returned early (seam, prior step, or fixture unavailable)');
       const sourceTerminal = await pollUntilTerminal(sourceRunId);
       expect(sourceTerminal.status).toBe('completed');
       const sourceEvents = await readEvents(sourceRunId);
@@ -196,10 +197,10 @@ describe.skipIf(HTTP_SKIP)(
   'replay-observable-sequence-determinism: observable-result caching (RFC 0041 §C)',
   () => {
     it('replay of a nondeterministic tool node reproduces the ORIGINAL observable result, NOT a fresh call', async (ctx) => {
-      if (!(await gateOnPhase4(ctx))) return;
+      if (!(await gateOnPhase4(ctx))) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gateOnPhase4(ctx))` returned early');
 
       const sourceRunId = await startFixtureRun(ctx);
-      if (sourceRunId === null) return;
+      if (sourceRunId === null) return softSkip('blocked', 'precondition not met — `sourceRunId === null` returned early (seam, prior step, or fixture unavailable)');
       expect((await pollUntilTerminal(sourceRunId)).status).toBe('completed');
       const sourceEvents = await readEvents(sourceRunId);
 

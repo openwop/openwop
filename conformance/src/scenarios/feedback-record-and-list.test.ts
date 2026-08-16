@@ -7,17 +7,18 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readFeedbackCap, seedRun } from '../lib/feedback.js';
 
 describe('feedback-record-and-list (RFC 0056 §C)', () => {
   it('POST an annotation then GET returns it', async () => {
     const cap = await readFeedbackCap();
-    if (cap?.supported !== true) return;
+    if (cap?.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.supported !== true` returned early');
     const runId = await seedRun('feedback-rl');
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     const post = await driver.post(`/v1/runs/${runId}/annotations`, { signal: { kind: 'rating', rating: 5 } });
-    if (post.status === 501 || post.status === 404) return;
+    if (post.status === 501 || post.status === 404) return softSkip('blocked', 'precondition not met — `post.status === 501 || post.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       post.status,
       driver.describe('RFC 0056 §C', 'POST annotation returns 201 with the persisted annotation'),

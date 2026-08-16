@@ -34,6 +34,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -69,7 +70,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 Â
     const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc?.ancestryEndpointSupported !== true) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host â€” gate `chc?.ancestryEndpointSupported !== true` returned early');
     }
 
     // Create a fresh top-level run via the host's conformance-dispatch-loop
@@ -78,7 +79,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 Â
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-dispatch-loop' });
     if (create.status !== 201) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met â€” `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
     }
     const runId = (create.json as { runId: string }).runId;
 
@@ -116,11 +117,11 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 Â
     const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc?.supported !== true) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host â€” gate `chc?.supported !== true` returned early');
     }
     if (chc.ancestryEndpointSupported === true) {
       ctx.skip(); // covered by the test above
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host â€” gate `chc.ancestryEndpointSupported === true` returned early');
     }
 
     // Use any runId â€” even a synthetic non-existent one. The endpoint should

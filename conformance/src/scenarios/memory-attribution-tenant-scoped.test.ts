@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
@@ -20,16 +21,16 @@ import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvent
 describe('memory-attribution-tenant-scoped (RFC 0057 §C)', () => {
   it("a run's memory.written events appear only on that run's stream", async () => {
     const cap = await readMemoryAttributionCap();
-    if (!emitsWriteEvents(cap)) return;
+    if (!emitsWriteEvents(cap)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!emitsWriteEvents(cap)` returned early');
     const runId = await seedRun('mem-attr-cti');
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
       return;
     }
     const events = await memoryWrittenEvents(runId);
-    if (events.length === 0) return;
+    if (events.length === 0) return softSkip('blocked', 'precondition not met — `events.length === 0` returned early (seam, prior step, or fixture unavailable)');
     // Every memory.written we read came from THIS run's /events stream; if the
     // host echoes a runId in the event it MUST be this run's (no cross-run leak).
     for (const e of events) {

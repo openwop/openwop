@@ -23,6 +23,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -36,7 +37,7 @@ describe('wasm-pack-memory-cap: host advertises maxMemoryBytes', () => {
     const wasm =
       capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
 
-    if (!wasm?.supported) return;
+    if (!wasm?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm?.supported` returned early');
 
     // The cap is REQUIRED to enforce §K. Hosts MUST surface the configured
     // ceiling so clients can size their packs accordingly.
@@ -59,12 +60,12 @@ describe('wasm-pack-memory-cap: positive path via misbehaving pack', () => {
         `[wasm-pack-memory-cap] fixture ${CAP_BREACH_FIXTURE} not advertised; skipping positive path. ` +
           'Build the misbehaving pack at examples/packs/rust-misbehaving-memory/ and ensure the host serves the fixture.',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(CAP_BREACH_FIXTURE)` returned early');
     }
     const disco = await driver.get('/.well-known/openwop');
     const wasm =
       capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
-    if (!wasm?.supported) return;
+    if (!wasm?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm?.supported` returned early');
 
     const create = await driver.post('/v1/runs', {
       workflowId: CAP_BREACH_FIXTURE,

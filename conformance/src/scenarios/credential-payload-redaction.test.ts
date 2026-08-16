@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -50,7 +51,7 @@ async function readCredentials(): Promise<DiscoveryCredentials | null> {
 describe('credential-payload-redaction: advertisement shape (RFC 0046 §A)', () => {
   it('capabilities.credentials.supported is a boolean when advertised', async () => {
     const cred = await readCredentials();
-    if (cred === null) return;
+    if (cred === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cred === null` returned early');
     expect(
       typeof cred.supported,
       driver.describe(
@@ -64,13 +65,13 @@ describe('credential-payload-redaction: advertisement shape (RFC 0046 §A)', () 
 describe('credential-payload-redaction: resolved material MUST NOT cross the wire (RFC 0046 §C.1)', () => {
   it('canary plaintext is absent from every observable run surface', async () => {
     const cred = await readCredentials();
-    if (!cred?.supported) return; // capability-gated
+    if (!cred?.supported) return softSkip('inapplicable', 'capability-gated');
 
     // Seam contract: resolve a seeded credential whose plaintext is CANARY,
     // run an echo node, and return the run's observable surfaces.
     const res = await driver.post('/v1/host/sample/credentials/echo', { canary: CANARY });
     // 404 from a host that hasn't wired the test seam is a soft-skip.
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     expect(
       res.status,

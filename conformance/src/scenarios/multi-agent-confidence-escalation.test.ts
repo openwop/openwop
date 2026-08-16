@@ -47,6 +47,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntil } from '../lib/polling.js';
@@ -84,11 +85,11 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 describe.skipIf(HTTP_SKIP)('multi-agent-confidence-escalation: capability shape (RFC 0039 §A)', () => {
   it('confidenceEscalationFloor (when advertised) MUST be in [0.5, 1.0]', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
-    if (em === undefined) return;
+    if (em === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `em === undefined` returned early');
     const floor = em.confidenceEscalationFloor;
-    if (floor === undefined) return;
+    if (floor === undefined) return softSkip('blocked', 'precondition not met — `floor === undefined` returned early (seam, prior step, or fixture unavailable)');
     expect(
       typeof floor === 'number' && Number.isFinite(floor) && floor >= 0.5 && floor <= 1.0,
       driver.describe(
@@ -105,7 +106,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     const supported = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.supported === true;
     const versionRaw = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;
     const version = typeof versionRaw === 'number' ? versionRaw : 0;
-    if (!supported || version < 2) return; // soft-skip — `version: 1` hosts pass via this absence
+    if (!supported || version < 2) return softSkip('inapplicable', 'soft-skip — `version: 1` hosts pass via this absence (!supported || version < 2)');
 
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);

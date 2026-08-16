@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -39,7 +40,7 @@ describe('wasm-pack-load: discovery surfaces WASM runtime support', () => {
     if (!wasm?.supported) {
       // eslint-disable-next-line no-console
       console.warn('[wasm-pack-load] host does not advertise WASM support; skipping');
-      return;
+      return softSkip('inapplicable', '[wasm-pack-load] host does not advertise WASM support; skipping');
     }
     expect(Array.isArray(wasm.abiVersions), driver.describe(
       'RFCS/0008-wasm-abi.md §H',
@@ -55,11 +56,11 @@ describe('wasm-pack-load: discovery surfaces WASM runtime support', () => {
 describe('wasm-pack-load: loaded pack typeIds are dispatchable', () => {
   it('host accepts a workflow whose node typeId is provided by a loaded WASM pack', async () => {
     const wasm = await getWasmCaps();
-    if (!wasm?.supported) return;
+    if (!wasm?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm?.supported` returned early');
     if (!isFixtureAdvertised(FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(`[wasm-pack-load] fixture ${FIXTURE} not advertised; skipping`);
-      return;
+      return softSkip('inapplicable', '[wasm-pack-load] fixture … not advertised; skipping');
     }
     // Creating a run against the fixture proves the host knows about the
     // WASM-provided typeId. A host that loaded the pack accepts the

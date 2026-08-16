@@ -24,6 +24,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -54,17 +55,17 @@ describe('otel-emission: required run-level + node-level attributes', () => {
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[otel-emission] collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
-      return;
+      return softSkip('blocked', '[otel-emission] collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
     }
     if (!isFixtureAdvertised(FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(`[otel-emission] fixture ${FIXTURE} not advertised; skipping`);
-      return;
+      return softSkip('inapplicable', '[otel-emission] fixture … not advertised; skipping');
     }
     if (!(await isObservabilityAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[otel-emission] host does not advertise capabilities.observability; skipping');
-      return;
+      return softSkip('inapplicable', '[otel-emission] host does not advertise capabilities.observability; skipping');
     }
 
     const collector = getCollector()!;

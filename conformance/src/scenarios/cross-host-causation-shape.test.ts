@@ -26,6 +26,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -62,12 +63,12 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
     const d = await readDiscovery();
     if (d === null) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc === undefined) {
       ctx.skip(); // host doesn't advertise — soft-skip
-      return;
+      return softSkip('blocked', 'precondition not met — `chc === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
     expect(
