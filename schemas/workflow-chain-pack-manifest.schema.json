@@ -490,9 +490,20 @@
               "description": "RFC 0151 §C — an inverse action can itself be harmful (RFC 0147 R9), so it may be gated behind the same approval surface as a forward effect."
             }
           }
+        },
+        "irreversibleEffect": {
+          "type": "boolean",
+          "description": "RFC 0151 §B UQ4 (resolved 2026-08-16), mirrored into chain fragments per RFC 0157 — the fragment author states that this node's committed effect HAS NO INVERSE. Mutually exclusive with `compensation` (host MUST reject both at pack install / chain expansion); expansion copies it onto the expanded `WorkflowNode` unchanged. See `workflow-definition.schema.json` `WorkflowNode.irreversibleEffect`."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "if": {
+        "properties": { "irreversibleEffect": { "const": true } },
+        "required": ["irreversibleEffect"]
+      },
+      "then": {
+        "not": { "required": ["compensation"] }
+      }
     },
     "FragmentEdge": {
       "type": "object",

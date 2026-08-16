@@ -293,9 +293,20 @@
               "description": "RFC 0151 \u00a7C \u2014 an inverse action can itself be harmful (RFC 0147 R9), so it may be gated behind the same approval surface as a forward effect."
             }
           }
+        },
+        "irreversibleEffect": {
+          "type": "boolean",
+          "description": "RFC 0151 \u00a7B (UQ4, resolved 2026-08-16) \u2014 the author states that this node's committed effect HAS NO INVERSE. OPTIONAL; absent or false means nothing (an undeclared compensator is still not implied). Mutually exclusive with `compensation`: a node declaring both is contradictory and a host MUST reject it at registration (`validation_error`). When true and the node's effect committed before an unwind starts, the plan records the node as `irreversible` (never completed) so the \u00a7D rollup caps at `partial` \u2014 a reader can no longer infer a full undo from a `completed` that quietly skipped it."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "if": {
+        "properties": { "irreversibleEffect": { "const": true } },
+        "required": ["irreversibleEffect"]
+      },
+      "then": {
+        "not": { "required": ["compensation"] }
+      }
     },
     "WorkflowEdge": {
       "type": "object",

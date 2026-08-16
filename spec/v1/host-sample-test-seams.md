@@ -898,7 +898,8 @@ not this extension keeps its RFC 0151 §C/§D/§F witness.
 - **`unwind` response gains** `inverseActions: [{ ordinal, effectId, attempts, outcome,
   downstreamKeys }]` — one entry per plan entry, in execution order. `effectId` is the
   inverse-action identity (§C tuple, opaque); `attempts` the attempts made; `outcome` one of
-  `completed | failed | skipped | terminated | held`; `downstreamKeys` the idempotency key the
+  `completed | failed | skipped | terminated | held | irreversible` (`irreversible` = a committed
+  node declaring `irreversibleEffect: true`, `compensation.md` §B — never runs, never completes); `downstreamKeys` the idempotency key the
   **fake downstream** received on each attempt (`length === attempts`). Non-vacuity: with
   `failFirstInverseAttempts: 2` the witness expects `attempts: 3`, a single distinct value across
   `downstreamKeys`, and exactly one plan entry per ordinal — one obligation, three attempts.

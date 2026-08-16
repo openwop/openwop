@@ -62,6 +62,19 @@ workflow node (`workflow-definition.schema.json`):
   surface as a forward effect (§E).
 - A host MUST reject a compensation cycle.
 
+**Irreversible effects (`irreversibleEffect: true`, RFC 0151 UQ4 — decided 2026-08-16).** A
+node MAY state that its committed effect **has no inverse** with the OPTIONAL boolean
+`irreversibleEffect` on the node (and on a chain fragment node, RFC 0157). It is mutually
+exclusive with `compensation`: a node declaring both is a contradiction and a host MUST reject
+the workflow at registration (`validation_error`); chain expansion copies the flag onto the
+expanded node unchanged. Absent or `false` says nothing — an undeclared compensator is still not
+implied. What the declaration changes is the plan (§C) and the rollup (§D): a committed
+irreversible effect enters the plan as an entry that can never complete, so the run's
+`compensationStatus` caps at `partial` and a reader can no longer take a `completed` unwind to
+mean "everything this run did was undone". This is deliberately a statement about the effect,
+not a compensator: it adds no event, no reason code, and no host behaviour beyond the plan entry
+and the fold — the point is that silence and "no inverse exists" stop looking the same.
+
 ### Workflow policy: `settings.compensation`
 
 The node declaration says **what** the inverse action is. The workflow-level policy —
@@ -133,7 +146,10 @@ first crash mid-unwind, and RFC 0148 §A treats "looks fine" as `blocked`, not a
 carries a `compensation` declaration. A trigger with nothing to unwind MUST NOT emit
 `compensation.requested`; the run ends with `compensationStatus: none`. A node whose
 forward effect never committed (failed before its effect, or has no `compensation`
-declaration) is not in the plan.
+declaration) is not in the plan — with one exception: a committed node declaring
+`irreversibleEffect: true` (§B) enters the plan when a plan is created at all, as an
+entry with the recorded outcome `irreversible`. It runs nothing and emits nothing; it
+exists so the plan, and therefore the rollup, tells the truth about what was not undone.
 
 **Plan.** Before executing its first inverse action the host MUST persist a
 **compensation plan**: the ordered set of inverse actions with, for each, the forward
@@ -261,8 +277,8 @@ the snapshot asserts exactly this table.
 | `none` | No `compensation.requested` has been recorded for the run. |
 | `pending` | `compensation.requested` recorded and `compensation.started` has not. |
 | `running` | `compensation.started` recorded and the plan is still active. A §E approval pause (`compensation.paused` while an RFC 0051 approval interrupt is open) does **not** change it — the run's own `status: waiting-approval` and `interrupt` already carry the wait, which is why the two fields are separate. |
-| `completed` | Every inverse action in the persisted plan completed. |
-| `partial` | The plan is no longer active, at least one inverse action completed, and at least one did not (failed, skipped with recorded justification, or terminated). Reported, never rounded: collapsing it to `failed` erases the refund that did go through; to `completed`, claims an unwind that half-happened. |
+| `completed` | Every inverse action in the persisted plan completed. A plan containing an `irreversible` entry (§B/§C) can never reach this value. |
+| `partial` | The plan is no longer active, at least one inverse action completed, and at least one did not (failed, skipped with recorded justification, terminated, or `irreversible`). Reported, never rounded: collapsing it to `failed` erases the refund that did go through; to `completed`, claims an unwind that half-happened. |
 | `failed` | The plan is no longer active and no inverse action completed. |
 | `manual` | `compensation.manual_intervention_required` recorded and not yet resolved by an authorized operator. Takes precedence over `partial` / `failed` while unresolved; on resolution the value becomes whichever of those the recorded outcomes yield. |
 
@@ -397,9 +413,9 @@ no host has run it yet.
 | G3 | ~~`schemas/compensation-policy.schema.json` — the policy that decides which failures qualify for automatic compensation~~ | **Closed 2026-08-16.** Landed as `settings.compensation` on `WorkflowDefinition` (§B "Workflow policy"): closed `triggers`, ordering model, retry/timeout defaults, `exhaustedDisposition`, escalate-only `approvalScope`, `onParentCancel`. Refusal rule for non-advertising hosts (`capability_required`) stated. |
 | G4 | `compensationStatus` on a forked run (`POST /v1/runs/{runId}:fork`) of a partially compensated source | **Open.** RFC 0151 §F says the branch preserves source facts without claiming it changed the source system; whether the child reports the source's rollup or starts at `none` is unresolved and is deliberately not decided by this document. |
 | G5 | Compensation evidence retention minimum | **Open** (RFC 0151 UQ5). |
-| G6 | The closed `reason` vocabulary on `compensation.paused` has no code for an approval hold or a parent-cancel hold; §E/§C omit `reason` for those | **Open.** Adding `approval-pending` / `parent-cancelled` to the enum is additive for producers but a strict consumer validating the closed enum would reject them; decide with the G7 endpoint family so the event and the action vocabulary move together. |
-| G7 | Canonical operator-recovery endpoints (see G2) | **Open.** |
-| G8 | Irreversible-effect declaration (RFC 0151 UQ4) — how an author states that a node's effect **has no inverse**, so a reader cannot infer a compensator from silence | **Open.** Candidate: a node-level `compensation: { "irreversible": true }` variant (mutually exclusive with `nodeTypeId`) that the plan records as *terminated, reason: irreversible* rather than skipping silently. Relaxing `required: [nodeTypeId]` inside the optional `compensation` object is a schema-shape decision under COMPATIBILITY §2.2 and is deliberately not made here. |
+| G6 | The closed `reason` vocabulary on `compensation.paused` has no code for an approval hold or a parent-cancel hold; §E/§C omit `reason` for those | **Open — held.** Adding `approval-pending` / `parent-cancelled` to the enum is additive for producers but a strict consumer validating the closed enum would reject them; decide with the G7 endpoint family so the event and the action vocabulary move together. Both are new optional wire surface and sit under the RFC 0147 §A.1 freeze until R3 / R9 / R14 close. |
+| G7 | Canonical operator-recovery endpoints (see G2) | **Open — held.** A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is new optional wire surface; RFC 0147 §A.1 freezes it until Workstreams 1–3 are Accepted and R3 / R9 / R14 are closed. Until then the §E actions are host-mediated and witnessed only through the §21 `operator` seam (`compensation-recovery.test.ts`). |
+| G8 | ~~Irreversible-effect declaration (RFC 0151 UQ4)~~ | **Closed 2026-08-16 (§B "Irreversible effects").** A sibling boolean `irreversibleEffect` on the node — NOT a variant inside `compensation`, so `required: [nodeTypeId]` is untouched and COMPATIBILITY §2.2 is not engaged; mutual exclusion enforced in the schema (`if irreversibleEffect === true then not required compensation`) and mirrored into RFC 0157 chain fragments. Plan entry `irreversible`, rollup caps at `partial`; no event, no reason code (G6 unchanged). |
 
 ## References
 
