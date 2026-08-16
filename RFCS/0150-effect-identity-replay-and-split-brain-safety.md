@@ -135,7 +135,7 @@ Publish cross-language golden vectors before host changes. Implement Layer-1 sco
 
 ## Acceptance criteria
 
-- [ ] Corrected normative formulas and recipe stamps merged. (§B effect identity and §D recovery vocabulary landed in `idempotency.md` v1.3. §C's semantic-digest recipe stamp is carried.)
+- [ ] Corrected normative formulas and recipe stamps merged. (§B effect identity and §D recovery vocabulary landed in `idempotency.md` v1.3. §C's semantic-digest recipe v2 and its stamp landed 2026-08-13 — `730ff3de` (`spec/v1/replay.md` §"Semantic request digest v2", `recipe: "openwop-semantic-request-v2"`) with golden vectors `40617a4d`. Still carried: the Python/Go vector consumers in `openwop-sdks`.)
 - [ ] Cross-language v2 vectors pass in TypeScript, Python, and Go. (Vectors published as `conformance/vectors/semantic-request-digest-v2.json` — eleven cases including pairs that pin tool-order irrelevance, message-order significance, and the NFC non-normalization JCS requires. TypeScript passes. Carried: the Python and Go implementations, which live in `openwop-sdks` and consume this file rather than re-reading the prose.)
 - [ ] Layer-1 scope and pending lease scenarios pass on SQLite and Postgres hosts. (Carried — §A's keyspace `MUST NOT` landed with a tier-1 host's merged fix as witness, but the pending-lease scenarios are unwritten and the reference hosts live in `openwop-examples`.)
 - [ ] Partition tests prove stale owners cannot issue effects under `fenced-effects`. (Carried — gap register row for §D. The existing `simulate-partition` seam covers record convergence only; proving effect fencing needs an observable effect sink, which is itself the record-vs-effect conflation §D exists to end.)
