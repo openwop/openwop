@@ -29,7 +29,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { driver } from '../lib/driver.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -69,12 +70,29 @@ async function resetLog(): Promise<number> {
   return res.status;
 }
 
+/**
+ * The cross-engine harness seam answered 404. Whether that is `blocked` (the host
+ * advertises `eventLog.crossEngineOrdering.supported: true` and so made a claim
+ * this file cannot check) or `inapplicable` (no such advertisement) depends on
+ * discovery — record the honest one (RFC 0148 §A).
+ */
+async function noteHarnessAbsent(): Promise<void> {
+  const disco = await driver.get('/.well-known/openwop');
+  const el = capabilityFamily<{ crossEngineOrdering?: { supported?: unknown } }>(disco.json, 'eventLog');
+  if (el?.crossEngineOrdering?.supported === true) {
+    seamAbsent('host advertises `eventLog.crossEngineOrdering.supported: true` but `POST /v1/host/sample/test/cross-engine/reset` answered 404 — the ordering claim is unobservable (host-sample-test-seams.md)');
+  } else {
+    softSkip('inapplicable', 'optional advertisement — `eventLog.crossEngineOrdering` not advertised by this host, and the cross-engine harness seam is absent (RFC 0036 §B)');
+  }
+}
+
 describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine ordering (RFC 0036)', () => {
   it('interleaved appends from two engines converge to a single globally-ordered sequence', async (ctx) => {
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
+      await noteHarnessAbsent();
       ctx.skip(); // host doesn't expose the cross-engine harness seam
-      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(resetStatus).toBe(200);
 
@@ -125,8 +143,9 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
   it('lamport clocks monotonically advance across engines', async (ctx) => {
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
+      await noteHarnessAbsent();
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(resetStatus).toBe(200);
 
@@ -153,8 +172,9 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
   it('lamport hint from engine A advances engine B past it', async (ctx) => {
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
+      await noteHarnessAbsent();
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(resetStatus).toBe(200);
 
@@ -180,8 +200,9 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
   it('linearization is deterministic — same appends → same total order', async (ctx) => {
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
+      await noteHarnessAbsent();
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(resetStatus).toBe(200);
 

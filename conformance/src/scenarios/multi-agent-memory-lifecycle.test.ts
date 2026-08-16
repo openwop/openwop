@@ -80,13 +80,15 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: advertisement shape (R
   it('crossChildMemoryConcurrency (when advertised) MUST be one of {strict, advisory}', async (ctx) => {
     const d = await readDiscovery();
     if (d === null) {
+      softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     const ccmc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossChildMemoryConcurrency;
     if (ccmc === undefined) {
+      softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.crossChildMemoryConcurrency` not advertised by this host');
       ctx.skip(); // optional advertisement — host hasn't opted in
-      return softSkip('blocked', 'precondition not met — `ccmc === undefined` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     expect(
       ccmc === 'strict' || ccmc === 'advisory',
@@ -134,16 +136,18 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
   it('MAE-3 replay snapshot refusal: fork mode:replay against a past-retention runId MUST return 422 replay_memory_snapshot_unavailable with documented envelope; silent substitution is non-conformant', async (ctx) => {
     const d = await readDiscovery();
     if (d === null) {
+      softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
+      return;
     }
     const v = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;
     const memorySupported = capabilityFamily<{ supported?: unknown }>(d, 'memory')?.supported;
     const phase2OrLater = typeof v === 'number' && v >= 2;
     const expiredRunId = process.env.OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID;
     if (!phase2OrLater || memorySupported !== true || !expiredRunId) {
+      softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!phase2OrLater || memorySupported !== true || !expiredRunId` returned early');
       ctx.skip();
-      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!phase2OrLater || memorySupported !== true || !expiredRunId` returned early');
+      return;
     }
 
     const fromSeq = 0;
