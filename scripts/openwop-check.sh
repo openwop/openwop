@@ -109,6 +109,10 @@ node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 # moment the corpus moves. Checking it here is the "generated from or checked
 # against" half of §B; without it the manifest would assert a floor nobody runs.
 node "$SPEC_ROOT/scripts/generate-core-standard-manifest.mjs" --check
+# RFC 0149 §A/§Conformance — the canonical resolved operation-path manifest SDK
+# repositories consume is DERIVED from api/openapi.yaml; stale = SDKs consuming
+# paths the contract no longer resolves.
+node "$SPEC_ROOT/scripts/generate-operation-path-manifest.mjs" --check
 node "$SPEC_ROOT/scripts/generate-extension-registry-coverage.mjs" --check
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 node "$SPEC_ROOT/scripts/check-capability-declaration-classes.mjs"

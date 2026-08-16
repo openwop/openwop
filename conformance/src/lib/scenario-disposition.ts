@@ -165,7 +165,11 @@ export function deriveRequirementDispositions(
     const id = requirementIdForPrefix(prefix);
     let row: DerivedRequirement;
     if (matching.some((r) => r.disposition === 'executed-pass')) {
-      row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'executed-pass' };
+      // Witnessed by the matching passes: the summary row carries their
+      // combined assertion count so a consumer reading only this row still
+      // sees a witnessed pass (RFC 0148 §C `assertionCount`).
+      const witnessed = matching.filter((r) => r.disposition === 'executed-pass').reduce((n, r) => n + (r.assertionCount ?? 0), 0);
+      row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'executed-pass', assertionCount: witnessed };
     } else if (matching.some((r) => r.disposition === 'executed-fail')) {
       row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'executed-fail', detail: `no ${prefix}* scenario passed and at least one failed` };
     } else if (matching.length === 0) {

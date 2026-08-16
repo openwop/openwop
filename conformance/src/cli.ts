@@ -35,6 +35,7 @@ import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from './lib/paths.js';
 import { readLedgerFile } from './lib/requirement-ledger.js';
 import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
+import { scrubEvidence, evidenceSecretsFromEnv, verifyBundleV2 } from './lib/certification-bundle-verify.js';
 import {
   deriveProfiles,
   isCoreStandard,
@@ -447,20 +448,50 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       targetConfigurationSha256: configSha,
     };
 
+    // RFC 0148 §C: secret canaries never enter evidence. Scrub the finished
+    // document with the credential this run was handed, every OPENWOP_*
+    // key/token/secret in the environment, and the conformance canary — a
+    // scenario's `detail` string, the captured discovery document, or a host
+    // field could carry any of them, and the emitter is the last place that
+    // can guarantee they do not ship.
+    const secrets = evidenceSecretsFromEnv(process.env, [apiKey]);
+    const scrubbed = scrubEvidence(v2, secrets);
+    const v2Out = scrubbed.value;
+    if (scrubbed.redactedAt.length > 0) {
+      process.stderr.write(
+        `openwop-conformance --certify: REDACTED ${scrubbed.redactedAt.length} evidence field(s) that carried a configured secret or the conformance canary: ${scrubbed.redactedAt.slice(0, 8).join(', ')}${scrubbed.redactedAt.length > 8 ? ', …' : ''}\n`,
+      );
+    }
+    // Self-audit with the consumer verifier: the emitter MUST NOT write a
+    // document the verifier would reject on shape (duplicate rows, totals that
+    // disagree with rows, unknown dispositions, a canary). Rejections scoped to
+    // a claimed profile (unwitnessed / vacuous) are the exit-3 case below and
+    // are reported through `derived`; a bundle-wide rejection here is a bug in
+    // this emitter and exits 2.
+    const selfAudit = verifyBundleV2(v2Out);
+    if (selfAudit.rejections.length > 0) {
+      process.stderr.write(
+        'openwop-conformance --certify: assembled v2 bundle FAILED self-verification (emitter defect):\n' +
+          selfAudit.rejections.map((r) => `  - [${r.kind}] ${r.detail}`).join('\n') +
+          '\n',
+      );
+      process.exit(2);
+    }
+
     const v2Schema = JSON.parse(
       readFileSync(join(SCHEMAS_DIR, 'certification-bundle-v2.schema.json'), 'utf8'),
     ) as Record<string, unknown>;
     const v2Ajv = new Ajv2020({ allErrors: true, strict: false });
     addFormats(v2Ajv);
     const v2Validate = v2Ajv.compile(v2Schema);
-    if (!v2Validate(v2)) {
+    if (!v2Validate(v2Out)) {
       process.stderr.write(
         'openwop-conformance --certify: assembled v2 bundle FAILED schema validation:\n' +
           `${JSON.stringify(v2Validate.errors, null, 2)}\n`,
       );
       process.exit(2);
     }
-    writeFileSync(outPath, `${JSON.stringify(v2, null, 2)}\n`);
+    writeFileSync(outPath, `${JSON.stringify(v2Out, null, 2)}\n`);
     process.stdout.write(
       `openwop-conformance --certify: wrote bundle v2 to ${outPath}\n` +
         `  host: ${host.name}@${host.version}\n` +
@@ -481,7 +512,14 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
   const validate = ajv.compile(schema);
-  if (!validate(bundle)) {
+  const bundleScrub = scrubEvidence(bundle, evidenceSecretsFromEnv(process.env, [apiKey]));
+  if (bundleScrub.redactedAt.length > 0) {
+    process.stderr.write(
+      `openwop-conformance --certify: REDACTED ${bundleScrub.redactedAt.length} evidence field(s) that carried a configured secret or the conformance canary\n`,
+    );
+  }
+  const bundleOut = bundleScrub.value;
+  if (!validate(bundleOut)) {
     process.stderr.write(
       'openwop-conformance --certify: assembled bundle FAILED schema validation:\n' +
         `${JSON.stringify(validate.errors, null, 2)}\n`,
@@ -489,7 +527,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     process.exit(2);
   }
 
-  writeFileSync(outPath, `${JSON.stringify(bundle, null, 2)}\n`);
+  writeFileSync(outPath, `${JSON.stringify(bundleOut, null, 2)}\n`);
   process.stdout.write(
     `openwop-conformance --certify: wrote certification bundle to ${outPath}\n` +
       `  host: ${host.name}@${host.version}\n` +
