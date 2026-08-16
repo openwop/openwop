@@ -36,6 +36,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 
+export const REQUIRES_HOST_CALLBACK = "the host issues MCP JSON-RPC calls (including the MRTR input_required round trip) to the suite's fake server via /v1/host/sample/mcp/invoke (serverUrl)";
+
 const META_V = 'io.modelcontextprotocol/protocolVersion';
 const META_C = 'io.modelcontextprotocol/clientCapabilities';
 

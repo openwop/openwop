@@ -48,7 +48,7 @@ A host **claims** `openwop-core-standard` by satisfying §B **AND passing the fl
 - Idempotency — `idempotency.test.ts` + `idempotency-key-determinism.test.ts`
 - Interrupts — the `interrupt-*.test.ts` family (external-event correlation, resume, token matrix)
 - Webhooks — `webhook-negative.test.ts` (signature versioning, negative signature)
-- Audit-log verification — `audit-log-verification.test.ts`
+- ~~Audit-log verification — `audit-log-verification.test.ts`~~ (removed 2026-08-16: no file of that name ever existed; the scenario it meant, `audit-log-integrity.test.ts`, gates on the optional annex profile `openwop-audit-log-integrity`, which §B does not include — by this section's own membership rule it was never a floor scenario. See `core-standard-profile.md` §C.)
 
 The aggregating meta-scenario `core-standard-profile.test.ts` derives the floor status from discovery (§B) and asserts the predicate's behavior on representative payloads. The **live aggregate-evidence assertion** (does every floor scenario actually pass against a host claiming the profile?) is the `Active → Accepted` step — naturally satisfied by any host already passing the wire core. MyndHyve and all four reference hosts pass every floor scenario today.
 

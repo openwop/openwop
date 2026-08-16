@@ -29,6 +29,10 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { McpFakeServer, MCP_ERR } from '../lib/mcp-fake-server.js';
 
+// The first describe drives the in-process McpFakeServer itself; the second (gated) describe
+// talks to the host's own MCP server mount and hands it nothing harness-hosted.
+export const HOST_CALLBACK_NOT_REQUIRED = 'the suite drives both ends itself: the fake-server legs read the in-process McpFakeServer directly and the host-as-server legs POST to the host mount; no harness endpoint is handed to the host';
+
 const META_V = 'io.modelcontextprotocol/protocolVersion';
 const META_C = 'io.modelcontextprotocol/clientCapabilities';
 const META_S = 'io.modelcontextprotocol/serverInfo';

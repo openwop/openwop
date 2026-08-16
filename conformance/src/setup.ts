@@ -30,6 +30,10 @@ import { setMultiAgentCapabilities } from './lib/multi-agent-capabilities.js';
 import { OtelCollector, setCollector } from './lib/otel-collector.js';
 import { McpFakeServer, setMcpFakeServer } from './lib/mcp-fake-server.js';
 import { A2AFakePeer, setA2AFakePeer } from './lib/a2a-fake-peer.js';
+import { afterAll, afterEach, beforeAll, expect } from 'vitest';
+import { basename } from 'node:path';
+import { recordRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
+import { fileDisposition, requirementIdForFile, type FileTestState } from './lib/scenario-disposition.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
 
 const SUITE_INIT_TIMEOUT_MS = 5_000;
@@ -203,3 +207,78 @@ await loadHostFixtures();
 await maybeStartOtelCollector();
 await maybeStartMcpFakeServer();
 await maybeStartA2AFakePeer();
+
+// ─── RFC 0148 §A file-level disposition recording (S6, acceptance item 2) ─────
+//
+// Every scenario FILE records exactly one disposition for its own requirement
+// id when it finishes. `afterEach` collects per-test states; `afterAll` folds
+// them (fileDisposition) and records — `executed-fail` / `executed-pass` /
+// `inapplicable` or `skipped` (when a behaviorGate in the file recorded that
+// reason for the profile it gates on) / else `blocked` (an all-skipped file
+// with no reason is an unclassified return, and §A resolves it to blocked).
+// When the runner set OPENWOP_LEDGER_PATH the recording also lands in the JSONL
+// sink, which is how `--certify` gets requirement-level dispositions instead of
+// inferring them from per-file pass/fail/skip.
+//
+// Setup-file hooks apply to every file in the worker; state is keyed by file.
+const _fileStates = new Map<string, FileTestState[]>();
+const _fileAssertions = new Map<string, number>();
+const _ledgerMarks = new Map<string, number>();
+function _fileOf(task: { file?: { filepath?: string; name?: string } } | undefined): string | null {
+  const f = task?.file?.filepath ?? task?.file?.name;
+  return typeof f === 'string' && f.length > 0 ? basename(f) : null;
+}
+beforeAll(({}, suite) => {
+  // Mark the ledger journal BEFORE the file's tests run, so a behaviorGate
+  // decision made by the very first test is inside the file's window.
+  const s = suite as unknown as { filepath?: string; name?: string; file?: { filepath?: string; name?: string } };
+  const file = _fileOf({ file: s.file ?? s });
+  if (file !== null && !_ledgerMarks.has(file)) _ledgerMarks.set(file, journalLength());
+});
+afterEach(({ task }) => {
+  const file = _fileOf(task as { file?: { filepath?: string; name?: string } });
+  if (file === null) return;
+  if (!_ledgerMarks.has(file)) _ledgerMarks.set(file, 0);
+  const state = task.result?.state;
+  const arr = _fileStates.get(file) ?? [];
+  arr.push(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip');
+  _fileStates.set(file, arr);
+  // RFC 0148 §C assertionCount: how many `expect` calls this test actually made.
+  // A leg that early-returns from a gate makes zero, and a file of such legs is
+  // an `executed-pass` with assertionCount 0 — visible, and unclassified for a
+  // claimed floor.
+  let calls = 0;
+  try {
+    calls = (expect.getState() as { assertionCalls?: number }).assertionCalls ?? 0;
+  } catch {
+    /* no state — count 0 */
+  }
+  _fileAssertions.set(file, (_fileAssertions.get(file) ?? 0) + calls);
+});
+afterAll(({}, suite) => {
+  // vitest 4: the suite/file task is the SECOND argument. For a file-level
+  // afterAll registered from a setup file, `suite` is the File task itself.
+  const s = suite as unknown as { filepath?: string; name?: string; file?: { filepath?: string; name?: string } };
+  const file = _fileOf({ file: s.file ?? s });
+  if (file === null || !file.endsWith('.test.ts')) return;
+  const states = _fileStates.get(file) ?? [];
+  // Did a behaviorGate in this file record inapplicable/skipped for its profile?
+  const mark = _ledgerMarks.get(file) ?? 0;
+  const since = journalSince(mark);
+  const gateReason = since.some((e) => e.disposition === 'inapplicable')
+    ? 'inapplicable'
+    : since.some((e) => e.disposition === 'skipped')
+      ? 'skipped'
+      : undefined;
+  const assertionCount = _fileAssertions.get(file) ?? 0;
+  const { disposition, detail } = fileDisposition(states, gateReason, assertionCount);
+  try {
+    recordRequirement(requirementIdForFile(file), disposition, detail, { assertionCount });
+  } catch {
+    /* a scenario that recorded its own file id first wins; never fail the file for bookkeeping */
+  }
+  _fileStates.delete(file);
+  _fileAssertions.delete(file);
+  _ledgerMarks.delete(file);
+});
+

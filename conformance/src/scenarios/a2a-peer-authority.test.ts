@@ -33,6 +33,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
 
+export const REQUIRES_HOST_CALLBACK = "the host issues A2A JSON-RPC calls to the suite's fake peer via /v1/host/sample/a2a/invoke (peerUrl), which the peer records";
+
 const PROFILE = 'a2a.peerAuthority';
 
 interface A2ACaps {

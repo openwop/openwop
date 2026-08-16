@@ -1,0 +1,222 @@
+/**
+ * RFC 0148 §A / acceptance item 2 (S6) — file-level requirement recording and
+ * the runner's derivation.
+ *
+ * Two halves that meet through the ledger file sink:
+ *
+ * 1. **In the vitest worker** (`setup.ts` hooks): every scenario FILE records
+ *    exactly one disposition for its own requirement id when it finishes —
+ *    `executed-fail` if any test failed, `executed-pass` if any test passed and
+ *    none failed, and for a file whose tests ALL skipped: `inapplicable` /
+ *    `skipped` if a `behaviorGate` inside the file recorded one of those for the
+ *    profile it gates on (the honest reason the tests did not run), else
+ *    `blocked` — an all-skipped file with no recorded reason is an unclassified
+ *    return, and §A resolves it to `blocked`, never to a pass.
+ *
+ * 2. **In the `--certify` runner** (`deriveRequirementDispositions`): every
+ *    scenario file's requirement is taken FROM THE LEDGER when present, falling
+ *    back to the vitest per-file report only for pass/fail (which the ledger
+ *    would agree with) and to `blocked` (unclassified) otherwise; the floor's
+ *    prefix requirements (`openwop.floor.any.<prefix>`) are derived from the
+ *    files that match; and a claimed profile whose floor contains ANY requirement
+ *    with no ledger entry is flagged `unclassified` so the runner can REJECT the
+ *    certification rather than round the silence up.
+ *
+ * Pure functions, no I/O, so `runner-ledger.test.ts` can pin them without a
+ * host or a vitest subprocess.
+ */
+
+import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
+import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
+import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-ledger.js';
+
+/** All scenario basenames that appear in some profile's runtime floor. */
+export function floorScenarioFiles(): ReadonlySet<string> {
+  const out = new Set<string>();
+  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const f of floor.required) out.add(f);
+  return out;
+}
+
+/** The requirement id a scenario FILE records under: the §A floor id when the
+ *  file is part of a floor, else the runner's per-scenario id. */
+export function requirementIdForFile(basename: string): string {
+  return floorScenarioFiles().has(basename)
+    ? requirementIdForScenario(basename)
+    : `openwop.scenario.${basename.replace(/\.test\.ts$/, '')}`;
+}
+
+export type FileTestState = 'pass' | 'fail' | 'skip';
+
+/** Worker half: fold a file's per-test states (+ any gate-recorded reason) into
+ *  the ONE disposition the file records. */
+export function fileDisposition(
+  states: readonly FileTestState[],
+  gateReason: 'inapplicable' | 'skipped' | undefined,
+  assertionCount?: number,
+): { disposition: Disposition; detail?: string } {
+  if (states.some((s) => s === 'fail')) return { disposition: 'executed-fail', detail: 'one or more assertions in the file failed' };
+  if (states.some((s) => s === 'pass')) {
+    // A test that early-returned through `behaviorGate` is reported by vitest
+    // as a pass with zero assertions. When EVERY passing test in the file did
+    // that (assertionCount 0) and the gate recorded why, the file's honest
+    // disposition is the gate's — `inapplicable` / `skipped` with its reason —
+    // not a vacuous executed-pass. Without a gate reason a zero-assertion pass
+    // stays `executed-pass` with `assertionCount: 0`, which certification
+    // rejects as unclassified (RFC 0148 §A).
+    if (assertionCount === 0 && gateReason === 'inapplicable') {
+      return { disposition: 'inapplicable', detail: 'every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set' };
+    }
+    if (assertionCount === 0 && gateReason === 'skipped') {
+      return { disposition: 'skipped', detail: 'every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)' };
+    }
+    return { disposition: 'executed-pass' };
+  }
+  if (gateReason === 'inapplicable') return { disposition: 'inapplicable', detail: 'every test skipped: profile not advertised in the captured discovery set (behaviorGate)' };
+  if (gateReason === 'skipped') return { disposition: 'skipped', detail: 'every test skipped: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)' };
+  return {
+    disposition: 'blocked',
+    detail:
+      states.length === 0
+        ? 'no test executed and no disposition recorded — unclassified return (RFC 0148 §A resolves it to blocked)'
+        : 'every test skipped with no recorded reason — unclassified return (RFC 0148 §A resolves it to blocked)',
+  };
+}
+
+export interface DerivedRequirement {
+  readonly requirementId: string;
+  readonly scenarioId: string;
+  readonly disposition: Disposition;
+  readonly detail?: string;
+  /** RFC 0148 §C — present when the ledger recorded it. */
+  readonly assertionCount?: number;
+}
+
+export interface DerivedProfileVerdict {
+  readonly profile: string;
+  /** Floor requirement ids with NO ledger entry (unclassified returns). */
+  readonly unclassified: readonly string[];
+  /** Floor requirement ids whose disposition is not certifiable. */
+  readonly blocking: readonly string[];
+  readonly certifiable: boolean;
+}
+
+export interface Derivation {
+  readonly requirements: readonly DerivedRequirement[];
+  readonly totals: { executedPass: number; executedFail: number; skipped: number; inapplicable: number; blocked: number };
+  readonly verdicts: readonly DerivedProfileVerdict[];
+  /** True when ANY claimed profile has an unclassified floor requirement. The
+   *  runner MUST reject certification in that case (RFC 0148 acceptance item 2). */
+  readonly rejectUnclassified: boolean;
+  /** Whether a ledger was available at all (false ⇒ every row is report-derived). */
+  readonly ledgerPresent: boolean;
+}
+
+/**
+ * Runner half. `reportStates` is what vitest's JSON report said per file
+ * (`passed`/`failed`/`skipped`); `ledger` is what the workers recorded.
+ */
+export function deriveRequirementDispositions(
+  reportStates: ReadonlyMap<string, 'passed' | 'failed' | 'skipped'>,
+  ledger: readonly LedgerEntry[],
+  claimedProfiles: readonly string[],
+): Derivation {
+  const byId = new Map(ledger.map((e) => [e.requirementId, e] as const));
+  const ledgerPresent = ledger.length > 0;
+  const rows: DerivedRequirement[] = [];
+  const perFile = new Map<string, DerivedRequirement>();
+
+  for (const [file, state] of [...reportStates.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const id = requirementIdForFile(file);
+    const rec = byId.get(id);
+    let row: DerivedRequirement;
+    if (rec !== undefined) {
+      row = {
+        requirementId: id,
+        scenarioId: file,
+        disposition: rec.disposition,
+        ...(rec.detail === undefined ? {} : { detail: rec.detail }),
+        ...(rec.assertionCount === undefined ? {} : { assertionCount: rec.assertionCount }),
+      };
+    } else if (state === 'passed') {
+      row = ledgerPresent
+        ? { requirementId: id, scenarioId: file, disposition: 'executed-pass', detail: 'report-derived: vitest passed the file but no disposition was recorded (assertion count unknown) — unclassified for a claimed floor' }
+        : { requirementId: id, scenarioId: file, disposition: 'executed-pass' };
+    } else if (state === 'failed') {
+      row = { requirementId: id, scenarioId: file, disposition: 'executed-fail', detail: 'the scenario executed and failed (report-derived; no ledger entry)' };
+    } else {
+      row = {
+        requirementId: id,
+        scenarioId: file,
+        disposition: 'blocked',
+        detail: ledgerPresent
+          ? 'unclassified return: the file recorded no disposition — RFC 0148 §A resolves it to blocked, never to a pass'
+          : 'runner cannot classify a skipped file without a ledger; RFC 0148 §A resolves an unclassifiable requirement to blocked',
+      };
+    }
+    rows.push(row);
+    perFile.set(file, row);
+  }
+
+  // Prefix requirements: derived from the matching files.
+  const prefixIds = new Set<string>();
+  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
+  for (const prefix of [...prefixIds].sort()) {
+    const matching = [...perFile.entries()].filter(([f]) => f.startsWith(prefix)).map(([, r]) => r);
+    const id = requirementIdForPrefix(prefix);
+    let row: DerivedRequirement;
+    if (matching.some((r) => r.disposition === 'executed-pass')) {
+      row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'executed-pass' };
+    } else if (matching.some((r) => r.disposition === 'executed-fail')) {
+      row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'executed-fail', detail: `no ${prefix}* scenario passed and at least one failed` };
+    } else if (matching.length === 0) {
+      row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'blocked', detail: `no ${prefix}* scenario ran — unclassified return` };
+    } else {
+      // all matching files are skipped/inapplicable/blocked: the prefix requirement is met by ANY pass, so none ⇒ blocked
+      row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'blocked', detail: `no ${prefix}* scenario executed a passing assertion (${matching.map((r) => r.disposition).join(', ')})` };
+    }
+    rows.push(row);
+  }
+
+  const totals = { executedPass: 0, executedFail: 0, skipped: 0, inapplicable: 0, blocked: 0 };
+  for (const r of rows) {
+    if (r.disposition === 'executed-pass') totals.executedPass++;
+    else if (r.disposition === 'executed-fail') totals.executedFail++;
+    else if (r.disposition === 'skipped') totals.skipped++;
+    else if (r.disposition === 'inapplicable') totals.inapplicable++;
+    else totals.blocked++;
+  }
+
+  const rowById = new Map(rows.map((r) => [r.requirementId, r] as const));
+  const verdicts: DerivedProfileVerdict[] = [];
+  for (const profile of claimedProfiles) {
+    const ids = requirementsFor(profile);
+    if (ids === null) {
+      verdicts.push({ profile, unclassified: [], blocking: [`(no floor defined for ${profile})`], certifiable: false });
+      continue;
+    }
+    const unclassified: string[] = [];
+    const blocking: string[] = [];
+    for (const id of ids) {
+      const r = rowById.get(id);
+      const fromLedger = byId.has(id) || (r !== undefined && r.scenarioId.endsWith('*'));
+      // Unclassified: no row, or a report-derived blocked (nothing recorded), or a
+      // VACUOUS pass — executed-pass with assertionCount 0 is a witness of nothing
+      // (RFC 0148 §A: "a required behavior MUST NOT be certified without a target
+      // execution witness"), so for a claimed floor it counts as unclassified.
+      const vacuous = r !== undefined && r.disposition === 'executed-pass' && r.assertionCount === 0;
+      // With a ledger present, ANY floor row that did not come from the ledger is
+      // unclassified: silence is evidence of nothing (RFC 0148 §A). Without a
+      // ledger only report-blocked rows are unclassified (the pre-S6 reading).
+      const silent = !fromLedger && (ledgerPresent || r?.disposition === 'blocked');
+      if (r === undefined || silent || vacuous) unclassified.push(id);
+      // Unclassified always blocks: a requirement nobody recorded cannot certify.
+      if (r === undefined || silent || vacuous || !CERTIFIABLE.includes(r.disposition)) blocking.push(id);
+    }
+    // discoveryOnly floors have ids.length === 0 and certify by design here (the
+    // requirement-ledger's verifyProfileRequirements is stricter; the runner
+    // consults PROFILE_FLOOR_SCENARIOS.discoveryOnly separately).
+    const discoveryOnly = PROFILE_FLOOR_SCENARIOS[profile]?.discoveryOnly === true;
+    verdicts.push({ profile, unclassified, blocking, certifiable: discoveryOnly || (ids.length > 0 && blocking.length === 0) });
+  }
+  return { requirements: rows, totals, verdicts, rejectUnclassified: verdicts.some((v) => v.unclassified.length > 0), ledgerPresent };
+}
