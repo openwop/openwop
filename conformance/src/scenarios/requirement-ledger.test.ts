@@ -142,9 +142,9 @@ describe('RFC 0148 §A — the registry binds to the certification floor', () =>
     expect(requirementsFor('openwop-does-not-exist')).toBeNull();
     // With the document, the advertised branch is required
     const doc = (modes: string[]) => ({ replay: { supported: true, modes } });
-    expect(requirementsFor('openwop-replay-fork', doc(['replay']))).toEqual(['openwop.floor.replayDeterminism']);
+    expect([...(requirementsFor('openwop-replay-fork', doc(['replay'])) ?? [])].sort()).toEqual(['openwop.floor.replay-side-effect-suppression', 'openwop.floor.replayDeterminism']);
     expect(requirementsFor('openwop-replay-fork', doc(['branch']))).toEqual(['openwop.floor.replay-fork']);
-    expect([...(requirementsFor('openwop-replay-fork', doc(['replay', 'branch'])) ?? [])].sort()).toEqual(['openwop.floor.replay-fork', 'openwop.floor.replayDeterminism']);
+    expect([...(requirementsFor('openwop-replay-fork', doc(['replay', 'branch'])) ?? [])].sort()).toEqual(['openwop.floor.replay-fork', 'openwop.floor.replay-side-effect-suppression', 'openwop.floor.replayDeterminism']);
     expect(requirementsFor('openwop-replay-fork', doc([]))).toEqual([]);
     // and every branch is a registered requirement
     expect(allRequirements()).toContain('openwop.floor.replayDeterminism');

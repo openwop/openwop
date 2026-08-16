@@ -54,14 +54,18 @@ describe('RFC 0148 §C — floor enforcement is not vacuous', () => {
     const doc = (modes: string[]) => ({ protocolVersion: '1.0', supportedEnvelopes: [], schemaVersions: {}, limits: { clarificationRounds: 1, schemaRounds: 1, envelopesPerTurn: 1 }, replay: { supported: true, modes } });
     const claim = (modes: string[], passed: string[]) => ({ discovery: { document: doc(modes) }, claimedProfiles: ['openwop-replay-fork'], results: { passed, failed: [] } });
     // replay-only host: replayDeterminism suffices; replay-fork is NOT required
-    let v = verifyBundleProfile(claim(['replay'], ['replayDeterminism.test.ts']), 'openwop-replay-fork');
+    let v = verifyBundleProfile(claim(['replay'], ['replayDeterminism.test.ts', 'replay-side-effect-suppression.test.ts']), 'openwop-replay-fork');
     expect(v.floorUnspecified).toBe(false);
     expect(v.floorProven).toBe(true);
+    // determinism alone does NOT prove replay mode: caveat 1 (no re-fire) is part of the branch
+    v = verifyBundleProfile(claim(['replay'], ['replayDeterminism.test.ts']), 'openwop-replay-fork');
+    expect(v.floorProven).toBe(false);
+    expect(v.missingFloor).toEqual(['replay-side-effect-suppression.test.ts']);
     // branch-only host: replay-fork suffices
     v = verifyBundleProfile(claim(['branch'], ['replay-fork.test.ts']), 'openwop-replay-fork');
     expect(v.floorProven).toBe(true);
     // both advertised: both required
-    v = verifyBundleProfile(claim(['replay', 'branch'], ['replay-fork.test.ts']), 'openwop-replay-fork');
+    v = verifyBundleProfile(claim(['replay', 'branch'], ['replay-fork.test.ts', 'replay-side-effect-suppression.test.ts']), 'openwop-replay-fork');
     expect(v.floorProven).toBe(false);
     expect(v.missingFloor).toEqual(['replayDeterminism.test.ts']);
     // a mode the floor does not know: nothing required → unprovable, not proven

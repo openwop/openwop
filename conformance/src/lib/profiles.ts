@@ -628,7 +628,11 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
   'openwop-replay-fork': {
     required: [],
     conditional: [
-      { path: 'replay.modes', includes: 'replay', required: ['replayDeterminism.test.ts'] },
+      // `replay` mode carries caveat 1 (a replay MUST NOT re-fire external
+      // effects — unconditional, `replay.md`); the suppression scenario records
+      // `blocked` when no probeable mechanism is advertised, so a
+      // `sideEffectSuppression: none` host does NOT certify on determinism alone.
+      { path: 'replay.modes', includes: 'replay', required: ['replayDeterminism.test.ts', 'replay-side-effect-suppression.test.ts'] },
       { path: 'replay.modes', includes: 'branch', required: ['replay-fork.test.ts'] },
     ],
   },
