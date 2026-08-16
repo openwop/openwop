@@ -1,5 +1,7 @@
 # Session Summary — 2026-05-11
 
+**Status:** ARCHIVED — a dated session record, preserved for traceability; counts and claims in it are as of 2026-05-11.
+
 > **Scope:** OpenWOP gap-closure plan execution, Phase 0 → Phase 3 + Postgres-host audit follow-up. Spans 41 commits over a single multi-turn session from baseline `5d3f1cc` (`feat(packs): vendor.myndhyve.entities v1.0.0`) to head `db9902c` (`feat(host-postgres): port audit.ts`).
 
 ## TL;DR
