@@ -1555,6 +1555,55 @@ invariants:
       Capability-gated on `compensation.supported`; resolves to `blocked`
       per RFC 0148 §A until a host advertises and wires the unwind seam.
 
+  - id: compensation-effect-id-retry-stable
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-compensation.md
+    tests:
+      - conformance/src/scenarios/compensation-recovery.test.ts
+    note: |
+      RFC 0151 §C. An inverse action's identity is the tuple
+      (tenantId, runId, forwardLogicalInvocationId, compensationOrdinal,
+      profileVersion) — `attempt` is OUTSIDE it (RFC 0150 §B parity) — and a
+      retry MUST re-present that identity as the downstream idempotency key.
+      Two keys for one obligation is two refunds (threat model A1). Witnessed
+      through the §21 recovery extension: `unwind` with
+      `failFirstInverseAttempts: 2` MUST report attempts: 3 and ONE distinct
+      `downstreamKeys` value. Capability-gated on `compensation.supported`;
+      `blocked` (named) until a host wires the extension.
+
+  - id: compensation-tenant-authority-bound
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-compensation.md
+    tests:
+      - conformance/src/scenarios/compensation-recovery.test.ts
+    note: |
+      RFC 0151 §E. Every operator action on a plan is an RFC 0049 decision
+      bound to tenant + principal + action + planVersion; a principal MUST
+      NOT act on a plan in a tenant where they hold no authority, and
+      forward-run / authoring authority is not inherited (threat model A3,
+      A4). Witnessed through the §21 `operator` seam: cross-tenant actor →
+      404 `not_found` (RFC 0132 §A.2 neutralize), same-tenant non-operator →
+      403 `forbidden` AND audited, operator → 200 `audited: true`. A seam
+      that answers 200 to all three consults nothing. Capability-gated;
+      `blocked` (named) until a host wires the extension.
+
+  - id: compensation-input-recorded-facts-only
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-compensation.md
+    tests:
+      - conformance/src/scenarios/compensation-recovery.test.ts
+    note: |
+      RFC 0151 §B / §F. Inverse inputs derive from recorded facts; a host
+      MUST NOT construct one from a prompt or model output during unwind or
+      replay — an inverse built from a re-derived value is not the inverse
+      of what was done (threat model A2). Witnessed through the §21 `replay`
+      extension: `replayed[]` MUST deep-equal `source[]` (same identities,
+      same inputs) while `refiredEffects` stays 0. Capability-gated;
+      `blocked` (named) until a host wires the extension.
+
   - id: delegation-tenant-audience-bound
     tier: protocol
     severity: high
