@@ -20,14 +20,19 @@
  *      portability requirement at the single-host boundary).
  *
  *   2. The emitted key is reproducible offline: locally recomputed
- *      SHA-256-over-RFC-8785-JCS over the canonical recipe MUST equal
+ *      SHA-256-over-RFC-8785-JCS over the canonical **v2** semantic request
+ *      (RFC 0150 §C, `recipe: "openwop-semantic-request-v2"`) MUST equal
  *      the host's emission. This is the load-bearing claim — without
  *      it, the recipe is private host state masquerading as a content-
  *      addressable hash.
  *
- *   3. (Negative) Permuting any non-recipe field (`max_tokens`, `stop`,
- *      `stream`, `seed`, `metadata`, `user`, request IDs, trace context)
- *      MUST NOT shift the key. This is the security boundary: hosts
+ *   3. (Negative) Permuting any transport-only field (`stream`, `metadata`,
+ *      `user`, request IDs, trace context, tenant id, timeout) MUST NOT
+ *      shift the key. (`max_tokens`/`stop`/`seed` were in this list until
+ *      suite 1.109.0; RFC 0150 §C moved them INTO the recipe because each
+ *      changes the completion — see `replay-llm-cache-key.test.ts` for the
+ *      sensitivity legs. Asserting their exclusion here was the suite
+ *      contradicting `semantic-digest-v2.test.ts` in the same package.) This is the security boundary: hosts
  *      that mix non-recipe state into the key leak that state across
  *      the cache boundary, defeating the portability claim and (via
  *      the SR-1 sibling invariant) potentially leaking BYOK plaintexts
@@ -35,7 +40,8 @@
  *
  *   4. (Gated on Phase 4 advertisement.) The host's discovery doc MUST
  *      advertise `replayDeterminism.llmCacheKeyRecipe` matching the
- *      recipe it honors — `spec-rfc-0041` for the canonical recipe,
+ *      recipe it honors — `spec-rfc-0041` for the canonical recipe (which,
+ *      since RFC 0150 §C replaced §A/§B in place, IS the v2 recipe),
  *      `x-host-<host>-<recipe-name>` for vendor variants per
  *      `host-extensions.md` §"Canonical prefixes".
  *
@@ -46,13 +52,13 @@
  *
  * @see RFCS/0041-multi-agent-replay-under-nondeterminism.md §E
  * @see SECURITY/invariants.yaml §replay-llm-cache-key-portable
- * @see spec/v1/replay.md §"LLM cache-key recipe" §A + §B + §D
+ * @see spec/v1/replay.md §"LLM cache-key recipe" §A + §B + §D (v2, RFC 0150 §C)
  * @see conformance/src/scenarios/replay-llm-cache-key.test.ts (the sibling behavioral suite)
  */
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { expectedCacheKey, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
+import { semanticRequestDigestV2, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -102,7 +108,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
         'SECURITY/invariants.yaml §replay-llm-cache-key-portable + replay.md §B',
         'host cache key MUST be reproducible offline from the recipe alone — no host-internal state',
       ),
-    ).toBe(expectedCacheKey(input));
+    ).toBe(semanticRequestDigestV2(input));
   });
 
   it('two identical probes MUST yield byte-identical keys (intra-host determinism)', async (ctx) => {
@@ -129,7 +135,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
 });
 
 describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field invariance (RFC 0041 §E security boundary)', () => {
-  it('non-recipe fields (request ID, trace context, tenant ID) MUST NOT influence the cache key', async (ctx) => {
+  it('transport-only fields (request ID, trace context, tenant ID) MUST NOT influence the cache key', async (ctx) => {
     const base = {
       provider: 'openai',
       model: 'gpt-4',
@@ -146,20 +152,20 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field inva
     // would expose tenant/request state through cache-collision behavior.
     const polluted = {
       ...base,
-      max_tokens: 1000,
-      stop: ['STOP'],
       stream: true,
-      seed: 42,
       metadata: { tenantId: 'tenant-A', traceparent: '00-deadbeef-cafe-01' },
       user: 'user-42',
       'x-request-id': 'req-abc-123',
+      tenantId: 'tenant-A',
+      timeoutMs: 30_000,
+      runId: 'run_123',
     };
     const pollutedResult = await callSeam(polluted);
     expect(
       pollutedResult.cacheKey,
       driver.describe(
         'SECURITY/invariants.yaml §replay-llm-cache-key-portable + replay.md §A',
-        'non-recipe fields (request id, trace context, tenant id) MUST NOT influence the cache key — leaking them defeats the portability invariant',
+        'transport-only fields (request id, trace context, tenant id, run id, timeout) MUST NOT influence the cache key — leaking them defeats the portability invariant',
       ),
     ).toBe(baseResult.cacheKey);
   });

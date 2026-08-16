@@ -130,22 +130,22 @@ When advertised, the host MUST serve a `200 OK` with the documented shape.
 
 Conformance: gates on `capabilities.observability.testSeams.debugBundleExport: true`.
 
-### 4. `POST /v1/host/sample/test/llm-cache-key` — LLM cache-key recipe (RFC 0041)
+### 4. `POST /v1/host/sample/test/llm-cache-key` — LLM cache-key recipe (RFC 0041; recipe v2 per RFC 0150 §C)
 
 | Field                     | Value                                                                                                                                               |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Method + path             | `POST /v1/host/sample/test/llm-cache-key`                                                                                                           |
 | Capability gate           | `capabilities.multiAgent.executionModel.replayDeterminism.supported: true` (RFC 0041 Phase 4 hosts); MAY be implemented earlier without advertising |
 | Env gate (reference impl) | implicit — seam registered alongside the cache-key implementation                                                                                   |
-| Introduced                | RFC 0041 §A                                                                                                                                         |
+| Introduced                | RFC 0041 §A. **Re-pointed 2026-08-16 to the RFC 0150 §C v2 recipe** (suite 1.109.0) — this section and both driving scenarios had kept the retired v1 field set for three days after `replay.md` replaced it in place, so the suite contradicted itself and a host that computed the current recipe went red for being right. |
 
-Computes the canonical LLM cache key per `replay.md` §"LLM cache-key recipe" §A + §B. Conformance scenarios drive the seam to assert (a) intra-host reproducibility, (b) non-recipe-field invariance, and (c) cross-host parity when two hosts both expose the seam.
+Computes the canonical LLM cache key per `replay.md` §"LLM cache-key recipe" §A + §B — the **v2 semantic request** (`recipe: "openwop-semantic-request-v2"`, RFC 0150 §C). Conformance scenarios drive the seam to assert (a) intra-host reproducibility, (b) transport-only-field invariance, (b′) outcome-affecting-field **sensitivity** (`seed`, `stop`, `maxOutputTokens` DO change the key; `providerOptions` are carried), and (c) cross-host parity when two hosts both expose the seam.
 
-Request body — an `LLMCacheKeyInput`-shaped object per `replay.md` §A. **Non-recipe fields are accepted and ignored** (the test exercises that the host's recipe correctly drops them):
+Request body — an `LLMCacheKeyInput`-shaped object per `replay.md` §A (v2). **Transport-only fields are accepted and ignored**; outcome-affecting fields are part of the recipe (the tests exercise both directions):
 
 ```typescript
 {
-  // Recipe fields (per replay.md §A — only these influence the key):
+  // Recipe fields (per replay.md §A, v2 — these influence the key):
   provider: string,                                  // canonical provider id, lowercase ASCII
   model: string,                                     // provider-stamped model id
   messages: Array<{ role, content, name?, toolCallId? }>,
@@ -154,16 +154,22 @@ Request body — an `LLMCacheKeyInput`-shaped object per `replay.md` §A. **Non-
   topP?: number,
   topK?: number,
   responseFormat?: { type: 'text' | 'json' | 'tool_call', schema? },
+  maxOutputTokens?: number,                          // RFC 0150 §C — decides truncation
+  stop?: string[],                                   // RFC 0150 §C — decides where generation halts
+  seed?: number,                                     // RFC 0150 §C — exists to change the output
+  safetySettings?: Record<string, unknown>,          // RFC 0150 §C — any policy that can alter output
+  providerOptions?: Record<string, unknown>,         // RFC 0150 §C — carried, never dropped (`vendor.<provider>.<option>`)
 
-  // Non-recipe fields (host MUST ignore for key computation):
-  max_tokens?: number,
-  stop?: string[],
+  // Transport-only fields (host MUST ignore for key computation):
   stream?: boolean,
-  seed?: number,
   metadata?: Record<string, unknown>,
   user?: string,
   'x-request-id'?: string,
-  // ... any other field
+  traceparent?: string,
+  tenantId?: string,
+  runId?: string,
+  timeoutMs?: number,
+  // ... any other transport/bookkeeping field
 }
 ```
 
@@ -171,14 +177,14 @@ Response body:
 
 ```typescript
 {
-  cacheKey: string,    // 64 lowercase-hex chars (SHA-256 of canonicalize(projectRecipe(input)))
+  cacheKey: string,    // 64 lowercase-hex chars (SHA-256 of JCS(projectSemanticRequestV2(input)))
 }
 ```
 
 Hosts MUST:
 
-1. Drop non-recipe fields from the input before canonicalization (§A closed-set rule)
-2. Canonicalize per `replay.md` §B (RFC 8785 JCS-style: sorted keys recursively, no whitespace, preserve array order, UTF-8 NFC strings)
+1. Build the v2 canonical object `{ recipe: "openwop-semantic-request-v2", provider, model, request: { … }, providerOptions? }` — drop transport-only fields, keep every outcome-affecting one, place unknown provider options under `providerOptions` (`replay.md` §B step 1)
+2. Canonicalize per `replay.md` §B (RFC 8785 JCS: sorted keys recursively, no whitespace, preserve array order; **no Unicode normalization outside JCS** — an earlier revision of this section said "UTF-8 NFC strings", which `replay.md` §B now explicitly forbids)
 3. Return SHA-256 over the canonical bytes as lowercase hex
 
 A missing or malformed `provider`/`model`/`messages` field MUST return `400 invalid_argument`.
