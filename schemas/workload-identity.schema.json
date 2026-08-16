@@ -52,7 +52,13 @@
             "required": ["subject"],
             "properties": {
               "subject": { "type": "string", "minLength": 1 },
-              "issuer": { "type": "string", "minLength": 1 }
+              "issuer": { "type": "string", "minLength": 1 },
+              "scopes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "type": "string", "minLength": 1 },
+                "description": "RFC 0154 §B — the effective scopes VERIFIED for this hop from its proof (RFC 0049 scope grammar). OPTIONAL and provenance, not authorization: the host still evaluates the resolved principal's own scopes. When present on consecutive hops, a later hop's scopes MUST NOT exceed the previous hop's (`auth.md` §\"Bounds\" — scope amplification is refused: `delegation_scope_amplified`)."
+              }
             }
           }
         },
