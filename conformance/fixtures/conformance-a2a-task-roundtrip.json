@@ -6,7 +6,7 @@
   "nodes": [
     {
       "id": "a2a-invoke",
-      "typeId": "core.a2a.invoke",
+      "typeId": "core.conformance.a2a-invoke",
       "name": "Invoke A2A peer",
       "position": { "x": 0, "y": 0 },
       "config": {

@@ -104,9 +104,21 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
         { nodeId: 'expose', typeId: 'core.openwop.mcp.expose-tool', config: { name: TOOL, description: 'MRTR conformance tool', inputSchema: { type: 'object', properties: {} } } },
         { nodeId: 'ask', typeId: 'core.openwop.mcp.handle-elicitation', config: { message: 'What is your name?', requestedSchema: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] } } },
       ],
-      edges: [{ from: 'expose', to: 'ask' }],
+      // The sample-workflow seam's registration shape (`nodeId` / `edgeId` /
+      // `sourceNodeId` / `targetNodeId` — the same convention every other leg
+      // posting to `/v1/host/sample/workflows` uses for nodes), NOT the RFC 0013
+      // workflow-CHAIN `{ from, to }` shape this leg posted until 2026-08-16
+      // (S17: the first 2026-07-28 host answered 400 validation_error and the
+      // leg walked on to tools/call for a tool that was never registered).
+      // Note the seam shape differs from the canonical WorkflowDefinition
+      // (`workflow-definition.schema.json` keys nodes and edges by `id`); the
+      // divergence is recorded in host-sample-test-seams.md.
+      edges: [{ edgeId: 'expose-ask', sourceNodeId: 'expose', targetNodeId: 'ask' }],
     });
     if (reg.status === 404 || reg.status === 403) return seamAbsent(`host advertises mcp-2026-07-28 with a server mount but the sample-workflow seam /v1/host/sample/workflows answered ${reg.status}`);
+    // A 4xx here is a SUITE defect (the fixture this leg posts is malformed),
+    // not seam absence and not a host finding — fail loudly at the source.
+    expect(reg.status, driver.describe('host-sample-test-seams.md §"sample workflows"', `the registration fixture MUST be accepted; a 4xx means the fixture this leg posts is malformed (suite defect): ${JSON.stringify(reg.json).slice(0, 200)}`)).toBeLessThan(400);
     const hdr = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': TOOL };
     const first = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: TOOL, arguments: {}, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     if (first.status === 404) return seamAbsent('host advertises an MCP server mount but /v1/host/sample/mcp answered 404');

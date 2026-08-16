@@ -905,3 +905,17 @@ OPTIONAL. Same shape and reason as §22's A2A `invoke`: RFC 0153 §B is about th
 - **Response ≥ 400:** the canonical error envelope — for an unsupported revision, `error.code: "interop_version_unsupported"`, `retriable: false`, `details.protocol: "mcp"`, `details.requested`, `details.supported[]`.
 - **404 / 403:** seam not wired — the header leg reports the requirement as unobservable and therefore `blocked` (RFC 0148 §A).
 - **Non-vacuity:** the seam **MUST** drive the same MCP client the production `ctx.mcp.*` path uses (same `_meta` construction, same header construction); a seam that hand-writes `MCP-Protocol-Version` proves nothing about production. Under the current profile the call **MUST** be stateless — no `initialize` before it.
+
+### 24. Sample-workflow registration — `POST /v1/host/sample/workflows` (used by the MCP server-mount legs, dispatch mapping legs, and the RFC 0153 §C MRTR server half)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/workflows`                                                      |
+| Capability gate           | none of its own — each calling leg gates on the capability it exercises              |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | `dispatch-output-mapping.test.ts`, `mcp-server-*-roundtrip.test.ts`, `mcp-mrtr-roundtrip.test.ts`. **Catalogued 2026-08-16 (S17)** — driven for months without a contract here. |
+
+OPTIONAL. Registers a workflow the host will serve for the duration of the conformance run (an exposed MCP tool/resource/prompt, a dispatch parent, an MRTR suspending tool). The seam accepts the **host's registration shape** — `{ workflowId, nodes: [{ nodeId, typeId, config, inputs? }], edges?: [{ edgeId, sourceNodeId, targetNodeId }] }` — and answers `201 { workflowId, nodeCount }`, `400 validation_error` on a malformed body, `404`/`403` when the seam is not mounted.
+
+> **Recorded divergence.** This shape keys nodes and edges by `nodeId` / `edgeId`; the canonical `workflow-definition.schema.json` keys both by `id`. Every leg posting here has used `nodeId` since the seam existed, so the seam is documented as it behaves rather than as the canonical schema would have it. The RFC 0013 workflow-**chain** vocabulary (`edges: [{ from, to }]`) is NOT accepted here — `mcp-mrtr-roundtrip.test.ts` posted it until 2026-08-16 and the first 2026-07-28 host answered `400`, which the leg then walked past into `tools/call` on a tool that was never registered (S17). A calling leg MUST treat a `4xx` on this registration as a **suite defect** (assert `< 400`), never as seam absence. Aligning the seam to canonical `id` (accepting both during a window) is an open item for the reference host; the corpus does not change the canonical schema for it.
+
