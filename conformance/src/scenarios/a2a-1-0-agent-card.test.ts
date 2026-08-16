@@ -35,6 +35,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { A2AFakePeer } from '../lib/a2a-fake-peer.js';
 
+export const HOST_CALLBACK_NOT_REQUIRED = 'the suite drives both ends itself: it boots the dual-era A2AFakePeer in-process and reads its agent card directly; no host connection is originated';
+
 async function rpc(endpoint: string, method: string, params: unknown, version?: string, id = 1) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (version !== undefined) headers['A2A-Version'] = version;

@@ -77,6 +77,12 @@ Bundle 1 is marked **`invalidated`** per RFC 0148 §D. Three of its five profile
 
 Reissue requires bundle v2 (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked` dispositions with witnesses), and it requires floor sets to exist for every profile a host intends to claim.
 
+## Refinement after the ledger landed (2026-08-16)
+
+The RFC 0148 §A ledger's first end-to-end `--certify` run (acceptance item 2, suite 1.114.0) found that the `openwop-core-standard` floor — `PROFILE_FLOOR_SCENARIOS`, `core-standard-profile.md` §C, RFC 0088 §C, and the generated manifest — had named **`audit-log-verification.test.ts`, a file that has never existed**, since RFC 0088 (2026-05-31). Under the pre-ledger verifier the row could only ever read as "not in `results.passed`", so no core-standard claim in any bundle, historic or current, has ever been substantiated by that verifier — but nothing said *why*, and the reason was a transcription error, not a host defect. The scenario the row meant, `audit-log-integrity.test.ts`, soft-skips unless the host advertises the optional annex profile `openwop-audit-log-integrity`, which §B's predicate does not include; by §C's own membership rule ("no soft-skip, no seam, no env-gate") it was never a floor scenario, and the row is removed rather than renamed. Bundle 1 makes no core-standard claim, so its disposition is unchanged. Any future core-standard row in this inventory is measured against the eight-file floor.
+
+The same run made **83 zero-assertion passes** visible suite-wide against the tier-1 reference host (an `it` that returns early without an `expect` reports as a pass); those are now `executed-pass` rows with `assertionCount: 0` in bundle v2 and are rejected when they sit on a claimed floor (`openwop.floor.pack-registry-publish` does today, so `openwop-node-packs` does not certify on that host). Classifying the remaining zero-assertion legs as `skipped`/`inapplicable`-with-reason is scenario-by-scenario work, tracked in the CHANGELOG entry for 1.114.0.
+
 ## What this changes about RFC 0148
 
 Three consequences the RFC as drafted does not yet capture:

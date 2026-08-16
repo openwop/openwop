@@ -20,6 +20,17 @@
  * Closed v1.x catalog. Adding a profile requires an RFC per
  * `RFCS/0001-rfc-process.md`.
  */
+/**
+ * RFC 0155 §A/§E — deprecated profile aliases, keyed by alias → canonical id.
+ * A certification bundle v2 (`certification-bundle-v2.schema.json`) MUST name
+ * canonical ids in `claimedProfiles`; an alias that also derives goes in
+ * `aliases`, never in `claimedProfiles` — a badge cannot be substantiated by a
+ * name that no longer means what it did.
+ */
+export const DEPRECATED_PROFILE_ALIASES: Readonly<Record<string, string>> = {
+  'openwop-core': 'openwop-discovery-core',
+};
+
 export const PROFILE_NAMES = [
   // RFC 0155 §A (2026-08-16): `openwop-discovery-core` is the CANONICAL name of
   // the discovery predicate; `openwop-core` is its DEPRECATED ALIAS for all of
@@ -498,7 +509,19 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
       'idempotency.test.ts',
       'idempotency-key-determinism.test.ts',
       'webhook-negative.test.ts',
-      'audit-log-verification.test.ts',
+      // Removed 2026-08-16 (S6): since RFC 0088/0089 this list carried
+      // `audit-log-verification.test.ts` — a file that has NEVER existed. The
+      // RFC 0148 §A ledger surfaced it on its first end-to-end `--certify` run
+      // as an unclassified floor requirement. The scenario it meant is
+      // `audit-log-integrity.test.ts`, which soft-skips unless the host
+      // advertises the OPTIONAL annex profile `openwop-audit-log-integrity`
+      // (auth-profiles.md §"Audit-log integrity" — `GET /v1/audit/verify` is
+      // REQUIRED-when-profile-claimed, not a core MUST). §C's membership rule
+      // is "no soft-skip, no seam, no env-gate", and §B's predicate does not
+      // include that profile, so by RFC 0088's own rule the row was never a
+      // floor scenario. Audit-log integrity remains required by
+      // `openwop-production` (PROFILE-DECISION-GUIDE) and certifiable on its
+      // own profile; it is not part of `openwop-core-standard`.
     ],
     requiredAnyPrefix: ['interrupt-'],
   },

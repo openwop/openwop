@@ -4,13 +4,12 @@
   "provenance": {
     "suite": {
       "package": "@openwop/openwop-conformance",
-      "version": "1.113.0"
+      "version": "1.114.0"
     },
     "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
   },
   "floor": {
     "requiredScenarios": [
-      "audit-log-verification.test.ts",
       "auth.test.ts",
       "discovery.test.ts",
       "eventOrdering.test.ts",
@@ -26,7 +25,6 @@
   },
   "requirementIds": [
     "openwop.floor.any.interrupt-",
-    "openwop.floor.audit-log-verification",
     "openwop.floor.auth",
     "openwop.floor.discovery",
     "openwop.floor.eventOrdering",
@@ -417,5 +415,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "7909e1249611473fae9261e8e43f225c461d3488bc0ee471bfe199c38e991377"
+  "digest": "29c522fd6e02f44bbf1d91d2378cbe952b94326452643ecf36f10d2cc87cab4a"
 }

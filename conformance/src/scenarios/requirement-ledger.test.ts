@@ -21,7 +21,7 @@
  * Server-free and always-on.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import {
   DISPOSITIONS,
   CERTIFIABLE,
@@ -30,9 +30,18 @@ import {
   entryOf,
   snapshot,
   resetLedger,
+  suspendSinkForFixtures,
   verifyProfileRequirements,
 } from '../lib/requirement-ledger.js';
 import { allRequirements, requirementsFor } from '../lib/requirement-registry.js';
+
+// This file records REAL requirement ids as fixtures; keep them out of a live
+// --certify ledger sink (they would out-vote genuine dispositions).
+let restoreSink: (() => void) | undefined;
+beforeAll(() => {
+  restoreSink = suspendSinkForFixtures();
+});
+afterAll(() => restoreSink?.());
 
 describe('RFC 0148 §A — requirement execution ledger', () => {
   beforeEach(() => resetLedger());

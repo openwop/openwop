@@ -33,10 +33,13 @@ import { tmpdir } from 'node:os';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from './lib/paths.js';
+import { readLedgerFile } from './lib/requirement-ledger.js';
+import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
 import {
   deriveProfiles,
   isCoreStandard,
   agentPlatformStatus,
+  DEPRECATED_PROFILE_ALIASES,
   type DiscoveryPayload,
 } from './lib/profiles.js';
 
@@ -284,9 +287,14 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   const conformanceRoot = resolvePath(here, '..');
   const reportDir = mkdtempSync(join(tmpdir(), 'owp-certify-'));
   const reportFile = join(reportDir, 'vitest-report.json');
+  // RFC 0148 §A ledger sink (S6): every scenario file records its disposition
+  // (and assertion count) here; the runner reads it after the run so bundle v2
+  // rows come from what scenarios RECORDED, not from per-file pass/fail/skip.
+  const ledgerFile = join(reportDir, 'requirement-ledger.jsonl');
   const env: NodeJS.ProcessEnv = { ...process.env };
   env.OPENWOP_BASE_URL = baseUrl;
   env.OPENWOP_API_KEY = apiKey;
+  env.OPENWOP_LEDGER_PATH = ledgerFile;
   if (args.impl) env.OPENWOP_IMPLEMENTATION_NAME = args.impl;
   if (args.implVersion) env.OPENWOP_IMPLEMENTATION_VERSION = args.implVersion;
 
@@ -307,6 +315,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   }
 
   let report: VitestJsonReport;
+  const ledgerEntries = readLedgerFile(ledgerFile);
   try {
     report = JSON.parse(readFileSync(reportFile, 'utf8')) as VitestJsonReport;
   } catch (err) {
@@ -382,6 +391,20 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   // a large `blocked` count and therefore does NOT certify. That is not a defect
   // in the emitter. It is the true state of the evidence, which v1 was unable to
   // represent and therefore reported as a clean skip.
+  // (d1) RFC 0148 acceptance item 2 — requirement-level dispositions from the
+  // ledger, and rejection of unclassified returns for a claimed profile.
+  const derived = deriveRequirementDispositions(states, ledgerEntries, claimedProfiles);
+  const rejectedProfiles = derived.verdicts.filter((v) => v.unclassified.length > 0);
+  if (rejectedProfiles.length > 0) {
+    process.stderr.write(
+      'openwop-conformance --certify: REJECTING certification — a claimed profile has UNCLASSIFIED floor requirements\n' +
+        '  (no disposition recorded, or an executed-pass with assertionCount 0 — a witness of nothing). RFC 0148 §A\n' +
+        '  resolves an unclassified requirement to `blocked`, never to a pass; the bundle is still written so the\n' +
+        '  evidence is inspectable, but it does not certify and this process exits 3.\n' +
+        rejectedProfiles.map((v) => `  - ${v.profile}: ${v.unclassified.join(', ')}\n`).join(''),
+    );
+  }
+
   if (args.bundleVersion === '2') {
     const scenarioIds = [...passed, ...failed, ...skipped].sort();
     const manifestSha = createHash('sha256').update(scenarioIds.join('\n'), 'utf8').digest('hex');
@@ -392,28 +415,15 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       .update(`${args.baseUrl}\n${sha256}\n${process.env['OPENWOP_REQUIRE_BEHAVIOR'] ?? ''}`, 'utf8')
       .digest('hex');
 
-    const requirements = [
-      ...passed.map((f) => ({
-        requirementId: `openwop.scenario.${f.replace(/\.test\.ts$/, '')}`,
-        scenarioId: f,
-        disposition: 'executed-pass' as const,
-      })),
-      ...failed.map((f) => ({
-        requirementId: `openwop.scenario.${f.replace(/\.test\.ts$/, '')}`,
-        scenarioId: f,
-        disposition: 'executed-fail' as const,
-        detail: 'the scenario executed and failed',
-      })),
-      ...skipped.map((f) => ({
-        requirementId: `openwop.scenario.${f.replace(/\.test\.ts$/, '')}`,
-        scenarioId: f,
-        disposition: 'blocked' as const,
-        detail:
-          'runner cannot classify a skipped file: the RFC 0148 §A requirement ledger is not ' +
-          'populated during a run, so skipped/inapplicable/blocked are indistinguishable here. ' +
-          '§A resolves an unclassifiable requirement to `blocked`, never to a pass.',
-      })),
-    ];
+    // Rows come from the ledger (S6). A file that recorded nothing is
+    // `blocked` — unclassified — and, if it sits on a claimed floor, rejected above.
+    const requirements = derived.requirements.map((r) => ({
+      requirementId: r.requirementId,
+      scenarioId: r.scenarioId,
+      disposition: r.disposition,
+      ...(r.detail === undefined ? {} : { detail: r.detail }),
+      ...(r.assertionCount === undefined ? {} : { assertionCount: r.assertionCount }),
+    }));
 
     const v2 = {
       bundleVersion: '2' as const,
@@ -422,15 +432,15 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       suite: { package: '@openwop/openwop-conformance' as const, version },
       host,
       discovery: { url: discoveryUrl, sha256, document },
-      claimedProfiles,
+      // RFC 0155 §E: canonical ids only in `claimedProfiles`; a deprecated
+      // alias that also derives (`openwop-core`, always alongside
+      // `openwop-discovery-core`) is reported in `aliases`, never as a claim.
+      claimedProfiles: claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)),
+      ...(claimedProfiles.some((p) => p in DEPRECATED_PROFILE_ALIASES)
+        ? { aliases: claimedProfiles.filter((p) => p in DEPRECATED_PROFILE_ALIASES) }
+        : {}),
       results: {
-        totals: {
-          executedPass: passed.length,
-          executedFail: failed.length,
-          skipped: 0,
-          inapplicable: 0,
-          blocked: skipped.length,
-        },
+        totals: derived.totals,
         requirements,
       },
       scenarioManifestSha256: manifestSha,
@@ -454,16 +464,14 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     process.stdout.write(
       `openwop-conformance --certify: wrote bundle v2 to ${outPath}\n` +
         `  host: ${host.name}@${host.version}\n` +
-        `  executed-pass ${passed.length} / executed-fail ${failed.length} / blocked ${skipped.length}\n` +
-        (skipped.length > 0
-          ? `  NOTE: ${skipped.length} requirement(s) are 'blocked', not 'skipped'. The runner cannot\n` +
-            `  classify a skipped file until scenarios record into the RFC 0148 §A ledger, and §A\n` +
-            `  resolves an unclassifiable requirement to 'blocked' rather than to a pass. A bundle\n` +
-            `  with blocked > 0 does NOT certify — that is the true state of the evidence, not a\n` +
-            `  defect in this emitter.\n`
-          : ''),
+        `  executed-pass ${derived.totals.executedPass} / executed-fail ${derived.totals.executedFail} / skipped ${derived.totals.skipped} / inapplicable ${derived.totals.inapplicable} / blocked ${derived.totals.blocked}\n` +
+        (derived.ledgerPresent
+          ? `  dispositions come from the RFC 0148 §A ledger (${ledgerEntries.length} entries recorded by the scenarios)\n`
+          : `  NOTE: no ledger was recorded — every skipped file is 'blocked' (unclassifiable), which is the honest reading\n`) +
+        (derived.totals.blocked > 0 ? `  a bundle with blocked > 0 does NOT certify — that is the state of the evidence, not a defect in this emitter\n` : '') +
+        derived.verdicts.map((v) => `  ${v.profile}: ${v.certifiable ? 'certifiable' : 'NOT certifiable'}${v.unclassified.length > 0 ? ` (unclassified: ${v.unclassified.length})` : ''}\n`).join(''),
     );
-    process.exit(failed.length > 0 ? 1 : 0);
+    process.exit(rejectedProfiles.length > 0 ? 3 : failed.length > 0 ? 1 : 0);
   }
 
   // (e) Validate against the bundle schema BEFORE writing.
@@ -489,8 +497,10 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       `  results: ${passed.length} passed / ${failed.length} failed / ${skipped.length} skipped\n`,
   );
   // Exit code mirrors the suite outcome: a failing run still produces a bundle
-  // (the failures are recorded), but the process exit reflects pass/fail.
-  process.exit(failed.length > 0 ? 1 : 0);
+  // (the failures are recorded), but the process exit reflects pass/fail — and
+  // 3 when a claimed profile has unclassified floor requirements (RFC 0148 §A;
+  // v1 bundles cannot express the distinction, so the exit code carries it).
+  process.exit(rejectedProfiles.length > 0 ? 3 : failed.length > 0 ? 1 : 0);
 }
 
 async function main(): Promise<never> {

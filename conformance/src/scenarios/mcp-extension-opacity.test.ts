@@ -26,6 +26,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 
+export const REQUIRES_HOST_CALLBACK = "the host issues MCP JSON-RPC calls to the suite's fake server via /v1/host/sample/mcp/invoke (serverUrl), which the server records";
+
 const META_V = 'io.modelcontextprotocol/protocolVersion';
 const META_C = 'io.modelcontextprotocol/clientCapabilities';
 interface McpCaps { readonly supported?: boolean; readonly protocolVersions?: readonly string[]; readonly profiles?: readonly string[]; readonly serverMount?: { supported?: boolean } }
