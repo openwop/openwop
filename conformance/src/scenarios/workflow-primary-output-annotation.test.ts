@@ -20,38 +20,25 @@
 import { describe, it, expect } from 'vitest';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 
 function compileWorkflowDefinition(): ReturnType<Ajv2020['compile']> {
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   addFormats(ajv);
-  // Register cross-file `$ref` targets — same pattern as
-  // `fixtures-valid.test.ts`. Without these, Ajv throws
-  // `missingRef` when compiling `workflow-definition.schema.json`
-  // because it references agent-ref + prompt-ref by URL.
-  const agentRefSchema = JSON.parse(
-    readFileSync(join(SCHEMAS_DIR, 'agent-ref.schema.json'), 'utf8'),
-  ) as Record<string, unknown>;
-  const promptRefSchema = JSON.parse(
-    readFileSync(join(SCHEMAS_DIR, 'prompt-ref.schema.json'), 'utf8'),
-  ) as Record<string, unknown>;
-  const promptKindSchema = JSON.parse(
-    readFileSync(join(SCHEMAS_DIR, 'prompt-kind.schema.json'), 'utf8'),
-  ) as Record<string, unknown>;
-  ajv.addSchema(agentRefSchema, 'agent-ref.schema.json');
-  ajv.addSchema(promptRefSchema, 'prompt-ref.schema.json');
-  ajv.addSchema(promptRefSchema, './prompt-ref.schema.json');
-  ajv.addSchema(promptKindSchema, 'prompt-kind.schema.json');
-  ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
-  const compensationPolicySchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'compensation-policy.schema.json'), 'utf8'));
-  ajv.addSchema(compensationPolicySchema, 'compensation-policy.schema.json');
-  ajv.addSchema(compensationPolicySchema, './compensation-policy.schema.json');
-  const schema = JSON.parse(
-    readFileSync(join(SCHEMAS_DIR, 'workflow-definition.schema.json'), 'utf8'),
-  ) as Record<string, unknown>;
-  return ajv.compile(schema);
+  // Register EVERY schema in the corpus (S14, 2026-08-16) — a fixed ref list is
+  // a claim about the schema graph that nothing keeps true; the fourth cross-file
+  // `$ref` (#1009) broke the previous list at describe time.
+  for (const file of readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.schema.json'))) {
+    const s = JSON.parse(readFileSync(join(SCHEMAS_DIR, file), 'utf8')) as Record<string, unknown>;
+    ajv.addSchema(s, file);
+    ajv.addSchema(s, `./${file}`);
+  }
+  return (
+    ajv.getSchema('workflow-definition.schema.json') ??
+    ajv.compile(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'workflow-definition.schema.json'), 'utf8')) as Record<string, unknown>)
+  );
 }
 
 /** Build the minimal-required shape of a WorkflowDefinition. Tests

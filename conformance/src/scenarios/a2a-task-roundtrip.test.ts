@@ -104,7 +104,7 @@ async function rpc(
 }
 
 describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
-  it('AgentCard exposes protocolVersion + skills; message/send + tasks/get round-trip per A2A v0.3 JSON-RPC', async () => {
+  it('AgentCard exposes a protocol version (0.3 top-level or 1.0 per-interface) + skills; message/send + tasks/get round-trip per A2A v0.3 JSON-RPC', async () => {
     const probe = probePeer();
     if (!probe) {
       // eslint-disable-next-line no-console
@@ -125,18 +125,30 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
       skills?: ReadonlyArray<{ id?: string; name?: string }>;
       url?: string;
       additionalInterfaces?: ReadonlyArray<{ url?: string; transport?: string }>;
+      // A2A 1.0 (RFC 0152 §C): the version is per interface and the top-level
+      // `url`/`protocolVersion` are gone. A dual-era peer (the suite's own, since
+      // 1.112.0, and any real 1.0 peer) serves THIS shape while still speaking
+      // 0.3 to a header-less request — which is what this leg exercises.
+      supportedInterfaces?: ReadonlyArray<{ url?: string; protocolBinding?: string; protocolVersion?: string }>;
     };
-    expect(typeof cardJson.protocolVersion).toBe('string');
+    const advertisedVersion =
+      cardJson.protocolVersion ??
+      cardJson.supportedInterfaces?.find((i) => typeof i.protocolVersion === 'string')?.protocolVersion;
+    expect(
+      typeof advertisedVersion,
+      'the card MUST advertise a protocol version — top-level (0.3) or per interface (1.0)',
+    ).toBe('string');
     expect(Array.isArray(cardJson.skills)).toBe(true);
     expect((cardJson.skills ?? []).length).toBeGreaterThan(0);
 
-    // Find the JSON-RPC transport endpoint. A2A v0.3 hosts MAY advertise
-    // multiple transports via `additionalInterfaces`; we pick the first
-    // JSONRPC entry, falling back to `card.url`.
+    // Find the JSON-RPC transport endpoint: 1.0 `supportedInterfaces[]`
+    // (`protocolBinding: "JSONRPC"`), else 0.3 `additionalInterfaces[]`
+    // (`transport: "JSONRPC"`), else 0.3 `card.url`.
+    const jsonrpc10 = (cardJson.supportedInterfaces ?? []).find((i) => i.protocolBinding === 'JSONRPC');
     const jsonrpcIface = (cardJson.additionalInterfaces ?? []).find(
       (i) => i.transport === 'JSONRPC',
     );
-    const rpcUrl = jsonrpcIface?.url ?? cardJson.url ?? `${probe.url}/a2a/jsonrpc`;
+    const rpcUrl = jsonrpc10?.url ?? jsonrpcIface?.url ?? cardJson.url ?? `${probe.url}/a2a/jsonrpc`;
     expect(typeof rpcUrl).toBe('string');
 
     if (probe.isReal) {

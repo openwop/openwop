@@ -24,29 +24,22 @@ const PROMPT_TEMPLATE_SCHEMA_PATH = join(SCHEMAS_DIR, 'prompt-template.schema.js
 describe('fixtures: workflow-definition schema validity', () => {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
-  // Pre-load peer schemas that workflow-definition cross-`$ref`s:
-  //   - agent-ref.schema.json — `WorkflowNode.agent` (Phase 1 multi-agent)
-  //   - prompt-ref.schema.json — `WorkflowDefinition.defaults.promptRefs.*`
-  //     (RFC 0029 §B resolution-chain layer 3)
-  //   - prompt-kind.schema.json — transitively referenced by prompt-ref's
-  //     object form when validating PromptRef variants
-  //   - compensation-policy.schema.json — `WorkflowSettings.compensation`
-  //     (RFC 0151 §B, the workflow-level unwind policy)
-  // Register each under both the canonical $id and the relative file
-  // name so Ajv resolves either way the host schema spelled the ref.
-  const agentRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'agent-ref.schema.json'), 'utf8'));
-  const compensationPolicySchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'compensation-policy.schema.json'), 'utf8'));
-  ajv.addSchema(compensationPolicySchema, 'compensation-policy.schema.json');
-  ajv.addSchema(compensationPolicySchema, './compensation-policy.schema.json');
-  const promptRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-ref.schema.json'), 'utf8'));
-  const promptKindSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-kind.schema.json'), 'utf8'));
-  ajv.addSchema(agentRefSchema, 'agent-ref.schema.json');
-  ajv.addSchema(promptRefSchema, 'prompt-ref.schema.json');
-  ajv.addSchema(promptRefSchema, './prompt-ref.schema.json');
-  ajv.addSchema(promptKindSchema, 'prompt-kind.schema.json');
-  ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
-  const schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf8'));
-  const validate = ajv.compile(schema);
+  // Pre-load EVERY schema in the corpus (S14, 2026-08-16). This used to be a
+  // fixed list of the peer schemas workflow-definition cross-`$ref`s (agent-ref,
+  // prompt-ref, prompt-kind) — and when `compensation-policy.schema.json` became
+  // the fourth cross-file `$ref` (#1009), `ajv.compile` threw at describe time
+  // here and in every downstream runner that resolves the sibling corpus with a
+  // pinned suite. A fixed list is a claim about the schema graph that nothing
+  // keeps true; enumerating the directory is not. Each schema is registered
+  // under both its bare file name and `./<name>` so Ajv resolves either spelling
+  // of a relative ref (canonical `$id`s resolve on their own).
+  for (const file of readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.schema.json'))) {
+    const s = JSON.parse(readFileSync(join(SCHEMAS_DIR, file), 'utf8')) as { $id?: string };
+    ajv.addSchema(s, file);
+    ajv.addSchema(s, `./${file}`);
+  }
+  // The root schema is already registered under its $id above; compile via getSchema.
+  const validate = ajv.getSchema('workflow-definition.schema.json') ?? ajv.compile(JSON.parse(readFileSync(SCHEMA_PATH, 'utf8')));
 
   const files = readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith('.json')) // top-level only — sub-dirs hold non-workflow fixtures

@@ -181,7 +181,15 @@ async function maybeStartA2AFakePeer(): Promise<void> {
   }
   const portEnv = process.env.OPENWOP_A2A_FAKE_PEER_PORT;
   const requestedPort = portEnv ? Number(portEnv) : 0;
-  const peer = new A2AFakePeer();
+  // Dual-era since 1.112.0. Order = card shape for a header-less GET (first
+  // wins); both eras are spoken on the RPC path. Default keeps the 0.3 card so
+  // today's 0.3 clients (which read `card.url`) keep working; set
+  // OPENWOP_A2A_FAKE_PEER_VERSIONS=1.0,0.3 to serve the 1.0 card by default.
+  const versionsEnv = process.env.OPENWOP_A2A_FAKE_PEER_VERSIONS;
+  const versions = versionsEnv
+    ? (versionsEnv.split(',').map((v) => v.trim()).filter((v) => v === '1.0' || v === '0.3') as Array<'1.0' | '0.3'>)
+    : undefined;
+  const peer = new A2AFakePeer(versions && versions.length > 0 ? { protocolVersions: versions } : undefined);
   await peer.start(requestedPort);
   setA2AFakePeer(peer);
   // eslint-disable-next-line no-console
