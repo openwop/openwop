@@ -34,6 +34,7 @@ import {
   type BundleV2Like,
   type BundleV2Requirement,
 } from '../lib/certification-bundle-verify.js';
+import { UNCLASSIFIED_RETURN_DETAIL } from '../lib/soft-skip.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'server-free: verifies bundle documents built in-process; no host is contacted';
 
@@ -128,6 +129,14 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const v = verifyBundleV2(bundle(rows));
     expect(v.evidenceValid).toBe(false);
     expect(v.profiles[0]?.rejections[0]?.kind).toBe('vacuous-pass');
+  });
+
+  it("the emitter's §A resolution of a silent zero-assertion file (blocked + marker detail) on a required row REJECTS as unwitnessed", () => {
+    const rows = witnessedRows();
+    rows[0] = { requirementId: (rows[0] as BundleV2Requirement).requirementId, scenarioId: (rows[0] as BundleV2Requirement).scenarioId, disposition: 'blocked', detail: UNCLASSIFIED_RETURN_DETAIL, assertionCount: 0 };
+    const v = verifyBundleV2(bundle(rows));
+    expect(v.evidenceValid).toBe(false);
+    expect(v.profiles[0]?.rejections.map((r) => r.kind)).toEqual(['unwitnessed-requirement']);
   });
 
   it('missing-floor: a required requirement with no row at all REJECTS (unwitnessed), never "not certified"', () => {

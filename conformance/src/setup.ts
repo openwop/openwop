@@ -34,6 +34,7 @@ import { afterAll, afterEach, beforeAll, expect } from 'vitest';
 import { basename } from 'node:path';
 import { recordRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
 import { fileDisposition, requirementIdForFile, type FileTestState } from './lib/scenario-disposition.js';
+import { softSkipDisposition, UNCLASSIFIED_RETURN_DETAIL } from './lib/soft-skip.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
 
 const SUITE_INIT_TIMEOUT_MS = 5_000;
@@ -271,7 +272,23 @@ afterAll(({}, suite) => {
       ? 'skipped'
       : undefined;
   const assertionCount = _fileAssertions.get(file) ?? 0;
-  const { disposition, detail } = fileDisposition(states, gateReason, assertionCount);
+  let { disposition, detail } = fileDisposition(states, gateReason, assertionCount);
+  // RFC 0148 §A: a pass with zero assertions is an unclassified return. If the
+  // file said why (softSkip), that is its disposition; if it said nothing, the
+  // runner resolves it to `blocked` with the marker detail — never to a pass.
+  // Floors still REJECT that row (scenario-disposition treats the marker as
+  // unclassified), so the honest bundle row and the pressure to say why both
+  // survive. Real assertions always mean executed-pass.
+  if (disposition === 'executed-pass' && assertionCount === 0) {
+    const noted = softSkipDisposition(file);
+    if (noted !== null) {
+      disposition = noted.kind;
+      detail = noted.reason;
+    } else {
+      disposition = 'blocked';
+      detail = UNCLASSIFIED_RETURN_DETAIL;
+    }
+  }
   try {
     recordRequirement(requirementIdForFile(file), disposition, detail, { assertionCount });
   } catch {

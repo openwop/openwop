@@ -24,6 +24,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 
@@ -43,7 +44,7 @@ describe('artifact-type-store-without-render: store-only hosts must not fail the
     // Only meaningful for a host that stores but does NOT render.
     // NOT a behaviorGate: this is a SHAPE precondition, not advertise-and-skip. A host that
     // renders is not failing to implement anything — this scenario simply does not apply to it.
-    if (cap?.['store'] !== true || cap?.['render'] !== false) return; // scenario inapplicable
+    if (cap?.['store'] !== true || cap?.['render'] !== false) return softSkip('inapplicable', 'host does not advertise artifactTypes { store: true, render: false } — the store-without-render shape is not this host\'s');
 
     const { artifactTypeId, manifest, schema } = sampleArtifactTypePack();
     if (!behaviorGate(PROFILE, (await installArtifactTypePack(manifest, { [artifactTypeId]: schema })) !== null)) return;

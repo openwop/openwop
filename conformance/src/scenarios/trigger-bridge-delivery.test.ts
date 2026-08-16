@@ -28,6 +28,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import {
@@ -52,11 +53,11 @@ function expectContentFree(payload: Record<string, unknown>, where: string): voi
 describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
   it('de-dups by dedupKey, retries to dead-letter, and links delivery→run causation', async () => {
     if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
-    if (!(await isEventLogSeamAvailable())) return; // event-log seam absent — soft-skip
+    if (!(await isEventLogSeamAvailable())) return seamAbsent('host advertises openwop-trigger-bridge but the event-log seam is absent');
 
     // ---- Leg 1: dedup → effectively-once (§C-1) ---------------------------
     const dedup = await driveDelivery({ scenario: 'dedup', dedupKey: 'conformance-dedup-key', source: 'queue' });
-    if (dedup === null) return; // delivery seam unwired — soft-skip the whole behavioral suite
+    if (dedup === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
 
     // The profile is derived AND the seam is wired — missing evidence is a
     // FAILURE, not a soft-skip. A repeated dedupKey MUST be effectively-once:

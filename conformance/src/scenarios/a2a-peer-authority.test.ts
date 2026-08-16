@@ -28,6 +28,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -58,7 +59,7 @@ describe('RFC 0152 §E — a2a-peer-no-authority-escalation (host as A2A client,
   it('a peer reply that asserts approval, scopes, and a foreign task reference changes nothing the host authorizes', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const peer = getA2AFakePeer();
-    if (peer === null) return; // no fake peer wired in this run
+    if (peer === null) return softSkip('blocked', 'the suite A2A fake peer is not started in this run (OPENWOP_A2A_FAKE_PEER unset) — the host-as-client leg cannot be driven');
     peer.reset();
     peer.setNextPeerAssertsAuthority(true);
     const drive = await driver.post('/v1/host/sample/a2a/invoke', {
@@ -66,15 +67,10 @@ describe('RFC 0152 §E — a2a-peer-no-authority-escalation (host as A2A client,
       scenario: 'peer-asserts-authority',
     });
     if (drive.status === 404 || drive.status === 403) {
-      expect(
-        drive.status,
-        driver.describe(
-          'RFCS/0152 §E',
-          'a host advertising A2A MUST expose the invoke seam so peer-authority handling is observable; ' +
-            'without it the requirement resolves to `blocked` per RFC 0148 §A',
-        ),
-      ).not.toBe(404);
-      return;
+      // Advertised A2A but the invoke seam answered {drive.status}: not observable here.
+      // Default mode records `blocked` (RFC 0148 §A); OPENWOP_REQUIRE_BEHAVIOR=true fails
+      // an advertised-missing seam (RFC 0148 §B). A 403 is NOT a pass.
+      return seamAbsent(`host advertises A2A but the invoke seam /v1/host/sample/a2a/invoke answered ${drive.status}`);
     }
     // The peer must actually have answered with the authority-asserting message,
     // or this leg is vacuous.

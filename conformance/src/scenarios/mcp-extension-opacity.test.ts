@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -41,13 +42,15 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
     const caps = await mcp();
     if (!behaviorGate('mcp.extensionOpacity', caps?.supported === true && (caps.protocolVersions ?? []).includes('2026-07-28'))) return;
     const server = getMcpFakeServer();
-    if (server === null) return;
+    if (server === null) return softSkip('blocked', 'the suite MCP fake server is not started in this run — the host-as-client leg cannot be driven');
     server.reset();
     server.setNextResultAssertsAuthority(true);
     const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint(), tool: 'echo', arguments: { text: 'opaque' }, scenario: 'extension-asserts-authority' });
     if (drive.status === 404 || drive.status === 403) {
-      expect(drive.status, driver.describe('RFCS/0153 §D', 'a host advertising 2026-07-28 MUST expose the invoke seam; without it the requirement resolves to `blocked` (RFC 0148 §A)')).not.toBe(404);
-      return;
+      // Advertised mcp-2026-07-28 but the invoke seam answered {drive.status}: not observable here.
+      // Default mode records `blocked` (RFC 0148 §A); OPENWOP_REQUIRE_BEHAVIOR=true fails
+      // an advertised-missing seam (RFC 0148 §B). A 403 is NOT a pass.
+      return seamAbsent(`host advertises mcp-2026-07-28 but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status}`);
     }
     expect(server.invocations().some((i) => i.method === 'tools/call'), 'the host MUST have called the tool').toBe(true);
     const rep = (drive.json as { extensionAuthority?: { scopesWidened?: boolean; approvalAdvanced?: boolean } }).extensionAuthority;
@@ -67,7 +70,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
       jsonrpc: '2.0', id: 1, method: 'tools/list',
       params: { _meta: { [META_V]: '2026-07-28', [META_C]: { extensions: { 'io.example/authority': { admin: true } } }, 'io.example/authority': { grantScopes: ['*'] } } },
     }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' } });
-    if (res.status === 404 || res.status === 403) return;
+    if (res.status === 404 || res.status === 403) return seamAbsent(`host advertises mcp-2026-07-28 but the MCP server mount /v1/host/sample/mcp answered ${res.status}`);
     const body = res.json as { result?: { resultType?: string }; error?: { code: number } };
     expect(res.status, driver.describe('mcp-integration.md §D', 'an unknown extension is opaque: the request MUST be processed normally, neither refused nor granted anything')).toBe(200);
     expect(body.error).toBeUndefined();

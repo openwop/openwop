@@ -28,6 +28,7 @@
 
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
 import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
+import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-ledger.js';
 
 /** All scenario basenames that appear in some profile's runtime floor. */
@@ -218,7 +219,12 @@ export function deriveRequirementDispositions(
       // VACUOUS pass — executed-pass with assertionCount 0 is a witness of nothing
       // (RFC 0148 §A: "a required behavior MUST NOT be certified without a target
       // execution witness"), so for a claimed floor it counts as unclassified.
-      const vacuous = r !== undefined && r.disposition === 'executed-pass' && r.assertionCount === 0;
+      const vacuous =
+        r !== undefined &&
+        ((r.disposition === 'executed-pass' && r.assertionCount === 0) ||
+          // the runner's own §A resolution of a zero-assertion file that noted no
+          // reason: honest as a row, still an unclassified return for a floor
+          (r.disposition === 'blocked' && r.detail === UNCLASSIFIED_RETURN_DETAIL));
       // With a ledger present, ANY floor row that did not come from the ledger is
       // unclassified: silence is evidence of nothing (RFC 0148 §A). Without a
       // ledger only report-blocked rows are unclassified (the pre-S6 reading).
