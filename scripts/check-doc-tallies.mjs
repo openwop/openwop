@@ -10,8 +10,11 @@
  *      advisory) as stated in SECURITY.md §8 and the README banner;
  *   2. the number of scenario files under conformance/src/scenarios/ as stated
  *      twice in conformance/README.md.
+ *   3. the security-response SLA numbers (RFC 0156 §G: one source,
+ *      `SECURITY/response-sla.json`) as stated in the SECURITY.md §3 table and
+ *      the GOVERNANCE.md §Security restatement.
  * `generate-protocol-status.mjs` already gates the RFC and spec-doc counts;
- * this script gates the two it does not. It reads the live tree, extracts the
+ * this script gates the ones it does not. It reads the live tree, extracts the
  * stated numbers with anchored regexes (so a paragraph rewrite that drops the
  * phrase fails loudly rather than silently passing), and exits 1 on any
  * mismatch with the exact fix.
@@ -51,6 +54,20 @@ check('protocol-tier', rdM ? Number(rdM[2]) : null, tiers.protocol, 'README.md')
 check('reference-impl-tier', rdM ? Number(rdM[3]) : null, tiers['reference-impl'], 'README.md');
 check('advisory', rdM ? Number(rdM[4]) : null, tiers.advisory, 'README.md');
 
+// 3. security-response SLA — one source, two prose surfaces
+const sla = JSON.parse(read('SECURITY/response-sla.json'));
+const slaTable = sec.match(/\| Acknowledgment of receipt[^\n]*\*\*(\d+) business days\*\*[\s\S]*?\| Initial triage[^\n]*\*\*(\d+) business days\*\*[\s\S]*?\| Remediation timeline communication[^\n]*\*\*(\d+) business days\*\* from triage[\s\S]*?\| Coordinated disclosure[^\n]*\*\*(\d+) days\*\*/);
+check('SLA acknowledgment', slaTable ? Number(slaTable[1]) : null, sla.acknowledgmentBusinessDays, 'SECURITY.md §3');
+check('SLA triage', slaTable ? Number(slaTable[2]) : null, sla.triageBusinessDays, 'SECURITY.md §3');
+check('SLA remediation timeline', slaTable ? Number(slaTable[3]) : null, sla.remediationTimelineBusinessDaysFromTriage, 'SECURITY.md §3');
+check('SLA disclosure', slaTable ? Number(slaTable[4]) : null, sla.coordinatedDisclosureDays, 'SECURITY.md §3');
+const gov = read('GOVERNANCE.md');
+const govM = gov.match(/acknowledgment within (\d+) business days, triage within (\d+), remediation timeline within (\d+) business days of triage, (\d+)-day coordinated disclosure/);
+check('SLA acknowledgment', govM ? Number(govM[1]) : null, sla.acknowledgmentBusinessDays, 'GOVERNANCE.md §Security');
+check('SLA triage', govM ? Number(govM[2]) : null, sla.triageBusinessDays, 'GOVERNANCE.md §Security');
+check('SLA remediation timeline', govM ? Number(govM[3]) : null, sla.remediationTimelineBusinessDaysFromTriage, 'GOVERNANCE.md §Security');
+check('SLA disclosure', govM ? Number(govM[4]) : null, sla.coordinatedDisclosureDays, 'GOVERNANCE.md §Security');
+
 // 2. scenario file count
 const scenarioCount = readdirSync(resolve(ROOT, 'conformance/src/scenarios')).filter((f) => f.endsWith('.test.ts')).length;
 const cr = read('conformance/README.md');
@@ -62,7 +79,7 @@ check('scenario files (footer)', c2 ? Number(c2[1]) : null, scenarioCount, 'conf
 if (failures.length > 0) {
   console.error('doc tallies DISAGREE with the tree:');
   for (const f of failures) console.error(`  - ${f}`);
-  console.error(`tree: invariants ${tiers.total} (${tiers.protocol} protocol / ${tiers['reference-impl']} reference-impl / ${tiers.advisory} advisory); ${scenarioCount} scenario files`);
+  console.error(`tree: invariants ${tiers.total} (${tiers.protocol} protocol / ${tiers['reference-impl']} reference-impl / ${tiers.advisory} advisory); ${scenarioCount} scenario files; SLA ${sla.acknowledgmentBusinessDays}/${sla.triageBusinessDays}/${sla.remediationTimelineBusinessDaysFromTriage} business days, ${sla.coordinatedDisclosureDays}-day disclosure (SECURITY/response-sla.json)`);
   process.exit(1);
 }
-console.log(`=== check-doc-tallies OK — SECURITY.md / README.md / conformance/README.md agree with the tree (invariants ${tiers.total}: ${tiers.protocol}/${tiers['reference-impl']}/${tiers.advisory}; ${scenarioCount} scenario files) ===`);
+console.log(`=== check-doc-tallies OK — SECURITY.md / README.md / conformance/README.md / GOVERNANCE.md agree with the tree (invariants ${tiers.total}: ${tiers.protocol}/${tiers['reference-impl']}/${tiers.advisory}; ${scenarioCount} scenario files; SLA ${sla.acknowledgmentBusinessDays}/${sla.triageBusinessDays}/${sla.remediationTimelineBusinessDaysFromTriage}/${sla.coordinatedDisclosureDays}) ===`);

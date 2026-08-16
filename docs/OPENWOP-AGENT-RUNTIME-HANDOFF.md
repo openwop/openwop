@@ -1,5 +1,7 @@
 # Handoff — Agent Packs, the (missing) Agent Registry, and the case for a best-in-class agent runtime
 
+**Status:** ARCHIVED — a dated 2026-05-26 handoff note; the agent runtime it argued for landed as RFC 0070/0072 (`Accepted`) and the "best-in-class" language below is that note's aspiration, not a claim the corpus makes (RFC 0147 §A). Preserved for traceability.
+
 Date: 2026-05-26
 From: a sibling Claude Code session (analysis pass)
 To: the next session that picks up agent work

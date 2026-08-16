@@ -48,7 +48,7 @@ The SLA applies to good-faith reports from any reporter. The maintainer set MAY 
 
 If the SLA cannot be met because the maintainer set is too small or under unusual load, the reporter is notified before the deadline with a revised timeline.
 
-**This table is the single security-response commitment of the project** (RFC 0147 §I). `GOVERNANCE.md` §"Security" and `MAINTAINERS.md` §"Maintainer expectations" defer to it rather than restating it; the maintainer set is currently one person (`MAINTAINERS.md`), so the "revised timeline" clause above is the operationally honest reading of a firm SLA held by a single maintainer — it does not lower the target, it names who is accountable for it and what happens when it slips.
+**This table is the single security-response commitment of the project** (RFC 0147 §I), and its numbers are sourced from `SECURITY/response-sla.json` (RFC 0156 §G) — `scripts/check-doc-tallies.mjs` fails when this table or `GOVERNANCE.md` §Security drifts from that file. `GOVERNANCE.md` §"Security" and `MAINTAINERS.md` §"Maintainer expectations" defer to it rather than restating it; the maintainer set is currently one person (`MAINTAINERS.md`), so the "revised timeline" clause above is the operationally honest reading of a firm SLA held by a single maintainer — it does not lower the target, it names who is accountable for it and what happens when it slips.
 
 ## 4. Coordinated disclosure
 

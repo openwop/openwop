@@ -170,6 +170,9 @@ echo "[6/7] Security invariants..."
 # scenario-file counts in conformance/README) must agree with the tree; the
 # part of "documents agree" that is a number is checked here, not asserted.
 node "$(dirname "$0")/check-doc-tallies.mjs"
+# RFC 0156 §F — the assurance manifest is current AND no public surface carries
+# a claim token the manifest does not permit (RFC 0147 §A claim table).
+node "$(dirname "$0")/generate-assurance-status.mjs" --check
 echo
 
 # 7. Published-layout collection — every scenario must LOAD in the tarball
