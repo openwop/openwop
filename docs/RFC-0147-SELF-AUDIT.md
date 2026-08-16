@@ -221,7 +221,9 @@ Registering the fuller name against this evidence would be the overclaim the
 program exists to stop, so the narrower name is registered and the difference is
 recorded here.
 
-**Twelve remain named-but-unregistered**, because no test genuinely exercises them
+**Update 2026-08-16 (later the same week): six more registered** once the first A2A 1.0 / MCP 2026-07-28 host (openwop-app ADR 0552 P2 / 0553 P2) let each be driven non-vacuously with the suite's fake peer/server under `OPENWOP_REQUIRE_BEHAVIOR=true`: `a2a-card-runtime-consistent`, `a2a-peer-no-authority-escalation`, `mcp-cache-tenant-scoped` (label honesty across two credentials), `mcp-extension-no-authority`, `mcp-peer-no-authority-escalation`, and `mcp-header-body-consistent` (both halves — the method/name half needed a new leg in `mcp-stateless-request.test.ts`). Each entry's note says exactly what the wire witnesses. **Six remain named-but-unregistered** (the three RFC 0151 rows — no host issues inverse effects yet; the three RFC 0154 rows — no scope decision to observe, provenance≠authorization is behavioural, attestations span sibling repos).
+
+**Twelve remained named-but-unregistered as of 2026-08-13**, because no test genuinely exercised them
 and registering an invariant against a test that does not verify it is worse than
 leaving it out — it converts a known gap into an apparent guarantee:
 
@@ -230,12 +232,12 @@ leaving it out — it converts a known gap into an apparent guarantee:
 | 0151 | `compensation-effect-id-retry-stable` | needs a host issuing inverse effects |
 | 0151 | `compensation-tenant-authority-bound` | needs authority checks on a live unwind |
 | 0151 | `compensation-input-recorded-facts-only` | schema constrains shape, not provenance of values |
-| 0152 | `a2a-card-runtime-consistent` | needs agent-card resolution against a live runtime |
-| 0152 | `a2a-peer-no-authority-escalation` | needs a peer attempting escalation |
-| 0153 | `mcp-cache-tenant-scoped` | needs a multi-tenant cache to probe |
-| 0153 | `mcp-extension-no-authority` | needs extension negotiation |
-| 0153 | `mcp-header-body-consistent` | partially covered; the body half is unexercised |
-| 0153 | `mcp-peer-no-authority-escalation` | as 0152 |
+| 0152 | `a2a-card-runtime-consistent` | ~~needs agent-card resolution against a live runtime~~ **registered 2026-08-16** |
+| 0152 | `a2a-peer-no-authority-escalation` | ~~needs a peer attempting escalation~~ **registered 2026-08-16** |
+| 0153 | `mcp-cache-tenant-scoped` | ~~needs a multi-tenant cache to probe~~ **registered 2026-08-16** |
+| 0153 | `mcp-extension-no-authority` | ~~needs extension negotiation~~ **registered 2026-08-16** |
+| 0153 | `mcp-header-body-consistent` | ~~partially covered; the body half is unexercised~~ **registered 2026-08-16** |
+| 0153 | `mcp-peer-no-authority-escalation` | ~~as 0152~~ **registered 2026-08-16** |
 | 0154 | `delegation-no-scope-amplification` | needs a scope decision to observe |
 | 0154 | `delegation-provenance-not-authorization` | the R12 rule; behavioral and unenforceable by schema |
 | 0154 | `provenance-attestation-digest-bound` | §E attestations span `openwop-sdks` and `openwop-registry` |

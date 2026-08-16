@@ -272,6 +272,18 @@ The conformance suite's MCP and A2A probes run against live reference implementa
 | **MCP** | `@modelcontextprotocol/sdk@1.29.0` (all three transports)  | ✅ pass                                    | —                                                                                          |
 | **A2A** | `@a2a-js/sdk@0.3.13` reference peer (echo skill, JSON-RPC) | ✅ 1/1 pass (`a2a-task-roundtrip.test.ts`) | ⏳ corpus landed (`capabilities.a2a` + `A2ATaskState` + durable-`tasks/get`/resubscribe/push subtests); reference-host durable-Task evidence at `Active → Accepted` |
 
+### Versioned composition profiles — A2A 1.0, MCP 2026-07-28, workload identity (RFCs 0152 / 0153 / 0154)
+
+Witnessed with the suite's **dual-era fake peer / fake server** (`OPENWOP_A2A_FAKE_PEER=true`, `OPENWOP_MCP_FAKE_SERVER=true`) under `OPENWOP_REQUIRE_BEHAVIOR=true`, suite `1.120.0`–`1.122.0`, on **local memory:// boots** of openwop-app (tier-1) — a boot, not the deployed origin; the deployed origin advertises none of these three families yet, so the wire claim is *not* made until it does. Real upstream peers in CI remain externally gated (RFC 0152/0153 acceptance).
+
+| Family (profile) | Host | Boot | Non-vacuous witness (file: passed / assertions) | Not yet |
+| --- | --- | --- | --- | --- |
+| `a2a` — `a2a-1.0` (+ `a2a-0.3-legacy`) | openwop-app main `24b9e6c9b` (ADR 0552 P2 merged) | local, `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` (the egress guard otherwise refuses the loopback peer — RFC 0093 §A.1 working as designed) | `a2a-1-0-agent-card` 10/10 (52 — suite peer), `a2a-card-runtime-consistency` 4/4 (11), `a2a-1-0-task-roundtrip` 1/1 (14), `a2a-peer-authority` 1/1 (4), `a2a-version-negotiation` 4/4 (5) | header-less card is served as 1.0 (§C decided 2026-08-16: 0.3 while legacy advertised — host follow-up H24); `core.conformance.a2a-invoke` not yet mapped in the conformance boot (H25 — drift #3 unwitnessed); `durableTasks` / `pushNotifications` not advertised |
+| `mcp` — `mcp-2026-07-28` (+ `mcp-2025-06-18-legacy`) | openwop-app branch `agrade/0553-p2-mcp-2026-07-28` `3c2cd839a` (PR #3279, unmerged) | local, `OPENWOP_MCP_SERVER_ENABLED=true`, second credential for the cache leg | 14/16 `mcp-*` files, 37/39 tests — `mcp-2026-07-28-discover` (48), `mcp-stateless-request` (7 + the Mcp-Method/Mcp-Name half), `mcp-mrtr-roundtrip` client + server halves (11), `mcp-extension-opacity` (6), `mcp-cache-tenant-scope` (1, two credentials), `mcp-current-auth-boundary` (2), `mcp-version-negotiation` (9), all four `mcp-server-*` round-trips + bridges | legacy host-mediated `mcp-tool-roundtrip` (no operator-configured server URL — H21); `mcp-toolcall-redaction` inapplicable (no `mcpClient` advert) |
+| `auth.workloadIdentity` — RFC 0154 | openwop-app main `8fbed15d4` (ADR 0556 P3 merged) | local, trust roots + audience/issuer configured (`run.ts` recipe) | `workload-identity-behavior` 6/6 (12), `workload-identity-profile` 11/11 (18) — the `delegation-tenant-audience-bound` / `delegation-chain-bounded` invariants ride on the behaviour file | scope-amplification and provenance≠authorization legs (RFC 0154 invariants still unregistered); no advertiser on the deployed wire |
+
+Six RFC 0152/0153 invariants were registered on these witnesses (`SECURITY/invariants.yaml`, 2026-08-16): `a2a-card-runtime-consistent`, `a2a-peer-no-authority-escalation`, `mcp-cache-tenant-scoped`, `mcp-extension-no-authority`, `mcp-peer-no-authority-escalation`, `mcp-header-body-consistent`.
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.
