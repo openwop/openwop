@@ -1,10 +1,13 @@
 # RFC 0149 — Gap Register
 
+> **Acceptance sweep 2026-08-16 (RFC 0147 criterion 12, S11).** Every row below carries a `Sweep 2026-08-16` disposition against the evidence on `main` at that date — closed / carried (with the pointer) / externally gated. Rows without one were already struck through as closed. This is a sweep, not a rewrite: original text is preserved.
+
+
 | ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
 | --- | --- | --- | --- | --- | --- |
-| G1 | §A | Generated-client workaround inventory is absent. | SDK Maintainer | Generate clients before/after and survey reference consumers. | Active |
-| G2 | §B | Typo heuristic false-positive tolerance is unmeasured. | Schema Architect | Run candidate rules across corpus and known vendor extensions. | Active |
-| G3 | §C | Deployed `protocolVersion: 1.0.0` population is unknown. | Interop Maintainer | Query public matrix and reference hosts. | Active |
-| G4 | §D | Intentional historical lifecycle prose needs an annotation syntax. | Spec Architect | Add `Historical note:` exemption and lint it narrowly. | Accepted |
-| G5 | Conformance | SDK path-manifest consumer changes live in a sibling repository. | SDK Maintainer | Coordinate paired openwop-sdks PR. | Accepted |
+| G1 | §A | Generated-client workaround inventory is absent. | SDK Maintainer | Generate clients before/after and survey reference consumers. | Active — **Sweep 2026-08-16:** **Closed** (UQ1, 2026-08-11 — none). |
+| G2 | §B | Typo heuristic false-positive tolerance is unmeasured. | Schema Architect | Run candidate rules across corpus and known vendor extensions. | Active — **Sweep 2026-08-16:** **Carried** (UQ2 — no threshold chosen; lint unbuilt). |
+| G3 | §C | Deployed `protocolVersion: 1.0.0` population is unknown. | Interop Maintainer | Query public matrix and reference hosts. | Active — **Sweep 2026-08-16:** **Closed by measurement:** every reference host advertises `1.0`, openwop-app `1.1` — no deployed `1.0.0`; the grammar is enforced directly (`profiles.ts` + schema `pattern`). |
+| G4 | §D | Intentional historical lifecycle prose needs an annotation syntax. | Spec Architect | Add `Historical note:` exemption and lint it narrowly. | Accepted — **Sweep 2026-08-16:** **Closed by a narrower rule** — `rfc-lifecycle-coherence.test.ts` uses annotated-vs-bare acceptance items on RFCs ≥ 0147 rather than a `Historical note:` syntax; `docs/RFC-LIFECYCLE-COHERENCE.md` records why (200 bare pre-0147 items). |
+| G5 | Conformance | SDK path-manifest consumer changes live in a sibling repository. | SDK Maintainer | Coordinate paired openwop-sdks PR. | Accepted — **Sweep 2026-08-16:** **Closed on the corpus side, carried on the SDK side:** `spec/v1/operation-path-manifest.json` is published from the corpus (#1019) and `openapi-asyncapi-sdk-parity.test.ts` checks `openwop-sdks` `sdk/parity-expectations.json` against it when reachable (zero drift today). The SDK repo still derives its parity from a vendored `openapi.yaml`; consuming the manifest file directly is the paired PR not yet opened. |
 
