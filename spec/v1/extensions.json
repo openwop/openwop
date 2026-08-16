@@ -29,9 +29,9 @@
         "openwop-core-standard"
       ],
       "securityTier": "high",
-      "minimumSuiteVersion": null,
+      "minimumSuiteVersion": "1.107.0",
       "evidenceTier": null,
-      "note": "RFC 0151 is `Accepted` with ZERO implementation \u2014 no spec prose, no schema, no conformance. `draft` not `experimental`: the shape is specified in the RFC, nothing implements it."
+      "note": "RFC 0151 `Accepted`; shape landed at suite 1.89.0 (`b4796755`), the six \u00a7D events (`76195069`), the capability-gated behavioral witness `compensation-behavior.test.ts` at 1.94.0 (`4bec9e07`), and `compensationStatus` on `RunSnapshot` + `spec/v1/compensation.md` (`Draft`, landed subset only) + seams \u00a721 at 1.107.0 (`5f1978f2`). `draft`, not `stable`: no host advertises `compensation.supported`, so every behavioral leg resolves to `blocked` (RFC 0148 \u00a7A); \u00a7C/\u00a7E prose and `compensation-policy.schema.json` remain carried."
     },
     {
       "id": "openwop-a2a-1-0",
@@ -42,9 +42,9 @@
         "openwop-core-standard"
       ],
       "securityTier": "high",
-      "minimumSuiteVersion": null,
+      "minimumSuiteVersion": "1.96.0",
       "evidenceTier": null,
-      "note": "RFC 0152 `Accepted`, nothing landed. Stable additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
+      "note": "RFC 0152 `Accepted`; discovery shape (`3ce1c04b`) and the \u00a7B negotiation witness `a2a-version-negotiation.test.ts` at 1.96.0 (`5f1a7112`) landed; openwop-app's live origin advertises `a2a.protocolVersions` and passes the \u00a7A/\u00a7B legs. `draft`: the 1.0 profile prose and translation table are unauthored in `spec/v1/a2a-integration.md`, the legacy 0.3 profile is not yet named or time-bounded, and stable is additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
     },
     {
       "id": "openwop-mcp-2026-07-28",
@@ -55,9 +55,9 @@
         "openwop-core-standard"
       ],
       "securityTier": "high",
-      "minimumSuiteVersion": null,
+      "minimumSuiteVersion": "1.97.0",
       "evidenceTier": null,
-      "note": "RFC 0153 `Accepted`, nothing landed. Same external gate as 0152: a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
+      "note": "RFC 0153 `Accepted`; discovery shape (`3ce1c04b`) and the \u00a7A/\u00a7B revision-negotiation witness `mcp-version-negotiation.test.ts` at 1.97.0 (`7b09e9aa`) landed; openwop-app's live origin advertises `mcp.protocolVersions`. `draft`: the MRTR mapping and profile prose are unauthored in `spec/v1/mcp-integration.md`, the legacy revision is not named or time-bounded, and stable is additionally gated on a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
     },
     {
       "id": "openwop-workload-identity-v1",
@@ -68,9 +68,9 @@
         "openwop-core-standard"
       ],
       "securityTier": "high",
-      "minimumSuiteVersion": null,
+      "minimumSuiteVersion": "1.95.0",
       "evidenceTier": null,
-      "note": "RFC 0154 `Accepted`, nothing landed. Provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`."
+      "note": "RFC 0154 `Accepted`; `workload-identity.schema.json` + `auth.workloadIdentity` (`8de95a14`), the behavioral witness `workload-identity-behavior.test.ts` + seam \u00a720 at 1.95.0 (`f27765cd`), and per-section gating (`b7c52f75`) landed. `draft`: no host advertises `auth.workloadIdentity` (legs resolve to `blocked`), the OTel mapping and auth prose are unauthored, and the provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`."
     },
     {
       "id": "openwop-effect-identity-v2",
