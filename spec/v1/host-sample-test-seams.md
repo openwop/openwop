@@ -877,6 +877,61 @@ fail the last node, and let the host unwind.
   leg with a message stating the requirement is unobservable and therefore `blocked`, and
   returns early on the remaining legs (covered by that assertion, not by silence).
 
+**Recovery extension (2026-08-16 — the witness for RFC 0151 §C retry-stability, §E operator
+authority, and §B/§F recorded-facts; `compensation-recovery.test.ts`).** RFC 0151 §G names
+`compensation-effect-id-retry-stable`, `compensation-tenant-authority-bound`, and
+`compensation-input-recorded-facts-only`; none is observable through the two seams above, so
+`SECURITY/threat-model-compensation.md` §7 left them named-not-registered. This extension is the
+seam each one needs. All three sub-features are OPTIONAL and independently `blocked`
+(`compensation-recovery.test.ts` reports which is absent); a host that wires the base seams but
+not this extension keeps its RFC 0151 §C/§D/§F witness.
+
+- **`unwind` request gains** `failFirstInverseAttempts?: integer 0..3` and `hold?: boolean`.
+  - `failFirstInverseAttempts: n` — the first inverse action to run (the highest forward
+    ordinal under `reverse-completion`) fails **transiently** `n` times, then succeeds. The seam
+    MUST run it under retry bounds of at least `n + 1` attempts so the unwind still completes.
+    This is the only way to observe §C's rule that a retry re-presents the **same** identity.
+  - `hold: true` — the first inverse action fails **permanently** and the plan's disposition is
+    `manual-intervention`: `compensation.manual_intervention_required` is emitted, the snapshot
+    reads `compensationStatus: "manual"`, and the returned `runId` is a held plan the `operator`
+    seam below can act on.
+- **`unwind` response gains** `inverseActions: [{ ordinal, effectId, attempts, outcome,
+  downstreamKeys }]` — one entry per plan entry, in execution order. `effectId` is the
+  inverse-action identity (§C tuple, opaque); `attempts` the attempts made; `outcome` one of
+  `completed | failed | skipped | terminated | held`; `downstreamKeys` the idempotency key the
+  **fake downstream** received on each attempt (`length === attempts`). Non-vacuity: with
+  `failFirstInverseAttempts: 2` the witness expects `attempts: 3`, a single distinct value across
+  `downstreamKeys`, and exactly one plan entry per ordinal — one obligation, three attempts.
+- **`replay` request gains** `runId?: string` (replay *that* run; default: a fresh completed
+  unwind as before) and **response gains** `source: [{ ordinal, effectId, input }]` and
+  `replayed: [{ ordinal, effectId, input }]` — the inverse actions of the source run and of the
+  replay, with the input each was executed with. Non-vacuity: `replayed` MUST deep-equal
+  `source` (same identities, same inputs — §B/§F: an inverse built from a re-derived value is not
+  the inverse of what was done) while `refiredEffects` stays `0`.
+- **NEW `POST /v1/host/sample/test/compensation/operator`** — drives the host's **real** §E
+  operator path against a held plan, as a presented actor.
+  - **Request:** `{ runId, action: "retry" | "skip" | "substitute" | "terminate",
+    justification?: string, nodeTypeId?: string, actor: { tenantId, principalId, operator:
+    boolean } }`. `actor` is the seam's stand-in for the caller's authenticated context; the
+    host MUST evaluate it through the same RFC 0049 decision the production operator path uses
+    (`operator: true` = holds operator authority *in `actor.tenantId`*; nothing else). `skip`
+    requires a non-empty `justification`; `substitute` requires a registered `nodeTypeId`.
+  - **200:** `{ runId, action, compensationStatus, planVersion, audited: true }` —
+    `compensationStatus` is the snapshot value after the action (§D fold; e.g. `retry` on a
+    held plan whose retried inverse succeeds → `completed`; `terminate` → `partial` / `failed`),
+    `planVersion` increments on `substitute` only, and `audited: true` means an
+    `authorization.decided` record was written for the override.
+  - **404 `not_found`:** `actor.tenantId` is not the plan's tenant — the RFC 0132 §A.2 rule:
+    neutralize to the actor's tenant, do not reveal that another tenant's plan exists.
+  - **403 `forbidden`:** same tenant, `operator: false` — and the refusal MUST also be audited
+    (`authorization.decided`, `reason: authority-denied` on the plan). `details.retriable: false`.
+  - **409 `compensation_action_invalid`:** the action's precondition fails (e.g. `retry` on a
+    `completed` action, `skip` without justification, `substitute` with an unregistered
+    `nodeTypeId`).
+  - Non-vacuity: the witness first presents a cross-tenant actor (expects 404), then a
+    same-tenant non-operator (expects 403), then the operator (expects 200) — a seam that
+    answers 200 to all three has demonstrated it consults nothing.
+
 ### 22. A2A negotiation + durable-task drivers — `POST /v1/host/sample/a2a/{invoke,tasks/start,tasks/push-config}` · `GET /v1/host/sample/a2a/tasks/{taskId}` (RFC 0152 §B, RFC 0100)
 
 | Field                     | Value                                                                                |

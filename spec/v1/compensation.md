@@ -358,16 +358,16 @@ The rules it rests on, all stated above and restated here as MUST-NOTs:
 - **Inputs.** Inverse inputs derive from recorded facts (§B); a host MUST NOT
   construct one from a prompt or model output during unwind or replay.
 
-Of RFC 0151 §G's four named invariants, `compensation-replay-no-refire` is
-**registered** (`SECURITY/invariants.yaml`, protocol tier) against the replay leg of
-`compensation-behavior.test.ts`. `compensation-effect-id-retry-stable`,
-`compensation-tenant-authority-bound`, and `compensation-input-recorded-facts-only` are
-**named, not registered**: each needs a witness that exercises the threat (a retried
-inverse action re-presenting the same identity; a cross-tenant operator action refused;
-an inverse input that differs from the recorded fact refused), and the §21 seams do not
-yet provoke those. Registering an invariant against a test that does not verify it
-would be the vacuous-pass RFC 0148 exists to stop; the threat model names the seam
-extension each one needs.
+All four RFC 0151 §G invariants are **registered** (`SECURITY/invariants.yaml`, protocol
+tier): `compensation-replay-no-refire` against the replay leg of
+`compensation-behavior.test.ts`; `compensation-effect-id-retry-stable`,
+`compensation-tenant-authority-bound`, and `compensation-input-recorded-facts-only`
+against `compensation-recovery.test.ts`, which drives the §21 **recovery extension**
+([`host-sample-test-seams.md`](./host-sample-test-seams.md) §21 — `unwind`
+`failFirstInverseAttempts` / `hold` with `inverseActions[]`, `replay` `source[]` /
+`replayed[]`, and the `operator` seam). Each is `blocked` in the ledger until a host wires
+the extension — registered against a witness that exercises the threat, and honest that
+no host has run it yet.
 
 ## Conformance
 
@@ -380,6 +380,11 @@ extension each one needs.
   effect, reverse-completion order, replay does not re-fire, content-free events, and the
   snapshot rollup matching the fold table above. Driven through the seams in
   [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21.
+- Recovery (same gate; the §21 recovery extension is independently optional and
+  `blocked` when absent): `compensation-recovery.test.ts` — §C retry-stable identity
+  (one obligation, three attempts, one downstream key), §E operator authority bound to the
+  plan's tenant (cross-tenant 404, same-tenant non-operator 403 audited, operator 200
+  audited), §B/§F recorded-facts replay (`replayed` ≡ `source`, `refiredEffects: 0`).
 - Until a host advertises the family and wires the seams, the behavioral requirements
   resolve to `blocked` per RFC 0148 §A — not to a pass.
 
