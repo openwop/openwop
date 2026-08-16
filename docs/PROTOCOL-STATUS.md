@@ -8,7 +8,7 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 60 | `spec/v1/*.md` |
-| JSON Schemas | 79 | `schemas/*.schema.json` |
+| JSON Schemas | 80 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 438 | `conformance/src/scenarios/*.test.ts` |
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.107.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.108.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 

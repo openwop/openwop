@@ -814,6 +814,10 @@
           "type": "integer",
           "minimum": 1,
           "default": 5
+        },
+        "compensation": {
+          "$ref": "compensation-policy.schema.json",
+          "description": "RFC 0151 §B — the workflow-level compensation policy (WHEN an unwind starts and HOW it runs). OPTIONAL and capability-gated: a host that advertises `capabilities.compensation` MUST validate it at registration; a host that does not MUST refuse the workflow with `capability_required` rather than accept a policy it will never honour. Node-level `nodes[].compensation` declarations remain valid without it — they describe the inverse action; this key requests the unwind."
         }
       }
     }
