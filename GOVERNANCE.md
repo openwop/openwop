@@ -1,6 +1,6 @@
 # OpenWOP Governance
 
-> **Status:** Initial maintainer-driven model. This will evolve toward a working group / steering committee as the contributor base grows.
+> **Status:** Initial maintainer-driven model (swept 2026-08-16 under RFC 0147 criterion 11: security-response policy reconciled to `SECURITY.md` §3; SDK locations corrected; evidence-tier rule extended to bundle v2). This will evolve toward a working group / steering committee as the contributor base grows. RFC 0147 §I lists the standards-readiness gates that depend on this document — two unaffiliated maintainers, working-group activation, retirement of the bootstrap RFC-waiver mechanism, and retrospective cross-organization review of waived cohorts — none of which has fired as of 2026-08-16.
 
 ## Repository
 
@@ -70,20 +70,21 @@ Rules:
 - An `Active → Accepted` flip **MUST name the tier of its evidence** in the RFC's `Updated` field (and the CHANGELOG graduation entry SHOULD repeat it).
 - During the bootstrap phase, **tier-2 evidence is sufficient** to graduate an RFC — it proves the wire shape cross-implements outside the reference tree. But the corpus **MUST NOT describe tier-2 evidence as "non-steward" or "independent"**: a sibling host under the same maintainer org is neither. The honest label is "steward-affiliated sibling host."
 - **Re-verification by a tier-3 host remains a `ROADMAP.md` gate** (the "second independent host implementation" line): tier-2 graduations are not retroactively invalidated when a tier-3 host arrives, but the working-group tripwires and the INTEROP-MATRIX "first non-steward row" milestone fire only on tier-3 evidence.
+- **Evidence is a bundle, not a sentence (RFC 0148, 2026-08-16).** From suite `1.114.0` the certification bundle v2 records a disposition per requirement (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) with a witnessed assertion count, and `--certify` rejects a claim whose floor requirement returned unclassified. An `Active → Accepted` flip that cites host evidence SHOULD cite the host's bundle v2 (or the equivalent ledger output) rather than a pass count; a claim with no v2 bundle is a self-declaration under `INTEROP-MATRIX.md`'s evidence vocabulary. RFC 0147 §A additionally forbids citing an RFC's own `Accepted` status as evidence for anything.
 
 > **Historical wording note.** Acceptance evidence recorded before 2026-06-11 (the RFC `Updated` fields and CHANGELOG entries for the RFC 0021–0092 graduations) frequently uses the phrase "non-steward host" for MyndHyve; that wording refers to **tier-2** evidence under this taxonomy and is not rewritten retroactively.
 
 ## Release process
 
 - **Spec corpus** ships as named tags (`v1.0.0`, `v1.1.0`, …). Major versions are reserved for breaking changes.
-- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop/sdk/go` (Go modules)) ship independently with semantic versioning. SDK majors track the spec major they target.
+- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop-sdks/go` (Go modules) — all in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) since 2026-06) ship independently with semantic versioning. SDK majors track the spec major they target.
 - **Conformance suite** (`@openwop/openwop-conformance`) ships independently. Suite majors track the spec major; minors add scenarios for the same spec major.
 
 A release requires: passing CI on `main`, a CHANGELOG entry, and a maintainer cutting the tag. The release workflow at `.github/workflows/release.yml` automates package publication once the tag is pushed.
 
 ## Security
 
-Security disclosures follow the process documented in `SECURITY.md`. Reports are received by the maintainer set; acknowledgment timing is governed by `SECURITY.md` (firm SLAs are deferred until a maintainer rotation is in place). Embargoed coordinated disclosure is the default for vulnerabilities that affect deployed implementations.
+Security disclosures follow the process documented in `SECURITY.md`, which is the **single** security-response commitment of the project: acknowledgment within 3 business days, triage within 10, remediation timeline within 20 business days of triage, 90-day coordinated disclosure (`SECURITY.md` §3). This section previously read that "firm SLAs are deferred until a maintainer rotation is in place" while `SECURITY.md` §3 already committed to firm targets — two policies, reconciled 2026-08-16 under RFC 0147 §I to the one `SECURITY.md` states. The maintainer set is currently a single person (`MAINTAINERS.md`); `SECURITY.md` §3's revised-timeline clause and §10's proactive-revision rule are how that reality is carried, not a second, softer policy. Embargoed coordinated disclosure is the default for vulnerabilities that affect deployed implementations.
 
 ## Trademark
 

@@ -44,6 +44,8 @@ Some invariants are stated normatively but mechanically verified at a level that
 
 Per the project's `MAINTAINERS.md` `### Vendor-neutral tripwire`, several profile claims are reference-host-only today. They are mechanically verified — strict-mode conformance scenarios pass against the reference — but no non-steward implementer has shipped a host claiming them.
 
+> **Sharpened 2026-08-16 (RFC 0148 §A/§C, bundle v2 re-measurement — `INTEROP-MATRIX.md`, `docs/CERTIFICATION-BUNDLE-INVENTORY.md` rows 2–5).** "Mechanically verified" above means the host's own scenario run; it is **not** a certification. Every profile in this table has **no floor in `PROFILE_FLOOR_SCENARIOS`**, so `--certify` cannot evaluate it (unprovable, RFC 0148 §C G6) — the claims are the Postgres host's self-declaration backed by its `conformance-full.md`. Separately, the reference hosts' catalog-profile claims that DO have floors were re-measured: `openwop-discovery-core` + `openwop-fixtures` certify on all four; `openwop-stream-sse` / `openwop-stream-poll` certify on SQLite, Postgres, Python and fail on in-memory; **`openwop-node-packs` is rejected on all four** — its `pack-registry*` floor legs pass with zero assertions on every reference host, which is a scenario-or-host gap this repository owns, not an adoption gap.
+
 | Profile                                     | Reference host | Non-steward implementer status                             |
 | ------------------------------------------- | -------------- | ---------------------------------------------------------- |
 | `openwop-production`                        | Postgres       | None yet. Outreach in `docs/recruitment/external-host.md`. |
