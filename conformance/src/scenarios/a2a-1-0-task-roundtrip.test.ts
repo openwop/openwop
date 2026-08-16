@@ -53,7 +53,9 @@ async function claims10(): Promise<boolean> {
 async function jsonrpc10Url(): Promise<string | null> {
   const caps = await a2a();
   if (typeof caps?.agentCardUrl !== 'string') return null;
-  const res = await fetch(caps.agentCardUrl, { headers: { accept: 'application/json' } });
+  // S18 (#1028): a header-less card GET returns the 0.3 shape while `a2a-0.3-legacy`
+  // is advertised; a 1.0 client asks for the 1.0 card explicitly (a2a-integration.md §C).
+  const res = await fetch(caps.agentCardUrl, { headers: { accept: 'application/json', 'A2A-Version': '1.0' } });
   if (res.status !== 200) return null;
   const card = (await res.json()) as { supportedInterfaces?: Array<{ url?: string; protocolBinding?: string; protocolVersion?: string }> };
   const iface = (card.supportedInterfaces ?? []).find((i) => i.protocolBinding === 'JSONRPC' && i.protocolVersion === '1.0');
