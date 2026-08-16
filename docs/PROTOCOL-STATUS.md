@@ -11,8 +11,8 @@
 | JSON Schemas | 80 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 439 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 156 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 440 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 157 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.110.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.111.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -31,7 +31,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 152 |
+| Accepted | 153 |
 | Active | 3 |
 | Draft | 1 |
 
@@ -193,6 +193,7 @@
 | RFC 0154 | Workload Identity, Delegation, Telemetry, and Provenance Assurance | Accepted |
 | RFC 0155 | Core Profile and Extension Discipline | Accepted |
 | RFC 0156 | Governance, Independent Assurance, and Claims Policy | Accepted |
+| RFC 0157 | Chain fragments carry compensation (RFC 0013 revision × RFC 0151 sectionB) | Accepted |
 
 ## SDK Helper Coverage
 
