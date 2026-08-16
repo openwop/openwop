@@ -20,6 +20,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -35,7 +36,7 @@ describe('mcp-toolcall-redaction: capability advertisement contract', () => {
     if (!(await isMcpClientSupported())) {
       // eslint-disable-next-line no-console
       console.warn('[mcp-toolcall-redaction] host does not advertise mcpClient; skipping');
-      return;
+      return softSkip('inapplicable', '[mcp-toolcall-redaction] host does not advertise mcpClient; skipping');
     }
     const disco = await driver.get('/.well-known/openwop');
     const cap = capabilityFamily((disco.json as {

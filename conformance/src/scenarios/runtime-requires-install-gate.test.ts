@@ -28,6 +28,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { installGate } from '../lib/runtimeRequires.js';
 
@@ -44,7 +45,7 @@ function manifest(requires: string[]) {
 describe('runtime-requires install gate (RFC 0076 §A)', () => {
   it('install-grant: requires ⊆ grant-set ⇒ install succeeds', async () => {
     const res = await installGate({ manifest: manifest(['net.dns']), grantSet: ['net.dns', 'net.outbound'] });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.status,
       driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'a pack whose runtime.requires are all grantable MUST install (no refusal)'),
@@ -57,7 +58,7 @@ describe('runtime-requires install gate (RFC 0076 §A)', () => {
 
   it('install-refuse: an ungrantable primitive ⇒ pack_runtime_requirement_unmet', async () => {
     const res = await installGate({ manifest: manifest(['net.dns']), grantSet: [] });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.status,
       driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'a pack requiring an ungranted primitive MUST be refused at install (not at first invocation)'),
@@ -78,11 +79,11 @@ describe('runtime-requires install gate (RFC 0076 §A)', () => {
 
   it('non-sandbox projection: a non-gating host installs and projects requires[] (§A SHOULD)', async () => {
     const res = await installGate({ manifest: manifest(['net.dns', 'net.outbound']), gating: false });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     // A non-gating host installs unconditionally; the SHOULD is the projection.
     // If the host gates anyway (returns 400) the projection SHOULD does not apply — tolerate either install shape.
-    if (res.status !== 200) return;
-    if (res.body.requiresProjected === undefined) return; // SHOULD, not MUST — a non-projecting host is conformant
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (res.body.requiresProjected === undefined) return softSkip('inapplicable', 'SHOULD, not MUST — a non-projecting host is conformant');
     const projected = res.body.requiresProjected as unknown;
     expect(
       Array.isArray(projected) && ['net.dns', 'net.outbound'].every((t) => (projected as unknown[]).includes(t)),

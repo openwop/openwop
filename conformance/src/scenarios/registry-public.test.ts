@@ -26,6 +26,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { createHash, createPublicKey, verify as cryptoVerify } from 'node:crypto';
 
 const REGISTRY_BASE = 'https://packs.openwop.dev';
@@ -54,7 +55,7 @@ describe('registry-public: packs.openwop.dev discovery document', () => {
       console.warn(
         '[registry-public] skipped — set OPENWOP_TEST_PUBLIC_REGISTRY=true to enable',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!ENABLED` returned early');
     }
 
     const res = await get('/.well-known/openwop-registry');
@@ -90,7 +91,7 @@ describe('registry-public: packs.openwop.dev discovery document', () => {
 
 describe('registry-public: packs.openwop.dev index', () => {
   it('GET /v1/index.json returns a non-empty pack list with valid name + version shapes', async () => {
-    if (!ENABLED) return;
+    if (!ENABLED) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!ENABLED` returned early');
 
     const res = await get('/v1/index.json');
     expect(res.status).toBe(200);
@@ -119,7 +120,7 @@ describe('registry-public: spec-canonical pack manifests resolve', () => {
 
   for (const { name, version } of KNOWN_PACKS) {
     it(`GET /v1/packs/${name}/-/${version}.json returns a valid manifest`, async () => {
-      if (!ENABLED) return;
+      if (!ENABLED) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!ENABLED` returned early');
 
       const res = await get(`/v1/packs/${name}/-/${version}.json`);
       expect(res.status).toBe(200);
@@ -162,7 +163,7 @@ describe('registry-public: tarball + signature + Ed25519 verify roundtrip', () =
   }
 
   it(`tarball + sig + public key all retrievable, SRI matches, Ed25519 verifies for ${PACK_NAME}@${PACK_VERSION}`, async () => {
-    if (!ENABLED) return;
+    if (!ENABLED) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!ENABLED` returned early');
 
     // 1. Manifest (JSON).
     const manifestRes = await get(`/v1/packs/${PACK_NAME}/-/${PACK_VERSION}.json`);
@@ -213,7 +214,7 @@ describe('registry-public: tarball + signature + Ed25519 verify roundtrip', () =
     // `method=ed25519` — the simpler path. Extending to `manual` would
     // require the tarball extractor from registry/scripts/verify-
     // signatures.mjs which is intentionally out of scope here.
-    if (method !== 'ed25519') return;
+    if (method !== 'ed25519') return softSkip('blocked', 'precondition not met — `method !== \'ed25519\'` returned early (seam, prior step, or fixture unavailable)');
 
     const verified = cryptoVerify(null, tarball.bytes, publicKey, sig.bytes);
     expect(verified, `Ed25519 signature over ${PACK_NAME}@${PACK_VERSION}.tgz MUST verify against ${manifest.signing!.keyId}`)

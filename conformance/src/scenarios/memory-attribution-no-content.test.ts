@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
@@ -19,16 +20,16 @@ import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvent
 describe('memory-attribution-no-content (RFC 0057 §C)', () => {
   it('memory.written payloads carry no entry content', async () => {
     const cap = await readMemoryAttributionCap();
-    if (!emitsWriteEvents(cap)) return;
+    if (!emitsWriteEvents(cap)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!emitsWriteEvents(cap)` returned early');
     const runId = await seedRun('mem-attr-no-content');
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
       return;
     }
     const events = await memoryWrittenEvents(runId);
-    if (events.length === 0) return; // run wrote no memory — soft-skip
+    if (events.length === 0) return softSkip('blocked', 'run wrote no memory — soft-skip (events.length === 0)');
     for (const e of events) {
       const payload = e.payload ?? {};
       expect(

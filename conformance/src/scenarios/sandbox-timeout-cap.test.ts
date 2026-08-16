@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -39,8 +40,8 @@ async function readSandbox(): Promise<{ supported: boolean; wallClockLimitMs?: n
 describe.skipIf(HTTP_SKIP)('sandbox-timeout-cap: capability shape + behavioral (RFC 0035 §B)', () => {
   it('wallClockLimitMs MUST be integer ≥ 100 ms when present (per schema)', async () => {
     const sb = await readSandbox();
-    if (!sb) return;
-    if (sb.wallClockLimitMs === undefined) return; // optional
+    if (!sb) return softSkip('blocked', 'precondition not met — `!sb` returned early (seam, prior step, or fixture unavailable)');
+    if (sb.wallClockLimitMs === undefined) return softSkip('inapplicable', 'optional (sb.wallClockLimitMs === undefined)');
 
     expect(
       Number.isInteger(sb.wallClockLimitMs) && sb.wallClockLimitMs >= 100,

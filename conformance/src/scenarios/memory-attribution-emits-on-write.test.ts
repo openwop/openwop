@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
@@ -16,16 +17,16 @@ import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvent
 describe('memory-attribution-emits-on-write (RFC 0057 §A/§B)', () => {
   it('an advertised host emits memory.written carrying a stable memoryId', async () => {
     const cap = await readMemoryAttributionCap();
-    if (!emitsWriteEvents(cap)) return;
+    if (!emitsWriteEvents(cap)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!emitsWriteEvents(cap)` returned early');
     const runId = await seedRun('mem-attr-emit');
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
       return;
     }
     const events = await memoryWrittenEvents(runId);
-    if (events.length === 0) return; // run wrote no memory — soft-skip
+    if (events.length === 0) return softSkip('blocked', 'run wrote no memory — soft-skip (events.length === 0)');
     for (const e of events) {
       const memoryId = (e.payload as { memoryId?: unknown } | undefined)?.memoryId;
       expect(
@@ -37,9 +38,9 @@ describe('memory-attribution-emits-on-write (RFC 0057 §A/§B)', () => {
 
   it('a host without the capability emits no memory.written', async () => {
     const cap = await readMemoryAttributionCap();
-    if (emitsWriteEvents(cap)) return; // advertised — N/A
+    if (emitsWriteEvents(cap)) return softSkip('inapplicable', 'advertised — N/A');
     const runId = await seedRun('mem-attr-absent');
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {

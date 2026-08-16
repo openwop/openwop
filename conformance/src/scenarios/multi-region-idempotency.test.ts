@@ -29,6 +29,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -58,7 +59,7 @@ describe('multi-region-idempotency: capability shape', () => {
       console.warn(
         '[multi-region-idempotency] capabilities.idempotency.crossRegion not advertised; skipping',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!idem || idem.crossRegion === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
     expect(ALLOWED.has(idem.crossRegion), driver.describe(
@@ -82,7 +83,7 @@ describe('multi-region-idempotency: capability shape', () => {
 
     if (crossRegion !== 'reconciled-records' && crossRegion !== 'fenced-effects') {
       // Single-region hosts have no conflicts to count — skip.
-      return;
+      return softSkip('blocked', 'precondition not met — `crossRegion !== \'reconciled-records\' && crossRegion !== \'fenced-effects\'` returned early (seam, prior step, or fixture unavailable)');
     }
 
     const advertised = new Set(observability?.metrics?.names ?? []);
@@ -117,7 +118,7 @@ describe('multi-region-idempotency: granular multiRegion advertisement shape (RF
       'idempotency',
     );
     const mr = idem?.multiRegion;
-    if (mr === undefined) return; // host doesn't advertise the granular block — soft-skip
+    if (mr === undefined) return softSkip('inapplicable', 'host doesn\'t advertise the granular block — soft-skip');
 
     expect(
       typeof mr.supported,

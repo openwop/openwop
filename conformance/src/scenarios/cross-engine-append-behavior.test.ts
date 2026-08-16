@@ -29,6 +29,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -73,7 +74,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
       ctx.skip(); // host doesn't expose the cross-engine harness seam
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -125,7 +126,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -153,7 +154,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -180,7 +181,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     const resetStatus = await resetLog();
     if (resetStatus === 404) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 

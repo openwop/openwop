@@ -19,6 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -49,12 +50,12 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (!(await isCompactionAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-tag] capabilities.memory.compaction.supported not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[rfc0012-tag] capabilities.memory.compaction.supported not advertised; skipping');
     }
     if (!(await isTestSeamReachable())) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-tag] test seam unreachable; skipping');
-      return;
+      return softSkip('blocked', '[rfc0012-tag] test seam unreachable; skipping');
     }
 
     // Seed + compact.
@@ -88,7 +89,7 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (listRes.status === 404) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
-      return;
+      return softSkip('blocked', '[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
     }
     expect(listRes.status, 'memory:list MUST return 200 when reachable').toBe(200);
 
@@ -98,7 +99,7 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (!output) {
       // eslint-disable-next-line no-console
       console.warn(`[rfc0012-tag] outputId ${outputId} not visible via memory:list; cannot inspect tags`);
-      return;
+      return softSkip('blocked', '[rfc0012-tag] outputId … not visible via memory:list; cannot inspect tags');
     }
     const tags = output.tags ?? [];
 
@@ -107,7 +108,7 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (provenance === undefined) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-tag] output entry has no compacted-from:<id> tag — RFC 0012 §C is SHOULD, not MUST; pass with warning');
-      return;
+      return softSkip('inapplicable', '[rfc0012-tag] output entry has no compacted-from:<id> tag — RFC 0012 §C is SHOULD, not MUST; pass with warning');
     }
     expect(provenance, driver.describe(
       'RFC 0012 §C',

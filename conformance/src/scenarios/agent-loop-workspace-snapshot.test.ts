@@ -11,15 +11,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readExecutionModelCap, isVersion5, hasWorkspace, invokeAgentLoop } from '../lib/agentLoop.js';
 
 describe('agent-loop-workspace-snapshot (RFC 0061 §C)', () => {
   it('a turn-i workspace write is invisible to turn i, visible to turn i+1', async () => {
-    if (!isVersion5(await readExecutionModelCap())) return;
-    if (!(await hasWorkspace())) return; // workspace optional — soft-skip
+    if (!isVersion5(await readExecutionModelCap())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isVersion5(await readExecutionModelCap())` returned early');
+    if (!(await hasWorkspace())) return softSkip('inapplicable', 'workspace optional — soft-skip (!(await hasWorkspace()))');
     const res = await invokeAgentLoop({ turns: 2, workspaceWriteAtTurn: 1 });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     const vis = res.workspaceVisible ?? {};
     expect(
       vis.atWriteTurn,

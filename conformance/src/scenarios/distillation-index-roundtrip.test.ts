@@ -14,15 +14,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readDistillationCap, invokeDistill } from '../lib/distillation.js';
 
 describe('distillation-index-roundtrip (RFC 0062 §B)', () => {
   it('an indexEmitted run updates a retrievable memory-index manifest', async () => {
     const cap = await readDistillationCap();
-    if (cap?.supported !== true || cap?.indexEmitted !== true) return;
+    if (cap?.supported !== true || cap?.indexEmitted !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.supported !== true || cap?.indexEmitted !== true` returned early');
     const res = await invokeDistill({ memoryRef: 'conformance-distill', tokenBudget: 8000, indexEmitted: true });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.body.indexUpdated === true || res.body.event?.distillation?.indexUpdated === true,
       driver.describe('RFC 0062 §B', 'an indexEmitted distillation MUST report updating the memory index'),

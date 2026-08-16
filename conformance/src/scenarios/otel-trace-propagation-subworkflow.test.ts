@@ -34,6 +34,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -89,22 +90,22 @@ describe('otel-trace-propagation-subworkflow: traceparent threads parent → chi
       // capability-opt-out would lie about observability claims.
       // eslint-disable-next-line no-console
       console.warn(`[${SCENARIO_ID}] scenario opted out via OPENWOP_OPTED_OUT_SCENARIOS; skipping`);
-      return;
+      return softSkip('blocked', '[…] scenario opted out via OPENWOP_OPTED_OUT_SCENARIOS; skipping (see message)');
     }
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[otel-trace-propagation-subworkflow] collector not started; skipping');
-      return;
+      return softSkip('blocked', '[otel-trace-propagation-subworkflow] collector not started; skipping');
     }
     if (!isFixtureAdvertised(PARENT_FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(`[otel-trace-propagation-subworkflow] ${PARENT_FIXTURE} not advertised; skipping`);
-      return;
+      return softSkip('inapplicable', '[otel-trace-propagation-subworkflow] … not advertised; skipping');
     }
     if (!(await isObservabilityAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[otel-trace-propagation-subworkflow] capabilities.observability not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[otel-trace-propagation-subworkflow] capabilities.observability not advertised; skipping');
     }
 
     const collector = getCollector()!;

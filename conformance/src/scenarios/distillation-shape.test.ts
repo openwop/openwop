@@ -12,13 +12,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readDistillationCap } from '../lib/distillation.js';
 
 describe('distillation-shape: advertisement (RFC 0062 §A)', () => {
   it('capabilities.memory.distillation is absent or a well-formed object', async () => {
     const cap = await readDistillationCap();
-    if (cap === null) return; // not advertised — valid
+    if (cap === null) return softSkip('inapplicable', 'not advertised — valid');
     expect(
       typeof cap.supported,
       driver.describe('capabilities.schema.json §memory.distillation', 'distillation.supported MUST be a boolean when the block is present'),

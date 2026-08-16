@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
@@ -26,22 +27,22 @@ function memoryIdOf(payload: Record<string, unknown> | undefined): string | null
 describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
   it('a replay-mode fork introduces no memory.written with a new memoryId', async () => {
     const cap = await readMemoryAttributionCap();
-    if (!emitsWriteEvents(cap)) return;
+    if (!emitsWriteEvents(cap)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!emitsWriteEvents(cap)` returned early');
     const runId = await seedRun('mem-attr-replay');
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
       return;
     }
     const original = await memoryWrittenEvents(runId);
-    if (original.length === 0) return; // run wrote no memory — nothing to test
+    if (original.length === 0) return softSkip('blocked', 'run wrote no memory — nothing to test');
     const recordedIds = new Set(original.map((e) => memoryIdOf(e.payload)).filter((x): x is string => x !== null));
 
     const fork = await driver.post(`/v1/runs/${runId}:fork`, { fromSeq: 0, mode: 'replay' });
-    if (fork.status !== 200 && fork.status !== 201) return; // replay fork unsupported — soft-skip
+    if (fork.status !== 200 && fork.status !== 201) return softSkip('inapplicable', 'replay fork unsupported — soft-skip (fork.status !== 200 && fork.status !== 201)');
     const forkId = (fork.json as { runId?: string } | undefined)?.runId;
-    if (!forkId) return;
+    if (!forkId) return softSkip('blocked', 'precondition not met — `!forkId` returned early (seam, prior step, or fixture unavailable)');
     try {
       await pollUntilTerminal(forkId, { timeoutMs: 10_000 });
     } catch {

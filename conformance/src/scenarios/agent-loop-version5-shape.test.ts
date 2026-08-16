@@ -12,13 +12,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readExecutionModelCap } from '../lib/agentLoop.js';
 
 describe('agent-loop-version5-shape: advertisement (RFC 0061 §A)', () => {
   it('executionModel.statefulResume/transcriptWindow are well-formed when present', async () => {
     const em = await readExecutionModelCap();
-    if (em === null) return; // no execution model — valid
+    if (em === null) return softSkip('inapplicable', 'no execution model — valid (em === null)');
     if (em.statefulResume !== undefined) {
       expect(
         typeof em.statefulResume,

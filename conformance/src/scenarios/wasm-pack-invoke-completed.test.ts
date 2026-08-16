@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -29,11 +30,11 @@ async function isWasmSupported(): Promise<boolean> {
 
 describe('wasm-pack-invoke-completed: round-trip output', () => {
   it('greet node returns Hello, <name>! and run reaches completed', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     if (!(await isWasmSupported())) {
       // eslint-disable-next-line no-console
       console.warn('[wasm-pack-invoke-completed] WASM not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[wasm-pack-invoke-completed] WASM not advertised; skipping');
     }
 
     const create = await driver.post('/v1/runs', {

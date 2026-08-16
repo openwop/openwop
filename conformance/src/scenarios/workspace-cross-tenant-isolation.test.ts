@@ -19,6 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -40,11 +41,11 @@ const SEAM_PATH = 'WCT1-SECRET.md';
 
 describe('workspace-cross-tenant-isolation: a workspace file MUST NOT leak across owners (RFC 0059 §E WCT-1)', () => {
   it('a file written under {tenant A, workspace A} is not readable under a different owner', async () => {
-    if (!(await workspaceSupported())) return; // capability not advertised — skip
+    if (!(await workspaceSupported())) return softSkip('inapplicable', 'capability not advertised — skip');
 
     // Owner A writes a file.
     const put = await seam({ tenant: 'wct1-tenant-a', workspace: 'ws-a', op: 'put', path: SEAM_PATH, content: 'A-only secret body' });
-    if (put.status === 404) return; // seam unwired — soft-skip the behavioral probe
+    if (put.status === 404) return softSkip('blocked', 'seam unwired — soft-skip the behavioral probe');
     expect(put.status, driver.describe('agent-workspace.md §C PUT', 'seam put MUST succeed for the owning workspace')).toBe(200);
 
     // A DIFFERENT workspace (same tenant) MUST NOT read it.

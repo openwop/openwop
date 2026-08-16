@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 
 const ALLOWED_SCOPES = new Set(['tenant', 'route', 'global', 'key']);
@@ -43,7 +44,7 @@ describe('rate-limit-envelope: 429 conforms to canonical shape', () => {
       console.warn(
         '[rate-limit-envelope] no 429 observed within burst; skipping shape assertions',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!last || last.status !== 429` returned early (seam, prior step, or fixture unavailable)');
     }
 
     const retryAfter = last.headers.get('retry-after');

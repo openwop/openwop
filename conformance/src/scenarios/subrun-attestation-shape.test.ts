@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readSubRunAttestationCap } from '../lib/subRunAttestation.js';
 
@@ -18,7 +19,7 @@ describe('subrun-attestation-shape: advertisement (RFC 0063 §A)', () => {
   it('capabilities.agents.subRunAttestation is absent or a boolean', async () => {
     const cap = await readSubRunAttestationCap();
     // null = unadvertised (no agents block OR flag omitted) — valid.
-    if (cap === null) return;
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early');
     expect(
       typeof cap,
       driver.describe(

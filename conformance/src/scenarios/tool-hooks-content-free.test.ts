@@ -11,15 +11,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
 
 describe('tool-hooks-content-free (RFC 0064 §B)', () => {
   it('toolCalled carries argsHash; toolReturned carries status + durationMs', async () => {
     const cap = await readToolHooksCap();
-    if (cap?.prePostEvents !== true) return;
+    if (cap?.prePostEvents !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.prePostEvents !== true` returned early');
     const res = await invokeToolHook({ principal: 'core.system', toolName: 'web.search', args: { q: 'openwop' } });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     const called = res.toolCalled ?? {};
     const returned = res.toolReturned ?? {};
     expect(

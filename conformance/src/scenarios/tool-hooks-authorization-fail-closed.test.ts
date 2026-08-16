@@ -12,13 +12,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
 
 describe('tool-hooks-authorization-fail-closed (RFC 0064 §C)', () => {
   it('a principal lacking a tool scope is denied and the tool is not invoked', async () => {
     const cap = await readToolHooksCap();
-    if (cap?.perToolAuthorization !== true) return;
+    if (cap?.perToolAuthorization !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.perToolAuthorization !== true` returned early');
     // A principal with no scopes against a tool requiring one MUST be denied.
     const res = await invokeToolHook({
       principal: 'conformance-unprivileged',
@@ -26,7 +27,7 @@ describe('tool-hooks-authorization-fail-closed (RFC 0064 §C)', () => {
       requiredScopes: ['db:write'],
       args: {},
     });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       (res.toolReturned ?? {}).status,
       driver.describe('RFC 0064 §C', 'a missing/unevaluable tool scope MUST fail closed → status:"forbidden"'),

@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -49,7 +50,7 @@ async function readOAuth(): Promise<DiscoveryOAuth | null> {
 describe('oauth-connector-redaction: advertisement shape (RFC 0047 §A)', () => {
   it('capabilities.oauth.supported is a boolean when advertised', async () => {
     const oauth = await readOAuth();
-    if (oauth === null) return;
+    if (oauth === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `oauth === null` returned early');
     expect(
       typeof oauth.supported,
       driver.describe(
@@ -63,14 +64,14 @@ describe('oauth-connector-redaction: advertisement shape (RFC 0047 §A)', () => 
 describe('oauth-connector-redaction: token material MUST NOT cross the wire (RFC 0047 §C.2)', () => {
   it('canary token is absent from every observable run surface', async () => {
     const oauth = await readOAuth();
-    if (!oauth?.supported) return; // capability-gated
+    if (!oauth?.supported) return softSkip('inapplicable', 'capability-gated');
 
     // Seam contract: a synthetic provider issues a token whose value is
     // TOKEN_CANARY, a connector node runs, and the run's observable surfaces
     // (events incl. connector.authorized + snapshot + debug bundle) are returned.
     const res = await driver.post('/v1/host/sample/oauth/connector-echo', { canary: TOKEN_CANARY });
     // 404 from a host that hasn't wired the test seam is a soft-skip.
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     expect(
       res.status,

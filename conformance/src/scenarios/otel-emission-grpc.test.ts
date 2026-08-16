@@ -26,6 +26,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -61,12 +62,12 @@ describe('otel-emission-grpc: OTLP/gRPC export path', () => {
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[otel-emission-grpc] collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
-      return;
+      return softSkip('blocked', '[otel-emission-grpc] collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
     }
     if (!isFixtureAdvertised(FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(`[otel-emission-grpc] fixture ${FIXTURE} not advertised; skipping`);
-      return;
+      return softSkip('inapplicable', '[otel-emission-grpc] fixture … not advertised; skipping');
     }
     if (!(await advertisesGrpcExport())) {
       // eslint-disable-next-line no-console
@@ -74,7 +75,7 @@ describe('otel-emission-grpc: OTLP/gRPC export path', () => {
         '[otel-emission-grpc] host does not advertise capabilities.observability.otel.exportProtocols including "grpc"; skipping. ' +
           'Hosts MAY opt into gRPC export by emitting OTLP via the OTLP/gRPC transport and adding `"grpc"` to the array.',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await advertisesGrpcExport())` returned early');
     }
 
     const collector = getCollector()!;

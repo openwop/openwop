@@ -17,6 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -54,7 +55,7 @@ async function readOAuth(): Promise<DiscoveryOAuth | null> {
 describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {
   it('capabilities.oauth is either absent or well-formed', async () => {
     const oauth = await readOAuth();
-    if (oauth === null) return; // host doesn't advertise host.oauth at all
+    if (oauth === null) return softSkip('inapplicable', 'host doesn\'t advertise host.oauth at all');
     expect(
       typeof oauth.supported,
       driver.describe(
@@ -66,7 +67,7 @@ describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {
 
   it('grants is a subset of the canonical grant set when supported', async () => {
     const oauth = await readOAuth();
-    if (!oauth?.supported || oauth.grants === undefined) return;
+    if (!oauth?.supported || oauth.grants === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!oauth?.supported || oauth.grants === undefined` returned early');
     expect(
       Array.isArray(oauth.grants),
       driver.describe('RFC 0047 §A', 'capabilities.oauth.grants MUST be an array'),
@@ -84,7 +85,7 @@ describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {
 
   it('every advertised provider has a non-empty id when supported', async () => {
     const oauth = await readOAuth();
-    if (!oauth?.supported || oauth.providers === undefined) return;
+    if (!oauth?.supported || oauth.providers === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!oauth?.supported || oauth.providers === undefined` returned early');
     for (const provider of oauth.providers) {
       expect(
         typeof provider.id === 'string' && provider.id.length > 0,

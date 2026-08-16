@@ -47,6 +47,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -80,12 +81,12 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: advertisement shape (R
     const d = await readDiscovery();
     if (d === null) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const ccmc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossChildMemoryConcurrency;
     if (ccmc === undefined) {
       ctx.skip(); // optional advertisement — host hasn't opted in
-      return;
+      return softSkip('blocked', 'precondition not met — `ccmc === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       ccmc === 'strict' || ccmc === 'advisory',
@@ -134,7 +135,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
     const d = await readDiscovery();
     if (d === null) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const v = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;
     const memorySupported = capabilityFamily<{ supported?: unknown }>(d, 'memory')?.supported;
@@ -142,7 +143,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
     const expiredRunId = process.env.OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID;
     if (!phase2OrLater || memorySupported !== true || !expiredRunId) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!phase2OrLater || memorySupported !== true || !expiredRunId` returned early');
     }
 
     const fromSeq = 0;

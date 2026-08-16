@@ -11,21 +11,22 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readSubRunAttestationCap, invokeSubRunAttest } from '../lib/subRunAttestation.js';
 
 describe('subrun-checksum-stable (RFC 0063 §B)', () => {
   it('identical child outputs produce an identical sha256 attestation checksum', async () => {
-    if ((await readSubRunAttestationCap()) !== true) return;
+    if ((await readSubRunAttestationCap()) !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `(await readSubRunAttestationCap()) !== true` returned early');
     const childOutputs = { report: 'done', score: 0.9, tags: ['a', 'b'] };
     const a = await invokeSubRunAttest({ childOutputs, outputAttestation: { checksum: true } });
-    if (a === null) return; // seam absent — soft-skip
+    if (a === null) return softSkip('blocked', 'seam absent — soft-skip');
     // Key-reordered but value-identical: JCS canonicalization MUST yield the same hash.
     const b = await invokeSubRunAttest({
       childOutputs: { tags: ['a', 'b'], score: 0.9, report: 'done' },
       outputAttestation: { checksum: true },
     });
-    if (b === null) return;
+    if (b === null) return softSkip('blocked', 'precondition not met — `b === null` returned early (seam, prior step, or fixture unavailable)');
     const att = a.attestation ?? {};
     expect(
       typeof att.checksum === 'string' && (att.checksum as string).length > 0,

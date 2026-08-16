@@ -24,6 +24,7 @@
  * @see SECURITY/invariants.yaml workspace-cross-tenant-isolation
  */
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { randomUUID } from 'node:crypto';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -42,11 +43,11 @@ const asTenantB = { headers: { Authorization: `Bearer ${tenantBKey ?? ''}` } };
 
 describe('workspace-cross-tenant-isolation (black-box): a §C file MUST NOT leak across owners (RFC 0059 §E WCT-1)', () => {
   it('a file written by owner A is unreadable + un-enumerable by a second-tenant credential', async () => {
-    if (!(await workspaceSupported())) return; // capability not advertised — skip
+    if (!(await workspaceSupported())) return softSkip('inapplicable', 'capability not advertised — skip');
     if (!tenantBKey) {
       // eslint-disable-next-line no-console
       console.warn('[workspace-cross-tenant-isolation-blackbox] OPENWOP_TEST_TENANT_B_API_KEY not supplied; skipping the production-path cross-tenant assertion');
-      return;
+      return softSkip('blocked', '[workspace-cross-tenant-isolation-blackbox] OPENWOP_TEST_TENANT_B_API_KEY not supplied; skipping the production-path cross-tenant assertion');
     }
 
     const path = `wct-blackbox-${randomUUID()}.md`;

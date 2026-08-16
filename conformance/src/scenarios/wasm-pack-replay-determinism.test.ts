@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -33,8 +34,8 @@ function extractGreeting(events: Array<{ type: string; data?: unknown }>): strin
 
 describe('wasm-pack-replay-determinism: same inputs → same output', () => {
   it('two independent runs with same inputs produce same WASM output', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
-    if (!(await isWasmSupported())) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
+    if (!(await isWasmSupported())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isWasmSupported())` returned early');
 
     const inputs = { name: 'determinism-probe' };
 

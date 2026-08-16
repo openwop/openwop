@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -32,12 +33,12 @@ async function authorizationSupported(): Promise<boolean> {
 
 describe('approval-gate-flow: role-gated, audited approval (RFC 0051 §A)', () => {
   it('an unauthorized principal does NOT release the gate (fail-closed)', async () => {
-    if (!(await authorizationSupported())) return; // capability-gated
+    if (!(await authorizationSupported())) return softSkip('inapplicable', 'capability-gated');
     const res = await driver.post('/v1/host/sample/governance/approval-gate', {
       scenario: 'unauthorized-grant',
       principal: 'conformance-unauthorized-principal',
     });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'seam unwired — soft-skip');
     const body = res.json as { released?: boolean } | undefined;
     expect(
       body?.released,
@@ -46,13 +47,13 @@ describe('approval-gate-flow: role-gated, audited approval (RFC 0051 §A)', () =
   });
 
   it('the override path emits an audited approval.overridden with a reason', async () => {
-    if (!(await authorizationSupported())) return; // capability-gated
+    if (!(await authorizationSupported())) return softSkip('inapplicable', 'capability-gated');
     const res = await driver.post('/v1/host/sample/governance/approval-gate', {
       scenario: 'override',
       principal: 'conformance-owner-principal',
       reason: 'conformance emergency publish',
     });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'seam unwired — soft-skip');
     const body = res.json as { event?: { type?: string; payload?: { reason?: string } } } | undefined;
     expect(
       body?.event?.type,

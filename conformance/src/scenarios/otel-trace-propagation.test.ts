@@ -18,6 +18,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -56,15 +57,15 @@ describe('otel-trace-propagation: inbound traceparent threads to emitted spans',
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[otel-trace-propagation] collector not started; skipping');
-      return;
+      return softSkip('blocked', '[otel-trace-propagation] collector not started; skipping');
     }
     if (!isFixtureAdvertised(FIXTURE)) {
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     }
     if (!(await isObservabilityAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[otel-trace-propagation] capabilities.observability not advertised; skipping');
-      return;
+      return softSkip('inapplicable', '[otel-trace-propagation] capabilities.observability not advertised; skipping');
     }
 
     const collector = getCollector()!;
