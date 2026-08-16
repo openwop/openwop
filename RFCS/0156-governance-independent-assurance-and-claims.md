@@ -116,7 +116,7 @@ This RFC depends on external decisions and should remain Draft until named candi
 - [ ] External audit completed; Critical/High findings remediated and retested. (Externally gated — the engagement is unscheduled.)
 - [ ] Tier-3 host publishes valid core-standard v2 evidence plus one current interop profile. (Externally gated — no Tier-3 host, and the v2 bundle schema does not exist yet either.)
 - [ ] Assurance manifest and claims CI gate land across public surfaces. (Carried — `check-doc-pack-claims.mjs` gates some claim language today, but there is no assurance manifest.)
-- [ ] Security SLA source and recurring review cadence are operational. (Carried.)
+- [ ] Security SLA source and recurring review cadence are operational. (**SLA source landed 2026-08-16:** `SECURITY/response-sla.json` is the one source; `SECURITY.md` §3 and `GOVERNANCE.md` §Security MUST state its numbers and `scripts/check-doc-tallies.mjs` fails when either drifts (`MAINTAINERS.md` defers to §3 by reference rather than restating). Carried: the recurring review cadence — annual governance review, security review cadence, quarterly standards-version review — has no record to check yet.)
 - [ ] Governance, security, contributing, compatibility, roadmap, matrix, status, and CHANGELOG documents agree. (Carried — no drift is known today. **2026-08-16: the numeric part of "agree" is now gated** — `scripts/check-doc-tallies.mjs` (openwop:check step 6) fails when SECURITY.md / README invariant tallies or the conformance/README scenario-file counts disagree with the tree, joining `generate-protocol-status.mjs --check` for the RFC and spec-doc counts. Prose agreement (which document says what about waivers, SLAs, tiers) is still an assertion.)
 
 ## References
