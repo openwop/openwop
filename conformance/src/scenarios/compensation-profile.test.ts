@@ -130,6 +130,20 @@ describe('RFC 0151 §B — node compensation declaration', () => {
     expect(validate({ ...base }), JSON.stringify(validate.errors)).toBe(true);
   });
 
+  it('irreversibleEffect (RFC 0151 UQ4) is a sibling boolean, mutually exclusive with a compensation declaration', () => {
+    // A statement that the effect HAS NO INVERSE. Sibling of `compensation`, so
+    // `nodeTypeId` stays required and COMPATIBILITY §2.2 is not engaged.
+    expect(validate({ ...base, irreversibleEffect: true }), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate({ ...base, irreversibleEffect: false, compensation: { nodeTypeId: 'vendor.shop.release' } }), JSON.stringify(validate.errors)).toBe(true);
+    // Both = an effect that both has and lacks an inverse. The schema rejects it
+    // (`if irreversibleEffect === true then not required compensation`).
+    expect(
+      validate({ ...base, irreversibleEffect: true, compensation: { nodeTypeId: 'vendor.shop.release' } }),
+      'compensation.md §B: a node declaring both irreversibleEffect: true and compensation is contradictory and MUST be rejected',
+    ).toBe(false);
+    expect(validate({ ...base, irreversibleEffect: 'yes' }), 'irreversibleEffect is a boolean').toBe(false);
+  });
+
   it('the declaration is closed — an unknown key is rejected', () => {
     expect(
       validate({ ...base, compensation: { nodeTypeId: 'x', onFailure: 'ignore' } }),

@@ -353,9 +353,30 @@ export interface ChainCompensationPolicy {
 /** A chain as RFC 0157 sees it: the RFC 0013 shape plus the two optional
  *  compensation surfaces. */
 export type WorkflowChainWithCompensation = Omit<WorkflowChain, 'dag'> & {
-  dag: { nodes: ReadonlyArray<FragmentNode & { compensation?: FragmentNodeCompensation }>; edges?: ReadonlyArray<FragmentEdge> };
+  dag: {
+    nodes: ReadonlyArray<FragmentNode & { compensation?: FragmentNodeCompensation; irreversibleEffect?: boolean }>;
+    edges?: ReadonlyArray<FragmentEdge>;
+  };
   compensation?: ChainCompensationPolicy;
 };
+
+/** Thrown when a fragment node declares BOTH `irreversibleEffect: true` and a
+ *  `compensation` (RFC 0151 UQ4 / `compensation.md` §B): a contradiction the
+ *  schema also rejects; expansion refuses it fail-closed rather than pick one.
+ *  Wire code `chain_irreversible_with_compensation`. */
+export class ChainIrreversibleWithCompensationError extends Error {
+  readonly code = 'chain_irreversible_with_compensation' as const;
+  constructor(
+    public readonly nodeId: string,
+    public readonly chainId: string,
+  ) {
+    super(
+      `chain_irreversible_with_compensation: fragment node "${nodeId}" in chain "${chainId}" declares both ` +
+        'irreversibleEffect: true and a compensation — an effect cannot both have and lack an inverse',
+    );
+    this.name = 'ChainIrreversibleWithCompensationError';
+  }
+}
 
 /** Thrown when the parent already carries a `settings.compensation` policy that
  *  is not deep-equal to the chain's. Wire code
@@ -412,8 +433,9 @@ function canonicalJson(v: unknown): string {
 
 export interface CarriedCompensation {
   /** The expanded fragment with `compensation` carried onto each node that
-   *  declared one (typeIds validated, params substituted, id refs rewritten). */
-  nodes: ReadonlyArray<ExpandedFragment['nodes'][number] & { compensation?: FragmentNodeCompensation }>;
+   *  declared one (typeIds validated, params substituted, id refs rewritten)
+   *  and `irreversibleEffect` copied verbatim where declared. */
+  nodes: ReadonlyArray<ExpandedFragment['nodes'][number] & { compensation?: FragmentNodeCompensation; irreversibleEffect?: boolean }>;
   /** The `settings.compensation` the registered definition MUST carry after
    *  this expansion: the parent's when the chain declares none; the chain's
    *  when the parent had none; the (equal) shared policy when both agree.
@@ -433,11 +455,15 @@ export interface CarriedCompensation {
  *       literals; the recorded-facts rule is unaffected);
  *   6b. fragment node-id references inside `inputMapping` are rewritten with
  *       the expansion prefix, exactly as edge refs are;
+ *   6c. `irreversibleEffect: true` (RFC 0151 UQ4) is copied onto the expanded
+ *       node unchanged; a fragment node declaring both it and a `compensation`
+ *       is refused (`chain_irreversible_with_compensation`) — the schema rejects
+ *       the shape too, and expansion does not pick a side;
  *   9b. the chain-level policy becomes the definition's `settings.compensation`
  *       — copied when the parent has none, accepted when equal, otherwise
  *       `chain_compensation_policy_conflict`.
  *
- * @throws ChainUnresolvableTypeIdError, ChainCompensationPolicyConflictError
+ * @throws ChainUnresolvableTypeIdError, ChainCompensationPolicyConflictError, ChainIrreversibleWithCompensationError
  */
 export function carryCompensation(
   chain: WorkflowChainWithCompensation,
@@ -450,17 +476,21 @@ export function carryCompensation(
   const fragmentNodeIds = new Set(srcNodes.map((n) => n.id));
   const byOriginalId = new Map(srcNodes.map((n) => [n.id, n] as const));
 
-  // 3b
+  // 3b (+ 6c's contradiction check, before any node is emitted)
   for (const n of srcNodes) {
+    if (n.irreversibleEffect === true && n.compensation !== undefined) {
+      throw new ChainIrreversibleWithCompensationError(n.id, chain.chainId);
+    }
     if (n.compensation !== undefined && !ctx.isTypeIdResolvable(n.compensation.nodeTypeId)) {
       throw new ChainUnresolvableTypeIdError(n.compensation.nodeTypeId, chain.chainId);
     }
   }
 
-  // 5b + 6b
+  // 5b + 6b + 6c
   const nodes = expanded.nodes.map((en) => {
     const originalId = en.id.startsWith(prefix) ? en.id.slice(prefix.length) : en.id;
     const src = byOriginalId.get(originalId);
+    if (src?.irreversibleEffect === true) return { ...en, irreversibleEffect: true };
     if (src?.compensation === undefined) return en;
     const c: FragmentNodeCompensation = { nodeTypeId: src.compensation.nodeTypeId };
     if (src.compensation.inputMapping !== undefined) {
