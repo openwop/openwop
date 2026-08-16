@@ -2,7 +2,7 @@
 
 > **Status: v1 (2026-05-01; swept 2026-08-16 under RFC 0147 criterion 11 — §3 named the single response policy, §8 counts refreshed, §9 audit state made explicit).** Vulnerability-disclosure policy for the openwop protocol, reference implementations, conformance suite, and machine-readable contracts. The protocol's normative security requirements are specified in `auth.md`, `idempotency.md`, `webhooks.md`, and per-capability spec docs; this file covers the disclosure process, response SLA, embargo terms, and advisory tracking.
 
-Profile-specific threat models live under `SECURITY/`, including `threat-model-auth-profiles.md`, `threat-model-secret-leakage.md`, `threat-model-provider-policy.md`, `threat-model-node-packs.md`, and `threat-model-prompt-injection.md`.
+Profile-specific threat models live under `SECURITY/`, including `threat-model-auth-profiles.md`, `threat-model-secret-leakage.md`, `threat-model-provider-policy.md`, `threat-model-node-packs.md`, `threat-model-prompt-injection.md`, `threat-model-workload-identity.md`, and `threat-model-compensation.md`.
 
 ## 1. Scope
 
@@ -117,12 +117,13 @@ This safe-harbor commitment binds the maintainer set; it does not bind third-par
 
 openwop threat models live at `SECURITY/threat-model-*.md` and cover specific attack surfaces:
 
-- `SECURITY/threat-model-secret-leakage.md` — BYOK secret resolution and redaction invariants (T1–T5 trust boundaries; 80 invariants as of 2026-08-16 — the largest surface, covering credential references, memory attribution, workspace, sub-run attestation, and egress policy).
+- `SECURITY/threat-model-secret-leakage.md` — BYOK secret resolution and redaction invariants (T1–T5 trust boundaries; 79 invariants as of 2026-08-16 — the largest surface, covering credential references, memory attribution, workspace, sub-run attestation, and egress policy).
 - `SECURITY/threat-model-prompt-injection.md` — LLM-mediated workflows (indirect injection via artifacts, exfiltration via tool outputs, refine-feedback path manipulation; 47 invariants as of 2026-08-16 — incl. the A2A/MCP peer- and extension-authority rows).
 - `SECURITY/threat-model-node-packs.md` — node-pack supply chain (tampering, signature substitution, sandbox escape; 30 invariants as of 2026-08-16).
 - `SECURITY/threat-model-provider-policy.md` — provider-policy bypass paths across all four modes; 15 invariants as of 2026-08-16.
 - `SECURITY/threat-model-auth-profiles.md` — OAuth2-CC / OIDC user-bearer / mTLS / API-key-rotation enforcement boundaries (qualitative; its enforcement invariants are tracked under the rows above + the auth tier in `invariants.yaml`).
 - `SECURITY/threat-model-workload-identity.md` — RFC 0154 workload identity, delegated actor chain, sender constraint, content-free audit/telemetry, and artifact provenance (T1–T5; 2 registered + 6 named-unregistered invariants; **no advertiser yet** — every behavioural row is `blocked` per RFC 0148 §A until one exists).
+- `SECURITY/threat-model-compensation.md` — RFC 0151 compensation and partial failure: declaration/policy, the persisted plan and inverse-action identity, approvals / dead-letter / operator recovery, events + rollup + replay (T1–T6, adversaries A1–A9; 1 registered + 3 named-unregistered invariants; **no deployed advertiser yet** — behavioural rows are `blocked` per RFC 0148 §A until one exists).
 
 The threat models track invariants in `SECURITY/invariants.yaml` (175 rows as of 2026-08-16: 145 protocol-tier, 28 reference-impl-tier, 2 advisory); the CI gate at `scripts/check-security-invariants.sh` (step 6 of the 7-step `openwop-check.sh`) verifies every protocol-tier MUST-NOT maps to at least one matching conformance test. Reference-impl-tier invariants are verified by the reference impl's CI; advisory invariants are defense-in-depth and don't gate. **What the gate does and does not say (RFC 0148 §A):** the mapping proves a *scenario exists* for the invariant, not that it executed non-vacuously against a given host — a scenario gated on a capability the host does not advertise records `inapplicable`; one whose seam the host has not wired records `blocked`. Per-host execution evidence is the host's certification bundle v2 (`INTEROP-MATRIX.md`), not this gate.
 

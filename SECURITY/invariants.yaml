@@ -1543,7 +1543,7 @@ invariants:
   - id: compensation-replay-no-refire
     tier: protocol
     severity: high
-    threat_model: SECURITY/threat-model-secret-leakage.md
+    threat_model: SECURITY/threat-model-compensation.md
     tests:
       - conformance/src/scenarios/compensation-behavior.test.ts
     note: |

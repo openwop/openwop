@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compensation and Partial-Failure Profile
 
-> **Status: Draft · v1.x (2026-08-16) — RFC 0151 `Accepted`, profile carried.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. (2026-08-16: §B gained the workflow-level policy, `settings.compensation`.) Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x (2026-08-16; §C/§E/§G prose landed 2026-08-16) — RFC 0151 `Accepted`.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. (2026-08-16: §B gained the workflow-level policy, `settings.compensation`.) Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ## Why this exists
 
@@ -59,7 +59,7 @@ workflow node (`workflow-definition.schema.json`):
   the inverse of what was actually done.
 - `retry.maxAttempts` / `retry.backoffMs` bound the inverse action's own retries.
 - `requiresApproval: true` gates the inverse effect behind the same RFC 0051 approval
-  surface as a forward effect (§E, carried).
+  surface as a forward effect (§E).
 - A host MUST reject a compensation cycle.
 
 ### Workflow policy: `settings.compensation`
@@ -120,6 +120,86 @@ Accepting a policy the host will never honour tells the author an unwind will ha
 it will not — RFC 0148 §B's advertise-and-opt-out failure with the sign flipped. Node-level
 `compensation` declarations alone remain acceptable on any host: they describe an inverse
 action; the policy is what requests the unwind.
+
+## §C — Lifecycle
+
+This section is the host-internal contract behind the events in §D. Almost none of it
+is observable from a normal run's wire — which is exactly why it is written down: a
+host that gets the order of these steps wrong produces a wire that looks fine until the
+first crash mid-unwind, and RFC 0148 §A treats "looks fine" as `blocked`, not as a pass.
+
+**Trigger.** An unwind starts only when a `settings.compensation.triggers` entry fires
+(§B "Workflow policy") and at least one *committed* forward effect exists whose node
+carries a `compensation` declaration. A trigger with nothing to unwind MUST NOT emit
+`compensation.requested`; the run ends with `compensationStatus: none`. A node whose
+forward effect never committed (failed before its effect, or has no `compensation`
+declaration) is not in the plan.
+
+**Plan.** Before executing its first inverse action the host MUST persist a
+**compensation plan**: the ordered set of inverse actions with, for each, the forward
+node's `logicalInvocationId` (RFC 0150 §B), the forward-completion ordinal, the resolved
+`nodeTypeId`, the input **as derived from recorded facts at plan time**, and the retry
+bounds in force (node bounds, else policy defaults). The plan carries a `planVersion`
+that changes only through an authorized §E substitution. Persisting the plan is what
+`compensation.requested` witnesses; a host MUST NOT emit it before the plan is durable.
+
+**Ordering.** `reverse-completion` executes inverse actions by **descending durable
+forward-completion sequence** — the order the host recorded the forward effects as
+committed, not the order the nodes were declared or started. `dependency-graph`, when
+advertised and selected, MUST be a DAG over the forward effects and MUST preserve
+reverse dependency order; where the graph leaves two inverse actions unordered the
+host MAY run them concurrently. Under either model an inverse action MUST NOT start
+until every inverse action ordered before it has reached a recorded outcome
+(completed, failed, skipped, or terminated).
+
+**Inverse-action identity.** Each inverse action has a stable identity derived from
+the tuple
+
+```text
+(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)
+```
+
+— the tenant, the run, the RFC 0150 identity of the forward invocation being undone,
+the action's position in the plan, and the profile version whose ordering rules minted
+it. This identity, not the attempt, is what a retry re-presents (§B `retry`), so a
+transient failure followed by a retry is one obligation with two attempts, never two
+obligations. The identity MUST be carried to the inverse effect (its idempotency key,
+per [`idempotency.md`](./idempotency.md)) so the downstream system can also
+deduplicate. `attempt` is recorded on the events (§D) but is **not** part of the
+identity — the RFC 0150 §B rule that retired `attempt` from effect identity applies
+here for the same reason: an identity that includes the attempt makes every retry a
+fresh effect. How this tuple composes with RFC 0150 §C's semantic-request digest is
+carried until that digest lands (gap G1).
+
+**Retry.** An inverse action that fails retries under its own bounds with a fresh
+`attempt` and the **same** identity. Exhausting the bounds records the action as failed
+(`compensation.failed`, `reason: retries-exhausted`) and hands the plan to §E — it does
+not stop the plan by itself unless the policy's `exhaustedDisposition` is
+`manual-intervention`. `completed` is terminal for an action: a completed inverse MUST
+NOT be re-executed by any later step, retry, resume, or replay (§F).
+
+**Crash and resume.** The plan and each action's recorded outcome MUST be durable
+before the host acts on them, so that a host restarted mid-unwind resumes **from the
+persisted plan**: actions with a recorded `completed` outcome are not re-run, the
+in-flight action is re-presented under its existing identity (the downstream system
+sees a retry, not a duplicate), and the remaining actions run in plan order. A host
+MUST NOT rebuild the plan from the workflow definition on resume — a definition edited
+between crash and restart would silently change what is being undone. Resume does not
+emit a second `compensation.requested`; the plan already exists.
+
+**Cancellation of the parent.** An RFC 0094 cancel accepted while an unwind is active
+MUST NOT silently abandon it. The policy's `onParentCancel` (§B) selects the behaviour:
+`continue` (the unwind runs to its terminal rollup while the run's forward `status`
+becomes `cancelled`), `pause` (`compensation.paused` with `reason` omitted — the closed
+vocabulary has no code for a parent-cancel hold, gap G6 — and the plan held for an
+authorized §E action), or `manual` (`compensation.manual_intervention_required`). In every case the rollup follows §D and
+the plan remains inspectable — a cancelled parent with a half-run unwind reads
+`partial` or `manual`, never `none`.
+
+**Timeouts.** `timeoutMs` (node, else policy) bounds one attempt of one inverse action.
+A timed-out attempt is a failed attempt: it retries under the same identity, and the
+downstream system's idempotency on that identity is what makes a late-arriving success
+from the timed-out attempt harmless.
 
 ## §D — Events and the run rollup
 
@@ -190,6 +270,65 @@ the snapshot asserts exactly this table.
 inverse is a double refund. `failed` is **not** terminal at the inverse-action level — a
 transient failure MUST be retryable without minting a second obligation (§C identity).
 
+## §E — Approvals, dead-letter routing, and operator recovery
+
+Compensation is a second effect, so it gets the forward path's controls, not weaker
+ones.
+
+**Approval before the inverse effect.** An inverse action whose node declares
+`compensation.requiresApproval: true` — or every inverse action when the policy's
+`approvalScope` is `all` (§B; the scope can only escalate) — MUST create an RFC 0051
+approval interrupt ([`interrupt.md`](./interrupt.md) §`kind: "approval"`) **before** the
+inverse effect executes, and emit `compensation.paused` (with `reason` omitted — no closed
+code names an approval hold, gap G6) while it is open. The
+`artifactData` presented for approval MUST be the plan entry — the identity tuple, the
+`nodeTypeId`, and the recorded-fact input — never a re-derived value, so the approver
+approves what will actually run. The run's own `status: waiting-approval` and
+`interrupt` carry the wait; `compensationStatus` stays `running` (§D fold). A `reject`
+records the action as not completed with `reason: approval-denied` and hands the plan
+to the exhausted path below — rejection is a recorded outcome, not a silent skip.
+
+**Authorization binding.** Every approval resolution and every operator action below is
+an RFC 0049 authorization decision and MUST bind **tenant, principal, action, and
+`planVersion`**: a decision recorded for one plan version MUST NOT authorize an action
+on a later one, and a principal's authority over a compensation plan is the authority
+they hold in the plan's tenant — never authority carried in from another tenant, from
+the forward run's caller, or from the workflow's author. The decision is audited through
+the existing `authorization.decided` event (RFC 0049); no new event type exists for
+it. An action that fails authorization records `reason: authority-denied`.
+
+**Dead-letter routing.** When an inverse action exhausts its retries, or is rejected or
+denied as above, the run MUST route to RFC 0053 dead-letter handling
+([`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter)):
+`run.dead_lettered` is emitted with a redaction-safe `reason`, the run stays
+fork-eligible for the retention window, and the plan stays inspectable alongside it. A
+host that does not advertise `deadLetter` MUST still retain the plan and its recorded
+outcomes for at least the run's own retention — a compensation that fails and is then
+purged is indistinguishable from one that never ran. What happens next is the policy's
+`exhaustedDisposition`: `record-outcome` records the failure and continues with the
+remaining actions (the rollup lands on `partial` or `failed`); `manual-intervention`
+emits `compensation.manual_intervention_required` (`reason: retries-exhausted` /
+`approval-denied` / `authority-denied` / `dead-lettered`) and holds the plan for an
+operator (`manual`).
+
+**Operator recovery actions.** An authorized operator MAY perform exactly these four
+actions on a held or partial plan. There is no canonical endpoint for them in v1.x —
+they are host-mediated (gap G2 below) — but their **outcomes are wire-defined**, so a
+consumer reading the events and the snapshot sees the same thing on every host:
+
+| Action | Precondition | Recorded outcome | Rollup effect (§D fold) |
+| --- | --- | --- | --- |
+| **retry** | action not `completed` | a fresh `attempt` under the **same** identity | `manual` → `running`; then whatever the outcomes yield |
+| **skip with justification** | action not `completed`; a non-empty justification is recorded | action marked skipped, justification in the audit record (never in the event payload) | counts as *did not complete*: `partial` if any other action completed, else `failed` |
+| **substitute** | a **registered** compensation `nodeTypeId` (resolves like §B); increments `planVersion` | the plan entry's `nodeTypeId` changes under a new `planVersion`; prior approvals for that entry are void | as retry, under the new plan version |
+| **terminate as uncompensated** | — | every remaining action marked terminated, `reason: operator-terminated` | `partial` if any action completed, else `failed`; the plan is closed and MUST NOT resume |
+
+Every override MUST be audited (`authorization.decided` with the action named), and
+none of them may re-execute a `completed` inverse action. Whether a substitute may
+change the node type without changing `planVersion` (RFC 0151 UQ2) is decided **no**
+here: substitution is a new plan version so that approvals and authorization decisions
+bound to the old one cannot carry over.
+
 ## §F — Replay
 
 Replay defaults MUST use recorded compensation outcomes and MUST NOT re-fire inverse
@@ -197,6 +336,38 @@ effects: a replay that re-executes inverse effects turns a recovery into a secon
 outage. A live-effect branch MAY execute compensation only after explicit authorization
 and with fresh effect IDs. The `compensation-replay-no-refire` invariant
 (`SECURITY/invariants.yaml`) is registered against `compensation-behavior.test.ts`.
+
+## §G — Security
+
+The threat model is [`SECURITY/threat-model-compensation.md`](../../SECURITY/threat-model-compensation.md).
+The rules it rests on, all stated above and restated here as MUST-NOTs:
+
+- **Credentials.** An inverse action authenticates to the downstream system under its
+  own credential, resolved through the normal BYOK / secret-store path
+  ([`auth.md`](./auth.md), RFC 0074) and the normal egress policy (RFC 0076). Forward
+  credentials MUST NOT be copied into the plan; the plan holds the identity tuple, the
+  `nodeTypeId`, and recorded-fact inputs, nothing that authenticates. Events MUST NOT
+  carry provider bodies or credentials (§D; SR-1).
+- **Identity.** An inverse action's identity is the §C tuple; a retry, resume, or
+  replay MUST NOT mint a second identity for the same obligation, and a `completed`
+  action MUST NOT execute again (§C, §F).
+- **Authority.** Every approval and operator action is bound to tenant, principal,
+  action, and `planVersion` (§E); a principal MUST NOT act on a plan in a tenant where
+  they hold no authority, and forward-run or authoring authority MUST NOT be inherited
+  by the unwind.
+- **Inputs.** Inverse inputs derive from recorded facts (§B); a host MUST NOT
+  construct one from a prompt or model output during unwind or replay.
+
+Of RFC 0151 §G's four named invariants, `compensation-replay-no-refire` is
+**registered** (`SECURITY/invariants.yaml`, protocol tier) against the replay leg of
+`compensation-behavior.test.ts`. `compensation-effect-id-retry-stable`,
+`compensation-tenant-authority-bound`, and `compensation-input-recorded-facts-only` are
+**named, not registered**: each needs a witness that exercises the threat (a retried
+inverse action re-presenting the same identity; a cross-tenant operator action refused;
+an inverse input that differs from the recorded fact refused), and the §21 seams do not
+yet provoke those. Registering an invariant against a test that does not verify it
+would be the vacuous-pass RFC 0148 exists to stop; the threat model names the seam
+extension each one needs.
 
 ## Conformance
 
@@ -216,11 +387,14 @@ and with fresh effect IDs. The `compensation-replay-no-refire` invariant
 
 | # | Gap | Disposition |
 | - | --- | ----------- |
-| G1 | §C lifecycle prose — plan persistence shape, the inverse-action identity tuple `(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)`, crash-resume, and cancellation-of-parent rules | **Carried.** The identity is stated in RFC 0151 §C and composes with RFC 0150 §B `logicalInvocationId`; §C's semantic digest is not landed, so the composition cannot be specified end-to-end here yet. |
-| G2 | §E approvals, dead-letter routing, and the operator recovery actions (retry / skip with justification / substitute / terminate as uncompensated) and their audit | **Carried.** The rollup table above already names the outcomes those actions produce so the field's meaning does not depend on §E landing. |
+| G1 | ~~§C lifecycle prose — plan persistence shape, the inverse-action identity tuple, crash-resume, and cancellation-of-parent rules~~ | **Closed 2026-08-16 (§C above).** Plan contents, `planVersion`, ordering under both models, the identity tuple `(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)` with `attempt` outside it (RFC 0150 §B parity), retry, crash-resume from the persisted plan, `onParentCancel`, and per-attempt timeouts. **Still carried within it:** how the tuple composes with RFC 0150 §C's semantic-request digest — that digest is not landed. |
+| G2 | ~~§E approvals, dead-letter routing, and the operator recovery actions and their audit~~ | **Closed 2026-08-16 (§E above)** as *outcomes*: approval-before-effect with the plan entry as `artifactData`, RFC 0049 binding to tenant/principal/action/`planVersion` audited via `authorization.decided`, RFC 0053 routing, and the four operator actions with the recorded outcome and rollup effect each yields; UQ2 decided (substitution is a new `planVersion`). **Still open — G7:** the operator actions have no canonical endpoint in v1.x; they are host-mediated. A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is the obvious additive shape and would need OpenAPI + SDK + a seam-driven witness before it is more than a sentence here. |
 | G3 | ~~`schemas/compensation-policy.schema.json` — the policy that decides which failures qualify for automatic compensation~~ | **Closed 2026-08-16.** Landed as `settings.compensation` on `WorkflowDefinition` (§B "Workflow policy"): closed `triggers`, ordering model, retry/timeout defaults, `exhaustedDisposition`, escalate-only `approvalScope`, `onParentCancel`. Refusal rule for non-advertising hosts (`capability_required`) stated. |
 | G4 | `compensationStatus` on a forked run (`POST /v1/runs/{runId}:fork`) of a partially compensated source | **Open.** RFC 0151 §F says the branch preserves source facts without claiming it changed the source system; whether the child reports the source's rollup or starts at `none` is unresolved and is deliberately not decided by this document. |
 | G5 | Compensation evidence retention minimum | **Open** (RFC 0151 UQ5). |
+| G6 | The closed `reason` vocabulary on `compensation.paused` has no code for an approval hold or a parent-cancel hold; §E/§C omit `reason` for those | **Open.** Adding `approval-pending` / `parent-cancelled` to the enum is additive for producers but a strict consumer validating the closed enum would reject them; decide with the G7 endpoint family so the event and the action vocabulary move together. |
+| G7 | Canonical operator-recovery endpoints (see G2) | **Open.** |
+| G8 | Irreversible-effect declaration (RFC 0151 UQ4) — how an author states that a node's effect **has no inverse**, so a reader cannot infer a compensator from silence | **Open.** Candidate: a node-level `compensation: { "irreversible": true }` variant (mutually exclusive with `nodeTypeId`) that the plan records as *terminated, reason: irreversible* rather than skipping silently. Relaxing `required: [nodeTypeId]` inside the optional `compensation` object is a schema-shape decision under COMPATIBILITY §2.2 and is deliberately not made here. |
 
 ## References
 
