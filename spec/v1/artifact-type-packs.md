@@ -24,6 +24,7 @@ A manifest with `kind: "artifact-type"` validates against [`artifact-type-pack-m
 
 ## Manifest format
 
+<!-- normative-example: artifact-type-pack-manifest.schema.json -->
 ```json
 {
   "kind": "artifact-type",

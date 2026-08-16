@@ -41,6 +41,7 @@ Versioning follows Semantic Versioning 2.0.0 per `node-packs.md` §Versioning. R
 
 A workflow-chain pack manifest is JSON at the pack root (`pack.json`). Schema: `schemas/workflow-chain-pack-manifest.schema.json`.
 
+<!-- normative-example: workflow-chain-pack-manifest.schema.json -->
 ```json
 {
   "name": "vendor.acme.editor-presets",

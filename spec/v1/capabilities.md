@@ -92,6 +92,7 @@ Every capability family — the required `protocolVersion` / `supportedEnvelopes
 
 A top-level `capabilities` wrapper object is a **deprecated legacy shape**, tolerated only by the schema's `additionalProperties: true`. Through the v1.x migration window a host MAY additionally mirror the families under a `capabilities` object for backward compatibility; **clients** SHOULD read the document root first and MAY fall back to a `capabilities.*` wrapper. The **conformance suite reads the root only** — root is the MUST above, so a host that serves families exclusively under the wrapper is non-conformant and is graded as such (RFC 0073 Phase 4). Hosts MUST serve families at the root and SHOULD NOT emit the wrapper. The host-side mirror affordance and the schema's `additionalProperties` tolerance are scheduled to retire together at the next major version (v2.0), at which point `capabilities.schema.json` tightens to forbid the wrapper — see RFC 0073.
 
+<!-- normative-example: capabilities.schema.json -->
 ```json
 {
   "protocolVersion": "1.0",
@@ -911,6 +912,7 @@ The refusal MUST use the canonical error envelope (`error-envelope.schema.json`)
 - `details.requiredCapability` SHOULD name the capability key whose absence triggered the refusal (e.g., `"conversationPrimitive"`).
 - `details.offendingTypeId` SHOULD name the typeId in the workflow that triggered the gating (e.g., `"core.conversationGate"`).
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "capability_required",

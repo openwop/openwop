@@ -52,6 +52,7 @@ The `configurable` field is opaque to the engine. NodeModules MAY consume keys v
 
 An OpenWOP-compliant server SHOULD validate `configurable` against the schema declared in `Capabilities.configurable` when the host advertises that optional v1 capability. If a key is unknown or a value is out of declared bounds, the server SHOULD reject the request with HTTP `400 Bad Request`:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "validation_error",
@@ -177,6 +178,7 @@ Mock providers MUST be guarded — anyone with API access could otherwise skip r
 - Test API keys (advertised via `Capabilities.testing.testKeyPrefix` — typically `hk_test_`) pass.
 - Servers MAY additionally gate on per-tenant policy or feature flags.
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "mock_provider_forbidden",

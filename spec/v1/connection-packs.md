@@ -207,6 +207,7 @@ of those.
 
 A complete connection pack for GitHub, reached via the official GitHub MCP server:
 
+<!-- normative-example: connection-pack-manifest.schema.json -->
 ```json
 {
   "name": "core.openwop.connections.github",

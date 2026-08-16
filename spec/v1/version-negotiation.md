@@ -80,6 +80,7 @@ The third case represents a deploy skew: the doc was written by a newer engine t
 
 ### Error surface
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "engine_version_mismatch",

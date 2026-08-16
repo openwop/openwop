@@ -24,6 +24,7 @@ Chat card packs are the fifth pack `kind`, peer to `node`, `workflow-chain`, `pr
 
 ## Manifest format
 
+<!-- normative-example: chat-card-pack-manifest.schema.json -->
 ```json
 {
   "kind": "card",

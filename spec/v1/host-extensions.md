@@ -128,6 +128,7 @@ Per `capabilities.schema.json`, `additionalProperties: true` makes this additive
 
 `GET /v1/runs/{runId}` returns a `RunSnapshot`. The schema's `additionalProperties: true` allows host fields. Conventional pattern:
 
+<!-- normative-example: run-snapshot.schema.json -->
 ```json
 {
   "runId": "run-...",

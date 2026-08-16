@@ -52,6 +52,7 @@ When to bump status:
 - Use RFC 2119 keywords (MUST, SHOULD, MAY, MUST NOT, SHOULD NOT) consistently.
 - Cross-reference companion specs by relative path. From the repo root, use links like `[capabilities.md](./spec/v1/capabilities.md)`; from inside `spec/v1`, link to peer docs by filename.
 - New surface area: add a "Why this exists" paragraph + an "Open spec gaps" table at the end.
+- **Normative examples are declared and validated (RFC 0149 §D).** A fenced ```json / ```jsonc block in `spec/v1/*.md` that is a WHOLE instance of a schema carries the marker `<!-- normative-example: <name>.schema.json -->` on the line immediately above the fence. `normative-example-extraction.test.ts` extracts every declared example at test time and validates it against `schemas/<name>` with the same Ajv registration every other leg uses, and it also fails on the *inverse* — a fenced block that validates as a whole instance of some schema but is not declared. Fragments (`...`, jsonc comments, partial objects) are prose and take no marker; a declared example MUST be strict JSON. Discovery-shaped examples (root `protocolVersion` + `supportedEnvelopes`) MUST be declared against `capabilities.schema.json` and MUST NOT carry credential- or tenant-shaped keys (RFC 0149 §E).
 
 ### JSON Schemas (`schemas/*.schema.json`)
 

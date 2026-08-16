@@ -26,6 +26,7 @@ Allowed values: `values | updates | messages | debug`. If omitted, the server MU
 
 If a client requests a mode the server doesn't implement, the server MUST respond with HTTP `400 Bad Request` and body:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "unsupported_stream_mode",
