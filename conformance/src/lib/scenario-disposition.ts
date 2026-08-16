@@ -86,6 +86,35 @@ export function fileDisposition(
   };
 }
 
+/**
+ * The runner's file-level record (RFC 0148 §A), as `setup.ts` computes it in
+ * `afterAll`. Pure so `conformance-execution-witness.test.ts` can pin the rule
+ * the hooks apply:
+ *   - a failed test ⇒ executed-fail; a witnessed pass ⇒ executed-pass;
+ *   - a zero-assertion "pass" ⇒ the file's noted reason (`softSkip` /
+ *     `seamAbsent`: inapplicable | skipped | blocked) or a behaviorGate reason;
+ *   - a zero-assertion "pass" with NO reason ⇒ `blocked` + the marker detail —
+ *     an early return can never become a pass.
+ */
+export function resolveFileRecord(
+  states: readonly FileTestState[],
+  gateReason: 'inapplicable' | 'skipped' | undefined,
+  assertionCount: number,
+  noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string } | null,
+): { disposition: Disposition; detail?: string } {
+  let { disposition, detail } = fileDisposition(states, gateReason, assertionCount);
+  if (disposition === 'executed-pass' && assertionCount === 0) {
+    if (noted !== null) {
+      disposition = noted.kind;
+      detail = noted.reason;
+    } else {
+      disposition = 'blocked';
+      detail = UNCLASSIFIED_RETURN_DETAIL;
+    }
+  }
+  return detail === undefined ? { disposition } : { disposition, detail };
+}
+
 export interface DerivedRequirement {
   readonly requirementId: string;
   readonly scenarioId: string;

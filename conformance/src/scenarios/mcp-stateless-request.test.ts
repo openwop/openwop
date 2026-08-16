@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'mcp-2026-07-28';
 const META_V = 'io.modelcontextprotocol/protocolVersion';
@@ -42,6 +43,22 @@ async function list() {
   );
   return { status: res.status, body: res.json as { result?: { resultType?: string; tools?: unknown[]; ttlMs?: number; cacheScope?: string }; error?: { code: number } } };
 }
+
+describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — mcp-header-body-consistent, the method/name half (host as server, gated on mcp.profiles ∋ mcp-2026-07-28)', () => {
+  it('Mcp-Method ≠ body method, and Mcp-Name ≠ params.name, are refused 400 + -32020 (HeaderMismatchError) — the same fail-closed rule as the version header', async () => {
+    if (!behaviorGate(PROFILE, await claimsCurrent())) return;
+    const meta = { [META_V]: '2026-07-28', [META_C]: {}, [META_I]: { name: 'openwop-conformance', version: 'suite' } };
+    // (a) Mcp-Method header disagrees with the JSON-RPC method
+    const m = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: meta } }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'resources/list' } });
+    if (m.status === 404 || m.status === 403) return softSkip('blocked', `MCP server mount /v1/host/sample/mcp answered ${m.status}`);
+    expect(m.status, driver.describe('mcp-integration.md §B', 'Mcp-Method MUST equal the body method; disagreement MUST be refused 400 (mcp-header-body-consistent)')).toBe(400);
+    expect((m.json as { error?: { code?: number } }).error?.code, driver.describe('mcp-integration.md §B', 'the refusal is HeaderMismatchError -32020')).toBe(-32020);
+    // (b) Mcp-Name header disagrees with params.name on tools/call
+    const n = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'echo', arguments: {}, _meta: meta } }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': 'not-echo' } });
+    expect(n.status, driver.describe('mcp-integration.md §B', 'Mcp-Name MUST equal params.name; disagreement MUST be refused 400 (mcp-header-body-consistent)')).toBe(400);
+    expect((n.json as { error?: { code?: number } }).error?.code, driver.describe('mcp-integration.md §B', 'the refusal is HeaderMismatchError -32020')).toBe(-32020);
+  });
+});
 
 describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — mcp-stateless-request (host as server, gated on mcp.profiles ∋ mcp-2026-07-28)', () => {
   it('tools/list succeeds with no initialize and no session; result carries resultType + cache hints; two connections agree', async () => {

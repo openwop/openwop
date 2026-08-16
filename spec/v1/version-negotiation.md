@@ -405,6 +405,19 @@ advertise no `crossRegion` at all are unaffected in both directions.
 
 ---
 
+## Certification-evidence migration (RFC 0148 — bundle v1 → v2)
+
+RFC 0148 classified certification evidence as a `safety-fix` (`COMPATIBILITY.md` §3): bundle **v1** (`results.passed[]` lists) counted an early-returning test as a pass and could not tell `skipped` from `inapplicable` from `blocked`. This runbook is what implementers and consumers do about it.
+
+| Who | What | When |
+| --- | --- | --- |
+| **Host operator** (publishing evidence) | Regenerate with `openwop-conformance --certify <out.json> --bundle-version 2` against a suite ≥ `1.114.0` (dispositions + `assertionCount` per requirement, `blocked` total REQUIRED, evidence scrubbed of the handed credential / `OPENWOP_*` secrets / the SR-1 canary). Publish the v2 file beside (not instead of) any v1 file for the window; link it from `capabilities.conformance.certificationBundleUrl` if you advertise one. A bundle with `blocked > 0` is honest evidence that does not certify the blocked claims — publish it anyway. | Now; v1 ceases to substantiate a **new** certification 90 days after 2026-08-12 (2026-11-10). |
+| **Consumer** (badge / interop matrix / procurement) | Re-derive with `verifyBundleV2` (`conformance/src/lib/certification-bundle-verify.ts`): `evidenceValid` (no unwitnessed / vacuous / duplicate / tampered / canary rows) and per-profile `certified`. Treat a v1 bundle as a *measurement*, not a claim, after the window; before it, read v1 `passed[]` knowing it may include zero-assertion passes. Never trust `claimedProfiles` verbatim (RFC 0089 §B(1)). | Now. |
+| **Reference hosts** | Already reissued as v2 (`openwop-examples#14`, 2026-08-16; `docs/CERTIFICATION-BUNDLE-INVENTORY.md` rows 2–5). | Done. |
+| **Suite** | v1 emission (`--bundle-version 1`) stays for the window; the emitter scrubs v1 too. After the window the default flips to v2 (a suite minor); v1 remains parseable. | Window end. |
+
+Nothing on the wire changes: discovery, runs, events are untouched. Only what a certification *claim* is allowed to rest on changes.
+
 ## Open spec gaps
 
 | #   | Gap                                                                                                                                                                                                                                                 | Owner       |

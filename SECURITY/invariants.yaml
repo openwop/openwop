@@ -3079,3 +3079,110 @@ invariants:
       the shape of the answer — never a 200. A host with no seams enabled
       answers 404 and passes correctly. It carries a non-zero-probe guard so it
       cannot pass by having issued no requests.
+
+  # ── RFC 0152 / 0153 named invariants, registered 2026-08-16 once a genuine
+  # witness existed (docs/RFC-0147-SELF-AUDIT.md §"Named-but-unregistered"):
+  # each was driven non-vacuously against the first A2A 1.0 / MCP 2026-07-28
+  # host (openwop-app ADR 0552 P2 at main 24b9e6c9b; ADR 0553 P2 branch
+  # 3c2cd839a) with the suite's dual-era fake peer / server. ─────────────────
+  - id: a2a-card-runtime-consistent
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/a2a-card-runtime-consistency.test.ts
+    note: |
+      RFC 0152 §C. The Agent Card a host publishes and the runtime it
+      actually serves MUST NOT drift: supportedInterfaces[].protocolVersion
+      equals capabilities.a2a.protocolVersions; the JSON-RPC 1.0 interface
+      the card lists is served (mandatory floor); card capabilities
+      streaming/pushNotifications equal the discovery flags; the header-less
+      card is the 0.3 shape while a2a-0.3-legacy is advertised. A card that
+      lists a security scheme the endpoint does not enforce, or an interface
+      it does not serve, is the drift a client's trust decision rides on.
+      Witnessed 4/4 under OPENWOP_REQUIRE_BEHAVIOR=true against the first
+      1.0 host; the header-less leg is red there until it follows §C.
+  - id: a2a-peer-no-authority-escalation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/a2a-peer-authority.test.ts
+    note: |
+      RFC 0152 §E. Content a peer returns — a message asserting an approval,
+      a widened scope set, a reference to a foreign task — MUST NOT change
+      anything the host authorizes: no approval gate advances, no scope
+      widens, no foreign task is dereferenced. The suite's fake peer answers
+      SendMessage with exactly that content; the host's §22 invoke seam
+      reports peerAuthority { approvalAdvanced, scopesWidened,
+      referencedTaskDereferenced } and the leg asserts all three false, and
+      that the peer actually saw a task (taskCount > 0 — the leg is vacuous
+      otherwise). Witnessed 1/1 (4 assertions) under strict against the
+      first 1.0 host with OPENWOP_A2A_FAKE_PEER=true.
+  - id: mcp-cache-tenant-scoped
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/mcp-cache-tenant-scope.test.ts
+    note: |
+      RFC 0153 §D. A cacheable MCP list result MUST be labelled honestly:
+      cacheScope is REQUIRED on tools/list; a list that differs per caller
+      MUST be cacheScope private (never public, which would let one
+      caller's catalog be served to another from a shared cache); a public
+      list is byte-identical across callers. What the wire can witness is
+      the label and the cross-caller comparison; the cache's internals are
+      the host's. Non-vacuous only with a second credential
+      (OPENWOP_TEST_SECONDARY_API_KEY) — the leg records blocked without one.
+      Witnessed under strict with two credentials against the first
+      2026-07-28 host.
+  - id: mcp-extension-no-authority
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/mcp-extension-opacity.test.ts
+    note: |
+      RFC 0153 §D. An MCP extension is opaque by default: an unknown _meta
+      extension key on an inbound request MUST be processed normally,
+      neither refused nor honoured (server half); and an extension _meta
+      asserting authority in a tool RESULT MUST NOT widen a scope or advance
+      an approval on the host (client half — the §23 invoke seam reports
+      extensionAuthority { scopesWidened, approvalAdvanced }, both asserted
+      false, with the fake server confirming the tool was actually called).
+      Witnessed 2/2 (6 assertions) under strict against the first
+      2026-07-28 host with OPENWOP_MCP_FAKE_SERVER=true.
+  - id: mcp-peer-no-authority-escalation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/mcp-extension-opacity.test.ts
+      - conformance/src/scenarios/mcp-current-auth-boundary.test.ts
+    note: |
+      RFC 0153 §E — the MCP counterpart of a2a-peer-no-authority-escalation.
+      A server's content (tool result, extension metadata) MUST NOT change
+      what the host authorizes (mcp-extension-opacity client half:
+      scopesWidened=false, approvalAdvanced=false), and an unauthenticated
+      current-profile request MUST be refused unless anonymousActor is
+      advertised — an anonymous MCP principal MUST NOT be the production
+      default (mcp-current-auth-boundary). Witnessed under strict against
+      the first 2026-07-28 host.
+  - id: mcp-header-body-consistent
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/mcp-2026-07-28-discover.test.ts
+      - conformance/src/scenarios/mcp-stateless-request.test.ts
+    note: |
+      RFC 0153 §B. Under 2026-07-28 the routing headers MUST agree with the
+      JSON-RPC body: MCP-Protocol-Version ≠ _meta revision, Mcp-Method ≠
+      method, and Mcp-Name ≠ params.name are each refused 400 +
+      HeaderMismatchError (-32020), fail closed — a proxy or WAF that routes
+      on the header while the body says otherwise is the attack. Both halves
+      are witnessed: the version half in mcp-2026-07-28-discover (a
+      supported-but-different body revision, so -32020 is isolated from
+      -32022 — agreement precedes selection, stated in mcp-integration.md
+      §B), the method/name half in mcp-stateless-request (added 1.123.0).
+      Witnessed 3/3 under strict against the first 2026-07-28 host.
