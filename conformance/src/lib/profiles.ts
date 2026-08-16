@@ -507,6 +507,19 @@ export interface ProfileFloor {
    * then being rejected for not shipping a registry it never advertised.
    */
   readonly runtimeDerived?: true;
+  /**
+   * RFC 0148 §C gap G7 — a DISCOVERY-CONDITIONAL floor. Each entry adds its
+   * `required` scenarios to the floor when the captured discovery document's
+   * array at `path` (dot-path from the document root, RFC 0073) includes
+   * `includes`. `profiles.md` §`openwop-replay-fork`: "the conformance
+   * scenarios pass on whichever mode the host advertises" — a flat list either
+   * over-requires (fails an honest single-mode host) or under-requires (the
+   * vacuity RFC 0148 exists to close). Evaluated by `requirementsFor(profile,
+   * document)`; without a document a conditional floor is UNEVALUABLE (null),
+   * never empty. A conditional floor whose branches all miss evaluates to zero
+   * requirements and therefore does not certify.
+   */
+  readonly conditional?: ReadonlyArray<{ readonly path: string; readonly includes: string; readonly required: readonly string[] }>;
 }
 
 export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
@@ -572,17 +585,53 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
   // profile "is derivable from which scenarios pass" — so it is runtime-derived.
   'openwop-node-packs': { required: ['pack-registry.test.ts', 'pack-registry-publish.test.ts'], runtimeDerived: true },
 
-  // ── Deliberately NOT transcribed ───────────────────────────────────────────
-  // `openwop-replay-fork` cannot be expressed by this model. `profiles.md`
-  // §`openwop-replay-fork` says "Hosts MAY support either or both modes; the
-  // conformance scenarios pass on whichever mode the host advertises" — a floor
-  // conditional on the advertised mode, which a flat `required[]` cannot state.
-  // Forcing it would either over-require (failing an honest single-mode host) or
-  // under-require (the vacuity this fix removes). It stays unspecified, and is
-  // therefore unprovable, until the model can express a discovery-conditional
-  // floor. Same for `openwop-interrupts`, `openwop-secrets`,
-  // `openwop-provider-policy`, `openwop-memory`, and `openwop-trigger-bridge`,
-  // whose prose sections do not yet name a settled floor set.
+  // ── Transcribed 2026-08-16 (RFC 0148 §C gap G7) ─────────────────────────────
+  // Each floor below is named in `profiles.md`'s section for the profile
+  // ("Floor (RFC 0148 §C)") and obeys `core-standard-profile.md` §C's membership
+  // rule: black-box, no seam, no soft-skip on the profile's OWN advert. Fixture-
+  // gated scenarios stay in (the conformance fixture IS the black-box seam and
+  // its absence records honestly as blocked/skipped), capability-gated ones are
+  // in only where the gate is the profile predicate itself.
+
+  // `profiles.md` §`openwop-interrupts`: the `clarification.request` envelope is
+  // the canonical interrupt envelope; the interrupt family proves resume.
+  'openwop-interrupts': { required: ['interrupt-clarification.test.ts'], requiredAnyPrefix: ['interrupt-'] },
+
+  // `profiles.md` §`openwop-secrets`: credential resolution per `run-options.md`
+  // §"Credential references" — the BYOK canary round-trip (`fixtures.md`
+  // §conformance-secrets-roundtrip, SR-1) is the profile's proof.
+  'openwop-secrets': { required: ['byok-roundtrip.test.ts'] },
+
+  // `profiles.md` §`openwop-provider-policy`: the four-mode taxonomy shape and
+  // its enforcement on the wire.
+  'openwop-provider-policy': { required: ['policies.test.ts', 'providerPolicyEnforcement.test.ts'] },
+
+  // `profiles.md` §`openwop-memory`: capability model shape, write attribution
+  // (RFC 0080 §A) and the degraded-projection contract (RFC 0080 §C).
+  'openwop-memory': {
+    required: [
+      'memory-capability-model-shape.test.ts',
+      'memory-attribution-shape.test.ts',
+      'memory-attribution-emits-on-write.test.ts',
+      'memory-degraded-projection.test.ts',
+    ],
+  },
+
+  // `profiles.md` §`openwop-trigger-bridge`: "The runtime conformance scenarios
+  // (`trigger-bridge-delivery.test.ts`, profile-gated) verify …" plus the shape.
+  'openwop-trigger-bridge': { required: ['trigger-bridge-shape.test.ts', 'trigger-bridge-delivery.test.ts'] },
+
+  // `profiles.md` §`openwop-replay-fork`: "This profile gates
+  // `replayDeterminism.test.ts` and `replay-fork.test.ts` … the conformance
+  // scenarios pass on whichever mode the host advertises." Discovery-conditional
+  // on `replay.modes` (RFC 0073 root family).
+  'openwop-replay-fork': {
+    required: [],
+    conditional: [
+      { path: 'replay.modes', includes: 'replay', required: ['replayDeterminism.test.ts'] },
+      { path: 'replay.modes', includes: 'branch', required: ['replay-fork.test.ts'] },
+    ],
+  },
 };
 
 /** Is `profile` derivable from a discovery document? Maps a profile name to its predicate (RFC 0089 §B(1)). */
@@ -641,9 +690,20 @@ export function verifyBundleProfile(bundle: CertificationBundleLike, profile: st
   }
 
   const passed = new Set(bundle.results.passed.map(scenarioBasename));
-  const missingFloor = floor.required.filter((r) => !passed.has(scenarioBasename(r)));
+  // Discovery-conditional floors (RFC 0148 §C G7): evaluate the conditional
+  // branches against the bundle's own captured discovery document.
+  const requiredFiles: string[] = [...floor.required];
+  for (const c of floor.conditional ?? []) {
+    let cur: unknown = bundle.discovery.document;
+    for (const seg of c.path.split('.')) cur = cur !== null && typeof cur === 'object' ? (cur as Record<string, unknown>)[seg] : undefined;
+    if (Array.isArray(cur) && cur.includes(c.includes)) requiredFiles.push(...c.required);
+  }
+  const missingFloor = requiredFiles.filter((r) => !passed.has(scenarioBasename(r)));
   const prefixOk = (floor.requiredAnyPrefix ?? []).every((p) => [...passed].some((s) => s.startsWith(p)));
-  const floorProven = missingFloor.length === 0 && prefixOk;
+  // A conditional floor none of whose branches matched requires nothing — that
+  // is unprovable for a non-discovery-only profile, not proven.
+  const evaluable = floor.discoveryOnly === true || requiredFiles.length > 0 || (floor.requiredAnyPrefix ?? []).length > 0;
+  const floorProven = evaluable && missingFloor.length === 0 && prefixOk;
   return {
     profile,
     derivable,

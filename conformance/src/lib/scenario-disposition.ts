@@ -34,7 +34,10 @@ import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-l
 /** All scenario basenames that appear in some profile's runtime floor. */
 export function floorScenarioFiles(): ReadonlySet<string> {
   const out = new Set<string>();
-  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const f of floor.required) out.add(f);
+  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) {
+    for (const f of floor.required) out.add(f);
+    for (const c of floor.conditional ?? []) for (const f of c.required) out.add(f);
+  }
   return out;
 }
 
@@ -129,6 +132,8 @@ export function deriveRequirementDispositions(
   reportStates: ReadonlyMap<string, 'passed' | 'failed' | 'skipped'>,
   ledger: readonly LedgerEntry[],
   claimedProfiles: readonly string[],
+  /** The captured discovery document — needed to evaluate a discovery-conditional floor (G7). */
+  document?: Readonly<Record<string, unknown>>,
 ): Derivation {
   const byId = new Map(ledger.map((e) => [e.requirementId, e] as const));
   const ledgerPresent = ledger.length > 0;
@@ -203,9 +208,11 @@ export function deriveRequirementDispositions(
   const rowById = new Map(rows.map((r) => [r.requirementId, r] as const));
   const verdicts: DerivedProfileVerdict[] = [];
   for (const profile of claimedProfiles) {
-    const ids = requirementsFor(profile);
+    const ids = requirementsFor(profile, document);
     if (ids === null) {
-      verdicts.push({ profile, unclassified: [], blocking: [`(no floor defined for ${profile})`], certifiable: false, runtimeDerived: false, held: false });
+      const floor = PROFILE_FLOOR_SCENARIOS[profile];
+      const why = floor === undefined ? `(no floor defined for ${profile})` : `(discovery-conditional floor for ${profile} is unevaluable without the discovery document)`;
+      verdicts.push({ profile, unclassified: [], blocking: [why], certifiable: false, runtimeDerived: false, held: false });
       continue;
     }
     const unclassified: string[] = [];

@@ -38,15 +38,35 @@ const bundleClaiming = (profiles: readonly string[], passed: readonly string[], 
 
 describe('RFC 0148 §C — floor enforcement is not vacuous', () => {
   it('a profile with NO floor definition is unprovable, not proven', () => {
-    // `openwop-interrupts` is deliberately untranscribed: its prose section does
-    // not yet name a settled floor set. Claiming it must therefore fail — the
-    // corpus cannot substantiate it, which is a different thing from the host
-    // having failed something.
-    const v = verifyBundleProfile(bundleClaiming(['openwop-interrupts'], []), 'openwop-interrupts');
-    expect(v.floorUnspecified, 'no floor set is defined for openwop-interrupts').toBe(true);
+    // A profile the floor map does not know (here a name outside the catalog;
+    // until 2026-08-16 `openwop-interrupts` played this role — its floor is now
+    // transcribed, RFC 0148 §C G7). Claiming it must fail — the corpus cannot
+    // substantiate it, which is a different thing from the host having failed
+    // something.
+    const v = verifyBundleProfile(bundleClaiming(['openwop-not-in-catalog'], []), 'openwop-not-in-catalog');
+    expect(v.floorUnspecified, 'no floor set is defined for a profile outside the floor map').toBe(true);
     expect(v.floorProven, 'RFC 0148 §C: an undefined floor MUST NOT satisfy the floor condition').toBe(false);
     expect(v.valid).toBe(false);
     expect(v.missingFloor, 'nothing is "missing" — the floor was never evaluable').toEqual([]);
+  });
+
+  it('G7: a discovery-conditional floor (openwop-replay-fork) requires the branch the document advertises — and nothing when it advertises none', () => {
+    const doc = (modes: string[]) => ({ protocolVersion: '1.0', supportedEnvelopes: [], schemaVersions: {}, limits: { clarificationRounds: 1, schemaRounds: 1, envelopesPerTurn: 1 }, replay: { supported: true, modes } });
+    const claim = (modes: string[], passed: string[]) => ({ discovery: { document: doc(modes) }, claimedProfiles: ['openwop-replay-fork'], results: { passed, failed: [] } });
+    // replay-only host: replayDeterminism suffices; replay-fork is NOT required
+    let v = verifyBundleProfile(claim(['replay'], ['replayDeterminism.test.ts']), 'openwop-replay-fork');
+    expect(v.floorUnspecified).toBe(false);
+    expect(v.floorProven).toBe(true);
+    // branch-only host: replay-fork suffices
+    v = verifyBundleProfile(claim(['branch'], ['replay-fork.test.ts']), 'openwop-replay-fork');
+    expect(v.floorProven).toBe(true);
+    // both advertised: both required
+    v = verifyBundleProfile(claim(['replay', 'branch'], ['replay-fork.test.ts']), 'openwop-replay-fork');
+    expect(v.floorProven).toBe(false);
+    expect(v.missingFloor).toEqual(['replayDeterminism.test.ts']);
+    // a mode the floor does not know: nothing required → unprovable, not proven
+    v = verifyBundleProfile(claim(['exotic'], []), 'openwop-replay-fork');
+    expect(v.floorProven).toBe(false);
   });
 
   it('a discovery-only profile with an EXPLICIT empty floor is proven by its predicate alone', () => {
