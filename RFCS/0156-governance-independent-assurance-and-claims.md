@@ -117,7 +117,7 @@ This RFC depends on external decisions and should remain Draft until named candi
 - [ ] Tier-3 host publishes valid core-standard v2 evidence plus one current interop profile. (Externally gated — no Tier-3 host, and the v2 bundle schema does not exist yet either.)
 - [ ] Assurance manifest and claims CI gate land across public surfaces. (Carried — `check-doc-pack-claims.mjs` gates some claim language today, but there is no assurance manifest.)
 - [ ] Security SLA source and recurring review cadence are operational. (Carried.)
-- [ ] Governance, security, contributing, compatibility, roadmap, matrix, status, and CHANGELOG documents agree. (Carried — no drift is known today, but nothing gates it, so "agree" is currently an assertion rather than a checked property.)
+- [ ] Governance, security, contributing, compatibility, roadmap, matrix, status, and CHANGELOG documents agree. (Carried — no drift is known today. **2026-08-16: the numeric part of "agree" is now gated** — `scripts/check-doc-tallies.mjs` (openwop:check step 6) fails when SECURITY.md / README invariant tallies or the conformance/README scenario-file counts disagree with the tree, joining `generate-protocol-status.mjs --check` for the RFC and spec-doc counts. Prose agreement (which document says what about waivers, SLAs, tiers) is still an assertion.)
 
 ## References
 

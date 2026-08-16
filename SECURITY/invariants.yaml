@@ -1604,6 +1604,27 @@ invariants:
       same inputs) while `refiredEffects` stays 0. Capability-gated;
       `blocked` (named) until a host wires the extension.
 
+  - id: profile-claim-floor-not-overstated
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/certification-bundle-non-vacuous.test.ts
+    note: |
+      RFC 0155 §F, the FLOOR half and named as such. A certification bundle
+      MUST NOT be `certified` for a claimed profile whose floor is not fully
+      witnessed: `verifyBundleV2` refuses `certified` on a missing floor row,
+      a zero-assertion pass, an executed-fail, an honest `blocked`, or a claim
+      the discovery document does not derive — every one is a leg of the
+      test. This is a claims invariant rather than a wire one: an overstated
+      profile claim is how a consumer is told a threat is covered when it is
+      not, and it is registered under threat-model-secret-leakage because that
+      is where the program's claim-integrity rows live (RFC 0147 §A).
+      NOT covered: §F's second clause — validating an extension's registry
+      `dependsOn` and `securityTier` before certification. Bundle v2 claims
+      profiles, not extension ids, so there is nothing yet for a verifier to
+      validate; carried until a bundle carries extension claims.
+
   - id: delegation-tenant-audience-bound
     tier: protocol
     severity: high
