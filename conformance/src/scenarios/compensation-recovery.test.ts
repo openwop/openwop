@@ -31,24 +31,29 @@
  * (soft-skips without the advert, HARD-FAILS under `OPENWOP_REQUIRE_BEHAVIOR=true`)
  * and records its RFC 0148 §A disposition. The three sub-features are
  * INDEPENDENTLY optional: a host that wires the base seams but not this
- * extension is `blocked` here (named as such via `seamAbsent`) and keeps its
+ * extension is `blocked` here (named as such via `softSkip`) and keeps its
  * `compensation-behavior` witness — the base and the extension are different
  * claims and are recorded separately.
  *
- * Mode matters, and the first host to advertise pointed it out: `seamAbsent`
- * records `blocked` in DEFAULT mode but THROWS under
- * `OPENWOP_REQUIRE_BEHAVIOR=true` (RFC 0148 §B — an advertised capability
- * whose witness seam is missing is a failure in strict certification, not a
- * disposition). So a host that flips `compensation.supported` on without the
- * §21 recovery extension is honest-red here in strict runs. Wire the extension
- * with the advert, or run default mode and read the `blocked` rows.
+ * Mode does NOT change that (S24, corrected 2026-08-16 after the first host to
+ * wire §21 read the contract back to us): the recovery extension has NO advert
+ * flag — `capabilities.compensation` is closed over `supported` /
+ * `profileVersion` / `orderingModels` / `manualIntervention` — so a host cannot
+ * claim or disclaim it, and `seamAbsent` (whose contract is "an ADVERTISED
+ * capability whose observation seam is absent", strict-failing) is the wrong
+ * tool for it. An absent extension is `softSkip('blocked', …)` in both modes,
+ * exactly as §21 says; the ledger still refuses to certify the three §G
+ * invariants, so nothing weakens. The BASE seams (`unwind` / `replay`) are a
+ * different matter: `compensation.supported` promises them, and a 404 there
+ * stays `seamAbsent` (strict-fails) — that is `compensation-behavior`'s wall,
+ * not this file's.
  */
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 
 const PROFILE = 'openwop-compensation';
@@ -93,9 +98,14 @@ async function post(path: string, body: Record<string, unknown>): Promise<{ stat
   return { status: r.status, json: r.json };
 }
 
-/** The recovery extension is optional; a base seam that ignores the new fields is `blocked` here, not failed. */
+/**
+ * The recovery extension is optional and has no advert flag, so its absence is
+ * `blocked` in BOTH modes — `softSkip`, never `seamAbsent` (S24). The three §G
+ * invariants stay uncertified either way; strict mode is not entitled to fail
+ * a host for a sub-seam it was never asked to claim.
+ */
 function extensionAbsent(what: string): undefined {
-  return seamAbsent(`the §21 recovery extension is not wired: ${what} (host-sample-test-seams.md §21 "Recovery extension") — retry-stability / operator authority / recorded-facts are unobservable`);
+  return softSkip('blocked', `the §21 recovery extension is not wired: ${what} (host-sample-test-seams.md §21 "Recovery extension") — retry-stability / operator authority / recorded-facts are unobservable`);
 }
 
 describe('RFC 0151 §C — inverse-action identity is retry-stable (capability-gated behavior)', () => {
