@@ -22,6 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryWorkspace {
@@ -49,7 +50,7 @@ interface WorkspaceFile {
 
 describe('workspace-behavior: §C CRUD round-trip (RFC 0059)', () => {
   it('PUT creates v1, GET returns it, list omits content, DELETE removes it', async () => {
-    if (!(await workspaceCap())) return;
+    if (!(await workspaceCap())) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     const path = 'behavior/CRUD.md';
 
     const created = await driver.put(`${FILES}/${encodeURIComponent(path)}`, { content: 'first body' });
@@ -78,7 +79,7 @@ describe('workspace-behavior: §C CRUD round-trip (RFC 0059)', () => {
 
 describe('workspace-behavior: §C optimistic concurrency (RFC 0059)', () => {
   it('stale If-Match → 409 workspace_conflict; matching If-Match bumps version', async () => {
-    if (!(await workspaceCap())) return;
+    if (!(await workspaceCap())) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     const path = 'behavior/ETAG.md';
 
     const v1 = await driver.put(`${FILES}/${encodeURIComponent(path)}`, { content: 'v1' });
@@ -101,7 +102,7 @@ describe('workspace-behavior: §C optimistic concurrency (RFC 0059)', () => {
 describe('workspace-behavior: §C size ceiling (RFC 0059)', () => {
   it('content beyond maxFileBytes returns workspace_too_large', async () => {
     const cap = await workspaceCap();
-    if (cap === null) return;
+    if (cap === null) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     const max = typeof cap.maxFileBytes === 'number' ? cap.maxFileBytes : 1_048_576;
     const tooBig = 'x'.repeat(max + 1);
     const res = await driver.put(`${FILES}/${encodeURIComponent('behavior/TOOBIG.md')}`, { content: tooBig });
@@ -112,14 +113,14 @@ describe('workspace-behavior: §C size ceiling (RFC 0059)', () => {
 
 describe('workspace-behavior: §D run-start snapshot (RFC 0059)', () => {
   it('a run started after a write exposes the workspace snapshot', async () => {
-    if (!(await workspaceCap())) return;
+    if (!(await workspaceCap())) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     const path = 'behavior/SNAPSHOT.md';
     await driver.put(`${FILES}/${encodeURIComponent(path)}`, { content: 'snapshot body' });
 
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });
-    if (create.status !== 201 && create.status !== 200) return; // host lacks the noop fixture — skip
+    if (create.status !== 201 && create.status !== 200) return seamAbsent(`host advertises workspace but the noop fixture run could not be created (POST /v1/runs → ${create.status})`);
     const runId = (create.json as { runId?: string }).runId;
-    if (runId === undefined) return;
+    if (runId === undefined) return seamAbsent('host advertises workspace but the created run carried no runId');
 
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
     const ws = (snap.json as { workspace?: Array<{ path: string }> }).workspace;

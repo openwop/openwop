@@ -23,6 +23,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { softSkip } from '../lib/soft-skip.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryWorkspace {
@@ -48,7 +49,7 @@ const POSITIVE_INT_FIELDS = ['maxFileBytes', 'maxFiles', 'maxVersions'] as const
 describe('workspace-capability-shape: advertisement shape (RFC 0059 §A)', () => {
   it('capabilities.workspace is either absent or well-formed', async () => {
     const ws = await readWorkspace();
-    if (ws === null) return; // host doesn't advertise workspace at all
+    if (ws === null) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     expect(
       typeof ws.supported,
       driver.describe(
@@ -60,7 +61,7 @@ describe('workspace-capability-shape: advertisement shape (RFC 0059 §A)', () =>
 
   it('maxFileBytes / maxFiles / maxVersions are positive integers when present', async () => {
     const ws = await readWorkspace();
-    if (ws === null) return;
+    if (ws === null) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     for (const field of POSITIVE_INT_FIELDS) {
       const v = ws[field];
       if (v === undefined) continue;

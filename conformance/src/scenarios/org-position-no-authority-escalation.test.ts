@@ -55,6 +55,15 @@ describe('org-position-no-authority-escalation (RFC 0087 §B, behavioral)', () =
     const chart = await getOrgChart();
     if (chart === null) return seamAbsent('host advertises org-position authority but GET /v1/agents/org-chart is not served');
 
+    // An EMPTY chart has nothing that could carry authority: the invariant is
+    // unobservable, and RFC 0148 §A says unobservable is `blocked`, not a
+    // zero-assertion pass (which is what this leg recorded on such a host).
+    if ((chart.members ?? []).length === 0 && (chart.departments ?? []).length === 0) {
+      return seamAbsent('host advertises org-position authority but the org chart is EMPTY — no member or department to check; the invariant is unobservable until the host seeds one');
+    }
+    // The chart root is a wire object too.
+    expectNoAuthority(chart as unknown as Record<string, unknown>, 'the org-chart root');
+
     for (const m of chart.members ?? []) {
       expectNoAuthority(m as Record<string, unknown>, 'an org-chart member');
     }
