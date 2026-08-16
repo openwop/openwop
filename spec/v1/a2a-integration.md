@@ -345,6 +345,9 @@ Normative for both directions; the outbound half is what `a2a-version-negotiatio
 
 The 1.0 Agent Card (`AgentCard` in `a2a.proto` v1.0.0) is a different shape from 0.3. The fields, with the OpenWOP source each **MUST** be derived from:
 
+
+> **Which card a header-less GET returns (decided 2026-08-16, RFC 0152 register S18 Q1).** The §B receiver rule — *an absent `A2A-Version` means 0.3* — applies to the Agent Card GET as to every other inbound request. While a host advertises `a2a-0.3-legacy` (`protocolVersions ∋ 0.3`) it **MUST** serve the **0.3-shaped** card (`url`, `preferredTransport`, …) for a header-less `GET agentCardUrl`, and the **1.0-shaped** card (`supportedInterfaces[]`) when the request carries `A2A-Version: 1.0`; a 1.0 client **MUST** send that header on the card GET. This is the only reading under which an external 0.3 client that reads `card.url` header-less keeps working through the legacy window (the point of advertising the legacy profile at all); serving 1.0 header-less breaks such clients now instead of at the sunset. A host that has **dropped** 0.3 (`protocolVersions ∌ 0.3`) serves the card of its `preferredVersion` header-less — a card GET is discovery, and refusing it would defeat the discovery a client needs in order to learn which versions to ask for. The suite's fake peer has served exactly this since 1.112.0; `a2a-card-runtime-consistency.test.ts` sends `A2A-Version: 1.0` on the GET from suite 1.122.0 (it fetched header-less and asserted the 1.0 shape before, which is what forced the first 1.0 host onto the wrong side of this rule).
+
 | A2A 1.0 `AgentCard` field | Required upstream | OpenWOP source of truth |
 | --- | --- | --- |
 | `name`, `description`, `version`, `documentationUrl?`, `iconUrl?` | name/description/version REQUIRED | Host identity; `version` is the host's own release identifier, **not** the A2A protocol version. |

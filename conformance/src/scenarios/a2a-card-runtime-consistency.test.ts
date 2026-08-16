@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -64,7 +65,13 @@ async function claims10(): Promise<boolean> {
 
 async function fetchCard(caps: A2ACaps): Promise<Card10 | null> {
   if (typeof caps.agentCardUrl !== 'string') return null;
-  const res = await fetch(caps.agentCardUrl, { headers: { accept: 'application/json' } });
+  // A 1.0 client MUST declare the version on the card GET too (a2a-integration.md
+  // §C, decided 2026-08-16 — S18 Q1): header-less means 0.3 by the receiver rule,
+  // so a host that still advertises `a2a-0.3-legacy` serves the 0.3-shaped card
+  // header-less and the 1.0 card only when asked for it. Fetching header-less
+  // and asserting the 1.0 shape (as this leg did until today) forced the host to
+  // break every 0.3 client reading `card.url` NOW instead of at the legacy sunset.
+  const res = await fetch(caps.agentCardUrl, { headers: { accept: 'application/json', 'A2A-Version': '1.0' } });
   if (res.status !== 200) return null;
   return (await res.json()) as Card10;
 }
@@ -82,6 +89,26 @@ describe('RFC 0152 §C — a2a-card-runtime-consistent (gated on a2a.profiles �
     expect(card!.url, driver.describe('a2a-integration.md §C', '1.0 removed the top-level `url` — a card with both shapes is neither')).toBeUndefined();
     expect(card!.protocolVersion, driver.describe('a2a-integration.md §C', '1.0 removed the top-level `protocolVersion` (per interface now)')).toBeUndefined();
     expect(Array.isArray(card!.skills) && card!.skills!.length > 0, driver.describe('a2a-integration.md §C', '`skills[]` MUST be non-empty — one per invocable workflow')).toBe(true);
+  });
+
+  it('a header-less card GET returns the 0.3-shaped card while a2a-0.3-legacy is advertised (§B receiver rule applied to discovery — S18 Q1)', async () => {
+    if (!behaviorGate(PROFILE, await claims10())) return;
+    const caps = (await a2a())!;
+    if (typeof caps.agentCardUrl !== 'string') return softSkip('blocked', 'no agentCardUrl advertised');
+    const legacy = (caps.protocolVersions ?? []).includes('0.3');
+    const res = await fetch(caps.agentCardUrl, { headers: { accept: 'application/json' } });
+    expect(res.status, driver.describe('a2a-integration.md §C', 'a header-less card GET MUST succeed — discovery must not fail')).toBe(200);
+    const card = (await res.json()) as Card10 & { url?: string; protocolVersion?: string };
+    if (legacy) {
+      // While 0.3 is advertised the header-less card is the 0.3 shape: an
+      // external 0.3 client reading `card.url` keeps working through the
+      // legacy window — the point of advertising `a2a-0.3-legacy` at all.
+      expect(typeof card.url, driver.describe('a2a-integration.md §C', 'header-less = 0.3 (§B receiver rule): the card MUST carry the 0.3 top-level `url` while `protocolVersions ∋ 0.3`')).toBe('string');
+      expect(card.supportedInterfaces, driver.describe('a2a-integration.md §C', 'the header-less card MUST NOT be the 1.0 shape while 0.3 is advertised (a card with both shapes is neither)')).toBeUndefined();
+    } else {
+      // 0.3 dropped: the preferred-version (1.0) card is served header-less.
+      expect(Array.isArray(card.supportedInterfaces) && card.supportedInterfaces!.length > 0, driver.describe('a2a-integration.md §C', 'with 0.3 dropped, the header-less card is the preferredVersion (1.0) card')).toBe(true);
+    }
   });
 
   it('the set of supportedInterfaces[].protocolVersion equals capabilities.a2a.protocolVersions', async () => {
