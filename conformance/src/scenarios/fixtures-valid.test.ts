@@ -30,9 +30,14 @@ describe('fixtures: workflow-definition schema validity', () => {
   //     (RFC 0029 §B resolution-chain layer 3)
   //   - prompt-kind.schema.json — transitively referenced by prompt-ref's
   //     object form when validating PromptRef variants
+  //   - compensation-policy.schema.json — `WorkflowSettings.compensation`
+  //     (RFC 0151 §B, the workflow-level unwind policy)
   // Register each under both the canonical $id and the relative file
   // name so Ajv resolves either way the host schema spelled the ref.
   const agentRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'agent-ref.schema.json'), 'utf8'));
+  const compensationPolicySchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'compensation-policy.schema.json'), 'utf8'));
+  ajv.addSchema(compensationPolicySchema, 'compensation-policy.schema.json');
+  ajv.addSchema(compensationPolicySchema, './compensation-policy.schema.json');
   const promptRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-ref.schema.json'), 'utf8'));
   const promptKindSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-kind.schema.json'), 'utf8'));
   ajv.addSchema(agentRefSchema, 'agent-ref.schema.json');

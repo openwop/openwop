@@ -45,6 +45,9 @@ function compileWorkflowDefinition(): ReturnType<Ajv2020['compile']> {
   ajv.addSchema(promptRefSchema, './prompt-ref.schema.json');
   ajv.addSchema(promptKindSchema, 'prompt-kind.schema.json');
   ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
+  const compensationPolicySchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'compensation-policy.schema.json'), 'utf8'));
+  ajv.addSchema(compensationPolicySchema, 'compensation-policy.schema.json');
+  ajv.addSchema(compensationPolicySchema, './compensation-policy.schema.json');
   const schema = JSON.parse(
     readFileSync(join(SCHEMAS_DIR, 'workflow-definition.schema.json'), 'utf8'),
   ) as Record<string, unknown>;

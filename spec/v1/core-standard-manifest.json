@@ -4,7 +4,7 @@
   "provenance": {
     "suite": {
       "package": "@openwop/openwop-conformance",
-      "version": "1.107.0"
+      "version": "1.108.0"
     },
     "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
   },
@@ -187,6 +187,10 @@
     {
       "file": "schemas/compact-tool-descriptor.schema.json",
       "$id": "https://openwop.dev/spec/v1/compact-tool-descriptor.schema.json"
+    },
+    {
+      "file": "schemas/compensation-policy.schema.json",
+      "$id": "https://openwop.dev/spec/v1/compensation-policy.schema.json"
     },
     {
       "file": "schemas/conformance-certification-bundle.schema.json",
@@ -413,5 +417,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "ebb4271b63d29092d770a851cbc7988a83e15594f0e6767c5afe7f4f58868d65"
+  "digest": "f12301ca8ef7356638259d7dde4a7ae56e699e06e652bd2a61ba25ef417261a5"
 }

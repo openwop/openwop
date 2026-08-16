@@ -31,7 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
+import { FIXTURES_DIR, SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 
 /**
  * Schemas ship inside the package; RFC prose does not. The old form derived
@@ -151,6 +151,96 @@ describe('RFC 0151 §B — node compensation declaration', () => {
     expect(validate({ ...base, compensation: { nodeTypeId: 'x', retry: { maxAttempts: 0 } } })).toBe(false);
     expect(validate({ ...base, compensation: { nodeTypeId: 'x', retry: { backoffMs: -1 } } })).toBe(false);
     expect(validate({ ...base, compensation: { nodeTypeId: 'x', retry: { maxAttempts: 1, backoffMs: 0 } } })).toBe(true);
+  });
+});
+
+describe('RFC 0151 §B — the workflow-level compensation policy (`settings.compensation`)', () => {
+  // `compensation-policy.schema.json` was the last `Affects` artifact of the whole
+  // RFC 0147 program that did not exist. It says WHEN an unwind starts and HOW it
+  // runs; the node-level declaration only says WHAT the inverse action is.
+  const POLICY_SCHEMA = 'compensation-policy.schema.json';
+
+  function ajvAll() {
+    const ajv = new Ajv2020({ strict: false, allErrors: true });
+    for (const file of readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.schema.json'))) {
+      ajv.addSchema(schema(file), file);
+    }
+    return ajv;
+  }
+  const policyValidator = () => {
+    const ajv = ajvAll();
+    return ajv.getSchema(POLICY_SCHEMA) ?? ajv.compile(schema(POLICY_SCHEMA));
+  };
+  const workflowValidator = () => {
+    const ajv = ajvAll();
+    return ajv.getSchema('workflow-definition.schema.json') ?? ajv.compile(schema('workflow-definition.schema.json'));
+  };
+
+  const minimalPolicy = { triggers: ['node-failure'] };
+  const fullPolicy = {
+    profileVersion: '1',
+    orderingModel: 'reverse-completion',
+    triggers: ['node-failure', 'run-cancel', 'cap-breach', 'operator-request'],
+    retry: { maxAttempts: 3, backoffMs: 500 },
+    timeoutMs: 30_000,
+    exhaustedDisposition: 'manual-intervention',
+    approvalScope: 'all',
+    onParentCancel: 'pause',
+  };
+
+  it('the schema exists, is closed, and requires triggers', () => {
+    const p = schema(POLICY_SCHEMA) as { additionalProperties?: boolean; required?: string[]; $id?: string };
+    expect(p.$id).toBe('https://openwop.dev/spec/v1/compensation-policy.schema.json');
+    expect(p.additionalProperties, 'closed — a host and an author must not be able to disagree about a key').toBe(false);
+    expect(p.required, 'a policy that names no trigger is not a policy').toEqual(['triggers']);
+  });
+
+  it('a minimal and a full policy validate', () => {
+    const validate = policyValidator();
+    expect(validate(minimalPolicy), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate(fullPolicy), JSON.stringify(validate.errors)).toBe(true);
+  });
+
+  it('closed vocabularies: an unknown key, trigger, ordering model, or disposition is rejected', () => {
+    const validate = policyValidator();
+    for (const bad of [
+      { ...minimalPolicy, rollback: true },
+      { triggers: [] },
+      { triggers: ['on-error'] },
+      { triggers: ['node-failure', 'node-failure'] },
+      { ...minimalPolicy, orderingModel: 'forward' },
+      { ...minimalPolicy, exhaustedDisposition: 'ignore' },
+      { ...minimalPolicy, approvalScope: 'none' },
+      { ...minimalPolicy, onParentCancel: 'abandon' },
+      { ...minimalPolicy, profileVersion: '0' },
+      { ...minimalPolicy, retry: { maxAttempts: 0 } },
+    ]) {
+      expect(validate(bad), `MUST be rejected: ${JSON.stringify(bad)}`).toBe(false);
+    }
+  });
+
+  it('there is no `none` approval scope — a policy can only escalate approval, never strip it', () => {
+    const p = schema(POLICY_SCHEMA) as { properties: { approvalScope: { enum: string[] } } };
+    expect(p.properties.approvalScope.enum).toEqual(['declared', 'all']);
+  });
+
+  it('attaches to WorkflowDefinition as `settings.compensation` and validates through the workflow schema', () => {
+    const wf = schema('workflow-definition.schema.json') as {
+      $defs: { WorkflowSettings: { properties: Record<string, { $ref?: string }> } };
+    };
+    expect(wf.$defs.WorkflowSettings.properties['compensation']?.$ref).toBe(POLICY_SCHEMA);
+    const validate = workflowValidator();
+    // A real, valid workflow fixture — so the leg proves the $ref is enforced
+    // through the workflow schema rather than that a hand-built object happens
+    // to satisfy WorkflowDefinition's required set.
+    const base = JSON.parse(
+      readFileSync(join(FIXTURES_DIR, 'conformance-subworkflow-child.json'), 'utf8'),
+    ) as { settings?: Record<string, unknown> };
+    expect(validate(base), `fixture must be valid on its own: ${JSON.stringify(validate.errors)}`).toBe(true);
+    const ok = validate({ ...base, settings: { ...(base.settings ?? {}), compensation: fullPolicy } });
+    expect(ok, JSON.stringify(validate.errors)).toBe(true);
+    const bad = validate({ ...base, settings: { ...(base.settings ?? {}), compensation: { triggers: [] } } });
+    expect(bad, 'the $ref must actually be enforced through the workflow schema').toBe(false);
   });
 });
 

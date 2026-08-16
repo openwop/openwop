@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compensation and Partial-Failure Profile
 
-> **Status: Draft · v1.x (2026-08-16) — RFC 0151 `Accepted`, profile carried.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x (2026-08-16) — RFC 0151 `Accepted`, profile carried.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. (2026-08-16: §B gained the workflow-level policy, `settings.compensation`.) Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ## Why this exists
 
@@ -61,6 +61,65 @@ workflow node (`workflow-definition.schema.json`):
 - `requiresApproval: true` gates the inverse effect behind the same RFC 0051 approval
   surface as a forward effect (§E, carried).
 - A host MUST reject a compensation cycle.
+
+### Workflow policy: `settings.compensation`
+
+The node declaration says **what** the inverse action is. The workflow-level policy —
+the reserved `settings.compensation` key on `WorkflowDefinition`, shape
+[`compensation-policy.schema.json`](../../schemas/compensation-policy.schema.json) —
+says **when** the host starts an unwind and **how** it runs one:
+
+```json
+{
+  "settings": {
+    "compensation": {
+      "profileVersion": "1",
+      "orderingModel": "reverse-completion",
+      "triggers": ["node-failure", "run-cancel"],
+      "retry": { "maxAttempts": 3, "backoffMs": 500 },
+      "timeoutMs": 30000,
+      "exhaustedDisposition": "record-outcome",
+      "approvalScope": "declared",
+      "onParentCancel": "continue"
+    }
+  }
+}
+```
+
+- `triggers` is REQUIRED and closed: `node-failure` (a node reaches terminal failure after
+  its own RFC 0009 retry policy), `run-cancel` (an RFC 0094 cancel accepted while committed
+  effects exist), `cap-breach` (an RFC 0058 / RFC 0084 `cap.breached` hard stop),
+  `operator-request` (an authorized §E request, RFC 0049-bound). **A trigger not listed
+  does not start an unwind** — the run ends with its effects in place and
+  `compensationStatus: none`. No generic rollback is inferred from an undeclared trigger.
+- `orderingModel` and `profileVersion` MUST be ones the host advertises; a host that
+  advertises `compensation` MUST validate the policy at registration and refuse a workflow
+  that names an unadvertised model or version (`validation_error`), so an unwind never
+  learns at failure time that its ordering rule is unimplemented.
+- `retry` / `timeoutMs` are defaults for inverse actions whose node declaration carries
+  none. **A node's own bounds always win.**
+- `exhaustedDisposition` chooses between recording the failure and continuing
+  (`record-outcome`, default) and stopping for an operator (`manual-intervention`, which
+  emits `compensation.manual_intervention_required` and requires
+  `capabilities.compensation.manualIntervention: true`). Either way the run MUST route to
+  RFC 0053 dead-letter handling (§E) and the rollup follows the §D fold.
+- `approvalScope` can only **escalate** (`declared` → `all`); there is no `none`, because
+  a policy MUST NOT strip an approval a node declared for itself (RFC 0147 R9).
+- `onParentCancel` — `continue` | `pause` | `manual` — is §C's rule that cancelling the
+  parent MUST NOT silently abandon an active unwind, made author-selectable.
+- The policy is **authored, not per-run**: there is deliberately no run-options overlay. A
+  per-run caller who could lower approval scope or drop a trigger would be authorizing
+  their own unwind.
+
+**A host that does NOT advertise `capabilities.compensation` MUST refuse a workflow that
+carries `settings.compensation`** with `capability_required`
+(`details.requiredCapability: "compensation"`, per
+[`capabilities.md`](./capabilities.md) §"Unsupported capability — refusal contract" and
+[`rest-endpoints.md`](./rest-endpoints.md) §Error codes) rather than accept it silently.
+Accepting a policy the host will never honour tells the author an unwind will happen when
+it will not — RFC 0148 §B's advertise-and-opt-out failure with the sign flipped. Node-level
+`compensation` declarations alone remain acceptable on any host: they describe an inverse
+action; the policy is what requests the unwind.
 
 ## §D — Events and the run rollup
 
@@ -141,9 +200,10 @@ and with fresh effect IDs. The `compensation-replay-no-refire` invariant
 
 ## Conformance
 
-- Shape (always-on, server-free): `compensation-profile.test.ts` — the §A family and
-  §B declaration admit exactly the shapes above and reject the ones they forbid; the
-  `compensationStatus` enum is closed.
+- Shape (always-on, server-free): `compensation-profile.test.ts` — the §A family, the
+  §B declaration, and the §B policy admit exactly the shapes above and reject the ones
+  they forbid (closed triggers, escalate-only approval scope, `$ref` enforced through the
+  workflow schema); the `compensationStatus` enum is closed.
 - Behavior (gated on `compensation.supported`, hard-fails under
   `OPENWOP_REQUIRE_BEHAVIOR=true`): `compensation-behavior.test.ts` — plan before first
   effect, reverse-completion order, replay does not re-fire, content-free events, and the
@@ -158,7 +218,7 @@ and with fresh effect IDs. The `compensation-replay-no-refire` invariant
 | - | --- | ----------- |
 | G1 | §C lifecycle prose — plan persistence shape, the inverse-action identity tuple `(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)`, crash-resume, and cancellation-of-parent rules | **Carried.** The identity is stated in RFC 0151 §C and composes with RFC 0150 §B `logicalInvocationId`; §C's semantic digest is not landed, so the composition cannot be specified end-to-end here yet. |
 | G2 | §E approvals, dead-letter routing, and the operator recovery actions (retry / skip with justification / substitute / terminate as uncompensated) and their audit | **Carried.** The rollup table above already names the outcomes those actions produce so the field's meaning does not depend on §E landing. |
-| G3 | `schemas/compensation-policy.schema.json` — the policy that decides which failures qualify for automatic compensation | **Carried.** Named in RFC 0151 `Affects`; nothing on the wire references it yet. |
+| G3 | ~~`schemas/compensation-policy.schema.json` — the policy that decides which failures qualify for automatic compensation~~ | **Closed 2026-08-16.** Landed as `settings.compensation` on `WorkflowDefinition` (§B "Workflow policy"): closed `triggers`, ordering model, retry/timeout defaults, `exhaustedDisposition`, escalate-only `approvalScope`, `onParentCancel`. Refusal rule for non-advertising hosts (`capability_required`) stated. |
 | G4 | `compensationStatus` on a forked run (`POST /v1/runs/{runId}:fork`) of a partially compensated source | **Open.** RFC 0151 §F says the branch preserves source facts without claiming it changed the source system; whether the child reports the source's rollup or starts at `none` is unresolved and is deliberately not decided by this document. |
 | G5 | Compensation evidence retention minimum | **Open** (RFC 0151 UQ5). |
 
@@ -166,4 +226,4 @@ and with fresh effect IDs. The `compensation-replay-no-refire` invariant
 
 - [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md) · [RFC 0147](../../RFCS/0147-protocol-integrity-and-standards-readiness-program.md) (program, R9) · [RFC 0150](../../RFCS/0150-effect-identity-replay-and-split-brain-safety.md) (effect identity) · [RFC 0148](../../RFCS/0148-non-vacuous-conformance-certification.md) (`blocked` disposition)
 - [`capabilities.md`](./capabilities.md) · [`stream-modes.md`](./stream-modes.md) · [`replay.md`](./replay.md) · [`interrupt.md`](./interrupt.md) · [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) · [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21
-- Schemas: [`capabilities.schema.json`](../../schemas/capabilities.schema.json) (`compensation`) · [`workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json) (node `compensation`) · [`run-event.schema.json`](../../schemas/run-event.schema.json) · [`run-event-payloads.schema.json`](../../schemas/run-event-payloads.schema.json) · [`run-snapshot.schema.json`](../../schemas/run-snapshot.schema.json) (`compensationStatus`)
+- Schemas: [`capabilities.schema.json`](../../schemas/capabilities.schema.json) (`compensation`) · [`workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json) (node `compensation`, `settings.compensation`) · [`compensation-policy.schema.json`](../../schemas/compensation-policy.schema.json) · [`run-event.schema.json`](../../schemas/run-event.schema.json) · [`run-event-payloads.schema.json`](../../schemas/run-event-payloads.schema.json) · [`run-snapshot.schema.json`](../../schemas/run-snapshot.schema.json) (`compensationStatus`)
