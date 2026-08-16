@@ -33,6 +33,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -76,7 +77,7 @@ async function resolve(body: Record<string, unknown>): Promise<{ status: number;
 }
 
 function reasonOf(json: unknown): string | undefined {
-  return (json as { error?: { code?: string } })?.error?.code;
+  return readErrorCode(json);
 }
 
 const IDENTITY = { scheme: 'spiffe', subject: 'spiffe://example/dispatcher', issuer: 'spiffe://example' };
@@ -154,9 +155,11 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
     if (!behaviorGate(PROFILE, (await caps())?.supported === true)) return;
     const r = await resolve({ identity: { scheme: 'spiffe', subject: 'spiffe://example/unknown' } });
     if (r === null || r.status < 400) return;
-    const err = (r.json as { error?: { code?: string; retriable?: boolean } }).error;
+    // canonical flat envelope: code = `error`, retriable = `details.retriable`
+    // (the legacy nested `error.{code,retriable}` the §20 catalog prescribed until
+    // 2026-08-16 is tolerated by the helpers for the deprecation window)
     expect(
-      err?.retriable,
+      readRetriable(r.json),
       driver.describe(
         'spec/v1/host-sample-test-seams.md §20',
         'an identity that does not resolve will not resolve on retry. Marking it retriable invites ' +
@@ -166,7 +169,7 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
     expect(
       ['identity_unverified', 'identity_unresolvable', 'audience_mismatch', 'delegation_expired', 'sender_constraint_missing'],
       driver.describe('RFCS/0154 §A', 'failures use a closed reason vocabulary'),
-    ).toContain(err?.code);
+    ).toContain(readErrorCode(r.json));
   });
 
   it('a resolution response carries no credential material', async () => {

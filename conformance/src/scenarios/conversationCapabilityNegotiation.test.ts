@@ -17,6 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
@@ -33,8 +34,8 @@ describe.skipIf(SKIP)('conversationCapabilityNegotiation: refusal contract', () 
     // or at run-create (400). What MUST NOT happen is a successful
     // 201 followed by silent fallback.
     expect([400, 404, 422]).toContain(create.status);
-    const body = create.json as { error?: { code?: string }; code?: string };
-    const code = body.error?.code ?? body.code ?? '';
+    const body = create.json as { code?: string };
+    const code = readErrorCode(create.json) ?? body.code ?? '';
     expect(typeof code).toBe('string');
   });
 });

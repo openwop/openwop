@@ -17,6 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -83,7 +84,7 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
         'envelope.recovery.applied payload MUST NOT carry pre-recovery output substrings; only the canonical {nodeId, path, byteOffset?} keys per RFC 0032 §B.6 + §G — the recovered content rides on downstream RunEventDoc, not on the recovery event',
       ),
     ).toBe(400);
-    expect(r.body.error?.code).toBe('envelope_recovery_content_leak');
+    expect(readErrorCode(r.body)).toBe('envelope_recovery_content_leak');
   });
 
   it('rejects payloads carrying any extra field outside {nodeId, path, byteOffset}', async () => {
@@ -104,7 +105,7 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
         'envelope.recovery.applied has additionalProperties: false on the payload — any extra field MUST be rejected to prevent regression carriers for pre-recovery output (defense-in-depth on top of envelope-recovery-no-content-leak)',
       ),
     ).toBe(400);
-    expect(r.body.error?.code).toBe('envelope_recovery_content_leak');
+    expect(readErrorCode(r.body)).toBe('envelope_recovery_content_leak');
   });
 });
 

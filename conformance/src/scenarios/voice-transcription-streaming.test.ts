@@ -19,6 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
@@ -30,7 +31,7 @@ function realtimeVoiceOf(ai: Record<string, unknown> | undefined): Record<string
   return rv && typeof rv === 'object' ? (rv as Record<string, unknown>) : undefined;
 }
 function errCode(json: unknown): string | undefined {
-  return (json as { error?: { code?: string } })?.error?.code;
+  return readErrorCode(json);
 }
 function eventsOf(json: unknown): Array<{ type?: string; payload?: Record<string, unknown> }> {
   const e = (json as { events?: unknown })?.events;

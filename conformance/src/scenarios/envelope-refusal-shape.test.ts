@@ -27,6 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -115,7 +116,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
         'envelope.refusal.refusalText MUST be passed through the host BYOK redaction harness; seam refuses payloads carrying secret-canary-* substrings (defense-in-depth CI gate per RFC 0032 §B.3 + §G)',
       ),
     ).toBe(400);
-    expect(r.body.error?.code).toBe('envelope_reliability_credential_leak');
+    expect(readErrorCode(r.body)).toBe('envelope_reliability_credential_leak');
   });
 
   it('rejects payloads with a top-level `credentialRef` field', async () => {
@@ -131,7 +132,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
     });
     if (r.status === 404) return;
     expect(r.status).toBe(400);
-    expect(r.body.error?.code).toBe('envelope_reliability_credential_leak');
+    expect(readErrorCode(r.body)).toBe('envelope_reliability_credential_leak');
   });
 
   it('rejects payloads missing required `provider` field', async () => {
@@ -146,7 +147,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
     });
     if (r.status === 404) return;
     expect(r.status).toBe(400);
-    expect(r.body.error?.code).toBe('invalid_argument');
+    expect(readErrorCode(r.body)).toBe('invalid_argument');
   });
 });
 

@@ -36,6 +36,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -96,12 +97,11 @@ describe.skipIf(HTTP_SKIP)('data-residency: admission control (capability-gated,
     // A host may legitimately reject the probe workflow for reasons unrelated to
     // residency (e.g. unknown workflowId) — but it MUST NOT reject an ADVERTISED
     // region with residency_unavailable. That specific pairing is the violation.
-    const okBody = ok.json as { error?: { code?: string } } | undefined;
     expect(
-      okBody?.error?.code !== 'residency_unavailable',
+      readErrorCode(ok.json) !== 'residency_unavailable',
       driver.describe(
         'capabilities.md §dataResidency / RFC 0129 §3',
-        `an ADVERTISED region ("${advertised}") MUST NOT be rejected with residency_unavailable (accept iff advertised) — got ${ok.status} ${JSON.stringify(okBody?.error)}`,
+        `an ADVERTISED region ("${advertised}") MUST NOT be rejected with residency_unavailable (accept iff advertised) — got ${ok.status} ${JSON.stringify(ok.json).slice(0, 200)}`,
       ),
     ).toBe(true);
 
@@ -114,7 +114,7 @@ describe.skipIf(HTTP_SKIP)('data-residency: admission control (capability-gated,
       inputs: {},
       residency: { region: bogus },
     });
-    const rejBody = rej.json as { error?: { code?: string }; runId?: string } | undefined;
+    const rejBody = rej.json as { runId?: string } | undefined;
 
     expect(
       rej.status === 400 || rej.status === 404 || rej.status === 422,
@@ -124,10 +124,10 @@ describe.skipIf(HTTP_SKIP)('data-residency: admission control (capability-gated,
       ),
     ).toBe(true);
     expect(
-      rejBody?.error?.code === 'residency_unavailable',
+      readErrorCode(rej.json) === 'residency_unavailable',
       driver.describe(
         'RFC 0129 §3',
-        `an unadvertised region MUST be rejected with error code "residency_unavailable" (MUST NOT silently accept-and-ignore) — got ${JSON.stringify(rejBody?.error)}`,
+        `an unadvertised region MUST be rejected with error code "residency_unavailable" (MUST NOT silently accept-and-ignore) — got ${JSON.stringify(rej.json).slice(0, 200)}`,
       ),
     ).toBe(true);
     expect(

@@ -263,7 +263,7 @@ Witnesses:
 
 **Status-status flip note.** The `runner_unavailable` numeric HTTP status is
 **host-chosen** (any `>= 400`): the conformance witness asserts the envelope
-`{ error: { code: "runner_unavailable", retriable: true } }`, NOT a fixed status
+`{ error: { code: "runner_unavailable", retriable: true } }` (as written 2026-07; **the canonical shape is flat** — `{ error: "runner_unavailable", message, details: { retriable: true } }` — per `rest-endpoints.md` §"Error response shape", restated 2026-08-16 (S22); the RFC text is left as the dated record), NOT a fixed status
 (mirrors `run_forbidden` / `capability_required`; registered in
 `rest-endpoints.md` §"Common error codes" per #815). openwop-app returns `409`,
 MyndHyve returns `503` — both conformant, both witnessed non-vacuously; the two
