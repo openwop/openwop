@@ -154,6 +154,59 @@ describe('RFC 0151 §B — node compensation declaration', () => {
   });
 });
 
+describe('RFC 0151 §D — the run rollup `compensationStatus` (RunSnapshot)', () => {
+  // Resolves RFC 0151 UQ3: `RunSnapshot` is the sole owner. Debug bundles and the
+  // AsyncAPI `run.snapshot` reuse the snapshot by $ref, so one property covers all
+  // three surfaces — and one enum keeps them from drifting apart.
+  const RUN_SNAPSHOT_SCHEMA = 'run-snapshot.schema.json';
+  const STATUSES = ['none', 'pending', 'running', 'completed', 'partial', 'failed', 'manual'] as const;
+
+  function snapshotValidator() {
+    const ajv = new Ajv2020({ strict: false, allErrors: true });
+    for (const file of readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.schema.json'))) {
+      ajv.addSchema(schema(file), file);
+    }
+    return ajv.getSchema(RUN_SNAPSHOT_SCHEMA) ?? ajv.compile(schema(RUN_SNAPSHOT_SCHEMA));
+  }
+
+  it('is declared on RunSnapshot as a closed enum of the seven §D values', () => {
+    const snap = schema(RUN_SNAPSHOT_SCHEMA) as {
+      properties: Record<string, { type?: string; enum?: string[] }>;
+      required: string[];
+    };
+    const field = snap.properties['compensationStatus'];
+    expect(field, 'RunSnapshot MUST declare `compensationStatus` (RFC 0151 §D, UQ3)').toBeDefined();
+    expect(field?.enum, 'the value set is closed and exactly the seven §D values').toEqual([...STATUSES]);
+    expect(
+      snap.required.includes('compensationStatus'),
+      'OPTIONAL on the schema — presence is governed by the capability gate in prose, not by `required`, ' +
+        'so a host that does not advertise `compensation` still validates',
+    ).toBe(false);
+  });
+
+  it('every §D value validates and a foreign value is rejected', () => {
+    const validate = snapshotValidator();
+    for (const value of STATUSES) {
+      const ok = validate({ runId: 'r1', workflowId: 'w1', status: 'failed', compensationStatus: value });
+      expect(ok, `compensationStatus=${value} MUST validate: ${JSON.stringify(validate.errors)}`).toBe(true);
+    }
+    for (const bad of ['compensating', 'COMPLETED', 'done', 'skipped', 'paused', 1, null, true]) {
+      const ok = validate({ runId: 'r1', workflowId: 'w1', status: 'failed', compensationStatus: bad });
+      expect(ok, `compensationStatus=${JSON.stringify(bad)} MUST be rejected — the fold is closed`).toBe(false);
+    }
+  });
+
+  it('a snapshot without the field still validates — the gate lives in prose', () => {
+    const validate = snapshotValidator();
+    expect(validate({ runId: 'r1', workflowId: 'w1', status: 'completed' })).toBe(true);
+  });
+
+  it('the forward `status` enum gained no `compensating` value — §D forbids reinterpreting it', () => {
+    const snap = schema(RUN_SNAPSHOT_SCHEMA) as { properties: { status: { enum: string[] } } };
+    expect(snap.properties.status.enum).not.toContain('compensating');
+  });
+});
+
 describe.skipIf(RFCS_DIR === null)('RFC 0151 — what this file does NOT establish', () => {
   it('records that behavioral conformance is absent, per RFC 0147 §A.5', () => {
     // Not decoration. RFC 0147 §A.5 forbids `Accepted` on shape-only evidence

@@ -810,3 +810,53 @@ request path consults, or the witness proves nothing about production.
   `resolved: true` for any of those has demonstrated it is **not** checking, which is
   precisely the confused-deputy failure RFC 0147 R12 names. Identity is not authorization:
   a `200` here means the identity resolved, **never** that the caller may act.
+
+### 21. Compensation unwind + replay drivers — `POST /v1/host/sample/test/compensation/{unwind,replay}` (RFC 0151)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/test/compensation/unwind` · `POST /v1/host/sample/test/compensation/replay` |
+| Capability gate           | `capabilities.compensation.supported: true` (RFC 0151 §A)                             |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | RFC 0151 §C–§F witness (`compensation-behavior.test.ts`, suite 1.94.0). **Catalogued 2026-08-16** — the witness had driven these two paths for three suite minors with no contract in this document, which meant a willing host had assertions to satisfy and no shape to build against. |
+
+OPTIONAL. RFC 0151 §C's rules — plan persisted before the first inverse action,
+descending forward-completion order, replay does not re-fire — are host-internal and
+**unobservable from a normal run's wire** except as the relative order of `compensation.*`
+events, which no black-box scenario can provoke without an effect that fails on cue. RFC
+0148 §A resolves an unobservable requirement to `blocked`, so without these seams RFC 0151
+cannot be certified; the gated scenario reports exactly that.
+
+Both seams drive the host's **real** unwind path against deterministic fake effects. They
+MUST NOT be a mock that returns a canned event list: the executor, plan persistence, and
+ordering must be the ones the production failure path uses, or the witness proves nothing.
+
+**`unwind`** — run a workflow of `nodes` (default 2, `1..8`) forward-committing fake effects,
+fail the last node, and let the host unwind.
+
+- **Request:** `{ nodes?: integer }`.
+- **Response 200:** `{ runId, events, compensatedOrder }`.
+  - `runId` — the run the seam created, so the scenario can `GET /v1/runs/{runId}` and
+    assert the §D rollup: after a clean unwind the snapshot MUST carry
+    `compensationStatus: "completed"` (see [`compensation.md`](./compensation.md)
+    §"Run rollup"). A host that advertises the family and omits the field on that
+    snapshot fails the gating rule, not merely the fold.
+  - `events` — the run's `compensation.*` events **in emission order**, each at least
+    `{ type, payload }`; `compensation.requested` MUST precede `compensation.started`.
+  - `compensatedOrder` — the forward-completion ordinals (1-based) in the order their
+    inverse actions were executed; for `reverse-completion` this MUST be strictly
+    descending.
+- **Non-vacuity:** the fake effects MUST record their inverse execution so
+  `compensatedOrder` is what happened, not what was scheduled; and payloads MUST be
+  content-free — the witness rejects a serialized event containing credential or
+  provider-body markers (`-----BEGIN`, `Bearer `, `sk-`, `authorization`, `providerResponse`).
+
+**`replay`** — replay a run whose recorded outcomes include a completed unwind.
+
+- **Request:** `{}`.
+- **Response 200:** `{ runId, refiredEffects }` — `refiredEffects` MUST be `0` (RFC 0151 §F:
+  replay defaults use recorded compensation outcomes and never re-fire inverse effects). The
+  replayed run's snapshot MUST carry the recorded rollup unchanged.
+- **404 / 403:** seam not wired — `compensation-behavior.test.ts` fails the plan-before-effect
+  leg with a message stating the requirement is unobservable and therefore `blocked`, and
+  returns early on the remaining legs (covered by that assertion, not by silence).
