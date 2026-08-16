@@ -57,6 +57,7 @@ The scale profile is **not** advertised in `/.well-known/openwop`. There's no pr
 
 A host SHOULD return `503 Service Unavailable` with a `Retry-After` header when the server is at capacity for the current request. The body MUST be the standard error envelope per `auth.md`:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "service_unavailable",

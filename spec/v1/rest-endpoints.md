@@ -338,6 +338,7 @@ The wire shape is locked at exactly these three top-level fields per `schemas/er
 
 When a host issues a server-side trace ID for a 5xx response so the API consumer can quote it when filing a bug, the canonical home is `details.correlationId`:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "internal_error",
@@ -408,6 +409,7 @@ Common error codes:
 
 When a host returns `429`, the response body MUST conform to the canonical `ErrorEnvelope` with `error: "rate_limited"` and SHOULD carry the following keys under `details`:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "rate_limited",

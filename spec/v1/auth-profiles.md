@@ -227,6 +227,7 @@ A host advertising the profile MUST:
 
 4. **Verification endpoint.** Hosts MUST expose `GET /v1/audit/verify?fromSeq=&toSeq=` (auth: `audit:read` scope, REQUIRED-when-profile-claimed) that returns:
 
+<!-- normative-example: audit-verify-result.schema.json -->
    ```json
    {
      "fromSeq": 0,

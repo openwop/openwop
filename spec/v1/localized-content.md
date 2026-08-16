@@ -65,6 +65,7 @@ The core decision: **content is one section record with a base `data` payload pl
 
 **Section** (`localized-content-section.schema.json`):
 
+<!-- normative-example: localized-content-section.schema.json -->
 ```json
 {
   "sectionId": "hero",

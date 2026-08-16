@@ -30,6 +30,7 @@ A form-content pack is **declarative**: it MUST NOT carry a `runtime` block, and
 
 ## Manifest format
 
+<!-- normative-example: form-content-pack-manifest.schema.json -->
 ```jsonc
 {
   "name": "core.openwop.forms.starters",

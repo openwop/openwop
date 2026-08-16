@@ -132,6 +132,7 @@ Pattern: `^prompt:<templateId>(@<version>)?$`. When `version` is omitted, the ho
 
 **Object form** — canonical when `libraryId` disambiguation, per-reference variable overrides, or version pinning need to be explicit:
 
+<!-- normative-example: prompt-ref.schema.json -->
 ```json
 {
   "libraryId": "vendor.acme.editorial-prompts",
@@ -287,6 +288,7 @@ Verified by the `prompt-mutation-workspace-membership-enforced` SECURITY invaria
 
 A third pack kind alongside node packs (RFC 0003) and workflow-chain packs (RFC 0013). Distinguished by `kind: "prompt"` in the manifest:
 
+<!-- normative-example: prompt-pack-manifest.schema.json -->
 ```json
 {
   "name": "vendor.acme.editorial-prompts",

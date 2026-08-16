@@ -155,6 +155,7 @@ A node passes if EITHER pass matches.
 
 Error envelope:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "channel_access_denied",
@@ -223,6 +224,7 @@ A copy node reads `feedback`, transforms each entry, writes to `feedbackV2`. Old
 
 **Error envelope:**
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "channel_schema_breaking_change",
@@ -257,6 +259,7 @@ Channel reducers run engine-host-locally. When a sub-workflow (a parent invokes 
 
 When a non-owner engine attempts a cross-engine write to a forbidden reducer, the server MUST return `400 channel_cross_engine_write_forbidden`:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "channel_cross_engine_write_forbidden",

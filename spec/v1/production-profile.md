@@ -37,6 +37,7 @@ Event logs MUST be replayable after process restart. Storage adapters MUST satis
 
 A production-profile host MUST return `503 Service Unavailable` with `Retry-After` when at capacity. The body MUST use the canonical error envelope:
 
+<!-- normative-example: error-envelope.schema.json -->
 ```json
 {
   "error": "service_unavailable",
