@@ -32,6 +32,11 @@
  *   - **No provider bodies or credentials in events.** §D and §G. These events
  *     land in the durable log, which is the least revocable place a credential
  *     can go.
+ *   - **The snapshot rollup agrees with the events.** §D `compensationStatus` on
+ *     `RunSnapshot` (UQ3 resolved 2026-08-16) is the deterministic fold defined in
+ *     `spec/v1/compensation.md`; an advertising host MUST carry it, and a value
+ *     that disagrees with the emitted events is a projection bug a client would
+ *     act on.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -138,6 +143,64 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
           'effects — a replay that re-executes them turns a recovery into a second outage',
       ),
     ).toBe(0);
+  });
+
+  it('the run snapshot carries the §D rollup, and it agrees with the events', async () => {
+    if (!behaviorGate(PROFILE, await advertised())) return;
+    const seam = await driver.post('/v1/host/sample/test/compensation/unwind', {});
+    if (seam.status === 404) return; // covered by the seam assertion above
+    const body = seam.json as { runId?: string; events?: { type: string }[] };
+    expect(
+      typeof body.runId === 'string' && body.runId.length > 0,
+      driver.describe(
+        'host-sample-test-seams.md §21',
+        'the unwind seam MUST return the `runId` it created — without it the §D rollup has no ' +
+          'black-box path to a witness and lands as another shape-only claim',
+      ),
+    ).toBe(true);
+    const snap = await driver.get(`/v1/runs/${encodeURIComponent(body.runId ?? '')}`);
+    expect(snap.status, driver.describe('rest-endpoints.md', 'GET /v1/runs/{runId} for the seam run')).toBe(200);
+    const status = (snap.json as { compensationStatus?: unknown }).compensationStatus;
+    expect(
+      status,
+      driver.describe(
+        'compensation.md §"Run rollup: compensationStatus"',
+        'a host that advertises `compensation` MUST include `compensationStatus` on every snapshot ' +
+          '(`none` when idle) — presence is the wire witness of the advert',
+      ),
+    ).toBeDefined();
+    const types = (body.events ?? []).map((e) => e.type);
+    // The fold, applied to what the seam reports: a clean unwind ends `completed`; a
+    // recorded `manual_intervention_required` dominates; a plan that never started is
+    // `pending`. Anything else the seam produced is a shape this leg cannot judge from
+    // outside, and it says so rather than passing.
+    const expected = types.includes('compensation.manual_intervention_required')
+      ? 'manual'
+      : types.includes('compensation.completed')
+        ? 'completed'
+        : types.includes('compensation.started')
+          ? null
+          : types.includes('compensation.requested')
+            ? 'pending'
+            : 'none';
+    if (expected === null) {
+      expect(
+        ['running', 'partial', 'failed'].includes(String(status)),
+        driver.describe(
+          'compensation.md §"Run rollup: compensationStatus"',
+          'an unwind that started and did not complete MUST report `running`, `partial`, or `failed` ' +
+            `— got ${String(status)}`,
+        ),
+      ).toBe(true);
+      return;
+    }
+    expect(
+      status,
+      driver.describe(
+        'compensation.md §"Run rollup: compensationStatus"',
+        `the rollup MUST be the deterministic fold of the compensation.* events — events ${JSON.stringify(types)} fold to \`${expected}\``,
+      ),
+    ).toBe(expected);
   });
 
   it('compensation events carry no provider bodies or credentials', async () => {

@@ -186,7 +186,10 @@ witness, which RFC 0148 §A resolves to `blocked` rather than to a pass.
 `scripts/rfc-conformance-coverage.mjs` also checks the `**Affects**` row of each
 RFC. **Two absences, both RFC 0151's** — `spec/v1/compensation.md` and
 `schemas/compensation-policy.schema.json` — and both are already annotated on
-0151's acceptance criteria as carried.
+0151's acceptance criteria as carried. *(2026-08-16 update: `compensation.md`
+now exists at `Draft`, covering the landed subset only — #1007. The policy
+schema remains the single absence on this axis, and is still annotated as
+carried.)*
 
 **That near-clean result is worth as much as the other two axes coming back
 dirty.** It is evidence the record is accurate here, rather than an assertion
