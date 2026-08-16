@@ -860,3 +860,24 @@ fail the last node, and let the host unwind.
 - **404 / 403:** seam not wired — `compensation-behavior.test.ts` fails the plan-before-effect
   leg with a message stating the requirement is unobservable and therefore `blocked`, and
   returns early on the remaining legs (covered by that assertion, not by silence).
+
+### 22. A2A negotiation + durable-task drivers — `POST /v1/host/sample/a2a/{invoke,tasks/start,tasks/push-config}` · `GET /v1/host/sample/a2a/tasks/{taskId}` (RFC 0152 §B, RFC 0100)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/a2a/invoke` · `POST /v1/host/sample/a2a/tasks/start` · `GET /v1/host/sample/a2a/tasks/{taskId}` · `POST /v1/host/sample/a2a/tasks/push-config` |
+| Capability gate           | `invoke`: `capabilities.a2a.supported && protocolVersions.length > 0` (RFC 0152 §A). `tasks/*`: `capabilities.a2a.durableTasks` / `capabilities.a2a.pushNotifications` (RFC 0100). |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | `a2a-task-roundtrip.test.ts` (RFC 0100, suite 1.34.0) and `a2a-version-negotiation.test.ts` (RFC 0152 §B, suite 1.96.0). **Catalogued 2026-08-16** — both had driven these paths without a contract here; openwop-app implemented `invoke` from the witness alone and its §A/§B legs pass live. |
+
+OPTIONAL. RFC 0152 §B's rules are about what the host puts on the wire *toward a peer* — the `A2A-Version` header, and whether a downgrade was explicit — which no black-box request to the host's own API can observe. The `invoke` seam makes the host call a peer of the suite's choosing so the peer can capture the headers.
+
+**`invoke`** — make the host's real A2A client path call `peerUrl` once (any operation; the witness only reads headers and the outcome).
+
+- **Request:** `{ peerUrl: string, authenticated?: boolean, peerOffersOnly?: "<Major.Minor>", requestVersion?: "<Major.Minor>" }`. `authenticated: true` asks the host to make the call under an authenticated principal (§B's fail-closed default applies); `peerOffersOnly` is passed to the fake peer so it advertises/accepts only that version; `requestVersion` overrides the version the host asks for (used to force an unsupported one).
+- **Response 200:** `{ negotiatedVersion: "<Major.Minor>", ... }` — the version the host **actually** used, which **MUST** equal the `A2A-Version` header on every non-GET call the peer captured. Reporting `preferredVersion` while having used a lower one is the silent downgrade §B forbids.
+- **Response ≥ 400:** the canonical error envelope — for an unsupported version, `error.code: "interop_version_unsupported"`, `retriable: false`, `details.protocol: "a2a"`, `details.requested`, `details.supported[]` (`a2a-integration.md` §B). A raw upstream body is a failure of the leg.
+- **404 / 403:** seam not wired — the header leg fails with a message stating the requirement is unobservable and therefore `blocked` (RFC 0148 §A); the remaining legs return early, covered by that assertion.
+- **Non-vacuity:** the seam **MUST** drive the same A2A client the production `a2a.invoke` path uses (same negotiation code, same header construction); a seam that hand-writes `A2A-Version` proves nothing about production.
+
+**`tasks/start`** — `{ scenario: "paused-at-approval" }` → `200 { taskId }`: drive a real backing run to a paused HITL state and return the A2A task id (which **is** the run id, RFC 0100). **`tasks/{taskId}`** — `200 { state, runId, metadata?: { openwop?: { interrupt?: { kind } } } }`: the persisted `A2ATaskState` projection read **without** the original connection; `state` uses the stored (0.3-lowercase) vocabulary, `input-required` for the paused run. **`tasks/push-config`** — `{ taskId, url }` → `≥ 400` for a private/loopback/link-local `url` before any push is attempted (`a2a-push-egress-ssrf`); the seam **MUST** run the same RFC 0093 egress guard as the production `CreateTaskPushNotificationConfig` path.

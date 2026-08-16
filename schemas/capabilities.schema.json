@@ -2864,11 +2864,11 @@
         "agentCardUrl": {
           "type": "string",
           "format": "uri",
-          "description": "The A2A 0.3 well-known agent card URL (`/.well-known/agent-card.json`)."
+          "description": "The A2A well-known agent card URL (`/.well-known/agent-card.json` \u2014 the same path in 0.3 and 1.0; the protocol version is discovered INSIDE the 1.0 card via `supportedInterfaces[].protocolVersion`, RFC 0152 \u00a7C)."
         },
         "streaming": {
           "type": "boolean",
-          "description": "Host supports `message/stream` + `tasks/resubscribe` (A2A `capabilities.streaming`). Gates the RFC 0100 \u00a73 resubscribe re-attach."
+          "description": "Host supports `message/stream` + `tasks/resubscribe` (0.3 names) / `SendStreamingMessage` + `SubscribeToTask` (1.0 names) \u2014 A2A `capabilities.streaming`. Gates the RFC 0100 \u00a73 resubscribe re-attach; MUST equal the Agent Card's `capabilities.streaming` (RFC 0152 \u00a7C)."
         },
         "pushNotifications": {
           "type": "boolean",
