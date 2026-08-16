@@ -130,15 +130,29 @@ describe('RFC 0148 §A — the registry binds to the certification floor', () =>
     expect(allRequirements()).toContain('openwop.floor.any.interrupt-');
   });
 
-  it('an unwritten floor returns null, not an empty list', () => {
-    // `openwop-replay-fork` is deliberately unspecified — `profiles.md` gives it
-    // a discovery-conditional floor a flat list cannot express (gap G7). Null
-    // forces the caller to decide; an empty array would silently certify.
+  it('an unwritten floor returns null, not an empty list — and so does a conditional floor without its document (G7)', () => {
+    // `openwop-replay-fork` has a discovery-conditional floor (RFC 0148 §C G7,
+    // transcribed 2026-08-16): "the conformance scenarios pass on whichever mode
+    // the host advertises". Without the document it is UNEVALUABLE — null forces
+    // the caller to decide; an empty array would silently certify.
     expect(
       requirementsFor('openwop-replay-fork'),
-      'RFC 0148 §C: unspecified MUST be distinguishable from empty-by-design',
+      'RFC 0148 §C: unevaluable MUST be distinguishable from empty-by-design',
     ).toBeNull();
     expect(requirementsFor('openwop-does-not-exist')).toBeNull();
+    // With the document, the advertised branch is required
+    const doc = (modes: string[]) => ({ replay: { supported: true, modes } });
+    expect([...(requirementsFor('openwop-replay-fork', doc(['replay'])) ?? [])].sort()).toEqual(['openwop.floor.replay-side-effect-suppression', 'openwop.floor.replayDeterminism']);
+    expect(requirementsFor('openwop-replay-fork', doc(['branch']))).toEqual(['openwop.floor.replay-fork']);
+    expect([...(requirementsFor('openwop-replay-fork', doc(['replay', 'branch'])) ?? [])].sort()).toEqual(['openwop.floor.replay-fork', 'openwop.floor.replay-side-effect-suppression', 'openwop.floor.replayDeterminism']);
+    expect(requirementsFor('openwop-replay-fork', doc([]))).toEqual([]);
+    // and every branch is a registered requirement
+    expect(allRequirements()).toContain('openwop.floor.replayDeterminism');
+    expect(allRequirements()).toContain('openwop.floor.replay-fork');
+    // the six formerly-unprovable profiles now have floors
+    for (const p of ['openwop-interrupts', 'openwop-secrets', 'openwop-provider-policy', 'openwop-memory', 'openwop-trigger-bridge']) {
+      expect((requirementsFor(p) ?? []).length, `${p} floor MUST be non-empty`).toBeGreaterThan(0);
+    }
   });
 
   it('a discovery-only profile returns an empty list, which does not certify', () => {

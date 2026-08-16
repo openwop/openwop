@@ -70,6 +70,8 @@ The `clarification.request` envelope is the canonical interrupt envelope per `in
 
 A host that genuinely doesn't expose any interrupt path (e.g., a fire-and-forget batch host) MAY publish without `clarification.request` in `supportedEnvelopes` and fail the `openwop-interrupts` profile. Such hosts are still `openwop-core`.
 
+> **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-interrupts` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `interrupt-clarification.test.ts` (the canonical envelope the predicate gates on) plus at least one passing `interrupt-*` scenario (`requiredAnyPrefix`). Before this date the profile had no floor and every bundle read it as *unprovable*.
+
 ### `openwop-stream-sse`
 
 The host accepts SSE streaming on the events endpoint per `stream-modes.md`.
@@ -121,6 +123,8 @@ openwop-secrets(c) :=
 
 `tenant`-scoped secrets are an OPTIONAL add-on; the conformance suite reports `openwop-secrets` + advertised scope set separately.
 
+> **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-secrets` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `byok-roundtrip.test.ts` — the BYOK canary round-trip (`fixtures.md` §`conformance-secrets-roundtrip`, SR-1); the profile's proof that a credential reference resolves and its value never leaves the host. Before this date the profile had no floor and every bundle read it as *unprovable*.
+
 ### `openwop-provider-policy`
 
 The host enforces AI provider policy modes per `capabilities.md` §`aiProviders.policies`.
@@ -141,6 +145,8 @@ openwop-provider-policy(c) :=
 
 The conformance suite verifies enforcement against the runtime; discovery-payload predicates prove the host advertises the contract.
 
+> **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-provider-policy` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `policies.test.ts` (four-mode taxonomy shape) and `providerPolicyEnforcement.test.ts` (enforcement on the wire). Before this date the profile had no floor and every bundle read it as *unprovable*.
+
 ### `openwop-replay-fork`
 
 The host implements `POST /v1/runs/{runId}:fork` per `replay.md`.
@@ -159,6 +165,8 @@ openwop-replay-fork(c) :=
 ```
 
 This profile gates `replayDeterminism.test.ts` and `replay-fork.test.ts` scenarios. Hosts MAY support either or both modes; the conformance scenarios pass on whichever mode the host advertises.
+
+> **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-replay-fork` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: **discovery-conditional** — `replayDeterminism.test.ts` **and `replay-side-effect-suppression.test.ts`** when `replay.modes` includes `replay` (caveat 1 of §"Determinism guarantees" — a replay MUST NOT re-fire external effects — is unconditional per `replay.md`; on a host advertising `sideEffectSuppression: none` that scenario records `blocked` (unwitnessed, not inapplicable), so a `none` host does **not** certify replay mode on determinism alone), `replay-fork.test.ts` when it includes `branch`, all three when both; a host advertising neither conventional mode has an empty, unprovable floor (`PROFILE_FLOOR_SCENARIOS['openwop-replay-fork'].conditional`; `--certify` and `verifyBundleV2` evaluate it against the captured discovery document). Before this date the profile had no floor and every bundle read it as *unprovable*.
 
 ### `openwop-fixtures`
 
@@ -238,6 +246,8 @@ openwop-memory(c) :=
 
 Derived purely from existing + the RFC 0080 additive fields — no new wire field beyond the §A dimensions. The degraded-projection contract (RFC 0080 §C: `GET /v1/agents` surfaces `memoryDegraded` when an agent's `memoryShape` exceeds the host's reconciled model) is validated by `memory-degraded-projection.test.ts` (gated on `agents.manifestRuntime` + `memory`); the additive field shapes are validated always-on by `memory-capability-model-shape.test.ts`.
 
+> **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-memory` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `memory-capability-model-shape.test.ts`, `memory-attribution-shape.test.ts`, `memory-attribution-emits-on-write.test.ts` (RFC 0080 §A write attribution), `memory-degraded-projection.test.ts` (RFC 0080 §C). Before this date the profile had no floor and every bundle read it as *unprovable*.
+
 ### `openwop-trigger-bridge`
 
 The host implements the durable inbound-work contract per `trigger-bridge.md` (RFC 0083) — a uniform composition of scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhooks, and cross-host causation (RFC 0040).
@@ -260,6 +270,8 @@ openwop-trigger-bridge(c) :=
 ```
 
 Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their _bridge_ into a run is uniform.
+
+> **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-trigger-bridge` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `trigger-bridge-shape.test.ts` and `trigger-bridge-delivery.test.ts` (profile-gated behavioural leg). Before this date the profile had no floor and every bundle read it as *unprovable*.
 
 ### `openwop-experimental`
 

@@ -31,7 +31,7 @@ import {
   type DiscoveryPayload,
 } from './profiles.js';
 import { CERTIFIABLE, DISPOSITIONS, type Disposition } from './requirement-ledger.js';
-import { requirementIdForPrefix, requirementIdForScenario } from './requirement-registry.js';
+import { floorFilesFor, requirementIdForPrefix, requirementIdForScenario } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 
 /**
@@ -149,11 +149,15 @@ export function findLiteral(value: unknown, literal: string): string[] {
  * it is the prefix requirement id, and the rows that satisfy it are the
  * matching scenario rows.
  */
-function requiredFor(profile: string): { files: string[]; prefixes: string[]; discoveryOnly: boolean } | null {
+function requiredFor(profile: string, document: Readonly<Record<string, unknown>>): { files: string[]; prefixes: string[]; discoveryOnly: boolean } | null {
   const floor = PROFILE_FLOOR_SCENARIOS[profile];
   if (floor === undefined) return null;
+  // Discovery-conditional floors (G7) are evaluated against the bundle's own
+  // captured document — the same evidence the claim was derived from.
+  const files = floorFilesFor(profile, document);
+  if (files === null) return null;
   return {
-    files: [...floor.required],
+    files: [...files],
     prefixes: [...(floor.requiredAnyPrefix ?? [])],
     discoveryOnly: floor.discoveryOnly === true,
   };
@@ -218,7 +222,7 @@ export function verifyBundleV2(bundle: BundleV2Like): BundleV2Verdict {
 
   const profiles: BundleV2ProfileVerdict[] = (bundle.claimedProfiles ?? []).map((profile) => {
     const derivable = profileDerivable(bundle.discovery?.document ?? {}, profile);
-    const req = requiredFor(profile);
+    const req = requiredFor(profile, (bundle.discovery?.document ?? {}) as Readonly<Record<string, unknown>>);
     if (req === null) {
       return { profile, derivable, floorUnspecified: true, required: [], rejections: [], notCertifiable: [], evidenceValid: true, certified: false };
     }

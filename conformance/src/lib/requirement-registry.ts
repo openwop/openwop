@@ -42,12 +42,50 @@ export function requirementIdForPrefix(prefix: string): string {
  * to close. `null` forces the caller to decide between `discoveryOnly` (an empty
  * floor by design) and unspecified (no floor written yet).
  */
-export function requirementsFor(profile: string): readonly string[] | null {
+/** Read a dot-path (RFC 0073 root families) out of a discovery document. */
+function readPath(doc: Readonly<Record<string, unknown>>, path: string): unknown {
+  let cur: unknown = doc;
+  for (const seg of path.split('.')) {
+    if (cur === null || typeof cur !== 'object') return undefined;
+    cur = (cur as Record<string, unknown>)[seg];
+  }
+  return cur;
+}
+
+/**
+ * The scenario FILES a profile's floor requires against a given discovery
+ * document — the unconditional `required` list plus every `conditional` branch
+ * whose `path` array includes its `includes` value. `null` when the floor is
+ * conditional and no document was supplied (unevaluable ≠ empty), or when the
+ * profile has no floor at all.
+ */
+export function floorFilesFor(profile: string, document?: Readonly<Record<string, unknown>>): readonly string[] | null {
+  const floor = PROFILE_FLOOR_SCENARIOS[profile];
+  if (floor === undefined) return null;
+  const files = [...floor.required];
+  if (floor.conditional !== undefined && floor.conditional.length > 0) {
+    if (document === undefined) return null;
+    for (const c of floor.conditional) {
+      const arr = readPath(document, c.path);
+      if (Array.isArray(arr) && arr.includes(c.includes)) files.push(...c.required);
+    }
+  }
+  return [...new Set(files)];
+}
+
+/**
+ * Requirement ids for a profile's floor. `document` is needed for a
+ * discovery-conditional floor (RFC 0148 §C G7 — `openwop-replay-fork`): without
+ * it such a floor is UNEVALUABLE and this returns `null`, never `[]`.
+ */
+export function requirementsFor(profile: string, document?: Readonly<Record<string, unknown>>): readonly string[] | null {
   const floor = PROFILE_FLOOR_SCENARIOS[profile];
   if (floor === undefined) return null;
   if (floor.discoveryOnly === true) return [];
+  const files = floorFilesFor(profile, document);
+  if (files === null) return null;
   return [
-    ...floor.required.map(requirementIdForScenario),
+    ...files.map(requirementIdForScenario),
     ...(floor.requiredAnyPrefix ?? []).map(requirementIdForPrefix),
   ];
 }
@@ -55,8 +93,13 @@ export function requirementsFor(profile: string): readonly string[] | null {
 /** Every registered requirement ID across every profile with a runtime floor. */
 export function allRequirements(): readonly string[] {
   const ids = new Set<string>();
-  for (const profile of Object.keys(PROFILE_FLOOR_SCENARIOS)) {
-    for (const id of requirementsFor(profile) ?? []) ids.add(id);
+  for (const [profile, floor] of Object.entries(PROFILE_FLOOR_SCENARIOS)) {
+    if (floor.discoveryOnly === true) continue;
+    // every branch of a conditional floor is a registered requirement
+    for (const f of floor.required) ids.add(requirementIdForScenario(f));
+    for (const c of floor.conditional ?? []) for (const f of c.required) ids.add(requirementIdForScenario(f));
+    for (const p of floor.requiredAnyPrefix ?? []) ids.add(requirementIdForPrefix(p));
+    void profile;
   }
   return [...ids].sort();
 }

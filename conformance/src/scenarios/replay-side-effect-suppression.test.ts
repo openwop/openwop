@@ -45,6 +45,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { recordRequirement } from '../lib/requirement-ledger.js';
+import { requirementIdForScenario } from '../lib/requirement-registry.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -111,7 +113,24 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     const replay = await fetchReplay();
 
     if (replay?.sideEffectSuppression !== 'recorded-outcome') {
-      ctx.skip(); // host makes no such guarantee — RFC 0140 imposes nothing
+      // `replay.md` §"Side-effect suppression" (corrected 2026-08-08): caveat 1 —
+      // a replay MUST NOT call the external system twice — is UNCONDITIONAL and
+      // `none` is not permission to re-fire; it only means no probeable mechanism
+      // is declared. So this is not `inapplicable`: the obligation applies and is
+      // unwitnessable here. Record the floor row `blocked` (RFC 0148 §A) so a
+      // host advertising `none` cannot certify `openwop-replay-fork` on the
+      // strength of determinism alone (H20 — re-advertising `recorded-outcome`
+      // is what makes this leg run).
+      try {
+        recordRequirement(
+          requirementIdForScenario('replay-side-effect-suppression.test.ts'),
+          'blocked',
+          `host advertises replay.sideEffectSuppression ${JSON.stringify(replay?.sideEffectSuppression ?? 'none')} — caveat 1 (a replay MUST NOT re-fire external effects) is unconditional but no declared mechanism is probeable; unwitnessed, not inapplicable`,
+        );
+      } catch {
+        /* already recorded */
+      }
+      ctx.skip();
       return;
     }
     if (!replay.modes?.includes('replay')) {

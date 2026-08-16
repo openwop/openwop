@@ -394,7 +394,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   // represent and therefore reported as a clean skip.
   // (d1) RFC 0148 acceptance item 2 — requirement-level dispositions from the
   // ledger, and rejection of unclassified returns for a claimed profile.
-  const derived = deriveRequirementDispositions(states, ledgerEntries, claimedProfiles);
+  const derived = deriveRequirementDispositions(states, ledgerEntries, claimedProfiles, document as Record<string, unknown>);
   const notHeld = new Set(derived.verdicts.filter((v) => v.runtimeDerived && !v.held).map((v) => v.profile));
   const rejectedProfiles = derived.verdicts.filter((v) => v.unclassified.length > 0);
   if (rejectedProfiles.length > 0) {
