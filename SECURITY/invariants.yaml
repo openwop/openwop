@@ -1558,7 +1558,7 @@ invariants:
   - id: delegation-tenant-audience-bound
     tier: protocol
     severity: high
-    threat_model: SECURITY/threat-model-secret-leakage.md
+    threat_model: SECURITY/threat-model-workload-identity.md
     tests:
       - conformance/src/scenarios/workload-identity-behavior.test.ts
     note: |
@@ -1574,7 +1574,7 @@ invariants:
   - id: delegation-chain-bounded
     tier: protocol
     severity: high
-    threat_model: SECURITY/threat-model-secret-leakage.md
+    threat_model: SECURITY/threat-model-workload-identity.md
     tests:
       - conformance/src/scenarios/workload-identity-profile.test.ts
     note: |

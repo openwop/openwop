@@ -172,6 +172,39 @@ Cross-link with `channels-and-reducers.md` §Distributed reducers: a child run's
 
 ---
 
+### Identity and delegation attributes (RFC 0154 §D)
+
+> Additive (2026-08-16, RFC 0154 `Accepted`). All OPTIONAL, all **content-free**: every value is an opaque id, an enum, or an integer. `openwop.*` remains canonical; the GenAI projection below is a labelled, versioned, optional mapping that core conformance MUST NOT require.
+
+Set on the `openwop.run` span (and MAY be repeated on `openwop.node` spans that make an authorization decision) when the request that started or acted on the run carried a workload identity (`auth.md` §"Workload identity and delegated actor chain"):
+
+| Attribute                          | Type   | Required | Notes                                                                                                                                                                       |
+| ---------------------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openwop.actor.principal`          | string | MAY      | Opaque RFC 0048 principal id of the **effective** actor. Never PII, never the presented `subject` unless the host genuinely uses it as its principal id.                      |
+| `openwop.actor.on_behalf_of`       | string | MAY      | Opaque principal id from a **verified** delegation context's `onBehalfOf`. Absent when there is no delegation. Never caller-asserted.                                        |
+| `openwop.identity.scheme`          | string | MAY      | `spiffe` \| `mtls-san` \| `cloud-subject` \| `oauth-client` — the closed set from `workload-identity.schema.json`.                                                       |
+| `openwop.identity.issuer_class`    | string | MAY      | The *class* of issuer, never the issuer URL: `spiffe` \| `mtls` \| `cloud` \| `oauth` \| `oidc` \| `api-key` \| `anonymous`.                                          |
+| `openwop.identity.sender_constraint` | string | MAY    | `mtls` \| `dpop` \| `none`. `none` is the bearer-fallback signal RFC 0154 §C requires to be distinguishable (`sender-constraint-no-bearer-downgrade`).                    |
+| `openwop.delegation.depth`         | int    | MAY      | Number of hops in the verified chain; `0` when none. The chain itself is never an attribute.                                                                                 |
+| `openwop.authz.audience_decision`  | string | MAY      | `match` \| `mismatch` \| `absent`.                                                                                                                                         |
+| `openwop.authz.scope_decision`     | string | MAY      | `allow` \| `deny`. Mirrors `authorization.decided.allowed`.                                                                                                                 |
+| `openwop.authz.correlation_id`     | string | MAY      | Host-minted correlation id linking the span to the `authorization.decided` audit fact. Not a trace id.                                                                        |
+
+Rules: `openwop.actor.kind` (RFC 0132, run-level table above) continues to carry the principal's kind. Hosts **MUST NOT** put a raw `subject`, issuer URL, certificate fingerprint, token, proof, or `requestState`-style opaque blob into any of these; a hashed subject, if used for correlation, follows the salt/rotation rule in `auth.md` §D. These attributes describe an *authorization outcome*; a consumer **MUST NOT** treat their presence as authorization evidence — a span is a record, not a grant.
+
+**Trace context across interop boundaries.** `traceparent` / `tracestate` (and `baggage`) propagate across A2A (`a2a-integration.md`), MCP (`mcp-integration.md` §D — the `_meta` keys are the only named MCP extension mapping), dispatch, compensation (`compensation.md`), and interrupt boundaries. They are correlation, **never** authorization evidence, and a host **MUST NOT** derive tenant, principal, or scope from them.
+
+**GenAI semantic-convention projection (RFC 0154 §D, gap G3 / UQ4 — decided as v0, experimental).** The OpenTelemetry GenAI conventions moved to `open-telemetry/semantic-conventions-genai` and, as of 2026-08-16, the agent/tool attributes there carry **Development** stability with no tagged release; the core `semantic-conventions` repo (`v1.44.0`, 2026-08-04) no longer hosts them. Accordingly the first mapping is **v0, optional, and labelled experimental**: a host that emits it **MUST** also emit `openwop.otel.genai_mapping_version: "0"` and `openwop.otel.genai_semconv_ref: "open-telemetry/semantic-conventions-genai@<commit>"`, and core conformance **MUST NOT** require any `gen_ai.*` attribute.
+
+| `openwop.*` (canonical)                                | `gen_ai.*` (v0 projection, Development stability)          | Rule                                                                                       |
+| ------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `openwop.actor.principal` when `openwop.actor.kind = agent` | `gen_ai.agent.id`                                     | Opaque id only; MUST NOT be a name or a subject.                                            |
+| the run's `agent.name` (RFC 0002 `AgentRef`)           | `gen_ai.agent.name`                                        | Only when the run has an `AgentRef`.                                                        |
+| `openwop.workflow_id`                                  | `gen_ai.workflow.name`                                     | The workflow id, not a human title.                                                          |
+| `openwop.run_id` for a `core.conversation` run         | `gen_ai.conversation.id`                                   | Only for conversation-model runs (RFC 0005).                                                 |
+
+No identity, delegation, or authorization attribute is projected into `gen_ai.*` — the upstream vocabulary has no stable field for them, and inventing one would be exactly the experimental-attribute-as-requirement RFC 0154 §D forbids. Revisit when the GenAI repository tags a release with these fields at Stable.
+
 ## Canonical run lifecycle event names
 
 An OpenWOP-compliant server emits run-lifecycle events through the event log (`GET /v1/runs/{runId}/events*`) and through structured logs / OTel spans. The wire-level event-type names form a closed vocabulary that external clients and SDKs can rely on:

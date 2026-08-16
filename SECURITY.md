@@ -120,6 +120,7 @@ openwop threat models live at `SECURITY/threat-model-*.md` and cover specific at
 - `SECURITY/threat-model-node-packs.md` — node-pack supply chain (tampering, signature substitution, sandbox escape; 26 invariants).
 - `SECURITY/threat-model-provider-policy.md` — provider-policy bypass paths across all four modes; 13 invariants.
 - `SECURITY/threat-model-auth-profiles.md` — OAuth2-CC / OIDC user-bearer / mTLS / API-key-rotation enforcement boundaries (qualitative; its enforcement invariants are tracked under the rows above + the auth tier in `invariants.yaml`).
+- `SECURITY/threat-model-workload-identity.md` — RFC 0154 workload identity, delegated actor chain, sender constraint, content-free audit/telemetry, and artifact provenance (T1–T5; 2 registered + 6 named-unregistered invariants; **no advertiser yet** — every behavioural row is `blocked` per RFC 0148 §A until one exists).
 
 The threat models track invariants in `SECURITY/invariants.yaml`; the CI gate at `scripts/check-security-invariants.sh` (step 8 of `openwop-check.sh`) verifies every protocol-tier MUST-NOT maps to at least one matching conformance test. Reference-impl-tier invariants are verified by the reference impl's CI; advisory invariants are defense-in-depth and don't gate.
 
