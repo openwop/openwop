@@ -182,6 +182,32 @@ describe.skipIf(V1_DIR === null)('RFC 0155 §C — extension registry', () => {
     ).toEqual([]);
   });
 
+  it('the coverage block is present and accounts for every capability family (RFC 0155 §C, acceptance item 3)', () => {
+    // "Unlisted means uncovered" was a sentence; this makes it a checked list.
+    // The block is DERIVED by scripts/generate-extension-registry-coverage.mjs
+    // (--check runs in openwop:check); here we assert the invariant it encodes
+    // so a tarball consumer sees it too: every top-level capability family is
+    // either a core predicate field, covered by a record's capabilityPath, or
+    // listed as uncovered — and nothing is in two buckets.
+    const reg = registry as unknown as {
+      coverage?: { familiesTotal: number; coreFields: string[]; covered: string[]; uncovered: string[] };
+      extensions: Extension[];
+    };
+    expect(reg.coverage, 'RFC 0155 §C: the registry MUST carry a derived `coverage` block').toBeDefined();
+    const cov = reg.coverage as NonNullable<typeof reg.coverage>;
+    const families = Object.keys((caps().properties as Record<string, unknown>) ?? {}).sort();
+    expect(cov.familiesTotal).toBe(families.length);
+    const all = [...cov.coreFields, ...cov.covered, ...cov.uncovered].sort();
+    expect(all, 'core + covered + uncovered MUST partition the family set exactly').toEqual(families);
+    expect(new Set(all).size, 'no family may sit in two buckets').toBe(all.length);
+    const reached = new Set(reg.extensions.map((e) => e.capabilityPath.split('.')[0]));
+    for (const f of cov.covered) expect(reached.has(f), `${f} listed as covered MUST be reached by a record`).toBe(true);
+    for (const f of cov.uncovered) expect(reached.has(f), `${f} listed as uncovered MUST NOT be reached by a record`).toBe(false);
+    // The honest number, asserted so it cannot silently shrink by deletion of the
+    // uncovered list rather than by adding records.
+    expect(cov.uncovered.length + cov.covered.length + cov.coreFields.length).toBe(families.length);
+  });
+
   it('every record names the RFC that owns it', () => {
     // Vendor extensions may not use an `openwop-*` id without an accepted RFC
     // (§F). The owning RFC is what makes that checkable.

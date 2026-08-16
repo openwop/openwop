@@ -272,7 +272,8 @@ describe('profiles: deriveProfiles produces the full set', () => {
     };
     const result = deriveProfiles(rich);
     const expected: ProfileName[] = [
-      'openwop-core',
+      'openwop-discovery-core', // RFC 0155 §A canonical name
+      'openwop-core', // deprecated alias — always beside the canonical name, never alone
       'openwop-interrupts',
       'openwop-stream-sse',
       'openwop-stream-poll',

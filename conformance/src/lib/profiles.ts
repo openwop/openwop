@@ -21,6 +21,13 @@
  * `RFCS/0001-rfc-process.md`.
  */
 export const PROFILE_NAMES = [
+  // RFC 0155 §A (2026-08-16): `openwop-discovery-core` is the CANONICAL name of
+  // the discovery predicate; `openwop-core` is its DEPRECATED ALIAS for all of
+  // v1 and derives exactly when the canonical name derives — both or neither.
+  // The predicate is a discovery-payload check and says nothing about whether a
+  // run can be started, suspended, or replayed; the executable floor is
+  // `openwop-core-standard` (`core-standard-profile.md`, RFC 0088).
+  'openwop-discovery-core',
   'openwop-core',
   'openwop-interrupts',
   'openwop-stream-sse',
@@ -408,7 +415,10 @@ export function isCoreStandard(c: DiscoveryPayload): boolean {
  */
 export function deriveProfiles(c: DiscoveryPayload): readonly ProfileName[] {
   const result: ProfileName[] = [];
-  if (isCore(c)) result.push('openwop-core');
+  if (isCore(c)) {
+    result.push('openwop-discovery-core');
+    result.push('openwop-core'); // deprecated alias — never alone (RFC 0155 §A)
+  }
   if (isInterrupts(c)) result.push('openwop-interrupts');
   if (isStreamSse(c)) result.push('openwop-stream-sse');
   if (isStreamPoll(c)) result.push('openwop-stream-poll');
@@ -427,7 +437,8 @@ export function deriveProfiles(c: DiscoveryPayload): readonly ProfileName[] {
  */
 export function hasProfile(c: DiscoveryPayload, profile: ProfileName): boolean {
   switch (profile) {
-    case 'openwop-core':
+    case 'openwop-discovery-core':
+    case 'openwop-core': // deprecated alias of `openwop-discovery-core` (RFC 0155 §A)
       return isCore(c);
     case 'openwop-interrupts':
       return isInterrupts(c);
@@ -502,7 +513,8 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
 
   // `profiles.md` §`openwop-core` is a pure discovery-payload predicate — it
   // names no runtime scenario, so the predicate IS the whole claim.
-  'openwop-core': { required: [], discoveryOnly: true },
+  'openwop-discovery-core': { required: [], discoveryOnly: true },
+  'openwop-core': { required: [], discoveryOnly: true }, // deprecated alias (RFC 0155 §A)
 
   // `profiles.md` §`openwop-fixtures`: "The profile is discovery-payload-only —
   // it confirms the host claims SOME fixture, not that any specific fixture is

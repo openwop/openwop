@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compatibility Profiles
 
-> **Status: Stable · v1.1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003).** Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing `/.well-known/openwop` fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.2 (2026-08-16 — RFC 0155 §A: `openwop-discovery-core` is the canonical name of the discovery predicate, `openwop-core` its deprecated alias for all of v1; claim vocabulary in §"Claim vocabulary"). v1.1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003).** Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing `/.well-known/openwop` fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ---
 
@@ -21,15 +21,17 @@ Per `COMPATIBILITY.md`, this document is additive — no v1 host implementation 
 
 ## Profile catalog
 
-Thirteen v1.x compatibility profiles. The catalog is closed: new compatibility profiles require an RFC per `RFCS/0001-rfc-process.md`.
+Thirteen v1.x compatibility profiles, plus one **deprecated alias** (`openwop-core` → `openwop-discovery-core`, RFC 0155 §A). The catalog is closed: new compatibility profiles require an RFC per `RFCS/0001-rfc-process.md`.
 
-### `openwop-core`
+### `openwop-discovery-core` (canonical) — alias `openwop-core` (deprecated)
 
-The minimum any conforming host MUST satisfy.
+> **RFC 0155 §A (2026-08-16).** `openwop-discovery-core` is the **canonical name** for this predicate. `openwop-core` remains a **deprecated alias throughout v1** and derives **exactly when** `openwop-discovery-core` derives — a derivation MUST emit both names or neither, and a consumer MUST treat them as the same profile. New claims, badges, and bundles MUST use the canonical name; the alias is accepted on input for the whole of v1 and removed no earlier than v2. **Why the rename:** this predicate is a *discovery-payload* check — it says the `/.well-known/openwop` document is well-formed, and nothing about whether a run can be started, suspended, or replayed. A published certification bundle claimed `openwop-core` while failing six `interrupt-*` scenarios (RFC 0155 §A's motivating defect), which was possible only because the name did not say what it measured. The **minimum executable conformance floor** is `openwop-core-standard` ([`core-standard-profile.md`](./core-standard-profile.md), RFC 0088), and that is what an unqualified conformance claim means — see §"Claim vocabulary" below.
+
+The minimum discovery shape any conforming host MUST satisfy.
 
 **Requirements:**
 
-- `protocolVersion` is set to a `1.x.x` semver string.
+- `protocolVersion` is a `1.<minor>` string per `version-negotiation.md` §"Protocol version grammar" (RFC 0149 §C: `MAJOR.MINOR`, not semver — `1.0` passes, `1.0.0` does not).
 - `supportedEnvelopes` is an array (MAY be empty for engine-only hosts that don't expose LLM-emitting nodes).
 - `schemaVersions` is an object with non-negative integer values.
 - `limits.clarificationRounds`, `limits.schemaRounds`, `limits.envelopesPerTurn` are all non-negative integers.
@@ -37,9 +39,9 @@ The minimum any conforming host MUST satisfy.
 **Predicate:**
 
 ```text
-openwop-core(c) :=
+openwop-discovery-core(c) :=          # alias: openwop-core(c) ≡ openwop-discovery-core(c)
      typeof c.protocolVersion == 'string'
-  && c.protocolVersion.startsWith('1.')
+  && MAJOR(c.protocolVersion) == 1        # `MAJOR.MINOR` grammar per version-negotiation.md (RFC 0149 §C); reference impl: conformance `isCore`
   && Array.isArray(c.supportedEnvelopes)
   && typeof c.schemaVersions == 'object'
   && typeof c.limits == 'object'
@@ -48,7 +50,7 @@ openwop-core(c) :=
   && Number.isInteger(c.limits.envelopesPerTurn)     && c.limits.envelopesPerTurn >= 0
 ```
 
-A host that fails `openwop-core` is not openwop-compatible. Every other profile implies `openwop-core`.
+A host that fails `openwop-discovery-core` is not openwop-compatible. Every other profile implies `openwop-discovery-core`. (Predicates below are written `openwop-core(c)` for continuity; read it as the alias of `openwop-discovery-core(c)`.)
 
 ### `openwop-interrupts`
 
@@ -278,7 +280,8 @@ The reference derivation for any conforming v1.x discovery payload `c` is:
 
 ```text
 profiles(c) := {
-  'openwop-core'                       if openwop-core(c),
+  'openwop-discovery-core'             if openwop-discovery-core(c),
+  'openwop-core'                       if openwop-discovery-core(c),   # deprecated alias — emitted together with the canonical name, never alone (RFC 0155 §A)
   'openwop-interrupts'                 if openwop-interrupts(c),
   'openwop-stream-sse'                 if openwop-stream-sse(c),
   'openwop-stream-poll'                if openwop-stream-poll(c),
@@ -299,6 +302,18 @@ A reference TypeScript implementation lives in `@openwop/openwop-conformance` at
 The derivation is **deterministic and pure** — same input, same profile set. It MUST NOT depend on host-specific state, time-of-day, or fields outside the discovery payload.
 
 ---
+
+## Claim vocabulary (RFC 0155 §A)
+
+Normative for any public conformance statement — README, badge, `INTEROP-MATRIX.md` row, certification bundle, marketing copy:
+
+- An **unqualified** "OpenWOP conformant" / "OpenWOP compatible" badge or statement **MUST** mean **`openwop-core-standard`** — the minimum executable floor (`core-standard-profile.md`; the manifest at `spec/v1/core-standard-manifest.json`), not the discovery predicate.
+- A **discovery-only** claim **MUST** say **`openwop-discovery-core`** and **MUST NOT** use the same visual or textual badge as `openwop-core-standard` (RFC 0155 §E).
+- Every claim **MUST** state all additional profiles it relies on (`openwop-interrupts`, `openwop-stream-sse`, extension profiles from `extensions.json`, …); an omitted profile is an unclaimed one.
+- Certification bundle v2 (RFC 0148 §C) **MUST** name canonical profile IDs; the deprecated alias MAY appear only as an alias, never as the claimed id.
+- Vendor extensions remain permitted but **MUST NOT** use an `openwop-*` id without an accepted RFC (RFC 0155 §F).
+
+Deprecation guidance for the alias: hosts and SDKs that emit `openwop-core` today keep working for all of v1; they SHOULD add `openwop-discovery-core` beside it now, and consumers SHOULD read the canonical name first and fall back to the alias. Structural invariant `profile-claim-floor-not-overstated` (RFC 0155 §F) is named and not yet registered; the certification-floor gate (`certification-floor-enforcement.test.ts`) is the current mechanism.
 
 ## Profile semantics
 
@@ -347,6 +362,7 @@ The derivation library is the single canonical implementation of profile members
 | ID        | Description                                                                                                                                                                                                               |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PROFILE-1 | Sub-profiles (`openwop-node-packs-readonly`, `openwop-node-packs-publish`) — deferred candidate. Derivable today from which scenarios pass; will be formalized via a successor RFC if a third-party host needs the split. |
+| PROFILE-3 | RFC 0155 §A rename landed 2026-08-16 (`openwop-discovery-core` canonical, `openwop-core` deprecated alias, both derived together — `profile-discovery-core-alias.test.ts`). Open: registering `profile-claim-floor-not-overstated`; certification bundle v2 `aliases` field (RFC 0155 §E) not yet in `certification-bundle-v2.schema.json`; badge artwork/text distinction is a site concern. |
 | PROFILE-2 | ✅ Closed in the v1.0 conformance baseline. Profile-gated scenarios use `describe.runIf(profile)`; the conformance runner exposes `--profile=<name>` to filter.                                                           |
 
 ---
