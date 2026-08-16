@@ -45,7 +45,10 @@ import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { FIXTURES_DIR } from '../lib/paths.js';
-import { expandChain, type WorkflowChain } from '../lib/workflow-chain-expansion.js';
+import { expandChain, expandChainWithCompensation, type WorkflowChain, type WorkflowChainWithCompensation } from '../lib/workflow-chain-expansion.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { readErrorCode } from '../lib/error-envelope.js';
 
 const PROFILE = 'workflowChainPacks.hostExpansionSeam';
 const EXPAND_PATH = '/v1/host/sample/workflow-chain:expand';
@@ -64,6 +67,9 @@ const PACK = JSON.parse(
 const SAMPLE_PACK = PACK.name; // vendor.openwop.workflow-chain-sample
 const CHAIN_1_NODE = 'vendor.openwop.workflow-chain-sample.summarize-text';
 const CHAIN_2_NODE = 'vendor.openwop.workflow-chain-sample.fetch-and-summarize';
+// RFC 0157 fixtures (pack 1.1.0, suite 1.133.0): node declarations + irreversibleEffect, without / with a chain policy.
+const CHAIN_COMP = 'vendor.openwop.workflow-chain-sample.reserve-and-notify';
+const CHAIN_COMP_POLICY = 'vendor.openwop.workflow-chain-sample.reserve-and-notify-with-policy';
 
 function chainById(chainId: string): WorkflowChain {
   const c = PACK.chains.find((x) => x.chainId === chainId);
@@ -154,7 +160,19 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
 
     expect(body.chainId).toBe(CHAIN_1_NODE);
     expect(body.packName).toBe(SAMPLE_PACK);
-    expect(body.packVersion).toBe(PACK.version);
+    // The host serves the fixture from ITS conformance pin; the fixture gained two
+    // RFC 0157 chains at pack 1.1.0 (suite 1.133.0) without touching the two
+    // chains these legs expand, so an older pin is a note, not a mismatch — the
+    // expansions below still compare like for like. A NEWER pack than this suite
+    // knows is a mismatch (the suite cannot vouch for chains it has not seen).
+    expect(typeof body.packVersion).toBe('string');
+    if (body.packVersion !== PACK.version) {
+      const [hm, hn] = body.packVersion.split('.').map(Number);
+      const [fm, fn] = PACK.version.split('.').map(Number);
+      const older = hm! < fm! || (hm === fm && hn! < fn!);
+      expect(older, driver.describe('workflow-chain-host-expansion', `host bundles workflow-chain-sample ${body.packVersion}; this suite's fixture is ${PACK.version} — a host pack NEWER than the suite is unaccounted for`)).toBe(true);
+      softSkip('blocked', `host bundles workflow-chain-sample ${body.packVersion} (suite fixture ${PACK.version}) — the RFC 0157 chains are absent there until its conformance pin catches up`);
+    }
     expect(typeof body.expansionId).toBe('string');
     expect(body.expansionId.length).toBeGreaterThan(0);
 
@@ -249,5 +267,80 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, parameters: {} });
     expect(res.status).toBe(422);
     expect((res.json as { error: string }).error).toBe('invalid_request');
+  });
+  it('RFC 0157 — a compensating chain expands through the live path with `compensation` and `irreversibleEffect` carried verbatim onto the expanded nodes', async () => {
+    if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
+    const parameters = { reservationUrl: 'https://example.com/reservations' };
+    const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, chainId: CHAIN_COMP, parameters });
+    if (res.status === 404 && readErrorCode(res.json) === 'chain_not_found') {
+      // The host serves the bundled fixture from its PINNED conformance package;
+      // the RFC 0157 chains arrived with pack 1.1.0 (suite 1.133.0). Older pin ⇒
+      // the chain does not exist there yet — unobservable, not a failure.
+      return softSkip('blocked', `host's bundled workflow-chain-sample pack predates 1.1.0 (chain ${CHAIN_COMP} answered chain_not_found) — the RFC 0157 carry is unobservable until the host's conformance pin reaches 1.133.0`);
+    }
+    expect(res.status, driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)"', 'a chain whose nodes declare an inverse action / irreversibleEffect (no policy) is acceptable on ANY host — the declaration describes, only the policy requests an unwind')).toBe(200);
+    const body = res.json as unknown as {
+      expansionId: string;
+      nodes: Array<{ id: string; compensation?: unknown; irreversibleEffect?: boolean }>;
+    };
+    const expected = expandChainWithCompensation(chainById(CHAIN_COMP) as unknown as WorkflowChainWithCompensation, {
+      expansionId: body.expansionId,
+      params: parameters,
+      isTypeIdResolvable: () => true,
+    });
+    expect(body.nodes).toHaveLength(expected.nodes.length);
+    for (const ref of expected.nodes) {
+      const node = body.nodes.find((n) => n.id === ref.id);
+      expect(node, driver.describe('workflow-chain-packs.md §Expansion semantics', `expanded node ${ref.id} present`)).toBeDefined();
+      const refC = (ref as unknown as { compensation?: unknown }).compensation;
+      expect(
+        node?.compensation,
+        driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)" rules 5b/6b', `node ${ref.id}: the inverse-action declaration MUST survive expansion verbatim (params substituted, node-id refs re-prefixed) — a node-rebuilding allowlist that drops it silently loses the unwind`),
+      ).toEqual(refC);
+      expect(
+        node?.irreversibleEffect,
+        driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)" rule 6c', `node ${ref.id}: irreversibleEffect MUST be copied unchanged`),
+      ).toEqual((ref as unknown as { irreversibleEffect?: boolean }).irreversibleEffect);
+    }
+    // Non-vacuity: the fixture DOES declare both, so at least one node of each kind was compared.
+    expect(expected.nodes.some((n) => (n as unknown as { compensation?: unknown }).compensation !== undefined)).toBe(true);
+    expect(expected.nodes.some((n) => (n as unknown as { irreversibleEffect?: boolean }).irreversibleEffect === true)).toBe(true);
+  });
+
+  it('RFC 0157 — a chain carrying an unwind POLICY is refused with capability_required on a host that does not advertise compensation, and expands on one that does', async () => {
+    if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
+    const disco = await driver.get('/.well-known/openwop');
+    const advertises = capabilityFamily<{ supported?: boolean }>(disco.json, 'compensation')?.supported === true;
+    const parameters = { reservationUrl: 'https://example.com/reservations' };
+    const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, chainId: CHAIN_COMP_POLICY, parameters });
+    if (res.status === 404 && readErrorCode(res.json) === 'chain_not_found') {
+      return softSkip('blocked', `host's bundled workflow-chain-sample pack predates 1.1.0 (chain ${CHAIN_COMP_POLICY} answered chain_not_found) — unobservable until the host's conformance pin reaches 1.133.0`);
+    }
+    if (!advertises) {
+      // compensation.md §"Workflow policy": a host that does NOT advertise the family
+      // MUST refuse a chain carrying a policy rather than accept a promise it will
+      // never honour. Accepting silently is the advertise-and-opt-out failure with
+      // the sign flipped.
+      expect(res.status >= 400, driver.describe('compensation.md §"Workflow policy"', 'a non-advertising host MUST refuse a chain carrying `compensation` (policy) — 4xx, not 200')).toBe(true);
+      expect(readErrorCode(res.json), driver.describe('capabilities.md §"Unsupported capability — refusal contract"', '`capability_required`')).toBe('capability_required');
+      return;
+    }
+    expect(res.status, driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)"', 'an advertising host expands the policy-carrying chain')).toBe(200);
+    const body = res.json as unknown as { expansionId: string; nodes: unknown[]; settings?: { compensation?: unknown } };
+    const expected = expandChainWithCompensation(chainById(CHAIN_COMP_POLICY) as unknown as WorkflowChainWithCompensation, {
+      expansionId: body.expansionId,
+      params: parameters,
+      isTypeIdResolvable: () => true,
+    });
+    expect(body.nodes).toHaveLength(expected.nodes.length);
+    // The policy's destination is the registered definition's settings.compensation
+    // (rule 9b). This seam returns the expanded fragment; whether it echoes
+    // `settings` is host-optional, so the policy carry is asserted when visible
+    // and noted when not — never assumed.
+    if (body.settings?.compensation !== undefined) {
+      expect(body.settings.compensation, driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)" rule 9b', 'the chain policy becomes settings.compensation, copied verbatim')).toEqual(expected.settingsCompensation);
+    } else {
+      softSkip('blocked', 'the expand seam does not echo `settings`, so the policy → settings.compensation carry (rule 9b) is unobservable through it; the node carry above was witnessed');
+    }
   });
 });

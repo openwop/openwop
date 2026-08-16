@@ -78,7 +78,7 @@ Same tier as RFC 0151 §B (security-high, RFC 0147 R9): a compensation is a seco
 - [x] Schema mirrors land, closed, self-contained, byte-equal to their sources under test.
 - [x] Spec prose lands (`workflow-chain-packs.md` §"Compensation (RFC 0157)", steps 3/5/6/9, error code, gap WCP6).
 - [x] Reference expansion lands below the mirrored core; server-free witness passes.
-- [ ] A host expands a compensating chain non-vacuously through the live `workflow-chain-host-expansion` path. (Carried — host adoption; openwop-app ADR 0554 P2 is the first candidate.)
+- [ ] A host expands a compensating chain non-vacuously through the live `workflow-chain-host-expansion` path. (**Witness landed 2026-08-16, suite 1.133.0:** the bundled `vendor.openwop.workflow-chain-sample` fixture (pack 1.1.0) gains `reserve-and-notify` (node `compensation` + `irreversibleEffect`, no policy) and `reserve-and-notify-with-policy` (adds the chain policy); two legs in `workflow-chain-host-expansion.test.ts` expand them through the host seam and compare with `expandChainWithCompensation` — declarations verbatim on the expanded nodes; the policy chain refused `capability_required` on a non-advertising host, expanded on an advertising one. openwop-app main `1b2dd6fbb` (H13, #3292) carries both through its expander; its seam serves the fixture from its conformance pin (1.130.0), so the legs record `blocked` there until the pin reaches 1.133.0 — then this box is measured, not merely witnessable.)
 - [ ] The in-memory reference host's mirrored core adopts `carryCompensation`. (Carried — `openwop-examples`.)
 
 ## References

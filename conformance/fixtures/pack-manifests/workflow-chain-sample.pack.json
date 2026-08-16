@@ -1,6 +1,6 @@
 {
   "name": "vendor.openwop.workflow-chain-sample",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "workflow-chain",
   "description": "Reference workflow-chain pack proving the RFC 0013 manifest format works end-to-end across schema validation, registry indexing, and the reference expansion library. Two chains: a 1-node 'summarize text' chain showing literal parameter substitution, and a 2-node 'fetch-and-summarize' chain showing multi-node DAG composition with edge wiring and capability propagation. In-tree only (NOT published to packs.openwop.dev); the canonical proof that the chain-pack contract is implementable with real-world-shaped content.",
   "author": "openwop project",
@@ -18,7 +18,9 @@
       "description": "Drag-tile that expands to a single core.ai.callPrompt with the summarization system prompt + author-supplied length / tone parameters substituted in. Mirrors the 'Generate PRD' positive example from workflow-chain-packs.md §Examples — the canonical 1-node chain shape.",
       "parameters": {
         "type": "object",
-        "required": ["sourceText"],
+        "required": [
+          "sourceText"
+        ],
         "properties": {
           "sourceText": {
             "type": "string",
@@ -26,7 +28,11 @@
           },
           "targetLength": {
             "type": "string",
-            "enum": ["one-sentence", "one-paragraph", "executive-summary"],
+            "enum": [
+              "one-sentence",
+              "one-paragraph",
+              "executive-summary"
+            ],
             "default": "one-paragraph",
             "description": "How long the summary should be."
           },
@@ -43,7 +49,10 @@
             "id": "summarize-call",
             "typeId": "core.ai.callPrompt",
             "name": "Summarize",
-            "position": { "x": 0, "y": 0 },
+            "position": {
+              "x": 0,
+              "y": 0
+            },
             "config": {
               "systemPrompt": "You are an expert summarizer. Produce a {{params.targetLength}} summary in a {{params.tone}} tone. Avoid lists unless the source uses them. Avoid hedging.\n\nSource text:\n{{params.sourceText}}",
               "envelopeType": "summary.v1",
@@ -60,7 +69,9 @@
           "description": "The summarized text from the AI call's envelope payload."
         }
       },
-      "capabilities": ["cacheable"]
+      "capabilities": [
+        "cacheable"
+      ]
     },
     {
       "chainId": "vendor.openwop.workflow-chain-sample.fetch-and-summarize",
@@ -69,7 +80,9 @@
       "description": "Drag-tile that expands to a two-node DAG: core.openwop.http.get fetches the URL, then core.ai.callPrompt summarizes the response body. Demonstrates multi-node chain composition with edge wiring, parameter substitution across multiple nodes, and capability propagation (side-effectful from the HTTP fetch propagates to both expanded nodes per spec §Capability propagation).",
       "parameters": {
         "type": "object",
-        "required": ["url"],
+        "required": [
+          "url"
+        ],
         "properties": {
           "url": {
             "type": "string",
@@ -78,7 +91,11 @@
           },
           "targetLength": {
             "type": "string",
-            "enum": ["one-sentence", "one-paragraph", "executive-summary"],
+            "enum": [
+              "one-sentence",
+              "one-paragraph",
+              "executive-summary"
+            ],
             "default": "one-paragraph"
           }
         }
@@ -89,7 +106,10 @@
             "id": "fetch",
             "typeId": "core.openwop.http.get",
             "name": "Fetch URL",
-            "position": { "x": 0, "y": 0 },
+            "position": {
+              "x": 0,
+              "y": 0
+            },
             "config": {
               "url": "{{params.url}}",
               "timeoutMs": 30000
@@ -100,7 +120,10 @@
             "id": "summarize",
             "typeId": "core.ai.callPrompt",
             "name": "Summarize",
-            "position": { "x": 280, "y": 0 },
+            "position": {
+              "x": 280,
+              "y": 0
+            },
             "config": {
               "systemPrompt": "Produce a {{params.targetLength}} summary of the fetched page content. Strip navigation, ads, and boilerplate. Focus on the article body.",
               "envelopeType": "summary.v1",
@@ -110,7 +133,10 @@
           }
         ],
         "edges": [
-          { "from": "fetch.body", "to": "summarize.sourceText" }
+          {
+            "from": "fetch.body",
+            "to": "summarize.sourceText"
+          }
         ]
       },
       "outputs": {
@@ -123,7 +149,173 @@
           "description": "Echo of the input URL for downstream reference."
         }
       },
-      "capabilities": ["side-effectful"]
+      "capabilities": [
+        "side-effectful"
+      ]
+    },
+    {
+      "chainId": "vendor.openwop.workflow-chain-sample.reserve-and-notify",
+      "version": "1.0.0",
+      "label": "Reserve & Notify (compensating)",
+      "description": "RFC 0157 fixture — a two-node chain whose first node declares an RFC 0151 §B inverse action (`compensation`, retry-bounded, `inputMapping` derived from the recorded reserve output + a {{params.*}} literal) and whose second node declares `irreversibleEffect: true` (RFC 0151 UQ4). Carries NO chain-level policy, so it is acceptable on any host — the node declaration describes an inverse action; only a policy requests an unwind. The host-expansion witness asserts both declarations survive verbatim onto the expanded nodes (params substituted, node-id refs re-prefixed) and that neither is silently dropped by a node-rebuilding allowlist.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "reservationUrl"
+        ],
+        "properties": {
+          "reservationUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reservation endpoint. Surfaced via {{params.reservationUrl}} in the reserve node config and its inverse action's inputMapping."
+          }
+        }
+      },
+      "dag": {
+        "nodes": [
+          {
+            "id": "reserve",
+            "typeId": "core.openwop.http.get",
+            "name": "Reserve",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "config": {
+              "url": "{{params.reservationUrl}}",
+              "timeoutMs": 30000
+            },
+            "inputs": {},
+            "compensation": {
+              "nodeTypeId": "core.openwop.http.get",
+              "inputMapping": {
+                "url": "{{params.reservationUrl}}",
+                "reservationId": "${nodes.reserve.output.body}"
+              },
+              "retry": {
+                "maxAttempts": 3,
+                "backoffMs": 250
+              },
+              "requiresApproval": false
+            }
+          },
+          {
+            "id": "notify",
+            "typeId": "core.ai.callPrompt",
+            "name": "Notify",
+            "position": {
+              "x": 280,
+              "y": 0
+            },
+            "config": {
+              "systemPrompt": "Write a one-line confirmation that the reservation at {{params.reservationUrl}} was placed.",
+              "envelopeType": "summary.v1",
+              "provider": "anthropic"
+            },
+            "inputs": {},
+            "irreversibleEffect": true
+          }
+        ],
+        "edges": [
+          {
+            "from": "reserve",
+            "to": "notify"
+          }
+        ]
+      },
+      "capabilities": [
+        "side-effectful"
+      ]
+    },
+    {
+      "chainId": "vendor.openwop.workflow-chain-sample.reserve-and-notify-with-policy",
+      "version": "1.0.0",
+      "label": "Reserve & Notify (compensating, with unwind policy)",
+      "description": "RFC 0157 fixture — the same two-node chain PLUS a chain-level compensation POLICY (a mirror of `compensation-policy.schema.json`). On a host that advertises `capabilities.compensation` the policy becomes the registered definition's `settings.compensation`; on a host that does NOT advertise it, expansion of this chain MUST be refused with `capability_required` (`compensation.md` §\"Workflow policy\") rather than accepted silently. The host-expansion witness accepts either outcome and asserts it matches the advert.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "reservationUrl"
+        ],
+        "properties": {
+          "reservationUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reservation endpoint. Surfaced via {{params.reservationUrl}} in the reserve node config and its inverse action's inputMapping."
+          }
+        }
+      },
+      "dag": {
+        "nodes": [
+          {
+            "id": "reserve",
+            "typeId": "core.openwop.http.get",
+            "name": "Reserve",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "config": {
+              "url": "{{params.reservationUrl}}",
+              "timeoutMs": 30000
+            },
+            "inputs": {},
+            "compensation": {
+              "nodeTypeId": "core.openwop.http.get",
+              "inputMapping": {
+                "url": "{{params.reservationUrl}}",
+                "reservationId": "${nodes.reserve.output.body}"
+              },
+              "retry": {
+                "maxAttempts": 3,
+                "backoffMs": 250
+              },
+              "requiresApproval": false
+            }
+          },
+          {
+            "id": "notify",
+            "typeId": "core.ai.callPrompt",
+            "name": "Notify",
+            "position": {
+              "x": 280,
+              "y": 0
+            },
+            "config": {
+              "systemPrompt": "Write a one-line confirmation that the reservation at {{params.reservationUrl}} was placed.",
+              "envelopeType": "summary.v1",
+              "provider": "anthropic"
+            },
+            "inputs": {},
+            "irreversibleEffect": true
+          }
+        ],
+        "edges": [
+          {
+            "from": "reserve",
+            "to": "notify"
+          }
+        ]
+      },
+      "capabilities": [
+        "side-effectful"
+      ],
+      "compensation": {
+        "profileVersion": "1",
+        "orderingModel": "reverse-completion",
+        "triggers": [
+          "node-failure",
+          "run-cancel"
+        ],
+        "retry": {
+          "maxAttempts": 3,
+          "backoffMs": 250
+        },
+        "timeoutMs": 30000,
+        "exhaustedDisposition": "record-outcome",
+        "approvalScope": "declared",
+        "onParentCancel": "continue"
+      }
     }
   ]
 }
