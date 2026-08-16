@@ -189,7 +189,13 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — host as MCP ser
 
   it('a header/body revision mismatch is refused 400 + -32020; an unsupported revision 400 + -32022', async () => {
     if (!behaviorGate(PROFILE, await claimsCurrent())) return;
-    const mismatch = await hostRpc('tools/list', { _meta: { [META_V]: '2025-11-25', [META_C]: {} } }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' });
+    // Header ≠ body with a body revision the host DOES support, so the leg
+    // isolates HeaderMismatchError (-32020) from UnsupportedProtocolVersion
+    // (-32022). The earlier vector (`2025-11-25` in the body) was BOTH
+    // mismatched and unsupported, and a host that checked support first
+    // answered -32022 — the leg was testing an unstated precedence
+    // (mcp-integration.md §B: agreement is checked before selection).
+    const mismatch = await hostRpc('tools/list', { _meta: { [META_V]: '2025-06-18', [META_C]: {} } }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' });
     if (mismatch.status === 404 || mismatch.status === 403) return;
     expect(mismatch.status, driver.describe('mcp-integration.md §B', 'header ≠ body MUST be refused 400 (HeaderMismatchError -32020) — fail closed')).toBe(400);
     expect(mismatch.body.error?.code).toBe(MCP_ERR.HEADER_MISMATCH);
