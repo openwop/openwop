@@ -151,6 +151,15 @@ describe('RFC 0154 §B — delegated actor chain', () => {
   it('a chain hop cannot carry extra fields', () => {
     expect(validate({ ...base, delegation: { chain: [{ subject: 'x', token: 'y' }], audience: 'h' } })).toBe(false);
   });
+
+  it('a chain hop MAY carry its verified scopes, as a set of non-empty strings', () => {
+    // RFC 0154 §B "Bounds": scope amplification is only observable if a hop can
+    // state the scopes its proof carried. Provenance, not authorization.
+    expect(validate({ ...base, delegation: { chain: [{ subject: 'x', scopes: ['runs:read'] }, { subject: 'y', scopes: ['runs:read'] }], audience: 'h' } })).toBe(true);
+    expect(validate({ ...base, delegation: { chain: [{ subject: 'x', scopes: 'runs:read' }], audience: 'h' } })).toBe(false);
+    expect(validate({ ...base, delegation: { chain: [{ subject: 'x', scopes: ['runs:read', 'runs:read'] }], audience: 'h' } })).toBe(false);
+    expect(validate({ ...base, delegation: { chain: [{ subject: 'x', scopes: [''] }], audience: 'h' } })).toBe(false);
+  });
 });
 
 describe.skipIf(RFCS_DIR === null)('RFC 0154 — what this does NOT establish', () => {

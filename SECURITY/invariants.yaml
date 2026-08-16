@@ -1632,15 +1632,48 @@ invariants:
       delegation nobody can inspect) and `maxChainDepth` bounds its
       length, because unbounded delegation is unbounded authority
       laundering — each hop is another party the host trusts transitively.
-      NOT covered: acyclicity. RFC 0154 §B's `delegation-chain-bounded-acyclic`
-      also requires cycle rejection, which a JSON Schema cannot express and
-      no behavioral leg currently exercises. This invariant is deliberately
-      registered under the narrower name it can actually substantiate
-      rather than the RFC's fuller one, because registering the fuller
-      name against this evidence would be the overclaim the program exists
-      to stop.
+      2026-08-16: the length half is now also witnessed behaviourally —
+      `workload-identity-chain-bounds.test.ts` presents a chain one hop
+      longer than the advertised `maxChainDepth` and expects
+      `delegation_chain_too_long`. Acyclicity is registered separately as
+      `delegation-chain-acyclic` (same file), so RFC 0154 §B's fuller
+      `delegation-chain-bounded-acyclic` is now the conjunction of the two
+      rows rather than a name this row overclaimed.
 
   # ===== Agent memory (Phase I.1) =====
+
+  - id: delegation-chain-acyclic
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests:
+      - conformance/src/scenarios/workload-identity-chain-bounds.test.ts
+    note: |
+      RFC 0154 §B "Bounds" / `auth.md`: a delegation chain in which a
+      subject appears twice MUST be rejected (`delegation_chain_cyclic` on
+      the §20 seam). A cycle is authority laundering with a bounded length —
+      the chain loops back through a party whose authority it already spent.
+      Capability-gated on `auth.workloadIdentity.delegation.supported`;
+      resolves to `blocked` per RFC 0148 §A until an advertising host wires
+      the seam, and to executed-fail on a host that resolves the cycle.
+
+  - id: delegation-no-scope-amplification
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests:
+      - conformance/src/scenarios/workload-identity-chain-bounds.test.ts
+    note: |
+      RFC 0154 §B "Bounds" / `auth.md`: the effective scopes at any hop
+      MUST NOT exceed the scopes of the hop before it. Observable since
+      2026-08-16 through the OPTIONAL per-hop `scopes` on
+      `workload-identity.schema.json`; the leg presents `runs:read` →
+      `runs:read, runs:write` and expects `delegation_scope_amplified`. A
+      host that cannot see hop scopes cannot enforce the MUST NOT, so a
+      host that resolves the chain fails the leg — the honest outcome. The
+      positive leg (a narrowing chain resolves) keeps the negatives from
+      being satisfied by a blanket refusal.
+      Capability-gated as `delegation-chain-acyclic`.
 
   - id: agent-memory-cti-1
     tier: protocol

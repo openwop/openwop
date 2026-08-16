@@ -167,7 +167,7 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
       ),
     ).toBe(false);
     expect(
-      ['identity_unverified', 'identity_unresolvable', 'audience_mismatch', 'delegation_expired', 'sender_constraint_missing'],
+      ['identity_unverified', 'identity_unresolvable', 'audience_mismatch', 'delegation_expired', 'sender_constraint_missing', 'delegation_chain_too_long', 'delegation_chain_cyclic', 'delegation_scope_amplified'],
       driver.describe('RFCS/0154 §A', 'failures use a closed reason vocabulary'),
     ).toContain(readErrorCode(r.json));
   });
