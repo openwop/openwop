@@ -98,6 +98,15 @@ export interface DerivedProfileVerdict {
   /** Floor requirement ids whose disposition is not certifiable. */
   readonly blocking: readonly string[];
   readonly certifiable: boolean;
+  /**
+   * `PROFILE_FLOOR_SCENARIOS[profile].runtimeDerived`: the profile is HELD only
+   * when every floor requirement is a witnessed `executed-pass`. When false for
+   * such a profile the emitter drops it from `claimedProfiles` — the host does
+   * not hold it — rather than reporting a rejection or a blocked claim.
+   */
+  readonly runtimeDerived: boolean;
+  /** For runtime-derived profiles: every floor row is a witnessed executed-pass. */
+  readonly held: boolean;
 }
 
 export interface Derivation {
@@ -195,14 +204,16 @@ export function deriveRequirementDispositions(
   for (const profile of claimedProfiles) {
     const ids = requirementsFor(profile);
     if (ids === null) {
-      verdicts.push({ profile, unclassified: [], blocking: [`(no floor defined for ${profile})`], certifiable: false });
+      verdicts.push({ profile, unclassified: [], blocking: [`(no floor defined for ${profile})`], certifiable: false, runtimeDerived: false, held: false });
       continue;
     }
     const unclassified: string[] = [];
     const blocking: string[] = [];
+    let witnessedPasses = 0;
     for (const id of ids) {
       const r = rowById.get(id);
       const fromLedger = byId.has(id) || (r !== undefined && r.scenarioId.endsWith('*'));
+      if (r !== undefined && r.disposition === 'executed-pass' && (r.assertionCount ?? 0) > 0) witnessedPasses += 1;
       // Unclassified: no row, or a report-derived blocked (nothing recorded), or a
       // VACUOUS pass — executed-pass with assertionCount 0 is a witness of nothing
       // (RFC 0148 §A: "a required behavior MUST NOT be certified without a target
@@ -220,7 +231,19 @@ export function deriveRequirementDispositions(
     // requirement-ledger's verifyProfileRequirements is stricter; the runner
     // consults PROFILE_FLOOR_SCENARIOS.discoveryOnly separately).
     const discoveryOnly = PROFILE_FLOOR_SCENARIOS[profile]?.discoveryOnly === true;
-    verdicts.push({ profile, unclassified, blocking, certifiable: discoveryOnly || (ids.length > 0 && blocking.length === 0) });
+    const runtimeDerived = PROFILE_FLOOR_SCENARIOS[profile]?.runtimeDerived === true;
+    // A runtime-derived profile is HELD only when every floor row is a witnessed
+    // pass ("derivable from which scenarios pass" — profiles.md). Anything else
+    // means the host does not hold it: not a rejection, not a blocked claim.
+    const held = ids.length > 0 && witnessedPasses === ids.length;
+    verdicts.push({
+      profile,
+      unclassified: runtimeDerived && !held ? [] : unclassified,
+      blocking: runtimeDerived && !held ? ids.filter((id) => rowById.get(id)?.disposition !== 'executed-pass' || (rowById.get(id)?.assertionCount ?? 0) === 0) : blocking,
+      certifiable: runtimeDerived ? held : discoveryOnly || (ids.length > 0 && blocking.length === 0),
+      runtimeDerived,
+      held,
+    });
   }
   return { requirements: rows, totals, verdicts, rejectUnclassified: verdicts.some((v) => v.unclassified.length > 0), ledgerPresent };
 }

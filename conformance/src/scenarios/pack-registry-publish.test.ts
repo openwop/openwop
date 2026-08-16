@@ -22,18 +22,51 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { recordRequirement } from '../lib/requirement-ledger.js';
+import { requirementIdForScenario } from '../lib/requirement-registry.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
+  packs?: Record<string, unknown>;
 }
 
+/** RFC 0148 §A requirement id this file's floor row is recorded under. */
+const REQUIREMENT_ID = requirementIdForScenario('pack-registry-publish.test.ts');
+let advertisedCache: boolean | null = null;
+
+/**
+ * Gate on `packs.testMode.supported` — read at the document ROOT (RFC 0073;
+ * `capabilities.*` wrapper tolerated for legacy documents). When the seam is
+ * NOT advertised the file records its floor row as `inapplicable` with the
+ * reason, ONCE, so the ledger says why every leg returned early: RFC 0025 §A
+ * makes the test-mode namespace optional, `pack-registry-publish` is the
+ * read/write half of `openwop-node-packs`, and a host without it does not hold
+ * that profile (it MAY hold the read-only sub-profile) — which is a fact about
+ * the host, not a defect, and not a vacuous pass. `--certify` drops a
+ * runtime-derived profile the host does not hold from `claimedProfiles`.
+ */
 async function isTestModeAdvertised(): Promise<boolean> {
+  if (advertisedCache !== null) return advertisedCache;
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
+  const rootPacks = body?.packs && typeof body.packs === 'object' ? body.packs : undefined;
   const top = body?.capabilities as Record<string, unknown> | undefined;
-  const packs = top && typeof top === 'object' ? (top['packs'] as Record<string, unknown> | undefined) : undefined;
+  const wrappedPacks = top && typeof top === 'object' ? (top['packs'] as Record<string, unknown> | undefined) : undefined;
+  const packs = rootPacks ?? wrappedPacks;
   const testMode = packs && typeof packs === 'object' ? (packs['testMode'] as Record<string, unknown> | undefined) : undefined;
-  return Boolean(testMode && testMode['supported'] === true);
+  advertisedCache = Boolean(testMode && testMode['supported'] === true);
+  if (!advertisedCache) {
+    try {
+      recordRequirement(
+        REQUIREMENT_ID,
+        'inapplicable',
+        'host does not advertise packs.testMode.supported (RFC 0025 §A optional test-mode namespace) — the publish error catalog is unobservable without it; openwop-node-packs (read/write) is not held by this host',
+      );
+    } catch {
+      /* already recorded by an earlier leg in this worker */
+    }
+  }
+  return advertisedCache;
 }
 
 /** Disposable pack name for an isolated test publish. */
@@ -48,9 +81,38 @@ function freshPackName(scope: string = 'core'): string {
  *  The shape-only error-catalog tests below only need the host's first
  *  validation step (URL pattern, body-presence, etc.) to fire. */
 async function putTest(name: string, version: string, body: unknown, extraHeaders: Record<string, string> = {}) {
-  return driver.put(`/v1/packs-test/${encodeURIComponent(name)}/-/${encodeURIComponent(version)}.tgz`, body, {
+  const res = await driver.put(`/v1/packs-test/${encodeURIComponent(name)}/-/${encodeURIComponent(version)}.tgz`, body, {
     headers: { 'Content-Type': 'application/octet-stream', ...extraHeaders },
   });
+  if (res.status === 404) noteSeamMissing();
+  return res;
+}
+
+/**
+ * Advertised but not mounted: `packs.testMode.supported: true` yet
+ * `/v1/packs-test/*` answers 404. That is not "inapplicable" — the host said
+ * it exposes the seam. Record `blocked` with the reason (RFC 0148 §A) so the
+ * early returns below are not vacuous passes; under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true` an advertised-missing seam is a failure
+ * (RFC 0148 §B), so throw there.
+ */
+let seamMissingNoted = false;
+function noteSeamMissing(): void {
+  if (seamMissingNoted) return;
+  seamMissingNoted = true;
+  if (process.env['OPENWOP_REQUIRE_BEHAVIOR'] === 'true') {
+    // Strict: the assertion failure below IS the disposition (executed-fail).
+    throw new Error('RFC 0148 §B: host advertises packs.testMode.supported but /v1/packs-test/* is not mounted (404) — advertised behavior MUST be present under OPENWOP_REQUIRE_BEHAVIOR=true');
+  }
+  try {
+    recordRequirement(
+      REQUIREMENT_ID,
+      'blocked',
+      'host advertises packs.testMode.supported: true but /v1/packs-test/* returned 404 — advertised seam not mounted; publish error catalog unwitnessable',
+    );
+  } catch {
+    /* already recorded */
+  }
 }
 
 /** GET signature; soft-skip on 404 (different from "404 signature_not_available"). */

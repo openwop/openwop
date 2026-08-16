@@ -395,6 +395,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   // (d1) RFC 0148 acceptance item 2 — requirement-level dispositions from the
   // ledger, and rejection of unclassified returns for a claimed profile.
   const derived = deriveRequirementDispositions(states, ledgerEntries, claimedProfiles);
+  const notHeld = new Set(derived.verdicts.filter((v) => v.runtimeDerived && !v.held).map((v) => v.profile));
   const rejectedProfiles = derived.verdicts.filter((v) => v.unclassified.length > 0);
   if (rejectedProfiles.length > 0) {
     process.stderr.write(
@@ -436,7 +437,12 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       // RFC 0155 §E: canonical ids only in `claimedProfiles`; a deprecated
       // alias that also derives (`openwop-core`, always alongside
       // `openwop-discovery-core`) is reported in `aliases`, never as a claim.
-      claimedProfiles: claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)),
+      // A runtime-derived profile (`PROFILE_FLOOR_SCENARIOS[p].runtimeDerived`,
+      // today `openwop-node-packs`) is claimed only when the host HOLDS it — every
+      // floor row a witnessed pass. Its discovery predicate is `openwop-core`, so
+      // deriving the claim from discovery alone made every core host "claim" a
+      // registry it never advertised (RFC 0025: the read surface has no advert).
+      claimedProfiles: claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES) && !notHeld.has(p)),
       ...(claimedProfiles.some((p) => p in DEPRECATED_PROFILE_ALIASES)
         ? { aliases: claimedProfiles.filter((p) => p in DEPRECATED_PROFILE_ALIASES) }
         : {}),
@@ -500,7 +506,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
           ? `  dispositions come from the RFC 0148 §A ledger (${ledgerEntries.length} entries recorded by the scenarios)\n`
           : `  NOTE: no ledger was recorded — every skipped file is 'blocked' (unclassifiable), which is the honest reading\n`) +
         (derived.totals.blocked > 0 ? `  a bundle with blocked > 0 does NOT certify — that is the state of the evidence, not a defect in this emitter\n` : '') +
-        derived.verdicts.map((v) => `  ${v.profile}: ${v.certifiable ? 'certifiable' : 'NOT certifiable'}${v.unclassified.length > 0 ? ` (unclassified: ${v.unclassified.length})` : ''}\n`).join(''),
+        derived.verdicts.map((v) => `  ${v.profile}: ${v.runtimeDerived && !v.held ? `not held (runtime-derived — dropped from claimedProfiles; floor rows not witnessed passes: ${v.blocking.join(', ')})` : v.certifiable ? 'certifiable' : 'NOT certifiable'}${v.unclassified.length > 0 ? ` (unclassified: ${v.unclassified.length})` : ''}\n`).join(''),
     );
     process.exit(rejectedProfiles.length > 0 ? 3 : failed.length > 0 ? 1 : 0);
   }

@@ -45,6 +45,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { recordRequirement } from '../lib/requirement-ledger.js';
+import { requirementIdForScenario } from '../lib/requirement-registry.js';
+
+/** RFC 0148 §A requirement id this file's floor row is recorded under. */
+const REQUIREMENT_ID = requirementIdForScenario('pack-registry.test.ts');
 
 /** A nonsense pack name in the `private.*` scope. Hosts MUST NOT have
  *  shipped a real pack at this name (the namespace is scoped to a
@@ -84,6 +89,23 @@ async function probeRegistry(): Promise<RegistryProbeResult> {
   // host-specific shape.
   const looksLikeWop = res.status === 200 || (typeof body === 'object' && body !== null && ('error' in body || 'results' in body));
   cachedProbe = { registryPresent: looksLikeWop, probeStatus: res.status };
+  if (!looksLikeWop) {
+    // RFC 0148 §A: say WHY every leg below returns early. RFC 0025 makes the
+    // `/v1/packs/*` read surface unconditional-when-shipped with no discovery
+    // advert, so "no registry" is only observable by probing; the honest
+    // disposition is `inapplicable` with the probe result — the host does not
+    // hold `openwop-node-packs` (a runtime-derived profile), which is a fact
+    // about the host, not a defect and not a vacuous pass.
+    try {
+      recordRequirement(
+        REQUIREMENT_ID,
+        'inapplicable',
+        `host ships no pack registry (GET /v1/packs/-/search?q= → ${res.status}, non-OpenWOP body); RFC 0025 read surface is unadvertised-when-shipped, so absence is a probe result — openwop-node-packs is not held by this host`,
+      );
+    } catch {
+      /* already recorded */
+    }
+  }
   return cachedProbe;
 }
 
