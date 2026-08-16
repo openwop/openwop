@@ -13,6 +13,7 @@ This document catalogs the REST surface an OpenWOP-compliant server MUST expose,
 - All paths under `/v1/` are versioned. Breaking changes go to `/v2/`.
 - A server MAY support multiple versions concurrently (`/v1/...` and `/v2/...` side by side) for migration windows.
 - Servers MUST return `400 Bad Request` for paths under unversioned roots.
+- **Canonical resolution (RFC 0149 §A).** The version segment lives in the path key, never in a server base: `api/openapi.yaml` `servers[].url` is `https://{host}`, every versioned operation resolves to exactly one `/v1` segment, and `/.well-known/openwop` resolves unversioned. `spec/v1/operation-path-manifest.json` is the **generated canonical operation-path manifest** — one row per OpenAPI operation with `{operationId, method, pathKey, resolvedPath, tag, class}`, where `resolvedPath` is the string an SDK MUST issue against a bare base URL and `class` is `canonical` | `host-extension` (`tags: [host]`) | `test-catalog` (`tags: [packs-test]`). SDK repositories consume it (`openwop-sdks` `sdk/parity-expectations.json` MUST agree with it method-for-method and path-for-path), AsyncAPI channel addresses MUST resolve under the AsyncAPI server `pathname` to a GET path key in the same document, and `openapi-asyncapi-sdk-parity.test.ts` holds all three in place (`scripts/generate-operation-path-manifest.mjs --check` in `openwop:check`).
 
 ## Required endpoints
 
