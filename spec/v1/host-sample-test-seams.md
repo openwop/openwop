@@ -887,3 +887,20 @@ OPTIONAL. RFC 0152 §B's rules are about what the host puts on the wire *toward 
 - **Non-vacuity:** the seam **MUST** drive the same A2A client the production `a2a.invoke` path uses (same negotiation code, same header construction); a seam that hand-writes `A2A-Version` proves nothing about production.
 
 **`tasks/start`** — `{ scenario: "paused-at-approval" }` → `200 { taskId }`: drive a real backing run to a paused HITL state and return the A2A task id (which **is** the run id, RFC 0100). **`tasks/{taskId}`** — `200 { state, runId, metadata?: { openwop?: { interrupt?: { kind } } } }`: the persisted `A2ATaskState` projection read **without** the original connection; `state` uses the stored (0.3-lowercase) vocabulary, `input-required` for the paused run. **`tasks/push-config`** — `{ taskId, url }` → `≥ 400` for a private/loopback/link-local `url` before any push is attempted (`a2a-push-egress-ssrf`); the seam **MUST** run the same RFC 0093 egress guard as the production `CreateTaskPushNotificationConfig` path.
+
+### 23. MCP revision-negotiation driver — `POST /v1/host/sample/mcp/invoke` (RFC 0153 §B)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/mcp/invoke`                                                     |
+| Capability gate           | `capabilities.mcp.supported && capabilities.mcp.protocolVersions.length > 0` (RFC 0153 §A) |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | `mcp-version-negotiation.test.ts` (RFC 0153 §A/§B, suite 1.97.0). **Catalogued 2026-08-16** — driven without a contract here; openwop-app implemented it from the witness and its §A/§B legs pass live. |
+
+OPTIONAL. Same shape and reason as §22's A2A `invoke`: RFC 0153 §B is about the `MCP-Protocol-Version` header (and `_meta`) the host puts on the wire *toward a server*, which no request to the host's own API can observe. The seam makes the host's real MCP client call `serverUrl` once so `McpFakeServer` can capture headers.
+
+- **Request:** `{ serverUrl: string, requestVersion?: "<YYYY-MM-DD>" }`. `requestVersion` overrides the revision the host asks for (used to force an unsupported one).
+- **Response 200:** `{ negotiatedVersion: "<YYYY-MM-DD>", ... }` — the revision the host **actually** used, in MCP date form; it **MUST** equal the `MCP-Protocol-Version` header (and `_meta` revision) on every call the server captured and **MUST** be one the host lists in `protocolVersions`. Reporting `preferredVersion` while having sent a lower one is the silent downgrade §B forbids.
+- **Response ≥ 400:** the canonical error envelope — for an unsupported revision, `error.code: "interop_version_unsupported"`, `retriable: false`, `details.protocol: "mcp"`, `details.requested`, `details.supported[]`.
+- **404 / 403:** seam not wired — the header leg reports the requirement as unobservable and therefore `blocked` (RFC 0148 §A).
+- **Non-vacuity:** the seam **MUST** drive the same MCP client the production `ctx.mcp.*` path uses (same `_meta` construction, same header construction); a seam that hand-writes `MCP-Protocol-Version` proves nothing about production. Under the current profile the call **MUST** be stateless — no `initialize` before it.

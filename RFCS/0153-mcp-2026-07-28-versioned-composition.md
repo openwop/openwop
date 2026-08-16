@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the MCP 2026-07-28 profile, callback-to-MRTR migration, and validation against a real upstream peer.) |
+| **Updated** | 2026-08-16 (§B/§C/§D/§E prose landed in `spec/v1/mcp-integration.md` §"MCP 2026-07-28 versioned composition" — pinned to upstream revision 2026-07-28: stateless `_meta` + `MCP-Protocol-Version`/`Mcp-Method`/`Mcp-Name` rules with fail-closed header/body agreement, `server/discover`, the MRTR mapping in both directions (identity, `requestState` binding, retry, timeout, cancellation, replay, interrupt composition — G2/UQ3), `CacheableResult` + tenant-scoped cache keys + scope-change staleness (G4/UQ5), extensions opaque with OTel/`logLevel` as the only named mappings and `io.modelcontextprotocol/tasks` deliberately unmapped (UQ4), the anonymous-principal production rule, `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12 (UQ1 date), seam §23 catalogued. Not landed: a 2026-07-28-shaped fake server, the six named scenarios, the four unregistered invariants, a real current peer, the adopter inventory.) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the MCP 2026-07-28 profile, callback-to-MRTR migration, and validation against a real upstream peer.) |
 | **Affects** | `spec/v1/mcp-integration.md`, `schemas/capabilities.schema.json`, MCP projection schemas, fake and real peer harnesses, RFC 0020, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` current profile with legacy 2025-06-18 deprecation |
 | **Supersedes** | Unqualified MCP support and 2025-06-18 as the current composition profile |
@@ -83,11 +83,11 @@ Acceptance requires a pinned real MCP 2026-07-28 peer plus fake-peer negative co
 
 ## Unresolved questions
 
-1. Exact legacy adopter population and deprecation date.
+1. Exact legacy adopter population and ~~deprecation date~~. **Date resolved 2026-08-16:** 2027-08-12 (`mcp-integration.md` §A). Population unknown (G1).
 2. Which official MCP implementation becomes the real-peer fixture?
-3. Complete MRTR-to-run/interrupt mapping and timeout ownership.
-4. Which extension identifiers receive first-class OpenWOP mappings?
-5. Cache validator behavior when authorization scope changes.
+3. ~~Complete MRTR-to-run/interrupt mapping and timeout ownership.~~ **Resolved 2026-08-16:** `mcp-integration.md` §C — client and server tables; the OpenWOP node owns the timeout (node timeout / RFC 0058), the server owes nothing to a pending request; the retry chain is one RFC 0150 §B logical invocation; `requestState` is opaque to the client and HMAC-bound (principal, TTL, request digest, `runId`, interrupt token) by the server; replay never re-issues the retry.
+4. ~~Which extension identifiers receive first-class OpenWOP mappings?~~ **Resolved 2026-08-16: none first-class.** OTel `_meta` keys and `io.modelcontextprotocol/logLevel` are the only named mappings; `io.modelcontextprotocol/tasks` is deliberately unmapped (RFC 0100 owns durable interop). Promote only on evidence (`mcp-integration.md` §D, gap G5).
+5. ~~Cache validator behavior when authorization scope changes.~~ **Resolved 2026-08-16:** a scope change makes cached `"private"` results for that principal stale regardless of `ttlMs`; `"private"` never crosses authorization contexts; keys include tenant/workspace/principal/origin/revision/discovery context (`mcp-integration.md` §D, gap G4 closed).
 
 ## Implementation notes (non-normative)
 
@@ -95,10 +95,10 @@ Keep upstream types generated or vendored once with provenance, not copied acros
 
 ## Acceptance criteria
 
-- [ ] Current profile, discovery schema, and complete mapping land. (Discovery schema landed — date-form `protocolVersions`, `preferredVersion`, `profiles`, and a closed `features` list on the `mcp` family, with `versioned-composition-profiles.test.ts`. **Shape only.** Carried: the profile itself and the mapping.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
-- [ ] Stateless discovery, headers, MRTR, caching, extensions, downgrade, and auth tests pass. (**Header and downgrade witnesses now exist**: `mcp-version-negotiation.test.ts`, driven against `McpFakeServer` with header capture — date-form revision on the wire, negotiated revision must be advertised, unsupported revision fails through the canonical envelope. Carried: MRTR, caching, extensions, auth, and a host that advertises revisions and wires the invoke seam.)
+- [ ] Current profile, discovery schema, and complete mapping land. (Discovery schema landed — date-form `protocolVersions`, `preferredVersion`, `profiles`, and a closed `features` list on the `mcp` family, with `versioned-composition-profiles.test.ts`. **Shape only.** 2026-08-16: **the profile prose and the mapping landed** — `spec/v1/mcp-integration.md` §"MCP 2026-07-28 versioned composition" §A–§E, pinned to the upstream 2026-07-28 revision. Carried: witnessing §B's stateless rules, §C, and §D — the suite's fake server still speaks the 2025-06-18 handshake.) (Formerly: nothing had landed. The RFC text is the only specification of this surface; no schema, no spec prose, no conformance. Status is `Accepted` per the corpus's own bar, which RFC 0147 §A.10 forbids citing as evidence the gap is closed.)
+- [ ] Stateless discovery, headers, MRTR, caching, extensions, downgrade, and auth tests pass. (**Header and downgrade witnesses now exist**: `mcp-version-negotiation.test.ts`, driven against `McpFakeServer` with header capture — date-form revision on the wire, negotiated revision must be advertised, unsupported revision fails through the canonical envelope. Carried: MRTR, caching, extensions, and auth legs — the fake server is legacy-shaped (`mcp-integration.md` §"Conformance (RFC 0153)", gap G6). The invoke seam is catalogued (`host-sample-test-seams.md` §23) and openwop-app's live origin passes the §A/§B legs.)
 - [ ] Pinned real MCP current peer passes in CI. (Carried, and externally gated: it needs a pinned upstream MCP peer at the current revision.)
-- [ ] Legacy profile and migration/deprecation runbook publish. (Carried — same shape as RFC 0152: the legacy revision the corpus handles today is neither named nor time-bounded.)
+- [ ] Legacy profile and migration/deprecation runbook publish. (2026-08-16: **named and time-bounded** — `mcp-2025-06-18-legacy` is the pre-2026-08-16 body of `mcp-integration.md`; hosts SHOULD NOT advertise it after 2027-08-12 (12 months after the profile's 2026-08-12 acceptance, per §Compatibility). Carried: the migration runbook beyond §A's paragraph, and the adopter inventory (G1).)
 - [ ] Threat models, invariants, SDKs, interop matrix, and CHANGELOG update. (Carried with the profile above.)
 
 ## References
