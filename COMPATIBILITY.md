@@ -94,6 +94,8 @@ The spec major does **not** bump for safety-fix changes. The spec minor bumps. T
 
 A safety-fix change is the only category that can break v1.x. Everything else goes to v2.
 
+**Editorial correction on record (2026-08-16, S22 — the error-envelope "schism"):** the HTTP error envelope is and was FLAT (`error` string + `message` + `details`, `error-envelope.schema.json`, `additionalProperties: false`); a nested `{ error: { code, retriable } }` shape that appeared in three `rest-endpoints.md` code-list entries, four test-seam contracts and ~15 scenarios between 2026-06 and 2026-08 was corrected back to flat with `details.retriable`. Not a safety-fix and not a wire change — no conforming host emitted the nested shape on a canonical endpoint; test seams that did get a tolerance window. Re-shaping `error` to an object would have been a §2.2 break, which is why the schema won.
+
 **Safety-fix classifications on record (2026-08-16):** RFC 0148 (certification evidence — bundle v1 sunset, unclassified returns rejected; the wire contract is untouched), RFC 0149 §A/§C (machine-contract defects — the `/v1/v1` base-path duplication and the `protocolVersion` grammar, both repairs of generators/validators rather than moves of any endpoint), and RFC 0150 §B (retiring the `attempt`-bearing idempotency identity). None of the three moved a wire shape a conforming host emitted; each is recorded here because it changed what a *validator* accepts, which §2.2 treats as a break.
 
 ## 4. Behavior-only changes

@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 
 interface DiscoveryDoc {
@@ -74,8 +75,7 @@ describe('table-schema-enforcement: behavioral (RFC 0016 §B point 2)', () => {
       bad.status >= 400 && bad.status < 500,
       driver.describe('RFC 0016 §B point 2', 'type-divergent insert MUST be rejected with 4xx'),
     ).toBe(true);
-    const body = bad.json as { error?: { code?: string } | string };
-    const code = typeof body.error === 'string' ? body.error : body.error?.code;
+    const code = readErrorCode(bad.json);
     expect(
       code,
       driver.describe('RFC 0016 §B point 2', 'rejection MUST carry the table_schema_violation error code'),

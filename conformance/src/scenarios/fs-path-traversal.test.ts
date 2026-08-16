@@ -26,6 +26,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -97,7 +98,7 @@ describe('fs-path-traversal: MUST-NOT escape sandboxRoot (RFC 0014 §C)', () => 
         'absolute paths outside sandboxRoot MUST be rejected with a 4xx envelope',
       ),
     ).toBeGreaterThanOrEqual(400);
-    const code = (res.json as { error?: { code?: string } } | undefined)?.error?.code;
+    const code = readErrorCode(res.json);
     expect(
       code !== undefined && PATH_REJECTION_CODES.has(code),
       driver.describe(
@@ -113,7 +114,7 @@ describe('fs-path-traversal: MUST-NOT escape sandboxRoot (RFC 0014 §C)', () => 
     const res = await driver.post('/v1/host/sample/fs/read', { path: '../../etc/passwd' });
     if (res.status === 404) return;
     expect(res.status).toBeGreaterThanOrEqual(400);
-    const code = (res.json as { error?: { code?: string } } | undefined)?.error?.code;
+    const code = readErrorCode(res.json);
     expect(
       code !== undefined && PATH_REJECTION_CODES.has(code),
       driver.describe(

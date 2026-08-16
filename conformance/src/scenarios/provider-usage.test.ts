@@ -20,6 +20,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readErrorCode } from '../lib/error-envelope.js';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -179,8 +180,7 @@ describe('provider-usage: event presence via emit-seam + event-log query (RFC 00
       res.status,
       driver.describe('SECURITY/invariants.yaml provider-usage-no-credential-leak', 'payload with credentialRef-shaped content MUST be refused'),
     ).toBe(400);
-    const body = res.json as { error?: { code?: string } };
-    expect(body.error?.code).toBe('provider_usage_credential_leak');
+    expect(readErrorCode(res.json)).toBe('provider_usage_credential_leak');
     await resetTestSeam();
   });
 });
