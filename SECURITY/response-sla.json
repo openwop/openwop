@@ -1,0 +1,8 @@
+{
+  "$comment": "RFC 0156 §G — the ONE source for the security-response SLA. SECURITY.md §3 (the table) and GOVERNANCE.md §Security (the restatement) MUST state these numbers; scripts/check-doc-tallies.mjs fails when either drifts. Change the number here first, then the prose, or the gate says which one you forgot. Substantive changes to the SLA still require an RFC (SECURITY.md §10).",
+  "acknowledgmentBusinessDays": 3,
+  "triageBusinessDays": 10,
+  "remediationTimelineBusinessDaysFromTriage": 20,
+  "coordinatedDisclosureDays": 90,
+  "governedBy": ["SECURITY.md#3-response-sla", "GOVERNANCE.md#security", "RFCS/0147 §I", "RFCS/0156 §G"]
+}
