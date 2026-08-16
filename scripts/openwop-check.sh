@@ -166,6 +166,10 @@ echo
 # SECURITY/invariants.yaml has at least one matching public test.
 echo "[6/7] Security invariants..."
 "$(dirname "$0")/check-security-invariants.sh"
+# RFC 0156 — the hand-typed tallies (invariant counts in SECURITY.md + README,
+# scenario-file counts in conformance/README) must agree with the tree; the
+# part of "documents agree" that is a number is checked here, not asserted.
+node "$(dirname "$0")/check-doc-tallies.mjs"
 echo
 
 # 7. Published-layout collection — every scenario must LOAD in the tarball

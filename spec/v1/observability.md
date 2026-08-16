@@ -546,6 +546,39 @@ Gated on `capabilities.idempotency.crossRegion ∈ {"reconciled-records","fenced
 | Attributes (Required) | `openwop.region_pair`                                                                           |
 | Stability             | Stable                                                                                          |
 
+#### `openwop.idempotency.reclaims_total`
+
+| Field                 | Value                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Instrument            | Counter (monotonic)                                                                                                                                                    |
+| Unit                  | reclaims                                                                                                                                                               |
+| Description           | RFC 0150 §A/§D — a pending idempotency lease was reclaimed after its owner failed to complete within the lease window. A rising rate is a stuck-owner or lease-too-short signal, not a duplicate-effect signal on its own. |
+| Attributes (Required) | `openwop.tenant_id`, `openwop.route`                                                                                                                                   |
+| Attributes (Optional) | `openwop.idempotency.scope` (`layer-1` \| `layer-2`)                                                                                                                  |
+| Stability             | Experimental (RFC 0150 §F, added 2026-08-16)                                                                                                                           |
+
+#### `openwop.idempotency.stale_fence_rejections_total`
+
+| Field                 | Value                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Instrument            | Counter (monotonic)                                                                                                                                                    |
+| Unit                  | rejections                                                                                                                                                             |
+| Description           | RFC 0150 §D `fenced-effects` — an effect was refused because the issuing owner's fence token was stale (a losing owner after a partition). Every increment is a duplicate effect that did NOT happen; a host under `reconciled-records` never emits it. |
+| Attributes (Required) | `openwop.tenant_id`, `openwop.route`, `openwop.region_pair`                                                                                                             |
+| Stability             | Experimental (RFC 0150 §F, added 2026-08-16)                                                                                                                           |
+
+#### `openwop.replay.effect_suppressions_total`
+
+| Field                 | Value                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Instrument            | Counter (monotonic)                                                                                                                                                    |
+| Unit                  | suppressions                                                                                                                                                           |
+| Description           | RFC 0150 §C — a replay/fork used the recorded outcome of an effect instead of re-issuing it (`replay.md`, `sideEffectSuppression: recorded-outcome`). Emitted per suppressed effect; a host advertising `sideEffectSuppression: none` never emits it. |
+| Attributes (Required) | `openwop.tenant_id`, `openwop.workflow_id`, `openwop.replay.mode` (`replay` \| `branch`)                                                                               |
+| Stability             | Experimental (RFC 0150 §F, added 2026-08-16)                                                                                                                           |
+
+**Attribute rule for all idempotency / effect-identity telemetry (RFC 0150 §F).** Spans, logs, and metric attributes MUST NOT carry the caller's idempotency key, the effect key, or request content — the key is caller-controlled and routinely embeds customer identifiers. A host MAY carry `openwop.idempotency.key_hash` (a **truncated keyed hash** — keyed with a host secret so it is not reversible by dictionary, truncated so it is not a stable global identifier); it MUST NOT carry the key. The same rule already governs the `redaction` attributes above and `SECURITY/threat-model-secret-leakage.md` SR-1.
+
 ### Cost attribution metrics
 
 The cost-attribution metrics below pair with the `openwop.cost.*` attributes (see "Cost attribution attributes" §). Promoted from Experimental → Stable on 2026-04-27 alongside O4 closure.
