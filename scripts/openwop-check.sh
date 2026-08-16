@@ -109,6 +109,7 @@ node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 # moment the corpus moves. Checking it here is the "generated from or checked
 # against" half of §B; without it the manifest would assert a floor nobody runs.
 node "$SPEC_ROOT/scripts/generate-core-standard-manifest.mjs" --check
+node "$SPEC_ROOT/scripts/generate-extension-registry-coverage.mjs" --check
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 node "$SPEC_ROOT/scripts/check-capability-declaration-classes.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
