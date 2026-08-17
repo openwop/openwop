@@ -26,6 +26,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
@@ -43,7 +44,7 @@ const FIXTURE = 'conformance-noop';
 async function isObservabilityAdvertised(): Promise<boolean> {
   try {
     const disco = await driver.get('/.well-known/openwop');
-    const caps = (disco.json as { capabilities?: { observability?: unknown } }).capabilities ?? {};
+    const caps = discoveryFamilies(disco.json) as { observability?: unknown };
     return caps.observability !== undefined;
   } catch {
     return false;

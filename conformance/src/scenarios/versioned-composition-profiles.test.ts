@@ -137,6 +137,24 @@ describe('RFC 0153 §A — MCP versioned discovery', () => {
     ).toBe(true);
   });
 
+  it('the v1.0 baseline `serverUrls` (required by mcp-discoverability when supported:true) validates — path or absolute URL, non-empty, no duplicates', () => {
+    // S27 (2026-08-17): the schema was `additionalProperties: false` and did not
+    // list `serverUrls`, while mcp-discoverability.test.ts REQUIRED it — a host
+    // could not satisfy the scenario and the schema at once. The second sibling
+    // host measured the contradiction on its own advert.
+    expect(
+      validate({ supported: true, serverUrls: ['/v1/host/openwop-app/mcp'], protocolVersions: ['2026-07-28'] }),
+      JSON.stringify(validate.errors),
+    ).toBe(true);
+    expect(
+      validate({ supported: true, serverUrls: ['https://example.test/canvasApi/v1/mcp'], protocolVersions: ['2024-11-05'], preferredVersion: '2024-11-05' }),
+      JSON.stringify(validate.errors),
+    ).toBe(true);
+    expect(validate({ supported: true, serverUrls: [] }), 'empty serverUrls is the bare `supported: true` problem').toBe(false);
+    expect(validate({ supported: true, serverUrls: ['/a', '/a'] }), 'duplicates').toBe(false);
+    expect(validate({ supported: true, serverUrls: [''] }), 'an empty string is not a mount').toBe(false);
+  });
+
   it('versions use MCP date form exactly', () => {
     // MCP revisions ARE dates. `latest` or a non-padded month would let two
     // hosts disagree about which revision they share while both validate.

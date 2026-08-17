@@ -21,6 +21,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector } from '../lib/otel-collector.js';
@@ -43,10 +44,8 @@ interface MetricsCaps {
 async function metricsAdvertised(): Promise<MetricsCaps | null> {
   try {
     const disco = await driver.get('/.well-known/openwop');
-    const caps = (disco.json as {
-      capabilities?: { observability?: { metrics?: MetricsCaps } };
-    }).capabilities;
-    return caps?.observability?.metrics ?? null;
+    const caps = discoveryFamilies(disco.json) as { observability?: { metrics?: MetricsCaps } };
+    return caps.observability?.metrics ?? null;
   } catch {
     return null;
   }

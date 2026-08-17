@@ -46,7 +46,7 @@ import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { FIXTURES_DIR } from '../lib/paths.js';
 import { expandChain, expandChainWithCompensation, type WorkflowChain, type WorkflowChainWithCompensation } from '../lib/workflow-chain-expansion.js';
-import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 
@@ -84,9 +84,7 @@ interface ChainCaps {
 
 async function isExpansionAdvertised(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const caps =
-    (disco.json as { capabilities?: { workflowChainPacks?: ChainCaps } }).capabilities
-      ?.workflowChainPacks ?? {};
+  const caps = (discoveryFamilies(disco.json) as { workflowChainPacks?: ChainCaps }).workflowChainPacks ?? {};
   return caps.hostExpansionSeam === true;
 }
 
@@ -105,8 +103,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     if (!behaviorGate(PROFILE, await isExpansionAdvertised())) return;
 
     const disco = await driver.get('/.well-known/openwop');
-    const caps = (disco.json as { capabilities?: { workflowChainPacks?: ChainCaps } }).capabilities
-      ?.workflowChainPacks;
+    const caps = (discoveryFamilies(disco.json) as { workflowChainPacks?: ChainCaps }).workflowChainPacks;
     expect(
       caps,
       driver.describe(

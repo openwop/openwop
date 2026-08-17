@@ -28,6 +28,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { createHmac } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
@@ -70,8 +71,8 @@ afterEach(async () => {
 
 async function isWebhookSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const caps = (disco.json as { capabilities?: { webhooks?: { supported?: boolean } } }).capabilities;
-  return caps?.webhooks?.supported === true;
+  const caps = discoveryFamilies(disco.json) as { webhooks?: { supported?: boolean } };
+  return caps.webhooks?.supported === true;
 }
 
 describe('webhook-signed-delivery: end-to-end HMAC v1', () => {

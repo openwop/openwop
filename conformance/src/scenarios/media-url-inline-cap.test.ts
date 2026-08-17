@@ -32,7 +32,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 const MEDIA_KINDS = ['media.image', 'media.audio', 'media.file'] as const;
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -136,10 +136,8 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
     // that emits a media.* envelope into a run (so no media payload appears).
     const disc = await driver.get('/.well-known/openwop');
     if (disc.status !== 200) return;
-    const caps = (disc.json as {
-      capabilities?: { aiProviders?: { maxInlineMediaBytes?: unknown }; debugBundle?: { supported?: unknown } };
-    }).capabilities;
-    if (caps?.aiProviders?.maxInlineMediaBytes === undefined || caps.debugBundle?.supported !== true) {
+    const caps = discoveryFamilies(disc.json) as { aiProviders?: { maxInlineMediaBytes?: unknown }; debugBundle?: { supported?: unknown } };
+    if (caps.aiProviders?.maxInlineMediaBytes === undefined || caps.debugBundle?.supported !== true) {
       return; // host doesn't serve media + export debug bundles — contract not exercisable
     }
     // Find a recent run and inspect its debug bundle for any media.* event.
