@@ -33,6 +33,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
@@ -120,7 +121,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     // not seam absence and not a host finding — fail loudly at the source.
     expect(reg.status, driver.describe('host-sample-test-seams.md §"sample workflows"', `the registration fixture MUST be accepted; a 4xx means the fixture this leg posts is malformed (suite defect): ${JSON.stringify(reg.json).slice(0, 200)}`)).toBeLessThan(400);
     const hdr = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': TOOL };
-    const first = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: TOOL, arguments: {}, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
+    const first = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: TOOL, arguments: {}, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     if (first.status === 404) return seamAbsent('host advertises an MCP server mount but /v1/host/sample/mcp answered 404');
     const r1 = first.json as { result?: { resultType?: string; inputRequests?: Record<string, { method?: string }>; requestState?: string }; error?: { code: number } };
     expect(r1.error, driver.describe('mcp-integration.md §C.2', `tools/call MUST NOT error: ${JSON.stringify(r1.error)}`)).toBeUndefined();
@@ -129,11 +130,11 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     expect(key, driver.describe('mcp-integration.md §C.2', 'inputRequests MUST carry the elicitation')).toBeDefined();
     expect(r1.result?.inputRequests?.[key!]?.method).toBe('elicitation/create');
     expect(typeof r1.result?.requestState, driver.describe('mcp-integration.md §C.2', 'requestState MUST be present (opaque, integrity-protected, bound to principal/TTL/request/runId/interrupt token)')).toBe('string');
-    const retry = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: TOOL, arguments: {}, requestState: r1.result!.requestState, inputResponses: { [key!]: { action: 'accept', content: { name: 'Ada' } } }, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
+    const retry = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: TOOL, arguments: {}, requestState: r1.result!.requestState, inputResponses: { [key!]: { action: 'accept', content: { name: 'Ada' } } }, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     const r2 = retry.json as { result?: { resultType?: string }; error?: { code: number } };
     expect(r2.error).toBeUndefined();
     expect(['complete', 'input_required'], driver.describe('mcp-integration.md §C.2', 'the retry MUST resolve the interrupt (complete) or ask for the next pending input')).toContain(r2.result?.resultType);
-    const forged = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: TOOL, arguments: {}, requestState: 'forged', inputResponses: { [key!]: { action: 'accept', content: { name: 'Eve' } } }, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
+    const forged = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: TOOL, arguments: {}, requestState: 'forged', inputResponses: { [key!]: { action: 'accept', content: { name: 'Eve' } } }, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     const r3 = forged.json as { result?: { resultType?: string }; error?: { code: number } };
     expect(r3.error !== undefined || forged.status >= 400, driver.describe('mcp-integration.md §C.2', 'a requestState that fails integrity verification MUST be refused (upstream: attacker-controlled input)')).toBe(true);
   });

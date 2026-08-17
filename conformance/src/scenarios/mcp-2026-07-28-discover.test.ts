@@ -25,6 +25,8 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { seamAbsent } from '../lib/soft-skip.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { McpFakeServer, MCP_ERR } from '../lib/mcp-fake-server.js';
@@ -170,7 +172,7 @@ async function claimsCurrent(): Promise<boolean> {
 }
 async function hostRpc(method: string, params: Record<string, unknown>, headers: Record<string, string>) {
   // The reference host mounts its MCP server at /v1/host/sample/mcp (mcp-server-* scenarios).
-  const res = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method, params }, { headers });
+  const res = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 1, method, params }, { headers });
   return { status: res.status, body: res.json as { result?: Record<string, unknown>; error?: { code: number; data?: Record<string, unknown> } } };
 }
 
@@ -179,7 +181,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — host as MCP ser
     if (!behaviorGate(PROFILE, await claimsCurrent())) return;
     const caps = (await mcp())!;
     const r = await hostRpc('server/discover', { _meta: { [META_V]: '2026-07-28', [META_C]: {} } }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'server/discover' });
-    if (r.status === 404 || r.status === 403) return; // mount not wired at the sample path — the mcp-server-* legs cover that gap
+    if (r.status === 404 || r.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${r.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(r.status, driver.describe('mcp-integration.md §B', 'server/discover is a server MUST under 2026-07-28')).toBe(200);
     expect(r.body.result?.['resultType']).toBe('complete');
     expect([...((r.body.result?.['supportedVersions'] as string[] | undefined) ?? [])].sort(), driver.describe('mcp-integration.md §B', 'server/discover.supportedVersions MUST equal capabilities.mcp.protocolVersions — two documents, one fact')).toEqual([...(caps.protocolVersions ?? [])].sort());
@@ -196,7 +198,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — host as MCP ser
     // answered -32022 — the leg was testing an unstated precedence
     // (mcp-integration.md §B: agreement is checked before selection).
     const mismatch = await hostRpc('tools/list', { _meta: { [META_V]: '2025-06-18', [META_C]: {} } }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' });
-    if (mismatch.status === 404 || mismatch.status === 403) return;
+    if (mismatch.status === 404 || mismatch.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${mismatch.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(mismatch.status, driver.describe('mcp-integration.md §B', 'header ≠ body MUST be refused 400 (HeaderMismatchError -32020) — fail closed')).toBe(400);
     expect(mismatch.body.error?.code).toBe(MCP_ERR.HEADER_MISMATCH);
     const unsupported = await hostRpc('tools/list', { _meta: { [META_V]: '1999-01-01', [META_C]: {} } }, { 'MCP-Protocol-Version': '1999-01-01', 'Mcp-Method': 'tools/list' });

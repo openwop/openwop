@@ -8,6 +8,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { seamAbsent } from '../lib/soft-skip.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -26,7 +28,7 @@ async function rpc(method: string, params?: Record<string, unknown>) {
   const id = Math.floor(Math.random() * 1e6);
   const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
   if (params !== undefined) req.params = params;
-  const res = await driver.post('/v1/host/sample/mcp', req);
+  const res = await driver.post(await mcpServerMount(), req);
   return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string } } };
 }
 
@@ -65,7 +67,7 @@ describe('mcp-server-prompt-roundtrip: behavioral (RFC 0020)', () => {
     if (!(await registerPromptWorkflow())) return;
 
     const list = await rpc('prompts/list');
-    if (list.status === 404) return;
+    if (list.status === 404) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${list.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     const prompts = (list.body.result as { prompts?: Array<{ name: string }> } | undefined)?.prompts ?? [];
     expect(
       prompts.find((p) => p.name === PROMPT_NAME),

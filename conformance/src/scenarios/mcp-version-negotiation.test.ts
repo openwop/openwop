@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { seamAbsent } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
@@ -123,8 +124,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     const caps = await mcp();
     server.reset();
     const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint() });
-    if (drive.status === 404 || drive.status === 403) return;
-    // Discovery is a promise about behavior. A host that negotiates a revision
+    if (drive.status === 404 || drive.status === 403) return seamAbsent(`host advertises mcp version negotiation but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status} — the host-as-client legs are unobservable (host-sample-test-seams.md)`);
     // it never advertised has made its own discovery document unreliable, which
     // is worse than advertising nothing — a consumer that read it made a
     // decision on a fact that was not true.
@@ -149,7 +149,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
       serverUrl: server.endpoint(),
       requestVersion: '1999-01-01',
     });
-    if (drive.status === 404 || drive.status === 403) return;
+    if (drive.status === 404 || drive.status === 403) return seamAbsent(`host advertises mcp version negotiation but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status} — the host-as-client legs are unobservable (host-sample-test-seams.md)`);
     expect(
       drive.status >= 400,
       driver.describe('RFCS/0153 §B', 'an unsupported revision MUST fail rather than silently proceed'),

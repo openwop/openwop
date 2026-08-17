@@ -204,7 +204,9 @@ Hosts that don't advertise `serverMount.supported: true` MUST refuse registratio
 
 ### 6. Conformance
 
-Six scenarios (all gated on `capabilities.mcp.serverMount.supported`):
+Six scenarios (all gated on `capabilities.mcp.serverMount.supported`). **Where they POST (S25, suite 1.134.0):** every server-side scenario — these six, `mcp-2026-07-28-discover`, `mcp-stateless-request`, `mcp-mrtr-roundtrip`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` — sends JSON-RPC to **`capabilities.mcp.serverUrls[0]`** when the host advertises one (a path is joined to the base URL, an absolute URL is used as-is), else to the reference-boot path `/v1/host/sample/mcp`. A host that mounts its server elsewhere says so in `serverUrls` and the suite follows; a mount that answers 404/403 where the host said it would be is `seamAbsent` (blocked in default mode, a failure under `OPENWOP_REQUIRE_BEHAVIOR=true`), never a silent early return. Found on the first deployed 2026-07-28 host, which mounted at `/v1/host/openwop-app/mcp`, advertised exactly that, and watched ten `server/discover` legs 404 against the sample path.
+
+The six:
 
 - `mcp-server-tool-roundtrip.test.ts` — `tools/list` then `tools/call` against a workflow exposed via `core.openwop.mcp.expose-tool`.
 - `mcp-server-resource-roundtrip.test.ts` — `resources/list` then `resources/read`.

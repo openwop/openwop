@@ -35,7 +35,9 @@ class OpenWOPDriver {
     init: OpenWOPRequestInit = {},
   ): Promise<OpenWOPResponse> {
     const env = loadEnv();
-    const url = `${env.baseUrl}${path}`;
+    // An absolute URL is used as-is (a host may advertise its MCP server mount or
+    // an A2A endpoint on another origin); a path is joined to the base URL.
+    const url = /^https?:\/\//i.test(path) ? path : `${env.baseUrl}${path}`;
 
     const headers: Record<string, string> = {
       Accept: 'application/json',
