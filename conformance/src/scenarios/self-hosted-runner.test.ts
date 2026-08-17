@@ -35,6 +35,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 
 const GATE = 'openwop-self-hosted-runner';
 
@@ -51,23 +52,14 @@ function readSchema(name: string): JsonSchema {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as JsonSchema;
 }
 
-/** Read the canonical error code from a response body (tolerant of shapes). */
-function errCode(json: unknown): string | undefined {
-  const j = json as { error?: unknown; code?: unknown };
-  if (typeof j?.code === 'string') return j.code;
-  if (typeof j?.error === 'string') return j.error;
-  const e = j?.error as { code?: unknown } | undefined;
-  if (e && typeof e.code === 'string') return e.code;
-  return undefined;
-}
-
-/** Read a boolean `retriable` flag from either `{retriable}` or `{error:{retriable}}`. */
-function retriable(json: unknown): boolean | undefined {
-  const j = json as { retriable?: unknown; error?: { retriable?: unknown } };
-  if (typeof j?.retriable === 'boolean') return j.retriable;
-  if (j?.error && typeof j.error.retriable === 'boolean') return j.error.retriable;
-  return undefined;
-}
+// S28 (2026-08-17): the HTTP error envelope is READ through lib/error-envelope.ts —
+// flat `{ error: "<code>", message, details.retriable }` per error-envelope.schema.json
+// (S22), with the pre-S22 nested `{ error: { code, retriable } }` tolerated only through
+// the deprecation window. The local readers this replaced accepted top-level `retriable`
+// or nested `error.retriable` and never `details.retriable`, so a schema-valid host could
+// not pass the retriable-flag leg at all (openwop-app H27 → S28).
+const errCode = readErrorCode;
+const retriable = readRetriable;
 
 interface SelfHostedRunner {
   supported?: boolean;
