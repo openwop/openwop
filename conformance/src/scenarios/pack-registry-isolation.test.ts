@@ -22,6 +22,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -35,7 +36,7 @@ interface TestModeAdvertisement {
 async function getTestModeAdvertisement(): Promise<TestModeAdvertisement | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const packs = top && typeof top === 'object' ? (top['packs'] as Record<string, unknown> | undefined) : undefined;
   const testMode = packs && typeof packs === 'object' ? (packs['testMode'] as Record<string, unknown> | undefined) : undefined;
   if (!testMode || typeof testMode !== 'object') return null;

@@ -29,7 +29,7 @@ const UNIVERSALS = ['clarification.request', 'schema.request', 'schema.response'
 async function readEnvelopeContracts(): Promise<{ advertised: boolean } | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const block = top && typeof top === 'object' ? (top['envelopeContracts'] as Record<string, unknown> | undefined) : undefined;
   if (!block || typeof block !== 'object') return null;
   return { advertised: block['advertised'] === true };
@@ -166,7 +166,7 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
 
 // E.1 engine-projection via the test-only event-log seam.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
-import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 describe('aiEnvelope.universalKinds: engine projection via event-log seam', () => {
   it('clarification.request MUST be lifted to interrupt.requested { kind: "clarification" } per interrupt.md', async () => {

@@ -3,15 +3,12 @@
  * Lives in lib/ (not a *.test.ts) so scenarios import it via `../lib/toolHooks.js`.
  */
 import { driver } from './driver.js';
-
-interface DiscoveryDoc {
-  capabilities?: Record<string, unknown>;
-}
+import { discoveryFamilies } from './discovery-capabilities.js';
 
 /** Reads `capabilities.toolHooks` from discovery; null when unadvertised. */
 export async function readToolHooksCap(): Promise<Record<string, unknown> | null> {
   const res = await driver.get('/.well-known/openwop');
-  const caps = (res.json as DiscoveryDoc | undefined)?.capabilities;
+  const caps = discoveryFamilies(res.json);
   const th = caps && typeof caps === 'object' ? (caps as Record<string, unknown>)['toolHooks'] : undefined;
   return th && typeof th === 'object' ? (th as Record<string, unknown>) : null;
 }

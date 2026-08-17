@@ -22,6 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForScenario } from '../lib/requirement-registry.js';
 
@@ -50,7 +51,7 @@ async function isTestModeAdvertised(): Promise<boolean> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
   const rootPacks = body?.packs && typeof body.packs === 'object' ? body.packs : undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const wrappedPacks = top && typeof top === 'object' ? (top['packs'] as Record<string, unknown> | undefined) : undefined;
   const packs = rootPacks ?? wrappedPacks;
   const testMode = packs && typeof packs === 'object' ? (packs['testMode'] as Record<string, unknown> | undefined) : undefined;

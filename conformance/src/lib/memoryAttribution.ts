@@ -3,16 +3,13 @@
  * Lives in lib/ (not a *.test.ts) so scenarios import it via `../lib/memoryAttribution.js`.
  */
 import { driver } from './driver.js';
+import { discoveryFamilies } from './discovery-capabilities.js';
 import { isFixtureAdvertised } from './fixtures.js';
-
-interface DiscoveryDoc {
-  capabilities?: Record<string, unknown>;
-}
 
 /** Reads `capabilities.memory.attribution` from discovery; null when unadvertised. */
 export async function readMemoryAttributionCap(): Promise<Record<string, unknown> | null> {
   const res = await driver.get('/.well-known/openwop');
-  const caps = (res.json as DiscoveryDoc | undefined)?.capabilities;
+  const caps = discoveryFamilies(res.json);
   const mem = caps && typeof caps === 'object' ? (caps as Record<string, unknown>)['memory'] : undefined;
   const attr = mem && typeof mem === 'object' ? (mem as Record<string, unknown>)['attribution'] : undefined;
   return attr && typeof attr === 'object' ? (attr as Record<string, unknown>) : null;

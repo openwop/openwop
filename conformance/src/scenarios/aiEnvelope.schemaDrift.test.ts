@@ -29,7 +29,7 @@ interface DiscoveryDoc {
 async function isEnvelopeContractsAdvertised(): Promise<boolean> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const block = top && typeof top === 'object' ? (top['envelopeContracts'] as Record<string, unknown> | undefined) : undefined;
   return Boolean(block && block['advertised'] === true);
 }
@@ -38,7 +38,7 @@ describe('aiEnvelope.schemaDrift: advertisement shape (FINAL v1.1)', () => {
   it('capabilities.envelopeStrictness is either absent (treated as "warn") or "warn" | "strict"', async () => {
     const res = await driver.get('/.well-known/openwop');
     const body = res.json as DiscoveryDoc | undefined;
-    const top = body?.capabilities as Record<string, unknown> | undefined;
+    const top = discoveryFamilies(body);
     const val = top && typeof top === 'object' ? top['envelopeStrictness'] : undefined;
     if (val === undefined) return; // absent → treated as 'warn'; skip
     expect(
@@ -189,7 +189,7 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
 // E.2 OTel scrape seam.
 import { queryTestSpans, isOtelSeamAvailable } from '../lib/otel-scrape.js';
 import { resetTestSeam } from '../lib/event-log-query.js';
-import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => {
   it('below-floor + strictness:warn → OTel span MUST carry envelope_schema_version_drift attribute', async () => {

@@ -47,3 +47,24 @@ export async function readCapabilityFamily<T = Record<string, unknown>>(
   if (res.status !== 200) return undefined;
   return capabilityFamily<T>(res.json, name);
 }
+
+/**
+ * A root-first VIEW of the discovery document's capability families for
+ * readers that were written against the deprecated top-level `capabilities`
+ * wrapper (RFC 0073: root is the MUST; the wrapper is a v1.x-tolerated
+ * mirror that retires at v2). Root families win; a family that exists only in
+ * the wrapper is still visible so a legacy host does not lose coverage. Until
+ * suite 1.135.0 forty-four readers consulted the wrapper ONLY, which meant a
+ * root-only host — the shape RFC 0073 asks for — silently lost their legs
+ * (S26, found by the second sibling host, which had to keep its wrapper as a
+ * mirror because of it).
+ */
+export function discoveryFamilies(doc: unknown): Record<string, unknown> {
+  if (!doc || typeof doc !== 'object') return {};
+  const root = doc as Record<string, unknown>;
+  const wrapper = root['capabilities'];
+  const merged: Record<string, unknown> = {};
+  if (wrapper && typeof wrapper === 'object' && !Array.isArray(wrapper)) Object.assign(merged, wrapper as Record<string, unknown>);
+  for (const [k, v] of Object.entries(root)) if (k !== 'capabilities') merged[k] = v;
+  return merged;
+}
