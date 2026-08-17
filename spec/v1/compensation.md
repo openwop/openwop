@@ -74,6 +74,15 @@ workflow node (`workflow-definition.schema.json`):
   has NO policy-level counterpart on purpose: because the default inherits the effective
   value, an `approvalScope` escalation escalates waives with it. Declared per node; a
   richer type would put a second policy language inside this closed block.
+  **Escalation is a floor (S37, 2026-08-17).** An explicit `waiveRequiresApproval: false`
+  MUST NOT lower a value that policy escalation has raised: the effective value is
+  `(declared ?? declared requiresApproval) OR (approvalScope === "all")` — the same
+  escalate-only rule `approvalScope` itself follows ("can only turn false into true"). An
+  author may still say "sign-off to *run* the inverse, but declining it is an operations
+  call" on a node whose own `requiresApproval` is `true` (declared `false` wins over the
+  node-level default in both directions); what an author cannot do is strip a gate the
+  workspace's policy raised. A host that let a node-level `false` win over escalation
+  would fail open exactly where the policy said not to.
 - A host MUST reject a compensation cycle.
 
 **Irreversible effects (`irreversibleEffect: true`, RFC 0151 UQ4 — decided 2026-08-16).** A
