@@ -22,6 +22,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 
 interface DiscoveryDoc {
@@ -32,7 +33,7 @@ describe('aiEnvelope.contractRefusal: advertisement shape (FINAL v1.1)', () => {
   it('opted-in hosts advertise envelopeContracts.advertised as a boolean', async () => {
     const res = await driver.get('/.well-known/openwop');
     const body = res.json as DiscoveryDoc | undefined;
-    const top = body?.capabilities as Record<string, unknown> | undefined;
+    const top = discoveryFamilies(body);
     const block = top && typeof top === 'object' ? top['envelopeContracts'] : undefined;
     if (block === undefined) return; // absent — skip
     expect(

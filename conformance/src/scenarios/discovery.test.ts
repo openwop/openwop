@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 
 describe('discovery: /.well-known/openwop', () => {
@@ -306,13 +307,10 @@ describe('discovery: auth-scoped is not an authorization oracle', () => {
     }
     expect(unauthorized.status).toBe(200);
 
-    const primaryCaps = Object.keys(
-      (primary.json as { capabilities?: Record<string, unknown> })?.capabilities ?? {},
-    );
-    const unauthorizedCaps = Object.keys(
-      (unauthorized.json as { capabilities?: Record<string, unknown> })?.capabilities ??
-        {},
-    );
+    // Root-first (RFC 0073); the deprecated `capabilities` wrapper is folded in
+    // so a root-only host and a wrapper-only host are compared the same way (S26).
+    const primaryCaps = Object.keys(discoveryFamilies(primary.json));
+    const unauthorizedCaps = Object.keys(discoveryFamilies(unauthorized.json));
 
     // Spec annex line 69: "Hosts MUST NOT let scoped discovery become
     // an authorization oracle. A caller should learn only about

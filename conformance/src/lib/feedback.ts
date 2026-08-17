@@ -4,6 +4,7 @@
  * standard `../lib/feedback.js` path.
  */
 import { driver } from './driver.js';
+import { discoveryFamilies } from './discovery-capabilities.js';
 import { isFixtureAdvertised } from './fixtures.js';
 
 interface DiscoveryDoc {
@@ -14,7 +15,7 @@ interface DiscoveryDoc {
 export async function readFeedbackCap(): Promise<Record<string, unknown> | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const fb = top && typeof top === 'object' ? (top as Record<string, unknown>)['feedback'] : undefined;
   return fb && typeof fb === 'object' ? (fb as Record<string, unknown>) : null;
 }

@@ -22,6 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -30,7 +31,7 @@ interface DiscoveryDoc {
 async function isEnvelopeContractsAdvertised(): Promise<boolean> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const block = top && typeof top === 'object' ? (top['envelopeContracts'] as Record<string, unknown> | undefined) : undefined;
   return Boolean(block && block['advertised'] === true);
 }

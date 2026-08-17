@@ -24,6 +24,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,7 +33,7 @@ interface DiscoveryDoc {
 async function isBYOKAdvertised(): Promise<boolean> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const secrets = top && typeof top === 'object' ? top['secrets'] : undefined;
   return Boolean(secrets && typeof secrets === 'object');
 }

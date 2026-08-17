@@ -10,6 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { seamAbsent } from '../lib/soft-skip.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
 
@@ -20,7 +21,7 @@ interface DiscoveryDoc {
 async function readCap(): Promise<Record<string, unknown> | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const cur = (top && typeof top === 'object') ? (top as Record<string, unknown>)["mcp"] : undefined;
   const final = (cur && typeof cur === 'object') ? (cur as Record<string, unknown>)["serverMount"] : undefined;
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);

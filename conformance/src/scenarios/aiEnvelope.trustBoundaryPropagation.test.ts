@@ -23,6 +23,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -31,7 +32,7 @@ interface DiscoveryDoc {
 async function readMcpTrustBoundary(): Promise<string | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const top = discoveryFamilies(body);
   const mcp = top && typeof top === 'object' ? (top['mcpClient'] as Record<string, unknown> | undefined) : undefined;
   if (!mcp || typeof mcp !== 'object') return null;
   const tb = mcp['trustBoundary'];
