@@ -33,6 +33,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { executionModelVersionMax } from '../lib/execution-model-version.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -81,11 +82,14 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
       ),
     ).toBe('number');
     const v = executionModel.version as number;
+    // S31 (2026-08-17): ceiling read from capabilities.schema.json (`maximum`, 6 since
+    // RFC 0090) instead of a literal that went stale the day version 6 was Accepted.
+    const max = executionModelVersionMax();
     expect(
-      Number.isInteger(v) && v >= 1 && v <= 5,
+      Number.isInteger(v) && v >= 1 && v <= max,
       driver.describe(
         'RFCS/0037-multi-agent-execution-model.md §C',
-        'version MUST be an integer in [1, 5] (1 = Phase 1 only; Phases 2-5 lift the ceiling additively — Phase 5 = RFC 0061 stateful agent-loop lifecycle, matching `capabilities.schema.json` §multiAgent.executionModel.version maximum)',
+        `version MUST be an integer in [1, ${max}] (1 = Phase 1 only; later phases lift the ceiling additively — 5 = RFC 0061 stateful agent-loop lifecycle, 6 = RFC 0090 verifier; the ceiling is \`capabilities.schema.json\` §multiAgent.executionModel.version maximum)`,
       ),
     ).toBe(true);
   });

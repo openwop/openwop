@@ -14,6 +14,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { executionModelVersionMax } from '../lib/execution-model-version.js';
 import { readExecutionModelCap } from '../lib/agentLoop.js';
 
 describe('agent-loop-version5-shape: advertisement (RFC 0061 §A)', () => {
@@ -33,9 +34,13 @@ describe('agent-loop-version5-shape: advertisement (RFC 0061 §A)', () => {
       ).toBe(true);
     }
     if (typeof em.version === 'number') {
+      // S31 (2026-08-17): the ceiling is the schema's `maximum` (6 since RFC 0090,
+      // Accepted 2026-06-08 — MyndHyve was the version-6 witness and this leg failed
+      // it against a stale literal 5 for ten weeks). Read, never restate.
+      const max = executionModelVersionMax();
       expect(
-        (em.version as number) >= 1 && (em.version as number) <= 5,
-        driver.describe('capabilities.schema.json §multiAgent.executionModel', 'version MUST be within the 1–5 ladder'),
+        (em.version as number) >= 1 && (em.version as number) <= max,
+        driver.describe('capabilities.schema.json §multiAgent.executionModel', `version MUST be within the 1–${max} ladder (schema maximum)`),
       ).toBe(true);
     }
   });
