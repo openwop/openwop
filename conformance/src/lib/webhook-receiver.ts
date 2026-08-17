@@ -138,11 +138,14 @@ export function signPayload(
 
 /**
  * Discover a tenant the calling bearer provably OWNS, by creating a probe run
- * and reading `owner.tenantId` off its snapshot (RFC 0048). A host that scopes
+ * and reading `owner.tenant` off its snapshot (RFC 0048; `run-snapshot.schema.json`
+ * §owner — the triple is `{ tenant, workspace, principal }`, and `tenantId` was
+ * never the spec name: S29, 2026-08-17, found by the second sibling host, whose
+ * schema-correct `owner.tenant` this helper silently ignored). A host that scopes
  * webhook subscriptions by tenant membership (RFC 0093) 403s a `tenantId` the
  * bearer is not a member of — so a hard-coded tenant is wrong; the only portable
  * owned tenant is the one on a run the bearer just created. Returns `undefined`
- * for a single-tenant host (which omits `owner.tenantId`) or when no probe
+ * for a single-tenant host (which omits `owner`) or when no probe
  * fixture is available — callers then omit `tenantId`, which single-tenant hosts
  * accept. (RFC 0093 / webhooks.md §Register; suite defect fixed 2026-08-09.)
  */
@@ -155,6 +158,8 @@ export async function discoverOwnedTenant(
   const runId = (create.json as { runId?: string } | null)?.runId;
   if (typeof runId !== 'string') return undefined;
   const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
-  const owner = (snap.json as { owner?: { tenantId?: unknown } } | null)?.owner;
-  return typeof owner?.tenantId === 'string' ? owner.tenantId : undefined;
+  const owner = (snap.json as { owner?: { tenant?: unknown; tenantId?: unknown } } | null)?.owner;
+  if (typeof owner?.tenant === 'string' && owner.tenant.length > 0) return owner.tenant;
+  // Pre-S29 hosts that copied the suite's misnamed field: tolerated, never asserted.
+  return typeof owner?.tenantId === 'string' && owner.tenantId.length > 0 ? owner.tenantId : undefined;
 }
