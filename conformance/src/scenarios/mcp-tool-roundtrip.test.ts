@@ -75,6 +75,10 @@ import { pollUntilTerminal } from '../lib/polling.js';
  */
 export const REQUIRES_HOST_CALLBACK = "the host issues MCP JSON-RPC calls to the suite's fake server";
 
+// The fixture's node is the conformance-RESERVED `core.conformance.mcp-invoke`
+// (S33, 2026-08-17 — was `core.ai.callPrompt` + `config.mcp`, a vendor pack-tier
+// node that never read that config): a host that consumes MCP maps it to its own
+// bridge; one that does not MUST NOT advertise the fixture.
 const ROUNDTRIP_FIXTURE = 'conformance-mcp-tool-roundtrip';
 
 /**

@@ -188,13 +188,31 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
       'payload.escalationKind ∈ {clarify, escalate}',
     ).toBe(true);
 
-    // Causation chain: escalation event causes back to the runOrchestrator.decided
-    // that named the worker.
-    const decidedEvent = events.find((e) => e.eventId === ev.causationId);
+    // Causation (S32, 2026-08-17): this leg used to REQUIRE `causationId` → a
+    // `runOrchestrator.decided`, which contradicts RFC 0011 §F CP-1 as asserted by
+    // orchestratorConservativePath.test.ts — a low-confidence decision is HELD, so
+    // no `runOrchestrator.decided` exists on the log before ratification; the
+    // escalation event carries the decision verbatim in `originalDecision` for
+    // exactly that reason (multi-agent-execution.md §"Confidence escalation").
+    // Rule now: `causationId` MAY be absent; when present it MUST resolve to an
+    // event already on this run's log (a host that does emit a pre-ratification
+    // decided event may point at it; one that honours CP-1 points at nothing or at
+    // the preceding node event).
+    if (typeof ev.causationId === 'string' && ev.causationId.length > 0) {
+      const cause = events.find((e) => e.eventId === ev.causationId);
+      expect(
+        cause !== undefined,
+        driver.describe(
+          'spec/v1/multi-agent-execution.md §"Confidence escalation"',
+          `confidence-escalated causationId (${ev.causationId}) MUST resolve to an event on this run's log when present`,
+        ),
+      ).toBe(true);
+    }
+    const original = (ev.payload as { originalDecision?: unknown } | undefined)?.originalDecision;
     expect(
-      decidedEvent?.type,
-      'confidence-escalated causationId MUST point at the runOrchestrator.decided that surfaced the low-confidence decision',
-    ).toBe('runOrchestrator.decided');
+      original !== null && typeof original === 'object',
+      driver.describe('run-event-payloads.schema.json §confidence-escalated', 'payload.originalDecision carries the escalated OrchestratorDecision verbatim — the decision is on the log HERE, not on a prior decided event'),
+    ).toBe(true);
 
     // Load-bearing: NO dispatch event fired. RFC 0039 gates BEFORE the loop.
     const chainEvents = events.filter((e) => e.type === 'core.workflowChain.event');
