@@ -488,6 +488,10 @@
             "requiresApproval": {
               "type": "boolean",
               "description": "RFC 0151 §C — an inverse action can itself be harmful (RFC 0147 R9), so it may be gated behind the same approval surface as a forward effect."
+            },
+            "waiveRequiresApproval": {
+              "type": "boolean",
+              "description": "RFC 0151 §B/§E (S36, 2026-08-17) — OPTIONAL. When true, ABANDONING this inverse action (§E `skip with justification` or `terminate as uncompensated`) requires an RFC 0051 approval to have resolved `approved` first — if a human must authorize RUNNING an inverse, a human must authorize deciding it will NEVER run. DEFAULT = the obligation's EFFECTIVE `requiresApproval` (after the policy's `approvalScope` escalation, §B) — NOT false — so the field is purely additive: no existing document changes meaning. Stamped onto the obligation at MINT time like `requiresApproval` (a mid-flight redefinition cannot change who had to authorize). Does NOT apply to `substitute` (still an attempt to undo; a substitution is a new planVersion whose own `requiresApproval` governs it). No policy-level counterpart: because the default inherits the effective value, an `approvalScope` escalation escalates waives with it."
             }
           }
         },
@@ -498,11 +502,21 @@
       },
       "additionalProperties": false,
       "if": {
-        "properties": { "irreversibleEffect": { "const": true } },
-        "required": ["irreversibleEffect"]
+        "properties": {
+          "irreversibleEffect": {
+            "const": true
+          }
+        },
+        "required": [
+          "irreversibleEffect"
+        ]
       },
       "then": {
-        "not": { "required": ["compensation"] }
+        "not": {
+          "required": [
+            "compensation"
+          ]
+        }
       }
     },
     "FragmentEdge": {

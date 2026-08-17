@@ -124,6 +124,14 @@ describe('RFC 0151 §B — node compensation declaration', () => {
     expect(ok, JSON.stringify(validate.errors)).toBe(true);
   });
 
+  it('waiveRequiresApproval (S36) is an OPTIONAL boolean in the closed §B block — absent is valid (default = effective requiresApproval), non-boolean is refused', () => {
+    const decl = { nodeTypeId: 'vendor.shop.release', requiresApproval: true };
+    expect(validate({ ...base, compensation: { ...decl, waiveRequiresApproval: false } }), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate({ ...base, compensation: { ...decl, waiveRequiresApproval: true } }), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate({ ...base, compensation: { ...decl } }), 'absent MUST validate — the default is the obligation\'s effective requiresApproval, so no existing document changes meaning').toBe(true);
+    expect(validate({ ...base, compensation: { ...decl, waiveRequiresApproval: 'yes' } }), 'compensation.md §B: a plain boolean, not a policy language').toBe(false);
+  });
+
   it('a node without compensation stays valid', () => {
     // The profile is optional. Absent MUST NOT become a validation error, or
     // every existing workflow in the corpus breaks.
