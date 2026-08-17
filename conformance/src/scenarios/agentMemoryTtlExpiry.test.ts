@@ -44,5 +44,23 @@ describe.skipIf(SKIP)('agentMemoryTtlExpiry: expired entries are excluded from l
         expect(new Date(e.expiresAt).getTime()).toBeGreaterThan(now);
       }
     }
+    // S35 (2026-08-17): TWO-SIDED. `[]` used to pass (a host that filtered
+    // everything, or wrote nothing and returned []). The fixture now lands the
+    // ids of both entries; the fresh one MUST be present, the expired one MUST
+    // be absent.
+    const freshId = body.variables?.freshId;
+    const expiredId = body.variables?.expiredId;
+    expect(
+      typeof freshId === 'string' && freshId.length > 0 && typeof expiredId === 'string' && expiredId.length > 0,
+      driver.describe('fixtures.md conformance-agent-memory-ttl', 'the host MUST land freshId and expiredId (the ids of the two entries it wrote) so the list can be checked on both sides'),
+    ).toBe(true);
+    expect(
+      listResult!.some((e) => e.id === freshId),
+      driver.describe('agent-memory.md §TTL', `list() MUST include the fresh entry (freshId=${String(freshId)})`),
+    ).toBe(true);
+    expect(
+      listResult!.some((e) => e.id === expiredId),
+      driver.describe('agent-memory.md §TTL', `list() MUST NOT include the expired entry (expiredId=${String(expiredId)})`),
+    ).toBe(false);
   });
 });

@@ -1,14 +1,17 @@
 {
   "id": "conformance-agent-memory-ttl",
   "name": "Conformance: Agent Memory TTL Expiry",
-  "version": "1.0",
-  "description": "Phase 3. Writes two memory entries — one with `expiresAt` in the past, one in the future — then lists. The result MUST contain only the future-dated entry. List result lands in `memoryList` variable. See agentMemoryTtlExpiry.test.ts.",
+  "version": "1.1",
+  "description": "Phase 3. Writes two memory entries under `agent.memoryRef` — one with `expiresAt` in the past, one in the future — lands their ids in `expiredId` / `freshId`, then lists into `memoryList`. TWO-SIDED since 2026-08-17 (S35): the list MUST contain the entry whose id is `freshId` and MUST NOT contain the entry whose id is `expiredId`; before S35 an empty list (a host that filtered everything, or wrote nothing) passed. See agentMemoryTtlExpiry.test.ts.",
   "nodes": [
     {
       "id": "memory-ttl-probe",
       "typeId": "core.identity",
       "name": "Memory TTL Probe",
-      "position": { "x": 0, "y": 0 },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
       "config": {
         "memoryAction": "ttl-probe"
       },
@@ -21,11 +24,36 @@
   ],
   "edges": [],
   "triggers": [
-    { "id": "manual", "type": "manual", "enabled": true }
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
   ],
   "variables": [
-    { "name": "memoryList", "type": "array" }
+    {
+      "name": "freshId",
+      "type": "string"
+    },
+    {
+      "name": "expiredId",
+      "type": "string"
+    },
+    {
+      "name": "memoryList",
+      "type": "array"
+    }
   ],
-  "metadata": { "tags": ["conformance", "multi-agent", "phase-3", "memory", "ttl"] },
-  "settings": { "timeout": 10000 }
+  "metadata": {
+    "tags": [
+      "conformance",
+      "multi-agent",
+      "phase-3",
+      "memory",
+      "ttl"
+    ]
+  },
+  "settings": {
+    "timeout": 10000
+  }
 }
