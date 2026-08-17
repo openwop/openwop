@@ -22,14 +22,18 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
 const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
 const WORKFLOW_DEF = join(SCHEMAS_DIR, 'workflow-definition.schema.json');
 const MANIFEST = join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json');
-const CHAIN_DOC = join(SCHEMAS_DIR, '..', 'spec', 'v1', 'workflow-chain-packs.md');
+// S38 (2026-08-17): `spec/` is NOT in the published package (`files`), so a path built
+// from SCHEMAS_DIR/../spec ENOENTs for every npm consumer — five always-on legs reddened
+// MyndHyve's bundle for a reason that had nothing to do with the host. Prose legs are
+// repo-layout only: `null` in the published layout and skipped, never thrown.
+const CHAIN_DOC: string | null = V1_DIR === null ? null : join(V1_DIR, 'workflow-chain-packs.md');
 
 function loadSchema(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
@@ -77,8 +81,8 @@ describe('edge-condition-truthy-falsy §A: corpus (RFC 0134, always-on)', () => 
     expect(validate(pack), cite('§EdgeCondition', `truthy/falsy edges validate: ${ajv.errorsText(validate.errors)}`)).toBe(true);
   });
 
-  it('the spec documents the no-`right` + required-`left` truthy/falsy semantics', () => {
-    const doc = readFileSync(CHAIN_DOC, 'utf8');
+  it.skipIf(CHAIN_DOC === null)('the spec documents the no-`right` + required-`left` truthy/falsy semantics', () => {
+    const doc = readFileSync(CHAIN_DOC as string, 'utf8');
     expect(doc.includes('truthy'), cite('§Edge-condition operators', 'documents truthy')).toBe(true);
     expect(
       /truthy[\s\S]{0,400}(no|without).{0,20}`?right`?/i.test(doc) || /(no|without).{0,20}`?right`?[\s\S]{0,400}truthy/i.test(doc),
