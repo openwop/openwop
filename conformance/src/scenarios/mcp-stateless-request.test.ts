@@ -20,9 +20,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 
 const PROFILE = 'mcp-2026-07-28';
 const META_V = 'io.modelcontextprotocol/protocolVersion';
@@ -37,7 +38,7 @@ async function claimsCurrent(): Promise<boolean> {
 }
 async function list() {
   const res = await driver.post(
-    '/v1/host/sample/mcp',
+    await mcpServerMount(),
     { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: { [META_V]: '2026-07-28', [META_C]: {}, [META_I]: { name: 'openwop-conformance', version: 'suite' } } } },
     { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' } },
   );
@@ -49,12 +50,12 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — mcp-header-body
     if (!behaviorGate(PROFILE, await claimsCurrent())) return;
     const meta = { [META_V]: '2026-07-28', [META_C]: {}, [META_I]: { name: 'openwop-conformance', version: 'suite' } };
     // (a) Mcp-Method header disagrees with the JSON-RPC method
-    const m = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: meta } }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'resources/list' } });
+    const m = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: meta } }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'resources/list' } });
     if (m.status === 404 || m.status === 403) return softSkip('blocked', `MCP server mount /v1/host/sample/mcp answered ${m.status}`);
     expect(m.status, driver.describe('mcp-integration.md §B', 'Mcp-Method MUST equal the body method; disagreement MUST be refused 400 (mcp-header-body-consistent)')).toBe(400);
     expect((m.json as { error?: { code?: number } }).error?.code, driver.describe('mcp-integration.md §B', 'the refusal is HeaderMismatchError -32020')).toBe(-32020);
     // (b) Mcp-Name header disagrees with params.name on tools/call
-    const n = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'echo', arguments: {}, _meta: meta } }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': 'not-echo' } });
+    const n = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'echo', arguments: {}, _meta: meta } }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': 'not-echo' } });
     expect(n.status, driver.describe('mcp-integration.md §B', 'Mcp-Name MUST equal params.name; disagreement MUST be refused 400 (mcp-header-body-consistent)')).toBe(400);
     expect((n.json as { error?: { code?: number } }).error?.code, driver.describe('mcp-integration.md §B', 'the refusal is HeaderMismatchError -32020')).toBe(-32020);
   });
@@ -64,7 +65,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — mcp-stateless-r
   it('tools/list succeeds with no initialize and no session; result carries resultType + cache hints; two connections agree', async () => {
     if (!behaviorGate(PROFILE, await claimsCurrent())) return;
     const a = await list();
-    if (a.status === 404 || a.status === 403) return; // mount not at the sample path — covered by mcp-server-* legs
+    if (a.status === 404 || a.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${a.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(a.status, driver.describe('mcp-integration.md §B', 'a core request MUST succeed without a prior initialize or a session header')).toBe(200);
     expect(a.body.error, driver.describe('mcp-integration.md §B', `stateless tools/list MUST NOT error: ${JSON.stringify(a.body.error)}`)).toBeUndefined();
     expect(a.body.result?.resultType, driver.describe('mcp-integration.md §B', 'every current-revision result carries resultType')).toBe('complete');

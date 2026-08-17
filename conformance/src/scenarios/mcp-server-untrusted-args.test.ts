@@ -12,6 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { seamAbsent } from '../lib/soft-skip.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -30,7 +32,7 @@ async function rpc(method: string, params?: Record<string, unknown>) {
   const id = Math.floor(Math.random() * 1e6);
   const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
   if (params !== undefined) req.params = params;
-  const res = await driver.post('/v1/host/sample/mcp', req);
+  const res = await driver.post(await mcpServerMount(), req);
   return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string; data?: unknown } } };
 }
 
@@ -77,7 +79,7 @@ describe('mcp-server-untrusted-args: behavioral (RFC 0020 §D)', () => {
       name: TEST_TOOL_NAME,
       arguments: { wrongField: 'no' },
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${r.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(r.status, 'JSON-RPC envelope MUST 200').toBe(200);
     expect(
       r.body.error?.code,
@@ -96,7 +98,7 @@ describe('mcp-server-untrusted-args: behavioral (RFC 0020 §D)', () => {
       name: TEST_TOOL_NAME,
       arguments: { text: 'hello' },
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${r.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(r.status).toBe(200);
     if (r.body.error) {
       expect(r.body.error.code, 'valid args MUST NOT trigger -32602').not.toBe(-32602);
