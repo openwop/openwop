@@ -272,6 +272,16 @@ The conformance suite's MCP and A2A probes run against live reference implementa
 | **MCP** | `@modelcontextprotocol/sdk@1.29.0` (all three transports)  | ✅ pass                                    | —                                                                                          |
 | **A2A** | `@a2a-js/sdk@0.3.13` reference peer (echo skill, JSON-RPC) | ✅ 1/1 pass (`a2a-task-roundtrip.test.ts`) | ⏳ corpus landed (`capabilities.a2a` + `A2ATaskState` + durable-`tasks/get`/resubscribe/push subtests); reference-host durable-Task evidence at `Active → Accepted` |
 
+### Compensation and partial-failure profile (RFC 0151 + 0157 — `capabilities.compensation`)
+
+The host-ordered, persisted, retried unwind of committed business effects (RFC 0151, `Accepted` 2026-08-12; `spec/v1/compensation.md`). A host populates the row when it advertises `capabilities.compensation` and the capability-gated witnesses execute non-vacuously — the base seams (`compensation-behavior.test.ts`: plan-before-effect, reverse-completion order, replay no-refire, content-free events, snapshot rollup ⇄ events) and the §21 recovery extension (`compensation-recovery.test.ts`: retry-stable identity, tenant-bound operator authority, recorded-facts replay).
+
+| Host                        | `compensation` status | Evidence |
+| --------------------------- | --------------------- | -------- |
+| openwop-app reference       | **advertised on main `d209d8009` (ADR 0554 wire flip, #3294) — local boot, strict, suite `1.134.0`, 2026-08-17** | `compensation-profile` 19/19 (58 asserts) · `compensation-behavior` **6/6** (25) · `compensation-recovery` **3/3** (25 — three attempts / one downstream key; cross-tenant 404 / same-tenant 403 audited / operator 200 audited; `replayed ≡ source`, `refiredEffects: 0`) · `chain-compensation-expansion` 11/11 (44) · `workflow-chain-host-expansion` 8/8 (the two RFC 0157 chains record `blocked` until the host's conformance pin reaches ≥ 1.133.0). Advert `{ supported: true, profileVersion: "1", orderingModels: ["reverse-completion"], manualIntervention: true }`; `compensationStatus` on every `RunSnapshot`; UQ4 `irreversible` plan entry caps the rollup at `partial`. **This is the first host to execute every RFC 0151 normative behavioral path in strict mode (RFC 0147 §A.5)** — on a local boot of merged main; the deployed origin advertises it after deploy #2, at which point the row moves to deployed-wire. The four §G invariants (`compensation-replay-no-refire`, `-effect-id-retry-stable`, `-tenant-authority-bound`, `-input-recorded-facts-only`) are witnessed here for the first time. |
+| MyndHyve `workflow-runtime` | **none**              | — |
+| In-memory / SQLite / Python / Postgres | **none** | reference hosts have no compensation surface (RFC 0151 acceptance: reference-host mid-unwind crash recovery is carried in `openwop-examples`) |
+
 ### Versioned composition profiles — A2A 1.0, MCP 2026-07-28, workload identity (RFCs 0152 / 0153 / 0154)
 
 Witnessed with the suite's **dual-era fake peer / fake server** (`OPENWOP_A2A_FAKE_PEER=true`, `OPENWOP_MCP_FAKE_SERVER=true`) under `OPENWOP_REQUIRE_BEHAVIOR=true`, suite `1.120.0`–`1.122.0`, on **local memory:// boots** of openwop-app (tier-1). Real upstream peers in CI remain externally gated (RFC 0152/0153 acceptance).
