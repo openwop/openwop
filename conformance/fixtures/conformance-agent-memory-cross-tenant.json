@@ -1,28 +1,61 @@
 {
   "id": "conformance-agent-memory-cross-tenant",
   "name": "Conformance: Agent Memory Cross-Tenant Isolation (CTI-1)",
-  "version": "1.0",
-  "description": "Phase 3 / CTI-1. Issues a deliberately-cross-tenant memoryRef probe (a path referencing tenant B from a run owned by tenant A). Host MUST return [] / null — no leak. Probe result lands in `crossTenantProbe` variable. See agentMemoryCrossTenantIsolation.test.ts.",
+  "version": "1.1",
+  "description": "Phase 3 / CTI-1. TWO-SIDED since 2026-08-17 (S35): the `core.identity` node with `memoryAction: \"cross-tenant-probe\"` MUST (1) write one entry under the run's OWN tenant at `agent.memoryRef` and land its id in `ownerEntryId`, (2) list that owner memoryRef and land the result in `ownerProbe` — a NON-EMPTY array containing the written entry (the positive control: proves the adapter is really being exercised), and (3) issue the deliberately-cross-tenant probe at `config.probeMemoryRef` (a path owned by ANOTHER tenant) and land the result in `crossTenantProbe`, which MUST be exactly `[]` (or `null`) — never another tenant's entries, and never left unset. A host may instead fail the run with a security-related error at step 3. Before S35 the scenario accepted an unset `crossTenantProbe`, so a host that ignored `memoryAction` entirely passed a critical-tier invariant vacuously. See agentMemoryCrossTenantIsolation.test.ts.",
   "nodes": [
     {
       "id": "cross-tenant-probe",
       "typeId": "core.identity",
       "name": "Cross-Tenant Memory Probe",
-      "position": { "x": 0, "y": 0 },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
       "config": {
         "memoryAction": "cross-tenant-probe",
         "probeMemoryRef": "conformance/another-tenant/agent-memory"
       },
-      "inputs": {}
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.cti-agent",
+        "memoryRef": "conformance/agent-memory-cti"
+      }
     }
   ],
   "edges": [],
   "triggers": [
-    { "id": "manual", "type": "manual", "enabled": true }
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
   ],
   "variables": [
-    { "name": "crossTenantProbe", "type": "array" }
+    {
+      "name": "ownerEntryId",
+      "type": "string"
+    },
+    {
+      "name": "ownerProbe",
+      "type": "array"
+    },
+    {
+      "name": "crossTenantProbe",
+      "type": "array"
+    }
   ],
-  "metadata": { "tags": ["conformance", "multi-agent", "phase-3", "memory", "cti-1", "security"] },
-  "settings": { "timeout": 10000 }
+  "metadata": {
+    "tags": [
+      "conformance",
+      "multi-agent",
+      "phase-3",
+      "memory",
+      "cti-1",
+      "security"
+    ]
+  },
+  "settings": {
+    "timeout": 10000
+  }
 }

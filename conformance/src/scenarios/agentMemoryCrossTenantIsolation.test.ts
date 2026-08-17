@@ -40,15 +40,37 @@ describe.skipIf(SKIP)('agentMemoryCrossTenantIsolation: CTI-1 invariant', () => 
     if (terminal.status === 'completed') {
       const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
       const body = snap.json as { variables?: Record<string, unknown> };
-      const crossTenantResult = body.variables?.crossTenantProbe as
-        | Array<unknown>
-        | null
-        | undefined;
-      // Cross-tenant list MUST return [] (or null); never another tenant's entries.
+      const vars = body.variables ?? {};
+
+      // S35 (2026-08-17): POSITIVE CONTROL first. Before this, the only assertion
+      // was "crossTenantProbe is empty or falsy" — a host whose core.identity node
+      // ignored `config.memoryAction` entirely left the variable undefined and
+      // PASSED a critical-tier invariant vacuously (measured by openwop-app H49).
+      // The owner-side write+list proves the MemoryAdapter is really exercised.
+      const ownerProbe = vars.ownerProbe;
+      expect(
+        Array.isArray(ownerProbe) && ownerProbe.length > 0,
+        driver.describe('agent-memory.md §CTI-1 / fixtures.md conformance-agent-memory-cross-tenant', 'ownerProbe MUST be a NON-EMPTY array — the run\'s own tenant can read the entry it just wrote (positive control; an unset or empty ownerProbe means the probe never ran)'),
+      ).toBe(true);
+      const ownerEntryId = vars.ownerEntryId;
+      if (typeof ownerEntryId === 'string' && ownerEntryId.length > 0) {
+        expect(
+          (ownerProbe as Array<{ id?: unknown }>).some((e) => e && typeof e === 'object' && e.id === ownerEntryId),
+          driver.describe('agent-memory.md §CTI-1', `ownerProbe MUST contain the entry the host reports writing (ownerEntryId=${ownerEntryId})`),
+        ).toBe(true);
+      }
+
+      // Cross-tenant list MUST return exactly [] (or null); never another
+      // tenant's entries, and never left unset.
+      const crossTenantResult = vars.crossTenantProbe;
+      expect(
+        crossTenantResult !== undefined,
+        driver.describe('agent-memory.md §CTI-1', 'crossTenantProbe MUST be set — an unset variable means the cross-tenant probe was never issued, which proves nothing'),
+      ).toBe(true);
       if (Array.isArray(crossTenantResult)) {
-        expect(crossTenantResult.length).toBe(0);
+        expect(crossTenantResult.length, driver.describe('agent-memory.md §CTI-1', 'a cross-tenant memoryRef probe MUST return [] — no entries of another tenant')).toBe(0);
       } else {
-        expect(crossTenantResult).toBeFalsy();
+        expect(crossTenantResult, driver.describe('agent-memory.md §CTI-1', 'a non-array cross-tenant probe result MUST be null')).toBeNull();
       }
     }
   });

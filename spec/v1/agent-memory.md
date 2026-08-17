@@ -62,7 +62,7 @@ In practice:
 2. Cross-instance leak protection: when multiple `MemoryAdapter` instances share an in-process backing store, each instance MUST gate by inspecting the ref shape — not by trusting the store. Reference impls verify via cross-instance test: tenant-A adapter MUST return `[]` when given a tenant-B-shaped ref, even when the underlying store holds the entries.
 3. Errors don't leak. When a MemoryAdapter throws (e.g., underlying Firestore failure), the error envelope MUST NOT contain entry data — error messages are host-internal concerns.
 
-**Conformance:** `conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts` exercises CTI-1 via the `conformance-agent-memory-cross-tenant` fixture (intentionally constructs a cross-tenant probe; passes when the probe returns empty / null).
+**Conformance:** `conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts` exercises CTI-1 via the `conformance-agent-memory-cross-tenant` fixture — TWO-SIDED since 2026-08-17 (S35): the host writes one entry under the run's own tenant and lists it back (`ownerProbe` MUST be non-empty — the positive control that proves the adapter is exercised), then issues the deliberately cross-tenant probe, whose result (`crossTenantProbe`) MUST be exactly `[]` / `null` and MUST be set. Before S35 an unset probe result passed, so a host that ignored the fixture's `memoryAction` satisfied a critical-tier invariant vacuously.
 
 ## SR-1 — Secret-Redaction Invariant (normative)
 
@@ -108,7 +108,7 @@ Entries carrying `expiresAt` (RFC 3339 / ISO 8601 UTC) MUST NOT surface in `Memo
 
 Granularity: millisecond floor (matches `Date` wire shape).
 
-**Conformance:** `conformance/src/scenarios/agentMemoryTtlExpiry.test.ts` exercises the contract via the `conformance-agent-memory-ttl` fixture.
+**Conformance:** `conformance/src/scenarios/agentMemoryTtlExpiry.test.ts` exercises the contract via the `conformance-agent-memory-ttl` fixture — TWO-SIDED since 2026-08-17 (S35): the host lands `freshId` / `expiredId` and `list()` MUST include the former and exclude the latter (an empty list no longer passes).
 
 ## Capability advertisement
 
