@@ -23,16 +23,20 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { V1_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
 const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
-const CHAIN_DOC = join(SCHEMAS_DIR, '..', 'spec', 'v1', 'workflow-chain-packs.md');
+// S38 (2026-08-17): `spec/` is NOT in the published package (`files`), so a path built
+// from SCHEMAS_DIR/../spec ENOENTs for every npm consumer — five always-on legs reddened
+// MyndHyve's bundle for a reason that had nothing to do with the host. Prose legs are
+// repo-layout only: `null` in the published layout and skipped, never thrown.
+const CHAIN_DOC: string | null = V1_DIR === null ? null : join(V1_DIR, 'workflow-chain-packs.md');
 
 describe('chain-subchain-unsupported-refused §A: corpus contract (RFC 0133, always-on)', () => {
-  it('spec corpus pins sub_chain_unsupported as a 422 refusal (never flatten)', () => {
-    const doc = readFileSync(CHAIN_DOC, 'utf8');
+  it.skipIf(CHAIN_DOC === null)('spec corpus pins sub_chain_unsupported as a 422 refusal (never flatten)', () => {
+    const doc = readFileSync(CHAIN_DOC as string, 'utf8');
     expect(doc.includes('sub_chain_unsupported'), cite('§Error codes', 'the code MUST be registered')).toBe(true);
     // The normative refusal-not-flatten rule MUST appear in the composition section.
     expect(

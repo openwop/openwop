@@ -24,9 +24,16 @@ const SEED_FIXTURE = 'conformance-noop';
 
 /** Seeds a basic run (the host writes a run-summary on completion); null
  *  (soft-skip) when the fixture isn't advertised or creation fails. */
-export async function seedRun(tenantId: string): Promise<string | null> {
+export async function seedRun(_label: string): Promise<string | null> {
   if (!isFixtureAdvertised(SEED_FIXTURE)) return null;
-  const r = await driver.post('/v1/runs', { workflowId: SEED_FIXTURE, tenantId, inputs: {} });
+  // S41 (2026-08-17): the argument used to be sent as `tenantId` on POST /v1/runs. It was
+  // a fabricated label (`mem-attr-emit`, `feedback-cti`, …), and a host that enforces
+  // "tenantId MUST match the principal's accessible workspaces" answers 403 — MyndHyve did,
+  // which left every scenario on this helper `blocked` and kept `openwop-memory` from
+  // certifying. No caller ever needed a SECOND tenant: every leg reads back its own run.
+  // The tenant is the credential's own tenant (the host defaults it from the API key —
+  // rest-endpoints.md), which is what "a run the bearer provably owns" means.
+  const r = await driver.post('/v1/runs', { workflowId: SEED_FIXTURE, inputs: {} });
   if (r.status !== 200 && r.status !== 201) return null;
   return (r.json as { runId?: string } | undefined)?.runId ?? null;
 }

@@ -43,7 +43,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -51,7 +51,12 @@ import { driver } from '../lib/driver.js';
 
 const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
 const WORKFLOW_DEF = join(SCHEMAS_DIR, 'workflow-definition.schema.json');
-const CHAIN_DOC = join(SCHEMAS_DIR, '..', 'spec', 'v1', 'workflow-chain-packs.md');
+// S38 (2026-08-17): `spec/` is NOT in the published package (`files`), so a path built
+// from SCHEMAS_DIR/../spec ENOENTs for every npm consumer — five always-on legs reddened
+// MyndHyve's bundle for a reason that had nothing to do with the host. Prose legs are
+// repo-layout only: `null` in the published layout and skipped, never thrown.
+const CHAIN_DOC: string | null = V1_DIR === null ? null : join(V1_DIR, 'workflow-chain-packs.md');
+const RFC_DOC: string | null = V1_DIR === null ? null : join(V1_DIR, '..', '..', 'RFCS', '0136-workflow-variable-format.md');
 
 function loadSchema(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
@@ -115,8 +120,8 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     ).toBe(true);
   });
 
-  it('A4 — chain-pack spec documents deferred-mode `format` propagation as mode-scoped', () => {
-    const doc = readFileSync(CHAIN_DOC, 'utf8');
+  it.skipIf(CHAIN_DOC === null)('A4 — chain-pack spec documents deferred-mode `format` propagation as mode-scoped', () => {
+    const doc = readFileSync(CHAIN_DOC as string, 'utf8');
     const step1 = doc.slice(doc.indexOf('Materialize parameters as variables'));
     expect(step1.length > 0, cite('§Deferred-parameter expansion', 'step 1 present')).toBe(true);
     expect(
@@ -129,8 +134,8 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     ).toBe(true);
   });
 
-  it('A5 — the RFC forbids `format` participating in a `configurable` validation decision', () => {
-    const rfc = readFileSync(join(SCHEMAS_DIR, '..', 'RFCS', '0136-workflow-variable-format.md'), 'utf8');
+  it.skipIf(RFC_DOC === null)('A5 — the RFC forbids `format` participating in a `configurable` validation decision', () => {
+    const rfc = readFileSync(RFC_DOC as string, 'utf8');
     expect(
       /configurableSchema/.test(rfc),
       cite('RFC 0136', 'names the configurableSchema propagation path'),

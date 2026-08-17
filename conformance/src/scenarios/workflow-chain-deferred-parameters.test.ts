@@ -40,7 +40,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
@@ -53,7 +53,11 @@ import {
 
 const CAPS = join(SCHEMAS_DIR, 'capabilities.schema.json');
 const MANIFEST = join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json');
-const CHAIN_DOC = join(SCHEMAS_DIR, '..', 'spec', 'v1', 'workflow-chain-packs.md');
+// S38 (2026-08-17): `spec/` is NOT in the published package (`files`), so a path built
+// from SCHEMAS_DIR/../spec ENOENTs for every npm consumer — five always-on legs reddened
+// MyndHyve's bundle for a reason that had nothing to do with the host. Prose legs are
+// repo-layout only: `null` in the published layout and skipped, never thrown.
+const CHAIN_DOC: string | null = V1_DIR === null ? null : join(V1_DIR, 'workflow-chain-packs.md');
 
 /** Spec-cited assertion message. Unlike `driver.describe`, this does NOT load
  *  env, so it is safe in always-on server-free legs (no OPENWOP_BASE_URL). */
@@ -240,8 +244,8 @@ describe('workflow-chain-deferred: schema + spec surface (always-on, server-free
     ).toBe(true);
   });
 
-  it('the spec pins the error code + the per-run credentialRef (not plaintext) supply shape', () => {
-    const spec = readFileSync(CHAIN_DOC, 'utf8');
+  it.skipIf(CHAIN_DOC === null)('the spec pins the error code + the per-run credentialRef (not plaintext) supply shape', () => {
+    const spec = readFileSync(CHAIN_DOC as string, 'utf8');
     expect(spec.includes('sensitive_param_not_deferrable'), 'error code MUST be documented').toBe(true);
     expect(
       spec.includes('credentialRef'),

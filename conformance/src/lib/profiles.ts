@@ -621,6 +621,32 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
   // (`trigger-bridge-delivery.test.ts`, profile-gated) verify …" plus the shape.
   'openwop-trigger-bridge': { required: ['trigger-bridge-shape.test.ts', 'trigger-bridge-delivery.test.ts'] },
 
+  // `agent-platform-profile.md` §C — the operational annex's aggregate-evidence
+  // rule: the platform claim is BACKED BY the constituent capabilities' runtime
+  // scenarios, never asserted on shape alone. S42 (2026-08-17): the profile was
+  // pushed onto `claimedProfiles` by the discovery predicate but had NO entry
+  // here, so `requirementsFor()` returned null and the verdict was always
+  // "NOT certifiable (no floor defined)" — a host on which every `agent-*`
+  // scenario passed could never certify. Floor = the §C list; replay is
+  // discovery-conditional ("or the host's declared nondeterminism").
+  'openwop-agent-platform': {
+    required: [
+      'agent-platform-aggregate-evidence.test.ts',
+      'agent-manifest-runtime.test.ts',
+      'agent-live-runtime-shape.test.ts',
+      'tool-descriptor-shape.test.ts',
+      'tool-hooks-shape.test.ts',
+      'safefetch-behavior.test.ts',
+      'provider-usage.test.ts',
+      'prompt-list-and-fetch.test.ts',
+      'memory-capability-model-shape.test.ts',
+      'feedback-capability-shape.test.ts',
+    ],
+    conditional: [
+      { path: 'replay.modes', includes: 'replay', required: ['replayDeterminism.test.ts'] },
+    ],
+  },
+
   // `profiles.md` §`openwop-replay-fork`: "This profile gates
   // `replayDeterminism.test.ts` and `replay-fork.test.ts` … the conformance
   // scenarios pass on whichever mode the host advertises." Discovery-conditional
