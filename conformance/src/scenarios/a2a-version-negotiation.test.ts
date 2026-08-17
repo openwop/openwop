@@ -28,6 +28,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
+import { readErrorCode } from '../lib/error-envelope.js';
 
 /**
  * Callback-shaped: the host issues A2A calls to the suite's fake peer, which records the negotiated version header.
@@ -153,9 +154,10 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
     });
     if (drive.status === 404 || drive.status === 403) return;
     expect(drive.status >= 400, driver.describe('RFCS/0152 §B', 'an unsupported version MUST fail')).toBe(true);
-    const err = (drive.json as { error?: { code?: string; retriable?: boolean } }).error;
+    // S28: canonical envelope is FLAT (`error: "<code>"`, error-envelope.schema.json);
+    // the nested `error.code` is tolerated by the lib only through the deprecation window.
     expect(
-      err?.code,
+      readErrorCode(drive.json),
       driver.describe(
         'RFCS/0152 §B',
         'the upstream version error MUST be projected through the canonical OpenWOP interop error ' +

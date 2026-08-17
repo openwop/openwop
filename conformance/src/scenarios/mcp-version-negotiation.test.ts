@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { readErrorCode } from '../lib/error-envelope.js';
 import { seamAbsent } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -154,8 +155,10 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
       drive.status >= 400,
       driver.describe('RFCS/0153 §B', 'an unsupported revision MUST fail rather than silently proceed'),
     ).toBe(true);
+    // S28: canonical envelope is FLAT (`error: "<code>"`, error-envelope.schema.json);
+    // the nested `error.code` is tolerated by the lib only through the deprecation window.
     expect(
-      (drive.json as { error?: { code?: string } }).error?.code,
+      readErrorCode(drive.json),
       driver.describe(
         'RFCS/0153 §B',
         'the upstream error MUST be projected through the canonical OpenWOP interop envelope — a ' +
