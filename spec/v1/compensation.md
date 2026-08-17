@@ -60,6 +60,20 @@ workflow node (`workflow-definition.schema.json`):
 - `retry.maxAttempts` / `retry.backoffMs` bound the inverse action's own retries.
 - `requiresApproval: true` gates the inverse effect behind the same RFC 0051 approval
   surface as a forward effect (§E).
+- `waiveRequiresApproval` (OPTIONAL boolean, S36 2026-08-17) gates **abandoning** the
+  inverse — the §E `skip with justification` and `terminate as uncompensated` actions —
+  behind the same approval surface: if a human must authorize *running* an inverse, a
+  human must authorize deciding it will *never* run. Its **default is the obligation's
+  effective `requiresApproval`** (after the policy's `approvalScope` escalation), NOT
+  `false`, which is what makes it purely additive: no existing document changes meaning
+  and a host that already derives "high-risk" from `requiresApproval` needs no behaviour
+  change. It is stamped onto the obligation at mint time exactly like `requiresApproval`
+  (§C — a mid-flight redefinition cannot change who had to authorize). It does NOT apply
+  to `substitute`, which is still an attempt to undo (a substitution is a new
+  `planVersion`, and the substituted inverse's own `requiresApproval` governs it). It
+  has NO policy-level counterpart on purpose: because the default inherits the effective
+  value, an `approvalScope` escalation escalates waives with it. Declared per node; a
+  richer type would put a second policy language inside this closed block.
 - A host MUST reject a compensation cycle.
 
 **Irreversible effects (`irreversibleEffect: true`, RFC 0151 UQ4 — decided 2026-08-16).** A
@@ -335,9 +349,9 @@ consumer reading the events and the snapshot sees the same thing on every host:
 | Action | Precondition | Recorded outcome | Rollup effect (§D fold) |
 | --- | --- | --- | --- |
 | **retry** | action not `completed` | a fresh `attempt` under the **same** identity | `manual` → `running`; then whatever the outcomes yield |
-| **skip with justification** | action not `completed`; a non-empty justification is recorded | action marked skipped, justification in the audit record (never in the event payload) | counts as *did not complete*: `partial` if any other action completed, else `failed` |
+| **skip with justification** | action not `completed`; a non-empty justification is recorded; when the obligation's effective `waiveRequiresApproval` (§B) is `true`, an RFC 0051 approval whose `artifactData` is the plan entry plus the justification MUST have resolved `approved` first — the same second human that would have had to authorize running it | action marked skipped, justification in the audit record (never in the event payload) | counts as *did not complete*: `partial` if any other action completed, else `failed` |
 | **substitute** | a **registered** compensation `nodeTypeId` (resolves like §B); increments `planVersion` | the plan entry's `nodeTypeId` changes under a new `planVersion`; prior approvals for that entry are void | as retry, under the new plan version |
-| **terminate as uncompensated** | — | every remaining action marked terminated, `reason: operator-terminated` | `partial` if any action completed, else `failed`; the plan is closed and MUST NOT resume |
+| **terminate as uncompensated** | when any remaining obligation's effective `waiveRequiresApproval` (§B) is `true`, an RFC 0051 approval covering the termination MUST have resolved `approved` first | every remaining action marked terminated, `reason: operator-terminated` | `partial` if any action completed, else `failed`; the plan is closed and MUST NOT resume |
 
 Every override MUST be audited (`authorization.decided` with the action named), and
 none of them may re-execute a `completed` inverse action. Whether a substitute may
