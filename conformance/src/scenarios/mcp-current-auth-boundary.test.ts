@@ -35,6 +35,14 @@ async function disco() {
 const REQ = { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: { [META_V]: '2026-07-28', [META_C]: {} } } };
 const HDR = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' };
 
+/** Set-Cookie values from a fetch Headers (Node ≥ 19.7 exposes them un-joined via getSetCookie). */
+function setCookies(h: Headers): string[] {
+  const g = (h as Headers & { getSetCookie?: () => string[] }).getSetCookie;
+  if (typeof g === 'function') return g.call(h);
+  const one = h.get('set-cookie');
+  return one ? [one] : [];
+}
+
 describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-auth-boundary (host as server, gated)', () => {
   it('an unauthenticated current-profile request is refused, unless anonymousActor is advertised', async () => {
     const { mcp, anon } = await disco();
@@ -53,5 +61,23 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
       [401, 403],
       driver.describe('mcp-integration.md §E', 'an anonymous MCP principal MUST NOT be the production default for an advertised current profile — refuse (401/403) or advertise anonymousActor'),
     ).toContain(anonymous.status);
+
+    // S30 (2026-08-17, openwop-app H43): a cookie-posture host may MINT an anonymous
+    // session for a credential-less caller and then treat "has a principal" as
+    // "is authenticated". The bare probe above never carries a cookie, so it can
+    // only observe the first request; replay with whatever the host just minted
+    // (from this response or from a credential-less discovery GET) and hold the
+    // same rule — an anonymous SESSION is still an anonymous principal.
+    const minted = [
+      ...setCookies(anonymous.headers),
+      ...setCookies((await driver.get('/.well-known/openwop', { authenticated: false })).headers),
+    ];
+    if (minted.length === 0) return; // host mints no anonymous session; the bare probe was the whole observation
+    const cookie = minted.map((c) => c.split(';')[0]).join('; ');
+    const withSession = await driver.post(await mcpServerMount(), REQ, { headers: { ...HDR, Cookie: cookie }, authenticated: false });
+    expect(
+      [401, 403],
+      driver.describe('mcp-integration.md §E', 'a caller holding only a host-minted anonymous session cookie is still an anonymous principal — refuse (401/403) unless anonymousActor is advertised (S30)'),
+    ).toContain(withSession.status);
   });
 });
