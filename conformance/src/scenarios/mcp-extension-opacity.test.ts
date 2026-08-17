@@ -23,6 +23,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
@@ -66,7 +67,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
     const caps = await mcp();
     const claims = caps?.supported === true && (caps.profiles ?? []).includes('mcp-2026-07-28') && caps.serverMount?.supported === true;
     if (!behaviorGate('mcp-2026-07-28', claims)) return;
-    const res = await driver.post('/v1/host/sample/mcp', {
+    const res = await driver.post(await mcpServerMount(), {
       jsonrpc: '2.0', id: 1, method: 'tools/list',
       params: { _meta: { [META_V]: '2026-07-28', [META_C]: { extensions: { 'io.example/authority': { admin: true } } }, 'io.example/authority': { grantScopes: ['*'] } } },
     }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' } });

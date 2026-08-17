@@ -22,6 +22,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { seamAbsent } from '../lib/soft-skip.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -38,7 +40,7 @@ async function claimsCurrent(): Promise<boolean> {
 async function listAs(bearer?: string) {
   const headers: Record<string, string> = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' };
   if (bearer) headers['authorization'] = `Bearer ${bearer}`;
-  const res = await driver.post('/v1/host/sample/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: { [META_V]: '2026-07-28', [META_C]: {} } } }, { headers });
+  const res = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: { [META_V]: '2026-07-28', [META_C]: {} } } }, { headers });
   return { status: res.status, body: res.json as { result?: { tools?: unknown[]; cacheScope?: string; ttlMs?: number } } };
 }
 
@@ -46,7 +48,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-cache-tenan
   it('a per-caller list is cacheScope private; a public list is byte-identical across callers', async () => {
     if (!behaviorGate(PROFILE, await claimsCurrent())) return;
     const mine = await listAs();
-    if (mine.status === 404 || mine.status === 403) return;
+    if (mine.status === 404 || mine.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${mine.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(['public', 'private'], driver.describe('mcp-integration.md §D', 'cacheScope MUST be present on tools/list')).toContain(mine.body.result?.cacheScope);
     const other = process.env.OPENWOP_TEST_SECONDARY_API_KEY;
     if (!other) {

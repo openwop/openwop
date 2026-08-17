@@ -18,6 +18,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { seamAbsent } from '../lib/soft-skip.js';
+import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -38,10 +40,10 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
     const { mcp, anon } = await disco();
     const claims = mcp?.supported === true && (mcp.profiles ?? []).includes(PROFILE) && mcp.serverMount?.supported === true;
     if (!behaviorGate(PROFILE, claims)) return;
-    const authed = await driver.post('/v1/host/sample/mcp', REQ, { headers: HDR });
-    if (authed.status === 404 || authed.status === 403) return; // mount not at the sample path
+    const authed = await driver.post(await mcpServerMount(), REQ, { headers: HDR });
+    if (authed.status === 404 || authed.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${authed.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(authed.status, driver.describe('mcp-integration.md §E', 'the authenticated call MUST succeed at the same path, so a refusal below is not a wrong path')).toBe(200);
-    const anonymous = await driver.post('/v1/host/sample/mcp', REQ, { headers: HDR, authenticated: false });
+    const anonymous = await driver.post(await mcpServerMount(), REQ, { headers: HDR, authenticated: false });
     if (anon?.supported === true) {
       // Anonymous is permitted only through the RFC 0132 surface; a 200 here is that surface answering.
       expect([200, 401, 403]).toContain(anonymous.status);
