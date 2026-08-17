@@ -22,13 +22,12 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
-import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 async function isMcpClientSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const caps = (disco.json as { capabilities?: { mcpClient?: { supported?: boolean } } })
-    .capabilities;
-  return caps?.mcpClient?.supported === true;
+  const caps = discoveryFamilies(disco.json) as { mcpClient?: { supported?: boolean } };
+  return caps.mcpClient?.supported === true;
 }
 
 describe('mcp-toolcall-redaction: capability advertisement contract', () => {

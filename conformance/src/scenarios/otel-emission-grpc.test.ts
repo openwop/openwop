@@ -28,6 +28,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
@@ -45,12 +46,8 @@ const FIXTURE = 'conformance-noop';
 async function advertisesGrpcExport(): Promise<boolean> {
   try {
     const disco = await driver.get('/.well-known/openwop');
-    const caps = (disco.json as {
-      capabilities?: {
-        observability?: { otel?: { exportProtocols?: unknown } };
-      };
-    }).capabilities;
-    const protocols = caps?.observability?.otel?.exportProtocols;
+    const caps = discoveryFamilies(disco.json) as { observability?: { otel?: { exportProtocols?: unknown } } };
+    const protocols = caps.observability?.otel?.exportProtocols;
     return Array.isArray(protocols) && protocols.includes('grpc');
   } catch {
     return false;

@@ -183,8 +183,7 @@ const AUTH_SCOPED_PROFILE = 'openwop-discovery-auth-scoped';
 
 async function readDiscoveryCaps(): Promise<DiscoveryCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop', { authenticated: false });
-  return (disco.json as { capabilities?: { discovery?: DiscoveryCaps } }).capabilities
-    ?.discovery;
+  return (discoveryFamilies(disco.json) as { discovery?: DiscoveryCaps }).discovery;
 }
 
 function isAuthScopedAdvertised(disc: DiscoveryCaps | undefined): boolean {

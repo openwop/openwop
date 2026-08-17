@@ -20,6 +20,7 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 /** RFC 0031 §C — spec-reserved capability identifiers. */
 const RESERVED_IDENTIFIERS: ReadonlySet<string> = new Set([
@@ -58,7 +59,7 @@ beforeAll(async () => {
     SKIP_REASON = 'discovery doc unreachable';
     return;
   }
-  const caps = (disco.json as DiscoveryDoc).capabilities ?? {};
+  const caps = discoveryFamilies(disco.json) as NonNullable<DiscoveryDoc['capabilities']>;
   if (caps.modelCapabilities?.supported !== true) {
     SKIP_REASON = 'host does not advertise capabilities.modelCapabilities.supported: true';
     return;

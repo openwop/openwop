@@ -110,7 +110,7 @@ An OpenWOP host that supports MCP advertises the capability and (per the host's 
 - The **in-memory reference host** does NOT support MCP — its `core.noop` and `core.delay` nodes don't invoke LLMs at all. A workflow that requires MCP tools fails with `unsupported_node_type` against the in-memory host.
 - A **third-party host** can implement MCP-compatibility independently; the openwop wire contract is unaffected.
 
-The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asserts the shape of any advertised MCP capability: `{supported: boolean, serverUrls: string[]}`. Hosts that don't advertise MCP skip-equivalent. The test accepts both the standard top-level `mcp` slot and vendor-namespaced slots like `<vendor>.mcp` (read from the discovery body root, since there is no `capabilities` envelope).
+The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asserts the shape of any advertised MCP capability: `{supported: boolean, serverUrls: string[]}` — `serverUrls` is declared in `capabilities.schema.json` §mcp (non-empty, unique, each entry an absolute URL or a path relative to the discovery origin; since 2026-08-17 / S27 — the schema was `additionalProperties: false` without it while this scenario required it, a contradiction the second sibling host measured on its own advert). Hosts that don't advertise MCP skip-equivalent. The test accepts both the standard top-level `mcp` slot and vendor-namespaced slots like `<vendor>.mcp` (read from the discovery body root, since there is no `capabilities` envelope).
 
 `mcp-tool-roundtrip.test.ts` extends the discoverability check with an end-to-end tool-call round-trip. Two modes, controlled by env vars:
 

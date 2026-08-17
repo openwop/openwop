@@ -3332,6 +3332,16 @@
           "type": "boolean",
           "description": "Host advertises a client-side MCP surface (ctx.mcp.*). See spec/v1/mcp-integration.md."
         },
+        "serverUrls": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Where the host's MCP server mount(s) answer JSON-RPC \u2014 an absolute URL or a path relative to the discovery origin (S25: a path is joined to the base URL, an absolute URL is used as-is). The v1.0 conformance baseline (`mcp-discoverability.test.ts`, spec/v1/mcp-integration.md \u00a7Conformance + interop) REQUIRES a non-empty `serverUrls` whenever `supported: true`, and since suite 1.134.0 every server-side scenario POSTs to `serverUrls[0]`. Required by the scenario and absent from this schema until 2026-08-17 (S27) \u2014 the second sibling host emitted it and measured the contradiction."
+        },
         "serverMount": {
           "type": "object",
           "description": "Server-side MCP composition (workflow IS an MCP server). When supported, the host mounts an MCP endpoint and routes inbound tools/call, resources/read, prompts/get into workflows. Inbound MUST be treated as `trustBoundary: 'untrusted'`.",

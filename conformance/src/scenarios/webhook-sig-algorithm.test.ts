@@ -15,6 +15,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryWebhooks {
   webhooks?: {
@@ -26,7 +27,7 @@ interface DiscoveryWebhooks {
 describe('webhook-sig-algorithm: host advertises supported algorithm set', () => {
   it('discovery surfaces a webhooks.signatureAlgorithms array including "v1"', async () => {
     const disco = await driver.get('/.well-known/openwop');
-    const caps = (disco.json as { capabilities?: DiscoveryWebhooks }).capabilities ?? {};
+    const caps = discoveryFamilies(disco.json) as DiscoveryWebhooks;
     const webhooks = caps.webhooks;
 
     if (!webhooks?.supported) {

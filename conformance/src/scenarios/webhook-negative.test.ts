@@ -22,13 +22,13 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
 
 async function isWebhookSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const caps = (disco.json as { capabilities?: { webhooks?: { supported?: boolean } } })
-    .capabilities;
-  return caps?.webhooks?.supported === true;
+  const caps = discoveryFamilies(disco.json) as { webhooks?: { supported?: boolean } };
+  return caps.webhooks?.supported === true;
 }
 
 describe('webhook-negative: SSRF guard rejects private destinations', () => {
