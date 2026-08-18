@@ -81,6 +81,46 @@ function extractAlgorithm(text, label) {
   return text.slice(startIdx, endIdx).trimEnd();
 }
 
+// SP-01 (2026-08-18) — SECOND mirrored region: the RFC 0157 compensation pass.
+//
+// `carryCompensation` / `expandChainWithCompensation` compose on the core's
+// output, so they sit BELOW the core sentinel — but carrying a chain's
+// `compensation` declaration is unconditional (a host that does not advertise
+// `capabilities.compensation` still MUST carry it verbatim and refuse only a
+// chain-level POLICY), unlike the capability-gated surfaces alongside them,
+// which a non-advertising host MUST REFUSE rather than mirror. Unconditional ⇒
+// mirrorable ⇒ gated. RFC 0157 claimed this pass was "CI-gated against the
+// reference host" and it never was, so the mirror silently lacked it.
+//
+// Both files delimit the region with the same explicit sentinels, so this
+// extraction is symmetric (unlike the core's, where the host file's trailing
+// I/O wrapper needs its own end marker).
+const COMPENSATION_BEGIN_RE = /\/\/ ─── Begin the MIRRORED COMPENSATION pass/;
+const COMPENSATION_END_RE = /\/\/ ─── End of the MIRRORED COMPENSATION pass/;
+
+/**
+ * Slice the compensation pass, or `null` when the file carries neither
+ * sentinel. A file with exactly one sentinel is a hard error: it means someone
+ * half-moved the region and the comparison would silently narrow.
+ */
+function extractCompensationPass(text, label) {
+  const begin = COMPENSATION_BEGIN_RE.exec(text);
+  const end = COMPENSATION_END_RE.exec(text);
+  if (!begin && !end) return null;
+  if (!begin || !end) {
+    console.error(
+      `[sync-gate] ${label} carries only ONE of the MIRRORED COMPENSATION sentinels ` +
+        `(begin=${Boolean(begin)}, end=${Boolean(end)}). Both are required.`,
+    );
+    process.exit(2);
+  }
+  if (end.index <= begin.index) {
+    console.error(`[sync-gate] ${label}: the COMPENSATION end sentinel precedes its begin sentinel.`);
+    process.exit(2);
+  }
+  return text.slice(begin.index + begin[0].length, end.index).trimEnd();
+}
+
 function normalize(s) {
   // Whitespace-tolerant diff: collapse trailing whitespace on each
   // line; drop fully-blank lines. Semantic drift in comments OR code
@@ -99,9 +139,57 @@ const hostText = readFileSync(HOST_PATH, 'utf8');
 const conformanceAlgo = extractAlgorithm(conformanceText, 'conformance');
 const hostAlgo = extractAlgorithm(hostText, 'host');
 
-if (normalize(conformanceAlgo) === normalize(hostAlgo)) {
-  console.log('[sync-gate] workflow-chain expansion algorithm — in-sync.');
+const conformanceComp = extractCompensationPass(conformanceText, 'conformance');
+const hostComp = extractCompensationPass(hostText, 'host');
+
+// The conformance copy is spec-authoritative: if IT delimits the region, the
+// host mirror MUST carry it too. (The reverse — a host-only region — is also a
+// mismatch and is reported by the same branch.)
+if (conformanceComp === null && hostComp !== null) {
+  console.error('[sync-gate] the HOST delimits a MIRRORED COMPENSATION pass but the conformance copy does not.');
+  process.exit(1);
+}
+if (conformanceComp !== null && hostComp === null) {
+  console.error('[sync-gate] DRIFT: the conformance copy delimits a MIRRORED COMPENSATION pass');
+  console.error('  (RFC 0157 carryCompensation / expandChainWithCompensation) that the host mirror LACKS.');
+  console.error(`  host: ${HOST_PATH}`);
+  console.error('  Port the region between the two `─── … MIRRORED COMPENSATION pass` sentinels.');
+  process.exit(1);
+}
+
+const coreInSync = normalize(conformanceAlgo) === normalize(hostAlgo);
+const compInSync =
+  conformanceComp === null || normalize(conformanceComp) === normalize(hostComp);
+
+if (coreInSync && compInSync) {
+  console.log(
+    '[sync-gate] workflow-chain expansion algorithm — in-sync' +
+      (conformanceComp === null ? '' : ' (core + RFC 0157 compensation pass)') +
+      '.',
+  );
   process.exit(0);
+}
+
+if (coreInSync && !compInSync) {
+  console.error('[sync-gate] DRIFT in the RFC 0157 MIRRORED COMPENSATION pass between:');
+  console.error(`  conformance: ${CONFORMANCE_PATH}`);
+  console.error(`  host:        ${HOST_PATH}`);
+  console.error('');
+  const a = normalize(conformanceComp).split('\n');
+  const b = normalize(hostComp).split('\n');
+  const max = Math.max(a.length, b.length);
+  for (let i = 0; i < max; i++) {
+    if (a[i] !== b[i]) {
+      console.error(`  L${i + 1}:`);
+      console.error(`    conformance: ${a[i] ?? '<absent>'}`);
+      console.error(`    host:        ${b[i] ?? '<absent>'}`);
+      if (i > 30) {
+        console.error(`  … (truncated; ${max - i - 1} more differing lines)`);
+        break;
+      }
+    }
+  }
+  process.exit(1);
 }
 
 console.error('[sync-gate] DRIFT detected between:');

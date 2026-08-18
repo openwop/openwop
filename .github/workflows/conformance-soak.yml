@@ -34,6 +34,40 @@ on:
       - '.github/workflows/conformance-soak.yml'
 
 jobs:
+  # SP-01 (2026-08-18): the RFC 0013 expansion drift guard runs in its OWN job.
+  # It used to be step 4 of `host-conformance`, and because a failing step aborts
+  # the remaining steps of its job, a drift in the reference host's mirrored
+  # algorithm MASKED everything after it — the full strict-mode conformance suite
+  # and the multi-process durability scenarios (`restart-during-run`,
+  # `staleClaim`) never ran. That is not hypothetical: the mirror was missing
+  # #819's whole-value raw-typed rule from 2026-07-05, so this workflow was red on
+  # every push to `main` from 2026-06-13 until openwop-examples#19, and nobody
+  # could see what the suite would have said. Separate jobs mean a mirror drift
+  # reds exactly one job and the host lane still reports.
+  expansion-drift-guard:
+    name: RFC 0013 expansion-algorithm drift guard (conformance vs in-memory host)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check out openwop-examples (reference hosts)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-examples
+          path: examples-ext
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # Plain node reading two files — no npm install, no host boot.
+      - name: Workflow-chain expansion drift guard (vs openwop-examples host)
+        env:
+          OPENWOP_EXAMPLES_DIR: examples-ext
+        run: node scripts/check-workflow-chain-expansion-sync.mjs
+
   host-conformance:
     name: SQLite host — full conformance + multi-process + SDK smoke
     runs-on: ubuntu-latest
@@ -64,15 +98,6 @@ jobs:
       - name: Install conformance suite
         working-directory: conformance
         run: npm ci
-
-      # RFC 0013 expansion-algorithm drift guard — conformance/ canonical copy
-      # vs the zero-deps mirror in the in-memory host (now in openwop-examples,
-      # checked out at examples-ext). Moved here from the server-free local gate
-      # since the host source no longer lives in this repo.
-      - name: Workflow-chain expansion drift guard (vs openwop-examples host)
-        env:
-          OPENWOP_EXAMPLES_DIR: examples-ext
-        run: node scripts/check-workflow-chain-expansion-sync.mjs
 
       # The SDKs moved to openwop-sdks. The conformance spec-corpus-validity
       # SDK-helper block self-skips when sdk/typescript/dist is absent (its
@@ -210,7 +235,16 @@ jobs:
           # responsibility.
         run: npx vitest run --no-file-parallelism
 
+      # SP-01 follow-up (2026-08-18): run even when the strict suite above
+      # reds. Moving the drift guard to its own job un-masked the strict
+      # suite — and immediately showed that the strict suite was in turn
+      # masking THIS step, which is the durability signal (`restart-during-run`,
+      # `staleClaim`) and the one nothing else covers. A step that only runs
+      # when everything upstream is green reports nothing on exactly the days
+      # you need it. The job still fails when either step fails; both now say
+      # what they found.
       - name: Multi-process scenarios (restart-during-run + staleClaim)
+        if: '!cancelled()'
         working-directory: conformance
         env:
           OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}

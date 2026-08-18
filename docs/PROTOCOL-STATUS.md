@@ -203,6 +203,11 @@ The TypeScript / Python / Go SDKs live in the [`openwop-sdks`](https://github.co
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
+| Workflow-engine reference (in-process, 1.29.0) | 2059 | 0 | 89 | 0 | 2148 | 95.9% |
+| Postgres reference | 1848 | 0 | 115 | 0 | 1963 | 94.1% |
+| SQLite reference (strict) | 1826 | 0 | 137 | 0 | 1963 | 93.0% |
+| In-memory reference | 1793 | 45 | 125 | 0 | 1963 | 91.3% |
+| Python reference | 1786 | 0 | 177 | 0 | 1963 | 91.0% |
 
 ## Registry Snapshot
 
