@@ -33,7 +33,7 @@
         "build": {
           "type": "string",
           "minLength": 1,
-          "description": "OPTIONAL, self-reported identifier of the ARTIFACT that executed — a container image digest is the strongest available, a build id the weakest useful one. This, not `commit`, is what a verifier needs in order to re-run the same thing."
+          "description": "OPTIONAL, self-reported identifier of what ACTUALLY EXECUTED — this, not `commit`, is what a verifier needs to re-run the same thing. Which identifier is reachable depends on when the bundle is written: a container image digest is strongest but does not exist yet for a bundle baked INTO the image at certify time; a builder-assigned build id is available during the build; a digest of the resolved dependency manifest (lockfile or resolved tree) is available at certify time and pins the closure that actually varied in the measurement behind this field. State which kind it is rather than reaching for the strongest-sounding one. See conformance-certification.md §\"A bundle attributes to a BUILD\"."
         }
       }
     },

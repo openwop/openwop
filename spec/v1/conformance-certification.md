@@ -37,7 +37,17 @@ A host MAY advertise `conformance.certificationBundleUrl` (an optional `format: 
   Consequences, stated rather than left to inference:
 
   - A bundle is evidence about **one execution of one build**. It is not evidence about a commit, and re-running "the same commit" is not a re-check unless the build is deterministic.
-  - A host SHOULD populate `host.build` with an identifier that names the artifact — a container image digest is the strongest available today, a build id the weakest useful one — and SHOULD make its builds reproducible (a lockfile-respecting install: `npm ci`, not `npm install`) so that identifier means something.
+  - A host SHOULD populate `host.build` with an identifier that names **what actually executed**, and SHOULD make its builds reproducible (a lockfile-respecting install: `npm ci`, not `npm install`) so that identifier means something.
+
+    **Which identifier depends on when the bundle is produced, and the strongest one is not always reachable** *(amended 2026-08-18 after a tier-1 host pointed out the ordering constraint)*. A bundle baked **into** the image at certify time — vendored so it is servable without a runtime recompute, which is what makes it tamper-evident — is written when no image and therefore no digest yet exists. Telling such a host to record an image digest would force it either to certify post-deploy, losing the baking property, or to ship a second revision purely to stamp one. Neither is intended. In rough order of strength, and each is only as good as what it pins:
+
+    | Identifier | Available | Pins |
+    | --- | --- | --- |
+    | container image digest | after the build | the exact artifact — strongest, but not at bake time |
+    | builder-assigned build id | during the build | that build, if the builder's ids are unique and retained |
+    | digest of the **resolved dependency manifest** (e.g. the lockfile, or the resolved tree) | at certify time | the dependency closure — the thing that actually varied in the measurement above |
+
+    The last row deserves emphasis, because it is available exactly when a baked bundle is written **and** it addresses the observed failure directly: what differed between the two builds of one commit was the resolved closure, not the image identity per se. A host whose install respects its lockfile has `commit` + lockfile digest jointly determining the closure; a host whose install does not has neither pinning anything, which is the defect. Recording *which* kind of identifier `host.build` holds is more useful than recording the strongest-sounding one.
   - A verifier re-checking a claim MUST re-run against the **same build**, not merely the same commit, or say which it did.
 
   This is a host-build property, so the spec **requires** nothing here beyond honest reporting; it is recorded because a bundle that cannot name its own build inputs is weaker evidence than its shape suggests, and the format previously implied otherwise. Same family as the dispositions RFC 0148 §A introduced: the artifact must not read as attesting more than it observed.
