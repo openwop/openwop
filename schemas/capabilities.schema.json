@@ -3495,7 +3495,7 @@
     },
     "idempotency": {
       "type": "object",
-      "description": "RFC 0036 \u2014 Multi-region idempotency contract. Optional v1 advertisement. The existing `crossRegion: 'single-region'|'best-effort'|'strict'` categorical claim lives under `capabilities.idempotency.crossRegion` per spec/v1/idempotency.md \u00a7'Multi-region idempotency (annex)'. The `multiRegion` sub-block here gives a granular advertisement that hosts SHOULD pair with the categorical `crossRegion` claim.",
+      "description": "RFC 0036 \u2014 Multi-region idempotency contract. Optional v1 advertisement. The existing `crossRegion: 'single-region'|'reconciled-records'|'fenced-effects'` categorical claim lives under `capabilities.idempotency.crossRegion` (this description named the pre-RFC-0150-\u00a7D vocabulary `'best-effort'|'strict'` until 2026-08-18 \u2014 both values were RETIRED by \u00a7D and the sibling `crossRegion` enum has been correct throughout, so only this prose was wrong; a reader of it would have believed two non-values were advertisable) per spec/v1/idempotency.md \u00a7'Multi-region idempotency (annex)'. The `multiRegion` sub-block here gives a granular advertisement that hosts SHOULD pair with the categorical `crossRegion` claim.",
       "additionalProperties": true,
       "properties": {
         "supported": {

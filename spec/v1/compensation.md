@@ -179,6 +179,21 @@ says **when** the host starts an unwind and **how** it runs one:
   [Open spec gaps](#open-spec-gaps). The refusal is what a host owes in the meantime, and
   it needs no new wire surface: the host already knows which triggers it fires.
 
+  > **⚠️ Editing this refusal changes a freeze analysis elsewhere — read before you relax it
+  > (2026-08-18).** `supportedTriggers` is held under §A.1 as *non-essential*, and the
+  > reason it is non-essential is **this paragraph**: the safety hole — an author writing
+  > down an unwind guarantee that silently never fires — is already closed at registration
+  > time by the refusal above. The advert would move discovery from registration-time to
+  > authoring-time, which is ergonomics.
+  >
+  > **If this registration refusal is ever weakened or removed, that analysis inverts.**
+  > `supportedTriggers` would then be the only thing standing between an author and a
+  > silently inert policy, which makes it *essential* and clears the §A.1 carve-out on its
+  > own terms. Anyone relaxing the refusal therefore owes a re-derivation of the freeze
+  > position for the advert, not just an edit here. Recorded at the point of edit so the
+  > dependency is visible to whoever makes it, rather than living only in the reasoning
+  > that produced it.
+
   **Compatibility.** Classified a **safety-fix** under `COMPATIBILITY.md` §3, not an
   additive change: it turns a registration that previously succeeded into a
   `validation_error`. The break is the point — the accepted-then-silent path is the
