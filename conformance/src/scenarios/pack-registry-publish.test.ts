@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { gzipSync } from 'node:zlib';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
@@ -81,6 +82,14 @@ function freshPackName(scope: string = 'core'): string {
  *  impl PR will likely extend the driver with an octet-stream variant.
  *  The shape-only error-catalog tests below only need the host's first
  *  validation step (URL pattern, body-presence, etc.) to fire. */
+/**
+ * S45 — a VALID gzip stream whose decompressed size (64 MiB of zeros) exceeds
+ * the recommended registry cap (50 MB) while the wire body stays ~64 KB, so no
+ * proxy body limit is reached and the host's own decompressed-bytes cap is the
+ * only thing that can refuse it. Built once per file.
+ */
+const OVERSIZED_GZIP: Buffer = gzipSync(Buffer.alloc(64 * 1024 * 1024, 0));
+
 async function putTest(name: string, version: string, body: unknown, extraHeaders: Record<string, string> = {}) {
   const res = await driver.put(`/v1/packs-test/${encodeURIComponent(name)}/-/${encodeURIComponent(version)}.tgz`, body, {
     headers: { 'Content-Type': 'application/octet-stream', ...extraHeaders },
@@ -196,14 +205,29 @@ describe('pack-registry-publish: tarball extraction error catalog (RFC 0025)', (
 
   it('PUT with decompressed bytes exceeding the registry\'s cap MUST return 400 tarball_too_large', async () => {
     if (!(await isTestModeAdvertised())) return;
-    // A real test would build a huge gzip; for shape-only assertion we
-    // send a body large enough that any reasonable cap fires.
-    const big = Buffer.alloc(60 * 1024 * 1024, 0x1f); // 60MB
-    big[0] = 0x1f; big[1] = 0x8b; // gzip magic so it gets past body-shape check
-    const res = await putTest(freshPackName(), '1.0.0', big);
+    // S45 (2026-08-18): the cap is on DECOMPRESSED bytes (node-packs.md
+    // §"Tarball extraction", recommended default 50 MB), so the probe is a
+    // small VALID gzip stream that inflates past it — 64 MiB of zeros gzips
+    // to ~64 KB on the wire. The previous probe was a 60 MB body of fake
+    // gzip magic: a load balancer in front of the host (Cloud Run's front
+    // end caps HTTP/1 bodies at 32 MiB) answered its own HTML 413 before the
+    // host saw the request, the leg blew the 30 s budget on a normal uplink,
+    // and — because `tarball_gunzip_failed` was also accepted — a host with
+    // NO cap at all passed it. Measured by MyndHyve on `api.myndhyve.ai`.
+    // Only `tarball_too_large` is accepted now: a real gzip that inflates to
+    // 64 MiB either trips the cap or reaches the tar layer, and reaching the
+    // tar layer means the cap is absent or above 64 MiB (> the recommended
+    // default) — say so in the run record if that is a deliberate host choice.
+    const res = await putTest(freshPackName(), '1.0.0', OVERSIZED_GZIP);
     if (res.status === 404) return;
-    expect(res.status).toBe(400);
-    expect(['tarball_too_large', 'tarball_gunzip_failed'].includes(errorCode(res.json) ?? '')).toBe(true);
+    expect(
+      res.status,
+      driver.describe('node-packs.md §"Tarball extraction"', 'a valid gzip inflating past the decompressed cap MUST be refused with 400 (a 413 here means a proxy refused the wire body — this probe is ~64 KB on the wire, so that is a host/proxy misconfiguration, not the cap)'),
+    ).toBe(400);
+    expect(
+      errorCode(res.json),
+      driver.describe('node-packs.md §"Tarball extraction"', 'decompressed bytes exceeding the registry cap MUST surface tarball_too_large (recommended default cap 50 MB; this probe inflates to 64 MiB)'),
+    ).toBe('tarball_too_large');
   });
 
   it('PUT with no `pack.json` at the tarball root MUST return 400 tarball_manifest_missing', async () => {

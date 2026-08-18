@@ -152,7 +152,7 @@ describe('redaction: 401 response MUST NOT echo invalid Bearer token (NFR-7)', (
       // are observable surfaces and MUST be canary-clean.
       const res = await driver.post(
         '/v1/runs',
-        { workflowId: NOOP_WORKFLOW_ID, tenantId: 'conformance-tenant' },
+        { workflowId: NOOP_WORKFLOW_ID },
         {
           authenticated: false,
           headers: { Authorization: `Bearer ${canaryValue}` },
@@ -170,7 +170,7 @@ describe('redaction: 401 response MUST NOT echo invalid Bearer token (NFR-7)', (
   it('the marker substring alone never appears in a 401 body (universal)', async () => {
     const res = await driver.post(
       '/v1/runs',
-      { workflowId: NOOP_WORKFLOW_ID, tenantId: 'conformance-tenant' },
+      { workflowId: NOOP_WORKFLOW_ID },
       {
         authenticated: false,
         headers: { Authorization: `Bearer ${CANARY_MARKER}-direct-marker` },
@@ -204,9 +204,11 @@ describe.skipIf(SKIP_NO_NOOP)('redaction: credentialRef value MUST NOT appear in
     // §configurable echo) — but per capabilities.md §"aiProviders"
     // it MUST NOT appear in any RunEvent payload.
     const c = getCanary('byok-credential-ref');
+    // S46 (2026-08-18): no fabricated `tenantId` — the run belongs to the
+    // credential's own tenant (S41 rule). A tenant-enforcing host answered
+    // 403 to the made-up id and this leg then `return`ed, vacuously.
     const create = await driver.post('/v1/runs', {
       workflowId: NOOP_WORKFLOW_ID,
-      tenantId: 'conformance-tenant',
       configurable: { ai: { credentialRef: c.value } },
     });
     if (create.status !== 201) {
