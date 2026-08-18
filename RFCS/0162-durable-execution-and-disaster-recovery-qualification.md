@@ -89,6 +89,22 @@ fencing.** A spec that asks for fast recovery without saying this invites the da
 
 ### §D The qualification ladder
 
+> **These rungs are a THIRD axis, orthogonal to two vocabularies they will be read beside.** Naming them here
+> because the next reader will otherwise ask whether this re-mints something the corpus already has — the
+> question that folded proposed RFC 0159 into RFC 0150 §D.
+>
+> - **Scale profiles** (`minimal` / `production` / `high-throughput`) describe *how much load* a host is built
+>   for. `production-profile.md` §"Durability" is the very MUST this RFC qualifies, so that document is the most
+>   likely to be co-read — and it uses "production" for capacity, not for durability evidence. **A `minimal`
+>   host may be `durable-multi-instance`; a `high-throughput` host may be unqualified.**
+> - **`capabilities.idempotency.crossRegion`** (`single-region` / `reconciled-records` / `fenced-effects`)
+>   describes *what happens to effects across a partition*. `multi-region-qualified` sits one word from
+>   `single-region` and means something else: the crossRegion enum is a **safety posture**, this rung is
+>   **demonstrated recovery**. A host may be `fenced-effects` and hold no rung, having never run the exercises.
+>
+> Scale is capacity, `crossRegion` is effect safety, a rung is evidence. A host's position on each says nothing
+> about the other two.
+
 A host **MAY** claim a rung only with the evidence named for it. Rungs are cumulative.
 
 | rung | claim | evidence required |
@@ -97,8 +113,13 @@ A host **MAY** claim a rung only with the evidence named for it. Rungs are cumul
 | `durable-multi-instance` | a *peer* instance resumes it, not only a restart of the same one | the above, executed with the resuming instance being a different process from the accepting one |
 | `multi-region-qualified` | the above across a region boundary, with a stated RPO/RTO | the above plus a restore-from-backup and a region-evacuation exercise |
 
-9. A host **MUST NOT** claim a rung on the basis of unit tests over its storage layer alone. Claim semantics
-   asserted against a storage adapter are evidence about **the claim**, not about a live deployment.
+9. A host **MUST NOT** claim a rung on the basis of tests **in which no process was actually terminated**.
+   Claim semantics asserted without a process death are evidence about **the claim**, not about recovery.
+
+   > Reworded from "unit tests over its storage layer alone", which named the *artifact* rather than the
+   > property and was therefore satisfiable by unit-testing a lease helper instead. It also generalises: a host
+   > whose durability comes from an external orchestrator has no storage adapter to unit-test, and the earlier
+   > wording would have been trivially satisfied rather than meaningfully met.
 
 ### §E Advertisement — deliberately deferred
 
@@ -148,8 +169,13 @@ what a double-fire produces, so an end-state assertion passes on the defect it e
 
 ## Unresolved questions
 
-1. Should the recovery bound be a single scalar, or per work class (run dispatch vs compensation vs outbox)?
-   The reference host has different bounds per lane today.
+1. ~~Should the recovery bound be a single scalar, or per work class?~~ **Resolved 2026-08-18: PER WORK CLASS,
+   and §B.5 already derives it.** "The recovery bound MUST be derived from the mechanism that enforces it" —
+   and the corpus has at least two independent enforcing mechanisms (the run/dispatch claim lease,
+   `storage-adapters.md` §"Claim acquisition"; the Layer-1 idempotency record's own lease, `idempotency.md`).
+   Several mechanisms, therefore several bounds. **A single scalar would have to be the maximum, which
+   overstates recovery for every faster class — a lie by aggregation, which is the failure this RFC exists to
+   stop.** A host with one mechanism declares one bound; that is the degenerate case, not the general one.
 2. Does `multi-region-qualified` require a *tested* evacuation, or a *rehearsed* one with recorded RPO/RTO?
 3. Should §C.8's attempt bound be normative, or host-declared like the recovery bound?
 
