@@ -475,6 +475,38 @@ outage. A live-effect branch MAY execute compensation only after explicit author
 and with fresh effect IDs. The `compensation-replay-no-refire` invariant
 (`SECURITY/invariants.yaml`) is registered against `compensation-behavior.test.ts`.
 
+**What "explicit authorization" means here, and what it does not** *(clarification,
+2026-08-18 — a host implementing this asked, having found the sentence readable two
+ways, and declined to pick the reading that made it conformant)*:
+
+- It is an **RFC 0049 authorization decision** in the sense §E §"Authorization binding"
+  already defines for this document: bound to **tenant, principal, action, and
+  `planVersion`**, and audited through `authorization.decided`.
+- It is **NOT** the workflow's authored `settings.compensation.triggers` declaration.
+  A policy naming a trigger is an *author's* statement that this class of failure
+  unwinds; it binds no principal, no `planVersion`, and emits no decision. §B says so
+  from the other direction: the policy is "authored, not per-run", because "a per-run
+  caller who could lower approval scope or drop a trigger would be **authorizing their
+  own unwind**" — the document already treats the policy and the authorization as
+  different acts, and a host that reads trigger-admission as authorization has
+  collapsed them.
+
+**And what the sentence is scoped to.** It governs a branch that would execute
+compensation **for obligations corresponding to the source run's recorded ones** — the
+replay-adjacent hazard the "fresh effect IDs" half names: an inverse action re-run
+under an identity (§C) that collides with one the source already recorded, so a second
+unwind is indistinguishable from the first. It does **not** reach a branch compensating
+obligations it minted itself during its own live execution; those are that run's own
+facts and follow §B and §E unchanged — the authored policy triggers them, and approval
+is required only where `requiresApproval` says so.
+
+A host whose forks are structurally incapable of compensating a source's obligations —
+one whose compensation root resolves to the fork's own `runId`, so `collectDeclarations`
+can only ever see what the fork minted — satisfies this constraint **vacuously**, and
+should record it as such rather than as a passing control. That is a stronger position
+than a guard, because it cannot be deleted by a later edit; it is also why such a host
+needs no per-fork consent step for conformance with *this* sentence.
+
 ## §G — Security
 
 The threat model is [`SECURITY/threat-model-compensation.md`](../../SECURITY/threat-model-compensation.md).
