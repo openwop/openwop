@@ -101,15 +101,19 @@ This is a correctness safety-fix requiring a 90-day public window. New recipe st
 
 ## Conformance
 
-New scenarios:
+New scenarios (**names reconciled with the tree 2026-08-18, SP-03** — five of the seven
+landed under different file names, and listing aspirational names as though they existed
+is exactly the "a scenario exists for this" claim RFC 0148 §A forbids):
 
-- `idempotency-tenant-endpoint-scope.test.ts`;
-- `idempotency-pending-lease-recovery.test.ts`;
-- `activity-id-retry-stability.test.ts`;
-- `replay-semantic-request-digest-v2.test.ts` with cross-language fixtures;
-- `replay-recipe-history-pinning.test.ts`;
-- `multi-region-effect-ownership.test.ts`; and
-- `multi-region-stale-fence-rejected.test.ts`.
+| RFC name (as proposed) | Actual file | State |
+| --- | --- | --- |
+| `idempotency-tenant-endpoint-scope.test.ts` | `idempotency.test.ts` + `idempotencyRetry.test.ts` | Landed under existing names — the Layer-1 caller-lane legs live there; they are the registered tests for `idempotency-key-tenant-endpoint-scoped`. |
+| `idempotency-pending-lease-recovery.test.ts` | — | **Unwritten.** Reclaim needs a host seam to observe a lease crossing owners; carried in acceptance box 3. |
+| `activity-id-retry-stability.test.ts` | `effect-identity-composition.test.ts` (+ `effect-identity-cross-scope.test.ts` for §B v1.4) | Landed (suite 1.77.0 / 1.82.0). |
+| `replay-semantic-request-digest-v2.test.ts` | `semantic-digest-v2.test.ts` + `semantic-digest-vectors.test.ts` | Landed (suite 1.85.0); vectors at `conformance/vectors/semantic-request-digest-v2.json`. |
+| `replay-recipe-history-pinning.test.ts` | `replay-llm-cache-key.test.ts` + `replay-llm-cache-key-portable.test.ts` | Recipe pinning is asserted there; no separate history file. |
+| `multi-region-effect-ownership.test.ts` | `multi-region-idempotency.test.ts` + `multi-region-idempotency-behavior.test.ts` | Landed. |
+| `multi-region-stale-fence-rejected.test.ts` | `multi-region-effect-vocabulary.test.ts` | Vocabulary + stale-owner legs landed (suite 1.78.0); proving effect *fencing* still needs an observable effect sink — acceptance box 4. |
 
 Shape/digest vectors are always-on. Live pending recovery and multi-region behavior gate on their advertised profile, but an advertising host **MUST** execute them in strict certification. Reference hosts include SQLite scope tests and Postgres partition/fencing tests. `INTEROP-MATRIX.md` records recipe and recovery strategy.
 
@@ -140,7 +144,7 @@ Publish cross-language golden vectors before host changes. Implement Layer-1 sco
 - [ ] Layer-1 scope and pending lease scenarios pass on SQLite and Postgres hosts. (Carried — §A's keyspace `MUST NOT` landed with a tier-1 host's merged fix as witness, but the pending-lease scenarios are unwritten and the reference hosts live in `openwop-examples`.)
 - [ ] Partition tests prove stale owners cannot issue effects under `fenced-effects`. (Carried — gap register row for §D. The existing `simulate-partition` seam covers record convergence only; proving effect fencing needs an observable effect sink, which is itself the record-vs-effect conflation §D exists to end.)
 - [ ] v1 inventory, migrator, dual-read tests, and version runbook published. (Inventory landed — `docs/EFFECT-IDENTITY-V1-INVENTORY.md`, and it found the migrator has nothing to operate on: zero hosts implement the v1 recipe. Runbook landed in `version-negotiation.md`. Dual-read tests are carried and currently untestable for the same reason the migrator is unneeded.)
-- [ ] Threat models, invariants, OTel vocabulary, CHANGELOG, and interop matrix updated. (Invariants and CHANGELOG landed — three new invariants across §A/§B/§D. **OTel vocabulary landed 2026-08-16** — `observability.md` §"Idempotency / cross-region metrics": `openwop.idempotency.reclaims_total`, `openwop.idempotency.stale_fence_rejections_total`, `openwop.replay.effect_suppressions_total` (Experimental) + the §F attribute rule (no caller/effect keys or request content in telemetry; truncated keyed `key_hash` MAY). Interop matrix carried — no host advertises `fenced-effects` or `recorded-outcome`, so there is no row to write.)
+- [ ] Threat models, invariants, OTel vocabulary, CHANGELOG, and interop matrix updated. (Invariants and CHANGELOG landed — **corrected 2026-08-18 (SP-03)**: this box claimed "three new invariants across §A/§B/§D" while only two were registered — §B `logical-effect-id-retry-stable` and §D `multi-region-stale-owner-no-effect`. §A's were named in the §A text and never landed. Both are registered now: `idempotency-key-tenant-endpoint-scoped` (protocol tier — the authenticated-tenant/routed-endpoint key tuple plus the digest-mismatch rule) and `idempotency-store-no-host-generated-keys` (reference-impl tier, gap G8 — the keyspace property is not black-box observable). Four total. **OTel vocabulary landed 2026-08-16** — `observability.md` §"Idempotency / cross-region metrics": `openwop.idempotency.reclaims_total`, `openwop.idempotency.stale_fence_rejections_total`, `openwop.replay.effect_suppressions_total` (Experimental) + the §F attribute rule (no caller/effect keys or request content in telemetry; truncated keyed `key_hash` MAY). Interop matrix carried — no host advertises `fenced-effects` or `recorded-outcome`, so there is no row to write.)
 
 ## References
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.4 (2026-08-12).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.5 (2026-08-18).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). v1.5 lands RFC 0150 §A: the Layer-1 record shape (digest, state, lease), atomic reclaim of an expired pending owner, the keyspace-separation `MUST NOT` for host-generated identifiers, and — new — the canonical **`idempotency_key_mismatch`** error for a same-key/different-body replay, which the spec had never named (SP-03, additive: it names an error hosts already had to return and states a shape they already had to keep). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -53,6 +53,80 @@ A server receiving an `Idempotency-Key`:
 4. SHOULD bound cache size and evict oldest entries on overflow; an evicted entry causes the server to treat the next duplicate request as a fresh request (which MAY produce a different result).
 5. MUST NOT cache responses for failed requests where the failure was a malformed key or auth failure (i.e., HTTP `400` `validation_error`, `401`, `403`); those failures aren't idempotent retries to begin with.
 6. (RFC 0093) MUST cache **final** outcomes — `2xx` and non-retryable `4xx` — for the dedup window. Retryable-class responses (`429`, `500`, `502`, `503`, `504`) MUST NOT be served from cache to a same-key retry: the retry MUST attempt re-execution (subject to the §"Concurrent duplicates" in-flight rule below), and a later successful execution MUST replace any recorded retryable-class outcome so subsequent duplicates replay the success. Hosts MAY record retryable-class outcomes for observability — recording is not replaying.
+
+### Record shape, digest, and lease (RFC 0150 §A)
+
+The rules above say what a server MUST *do*; this says what it MUST *keep*, because
+several of them are unimplementable without it (rule 6 cannot distinguish a
+retryable-class outcome from a final one without a state, and the mismatch rule
+below cannot fire without a digest).
+
+A Layer-1 record MUST be keyed by `(authenticatedTenantId, canonicalEndpointId,
+callerIdempotencyKey)`. **The tenant identity MUST come from the authenticated
+context, never from the request body** — a body-supplied tenant lets a caller
+address another tenant's records. `canonicalEndpointId` is the routed
+operation (e.g. `POST /v1/runs`), not the raw path, so path-parameter spellings
+of one operation share a keyspace.
+
+Each record MUST persist:
+
+| Field | Requirement |
+| --- | --- |
+| `requestDigest` | A digest of the canonicalized request body, sufficient to detect a different body under the same key. |
+| `state` | One of `pending`, `completed`, `retryable-failure`, `terminal-failure`. `completed` and `terminal-failure` are the **final** outcomes rule 6 caches; `retryable-failure` MUST NOT be replayed to a same-key retry. |
+| lease owner + expiry | Which executor holds a `pending` record and until when. |
+| terminal response metadata | Status, headers (excluding `Set-Cookie`), and body for a final outcome. |
+
+A `pending` record whose lease has expired — a crashed or stalled owner — **MAY**
+be reclaimed. A host that reclaims **MUST** do so atomically (compare-and-set on
+the lease owner/expiry): two executors MUST NOT both conclude they own it, which
+is the same duplicate-effect failure Layer 1 exists to prevent.
+
+**A different `requestDigest` under the same scoped key MUST fail with
+`409 idempotency_key_mismatch` and MUST NOT return the cached body.** Returning
+the cached body would answer a question the caller did not ask; treating it as a
+fresh request would duplicate the effect. The envelope is the canonical flat
+shape — `{ "error": "idempotency_key_mismatch", "message": "…" }`. This is
+distinct from `idempotency_in_flight` below: *mismatch* is a different body under
+a settled key, *in-flight* is the same key still executing.
+
+> **Naming note (2026-08-18, SP-03).** The spec named no mismatch error until
+> now, so implementations diverged: `grpc-transport.md` mapped both
+> `idempotency_key_conflict` and `idempotency_key_mismatch` (two spellings, one
+> concept, in a single table row), the published TypeScript SDK's
+> `HTTP_ERROR_CODES` carried `idempotency_key_mismatch`, the SQLite reference
+> host emitted `idempotency_key_conflict`, and a tier-1 host emitted
+> `idempotency_key_replay_mismatch`. `idempotency_key_mismatch` is canonical: it
+> is the only spelling already present in more than one shipped artifact (the
+> gRPC mapping and the published SDK), and it names what actually mismatched.
+> `idempotency_key_conflict` is **retired** — "conflict" reads as the in-flight
+> case, which has its own code. Hosts emitting either other spelling SHOULD move;
+> the suite asserts `idempotency_key_mismatch`.
+
+### Keyspace separation (RFC 0150 §A)
+
+A host **MUST NOT** store host-generated identifiers — internal locks, scheduler
+fire-once slots, or any key the host mints for itself — in the Layer-1
+idempotency store. Caller-supplied and host-generated identifiers **MUST NOT**
+share a keyspace.
+
+This does not follow from the key tuple: a host can key its HTTP lane exactly as
+required and still keep daemon keys in the same table under a bare primary key,
+because those keys never entered the tuple's keyspace at all. `Idempotency-Key`
+is caller-controlled and validated nowhere, so a shared table lets any
+authenticated tenant send `Idempotency-Key: schedule-fire:<jobId>:<slot>`, win
+the scheduler's row, and make a scheduled job **skip** — privilege escalation
+through an unvalidated header, reported by a tier-1 host that had this shape.
+
+The failure semantics force the separation independently: the caller lane MUST
+distinguish `retryable-failure` so a failed attempt releases and a retry may
+re-execute, while a fire-once daemon slot needs the opposite — releasing it on
+failure lets another instance re-fire work the first may have half-performed.
+Two concepts with contradictory release rules cannot correctly share one table.
+
+Caller keys are caller-controlled and routinely embed customer identifiers.
+Per RFC 0150 §F, logs and spans **MUST NOT** expose them; a truncated,
+per-boot-salted keyed hash MAY be exposed instead.
 
 ### Concurrent duplicates
 
