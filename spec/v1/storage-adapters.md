@@ -157,6 +157,120 @@ interface PendingDoc {
 
 ---
 
+## Claim acquisition
+
+> **Added 2026-08-18 (SP-04).** Four artifacts have cited `storage-adapters.md` §"Claim acquisition" since RFC 0009 — `production-profile.md` §Durability ("Storage adapters MUST satisfy `storage-adapters.md` lease and event-log invariants, including stale-claim recovery"), RFC 0009's scenario-citation table, and the docstrings of `staleClaim.test.ts` and `restart-during-run.test.ts` — and the section did not exist. The contract below is the one the SQLite reference host and the tier-1 host already implement and the one those two scenarios already assert; writing it down resolves the citations rather than introducing a new requirement.
+
+A host that runs more than one process against shared storage MUST NOT execute a
+run in two processes at once, and MUST NOT strand a run whose executing process
+died. Both follow from one mechanism: an expiring **claim** (a lease) on the run,
+renewed while the holder executes.
+
+This section is normative for hosts advertising `capabilities.production.supported: true`
+(`production-profile.md` §Durability). A single-process host with no shared storage
+cannot violate it and need not implement it.
+
+### The claim record
+
+A run MUST carry a claim holder identity and a claim expiry:
+
+| Field | Requirement |
+| --- | --- |
+| holder id | The process/instance identity currently executing the run. `null` (or absent) when unclaimed. |
+| expiry | The wall-clock instant after which the claim is **stale** and MAY be taken by another process. `null` (or absent) when unclaimed. |
+
+The field names are the adapter's own — the reference SQLite adapter uses
+`runs.claim_holder_id` / `runs.claim_expires_at`. What is normative is that both
+facts are durable and are read and written in the same store as the run, so a
+process that cannot see the run cannot claim it either.
+
+### Acquisition
+
+Acquiring a claim MUST be **atomic** — a single compare-and-set against the
+durable store, not a read followed by a write. The condition is "unclaimed OR
+expired":
+
+```sql
+-- The reference SQLite adapter (examples/hosts/sqlite/src/server.ts), verbatim in shape:
+UPDATE runs SET claim_holder_id = ?, claim_expires_at = ?
+  WHERE run_id = ?
+    AND (claim_holder_id IS NULL OR claim_expires_at < ?)
+```
+
+A host MUST treat "zero rows affected" as **lost the race** and MUST NOT execute
+the run. Two processes MUST NOT both conclude they hold the claim: a read-then-write
+acquisition permits exactly that interleaving and is not conformant, however
+short the window.
+
+### Heartbeat and TTL
+
+While executing, the holder MUST renew its own claim's expiry at an interval
+strictly shorter than the TTL, so a live holder never appears stale. The
+reference adapter defaults to a `30s` TTL renewed every `10s`; the conformance
+scenario drives `2s` / `500ms`. Neither number is normative — the **ratio** is:
+renewal interval MUST be less than the TTL, with enough margin to survive a
+scheduling delay or a slow store round-trip.
+
+Renewal MUST be scoped to the holder (`WHERE claim_holder_id = <me>`), so a
+process whose claim was already stolen cannot extend a claim it no longer holds.
+
+The TTL is the bound on how long a run stays stranded after a process dies, so a
+host SHOULD make it configurable and SHOULD document its default.
+
+### Stale reclaim
+
+A claim whose expiry has passed is **stale**. Another process MAY acquire it
+through the same atomic acquisition above — no separate "steal" path, and no
+coordination with the dead holder, which by definition cannot participate.
+
+A host MUST NOT reclaim a claim that has not expired, even when the holder looks
+unhealthy by some other signal. Expiry is the only reclaim authority; adding a
+second one reintroduces the double-execution the claim exists to prevent.
+
+### Resume on startup
+
+On boot, a host MUST look for runs that are non-terminal and unclaimed-or-stale,
+and MUST attempt to claim and resume them. Without this, a run whose only
+executing process died stays stranded until some unrelated request happens to
+touch it — the run is durable, and stalled, which is the failure
+`production-profile.md` §Durability exists to exclude.
+
+Resume MUST go through the same atomic acquisition: a booting process races other
+live processes, and losing the race is the correct outcome, not an error.
+
+### Event-log invariants under claim transfer
+
+A claim transfer MUST NOT perturb the run's event log:
+
+- The log is append-only across the transfer. The resuming process MUST NOT
+  rewrite, renumber, or truncate events the previous holder appended.
+- Sequence numbers MUST remain monotonic across the transfer — the resuming
+  process continues the sequence, it does not restart it.
+- A transfer is not itself a run event. Claim churn is host-operational state;
+  emitting it into the run's log would make replay depend on which process
+  executed, which `replay.md` forbids.
+- The terminal-event rule holds regardless of which process appends it
+  (`observability.md` §"Run lifecycle events", including the durability boundary:
+  a terminal status MUST NOT be reported before its terminal event is appended).
+
+### Conformance
+
+`staleClaim.test.ts` and `restart-during-run.test.ts` assert this contract across
+two real processes over shared storage: process A starts a run and is `SIGKILL`ed
+without releasing its claim; after the TTL elapses, process B boots against the
+same store, resumes the run through resume-on-startup, and the run reaches a
+terminal status observable on B's HTTP surface — with A's events intact and the
+sequence continuous.
+
+Both are `@multi-process` and `@timing-sensitive`: they spawn hosts and depend on
+a configurable TTL, so they are opt-in (`OPENWOP_RUN_STALE_CLAIM=1`, with
+`OPENWOP_STALE_CLAIM_HOST_DIR` naming a host package that exposes
+`OPENWOP_CLAIM_TTL_MS` / `OPENWOP_HEARTBEAT_INTERVAL_MS`). A host advertising
+`capabilities.production.supported: true` SHOULD run them; they are the only
+executing witness of this section.
+
+---
+
 ## Naming and back-compat
 
 The original v1 type + class names carried a `Firestore-` prefix because Firestore was the only initial implementation:
