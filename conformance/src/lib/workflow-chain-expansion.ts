@@ -306,6 +306,26 @@ export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): Expand
 // If it is gated on an advertised capability, it goes below.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── Begin the MIRRORED COMPENSATION pass ───────────────────────────────────
+//
+// SP-01 (2026-08-18): this pass is a SECOND byte-mirrored region, gated by
+// `scripts/check-workflow-chain-expansion-sync.mjs` alongside the core above.
+//
+// It sits below "End of the MIRRORED CORE" because it composes on the core's
+// OUTPUT rather than editing it — but unlike the capability-gated surfaces that
+// follow (RFC 0124 deferred parameters, RFC 0133 sub-chains, which a host that
+// does not advertise them MUST REFUSE rather than implement), carrying a
+// chain's compensation declaration is UNCONDITIONAL: `compensation.md`
+// §"Workflow policy" makes the declaration descriptive, so a host that does not
+// advertise `capabilities.compensation` still MUST carry it verbatim and refuse
+// only a chain-level POLICY (`capability_required`). Unconditional ⇒ genuinely
+// mirrorable ⇒ gated. RFC 0157's own commit claimed this pass was already
+// "CI-gated against the reference host"; it was not — the gate stopped at the
+// core sentinel — so the mirror never received it. Anything added between the
+// two sentinels below MUST be mirrored in the reference host — that is the
+// whole RFC 0157 unit: the types, the two error classes, the helpers, and
+// `carryCompensation` / `expandChainWithCompensation`.
+
 // ---------------------------------------------------------------------------
 // RFC 0157 (RFC 0013 revision × RFC 0151 §B) — chain fragments carry
 // compensation.
@@ -524,6 +544,8 @@ export function expandChainWithCompensation(
   const carried = carryCompensation(chain, expanded, ctx, parentSettingsCompensation);
   return { ...expanded, nodes: carried.nodes, settingsCompensation: carried.settingsCompensation };
 }
+
+// ─── End of the MIRRORED COMPENSATION pass ──────────────────────────────────
 
 // ---------------------------------------------------------------------------
 // RFC 0124 (WCP4) — Portable per-run parameter deferral.

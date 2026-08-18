@@ -157,12 +157,27 @@ function parseSdkParity() {
   return [];
 }
 
+// SP-02 (2026-08-18): the header match was `line.startsWith('| Host | Passed | …')`
+// — an UNPADDED spelling. `INTEROP-MATRIX.md` pads its table cells (markdown
+// formatters do; the pass-rate header there reads
+// `| Host                            | Passed | …`), so this parser matched
+// nothing, `interopRows` was always `[]`, and the "Reference Host Conformance
+// Evidence" section of the generated `PROTOCOL-STATUS.md` has been an empty
+// table with a header and no rows — a DEAD section that `--check` happily
+// confirmed, because the generator and the doc agreed on emptiness.
+// Whitespace-tolerant now, and `generateStatus()` FAILS when the parse comes
+// back empty (see the non-vacuity guard at its call site) so the next time the
+// source table is renamed or reformatted the gate reds instead of silently
+// emptying the section.
+const INTEROP_PASS_RATE_HEADER =
+  /^\|\s*Host\s*\|\s*Passed\s*\|\s*Failed\s*\|\s*Skipped\s*\|\s*Todo\s*\|\s*Total\s*\|\s*Pass rate/;
+
 function parseInteropPassRates() {
   const text = read('INTEROP-MATRIX.md');
   const rows = [];
   let inPassRateTable = false;
   for (const line of text.split('\n')) {
-    if (line.startsWith('| Host | Passed | Failed | Skipped | Todo | Total | Pass rate')) {
+    if (INTEROP_PASS_RATE_HEADER.test(line)) {
       inPassRateTable = true;
       continue;
     }
@@ -407,6 +422,17 @@ function generateStatus() {
   const rfcs = parseRfcs();
   const sdkRows = parseSdkParity();
   const interopRows = parseInteropPassRates();
+  // SP-02 non-vacuity guard: the "Reference Host Conformance Evidence" section
+  // is only meaningful if the source table actually parsed. An empty parse is a
+  // parser/source mismatch (that is exactly how this section died), never a
+  // legitimate state — INTEROP-MATRIX.md carries reference-host rows.
+  if (interopRows.length === 0) {
+    throw new Error(
+      'parseInteropPassRates() returned no rows — the INTEROP-MATRIX.md pass-rate table did not parse.\n' +
+        `Expected a header matching ${INTEROP_PASS_RATE_HEADER} followed by 7-cell rows whose host name contains "reference".\n` +
+        'Fix the parser or the source table; do NOT let the generated section go empty (SP-02).',
+    );
+  }
   const rfcStatusCounts = rfcs.reduce((acc, rfc) => {
     acc[rfc.status] = (acc[rfc.status] ?? 0) + 1;
     return acc;
