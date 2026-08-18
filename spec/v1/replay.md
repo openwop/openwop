@@ -485,6 +485,35 @@ Requirements:
   what a host does with *node* effects on replay and makes no claim about host-level
   fan-out.
 
+> **Prior art (added 2026-08-18).** This is not a new constraint invented for OpenWOP;
+> it is a named pattern that predates it. Martin Fowler's *Event Sourcing* §"External
+> Updates" states the failure mode directly — *"those external systems don't know the
+> difference between real processing and replays"* — and prescribes the same fix this
+> section requires, at the same place: a **Gateway** that "should handle that
+> distinction by having a reference to the event processor and checking the whether it's
+> in replay mode before passing the external call off to the outside world."
+> Suppression at the boundary, unconditionally.
+>
+> **The obvious alternative is a dead end, and it was checked rather than assumed.** A
+> survey of "deliver the event anyway, tag it `isReplay`, let the receiver filter" found
+> that pattern **only for internal observability sinks** — Azure Durable Functions
+> stamps `isReplay` on its telemetry so operators can exclude replayed spans from
+> queries. No surveyed system tags an *external* delivery and sends it. That is why this
+> section is unconditional rather than gated on a capability or a delivery flag: a gate
+> would have been the novel choice, not the conservative one.
+>
+> **Why OpenWOP faces this at all, when Temporal and Durable Functions do not.** Their
+> replay re-reads **one log in place** — the recorded region is read-only and nothing is
+> appended for already-recorded steps — so the question never arises. OpenWOP's
+> `POST /v1/runs/{runId}:fork` is a different topology: a **new `runId` with a second
+> log** that must reproduce the first. "Read, don't write" is therefore unavailable to
+> us, and byte-equivalence necessarily means re-emission — which is what creates the
+> outbound exposure this section closes. The nearest precedent for the strictness is
+> Temporal's non-determinism error, where a replay producing a command sequence that
+> does not match recorded history is an error rather than an accepted variant; a replay
+> whose log is *shorter* than history fails there too, which is caveat 5's position
+> reached independently.
+>
 > **Why this is stated separately.** The principle — replay MUST NOT re-fire external
 > effects — was already consistent across `replay.md`, `capabilities.md`
 > (`sideEffectSuppression: "none"` is "not permission to re-fire") and
