@@ -20,7 +20,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { verifyBundle, verifyBundleProfile, PROFILE_FLOOR_SCENARIOS } from '../lib/profiles.js';
+import { SCENARIOS_DIR } from '../lib/paths.js';
 
 /** Derives `openwop-core` and `openwop-stream-sse` (transports omitted ⇒ all). */
 const streamingDiscovery = {
@@ -135,5 +138,67 @@ describe('RFC 0148 §C — floor enforcement is not vacuous', () => {
     for (const { profile, scenario } of all) {
       expect(scenario, `${profile} floor cites a non-scenario filename`).toMatch(/\.test\.ts$/);
     }
+
+    // 2026-08-18: this leg's NAME promised "files that exist" and it only
+    // matched the `.test.ts` suffix — a string check wearing an existence
+    // check's name. The phantom `audit-log-verification.test.ts` floor row sat
+    // in `openwop-core-standard` until `--certify` hit it against a live host,
+    // because nothing here opened the directory.
+    if (SCENARIOS_DIR === null) return; // published layout ships src/, but stay honest if it ever does not
+    const dir = SCENARIOS_DIR as string;
+    const missing = all
+      .filter(({ scenario }) => !existsSync(join(dir, scenario)))
+      .map(({ profile, scenario }) => `${profile} → ${scenario}`);
+    expect(
+      missing,
+      'a floor cites a scenario file that does not exist — that requirement can never be satisfied, ' +
+        'so the profile can never certify, for a reason unrelated to any host',
+    ).toEqual([]);
+  });
+
+  it('no floor scenario is corpus-only — a floor must be provable from the published package', () => {
+    // openwop-app's suggestion, and it is right that this be a red test rather
+    // than a paragraph: the failure mode is SOMEONE LATER adding a corpus
+    // self-check to a floor, and prose in a PR body will not be in front of
+    // them.
+    //
+    // A scenario that can only run in a repo checkout (it reads `spec/` or
+    // `RFCS/` through `V1_DIR`) records `blocked` in the published layout,
+    // where the package ships no corpus by design. `blocked` is correct there
+    // — RFC 0148 §A defines it as a missing dependency — but a `blocked`
+    // requirement in a claimed profile invalidates that profile. So a
+    // corpus-only scenario in a floor makes the profile UNCERTIFIABLE from the
+    // npm tarball, permanently, for a reason no host can fix. It is the mirror
+    // of the phantom-row trap above: that one named a file that does not
+    // exist, this one names a file that cannot execute where certification is
+    // measured.
+    if (SCENARIOS_DIR === null) return;
+    const dir = SCENARIOS_DIR as string;
+
+    /** Every `it`/`test` in the file is V1_DIR-guarded, or every `describe` is. */
+    const isCorpusOnly = (source: string): boolean => {
+      if (!source.includes('V1_DIR')) return false;
+      const guard = /\(V1_DIR === null\)/;
+      const its = [...source.matchAll(/\b(?:it|test)(\.skipIf\([^)]*\))?\s*\(/g)];
+      const describes = [...source.matchAll(/\bdescribe(\.skipIf\([^)]*\))?\s*\(/g)];
+      const allItsGuarded = its.length > 0 && its.every((m) => guard.test(m[1] ?? ''));
+      const allDescribesGuarded = describes.length > 0 && describes.every((m) => guard.test(m[1] ?? ''));
+      return allItsGuarded || allDescribesGuarded;
+    };
+
+    const offenders = Object.entries(PROFILE_FLOOR_SCENARIOS)
+      .flatMap(([profile, floor]) => floor.required.map((scenario) => ({ profile, scenario })))
+      .filter(({ scenario }) => {
+        const path = join(dir, scenario);
+        return existsSync(path) && isCorpusOnly(readFileSync(path, 'utf8'));
+      })
+      .map(({ profile, scenario }) => `${profile} → ${scenario}`);
+
+    expect(
+      offenders,
+      'a profile floor cites a CORPUS-ONLY scenario (all of its tests are guarded on `V1_DIR === null`). ' +
+        'It records `blocked` in the published layout, so that profile can never certify from the npm ' +
+        'tarball — no host can fix it. Keep corpus self-checks out of floors.',
+    ).toEqual([]);
   });
 });
