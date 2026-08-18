@@ -30,6 +30,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
@@ -38,6 +39,17 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 
 const GATE = 'openwop-self-hosted-runner';
+
+// S40 (2026-08-18): every registration / dispatch id carries a per-run nonce. The
+// seam drives the host's REAL runner registry + `{runId, stepId}` result store
+// (host-sample-test-seams.md §19), so fixed ids (`runner_a_1`, `run_idem`/`step_1`)
+// collide with the previous certification run on any host whose store outlives
+// the process: the second run's FIRST dispatch is already `deduped:true` and the
+// at-most-once leg no longer proves anything, and re-registering a fixed runnerId
+// may be refused. Fresh ids per run keep both legs non-vacuous on a durable host.
+const NONCE = randomUUID().slice(0, 8);
+const SUBJECT_A = `subject_A_${NONCE}`;
+const SUBJECT_B = `subject_B_${NONCE}`;
 
 interface JsonSchema {
   properties?: Record<string, JsonSchema>;
@@ -155,15 +167,15 @@ describe('self-hosted-runner: behavioral (seam-gated, soft-skip 404)', () => {
     // MUST NOT fall back to B's runner (subject-first isolation); with no runner
     // for A the dispatch MUST fail with the retriable `runner_unavailable`.
     const reg = await driver.post(REGISTER, {
-      runnerId: 'runner_b_1',
-      subject: 'subject_B',
+      runnerId: `runner_b_${NONCE}`,
+      subject: SUBJECT_B,
       capabilities: { providers: ['anthropic'] },
     });
     if (reg.status === 404) return; // seam unwired — soft-skip
 
     const res = await driver.post(DISPATCH, {
-      subject: 'subject_A',
-      runId: 'run_iso',
+      subject: SUBJECT_A,
+      runId: `run_iso_${NONCE}`,
       stepId: 'step_0',
       seq: 0,
       kind: 'model',
@@ -189,15 +201,15 @@ describe('self-hosted-runner: behavioral (seam-gated, soft-skip 404)', () => {
 
   it('a redelivered {runId, stepId} dispatch is dropped, not re-executed (at-most-once)', async () => {
     const reg = await driver.post(REGISTER, {
-      runnerId: 'runner_a_1',
-      subject: 'subject_A',
+      runnerId: `runner_a_${NONCE}`,
+      subject: SUBJECT_A,
       capabilities: { providers: ['anthropic'] },
     });
     if (reg.status === 404) return;
 
     const frame = {
-      subject: 'subject_A',
-      runId: 'run_idem',
+      subject: SUBJECT_A,
+      runId: `run_idem_${NONCE}`,
       stepId: 'step_1',
       seq: 0,
       kind: 'model',

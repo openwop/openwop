@@ -12,6 +12,7 @@
  *   openwop-conformance --filter discovery               # category filter
  *   openwop-conformance --base-url ... --api-key ... --filter "interrupt|cancellation"
  *   openwop-conformance --base-url ... --api-key ... --certify out.json   # RFC 0089 bundle
+ *   openwop-conformance --base-url ... --api-key ... --max-workers 4    # cap parallel scenario files
  *
  * Environment variables override flags (per the conformance harness's
  * existing convention):
@@ -55,6 +56,13 @@ interface ParsedArgs {
   /** RFC 0089 — emit a conformance certification bundle to this path. */
   readonly certify: string | undefined;
   readonly bundleVersion: '1' | '2';
+  /**
+   * S43 (2026-08-18) — cap on concurrently running scenario FILES, forwarded to
+   * vitest `--maxWorkers`. Unset = vitest's default (one worker per CPU), which
+   * hammers a rate-limited production origin with ~460 files at once and turns
+   * `429`s into spurious reds. Env: `OPENWOP_MAX_WORKERS`.
+   */
+  readonly maxWorkers: number | undefined;
 }
 
 function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -67,6 +75,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let implVersion: string | undefined;
   let certify: string | undefined;
   let bundleVersion: '1' | '2' = '1';
+  let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
@@ -121,6 +130,9 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--certify':
         certify = nextValue();
         break;
+      case '--max-workers':
+        maxWorkers = parseMaxWorkers(nextValue(), '--max-workers');
+        break;
       default:
         if (arg.startsWith('-')) {
           // Unknown flag — pass through to vitest by ignoring here.
@@ -128,7 +140,34 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     }
   }
 
-  return { baseUrl, apiKey, offline, filter, help, impl, implVersion, certify, bundleVersion };
+  return {
+    baseUrl,
+    apiKey,
+    offline,
+    filter,
+    help,
+    impl,
+    implVersion,
+    certify,
+    bundleVersion,
+    maxWorkers,
+  };
+}
+
+/** Parse a `--max-workers` / `OPENWOP_MAX_WORKERS` value: a positive integer, else exit 2. */
+function parseMaxWorkers(raw: string | undefined, source: string): number | undefined {
+  if (raw === undefined || raw === '') return undefined;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1) {
+    process.stderr.write(`${source} must be a positive integer (got '${raw}')\n`);
+    process.exit(2);
+  }
+  return n;
+}
+
+/** The vitest argv fragment for the resolved worker cap (empty when uncapped). */
+function maxWorkersArgs(maxWorkers: number | undefined): string[] {
+  return maxWorkers === undefined ? [] : ['--maxWorkers', String(maxWorkers)];
 }
 
 const HELP_TEXT = `openwop-conformance — run the openwop conformance suite against a server
@@ -153,6 +192,10 @@ Certification (RFC 0089):
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
                         from "checked and it holds". See the note it prints.
+  --max-workers <n>     Cap concurrently running scenario files (vitest --maxWorkers).
+                        Default: one worker per CPU. Use a small number against a
+                        rate-limited production origin so 429s don't read as failures.
+                        (env: OPENWOP_MAX_WORKERS)
   --certify <out.json>  Generate a machine-readable conformance certification
                         bundle: fetch /.well-known/openwop (captured verbatim +
                         SHA-256), derive claimedProfiles from it, run the suite
@@ -306,6 +349,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     resolvePath(conformanceRoot, 'vitest.config.ts'),
     '--reporter=json',
     `--outputFile=${reportFile}`,
+    ...maxWorkersArgs(args.maxWorkers),
   ];
   const runResult = spawnSync('npx', vitestArgs, { cwd: conformanceRoot, env, stdio: 'inherit' });
   if (runResult.error) {
@@ -605,6 +649,7 @@ async function main(): Promise<never> {
   if (args.filter) {
     vitestArgs.push('--testNamePattern', args.filter);
   }
+  vitestArgs.push(...maxWorkersArgs(args.maxWorkers));
 
   const result = spawnSync('npx', ['vitest', ...vitestArgs], {
     cwd: conformanceRoot,
