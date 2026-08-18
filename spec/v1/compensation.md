@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compensation and Partial-Failure Profile
 
-> **Status: Draft · v1.x (2026-08-16; §C/§E/§G prose landed 2026-08-16) — RFC 0151 `Accepted`.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. (2026-08-16: §B gained the workflow-level policy, `settings.compensation`.) Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x (2026-08-18; §C/§E/§G prose landed 2026-08-16; SP-11a landed the `inputMapping` value grammar, the unfired-trigger registration refusal, and the healthy-run `none` rule 2026-08-18) — RFC 0151 `Accepted`.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. (2026-08-16: §B gained the workflow-level policy, `settings.compensation`.) Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ## Why this exists
 
@@ -57,6 +57,35 @@ workflow node (`workflow-definition.schema.json`):
   already in the event log). Prompt or model regeneration MUST NOT construct a
   compensation input during replay: an inverse built from a re-inferred value is not
   the inverse of what was actually done.
+
+  **Value grammar** *(added 2026-08-18 — SP-11a; the rule above said where values come
+  from and never said what a value looks like, so two hosts could read the same mapping
+  differently).* An `inputMapping` value is either a literal (any JSON that contains no
+  reference token) or a **reference**, which MUST be one of exactly two forms:
+
+  | Form | Resolves to |
+  | --- | --- |
+  | `${nodes.<nodeId>.output.<port>}` | The recorded output `<port>` of the forward node `<nodeId>` **as it was committed** — read from the event log, never recomputed. |
+  | `${inputs.<name>}` | The run's recorded input `<name>`. |
+
+  A whole-value reference (a string that is exactly one token) resolves to the **raw
+  typed** recorded value; a token embedded in surrounding text does string substitution.
+  This matches the `{{params.*}}` rule in
+  [`workflow-chain-packs.md`](./workflow-chain-packs.md) §"Parameter substitution"
+  deliberately: an author should not have to learn two substitution semantics inside one
+  workflow.
+
+  **References MUST be resolved at plan time — when the obligation is minted (§C) — and
+  the resolved value MUST be persisted on the obligation.** A host MUST NOT re-evaluate
+  the mapping at unwind time. Re-evaluation reintroduces exactly what the recorded-facts
+  rule excludes: between commit and unwind the workflow may have been redefined, a later
+  node may have overwritten the variable, and the run may be a replay — so a
+  re-evaluated mapping can hand the inverse action an input that was never the input to
+  the effect it is undoing.
+
+  A reference that does not resolve at plan time — an unknown `nodeId`, a port the node
+  did not emit, an input the run did not carry — MUST fail the mint and surface as the
+  plan's own failure, never as an inverse action invoked with a missing or `null` input.
 - `retry.maxAttempts` / `retry.backoffMs` bound the inverse action's own retries.
 - `requiresApproval: true` gates the inverse effect behind the same RFC 0051 approval
   surface as a forward effect (§E).
@@ -132,6 +161,30 @@ says **when** the host starts an unwind and **how** it runs one:
   advertises `compensation` MUST validate the policy at registration and refuse a workflow
   that names an unadvertised model or version (`validation_error`), so an unwind never
   learns at failure time that its ordering rule is unimplemented.
+- **A host MUST likewise refuse, at registration, a policy naming a `triggers` entry the
+  host does not fire** (`validation_error`, naming the offending trigger). *(Erratum,
+  2026-08-18 — SP-11a.)* The four triggers are a closed vocabulary, but implementing them
+  is not all-or-nothing: a host can ship `node-failure` long before `cap-breach` or
+  `operator-request`. Silently accepting a policy that lists a trigger the host never
+  fires is the worst of the three possible behaviours — the author has written down a
+  guarantee, the registration succeeded, and the absence only becomes observable during
+  the incident the policy existed for, when the unwind that was promised does not start.
+  This is the same principle as the `capability_required` refusal above and as the
+  `orderingModel` rule in this bullet's predecessor: **an unimplemented obligation is
+  refused when it is declared, not discovered when it is needed.**
+
+  There is deliberately **no advertisement surface** for per-trigger support in this
+  document — `capabilities.compensation` carries no `supportedTriggers`, and adding one
+  is a new optional wire capability, frozen under RFC 0147 §A.1 and carried in
+  [Open spec gaps](#open-spec-gaps). The refusal is what a host owes in the meantime, and
+  it needs no new wire surface: the host already knows which triggers it fires.
+
+  **Compatibility.** Classified a **safety-fix** under `COMPATIBILITY.md` §3, not an
+  additive change: it turns a registration that previously succeeded into a
+  `validation_error`. The break is the point — the accepted-then-silent path is the
+  defect. Hosts that fire all four triggers see no change; a host that fires a subset
+  begins refusing policies that named the rest, which is the honest answer it should
+  always have given.
 - `retry` / `timeoutMs` are defaults for inverse actions whose node declaration carries
   none. **A node's own bounds always win.**
 - `exhaustedDisposition` chooses between recording the failure and continuing
@@ -297,7 +350,7 @@ the snapshot asserts exactly this table.
 
 | Value | When |
 | --- | --- |
-| `none` | No `compensation.requested` has been recorded for the run. |
+| `none` | No `compensation.requested` has been recorded for the run. **This includes a run that completed successfully while declaring compensable nodes** — a healthy run has nothing to unwind, so its rollup is `none`, not `pending`. *(Stated explicitly 2026-08-18, SP-11a: the fold is over the PLAN, and no plan exists until a trigger fires. A host deriving the rollup from the existence of obligation rows — which are minted per compensable node, healthy or not — reports `pending` on every successful run that declares a compensator, and every pre-existing witness of this table drives a failure, so none of them could see it.)* |
 | `pending` | `compensation.requested` recorded and `compensation.started` has not. |
 | `running` | `compensation.started` recorded and the plan is still active. A §E approval pause (`compensation.paused` while an RFC 0051 approval interrupt is open) does **not** change it — the run's own `status: waiting-approval` and `interrupt` already carry the wait, which is why the two fields are separate. |
 | `completed` | Every inverse action in the persisted plan completed. A plan containing an `irreversible` entry (§B/§C) can never reach this value. |

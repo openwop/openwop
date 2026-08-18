@@ -40,6 +40,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -223,5 +224,75 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
         ).toBe(false);
       }
     }
+  });
+
+  it('a healthy run that DECLARES a compensator reports compensationStatus `none` (SP-11a)', async () => {
+    if (!behaviorGate(PROFILE, await advertised())) return;
+
+    // The rollup folds over the PLAN, and no plan exists until a trigger fires
+    // (`compensation.md` §"Run rollup"). So a run that completes successfully while
+    // declaring compensable nodes reads `none` — it has nothing to unwind.
+    //
+    // Nothing observed this. Every other leg of the §21 seam drives a FAILURE, so a
+    // host that derived the rollup from the existence of obligation rows — minted per
+    // compensable node, healthy or not — reported `pending` on every successful run
+    // that declared a compensator and passed all of them. A tier-1 host shipped exactly
+    // that (SP-11a / their AP-03). This leg is the healthy case, and it needs no failure:
+    // `fail: false` on the unwind seam runs the same compensator-declaring workflow to
+    // completion.
+    const seam = await driver.post('/v1/host/sample/test/compensation/unwind', { fail: false });
+    if (seam.status === 404) {
+      return softSkip('blocked', 'the §21 unwind seam is not wired — the healthy-run rollup has no black-box witness');
+    }
+    if (seam.status >= 400) {
+      // The host mounts the seam but rejects `fail: false`. That is the pre-extension
+      // shape, not a pass: without it the healthy-run rollup stays unobservable.
+      return softSkip(
+        'blocked',
+        `the §21 unwind seam does not honour \`fail: false\` (HTTP ${seam.status}) — the healthy-run ` +
+          'rollup is unobservable until it does (host-sample-test-seams.md §21)',
+      );
+    }
+
+    const body = seam.json as { runId?: string; events?: { type: string }[] };
+    expect(
+      typeof body.runId === 'string' && body.runId.length > 0,
+      driver.describe('host-sample-test-seams.md §21', '`fail: false` MUST still return the runId it created'),
+    ).toBe(true);
+
+    // Positive control: the seam really did run a healthy compensator-declaring
+    // workflow. If it emitted a `compensation.requested`, it failed the node anyway and
+    // this is not the healthy case — say so rather than assert `none` against a run
+    // that legitimately has a plan.
+    const types = (body.events ?? []).map((e) => e.type);
+    if (types.includes('compensation.requested')) {
+      return softSkip(
+        'blocked',
+        `the seam emitted ${JSON.stringify(types)} under \`fail: false\` — a trigger fired, so this run ` +
+          'is not the healthy case the leg needs',
+      );
+    }
+
+    const snap = await driver.get(`/v1/runs/${encodeURIComponent(body.runId ?? '')}`);
+    expect(snap.status, driver.describe('rest-endpoints.md', 'GET /v1/runs/{runId} for the healthy seam run')).toBe(200);
+    const snapshot = snap.json as { status?: unknown; compensationStatus?: unknown };
+
+    expect(
+      snapshot.compensationStatus,
+      driver.describe(
+        'compensation.md §"Run rollup: compensationStatus"',
+        'a host advertising `compensation` MUST carry the field on EVERY snapshot — presence is the wire witness of the advert',
+      ),
+    ).toBeDefined();
+
+    expect(
+      snapshot.compensationStatus,
+      driver.describe(
+        'compensation.md §"Run rollup: compensationStatus"',
+        'a run that completed while declaring compensable nodes has nothing to unwind: no `compensation.requested` ' +
+          'was recorded, so the fold is `none`. `pending` here means the rollup was derived from obligation ROWS ' +
+          `rather than from plan state — got \`${String(snapshot.compensationStatus)}\``,
+      ),
+    ).toBe('none');
   });
 });
