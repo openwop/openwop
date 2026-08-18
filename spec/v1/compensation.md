@@ -350,7 +350,7 @@ the snapshot asserts exactly this table.
 
 | Value | When |
 | --- | --- |
-| `none` | No `compensation.requested` has been recorded for the run. **This includes a run that completed successfully while declaring compensable nodes** — a healthy run has nothing to unwind, so its rollup is `none`, not `pending`. *(Stated explicitly 2026-08-18, SP-11a: the fold is over the PLAN, and no plan exists until a trigger fires. A host deriving the rollup from the existence of obligation rows — which are minted per compensable node, healthy or not — reports `pending` on every successful run that declares a compensator, and every pre-existing witness of this table drives a failure, so none of them could see it.)* |
+| `none` | No `compensation.requested` has been recorded for the run, **or** the only such record was inherited by a `branch` fork whose plan was still non-terminal at `fromSeq` (see §"Forked runs" below). **This includes a run that completed successfully while declaring compensable nodes** — a healthy run has nothing to unwind, so its rollup is `none`, not `pending`. *(Stated explicitly 2026-08-18, SP-11a: the fold is over the PLAN, and no plan exists until a trigger fires. A host deriving the rollup from the existence of obligation rows — which are minted per compensable node, healthy or not — reports `pending` on every successful run that declares a compensator, and every pre-existing witness of this table drives a failure, so none of them could see it.)* |
 | `pending` | `compensation.requested` recorded and `compensation.started` has not. |
 | `running` | `compensation.started` recorded and the plan is still active. A §E approval pause (`compensation.paused` while an RFC 0051 approval interrupt is open) does **not** change it — the run's own `status: waiting-approval` and `interrupt` already carry the wait, which is why the two fields are separate. |
 | `completed` | Every inverse action in the persisted plan completed. A plan containing an `irreversible` entry (§B/§C) can never reach this value. |
@@ -361,6 +361,52 @@ the snapshot asserts exactly this table.
 `completed` is the only terminal value that never moves again: re-running a completed
 inverse is a double refund. `failed` is **not** terminal at the inverse-action level — a
 transient failure MUST be retryable without minting a second obligation (§C identity).
+
+### Forked runs (G4, decided 2026-08-18)
+
+`POST /v1/runs/{runId}:fork` produces a run with its own `runId` and its own log,
+seeded with the source's events `< fromSeq` as fixed history
+([`replay.md`](./replay.md) §`branch` mode). Because the §D fold is defined over
+*the run's* log, a fork folds over what it inherited — which decides most of this
+mechanically:
+
+| Inherited prefix contains | Child reports |
+| --- | --- |
+| no `compensation.requested` | `none` |
+| a **terminal** compensation outcome (`completed` / `partial` / `failed` / `manual`) | that same value |
+| `compensation.requested` (± `started`) with **no terminal outcome** at `fromSeq` | **`none`** |
+
+The first two rows follow from the fold and from §F's rule that a branch
+"preserves source facts without claiming it changed the source system": an
+inherited terminal outcome *is* a recorded fact, and reporting it claims nothing
+about the child's own execution.
+
+**The third row is the decision this gap existed for, and it does not follow
+mechanically.** Applying the table verbatim to a plan that was mid-unwind at
+`fromSeq` yields `running` — whose own condition is "`compensation.started`
+recorded **and the plan is still active**", and in the child it is not: the child
+is not executing that plan and cannot discharge it. Falling through to `partial`
+or `failed` is worse, because both assert an *outcome* ("the unwind stopped here")
+that has not happened — the source may still be unwinding, and the child cannot
+observe whether it is.
+
+So a non-terminal inherited plan is **not** inherited as an in-flight obligation.
+An obligation is a commitment by a particular run to perform particular inverse
+actions; the fork never made it, never minted its entries, and MUST NOT report a
+status implying either that it is discharging one or that one concluded. The
+child reports `none` — it has no compensation outcome of its own — and **the
+source retains its own rollup, unchanged**. A fork is not a transfer of custody.
+
+A host MUST NOT infer a compensation trigger from the fork itself. If the child's
+own execution later fails and its policy names a firing trigger, it mints its own
+plan and folds normally from there; those are its facts, keyed to its own run.
+
+> **Not in scope here.** Whether a `branch` fork should *re-execute* the source's
+> committed effects is settled elsewhere and is not this rule:
+> [`replay.md`](./replay.md) §`branch` mode says it does, by design, and SHOULD be
+> surfaced in any operator-facing fork UI. §F adds the compensation-specific
+> constraint that a live-effect branch MAY execute compensation only after
+> explicit authorization and with fresh effect IDs.
 
 ## §E — Approvals, dead-letter routing, and operator recovery
 
@@ -487,7 +533,7 @@ no host has run it yet.
 | G1 | ~~§C lifecycle prose — plan persistence shape, the inverse-action identity tuple, crash-resume, and cancellation-of-parent rules~~ | **Closed 2026-08-16 (§C above).** Plan contents, `planVersion`, ordering under both models, the identity tuple `(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)` with `attempt` outside it (RFC 0150 §B parity), retry, crash-resume from the persisted plan, `onParentCancel`, and per-attempt timeouts. **Still carried within it:** how the tuple composes with RFC 0150 §C's semantic-request digest — that digest is not landed. |
 | G2 | ~~§E approvals, dead-letter routing, and the operator recovery actions and their audit~~ | **Closed 2026-08-16 (§E above)** as *outcomes*: approval-before-effect with the plan entry as `artifactData`, RFC 0049 binding to tenant/principal/action/`planVersion` audited via `authorization.decided`, RFC 0053 routing, and the four operator actions with the recorded outcome and rollup effect each yields; UQ2 decided (substitution is a new `planVersion`). **Still open — G7:** the operator actions have no canonical endpoint in v1.x; they are host-mediated. A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is the obvious additive shape and would need OpenAPI + SDK + a seam-driven witness before it is more than a sentence here. |
 | G3 | ~~`schemas/compensation-policy.schema.json` — the policy that decides which failures qualify for automatic compensation~~ | **Closed 2026-08-16.** Landed as `settings.compensation` on `WorkflowDefinition` (§B "Workflow policy"): closed `triggers`, ordering model, retry/timeout defaults, `exhaustedDisposition`, escalate-only `approvalScope`, `onParentCancel`. Refusal rule for non-advertising hosts (`capability_required`) stated. |
-| G4 | `compensationStatus` on a forked run (`POST /v1/runs/{runId}:fork`) of a partially compensated source | **Open.** RFC 0151 §F says the branch preserves source facts without claiming it changed the source system; whether the child reports the source's rollup or starts at `none` is unresolved and is deliberately not decided by this document. |
+| G4 | ~~`compensationStatus` on a forked run (`POST /v1/runs/{runId}:fork`) of a partially compensated source~~ | **Closed 2026-08-18** — §"Forked runs" above. The fold is over the run's own log, so an inherited **terminal** outcome is reported as the recorded fact it is, and an absent one yields `none`. The case the gap existed for — a plan **non-terminal** at `fromSeq` — is decided rather than derived: the child reports `none` and the source keeps its rollup, because a non-terminal plan is an in-flight obligation the fork never made and cannot discharge, and every other value asserts either activity the child lacks or an outcome that has not happened. |
 | G5 | Compensation evidence retention minimum | **Open** (RFC 0151 UQ5). |
 | G6 | The closed `reason` vocabulary on `compensation.paused` has no code for an approval hold or a parent-cancel hold; §E/§C omit `reason` for those | **Open — held.** Adding `approval-pending` / `parent-cancelled` to the enum is additive for producers but a strict consumer validating the closed enum would reject them; decide with the G7 endpoint family so the event and the action vocabulary move together. Both are new optional wire surface and sit under the RFC 0147 §A.1 freeze until R3 / R9 / R14 close. |
 | G7 | Canonical operator-recovery endpoints (see G2) | **Open — held.** A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is new optional wire surface; RFC 0147 §A.1 freezes it until Workstreams 1–3 are Accepted and R3 / R9 / R14 are closed. Until then the §E actions are host-mediated and witnessed only through the §21 `operator` seam (`compensation-recovery.test.ts`). |
