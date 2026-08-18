@@ -24,7 +24,17 @@
       "properties": {
         "name": { "type": "string", "minLength": 1 },
         "version": { "type": "string", "minLength": 1 },
-        "vendor": { "type": "string" }
+        "vendor": { "type": "string" },
+        "commit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OPTIONAL, self-reported source revision the host was built from. NOT sufficient to attribute the bundle: a commit does not determine the artifact unless the build is deterministic — a tier-2 host measured 283/22 vs 303/2 from two builds of one commit whose container image ran `npm install` rather than `npm ci` (conformance-certification.md §\"What a bundle attributes to\")."
+        },
+        "build": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OPTIONAL, self-reported identifier of the ARTIFACT that executed — a container image digest is the strongest available, a build id the weakest useful one. This, not `commit`, is what a verifier needs in order to re-run the same thing."
+        }
       }
     },
     "discovery": {
