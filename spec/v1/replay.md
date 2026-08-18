@@ -442,6 +442,62 @@ so its effects are duplicates by definition. A host MAY suppress branch effects
 too, but MUST NOT report that as `sideEffectSuppression`.
 
 
+### Host-initiated fan-out is an external effect (2026-08-18)
+
+Everything above binds **nodes**: caveat 1 binds "a node calling an external API",
+and the `recorded-outcome` requirements are about node re-execution. That leaves a
+gap a host falls into without noticing, because the effect is not in the node graph
+at all.
+
+**A host that projects its event log outward — webhook delivery
+(`webhooks.md`), outbound streams, analytics or audit sinks — MUST NOT emit those
+outbound deliveries for events a `mode: "replay"` fork re-emits as fixed history.**
+A re-emitted event is a record of something that already happened; delivering it
+again asserts to a subscriber that it happened again.
+
+The interaction is easy to miss and gets worse the more correct the host is:
+
+- Caveat 5 above requires a replay to **re-emit** recorded-fact events such as
+  `memory.written`.
+- A host that fans out on every append will therefore deliver them.
+- The re-emitted envelope legitimately carries a **fresh `eventId`** (envelope
+  identity is volatile; caveat 5 pins the *payload's* identifiers, e.g. `memoryId`).
+- Webhook dedup keys on `(subscriptionId, eventId)` per `webhooks.md`.
+
+So a correct re-emission defeats subscriber-side dedup by construction, and the
+subscriber receives a durable-sounding claim — *this run wrote this memory entry* —
+about a write that did not happen in that run. Lifecycle events (`run.started`,
+`run.completed`) have the same shape but are ambiguous noise; a recorded-fact event
+is a false statement.
+
+Requirements:
+
+- A host MUST determine replay-ness from the run itself (its fork mode / source
+  pointer), **not** from the event type. Any event re-emitted as fixed history is
+  in scope, including types added later.
+- Suppression applies to **outbound** delivery only. Internal projections keyed by
+  `runId` are unaffected — a fork has its own `runId`, so it cannot double-count the
+  source — and the fork's own event log MUST still carry the re-emitted events, which
+  is what caveat 5 requires.
+- A `branch` fork is out of scope for the same reason it is out of scope above: its
+  events are new facts, and its effects are effects the operator asked for.
+- This is unconditional. It is not gated on `sideEffectSuppression`, which describes
+  what a host does with *node* effects on replay and makes no claim about host-level
+  fan-out.
+
+> **Why this is stated separately.** The principle — replay MUST NOT re-fire external
+> effects — was already consistent across `replay.md`, `capabilities.md`
+> (`sideEffectSuppression: "none"` is "not permission to re-fire") and
+> `compensation.md` (`compensation-replay-no-refire`). Every statement of it was
+> scoped to nodes, so a host could satisfy all of them and still deliver. Reported by
+> a tier-2 host that found it in its own event-log fan-out (`onAppend` → webhook
+> dispatcher, with no fork-awareness anywhere on the path) immediately after fixing
+> its re-emission — the fix that raised the severity. This is the dual of the rule in
+> [`storage-adapters.md`](./storage-adapters.md) §"Claim acquisition" that a claim
+> transfer is not itself a run event: **what a run reports outward must not depend on
+> the mechanics of how it was executed.**
+
+
 ## Replay-from-event-log internals
 
 An engine implementation typically reuses its existing run-recovery machinery (a non-normative example: the reference host's `recoverRunFromEventLog(runId)` helper), built on the `RunEventLogIO` storage-adapter contract (see `storage-adapters.md`):
