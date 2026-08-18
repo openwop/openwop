@@ -235,7 +235,16 @@ jobs:
           # responsibility.
         run: npx vitest run --no-file-parallelism
 
+      # SP-01 follow-up (2026-08-18): run even when the strict suite above
+      # reds. Moving the drift guard to its own job un-masked the strict
+      # suite — and immediately showed that the strict suite was in turn
+      # masking THIS step, which is the durability signal (`restart-during-run`,
+      # `staleClaim`) and the one nothing else covers. A step that only runs
+      # when everything upstream is green reports nothing on exactly the days
+      # you need it. The job still fails when either step fails; both now say
+      # what they found.
       - name: Multi-process scenarios (restart-during-run + staleClaim)
+        if: '!cancelled()'
         working-directory: conformance
         env:
           OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
