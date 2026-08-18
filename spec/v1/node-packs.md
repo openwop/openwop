@@ -735,7 +735,7 @@ Body shape:
 Tarball extraction (`tarball_<code>` prefix groups these together for client-side switching):
 
 - `400 tarball_gunzip_failed` — body isn't a valid gzip stream.
-- `400 tarball_too_large` — decompressed bytes exceed the registry's cap (recommended default: 50 MB).
+- `400 tarball_too_large` — decompressed bytes exceed the registry's cap (recommended default: 50 MB). The cap is on the *inflated* size, so a registry MUST evaluate it on the gunzip output (streaming or after inflate), not on the wire body — the conformance probe (`pack-registry-publish.test.ts`, S45) is a ~64 KB gzip that inflates to 64 MiB, which a proxy body limit never sees; a registry whose cap is above 64 MiB (or absent) reaches the tar layer instead and fails that leg.
 - `400 tarball_manifest_missing` — no `pack.json` at the tarball root.
 - `400 tarball_manifest_too_large` — `pack.json` exceeds the registry's per-file cap (recommended default: 256 KB).
 - `400 tarball_manifest_not_json` — `pack.json` isn't valid JSON.
