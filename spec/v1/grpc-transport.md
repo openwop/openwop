@@ -123,7 +123,8 @@ REST `ErrorEnvelope` ↔ gRPC `Status`:
 | `forbidden`                                                                  | `PERMISSION_DENIED` (7)                                                                        |
 | `validation_error`                                                           | `INVALID_ARGUMENT` (3)                                                                         |
 | `not_found`, `run_not_found`, `workflow_not_found`                           | `NOT_FOUND` (5)                                                                                |
-| `run_already_active`, `idempotency_key_conflict`, `idempotency_key_mismatch` | `ALREADY_EXISTS` (6) — for run dedup; `ABORTED` (10) — for idempotency conflicts               |
+| `run_already_active`                                                         | `ALREADY_EXISTS` (6) — run dedup                                                               |
+| `idempotency_key_mismatch`, `idempotency_in_flight`                          | `ABORTED` (10) — a same-key replay that cannot be answered (different body / still executing)  |
 | `recursion_limit_exceeded`                                                   | `RESOURCE_EXHAUSTED` (8)                                                                       |
 | `rate_limited`                                                               | `RESOURCE_EXHAUSTED` (8) — gRPC has no native `429`; use this code + `retry-after` in metadata |
 | `capability_not_provided`, `capability_required`                             | `FAILED_PRECONDITION` (9)                                                                      |

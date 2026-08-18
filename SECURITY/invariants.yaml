@@ -1363,6 +1363,59 @@ invariants:
       third-party `core.openwop.http` reimplementations verify wire
       agreement on a fixed set of (runId, nodeId, payload) inputs.
 
+  - id: idempotency-key-tenant-endpoint-scoped
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/idempotency.test.ts
+      - conformance/src/scenarios/idempotencyRetry.test.ts
+    note: |
+      RFC 0150 §A / `spec/v1/idempotency.md` §"Record shape, digest, and
+      lease". The Layer-1 record MUST be keyed by
+      `(authenticatedTenantId, canonicalEndpointId, callerIdempotencyKey)`
+      with the tenant taken from the AUTHENTICATED context, never the body.
+      A body-supplied tenant lets a caller address another tenant's
+      idempotency records: replaying a victim tenant's cached response, or
+      planting a record that suppresses the victim's next request. The
+      endpoint component is the ROUTED operation, so two spellings of one
+      path cannot be used to escape a record.
+      Paired rule, same section: a different `requestDigest` under the same
+      scoped key MUST fail `409 idempotency_key_mismatch` and MUST NOT
+      return the cached body — answering a question the caller did not ask
+      is the read half of the same confusion.
+      Registered 2026-08-18 (SP-03). RFC 0150's acceptance box claimed
+      three invariants "across §A/§B/§D" while only §B
+      (`logical-effect-id-retry-stable`) and §D
+      (`multi-region-stale-owner-no-effect`) were registered; §A's was
+      named in the RFC and never landed. The §A keyspace-separation rule
+      is the SEPARATE invariant below, whose witness is not black-box.
+
+  - id: idempotency-store-no-host-generated-keys
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/idempotency.test.ts
+    note: |
+      RFC 0150 §A / `spec/v1/idempotency.md` §"Keyspace separation". A
+      caller-supplied `Idempotency-Key` MUST NOT be able to name, claim, or
+      suppress a host-generated lock — internal locks, scheduler fire-once
+      slots, or any key the host mints for itself MUST NOT share a keyspace
+      with caller keys. Reported by a tier-1 host that kept both in one
+      table: because `Idempotency-Key` is caller-controlled and validated
+      nowhere, any authenticated tenant could send
+      `Idempotency-Key: schedule-fire:<jobId>:<slot>`, win the scheduler's
+      row, and make a scheduled job SKIP. That is privilege escalation
+      through an unvalidated header.
+      **Witness is NOT black-box** — "shares no keyspace" is a storage-layout
+      property no wire probe can see. The observable projection is that a
+      caller-supplied key MUST NOT affect an operation the caller did not
+      initiate, which needs a host-sample seam to exercise. Absent one this
+      is reference-impl tier, and RFC 0150 records it as gap G8. Saying so
+      is preferable to a scenario that passes without executing
+      (RFC 0148 §A). The listed test covers the caller-lane keying only.
+
   - id: logical-effect-id-retry-stable
     tier: protocol
     severity: high

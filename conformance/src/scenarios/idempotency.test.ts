@@ -17,6 +17,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { readErrorCode } from '../lib/error-envelope.js';
 
 const WORKFLOW_ID = 'conformance-idempotent';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -85,5 +86,44 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
       'idempotency.md §Layer 1',
       'same Idempotency-Key with a different body MUST return 409',
     )).toBe(409);
+
+    // SP-03 (2026-08-18): the code, not just the status. `idempotency.md`
+    // named NO mismatch error until v1.5, and implementations diverged exactly
+    // as an unnamed error invites: `grpc-transport.md` mapped BOTH
+    // `idempotency_key_conflict` and `idempotency_key_mismatch` in one row, the
+    // published TypeScript SDK's `HTTP_ERROR_CODES` carried
+    // `idempotency_key_mismatch`, the SQLite reference host emitted
+    // `idempotency_key_conflict`, and a tier-1 host emitted
+    // `idempotency_key_replay_mismatch` — a spelling in no corpus artifact at
+    // all. This leg asserted the status alone, so every one of them passed.
+    //
+    // `idempotency_key_mismatch` is canonical (idempotency.md §"Record shape,
+    // digest, and lease"): the only spelling already in more than one shipped
+    // artifact. The two legacy spellings are TOLERATED here through the first
+    // minor after 2026-11-10 so a converging host is not red on a rename it is
+    // mid-flight on — the same deprecation shape S22 used for the error
+    // envelope. Remove the tolerance then; the canonical assertion stays.
+    const code = readErrorCode(conflict.json);
+    const LEGACY = ['idempotency_key_conflict', 'idempotency_key_replay_mismatch'];
+    expect(
+      code === 'idempotency_key_mismatch' || LEGACY.includes(code ?? ''),
+      driver.describe(
+        'idempotency.md §"Record shape, digest, and lease"',
+        `a different request digest under the same scoped key MUST fail with the canonical ` +
+          `\`idempotency_key_mismatch\` (legacy \`${LEGACY.join('` / `')}\` tolerated through the ` +
+          `first minor after 2026-11-10); got \`${code ?? '<none>'}\``,
+      ),
+    ).toBe(true);
+
+    // …and MUST NOT hand back the first run's body. Answering a question the
+    // caller did not ask is the read half of the same confusion.
+    const conflictRunId = (conflict.json as { runId?: unknown } | undefined)?.runId;
+    expect(
+      conflictRunId,
+      driver.describe(
+        'idempotency.md §"Record shape, digest, and lease"',
+        'a digest mismatch MUST NOT return the cached body (no runId on the 409)',
+      ),
+    ).toBeUndefined();
   });
 });
