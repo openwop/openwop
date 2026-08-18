@@ -11,6 +11,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [Unreleased]
+
 ## [1.8.0] — 2026-08-18 — the evidence-integrity cycle: what an artifact actually measured
 
 No new RFCs and no `Active → Accepted` promotions (**Accepted 153, Active 3 — 0035 / 0111 / 0121 held —, Draft 1 — 0038 Parked**). This cycle repaired the *evidence* layer instead: a recurring defect in which a gate, a test, a spec sentence, a build, or a bundle **reported, but not on what its reader assumed it measured**. Five instances were found and closed, four of them by a host checking its own tree and disclosing the result. All wire shapes additive per `COMPATIBILITY.md` §2.1; one erratum classified safety-fix and one correction recorded as W3C-Class-3 conformance-affecting.
