@@ -117,6 +117,26 @@ The distinction is between the two fork modes. A `branch`-mode fork is a genuine
 > Found by a tier-2 host that implemented "skip" from this note, and by the tier-1 host
 > that implemented re-emit from the normative text — the two diverged for months while
 > both stayed green.
+>
+> **Classification (added 2026-08-18, after review): this is not a tidy-up.** Under the
+> W3C Process taxonomy it is a **Class 3** change — *"corrections that MAY affect
+> conformance, but add no new features"*, whose definition covers a change that "clears
+> up an ambiguity or under-specified part of the specification in such a way that an
+> agent whose conformance was once unclear becomes clearly conforming or non-conforming".
+> That is this fact pattern exactly. It is **not** Class 2 (*"editorial changes or
+> clarifications that do not change the technical content"*), even though the technical
+> content genuinely did not move — because what moves is **which implementations can
+> claim conformance**. Under the IETF axis the same change reads Technical rather than
+> Editorial, but *verified* rather than requiring a `-bis`, since the `MUST` never
+> changed; the two taxonomies do not map 1:1 and are recorded separately rather than
+> collapsed.
+>
+> **Practical consequence, stated plainly so an operator does not have to infer it: a
+> host that suppresses instead of re-emitting is now clearly non-conforming, where
+> before its status was arguable.** No host is newly *broken* — the requirement is
+> unchanged and both known hosts re-emit — but a suppressing implementation can no
+> longer read this note as cover. That is a different sentence from "documentation
+> cleanup" and warrants different urgency from whoever operates such a host.
 
 ## Compatibility
 
