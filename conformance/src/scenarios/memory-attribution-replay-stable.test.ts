@@ -13,16 +13,21 @@
  * events; a tier-2 host suppressed them, which leaves the replayed log SHORT
  * of the source's and breaks RFC 0041 §C byte-equivalence).
  *
- * The divergence is the spec's, not the hosts': RFC 0057 §D says the host
- * "MUST re-emit the recorded events from the log" and then, in a
- * non-normative implementation note in the same section, blesses the
- * reference host for "suppress[ing] rather than re-emit[ting]". Resolving
- * that contradiction is a normative decision (it plausibly makes one shipped
- * host non-conformant), so this leg does NOT pick a side. What it stops
- * doing is passing silently: an empty replay now records `blocked` naming
- * the contradiction, per RFC 0148 §A — a leg that cannot observe MUST NOT
- * read as a pass. Once §D is resolved, the winning side becomes an assertion
- * here.
+ * The spec was never actually ambiguous, and an earlier revision of this file
+ * said it was — that was wrong. `replay.md` §"Determinism guarantees"
+ * caveat 5 (Stable, unchanged since v1.2) names this exact case: recorded-fact
+ * events such as `memory.written` "are fixed history. On replay against a
+ * checkpoint a host MUST re-emit them from the event log and MUST NOT
+ * regenerate their identifiers or timestamps." RFC 0041 §C independently
+ * requires caching "emitted events" so a replay reproduces the observable
+ * sequence. RFC 0057 §D's implementation note appeared to bless suppression
+ * and conceded in its own words that it satisfied only the "MUST NOT
+ * regenerate" half; that note is retired (RFC 0057, Correction 2026-08-18).
+ *
+ * So this asserts BOTH halves — every replayed id is a recorded id, AND the
+ * source's recorded ids all reappear. A suppressing host fails, and always
+ * should have: nothing normative changed, the instrument just could not see
+ * it before.
  *
  * Gated on `capabilities.memory.attribution.emitsWriteEvents`; soft-skips
  * when unadvertised, when the seeded run wrote no memory, or when the host
@@ -68,19 +73,26 @@ describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
     }
 
     const replayed = await memoryWrittenEvents(forkId);
-    if (replayed.length === 0) {
-      // NOT a pass. The source run recorded `memory.written` events and the
-      // replay carries none, so this host is on the "suppress" side of the
-      // RFC 0057 §D contradiction. Whether that is conformant is undecided;
-      // that it is unobserved here is not (RFC 0148 §A).
-      return softSkip(
-        'blocked',
-        `replay emitted no memory.written while the source recorded ${recordedIds.size} — ` +
-          'the host suppresses rather than re-emits. RFC 0057 §D requires re-emission in its ' +
-          'normative half and blesses suppression in its implementation note; until that ' +
-          'contradiction is resolved this leg records the divergence instead of passing on it.',
-      );
-    }
+    // Half 1 — MUST re-emit. The source's recorded ids all reappear on the
+    // replay. This is the half that went unasserted for months: the loop below
+    // is vacuously true on an empty array, so a host that suppressed the
+    // re-emission entirely passed.
+    const replayedIds = new Set(
+      replayed.map((e) => memoryIdOf(e.payload)).filter((x): x is string => x !== null),
+    );
+    const missing = [...recordedIds].filter((id) => !replayedIds.has(id));
+    expect(
+      missing,
+      driver.describe(
+        'replay.md §"Determinism guarantees" caveat 5',
+        'recorded-fact events are fixed history: a replay MUST re-emit the source run\'s ' +
+          '`memory.written` events from the log. A replay whose log is SHORT of the source\'s is not ' +
+          'a reproduction of the observable sequence (RFC 0041 §C). Suppressing the write is not ' +
+          'enough — that satisfies only the MUST-NOT-regenerate half',
+      ),
+    ).toEqual([]);
+
+    // Half 2 — MUST NOT regenerate. Every id on the replay is one the source recorded.
     for (const e of replayed) {
       const id = memoryIdOf(e.payload);
       expect(

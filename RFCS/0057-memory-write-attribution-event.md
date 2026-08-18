@@ -89,7 +89,34 @@ Per `replay.md`: `memory.written` is an immutable recorded fact. On `POST /v1/ru
 
 The distinction is between the two fork modes. A `branch`-mode fork is a genuinely new run: it MAY perform its own memory writes and emit its own `memory.written` events with fresh `memoryId`s — those are new facts, not regenerated ones. A `replay`-mode fork reproduces a prior run's recorded history; the host MUST NOT mint a new `memoryId` for a write the source run already recorded.
 
-_Implementation note (non-normative)._ The reference workflow-engine host honors this by **skipping** its host session-end run-summary write when `run.forkMode === 'replay'` — it does not re-mint, so no second `memory.written` with a new `memoryId` appears on a replay. (Full replay-stable re-emission of a historical `memory.written` whose original sequence is `≥ fromSeq` is a host responsibility tied to whether the host replays recorded events or re-executes; the reference host re-executes, so it suppresses rather than re-emits — which satisfies the "MUST NOT regenerate" half. The `memory-attribution-replay-stable` conformance scenario asserts a replay introduces no new-`memoryId` `memory.written`.)
+> **Correction (2026-08-18).** The implementation note that stood here was wrong, and
+> it is retired rather than edited, because it told implementers to do something the
+> normative text forbids.
+>
+> It said the reference host "honors this by **skipping** its host session-end
+> run-summary write when `run.forkMode === 'replay'`", and conceded in its own words
+> that suppressing "satisfies the `MUST NOT regenerate` half". **Half is not the
+> requirement.** `replay.md` §"Determinism guarantees" caveat 5 (Stable, and unchanged
+> since v1.2) names this exact case — *"events whose payload records a write that
+> already happened, such as `memory.written` (RFC 0057), are fixed history. On replay
+> against a checkpoint a host **MUST re-emit them from the event log** and MUST NOT
+> regenerate their identifiers or timestamps"* — and RFC 0041 §C requires caching
+> "the observable result (return value, side-effects on workflow state, **emitted
+> events**)" so a replay reproduces the observable sequence. Three normative statements,
+> all re-emit; the note described a host meeting one of two obligations and read as
+> permission.
+>
+> **Nothing normative changed here** — a suppressing host was always non-conformant.
+> What changed is that the suite can now see it: `memory-attribution-replay-stable`
+> asserted only "no new `memoryId`", exactly the half a suppressing host satisfies, so
+> a replay emitting **nothing** passed it vacuously. The MUST-re-emit half is asserted
+> as of suite 1.136.10. A replay whose log is short of the source's recorded
+> `memory.written` events is not a reproduction of the observable sequence, which is
+> what RFC 0041 §C byte-equivalence means.
+>
+> Found by a tier-2 host that implemented "skip" from this note, and by the tier-1 host
+> that implemented re-emit from the normative text — the two diverged for months while
+> both stayed green.
 
 ## Compatibility
 
