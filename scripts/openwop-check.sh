@@ -59,7 +59,24 @@ echo "[1/7] Conformance suite (typecheck + server-free scenarios)..."
   cd "$SPEC_ROOT/conformance"
   if [[ ! -d node_modules ]]; then
     echo "  installing conformance deps (one-time)..."
-    npm_config_cache="$NPM_CACHE" npm install --no-audit --no-fund --prefer-offline >/dev/null
+    # `npm ci`, NOT `npm install` (2026-08-18). `npm install` WRITES
+    # package-lock.json as a side effect of running the gate: it rewrites the
+    # root version line and prunes entries, so a contributor whose node_modules
+    # happened to be absent would find a lockfile diff they did not make, and
+    # it lands in whoever's PR runs the check next. Reported independently by
+    # two sessions, each of which reverted it by hand.
+    #
+    # `npm ci` installs FROM the lockfile and never writes to it (verified:
+    # byte-identical after a run). It also fails loudly if the lock and the
+    # manifest genuinely disagree, which is the behaviour a gate should have —
+    # the same lockfile-respecting-install discipline `conformance-certification.md`
+    # §"A bundle attributes to a BUILD" now recommends to hosts, applied to our
+    # own gate. Falls back to `install` only when there is no lockfile to honour.
+    if [[ -f package-lock.json ]]; then
+      npm_config_cache="$NPM_CACHE" npm ci --no-audit --no-fund --prefer-offline >/dev/null
+    else
+      npm_config_cache="$NPM_CACHE" npm install --no-audit --no-fund --prefer-offline >/dev/null
+    fi
   fi
   npx tsc --noEmit
   npx vitest run \
