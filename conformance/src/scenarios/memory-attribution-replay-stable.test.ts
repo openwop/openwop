@@ -3,8 +3,26 @@
  * immutable recorded fact: a `replay`-mode fork MUST NOT mint a new
  * `memoryId` for a write the source run already recorded. This asserts the
  * "MUST NOT regenerate" half — every `memory.written` on a replayed run
- * reuses a `memoryId` the source run recorded (a compliant host that
- * suppresses re-mint on replay satisfies this vacuously with zero events).
+ * reuses a `memoryId` the source run recorded.
+ *
+ * H2 (2026-08-18): this file used to say, in this docstring, that "a
+ * compliant host that suppresses re-mint on replay satisfies this vacuously
+ * with zero events" — and it did: the assertion is a `for` loop over the
+ * replayed events, so a host that emits NONE passed trivially. Two hosts
+ * diverged under it and both stayed green (openwop-app re-emits the source's
+ * events; a tier-2 host suppressed them, which leaves the replayed log SHORT
+ * of the source's and breaks RFC 0041 §C byte-equivalence).
+ *
+ * The divergence is the spec's, not the hosts': RFC 0057 §D says the host
+ * "MUST re-emit the recorded events from the log" and then, in a
+ * non-normative implementation note in the same section, blesses the
+ * reference host for "suppress[ing] rather than re-emit[ting]". Resolving
+ * that contradiction is a normative decision (it plausibly makes one shipped
+ * host non-conformant), so this leg does NOT pick a side. What it stops
+ * doing is passing silently: an empty replay now records `blocked` naming
+ * the contradiction, per RFC 0148 §A — a leg that cannot observe MUST NOT
+ * read as a pass. Once §D is resolved, the winning side becomes an assertion
+ * here.
  *
  * Gated on `capabilities.memory.attribution.emitsWriteEvents`; soft-skips
  * when unadvertised, when the seeded run wrote no memory, or when the host
@@ -50,6 +68,19 @@ describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
     }
 
     const replayed = await memoryWrittenEvents(forkId);
+    if (replayed.length === 0) {
+      // NOT a pass. The source run recorded `memory.written` events and the
+      // replay carries none, so this host is on the "suppress" side of the
+      // RFC 0057 §D contradiction. Whether that is conformant is undecided;
+      // that it is unobserved here is not (RFC 0148 §A).
+      return softSkip(
+        'blocked',
+        `replay emitted no memory.written while the source recorded ${recordedIds.size} — ` +
+          'the host suppresses rather than re-emits. RFC 0057 §D requires re-emission in its ' +
+          'normative half and blesses suppression in its implementation note; until that ' +
+          'contradiction is resolved this leg records the divergence instead of passing on it.',
+      );
+    }
     for (const e of replayed) {
       const id = memoryIdOf(e.payload);
       expect(
