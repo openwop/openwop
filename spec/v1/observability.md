@@ -235,6 +235,12 @@ An OpenWOP-compliant server emits run-lifecycle events through the event log (`G
 
 **Terminal events.** A run MUST emit exactly one of `run.completed` / `run.failed` / `run.cancelled` and that event MUST be the last event in the stream. The conformance scenario `eventOrdering.test.ts` pins this contract.
 
+**Terminal status follows the terminal event (clarification, 2026-08-18).** A host **MUST NOT** report a terminal run status — `completed` / `failed` / `cancelled` on `GET /v1/runs/{runId}` or any snapshot projection — before the corresponding terminal event is durably appended to the run's event log. The rule above constrains order *within* the log; this one constrains the boundary *between* the status projection and the log, which is a separate guarantee a host can miss while satisfying the first.
+
+The two are independent because most hosts write the status projection and the event log separately. A host that flips status first opens a window in which a consumer reads a terminal status, reads the log, and finds the terminal event absent — a run that looks finished and unfinished at once. Any consumer that waits on status and then reads the log depends on this, `eventOrdering.test.ts` among them: it polls status to terminal and *then* reads the log, so a host with that window fails the leg while satisfying the prose as previously written. Reported by a tier-2 host (MyndHyve) that carried the window for months; a later change that widened it past the wire is what made it observable.
+
+This is a clarification of an already-load-bearing requirement, not a new constraint: the conformance floor has enforced it since `eventOrdering.test.ts` existed. It relaxes no `MUST`, changes no shape, and adds no capability — `COMPATIBILITY.md` §2.3 (the suite MUST NOT be stricter about wire shape than the spec defines) is the reason it is written down here rather than loosened there.
+
 **Forward-compat.** Clients consuming the event stream MUST treat unknown event types as opaque and continue reading. Hosts MAY add new event types in v1.x if they're additive (no behavior change for clients that ignore the new type) per `COMPATIBILITY.md` §2.1.
 
 ---
