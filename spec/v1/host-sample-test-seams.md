@@ -850,7 +850,16 @@ ordering must be the ones the production failure path uses, or the witness prove
 **`unwind`** — run a workflow of `nodes` (default 2, `1..8`) forward-committing fake effects,
 fail the last node, and let the host unwind.
 
-- **Request:** `{ nodes?: integer }`.
+- **Request:** `{ nodes?: integer, fail?: boolean }`.
+- **`fail`** (OPTIONAL, default `true`, SP-11a 2026-08-18) — when `false`, the seam runs the
+  same compensator-declaring workflow **to successful completion**: no node fails, no trigger
+  fires, and the host MUST record no `compensation.requested`. The returned snapshot MUST
+  therefore read `compensationStatus: "none"` (`compensation.md` §"Run rollup"). This is the
+  **healthy-run** case, and it is the one nothing observed: every other leg of this seam drives
+  a failure, so a host that derived the rollup from row existence rather than plan state
+  reported `pending` on a run that had nothing to unwind and passed every existing witness. A
+  host that does not honour `fail: false` — it fails the node anyway, or rejects the field —
+  leaves `compensation-behavior.test.ts` to record that leg `blocked`, not to pass it.
 - **Response 200:** `{ runId, events, compensatedOrder }`.
   - `runId` — the run the seam created, so the scenario can `GET /v1/runs/{runId}` and
     assert the §D rollup: after a clean unwind the snapshot MUST carry
