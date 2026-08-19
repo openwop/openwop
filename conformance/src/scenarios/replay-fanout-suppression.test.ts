@@ -55,9 +55,14 @@
  * `run.completed` in the fork's log is RE-EMITTED HISTORY and therefore squarely
  * inside "any event re-emitted as fixed history is in scope". A host that
  * suppressed only recorded-fact events while delivering re-emitted lifecycle
- * events would fail this scenario. That is believed correct, and it is called
- * out here so a host that reads it differently raises the question against a
- * visible claim instead of discovering it as a surprise red.
+ * events would fail this scenario.
+ *
+ * That reading is no longer an inference: `replay.md` was clarified on
+ * 2026-08-19 to say the contrast RANKS THE HARM and does not narrow the scope,
+ * because the requirement above it already decides the question — replay-ness is
+ * read from the run, never from the event type, so suppressing by event type is
+ * selecting by event type. The paragraph stays here because a host that reads
+ * the older text should meet a visible claim rather than a surprise red.
  *
  * @see spec/v1/replay.md §"Host-initiated fan-out is an external effect"
  * @see spec/v1/webhooks.md §"Register"
