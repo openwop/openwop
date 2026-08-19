@@ -17,7 +17,14 @@
  * Environment variables override flags (per the conformance harness's
  * existing convention):
  *   OPENWOP_BASE_URL, OPENWOP_API_KEY, OPENWOP_IMPLEMENTATION_NAME,
- *   OPENWOP_IMPLEMENTATION_VERSION, OPENWOP_LIFECYCLE_TIMEOUT_MS
+ *   OPENWOP_IMPLEMENTATION_VERSION, OPENWOP_LIFECYCLE_TIMEOUT_MS,
+ *   OPENWOP_POLL_TIMEOUT_SCALE, OPENWOP_MAX_WORKERS
+ *
+ * OPENWOP_LIFECYCLE_TIMEOUT_MS sets the DEFAULT poll bound only — it does
+ * not reach the many scenarios that pass an explicit `timeoutMs`.
+ * OPENWOP_POLL_TIMEOUT_SCALE (default 1) multiplies EVERY bound and is the
+ * knob to reach for when a run's failures are the endpoint (cold start,
+ * contention) rather than the host. See src/lib/polling.ts.
  *
  * Exit codes:
  *   0   all scenarios pass
