@@ -1593,6 +1593,26 @@ invariants:
       `McpFakeServer` had the identical header-capture gap as its A2A
       counterpart; both recorded the call body and discarded the headers.
 
+  - id: replay-fanout-no-refire
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-replay.md
+    tests:
+      - conformance/src/scenarios/replay-fanout-suppression.test.ts
+    note: |
+      `replay.md` §"Host-initiated fan-out is an external effect". A host that
+      projects its event log outward — webhook delivery, outbound streams,
+      analytics or audit sinks — MUST NOT emit those deliveries for events a
+      `mode: "replay"` fork re-emits as fixed history. Replay-ness MUST be read
+      from the RUN, never from the event type.
+      Subscriber-side defences cannot cover this: a re-emitted event legitimately
+      carries a fresh envelope `eventId`, and webhook dedup keys on
+      `(subscriptionId, eventId)` — so a CORRECT re-emission defeats dedup by
+      construction, and the delivery is authentic in every respect a receiver can
+      check. The false claim is carried by the act of delivering, not by the body.
+      Capability-gated on `webhooks.supported` and OUTSIDE every profile floor: a
+      host whose SSRF guard refuses the suite's loopback receiver records
+      `blocked`, which means UNOBSERVABLE, not unmet.
   - id: compensation-replay-no-refire
     tier: protocol
     severity: high
