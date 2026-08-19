@@ -154,6 +154,20 @@ ceiling), which is honest and is the point: it makes a twelve-minute recovery vi
 | `durability/poison-exhaustion` | deterministic failure reaches a terminal operator-visible state within the attempt bound |
 | `durability/bound-is-derived` | the declared recovery bound matches the mechanism that enforces it — a host that states a bound it cannot produce **fails** |
 
+> **What `bound-is-derived` cannot catch** *(added 2026-08-19, from a measured failure on a tier-1 host)*. This
+> row checks that the declared number follows from the mechanism. It cannot check that **the mechanism runs.** A
+> host whose sweeper wedges — one lane's await never settling, leaving a shared re-entry flag set, with nothing
+> logged because nothing threw — has a derivation that stays perfectly correct while the bound is not produced at
+> all. A run sat unclaimed for 16 minutes against a derived bound of 12.5, and every isolated check of the
+> mechanism passed: the storage query returned the run as claimable, the sweep function reclaimed it on a
+> reproduced state, and a fresh daemon reclaimed a seeded orphan in 24 s.
+>
+> **Only an exercise that actually kills a process and waits out the bound distinguishes the two cases.** That is
+> the strongest argument yet for §D.9's insistence on real process termination — and, for the conformance suite,
+> for the kill seam the recovery rows need: `bound-is-derived` is a paper check by construction, and no amount of
+> strengthening makes it a liveness check. `storage-adapters.md` §"Expiry is authority; the sweeper is the
+> exercise of it" carries the normative consequence.
+
 `duplicate-delivery` asserts **invocation counts per identity**, not final state: a legal end state is exactly
 what a double-fire produces, so an end-state assertion passes on the defect it exists to catch.
 
