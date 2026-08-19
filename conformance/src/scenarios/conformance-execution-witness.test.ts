@@ -51,6 +51,35 @@ describe('RFC 0148 §A — conformance-execution-witness: the runner record', ()
     expect(resolveFileRecord(['pass'], undefined, 0, { kind: 'skipped', reason: 'operator opt-out' })).toEqual({ disposition: 'skipped', detail: 'operator opt-out' });
   });
 
+  it('gap G8 — a file that asserted then soft-skipped keeps the note as a partial-witness detail, and its disposition does NOT move', () => {
+    // `return softSkip(...)` produces a PASS state, not a skip, so neither the
+    // zero-assertion branch nor the all-skipped branch fires. The note used to be
+    // discarded outright and the row read a bare `executed-pass` — for a
+    // requirement the run may never have reached, because the assertions came
+    // from a positive control or a setup precondition. Measured on this exact
+    // function by a tier-1 host writing a scenario whose first leg is a control.
+    const one = resolveFileRecord(['pass'], undefined, 1, { kind: 'blocked', reason: 'fork returned 501' });
+    expect(one.disposition).toBe('executed-pass');
+    expect(one.detail).toBe('partial-witness: blocked: fork returned 501');
+
+    const many = resolveFileRecord(['pass', 'pass'], undefined, 4, { kind: 'inapplicable', reason: 'fork unsupported' });
+    expect(many.disposition).toBe('executed-pass');
+    expect(many.detail).toBe('partial-witness: inapplicable: fork unsupported');
+
+    // The disposition deliberately does not move: honouring a per-FILE note here
+    // would downgrade a file that legitimately finished its requirement and also
+    // soft-skipped an optional extra leg. The marker makes the rows findable so
+    // the per-`it` fix can follow measurement instead of preceding it.
+    expect(many.disposition).not.toBe('inapplicable');
+
+    // A clean pass is untouched — no note, no marker, no detail at all.
+    expect(resolveFileRecord(['pass', 'pass'], undefined, 7, null)).toEqual({ disposition: 'executed-pass' });
+
+    // A FAILING file keeps its failure; the note must not dress a red as a pass.
+    const red = resolveFileRecord(['pass', 'fail'], undefined, 3, { kind: 'blocked', reason: 'seam 404' });
+    expect(red.disposition).toBe('executed-fail');
+  });
+
   it('every test ctx.skip()ped takes the noted reason when one was written before the skip, else stays the blocked marker', () => {
     // `ctx.skip()` throws — a `softSkip(...)` AFTER it is dead code. Seven files
     // carried exactly that dead note and reported as unclassified for a suite minor.

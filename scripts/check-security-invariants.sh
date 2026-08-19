@@ -190,8 +190,45 @@ for (const inv of invariants) {
   }
 }
 
+// ── Threat-model traceability (added 2026-08-19) ─────────────────────────────
+// Every invariant carries a `threat_model:` pointer, and until now NOTHING
+// checked it: not that the file exists, not that it says anything about the
+// invariant. A pointer nobody verifies is an unchecked claim — the same shape
+// as the drift guard that masked a suite, the replay leg that asserted over an
+// empty loop, and the poll knob that reached no call site. Reported by a host
+// that declined to add an entry whose pointer it would have had to make true by
+// asserting it.
+//
+// A MISSING file is a hard failure — that pointer cannot be honoured by anyone.
+// A file that exists but never NAMES the invariant is the softer defect: a
+// reader cannot get from the invariant to the paragraph that justifies it. There
+// are 79 of those today (of 183), so this is a RATCHET, not a cliff: the count
+// may not grow, and lowering the baseline is how the debt gets paid. Failing
+// hard today would either red the gate for every contributor or invite 79
+// rubber-stamp edits, and a rubber stamp is the thing being fixed.
+let tmMissingFile = 0;
+let tmUntraced = 0;
+const untracedIds = [];
+for (const inv of invariants) {
+  // \u0027 rather than a literal apostrophe: this JS lives inside a
+  // single-quoted bash string, so one apostrophe here ends the script.
+  const pointer = (inv.threat_model || "").replace(/^["\u0027]|["\u0027]$/g, "").trim();
+  if (pointer === "") continue;
+  const full = path.join(repoRoot, pointer);
+  if (!fs.existsSync(full)) {
+    tmMissingFile++;
+    fs.writeSync(failHandle, "  FAIL: " + inv.id + " — threat_model points at a file that does not exist: " + pointer + "\n");
+    continue;
+  }
+  if (!fs.readFileSync(full, "utf8").includes(inv.id)) {
+    tmUntraced++;
+    untracedIds.push(inv.id);
+  }
+}
+failed += tmMissingFile;
+
 fs.closeSync(failHandle);
-process.stdout.write(JSON.stringify({ total, protocol, refImpl, advisory, failed }));
+process.stdout.write(JSON.stringify({ total, protocol, refImpl, advisory, failed, tmUntraced, untracedIds }));
 '
 
 STATS=$(node -e "$PROCESS_SCRIPT" "$REPO_ROOT" "$INVARIANTS_JSON" "$FAIL_LOG")
@@ -200,6 +237,12 @@ PROTOCOL=$(echo "$STATS" | node -e 'let d=""; process.stdin.on("data",c=>d+=c).o
 REFERENCE_IMPL=$(echo "$STATS" | node -e 'let d=""; process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).refImpl))')
 ADVISORY=$(echo "$STATS" | node -e 'let d=""; process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).advisory))')
 FAILED=$(echo "$STATS" | node -e 'let d=""; process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).failed))')
+TM_UNTRACED=$(echo "$STATS" | node -e 'let d=""; process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).tmUntraced))')
+
+# Ratchet baseline — the number of invariants whose `threat_model:` file exists
+# but never names the invariant. Measured 2026-08-19: 79 of 183. This number MUST
+# NOT grow. When you trace one, lower it; the gate tells you to.
+THREAT_MODEL_UNTRACED_BASELINE=79
 
 echo "Invariants tracked:"
 echo "  total:          $TOTAL"
@@ -225,4 +268,29 @@ if [[ "$FAILED" -gt 0 ]]; then
   exit 1
 fi
 
+if [[ "$TM_UNTRACED" -gt "$THREAT_MODEL_UNTRACED_BASELINE" ]]; then
+  echo "=== check-security-invariants FAILED — threat-model traceability regressed ==="
+  echo
+  echo "Invariants whose threat_model file never names them: $TM_UNTRACED (baseline $THREAT_MODEL_UNTRACED_BASELINE)."
+  echo
+  echo "A threat_model pointer is a claim that the named document explains the"
+  echo "threat this invariant defends. If the document never mentions the id, a"
+  echo "reader cannot get from the invariant to that explanation, and the pointer"
+  echo "asserts a traceability that does not exist."
+  echo
+  echo "Either name the invariant id in its threat-model document, or point it at"
+  echo "one that already covers the threat. Do not raise the baseline."
+  echo
+  exit 1
+fi
+
+if [[ "$TM_UNTRACED" -lt "$THREAT_MODEL_UNTRACED_BASELINE" ]]; then
+  echo "Threat-model traceability improved: $TM_UNTRACED untraced (baseline $THREAT_MODEL_UNTRACED_BASELINE)."
+  echo "Lower THREAT_MODEL_UNTRACED_BASELINE in $0 to $TM_UNTRACED so the gain is held."
+  echo
+  exit 1
+fi
+
+echo "Threat-model pointers: all resolve; $TM_UNTRACED of $TOTAL are untraced (at baseline — a ratchet, not a pass)."
+echo
 echo "=== check-security-invariants OK — all protocol-tier invariants have test coverage ==="

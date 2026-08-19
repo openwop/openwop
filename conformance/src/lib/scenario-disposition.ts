@@ -49,6 +49,15 @@ export function requirementIdForFile(basename: string): string {
     : `openwop.scenario.${basename.replace(/\.test\.ts$/, '')}`;
 }
 
+/**
+ * Marks an `executed-pass` row whose file ALSO recorded a soft-skip note — the
+ * file asserted something, then stopped short (gap G8). Greppable on purpose: a
+ * bundle reader filters `disposition === 'executed-pass' && detail?.startsWith(
+ * PARTIAL_WITNESS_PREFIX)` to find rows where the requirement may not have been
+ * the thing that passed.
+ */
+export const PARTIAL_WITNESS_PREFIX = 'partial-witness: ';
+
 export type FileTestState = 'pass' | 'fail' | 'skip';
 
 /** Worker half: fold a file's per-test states (+ any gate-recorded reason) into
@@ -125,6 +134,27 @@ export function resolveFileRecord(
     // dead code — which is how seven files carried notes the ledger never saw.
     disposition = noted.kind;
     detail = noted.reason;
+  } else if (noted !== null && disposition === 'executed-pass') {
+    // PARTIAL WITNESS (2026-08-19, gap G8). The file asserted something and then
+    // soft-skipped: `return softSkip(...)` yields a PASS state, not a skip, so
+    // neither branch above fires and the note used to be discarded outright. The
+    // row then read `executed-pass` for a requirement the run may never have
+    // reached — e.g. a file asserting a `201` setup precondition before
+    // returning `inapplicable`.
+    //
+    // Same defect as the note-after-`ctx.skip()` case the comment above records;
+    // note-after-ASSERTION was the half that stayed. Both hid because nothing
+    // goes red.
+    //
+    // The disposition is deliberately NOT changed. Honouring the note here would
+    // downgrade a file that legitimately completed its requirement AND
+    // soft-skipped an optional extra leg — trading a false positive for a false
+    // negative, on a per-FILE note that cannot say which leg it came from. The
+    // durable fix is per-`it` recording; this makes the affected rows
+    // self-identifying first, so that change follows measurement instead of
+    // preceding it. `detail` is permitted on `executed-pass` (RFC 0148 §A only
+    // REQUIRES it for other dispositions), so this is additive on the wire.
+    detail = `${PARTIAL_WITNESS_PREFIX}${noted.kind}: ${noted.reason}`;
   }
   return detail === undefined ? { disposition } : { disposition, detail };
 }

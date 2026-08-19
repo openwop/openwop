@@ -470,6 +470,15 @@ about a write that did not happen in that run. Lifecycle events (`run.started`,
 `run.completed`) have the same shape but are ambiguous noise; a recorded-fact event
 is a false statement.
 
+**That contrast ranks the harm; it does not narrow the scope** *(clarified
+2026-08-19, after a host implementing this section read it as a possible
+carve-out)*. Lifecycle events are re-emitted as fixed history like any other, and
+the first requirement below decides the question directly: replay-ness is read
+from the run, never from the event type. A host suppressing only recorded-fact
+deliveries would be selecting by event type — the exact thing that requirement
+forbids — so it is non-conforming, notwithstanding that the harm it leaves behind
+is the milder one.
+
 Requirements:
 
 - A host MUST determine replay-ness from the run itself (its fork mode / source
