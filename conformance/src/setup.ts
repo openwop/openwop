@@ -32,7 +32,7 @@ import { McpFakeServer, setMcpFakeServer } from './lib/mcp-fake-server.js';
 import { A2AFakePeer, setA2AFakePeer } from './lib/a2a-fake-peer.js';
 import { afterAll, afterEach, beforeAll, expect } from 'vitest';
 import { basename } from 'node:path';
-import { recordRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
+import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
 import { requirementIdForFile, resolveFileRecord, type FileTestState } from './lib/scenario-disposition.js';
 import { softSkipDisposition } from './lib/soft-skip.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
@@ -279,10 +279,29 @@ afterAll(({}, suite) => {
   // honest bundle row and the pressure to say why both survive. The rule is
   // `resolveFileRecord` (pinned by conformance-execution-witness.test.ts).
   const { disposition, detail } = resolveFileRecord(states, gateReason, assertionCount, softSkipDisposition(file));
-  try {
-    recordRequirement(requirementIdForFile(file), disposition, detail, { assertionCount });
-  } catch {
-    /* a scenario that recorded its own file id first wins; never fail the file for bookkeeping */
+  const fileRequirementId = requirementIdForFile(file);
+  // A scenario that classified ITSELF wins outright — including its `detail` and
+  // its `assertionCount`.
+  //
+  // The `catch` below has always made the explicit record win when the two
+  // DISAGREE (`recordRequirement` throws on a conflicting disposition). It did
+  // not when they AGREE: the automatic call then reached `ledger.set` and
+  // silently replaced the scenario's own detail and count with the file-level
+  // ones. Invisible until 2026-08-19, when `resolveFileRecord` started attaching
+  // a `partial-witness:` marker — a scenario that recorded `executed-pass` for a
+  // requirement it really did exercise, in a file whose LAST leg soft-skipped,
+  // would have been stamped "may not have witnessed this" over its own explicit
+  // finding. That would inject false positives into exactly the measurement the
+  // marker exists to produce.
+  //
+  // So the comment describing this line was true of half the cases. It is true
+  // of both now.
+  if (!hasRequirement(fileRequirementId)) {
+    try {
+      recordRequirement(fileRequirementId, disposition, detail, { assertionCount });
+    } catch {
+      /* never fail a file for bookkeeping */
+    }
   }
   _fileStates.delete(file);
   _fileAssertions.delete(file);

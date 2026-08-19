@@ -158,6 +158,15 @@ export function readLedgerFile(path: string): readonly LedgerEntry[] {
  * returned early, threw and swallowed, or was never written leaves no entry, and
  * the honest reading of no entry is "this was not exercised".
  */
+/**
+ * Has this requirement already been recorded in THIS run? Distinguishes "the
+ * scenario classified itself" from "nothing has been recorded yet" — which
+ * `dispositionOf` cannot, since it folds the absent case to `blocked`.
+ */
+export function hasRequirement(requirementId: string): boolean {
+  return ledger.has(requirementId);
+}
+
 export function dispositionOf(requirementId: string): Disposition {
   return ledger.get(requirementId)?.disposition ?? 'blocked';
 }
