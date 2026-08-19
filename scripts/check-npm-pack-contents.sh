@@ -95,7 +95,7 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.136.13', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '1.136.14', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
