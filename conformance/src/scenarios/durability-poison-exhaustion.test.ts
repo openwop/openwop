@@ -75,13 +75,20 @@ function declaredAttemptBound(): number | null {
 
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
 
+// Recorded at MODULE scope, not inside the `it`. `describe.skipIf` never runs the
+// callback, so a `recordRequirement` in the test body is dead code on exactly the
+// path it exists to classify — the same shape as the note written after
+// `ctx.skip()` threw, which left seven files carrying notes the ledger never saw.
+// Caught by reading a CI log: this file and `failure-path.test.ts` both skipped
+// against the postgres host, which does not advertise the fixture, and the row
+// would have been recorded `blocked` with the unclassified-return marker instead
+// of `inapplicable` with a reason.
+if (SKIP_NO_FIXTURE) {
+  recordRequirement(REQ, 'inapplicable', `fixture ${WORKFLOW_ID} not advertised`);
+}
+
 describe.skipIf(SKIP_NO_FIXTURE)('RFC 0162 §C.8 — poison work terminates within a bounded number of attempts', () => {
   it('reaches terminal AND stops being retried, asserted on the log rather than on the status alone', async () => {
-    if (SKIP_NO_FIXTURE) {
-      recordRequirement(REQ, 'inapplicable', `fixture ${WORKFLOW_ID} not advertised`);
-      return softSkip('inapplicable', `fixture ${WORKFLOW_ID} not advertised`);
-    }
-
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status, driver.describe(
       'rest-endpoints.md',
