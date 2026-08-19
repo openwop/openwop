@@ -47,6 +47,16 @@ been explicitly asked and answered wrong is the case for a normative rule.
 
 **What this row does not claim.** The conformance scenario does **not** independently witness the seam guard — classification and the guard mask each other in the fixture, so disabling either alone leaves the scenario green (RFC 0140 gap G8); the guard's evidence is host-side. Three node-reachable effect paths remain unguarded in openwop-app (gap G9: webhook fan-out, `s3Blob.put`, `openSearchSearch`), the first deliberately, since it is host-level fan-out with no node to fail closed. Out-of-process pack execution is uncovered — `AsyncLocalStorage` does not cross a worker boundary. `branch`-mode forks re-fire effects by design (§D).
 
+### Poison work terminates within a bounded number of attempts (RFC 0162 §C.8 — `durability/poison-exhaustion`)
+
+RFC 0162 is **`Draft`**. This row records evidence for one requirement, not a rung: the RFC's ladder mints no advertised capability (§E.10, under the RFC 0147 §A.1 freeze), so nothing here is a claim a host advertises. Of the RFC's six conformance rows this is the only one **causable** without terminating a process — the other five need a host seam, a supervisor, or ≥2 instances, and none exists yet. Seam-gated on the existing `/v1/host/sample/test/runs/{runId}/events` log seam and **outside every profile floor**.
+
+| Host | Status | Evidence |
+| --- | --- | --- |
+| **openwop-app** (tier-1 reference) | **witnessed + sabotage-verified — 2026-08-19, suite `1.138.0`** | **PASS in 4030 ms** on a clean host, and **RED** — `expected 2 to be 1` — against a host patched to emit one attempt *after* `run.failed`. The red is the point: the stability leg fires on exactly the behaviour `failure-path.test.ts` cannot see, because a host that reports terminal and keeps re-dispatching also reports terminal. The host additionally checked the scenario's own blind spot and reported a **clean negative rather than a reassurance**: `node.started` has exactly one emission site, unconditional at the top of node execution with no served-from-log bypass, so on this host every re-dispatch is counted — *"a fact about this host's structure, not about hosts"*, which is why the scenario keeps counting both event types. |
+| **Postgres / SQLite / In-memory / Python** (reference examples) | **`blocked` — unobservable, not unmet** | The reference hosts advertise no `conformance-failure` fixture, so this scenario and `failure-path.test.ts` both skip against them in CI. The reference host cannot witness §C.8 at all — found by reading a CI log rather than by any failure. |
+| **MyndHyve `workflow-runtime`** (tier-2 sibling) | Not measured | Candidate: needs the fixture advertised and the event-log seam wired; no opt-in and no process kill required. |
+
 ### Agent Platform profile (RFC 0085 — `openwop-agent-platform`)
 
 The aggregate platform profile defined in `spec/v1/agent-platform-profile.md` (RFC 0085, **`Accepted` 2026-06-01**). A host populates the status column when it reaches `partial`/`full`. MyndHyve — the steward-affiliated sibling host whose graduation evidence accepted the RFC — derives **full**; no example reference host claims it yet (honest).
