@@ -17,6 +17,13 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
+/**
+ * The `X-openwop-Signature` value prefix, per `webhooks.md` §"Delivery headers"
+ * (`sha256={hex}`). Distinct from the ALGORITHM header's `v1`, which names the
+ * signing scheme, not the encoding — see `verifyWebhookDelivery`.
+ */
+export const SIGNATURE_PREFIX = 'sha256=';
+
 export const DEFAULT_FRESHNESS_WINDOW_SECONDS = 300;
 
 export type WebhookRejectionReason =
@@ -75,10 +82,24 @@ export function verifyWebhookDelivery(
   }
 
   // 2. Signature header parse.
-  if (!signatureHeader.startsWith('v1=')) {
+  //
+  // `sha256=`, NOT `v1=` (corrected 2026-08-19). `webhooks.md` §"Delivery
+  // headers" specifies `X-openwop-Signature: sha256={hex}` and its verification
+  // recipe says "Strip the `sha256=` prefix". This verifier required `v1=` and
+  // rejected the spec's own header as malformed — so the reference verifier a
+  // subscriber implementer would copy refused every conforming delivery.
+  //
+  // The confusion is visible one comment above: `v1` is the value of the
+  // ALGORITHM header (`X-openwop-Signature-Algorithm: v1`), a different field.
+  // One value, two fields, conflated. It survived because
+  // `webhook-receiver-adversarial.test.ts` signs with `signPayload` and verifies
+  // with this function — a closed loop that is self-consistent and wrong, and
+  // therefore green on every host. Reported by a tier-2 host that could not
+  // adjudicate which of the suite's three signature shapes was canonical.
+  if (!signatureHeader.startsWith(SIGNATURE_PREFIX)) {
     return { accepted: false, reason: 'malformed_signature_header' };
   }
-  const providedHex = signatureHeader.slice(3);
+  const providedHex = signatureHeader.slice(SIGNATURE_PREFIX.length);
   if (!/^[0-9a-f]+$/i.test(providedHex)) {
     return { accepted: false, reason: 'malformed_signature_header' };
   }
@@ -130,7 +151,7 @@ export function signPayload(
   const bodyStr = typeof rawBody === 'string' ? rawBody : rawBody.toString('utf8');
   const hex = createHmac('sha256', secret).update(`${timestamp}.${bodyStr}`, 'utf8').digest('hex');
   return {
-    signatureHeader: `v1=${hex}`,
+    signatureHeader: `${SIGNATURE_PREFIX}${hex}`,
     timestampHeader: String(timestamp),
     algorithmHeader: 'v1',
   };
