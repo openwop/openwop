@@ -176,8 +176,29 @@ what a double-fire produces, so an end-state assertion passes on the defect it e
    Several mechanisms, therefore several bounds. **A single scalar would have to be the maximum, which
    overstates recovery for every faster class — a lie by aggregation, which is the failure this RFC exists to
    stop.** A host with one mechanism declares one bound; that is the degenerate case, not the general one.
-2. Does `multi-region-qualified` require a *tested* evacuation, or a *rehearsed* one with recorded RPO/RTO?
-3. Should §C.8's attempt bound be normative, or host-declared like the recovery bound?
+2. ~~Does `multi-region-qualified` require a *tested* evacuation, or a *rehearsed* one?~~ **Resolved
+   2026-08-19: TESTED — traffic MUST actually be served from the surviving region, with RPO/RTO MEASURED
+   rather than declared.** §D.9 already derives this: it refuses a rung claimed on "tests in which no process
+   was actually terminated", so a region that was never left cannot qualify the rung above. A rehearsal that
+   moves no traffic is a runbook review, and accepting it would make the ladder inconsistent with its own
+   lowest rung.
+
+   **PLANNED is fine; SIMULATED is not.** A scheduled failover drill in which the secondary genuinely serves
+   traffic satisfies this; an unplanned outage is not required. The bar is *did the traffic move*, not *did the
+   host suffer* — which is also how disaster recovery is qualified in practice.
+3. ~~Should §C.8's attempt bound be normative, or host-declared?~~ **Resolved 2026-08-19: HOST-DECLARED, with
+   two normative constraints — it MUST be finite, and it MUST be derived from the mechanism that enforces it.**
+   §B.6 already settled this pattern for the recovery bound ("a host MAY declare a bound of any length; a long
+   bound is conformant, an undeclared or unenforced one is not"), and a fixed number would select for an
+   architecture: three attempts is right for expensive external effects, fifty for cheap idempotent work.
+   Selecting for an architecture is precisely what this RFC declined to do when it refused to mandate a fast
+   recovery bound.
+
+   **The two constraints exist because this bound is NOT symmetric with the recovery bound**, and the asymmetry
+   is the whole reason to write them down. A slow recovery bound is harmless — it delays resumption and says so.
+   An attempt bound declared as effectively infinite would satisfy a bare declaration requirement while
+   reproducing the unbounded-redelivery failure §C.8 exists to stop. Finiteness is the property that matters;
+   the §B.5 derivation rule stops a host declaring a number nothing enforces.
 
 ## Implementation notes (non-normative)
 
