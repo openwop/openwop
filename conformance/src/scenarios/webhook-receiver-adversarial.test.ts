@@ -17,7 +17,7 @@
  *      delivers body B'. Receiver MUST reject with
  *      `signature_mismatch`.
  *   2. Tampered HMAC — body is valid; adversary flips a byte of the
- *      v1=<hex> signature. Receiver MUST reject with
+ *      sha256=<hex> signature. Receiver MUST reject with
  *      `signature_mismatch`.
  *   3. Stale timestamp — body + HMAC are valid but timestamp is
  *      older than the default 5-minute window. Receiver MUST reject
@@ -42,6 +42,7 @@ import {
   createReceiverState,
   signPayload,
   verifyWebhookDelivery,
+  SIGNATURE_PREFIX,
 } from '../lib/webhook-receiver.js';
 
 describe('webhook-receiver-adversarial: receiver rejects five canonical attacks', () => {
@@ -93,8 +94,13 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
   it('case 2: tampered HMAC → signature_mismatch', () => {
     const state = createReceiverState();
     const { signatureHeader, timestampHeader, algorithmHeader } = signPayload(secret, ts, body);
-    // Flip one hex character of the v1=<hex> signature.
-    const flipIndex = 5;
+    // Flip one hex character of the `sha256=<hex>` signature. Derived from
+    // SIGNATURE_PREFIX rather than hard-coded: the literal `5` was inside the
+    // hex only while the prefix was the (non-spec) `v1=`, and silently moved
+    // INTO the prefix when it was corrected to `sha256=` — turning a
+    // tampered-HMAC case into a malformed-header one. The test caught it; the
+    // constant is what makes it stay caught.
+    const flipIndex = SIGNATURE_PREFIX.length + 2;
     const orig = signatureHeader[flipIndex]!;
     const replacement = orig === '0' ? '1' : '0';
     const tampered = signatureHeader.slice(0, flipIndex) + replacement + signatureHeader.slice(flipIndex + 1);

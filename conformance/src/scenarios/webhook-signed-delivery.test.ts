@@ -7,7 +7,11 @@
  *   2. `X-openwop-Signature-Algorithm: v1` header is present.
  *   3. `X-openwop-Signature` is a valid HMAC-SHA256 of
  *      `${timestamp}.${rawBody}` under the subscription secret.
- *   4. `X-openwop-Subscription-Id` matches the returned subscription id.
+ *   4. `X-openwop-Webhook-Id` matches the returned `webhookId`.
+ *      (This line said `X-openwop-Subscription-Id` until 2026-08-19, two years
+ *      after the assertion below stopped checking that header — a docblock
+ *      asserting more than the code did, in the file that documents a
+ *      security-relevant contract.)
  *
  * Capability-gated: skips when the host does not advertise
  * `capabilities.webhooks.supported = true`.
@@ -122,10 +126,23 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
 
     expect(reg.status, driver.describe(
       'webhooks.md §"Register"',
-      'POST /v1/webhooks MUST return 201 with subscriptionId + secret on success',
+      'POST /v1/webhooks MUST return 201 with webhookId + secret on success',
     )).toBe(201);
-    const sub = reg.json as { subscriptionId: string; secret: string };
-    expect(typeof sub.subscriptionId).toBe('string');
+    // `webhookId`, NOT `subscriptionId` (corrected 2026-08-19). `webhooks.md`
+    // §"Register" shows `{"webhookId": "wh_a3b9c2", ...}`, `api/openapi.yaml`
+    // declares the 201 body `required: [webhookId]` with no `subscriptionId`
+    // property at all, and the sibling `webhook-tenant-isolation.test.ts` reads
+    // `webhookId`. This file required a field the contract does not define, so a
+    // SPEC-CONFORMING host failed at the first assertion — the suite being
+    // different from the spec, which is worse than the stricter-than-spec case
+    // COMPATIBILITY.md §2.3 forbids. Reported by a tier-2 host emitting exactly
+    // what the spec shows. The postgres reference host returns both names, which
+    // is why nothing went red here.
+    const sub = reg.json as { webhookId: string; secret: string };
+    expect(typeof sub.webhookId, driver.describe(
+      'api/openapi.yaml registerWebhook 201',
+      'the 201 body MUST carry `webhookId` (required) — `subscriptionId` is not in the contract',
+    )).toBe('string');
     expect(typeof sub.secret).toBe('string');
     expect(sub.secret.length).toBeGreaterThan(0);
 
@@ -174,7 +191,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     expect(
       first.headers['x-openwop-webhook-id'],
       driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Webhook-Id MUST carry the subscription id'),
-    ).toBe(sub.subscriptionId);
+    ).toBe(sub.webhookId);
 
     const timestamp = first.headers['x-openwop-timestamp'];
     expect(
@@ -201,7 +218,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     expect(event.runId).toBe(runId);
 
     // Cleanup: unregister.
-    const del = await driver.delete(`/v1/webhooks/${encodeURIComponent(sub.subscriptionId)}`);
+    const del = await driver.delete(`/v1/webhooks/${encodeURIComponent(sub.webhookId)}`);
     expect(del.status).toBeGreaterThanOrEqual(200);
     expect(del.status).toBeLessThan(300);
   });
