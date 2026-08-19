@@ -227,6 +227,47 @@ A host MUST NOT reclaim a claim that has not expired, even when the holder looks
 unhealthy by some other signal. Expiry is the only reclaim authority; adding a
 second one reintroduces the double-execution the claim exists to prevent.
 
+#### Expiry is authority; the sweeper is the exercise of it
+
+*(Added 2026-08-19, from a tier-1 host's measured failure.)*
+
+The clauses above make expiry the sole **authority** to reclaim. They say nothing
+about the thing that *exercises* that authority — the periodic lane that looks for
+stale claims — and a host can satisfy every rule above while never reclaiming
+anything, because that lane has stopped.
+
+The measured case: a sweeper guarded re-entry with a single `running` flag,
+released in a `finally` attached to the last of two sequential lanes. Each lane
+was individually try/caught, so a lane that **threw** could not stop the other —
+which the code's own comment stated, correctly. **But a hang is not a throw.** An
+await that never settles never reaches the release, `running` stays set, and every
+later tick returns at the guard. Both lanes stop permanently **with nothing
+logged, because nothing failed**. A run sat unclaimed for 16 minutes against a
+12.5-minute bound; the storage query returned it as claimable throughout, and the
+same daemon reclaimed a seeded orphan within 24 s of a fresh boot.
+
+Two fixes that do not work, both worth knowing:
+
+- **One `try { both lanes } finally { running = false }`.** A `finally` cannot run
+  while an `await` inside its `try` is still pending — control never leaves the
+  block, so the flag is never released. This fails identically to the original.
+- **Per-lane deadlines alone.** They end the permanent stall, but if the reclaim
+  cadence is counted in *ticks* rather than wall-clock, a slow neighbouring lane
+  stretches every tick and degrades reclaim from seconds to minutes.
+
+So, normatively: a host **MUST NOT** let one periodic lane's failure to settle
+prevent another from running, and the reclaim cadence **MUST** be measured in
+wall-clock time rather than in iterations of a shared loop. A host **SHOULD**
+bound each lane with a deadline that converts a hang into a caught error, so the
+lane runs again on the next cycle.
+
+**Why this belongs in the spec and not only in a host's changelog:** a declared
+recovery bound is only real if the mechanism that produces it runs. A wedged
+sweeper leaves the derivation perfectly correct and the bound entirely
+unproduced — **true on paper, false in production, with no signal either way** —
+which is precisely the failure a reader of a derived bound would assume was
+impossible.
+
 ### Resume on startup
 
 On boot, a host MUST look for runs that are non-terminal and unclaimed-or-stale,
