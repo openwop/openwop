@@ -8,6 +8,8 @@ If you're building agentic systems, AI workflow engines, multi-agent application
 
 > **Read the paper: [_OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration_](https://doi.org/10.5281/zenodo.20576239)** — published on Zenodo (DOI [10.5281/zenodo.20576239](https://doi.org/10.5281/zenodo.20576239), CC BY 4.0). The protocol-level argument, a reproducible cross-language portability result, and the full evidence artifact live in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper).
 
+> **Implementing a host? Start with [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md), not with this corpus.** Conformance means **nine floor scenarios** and four documents. The other 56 documents describe optional surfaces you can ignore until you want them — and most implementers should ignore most of them on day one. The size of the corpus, not its content, is the main barrier to an independent implementation, and an independent implementation is the thing this protocol most needs.
+
 ## Multi-Agent Architecture (v1+)
 
 OpenWOP v1 introduces first-class support for **orchestrator-driven multi-agent workflows**:
@@ -157,6 +159,8 @@ This repository is the canonical source for the **protocol contract** — the sp
 - [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md) — end-to-end path for third-party pack authors: skeleton → signing key → tarball + signature + SBOM → schema validation → local-host smoke → publish PR → lifecycle (versioning, deprecate, yank, key rotation).
 - [`docs/integrations/durable-runtimes.md`](./docs/integrations/durable-runtimes.md) — implementation guide for hosts built on Temporal / Restate / DBOS / Inngest.
 - [`docs/integrations/serverless-workflow-and-bpmn.md`](./docs/integrations/serverless-workflow-and-bpmn.md) — bridging OpenWOP to / from CNCF Serverless Workflow and OMG BPMN. Honest about what round-trips and what stays host-specific.
+- [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md) — **start here to build a host.** The nine floor scenarios of `openwop-core-standard`, the four documents you need, and an explicit list of what to ignore and until when.
+- [`docs/EVIDENCE-DISCIPLINE.md`](./docs/EVIDENCE-DISCIPLINE.md) — eleven practices for making a conformance suite's results mean what a reader assumes, each earned by a defect. **Written to be protocol-agnostic** — nothing in it depends on OpenWOP.
 - [`docs/KNOWN-LIMITS.md`](./docs/KNOWN-LIMITS.md) — honest catalog of shape-only coverage, external-gated work, profile claims awaiting non-steward adoption, and surfaces deliberately NOT standardized.
 - [`docs/ASSURANCE-STATUS.md`](./docs/ASSURANCE-STATUS.md) — RFC 0156 §F assurance manifest, generated from the tree: governance membership and organizations, bootstrap-waiver count, audit status, Tier-3 evidence, current versions, open Critical/High program risks, and which RFC 0147 §A claims are permitted today (`docs/ASSURANCE-STATUS.json` is the machine form; `openwop:check` fails when either drifts or a public surface carries an unpermitted claim token).
 - [`docs/AGENT-FAILURE-MODES.md`](./docs/AGENT-FAILURE-MODES.md) — non-normative rationale note mapping the well-known production failure modes of tool-using agents (runaway loops, cost blowout, compounding errors, autonomous irreversible actions, prompt injection) onto the existing OpenWOP surfaces that bound, observe, or fail-closed against each.
