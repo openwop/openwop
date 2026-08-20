@@ -89,7 +89,7 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "1.138.0",
+    "conformanceSuite": "1.138.1",
     "corpusRelease": "1.8.0",
     "corpusReleaseDate": "2026-08-18"
   },
@@ -281,13 +281,6 @@
       },
       {
         "rfc": "0147",
-        "id": "R2",
-        "score": "Critical",
-        "title": "Correcting activity identity or replay digests silently changes interpretation of store…",
-        "status": "Target: SR-3 `Active`; Open — Sweep 2026-08-16: Mitigated by evidence: no stored histories use the retired recipe (RFC 0150 G1); digest v2 is versioned (`recipe"
-      },
-      {
-        "rfc": "0147",
         "id": "R3",
         "score": "Critical",
         "title": "Split-brain hosts duplicate payments/messages before a losing run is cancelled.",
@@ -320,13 +313,6 @@
         "score": "High",
         "title": "Compensation is marketed as rollback or atomicity.",
         "status": "Target: SR-4 `Active`; Open — Sweep 2026-08-16: Mitigated in prose — `compensation.md` names best-effort durable compensation, `partial`/`manual` states, no rol"
-      },
-      {
-        "rfc": "0147",
-        "id": "R9",
-        "score": "Critical",
-        "title": "A compensating action causes a second harmful effect or leaks authority.",
-        "status": "Target: SR-4 `Accepted`; Open — Sweep 2026-08-16: Open — unwitnessed. Prose separates identity/approval/egress/audit/DLQ (`compensation.md` §E carried per its G"
       },
       {
         "rfc": "0147",
@@ -432,6 +418,13 @@
         "score": "High",
         "title": "Provider claims idempotency but retention is too short.",
         "status": "Open — Sweep 2026-08-16: Open (G4)."
+      },
+      {
+        "rfc": "0151",
+        "id": "R1",
+        "score": "Critical",
+        "title": "Compensation executes twice.",
+        "status": "Open — Sweep 2026-08-16: Mitigated in prose — inverse-action identity tuple stated; `compensation.md` §C now states the persistence shape, `attempt` outside the"
       },
       {
         "rfc": "0151",
@@ -602,14 +595,17 @@
         "status": "Open — Sweep 2026-08-16: Open, Critical — single maintainer; every 2026-08 decision was unilateral by construction, recorded publicly in PRs/CHANGELOG."
       }
     ],
+    "transferred": [
+      "0147/R3",
+      "0147/R12",
+      "0147/R14"
+    ],
     "programOpenCriticalOrHigh": [
-      "0147/R2",
       "0147/R3",
       "0147/R4",
       "0147/R5",
       "0147/R7",
       "0147/R8",
-      "0147/R9",
       "0147/R11",
       "0147/R12",
       "0147/R14",
@@ -625,6 +621,7 @@
       "0150/R2",
       "0150/R3",
       "0150/R4",
+      "0151/R1",
       "0151/R2",
       "0151/R3",
       "0151/R4",

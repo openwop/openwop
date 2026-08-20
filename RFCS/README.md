@@ -124,11 +124,6 @@ Every RFC follows `0000-template.md` and must answer:
 
 Current tally: **Accepted 153 · Active 3 · Draft 2** (158 RFCs, excluding the `0000` template; Active = 0035 Parked, 0111 Parked, 0121 Parked; Draft = 0038 Parked, 0158).
 
-> **Numbering note (2026-08-19).** RFC **0158** was authored as `0162` against a planned 0158–0161 block that
-> was never written. It was renumbered to close the gap rather than reserve four numbers for proposals the
-> analysis rejected. **There is no RFC 0159–0164 and none is pending**; references to "RFC 0162" in host
-> repositories predate the renumber and mean RFC 0158.
-
 Of the 5 non-`Accepted` RFCs, **4 are [Parked](#parked-rfcs)** on a named external tripwire and **1 await repository work**.
 
 | RFC | Title | Status |

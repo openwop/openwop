@@ -39,7 +39,28 @@ The program uses current primary prior art as a benchmark: durable-history and v
 
 The following requirements apply to every workstream:
 
-1. The project **MUST** freeze new non-essential optional wire capabilities until Workstreams 1–3 are Accepted and every Critical risk in the companion register is Closed or transferred to an embargoed advisory.
+1. The project **MUST** freeze new non-essential optional wire capabilities until Workstreams 1–3 are Accepted and every Critical risk in the companion register is Closed or transferred to a **named tracked surface** — an embargoed advisory where non-disclosure is warranted, otherwise a follow-up RFC, a `ROADMAP.md` entry, or a `docs/KNOWN-LIMITS.md` row.
+
+   > **Amended 2026-08-20 (drafting defect; the earlier text was wrong, not merely narrow).** This clause
+   > originally offered exactly two dispositions: `Closed`, or *"transferred to an embargoed advisory"*. That
+   > second option is unreachable for most of the risks it governs. R3 (split-brain), R12 (provenance mistaken
+   > for authorization) and R14 (no independent maintainers) are all **deliberately and publicly disclosed** —
+   > in `docs/KNOWN-LIMITS.md`, in the registers, and in the generated `docs/ASSURANCE-STATUS.md`. Filing them
+   > as embargoed advisories would have made the project **less** transparent in order to satisfy a clause whose
+   > purpose is rigour, and R14 is not a vulnerability at all, so no advisory could honestly hold it.
+   >
+   > The amended wording aligns this clause with the disposition vocabulary the project already uses everywhere
+   > else — `RFCS/README.md` §"Companion gap & risk registers" requires an open row to be *"closed, transferred
+   > to a tracked surface (a follow-up RFC, a `ROADMAP.md` line, a `docs/KNOWN-LIMITS.md` entry), or explicitly
+   > carried forward"*. **This is a strengthening, not a relaxation:** a public tracked surface is auditable by
+   > anyone, an embargoed advisory by no one outside the project.
+   >
+   > **Exit condition status: MET as of 2026-08-20.** Workstreams 1–3 (RFCs 0148, 0149, 0150) have been
+   > `Accepted` since 2026-08-12 — the same day this RFC was accepted, so this half of the condition was never
+   > outstanding. All six Critical rows are now dispositioned: R1 and R9 **Closed** against re-verified evidence,
+   > R2 closed in corpus scope with its cross-language residual transferred to `openwop-sdks`, and R3, R12 and
+   > R14 **transferred** to the named surfaces above. §A.1's freeze therefore **no longer binds**. See the
+   > companion register's 2026-08-20 Critical close-out sweep for the per-row evidence.
 2. Every child RFC **MUST** complete Spec, Schema, Security, Conformance, and Compatibility reviews before `Draft → Active`.
 3. Every normative behavioral requirement **MUST** have a non-vacuous execution witness, an explicit reporter-visible skip, or a failure. A plain early return **MUST NOT** satisfy a required behavior.
 4. Every host compatibility or conformance claim **MUST** name the protocol version, profile, conformance-suite version, run date, configuration identity, executed assertion count, and skip/inapplicable count.
