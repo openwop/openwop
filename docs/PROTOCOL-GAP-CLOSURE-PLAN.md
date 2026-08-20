@@ -26,7 +26,7 @@ This document turned the protocol deep-dive review into implementation tracks. I
 
 - ✅ **i18n / locale handling** — landed at `spec/v1/i18n.md` (FINAL v1) + `capabilities.i18n` block + interrupt `locale` field.
 - ✅ **Compliance vocabulary** — landed at `spec/v1/compliance.md` (FINAL, non-normative — SOC 2 / GDPR / HIPAA / ISO 27001 mapping).
-- ✅ **Bug-bounty program** — landed at `SECURITY/bug-bounty.md` (annex; activation tracked behind the maintainer tripwire).
+- ✅ **Coordinated-disclosure & recognition program** — landed at `SECURITY/bug-bounty.md` (recognition-based: acknowledgment + credit + attribution, no monetary awards; a paid program stays behind the maintainer + funded-org tripwire).
 - ✅ **CNA registration** — landed at `SECURITY/cna.md` (annex; engagement-letter step deferred to the external-audit closure).
 - ✅ **Workspace pack lockfile demo** — landed at `examples/core-packs-lockfile/` (commit `daeaef5`, 2026-05-13): air-gapped resolver-and-verify proof for the 4 audit-gated core packs at v1.0.0, validating `schemas/pack-lockfile.schema.json` with SRI integrity hashes + raw Ed25519 signature material.
 - ✅ **`capabilities.nodePackRuntimes` schema declaration** — formalized at `schemas/capabilities.schema.json` (commit `09e28fd`, 2026-05-12): strict-mode validators now enforce the shape of `wasm.{supported,abiVersions[],maxMemoryBytes,loadedPacks[]}` + the `wasmComponent` reservation.
