@@ -1,17 +1,17 @@
 # RFC 0114: A2UI Surface Deltas
 
-| Field             | Value                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------- |
-| **RFC**           | 0114                                                                                   |
-| **Title**         | A2UI Surface Deltas                                                                    |
-| **Status**        | `Accepted`                                                                             |
-| **Author(s)**     | David Tufts (@davidscotttufts)                                                          |
-| **Created**       | 2026-06-26                                                                             |
-| **Updated**       | 2026-07-06 (`Active → Accepted` — **single-witness** bootstrap steward waiver + maintainer autonomy grant. tier-1 reference host openwop-app advertises `a2uiSurface.deltaTransport:true` live + serves the emit-surface + delta-stream seams (host code openwop-app#1416). Three verifications GREEN: **① delta delivered + reconstructs** — a `?a2uiDelta=1` subscriber receives an RFC 6902 frame (op enum add/remove/replace, **no `test`**) that `applyPatch`-round-trips to the updated surface + re-validates against the closed catalog (host test `a2uiSurfaceDelta.test.ts`, 5 passed); **② recorded envelope stays FULL — the replay-pinned core** — a non-negotiating subscriber gets `{kind:'full'}` for both surfaces, the recorded event is the full `ui.a2ui-surface`, so `:fork`/replay read the full surface unaffected (delta is a per-subscriber transport projection only). **Steward-curl-verified** on `app.openwop.dev/api`: valid emit → `201 {eventId, sequence:1, surfaceRef, catalogVersion:"0.9.1"}` (records baseline full); **③ post-patch re-validation fail-closed** — **steward-curl-verified**: an out-of-catalog `iframe` component → `422 a2ui_surface_invalid` (`#/anyOf` "must match a schema in anyOf" — the closed A2UI catalog; `a2ui-surface-no-code-exec` holds post-patch). Applied-control witness (host test) + wire evidence, same tier as the 0117 FE unit tests. No new invariant (all RFC 0102 A2UI invariants hold post-patch). Tier-2 (second host advertising `deltaTransport`) carried forward.) · 2026-06-26 |
-| **Affects**       | `spec/v1/ai-envelope.md`, `spec/v1/stream-modes.md`, `schemas/a2ui-surface-delta-frame.schema.json` (NEW), `schemas/capabilities.schema.json`, `spec/v1/host-capabilities.md`, conformance (recorded `ui.a2ui-surface.schema.json` UNCHANGED) |
-| **Compatibility** | `additive` per `COMPATIBILITY.md`                                                       |
-| **Supersedes**    | —                                                                                     |
-| **Superseded by** | —                                                                                     |
+| Field | Value |
+| --- | --- |
+| **RFC** | 0114 |
+| **Title** | A2UI Surface Deltas |
+| **Status** | `Accepted` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-06-26 |
+| **Updated** | 2026-07-06 (`Active → Accepted` — **single-witness** bootstrap steward waiver + maintainer autonomy grant. tier-1 reference host openwop-app advertises `a2uiSurface.deltaTransport:true` live + serves the emit-surface + delta-stream seams (host code openwop-app#1416). See [Amendment record](#amendment-record). |
+| **Affects** | `spec/v1/ai-envelope.md`, `spec/v1/stream-modes.md`, `schemas/a2ui-surface-delta-frame.schema.json` (NEW), `schemas/capabilities.schema.json`, `spec/v1/host-capabilities.md`, conformance (recorded `ui.a2ui-surface.schema.json` UNCHANGED) |
+| **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Supersedes** | — |
+| **Superseded by** | — |
 
 ## Summary
 
@@ -113,6 +113,15 @@ A subscriber WITHOUT `?a2uiDelta=1` receives the materialized full surface for t
 - [ ] `a2ui-surface-delta-transport.test.ts` in the suite (incl. the out-of-catalog-delta-fails-closed assertion).
 - [ ] CHANGELOG entry.
 - [ ] Reference host (openwop-app, real A2UI emitter) advertises `a2uiSurface.deltaTransport` and passes, or impl deferred.
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- Three verifications GREEN: **① delta delivered + reconstructs** — a `?a2uiDelta=1` subscriber receives an RFC 6902 frame (op enum add/remove/replace, **no `test`**) that `applyPatch`-round-trips to the updated surface + re-validates against the closed catalog (host test `a2uiSurfaceDelta.test.ts`, 5 passed); **② recorded envelope stays FULL — the replay-pinned core** — a non-negotiating subscriber gets `{kind:'full'}` for both surfaces, the recorded event is the full `ui.a2ui-surface`, so `:fork`/replay read the full surface unaffected (delta is a per-subscriber transport projection only).
+- **Steward-curl-verified** on `app.openwop.dev/api`: valid emit → `201 {eventId, sequence:1, surfaceRef, catalogVersion:"0.9.1"}` (records baseline full); **③ post-patch re-validation fail-closed** — **steward-curl-verified**: an out-of-catalog `iframe` component → `422 a2ui_surface_invalid` (`#/anyOf` "must match a schema in anyOf" — the closed A2UI catalog; `a2ui-surface-no-code-exec` holds post-patch).
+- Applied-control witness (host test) + wire evidence, same tier as the 0117 FE unit tests. No new invariant (all RFC 0102 A2UI invariants hold post-patch). Tier-2 (second host advertising `deltaTransport`) carried forward.).
+- 2026-06-26.
 
 ## References
 

@@ -1,17 +1,17 @@
 # RFC 0102: A2UI agent-authored interface surfaces
 
-| Field             | Value                                                           |
-| ----------------- | --------------------------------------------------------------- |
-| **RFC**           | 0102                                                            |
-| **Title**         | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a core, advertised envelope kind) |
-| **Status**        | `Accepted`                                                      |
-| **Author(s)**     | David Tufts (@davidscotttufts)                                  |
-| **Created**       | 2026-06-15                                                      |
-| **Updated**       | 2026-06-15 (Draft → **Active** — 7-day window waived by maintainer to unblock implementation. **Amended in place at Active** the same day — twice — per maintainer decision. (1) A first cross-session review (`openwop-1`) was made *before that reviewer had read this RFC* and recommended vendor-namespacing; it landed (#715). (2) The reviewer then re-ran the review **with the landed RFC in hand**, reversed to **core**, and the maintainer ruled core. This revision restores the **core, advertised kind `ui.a2ui-surface`** (a portable content-primitive family beside `media.*`, §A), keeps `catalogVersion` host-**enumerated** (§A/§C), keeps advertisement via `supportedEnvelopes`/`schemaVersions` (§C), keeps the **five** invariants + threat-model update (§Conformance), and fixes the `surface` discriminator to **`anyOf` + single-string-enum** (was `oneOf`, banned by `ai-envelope.md` §"Schema discipline" for LLM-emitted payloads). Wire shape now stable at this revision.) · **2026-06-15 (Active → `Accepted`)** — graduated on dual live evidence vs `@openwop/openwop-conformance@1.26.0`: the **openwop-app reference host** (rev `openwop-app-backend-00204-v75`, advertising `ui.a2ui-surface` in `supportedEnvelopes` + `schemaVersions[…]=1`, steward-curl-verified; non-vacuous proof 19/19 under `OPENWOP_REQUIRE_BEHAVIOR=true`) **and the MyndHyve non-steward witness** (rev `workflow-runtime-00485-kon` on `api.myndhyve.ai`, advertising `ui.a2ui-surface` in `supportedEnvelopes` + `schemaVersions[…]=1`, steward-curl-verified; non-vacuous proof 19/19 under `OPENWOP_REQUIRE_BEHAVIOR=true` — all five HTTP legs ran real assertions, not soft-skipped), both with the byte-identical core schema (`sha256 68f977c1…`). Vendor-namespaced detour (#715) fully superseded; the kind ships as the core `ui.a2ui-surface`. |
-| **Affects**       | `spec/v1/ai-envelope.md` (new §"A2UI surfaces" — a **core, advertised** kind `ui.a2ui-surface` beside the `media.*` family + a carve-out clarification to §"Vendor-namespaced kinds") · `spec/v1/host-capabilities.md` (§"A2UI surface support" — how a host advertises the kind + its enumerated catalog versions) · new core `schemas/envelopes/ui.a2ui-surface.schema.json` (closed `surface` `anyOf` + enumerated `catalogVersion`) · `SECURITY/invariants.yaml` (5 rows, below) · `SECURITY/threat-model-prompt-injection.md` (new agent→user render surface) · new conformance scenarios · `INTEROP-MATRIX.md` (advertisement column) |
-| **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                          |
-| **Supersedes**    | —                                                               |
-| **Superseded by** | —                                                               |
+| Field | Value |
+| --- | --- |
+| **RFC** | 0102 |
+| **Title** | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a core, advertised envelope kind) |
+| **Status** | `Accepted` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-06-15 |
+| **Updated** | 2026-06-15 (Draft → **Active** — 7-day window waived by maintainer to unblock implementation. See [Amendment record](#amendment-record). |
+| **Affects** | `spec/v1/ai-envelope.md` (new §"A2UI surfaces" — a **core, advertised** kind `ui.a2ui-surface` beside the `media.*` family + a carve-out clarification to §"Vendor-namespaced kinds") · `spec/v1/host-capabilities.md` (§"A2UI surface support" — how a host advertises the kind + its enumerated catalog versions) · new core `schemas/envelopes/ui.a2ui-surface.schema.json` (closed `surface` `anyOf` + enumerated `catalogVersion`) · `SECURITY/invariants.yaml` (5 rows, below) · `SECURITY/threat-model-prompt-injection.md` (new agent→user render surface) · new conformance scenarios · `INTEROP-MATRIX.md` (advertisement column) |
+| **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
+| **Supersedes** | — |
+| **Superseded by** | — |
 
 > **Amendment note (2026-06-15).** This RFC was flipped to `Active` and then amended at
 > `Active` the same day — twice — all explicit sole-steward maintainer decisions during the
@@ -296,6 +296,17 @@ text-only rendering + action confinement are its mitigations.
 - [ ] ≥1 conformance scenario per the five above (capability-gated); two as reference-app probes.
 - [ ] CHANGELOG entry; `INTEROP-MATRIX.md` advertisement column.
 - [ ] Reference host (`openwop-app`, ADR 0051) implements + passes; register sweep closed.
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- **Amended in place at Active** the same day — twice — per maintainer decision. (1) A first cross-session review (`openwop-1`) was made *before that reviewer had read this RFC* and recommended vendor-namespacing; it landed (#715).
+- (2) The reviewer then re-ran the review **with the landed RFC in hand**, reversed to **core**, and the maintainer ruled core.
+- This revision restores the **core, advertised kind `ui.a2ui-surface`** (a portable content-primitive family beside `media.*`, §A), keeps `catalogVersion` host-**enumerated** (§A/§C), keeps advertisement via `supportedEnvelopes`/`schemaVersions` (§C), keeps the **five** invariants + threat-model update (§Conformance), and fixes the `surface` discriminator to **`anyOf` + single-string-enum** (was `oneOf`, banned by `ai-envelope.md` §"Schema discipline" for LLM-emitted payloads).
+- Wire shape now stable at this revision.).
+- **2026-06-15 (Active → `Accepted`)** — graduated on dual live evidence vs `@openwop/openwop-conformance@1.26.0`: the **openwop-app reference host** (rev `openwop-app-backend-00204-v75`, advertising `ui.a2ui-surface` in `supportedEnvelopes` + `schemaVersions[…]=1`, steward-curl-verified; non-vacuous proof 19/19 under `OPENWOP_REQUIRE_BEHAVIOR=true`) **and the MyndHyve non-steward witness** (rev `workflow-runtime-00485-kon` on `api.myndhyve.ai`, advertising `ui.a2ui-surface` in `supportedEnvelopes` + `schemaVersions[…]=1`, steward-curl-verified; non-vacuous proof 19/19 under `OPENWOP_REQUIRE_BEHAVIOR=true` — all five HTTP legs ran real assertions, not soft-skipped), both with the byte-identical core schema (`sha256 68f977c1…`).
+- Vendor-namespaced detour (#715) fully superseded; the kind ships as the core `ui.a2ui-surface`.
 
 ## References
 

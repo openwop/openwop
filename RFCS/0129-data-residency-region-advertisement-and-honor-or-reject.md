@@ -1,17 +1,17 @@
 # RFC 0129: Data-residency — regional advertisement + honor-or-reject run constraint
 
 | Field | Value |
-| ----------------- | --------------------------------------------------------------- |
-| **RFC**           | 0129                                                            |
-| **Title**         | Data-residency — regional advertisement + honor-or-reject run constraint |
-| **Status**        | `Accepted`                                                      |
-| **Author(s)**     | openwop-app maintainers                                         |
-| **Created**       | 2026-07-06                                                      |
-| **Updated**       | 2026-07-06 (Draft→Active — bootstrap steward waiver, 7-day window waived; wire-shape-only additive + /architect review SOUND (admission-control is the falsifiable surface, mirrors 0127/0128 §4). §Affects/§2 amended for schema fidelity: no `run-create-request.schema.json` exists — `residency` is a new `schemas/residency.schema.json` `$ref`'d from the `POST /v1/runs` inline `allOf` in `api/openapi.yaml` (RFC 0094 §A forbids a closed branch inside that allOf, so the closed shape lives in the referenced file); `residency_unavailable` HTTP status widened to one-of 400/404/422 per the #815 envelope-not-status convention. Accepted path: single-witness (openwop-app tier-1 admission-control gate) + tier-2 gap named)<br>2026-07-06 (`Active → Accepted` — **single-witness** graduation (bootstrap steward waiver + maintainer call), **tier-1 reference-host evidence** (openwop-app, Cloud Run rev `openwop-app-backend-00413-jcm` advertising `capabilities.dataResidency {supported:true, regions:["eu","us"]}`): both §3 admission legs **steward-curl-verified on the wire** against `POST /v1/runs` — (1) unadvertised `region:"zz-nowhere"` → **HTTP 422** + nested `{error:{code:"residency_unavailable", details:{requestedRegion, availableRegions:["eu","us"]}}}` with **no runId** (fail-closed); (2) advertised `region:"eu"` → **NOT** `residency_unavailable`, proceeds past the residency gate to workflow resolution (`workflow_not_found` on the unknown probe id) — the exact admission-decision separation §3 requires (reject-on-residency iff region∉advertised, else proceed). Envelope is the nested `{error:{code}}` (#815), 422 ∈ one-of {400/404/422}, `availableRegions` matches the advert. Conformance witness = `@openwop/openwop-conformance@1.54.0` `data-residency-admission` (capability-gated, 3 passed / 0 failed non-vacuous vs 1.54.0). **G4 carried forward** = the tier-2 witness is the first *second* residency-advertising host; MyndHyve lacks a genuine multi-region deployment to witness honestly (0127/0128 G4 pattern). The maintainer elected single-witness graduation with this named gap per the 2026-07-06 evidence-tier ruling) |
-| **Affects**       | `spec/v1/capabilities.md`, `spec/v1/rest-endpoints.md` (run-creation admission), `schemas/capabilities.schema.json`, `schemas/residency.schema.json` (new) `$ref`'d from the `POST /v1/runs` request body `allOf` in `api/openapi.yaml` (there is NO `run-create-request.schema.json`), conformance `data-residency-*` scenarios |
-| **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
-| **Supersedes**    | —                                                               |
-| **Superseded by** | —                                                               |
+| --- | --- |
+| **RFC** | 0129 |
+| **Title** | Data-residency — regional advertisement + honor-or-reject run constraint |
+| **Status** | `Accepted` |
+| **Author(s)** | openwop-app maintainers |
+| **Created** | 2026-07-06 |
+| **Updated** | 2026-07-06 (Draft→Active — bootstrap steward waiver, 7-day window waived; wire-shape-only additive + /architect review SOUND (admission-control is the falsifiable surface, mirrors 0127/0128 §4). §Affects/§2 amended for schema fidelity: no `run-create-request.schema.json` exists — `residency` is a new `schemas/residency.schema.json` `$ref`'d from the `POST /v1/runs` inline `allOf` in See [Amendment record](#amendment-record). |
+| **Affects** | `spec/v1/capabilities.md`, `spec/v1/rest-endpoints.md` (run-creation admission), `schemas/capabilities.schema.json`, `schemas/residency.schema.json` (new) `$ref`'d from the `POST /v1/runs` request body `allOf` in `api/openapi.yaml` (there is NO `run-create-request.schema.json`), conformance `data-residency-*` scenarios |
+| **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Supersedes** | — |
+| **Superseded by** | — |
 
 ## Summary
 
@@ -206,3 +206,13 @@ None blocking. Deferred (named, non-blocking):
 - **Per-region capability variance** (a host that supports different features per region)
   — out of scope; `dataResidency` advertises admissibility only, not per-region feature
   matrices.
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- `api/openapi.yaml` (RFC 0094 §A forbids a closed branch inside that allOf, so the closed shape lives in the referenced file); `residency_unavailable` HTTP status widened to one-of 400/404/422 per the #815 envelope-not-status convention.
+- Accepted path: single-witness (openwop-app tier-1 admission-control gate) + tier-2 gap named)<br>2026-07-06 (`Active → Accepted` — **single-witness** graduation (bootstrap steward waiver + maintainer call), **tier-1 reference-host evidence** (openwop-app, Cloud Run rev `openwop-app-backend-00413-jcm` advertising `capabilities.dataResidency {supported:true, regions:["eu","us"]}`): both §3 admission legs **steward-curl-verified on the wire** against `POST /v1/runs` — (1) unadvertised `region:"zz-nowhere"` → **HTTP 422** + nested `{error:{code:"residency_unavailable", details:{requestedRegion, availableRegions:["eu","us"]}}}` with **no runId** (fail-closed); (2) advertised `region:"eu"` → **NOT** `residency_unavailable`, proceeds past the residency gate to workflow resolution (`workflow_not_found` on the unknown probe id) — the exact admission-decision separation §3 requires (reject-on-residency iff region∉advertised, else proceed).
+- Envelope is the nested `{error:{code}}` (#815), 422 ∈ one-of {400/404/422}, `availableRegions` matches the advert.
+- Conformance witness = `@openwop/openwop-conformance@1.54.0` `data-residency-admission` (capability-gated, 3 passed / 0 failed non-vacuous vs 1.54.0).
+- **G4 carried forward** = the tier-2 witness is the first *second* residency-advertising host; MyndHyve lacks a genuine multi-region deployment to witness honestly (0127/0128 G4 pattern). The maintainer elected single-witness graduation with this named gap per the 2026-07-06 evidence-tier ruling).

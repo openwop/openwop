@@ -1,18 +1,18 @@
 # RFC 0117: Front-End Plugin Packs (Sandboxed UI Extensions)
 
-| Field             | Value                                                                 |
-| ----------------- | --------------------------------------------------------------------- |
-| **RFC**           | 0117                                                                  |
-| **Title**         | Front-End Plugin Packs (Sandboxed UI Extensions)                      |
-| **Status**        | `Accepted`                                                            |
-| **Author(s)**     | David Tufts (@davidscotttufts)                                        |
-| **Created**       | 2026-06-27                                                            |
-| **Updated**       | 2026-07-06 (`Active → Accepted` — **single-witness** bootstrap steward waiver + maintainer autonomy grant; tier-1 reference host openwop-app advertises `uiPlugins {supported:true, isolation:"cross-origin-iframe"}` live + serves the `kind:"frontend-plugin"` loader boundary [host code merged openwop-app#1408, ADR 0300]. All four invariants witnessed: `frontend-plugin-rpc-allowlist` (undeclared `host.exec` → `method_not_allowed`, steward-curl-verified on the wire) + `frontend-plugin-no-byok` (RPC envelope carries no secret, steward-verified) + `frontend-plugin-isolation` (advert `cross-origin-iframe` steward-verified + `PLUGIN_SANDBOX` allow-scripts-without-allow-same-origin FE unit-test) + `frontend-plugin-egress` (`PLUGIN_CSP` deny-egress + `withPluginCsp` srcDoc injection FE unit-test — the plugin is served under the deny-egress CSP by the loader). Ruling: isolation/egress are **serve/apply-control MUSTs** (falsifiable by wire + FE unit test); the browser's runtime enforcement of correctly-applied sandbox+CSP is a platform guarantee (§4-parallel). Tier-2 (second host / non-iframe mechanism) witness carried forward as the named gap. Defense-in-depth follow-up RESOLVED 2026-07-06 (openwop-app#1414): the backend deny-egress CSP response header on the entry endpoint was initially a no-op [Firebase Hosting global CSP overrode `/api/**`]; a scoped `firebase.json` header rule now makes it authoritative — steward-re-curl-verified the entry endpoint returns `default-src 'none'` with no `connect-src`, so the backend second layer is real end-to-end alongside the load-bearing frontend `withPluginCsp` srcDoc meta.) · 2026-06-27 (`Draft → Active` — steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus; all four Open questions resolved in-RFC because `Active` locks the wire shape) |
-| **Affects**       | `node-packs.md` (new `kind`), `host-capabilities.md` (`host.uiPlugins`), `capabilities.md`, `registry-operations.md`, a new `spec/v1/frontend-plugin-packs.md`, conformance scenarios, `SECURITY/invariants.yaml` |
-| **Compatibility** | `additive` per `COMPATIBILITY.md`                                     |
-| **Supersedes**    | —                                                                     |
-| **Superseded by** | —                                                                     |
-| **Amended by**    | [RFC 0119](./0119-isolation-model-mechanism-neutrality.md) — generalizes the `isolation` advertisement from a single browser mechanism (`cross-origin-iframe`) to a categorical, mechanism-neutral model (additive); §Isolation + §Host-RPC reframed to the property + a transport-agnostic channel binding. · [RFC 0130](./0130-canvas-preview-plugin-surface.md) — adds the `canvas-preview` surface (plugin-rendered live preview inside a host-owned canvas editor), the OPTIONAL `canvasTypes` manifest field, and three core `ui-plugin/1` methods (`host.documentChanged`, `host.selectionChanged` events; `host.announce` request) — additive. |
+| Field | Value |
+| --- | --- |
+| **RFC** | 0117 |
+| **Title** | Front-End Plugin Packs (Sandboxed UI Extensions) |
+| **Status** | `Accepted` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-06-27 |
+| **Updated** | 2026-07-06 (`Active → Accepted` — **single-witness** bootstrap steward waiver + maintainer autonomy grant; tier-1 reference host openwop-app advertises `uiPlugins {supported:true, isolation:"cross-origin-iframe"}` live + serves the `kind:"frontend-plugin"` loader boundary [host code merged openwop-app#1408, ADR 0300]. See [Amendment record](#amendment-record). |
+| **Affects** | `node-packs.md` (new `kind`), `host-capabilities.md` (`host.uiPlugins`), `capabilities.md`, `registry-operations.md`, a new `spec/v1/frontend-plugin-packs.md`, conformance scenarios, `SECURITY/invariants.yaml` |
+| **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Supersedes** | — |
+| **Superseded by** | — |
+| **Amended by** | [RFC 0119](./0119-isolation-model-mechanism-neutrality.md) — generalizes the `isolation` advertisement from a single browser mechanism (`cross-origin-iframe`) to a categorical, mechanism-neutral model (additive); §Isolation + §Host-RPC reframed to the property + a transport-agnostic channel binding. · [RFC 0130](./0130-canvas-preview-plugin-surface.md) — adds the `canvas-preview` surface (plugin-rendered live preview inside a host-owned canvas editor), the OPTIONAL `canvasTypes` manifest field, and three core `ui-plugin/1` methods (`host.documentChanged`, `host.selectionChanged` events; `host.announce` request) — additive. |
 
 ## Summary
 
@@ -192,3 +192,14 @@ Because `Active` locks the wire shape, all four opens are resolved in-RFC at the
 ## Adoption / reference
 
 The openwop-app reference host is the intended first adopter (Track 2 of its ADR 0153 canvas program): its canvas editors (app-builder, etc.) become `frontend-plugin` packs loaded in a cross-origin sandbox, enabled through the existing feature-toggle admin — closing the "download a canvas editor plugin" gap that ADR 0153 Track 1 deliberately deferred. Per the bootstrap-phase rule, this RFC MUST reach at least `Accepted` (with the isolation + egress invariants implemented + tested) before that host work lands.
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- All four invariants witnessed: `frontend-plugin-rpc-allowlist` (undeclared `host.exec` → `method_not_allowed`, steward-curl-verified on the wire) + `frontend-plugin-no-byok` (RPC envelope carries no secret, steward-verified) + `frontend-plugin-isolation` (advert `cross-origin-iframe` steward-verified + `PLUGIN_SANDBOX` allow-scripts-without-allow-same-origin FE unit-test) + `frontend-plugin-egress` (`PLUGIN_CSP` deny-egress + `withPluginCsp` srcDoc injection FE unit-test — the plugin is served under the deny-egress CSP by the loader).
+- Ruling: isolation/egress are **serve/apply-control MUSTs** (falsifiable by wire + FE unit test); the browser's runtime enforcement of correctly-applied sandbox+CSP is a platform guarantee (§4-parallel).
+- Tier-2 (second host / non-iframe mechanism) witness carried forward as the named gap.
+- Defense-in-depth follow-up RESOLVED 2026-07-06 (openwop-app#1414): the backend deny-egress CSP response header on the entry endpoint was initially a no-op [Firebase Hosting global CSP overrode `/api/**`]; a scoped `firebase.json` header rule now makes it authoritative — steward-re-curl-verified the entry endpoint returns `default-src 'none'` with no `connect-src`, so the backend second layer is.
+- real end-to-end alongside the load-bearing frontend `withPluginCsp` srcDoc meta.).
+- 2026-06-27 (`Draft → Active` — steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus; all four Open questions resolved in-RFC because `Active` locks the wire shape).
