@@ -891,6 +891,56 @@ A host advertising any `tier: "experimental"` capability derives the `openwop-ex
 
 ---
 
+## What a capability may vary
+
+*(Added 2026-08-19. This section introduces no new requirement. It states the
+discipline the corpus already follows across `replay.sideEffectSuppression`,
+`compensation`, `idempotency.crossRegion` and the refusal contract below, so that
+the author of the next capability does not have to re-derive it — or get it
+wrong.)*
+
+A discovery advertisement is a statement about a **host**. It is not a dial on
+the meaning of the protocol. The distinction that matters:
+
+> **A capability MAY vary what a host can do. A capability MUST NOT silently vary
+> what an already-accepted construct means.**
+
+A client that reads a workflow definition and a run's events must be able to
+interpret them without consulting the host's capability document. Where the host
+cannot honour a construct, the client learns that by a **refusal**, not by a
+different outcome.
+
+Every optional capability in v1 falls into exactly one of three classes. When
+adding one, say in the RFC which class it is.
+
+| Class | The advertisement means | Absence means | Worked example |
+| --- | --- | --- | --- |
+| **1 — Probeability** | "I declare a specific mechanism, and conformance can probe it." | The **obligation still binds**; conformance has nothing to probe and soft-skips. | `replay.sideEffectSuppression`. Caveat 1 of §"Determinism guarantees" binds every host unconditionally; `none` declares no mechanism and is explicitly *not* a licence to re-fire. |
+| **2 — Gated construct** | "I accept workflows that use this construct." | The host **MUST refuse observably** (`capability_required`), at registration or run creation. Silent substitution is forbidden — see §"Unsupported capability" below. | `compensation`; `conversationPrimitive` gating `core.conversationGate`. |
+| **3 — Declared posture** | "My guarantee is *this* one of an enumerated set." | Not applicable — the enum is closed and one value is the default posture. Clients that need a specific guarantee **MUST** check for it by name. | `idempotency.crossRegion`: `single-region` / `reconciled-records` / `fenced-effects`. |
+
+**Class 1 carries an obligation on the corpus, not just on the host.** An
+unconditional requirement whose only conformance probe is gated on an optional
+advertisement is **unfalsifiable on every host that does not advertise** — the
+requirement binds, and nothing can observe whether it is met. That is a real
+residual, not a rhetorical one: it is the current state of caveat 1 on any host
+advertising `none`. A class-1 capability SHOULD therefore ship with a probe that
+does not depend on the advertisement, or the RFC SHOULD record that the
+obligation is unwitnessable when unadvertised, and why no cheaper probe exists.
+
+**Class 3 is the class to be suspicious of.** It is the only one where two
+conforming hosts genuinely differ in what a client can rely on, so it is the only
+one where a portable workflow can be silently wrong. Reach for class 3 only when
+the difference is a property of the *deployment* (regions, storage topology) that
+no host can be required to have. If the difference is a property of the
+*implementation*, it belongs in class 1 or 2.
+
+**What none of the three permits.** No class licenses a host to accept a
+construct and then do something else with it. That rule has one statement, below,
+and it is the boundary this whole section exists to protect.
+
+---
+
 ## Unsupported capability — refusal contract
 
 Workflows MAY reference typeIds that are gated on optional capability advertisement (e.g., `core.conversationGate` is gated on `conversationPrimitive: true`). A host that does not advertise the gating capability MUST refuse such workflows. Refusal may occur at either of two boundaries:

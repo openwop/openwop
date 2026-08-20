@@ -66,6 +66,36 @@ For safety-fix and breaking changes, include a migration plan section describing
 
 A normative-addition RFC SHOULD ship with at least one new conformance scenario in the same release of `@openwop/openwop-conformance`.
 
+### Falsifiability — one row per normative requirement
+
+*(Required since 2026-08-19.)* For each MUST / MUST NOT this RFC introduces, name
+**the observable** and **who can cause the condition**. Fill this in while
+drafting, not after — the point is to discover an unwitnessable requirement
+before it is written, rather than when someone tries to test it.
+
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A.1 … | e.g. "no delivery arrives at a registered receiver" | the suite, unaided | witnessable |
+| §B.4 … | e.g. "a different process id serves the resumed run" | operator (needs a process kill) | seam-gated |
+| §C.2 … | — | — | **unwitnessable — say so here and why** |
+
+Two failure modes this table exists to catch, both of which have cost real work
+in this corpus:
+
+- **Observable but not causable.** The property is visible; the *condition that
+  produces it* cannot be produced from outside. Duplicate external effects are
+  perfectly observable, but a suite cannot make a host's queue redeliver accepted
+  work — so a same-key client retry witnesses a different mechanism wearing the
+  same name. Ask both questions separately: *can I see it?* and *can I cause it?*
+- **Witnessable only when advertised.** An unconditional obligation whose only
+  probe is gated on an optional capability is unfalsifiable on every host that
+  does not advertise — see `capabilities.md` §"What a capability may vary",
+  class 1.
+
+An RFC MAY introduce a requirement it cannot witness. What it MUST NOT do is
+leave that undiscovered: record it in the table, and in §"Unresolved questions"
+if a probe is wanted later.
+
 ## Alternatives considered
 
 What other approaches were considered? Why were they rejected?
