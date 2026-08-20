@@ -51,17 +51,21 @@ describe('cross-host-traceparent-propagation: behavioral (RFC 0040 §B)', () => 
   // Until the peer harness lands, the assertion is surfaced as `it.skip` so
   // test reporters track the gap rather than reporting a vacuous PASS.
   // Marked out of stable profile via RFC 0042 §B (experimental tier):
-  // RFC 0040 remains Active. Hosts that wire Phase 3 cross-host causation
-  // before RFC 0040 graduates SHOULD advertise
+  // RFC 0040 is Accepted, but the cross-host behavioral scenario stays
+  // experimental until a non-steward host produces the behavioral
+  // traceparent evidence — RFC status (Accepted) and conformance-profile
+  // tier (experimental) are separate axes per RFC 0042 §B. Hosts that wire
+  // Phase 3 cross-host causation SHOULD advertise
   // `multiAgent.executionModel.tier: 'experimental'` per RFC 0042 §A
-  // until cross-host evidence drives the promotion. Path-to-runnable
+  // until that behavioral evidence lands. Path-to-runnable
   // requires the MCP peer harness (OPENWOP_MCP_REAL_SERVER_URL) +
   // inbound-header recorder; flips to a real `it()` on first non-steward
   // Phase 3 host advertising matching capabilities.
   it.skip('Phase 3 host MUST inject parent run\'s traceparent into outbound MCP requests — out of stable profile via RFC 0042');
 
-  // Same routing — out of stable profile via RFC 0042 §B until RFC 0040
-  // graduates to Accepted; behavioral A2A test seam contract still to be
-  // designed alongside the corresponding peer harness.
+  // Same routing — out of stable profile via RFC 0042 §B until behavioral
+  // A2A cross-host evidence lands (RFC 0040 itself is already Accepted); the
+  // A2A test seam contract is still to be designed alongside the
+  // corresponding peer harness.
   it.skip('Phase 3 host MUST inject parent run\'s traceparent into outbound A2A messages — out of stable profile via RFC 0042');
 });
