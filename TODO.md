@@ -33,7 +33,7 @@
 
 ## On the maintainer's desk (not any session's to decide)
 
-- **RFC 0147 §A.1 freeze — should its exit be expressed in evidence rather than RFC statuses?** Written up as a proposal at [`docs/proposals/0147-freeze-exit.md`](./docs/proposals/0147-freeze-exit.md). **Not adopted; the freeze stands as written.** The argument in one line: the exit is gated on statuses that are gated on evidence the freeze restricts the surface for producing, and 14 Critical rows are open partly because nothing witnesses them. Three separable decisions are listed at the end of the proposal. Deliberately independent of the "essential" carve-out below — if that is ever granted it should be on its own argument, not through an exit criterion.
+- ~~RFC 0147 §A.1 freeze exit~~ — **resolved 2026-08-20.** The exit condition was MET, not rewritten: WS1–3 `Accepted` since 2026-08-12, all six Critical rows dispositioned. One drafting fix landed (§A.1's transfer target excluded public disclosure). Downstream blocks removed. `docs/proposals/0147-freeze-exit.md` superseded and retained.
 
 - **RFC 0147 §A.1 "essential" carve-out (D2).** Declined five times by the corpus session, most recently when a conformance-only test seam looked like it needed one — it did not, because `host-sample-test-seams.md` already puts seams outside the v1 wire surface. That ruling is **not precedent for D2**.
 - RFC 0154 proof format · hosted-CI billing · maintainer and audit recruitment.

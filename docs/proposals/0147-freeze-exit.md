@@ -1,5 +1,23 @@
 # Proposal: give the RFC 0147 §A.1 freeze an exit expressed in evidence
 
+> **Status: SUPERSEDED 2026-08-20 — retained as the record of a question that got a
+> better answer than this document proposed.**
+>
+> This argued for rewriting §A.1's exit condition, on the reading that Workstreams 1–3
+> were pending. **They were not** — RFCs 0148/0149/0150 have been `Accepted` since
+> 2026-08-12, the same day RFC 0147 was accepted, so the clause this proposal treated as
+> the blocker was satisfied from the start. The freeze was held entirely by the
+> Critical-risk half, which was **closed out on its own terms** rather than rewritten:
+> R1/R2/R9 Closed against re-verified evidence, R3/R12/R14 transferred to named tracked
+> surfaces. §A.1 needed one drafting fix (its transfer target excluded the public
+> disclosure this project actually practises), not the restructuring proposed here.
+>
+> Kept rather than deleted because the loop it described is real and will recur: an exit
+> condition gated on evidence the condition itself restricts. The instance was in a
+> different clause than this document identified.
+>
+> **Original text follows.**
+>
 > **Status: PROPOSAL — not adopted, not normative.** RFC 0147 is `Accepted`, its
 > §A.1 freeze is in force, and changing it is the steward's decision. This
 > document exists so that decision can be made against a written argument rather

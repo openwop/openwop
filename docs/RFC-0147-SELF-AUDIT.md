@@ -260,7 +260,7 @@ above are recorded here rather than left to be discovered.
 
 | Invariant | Disposition |
 | --- | --- |
-| A.1 freeze | satisfied (still binding; R14 open) |
+| A.1 freeze | **exit condition MET 2026-08-20** — WS1–3 `Accepted` since 2026-08-12; all six Critical rows dispositioned (R1/R2/R9 Closed, R3/R12/R14 transferred). No longer binding. |
 | A.2 five reviews | not satisfied |
 | A.3 non-vacuous witness | partially satisfied |
 | A.4 claim completeness | partially satisfied |
