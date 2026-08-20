@@ -92,7 +92,7 @@ openwop already standardizes every *piece* of the estate (agents 0070, packs 000
 | --- | --- |
 | `GET /export[?kinds=]` | Emit an export bundle for the caller's tenant/workspace (RFC 0048). |
 | `POST /import?dryRun=true` | **Plan**: validate the bundle, resolve dependency order, and return an `ImportPlan` (creates/updates/skips/conflicts + unbound credential refs) **without writing**. |
-| `POST /import` | **Apply**: execute the plan idempotently. Returns an `ImportResult` per item: `created | updated | skipped | failed`, plus `secretsToRebind`. |
+| `POST /import` | **Apply**: execute the plan idempotently. Returns an `ImportResult` per item: `created \| updated \| skipped \| failed`, plus `secretsToRebind`. |
 
 `ImportPlan`/`ImportResult` per item: `{ ref, kind, action, targetId?, reason? }`. Aggregate: `{ migrated: bool, counts: {...}, secretsToRebind: [provider/ref], conflicts: [...] }`. (This aggregate shape is a superset of, and supersedes, the host-private anon→user migration response.)
 

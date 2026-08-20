@@ -30,7 +30,7 @@ The host serves portability as a host-extension (see `host-sample-test-seams.md`
 |---|---|
 | `GET /export[?kinds=]` | Emit an export bundle for the caller's tenant/workspace (RFC 0048). |
 | `POST /import?dryRun=true` | **Plan**: validate, resolve dependency order, return an `ImportPlan` (creates/updates/skips/conflicts + unbound credential refs) **without writing**. |
-| `POST /import` | **Apply**: execute the plan idempotently; returns an `ImportResult` per item (`created | updated | skipped | failed`) + `secretsToRebind`. |
+| `POST /import` | **Apply**: execute the plan idempotently; returns an `ImportResult` per item (`created \| updated \| skipped \| failed`) + `secretsToRebind`. |
 
 One additive, content-free event is emitted (gated on the capability): `import.applied` (`run-event-payloads.schema.json`) — counts + refs only, never item payloads or secret values. The existing host-private anon→user migration remains valid: its response is a subset of the `ImportResult` aggregate.
 
