@@ -129,18 +129,30 @@ A host **MAY** claim a rung only with the evidence named for it. Rungs are cumul
    > whose durability comes from an external orchestrator has no storage adapter to unit-test, and the earlier
    > wording would have been trivially satisfied rather than meaningfully met.
 
-### §E Advertisement — deliberately deferred
+### §E Advertisement — deferred by design (freeze lifted 2026-08-20)
 
 10. This RFC defines the ladder and its evidence. It **does not** mint a new advertised capability field.
 
-> **Why.** RFC 0147 §A.1 freezes *new non-essential optional wire capabilities* until Workstreams 1–3 are
-> Accepted, and that box is unticked. A qualification ladder is **evidence about behaviour that already
-> exists**, so authoring it is specification work and is not reached by the freeze — but minting an advert would
-> be, and would freeze this RFC behind its own field.
+> **Why (original reasoning, 2026-08-18).** RFC 0147 §A.1 froze *new non-essential optional wire capabilities*
+> until Workstreams 1–3 were Accepted. A qualification ladder is **evidence about behaviour that already
+> exists**, so authoring it is specification work and was not reached by the freeze — but minting an advert
+> would have been, and would have frozen this RFC behind its own field.
 >
 > Hosts therefore publish rung and recovery bound in their **conformance evidence bundle** (RFC 0148), where
-> claims already live and where a claim without evidence is already a defect. A capability field, if wanted,
-> is a one-field additive revision once the freeze lifts — deliberately left as the smaller, later change.
+> claims already live and where a claim without evidence is already a defect.
+>
+> **Update 2026-08-20 — the freeze no longer defers this, and one premise above was wrong.** §A.1's exit
+> condition is MET: Workstreams 1–3 (RFCs 0148/0149/0150) have been `Accepted` since **2026-08-12 — the same
+> day RFC 0147 was itself accepted**, so *"that box is unticked"* was never true. The box that was unticked
+> was the Critical-risk half, now dispositioned in full (R1/R2/R9 Closed; R3/R12/R14 transferred to named
+> tracked surfaces).
+>
+> **What this does and does not change.** The block is gone; the decision is not made. Minting
+> `capabilities.durability.rung` is now **ordinary additive RFC work** — schema, conformance, security and
+> compatibility review, plus the falsifiability table `RFCS/0000-template.md` now requires, which this
+> capability needs more than most: four of the six rows in §Conformance require a process termination the
+> black-box suite cannot cause. **The bundle-first design above stands on its own merits** and should be
+> revisited as a design question rather than resumed as a deferred obligation.
 
 ## Compatibility
 
