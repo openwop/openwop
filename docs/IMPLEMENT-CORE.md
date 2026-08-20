@@ -37,7 +37,7 @@ Read these, in this order. Everything else is reference.
 
 1. **[`rest-endpoints.md`](../spec/v1/rest-endpoints.md)** — the endpoints, request and response shapes.
 2. **[`capabilities.md`](../spec/v1/capabilities.md)** — the discovery document, and §"What a capability may vary" so you advertise honestly.
-3. **[`run-events.md`](../spec/v1/run-events.md)** — the event envelope and ordering rules.
+3. **[`stream-modes.md`](../spec/v1/stream-modes.md)** — how a run's events reach a client, and the order they must arrive in. (`eventOrdering.test.ts` verifies against this and `observability.md`.)
 4. **[`interrupt.md`](../spec/v1/interrupt.md)** — durable suspend and resume; pick one kind.
 
 Plus **[`idempotency.md`](../spec/v1/idempotency.md) §A** when you get to run
