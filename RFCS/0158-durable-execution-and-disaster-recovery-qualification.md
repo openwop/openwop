@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------ |
 | **RFC**           | 0158                                                                     |
 | **Title**         | Durable Execution and Disaster-Recovery Qualification                    |
-| **Status**        | `Draft`                                                                  |
+| **Status**        | `Active`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. |
+| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
