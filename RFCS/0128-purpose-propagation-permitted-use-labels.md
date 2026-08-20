@@ -1,17 +1,17 @@
 # RFC 0128: Purpose-propagation — permitted-use labels on synced data
 
-| Field             | Value                                                           |
-| ----------------- | --------------------------------------------------------------- |
-| **RFC**           | 0128                                                            |
-| **Title**         | Purpose-propagation — permitted-use labels on cross-host synced data |
-| **Status**        | `Accepted`                                                      |
-| **Author(s)**     | openwop-app maintainers                                         |
-| **Created**       | 2026-07-06                                                      |
-| **Updated**       | 2026-07-06 (`Active → Accepted` — **single-witness** graduation (bootstrap steward waiver + maintainer call), **tier-1 reference-host evidence** (openwop-app, Cloud Run rev `openwop-app-backend-00411-77q` advertising `purposePropagation {supported:true, propagatesOnward:true}`): all four §3 two-hop legs — re-emit ⊆ received / never-widen, derived-output ⊆ intersection of labelled inputs, unlabelled adds no constraint, `[]` fail-closed dropped with an unlabelled positive control — witnessed by `@openwop/openwop-conformance@1.53.1` `purpose-propagation.test.ts` (seam-gated) and **steward-curl-verified** on the wire against the `/v1/host/sample/purpose-propagation/forward` seam. **G4 carried forward** = the tier-2 (MyndHyve) witness attempt was made and MyndHyve **honestly opted out** on 2026-07-06: an architect review of its real carriers (MyndHyve repo @ `789480099`) found **no genuine onward OpenWOP-envelope egress** to carry a `permittedPurposes` label — its A2A surface is ingress-only (no outbound client; the task types carry no `metadata` field) and its trigger bridge delivers content-free in-run only, so a non-vacuous tier-2 witness would require fabricating hop C in the seam (the vacuous-witness trap this arc guards against). The maintainer elected single-witness graduation with this named gap per the 2026-07-06 evidence-tier ruling; the tier-2/second witness is now defined as the first host with a real onward label-carrying OpenWOP-envelope egress (a broker/CDC-consumer analog of RFC 0127 G4). Draft→Active earlier the same day; §1 schema-fidelity + §3(a) envelope-hop scope + derived-output rule folded from the reference-implementer review) |
-| **Affects**       | `spec/v1/a2a-integration.md` (A2A message metadata carrier), `spec/v1/trigger-bridge.md`, `spec/v1/capabilities.md`, `schemas/capabilities.schema.json`, `schemas/trigger-event.schema.json`, conformance `purpose-propagation-*` scenarios |
-| **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
-| **Supersedes**    | —                                                               |
-| **Superseded by** | —                                                               |
+| Field | Value |
+| --- | --- |
+| **RFC** | 0128 |
+| **Title** | Purpose-propagation — permitted-use labels on cross-host synced data |
+| **Status** | `Accepted` |
+| **Author(s)** | openwop-app maintainers |
+| **Created** | 2026-07-06 |
+| **Updated** | 2026-07-06 (`Active → Accepted` — **single-witness** graduation (bootstrap steward waiver + maintainer call), **tier-1 reference-host evidence** (openwop-app, Cloud Run rev `openwop-app-backend-00411-77q` advertising `purposePropagation {supported:true, propagatesOnward:true}`): all four §3 two-hop legs — re-emit ⊆ received / never-widen, derived-output ⊆ intersection of labelled inputs, See [Amendment record](#amendment-record). |
+| **Affects** | `spec/v1/a2a-integration.md` (A2A message metadata carrier), `spec/v1/trigger-bridge.md`, `spec/v1/capabilities.md`, `schemas/capabilities.schema.json`, `schemas/trigger-event.schema.json`, conformance `purpose-propagation-*` scenarios |
+| **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Supersedes** | — |
+| **Superseded by** | — |
 
 ## Summary
 
@@ -185,3 +185,12 @@ before this RFC reaches `Accepted`.
 
 None — the two questions above are resolved, and the 2026-07-06 reference-implementer review
 (CLEAN, no blocking findings) is folded into §3. The RFC is ready for the comment window.
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- unlabelled adds no constraint, `[]` fail-closed dropped with an unlabelled positive control — witnessed by `@openwop/openwop-conformance@1.53.1` `purpose-propagation.test.ts` (seam-gated) and **steward-curl-verified** on the wire against the `/v1/host/sample/purpose-propagation/forward` seam.
+- **G4 carried forward** = the tier-2 (MyndHyve) witness attempt was made and MyndHyve **honestly opted out** on 2026-07-06: an architect review of its real carriers (MyndHyve repo @ `789480099`) found **no genuine onward OpenWOP-envelope egress** to carry a `permittedPurposes` label — its A2A surface is ingress-only (no outbound client; the task types carry no `metadata` field) and its trigger bridge delivers content-free in-run only, so a non-vacuous tier-2 witness would require fabricating hop C in the seam (the vacuous-witness trap this arc guards against).
+- The maintainer elected single-witness graduation with this named gap per the 2026-07-06 evidence-tier ruling; the tier-2/second witness is now defined as the first host with a real onward label-carrying OpenWOP-envelope egress (a broker/CDC-consumer analog of RFC 0127 G4).
+- Draft→Active earlier the same day; §1 schema-fidelity + §3(a) envelope-hop scope + derived-output rule folded from the reference-implementer review).

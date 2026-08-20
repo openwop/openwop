@@ -1,17 +1,17 @@
 # RFC 0118: Parallel Sub-Workflow Fan-Out and Join
 
-| Field             | Value                                                                                                                                                                                                                                                            |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **RFC**           | 0118                                                                                                                                                                                                                                                            |
-| **Title**         | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`)                                                                                                                                                                              |
-| **Status**        | `Accepted`                                                                                                                                                                                                                                                      |
-| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                  |
-| **Created**       | 2026-06-27                                                                                                                                                                                                                                                      |
-| **Updated**       | 2026-06-28 (`Active → Accepted` — register sweep complete, G1–G9 (see `…gaps.md` §"Register sweep"). Graduated on **dual-witness discovery/advertisement evidence**, steward-curl-verified 2026-06-28: openwop-app reference host (prod, `app.openwop.dev/api`) advertises `dispatch { fanOutSupported:true, fanOutPolicies:["sequential","reject","parallel"], joinModes:["wait-all"], onChildFailureModes:["collect","absorb"], maxFanOut:16 }`; MyndHyve `workflow-runtime` (tier-2 steward-affiliated sibling, seam-enabled rev `00513-qib` from `main`@`66fc108e`, `--no-traffic --tag conf-fanout`) advertises the full `joinModes:["wait-all","quorum","first","race"]` + `onChildFailureModes:["collect","fail-fast","absorb"]` — the honest per-host subset divergence the capability gating exists to surface. **Behavioral evidence: dual-witness, steward-verified 2026-06-28** (the cross-check deferred at the flip was subsequently run — both hosts stood up auth-exempt `conf-fanout` seam revisions, so no key was needed): steward direct probe of each host's `POST /v1/host/sample/dispatch/fanout` (wait-all/collect ×3) returned a real non-vacuous coordinator+fold — openwop-app tag rev `00355-zag` and MyndHyve tag rev `00513-qib` each → `{ joinOutcome:"satisfied", children:[3×completed], mergeOrder:[3], completedCount:3, failedCount:0 }`; corroborated by MyndHyve's own `dispatch-fanout-parallel.test.ts` 10/10 (`@openwop/openwop-conformance@1.45.0`, `OPENWOP_REQUIRE_BEHAVIOR=true`). The full conformance harness against openwop-app's tag URL tripped that host's per-IP 429 read budget during its discovery burst and soft-skipped the gated legs, so the direct seam probe is the steward behavioral artifact for that host. openwop-app's prod seam stays dark by posture (RFC 0117 parity); the always-on schema legs pass server-free. Per `GOVERNANCE.md` §"Acceptance evidence tiers" this is a steward-affiliated (tier-2) + reference-host graduation, recorded honestly rather than as independent-org dual-witness.) 2026-06-27 (`Draft → Active` — steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus; all five Unresolved questions resolved in-RFC because `Active` locks the wire shape) |
-| **Affects**       | `schemas/dispatch-config.schema.json`, `schemas/run-event-payloads.schema.json`, `spec/v1/node-packs.md` (`core.dispatch` / `core.subWorkflow` fan-out semantics), `spec/v1/capabilities.md` (`capabilities.dispatch.*`), `api/asyncapi.yaml`, conformance `dispatch-*` scenarios |
-| **Compatibility** | `additive` per `COMPATIBILITY.md`                                                                                                                                                                                                                              |
-| **Supersedes**    | —                                                                                                                                                                                                                                                              |
-| **Superseded by** | —                                                                                                                                                                                                                                                              |
+| Field | Value |
+| --- | --- |
+| **RFC** | 0118 |
+| **Title** | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`) |
+| **Status** | `Accepted` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-06-27 |
+| **Updated** | 2026-06-28 (`Active → Accepted` — register sweep complete, G1–G9 (see `…gaps.md` §"Register sweep"). See [Amendment record](#amendment-record). |
+| **Affects** | `schemas/dispatch-config.schema.json`, `schemas/run-event-payloads.schema.json`, `spec/v1/node-packs.md` (`core.dispatch` / `core.subWorkflow` fan-out semantics), `spec/v1/capabilities.md` (`capabilities.dispatch.*`), `api/asyncapi.yaml`, conformance `dispatch-*` scenarios |
+| **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Supersedes** | — |
+| **Superseded by** | — |
 
 ## Summary
 
@@ -307,6 +307,16 @@ Because `Active` locks the wire shape, all five opens are resolved in-RFC at the
 - [x] At least one conformance scenario per §B mode + the partial/fail-fast/replay-merge cases land in `@openwop/openwop-conformance` (`dispatch-fanout-parallel.test.ts`, suite 1.45.0).
 - [x] CHANGELOG entry citing RFC 0118 and closing RFC 0007 §K3.
 - [x] Reference host advertises `fanOutSupported: true` (openwop-app prod + MyndHyve tier-2 sibling, both steward-curl-verified 2026-06-28 — see `INTEROP-MATRIX.md` §"Parallel sub-workflow fan-out and join"). Behavioral leg: single-witness host-self-reported (MyndHyve `dispatch-fanout-parallel` 10/10 non-vacuous); openwop-app's seam is dark in prod by deliberate posture. Steward-run authenticated cross-check deferred (keys not exchanged).
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- Graduated on **dual-witness discovery/advertisement evidence**, steward-curl-verified 2026-06-28: openwop-app reference host (prod, `app.openwop.dev/api`) advertises `dispatch { fanOutSupported:true, fanOutPolicies:["sequential","reject","parallel"], joinModes:["wait-all"], onChildFailureModes:["collect","absorb"], maxFanOut:16 }`; MyndHyve `workflow-runtime` (tier-2 steward-affiliated sibling, seam-enabled rev `00513-qib` from `main`@`66fc108e`, `--no-traffic --tag conf-fanout`) advertises the full `joinModes:["wait-all","quorum","first","race"]` + `onChildFailureModes:["collect","fail-fast","absorb"]` — the honest per-host subset divergence the capability gating exists to surface.
+- **Behavioral evidence: dual-witness, steward-verified 2026-06-28** (the cross-check deferred at the flip was subsequently run — both hosts stood up auth-exempt `conf-fanout` seam revisions, so no key was needed): steward direct probe of each host's `POST /v1/host/sample/dispatch/fanout` (wait-all/collect ×3) returned a real non-vacuous coordinator+fold — openwop-app tag rev `00355-zag` and MyndHyve tag rev `00513-qib` each → `{ joinOutcome:"satisfied", children:[3×completed], mergeOrder:[3], completedCount:3, failedCount:0 }`; corroborated by MyndHyve's own `dispatch-fanout-parallel.test.ts` 10/10 (`@openwop/openwop-conformance@1.45.0`, `OPENWOP_REQUIRE_BEHAVIOR=true`).
+- The full conformance harness against openwop-app's tag URL tripped that host's per-IP 429 read budget during its discovery burst and soft-skipped the gated legs, so the direct seam probe is the steward behavioral artifact for that host. openwop-app's prod seam stays dark by posture (RFC 0117 parity); the always-on schema legs pass server-free.
+- Per `GOVERNANCE.md` §"Acceptance evidence tiers" this is a steward-affiliated (tier-2) + reference-host graduation, recorded honestly rather than as independent-org dual-witness.) 2026-06-27 (`Draft → Active` — steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus; all five Unresolved questions resolved in-RFC because `Active` locks the wire.
+- shape).
 
 ## References
 
