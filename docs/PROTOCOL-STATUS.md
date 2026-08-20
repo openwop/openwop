@@ -32,8 +32,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 153 |
-| Active | 3 |
-| Draft | 2 |
+| Active | 4 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -194,7 +194,7 @@
 | RFC 0155 | Core Profile and Extension Discipline | Accepted |
 | RFC 0156 | Governance, Independent Assurance, and Claims Policy | Accepted |
 | RFC 0157 | Chain fragments carry compensation (RFC 0013 revision × RFC 0151 sectionB) | Accepted |
-| RFC 0158 | Durable Execution and Disaster-Recovery Qualification | Draft |
+| RFC 0158 | Durable Execution and Disaster-Recovery Qualification | Active |
 
 ## SDK Helper Coverage
 
@@ -216,8 +216,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0158) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
