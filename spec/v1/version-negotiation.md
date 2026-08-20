@@ -309,7 +309,7 @@ The interaction between the four version axes determines deploy ordering. An Ope
 | Add new branch via `ctx.getVersion(id, min, M)`      | `max` (M+1)                   | No (in-flight runs stay on old `M`)                           | Either order — pinning is per-run                  |
 | Remove old branch via `ctx.getVersion(id, M+1, ...)` | `min` (M+1)                   | **Drain or migrate** runs holding pinned ≤ M, else they error | Server first                                       |
 
-⚠️ = optional but recommended  
+⚠️ = optional but recommended
 ✗ = mandatory (otherwise data is stranded)
 
 ---

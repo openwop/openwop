@@ -198,7 +198,7 @@ This RFC lands in v1.x. No migration plan is required (nothing to migrate from).
 
 **On landing at `Active` with the comment window waived (maintainer decision).** Per `RFCS/README.md` §"Status states", `Active` = "accepted, implementation pending; wire shapes are locked unless the RFC explicitly says otherwise." Two consequences were accounted for in authoring:
 
-1. Missing reference-host implementation and a not-yet-shipped full conformance suite are **not** blockers for `Active` — they gate the later `Accepted` flip (see Acceptance criteria). 
+1. Missing reference-host implementation and a not-yet-shipped full conformance suite are **not** blockers for `Active` — they gate the later `Accepted` flip (see Acceptance criteria).
 2. Because `Active` **locks the wire shapes**, the three shape-level open questions that would normally be resolved during the comment window are resolved **in this RFC** rather than left open: the `content`↔`i18n` capability relationship (§A), publish granularity (§E), and the security MUST-NOTs (§F). The remaining open items (Q1–Q6) are deliberately **non-wire-shape** (AsyncAPI presence, conformance breadth, BCP-47 strictness, deep-merge) — each is itself additive and can be settled before the `Accepted` flip without re-locking anything.
 
 ## Conformance

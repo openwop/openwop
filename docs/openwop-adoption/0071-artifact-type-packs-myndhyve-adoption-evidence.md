@@ -122,7 +122,7 @@ it cuts. **4 files / 15 tests passed** against the canary tag URL, 2026-05-26.
 ## Migration map — status
 
 The 16 `vendor.myndhyve.*` artifact types from the request's
-[migration map](./0071-artifact-type-packs-migration-request.md#migration-map)
+[migration map](./0071-artifact-type-packs-migration-request.md#migration-map--your-artifacttypedefinition--openwop-artifacttype)
 are advertised with `schemaVersion: 1`. The reverse-DNS rename lands on the
 wire: MyndHyve's `CORE_ARTIFACT_TYPE_IDS` (`prd`/`theme`/`plan`/`screen`)
 publish under `vendor.myndhyve.*` (`core.*` reserved for the working group);

@@ -150,7 +150,7 @@ A subset of `schemas/workflow-definition.schema.json`. Differences from a top-le
 | `nodes[].compensation`               | RFC 0157 — OPTIONAL per-node inverse-action declaration, a mirror of `WorkflowNode.compensation` (RFC 0151 §B): `{ nodeTypeId, inputMapping?, retry?, requiresApproval? }`. `nodeTypeId` MUST resolve at expansion exactly as `typeId` does; `inputMapping` strings MAY carry `{{params.<name>}}`; node-id references inside `inputMapping` are rewritten with the expansion prefix. Survives expansion verbatim. |
 | `edges[]`                            | Required when `nodes.length > 1`. Same shape as in a top-level workflow definition — including an optional `condition` (the `EdgeCondition` object `{type, left, right}`) for content routing, and an optional `triggerRule` (RFC 0125) — the same enum as `WorkflowEdge.triggerRule` (`all_success` \| `any_success` \| `all_complete` \| `none_failed` \| `any_failed`, default `all_success`) — for fan-in / error-routing / best-effort completion. Hosts that honor edge `condition`/`triggerRule` on top-level workflows MUST honor them on expanded chain edges identically. Both fields MUST survive expansion (see §Expansion semantics step 6). `condition` (does this edge participate?) and `triggerRule` (how does the target aggregate its incoming edges?) are orthogonal and compose on the same edge. |
 
-#### Edge-condition operators (RFC 0134)
+### Edge-condition operators (RFC 0134)
 
 An `EdgeCondition.type` is one of `expression`, `equals`, `notEquals`, `contains`,
 `regex`, **`truthy`**, or **`falsy`**. `equals`/`notEquals`/`contains`/`regex` compare
