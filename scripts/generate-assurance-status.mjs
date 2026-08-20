@@ -135,8 +135,8 @@ function risks() {
       //   · A row stating a risk "cannot be closed by repository work" was
       //     counted closed by saying so.
       //
-      // This count is not cosmetic: RFC 0147 §A.1's freeze exit is gated on it,
-      // so a false closure silently loosens a project-wide constraint.
+      // This count is not cosmetic: project-wide gates have been keyed to it, so a
+      // false closure silently loosens a constraint.
       const negated = /\b(cannot|can ?not|could not|will not|never|not)\s+be\s+(closed|resolved)\b|\bnot closed\b/i.test(status);
       const explicitlyClosed =
         /\*\*(CLOSED|Closed)\b/.test(status) ||
@@ -144,9 +144,9 @@ function risks() {
         /Realised and remediated/i.test(status);
       const closed = explicitlyClosed && !negated;
       // A risk may also be TRANSFERRED — real and open, but tracked on a named
-      // surface outside this register. RFC 0147 §A.1's freeze exit is satisfied by
-      // "Closed OR transferred", so a count that cannot express `transferred`
-      // cannot express the condition it gates. Reported separately rather than
+      // surface outside this register. a disposition of "Closed OR transferred" is what
+      // register sweeps turn on, so a count that cannot express `transferred`
+      // cannot express the condition it reports. Reported separately rather than
       // folded into either bucket: a transferred risk is not closed, and reading
       // it as unaddressed is equally wrong.
       const transferred = !closed && /\*\*(?:OPEN\s+—\s+)?TRANSFERRED\b/i.test(status);
@@ -231,9 +231,9 @@ function projection(m) {
   lines.push('');
   lines.push('## Open Critical / High program risks');
   lines.push('');
-  lines.push(`Source: \`${m.risks.source}\` (${m.risks.rowsScanned} rows scanned). **${m.risks.openCriticalOrHigh.length}** open across all registers, of which **${m.risks.programOpenCriticalOrHigh.length}** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0147 §A.1's freeze and RFC 0156's claims are gated on. Older registers were never dispositioned; \`Open\` there means \"the mitigation is the normative MUST in the row\", not an unaddressed risk:`);
+  lines.push(`Source: \`${m.risks.source}\` (${m.risks.rowsScanned} rows scanned). **${m.risks.openCriticalOrHigh.length}** open across all registers, of which **${m.risks.programOpenCriticalOrHigh.length}** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; \`Open\` there means \"the mitigation is the normative MUST in the row\", not an unaddressed risk:`);
   lines.push('');
-  lines.push(`Of those, **${m.risks.transferred.length}** are explicitly **transferred** to a named tracked surface (${m.risks.transferred.join(', ') || 'none'}) — real and open, but dispositioned. RFC 0147 §A.1's freeze exit reads "Closed **or transferred**", so this is the count that clause turns on; an open row and a transferred row are not the same state and are not reported as one.`);
+  lines.push(`Of those, **${m.risks.transferred.length}** are explicitly **transferred** to a named tracked surface (${m.risks.transferred.join(', ') || 'none'}) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.`);
   lines.push('');
   lines.push('| RFC | Risk | Score | Status (head) |');
   lines.push('| --- | --- | --- | --- |');

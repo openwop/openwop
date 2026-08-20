@@ -2,9 +2,9 @@
  * Unit tests for the closed/transferred predicate in
  * `scripts/generate-assurance-status.mjs`.
  *
- * This predicate is not cosmetic. RFC 0147 §A.1's freeze exit is gated on the
+ * This predicate is not cosmetic. Project-wide gates have been keyed to the
  * open-Critical count it produces, so a false closure silently loosens a
- * project-wide constraint — and a false open silently keeps one in force.
+ * constraint — and a false open silently keeps one in force.
  *
  * It previously matched the bare substring `closed` anywhere in a row's status
  * cell, which produced two failures in opposite directions:

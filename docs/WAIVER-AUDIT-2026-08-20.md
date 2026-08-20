@@ -102,6 +102,22 @@ steward decision.
 - **Not that this is the whole picture.** Six RFCs remain unclassified (§2), and this sweep
   read headers rather than diffs.
 
+## 5b. One lesson worth keeping from how the freeze ended
+
+An earlier proposal (`docs/proposals/0147-freeze-exit.md`, now removed) argued for rewriting
+§A.1's exit condition because it looked self-blocking: the exit was gated on evidence the
+freeze restricted the surface for producing. **That reading was wrong about which clause** —
+Workstreams 1–3 were already `Accepted` — but the *shape* it described is real and will recur:
+
+> **An exit condition expressed in internal statuses can be gated on evidence the condition
+> itself restricts.** RFC 0158 §E declined to mint a capability because of the freeze, so no
+> host could declare a rung, so rung claims accumulated no evidence — which is what would have
+> moved a workstream toward the status the exit required.
+
+The general form is worth carrying into any future gate: **prefer an exit stated in evidence
+over one stated in statuses.** A status can be waived — 41 were. A non-vacuous witness on a
+deployed host cannot.
+
 ## 6. Recommended, in order
 
 1. **Generate the waiver ledger** from the tree instead of hand-keeping it, so §3.2 cannot
