@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-16 later (S16, suite 1.113.0: dual-era `McpFakeServer` at 2026-07-28 incl. MRTR; the six RFC-named legs landed, gated; correction: openwop-app passes §A only — no invoke seam). 2026-08-16 (§B/§C/§D/§E prose landed in `spec/v1/mcp-integration.md` §"MCP 2026-07-28 versioned composition" — pinned to upstream revision 2026-07-28: stateless `_meta` + `MCP-Protocol-Version`/`Mcp-Method`/`Mcp-Name` rules with fail-closed header/body agreement, `server/discover`, the MRTR mapping in both directions (identity, `requestState` binding, retry, timeout, cancellation, replay, interrupt composition — G2/UQ3), `CacheableResult` + tenant-scoped cache keys + scope-change staleness (G4/UQ5), extensions opaque with OTel/`logLevel` as the only named mappings and `io.modelcontextprotocol/tasks` deliberately unmapped (UQ4), the anonymous-principal production rule, `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12 (UQ1 date), seam §23 catalogued. Not landed: a 2026-07-28-shaped fake server, the six named scenarios, the four unregistered invariants, a real current peer, the adopter inventory.) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the MCP 2026-07-28 profile, callback-to-MRTR migration, and validation against a real upstream peer.) |
+| **Updated** | 2026-08-16 later (S16, suite 1.113.0: dual-era `McpFakeServer` at 2026-07-28 incl. See [Amendment record](#amendment-record). |
 | **Affects** | `spec/v1/mcp-integration.md`, `schemas/capabilities.schema.json`, MCP projection schemas, fake and real peer harnesses, RFC 0020, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` current profile with legacy 2025-06-18 deprecation |
 | **Supersedes** | Unqualified MCP support and 2025-06-18 as the current composition profile |
@@ -100,6 +100,15 @@ Keep upstream types generated or vendored once with provenance, not copied acros
 - [ ] Pinned real MCP current peer passes in CI. (Carried, and externally gated: it needs a pinned upstream MCP peer at the current revision.)
 - [ ] Legacy profile and migration/deprecation runbook publish. (2026-08-16: **named and time-bounded** — `mcp-2025-06-18-legacy` is the pre-2026-08-16 body of `mcp-integration.md`; hosts SHOULD NOT advertise it after 2027-08-12 (12 months after the profile's 2026-08-12 acceptance, per §Compatibility). Carried: the migration runbook beyond §A's paragraph, and the adopter inventory (G1).)
 - [ ] Threat models, invariants, SDKs, interop matrix, and CHANGELOG update. (**2026-08-16: invariants registered** — `mcp-cache-tenant-scoped`, `mcp-extension-no-authority`, `mcp-peer-no-authority-escalation`, `mcp-header-body-consistent` (both halves — the Mcp-Method/Mcp-Name half needed a new leg in `mcp-stateless-request.test.ts`) in `SECURITY/invariants.yaml`, each driven non-vacuously against the first 2026-07-28 host (openwop-app ADR 0553 P2 branch `3c2cd839a`, strict, fake server); **interop matrix** — `INTEROP-MATRIX.md` §"Versioned composition profiles" (tier-1 local boot of an unmerged branch, stated as such); **CHANGELOG** landed with each piece. Still carried: a dedicated threat-model document and the SDK half.)
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- MRTR; the six RFC-named legs landed, gated; correction: openwop-app passes §A only — no invoke seam).
+- 2026-08-16 (§B/§C/§D/§E prose landed in `spec/v1/mcp-integration.md` §"MCP 2026-07-28 versioned composition" — pinned to upstream revision 2026-07-28: stateless `_meta` + `MCP-Protocol-Version`/`Mcp-Method`/`Mcp-Name` rules with fail-closed header/body agreement, `server/discover`, the MRTR mapping in both directions (identity, `requestState` binding, retry, timeout, cancellation, replay, interrupt composition — G2/UQ3), `CacheableResult` + tenant-scoped cache keys + scope-change staleness (G4/UQ5), extensions opaque with OTel/`logLevel` as the only named mappings and `io.modelcontextprotocol/tasks` deliberately unmapped (UQ4), the anonymous-principal production rule, `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12 (UQ1 date), seam §23 catalogued.
+- Not landed: a 2026-07-28-shaped fake server, the six named scenarios, the four unregistered invariants, a real current peer, the adopter inventory.) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers".
+- **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the MCP 2026-07-28 profile, callback-to-MRTR migration, and validation against a real upstream peer.).
 
 ## References
 

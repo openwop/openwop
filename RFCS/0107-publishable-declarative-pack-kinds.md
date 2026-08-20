@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-23 |
-| **Updated** | 2026-06-23 — **Correction (post-Accepted):** the chat-card-pack kind string is **`card`**, not `chat-card`. RFC 0071 (authoritative for this kind — `chat-card-pack-manifest.schema.json`, `spec/v1/chat-card-packs.md`, `host.chat.cardPacks`) defines `kind: "card"`; this RFC's original Proposal/schema diff below used `chat-card` in error. Corrected in `registry-version-manifest.schema.json` (kind enum + `cards` condition + runtime `allOf`) + `registry-operations.md` + a conformance case (`registry-declarative-kinds.test.ts` now asserts `kind:"card"` validates and `kind:"chat-card"` is rejected; suite `1.34.0 → 1.35.0`). Safe correction — zero chat-card packs were ever published, so no served manifest relied on the wrong value. The original code blocks below are kept intact (history) with this note. · 2026-06-23 — flipped to `Accepted`; implementation landed (PR #749 → `534a25be`) and conformance reflects it (suite `1.33.0`, tag `openwop-conformance/v1.33.0`). The reference registry published the first declarative packs (`openwop-registry` PR #4 → `4dde5009`) and `packs.openwop.dev` serves them live (artifact-type + 6 connection packs; 4-tab landing). All acceptance criteria met. _Prior:_ 2026-06-23 — flipped to `Active`; 7-day comment window **waived** by the maintainer (David Tufts) under single-org bootstrap governance (`GOVERNANCE.md` — lazy consensus, maintainer-driven). Additive/backward-compatible; no objections outstanding. |
+| **Updated** | 2026-06-23 — **Correction (post-Accepted):** the chat-card-pack kind string is **`card`**, not `chat-card`. See [Amendment record](#amendment-record). |
 | **Affects** | `spec/v1/registry-operations.md` §"Validation flow" + §"Type-ID indexing and cross-namespace exports"; `schemas/registry-version-manifest.schema.json`; `conformance/src/scenarios/registry-public.test.ts` (+ fixtures); reference registry (`openwop-registry`) `build-index` + landing |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
@@ -142,6 +142,17 @@ Sequencing once Active: (1) land the schema + `registry-operations.md` prose + c
 - [x] ≥1 conformance scenario covering a published artifact-type + connection manifest (positive) and a declarative-with-runtime manifest (negative); fixtures catalogued. — `conformance/src/scenarios/registry-declarative-kinds.test.ts` (8 tests), PR #749; suite `1.33.0` (tag `openwop-conformance/v1.33.0`).
 - [x] `CHANGELOG.md` entry under the appropriate v1.x minor. — PR #749, conformance suite `1.32.0 → 1.33.0`.
 - [x] Reference registry (`openwop-registry`) re-vendors the schema, serves a published artifact-type + connection pack, and the landing surfaces the kinds. — `openwop-registry` PR #4 (`4dde5009`): re-vendored schema + `build-index` 4-tab landing + 7 signed declarative packs (`core.openwop.artifact-types` + 6 `core.openwop.connections.*`), `registry-check` green (96 packs). Live on `packs.openwop.dev` — manifests + `.sig` served (HTTP 200), landing shows Node 58 · Agent 5 · Artifact-type 1 · Connection 6. First non-node packs ever published.
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- RFC 0071 (authoritative for this kind — `chat-card-pack-manifest.schema.json`, `spec/v1/chat-card-packs.md`, `host.chat.cardPacks`) defines `kind: "card"`; this RFC's original Proposal/schema diff below used `chat-card` in error.
+- Corrected in `registry-version-manifest.schema.json` (kind enum + `cards` condition + runtime `allOf`) + `registry-operations.md` + a conformance case (`registry-declarative-kinds.test.ts` now asserts `kind:"card"` validates and `kind:"chat-card"` is rejected; suite `1.34.0 → 1.35.0`).
+- Safe correction — zero chat-card packs were ever published, so no served manifest relied on the wrong value. The original code blocks below are kept intact (history) with this note.
+- 2026-06-23 — flipped to `Accepted`; implementation landed (PR #749 → `534a25be`) and conformance reflects it (suite `1.33.0`, tag `openwop-conformance/v1.33.0`).
+- The reference registry published the first declarative packs (`openwop-registry` PR #4 → `4dde5009`) and `packs.openwop.dev` serves them live (artifact-type + 6 connection packs; 4-tab landing).
+- All acceptance criteria met. _Prior:_ 2026-06-23 — flipped to `Active`; 7-day comment window **waived** by the maintainer (David Tufts) under single-org bootstrap governance (`GOVERNANCE.md` — lazy consensus, maintainer-driven). Additive/backward-compatible; no objections outstanding.
 
 ## References
 
