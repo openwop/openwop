@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. |
+| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. · §Conformance note added: the recovery interval is measured kill → **resumption** (first re-execution observation, e.g. a second `run.started`), never kill → terminal — from a second tier-1 measured failure where time-to-terminal read as a false §B.5 violation. |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
@@ -201,6 +201,19 @@ fake it. What the suite observes is what is normative.
       and dispatch are microseconds apart, the seam **MUST hold dispatch**, take the kill during the hold, and
       show the accepted-but-undispatched work dispatching on resume. A seam that races a kill into that window
       cannot reliably hit it and must not pretend to.
+
+    > **The measured interval is kill → *resumption*, never kill → *terminal*** *(added 2026-08-20, from a
+    > second measured failure on a tier-1 host)*. §B.4 bounds the interval until another instance becomes
+    > eligible to **resume** the work — not until the work **finishes**. Timing `kill → terminal status` adds
+    > the work's own execution time to the recovery interval, and a host whose runs do real work will then
+    > report an observed figure that exceeds its own derived bound and reads as a §B.5 violation that did not
+    > happen. The witness **MUST** record the interval to the **first observation that the work is being
+    > re-executed** — a subsequent run-lifecycle re-start on the same run id (a second `run.started`), or any
+    > equivalent progress-past-the-pre-kill-point signal — and **MUST NOT** substitute time-to-completion. A
+    > resumption observation of this kind needs no seam and no new field; it is exactly the "resumption observed
+    > on a **subsequent** observation" item 11 requires. It does **not** discriminate a *peer*: a second
+    > `run.started` cannot tell "a different process resumed" from "the same process restarted", so it does not
+    > substitute for `peer-resume`'s opaque per-boot token.
 
 12. **The seam MUST be gated on a deployment-time flag that is unset in production, and MUST be fail-closed.**
     This RFC names no specific environment variable — a host that already gates a test seam (e.g. a boot-read
