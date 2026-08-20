@@ -1,6 +1,6 @@
 /**
  * Poison work reaches a bounded, operator-visible terminal state
- * (RFC 0162 §C.8, conformance row `durability/poison-exhaustion`).
+ * (RFC 0158 §C.8, conformance row `durability/poison-exhaustion`).
  *
  * THE REQUIREMENT: work that fails deterministically **MUST** reach a terminal,
  * operator-visible state within a bounded number of attempts, and **MUST NOT**
@@ -22,7 +22,7 @@
  * does not carry (see below).
  *
  * ── What this scenario deliberately does NOT assert ──────────────────────────
- * Conformance to a SPECIFIC declared attempt bound. RFC 0162 §E mints no
+ * Conformance to a SPECIFIC declared attempt bound. RFC 0158 §E mints no
  * advertised capability field, so a host's declared bound is not on the wire and
  * the suite cannot read it. Asserting against a number the suite invented would
  * be a bound of the suite's own making, which is the inverse of the §B.5
@@ -39,7 +39,7 @@
  * `blocked`: unobservable, not unmet. Outside every profile floor, for the same
  * reason.
  *
- * @see RFCS/0162-durable-execution-and-disaster-recovery-qualification.md §C.8
+ * @see RFCS/0158-durable-execution-and-disaster-recovery-qualification.md §C.8
  * @see spec/v1/host-sample-test-seams.md
  */
 
@@ -87,7 +87,7 @@ if (SKIP_NO_FIXTURE) {
   recordRequirement(REQ, 'inapplicable', `fixture ${WORKFLOW_ID} not advertised`);
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('RFC 0162 §C.8 — poison work terminates within a bounded number of attempts', () => {
+describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates within a bounded number of attempts', () => {
   it('reaches terminal AND stops being retried, asserted on the log rather than on the status alone', async () => {
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status, driver.describe(
@@ -99,7 +99,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0162 §C.8 — poison work terminates with
     // ── First clause: a terminal, OPERATOR-VISIBLE state ─────────────────────
     const terminal = await pollUntilTerminal(runId);
     expect(terminal.status, driver.describe(
-      'RFC 0162 §C.8',
+      'RFC 0158 §C.8',
       'deterministically failing work MUST reach a terminal, operator-visible state',
     )).toBe('failed');
 
@@ -114,29 +114,29 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0162 §C.8 — poison work terminates with
       return softSkip('blocked', why);
     }
 
-    const events = requireEvents(first, 'RFC 0162 §C.8 attempt counting');
+    const events = requireEvents(first, 'RFC 0158 §C.8 attempt counting');
     // Non-vacuity: the failure must actually be ON the log. Without this, a host
     // returning an empty array would sail through every count comparison below,
     // since 0 === 0 after any wait.
     expect(events.some((e) => e.type === 'node.failed'), driver.describe(
-      'RFC 0162 §C.8',
+      'RFC 0158 §C.8',
       'the run log MUST record the deterministic failure — an empty log makes every attempt count vacuous',
     )).toBe(true);
 
     const attemptsBefore = events.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
     expect(attemptsBefore, driver.describe(
-      'RFC 0162 §C.8',
+      'RFC 0158 §C.8',
       'at least one attempt MUST be recorded — zero attempts means nothing was delivered',
     )).toBeGreaterThan(0);
 
     // ── Second clause, the load-bearing one: NOT redelivered indefinitely ────
     await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
     const second = await queryTestEvents(runId);
-    const after = requireEvents(second, 'RFC 0162 §C.8 attempt counting (post-terminal)');
+    const after = requireEvents(second, 'RFC 0158 §C.8 attempt counting (post-terminal)');
     const attemptsAfter = after.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
 
     expect(attemptsAfter, driver.describe(
-      'RFC 0162 §C.8',
+      'RFC 0158 §C.8',
       'attempts MUST NOT continue after the run reports terminal — a host still redelivering records more',
     )).toBe(attemptsBefore);
 
@@ -144,7 +144,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0162 §C.8 — poison work terminates with
     const bound = declaredAttemptBound();
     if (bound !== null) {
       expect(attemptsAfter, driver.describe(
-        'RFC 0162 §C.8 + §B.5',
+        'RFC 0158 §C.8 + §B.5',
         'total attempts MUST NOT exceed the operator-declared attempt bound',
       )).toBeLessThanOrEqual(bound);
     }

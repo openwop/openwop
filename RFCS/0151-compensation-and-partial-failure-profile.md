@@ -143,7 +143,7 @@ Implement after RFC 0150's effect identities. Start with reverse-completion and 
 
   The criterion is therefore: **a reference host demonstrates non-vacuous recovery from a mid-unwind crash *within a host-declared bound*, and that bound is advertised.** A twelve-minute recovery is a legitimate posture; an *undeclared* recovery bound is not, and that is the property worth requiring. The reworded criterion is satisfiable by a host that recovers slowly and says so, and unsatisfiable by one that recovers at an unknown time — which is the correct discrimination and the opposite of what the old text selected for.
 
-  **This belongs in RFC 0162 (durable execution / DR qualification) rather than here**, and moves there when 0162 is authored: "recovery within a declared bound" is the general durability property, of which mid-unwind compensation is one instance. It stays in this box until 0162 exists so nothing is dropped in transit.
+  **This belongs in RFC 0158 (durable execution / DR qualification) rather than here**, and moves there when 0158 is authored: "recovery within a declared bound" is the general durability property, of which mid-unwind compensation is one instance. It stays in this box until 0158 exists so nothing is dropped in transit.
 - [ ] SDK types, fixtures catalog, interop matrix, and CHANGELOG update. (Carried with the spec above.)
 
 ## References

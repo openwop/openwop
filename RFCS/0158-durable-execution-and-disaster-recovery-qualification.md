@@ -1,17 +1,25 @@
-# RFC 0162: Durable Execution and Disaster-Recovery Qualification
+# RFC 0158: Durable Execution and Disaster-Recovery Qualification
 
 | Field             | Value                                                                    |
 | ----------------- | ------------------------------------------------------------------------ |
-| **RFC**           | 0162                                                                     |
+| **RFC**           | 0158                                                                     |
 | **Title**         | Durable Execution and Disaster-Recovery Qualification                    |
 | **Status**        | `Draft`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-18                                                               |
+| **Updated**       | 2026-08-19                                                               |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
 | **Superseded by** | —                                                                        |
+
+> **Renumbered `0162` → `0158` on 2026-08-19.** This RFC was minted at 0162 against a planned block
+> 0158–0161 that was never authored and, on the dossier's own analysis, will not be: 0159 is folded into
+> RFC 0150 §D, 0160 restates RFC 0154 §E/UQ3, and 0161 is v2 work. Leaving a four-number hole to reserve
+> RFCs that were argued *against* would have made the gap permanent and unexplained. External references
+> to "RFC 0162" — reference-host ADRs, branch names, and an open host PR — predate the change and mean
+> this document. Nothing about its content moved; it was `Draft` and unreleased when renumbered, so no
+> tagged corpus release ever carried the old number.
 
 ## Summary
 
