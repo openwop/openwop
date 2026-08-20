@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-19                                                               |
+| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
@@ -180,6 +180,65 @@ ceiling), which is honest and is the point: it makes a twelve-minute recovery vi
 `duplicate-delivery` asserts **invocation counts per identity**, not final state: a legal end state is exactly
 what a double-fire produces, so an end-state assertion passes on the defect it exists to catch.
 
+### Witnessing the recovery rows *(added 2026-08-20)*
+
+The three recovery rows — `kill-after-accept`, `kill-during-execution`, `peer-resume` — need a process
+termination the black-box suite cannot itself cause (§E), so a host under test exposes a **conformance fixture
+seam** the suite drives. The requirements below are written on the **observable property**, not on any
+particular trigger: hosts differ in whether a run is served synchronously or accepted asynchronously, so a
+requirement phrased on "the request that is killed" would describe one host's mechanism and force another to
+fake it. What the suite observes is what is normative.
+
+11. **A real process termination MUST have occurred, and no in-flight work is ever reported complete.** The
+    seam performs a genuine `exit` / signal, not a simulated one. **Work that was accepted or executing when
+    the process died MUST NOT be observable as completed or successful**, and resumption MUST be observed on a
+    **subsequent** observation within the declared recovery bound. How the kill is triggered — a killed request,
+    an out-of-band signal to an async worker, a supervisor — is the host's choice; asserting recovery without a
+    real death is the "claim semantics asserted without a process death" §D.9 rejects.
+
+    - `kill-during-execution` witnesses a **termination** while work executes.
+    - `kill-after-accept` is a **hold-dispatch** row, not a termination-timing row: on hosts where acceptance
+      and dispatch are microseconds apart, the seam **MUST hold dispatch**, take the kill during the hold, and
+      show the accepted-but-undispatched work dispatching on resume. A seam that races a kill into that window
+      cannot reliably hit it and must not pretend to.
+
+12. **The seam MUST be gated on a deployment-time flag that is unset in production, and MUST be fail-closed.**
+    This RFC names no specific environment variable — a host that already gates a test seam (e.g. a boot-read
+    flag) rides that gate; minting a second flag for one boundary is itself a hazard, since one gets set in a
+    context the other does not and the fail-closed property silently stops holding (the shared-flag failure
+    RFC 0144 and `SECURITY/threat-model-secret-leakage.md` name). The gate MUST be a deployment-time property
+    (read at boot / per-revision), **not** a per-request toggle: a self-terminating endpoint reachable in
+    production is a denial-of-service surface.
+
+The seam is a **non-normative host-extension route** (`host-extensions.md`): it advertises nothing, this RFC
+mints no capability field for it (§E.10), and a host that never runs the durability exercises exposes no such
+route. It is test infrastructure, not protocol surface — which is why a host may implement it before this RFC
+reaches `Accepted` without advertising a claim it cannot yet defend.
+
+**Operator preconditions are declared, not hidden.** These rows do not run against an unattended black-box host
+unchanged: `kill-after-accept` / `kill-during-execution` need a **restart supervisor** (a black-box suite
+cannot itself restart a killed single instance — something must, e.g. the harness as parent process), and
+`peer-resume` needs **two live instances at the moment the kill lands**. A row whose operator precondition is
+unmet is **`blocked`** with the precondition **named** (the disposition shape `production-profile.md` uses for
+`OPENWOP_WEBHOOK_ALLOW_PRIVATE`), never silently skipped or reported as a pass.
+
+**`peer-resume` disposition and witness.** `peer-resume` is the `durable-multi-instance` discriminator (§D). It
+is **not** `inapplicable` to a host with the mechanism — it is **`blocked` on the ≥2-live-instances
+precondition**; a host that never claims `durable-multi-instance` simply does not run it. Witnessing that a
+*different process* resumed the work needs a per-boot observable, and there is none on the wire today.
+Per §E.10's deferral of new discovery fields to a later, smaller revision, **this RFC does NOT add a discovery
+field for it**: the resuming instance's opaque per-boot incarnation token (opaque, never a raw pid — a pid
+leaks infrastructure) is recorded in the host's **RFC 0148 evidence bundle** alongside `recoveryBoundTerms()`,
+together with the continuous-reachability trace that shows the service never went down across the kill. So
+`peer-resume` is **bundle-witnessed**, and the table reads it as such; a discovery `processIncarnation` field,
+with its own falsifiability table, remains the deferred later revision §E.10 anticipates should black-box
+witnessing ever be wanted.
+
+**`bound-is-derived` evidence.** The derivation — the per-class arithmetic, not a single total (Unresolved
+Question 1) — is emitted into the host's RFC 0148 evidence bundle, where a reader can recompute it. It is
+**not** advertised as a discovery field (§E.10). Per the note above, this row is a paper check and **MUST NOT**
+be cited as evidence that the recovery mechanism runs; only the kill rows witness that.
+
 ## Alternatives considered
 
 - **Require a fast recovery bound (e.g. ≤ 60s).** Rejected: it selects for an architecture rather than a
@@ -233,7 +292,13 @@ second — and this RFC's §B is written so the reverse ordering is visibly non-
 ## Acceptance criteria
 
 - [ ] Spec text, conformance scenarios, and the evidence-bundle fields land.
-- [ ] At least one host executes every scenario in strict mode (RFC 0147 requirement 5 — shape-only evidence
-      does not suffice).
-- [ ] The `peer-resume` scenario is executed by a host running **two processes**, not two workers in one.
+- [ ] At least one host executes, in strict mode, **every scenario applicable to the rung(s) it claims** (RFC
+      0147 requirement 5 — shape-only evidence does not suffice). Witnessing the **`durable-single-instance`**
+      rung — `kill-after-accept`, `kill-during-execution`, `duplicate-delivery`, `poison-exhaustion`, and
+      `bound-is-derived` — is sufficient to accept this RFC. The higher rungs are **defined-but-unclaimed** until
+      a host at that rung witnesses them; because §E.10 mints no capability field, an unwitnessed rung advertises
+      nothing and so cannot be a vacuous claim.
+- [ ] **Gating the `durable-multi-instance` rung (not this RFC's acceptance):** no host claims that rung until
+      `peer-resume` is witnessed by a host running **two processes**, not two workers in one. A host that cannot
+      guarantee a second live instance at kill time marks the row `inapplicable` and holds only the lower rung.
 - [ ] `docs/KNOWN-LIMITS.md` and `INTEROP-MATRIX.md` updated with each host's declared rung and bound.
