@@ -232,4 +232,3 @@ Checklist for `Active → Accepted` (file lands at `Draft`):
 - [`spec/v1/profiles.md`](../spec/v1/profiles.md) §"Adding a profile" — the derived-profile machinery + the append-only / widening-is-additive rule.
 - openwop-app **ADR 0033 — Work-twin connector reachability** — the motivating host; explicitly defers external-event triggers to "an upstream OpenWOP RFC" (this one). The host wiring is gated on this RFC reaching at least `Active`.
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-```

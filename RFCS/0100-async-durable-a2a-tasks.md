@@ -177,4 +177,3 @@ Checklist for `Active → Accepted` (file lands at `Draft`):
 - A2A spec `https://a2a-protocol.org/latest/specification/` + canonical `.proto` `https://github.com/a2aproject/A2A/blob/main/specification/a2a.proto` — `tasks/get`, `tasks/resubscribe`, `message/stream`, push-notification config (§4.3.3); the authoritative A2A wire openwop defers to.
 - openwop-app **ADR 0033 — Work-twin connector reachability** — the motivating host; explicitly defers async A2A to "an upstream OpenWOP RFC" (this one). The host wiring is gated on this RFC reaching at least `Active`.
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-```

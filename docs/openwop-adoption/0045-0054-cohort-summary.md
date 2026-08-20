@@ -1,6 +1,6 @@
 # MyndHyve adoption — the 0045–0054 protocol-extension cohort
 
-**Status: ✅ Accepted (2026-05-25).** This is the openwop-side consolidation record for MyndHyve's adoption of the 8-RFC protocol-extension cohort. It is an **index, not the source of truth** — the canonical, per-row conformance evidence lives in [`../../INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md) §"Capability adoption — RFC 0045–0054 cohort (MyndHyve)". This file exists because `INTEROP-MATRIX.md`, `README.md`, `CHANGELOG.md`, `docs/myndhyve-rfc-adoption-handoff.md`, and RFCs 0045–0053 reference it by name; it consolidates the cohort story in one place.
+**Status: ✅ Accepted (2026-05-25).** This is the openwop-side consolidation record for MyndHyve's adoption of the 8-RFC protocol-extension cohort. It is an **index, not the source of truth** — the canonical, per-row conformance evidence lives in [`../../INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md) §"Capability adoption — RFC 0045–0054 cohort (MyndHyve)". This file exists because `INTEROP-MATRIX.md`, `README.md`, `CHANGELOG.md`, and RFCs 0045–0053 reference it by name; it consolidates the cohort story in one place.
 
 ## What graduated
 
@@ -26,7 +26,7 @@ On a single verified conformance run, **8 RFCs promoted `Active → Accepted`** 
 
 ## Not in this cohort
 
-- **RFC 0050 (SAML/SCIM)** + **RFC 0054 (run-diff)** remain `Draft` — MyndHyve documented opt-outs (no SSO infrastructure / time-travel-debug-UI demand). The RFC 0050 synthetic-IdP fixture is bundled in the conformance suite; both graduate when a non-steward host advertises them or MyndHyve's internal demand triggers implementation. See [`../myndhyve-rfc-adoption-handoff.md`](../myndhyve-rfc-adoption-handoff.md) for the retained per-RFC checklist.
+- **RFC 0050 (SAML/SCIM)** + **RFC 0054 (run-diff)** remain `Draft` — MyndHyve documented opt-outs (no SSO infrastructure / time-travel-debug-UI demand). The RFC 0050 synthetic-IdP fixture is bundled in the conformance suite; both graduate when a non-steward host advertises them or MyndHyve's internal demand triggers implementation.
 
 ## Related cross-repo adoption notes (MyndHyve's repo)
 
@@ -35,6 +35,4 @@ The earlier multi-agent signals reference adoption write-ups that live in **Mynd
 ## See also
 
 - [`../../INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md) — canonical per-capability adoption rows + reading guide.
-- [`../myndhyve-rfc-adoption-handoff.md`](../myndhyve-rfc-adoption-handoff.md) — the original implementation handoff for this cohort.
-- [`../myndhyve-agentic-runtime-handoff.md`](../myndhyve-agentic-runtime-handoff.md) — the follow-on handoff for the agentic-runtime + app-UX Active RFCs.
 - [`../../RFCS/0001-rfc-process.md`](../../RFCS/0001-rfc-process.md) §"Promotion to Accepted" — the gate these 8 RFCs cleared.

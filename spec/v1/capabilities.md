@@ -84,7 +84,7 @@ interface CapabilityLimits {
 
 The full `GET /.well-known/openwop` response. Only `protocolVersion`, `supportedEnvelopes`, `schemaVersions`, and the three base `limits` are required by `schemas/capabilities.schema.json`. Additional fields below are **optional v1**: their shapes are stable when present, and clients MUST tolerate absence.
 
-#### Document-root layout (normative — RFC 0073)
+### Document-root layout (normative — RFC 0073)
 
 Every capability family — the required `protocolVersion` / `supportedEnvelopes` / `schemaVersions` / `limits`, and every optional family (`agents`, `secrets`, `aiProviders`, `auth`, `memory`, `multiAgent`, `authorization`, and all others defined in `schemas/capabilities.schema.json`) — MUST appear as a property of the **document root** of the `GET /.well-known/openwop` response. `capabilities.schema.json` validates this full response: its properties are the root properties, and it declares **no `capabilities` wrapper property**. A host MUST NOT require a `capabilities` wrapper object to convey them.
 

@@ -1776,9 +1776,9 @@ ctx.db.vector.delete({ collection: string, ids: ReadonlyArray<string> }) → Pro
 **Hard rules:**
 
 | Rule                   | Detail                                                                                                                 |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------- | --- |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Cross-tenant isolation | A `query` for tenant A MUST NOT return vectors written by tenant B, even within the same collection name.              |
-| KNN roundtrip          | An `upsert` followed by `query` with the same embedding MUST return the inserted ids in the top-k matches when k ≥     | inserted | .   |
+| KNN roundtrip          | An `upsert` followed by `query` with the same embedding MUST return the inserted ids in the top-k matches when k ≥ the number of inserted ids. |
 | Backend transparency   | Wire shape MUST be backend-invariant across advertised backends (`pinecone`, `qdrant`, `pgvector`, `in-memory`, etc.). |
 
 **Capability advertisement shape:**

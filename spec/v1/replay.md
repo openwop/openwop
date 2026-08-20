@@ -73,7 +73,7 @@ Body:
 | `mode`              | `'replay' \| 'branch'`              | both         | Determines re-execution semantics (above).                                                                                                                                    |
 | `runOptionsOverlay` | `RunOptions` (see `run-options.md`) | branch only  | MUST be omitted or empty for `replay` (replay must be deterministic — overlays would break that).                                                                             |
 
-#### Replay-mode defaults
+### Replay-mode defaults
 
 For `mode: "replay"`, `fromSeq` is optional and defaults to `0` — a minimal `{"mode": "replay"}` request body is a valid full-replay probe. The default matches the natural "re-execute everything" semantic and lets conformance probes test replay support without inspecting the source run's event log first.
 
