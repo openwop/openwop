@@ -78,6 +78,6 @@ For reporters and operators: nothing changes operationally before tripwire #1 fi
 ## See also
 
 - `SECURITY.md` — disclosure policy + reporting channels + response SLA
-- `SECURITY/bug-bounty.md` — bug-bounty program structure (also tripwire-gated)
+- `SECURITY/bug-bounty.md` — recognition-based coordinated-disclosure program (a paid program is tripwire-gated)
 - `MAINTAINERS.md` — maintainer set + tripwire definition
 - `ROADMAP.md` §"Vendor-neutral org migration" — the same tripwire gates the org migration; CNA registration is downstream of that decision

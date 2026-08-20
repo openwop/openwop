@@ -67,7 +67,7 @@ The maintainer set will request CVE IDs through:
 - **GitHub Security Advisories** — GitHub is a CVE Numbering Authority (CNA) for projects hosted on GitHub; advisories filed via §2.1 can request a CVE through the GitHub UI.
 - **MITRE direct submission** — for cases where GitHub-issued CVEs aren't appropriate (e.g., the vulnerability spans GitHub-hosted and external code).
 
-The maintainer set does not currently operate as its own CNA. CNA registration is planned and tripwire-gated on `MAINTAINERS.md` listing ≥1 non-steward maintainer; the operational plan + scope statement is at `SECURITY/cna.md`. A coordinated bug-bounty program is planned on the same tripwire; structure + reward tiers are at `SECURITY/bug-bounty.md`.
+The maintainer set does not currently operate as its own CNA. CNA registration is planned and tripwire-gated on `MAINTAINERS.md` listing ≥1 non-steward maintainer; the operational plan + scope statement is at `SECURITY/cna.md`. OpenWOP runs a **recognition-based** coordinated-disclosure program — acknowledgment, public credit, and advisory attribution, with no monetary awards (the project has no bounty budget); its scope + rules are at `SECURITY/bug-bounty.md`. A paid program is not committed and would be gated on the same tripwire plus a funded maintaining org.
 
 ## 6. Advisory tracking
 
