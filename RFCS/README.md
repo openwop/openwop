@@ -60,6 +60,42 @@ Examples: [RFC 0038](./0038-working-group-charter.md) (`Draft`, parked until the
 
 When a later RFC amends an earlier one (an erratum, a rename, a real-world-adoption adjustment), the **earlier** RFC's header gains an `**Amended by**` row containing a forward pointer to the amending RFC plus a one-line summary of the amendment. This keeps the audit trail bidirectional: the amending RFC already names its target in its title/`Affects`; the forward pointer means a reader landing on the original is never working from silently-amended text. Examples: [RFC 0071](./0071-artifact-type-and-chat-card-packs.md) (amended by RFC 0075), [RFC 0021](./0021-ai-envelope-primitive.md) (amended by RFC 0033's error-code rename).
 
+### When a correction needs a new number, and when it does not
+
+*(Added 2026-08-19.)* The `Amended by` mechanism above assumes the amendment is
+itself an RFC. Applied to every correction, that mints a number for changes that
+decide nothing — and the count stops carrying information. An implementer
+estimating the cost of a conforming host reads "213 RFCs" as 213 decisions.
+
+**Amend in place, no new number, when the change:**
+
+- corrects text that misstates a decision the RFC already made (a stale line, a
+  wrong citation, a contradiction between two of its own sections);
+- narrows or clarifies without changing what a conforming host must do; or
+- records evidence, a measurement, or a disposition on an existing gap.
+
+Do it by editing the RFC, bumping its `Updated` field, and adding a dated
+parenthetical at the point of change — *"(clarified 2026-08-19, after a host read
+this as a carve-out)"* — plus a `CHANGELOG.md` line. **Record that the earlier
+text was wrong rather than silently repointing it**: the next reader needs to
+know the sentence was load-bearing in the other direction.
+
+**Mint a new RFC when the change:**
+
+- alters what a conforming host must do — including a narrowing, if a host that
+  was conforming yesterday is not conforming today;
+- adds or removes wire surface; or
+- reverses a decision the RFC's comment window considered.
+
+**The distinguishing question is not "how big is the diff" but "could a host have
+been relying on the old text?"** If yes, it needs a number and a compatibility
+classification, however small the edit. If no, a number adds a decision that was
+never made.
+
+An amendment-in-place still gets an `Amended by`-style trail when a *separate*
+RFC drives it; what changes is that a correction with no decision behind it no
+longer consumes a number.
+
 ## Companion gap & risk registers
 
 The RFC-authoring workflow produces two companion registers alongside substantial RFCs: `registers/<nnnn>-<slug>.gaps.md` (open design gaps discovered during authoring, each with an owner/disposition) and `registers/<nnnn>-<slug>.risks.md` (identified risks with severity and mitigation). Both live in [`RFCS/registers/`](./registers/), keyed to the RFC number.
