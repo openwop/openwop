@@ -35,9 +35,7 @@
 
 - **Bootstrap-waiver reconciliation — the grant and the practice disagree** ([`docs/WAIVER-AUDIT-2026-08-20.md`](./docs/WAIVER-AUDIT-2026-08-20.md)). `MAINTAINERS.md` permits *additive* RFCs, *Draft → Active*; **five confirmed RFCs (0147, 0148, 0149, 0150, 0156) are non-additive and reached `Accepted`** — the entire RFC 0147 program spine. Six more (0106, 0108, 0109, 0110, 0121, 0124) are unclassified and need reading. RFC 0147 §I already prescribes the remedy for exactly this — *retrospective cross-organization review **or** explicit reclassification as provisional* — and has never been applied to its own cohort; with one maintainer, only the second branch is reachable. Four recommendations in §6 of the audit, all steward calls. **Nothing has been reversed.**
 
-- ~~RFC 0147 §A.1 freeze exit~~ — **resolved 2026-08-20.** The exit condition was MET, not rewritten: WS1–3 `Accepted` since 2026-08-12, all six Critical rows dispositioned. One drafting fix landed (§A.1's transfer target excluded public disclosure). Downstream blocks removed. `docs/proposals/0147-freeze-exit.md` superseded and retained.
 
-- **RFC 0147 §A.1 "essential" carve-out (D2).** Declined five times by the corpus session, most recently when a conformance-only test seam looked like it needed one — it did not, because `host-sample-test-seams.md` already puts seams outside the v1 wire surface. That ruling is **not precedent for D2**.
 - RFC 0154 proof format · hosted-CI billing · maintainer and audit recruitment.
 
 ## Standing debt with a number on it
