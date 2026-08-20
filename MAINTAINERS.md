@@ -111,6 +111,24 @@ When the first non-steward maintainer is added to the "Current maintainers" tabl
 
 ## Bootstrap-phase RFC waivers
 
+> **⚠️ This ledger is incomplete and the grant below is narrower than the practice
+> (audited 2026-08-20 — see [`docs/WAIVER-AUDIT-2026-08-20.md`](./docs/WAIVER-AUDIT-2026-08-20.md)).**
+>
+> **The table holds 26 rows; the tree derives 41.** Twenty-one waived RFCs are missing from
+> the surface that exists to make waivers auditable — including RFC 0147 and all three of
+> its Workstream 1–3 children. Use `docs/ASSURANCE-STATUS.md` (generated) as the current
+> list until this table is generated too.
+>
+> **And the grant below authorises less than has been done under it.** It permits *additive*
+> RFCs, *Draft → Active*. At least five RFCs — 0147, 0148, 0149, 0150, 0156 — are
+> **non-additive** and were promoted to **`Accepted`**. RFC 0147 additionally forbids waiving
+> the comment window for RFCs touching identity, authorization, idempotency, replay or
+> certification (§A.6), and was itself waived while affecting four of them.
+>
+> Nothing is being reversed on that basis. The audit records what happened; §6 of it lists
+> the remedies, all of which are steward decisions.
+
+
 Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section tracks every RFC that has used the waiver so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
 
 | RFC  | Title                                                                                                                               | Draft date | Active date | Comment-window duration                 | Waiver rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
