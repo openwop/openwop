@@ -224,7 +224,6 @@ End-to-end deployable templates under [`apps/`](https://github.com/openwop/openw
 ## Design standards
 
 - **[`DESIGN.md`](https://github.com/openwop/openwop-site/blob/main/DESIGN.md)** — marketing-site standards + shared editorial palette (`--paper` / `--ink` / `--clay` / `--star-glow`) + Instrument Serif + Geist + Geist Mono type triple. Now lives in the [openwop-site](https://github.com/openwop/openwop-site) repo alongside the marketing site it governs.
-- **[`DESIGN.app.md`](./DESIGN.app.md)** — _moved with the app to [`openwop/openwop-app`](https://github.com/openwop/openwop-app)_ (stub retained here). Reference-app frontend standards: app-specific components, functional status tokens, xyflow canvas theming, Firebase-Auth vendor-mark policy, inline-style policy. Mirrors shared tokens from `DESIGN.md`.
 - Reviewed by `/ux-review`.
 
 ## Status legend
