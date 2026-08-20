@@ -113,6 +113,7 @@ function versions() {
 function risks() {
   const dir = resolve(ROOT, 'RFCS/registers');
   const open = [];
+  const transferredRows = [];
   let total = 0;
   for (const f of readdirSync(dir).filter((x) => x.endsWith('.risks.md')).sort()) {
     const rfc = f.slice(0, 4);
@@ -122,11 +123,41 @@ function risks() {
       total++;
       const [, id, title, score, status] = m;
       if (score !== 'Critical' && score !== 'High') continue;
-      const closed = /(^|\s)(closed|resolved|~~)/i.test(status) || /\*\*Closed/i.test(status) || /Realised and remediated/i.test(status);
-      if (!closed) open.push({ rfc, id, score, title: title.length > 90 ? title.slice(0, 87) + '…' : title, status: status.replace(/\*\*/g, '').slice(0, 160) });
+      // A row counts as closed only on an EXPLICIT disposition marker, and never
+      // when the cell negates one. The previous test matched the bare substring
+      // `closed` anywhere in the status cell, which is the
+      // substring-of-a-different-concept failure:
+      //
+      //   · RFC 0151 R1 ("Compensation executes twice", Critical) reads
+      //     "Open — ... unwitnessed" and was counted CLOSED from 2026-08-16,
+      //     purely because the cell mentions "(G1 closed 2026-08-16)" — a
+      //     different item's closure.
+      //   · A row stating a risk "cannot be closed by repository work" was
+      //     counted closed by saying so.
+      //
+      // This count is not cosmetic: RFC 0147 §A.1's freeze exit is gated on it,
+      // so a false closure silently loosens a project-wide constraint.
+      const negated = /\b(cannot|can ?not|could not|will not|never|not)\s+be\s+(closed|resolved)\b|\bnot closed\b/i.test(status);
+      const explicitlyClosed =
+        /\*\*(CLOSED|Closed)\b/.test(status) ||
+        /~~/.test(status) ||
+        /Realised and remediated/i.test(status);
+      const closed = explicitlyClosed && !negated;
+      // A risk may also be TRANSFERRED — real and open, but tracked on a named
+      // surface outside this register. RFC 0147 §A.1's freeze exit is satisfied by
+      // "Closed OR transferred", so a count that cannot express `transferred`
+      // cannot express the condition it gates. Reported separately rather than
+      // folded into either bucket: a transferred risk is not closed, and reading
+      // it as unaddressed is equally wrong.
+      const transferred = !closed && /\*\*(?:OPEN\s+—\s+)?TRANSFERRED\b/i.test(status);
+      if (closed) continue;
+      const row = { rfc, id, score, title: title.length > 90 ? title.slice(0, 87) + '…' : title, status: status.replace(/\*\*/g, '').slice(0, 160) };
+      if (transferred) transferredRows.push(row);
+      open.push(row);
     }
   }
-  return { rowsScanned: total, openCriticalOrHigh: open, programOpenCriticalOrHigh: open.filter((r) => Number(r.rfc) >= 147).map((r) => `${r.rfc}/${r.id}`) };
+  return { rowsScanned: total, openCriticalOrHigh: open, transferred: transferredRows.map((r) => `${r.rfc}/${r.id}`),
+    programOpenCriticalOrHigh: open.filter((r) => Number(r.rfc) >= 147).map((r) => `${r.rfc}/${r.id}`) };
 }
 
 // -------------------------------------------------------- permitted claims
@@ -201,6 +232,8 @@ function projection(m) {
   lines.push('## Open Critical / High program risks');
   lines.push('');
   lines.push(`Source: \`${m.risks.source}\` (${m.risks.rowsScanned} rows scanned). **${m.risks.openCriticalOrHigh.length}** open across all registers, of which **${m.risks.programOpenCriticalOrHigh.length}** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0147 §A.1's freeze and RFC 0156's claims are gated on. Older registers were never dispositioned; \`Open\` there means \"the mitigation is the normative MUST in the row\", not an unaddressed risk:`);
+  lines.push('');
+  lines.push(`Of those, **${m.risks.transferred.length}** are explicitly **transferred** to a named tracked surface (${m.risks.transferred.join(', ') || 'none'}) — real and open, but dispositioned. RFC 0147 §A.1's freeze exit reads "Closed **or transferred**", so this is the count that clause turns on; an open row and a transferred row are not the same state and are not reported as one.`);
   lines.push('');
   lines.push('| RFC | Risk | Score | Status (head) |');
   lines.push('| --- | --- | --- | --- |');

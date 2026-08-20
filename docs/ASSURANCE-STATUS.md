@@ -38,11 +38,13 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.138.0**; corpus release **1.8.0** (2026-08-18).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.138.1**; corpus release **1.8.0** (2026-08-18).
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md` (130 rows scanned). **72** open across all registers, of which **46** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0147 §A.1's freeze and RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md` (130 rows scanned). **71** open across all registers, of which **45** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0147 §A.1's freeze and RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+
+Of those, **3** are explicitly **transferred** to a named tracked surface (0147/R3, 0147/R12, 0147/R14) — real and open, but dispositioned. RFC 0147 §A.1's freeze exit reads "Closed **or transferred**", so this is the count that clause turns on; an open row and a transferred row are not the same state and are not reported as one.
 
 | RFC | Risk | Score | Status (head) |
 | --- | --- | --- | --- |
@@ -72,13 +74,11 @@ Source: `RFCS/registers/*.risks.md` (130 rows scanned). **72** open across all r
 | 0103 | R1 — **Draft content leaks via the public cache.** A draft section is written into a shared/… | High | Open — confirm cache-key scoping in the host implementation + add the SECURITY invariant. |
 | 0103 | R2 — **Cross-tenant content disclosure / enumeration oracle.** A request for another tenant'… | High | Open — verify the 404-equivalence in conformance + host. |
 | 0103 | R3 — **A second locale mechanism creeps in** (e.g. a `?locale=` shortcut in a host implement… | High | Mitigated by design — hold the exclusion through implementation review. |
-| 0147 | R2 — Correcting activity identity or replay digests silently changes interpretation of store… | Critical | Target: SR-3 `Active`; Open — Sweep 2026-08-16: Mitigated by evidence: no stored histories use the retired recipe (RFC 0150 G1); digest v2 is versioned (`recipe |
 | 0147 | R3 — Split-brain hosts duplicate payments/messages before a losing run is cancelled. | Critical | Target: SR-3 `Accepted`; Open — Sweep 2026-08-16: Open — unwitnessed. §D separates ownership from reconciliation on paper; no host fences and no black-box witne |
 | 0147 | R4 — The remediation program expands the corpus further without improving implementability. | High | Target: RFC 0147 `Active`; Open — Sweep 2026-08-16: Mitigated: §A freeze in force (no new optional wire capability landed since 0147; 0157 is a §A-compliant err |
 | 0147 | R5 — A single umbrella RFC obscures incompatible compatibility classes. | High | Target: each child intake; Mitigated by design |
 | 0147 | R7 — Tightening discovery schema closure breaks legal v1 extensions. | High | Target: SR-2 `Active`; Open — Sweep 2026-08-16: Mitigated by design — runtime schemas stay open; only authoring/certification lints landed (`capability-example- |
 | 0147 | R8 — Compensation is marketed as rollback or atomicity. | High | Target: SR-4 `Active`; Open — Sweep 2026-08-16: Mitigated in prose — `compensation.md` names best-effort durable compensation, `partial`/`manual` states, no rol |
-| 0147 | R9 — A compensating action causes a second harmful effect or leaks authority. | Critical | Target: SR-4 `Accepted`; Open — Sweep 2026-08-16: Open — unwitnessed. Prose separates identity/approval/egress/audit/DLQ (`compensation.md` §E carried per its G |
 | 0147 | R11 — Dual legacy/current interop profiles create downgrade attacks. | High | Target: SR-5/SR-6 `Accepted`; Open — Sweep 2026-08-16: Mitigated in suite: `a2a-version-no-silent-downgrade` / `mcp-version-no-silent-downgrade` invariants + ne |
 | 0147 | R12 — Workload provenance is mistaken for authorization and creates a confused deputy. | Critical | Target: SR-7 `Accepted`; Open — Sweep 2026-08-16: Mitigated in prose + suite: identity ≠ authorization stated (`auth.md`, `a2a-integration.md` §E, `mcp-integrat |
 | 0147 | R14 — Governance requirements cannot be satisfied because no independent maintainers volunteer. | Critical | Target: before RFC 0147 `Accepted`; Open — Sweep 2026-08-16: Open, Critical, externally gated — one maintainer as of 2026-08-16; standards claims stay qualified |
@@ -94,6 +94,7 @@ Source: `RFCS/registers/*.risks.md` (130 rows scanned). **72** open across all r
 | 0150 | R2 — A semantic provider option is omitted and digest collision remains. | High | Open — Sweep 2026-08-16: Open (G3). |
 | 0150 | R3 — Fencing service outage halts effects. | High | Open — Sweep 2026-08-16: Open — no fencing host (G10). |
 | 0150 | R4 — Provider claims idempotency but retention is too short. | High | Open — Sweep 2026-08-16: Open (G4). |
+| 0151 | R1 — Compensation executes twice. | Critical | Open — Sweep 2026-08-16: Mitigated in prose — inverse-action identity tuple stated; `compensation.md` §C now states the persistence shape, `attempt` outside the |
 | 0151 | R2 — Inverse action worsens the incident. | Critical | Open — Sweep 2026-08-16: Open — unwitnessed (§E landed 2026-08-16: approval on the plan entry, RFC 0049 binding, four audited override actions; `SECURITY/threat |
 | 0151 | R3 — Users interpret compensation as atomic rollback. | High | Open — Sweep 2026-08-16: Mitigated in prose — best-effort language, `partial` / `manual` states, `compensationStatus: none` default; claims-test unbuilt. |
 | 0151 | R4 — Replay re-fires inverse effects. | Critical | Open — Sweep 2026-08-16: Mitigated in suite — `compensation-replay-no-refire` invariant + `compensation-behavior.test.ts` leg (gated; `blocked` until a host adv |
