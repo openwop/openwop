@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-19                                                               |
+| **Updated**       | 2026-08-20 — §Conformance witness discipline: kill-row dropped-response signature, fixture-seam contract (env-gated, fail-closed), `peer-resume` `inapplicable` disposition, bundle-fed `bound-is-derived`, and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
@@ -180,6 +180,41 @@ ceiling), which is honest and is the point: it makes a twelve-minute recovery vi
 `duplicate-delivery` asserts **invocation counts per identity**, not final state: a legal end state is exactly
 what a double-fire produces, so an end-state assertion passes on the defect it exists to catch.
 
+### Witnessing the kill rows *(added 2026-08-20)*
+
+`kill-after-accept` and `kill-during-execution` require a process termination the black-box suite cannot itself
+cause (§E). A host under test therefore exposes a **conformance fixture seam** the suite calls to make the host
+kill its own worker, and the pass condition is written so a seam that only *simulates* the kill cannot satisfy
+it:
+
+11. The seam **MUST** terminate the process serving the triggering request (a real `exit` / signal, not a
+    simulated one). Because the process dies mid-request, that request **MUST NOT** return a success response —
+    a dropped connection is the expected signature. **Resumption is asserted on a *subsequent* observation**,
+    within the declared recovery bound. A seam that returns a success response and then arranges a restart does
+    **not** witness the row; it re-creates the "claim semantics asserted without a process death" that §D.9
+    rejects.
+12. The seam **MUST** be gated on the `OPENWOP_CONFORMANCE_FIXTURES` environment flag and **MUST** be
+    fail-closed: unreachable in any production configuration, and **not** a runtime-flippable feature toggle. A
+    self-terminating endpoint reachable in production is a denial-of-service surface, so the gate is a
+    deployment-time property, not a request-time one.
+
+The seam is a **non-normative host-extension route** (`host-extensions.md`): it advertises nothing, this RFC
+mints no capability field for it (§E.10), and a host that never runs the durability exercises exposes no such
+route. It is test infrastructure, not protocol surface — which is why a host may implement it before this RFC
+reaches `Accepted` without advertising a claim it cannot yet defend.
+
+**`peer-resume` disposition.** `peer-resume` is the `durable-multi-instance` discriminator (§D). A host that
+claims only `durable-single-instance` marks it **`inapplicable`**, not `blocked` or `skipped` — the row does
+not apply to a rung it does not claim, and a topology that cannot guarantee a *second live instance at the
+moment the kill lands* honestly holds only the lower rung. Per-process worker identity proves the mechanism
+*supports* a peer; it does not prove a peer *exists*. `inapplicable` with that stated reason is the honest
+disposition; a witnessed pass requires two instances provably live when the kill occurs.
+
+**`bound-is-derived` evidence.** The derivation — the per-class arithmetic, not a single total (Unresolved
+Question 1) — is emitted into the host's RFC 0148 evidence bundle, where a reader can recompute it. It is
+**not** advertised as a discovery field (§E.10). Per the note above, this row is a paper check and **MUST NOT**
+be cited as evidence that the recovery mechanism runs; only the kill rows witness that.
+
 ## Alternatives considered
 
 - **Require a fast recovery bound (e.g. ≤ 60s).** Rejected: it selects for an architecture rather than a
@@ -233,7 +268,13 @@ second — and this RFC's §B is written so the reverse ordering is visibly non-
 ## Acceptance criteria
 
 - [ ] Spec text, conformance scenarios, and the evidence-bundle fields land.
-- [ ] At least one host executes every scenario in strict mode (RFC 0147 requirement 5 — shape-only evidence
-      does not suffice).
-- [ ] The `peer-resume` scenario is executed by a host running **two processes**, not two workers in one.
+- [ ] At least one host executes, in strict mode, **every scenario applicable to the rung(s) it claims** (RFC
+      0147 requirement 5 — shape-only evidence does not suffice). Witnessing the **`durable-single-instance`**
+      rung — `kill-after-accept`, `kill-during-execution`, `duplicate-delivery`, `poison-exhaustion`, and
+      `bound-is-derived` — is sufficient to accept this RFC. The higher rungs are **defined-but-unclaimed** until
+      a host at that rung witnesses them; because §E.10 mints no capability field, an unwitnessed rung advertises
+      nothing and so cannot be a vacuous claim.
+- [ ] **Gating the `durable-multi-instance` rung (not this RFC's acceptance):** no host claims that rung until
+      `peer-resume` is witnessed by a host running **two processes**, not two workers in one. A host that cannot
+      guarantee a second live instance at kill time marks the row `inapplicable` and holds only the lower rung.
 - [ ] `docs/KNOWN-LIMITS.md` and `INTEROP-MATRIX.md` updated with each host's declared rung and bound.
