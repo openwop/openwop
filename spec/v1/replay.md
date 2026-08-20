@@ -103,6 +103,56 @@ Status codes:
 
 ---
 
+## The determinism model
+
+*(Added 2026-08-19. Non-normative framing of requirements that already exist; the
+numbered caveats below remain the normative text and are unchanged.)*
+
+The caveats accreted one at a time, each correct and each written when a gap was
+found. Read as a list they are hard to implement against, because an implementer
+has to infer the model from its exceptions. Stated directly, the model is three
+sentences:
+
+> **1. A run's event log is the only authority on what happened.**
+> **2. A replay re-derives the run from that log; anything a node observes that is
+> not in the log is a source of divergence.**
+> **3. Therefore every observation a node makes must be either recorded in the
+> log or reproducible from it — and where it is neither, the host must say so
+> rather than let the divergence pass silently.**
+
+Everything below is a consequence of applying sentence 3 to a particular kind of
+observation. It is worth reading the caveats that way, because the classification
+tells an implementer what to do about an observation the caveats do not name.
+
+| An observation of… | Is made deterministic by | Caveat |
+| --- | --- | --- |
+| an **external system** (LLM, payment, message) | consulting the durable invocation log instead of calling | 1 |
+| a **human** (approval, clarification) | short-circuiting to the persisted resolution | 2 |
+| the **code's own version** across a deploy | pinning the value the original run took | 3 |
+| **wall-clock time** | reading the engine's logical clock, not the host's | 4 |
+| a **fact the run already recorded** (e.g. `memory.written`) | re-emitting from the log without regenerating identifiers | 5 |
+| the host's **own outbound projection** (webhooks, sinks) | suppressing outbound delivery for re-emitted events | §"Host-initiated fan-out is an external effect" |
+
+**The gap the table makes visible.** Caveat 4 ends *"or accept
+non-determinism"* — the only caveat that offers an escape rather than a
+mechanism. That is deliberate (the protocol cannot stop a node calling
+`Date.now()`), but it means the model has exactly one hole, and an implementer
+should know where it is rather than discover it. A host that cannot supply
+`ctx.now()` has a non-deterministic replay and no way to detect it; the
+`replay.diverged` event in §"Failure surfaces" is the only signal, and it is
+informational.
+
+**How to classify an observation the caveats do not name.** Ask, in order:
+
+1. **Is it recorded in the log?** Then re-derive from the log — never regenerate.
+2. **Can it be recorded?** Then record it during the original run, not the replay.
+3. **Neither?** It is a divergence source. Say so in the host's documentation and
+   emit `replay.diverged` when it fires. Do not assume it is out of scope because
+   no caveat names it — **caveat 5 and the fan-out rule were both added because an
+   observation nobody had classified turned out to be in scope.**
+
+---
+
 ## Determinism guarantees
 
 ### `replay` mode
