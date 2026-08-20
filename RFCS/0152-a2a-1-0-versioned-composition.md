@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-16 later (S15, suite 1.112.0: dual-era `A2AFakePeer` at 1.0; `a2a-1-0-agent-card`, `a2a-card-runtime-consistency`, `a2a-1-0-task-roundtrip`, `a2a-peer-authority` legs; correction: openwop-app passes §A only — its §B legs are `blocked`, no invoke seam). 2026-08-16 (§C/§D/§E prose landed in `spec/v1/a2a-integration.md` §"A2A 1.0 versioned composition" — pinned to A2A 1.0.0 (2026-03-12): Agent Card projection table, JSON-RPC-at-1.0 interface floor (G4/UQ3), the D.1–D.7 translation tables (operations, Message, Part/Artifact, Task/TaskState with the stored-vocabulary bijection, streaming, configuration/push, errors), identity/no-enumeration rules, `a2a-0.3-legacy` named and time-bounded to 2027-03-12 (UQ1 date), `interop_version_unsupported` error code, seam §22 catalogued. Not landed: a 1.0-shaped fake peer, the seven named scenarios, the two unregistered invariants, a real upstream peer, the 0.3 adopter inventory.) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the A2A 1.0 profile, its legacy-deprecation window, and validation against a real upstream peer.) |
+| **Updated** | 2026-08-16 later (S15, suite 1.112.0: dual-era `A2AFakePeer` at 1.0; `a2a-1-0-agent-card`, `a2a-card-runtime-consistency`, `a2a-1-0-task-roundtrip`, `a2a-peer-authority` legs; correction: openwop-app passes §A only — its §B legs are `blocked`, no invoke seam). See [Amendment record](#amendment-record). |
 | **Affects** | `spec/v1/a2a-integration.md`, `schemas/capabilities.schema.json`, A2A projection schemas, conformance fake/real peers, RFC 0100, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` A2A 1.0 profile with legacy 0.3 deprecation |
 | **Supersedes** | Unqualified A2A support and A2A 0.3 as the current profile |
@@ -98,6 +98,14 @@ Generate the translation table from the pinned A2A 1.0 schema where possible. Do
 - [ ] Real upstream A2A 1.0 peer passes in CI. (Carried, and externally gated: it needs a reachable upstream A2A 1.0 peer, which is not a corpus deliverable.)
 - [ ] Legacy 0.3 profile and deprecation runbook published. (2026-08-16: **named and time-bounded** — `a2a-0.3-legacy` is defined as the pre-2026-08-16 body of `a2a-integration.md`; hosts SHOULD NOT advertise it after 2027-03-12 (A2A 1.0.0 published 2026-03-12 + the 12-month window). Carried: the deprecation *runbook* (what a 0.3-only host does on that date) is one paragraph in §A, not a runbook; and the adopter inventory (G1) is unknown.)
 - [ ] Threat models, invariants, SDKs, interop matrix, and CHANGELOG updated. (**2026-08-16: invariants registered** — `a2a-card-runtime-consistent` and `a2a-peer-no-authority-escalation` in `SECURITY/invariants.yaml`, each on a leg driven non-vacuously against the first 1.0 host (openwop-app ADR 0552 P2 at main `24b9e6c9b`, strict, fake peer); **interop matrix** — `INTEROP-MATRIX.md` §"Versioned composition profiles" records the witness as a tier-1 local boot, not the deployed origin; **CHANGELOG** landed with each piece. Still carried: a dedicated threat-model document (the §E invariants live under `threat-model-prompt-injection.md` / `-secret-leakage.md`), and the SDK half (`openwop-sdks`).)
+
+## Amendment record
+
+Change history relocated from the `Updated` metadata cell (newest first).
+
+- 2026-08-16 (§C/§D/§E prose landed in `spec/v1/a2a-integration.md` §"A2A 1.0 versioned composition" — pinned to A2A 1.0.0 (2026-03-12): Agent Card projection table, JSON-RPC-at-1.0 interface floor (G4/UQ3), the D.1–D.7 translation tables (operations, Message, Part/Artifact, Task/TaskState with the stored-vocabulary bijection, streaming, configuration/push, errors), identity/no-enumeration rules, `a2a-0.3-legacy` named and time-bounded to 2027-03-12 (UQ1 date), `interop_version_unsupported` error code, seam §22 catalogued.
+- Not landed: a 1.0-shaped fake peer, the seven named scenarios, the two unregistered invariants, a real upstream peer, the 0.3 adopter inventory.) 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers".
+- **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** the A2A 1.0 profile, its legacy-deprecation window, and validation against a real upstream peer.).
 
 ## References
 
