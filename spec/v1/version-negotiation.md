@@ -405,6 +405,43 @@ advertise no `crossRegion` at all are unaffected in both directions.
 
 ---
 
+## Canonical URL resolution (RFC 0149 §A — the `/v1/v1` correction)
+
+> Safety-fix (RFC 0149 §A). Affects **generated clients and anything that composed a base
+> URL from `api/openapi.yaml`'s `servers` entry**. Hosts are unaffected: no endpoint moved.
+
+The OpenAPI document declared `servers: [{ url: "https://{host}/v1" }]` while every path
+already began with `/v1`. A generator that composes `server.url + path` therefore produced
+**`https://{host}/v1/v1/runs`**. The correction drops the prefix from `servers`:
+
+```diff
+ servers:
+-  - url: https://{host}/v1
++  - url: https://{host}
+```
+
+**The hazard is that the bug was survivable.** A consumer that hit `/v1/v1` and worked
+around it — by stripping the duplicate, by hard-coding a base without the suffix, or by
+patching the spec locally — has a workaround that the correction **turns into a new bug**,
+because the same composition now yields `https://{host}/runs`. This is the case RFC 0147's
+register tracks as R6.
+
+| Who | What | When |
+| --- | --- | --- |
+| **SDK / client generator** | Regenerate against the corrected `api/openapi.yaml`. If you carried a workaround for the duplicate prefix, **remove it in the same change** — the two corrections cancel, and applying either alone is broken. | Before upgrading past the corrected document. |
+| **Hand-written client** | Verify your base URL has no `/v1` suffix; paths supply it. | Any time — the resolved URL is unchanged if you were already correct. |
+| **Host operator** | Nothing. No route moved and no request shape changed. A host that answered `/v1/runs` before answers it now. | — |
+| **Anyone unsure** | `scripts/generate-operation-path-manifest.mjs` emits the canonical resolved path for every operation. Compare against what your client actually requests. | — |
+
+**Detection.** A client on the old composition requests a path with a doubled prefix; a
+client with an un-removed workaround requests one with no prefix. Both are visible in a
+single request log, and both 404 against a conforming host — the failure is loud, not silent.
+
+No `protocolVersion` bump: the wire contract is unchanged. What changed is the document that
+describes how to address it.
+
+---
+
 ## Certification-evidence migration (RFC 0148 — bundle v1 → v2)
 
 RFC 0148 classified certification evidence as a `safety-fix` (`COMPATIBILITY.md` §3): bundle **v1** (`results.passed[]` lists) counted an early-returning test as a pass and could not tell `skipped` from `inapplicable` from `blocked`. This runbook is what implementers and consumers do about it.

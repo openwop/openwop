@@ -118,6 +118,40 @@ The general form is worth carrying into any future gate: **prefer an exit stated
 over one stated in statuses.** A status can be waived — 41 were. A non-vacuous witness on a
 deployed host cannot.
 
+## 5c. The sharper test, and what it found (added 2026-08-20)
+
+The waiver-citation question in §1–2 is not the strongest available test. Four of the five
+RFCs invoked `COMPATIBILITY.md` §3 — **the safety-fix exception** — which carries its own
+precondition, stricter than the bootstrap waiver:
+
+> The fix is published with one of: **a 90-day public RFC window** … OR **an embargoed
+> coordinated-disclosure window**.
+
+RFC 0147 had **23 hours**. So the finding is not merely that the wrong waiver was cited; it
+is that **§3's own gate was skipped**.
+
+Against that, the shipping requirements §3 lists were largely met — and checking them
+corrected two claims made earlier in this audit's own drafting:
+
+| §3 requires | State |
+| --- | --- |
+| RFC with threat model + migration path | met for all four |
+| `version-negotiation.md` runbook | met for 0148 and 0150 (**two** sections, §B and §D); **added 2026-08-20 for 0149 §A**; not owed by 0147, an umbrella that adds no wire |
+| Migration tooling where mechanical | met in part — golden vectors (0150), bundle reissue (0148) |
+| `### Security` changelog entry citing an advisory | **was absent entirely**; added 2026-08-20, deliberately without fabricated advisory IDs |
+
+**Realised harm: none, and this was verified rather than reasoned.** RFC 0150's digest change
+is the one that could have silently reinterpreted stored histories — *"no stored histories use
+the retired recipe."* RFC 0148 invalidated one bundle; it was reissued. The population §3's
+notice period protects is currently **empty**, which is why coordination by two parties
+absorbed changes that the machinery exists to announce.
+
+**That is the argument against retrospective reclassification** — it would churn every
+downstream citation to remedy a defect with no victim, and understate work implemented and
+witnessed on deployed hosts. It is *not* an argument that the process defect is unimportant:
+the notice requirements stop being cosmetic the moment an independent implementer exists,
+which is the outcome the project is working toward.
+
 ## 6. Recommended, in order
 
 1. **Generate the waiver ledger** from the tree instead of hand-keeping it, so §3.2 cannot
