@@ -47,9 +47,9 @@ been explicitly asked and answered wrong is the case for a normative rule.
 
 **What this row does not claim.** The conformance scenario does **not** independently witness the seam guard — classification and the guard mask each other in the fixture, so disabling either alone leaves the scenario green (RFC 0140 gap G8); the guard's evidence is host-side. Three node-reachable effect paths remain unguarded in openwop-app (gap G9: webhook fan-out, `s3Blob.put`, `openSearchSearch`), the first deliberately, since it is host-level fan-out with no node to fail closed. Out-of-process pack execution is uncovered — `AsyncLocalStorage` does not cross a worker boundary. `branch`-mode forks re-fire effects by design (§D).
 
-### Poison work terminates within a bounded number of attempts (RFC 0162 §C.8 — `durability/poison-exhaustion`)
+### Poison work terminates within a bounded number of attempts (RFC 0158 §C.8 — `durability/poison-exhaustion`)
 
-RFC 0162 is **`Draft`**. This row records evidence for one requirement, not a rung: the RFC's ladder mints no advertised capability (§E.10, under the RFC 0147 §A.1 freeze), so nothing here is a claim a host advertises. Of the RFC's six conformance rows this is the only one **causable** without terminating a process — the other five need a host seam, a supervisor, or ≥2 instances, and none exists yet. Seam-gated on the existing `/v1/host/sample/test/runs/{runId}/events` log seam and **outside every profile floor**.
+RFC 0158 is **`Draft`**. This row records evidence for one requirement, not a rung: the RFC's ladder mints no advertised capability (§E.10, under the RFC 0147 §A.1 freeze), so nothing here is a claim a host advertises. Of the RFC's six conformance rows this is the only one **causable** without terminating a process — the other five need a host seam, a supervisor, or ≥2 instances, and none exists yet. Seam-gated on the existing `/v1/host/sample/test/runs/{runId}/events` log seam and **outside every profile floor**.
 
 | Host | Status | Evidence |
 | --- | --- | --- |
