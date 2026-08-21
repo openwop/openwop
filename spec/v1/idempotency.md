@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.6 (2026-08-20).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). v1.5 lands RFC 0150 §A: the Layer-1 record shape (digest, state, lease), atomic reclaim of an expired pending owner, the keyspace-separation `MUST NOT` for host-generated identifiers, and — new — the canonical **`idempotency_key_mismatch`** error for a same-key/different-body replay, which the spec had never named (SP-03, additive: it names an error hosts already had to return and states a shape they already had to keep). v1.6 states the **recovery-boundary precondition** for Layer-2 identity: the ordinal reproduces across crash-and-resume **iff** the host re-executes the node's logical activities from the start on resume — the precondition RFC 0158's `kill-during-execution` / `duplicate-delivery` witnesses depend on, previously presumed but unstated (RFC 0150 §B, additive). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.7 (2026-08-21).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). v1.5 lands RFC 0150 §A: the Layer-1 record shape (digest, state, lease), atomic reclaim of an expired pending owner, the keyspace-separation `MUST NOT` for host-generated identifiers, and — new — the canonical **`idempotency_key_mismatch`** error for a same-key/different-body replay, which the spec had never named (SP-03, additive: it names an error hosts already had to return and states a shape they already had to keep). v1.6 states the **recovery-boundary precondition** for Layer-2 identity: the ordinal reproduces across crash-and-resume **iff** the host re-executes the node's logical activities from the start on resume — the precondition RFC 0158's `kill-during-execution` / `duplicate-delivery` witnesses depend on, previously presumed but unstated (RFC 0150 §B, additive). v1.7 states that the Layer-2 invocation-log claim **MUST be atomic** (compare-and-set / insert-if-absent): a non-atomic read-then-write double-fires under **concurrent** duplicate delivery, so exactly-once was never satisfiable without it — the Layer-2 counterpart of the Layer-1 §"Concurrent duplicates" rule, previously explicit only one layer up (RFC 0158 §C.7 / RFC 0150 §B, additive). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -273,10 +273,27 @@ interchangeable and the failure is silent in both directions.
 
 The engine MUST:
 
-1. Persist the result of each `(logicalInvocationId)` to a durable invocation log before returning it to the executor.
+1. Persist the result of each `(logicalInvocationId)` to a durable invocation log before returning it to the executor. The persist that guards the side effect **MUST** be an **atomic claim** — a compare-and-set / insert-if-absent that at most one executor can win — not a non-atomic read-then-write (see "Concurrent duplicates (Layer 2)" below).
 2. On a retry that produces the same `logicalInvocationId`, return the persisted result without re-invoking the side effect.
 3. Persist failures as well as successes — a 4xx from a payment provider should not be retried as if it never happened.
 4. Apply a TTL on invocation log entries (recommended 14 days; configurable).
+
+### Concurrent duplicates (Layer 2)
+
+Two executors can produce the same `logicalInvocationId` **concurrently** — the canonical at-least-once
+hazard: an orphaned-run sweep re-dispatches a run whose previous owner is stalled but still alive, two
+workers claim the same dispatch, a supervisor restarts a process that has not fully stopped. Both re-execute
+the logical activity from the start, so the ordinal reproduces (§"Idempotency key composition", "Across a
+recovery boundary") and both mint the **same** identity.
+
+The engine **MUST** ensure at most one of them performs the external effect. Concretely, the persist that
+guards the effect (guarantee 1) **MUST** be an atomic claim: exactly one executor wins the compare-and-set /
+insert-if-absent and fires, and the other observes the hit and returns the persisted result. A non-atomic
+read-then-write does **NOT** satisfy the exactly-once guarantee under concurrent delivery — both executors
+miss the read and both fire, producing the duplicate external effect that §"Why this exists" and RFC 0158
+§C.7 exist to prevent. This is the Layer-2 counterpart of §"Concurrent duplicates" (Layer 1, above), and it
+**MUST** hold within a single-instance deployment — the orphan-sweep-races-the-original case is reachable
+without a second host — not only across instances.
 
 ### Provider header injection
 
