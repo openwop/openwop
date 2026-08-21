@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.5 (2026-08-18).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). v1.5 lands RFC 0150 §A: the Layer-1 record shape (digest, state, lease), atomic reclaim of an expired pending owner, the keyspace-separation `MUST NOT` for host-generated identifiers, and — new — the canonical **`idempotency_key_mismatch`** error for a same-key/different-body replay, which the spec had never named (SP-03, additive: it names an error hosts already had to return and states a shape they already had to keep). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.6 (2026-08-20).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). v1.5 lands RFC 0150 §A: the Layer-1 record shape (digest, state, lease), atomic reclaim of an expired pending owner, the keyspace-separation `MUST NOT` for host-generated identifiers, and — new — the canonical **`idempotency_key_mismatch`** error for a same-key/different-body replay, which the spec had never named (SP-03, additive: it names an error hosts already had to return and states a shape they already had to keep). v1.6 states the **recovery-boundary precondition** for Layer-2 identity: the ordinal reproduces across crash-and-resume **iff** the host re-executes the node's logical activities from the start on resume — the precondition RFC 0158's `kill-during-execution` / `duplicate-delivery` witnesses depend on, previously presumed but unstated (RFC 0150 §B, additive). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -188,6 +188,23 @@ across retries of the same side effect.
 same logical activity. Two distinct logical invocations **MUST** receive different ordinals
 even when every other input matches — a node that calls the same provider twice on purpose
 is performing two effects, and they MUST NOT deduplicate against each other.
+
+> **Across a recovery boundary.** The retries bounded above are in-process. A
+> crash-and-resume is not, and whether the ordinal survives it is a property of *how the
+> host resumes*, not of the composition. The ordinal — and therefore the
+> `logicalInvocationId` — reproduces across a recovery-boundary resume **if and only if** the
+> resumed unit re-executes the node's logical activities from the start, in the same order:
+> deterministic re-execution reconstructs the same ordinal sequence, so the durable
+> invocation log below suppresses the duplicate effect. A host that resumes *inside* a node —
+> skipping already-run logical activities and continuing at ordinal *k* — numbers what a
+> from-start re-execution would have numbered differently, shifting every downstream identity
+> and defeating Layer-2 dedup on exactly the crash it most needs to survive. A host whose
+> durability claim includes suppressing duplicate effects across process death (RFC 0158
+> `kill-during-execution`, `duplicate-delivery`) therefore **MUST** re-execute from the node
+> start on resume, **or MUST NOT** rely on Layer-2 identity to dedupe across that boundary and
+> **MUST** additionally key the effect on a business identity (§"The identity is run-scoped,
+> and what that costs"). This adds no field to the composition; it states the resume
+> discipline the composition already presumes.
 
 The retry counter **MUST NOT** participate in the identity. `attempt` remains useful
 telemetry and hosts SHOULD keep recording it, but an identity that varies per attempt is not
