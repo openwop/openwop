@@ -229,7 +229,7 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.78.0",
       "evidenceTier": null,
-      "note": "RFC 0150 \u00a7D vocabulary landed, but no host implements fencing and the witness is corpus-structural (gap G10)."
+      "note": "RFC 0150 \u00a7D vocabulary landed; no host advertises `fenced-effects`, so the effect-fencing witness (gap G10) is still corpus-structural. Its runtime witness is now SPECIFIED (RFC 0150 acceptance box 4, resolved 2026-08-21): a fence-verdict observation over the \u00a7F counters (`stale_fence_rejections_total` OR `effect_suppressions_total`) plus a per-`logicalInvocationId` effect count of 1 \u2014 never an effect-content sink \u2014 capability-gated on `crossRegion: fenced-effects` and landing with the first advertising host."
     },
     {
       "id": "openwop-a2ui-surface-transport",
