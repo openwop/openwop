@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Documentation
+
+- **RFC 0150 §D effect-fencing witness (gap G10) specified — the acceptance box's "needs an observable effect sink, which re-conflates record and effect" was too broad.** It conflated an effect *content* sink (which does re-conflate) with a **fence-verdict / count observable**, which §F already sanctions. The witness is now named: two-legged and content-free — (i) a fence decision fired over the §F counters `openwop.idempotency.stale_fence_rejections_total` **or** `openwop.replay.effect_suppressions_total` (accepting both §D mechanisms — adapter reject-stale-token or provider duplicate-suppression under `logicalInvocationId`); (ii) the per-`logicalInvocationId` effect count stayed 1 (the same instrument RFC 0158 `duplicate-delivery` uses). No soft-skipping scenario is added against a seam no host implements (RFC 0148 §A); the runtime scenario lands with the first `fenced-effects`-advertising host. Additive documentation — no normative §D change, no new capability, no wire surface. Sharpened in `RFCS/0150-*.md` (box 4 + conformance table) and `spec/v1/extensions.json` (G10 note).
+
 ### Security
 
 *(Section added 2026-08-20. `COMPATIBILITY.md` §3 requires a safety-fix to ship a `### Security` changelog entry citing an advisory ID. **No such section existed anywhere in this changelog**, and the four safety-fix RFCs accepted in August — 0147, 0148, 0149, 0150 — shipped without one. This is the retrospective entry, and it is deliberately not four fabricated advisories.)*
