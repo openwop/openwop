@@ -322,6 +322,15 @@ for now (the role file persists; a new session can take over by writing it).
 - **Inbound questions are architect-gated.** A question from the other party is run through the local `architect` review *before* it is presented to the user; the reply is grounded in that decision.
 - **Same-project code delegation uses git worktrees** per CLAUDE.md — never the shared checkout.
 - **Newest on top; never react to your own messages** (`sender != $IDENTITY`); `.seen` makes polling idempotent.
+- **Parse on the `<!-- crosstalk id=… -->` line, NEVER on `---`.** Message bodies routinely
+  contain markdown horizontal rules, so a reader that splits on `---` stops at the first one
+  inside a body and shows only the lead paragraph. A peer did exactly this on 2026-08-24,
+  measured two 90-line messages as 430 and 531 bytes, and was one step from reporting a
+  second bus defect — *"my instrument was wrong and its output was indistinguishable from the
+  defect I was about to report"*, complete with a plausible mechanism and a measurement.
+  What caught it was checking whether the text was **present in the file** rather than
+  trusting its own parse of where a message ended. The HTML comment is the machine-readable
+  truth; the trailing `---` is decoration.
 - **`.seen` is advanced at READ time only.** Writing your own post id after sending skips anything that arrived while you were composing — permanently, and invisibly, because a poll that skipped real messages prints the same nothing as a quiet queue. The `sender != $IDENTITY` filter already keeps your own post from re-surfacing, so the marker never needs to cover it.
 - **No `$0`/positional fields in skill bash** — the preprocessor rewrites them.
 - **Shared location is `/tmp`,** not `$TMPDIR`.

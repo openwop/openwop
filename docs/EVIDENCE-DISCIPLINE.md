@@ -123,7 +123,38 @@ at once, **ratchet**: fail if the count grows, and fail if it shrinks without th
 baseline being lowered — the second half is what keeps the number a measurement
 rather than a decaying comment.
 
-## 10. Do not let a suite be stricter than the specification
+## 10. A test that recomputes the thing under test is a mirror, not an oracle
+
+**Failure:** three independent codebases, one week. A reference verifier's adversarial
+test signed with its own `signPayload` and verified with its own `verifyDelivery`. A
+vendor SDK's only signature test **re-implemented the SDK's own signing inline** and
+checked against that. A third tree came within one commit of the same shape.
+
+The formulation is a peer's and it is the sharpest available:
+
+> **A mirror, not an oracle — it can only fail if the function contradicts itself, which
+> is the one thing that is not wrong with it.**
+
+A round-trip through your own encoder proves the encoder and decoder **agree**. It never
+proves either is **right**. Both can be wrong together and the test stays green forever,
+on every host, in every environment.
+
+**Practice:** build the expected value **from the specification, or from a primitive** —
+never from the thing under test. `createHmac('sha256', k).update(bytes).digest('hex')` is
+an oracle; `mySigner(bytes)` is a mirror.
+
+**And check the right assertion, because format is not correctness.** A vendor SDK
+diverged from its own host on *two* axes: the header prefix, and the **signed bytes**
+(HMAC over `payload` alone versus `` `${timestamp}.${rawBody}` ``). A format assertion —
+`/^sha256=[0-9a-f]{64}$/` — passes a signature computed over entirely the wrong input.
+
+> **Well-formed and correct are different assertions, and only the second needs an
+> independent recipe.**
+
+The difference between a tree that had this defect and one that did not was not diligence:
+one test reached for `node:crypto` and the other reached for its own signer.
+
+## 11. Do not let a suite be stricter than the specification
 
 **Failure:** a scenario required a response field the API contract does not
 define. A host implementing **only the published contract** failed at the first
@@ -136,7 +167,7 @@ oracle before the host** — and note that a reference implementation's
 compatibility shim will hide a contract error from everyone who is not equally
 lenient.
 
-## 11. Re-measure the inference, not only the input
+## 12. Re-measure the inference, not only the input
 
 **Failure:** a register row read *"the freeze demonstrably has not cleared — RFC 0147's
 acceptance box is unchecked, a fact in the tree."* The measurement was real, checkable, and
@@ -155,7 +186,7 @@ dependency on that clause's *continued force*, not on its text. Retire such a ro
 reasoning attached rather than deleting it, so the next person to write "verified in the tree"
 knows a verification can survive its own conclusion.
 
-## 12. Prose beside code has no gate
+## 13. Prose beside code has no gate
 
 **Failure:** five instances in one review cycle. A comment claimed a knob reached
 call sites it never reached; a docblock named a header the assertion had stopped
@@ -178,6 +209,6 @@ enough to argue with.
 
 The honest caveat: **these were all learned by being wrong first**, and the list
 is certainly incomplete. If you are adopting them, the practice underneath all
-twelve is the one worth taking: *when an artifact reports something good, ask
+thirteen is the one worth taking: *when an artifact reports something good, ask
 what it would have reported had the thing been bad* — and if the answer is "the
 same", the artifact is not evidence.
