@@ -136,7 +136,26 @@ oracle before the host** — and note that a reference implementation's
 compatibility shim will hide a contract error from everyone who is not equally
 lenient.
 
-## 11. Prose beside code has no gate
+## 11. Re-measure the inference, not only the input
+
+**Failure:** a register row read *"the freeze demonstrably has not cleared — RFC 0147's
+acceptance box is unchecked, a fact in the tree."* The measurement was real, checkable, and
+**is still true today**: the box is still unchecked. But the clause that box gated was spent
+by a different route, so the row's conclusion became false while its evidence stayed true.
+Re-running the exact check returns the same answer and still supports the wrong conclusion.
+
+**Why "re-measure before trusting" does not catch it.** That rule catches *a fact that
+changed*. This is **a fact that stayed true while ceasing to be load-bearing** — the input
+survives, the inference does not. No amount of re-running the original check will surface it,
+because the check was never wrong.
+
+**Practice:** when a claim is *"X, therefore Y"*, re-read **Y's basis**, not only X. Ask what
+would have to be true for X to still support Y — and treat a citation to a clause as a
+dependency on that clause's *continued force*, not on its text. Retire such a row with the
+reasoning attached rather than deleting it, so the next person to write "verified in the tree"
+knows a verification can survive its own conclusion.
+
+## 12. Prose beside code has no gate
 
 **Failure:** five instances in one review cycle. A comment claimed a knob reached
 call sites it never reached; a docblock named a header the assertion had stopped
@@ -159,6 +178,6 @@ enough to argue with.
 
 The honest caveat: **these were all learned by being wrong first**, and the list
 is certainly incomplete. If you are adopting them, the practice underneath all
-eleven is the one worth taking: *when an artifact reports something good, ask
+twelve is the one worth taking: *when an artifact reports something good, ask
 what it would have reported had the thing been bad* — and if the answer is "the
 same", the artifact is not evidence.
