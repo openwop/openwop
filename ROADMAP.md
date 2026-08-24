@@ -1,7 +1,7 @@
 # OpenWOP Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-08-18 (the v1.8.0 corpus release — the evidence-integrity cycle. **No RFC status changed**: Accepted 153 / Active 3 / Draft 1, unchanged from v1.7.0. The cycle repaired the evidence layer instead — five instances of a gate, test, spec sentence, build, or bundle reporting on something other than what its reader assumed it measured, four of them disclosed by a host checking its own tree. Suite `1.123.0 → 1.136.11`; invariants 181 → 183; 463 scenario files.)
+> **Last reviewed:** 2026-08-23 (the v1.9.0 corpus release — the cycle that audited its own authority: RFC 0147 §A.1 found binding without a decision behind it, dispositioned and retired; the waiver ledger gated; the implementer front door built).
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
