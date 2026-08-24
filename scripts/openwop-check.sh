@@ -187,6 +187,11 @@ echo "[6/7] Security invariants..."
 # scenario-file counts in conformance/README) must agree with the tree; the
 # part of "documents agree" that is a number is checked here, not asserted.
 node "$(dirname "$0")/check-doc-tallies.mjs"
+# The bootstrap-waiver ledger must not drift from the tree. It reached 26 rows
+# against 41 derived before this gate existed — the twenty-one absent included
+# RFC 0147 and all three Workstream 1-3 children, i.e. the whole program spine
+# was missing from the surface that exists to make waivers auditable.
+node "$(dirname "$0")/check-waiver-ledger.mjs"
 # RFC 0156 §F — the assurance manifest is current AND no public surface carries
 # a claim token the manifest does not permit (RFC 0147 §A claim table).
 node "$(dirname "$0")/generate-assurance-status.mjs" --check

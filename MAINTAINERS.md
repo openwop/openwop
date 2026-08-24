@@ -111,23 +111,17 @@ When the first non-steward maintainer is added to the "Current maintainers" tabl
 
 ## Bootstrap-phase RFC waivers
 
-> **⚠️ This ledger is incomplete and the grant below is narrower than the practice
-> (audited 2026-08-20 — see [`docs/WAIVER-AUDIT-2026-08-20.md`](./docs/WAIVER-AUDIT-2026-08-20.md)).**
->
-> **The table holds 26 rows; the tree derives 41.** Twenty-one waived RFCs are missing from
-> the surface that exists to make waivers auditable — including RFC 0147 and all three of
-> its Workstream 1–3 children. Use `docs/ASSURANCE-STATUS.md` (generated) as the current
-> list until this table is generated too.
->
-> **And the grant below authorises less than has been done under it.** It permits *additive*
-> RFCs, *Draft → Active*. At least five RFCs — 0147, 0148, 0149, 0150, 0156 — are
+> **⚠️ The grant below authorises less than has been done under it (audited 2026-08-20 — see
+> [`docs/WAIVER-AUDIT-2026-08-20.md`](./docs/WAIVER-AUDIT-2026-08-20.md)).** It permits
+> *additive* RFCs, *Draft → Active*. At least five RFCs — 0147, 0148, 0149, 0150, 0156 — are
 > **non-additive** and were promoted to **`Accepted`**. RFC 0147 additionally forbids waiving
 > the comment window for RFCs touching identity, authorization, idempotency, replay or
-> certification (§A.6), and was itself waived while affecting four of them.
+> certification (§A.6), and was itself waived while affecting four of them. Reconciling the
+> text with the practice is on the maintainer's desk; nothing has been reversed on this basis.
 >
-> Nothing is being reversed on that basis. The audit records what happened; §6 of it lists
-> the remedies, all of which are steward decisions.
-
+> **Completeness is now gated.** `scripts/check-waiver-ledger.mjs` (step 6 of `openwop:check`)
+> fails if an RFC the tree shows as waived has no row here. The ledger drifted to 26 rows
+> against 41 derived before that gate existed.
 
 Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section tracks every RFC that has used the waiver so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
 
@@ -163,6 +157,40 @@ Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted D
 When the count gets uncomfortable (e.g., > 5 waivers within a 30-day window, or > 15 total before the first non-steward maintainer joins), that's a signal to slow down and stage at least one RFC through a real 7-day window even without external reviewers — exercising the process is itself a credibility surface.
 
 > **Tripwire status (2026-06-11): crossed.** This ledger now records **26** waivers with no non-steward maintainer yet — past the > 15-total threshold above (and the 2026-05-25 – 2026-05-30 cluster alone exceeded the 5-in-30-days signal). Per the policy this is the signal to slow down: the slow-down response should be evaluated now, and at least one upcoming RFC should be staged through a real 7-day comment window even without external reviewers. The 2026-06-11 backfill itself is part of the response — the ledger had silently lagged at 5 rows while ≥ 19 RFCs carried "comment window waived" language; every discoverable waiver is now recorded. The tripwire is deliberately retained, not raised.
+
+### Waivers not annotated at the time (added 2026-08-20)
+
+These twenty-one RFCs used the waiver but were never entered above. **The rationale column is
+absent rather than reconstructed** — nobody recorded why at the time, and a plausible
+after-the-fact reconstruction would be worse than an honest gap: it would read as a decision
+that was made. What is below is derived from each RFC's own header.
+
+| RFC  | Title | Created | First promotion | Status |
+| ---- | ----- | ------- | --------------- | ------ |
+| 0043 | Registry and extension-policy | 2026-05-22 | 2026-07-07 | `Accepted` |
+| 0101 | Multi-party group conversation (shared transcript, speaker attribution) | 2026-06-14 | 2026-06-22 | `Accepted` |
+| 0103 | Localized Content Surface — durable, authored, structured localized content (p | 2026-06-17 | 2026-06-17 | `Accepted` |
+| 0105 | Speech synthesis adapter (`ctx.callSpeechSynthesizer`) — text-to-speech as a f | 2026-06-20 | 2026-06-21 | `Accepted` |
+| 0106 | — | — | — | `?` |
+| 0108 | Self-hosted / OpenAI-compatible provider class (`aiProviders.selfHosted[]`) | 2026-06-23 | 2026-06-24 | `Accepted` |
+| 0109 | Conversation-turn model provenance (`agent.model`) | 2026-06-24 | 2026-06-24 | `Accepted` |
+| 0110 | — | — | — | `?` |
+| 0121 | — | — | — | `?` |
+| 0124 | — | — | — | `?` |
+| 0147 | Protocol Integrity and Standards-Readiness Program | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0148 | Non-Vacuous Conformance and Certification Evidence | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0149 | Machine-Contract and Version Reconciliation | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0150 | Effect Identity, Replay, and Split-Brain Safety | 2026-08-11 | 2026-08-12 | `Accepted` |
+| 0151 | Compensation and Partial-Failure Profile | 2026-08-11 | 2026-08-17 | `Accepted` |
+| 0152 | A2A 1.0 Versioned Composition | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0153 | MCP 2026-07-28 Versioned Composition | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0154 | Workload Identity, Delegation, Telemetry, and Provenance Assurance | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0155 | Core Profile and Extension Discipline | 2026-08-11 | 2026-08-16 | `Accepted` |
+| 0156 | Governance, Independent Assurance, and Claims Policy | 2026-08-11 | 2026-08-12 | `Accepted` |
+| 0157 | Chain fragments carry compensation (RFC 0013 revision × RFC 0151 §B) | 2026-08-16 | 2026-08-16 | `Accepted` |
+
+Anyone with first-hand knowledge of one of these decisions should move its row into the
+curated table above with the real rationale.
 
 ## Spec version bump runbook
 
