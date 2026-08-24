@@ -73,13 +73,15 @@ Authorization decisions **MUST** emit content-free audit facts containing opaque
 
 ### §E — Artifact provenance
 
-The project **MUST** publish provenance attestations for spec releases, conformance packages, SDK packages, and official packs. Each attestation binds artifact digest, source revision, builder/workflow identity, build invocation, dependency lock digest, and publication identity. Certification bundle v2 from RFC 0148 **MAY** be wrapped in the same signed attestation format. Verification **MUST** fail closed on digest/signature mismatch but **MUST NOT** imply semantic conformance without the underlying suite witnesses.
+The project **MUST** publish provenance attestations for spec releases, conformance packages, SDK packages, and official packs. Each attestation binds artifact digest, source revision, builder/workflow identity, build invocation, dependency lock digest, and publication identity. Certification bundle v2 from RFC 0148 **MAY** be wrapped in the same **envelope** — DSSE carrying an in-toto Statement — but **MUST NOT** use the same predicate.
+
+*(Amended 2026-08-23; the earlier text read "wrapped in the same signed attestation format", which conflates envelope with predicate and would send an implementer to SLSA Provenance.)* Build artifacts take the SLSA Provenance v1 predicate, whose semantics are *how this artifact was built*. A certification bundle attests that **a remote host behaved a certain way when tested** and was not built at all; it takes `predicateType: https://openwop.dev/spec/v1/certification-bundle-v2.schema.json` — the bundle's existing schema `$id`, so the predicate type needs no new identifier. This registers an existing artifact as a predicate type, which is what in-toto's extensibility is for; it does not mint a competing format. A host MAY additionally emit `https://in-toto.io/attestation/test-result/v0.1` for consumers wanting the generic shape, **provided it is derived from the bundle and not published in its place** — that predicate cannot express `blocked`, `inapplicable`, or `assertionCount`. Verification **MUST** fail closed on digest/signature mismatch but **MUST NOT** imply semantic conformance without the underlying suite witnesses.
 
 ### §F — Security invariants
 
 Add:
 
-- `workload-identity-cryptographically-bound`;
+- `workload-identity-cryptographically-bound` — **structurally un-witnessable through the §20 seam, stated rather than left to be discovered.** §B carries the proof as `proofRef` (a digest), never as material, and the seam is a projection that cannot carry credential material by design. An outside observer therefore cannot distinguish a host that verified a proof from one that asserted it did. This is a property of the invariant, not a gap to close: closing it would require putting credential material on a conformance surface, which SR-1 forbids. Per `RFCS/0000-template.md` §Falsifiability, an unwitnessable requirement is permitted — leaving it undiscovered is not;
 - `delegation-provenance-not-authorization`;
 - `delegation-no-scope-amplification`;
 - `delegation-tenant-audience-bound`;
@@ -118,9 +120,51 @@ Shape and provenance fixture verification are server-free. Behavioral identity t
 
 ## Unresolved questions
 
-1. Which delegation proof formats are mandatory in profile v1?
-2. Is DPoP included at Active or left as an advertised optional sender constraint?
-3. Which in-toto/SLSA predicate becomes the canonical provenance envelope?
+1. ~~Which delegation proof formats are mandatory in profile v1?~~ **Resolved 2026-08-23: NONE, and §B
+   already decided it.** The chain entries are `{subject, issuer}` **opaque strings** and the proof is carried
+   **by reference** (`"proofRef": "sha256:…"`), never by value — so **no format can be mandatory against a wire
+   shape that never carries one.** What §B mandates is *properties*: the chain is provenance not authorization,
+   every hop MUST be verified, a caller MUST NOT self-assert `onBehalfOf`, and the chain MUST be bounded. Those
+   are format-independent by construction.
+
+   Mandating one would also have been wrong on the merits. SPIFFE/SPIRE is the 2026 workload-identity anchor
+   with real production deployments, but requiring it **selects for a deployment shape** — the same error
+   RFC 0158 §B.5 avoids when it refuses to mandate a single recovery bound. A host authenticating through
+   cloud-provider workload identity or mTLS SANs is not less conformant for it, and
+   `workload-identity.schema.json` already carries all four schemes.
+
+   **Recorded as the pattern to watch, not to mandate:** RFC 8693 token exchange records a delegation chain,
+   and the OAuth WG's Transaction Tokens work is standardising exactly that shape. If a format becomes
+   ubiquitous enough to name, it arrives as an advertised value in `schemes[]` — not as a new MUST.
+
+2. ~~Is DPoP included at Active or left as an advertised optional sender constraint?~~ **Resolved 2026-08-23:
+   advertised optional — and §C already says so.** It reads *"**SHOULD** be sender-constrained through mTLS,
+   DPoP, **or an equivalent verified key binding**"*: already a SHOULD, already both, already open-ended.
+
+   The external picture supports leaving it there. FAPI 2.0 approves **both**; DPoP targets public clients and
+   mTLS confidential ones. **An mTLS binding dies at any TLS termination point**, so mandating it would break
+   every host behind a terminating proxy; mandating DPoP would impose a signed JWT per request on hosts that
+   terminate their own TLS and gain nothing. The safety property is not *which* constraint but that its absence
+   is **visible** — which §C already requires: *"Bearer fallback **MUST** be explicitly advertised."*
+
+3. ~~Which in-toto/SLSA predicate becomes the canonical provenance envelope?~~ **Resolved 2026-08-23 — and the
+   question conflates an envelope with a predicate.** See §E, which is amended with the answer.
+
+   **Envelope: DSSE, carrying an in-toto Statement.** Settled by adoption rather than by choice — it is the
+   format SLSA, Sigstore and the in-toto attestation spec all assume.
+
+   **Predicate: it depends what the attestation is about, and the two cases are not the same.** SLSA
+   Provenance v1 means *"how this artifact was built"* — correct for a spec release, a suite tarball, an SDK
+   package or an official pack; wrong for a certification bundle, which attests that **a remote host behaved a
+   certain way when tested**, and was not built at all.
+
+   **The tempting wrong answer was to mint an OpenWOP predicate for bundles**, and in-toto's vetted catalogue
+   already contains `test-result/v0.1` — so minting one would be the two-spellings error that folded proposed
+   RFC 0159 into RFC 0150 §D. **The other tempting wrong answer was to use `test-result/v0.1` as-is:** it
+   expresses PASSED / WARNED / FAILED, and bundle v2 carries `executed-pass | executed-fail | skipped |
+   inapplicable | blocked` plus `assertionCount`. **`blocked`, `inapplicable` and the assertion count are the
+   whole of RFC 0148** — flattening into `test-result` would discard the non-vacuity property the format exists
+   to carry.
 4. ~~Which OTel GenAI convention version is sufficiently stable for the first mapping?~~ **Resolved 2026-08-16: none is.** The GenAI conventions moved to `open-telemetry/semantic-conventions-genai`; the agent/tool attributes are Development-stability with no tagged release, and core `semantic-conventions@v1.44.0` no longer hosts them. The first mapping is therefore v0, experimental, optional, labelled with the upstream ref, and projects no identity/delegation field (`observability.md` §"Identity and delegation attributes"; gap G3 closed as decided).
 5. ~~How are privacy deletion requests reconciled with immutable hashed audit identifiers?~~ **Resolved 2026-08-16:** hashes use a per-tenant, rotatable salt; a deletion request is satisfied by rotating the salt so prior hashes become unlinkable, without editing an append-only log; retention is stated in the host runbook (`auth.md` §D; gap G5).
 

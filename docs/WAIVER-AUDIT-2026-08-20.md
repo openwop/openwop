@@ -38,9 +38,11 @@ and a `safety-fix` by definition changes behaviour a conforming host was entitle
 That is **the entire RFC 0147 program spine**: the umbrella, all three of Workstreams 1–3,
 and the governance RFC that defines the claims policy.
 
-**Six more could not be classified** by the header parse used here — 0106, 0108, 0109,
-0110, 0121, 0124 — because their `Compatibility` field is laid out differently. They are
-listed as *unclassified*, not as violations. Someone should read them.
+~~**Six more could not be classified** by the header parse used here — 0106, 0108, 0109, 0110,
+0121, 0124.~~ **Read 2026-08-23: all six are `additive`.** They therefore sit inside the
+grant's compatibility constraint and outside only its *transition* constraint (five reached
+`Accepted`, one is `Active`). **The confirmed non-additive set stays at five** — the finding
+narrows rather than grows, which is the direction a re-check should be trusted to move.
 
 ## 3. Two compounding problems
 
@@ -162,4 +164,4 @@ which is the outcome the project is working toward.
 3. **Apply §I to the 0147 cohort.** Reclassify the five as provisional pending retrospective
    review, or record a decision not to. Either is defensible; the current state — a rule that
    names this exact case and has never been applied to it — is not.
-4. **Classify the six unclassified RFCs** by reading their headers.
+4. ~~Classify the six unclassified RFCs by reading their headers.~~ **Done 2026-08-23 — all six `additive`; see §2.**
