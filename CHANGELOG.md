@@ -11,6 +11,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [Unreleased]
+
 ## [1.9.0] — 2026-08-23 — the cycle that audited its own authority
 
 No new RFCs and no `Active → Accepted` promotions (**Accepted 153, Active 4, Draft 1**). This cycle's defining event was governance rather than wire: **a project-wide rule was found binding the corpus that no human had decided**, and repairing it exposed that the rule was typical rather than exceptional. Alongside it, the adoption surface the protocol most needs was finally built. All wire shapes additive per `COMPATIBILITY.md` §2.1.
