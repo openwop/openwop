@@ -72,7 +72,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
-import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { forkDeclined } from '../lib/fork-availability.js';
+import { discoveryFamilies, readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
@@ -213,18 +214,50 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
       ),
     ).toBeGreaterThan(0);
 
+    // ── CAPABILITY GATE (added 2026-08-25) ──────────────────────────────────
+    // This is the ONLY scenario in the replay family that never checked whether
+    // the host advertises replay before forking — every sibling reads
+    // `replay.supported` first. That omission is why it was the one scenario
+    // reaching the fork seam on a host that does not implement it, and why it
+    // hard-failed `expected 404 to be 201` on every CI run of `main` while the
+    // siblings quietly returned at their capability check.
+    //
+    // `inapplicable`, not `blocked`: a host that does not advertise replay is
+    // outside this MUST NOT's scope entirely, and `blocked` would claim the
+    // requirement applies but could not be witnessed — a stronger claim than
+    // the evidence supports. Recorded explicitly because LEG 1 above asserted,
+    // so the file-level disposition would otherwise be `executed-pass`.
+    const replayCap = await readCapabilityFamily<{ supported?: boolean; modes?: unknown }>('replay');
+    if (replayCap?.supported !== true) {
+      recordRequirement(
+        REQUIREMENT_ID,
+        'inapplicable',
+        'host does not advertise `replay.supported: true`, so a replay fork cannot occur and this MUST NOT '
+          + 'has nothing to constrain on this host',
+      );
+      ctx.skip();
+      return;
+    }
+
     // ── LEG 2 — THE MUST NOT. A replay fork re-emits; it must not deliver. ───
     const replay = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:fork`, {
       mode: 'replay',
     });
-    if (replay.status === 501) {
-      // Advertised but not implemented for this range. Leg 1 already asserted,
-      // so the FILE is `executed-pass` — but the MUST NOT was never exercised,
-      // and that is what this row must say.
+    if (forkDeclined(replay.status, 'fanout-suppression replay fork')) {
+      // Leg 1 already asserted, so the FILE is `executed-pass` — but the MUST
+      // NOT was never exercised, and that is what this row must say. The
+      // explicit record wins over the file-level one (setup.ts).
+      //
+      // 404 and 403 were NOT handled here until 2026-08-25, only 501. The
+      // postgres reference host 404s this route, so this was the one scenario
+      // in the replay family that actually reached the seam — and it hard-
+      // failed `expected 404 to be 201` on every CI run of `main`, absorbed by
+      // the 85% pass-rate floor. The suite required a host to implement the
+      // route in order to say it had not implemented the route.
       recordRequirement(
         REQUIREMENT_ID,
         'blocked',
-        'replay fork returned 501 — the re-emission this requirement is stated over never happened, '
+        `replay fork returned ${replay.status} — the re-emission this requirement is stated over never happened, `
           + 'so the absence of deliveries below would prove nothing',
       );
       ctx.skip();

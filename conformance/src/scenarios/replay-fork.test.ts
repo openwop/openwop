@@ -25,6 +25,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 
@@ -60,6 +62,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in replay mode', () =
       // Visible skip — earlier this was a silent `return` that
       // collapsed to a vacuous pass and made it impossible to tell
       // unexercised tests apart from honest passes.
+      softSkip('inapplicable', "host does not advertise the `replay` fork mode — this leg's rule has no path to apply");
       ctx.skip();
       return;
     }
@@ -70,7 +73,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in replay mode', () =
       { fromSeq: 0, mode: 'replay' },
     );
 
-    if (fork.status === 501) return; // mode advertised but not implemented; skip-equivalent
+    if (forkDeclined(fork.status, 'replay fork')) return;
     expect(fork.status, driver.describe(
       'rest-endpoints.md POST /v1/runs/{runId}:fork',
       'fork MUST return 201 on accepted replay',
@@ -101,6 +104,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in branch mode with e
   it('produces a new run that reaches terminal `completed`', async (ctx) => {
     const modes = await fetchReplayModes();
     if (!modes.includes('branch')) {
+      softSkip('inapplicable', "host does not advertise the `branch` fork mode — this leg's rule has no path to apply");
       ctx.skip();
       return;
     }
@@ -111,7 +115,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in branch mode with e
       { fromSeq: 0, mode: 'branch', runOptionsOverlay: {} },
     );
 
-    if (fork.status === 501) return; // mode advertised but not implemented; skip-equivalent
+    if (forkDeclined(fork.status, 'branch fork')) return;
     expect(fork.status, driver.describe(
       'rest-endpoints.md POST /v1/runs/{runId}:fork',
       'branch fork MUST return 201',
@@ -137,6 +141,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   it('rejects negative fromSeq with 400', async (ctx) => {
     const modes = await fetchReplayModes();
     if (modes.length === 0) {
+      softSkip('inapplicable', "host advertises no usable fork mode for this leg");
       ctx.skip();
       return;
     }
@@ -155,6 +160,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   it('rejects fromSeq beyond source event log length with 422', async (ctx) => {
     const modes = await fetchReplayModes();
     if (modes.length === 0) {
+      softSkip('inapplicable', "host advertises no usable fork mode for this leg");
       ctx.skip();
       return;
     }
@@ -179,6 +185,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
       // → 400) only applies on hosts that advertise the `replay` mode.
       // A `branch`-only host has no path to even attempt the request.
       // Visible skip rather than silent vacuous pass.
+      softSkip('inapplicable', "host does not advertise the `replay` fork mode — the runOptionsOverlay rejection rule only applies to hosts that do");
       ctx.skip();
       return;
     }
@@ -200,6 +207,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   it('rejects fork on a non-existent run with 404', async (ctx) => {
     const modes = await fetchReplayModes();
     if (modes.length === 0) {
+      softSkip('inapplicable', "host advertises no usable fork mode for this leg");
       ctx.skip();
       return;
     }

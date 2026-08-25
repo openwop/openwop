@@ -38,6 +38,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -149,8 +150,7 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
       { fromSeq: 0, mode: 'replay' },
     );
-    if (fork1.status === 501) {
-      // replay advertised but not implemented for this run — skip-equivalent.
+    if (forkDeclined(fork1.status, 'channel-dispatch replay fork 1')) {
       ctx.skip();
       return;
     }
@@ -213,7 +213,7 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
       { fromSeq: 0, mode: 'replay' },
     );
-    if (fork2.status === 501) {
+    if (forkDeclined(fork2.status, 'channel-dispatch replay fork 2')) {
       ctx.skip();
       return;
     }

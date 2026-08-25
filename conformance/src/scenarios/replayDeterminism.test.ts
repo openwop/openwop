@@ -18,6 +18,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 
@@ -69,7 +71,7 @@ function structuralShape(events: readonly RawEvent[]): Array<{ type: unknown; no
 describe('replay-determinism: openwop-replay-fork profile gate', () => {
   it('host advertising replay.supported MUST also advertise replay.modes', async () => {
     const replay = await fetchReplayCapability();
-    if (replay === null || replay.supported !== true) return; // skip-equivalent
+    if (replay === null || replay.supported !== true) return softSkip('inapplicable', 'host does not advertise `replay.supported: true` — the replay contract does not apply to it');
 
     expect(Array.isArray(replay.modes), driver.describe(
       'spec/v1/replay.md',
@@ -91,8 +93,8 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
     'two replay forks of the same point produce structurally-identical event lists',
     async () => {
       const replay = await fetchReplayCapability();
-      if (replay === null || replay.supported !== true) return; // host doesn't claim replay
-      if (!Array.isArray(replay.modes) || !replay.modes.includes('replay')) return; // mode not supported
+      if (replay === null || replay.supported !== true) return softSkip('inapplicable', 'host does not advertise `replay.supported: true` — the replay contract does not apply to it');
+      if (!Array.isArray(replay.modes) || !replay.modes.includes('replay')) return softSkip('inapplicable', 'host advertises replay but not the `replay` mode — this leg is out of scope for it');
 
       // Phase 1: complete an original run.
       const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
@@ -105,7 +107,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
         mode: 'replay',
         fromSeq: 0,
       });
-      if (fork1.status === 501) return; // mode not implemented; skip-equivalent
+      if (forkDeclined(fork1.status, 'determinism fork 1')) return;
       expect(fork1.status, driver.describe(
         'spec/v1/replay.md',
         'POST /v1/runs/{runId}:fork with mode=replay MUST return 201',
@@ -118,7 +120,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
         mode: 'replay',
         fromSeq: 0,
       });
-      if (fork2.status === 501) return;
+      if (forkDeclined(fork2.status, 'determinism fork 2')) return;
       expect(fork2.status).toBe(201);
       const fork2Id = (fork2.json as { runId: string }).runId;
       await pollUntilTerminal(fork2Id, { timeoutMs: 10_000 });
@@ -152,7 +154,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
 describe.skipIf(SKIP_NO_NOOP)('replay-determinism: branch-mode is permitted to diverge', () => {
   it('branch mode does NOT need to produce identical event sequences (negative-control)', async () => {
     const replay = await fetchReplayCapability();
-    if (replay === null || replay.supported !== true) return;
+    if (replay === null || replay.supported !== true) return softSkip('inapplicable', 'host does not advertise `replay.supported: true` — the replay contract does not apply to it');
     if (!Array.isArray(replay.modes) || !replay.modes.includes('branch')) return;
 
     // Self-test on the spec interpretation: branch and replay are
