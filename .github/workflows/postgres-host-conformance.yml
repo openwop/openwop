@@ -162,8 +162,11 @@ jobs:
           set -e
 
           # Extract `N passed | N failed | N skipped` from the summary.
-          # The line we want looks like:
-          #   Tests  23 failed | 588 passed | 41 skipped | 30 todo (682)
+          # NOTE: the example line that used to sit here as a comment was read
+          # out of THIS LOG on 2026-08-25 and quoted as if it were a measurement
+          # (Actions echoes the run: script, so a comment is typographically
+          # identical to output). Illustrative shape only, deliberately not
+          # number-bearing: `Tests  <n> failed | <n> passed | ... (<total>)`.
           PASSED=$(grep -oE '[0-9]+ passed' /tmp/conformance.out | tail -1 | awk '{print $1}')
           TOTAL=$(grep -oE '\([0-9]+\)' /tmp/conformance.out | tail -1 | tr -d '()')
           if [ -z "$PASSED" ] || [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
@@ -171,6 +174,39 @@ jobs:
             tail -20 /tmp/conformance.out
             exit 1
           fi
+
+          # Name every failing scenario before reducing them to a fraction.
+          # A pass-rate floor converts a specific, named, reproducible failure
+          # into an anonymous number: `webhook-signed-delivery` was red here on
+          # every run from 2026-08-09 to 2026-08-25 — a reference host
+          # contradicting webhooks.md — and the job reported success each time
+          # because the rate sat ~10 points above the floor. Nobody reads
+          # "N failed" as "one of these is a spec-conformance defect". This
+          # does not gate; it makes the fraction attributable.
+          # Strip ANSI first. vitest colourises the marker glyph itself, so the
+          # raw line is " <ESC>[31m❯<ESC>[39m src/scenarios/x.test.ts ...": an
+          # anchored ^\s*❯ never matches, and the FIRST version of this block
+          # printed EMPTY while a scenario was genuinely failing — a report
+          # that read "all clear" having matched nothing, which is the exact
+          # defect the block was added to prevent. Match on content, not glyphs.
+          echo "--- failing scenarios (not a gate; the floor below decides) ---"
+          sed -r 's/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/conformance.out > /tmp/conformance.plain
+          NAMED=$(grep -E '(^|[[:space:]])(FAIL|❯|×)[[:space:]]|\.test\.ts.*[0-9]+ failed' /tmp/conformance.plain \
+                  | grep -E '\.test\.ts' | sed 's/^[[:space:]]*/  /' | sort -u)
+          [ -n "$NAMED" ] && printf '%s\n' "$NAMED"
+          # Self-check: an empty list is only credible when the summary agrees.
+          # Without this, a broken matcher and a clean run are indistinguishable
+          # — the same "silent on empty" ambiguity that let the header defect
+          # ride for 16 days.
+          FAILED=$(grep -oE '[0-9]+ failed' /tmp/conformance.plain | tail -1 | awk '{print $1}')
+          FAILED=${FAILED:-0}
+          NAMED_N=$(printf '%s' "$NAMED" | grep -c . || true)
+          if [ "$FAILED" -gt 0 ] && [ "$NAMED_N" -eq 0 ]; then
+            echo "::warning::vitest reports ${FAILED} failing test(s) but this step named none — the matcher is broken, not the run clean."
+          elif [ "$FAILED" -eq 0 ]; then
+            echo "  (none — vitest summary reports 0 failed)"
+          fi
+          echo "--- end failing scenarios ---"
 
           # Floor: 85% pass rate. Drop below = regression.
           RATE=$((PASSED * 100 / TOTAL))

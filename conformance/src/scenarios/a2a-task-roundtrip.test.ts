@@ -47,6 +47,7 @@ import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { seamAbsent } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host issues A2A JSON-RPC calls to the suite's fake peer.
@@ -403,21 +404,76 @@ describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: durable tasks/get after disconne
   });
 });
 
-describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: push-config SSRF (gated on a2a.pushNotifications; RFC 0100)', () => {
-  it('registering a pushConfig.url at a private address is refused (a2a-push-egress-ssrf)', async () => {
+/**
+ * Push-config SSRF, TWO-SIDED (RFC 0100 §4, a2a-integration.md §D.6).
+ *
+ * The RFC 0093 webhook-egress guard has two arms — `webhooks.md`
+ * §"SSRF protection" rejects non-`https://` protocols AND private/loopback/
+ * link-local/ULA/metadata addresses — and a host may implement either one
+ * alone.
+ *
+ * Until 2026-08-25 this file probed with a single `http://10.0.0.5/push`,
+ * which **violates both arms at once**. Either arm alone refuses it, so a
+ * `>= 400` witnessed *that something refused* and never *which guard ran*.
+ * A host with only the address arm passed; so did a host with only the
+ * scheme arm; so would a host that refused every push URL for an unrelated
+ * reason. The assertion was real and the conclusion drawn from it was not.
+ *
+ * The probes below isolate one arm each: `https` at a private address can
+ * only be refused by the address arm, and `http` at a public host can only
+ * be refused by the scheme arm. Two legs is the minimum that distinguishes
+ * them — the same reason a negative control is not optional.
+ *
+ * The scheme leg is new, and the obligation it checks was previously stated
+ * only by reference (every prior wording abbreviated the guard to its
+ * address arm). `COMPATIBILITY.md` §3 records the Class 3 classification: a
+ * host accepting a plaintext push target was never conforming. An
+ * implementer reddened by this leg is reading a clarification, not a new
+ * requirement — the failure message says so.
+ */
+describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: push-config SSRF, two-sided (gated on a2a.pushNotifications; RFC 0100)', () => {
+  async function registerPush(url: string): Promise<{ status: number } | null> {
     const a2a = await readCapabilityFamily<{ pushNotifications?: boolean }>('a2a');
-    if (!behaviorGate('a2a.pushNotifications', a2a?.pushNotifications === true)) return;
+    if (!behaviorGate('a2a.pushNotifications', a2a?.pushNotifications === true)) return null;
+    const res = await driver.post('/v1/host/sample/a2a/tasks/push-config', { taskId: 'run_x', url });
+    if (res.status === 404 || res.status === 403) {
+      // Previously a bare `return`, invisible to the RFC 0148 §A ledger because
+      // this file's other tests assert — so the file recorded `executed-pass`
+      // while this leg had witnessed nothing. Say why instead.
+      return seamAbsent(
+        'a2a-push-egress-ssrf — the `/v1/host/sample/a2a/tasks/push-config` seam is not mounted (404/403), so neither guard arm is observable',
+      ) ?? null;
+    }
+    return { status: res.status };
+  }
 
-    const res = await driver.post('/v1/host/sample/a2a/tasks/push-config', {
-      taskId: 'run_x',
-      url: 'http://10.0.0.5/push',
-    });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+  it('ADDRESS arm: an https pushConfig.url at a private address is refused', async () => {
+    // `https` on purpose: this probe is refusable ONLY by the address arm, so a
+    // host that implements the scheme arm alone cannot pass it by accident.
+    const res = await registerPush('https://10.0.0.5/push');
+    if (res === null) return;
     expect(
       res.status >= 400,
       driver.describe(
-        'a2a-integration.md §"Async / durable Tasks"',
-        'a2a-push-egress-ssrf — a caller-supplied pushConfig.url at a private/loopback address MUST be refused before any push',
+        'a2a-integration.md §D.6 (address arm)',
+        'a2a-push-egress-ssrf — a pushConfig.url at a private/loopback address MUST be refused before any push, even over https',
+      ),
+    ).toBe(true);
+  });
+
+  it('SCHEME arm: an http pushConfig.url at a public host is refused', async () => {
+    // Public hostname on purpose: refusable ONLY by the scheme arm.
+    const res = await registerPush('http://push.example.com/push');
+    if (res === null) return;
+    expect(
+      res.status >= 400,
+      driver.describe(
+        'a2a-integration.md §D.6 (scheme arm)',
+        'a2a-push-egress-ssrf — a plaintext `http://` pushConfig.url MUST be refused before any push. '
+          + 'The RFC 0093 webhook-egress guard is the `webhooks.md` §"SSRF protection" list IN FULL, whose first entry is '
+          + '"Non-`https://` protocols". Every prior wording of this requirement abbreviated the guard to its address arm; '
+          + 'COMPATIBILITY.md §3 records this as a Class 3 clarification, so a host failing here was never conforming rather '
+          + 'than newly non-conforming.',
       ),
     ).toBe(true);
   });

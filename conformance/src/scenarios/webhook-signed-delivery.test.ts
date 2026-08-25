@@ -45,6 +45,18 @@
  * layer is not non-conformant — it simply cannot witness this scenario,
  * and that is a property of the test posture, not of its webhook signing.
  *
+ * What that costs is more than a checkmark, and it is worth stating plainly
+ * because the cost is invisible from inside such a host. This scenario is
+ * typically the ONLY automated oracle a host has on its delivery header
+ * NAMES: a host-local delivery test almost always compares a hand-written
+ * literal in the test to a hand-written literal in the implementation, which
+ * is a mirror — typo both and it stays green — while the HMAC assertion
+ * beside it recomputes from `node:crypto` and is real. So the names go
+ * unchecked exactly where the bytes are checked well. All three reference
+ * hosts emitted invented header names for 16 days (openwop-examples#22) and
+ * the runs that would have caught it were the ones this scenario could not
+ * reach. A host that runs it is not thereby careful; it is thereby measured.
+ *
  * Relaxing gates 2 and 3 is test-only posture. See
  * `SECURITY/threat-model-secret-leakage.md` §4.9 for why a
  * registration-time relaxation is the more dangerous of the two: it
