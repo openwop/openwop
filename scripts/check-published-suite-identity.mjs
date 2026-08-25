@@ -65,11 +65,22 @@ const IGNORED = new Set(['package.json']);
 const IGNORED_PREFIXES = ['dist/'];
 
 /**
- * Fail fast rather than sit through npm's retry backoff. An offline developer
- * should see UNKNOWN in about a second, not wait out exponential retries — a
- * slow check is one people learn to skip, and a skipped check is no check.
+ * Fail fast rather than sit through npm's retry backoff — a slow check is one
+ * people learn to skip, and a skipped check is no check.
+ *
+ * `--fetch-retries=0` ONLY. An earlier version also passed
+ * `--fetch-retry-maxtimeout=3000`, which is below npm's default
+ * `fetch-retry-mintimeout` of 10000; npm 11.6 accepts that, and the npm in CI
+ * rejects it outright with "minTimeout is greater than maxTimeout" — so the
+ * check reported UNKNOWN on every CI run and exited 0. It was not measuring
+ * anything, and the gate stayed green. Enforce the wall clock HERE (see
+ * `timeout` below) rather than through registry config whose validation varies
+ * by npm version.
  */
-const FAST_FAIL = ['--fetch-retries=0', '--fetch-retry-maxtimeout=3000', '--fetch-timeout=8000'];
+const FAST_FAIL = ['--fetch-retries=0'];
+
+/** Hard wall-clock ceiling, ours rather than npm's, so it behaves identically everywhere. */
+const NPM_TIMEOUT_MS = 30_000;
 
 function run(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts });
@@ -77,7 +88,12 @@ function run(cmd, args, opts = {}) {
 
 /** npm, with the fast-fail flags appended. Calls execFileSync via `run`, never itself. */
 function npm(args, opts = {}) {
-  return execFileSync('npm', [...args, ...FAST_FAIL], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts });
+  return execFileSync('npm', [...args, ...FAST_FAIL], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: NPM_TIMEOUT_MS,
+    ...opts,
+  });
 }
 
 /** Every file in an extracted `package/` dir → sha256, keyed by relative path. */
@@ -117,13 +133,25 @@ try {
   if (/E404|is not in this registry|No match found/i.test(stderr)) {
     published = false;
   } else {
-    // Network, auth, registry outage — NOT evidence of anything about contents.
+    // Network, auth, registry outage, or a malformed flag — NOT evidence of
+    // anything about contents.
+    //
+    // In CI this is a FAILURE, not a tolerated skip. CI has a registry, so
+    // "could not look" there means the check itself is broken — which is
+    // exactly what happened: an invalid `--fetch-retry-maxtimeout` made every
+    // CI run report UNKNOWN and exit 0, a dead gate that stayed green. Local
+    // runs stay tolerant so offline work is unaffected.
+    const strict = REQUIRE_NETWORK || process.env['CI'] === 'true';
     process.stdout.write(
       `  UNKNOWN — could not reach the registry to look up ${spec}.\n` +
         `  This is NOT a pass: "could not look" and "looked and it matched" are different claims.\n` +
-        `  ${stderr.trim().split('\n').slice(0, 2).join(' / ')}\n`,
+        `  ${stderr.trim().split('\n').slice(0, 2).join(' / ')}\n` +
+        (strict
+          ? `  Treating UNKNOWN as a FAILURE: this environment is expected to reach the registry,\n` +
+            `  so an unreachable lookup means the check is broken rather than the network absent.\n`
+          : `  Tolerated locally (exit 0) so offline work is unaffected.\n`),
     );
-    process.exit(REQUIRE_NETWORK ? 2 : 0);
+    process.exit(strict ? 2 : 0);
   }
 }
 
