@@ -17,5 +17,12 @@ export default defineConfig({
     // populates `lib/fixtures.ts` so `describe.skipIf(...)` predicates
     // see the cached set when scenarios register their tests.
     setupFiles: ['src/setup.ts'],
+    // RFC 0148 §A run-end disposition summary. `setup.ts` records an honest
+    // disposition per scenario file on EVERY run; before this, only
+    // `--certify` set OPENWOP_LEDGER_PATH, so on a plain `vitest run` the
+    // recording was computed and then discarded, leaving "N passed" as the
+    // sole artifact for rows the suite had classified `blocked`. This routes
+    // the ledger to a temp file and prints what did not witness.
+    globalSetup: ['src/global-setup.ts'],
   },
 });

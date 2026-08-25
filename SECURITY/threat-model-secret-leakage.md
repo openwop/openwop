@@ -155,11 +155,35 @@ The corpus mandates an SSRF guard on _every_ host egress surface — node egress
 
 The _config antipattern_ itself — one flag wired into two surfaces' guards — is **not wire-observable** (a black-box suite cannot see which env var a guard reads), so it is captured here as a `SHOULD` + reviewer heuristic, not a `SECURITY/invariants.yaml` MUST-NOT: hosts **SHOULD** scope each SSRF/private-egress relaxation switch to exactly one egress surface, and a relaxation for one surface **SHOULD NOT**, as a side effect, relax any other. **Enforcement: host self-attestation + code review** (grep every SSRF-guard call site for the env flag it reads; the same flag name across two surfaces' guards is the smell). Filing this as a protocol-tier MUST-NOT would be exactly the defect RFC 0144 names — a normative claim whose enforcement surface was never declared — since `scripts/check-security-invariants.sh` would demand a conformance test the wire cannot provide. See also `threat-model-prompt-injection.md` (a relaxed egress guard widens the exfiltration surface an injected tool can reach).
 
+### 4.9 One relaxation flag spanning two LAYERS of the same surface (hardening note)
+
+§4.8 scopes a relaxation flag across *surfaces* — webhook delivery vs pack `safeFetch`. This note is about the two *layers* of a single surface, which §4.8 does not reach and which turn out to have unequal blast radius.
+
+`webhooks.md` mandates the egress guard **twice**: §"SSRF protection" requires validation of subscription URLs **at registration time**, and §"Delivery-time egress validation (RFC 0093)" requires the dispatcher to **re-resolve and re-validate at delivery time**. These are independent MUSTs closing different windows — the second exists precisely because the first cannot see a DNS rebind that happens after registration.
+
+A test-posture relaxation such as `OPENWOP_WEBHOOK_ALLOW_PRIVATE` must therefore reach both layers to make the loopback receiver in `webhook-signed-delivery.test.ts` reachable at all (see `conformance/README.md` §"Operator flags"). Three hosts were observed reading it three different ways on 2026-08-25: delivery-only, both-layers, and registration-only.
+
+**Threat (STRIDE: Elevation of Privilege).** The two layers are not symmetric in what they leave behind.
+
+- A **delivery-time** relaxation is evaluated per delivery. Turn the flag off and the next delivery is guarded again; nothing persists.
+- A **registration-time** relaxation **writes durable state**. A subscription registered while the flag was on is a row in the host's subscription table pointing at a private address, and it survives the flag being turned back off — the guard that would have rejected it does not run again at registration, because registration already happened. `webhooks.md` §"Delivery semantics" additionally lets operators re-activate failed subscriptions by re-registering, so such a row has a maintenance path that never re-crosses the check.
+
+The delivery-time guard is what contains this: a host that correctly implements RFC 0093 re-validates every delivery and refuses the stale row once the flag is off. **The dangerous configuration is registration-relaxed plus delivery-time revalidation absent or also relaxed** — then a test-posture row becomes a durable egress primitive.
+
+**What is normative.** Nothing new. Both layers are already MUSTs in `webhooks.md`; a host that skips delivery-time revalidation is non-conformant to §"Delivery-time egress validation" whatever its flags say, and that contract is carried by the reference-impl-tier invariant `webhook-delivery-egress-revalidation`. The guidance here is operational and, like §4.8, not wire-observable — a black-box suite cannot see which layer read which env var:
+
+- Hosts **SHOULD** treat a registration-relaxed posture as test-only and **SHOULD NOT** carry subscriptions registered under it into a relaxed-off posture — purge or re-validate them on the transition.
+- Hosts **SHOULD NOT** relax the registration-time guard without also implementing delivery-time revalidation, since the latter is what bounds the former's residue.
+- A host declining to relax registration is making a defensible security choice, not failing a conformance requirement. It cannot witness the loopback scenarios; that is a property of the test posture, and `webhook-signed-delivery.test.ts` appears in **no profile floor**, so it costs no certification.
+
+**Enforcement: host self-attestation + code review.** Filing this as a protocol-tier MUST-NOT would repeat the RFC 0144 defect §4.8 names — a normative claim whose enforcement surface was never declared.
+
 ## 6. Residual risks
 
 - **Host-internal memory.** A reference impl that holds decrypted secrets in process memory remains vulnerable to OS-level attacks (core dumps, swap, debug attach). Out of scope for protocol-level threat model; handled by host operator policy.
 - **Provider compromise.** A compromised LLM/payment provider could log or exfiltrate the upstream secret regardless of host redaction. Mitigation is BYOK + tight per-provider scoping; covered by §3 A3 and partially by `secret-leakage-stream-chunk`.
 - **Workflow-author-emitted leaks.** A malicious workflow author can construct a workflow whose declared output deliberately echoes the credential. The advisory invariant (`secret-leakage-author-emit`) reduces but doesn't eliminate this; ultimate defense is access control on workflow authoring.
+- **Two-layer relaxation residue (§4.9).** A subscription registered under a registration-time relaxation persists after the flag is turned off. Bounded by delivery-time revalidation where implemented (RFC 0093), and not wire-observable, so it stays a `SHOULD` + operator runbook item rather than a protocol-tier MUST-NOT. The residual gap is a host that relaxes registration and does not revalidate at delivery.
 - **Shared-flag SSRF-guard relaxation (§4.8).** A host wiring one relaxation flag into two egress surfaces' SSRF guards is a config antipattern the wire cannot observe, so it stays a `SHOULD` + reviewer heuristic (host self-attestation + code review) rather than a protocol-tier MUST-NOT. The observable outcome it produces — an advertised guard reaching a blocked address — is already caught by the `http-client-ssrf-guard` invariant _when the SSRF legs are run under the relaxed posture_; a host CI that never runs that posture is the residual gap.
 
 ## 7. Verification
