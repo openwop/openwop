@@ -1,7 +1,7 @@
 # OpenWOP Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-08-23 (the v1.9.0 corpus release — the cycle that audited its own authority: RFC 0147 §A.1 found binding without a decision behind it, dispositioned and retired; the waiver ledger gated; the implementer front door built).
+> **Last reviewed:** 2026-08-25 (the v1.10.0 corpus release — the cycle that asked every green what it had measured: a published version that had stopped identifying its contents, a disposition ledger with no reader outside `--certify`, three reference hosts emitting invented delivery headers for sixteen days, and an SSRF obligation that named one arm of a two-arm guard. No new RFCs, no promotions; conformance suite 1.139.0.).
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
