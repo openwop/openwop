@@ -109,16 +109,33 @@ jobs:
       # OIDC-authenticated publish — npm 11.5.1+ accepts the OIDC token from
       # `permissions: id-token: write` automatically. No NODE_AUTH_TOKEN needed.
       # Trusted-publisher config: npmjs.com/package/@openwop/openwop-conformance/access.
-      # Idempotency guard: conformance has an independent version line bumped via
-      # its own `openwop-conformance/v*` tag, so a corpus `v*` tag almost always
-      # finds it already published — skip rather than fail.
-      - name: Publish to npm (skip if already published)
+      # Identity guard, not an existence guard (2026-08-25).
+      #
+      # This step used to skip whenever `npm view $PKG@$VER` succeeded, i.e.
+      # whenever the version EXISTED. That is a version-number comparison
+      # standing in for a content comparison, and it failed exactly once it
+      # mattered: package.json read 1.138.1 while npm served a DIFFERENT
+      # 1.138.1 — fifteen files of drift, including a new globalSetup and seven
+      # scenarios. A release tag would have gone green, published NOTHING, and
+      # left every claim about "suite 1.138.1" ambiguous. The drift's only
+      # symptom was this step printing "already on npm" and exiting 0, which is
+      # precisely what a correct no-op prints.
+      #
+      # The idempotency the comment wanted is still here — a corpus `v*` tag
+      # finding an identical, already-published version still skips. What no
+      # longer passes is a version that exists with different contents.
+      - name: Verify the published version still identifies these contents
+        run: node scripts/check-published-suite-identity.mjs --require-network
+
+      - name: Publish to npm (skip only when byte-identical)
         run: |
           cd conformance
           PKG=$(node -p "require('./package.json').name")
           VER=$(node -p "require('./package.json').version")
           if npm view "$PKG@$VER" version >/dev/null 2>&1; then
-            echo "✓ $PKG@$VER is already on npm — skipping publish (idempotent)."
+            # The step above already proved identity, so reaching here means
+            # published == this tree. Genuinely nothing to do.
+            echo "✓ $PKG@$VER is on npm and byte-identical to this tree — nothing to publish."
           else
             npm publish --access public --provenance
           fi
