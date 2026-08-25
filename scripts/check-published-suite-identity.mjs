@@ -96,6 +96,45 @@ function npm(args, opts = {}) {
   });
 }
 
+/**
+ * `schemas/CORPUS-STAMP.json` records the provenance of the vendored schema
+ * copy — `suiteVersion` plus `corpusCommit`, which is `git rev-parse HEAD` at
+ * pack time. `corpusCommit` therefore changes on EVERY commit, whether or not
+ * a single shipped byte moved.
+ *
+ * Comparing it would make this check fail on every commit after a publish
+ * until the next suite bump — including a CHANGELOG-only PR, which is exactly
+ * how it was caught. A gate that cries wolf on every commit is a gate someone
+ * turns off, so this one compares the stamp's MEANING instead: `suiteVersion`
+ * still matters (a stamp claiming the wrong suite version is real drift and
+ * still fails), `corpusCommit` is a provenance label, not contract content.
+ *
+ * The distinction is the same one the whole check rests on: two tarballs with
+ * identical schemas and different `corpusCommit` are the same contract.
+ */
+const STAMP_PATH = 'schemas/CORPUS-STAMP.json';
+const STAMP_VOLATILE_KEYS = ['corpusCommit'];
+
+function stampDigest(buf) {
+  try {
+    const o = JSON.parse(buf.toString('utf8'));
+    for (const k of STAMP_VOLATILE_KEYS) delete o[k];
+    return createHash('sha256').update(canonicalJson(o)).digest('hex');
+  } catch {
+    // Unparseable stamp — fall back to raw bytes rather than silently passing.
+    return createHash('sha256').update(buf).digest('hex');
+  }
+}
+
+/** Stable key order so the digest depends on content, not serialisation order. */
+function canonicalJson(v) {
+  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(',')}]`;
+  if (v && typeof v === 'object') {
+    return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(v[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(v);
+}
+
 /** Every file in an extracted `package/` dir → sha256, keyed by relative path. */
 function digestTree(dir) {
   const out = new Map();
@@ -106,7 +145,8 @@ function digestTree(dir) {
       else {
         const rel = relative(dir, p);
         if (IGNORED.has(rel) || IGNORED_PREFIXES.some((pre) => rel.startsWith(pre))) continue;
-        out.set(rel, createHash('sha256').update(readFileSync(p)).digest('hex'));
+        const buf = readFileSync(p);
+        out.set(rel, rel === STAMP_PATH ? stampDigest(buf) : createHash('sha256').update(buf).digest('hex'));
       }
     }
   };
