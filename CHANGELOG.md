@@ -11,6 +11,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [Unreleased]
+
 ## [1.10.0] — 2026-08-25 — the cycle that asked every green what it had measured
 
 No new RFCs and no `Active → Accepted` promotions (**Accepted 153, Active 4, Draft 1**). Conformance suite `1.138.1 → 1.139.0` (465 scenario files). All wire shapes additive per `COMPATIBILITY.md` §2.1; one Class 3 conformance-affecting clarification, recorded in §3. The through-line: **a green result is a claim about what ran, and this cycle went looking for the ones where nothing had.** Every defect below was invisible not because it was subtle but because its symptom was indistinguishable from success.
