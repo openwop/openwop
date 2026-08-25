@@ -162,8 +162,11 @@ jobs:
           set -e
 
           # Extract `N passed | N failed | N skipped` from the summary.
-          # The line we want looks like:
-          #   Tests  23 failed | 588 passed | 41 skipped | 30 todo (682)
+          # NOTE: the example line that used to sit here as a comment was read
+          # out of THIS LOG on 2026-08-25 and quoted as if it were a measurement
+          # (Actions echoes the run: script, so a comment is typographically
+          # identical to output). Illustrative shape only, deliberately not
+          # number-bearing: `Tests  <n> failed | <n> passed | ... (<total>)`.
           PASSED=$(grep -oE '[0-9]+ passed' /tmp/conformance.out | tail -1 | awk '{print $1}')
           TOTAL=$(grep -oE '\([0-9]+\)' /tmp/conformance.out | tail -1 | tr -d '()')
           if [ -z "$PASSED" ] || [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
@@ -171,6 +174,18 @@ jobs:
             tail -20 /tmp/conformance.out
             exit 1
           fi
+
+          # Name every failing scenario before reducing them to a fraction.
+          # A pass-rate floor converts a specific, named, reproducible failure
+          # into an anonymous number: `webhook-signed-delivery` was red here on
+          # every run from 2026-08-09 to 2026-08-25 — a reference host
+          # contradicting webhooks.md — and the job reported success each time
+          # because the rate sat ~10 points above the floor. Nobody reads
+          # "N failed" as "one of these is a spec-conformance defect". This
+          # does not gate; it makes the fraction attributable.
+          echo "--- failing scenarios (not a gate; the floor below decides) ---"
+          grep -E '^\s*(FAIL|❯|×)' /tmp/conformance.out | sed 's/^/  /' | sort -u || true
+          echo "--- end failing scenarios ---"
 
           # Floor: 85% pass rate. Drop below = regression.
           RATE=$((PASSED * 100 / TOTAL))

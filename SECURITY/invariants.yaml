@@ -2909,9 +2909,18 @@ invariants:
     note: |
       RFC 0100 §4 / a2a-integration.md §"Async / durable Tasks". A
       caller-registered A2A push-notification `pushConfig.url` MUST be validated
-      through the RFC 0093 webhook-egress SSRF guard before any push (no
-      private/loopback/link-local target) — a caller-supplied push URL is an
-      SSRF surface identical to a webhook. A push MUST NOT carry run-internal
+      through the RFC 0093 webhook-egress SSRF guard IN FULL before any push — a
+      caller-supplied push URL is an SSRF surface identical to a webhook, and
+      "identical" means BOTH arms of the `webhooks.md` §"SSRF protection" list:
+      the SCHEME arm (non-`https://` protocols MUST be refused) and the ADDRESS
+      arm (no private/loopback/link-local/ULA/metadata target).
+      Clarified 2026-08-25: this note, the RFC, and the spec cell all previously
+      abbreviated the guard to its address arm, so a host refusing
+      `http://10.0.0.5/push` while accepting `http://push.example.com/` read as
+      conforming. It never was — `COMPATIBILITY.md` §3 records the Class 3
+      classification. Reported by a tier-1 host that found the same structural
+      defect in its own A2A path after fixing it on the webhook path, and
+      correctly declined to fix it while the obligation was inference-only. A push MUST NOT carry run-internal
       content beyond the projected `A2ATaskState` + A2A artifact references;
       `pushConfig.tokenFingerprint` MUST be a truncated/salted digest
       (`maxLength: 32`), never the raw push-auth token (SR-1, mirroring RFC
@@ -2920,8 +2929,11 @@ invariants:
       `tokenFingerprint` ceiling structurally rejects a full-length raw token,
       and that an `A2ATaskState` carrying run inputs/artifacts inline fails
       `additionalProperties:false`; the capability-gated behavioral leg
-      (`a2a.pushNotifications`) asserts a `pushConfig.url` at a private address
-      is refused, reusing the RFC 0093 webhook-egress-guard fixture posture.
+      (`a2a.pushNotifications`) is TWO-SIDED: a `pushConfig.url` at a private
+      address over `https` is refused (address arm) and one at a public host
+      over `http` is refused (scheme arm). Two legs, because the previous single
+      `http://10.0.0.5` probe is refused by EITHER arm alone and so witnessed
+      neither — an assertion that passes on half an implementation.
 
   # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
 

@@ -78,7 +78,7 @@ When `durableTasks: true`, the host persists an **`A2ATaskState`** per backing r
       "additionalProperties": false,
       "required": ["url"],
       "properties": {
-        "url":            { "type": "string", "format": "uri", "description": "Caller-registered push target. The host MUST validate it through the RFC 0093 webhook-egress SSRF guard before any push (no private/loopback target)." },
+        "url":            { "type": "string", "format": "uri", "description": "Caller-registered push target. The host MUST validate it through the RFC 0093 webhook-egress SSRF guard IN FULL before any push — both the scheme arm (non-https:// refused) and the address arm (no private/loopback/link-local/ULA/metadata target). See a2a-integration.md D.6." },
         "tokenFingerprint": { "type": "string", "maxLength": 32, "description": "MAY — a truncated/salted digest of the caller's push-auth token (NEVER the raw token; same SR-1 rule as RFC 0083's `secretFingerprint`). The A2A push HMAC details (A2A §4.3.3) stay inside the A2A layer per a2a-integration.md." }
       }
     }
@@ -100,7 +100,7 @@ When `durableTasks: true`:
 
 When `pushNotifications: true`, a caller MAY register an A2A push config (`PushConfig`, §2) for a Task; the host MUST:
 
-- **Validate the push `url` through the RFC 0093 webhook-egress SSRF guard** before any delivery (no private/loopback/link-local target) — a caller-supplied push URL is an SSRF surface identical to a webhook.
+- **Validate the push `url` through the RFC 0093 webhook-egress SSRF guard** before any delivery — a caller-supplied push URL is an SSRF surface identical to a webhook, and "identical" means the guard **in full**: the **scheme** arm (non-`https://` protocols refused) as well as the **address** arm (no private/loopback/link-local/ULA/metadata target). *(Clarified 2026-08-25: every statement of this requirement in this RFC previously abbreviated the guard to its address arm, so a host could refuse `http://10.0.0.5/push` on the address and still accept `http://push.example.com/`. `COMPATIBILITY.md` §3 records the classification — Class 3: such a host was never conforming.)*
 - **Fire a push on each durable TaskState transition** the caller subscribed to — at minimum on the transitions to `input-required`, `completed`, `failed`, `canceled` (the states a caller most needs without polling). The push body is an A2A `TaskStatusUpdateEvent` (composed per `a2a-integration.md` §3); its HMAC/signing follows A2A §4.3.3 (openwop defers the HMAC details per `a2a-integration.md` §"What openwop does NOT specify" — unchanged).
 - **Never include run-internal content** in the push beyond the projected Task state + the A2A artifact references (SR-1 / `a2a-integration.md` trust-boundary — the push carries the same content-free projection as the persisted record).
 
@@ -114,7 +114,7 @@ The `a2a-integration.md` §"Trust boundary" and §"Operational mapping table" ro
 
 **Negative (sync host, no regression).** A host advertising `a2a: { supported:true, durableTasks:false }` exposes only the synchronous round-trip already specified; `tasks/get` after disconnect MAY return only the terminal/last-known state — exactly today's behavior. The async conformance subtests soft-skip.
 
-**Negative (SSRF).** A `pushConfig.url` of `http://10.0.0.5/...` is rejected by the RFC 0093 webhook-egress guard before any push.
+**Negative (SSRF), both arms.** A `pushConfig.url` of `https://10.0.0.5/...` is rejected on the **address** arm; a `pushConfig.url` of `http://push.example.com/...` is rejected on the **scheme** arm. Each example isolates one arm on purpose: the older example, `http://10.0.0.5/...`, violates both at once and so cannot show which guard fired — a host implementing only one arm passes it.
 
 **Negative (schema).** An `A2ATaskState.state` of `WORKING` (UPPERCASE) fails — the persisted/wire form is the A2A v0.3 lowercase-hyphen variant (`a2a-integration.md` spelling-drift note). An `A2ATaskState` carrying run inputs/artifacts inline fails `additionalProperties:false`. A `PushConfig` carrying a raw push token (not a truncated fingerprint) violates SR-1.
 
@@ -128,7 +128,7 @@ The `a2a-integration.md` §"Trust boundary" and §"Operational mapping table" ro
   - **Capability shape (always-on, server-free):** the `a2a` block validates (`supported`, `agentCardUrl` uri, the three optional booleans); `A2ATaskState` validates with the lowercase-hyphen `state` enum and `taskId == runId`; a `state:"input-required"` record requires `interruptKind`; a `PushConfig` requires `url` and rejects a raw token; an UPPERCASE `state` fails.
   - **Durable `tasks/get` (gated on `a2a.durableTasks` via `describe.runIf`):** drive a backing run to a paused HITL state, *disconnect*, then `tasks/get` later returns the live `input-required` projection (not a stale `working`) with `metadata.openwop.interrupt.kind`.
   - **`tasks/resubscribe` (gated on `a2a.streaming`):** drop the stream mid-run, `tasks/resubscribe`, assert re-attachment delivers the next `TaskStatusUpdateEvent` from current state forward without the run re-executing (assert the backing `runId` is unchanged and no duplicate `run.started`).
-  - **Push config SSRF (gated on `a2a.pushNotifications`):** registering a `pushConfig.url` at a private address is refused (reuses the RFC 0093 webhook-egress-guard fixture posture).
+  - **Push config SSRF (gated on `a2a.pushNotifications`), two-sided:** registering a `pushConfig.url` at a private address **over `https`** is refused (address arm), AND registering one at a public host **over `http`** is refused (scheme arm). Two legs rather than one because a single `http://10.0.0.5` probe is refused by either arm alone and therefore witnesses neither.
   - The two existing drift-point subtests (#3 AUTH_REQUIRED, #4 REJECTED) are unchanged.
 - **Capability gating** per `capabilities.md` + `coverage.md`: every new subtest soft-skips when its sub-capability is unadvertised. The sync round-trip subtests stay always-on.
 - **Reference host.** Deferred to `Active → Accepted` (file lands at `Draft`). The openwop-app work-twin suite (ADR 0033's deferred async-A2A item) is the intended evidence host; the host wiring is gated on this RFC reaching at least `Active`.
