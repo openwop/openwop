@@ -48,6 +48,7 @@ import { describe, it, expect } from 'vitest';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForScenario } from '../lib/requirement-registry.js';
 import { driver } from '../lib/driver.js';
+import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readFileSync } from 'node:fs';
@@ -173,8 +174,8 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     const fork = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:fork`, {
       mode: 'replay',
     });
-    if (fork.status === 501) {
-      ctx.skip(); // advertised but not implemented for this range — suite convention
+    if (forkDeclined(fork.status, 'side-effect-suppression replay fork')) {
+      ctx.skip();
       return;
     }
     expect(fork.status, 'fork should be accepted').toBe(201);

@@ -30,6 +30,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 
@@ -122,6 +124,7 @@ describe.skipIf(SKIP_NO_MULTI)(
     it('mid-fromSeq replay fork produces a new run that reaches `completed`', async (ctx) => {
       const replay = await fetchReplayCapability();
       if (replay?.supported !== true) {
+        softSkip('inapplicable', "host does not advertise `replay.supported: true` — the replay contract does not apply to it");
         ctx.skip();
         return;
       }
@@ -129,6 +132,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         ? replay.modes.filter((m): m is string => typeof m === 'string')
         : [];
       if (!modes.includes('replay')) {
+        softSkip('inapplicable', "host does not advertise the `replay` fork mode — this leg's rule has no path to apply");
         ctx.skip();
         return;
       }
@@ -140,6 +144,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         // Fixture's wire shape doesn't expose node.completed(b) with a
         // numeric sequence — skip rather than fail. Conformant hosts
         // with the standard event shape will hit the assertions below.
+        softSkip('blocked', "the advertised fixture's wire shape exposes no numeric sequence for node.completed(b), so there is no mid-run point to fork from");
         ctx.skip();
         return;
       }
@@ -149,7 +154,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         { fromSeq, mode: 'replay' },
       );
 
-      if (fork.status === 501) {
+      if (forkDeclined(fork.status, 'arbitrary-event fork')) {
         ctx.skip();
         return;
       }
@@ -226,7 +231,7 @@ describe.skipIf(SKIP_NO_MULTI)(
           `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
           { fromSeq, mode: 'replay' },
         );
-        if (fork1.status === 501) {
+        if (forkDeclined(fork1.status, 'arbitrary-event fork 1')) {
           ctx.skip();
           return;
         }
@@ -238,7 +243,7 @@ describe.skipIf(SKIP_NO_MULTI)(
           `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
           { fromSeq, mode: 'replay' },
         );
-        if (fork2.status === 501) {
+        if (forkDeclined(fork2.status, 'arbitrary-event fork 2')) {
           ctx.skip();
           return;
         }
@@ -294,6 +299,7 @@ describe.skipIf(SKIP_NO_MULTI)(
     it('mid-fromSeq branch fork with empty overlay produces a new run that reaches `completed`', async (ctx) => {
       const replay = await fetchReplayCapability();
       if (replay?.supported !== true) {
+        softSkip('inapplicable', "host does not advertise `replay.supported: true` — the replay contract does not apply to it");
         ctx.skip();
         return;
       }
