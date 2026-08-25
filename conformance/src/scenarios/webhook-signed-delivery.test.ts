@@ -16,13 +16,47 @@
  * Capability-gated: skips when the host does not advertise
  * `capabilities.webhooks.supported = true`.
  *
- * Operator contract: hosts that implement a SSRF guard on
- * `POST /v1/webhooks` (rejecting loopback / RFC1918 / link-local
- * destinations to protect deployer infrastructure) MUST allow the test
- * receiver. The SQLite reference host bypasses the guard when the
- * `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` env var is set at boot. Test-only
- * hosts SHOULD provide an equivalent opt-in. When the host rejects with
- * `400 webhook_url_rejected`, this scenario skips with a warning.
+ * Operator contract — THREE gates, not one (clarified 2026-08-25).
+ *
+ * The test receiver is `http://127.0.0.1:{port}/`, and `webhooks.md`
+ * forbids it three separate times. A host honoring
+ * `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` (or an equivalent opt-in) MUST
+ * relax ALL THREE for this scenario to be witnessable:
+ *
+ *   1. **Scheme.** §"SSRF protection" bullet 1 rejects non-`https://`
+ *      protocols, and §"Register" says `url` MUST be `https://`. The
+ *      receiver is plain `http`. This gate is the one the flag's
+ *      description omitted until 2026-08-25, and it fires FIRST on a
+ *      host that validates scheme before address.
+ *   2. **Registration-time address check.** §"SSRF protection": the
+ *      server MUST validate subscription URLs at registration time and
+ *      reject loopback / RFC1918 / link-local / ULA / metadata.
+ *   3. **Delivery-time re-resolution.** §"Delivery-time egress
+ *      validation (RFC 0093)": the dispatcher MUST re-resolve at
+ *      delivery time and validate every resolved address against the
+ *      same ranges.
+ *
+ * Gates 2 and 3 are INDEPENDENT MUSTs at different layers, so "which
+ * layer must the opt-in reach" is not a matter of taste: a relaxation
+ * reaching only one layer cannot produce a witness. Delivery-only leaves
+ * registration returning `400 webhook_url_rejected` (observed on a tier-2
+ * host, 2026-08-25); registration-only leaves the dispatcher re-resolving
+ * `127.0.0.1` and refusing to connect. A host whose opt-in reaches one
+ * layer is not non-conformant — it simply cannot witness this scenario,
+ * and that is a property of the test posture, not of its webhook signing.
+ *
+ * Relaxing gates 2 and 3 is test-only posture. See
+ * `SECURITY/threat-model-secret-leakage.md` §4.9 for why a
+ * registration-time relaxation is the more dangerous of the two: it
+ * writes a durable subscription row that survives the flag being turned
+ * back off.
+ *
+ * When the host rejects with `400 webhook_url_rejected`, this scenario
+ * records `blocked` (RFC 0148 §A) — NOT a pass. Under a plain
+ * `vitest run` the console still prints "1 passed", because that is
+ * vitest reporting test outcomes rather than conformance dispositions;
+ * the run-end disposition summary (`src/global-setup.ts`) is where the
+ * `blocked` becomes visible without `--certify`.
  *
  * @see spec/v1/webhooks.md §"Signature scheme"
  */
