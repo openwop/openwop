@@ -8,6 +8,19 @@ The TL;DR: **v1.x is additive-only, with one explicit exception for safety and s
 
 ## 1. Versioning model
 
+**The v1 wire contract froze on 2026-05-08.** That is the date this document's additive-only guarantee starts running from, and until now it was stated nowhere in this file — a downstream consumer citing the freeze had to source it from a `CHANGELOG.md` release entry, which is why openwop.dev carried the date for months with no citable anchor and a sibling session could not verify it.
+
+Three dates sit close together and name **different events**; conflating them is easy and each is load-bearing somewhere:
+
+| Date | Event | Recorded in |
+| --- | --- | --- |
+| **2026-05-08** | **The wire contract froze.** 26 prose specs at FINAL v1, 17 first-class JSON Schemas, OpenAPI 3.1 + AsyncAPI 3.1. Everything after this is additive per §2, or a safety-fix per §3. | `CHANGELOG.md` `[1.0] — 2026-05-08` |
+| 2026-05-11 | First publication of `v1.0.0` to the registries. | `CHANGELOG.md` `[1.0.0]` |
+| 2026-05-12 | The v1.0 close-out release — what `README.md`'s status banner calls "v1.0 core locked". | `CHANGELOG.md` `[1.1.0] — 2026-05-12` |
+
+**The freeze is the one that governs this document.** A reader asking "since when has openwop promised additive-only evolution?" wants 2026-05-08, not the close-out date the README banner shows — the banner is describing when the corpus stopped moving, which happened four days later.
+
+
 openwop uses three independent version axes:
 
 | Axis                                                            | Range             | Bump rule                                                                                          |

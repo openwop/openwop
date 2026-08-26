@@ -254,6 +254,59 @@ function staleStatusFindings(rfcs) {
     }
   }
 
+  // (2b) The published-artifacts banner's CONFORMANCE version.
+  //
+  // README advertised `@openwop/openwop-conformance` at v1.73.0 while
+  // conformance/package.json said 1.139.0 and npm served 1.139.0 — stale by 66
+  // minors, in two places on the same line, and found by a downstream consumer
+  // rather than by any gate here. The irony sharpened the case: the 1.10.0
+  // cycle was ABOUT a published version that had stopped identifying its
+  // contents, and `check-published-suite-identity.mjs` now compares the tree to
+  // the registry — but nothing compared what the README ADVERTISES to either.
+  //
+  // This one is knowable offline: conformance/package.json is in this repo, and
+  // the three-way pin (checked separately) already ties it to what gets
+  // published. The three SDK versions on that same line are NOT checked here —
+  // they live in openwop-sdks and only a registry knows them, so they need the
+  // network and the UNKNOWN-is-not-a-pass discipline. That is
+  // `scripts/check-advertised-versions.mjs`; the split is deliberate, because a
+  // check that can only sometimes run should not be mixed into one that always
+  // can.
+  const suiteVersion = JSON.parse(read('conformance/package.json')).version;
+  // Per-SITE, not per-corpus. An earlier draft collected every parseable claim
+  // and hard-failed only when the total was zero — so with two claim sites, one
+  // reformatting out of range left the other matching, the count stayed 1, and
+  // the unparseable site passed in silence. Exactly the toothless-guard shape
+  // this check exists to avoid, caught by feeding it a known-bad input rather
+  // than by reading it. Each site is now checked on its own: if its anchor is
+  // present and its version is not parseable, that is a hard failure.
+  const suiteSites = [
+    {
+      what: 'the published-artifacts npm entry',
+      anchor: /@openwop\/openwop-conformance`\]\([^)]*\) \(npm[^)]*\)/g,
+      version: /@openwop\/openwop-conformance`\]\([^)]*\) \(npm, \*\*v([0-9][0-9.]*)\*\*\)/g,
+    },
+    {
+      what: 'the "versions independently" prose',
+      anchor: /conformance suite versions independently \([^)]*\)/g,
+      version: /conformance suite versions independently \(currently \*\*v([0-9][0-9.]*)\*\*\)/g,
+    },
+  ];
+  for (const site of suiteSites) {
+    const anchors = [...readmeText.matchAll(site.anchor)];
+    const versions = [...readmeText.matchAll(site.version)];
+    if (anchors.length !== versions.length) {
+      findings.push(
+        `README.md: ${site.what} appears ${anchors.length}x but only ${versions.length} carry a parseable version — the format changed, update this check rather than letting it skip.`,
+      );
+    }
+    for (const m of versions) {
+      if (m[1] !== suiteVersion) {
+        findings.push(`README.md: ${site.what} advertises @openwop/openwop-conformance v${m[1]} but conformance/package.json is ${suiteVersion}.`);
+      }
+    }
+  }
+
   // (3) SECURITY invariant counts: parse the YAML and compare to README claims.
   const invariantsText = read('SECURITY/invariants.yaml');
   const protocolCount = (invariantsText.match(/^\s+tier:\s*protocol\b/gm) ?? []).length;
