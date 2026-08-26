@@ -29,6 +29,7 @@
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
 import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
+import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './spec-coherence.js';
 import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-ledger.js';
 
 /** All scenario basenames that appear in some profile's runtime floor. */
@@ -112,7 +113,22 @@ export function resolveFileRecord(
   gateReason: 'inapplicable' | 'skipped' | undefined,
   assertionCount: number,
   noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string } | null,
+  specCoherenceFile?: string,
 ): { disposition: Disposition; detail?: string } {
+  // A scenario whose subject is the CORPUS, skipped because the published
+  // tarball does not bundle spec/v1/. RFC 0148 §A: `blocked` is defined over
+  // ADVERTISED BEHAVIOUR, and there is none here — nothing about the host was
+  // ever going to be exercised. `inapplicable` is the honest label, and it is
+  // CERTIFIABLE, so these rows stop counting against a host that cannot affect
+  // them. See lib/spec-coherence.ts for why not a new disposition value.
+  if (
+    specCoherenceFile !== undefined
+    && SPEC_COHERENCE_SCENARIOS.has(specCoherenceFile)
+    && !states.includes('fail')
+    && assertionCount === 0
+  ) {
+    return { disposition: 'inapplicable', detail: SPEC_COHERENCE_DETAIL };
+  }
   let { disposition, detail } = fileDisposition(states, gateReason, assertionCount);
   if (disposition === 'executed-pass' && assertionCount === 0) {
     if (noted !== null) {
