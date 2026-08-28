@@ -131,7 +131,16 @@ async function startReceiver(): Promise<{ server: Server; url: string; received:
       res.end();
     });
   });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
+  // Port 0 (ephemeral) by default — nothing outside this process needs to find
+  // it. But OPENWOP_WEBHOOK_RECEIVER_URL fronts THIS receiver through a tunnel,
+  // and a tunnel has to be pointed at a port the operator knows in ADVANCE. An
+  // ephemeral port makes that variable unusable by anyone not reading the port
+  // out of a running process — a gap found by standing up a real TLS front and
+  // trying to use the feature, not by reading the code. OPENWOP_WEBHOOK_RECEIVER_PORT
+  // pins it so `ngrok http <port>` (or a proxy) has a stable target.
+  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
+  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  await new Promise<void>((resolve) => server.listen(bindPort, '127.0.0.1', () => resolve()));
   const addr = server.address();
   if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
   return { server, url: `http://127.0.0.1:${addr.port}/`, received };
