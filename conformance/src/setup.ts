@@ -278,7 +278,7 @@ afterAll(({}, suite) => {
   // the marker detail — never to a pass. Floors still REJECT that row, so the
   // honest bundle row and the pressure to say why both survive. The rule is
   // `resolveFileRecord` (pinned by conformance-execution-witness.test.ts).
-  const { disposition, detail } = resolveFileRecord(states, gateReason, assertionCount, softSkipDisposition(file));
+  const { disposition, detail } = resolveFileRecord(states, gateReason, assertionCount, softSkipDisposition(file), file);
   const fileRequirementId = requirementIdForFile(file);
   // A scenario that classified ITSELF wins outright — including its `detail` and
   // its `assertionCount`.
