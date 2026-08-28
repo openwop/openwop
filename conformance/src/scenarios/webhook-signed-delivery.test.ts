@@ -63,6 +63,32 @@
  * writes a durable subscription row that survives the flag being turned
  * back off.
  *
+ * `OPENWOP_WEBHOOK_RECEIVER_URL` — the route that relaxes NOTHING (added
+ * 2026-08-28). Set it to a public `https:` tunnel or TLS-terminating proxy
+ * standing in front of this scenario's own local receiver. Registration then
+ * uses that URL and all three gates are satisfied honestly: the scheme is
+ * `https:`, the registered address is public, and delivery-time re-resolution
+ * resolves a public address it is entitled to connect to. No guard is waived,
+ * no durable private-address row is written, and §4.9's hazard does not arise.
+ *
+ * This exists because the ALLOW_PRIVATE contract above is unsatisfiable for a
+ * host whose guard is strongest at registration time: reported by a tier-2
+ * host (2026-08-25) whose `classifyUrl` rejects on scheme AND address as two
+ * independent grounds returning one code, so relaxing the address check leaves
+ * the scheme check standing and the row `blocked` either way. Such a host is
+ * conformant and was simply unmeasurable. It is now measurable.
+ *
+ * Two things it deliberately does NOT do. It is not "register any endpoint":
+ * the assertions read an in-process array, so a third-party destination would
+ * turn the row green while every assertion went vacuous — see
+ * `resolveRegistrationUrl`. And it does not soften a rejection into a skip: a
+ * host that refuses a legitimate public https destination FAILS, because
+ * `blocked` would let it record a missing precondition forever instead of the
+ * finding it earned.
+ *
+ * Paired with a positive control (bottom of this file) so the tunnelled pass
+ * is attributable to a guard that works rather than to a guard that is absent.
+ *
  * When the host rejects with `400 webhook_url_rejected`, this scenario
  * records `blocked` (RFC 0148 §A) — NOT a pass. Under a plain
  * `vitest run` the console still prints "1 passed", because that is
@@ -81,7 +107,7 @@ import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
+import { discoverOwnedTenant, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 
 interface DeliveredRequest {
   readonly headers: Record<string, string>;
@@ -105,7 +131,16 @@ async function startReceiver(): Promise<{ server: Server; url: string; received:
       res.end();
     });
   });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
+  // Port 0 (ephemeral) by default — nothing outside this process needs to find
+  // it. But OPENWOP_WEBHOOK_RECEIVER_URL fronts THIS receiver through a tunnel,
+  // and a tunnel has to be pointed at a port the operator knows in ADVANCE. An
+  // ephemeral port makes that variable unusable by anyone not reading the port
+  // out of a running process — a gap found by standing up a real TLS front and
+  // trying to use the feature, not by reading the code. OPENWOP_WEBHOOK_RECEIVER_PORT
+  // pins it so `ngrok http <port>` (or a proxy) has a stable target.
+  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
+  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  await new Promise<void>((resolve) => server.listen(bindPort, '127.0.0.1', () => resolve()));
   const addr = server.address();
   if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
   return { server, url: `http://127.0.0.1:${addr.port}/`, received };
@@ -150,23 +185,43 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // tenantId is 403'd by a host that scopes subscriptions by membership
     // (RFC 0093). Single-tenant hosts return undefined ⇒ omit tenantId.
     const ownedTenant = await discoverOwnedTenant(driver);
+    const registration = resolveRegistrationUrl(receiver.url);
     const reg = await driver.post('/v1/webhooks', {
-      url: receiver.url,
+      url: registration.url,
       events: ['run.completed'],
       ...(ownedTenant ? { tenantId: ownedTenant } : {}),
     });
 
-    // SSRF guard skip: if the host rejects loopback destinations,
-    // honor the operator contract and skip rather than fail.
+    // SSRF guard: if the host rejects the destination, what that MEANS depends
+    // on which URL was registered.
+    //
+    //   * No tunnel wired (loopback URL): the host is refusing a private
+    //     address, which webhooks.md REQUIRES it to do. That is correct
+    //     behaviour and the scenario is unwitnessable here — `blocked`.
+    //   * Tunnel wired (public https URL): the host refused a destination the
+    //     spec makes legitimate. RFC 0093 does not permit rejecting a public
+    //     https host, so this is a FINDING, not a missing precondition. Fail.
+    //
+    // Soft-skipping the second case would let a host that rejects everything
+    // record `blocked` forever instead of the failure it earned.
     if (reg.status === 400) {
       const body = reg.json as { error?: string };
       if (body.error === 'webhook_url_rejected') {
-        // eslint-disable-next-line no-console
-        console.warn(
-          '[webhook-signed-delivery] host SSRF guard rejected the loopback receiver; ' +
-            'set OPENWOP_WEBHOOK_ALLOW_PRIVATE=true on the host (or equivalent) to run',
+        if (!registration.tunnelled) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            '[webhook-signed-delivery] host SSRF guard rejected the loopback receiver; ' +
+              'set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of it ' +
+              '(preferred — relaxes no guard), or OPENWOP_WEBHOOK_ALLOW_PRIVATE=true on the host',
+          );
+          return softSkip('blocked', 'precondition not met — `body.error === \'webhook_url_rejected\'` returned early (seam, prior step, or fixture unavailable)');
+        }
+        expect.fail(
+          `host rejected the operator-supplied public https receiver (${registration.url}) with ` +
+            'webhook_url_rejected. A public https destination is legitimate under ' +
+            'webhooks.md §"SSRF protection" and RFC 0093 §"Delivery-time egress validation"; ' +
+            'rejecting it is a host defect, not an unmet precondition.',
         );
-        return softSkip('blocked', 'precondition not met — `body.error === \'webhook_url_rejected\'` returned early (seam, prior step, or fixture unavailable)');
       }
     }
 
@@ -216,9 +271,19 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
         return false;
       }
     });
+    // With a tunnel wired this is the assertion that keeps a mis-wired front
+    // from reading as a pass. Registration succeeded, so the host believes it
+    // has a subscriber; if nothing arrived HERE, the delivery went somewhere
+    // this process cannot see and every assertion below it would be vacuous.
+    // It fails — it must never soft-skip.
     expect(ourDeliveries.length, driver.describe(
       'webhooks.md §"Delivery"',
-      'host MUST POST at least one event for THIS run to a registered subscriber after run.completed',
+      registration.tunnelled
+        ? 'host MUST POST at least one event for THIS run to the registered subscriber. ' +
+          'Registration was accepted, so zero deliveries observed on the local receiver means ' +
+          'either the host did not deliver, or OPENWOP_WEBHOOK_RECEIVER_URL does not actually ' +
+          'front this process. Both are failures; neither is a skip.'
+        : 'host MUST POST at least one event for THIS run to a registered subscriber after run.completed',
     )).toBeGreaterThan(0);
 
     // Validate the FIRST delivery's signature contract. Other deliveries
@@ -267,5 +332,63 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     const del = await driver.delete(`/v1/webhooks/${encodeURIComponent(sub.webhookId)}`);
     expect(del.status).toBeGreaterThanOrEqual(200);
     expect(del.status).toBeLessThan(300);
+  });
+
+  /**
+   * POSITIVE CONTROL for the tunnel path.
+   *
+   * Without this, the tunnel run passes identically on two very different
+   * hosts: one whose SSRF guard is intact and was cleared by a legitimate
+   * public destination, and one that has NO GUARD AT ALL and would have
+   * accepted the loopback URL just as happily. The green would be reporting on
+   * the operator's tunnel rather than on the host's behaviour, and the
+   * variable would be doing no work.
+   *
+   * So: with the tunnel wired, re-register the LOOPBACK url and require that
+   * the host still refuses it. That is what makes the sibling test's pass
+   * attributable to the guard being cleared rather than absent.
+   *
+   * A host that ACCEPTS loopback here is not necessarily non-conformant — it
+   * may be running with `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true`. But in that
+   * configuration the tunnel is demonstrating nothing, and saying so is the
+   * control's whole job.
+   */
+  it('control: with a tunnel wired, the host still refuses the loopback receiver', async () => {
+    if (!(await isWebhookSupported())) {
+      return softSkip('inapplicable', '[webhook-signed-delivery] host does not advertise webhook support; skipping');
+    }
+    if (!process.env.OPENWOP_WEBHOOK_RECEIVER_URL?.trim()) {
+      // No tunnel wired ⇒ the sibling test already registers loopback directly
+      // and this control has nothing to add.
+      return softSkip('inapplicable', 'control applies only when OPENWOP_WEBHOOK_RECEIVER_URL is set');
+    }
+
+    const receiver = await startReceiver();
+    activeServer = receiver.server;
+
+    const ownedTenant = await discoverOwnedTenant(driver);
+    const reg = await driver.post('/v1/webhooks', {
+      url: receiver.url, // deliberately the raw loopback URL, NOT the tunnel
+      events: ['run.completed'],
+      ...(ownedTenant ? { tenantId: ownedTenant } : {}),
+    });
+
+    if (reg.status >= 200 && reg.status < 300) {
+      // Clean up the subscription we just created before failing, so a failed
+      // control does not leave a live loopback subscriber behind.
+      const created = reg.json as { webhookId?: string };
+      if (created?.webhookId) {
+        await driver.delete(`/v1/webhooks/${encodeURIComponent(created.webhookId)}`);
+      }
+    }
+
+    expect(reg.status, driver.describe(
+      'webhooks.md §"SSRF protection"',
+      'the server MUST reject loopback subscription URLs at registration time. ' +
+        'It was accepted here, so this run cannot attribute the tunnelled test\'s pass to ' +
+        'a working guard: a host with no guard produces the same result. Either the guard is ' +
+        'absent (a finding) or OPENWOP_WEBHOOK_ALLOW_PRIVATE is set (in which case drop the ' +
+        'tunnel — it is not doing anything).',
+    )).toBe(400);
   });
 });

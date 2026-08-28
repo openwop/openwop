@@ -184,3 +184,73 @@ export async function discoverOwnedTenant(
   // Pre-S29 hosts that copied the suite's misnamed field: tolerated, never asserted.
   return typeof owner?.tenantId === 'string' && owner.tenantId.length > 0 ? owner.tenantId : undefined;
 }
+
+/**
+ * The public `https:` front for the conformance webhook receiver, when the operator
+ * has wired one (`OPENWOP_WEBHOOK_RECEIVER_URL`).
+ *
+ * This does NOT point the host at some third-party endpoint. The delivery must
+ * still land on the local `startReceiver()` server, because every assertion in
+ * the scenario reads `receiver.received` — an IN-PROCESS array. Registering an
+ * arbitrary URL would send the delivery somewhere the suite cannot observe, and
+ * the row would turn green while every header and HMAC assertion went vacuous.
+ * That is the precise defect this suite exists to catch, so the variable is
+ * specified as "a tunnel or TLS-terminating proxy in front of THIS receiver",
+ * never "an endpoint of your choosing".
+ *
+ * The suite cannot verify that the tunnel actually fronts this process — that
+ * is the operator's contract. What it CAN do is refuse to let a mis-wired
+ * tunnel look like a pass: with the variable set, zero observed deliveries is a
+ * hard assertion failure, never a soft-skip (see the delivery assertion below).
+ *
+ * Validation is deliberately strict and fails LOUDLY rather than skipping: a
+ * malformed value is an operator error, and turning it into a `blocked` row
+ * would hide the misconfiguration behind a disposition that reads as
+ * "the host could not be exercised".
+ */
+export function resolveRegistrationUrl(localUrl: string): { url: string; tunnelled: boolean } {
+  const raw = process.env.OPENWOP_WEBHOOK_RECEIVER_URL?.trim();
+  if (!raw) return { url: localUrl, tunnelled: false };
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(
+      `OPENWOP_WEBHOOK_RECEIVER_URL is not a valid URL: ${JSON.stringify(raw)}`,
+    );
+  }
+
+  // Must clear gate 1 (scheme). An `http:` front cannot satisfy a host that
+  // validates scheme before address, which is the ordering that made the
+  // ALLOW_PRIVATE flag insufficient in the first place.
+  if (parsed.protocol !== 'https:') {
+    throw new Error(
+      `OPENWOP_WEBHOOK_RECEIVER_URL MUST be https: (got ${parsed.protocol}). ` +
+        'A plain-http front cannot clear the scheme gate, so it cannot witness this scenario.',
+    );
+  }
+
+  // Must clear gate 2 (registration-time address check). A loopback or private
+  // hostname here is just the local URL wearing a different scheme — it would
+  // be rejected for the same reason, and the operator would read the resulting
+  // failure as a host defect rather than as their own misconfiguration.
+  const host = parsed.hostname.toLowerCase();
+  const isLoopback =
+    host === 'localhost' || host === '::1' || host.startsWith('127.');
+  const isPrivate =
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+    /^169\.254\./.test(host) ||
+    /^(fc|fd)/.test(host);
+  if (isLoopback || isPrivate) {
+    throw new Error(
+      `OPENWOP_WEBHOOK_RECEIVER_URL MUST be a publicly-resolvable host (got ${parsed.hostname}). ` +
+        'It is the PUBLIC front for the local receiver — a tunnel or TLS-terminating proxy — ' +
+        'not the receiver address itself.',
+    );
+  }
+
+  return { url: raw, tunnelled: true };
+}
