@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './spec-coherence.js';
+import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL, SPEC_COHERENCE_EXCLUDED } from './spec-coherence.js';
 import { resolveFileRecord } from './scenario-disposition.js';
 
 const SCENARIOS = new URL('../scenarios/', import.meta.url).pathname;
@@ -39,6 +39,27 @@ describe('SPEC_COHERENCE_SCENARIOS is derivable, not asserted', () => {
     // which file to add or drop, not that two sets differ.
     expect(pure.filter((f) => !SPEC_COHERENCE_SCENARIOS.has(f)), 'reads spec/v1, drives no host, NOT in the registry — it will report `blocked` in every host bundle').toEqual([]);
     expect(listed.filter((f) => !pure.includes(f)), 'in the registry but no longer qualifies — it now drives a host, or stopped reading spec/v1').toEqual([]);
+  });
+
+  it('the EXCLUDED set is exactly the host-touching ones — the exclusions are checked, not asserted in prose', () => {
+    // These used to live only in a docblock sentence. A peer grepping this file
+    // for membership matched that sentence and read all three named scenarios
+    // as members — the opposite of the truth, and the dangerous direction: it
+    // would mean host-behaviour rows downgraded to "does not apply to you" as a
+    // credit. Naming them in prose made the file lie to a reasonable reader.
+    const { hostTouching } = derive();
+    expect([...SPEC_COHERENCE_EXCLUDED].sort()).toEqual(hostTouching);
+  });
+
+  it('the two sets are disjoint and jointly exhaustive over the V1_DIR-gated files', () => {
+    // Disjoint: no scenario can be both "does not apply to any host" and
+    // "applies but was unwitnessable". Exhaustive: every V1_DIR-gated file has
+    // a decided disposition, so none falls back to the unclassified marker.
+    const { pure, hostTouching } = derive();
+    const overlap = [...SPEC_COHERENCE_SCENARIOS].filter((f) => SPEC_COHERENCE_EXCLUDED.has(f));
+    expect(overlap, 'a scenario cannot be both inapplicable-to-all-hosts and blocked-for-this-host').toEqual([]);
+    const union = new Set([...SPEC_COHERENCE_SCENARIOS, ...SPEC_COHERENCE_EXCLUDED]);
+    expect([...union].sort()).toEqual([...pure, ...hostTouching].sort());
   });
 
   it('excludes the host-touching ones, which are honestly `blocked`', () => {
