@@ -55,16 +55,29 @@
  * run and fails when the two disagree, which is the only thing that makes a
  * hand-maintained set trustworthy.
  *
- * ## What is deliberately NOT here
+ * ## What is deliberately NOT here — and why it is a Set, not a sentence
  *
- * Seven scenarios gate on `V1_DIR` **and** drive the host
- * (`replay-side-effect-suppression`, `data-residency-admission`,
- * `profile-discovery-core-alias`, `workflow-variable-format`,
- * `workflow-chain-deferred-parameters`, `artifact-type-store-emission`,
- * `artifact-type-registration-source`). Those assert advertised host behaviour
- * that could not be exercised because a dependency was unavailable — which is
- * `blocked`, exactly as §A defines it. Classifying them `inapplicable` would
- * tell a host "this does not apply to you" about a requirement that does.
+ * Seven scenarios gate on `V1_DIR` **and** drive the host. They assert
+ * advertised host behaviour that could not be exercised because a dependency
+ * was unavailable — `blocked`, exactly as §A defines it. Classifying them
+ * `inapplicable` would tell a host "this does not apply to you" about a
+ * requirement that does.
+ *
+ * They are listed in `SPEC_COHERENCE_EXCLUDED` below rather than named in this
+ * prose, because naming them here made this file lie to a reasonable reader.
+ * A peer checking membership with `grep -c "<scenario>" spec-coherence.ts` got
+ * **1 hit for all three** of the ones the prose named — from this very
+ * paragraph — and was one step from reporting that host-behaviour rows had
+ * been downgraded to "does not apply to you" as a credit. They caught it only
+ * because two counts disagreed: 28 members and those 7 included cannot both be
+ * true.
+ *
+ * **A text search over this file still matches both sets** — that is inherent
+ * to any file that names what it excludes. So the exclusions are now an
+ * exported Set with the same standing as the inclusions: membership has a
+ * programmatic answer, `spec-coherence-registry.test.ts` asserts the two are
+ * disjoint and jointly exhaustive over the `V1_DIR`-gated files, and a comment
+ * is no longer the only place the exclusion reason lives.
  */
 
 /** Scenarios whose subject is the corpus. Kept honest by `spec-coherence-registry.test.ts`. */
@@ -97,6 +110,21 @@ export const SPEC_COHERENCE_SCENARIOS: ReadonlySet<string> = new Set([
   'versioned-composition-profiles.test.ts',
   'workflow-chain-internal-flag.test.ts',
   'workload-identity-profile.test.ts',
+]);
+
+/**
+ * Scenarios that gate on `V1_DIR` **and** drive the host, so their `blocked` is
+ * honest: advertised behaviour a missing dependency prevented exercising.
+ * Exported so membership is checkable in code rather than inferred from prose.
+ */
+export const SPEC_COHERENCE_EXCLUDED: ReadonlySet<string> = new Set([
+  'artifact-type-registration-source.test.ts',
+  'artifact-type-store-emission.test.ts',
+  'data-residency-admission.test.ts',
+  'profile-discovery-core-alias.test.ts',
+  'replay-side-effect-suppression.test.ts',
+  'workflow-chain-deferred-parameters.test.ts',
+  'workflow-variable-format.test.ts',
 ]);
 
 /** The reason recorded on such a row, written for the host operator reading it. */
