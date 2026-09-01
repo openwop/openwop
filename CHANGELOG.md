@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0159 §A.2 threat-model entry landed — the reference was dangling.** RFC 0159 §A.2 cited `SECURITY/threat-model-auth-profiles.md` for the mutable/PII link-key **join-and-inherit** vector, but no such entry existed. Added §4.5 "SAML ⟷ SCIM subject linking" (STRIDE: join-and-inherit spoofing, leaver elevation, cross-tenant/-IdP spoofing, each with the §A opaque-key / fail-closed / same-tenant mitigation) + a §6 residual-risk bullet for the unprobed-pair negative-existence limit (UQ2). Additive doc-only; resolves the §A.2 pointer. `SECURITY/threat-model-auth-profiles.md`.
 - **Suite `1.143.0 → 1.144.0`.** Adds the RFC 0159 conformance scenario `auth-subject-link.test.ts` (published tarball content changed → identity bump), plus the `capabilities.auth.subjectLinking` schema property and the `auth-profiles.md` §Subject linking prose.
 
 ### Security
