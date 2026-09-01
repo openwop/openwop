@@ -184,7 +184,29 @@ jobs:
           # profiles (verified: they soft-skip in non-strict mode), so under
           # OPENWOP_REQUIRE_BEHAVIOR=true they turn the soak red. Opting out
           # keeps the strict gate a clean signal for what SQLite DOES claim.
-          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full,openwop-agent-platform,openwop-budget-enforcement,openwop-deployment-channel-dispatch,openwop-deployment-lifecycle,openwop-egress-audience-binding,openwop-egress-decision-content-free,openwop-eval-run,openwop-live-allowlist-enforced,openwop-live-invocation-bracket,openwop-live-structured-output,openwop-memory-degraded,openwop-org-chart-scoping,openwop-org-position-no-authority,openwop-roster-attribution,openwop-safefetch-live-audit,openwop-tool-catalog,openwop-tool-session-lifecycle,openwop-trigger-bridge,openwop-verifier-gating,openwop-callai-multimodal,openwop-agent-capability-degraded,openwop-grpc-transport,openwop-i18n,connections.packsSupported'
+          # 2026-09-01 cohort (13 profiles) — the strict run demanded these
+          # and the SQLite host advertises none of them. Verified the honest
+          # way rather than by pattern: booted the host and read its live
+          # `/.well-known/openwop`, then probed each name at the document
+          # root, under `capabilities.`, and in `profiles[]`. All 13 came
+          # back `undefined` — the host declares no `profiles` array at all,
+          # and its capability keys are memory/feedback/limits/discovery/
+          # auth/secrets/modelCapabilities/webhooks/orchestrator/dispatch/
+          # agents/subWorkflow. `dispatch.perItemInput` is the one worth
+          # naming: `dispatch` IS advertised, the `perItemInput` sub-key is
+          # not, so it is opted out at the sub-key and the rest of the
+          # dispatch surface stays under strict enforcement.
+          #
+          # This distinction is the whole point of the list: opting out must
+          # mean "the host does not claim this surface", never "the host
+          # claims it and fails". A profile that IS advertised must stay out
+          # of this list so a real regression can still red the gate.
+          #
+          # These accounted for ~40 of the failures in the 2026-09-01 run.
+          # The other ~200 were a dead host, not a suite problem
+          # (better-sqlite3 v11 SIGABRTing on Node 24) — fixed in
+          # openwop-examples#26. Both had to land for the soak to report.
+          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full,openwop-agent-platform,openwop-budget-enforcement,openwop-deployment-channel-dispatch,openwop-deployment-lifecycle,openwop-egress-audience-binding,openwop-egress-decision-content-free,openwop-eval-run,openwop-live-allowlist-enforced,openwop-live-invocation-bracket,openwop-live-structured-output,openwop-memory-degraded,openwop-org-chart-scoping,openwop-org-position-no-authority,openwop-roster-attribution,openwop-safefetch-live-audit,openwop-tool-catalog,openwop-tool-session-lifecycle,openwop-trigger-bridge,openwop-verifier-gating,openwop-callai-multimodal,openwop-agent-capability-degraded,openwop-grpc-transport,openwop-i18n,connections.packsSupported,a2a.durableTasks,a2a.pushNotifications,dispatch.perItemInput,mcp-2026-07-28,mcp.mrtr.client,openwop-compensation,openwop-content,openwop-context-budget,openwop-self-hosted-runner,triggerBridge.ingestion,uiPlugins.supported,workflowChainPacks.deferredParameters.supported,workflowChainPacks.hostExpansionSeam'
           # Fixture-id opt-outs — the SQLite host auto-loads every
           # `conformance-*.json` fixture on disk (so the fixture IS
           # advertised in `/.well-known/openwop`) but does not implement
