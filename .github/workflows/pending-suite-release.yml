@@ -1,0 +1,63 @@
+name: Pending suite release
+
+# Does main's pinned conformance version actually exist on npm?
+#
+# `openwop:check` step 9 (check-published-suite-identity) answers a different
+# question: IF the version is on npm, do its contents still match the tree? It
+# passes when the version is absent, because that is precisely what a freshly
+# bumped, not-yet-tagged version looks like. Correct for that gate — and it
+# leaves a bump that is never tagged indistinguishable from one about to be.
+#
+# Nothing else looked either. The suite once accumulated 25 unpublished bumps
+# (1.73.0 → 1.98.0) while npm served 1.73.0; a peer session noticed, no gate
+# could. More recently 1.143.0 was main's pin between #1152 and #1153, was
+# never published, and was superseded by 1.144.0 — that version number does
+# not exist on npm and never will.
+#
+# Deliberately NOT part of `openwop:check`, which gates pull requests. Main's
+# pin being stale is the maintainer's business, not a contributor's: reding
+# someone's unrelated PR because a tag was missed punishes the wrong person and
+# teaches everyone that red means nothing. Scheduled against main instead,
+# where the finding is actionable by whoever sees it.
+#
+# The check has a grace window (default 24h) so a normal bump-then-tag release
+# does not trip it. Detection therefore lands within roughly two days of a
+# forgotten tag — which is the difference between noticing and 25 bumps.
+
+on:
+  schedule:
+    # 07:00 UTC, an hour after the soak so the two do not report at once.
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      grace_hours:
+        description: 'Hours a bump may sit unpublished before this fails'
+        required: false
+        default: '24'
+
+jobs:
+  pending-release:
+    name: Is main's conformance pin published?
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Full history: the check dates a version by finding the commit that
+      # introduced it. A shallow clone would leave that unknown, and the check
+      # reports "age unknown, not guessing" rather than inventing a number.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # CI=true makes an unreachable registry exit 2 rather than pass. A gate
+      # that cannot reach the registry has not looked, and "did not look" is
+      # not "looked and found it" — the identity gate shipped dead for exactly
+      # this reason and stayed green the whole time.
+      - name: Check for an unpublished suite bump
+        env:
+          OPENWOP_PENDING_RELEASE_GRACE_HOURS: ${{ github.event.inputs.grace_hours || '24' }}
+        run: node scripts/check-pending-suite-release.mjs --require-network
