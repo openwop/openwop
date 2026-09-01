@@ -38,11 +38,11 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.143.0**; corpus release **1.10.0** (2026-08-25).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.144.0**; corpus release **1.10.0** (2026-08-25).
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md` (130 rows scanned). **71** open across all registers, of which **45** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md` (132 rows scanned). **72** open across all registers, of which **46** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **3** are explicitly **transferred** to a named tracked surface (0147/R3, 0147/R12, 0147/R14) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
@@ -119,6 +119,7 @@ Of those, **3** are explicitly **transferred** to a named tracked surface (0147/
 | 0156 | R3 — Sponsored Tier-3 host is effectively steward-controlled. | High | Open — Sweep 2026-08-16: Open — moot until a Tier-3 candidate exists. |
 | 0156 | R4 — Retrospective review destabilizes v1. | High | Open — Sweep 2026-08-16: Open — not started. |
 | 0156 | R6 — Governance becomes performative while lead retains de facto control. | Critical | Open — Sweep 2026-08-16: Open, Critical — single maintainer; every 2026-08 decision was unilateral by construction, recorded publicly in PRs/CHANGELOG. |
+| 0159 | R1 — A host implements the link on **email/`userName`** (mutable/PII) → account-takeover joi… | High | Open (mitigated by §A.2 + negative scenario) |
 
 ## Permitted claims (RFC 0147 §A)
 

@@ -11,8 +11,8 @@
 | JSON Schemas | 80 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 466 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 158 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 467 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 159 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.143.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.144.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 153 |
-| Active | 4 |
+| Active | 5 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -195,6 +195,7 @@
 | RFC 0156 | Governance, Independent Assurance, and Claims Policy | Accepted |
 | RFC 0157 | Chain fragments carry compensation (RFC 0013 revision × RFC 0151 sectionB) | Accepted |
 | RFC 0158 | Durable Execution and Disaster-Recovery Qualification | Active |
+| RFC 0159 | A subject-linking obligation for hosts advertising **both** `openwop-auth-saml` and `openwop-auth-scim`: a SCIM deactivation MUST fail-close the linked SAML identity, keyed on an opaque IdP-stable subject id - so a provisioned leaver cannot still SSO in | Active |
 
 ## SDK Helper Coverage
 
@@ -217,7 +218,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0159) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

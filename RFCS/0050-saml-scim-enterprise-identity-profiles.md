@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0159](./0159-scim-saml-subject-linking.md) — adds the cross-profile **subject-linking** obligation (opt-in via `capabilities.auth.subjectLinking`): a host advertising both `openwop-auth-saml` and `openwop-auth-scim` must fail-close the linked SAML identity on SCIM deactivation, keyed on an opaque IdP-stable subject id (never email/PII). Closes the combined-deployment leaver-bypass left open by §`openwop-auth-scim` (deactivation was per-lane only). |
 
 ## Summary
 
