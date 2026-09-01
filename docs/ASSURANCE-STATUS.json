@@ -89,13 +89,13 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "1.143.0",
+    "conformanceSuite": "1.144.0",
     "corpusRelease": "1.10.0",
     "corpusReleaseDate": "2026-08-25"
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md",
-    "rowsScanned": 130,
+    "rowsScanned": 132,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -593,6 +593,13 @@
         "score": "Critical",
         "title": "Governance becomes performative while lead retains de facto control.",
         "status": "Open — Sweep 2026-08-16: Open, Critical — single maintainer; every 2026-08 decision was unilateral by construction, recorded publicly in PRs/CHANGELOG."
+      },
+      {
+        "rfc": "0159",
+        "id": "R1",
+        "score": "High",
+        "title": "A host implements the link on **email/`userName`** (mutable/PII) → account-takeover joi…",
+        "status": "Open (mitigated by §A.2 + negative scenario)"
       }
     ],
     "transferred": [
@@ -645,7 +652,8 @@
       "0156/R2",
       "0156/R3",
       "0156/R4",
-      "0156/R6"
+      "0156/R6",
+      "0159/R1"
     ]
   },
   "claims": {

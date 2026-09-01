@@ -149,6 +149,27 @@ An optional directory-bind variant for hosts with on-prem LDAP/Active Directory:
 
 ---
 
+### Subject linking (SAML ⟷ SCIM) — RFC 0159
+
+`openwop-auth-saml` (authentication) and `openwop-auth-scim` (provisioning) are independent lanes: SCIM `active:false`/`DELETE` deactivates *its* provisioned principal, and SAML validates an assertion onto *its* principal, but nothing ties the two to the same human. On a host advertising **both** profiles this leaves a leaver gap — a person deactivated over SCIM can still authenticate over SAML, because the two lanes map to structurally different RFC 0048 principals. This subsection closes that gap as an **opt-in** obligation, discoverable via `capabilities.auth.subjectLinking`.
+
+The obligations below apply to a host that advertises `openwop-auth-saml` **and** `openwop-auth-scim` **and** sets `capabilities.auth.subjectLinking: true`.
+
+**Requirements:**
+
+- The host MUST maintain a **subject link** between the RFC 0048 `principal` produced by SAML assertion validation and the `principal` produced by SCIM provisioning when both denote the same human. The link key MUST be an **opaque, IdP-asserted, stable** identifier — the SCIM resource `externalId` matched to the SAML persistent-format `NameID` (or a host-configured stable linking attribute asserted by the same IdP). The link MUST be scoped to a **single tenant**; the host MUST NOT link identities across tenants.
+- The host MUST NOT use email, `userName`, display name, or any operator/user-mutable attribute as the link key. (A mutable/PII key lets a caller who can influence that attribute join — and inherit — another subject: an account-takeover join vector.)
+- When SCIM deactivates a provisioned user (`DELETE /Users/{id}` or `PATCH` to `active:false`), the host MUST deny subsequent authorization decisions for the **linked** SAML identity as well, fail-closed (composing with RFC 0049 §C) — not only for the SCIM-provisioned principal. Equivalently: after a SCIM deactivation, a SAML assertion for the linked subject MUST NOT yield an authorized decision.
+- If no opaque IdP-stable link key is available for a pair of identities (the IdP asserts no persistent `NameID` / no `externalId`), the host MUST NOT claim the combined leaver guarantee for those identities: it MUST either treat them as independent subjects (and not set `subjectLinking: true`) or fail closed on the SAML lane for the unlinkable subject. A host MUST NOT silently fall back to a mutable/PII key, and MUST NOT advertise `subjectLinking: true` while any admitted identity pair is joined on a non-conforming key.
+
+The link is a **reference, not a merge**: the two durable subjects (`saml:…` and `scim:…`) remain distinct records — nothing rewrites a subject key already stamped on a run (which would break replay / `:fork` per the RFC 0048 §D owner-echo determinism). Deactivation sets a link-scoped deny that the SAML decision path consults.
+
+**Discovery shape:** `capabilities.auth.subjectLinking: true` (optional boolean; absent/false = the lanes are independent and the combined leaver guarantee is not claimed). A host MUST NOT set it true unless both `openwop-auth-saml` and `openwop-auth-scim` are in `capabilities.auth.profiles[]` and the obligations above hold.
+
+**Conformance gaps to close:** `auth-subject-link.test.ts` (RFC 0159), gated on `capabilities.auth.subjectLinking`, verifies (positive) that a SCIM-provisioned user linked by `externalId` to a SAML persistent `NameID`, once SCIM-deactivated, yields a **denied** SAML decision; and (negative) that a link configured on a mutable key (email) never produces a cross-lane pass. Reuses the bundled synthetic SAML IdP (`conformance/src/lib/saml-idp.ts`) + a synthetic SCIM payload; the live cross-lane path is opt-in via the existing `OPENWOP_TEST_SAML_IDP_URL` / `OPENWOP_TEST_SCIM_URL` seams.
+
+---
+
 ## Discovery guidance
 
 As of RFC 0010 (2026-05-11), auth-profile metadata has a **formal schema location** at `capabilities.auth.*` in `schemas/capabilities.schema.json`. Hosts SHOULD advertise auth-profile claims and metadata here. The `extensions.auth.*` location below remains valid for historical reasons; clients MUST prefer `capabilities.auth.*` when both are present.
