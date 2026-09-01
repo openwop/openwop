@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0159                                                            |
 | **Title**         | A subject-linking obligation for hosts advertising **both** `openwop-auth-saml` and `openwop-auth-scim`: a SCIM deactivation MUST fail-close the linked SAML identity, keyed on an opaque IdP-stable subject id — so a provisioned leaver cannot still SSO in |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-08-31                                                      |
-| **Updated**       | 2026-08-31 (`Draft → Active` — 7-day comment window **waived** per `GOVERNANCE.md` single-maintainer lazy consensus, as RFC 0050 did; wire shape locked, implementation pending. `Active → Accepted` gates on the reference host implementing the cross-lane leaver deny + a live pass under `OPENWOP_REQUIRE_BEHAVIOR=true`.) |
+| **Updated**       | 2026-09-01 (`Active → Accepted` — the reference host (openwop-app) implements the cross-lane leaver deny; witnessed behaviorally, see § Implementation record. `Draft → Active` on 2026-08-31 waived the 7-day comment window per `GOVERNANCE.md` single-maintainer lazy consensus, as RFC 0050 did; wire shape locked at `Active`.) |
 | **Affects**       | `spec/v1/auth-profiles.md` (new cross-profile "Subject linking" subsection + discovery flag) · `schemas/capabilities.schema.json` (new optional `auth.subjectLinking` boolean) · RFC 0050 (gains an **Amended by** forward pointer) · extends RFC 0048 (principals) + RFC 0049 (roles, fail-closed §C) · new conformance scenario `auth-subject-link.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (new **optional** discovery flag; its MUSTs bind only the hosts that opt in — no host conforming to RFC 0050 today de-conforms) |
 | **Supersedes**    | —                                                              |
@@ -130,13 +130,23 @@ Note (per the template's two failure modes): §A.2 and §A.4 are partly **negati
 
 ## Acceptance criteria
 
-- [ ] Spec text merged — `spec/v1/auth-profiles.md` gains the "Subject linking (SAML ⟷ SCIM)" subsection (§A) + the discovery flag note (§B).
-- [ ] `schemas/capabilities.schema.json` gains the optional `auth.subjectLinking` boolean; `redocly lint api/openapi.yaml` stays clean.
-- [ ] RFC 0050 gains an `**Amended by**` row pointing to RFC 0159 with a one-line summary.
-- [ ] At least one conformance scenario (`auth-subject-link.test.ts`) covering §A.3 (positive) + §A.2 (negative), capability-gated on `auth.subjectLinking`.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] Reference host (per `ROADMAP.md`) implements and passes the new scenarios, OR the RFC explicitly defers reference-host implementation (`Active → Accepted` gate).
-- [ ] Register sweep: `registers/0159-scim-saml-subject-linking.gaps.md` + `.risks.md` rows closed, transferred, or carried forward in Unresolved questions before any `Accepted` flip.
+- [x] Spec text merged — `spec/v1/auth-profiles.md` gains the "Subject linking (SAML ⟷ SCIM)" subsection (§A) + the discovery flag note (§B). (#1153)
+- [x] `schemas/capabilities.schema.json` gains the optional `auth.subjectLinking` boolean (added under `auth.properties`, `additionalProperties: true` preserved — no latent breaking change); `redocly lint api/openapi.yaml` stays clean. (#1153)
+- [x] RFC 0050 gains an `**Amended by**` row pointing to RFC 0159 with a one-line summary. (#1153)
+- [x] At least one conformance scenario (`auth-subject-link.test.ts`) covering §A.3 (positive) + §A.2 (negative), capability-gated on `auth.subjectLinking`. (#1153)
+- [x] CHANGELOG entry under the suite version. (#1153)
+- [x] Reference host (openwop-app) implements and passes the new scenarios — see § Implementation record. (openwop-app #3581)
+- [x] Register sweep: `registers/0159-scim-saml-subject-linking.gaps.md` + `.risks.md` — the remaining open design items are carried forward as Unresolved questions UQ1–UQ4 (mandatory-follow-up RFC, link-key-class declaration, configured linking attribute, same-IdP trust-root MUST); the security-critical R1 (mutable/PII-key join-and-inherit) is closed by the §A.2 MUST-NOT + the `auth-subject-link` email-key negative case + the `SECURITY/threat-model-auth-profiles.md` §4.5 entry (#1154).
+
+## Implementation record
+
+| Item | Where | Status |
+| --- | --- | --- |
+| Spec + schema + conformance scenario + registers + RFC 0050 `Amended by` | `../openwop` #1153 (`d137f2ff`) | merged |
+| `SECURITY/threat-model-auth-profiles.md` §4.5 (join-and-inherit / leaver / cross-tenant) | `../openwop` #1154 (`358ac06b`) | merged |
+| Reference-host cross-lane leaver deny — link store on the opaque `externalId`, SCIM-deactivate writes the deny, SAML **validate seam + production ACS** consult it fail-closed, §A.2 mutable-key link rejected, `subjectLinking` discovery gated on both profiles, DSAR eraser (ADR 0464) | openwop-app #3581 (`99716f3c`), ADR 0613 | merged |
+
+**Witness.** The host honours §A (link-not-merge — no `userIdFor` rewrite, so RFC 0048 §D owner-echo + `:fork` replay stay deterministic). The behavioral contract (§A.3 cross-lane leaver deny + §A.2 mutable-key rejection + §B advertisement gating) is executed green by the in-process route-level witness `backend/typescript/test/auth-subject-link.test.ts`, which boots the real host with the seams enabled and runs the exact vendored sequence: provision(externalId) → SAML authenticates → SCIM deactivate → **SAML denied** (`subject_linked_deactivated`), unrelated subject unaffected, email-key link rejected `400`. The vendored `auth-subject-link.test.ts` advertisement-shape leg rides `@openwop/openwop-conformance` ≥ 1.144.0 in openwop-app CI; its behavioral legs are opt-in (`OPENWOP_TEST_SAML_IDP_URL` + `OPENWOP_TEST_SCIM_URL` + a synthetic IdP), mirrored exactly by the in-process witness above.
 
 ## References
 
