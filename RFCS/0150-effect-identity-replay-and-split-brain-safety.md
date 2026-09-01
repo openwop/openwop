@@ -79,6 +79,10 @@ The canonical recovery strategies are:
 
 `last-writer-wins` is removed from the normative strategy vocabulary through the safety-fix migration. Conflict events **MUST** record winner, loser, strategy, and opaque effect IDs without content.
 
+**Scope, and where the intra-region case lives.** Every obligation in this section above the separation principle is conditioned on *claiming multi-region effect safety*; a host that advertises nothing for `capabilities.idempotency.crossRegion` is not bound by the fencing-token requirement and never will be. That is deliberate — but it is **not** a statement that duplicate external effects are out of scope for a single-region host, and this section's title is where a reader with an intra-region hazard tends to arrive. The concurrent-duplicate rule for **two executors of one run inside one region** — the orphan sweeper re-dispatching a run whose owner is stalled but alive — is **§B**, which requires the durable invocation-log claim to be an atomic compare-and-set / insert-if-absent, and which `idempotency.md` §"Concurrent duplicates (Layer 2)" states **MUST** hold within a single-instance deployment. Unlike a lease, that claim is liveness-independent: the losing executor need not be alive or aware, because it loses at the moment it attempts the write. Read §B with the recovery-boundary precondition it carries — the identities only collide if the re-dispatched executor re-executes the node's logical activities from the start.
+
+The first two sentences of this section are the exception: reconciliation not authorizing effects is unconditional, and `idempotency.md` §"Reconciliation does not authorize effects" states it outside the `multiRegion.supported: true` list.
+
 ### §E — Versioning and history
 
 Runs **MUST** stamp `activityIdentityRecipe` and `semanticRequestRecipe`. Existing histories remain `v1`; readers **MUST NOT** recompute v1 IDs with v2 rules. A host MAY dual-read v1/v2 cache records during migration but **MUST** write v2 only after enabling the new recipe. Forks inherit source recipe stamps for recorded history and use the target host's selected recipe only for new branch effects.
