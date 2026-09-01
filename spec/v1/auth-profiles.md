@@ -166,6 +166,23 @@ The link is a **reference, not a merge**: the two durable subjects (`saml:…` a
 
 **Discovery shape:** `capabilities.auth.subjectLinking: true` (optional boolean; absent/false = the lanes are independent and the combined leaver guarantee is not claimed). A host MUST NOT set it true unless both `openwop-auth-saml` and `openwop-auth-scim` are in `capabilities.auth.profiles[]` and the obligations above hold.
 
+#### Link-key-class declaration and same-IdP trust root — RFC 0163
+
+RFC 0163 hardens the two obligations above that were, in RFC 0159, only partially witnessable: the "MUST NOT key on a mutable/PII attribute" (above) was a negative-existence property a suite cannot exhaustively falsify, and the acceptable stable-key set and the two lanes' trust-root relationship were left open. Both additions below apply to the same opt-in host (advertising both profiles with `capabilities.auth.subjectLinking: true`).
+
+**Declarable, witnessable link-key class:**
+
+- A host that advertises `capabilities.auth.subjectLinking: true` MUST also advertise `capabilities.auth.subjectLinkKey`, whose value MUST be one of the **closed enum** of allowed classes: `opaque-idp` (SCIM `externalId` ↔ persistent-format SAML `NameID` — the default pairing above), `oid` (an IdP-asserted immutable object identifier), or `immutable-id` (a host-configured immutable-id attribute asserted by the same IdP). All three name an opaque, IdP-asserted, stable, non-PII identifier.
+- A host MUST NOT advertise a `subjectLinkKey` it does not honour: the declared class MUST be the class the host actually joins on (advertise only what you honour, per RFC 0011 / RFC 0048 §D).
+- The enum is **allowed-classes-only**. `email`, `userName`, `displayName`, and every mutable-or-PII attribute are absent from it by construction — a conforming discovery document cannot name one. This is the witness: the "MUST NOT use a mutable key" prohibition becomes "a host cannot *say* it uses one and stay conforming, and MUST honour what it says", which a conformance suite asserts positively (the declared class is a member of the safe set) rather than as an unfalsifiable negative.
+
+**Same-IdP trust root (before a link may form):**
+
+- The host MUST NOT form a subject link between a SAML-asserted principal and a SCIM-provisioned principal unless both lanes are fed by the **same IdP trust root**: the issuer of the SAML assertion MUST correspond to the same IdP that provisioned the SCIM resource. An opaque identifier that collides across two *different* IdPs MUST NOT join two principals.
+- If the host cannot establish that the two lanes share an IdP trust root for a candidate pair, it MUST NOT form the link and MUST NOT claim the combined leaver guarantee for that pair on the strength of a cross-IdP identifier match (composing with the "fail closed absent a link key" requirement above). This same-IdP scoping composes with the same-**tenant** MUST: a link requires both same-tenant and same-IdP-trust-root.
+
+**Discovery shape (RFC 0163):** `capabilities.auth.subjectLinkKey: "opaque-idp" | "oid" | "immutable-id"` (optional string, closed enum; a host setting `subjectLinking:true` MUST advertise a value in the enum — absence or an out-of-enum value is non-conforming).
+
 **Conformance gaps to close:** `auth-subject-link.test.ts` (RFC 0159), gated on `capabilities.auth.subjectLinking`, verifies (positive) that a SCIM-provisioned user linked by `externalId` to a SAML persistent `NameID`, once SCIM-deactivated, yields a **denied** SAML decision; and (negative) that a link configured on a mutable key (email) never produces a cross-lane pass. Reuses the bundled synthetic SAML IdP (`conformance/src/lib/saml-idp.ts`) + a synthetic SCIM payload; the live cross-lane path is opt-in via the existing `OPENWOP_TEST_SAML_IDP_URL` / `OPENWOP_TEST_SCIM_URL` seams.
 
 ---
