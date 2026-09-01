@@ -206,7 +206,26 @@ jobs:
           # The other ~200 were a dead host, not a suite problem
           # (better-sqlite3 v11 SIGABRTing on Node 24) — fixed in
           # openwop-examples#26. Both had to land for the soak to report.
-          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full,openwop-agent-platform,openwop-budget-enforcement,openwop-deployment-channel-dispatch,openwop-deployment-lifecycle,openwop-egress-audience-binding,openwop-egress-decision-content-free,openwop-eval-run,openwop-live-allowlist-enforced,openwop-live-invocation-bracket,openwop-live-structured-output,openwop-memory-degraded,openwop-org-chart-scoping,openwop-org-position-no-authority,openwop-roster-attribution,openwop-safefetch-live-audit,openwop-tool-catalog,openwop-tool-session-lifecycle,openwop-trigger-bridge,openwop-verifier-gating,openwop-callai-multimodal,openwop-agent-capability-degraded,openwop-grpc-transport,openwop-i18n,connections.packsSupported,a2a.durableTasks,a2a.pushNotifications,dispatch.perItemInput,mcp-2026-07-28,mcp.mrtr.client,openwop-compensation,openwop-content,openwop-context-budget,openwop-self-hosted-runner,triggerBridge.ingestion,uiPlugins.supported,workflowChainPacks.deferredParameters.supported,workflowChainPacks.hostExpansionSeam'
+          # 2026-09-01 second cohort (32 profiles). These were NOT newly
+          # broken — they were unreachable. The host used to die ~40% of the
+          # way through the run, so the scenarios that demand these never
+          # executed and the gate could not report on them. Fixing the crash
+          # (better-sqlite3 v11 → v12, openwop-examples#26) took the run from
+          # 241 failures to 40, and the 40 that remained were this set
+          # becoming visible for the first time.
+          #
+          # Verified the same way as the first cohort: booted the host on the
+          # bumped dependency and probed each name against its live
+          # `/.well-known/openwop` at the document root, under `capabilities.`,
+          # and in `profiles[]`. 32 of 32 unadvertised; 0 advertised-but-
+          # failing. Had any been advertised it would have stayed OFF this
+          # list — that case is a real host bug and must keep the gate red.
+          #
+          # Note `workflowChainPacks.supported` and
+          # `workflowChainPacks.subChains.supported` appear even though
+          # `workflowChainPacks` is already listed: matching is exact-string,
+          # not prefix, so each gated sub-key needs its own entry.
+          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full,openwop-agent-platform,openwop-budget-enforcement,openwop-deployment-channel-dispatch,openwop-deployment-lifecycle,openwop-egress-audience-binding,openwop-egress-decision-content-free,openwop-eval-run,openwop-live-allowlist-enforced,openwop-live-invocation-bracket,openwop-live-structured-output,openwop-memory-degraded,openwop-org-chart-scoping,openwop-org-position-no-authority,openwop-roster-attribution,openwop-safefetch-live-audit,openwop-tool-catalog,openwop-tool-session-lifecycle,openwop-trigger-bridge,openwop-verifier-gating,openwop-callai-multimodal,openwop-agent-capability-degraded,openwop-grpc-transport,openwop-i18n,connections.packsSupported,a2a.durableTasks,a2a.pushNotifications,dispatch.perItemInput,mcp-2026-07-28,mcp.mrtr.client,openwop-compensation,openwop-content,openwop-context-budget,openwop-self-hosted-runner,triggerBridge.ingestion,uiPlugins.supported,workflowChainPacks.deferredParameters.supported,workflowChainPacks.hostExpansionSeam,a2a-1.0,a2a.peerAuthority,a2a.versionNegotiation,agents.goals,agents.proposals,dataResidency,dispatch.fanOutSupported,host.forms.contentPacks,interrupt.approverRouting,mcp.extensionOpacity,mcp.versionNegotiation,openwop-anonymous-actor,openwop-artifact-type-packs,openwop-channel-presence,openwop-chat-card-packs,openwop-context-summarization,openwop-memory-injection-budget,openwop-multi-party-conversation,openwop-selfhosted-providers,openwop-speech-synthesis,openwop-subscription-auth,openwop-tool-catalog-compact,openwop-voice-bargein,openwop-voice-interim-not-durable,openwop-voice-streamref-tenant,openwop-voice-synthesis,openwop-voice-transcription,openwop-workload-identity,openwop-workload-identity-delegation,portability,workflowChainPacks.subChains.supported,workflowChainPacks.supported'
           # Fixture-id opt-outs — the SQLite host auto-loads every
           # `conformance-*.json` fixture on disk (so the fixture IS
           # advertised in `/.well-known/openwop`) but does not implement
