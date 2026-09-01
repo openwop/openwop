@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (new **optional** discovery flag; its MUSTs bind only the hosts that opt in — no host conforming to RFC 0050 today de-conforms) |
 | **Supersedes**    | —                                                              |
 | **Superseded by** | —                                                              |
+| **Amended by**    | [RFC 0163](./0163-subject-linking-hardening.md) — additive hardening: a declarable, witnessable link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) that converts this RFC's §A.2/§A.4 negative-existence mutable-key prohibition into a positive advertisement (closes UQ2/UQ3), plus a same-IdP trust-root MUST before a link may form (closes UQ4 / register R5). Both gated on `subjectLinking:true` — additive, nothing de-conforms. |
 
 ## Summary
 
