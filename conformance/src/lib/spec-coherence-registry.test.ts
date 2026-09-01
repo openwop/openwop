@@ -119,3 +119,37 @@ describe('resolveFileRecord classifies a corpus scenario as inapplicable, not bl
     expect(r.disposition).toBe('executed-pass');
   });
 });
+
+describe('the published layout is what makes these rows comparable across hosts', () => {
+  // Load-bearing and, until now, tested nowhere.
+  //
+  // A spec-coherence row is `inapplicable` only when V1_DIR is null, and V1_DIR
+  // is null only when the layout resolves to `published`. Two peers established
+  // by measurement what the code implies: `resolveLayout()` keys off PKG_ROOT,
+  // not the consuming repo, so an npm-installed consumer's parent is always
+  // `node_modules/@openwop/` — which never contains `schemas/` no matter where
+  // the host's checkout sits on disk. Every npm-consuming host therefore gets
+  // the same answer, and the dispositions are comparable BY CONSTRUCTION.
+  //
+  // One peer had generalised the opposite way — "the disposition is a property
+  // of where the bundle was cut" — from a host whose own runner sets
+  // OPENWOP_CONFORMANCE_ROOT when it finds a sibling checkout. True of that
+  // host, false of the artifact. The distinction only survives if something
+  // holds the artifact to it.
+  //
+  // The thing that would break it is a change that looks HELPFUL: adding
+  // `spec` to `files` so "the corpus tests run for consumers too". That would
+  // silently give npm consumers V1_DIR, the 28 would execute instead of
+  // flipping, and every host's numbers would shift with no failure anywhere.
+  it('the published package ships no spec/ — so V1_DIR is null for npm consumers', () => {
+    const pkg = JSON.parse(readFileSync(join(SCENARIOS, '../../package.json'), 'utf8')) as { files: string[] };
+    expect(
+      pkg.files.filter((f) => f === 'spec' || f.startsWith('spec/')),
+      'adding spec/ to `files` would give npm consumers a V1_DIR, so the spec-coherence rows would execute '
+        + 'instead of reporting `inapplicable` — changing every host bundle with no test going red',
+    ).toEqual([]);
+    // schemas/ IS shipped, and is what selects the `published` layout. If this
+    // ever stops being true the layout resolves to neither branch.
+    expect(pkg.files, 'schemas/ is what makes resolveLayout() pick `published`').toContain('schemas');
+  });
+});
