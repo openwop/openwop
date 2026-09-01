@@ -12,9 +12,14 @@
  *
  * Nothing else looked either. `@openwop/openwop-conformance` once accumulated
  * 25 unpublished bumps (1.73.0 → 1.98.0) while npm served 1.73.0; a peer
- * session noticed, no gate could. Smaller and more recent: 1.143.0 was main's
- * pinned version between #1152 and #1153, was never published, and was
- * silently superseded by 1.144.0. That version number does not exist on npm.
+ * session noticed, no gate could.
+ *
+ * The first CI run of this check corrected an assumption behind its own
+ * design. A version that was pinned, superseded, and never published is not
+ * rare — it is the NORMAL case here, 59 of the last 120. The suite is bumped
+ * on most merges and tagged in batches, so gaps in the version line are the
+ * release cadence, not a fault. What actually hurt was never the gaps; it was
+ * the CURRENT pin sitting unpublished while npm served something older.
  *
  * ## Two findings, deliberately weighted differently
  *
@@ -25,11 +30,11 @@
  *     loudly about.
  *
  *   SKIPPED (reported, never fails) — a version that was main's pin at some
- *     point, was superseded, and was never published. NOT recoverable: the
- *     tree that version named is gone, and publishing it now would be a lie
- *     about what it contained. Failing a build over an unfixable historical
- *     fact trains people to ignore the check, so these are reported and
- *     counted, never fatal.
+ *     point, was superseded, and was never published. Routine, and doubly
+ *     un-failable: it is the normal cadence, AND it is unrecoverable, since
+ *     the tree that version named is gone and publishing it now would be a lie
+ *     about what it contained. Reported as a count with a small sample, so the
+ *     number stays visible without burying the one line that matters.
  *
  * ## Why the grace window, and why this is not in `openwop:check`
  *
@@ -136,17 +141,34 @@ const walkedAll = commits.length < HISTORY_LIMIT;
 process.stdout.write(
   `  Examined ${commits.length} commit(s) touching ${MANIFEST}` +
     (walkedAll ? ` (entire history).\n` : ` — the last ${HISTORY_LIMIT}, NOT the entire history.\n`) +
-    `  ${introduced.size} distinct version(s) pinned; ${publishedVersions.size} published on npm.\n`,
+    `  ${introduced.size} distinct version(s) pinned in that window.\n` +
+    `  ${publishedVersions.size} version(s) exist on npm in total — that is the registry's whole\n` +
+    `  history, NOT the overlap with the window, so the two numbers do not subtract.\n`,
 );
 
 // ---- 3. SKIPPED: pinned at some point, superseded, never published ----------
 const skipped = [...introduced.keys()].filter((v) => v !== current && !publishedVersions.has(v));
 if (skipped.length > 0) {
+  // Routine here, not anomalous: the suite version is bumped on most merges and
+  // tagged in batches, so a superseded-unpublished version is the NORMAL case —
+  // the first CI run of this check found 59 of them. Printing all 59 every day
+  // would bury the one line that matters, so the count is the finding and the
+  // list is a sample. Never fatal, for the same reason: a check that fails on
+  // the normal case is a check people learn to ignore.
+  const SHOW = 5;
+  const recent = skipped
+    .slice()
+    .sort((a, b) => String(introduced.get(b)).localeCompare(String(introduced.get(a))))
+    .slice(0, SHOW);
   process.stdout.write(
-    `\n  ${skipped.length} version(s) were pinned on main, superseded, and never published:\n` +
-      skipped.map((v) => `    ${v}  (pinned ${introduced.get(v).slice(0, 10)})\n`).join('') +
-      `  Reported, not fatal: the tree each named is gone, so publishing one now would\n` +
-      `  misrepresent its contents. They are here so the count is visible rather than zero.\n`,
+    `\n  ${skipped.length} version(s) were pinned on main, superseded, and never published.\n` +
+      `  This is expected: the suite is bumped on most merges and tagged in batches, so a\n` +
+      `  version that never shipped is the normal case rather than a defect. Reported so the\n` +
+      `  count is visible rather than zero; never fatal, because the tree each one named is\n` +
+      `  gone and publishing it now would misrepresent its contents.\n` +
+      `  Most recent ${Math.min(SHOW, skipped.length)}:\n` +
+      recent.map((v) => `    ${v}  (pinned ${introduced.get(v).slice(0, 10)})\n`).join('') +
+      (skipped.length > SHOW ? `    … and ${skipped.length - SHOW} older, not listed.\n` : ''),
   );
 }
 
