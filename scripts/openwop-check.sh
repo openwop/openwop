@@ -133,6 +133,9 @@ node "$SPEC_ROOT/scripts/generate-operation-path-manifest.mjs" --check
 node "$SPEC_ROOT/scripts/generate-extension-registry-coverage.mjs" --check
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 node "$SPEC_ROOT/scripts/check-capability-declaration-classes.mjs"
+# COMPATIBILITY.md §7 — the deprecation register is an index of deprecations the RFC
+# process already made; this keeps every cited source carrying its annotation.
+node "$SPEC_ROOT/scripts/check-deprecations.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).

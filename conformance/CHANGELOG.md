@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.152.0] — 2026-09-02 — v2 charter Phase 0: `--certify` defaults to bundle v2; the RFC 0050 reference suite leaves the scenario file
+
+No new scenario file. Two packed changes:
+
+- **`--certify` emits certification bundle v2 by default** (RFC 0148). `--bundle-version 1` still works through the RFC 0148 migration window (ends 2026-11-10) and prints a deprecation notice; the v1 schema file stays in the package so v1 bundles remain parseable, and is removed at v2.0 (`spec/v1/deprecations.json`).
+- **The RFC 0050 §A synthetic-IdP reference suite moved** from `scenarios/auth-saml-profile.test.ts` to `src/lib/saml-idp.test.ts` (RFC 0163 gap G5): it proves the bundled fixture, not a host, and inside a scenario file it recorded an `executed-pass` in every host bundle (certification gap G8). The scenario keeps its host-facing legs; `coverage.md` grades it `host-pending` on the opt-in host-ACS leg. Hosts whose bundles previously counted this file as a pass will see it become `skipped`/`inapplicable` unless they opt into the seam — that is the honest reading.
+
 ## [1.151.0] — 2026-09-02 — RFC 0164: the subject-link scenarios gate on the profile pair; the opted-out shape fails
 
 No new scenario file. `auth-subject-link.test.ts` and `auth-subject-link-key-class.test.ts` re-gate every leg on the host advertising **both** `openwop-auth-saml` and `openwop-auth-scim`, not on `capabilities.auth.subjectLinking`, which RFC 0164 makes a derived advertisement. The RFC 0159 advertisement block gains a leg: both profiles advertised ⇒ `subjectLinking === true` and `subjectLinkKey ∈ {opaque-idp, configured-immutable}`, else `executed-fail` citing RFC 0164 §A.3. That is the shape a combined host that opted out used to present, and it used to read `inapplicable` — a host shipping the leaver bypass was invisible to the suite. `src/lib/capabilities-auth-subject-link.test.ts` pins the new schema conditional (both profiles with the flag absent, `false`, or without a key are rejected; with `true` + a class accepted; profile order irrelevant; single-profile hosts unaffected). `capabilities.schema.json` composes the RFC 0163 and RFC 0164 conditionals under `allOf`; `coverage.md` rows re-worded. No production host advertises both profiles, so no host's recorded evidence changes.

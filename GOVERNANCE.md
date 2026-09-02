@@ -102,6 +102,17 @@ When those conditions are met, a working group charter will be filed as an RFC a
 
 Working-group activation also ratifies the registry and extension policy in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) (currently `Draft`, auditable today): the WG's first ballot is to ratify RFC 0043 §B/§C verbatim or amend, flipping it to `Accepted`. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
 
+## Sole-steward operation
+
+Recorded 2026-09-02, to be retired when the "Path to working group" conditions above are met.
+
+The project currently has **one maintainer and one organization**. The only conforming hosts are the steward's own: the tier-1 reference host (`openwop-app`) and the steward-affiliated tier-2 host (MyndHyve `workflow-runtime`), per `INTEROP-MATRIX.md`. No independent-organization host, maintainer, or user exists to wait for. Under that fact the project operates as follows, and says so rather than performing a review it cannot have:
+
+- **Comment windows may be waived and every waiver is recorded** in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers", including the 30-day breaking-change window for the v2 major. The RFC 0001 §5 note that the cross-organization approval rule is not yet active is carried into each such RFC's header, together with any rule the RFC overrides (for example RFC 0147 §A.6).
+- **Evidence gates are never waived.** `Active → Accepted` remains a witnessed, non-vacuous conformance pass on a deployed host per §"Acceptance evidence tiers"; the tier is stated in the RFC. A status can be waived; a bundle cannot.
+- **Adopter-facing machinery is built even though no external adopter exists**: the deprecation register (`COMPATIBILITY.md` §7), migration guides, codemods with negative controls, and dual-major conformance scenarios. A future implementer inherits a protocol that migrated itself on the record.
+- **The v1 deprecation clock is the host inventory**, per `COMPATIBILITY.md` §5, with a calendar floor that activates only when an independent host is in the matrix.
+
 ## Amendments
 
 This document is amended via the same process as a non-normative addition (one maintainer approval; CHANGELOG entry). Changes that affect the maintainer set or the decision rule require two maintainer approvals **and an RFC** per `RFCS/0001-rfc-process.md`.

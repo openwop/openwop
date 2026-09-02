@@ -210,20 +210,37 @@ The release manager:
 
 ### Major bump to v2.x (rare)
 
-The release manager:
+Rewritten 2026-09-02 from the v2 charter's downstream audit: the earlier text pointed at `site/src/build.mjs`, which moved to the `openwop-site` repository in the 2026-06 split, and covered only the site. A major touches nine repositories. The release manager, in this order:
 
-1. Creates `spec/v2/` alongside the existing `spec/v1/`. v1 stays in place — it remains supported under the deprecation policy in `PUBLISHING.md`.
-2. **Refactors `site/src/build.mjs::buildSpecDocs()`** to iterate over `spec/v*/` directories instead of hard-coding `spec/v1`. The expected shape:
-   - Discover versions via `readdirSync('spec').filter(d => /^v\d+(\.\d+)?$/.test(d))`.
-   - Render each version's docs at `/spec/{version}/{slug}.html`.
-   - Render the highest version's index at `/spec/{highest}/index.html` plus a copy or canonical at `/spec/latest/`.
-   - Per-doc page-header gains an "Other versions: v1" link slot derived from the discovered directory set.
-3. Updates `firebase.json` `redirects` block:
-   - `/spec/latest{,/:path*}` now points at `/spec/v2/`.
-   - The existing `/spec/v1.1{,/:path*}` → `/spec/v1/...` (301) entries stay (v1 docs remain at `/spec/v1/`).
-4. Updates `spec/v1/auth.md` Status legend to reference both the v1 and v2 legend pages (each major version may have its own `/governance/spec-status/` policy URL — keep them version-prefixed if they diverge).
-5. CHANGELOG entry: `## [2.0.0]` — the breaking-change-permitted release.
-6. Capability profile manifests advertised by hosts may now negotiate v2 alongside v1; see RFC 0001 §"Version negotiation."
+**In this repository (`openwop/openwop`):**
+
+1. Creates `spec/v2/` alongside `spec/v1/` (`spec/v2/core/` under the word budget the v2 RFC sets; `spec/v2/ext/<name>/` for everything else, each with a witness class and maturity in its header). v1 stays in place and remains supported under `COMPATIBILITY.md` §5's host-inventory rule.
+2. Creates `schemas/v2/` with every `$id` under `https://openwop.dev/spec/v2/`. `schemas/` (flat, v1 `$id`s) is left untouched and becomes read-only.
+3. Regenerates `api/openapi.yaml`, `api/asyncapi.yaml`, `api/grpc/openwop.proto` (if the transport survives the cut) and the seams document from the v2 declaration file; the `operation-path-manifest.json` is regenerated for both operations and channels.
+4. Enforces `spec/v1/deprecations.json`: every entry whose `removeIn` is `2.0` is absent from `spec/v2/` and `schemas/v2/`, and the check script fails otherwise.
+5. Publishes `@openwop/openwop-conformance@2.0.0` per `PUBLISHING.md` (tarball contains `dist`, `fixtures`, `vectors` only; the v2 suite ships bundle v3 and the dual-major scenario).
+6. CHANGELOG entry: `## [2.0.0]` — the breaking-change-permitted release. Updates `spec/v1/auth.md`'s status legend to reference both majors' legend pages.
+
+**In `openwop/openwop-site`:**
+
+7. Refactors `site/src/build.mjs::buildSpecDocs()` to iterate over `spec/v*/` instead of hard-coding `spec/v1` (twelve sites at the time of writing, including a FATAL guard and the nav label): discover versions via `readdirSync('spec').filter(d => /^v\d+$/.test(d))`; render each at `/spec/{version}/{slug}.html`; render the highest version's index plus `/spec/latest/`; add an "Other versions" link slot. `scripts/build-site.sh` copies `schemas/v2/` to `public/spec/v2/` beside the v1 copy.
+8. Updates `firebase.json` redirects: `/spec/latest{,/:path*}` → `/spec/v2/…`; the `/spec/v1.1{,/:path*}` → `/spec/v1/…` entries stay.
+
+**In `openwop/openwop-sdks`:**
+
+9. Publishes `@openwop/openwop@2.0.0` (npm), `openwop-client==2.0.0` (PyPI), and the Go module under a `/v2` directory (the module path has no version suffix today, so this is a directory move, not a tag; fix the stale `sdk/smoke` module path first). Old majors stay available for the `PUBLISHING.md` retention floor.
+
+**In `openwop/openwop-registry`:**
+
+10. Publishes `registry/v2/` (re-signed manifests, or a signed compatibility overlay) and the peer-dependency alias table generated from the v2 declaration file. A v2 host treats an absent `engines.openwop` ceiling as `<2.0.0`.
+
+**In `openwop/openwop-examples`, `openwop/openwop-cli`:**
+
+11. The four reference hosts pass the 2.0.0 floor and commit fresh v3 bundles; the CLI's disposition (rewritten onto SDK 2, or frozen v1-only) is recorded in its README.
+
+**Hosts (`INTEROP-MATRIX.md`):**
+
+12. Each host advertises both majors via `protocolVersions[]` during the overlap, produces a non-vacuous v2 bundle, and gets a matrix row. The v1 deprecation date is then computed per `COMPATIBILITY.md` §5.
 
 **Anti-pattern.** Do not create `spec/v1.2/` as a directory. Inside v1.x, minor bumps are in-place edits of `spec/v1/`. A new directory is reserved for a new major version. The `/spec/v1.1/` redirect entry in `firebase.json` exists only as an inbound-link safety net for citations that hard-coded the minor number; it does not imply a parallel directory.
 
