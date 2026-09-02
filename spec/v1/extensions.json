@@ -166,9 +166,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.107.0",
       "evidenceTier": null,
-      "note": "RFC 0151 `Accepted`; shape landed at suite 1.89.0 (`b4796755`), the six \u00a7D events (`76195069`), the capability-gated behavioral witness `compensation-behavior.test.ts` at 1.94.0 (`4bec9e07`), and `compensationStatus` on `RunSnapshot` + `spec/v1/compensation.md` (`Draft`, landed subset only) + seams \u00a721 at 1.107.0 (`5f1978f2`). `draft`, not `stable`: no host advertises `compensation.supported`, so every behavioral leg resolves to `blocked` (RFC 0148 \u00a7A); \u00a7C/\u00a7E prose and `compensation-policy.schema.json` remain carried.",
-      "witness": "witnessable-gated",
-      "witnessReview": "initial-mechanical-2026-09-02"
+      "note": "RFC 0151 `Accepted`; shape landed at suite 1.89.0 (`b4796755`), the six \u00a7D events (`76195069`), the capability-gated behavioral witness `compensation-behavior.test.ts` at 1.94.0 (`4bec9e07`), and `compensationStatus` on `RunSnapshot` + `spec/v1/compensation.md` (`Draft`, landed subset only) + seams \u00a721 at 1.107.0 (`5f1978f2`). `draft`, not `stable`: no host advertises `compensation.supported`, so every behavioral leg resolves to `blocked` (RFC 0148 \u00a7A); \u00a7C/\u00a7E prose and `compensation-policy.schema.json` remain carried. Witness review 2026-09-02: reclassified witnessable-gated \u2192 seam-gated \u2014 `compensation-behavior` / `-recovery` run through `/v1/host/sample/test/compensation/*` (`host-sample-test-seams.md` \u00a721) and record `blocked` without it.",
+      "witness": "seam-gated",
+      "witnessReview": "reviewed-2026-09-02"
     },
     {
       "id": "openwop-a2a-1-0",
@@ -181,9 +181,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.96.0",
       "evidenceTier": null,
-      "note": "RFC 0152 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7B negotiation witness `a2a-version-negotiation.test.ts` at 1.96.0 (`5f1a7112`), and \u2014 2026-08-16 \u2014 the 1.0 profile prose and field-by-field translation table in `spec/v1/a2a-integration.md` \u00a7\"A2A 1.0 versioned composition\" (`d77d259b`, pinned to A2A 1.0.0; JSON-RPC-at-1.0 floor; `a2a-0.3-legacy` named and time-bounded to 2027-03-12) landed; openwop-app's live origin advertises `a2a.protocolVersions` and passes the \u00a7A leg; it has not wired the invoke seam, so the \u00a7B legs are `blocked` there (corrected 2026-08-16). `draft`: the suite's fake peer is 0.3-shaped so \u00a7C/\u00a7D are unwitnessed at 1.0, and stable is additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`.",
-      "witness": "witnessable-gated",
-      "witnessReview": "initial-mechanical-2026-09-02"
+      "note": "RFC 0152 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7B negotiation witness `a2a-version-negotiation.test.ts` at 1.96.0 (`5f1a7112`), and \u2014 2026-08-16 \u2014 the 1.0 profile prose and field-by-field translation table in `spec/v1/a2a-integration.md` \u00a7\"A2A 1.0 versioned composition\" (`d77d259b`, pinned to A2A 1.0.0; JSON-RPC-at-1.0 floor; `a2a-0.3-legacy` named and time-bounded to 2027-03-12) landed; openwop-app's live origin advertises `a2a.protocolVersions` and passes the \u00a7A leg; it has not wired the invoke seam, so the \u00a7B legs are `blocked` there (corrected 2026-08-16). `draft`: the suite's fake peer is 0.3-shaped so \u00a7C/\u00a7D are unwitnessed at 1.0, and stable is additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`. Witness review 2026-09-02: reclassified witnessable-gated \u2192 seam-gated \u2014 `a2a-version-negotiation` needs the invoke seam to observe the negotiated version and records `blocked` without it (RFC 0148 \u00a7A).",
+      "witness": "seam-gated",
+      "witnessReview": "reviewed-2026-09-02"
     },
     {
       "id": "openwop-mcp-2026-07-28",
@@ -196,9 +196,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.97.0",
       "evidenceTier": null,
-      "note": "RFC 0153 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7A/\u00a7B revision-negotiation witness `mcp-version-negotiation.test.ts` at 1.97.0 (`7b09e9aa`), and \u2014 2026-08-16 \u2014 the profile prose and MRTR mapping in `spec/v1/mcp-integration.md` \u00a7\"MCP 2026-07-28 versioned composition\" (`65ebd53a`, pinned to the upstream 2026-07-28 revision; `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12) landed; openwop-app's live origin advertises `mcp.protocolVersions` and passes the \u00a7A legs; the \u00a7B legs are `blocked` there (no invoke seam). `draft`: the suite's fake server speaks the 2025-06-18 handshake so \u00a7B stateless rules, `server/discover`, MRTR, and cache hints are unwitnessed, and stable is additionally gated on a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`.",
-      "witness": "witnessable-gated",
-      "witnessReview": "initial-mechanical-2026-09-02"
+      "note": "RFC 0153 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7A/\u00a7B revision-negotiation witness `mcp-version-negotiation.test.ts` at 1.97.0 (`7b09e9aa`), and \u2014 2026-08-16 \u2014 the profile prose and MRTR mapping in `spec/v1/mcp-integration.md` \u00a7\"MCP 2026-07-28 versioned composition\" (`65ebd53a`, pinned to the upstream 2026-07-28 revision; `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12) landed; openwop-app's live origin advertises `mcp.protocolVersions` and passes the \u00a7A legs; the \u00a7B legs are `blocked` there (no invoke seam). `draft`: the suite's fake server speaks the 2025-06-18 handshake so \u00a7B stateless rules, `server/discover`, MRTR, and cache hints are unwitnessed, and stable is additionally gated on a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`. Witness review 2026-09-02: reclassified witnessable-gated \u2192 seam-gated \u2014 `mcp-version-negotiation` needs the invoke seam to observe the negotiated revision and records `blocked` without it.",
+      "witness": "seam-gated",
+      "witnessReview": "reviewed-2026-09-02"
     },
     {
       "id": "openwop-workload-identity-v1",
@@ -211,9 +211,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.95.0",
       "evidenceTier": null,
-      "note": "RFC 0154 `Accepted`; `workload-identity.schema.json` + `auth.workloadIdentity` (`8de95a14`), the behavioral witness `workload-identity-behavior.test.ts` + seam \u00a720 at 1.95.0 (`f27765cd`), per-section gating (`b7c52f75`), and \u2014 2026-08-16 \u2014 the auth prose (`spec/v1/auth.md` \u00a7\"Workload identity and delegated actor chain\"), the OTel mapping (`observability.md`, v0 experimental `gen_ai.*` projection), and `SECURITY/threat-model-workload-identity.md` (`31de3bbb`) landed. `draft`: no host advertises `auth.workloadIdentity` (legs resolve to `blocked`), six \u00a7F invariants are named-but-unregistered, and the provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`.",
-      "witness": "claims-check",
-      "witnessReview": "initial-mechanical-2026-09-02"
+      "note": "RFC 0154 `Accepted`; `workload-identity.schema.json` + `auth.workloadIdentity` (`8de95a14`), the behavioral witness `workload-identity-behavior.test.ts` + seam \u00a720 at 1.95.0 (`f27765cd`), per-section gating (`b7c52f75`), and \u2014 2026-08-16 \u2014 the auth prose (`spec/v1/auth.md` \u00a7\"Workload identity and delegated actor chain\"), the OTel mapping (`observability.md`, v0 experimental `gen_ai.*` projection), and `SECURITY/threat-model-workload-identity.md` (`31de3bbb`) landed. `draft`: no host advertises `auth.workloadIdentity` (legs resolve to `blocked`), six \u00a7F invariants are named-but-unregistered, and the provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`. Witness review 2026-09-02: reclassified claims-check \u2192 seam-gated \u2014 `workload-identity-behavior` / `-chain-bounds` resolve through the `host-sample-test-seams.md` \u00a720 seam and record `blocked` without it; the profile scenario alone is a shape check.",
+      "witness": "seam-gated",
+      "witnessReview": "reviewed-2026-09-02"
     },
     {
       "id": "openwop-effect-identity-v2",
@@ -335,9 +335,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.55.0",
       "evidenceTier": null,
-      "note": "RFC 0132 anonymous-actor authorization; five protocol-tier MUST-NOTs graduated on the openwop-app witness. Owning RFC `0132` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `anonymous-actor-shape.test.ts`.",
-      "witness": "witnessable-gated",
-      "witnessReview": "initial-mechanical-2026-09-02"
+      "note": "RFC 0132 anonymous-actor authorization; five protocol-tier MUST-NOTs graduated on the openwop-app witness. Owning RFC `0132` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `anonymous-actor-shape.test.ts`. Witness review 2026-09-02: reclassified witnessable-gated \u2192 seam-gated \u2014 every behavioral probe goes through `/v1/host/sample/anon-surface/*` and soft-skips on 404.",
+      "witness": "seam-gated",
+      "witnessReview": "reviewed-2026-09-02"
     },
     {
       "id": "openwop-artifact-types",
@@ -1219,7 +1219,7 @@
       "note": "v1 base webhook delivery (HMAC-signed, circuit breaker; RFC 0083 composes it). Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `webhook-signed-delivery.test.ts`.",
       "owningDoc": "spec/v1/webhooks.md",
       "witness": "witnessable-gated",
-      "witnessReview": "initial-mechanical-2026-09-02"
+      "witnessReview": "reviewed-2026-09-02"
     },
     {
       "id": "openwop-workflow-chain-packs",

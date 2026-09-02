@@ -9163,11 +9163,11 @@
       "rfc": "0166",
       "local": "G1",
       "section": "§C.2",
-      "surface": "The initial witness classification of 191 invariants and 73 extensions is mechanical and marked `initial-mechanical-2026-09-02`; none has been reviewed.",
+      "surface": "The initial witness classification of 191 invariants and 73 extensions is mechanical and marked `initial-mechanical-2026-09-02`. First review 2026-09-02 at `Accepted`: 25 invariants + 6 extension records re-judged, 10 reclassified `witnessable-gated → seam-gated`; 166 / 67 remain mechanical.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.1",
       "sources": [
         {
           "file": "RFCS/registers/0166-register-dispositions-terminal-states-witness-classes.gaps.md",
@@ -9180,11 +9180,11 @@
       "rfc": "0166",
       "local": "G2",
       "section": "§B",
-      "surface": "538 gap entries carry `witness: unclassified`.",
+      "surface": "543 gap entries carry `witness: unclassified`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.2",
       "sources": [
         {
           "file": "RFCS/registers/0166-register-dispositions-terminal-states-witness-classes.gaps.md",
@@ -9200,8 +9200,8 @@
       "surface": "367 of the backfilled tokens were assigned by RFC-status default (`carried:<self>` on an Accepted RFC with no marker). They are correct under the README rule but not individually reviewed.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.3",
       "sources": [
         {
           "file": "RFCS/registers/0166-register-dispositions-terminal-states-witness-classes.gaps.md",
@@ -9217,8 +9217,8 @@
       "surface": "`transferred:<target>` and `externally-gated:<tripwire>` arguments extracted from prose read `unspecified` where the text named no target.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.4",
       "sources": [
         {
           "file": "RFCS/registers/0166-register-dispositions-terminal-states-witness-classes.gaps.md",
