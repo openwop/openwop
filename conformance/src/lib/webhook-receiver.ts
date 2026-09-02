@@ -169,6 +169,27 @@ export function signPayload(
  * for a single-tenant host (which omits `owner`) or when no probe
  * fixture is available — callers then omit `tenantId`, which single-tenant hosts
  * accept. (RFC 0093 / webhooks.md §Register; suite defect fixed 2026-08-09.)
+ *
+ * **Prefers `owner.workspace`, and that is not a fallback ordering — it is which
+ * field the route actually takes.** `webhooks.md` §Register documents the body's
+ * `tenantId` as *"Workspace under which the subscription lives. Caller MUST be a
+ * member."*, and every example in that document passes a workspace
+ * (`workspace-123`, `workspace-prod`). RFC 0048 §A defines `owner.tenant` as
+ * something else entirely — the **top-level isolation boundary** — with
+ * `workspace` an optional sub-tenant beneath it. The two coincide only on hosts
+ * where tenant ≡ workspace, which is why reading `owner.tenant` worked
+ * everywhere it had been run.
+ *
+ * Reported 2026-09-02 by a tier-2 host with a real workspace layer: its
+ * schema-correct `owner` is `{tenant: "<instance>", workspace: "<workspaceId>",
+ * principal: …}`, so this helper derived the instance label — a value **nobody
+ * is a member of** — and registration 403'd by design. Registering with
+ * `owner.workspace` returns 201, verified by curl on that host. The host is
+ * conformant and the suite was wrong; the docblock above already stated the
+ * right intent ("a tenant the calling bearer provably OWNS") while reading the
+ * field that does not carry it.
+ *
+ * The `tenant` read is retained beneath it for hosts that emit no `workspace`.
  */
 export async function discoverOwnedTenant(
   driver: { post: (p: string, b: unknown) => Promise<{ status: number; json: unknown }>; get: (p: string) => Promise<{ status: number; json: unknown }> },
@@ -179,7 +200,12 @@ export async function discoverOwnedTenant(
   const runId = (create.json as { runId?: string } | null)?.runId;
   if (typeof runId !== 'string') return undefined;
   const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
-  const owner = (snap.json as { owner?: { tenant?: unknown; tenantId?: unknown } } | null)?.owner;
+  const owner = (snap.json as { owner?: { tenant?: unknown; workspace?: unknown; tenantId?: unknown } } | null)
+    ?.owner;
+  // `tenantId` on POST /v1/webhooks is the WORKSPACE (webhooks.md §Register), not
+  // the RFC 0048 §A `tenant` isolation boundary. Where a host distinguishes them,
+  // only the workspace is a scope the bearer is a member of.
+  if (typeof owner?.workspace === 'string' && owner.workspace.length > 0) return owner.workspace;
   if (typeof owner?.tenant === 'string' && owner.tenant.length > 0) return owner.tenant;
   // Pre-S29 hosts that copied the suite's misnamed field: tolerated, never asserted.
   return typeof owner?.tenantId === 'string' && owner.tenantId.length > 0 ? owner.tenantId : undefined;

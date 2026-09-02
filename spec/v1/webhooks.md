@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Webhook Subscriptions
 
-> **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2 (2026-09-02).** Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. v1.2 states that the register body's `tenantId` carries the RFC 0048 **`workspace`**, not the RFC 0048 `tenant` — the field name predates RFC 0048 and is retained for wire compatibility, and a host MUST NOT accept its `tenant` label as an alias (clarifying, additive: it states the membership scope the route already required, which every example in this document already showed). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -40,8 +40,28 @@ Authentication: same as the rest of the canonical surface (`auth.md`). The calle
 | ---------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
 | `url`      | URI      | yes      | MUST be `https://`. The server SSRF-validates against private-IP / metadata-server ranges (see §Security below). |
 | `events`   | string[] | yes      | One or more `RunEventType` values. Empty array → 400.                                                            |
-| `tenantId` | string   | yes      | Workspace under which the subscription lives. Caller MUST be a member.                                           |
+| `tenantId` | string   | yes      | Workspace under which the subscription lives. Caller MUST be a member. **Takes the RFC 0048 `workspace` value, not `tenant`** — see the note below.                                           |
 | `tags`     | string[] | no       | When set, only runs whose `RunOptions.tags` overlap deliver to this subscription.                                |
+
+> **`tenantId` carries the RFC 0048 `workspace`, not the RFC 0048 `tenant`.** The field name
+> predates RFC 0048 and is retained for v1 wire compatibility (renaming a required request
+> field is a §2.2 break), but the two words denote different things and the mismatch is a
+> genuine trap. RFC 0048 §A defines `tenant` as the **top-level isolation boundary** and
+> `workspace` as an **optional sub-tenant** beneath it; this route's value is the scope the
+> caller holds **membership** in, which is the workspace — as every example in this document
+> shows (`workspace-123`, `workspace-prod`).
+>
+> On the common host where tenant ≡ workspace the two coincide and nothing distinguishes
+> them, which is exactly why this went unnoticed. On a host with a real workspace layer,
+> passing the RFC 0048 `tenant` names a scope **nobody is a member of** and the route
+> **MUST** 403 — correctly. A host **MUST NOT** paper over the mismatch by accepting its
+> `tenant` label as an alias here: that would mint membership semantics for a label that has
+> none, in order to satisfy a caller's misreading.
+>
+> Reported 2026-09-02 by a tier-2 host whose `owner` triple is
+> `{tenant: "<instance>", workspace: "<workspaceId>", principal: …}` — schema-correct under
+> RFC 0048 §C — after the conformance suite derived `tenantId` from `owner.tenant` and was
+> 403'd by design. The suite was fixed to prefer `owner.workspace`; the host needed no change.
 
 **Response:**
 
