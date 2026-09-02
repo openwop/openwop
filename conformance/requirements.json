@@ -14608,7 +14608,7 @@
     {
       "id": "openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b",
       "file": "owner-subject-echo.test.ts",
-      "line": 77,
+      "line": 78,
       "title": "subject is consistent with the owner triple (§B.2) and the actor chain is bounded (§B.5)",
       "explicitId": null,
       "citations": [
@@ -14641,7 +14641,7 @@
     {
       "id": "openwop.it.owner-subject-echo.run-started-echoes-the-snapshot-subject-verbatim-b-2-rfc-0048-c",
       "file": "owner-subject-echo.test.ts",
-      "line": 99,
+      "line": 100,
       "title": "run.started echoes the snapshot subject verbatim (§B.2, RFC 0048 §C)",
       "explicitId": null,
       "citations": [
@@ -14658,7 +14658,7 @@
     {
       "id": "openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4",
       "file": "owner-subject-echo.test.ts",
-      "line": 110,
+      "line": 117,
       "title": "a fork copies owner.tenant and owner.subject verbatim onto the child (§B.4)",
       "explicitId": null,
       "citations": [
