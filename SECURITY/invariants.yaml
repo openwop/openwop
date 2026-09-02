@@ -574,7 +574,7 @@ invariants:
     note: |
       Canonical error envelope's message field MUST NOT leak material.
     witness: witnessable-unaided
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: secret-leakage-auth-middleware
     tier: protocol
@@ -585,7 +585,7 @@ invariants:
     note: |
       Auth-middleware log lines must not echo Bearer header content.
     witness: witnessable-unaided
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: secret-leakage-debug-bundle
     tier: protocol
@@ -1891,7 +1891,7 @@ invariants:
       request headers at all: it captured method, path, rpcMethod, and
       body, and §B lives entirely in the headers.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: mcp-version-no-silent-downgrade
     tier: protocol
@@ -1912,7 +1912,7 @@ invariants:
       `McpFakeServer` had the identical header-capture gap as its A2A
       counterpart; both recorded the call body and discarded the headers.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: replay-fanout-no-refire
     tier: protocol
@@ -1951,7 +1951,7 @@ invariants:
       Capability-gated on `compensation.supported`; resolves to `blocked`
       per RFC 0148 §A until a host advertises and wires the unwind seam.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: compensation-effect-id-retry-stable
     tier: protocol
@@ -1970,7 +1970,7 @@ invariants:
       `downstreamKeys` value. Capability-gated on `compensation.supported`;
       `blocked` (named) until a host wires the extension.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: compensation-tenant-authority-bound
     tier: protocol
@@ -1989,7 +1989,7 @@ invariants:
       that answers 200 to all three consults nothing. Capability-gated;
       `blocked` (named) until a host wires the extension.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: compensation-input-recorded-facts-only
     tier: protocol
@@ -2006,7 +2006,7 @@ invariants:
       same inputs) while `refiredEffects` stays 0. Capability-gated;
       `blocked` (named) until a host wires the extension.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: profile-claim-floor-not-overstated
     tier: protocol
@@ -2047,7 +2047,7 @@ invariants:
       input satisfies every positive assertion, and only `audience_mismatch`
       distinguishes a verifier from a passthrough.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: delegation-chain-bounded
     tier: protocol
@@ -2071,7 +2071,7 @@ invariants:
 
   # ===== Agent memory (Phase I.1) =====
     witness: claims-check
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: delegation-chain-acyclic
     tier: protocol
@@ -2088,7 +2088,7 @@ invariants:
       resolves to `blocked` per RFC 0148 §A until an advertising host wires
       the seam, and to executed-fail on a host that resolves the cycle.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: delegation-no-scope-amplification
     tier: protocol
@@ -2108,7 +2108,7 @@ invariants:
       being satisfied by a blanket refusal.
       Capability-gated as `delegation-chain-acyclic`.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: agent-memory-cti-1
     tier: protocol
@@ -2453,7 +2453,7 @@ invariants:
       on a host that does not advertise both profiles (RFC 0164). Registered 2026-09-01 at RFC 0163
       `Active` — RFC 0159 had a threat-model row (§4.5) and no invariant.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: subject-link-key-class-declared
     tier: protocol
@@ -2474,7 +2474,7 @@ invariants:
       (a host that declares a safe class and joins on email for an unprobed
       pair) is recorded as RFC 0163 UQ5.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: subject-link-same-trust-root
     tier: protocol
@@ -2493,7 +2493,7 @@ invariants:
       non-vacuous) over OPENWOP_TEST_SAML_IDP_URL + _B + OPENWOP_TEST_SCIM_URL.
       The fixture is proven in conformance/src/lib/saml-idp.test.ts.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: subject-link-mandatory-when-both-advertised
     tier: protocol
@@ -2519,7 +2519,7 @@ invariants:
 
   # ===== RFC 0049 RBAC fail-closed =====
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: authorization-fail-closed
     tier: protocol
@@ -2885,8 +2885,12 @@ invariants:
       "anon-not-granted"} with no dispatch. GRADUATED reference-impl → protocol at
       RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-default-deny.test.ts
       passed non-vacuously against openwop-app rev 03d06d1f2.
-    witness: witnessable-gated
-    witnessReview: initial-mechanical-2026-09-02
+      Witness review 2026-09-02: reclassified witnessable-gated → seam-gated. The scenario
+      gates on `anonymousActor` but every probe goes through the host-extension
+      sample seam `/v1/host/sample/anon-surface/*` (`conformance/src/lib/anonymousActor.ts`)
+      and soft-skips when it answers 404 — only a seam can falsify it.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-02
 
   - id: anon-actor-no-secret-reach
     tier: protocol
@@ -2905,8 +2909,12 @@ invariants:
       protocol at RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-no-secret-
       reach.test.ts passed non-vacuously against openwop-app rev 03d06d1f2 (planted
       BYOK canary never surfaced; the caller-supplied tenant was ignored).
-    witness: witnessable-gated
-    witnessReview: initial-mechanical-2026-09-02
+      Witness review 2026-09-02: reclassified witnessable-gated → seam-gated. The scenario
+      gates on `anonymousActor` but every probe goes through the host-extension
+      sample seam `/v1/host/sample/anon-surface/*` (`conformance/src/lib/anonymousActor.ts`)
+      and soft-skips when it answers 404 — only a seam can falsify it.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-02
 
   - id: anon-actor-egress-ssrf-guarded
     tier: protocol
@@ -2925,8 +2933,12 @@ invariants:
       GRADUATED reference-impl → protocol at RFC 0132 Active→Accepted (2026-07-22):
       anonymous-actor-egress-guarded.test.ts passed non-vacuously against openwop-
       app rev 03d06d1f2 (out-of-audience → anon-egress-denied, credentialAttached:false).
-    witness: witnessable-gated
-    witnessReview: initial-mechanical-2026-09-02
+      Witness review 2026-09-02: reclassified witnessable-gated → seam-gated. The scenario
+      gates on `anonymousActor` but every probe goes through the host-extension
+      sample seam `/v1/host/sample/anon-surface/*` (`conformance/src/lib/anonymousActor.ts`)
+      and soft-skips when it answers 404 — only a seam can falsify it.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-02
 
   - id: anon-actor-write-egress-gated
     tier: protocol
@@ -2946,8 +2958,12 @@ invariants:
       Active→Accepted (2026-07-22): anonymous-actor-write-gated.test.ts passed non-
       vacuously against openwop-app rev 03d06d1f2 (hitl control → approval interrupt
       before the durable write; uncontrolled surface → anon-write-ungated).
-    witness: witnessable-gated
-    witnessReview: initial-mechanical-2026-09-02
+      Witness review 2026-09-02: reclassified witnessable-gated → seam-gated. The scenario
+      gates on `anonymousActor` but every probe goes through the host-extension
+      sample seam `/v1/host/sample/anon-surface/*` (`conformance/src/lib/anonymousActor.ts`)
+      and soft-skips when it answers 404 — only a seam can falsify it.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-02
 
   - id: anon-actor-audit-opaque
     tier: protocol
@@ -2966,8 +2982,12 @@ invariants:
       RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-audit-opaque.test.ts
       passed non-vacuously against openwop-app rev 03d06d1f2 (opaque anon: id, no
       PII in the decision record; owner.principalKind:"anonymous" projected).
-    witness: witnessable-gated
-    witnessReview: initial-mechanical-2026-09-02
+      Witness review 2026-09-02: reclassified witnessable-gated → seam-gated. The scenario
+      gates on `anonymousActor` but every probe goes through the host-extension
+      sample seam `/v1/host/sample/anon-surface/*` (`conformance/src/lib/anonymousActor.ts`)
+      and soft-skips when it answers 404 — only a seam can falsify it.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-02
 
   - id: sub-chain-expansion-bounded
     tier: protocol
@@ -3500,7 +3520,7 @@ invariants:
       asserts a valid resume/exchange action validates and an out-of-enum / extra-prop
       action target is rejected.
     witness: claims-check
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: a2ui-untrusted-blocks-approval
     tier: protocol
@@ -3517,7 +3537,7 @@ invariants:
       `a2ui-untrusted-blocks-approval.test.ts` asserts an untrusted-marked surface bound
       to an approval interrupt is refused.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
 
   - id: a2ui-surface-no-secret-rendering
     tier: protocol
@@ -3981,7 +4001,7 @@ invariants:
       never MINTS PII into an opaque-looking id is negative-existence and is
       not witnessable from outside; the invariant records the obligation.
     witness: claims-check
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
   - id: subject-legacy-not-linkable
     tier: protocol
     severity: high
@@ -3999,4 +4019,4 @@ invariants:
       mints a legacy-issuer subject bound to a SCIM record yet, so the scenario
       leg records `blocked`, never a pass.
     witness: seam-gated
-    witnessReview: initial-mechanical-2026-09-02
+    witnessReview: reviewed-2026-09-02
