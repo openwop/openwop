@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.149.0] — 2026-09-02 — RFC 0163 `Active → Accepted` (tier-1 witness)
+
+No scenario change; `coverage.md` (packed) moves the `auth-subject-link-key-class.test.ts` behaviour grade from `host-pending` to host-pass, so the published tarball content changes and the identity gate asks for a bump. The reference host (openwop-app #3614, `2f6ca969d`, ADR 0620) emits `subjectLinkKey: "opaque-idp"` from the same gate as `subjectLinking`, reconstructs the suite's signed `<saml:Issuer>` in its validator, binds the SCIM connection to an IdP entityID (`idpUrl` accepted on the provision seam, SSRF-guarded), and refuses a cross-IdP identifier collision with `401 subject_link_trust_root_mismatch` on the validate seam and with no session on the production ACS. The host widened its seam SSRF allowlist to the second synthetic IdP first, so the cross-root negative is refused on trust root rather than on origin — sabotage-verified. Single-witness under the bootstrap waiver; no tier-2/3 host advertises `subjectLinking`.
+
 ## [1.148.0] — 2026-09-01 — RFC 0163 `Draft → Active`: classes not attributes, schema conditional, fixture proof out of the scenario
 
 No new scenario file (suite file count unchanged); published content changes, so the identity bump is a minor. Three things move.

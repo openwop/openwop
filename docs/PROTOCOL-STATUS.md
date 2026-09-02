@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.148.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.149.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 154 |
-| Active | 5 |
+| Accepted | 155 |
+| Active | 4 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -196,7 +196,7 @@
 | RFC 0157 | Chain fragments carry compensation (RFC 0013 revision × RFC 0151 sectionB) | Accepted |
 | RFC 0158 | Durable Execution and Disaster-Recovery Qualification | Active |
 | RFC 0159 | A subject-linking obligation for hosts advertising **both** `openwop-auth-saml` and `openwop-auth-scim`: a SCIM deactivation MUST fail-close the linked SAML identity, keyed on an opaque IdP-stable subject id - so a provisioned leaver cannot still SSO in | Accepted |
-| RFC 0163 | Subject-linking hardening - a **declarable, witnessable** link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) plus a **same-IdP trust-root MUST** before a SAML⟷SCIM link may form. The additive follow-on to RFC 0159 that converts its sectionA.2/sectionA.4 negative-existence claims-check into a positive advertisement and closes its cross-IdP collision gap. | Active |
+| RFC 0163 | Subject-linking hardening - a **declarable, witnessable** link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) plus a **same-IdP trust-root MUST** before a SAML⟷SCIM link may form. The additive follow-on to RFC 0159 that converts its sectionA.2/sectionA.4 negative-existence claims-check into a positive advertisement and closes its cross-IdP collision gap. | Accepted |
 
 ## SDK Helper Coverage
 
@@ -219,7 +219,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0163) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
