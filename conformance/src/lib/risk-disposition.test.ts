@@ -78,14 +78,32 @@ describe('assurance risk disposition', () => {
     const script = join(dirname(V1_DIR), '..', 'scripts', 'generate-assurance-status.mjs');
     if (!existsSync(script)) return;
     const src = readFileSync(script, 'utf8');
-    // Guard the shape, not the byte-for-byte text: the generator must still gate
-    // on an explicit marker AND a negation check, never on a bare substring.
-    expect(src, 'generator must keep the negation guard').toMatch(/const negated = /);
-    expect(src, 'generator must require an explicit closed marker').toMatch(/const explicitlyClosed =/);
-    expect(src, 'generator must still separate transferred rows').toMatch(/const transferred = /);
-    expect(
-      /const closed = \/\(\^\|\\s\)\(closed\|resolved/.test(src),
-      'the bare-substring test must not come back',
-    ).toBe(false);
+    // Guard the PROPERTY, not the location. RFC 0166 §A (openwop#1174) replaced
+    // the generator's inline regex with the shared register parser: a row's
+    // disposition is now the TOKEN at the head of the Status cell, which cannot
+    // be fooled by prose at all. The old inline `const negated` / `explicitlyClosed`
+    // pair moved into `registers-lib.mjs` for the legacy free-text backfill path.
+    //
+    // This test kept asserting the old symbols in the old file and went red on a
+    // refactor that strictly improved the thing it was protecting — it was
+    // guarding the implementation, not the guarantee. What must stay true:
+    //   1. the generator dispositions by token via the shared parser, and
+    //   2. wherever legacy free text is still mapped, a negation check survives,
+    //   3. and the bare-substring test never comes back.
+    expect(src, 'generator must disposition via the shared register parser').toMatch(/parseRegister/);
+    expect(src, 'generator must read the disposition token, not free text').toMatch(/row\.token/);
+
+    const lib = join(dirname(V1_DIR), '..', 'scripts', 'registers-lib.mjs');
+    if (existsSync(lib)) {
+      const libSrc = readFileSync(lib, 'utf8');
+      expect(libSrc, 'the legacy free-text path must keep its negation guard').toMatch(/const negated = /);
+      expect(libSrc, 'a closed marker must still be required explicitly').toMatch(/closedMark && !negated/);
+    }
+    for (const [name, text] of [['generator', src], ['registers-lib', existsSync(lib) ? readFileSync(lib, 'utf8') : '']]) {
+      expect(
+        /const closed = \/\(\^\|\\s\)\(closed\|resolved/.test(text),
+        `the bare-substring test must not come back (${name})`,
+      ).toBe(false);
+    }
   });
 });
