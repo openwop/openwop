@@ -127,6 +127,7 @@ A host that advertises `capabilities.anonymousActor` (see `capabilities.md` §`a
 which is why two lanes can produce two subjects for one human (RFC 0159). `owner.subject`
 (`schemas/subject.schema.json`) is the OPTIONAL, issuer-scoped form of the same identity:
 
+<!-- normative-example: subject.schema.json -->
 ```json
 { "issuer": "https://idp.example.com/entity", "subjectId": "idp-op-8f3a", "tenant": "acme",
   "lane": "saml", "kind": "user", "keyClass": "opaque-idp" }
