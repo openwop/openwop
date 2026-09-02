@@ -19,10 +19,14 @@
  *
  * @see conformance/src/lib/saml-idp.ts
  * @see RFCS/0163-subject-linking-hardening.md §B
+ *
+ * The RFC 0050 §A reference suite (1 positive + 6 negative variants against the
+ * same fixture) moved here from `scenarios/auth-saml-profile.test.ts` on
+ * 2026-09-02 (RFC 0163 gap G5) for the same reason.
  */
 
 import { describe, it, expect } from 'vitest';
-import { createSyntheticSamlIdp, DEFAULT_SAML_ENTITY_ID } from './saml-idp.js';
+import { createSyntheticSamlIdp, DEFAULT_SAML_ENTITY_ID, type SamlVariant } from './saml-idp.js';
 
 const COLLIDING_SUBJECT = 'idp-op-8f3a';
 
@@ -80,4 +84,44 @@ describe('saml-idp: two-trust-root fixture (RFC 0163 §B)', () => {
     expect(idpA.verify(forged).valid, 'a re-stamped Issuer MUST NOT verify').toBe(false);
     expect(idpB.verify(forged).valid, 'the original root MUST NOT verify it either').toBe(false);
   });
+});
+
+describe('saml-idp: synthetic-IdP reference suite (RFC 0050 §A)', () => {
+  // Server-free: the bundled synthetic IdP (conformance/src/lib/saml-idp.ts)
+  // mints a valid assertion + the 6 negative variants, and its verify()
+  // implements the RFC 0050 §A MUST list. This proves each negative is
+  // detectably malformed and gives the suite a reference SAML validator.
+  // A host's real ACS validates the SAME assertions over the
+  // `auth/saml/validate` seam (scenarios/auth-saml-profile.test.ts, gated on
+  // OPENWOP_TEST_SAML_IDP_URL).
+  const idp = createSyntheticSamlIdp();
+
+  it('publishes a PEM signing certificate', () => {
+    expect(idp.certificatePem).toContain('BEGIN PUBLIC KEY');
+  });
+
+  it('accepts a valid signed, in-window, non-wrapped assertion', () => {
+    const r = idp.verify(idp.mint('valid'));
+    expect(r.valid, `expected valid; got reason=${r.reason}`).toBe(true);
+  });
+
+  const negatives: ReadonlyArray<[Exclude<SamlVariant, 'valid'>, string]> = [
+    ['alg-none', 'alg-none'],
+    ['unsigned', 'unsigned'],
+    ['bad-signature', 'bad-signature'],
+    ['expired', 'expired'],
+    ['not-yet-valid', 'not-yet-valid'],
+    ['signature-wrapping', 'signature-wrapping'],
+  ];
+
+  for (const [variant, expectedReason] of negatives) {
+    it(`rejects the ${variant} assertion (RFC 0050 §A MUST)`, () => {
+      const r = idp.verify(idp.mint(variant));
+      expect(r.valid, `${variant} MUST be rejected`).toBe(false);
+      expect(
+        r.reason,
+        `${variant} MUST be rejected for the ${expectedReason} reason`,
+      ).toBe(expectedReason);
+    });
+  }
 });

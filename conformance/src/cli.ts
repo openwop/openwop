@@ -81,7 +81,10 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let impl: string | undefined;
   let implVersion: string | undefined;
   let certify: string | undefined;
-  let bundleVersion: '1' | '2' = '1';
+  // Suite 1.152.0: bundle v2 (RFC 0148) is the default. v1 stays reachable via
+  // `--bundle-version 1` through the RFC 0148 migration window (ends
+  // 2026-11-10) and is removed at v2.0 (spec/v1/deprecations.json).
+  let bundleVersion: '1' | '2' = '2';
   let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
 
   for (let i = 0; i < argv.length; i++) {
@@ -132,6 +135,11 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
           process.exit(2);
         }
         bundleVersion = v;
+        if (v === '1') {
+          process.stderr.write(
+            'openwop-conformance: --bundle-version 1 is DEPRECATED (RFC 0148). A v1 bundle ceases to substantiate a new certification after 2026-11-10 and the format is removed at v2.0; omit the flag to emit bundle v2.\n',
+          );
+        }
         break;
       }
       case '--certify':

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/conformance-certification-bundle.schema.json",
   "title": "OpenWOP Conformance Certification Bundle",
-  "description": "RFC 0089. A machine-readable attestation binding a host's claimed profiles to the reproducible run that substantiates them: suite version, per-scenario pass list, host identity + commit, and the captured discovery document. An out-of-band artifact emitted by the conformance harness (not a runtime wire message). A consumer MUST re-derive each claimed profile from the embedded `discovery.document` rather than trusting `claimedProfiles` verbatim (RFC 0089 §B).",
+  "description": "DEPRECATED (RFC 0148, suite 1.114.0): bundle v1 remains parseable but ceases to substantiate a new certification after 2026-11-10; emit `certification-bundle-v2.schema.json` (the `--certify` default since suite 1.152.0). Scheduled for removal at v2.0 — see spec/v1/deprecations.json. RFC 0089. A machine-readable attestation binding a host's claimed profiles to the reproducible run that substantiates them: suite version, per-scenario pass list, host identity + commit, and the captured discovery document. An out-of-band artifact emitted by the conformance harness (not a runtime wire message). A consumer MUST re-derive each claimed profile from the embedded `discovery.document` rather than trusting `claimedProfiles` verbatim (RFC 0089 §B).",
   "type": "object",
   "additionalProperties": false,
   "required": ["bundleVersion", "generatedAt", "generator", "suite", "host", "discovery", "claimedProfiles", "results"],

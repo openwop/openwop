@@ -144,10 +144,17 @@ ships as part of the v2 spec major. A v2 RFC must include:
 
 - A migration plan for v1.x implementers.
 - A coexistence plan: how v1 and v2 servers/openwops interoperate during the transition (typically a discovery field that advertises support for both).
-- A deprecation timeline for v1 (typically 18–24 months from v2 release).
+- A deprecation timeline for v1, computed by the **host-inventory rule** below rather than by a fixed calendar.
 - An updated conformance suite major (`@openwop/openwop-conformance@2.0.0`).
 
 v1.x and v2 ship as parallel tracks. v1.x continues to receive additive and safety-fix releases until the v1 deprecation date.
+
+**Host-inventory rule for the v1 deprecation date (2026-09-02).** v1 support ends at the *later* of:
+
+1. **Every host listed in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md) has published a non-vacuous v2 certification bundle** (a bundle whose claimed profiles are witnessed by executed assertions on a deployed origin, per RFC 0148), **plus 90 days**; and
+2. **18 months from the v2 release**, *if and only if* the matrix lists at least one host operated by an organization other than the steward at the time v2 is released.
+
+The rule replaces the earlier "typically 18–24 months" guidance. The project is currently operated by a single steward whose two hosts are the only conforming implementations (`GOVERNANCE.md` §"Sole-steward operation"); a calendar window written for external implementers who do not exist would only delay v2 without protecting anyone. Clause 2 exists so that the day an independent host appears, the calendar floor protects it without a further amendment. The v2 RFC restates this rule normatively; until then it is release policy under `GOVERNANCE.md` §"Amendments".
 
 ## 6. Pinning recommendations
 
@@ -180,6 +187,8 @@ A deprecation in v1.x requires:
 - A `CHANGELOG.md` entry under `### Deprecated`.
 
 Deprecated surfaces continue to pass conformance. The `Deprecated:` annotation is informational, not normative.
+
+**Deprecation register (2026-09-02).** Every surface that an RFC or a spec annotation has deprecated is listed, with its authority, replacement, and scheduled removal version, in [`spec/v1/deprecations.json`](./spec/v1/deprecations.json) (schema: [`spec/v1/deprecations.schema.json`](./spec/v1/deprecations.schema.json); gate: `scripts/check-deprecations.mjs`, run by `npm run openwop:check`). In v1.x the register is an **index**, not a source of obligations: it records deprecations the RFC process has already made and never creates one. Entries carry `status: "deprecated"` only when an RFC or annotation exists; surfaces the v2 program *proposes* to deprecate carry `status: "proposed"` with `deprecatedIn: null`, so a reader can tell the two apart. The v2 major makes the register normative (removal dates enforced at merge); see the v2 charter program item C.11.
 
 ## 8. What this document doesn't cover
 

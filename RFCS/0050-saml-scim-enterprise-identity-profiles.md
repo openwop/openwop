@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-06-01 (`Active → Accepted`) — graduated on the **non-steward host** MyndHyve, whose **real XML-DSig SAML ACS + SCIM provisioning** the steward **independently drove over the live wire** (rev `workflow-runtime-00453-hot @ 100%`, `https://api.myndhyve.ai`; steward-verified 2026-06-01). See [Amendment record](#amendment-record). |
+| **Updated** | 2026-09-02 (evidence-surface note: the §A synthetic-IdP reference suite moved from `conformance/src/scenarios/auth-saml-profile.test.ts` to `conformance/src/lib/saml-idp.test.ts` per RFC 0163 gap G5 — it proves the bundled fixture, not a host, and no longer records a scenario ledger row; the host-facing legs and the `saml-idp.ts` fixture this RFC's acceptance cites are unchanged; register opened at `RFCS/registers/0050-saml-scim-enterprise-identity-profiles.gaps.md`) · 2026-06-01 (`Active → Accepted`) — graduated on the **non-steward host** MyndHyve, whose **real XML-DSig SAML ACS + SCIM provisioning** the steward **independently drove over the live wire** (rev `workflow-runtime-00453-hot @ 100%`, `https://api.myndhyve.ai`; steward-verified 2026-06-01). See [Amendment record](#amendment-record). |
 | **Affects** | `spec/v1/auth-profiles.md` (new `openwop-auth-saml` + `openwop-auth-scim` profiles; optional `openwop-auth-ldap`) · `schemas/capabilities.schema.json` (conditional `auth.profiles += ['saml','scim']`) · RFC 0010 (extends the auth-profile-conformance family) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
