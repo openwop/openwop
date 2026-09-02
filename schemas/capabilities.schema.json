@@ -3693,7 +3693,7 @@
         },
         "subjectLinking": {
           "type": "boolean",
-          "description": "RFC 0159 (auth-profiles.md \u00a7Subject linking). When true, this host advertises BOTH `openwop-auth-saml` and `openwop-auth-scim` AND honours the cross-profile subject-linking obligation: it links the SAML and SCIM principals of one human on an opaque, IdP-stable subject id (SCIM `externalId` \u2194 persistent SAML `NameID`), same-tenant only, and on SCIM deactivation fail-closes the linked SAML identity too (composing RFC 0049 \u00a7C) \u2014 so a provisioned leaver cannot still SSO in. The link key MUST NOT be a mutable/PII attribute (email, userName). Optional; absent/false means the SAML and SCIM lanes are independent and the combined leaver guarantee is NOT claimed. A host MUST NOT set this true unless both profiles are advertised and the obligation holds."
+          "description": "RFC 0164: DERIVED and DEPRECATED toward v2. A host that advertises both `openwop-auth-saml` and `openwop-auth-scim` MUST set this true (schema conditional on `profiles[]`); a document advertising both with this absent/false is invalid. Kept through v1.x for clients pinned to it; clients SHOULD derive the guarantee from the profile pair. Original (RFC 0159) semantics follow. RFC 0159 (auth-profiles.md \u00a7Subject linking). When true, this host advertises BOTH `openwop-auth-saml` and `openwop-auth-scim` AND honours the cross-profile subject-linking obligation: it links the SAML and SCIM principals of one human on an opaque, IdP-stable subject id (SCIM `externalId` \u2194 persistent SAML `NameID`), same-tenant only, and on SCIM deactivation fail-closes the linked SAML identity too (composing RFC 0049 \u00a7C) \u2014 so a provisioned leaver cannot still SSO in. The link key MUST NOT be a mutable/PII attribute (email, userName). Optional; absent/false means the SAML and SCIM lanes are independent and the combined leaver guarantee is NOT claimed. A host MUST NOT set this true unless both profiles are advertised and the obligation holds."
         },
         "subjectLinkKey": {
           "type": "string",
@@ -3862,14 +3862,36 @@
           }
         }
       },
-      "if": {
-        "properties": { "subjectLinking": { "const": true } },
-        "required": ["subjectLinking"]
-      },
-      "then": {
-        "required": ["subjectLinkKey"],
-        "$comment": "RFC 0163 \u00a7A.1 / \u00a7C: a host that claims subject linking MUST declare the class it joins on. A conditional required on a flag no host emitted when it landed is a tightening of an unemitted shape (COMPATIBILITY.md \u00a72.2), not closure of a server-emitted shape (\u00a72.1)."
-      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "subjectLinking": { "const": true } },
+            "required": ["subjectLinking"]
+          },
+          "then": {
+            "required": ["subjectLinkKey"],
+            "$comment": "RFC 0163 \u00a7A.1 / \u00a7C: a host that claims subject linking MUST declare the class it joins on. A conditional required on a flag no host emitted when it landed is a tightening of an unemitted shape (COMPATIBILITY.md \u00a72.2), not closure of a server-emitted shape (\u00a72.1)."
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profiles": {
+                "allOf": [
+                  { "contains": { "const": "openwop-auth-saml" } },
+                  { "contains": { "const": "openwop-auth-scim" } }
+                ]
+              }
+            },
+            "required": ["profiles"]
+          },
+          "then": {
+            "properties": { "subjectLinking": { "const": true } },
+            "required": ["subjectLinking", "subjectLinkKey"],
+            "$comment": "RFC 0164 \u00a7A.3 / \u00a7B: advertising BOTH openwop-auth-saml and openwop-auth-scim implies the combined leaver contract, so `subjectLinking` MUST be true (a derived statement of fact, deprecated toward v2) and `subjectLinkKey` MUST name the class. Binds only documents that emit both profile strings; none did when it landed (COMPATIBILITY.md \u00a72.2 / \u00a74 default-on row with an empty harm set)."
+          }
+        }
+      ],
       "additionalProperties": true
     },
     "discovery": {

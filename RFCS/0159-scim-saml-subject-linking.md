@@ -12,7 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (new **optional** discovery flag; its MUSTs bind only the hosts that opt in — no host conforming to RFC 0050 today de-conforms) |
 | **Supersedes**    | —                                                              |
 | **Superseded by** | —                                                              |
-| **Amended by**    | [RFC 0163](./0163-subject-linking-hardening.md) — additive hardening: a declarable, witnessable link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) that converts this RFC's §A.2/§A.4 negative-existence mutable-key prohibition into a positive advertisement (closes UQ2/UQ3), plus a same-IdP trust-root MUST before a link may form (closes UQ4 / register R5). Both gated on `subjectLinking:true` — additive, nothing de-conforms. |
+| **Amended by**    | [RFC 0164](./0164-mandatory-subject-linking.md) — the contract becomes **mandatory** for any host advertising both profiles; `subjectLinking` is derived (MUST be `true` when both are advertised) and deprecated toward v2; the §A.4 "do not set the flag" escape is removed (closes UQ1). · [RFC 0163](./0163-subject-linking-hardening.md) — additive hardening: a declarable, witnessable link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) that converts this RFC's §A.2/§A.4 negative-existence mutable-key prohibition into a positive advertisement (closes UQ2/UQ3), plus a same-IdP trust-root MUST before a link may form (closes UQ4 / register R5). Both gated on `subjectLinking:true` — additive, nothing de-conforms. |
 
 ## Summary
 
@@ -58,7 +58,7 @@ Add an **optional** boolean under `auth` (which is `additionalProperties: true`,
 ```
 
 - Optional, default absent (treated as `false`). Existing clients ignore it; existing hosts do not emit it.
-- A host MUST NOT set `subjectLinking: true` unless it also advertises both `openwop-auth-saml` and `openwop-auth-scim` in `auth.profiles[]` and honours §A. (This keeps the RFC 0011 / RFC 0048 §D authorization-oracle discipline: advertise only what you honour.)
+- A host MUST NOT set `subjectLinking: true` unless it also advertises both `openwop-auth-saml` and `openwop-auth-scim` in `auth.profiles[]` and honours §A. (RFC 0164 adds the converse: a host advertising both MUST set it `true` — the flag is derived.) (This keeps the RFC 0011 / RFC 0048 §D authorization-oracle discipline: advertise only what you honour.)
 
 ### Examples
 
@@ -118,7 +118,7 @@ Note (per the template's two failure modes): §A.2 and §A.4 are partly **negati
 
 ## Unresolved questions
 
-1. **Mandatory follow-up.** Should a later (breaking, v2) RFC make cross-lane deactivation **mandatory** for any host advertising both `openwop-auth-saml` and `openwop-auth-scim` (retiring the opt-in flag)? If so, on what deprecation window? This RFC deliberately lands opt-in-additive first.
+1. **Mandatory follow-up — RESOLVED by RFC 0164 (2026-09-02, `additive`, not v2).** The premise that it "de-conforms every current combined host" was empty: no production host advertised both profiles. Original text: Should a later (breaking, v2) RFC make cross-lane deactivation **mandatory** for any host advertising both `openwop-auth-saml` and `openwop-auth-scim` (retiring the opt-in flag)? If so, on what deprecation window? This RFC deliberately lands opt-in-additive first.
 2. **Link-key-class declaration — RESOLVED by RFC 0163 §A** (`capabilities.auth.subjectLinkKey`, closed enum `{opaque-idp, configured-immutable}` + schema conditional). Original text: §A.2/§A.4 are partly negative-existence (a suite cannot prove a host never joins on a mutable key for an unprobed pair). Should discovery declare the link key class (e.g. `auth.subjectLinkKey: "opaque-idp"` vs a rejected `"email"`) so the suite can assert the *claimed* key class and gate on it, converting a claims-check into a witnessable advertisement?
 3. **Configured linking attribute — RESOLVED by RFC 0163 §A.1** (the enum names classes, not attributes; the configured attribute is host config under the conjunctive predicate). Original text: §A.1 allows "a host-configured stable linking attribute asserted by the same IdP" beyond `externalId`↔persistent-`NameID`. Should the profile enumerate the acceptable attribute set (e.g. an IdP `oid`/`immutableId`) or leave it to operator config with only the opaque+stable+non-PII constraint?
 4. **Same-IdP requirement — RESOLVED by RFC 0163 §B** (MUST share a trust root; SAML `<saml:Issuer>` ↔ the entityID bound to the SCIM connection). Original text: The link presumes both lanes are fed by the same IdP (so the opaque subject id is comparable). Should §A state a MUST that the SAML and SCIM lanes share an IdP trust root before a link may form, to prevent linking a subject across two IdPs that happen to collide on an identifier?

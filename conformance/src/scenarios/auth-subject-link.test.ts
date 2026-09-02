@@ -6,14 +6,20 @@
  * documented in `auth-profiles.md` §"Subject linking (SAML ⟷ SCIM)" and is
  * discoverable via `capabilities.auth.subjectLinking`.
  *
- * Advertisement shape runs unconditionally when the flag is set. The
- * cross-lane behavioral legs (a SCIM deactivation fail-closing the linked SAML
- * identity; a mutable-key link never producing a cross-lane pass) are opt-in
- * via `OPENWOP_TEST_SAML_IDP_URL` + `OPENWOP_TEST_SCIM_URL` (operator-supplied
+ * GATE (RFC 0164): every leg runs whenever the host advertises BOTH
+ * `openwop-auth-saml` and `openwop-auth-scim` — the profile PAIR is the gate,
+ * not `capabilities.auth.subjectLinking`, which since RFC 0164 is a DERIVED
+ * advertisement that MUST be true when both profiles are present. A host that
+ * advertises both and omits the flag is the vulnerable pre-0164 shape and
+ * FAILS the advertisement leg (never `inapplicable`). The cross-lane
+ * behavioral legs (a SCIM deactivation fail-closing the linked SAML identity;
+ * a mutable-key link never producing a cross-lane pass) are opt-in via
+ * `OPENWOP_TEST_SAML_IDP_URL` + `OPENWOP_TEST_SCIM_URL` (operator-supplied
  * endpoints), following the `auth-scim-profile.test.ts` opt-in precedent.
  * Soft-skips otherwise; soft-skips `blocked` until the host wires the seam.
  *
  * @see RFCS/0159-scim-saml-subject-linking.md
+ * @see RFCS/0164-mandatory-subject-linking.md (the profile-pair gate + the vulnerable-shape leg)
  * @see spec/v1/auth-profiles.md §"Subject linking (SAML ⟷ SCIM)"
  */
 
@@ -28,6 +34,15 @@ const SCIM_PROFILE = 'openwop-auth-scim';
 interface DiscoveryAuth {
   profiles?: string[];
   subjectLinking?: boolean;
+  subjectLinkKey?: string;
+}
+
+const SUBJECT_LINK_KEY_CLASSES: readonly string[] = ['opaque-idp', 'configured-immutable'];
+
+/** RFC 0164: the gate is the profile PAIR. */
+function advertisesBoth(auth: DiscoveryAuth | null): auth is DiscoveryAuth {
+  const p = auth?.profiles ?? [];
+  return p.includes(SAML_PROFILE) && p.includes(SCIM_PROFILE);
 }
 
 interface DiscoveryDoc {
@@ -41,7 +56,7 @@ async function readAuth(): Promise<DiscoveryAuth | null> {
   return capabilityFamily<DiscoveryAuth>(body, 'auth') ?? body?.extensions?.auth ?? null;
 }
 
-describe('auth-subject-link: advertisement shape (RFC 0159 §B)', () => {
+describe('auth-subject-link: advertisement shape (RFC 0159 §B + RFC 0164 §A.3)', () => {
   it('subjectLinking:true is only claimed alongside both SAML and SCIM profiles', async () => {
     const auth = await readAuth();
     if (auth === null || auth.subjectLinking !== true) {
@@ -56,6 +71,31 @@ describe('auth-subject-link: advertisement shape (RFC 0159 §B)', () => {
       ),
     ).toBe(true);
   });
+
+  it('advertising BOTH profiles REQUIRES subjectLinking:true + a subjectLinkKey (RFC 0164 — the vulnerable shape fails, never inapplicable)', async () => {
+    const auth = await readAuth();
+    if (!advertisesBoth(auth)) {
+      return softSkip('inapplicable', 'host does not advertise both openwop-auth-saml and openwop-auth-scim');
+    }
+    // The pre-RFC-0164 "opted out" shape: both lanes advertised, no flag. That
+    // host ships the combined-deployment leaver bypass under a conforming
+    // banner. RFC 0164 §A.3 makes the flag a DERIVED statement of fact, so its
+    // absence alongside both profiles is a conformance FAILURE.
+    expect(
+      auth.subjectLinking,
+      driver.describe(
+        'auth-profiles.md §Subject linking (RFC 0164)',
+        'RFC 0164 §A.3: a host advertising BOTH openwop-auth-saml and openwop-auth-scim MUST advertise capabilities.auth.subjectLinking:true — the leaver contract follows the profile pair; omitting the flag is the vulnerable pre-0164 shape',
+      ),
+    ).toBe(true);
+    expect(
+      typeof auth.subjectLinkKey === 'string' && SUBJECT_LINK_KEY_CLASSES.includes(auth.subjectLinkKey),
+      driver.describe(
+        'auth-profiles.md §Subject linking (RFC 0164)',
+        `RFC 0164 §A.3 / RFC 0163 §A.1: a host advertising both profiles MUST advertise subjectLinkKey ∈ {${SUBJECT_LINK_KEY_CLASSES.join(', ')}}`,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe('auth-subject-link: cross-lane deactivation (RFC 0159 §A.3 — opt-in)', () => {
@@ -64,7 +104,7 @@ describe('auth-subject-link: cross-lane deactivation (RFC 0159 §A.3 — opt-in)
 
   it('a SCIM deactivation fail-closes the linked SAML identity', async () => {
     const auth = await readAuth();
-    if (auth === null || auth.subjectLinking !== true) return softSkip('inapplicable', 'capability-gated');
+    if (!advertisesBoth(auth)) return softSkip('inapplicable', 'RFC 0164 gate: host does not advertise both openwop-auth-saml and openwop-auth-scim');
     if (!idpUrl || !scimUrl) return softSkip('inapplicable', 'opt-in: SAML IdP and/or SCIM endpoint not provided');
 
     // 1. Provision a SCIM user carrying an opaque, IdP-stable externalId.
@@ -110,7 +150,7 @@ describe('auth-subject-link: link-key hygiene (RFC 0159 §A.2 — opt-in)', () =
 
   it('a mutable/PII link key (email) never produces a cross-lane pass', async () => {
     const auth = await readAuth();
-    if (auth === null || auth.subjectLinking !== true) return softSkip('inapplicable', 'capability-gated');
+    if (!advertisesBoth(auth)) return softSkip('inapplicable', 'RFC 0164 gate: host does not advertise both openwop-auth-saml and openwop-auth-scim');
     if (!idpUrl || !scimUrl) return softSkip('inapplicable', 'opt-in: SAML IdP and/or SCIM endpoint not provided');
 
     // Attempt to form the cross-lane link on email (a mutable/PII attribute).

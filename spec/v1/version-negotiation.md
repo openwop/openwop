@@ -455,6 +455,20 @@ RFC 0148 classified certification evidence as a `safety-fix` (`COMPATIBILITY.md`
 
 Nothing on the wire changes: discovery, runs, events are untouched. Only what a certification *claim* is allowed to rest on changes.
 
+## Combined SAML + SCIM hosts (RFC 0164 — the leaver contract is implied)
+
+RFC 0164 (`additive`, 2026-09-02) made the SCIM ⟷ SAML leaver contract (`auth-profiles.md` §"Subject linking (SAML ⟷ SCIM)") follow the **profile pair**: a host that advertises both `openwop-auth-saml` and `openwop-auth-scim` is bound whether or not it sets `capabilities.auth.subjectLinking`, and MUST advertise `subjectLinking: true` + `subjectLinkKey`. No production host advertised both at filing, so no deployed host changes status; this section exists for the first one that does.
+
+| Who | What | When |
+| --- | --- | --- |
+| **Host operator** advertising both profiles today (none known) | Detect: `capabilities.auth.profiles[]` contains both strings and `subjectLinking` is absent/`false` — the suite's `auth-subject-link` advertisement leg now records `executed-fail`, and the discovery document fails `capabilities.schema.json`. Migrate by **one** of: (a) implement the contract (RFC 0159 §A + RFC 0163 §A/§B — link on an opaque IdP-stable key, declare the class, check the trust root, fail-close the linked SAML identity on SCIM deactivation) and emit the derived flag; or (b) **narrow the advertisement** — drop one of the two profile strings. (b) is conforming: a profile string is a claim of conformance, not an inventory of code. | Before the next suite pin. |
+| **Host operator** adopting the second lane | Adopt the contract with it; the derived flag and key come from the same gate that adds the second profile string, so they cannot drift. | At adoption. |
+| **Host** whose SAML SP and SCIM connection serve different tenant realms | The same-tenant link cannot form, so advertise one profile (the reference host does this when `subjectLinkRealmAlignment()` is false). | At configuration. |
+| **Client / consumer** | Derive the combined-leaver guarantee from the profile pair; keep tolerating `subjectLinking` (kept through v1.x, removed in v2 per `COMPATIBILITY.md` §5). | Any time. |
+| **Suite** | Both subject-link scenarios gate on the pair; a combined host that opted out now fails where it previously read `inapplicable` — the `COMPATIBILITY.md` §2.3 case of a new scenario finding a previously untested gap. | Suite ≥ 1.150.0. |
+
+Nothing on the wire changes for SAML-only or SCIM-only hosts.
+
 ## Open spec gaps
 
 | #   | Gap                                                                                                                                                                                                                                                 | Owner       |

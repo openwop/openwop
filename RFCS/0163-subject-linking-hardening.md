@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (a new **optional** discovery field + two MUSTs that bind only hosts already advertising `subjectLinking:true` — no host conforming to RFC 0159 or RFC 0050 today de-conforms) |
 | **Supersedes**    | —                                                              |
 | **Superseded by** | —                                                              |
+| **Amended by**    | [RFC 0164](./0164-mandatory-subject-linking.md) — the obligations of this RFC and RFC 0159 follow the profile pair; the `subjectLinking` gate becomes a derived advertisement (closes UQ1). |
 
 ## Summary
 
@@ -142,7 +143,7 @@ Backward-compatibility clauses:
 
 ## Unresolved questions
 
-1. **Mandatory follow-up (UQ1, inherited).** Should a later (`breaking`, v2) RFC make cross-lane deactivation **mandatory** for any host advertising both `openwop-auth-saml` and `openwop-auth-scim` (retiring the opt-in `subjectLinking` flag)? This RFC, like RFC 0159, deliberately stays additive/opt-in. Out of scope here; recorded so the sequencing is explicit.
+1. **Mandatory follow-up (UQ1, inherited) — RESOLVED by RFC 0164 (2026-09-02).** Original text: Should a later (`breaking`, v2) RFC make cross-lane deactivation **mandatory** for any host advertising both `openwop-auth-saml` and `openwop-auth-scim` (retiring the opt-in `subjectLinking` flag)? This RFC, like RFC 0159, deliberately stays additive/opt-in. Out of scope here; recorded so the sequencing is explicit.
 2. **Enum extensibility — RESOLVED at `Active` (2026-09-01).** The enum names classes, not attributes: `{opaque-idp, configured-immutable}`. A directory-specific GUID, `oid`, `ImmutableID` and `ms-DS-ConsistencyGuid` are all `configured-immutable` if they meet the §A.1 conjunctive predicate. A new *class* (one that names a different verification path, as RFC 0154's `schemes` members do) would still be an additive enum growth; a new *attribute* is not a new class and does not change the wire.
 3. **§B trust-root identity representation — RESOLVED at `Active` (2026-09-01).** Pinned in §B.1: SAML `<saml:Issuer>` entityID (inside the signed element) ↔ the IdP entityID the host recorded for the SCIM connection at configuration time; the SCIM credential is bound to exactly one entityID and the binding is never inferred from a request. "Correspond" without a representation was unwitnessable; the fixture's `issuerOf()` is the comparison the suite makes.
 4. **Two-trust-root fixture ownership — RESOLVED (#1163, suite 1.147.0).** Shipped as a `src/lib/` code fixture with its own self-test.

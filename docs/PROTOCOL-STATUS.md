@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 468 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 160 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 161 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.150.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.151.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 155 |
-| Active | 4 |
+| Active | 5 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -197,6 +197,7 @@
 | RFC 0158 | Durable Execution and Disaster-Recovery Qualification | Active |
 | RFC 0159 | A subject-linking obligation for hosts advertising **both** `openwop-auth-saml` and `openwop-auth-scim`: a SCIM deactivation MUST fail-close the linked SAML identity, keyed on an opaque IdP-stable subject id - so a provisioned leaver cannot still SSO in | Accepted |
 | RFC 0163 | Subject-linking hardening - a **declarable, witnessable** link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) plus a **same-IdP trust-root MUST** before a SAML⟷SCIM link may form. The additive follow-on to RFC 0159 that converts its sectionA.2/sectionA.4 negative-existence claims-check into a positive advertisement and closes its cross-IdP collision gap. | Accepted |
+| RFC 0164 | The SCIM ⟷ SAML leaver contract (RFC 0159 sectionA, hardened by RFC 0163) becomes **mandatory** for any host that advertises **both** `openwop-auth-saml` and `openwop-auth-scim`. `capabilities.auth.subjectLinking` stops being an opt-in gate and becomes a **derived** advertisement that MUST be `true` whenever both profiles are advertised; it is deprecated toward v2. | Active |
 
 ## SDK Helper Coverage
 
@@ -219,7 +220,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0164) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
