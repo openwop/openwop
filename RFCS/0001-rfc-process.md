@@ -48,7 +48,7 @@ The next free number is the highest existing number + 1. Concurrent PRs that pic
 
 ### 3. Status states
 
-Five states, transitions visible in git history:
+Six states (the sixth added by RFC 0166 §D.1), transitions visible in git history:
 
 | Status       | Meaning                                    | Transition rule                                                               |
 | ------------ | ------------------------------------------ | ----------------------------------------------------------------------------- |
@@ -57,6 +57,7 @@ Five states, transitions visible in git history:
 | `Accepted`   | Implementation landed; conformance updated | Maintainers flip when acceptance criteria met                                 |
 | `Withdrawn`  | Author or maintainers withdrew             | Status flipped via follow-up PR                                               |
 | `Superseded` | Replaced by a later RFC                    | Status flipped when the replacement reaches `Accepted`; forward pointer added |
+| `Rejected`   | Maintainers declined the proposal          | RFC 0166 §D.1 (2026-09-02). Status flipped via the declining PR; the reason goes in the `Updated` field; the file stays and the number is never reused |
 
 ### 4. Comment windows
 

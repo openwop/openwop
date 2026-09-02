@@ -61,6 +61,8 @@ invariants:
       in `openwop-app:backend/typescript/src/byok/ephemeralRunSecrets.ts`,
       wrapped at `executor.ts:emit`). Conformance scenario drives canaries
       through every persistence surface and asserts no leak.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-composed-secret-redaction
     tier: protocol
@@ -84,6 +86,8 @@ invariants:
       observability projection. The plaintext value MAY be inlined
       into the dispatched body at LLM-call time, but MUST NOT appear
       in any `prompt.composed` event-log entry.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-composed-trust-marker
     tier: protocol
@@ -105,6 +109,8 @@ invariants:
       aggregation logic at the top of `composePromptTemplate()`
       promotes top-level `contentTrust` to `"untrusted"` if ANY
       binding carries the flag.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: envelope-reasoning-secret-redaction
     tier: protocol
@@ -128,6 +134,8 @@ invariants:
       or prior turns; if `reasoning` is persisted without scrubbing,
       BYOK keys leak. Gate timing: lands alongside reference-host
       emission per the RFC 0027 §G staging precedent.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: model-capability-substituted-no-credential-disclosure
     tier: protocol
@@ -152,6 +160,8 @@ invariants:
       true`. The hidden bit is which specific fallback fired for a given
       dispatch — workspace-internal info that some operators prefer to
       keep private. Gate timing: lands alongside reference-host emission.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: self-hosted-endpoint-no-disclosure
     tier: protocol
@@ -174,6 +184,8 @@ invariants:
       (no `://`, bare `host:port`, or leading `/` path); the Active→Accepted
       honesty scenario asserts the endpoint location appears in no run.* event
       or error payload.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: subscription-credential-user-scope-only
     tier: protocol
@@ -202,6 +214,8 @@ invariants:
       write the personal credential to a shared-workspace row — see
       docs/KNOWN-LIMITS.md "Behavior tests too coarse"). Enforce BOTH: reject the
       request scope AND bind storage to the caller's own user tenant.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: runner-credential-non-transit
     tier: protocol
@@ -224,6 +238,8 @@ invariants:
       credential field onto a result frame; the behavioral leg (OPENWOP_REQUIRE_BEHAVIOR)
       asserts a dispatch/result round-trip carries no credential material on any
       observable surface.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: runner-output-untrusted-transport
     tier: protocol
@@ -241,6 +257,8 @@ invariants:
       node-pack-output-untrusted / prompt-injection-* ids). The behavioral leg
       (OPENWOP_REQUIRE_BEHAVIOR) asserts runner output re-entering an agent loop is
       marked untrusted, not trusted host-origin content.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: media-asset-url-tenant-scoped
     tier: protocol
@@ -261,6 +279,8 @@ invariants:
       carries the advertisement-shape probe now; the cross-tenant + cap
       behavioral assertions soft-skip until a reference host wires asset
       serving (greenfield — staged per the RFC 0027 §G precedent).
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: envelope-refusal-no-prompt-leak
     tier: protocol
@@ -282,6 +302,8 @@ invariants:
       `refusalText: null` even when the original was non-null. Gate
       timing: lands alongside reference-host emission per the RFC 0027
       §G staging precedent.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: envelope-recovery-no-content-leak
     tier: protocol
@@ -303,6 +325,8 @@ invariants:
       bypasses the normal SR-1 redaction harness (which runs on
       envelope payloads, not on parsing-error diagnostics). Gate
       timing: lands alongside reference-host emission.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: artifact-schema-compile-bounded
     tier: protocol
@@ -329,6 +353,8 @@ invariants:
       rejects an over-bounds pack at registry `PUT`) is capability-gated
       on `host.artifactTypes.supported` and `host-pending` until a
       reference host lands.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: chat-card-input-trust-boundary
     tier: protocol
@@ -350,6 +376,8 @@ invariants:
       propagation through the documented `POST /v1/host/sample/cardpacks/execute`
       seam; capability-gated on `host.chat.cardPacks.supported` and host-pending
       until a host wires card execution (Phase 2 `Active` gate).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: form-content-pack-string-trust-boundary
     tier: protocol
@@ -384,6 +412,8 @@ invariants:
       contract server-free; the behavioral trust-tag leg is capability-gated on
       `host.forms.contentPacks` and host-pending until a host wires template
       instantiation (the `Active → Accepted` gate).
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: form-content-template-no-submission-routing
     tier: protocol
@@ -414,6 +444,8 @@ invariants:
       a signature confers authorship, not authority (cf.
       `form-content-pack-string-trust-boundary`).
       Verified always-on + server-free by `form-content-packs.test.ts`.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: tool-result-trust-monotone
     tier: protocol
@@ -442,6 +474,8 @@ invariants:
       ingress), that the meet rule is stated normatively, and that the instances
       cross-reference the general rule; the dynamic-propagation-through-storage
       behavior is host-witnessed (openwop-app memory lane).
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
   - id: pack-manifest-extension-opaque
     tier: protocol
     severity: high
@@ -471,6 +505,8 @@ invariants:
       Verified always-on + server-free by `pack-manifest-extensions.test.ts`,
       which asserts every manifest admits the hatch, still rejects a misspelled
       canonical field, and that the corpus states the opacity rule normatively.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
@@ -483,6 +519,8 @@ invariants:
       Sensitive workflow variables MUST be masked per host's advertised
       compliance.defaultMode. Verified in reference impl; conformance
       implementation-specific coverage is enforced by conformant hosts.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-otel-exception
     tier: protocol
@@ -494,6 +532,8 @@ invariants:
       Error.message and Error.stack sanitized before recordException.
       Host implementations must apply the same redaction contract to their
       telemetry exporters.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-otel-attribute
     tier: protocol
@@ -521,6 +561,8 @@ invariants:
       reported scrape seam), closing the collector-seam gap tracked in
       docs/KNOWN-LIMITS.md. The Postgres reference host's byok-roundtrip.test.ts
       continues to cover the host-internal allowlist.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-error-envelope
     tier: protocol
@@ -531,6 +573,8 @@ invariants:
       - conformance/src/scenarios/auth.test.ts
     note: |
       Canonical error envelope's message field MUST NOT leak material.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-auth-middleware
     tier: protocol
@@ -540,6 +584,8 @@ invariants:
       - conformance/src/scenarios/auth.test.ts
     note: |
       Auth-middleware log lines must not echo Bearer header content.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-debug-bundle
     tier: protocol
@@ -552,6 +598,8 @@ invariants:
       §"Redaction guarantees". The v1.0 conformance baseline plants a
       BYOK-shaped canary in workflow inputs and asserts it does not
       appear verbatim in the bundle response.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-debug-bundle-otel
     tier: protocol
@@ -573,6 +621,8 @@ invariants:
       bundle is now also covered over-the-wire by `otel-collector-canary-
       inspection.test.ts` (added 2026-06-01), which proves the collector
       inspects real exported span/metric attributes.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-artifact-content
     tier: reference-impl
@@ -588,6 +638,8 @@ invariants:
       [REDACTED:<id>] marker + content-hash) and ai-policy.test.ts
       (4-mode policy enforcement: cleartext credential flows are
       blocked at the policy layer before reaching the provider).
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-stream-chunk
     tier: protocol
@@ -598,6 +650,8 @@ invariants:
       - conformance/src/scenarios/stream-modes.test.ts
     note: |
       SSE chunks forwarded from a provider must pass through sanitizer.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-stream-error
     tier: protocol
@@ -607,6 +661,8 @@ invariants:
       - conformance/src/scenarios/redaction.test.ts
     note: |
       SSE error chunks must pass through sanitizer.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: secret-leakage-author-emit
     tier: advisory
@@ -616,6 +672,13 @@ invariants:
     note: |
       Defense-in-depth advisory. Workflow validation SHOULD reject
       credential-shaped strings in declared inputs. Not a hard MUST.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: heartbeat-state-no-secret
     tier: advisory
@@ -634,6 +697,13 @@ invariants:
       states the constraint in its `from`/`to` descriptions.
 
   # ===== Prompt Injection =====
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-input-marker
     tier: reference-impl
@@ -651,6 +721,8 @@ invariants:
       `core.openwop.ai` pack delegates' `applyUntrustedMarkers` helper:
       trusted runs leave content unmarked; untrusted runs wrap user-role
       content in `<UNTRUSTED>...</UNTRUSTED>` per RFC 0020 §D.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-kb-marker
     tier: reference-impl
@@ -662,6 +734,13 @@ invariants:
     # reference impl (MyndHyve), outside any public openwop repo.
     note: |
       KB content wrapped in untrusted markers in the reference impl.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-artifact-marker
     tier: reference-impl
@@ -673,6 +752,13 @@ invariants:
     # reference impl (MyndHyve), outside any public openwop repo.
     note: |
       Prior-artifact content wrapped in untrusted markers.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-refine-quorum
     tier: protocol
@@ -683,6 +769,8 @@ invariants:
       - conformance/src/scenarios/interrupt-approval.test.ts
     note: |
       Refine resume resets quorum on the upstream gate.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-decidedby-host-only
     tier: protocol
@@ -693,6 +781,8 @@ invariants:
       - conformance/src/scenarios/identity-passthrough.test.ts
     note: |
       decidedBy must be host-derived; client-supplied value ignored.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-mcp-marker
     tier: reference-impl
@@ -707,6 +797,8 @@ invariants:
       `<UNTRUSTED tool="<name>">...</UNTRUSTED>` whenever the host's
       MCP client flags untrustedContent OR the run is operating under
       `ctx.trustBoundary === 'untrusted'` (RFC 0020 §D).
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-mcp-no-approval
     tier: protocol
@@ -716,6 +808,8 @@ invariants:
       - conformance/src/scenarios/interrupt-approval.test.ts
     note: |
       MCP tool responses must not advance HITL gates.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-envelope-typecheck
     tier: protocol
@@ -726,6 +820,8 @@ invariants:
       - conformance/src/scenarios/discovery.test.ts
     note: |
       Envelope types validated against capabilities.supportedEnvelopes.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-no-llm-approval
     tier: protocol
@@ -735,6 +831,8 @@ invariants:
       - conformance/src/scenarios/interrupt-approval.test.ts
     note: |
       LLM-emitted approval-resolution envelopes rejected; HITL only.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-tool-allowlist
     tier: reference-impl
@@ -753,6 +851,8 @@ invariants:
       emit `agent.toolCalled` for a tool outside the agent's
       `toolAllowlist` — for hosts advertising `agents.liveRuntime`;
       it soft-skips elsewhere, so the invariant stays reference-impl tier.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: agent-skill-profile-stateless
     tier: protocol
@@ -776,6 +876,8 @@ invariants:
       so no pre-existing manifest changes validity. The always-on test is the
       public witness (validate skill/assistant/no-role cases; reject the
       stateful skill + the handoff-less skill + a bad enum value).
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: agent-pack-handoff-schema-enforcement
     tier: protocol
@@ -797,6 +899,8 @@ invariants:
       from a less-trusted surface (chat, webhook, conversation channel)
       and tries to widen the agent's input contract beyond what the
       manifest author declared. Closes HV-1.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: agents-run-no-raw-handler
     tier: protocol
@@ -820,6 +924,8 @@ invariants:
       This protocol-tier invariant pairs with the reference-impl-tier
       `prompt-injection-tool-allowlist`: defense-in-depth across both
       layers.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-tenant-host-derived
     tier: protocol
@@ -830,6 +936,8 @@ invariants:
     note: |
       tenantId / workspaceId derived from auth principal; envelope-supplied
       values ignored.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-no-auto-fetch
     tier: reference-impl
@@ -842,6 +950,13 @@ invariants:
     # for envelope content); verification is host-specific CI.
     note: |
       Hosts must not fetch URLs from envelope content directly.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-injection-webhook-host-only
     tier: reference-impl
@@ -854,6 +969,13 @@ invariants:
     # is host-specific CI.
     note: |
       Webhook deliveries fire from declared workflow events only.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: exec-must-not-be-protocol-tier
     tier: protocol
@@ -879,6 +1001,8 @@ invariants:
       assertion against the spec corpus, not a host behavior.
 
   # ===== Node Packs =====
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-manifest-name-match
     tier: protocol
@@ -888,6 +1012,8 @@ invariants:
       - conformance/src/scenarios/pack-registry-publish.test.ts
     note: |
       Registry rejects manifest_name_mismatch.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-manifest-version-match
     tier: protocol
@@ -897,6 +1023,8 @@ invariants:
       - conformance/src/scenarios/pack-registry-publish.test.ts
     note: |
       Registry rejects manifest_version_mismatch.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-tarball-size-cap
     tier: protocol
@@ -906,6 +1034,8 @@ invariants:
       - conformance/src/scenarios/pack-registry-publish.test.ts
     note: |
       Tarball size cap enforced; tarball_too_large on overrun.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-manifest-size-cap
     tier: protocol
@@ -913,6 +1043,8 @@ invariants:
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
       - conformance/src/scenarios/pack-registry-publish.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-entry-size-cap
     tier: protocol
@@ -920,6 +1052,8 @@ invariants:
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
       - conformance/src/scenarios/pack-registry-publish.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-path-traversal
     tier: protocol
@@ -930,6 +1064,8 @@ invariants:
     note: |
       Tarballs with `..` or absolute paths rejected by registry validation.
       maliciousManifest.test.ts will add adversarial coverage.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-scope-author-match
     tier: protocol
@@ -937,6 +1073,8 @@ invariants:
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
       - conformance/src/scenarios/pack-registry-publish.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sig-publish
     tier: reference-impl
@@ -952,6 +1090,8 @@ invariants:
       the namespace allow-list in
       `openwop-registry:registry/.well-known/openwop-registry.json`
       before the tarball lands in the index.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sig-host-verify
     tier: reference-impl
@@ -968,6 +1108,8 @@ invariants:
       invalid-public-key rejection + truncated-signature rejection.
       The PackConsumerError(pack_signature_invalid) path is the
       load-bearing rejection.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sig-key-in-keychain
     tier: protocol
@@ -975,6 +1117,8 @@ invariants:
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
       - conformance/src/scenarios/pack-registry.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sig-no-yanked
     tier: protocol
@@ -985,6 +1129,8 @@ invariants:
     note: |
       Yanked versions return 404 signature_not_available per
       openwop/openwop@434c8f2.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sig-revocation
     tier: reference-impl
@@ -994,6 +1140,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # yet (pack-registry.test.ts probes keychain shape and yank → 404,
     # not key revocation handling); verification is host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-approval-required
     tier: reference-impl
@@ -1003,6 +1156,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # covers host-side pack install approval; verification is
     # host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-approval-host-state
     tier: reference-impl
@@ -1012,6 +1172,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # covers host-side pack-approval state; verification is
     # host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-approval-scope
     tier: reference-impl
@@ -1030,6 +1197,13 @@ invariants:
   # invariants gate on the first host that does so.
   # See plans/openwop-protocol-gap-closure-plan.md Workstream 5 PACK-1
   # and Workstream 4 SEC-4 for the policy.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-no-process
     tier: protocol
@@ -1049,6 +1223,8 @@ invariants:
       .test.ts` asserts `misbehaving-process` → sandbox_escape_attempt
       (host-process-escape) non-vacuously. The legacy seam scenario
       remains for the host-driven path.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-no-eval
     tier: reference-impl
@@ -1065,6 +1241,8 @@ invariants:
       because non-JS runtimes (wasmtime, nsjail) don't expose
       `eval()` semantics. Graduates if + when a JS-pack-loading host
       ships with a corresponding `sandbox-no-eval.test.ts`.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-network-gated
     tier: protocol
@@ -1082,6 +1260,8 @@ invariants:
       socket import (`misbehaving-network`) → sandbox_escape_attempt
       (network-escape) non-vacuously, and a granted `openwop.fetch` is
       callable only when in allowedHostCalls.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-fs-gated
     tier: protocol
@@ -1098,6 +1278,8 @@ invariants:
       import the host refuses before instantiation. The portable
       `sandbox-wasm-isolation.test.ts` asserts `misbehaving-fs` →
       sandbox_escape_attempt (host-fs-escape) non-vacuously.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-no-env
     tier: protocol
@@ -1115,6 +1297,8 @@ invariants:
       refuses. The portable `sandbox-wasm-isolation.test.ts` asserts
       `misbehaving-env` → sandbox_escape_attempt (host-env-leak)
       non-vacuously.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-timeout
     tier: protocol
@@ -1138,6 +1322,8 @@ invariants:
       control. This completes the 7-of-8 RFC 0035 §B graduation (only the
       JS-specific `no-eval` stays exempt). The legacy seam scenario remains
       for the host-driven path.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-memory-cap
     tier: protocol
@@ -1157,6 +1343,8 @@ invariants:
       `misbehaving-memory` (an out-of-bound store) → sandbox_memory
       _exceeded non-vacuously, engine-enforced. The legacy seam +
       WASM-pack-runtime scenarios remain for those paths.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-sandbox-isolated-context
     tier: protocol
@@ -1173,6 +1361,8 @@ invariants:
       no module state survives across calls. The portable `sandbox-wasm
       -isolation.test.ts` bumps a mutable global on one instance and
       reads 0 on a separate fresh instance non-vacuously.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-output-untrusted
     tier: protocol
@@ -1183,6 +1373,8 @@ invariants:
     note: |
       Pack output treated as untrusted; downstream prompt-injection
       invariants apply (cross-references prompt-injection-* ids).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: node-pack-no-decidedby-emit
     tier: protocol
@@ -1192,6 +1384,8 @@ invariants:
       - conformance/src/scenarios/approval-payload.test.ts
 
   # ===== Provider Policy =====
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-pre-dispatch
     tier: protocol
@@ -1201,6 +1395,8 @@ invariants:
       - conformance/src/scenarios/policies.test.ts
     note: |
       All LLM provider invocations must invoke resolver.
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-runtime-recheck
     tier: reference-impl
@@ -1210,6 +1406,13 @@ invariants:
     # enforcement pending — tracked gap: policies.test.ts /
     # providerPolicyEnforcement.test.ts cover only the advertisement
     # shape, not runtime rechecks; verification is host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-disabled-hard
     tier: protocol
@@ -1217,6 +1420,8 @@ invariants:
     threat_model: SECURITY/threat-model-provider-policy.md
     tests:
       - conformance/src/scenarios/policies.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-no-discovery-leak
     tier: protocol
@@ -1224,6 +1429,8 @@ invariants:
     threat_model: SECURITY/threat-model-provider-policy.md
     tests:
       - conformance/src/scenarios/policies.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-required-byok-only
     tier: reference-impl
@@ -1233,6 +1440,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # exercises `required`-mode BYOK-only enforcement; verification is
     # host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-required-distinguishes-source
     tier: reference-impl
@@ -1242,6 +1456,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # exercises key-source distinction under `required` mode;
     # verification is host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-restricted-glob
     tier: protocol
@@ -1249,6 +1470,8 @@ invariants:
     threat_model: SECURITY/threat-model-provider-policy.md
     tests:
       - conformance/src/scenarios/policies.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-restricted-fail-closed
     tier: protocol
@@ -1256,6 +1479,8 @@ invariants:
     threat_model: SECURITY/threat-model-provider-policy.md
     tests:
       - conformance/src/scenarios/policies.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-restricted-canonical-name
     tier: reference-impl
@@ -1265,6 +1490,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # exercises canonical-name matching under `restricted` mode;
     # verification is host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-resolver-outage-fail-open
     tier: protocol
@@ -1272,6 +1504,8 @@ invariants:
     threat_model: SECURITY/threat-model-provider-policy.md
     tests:
       - conformance/src/scenarios/policies.test.ts
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-partial-resolution
     tier: reference-impl
@@ -1281,6 +1515,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # exercises partial policy resolution; verification is
     # host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-audit-emit
     tier: reference-impl
@@ -1290,6 +1531,13 @@ invariants:
     # enforcement pending — tracked gap: no public conformance scenario
     # asserts policy-decision audit emission; verification is
     # host-specific CI.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-policy-audit-provenance
     tier: reference-impl
@@ -1300,6 +1548,13 @@ invariants:
     # asserts audit provenance fields; verification is host-specific CI.
 
   # ===== MCP client (Phase H.2) =====
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: mcp-toolcall-payload-redaction
     tier: protocol
@@ -1318,6 +1573,8 @@ invariants:
       workflow can consume it under the UNTRUSTED trust boundary.
 
   # ===== HTTP client (Phase H.3) =====
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: http-client-ssrf-guard
     tier: protocol
@@ -1339,6 +1596,8 @@ invariants:
       independent implementers cannot ship a partial guard silently.
 
   # ===== Idempotency-Key determinism (1.1.2 safety-fix) =====
+    witness: witnessable-unaided
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: idempotency-key-deterministic
     tier: protocol
@@ -1362,6 +1621,8 @@ invariants:
       `CONFIG_INVALID`. The cross-impl vector test in the scenario lets
       third-party `core.openwop.http` reimplementations verify wire
       agreement on a fixed set of (runId, nodeId, payload) inputs.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: idempotency-key-tenant-endpoint-scoped
     tier: protocol
@@ -1390,6 +1651,8 @@ invariants:
       (`multi-region-stale-owner-no-effect`) were registered; §A's was
       named in the RFC and never landed. The §A keyspace-separation rule
       is the SEPARATE invariant below, whose witness is not black-box.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: idempotency-store-no-host-generated-keys
     tier: reference-impl
@@ -1415,6 +1678,8 @@ invariants:
       is reference-impl tier, and RFC 0150 records it as gap G8. Saying so
       is preferable to a scenario that passes without executing
       (RFC 0148 §A). The listed test covers the caller-lane keying only.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: logical-effect-id-retry-stable
     tier: protocol
@@ -1451,6 +1716,8 @@ invariants:
       by the provider, not by the caller — so a wire probe claiming to
       prove it would be the vacuous-witness pattern RFC 0148 §A exists to
       close. Recorded as gap G9.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: layer2-invocation-claim-atomic
     tier: reference-impl
@@ -1490,6 +1757,13 @@ invariants:
       Recorded as gap G17. Landing a seam-driven witness is the close;
       until then this is reference-impl tier and the gap is stated rather
       than papered over with a probe that would pass either way.
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: multi-region-stale-owner-no-effect
     tier: protocol
@@ -1539,6 +1813,8 @@ invariants:
       `POST /v1/host/sample/test/multi-region/simulate-partition` seam
       covers record convergence only. Recorded as an open row in RFC
       0150's gap register.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: discovery-canonical-family-no-shadow
     tier: protocol
@@ -1593,6 +1869,8 @@ invariants:
       The three fail differently; that is the most that can be said, and it
       is said here rather than implied by a green run. Each axis is
       independently sabotage-verified.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2a-version-no-silent-downgrade
     tier: protocol
@@ -1612,6 +1890,8 @@ invariants:
       Witnessed against `A2AFakePeer`, which had to be extended to record
       request headers at all: it captured method, path, rpcMethod, and
       body, and §B lives entirely in the headers.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: mcp-version-no-silent-downgrade
     tier: protocol
@@ -1631,6 +1911,8 @@ invariants:
       decided on a fact that was not true.
       `McpFakeServer` had the identical header-capture gap as its A2A
       counterpart; both recorded the call body and discarded the headers.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: replay-fanout-no-refire
     tier: protocol
@@ -1652,6 +1934,8 @@ invariants:
       Capability-gated on `webhooks.supported` and OUTSIDE every profile floor: a
       host whose SSRF guard refuses the suite's loopback receiver records
       `blocked`, which means UNOBSERVABLE, not unmet.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: compensation-replay-no-refire
     tier: protocol
     severity: high
@@ -1666,6 +1950,8 @@ invariants:
       wrong, and re-firing compounds it.
       Capability-gated on `compensation.supported`; resolves to `blocked`
       per RFC 0148 §A until a host advertises and wires the unwind seam.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: compensation-effect-id-retry-stable
     tier: protocol
@@ -1683,6 +1969,8 @@ invariants:
       `failFirstInverseAttempts: 2` MUST report attempts: 3 and ONE distinct
       `downstreamKeys` value. Capability-gated on `compensation.supported`;
       `blocked` (named) until a host wires the extension.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: compensation-tenant-authority-bound
     tier: protocol
@@ -1700,6 +1988,8 @@ invariants:
       403 `forbidden` AND audited, operator → 200 `audited: true`. A seam
       that answers 200 to all three consults nothing. Capability-gated;
       `blocked` (named) until a host wires the extension.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: compensation-input-recorded-facts-only
     tier: protocol
@@ -1715,6 +2005,8 @@ invariants:
       extension: `replayed[]` MUST deep-equal `source[]` (same identities,
       same inputs) while `refiredEffects` stays 0. Capability-gated;
       `blocked` (named) until a host wires the extension.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: profile-claim-floor-not-overstated
     tier: protocol
@@ -1736,6 +2028,8 @@ invariants:
       `dependsOn` and `securityTier` before certification. Bundle v2 claims
       profiles, not extension ids, so there is nothing yet for a verifier to
       validate; carried until a bundle carries extension claims.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: delegation-tenant-audience-bound
     tier: protocol
@@ -1752,6 +2046,8 @@ invariants:
       The negative leg carries the weight: a host that merely echoes its
       input satisfies every positive assertion, and only `audience_mismatch`
       distinguishes a verifier from a passthrough.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: delegation-chain-bounded
     tier: protocol
@@ -1774,6 +2070,8 @@ invariants:
       rows rather than a name this row overclaimed.
 
   # ===== Agent memory (Phase I.1) =====
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: delegation-chain-acyclic
     tier: protocol
@@ -1789,6 +2087,8 @@ invariants:
       Capability-gated on `auth.workloadIdentity.delegation.supported`;
       resolves to `blocked` per RFC 0148 §A until an advertising host wires
       the seam, and to executed-fail on a host that resolves the cycle.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: delegation-no-scope-amplification
     tier: protocol
@@ -1807,6 +2107,8 @@ invariants:
       positive leg (a narrowing chain resolves) keeps the negatives from
       being satisfied by a blanket refusal.
       Capability-gated as `delegation-chain-acyclic`.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: agent-memory-cti-1
     tier: protocol
@@ -1821,6 +2123,8 @@ invariants:
       tenant B's calls against the same `memoryRef`. Reference-impl
       verification: `openwop-examples:examples/hosts/postgres/test/memory-adapter.test.ts`
       §8 (CTI-1 cross-tenant probe).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: agent-memory-sr-1-redaction
     tier: protocol
@@ -1836,6 +2140,8 @@ invariants:
       webhook envelopes carrying memory events. Caller is responsible
       for the placeholder substitution at write time; the host MUST
       reject content over `maxEntrySizeBytes` to bound exposure.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: memory-compaction-sr-1-carry-forward
     tier: protocol
@@ -1857,6 +2163,8 @@ invariants:
       in-context examples) not present in any source. The redaction
       harness is the only protocol-level defense at the compaction
       boundary.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: envelope-redaction-sr-1-carry-forward
     tier: protocol
@@ -1886,6 +2194,8 @@ invariants:
       accept path.
 
   # ===== RFC 0015 host.kvStorage cross-tenant isolation =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: kv-cross-tenant-isolation
     tier: protocol
@@ -1900,6 +2210,8 @@ invariants:
       `agent-memory-cti-1`. Same applies to `list` enumeration.
 
   # ===== RFC 0017 host.queueBus cross-tenant message isolation =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: queue-cross-tenant-isolation
     tier: protocol
@@ -1913,6 +2225,8 @@ invariants:
       messages published by tenant B, even on the same logical topic.
 
   # ===== RFC 0059 host.workspace cross-tenant·workspace isolation =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: workspace-cross-tenant-isolation
     tier: protocol
@@ -1938,6 +2252,8 @@ invariants:
       `openwop-core-standard` floor (RFC 0088 §D Lever-2), no seam.
 
   # ===== RFC 0116 prompt-prefix cache cross-tenant isolation =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-prefix-cache-cross-tenant-isolation
     tier: protocol
@@ -1963,6 +2279,8 @@ invariants:
       public test is the cross-tenant leg of `prompt-prefix-cache.test.ts`.
 
   # ===== RFC 0063 core.subWorkflow output-merge approval fail-closed =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: subrun-merge-approval-fail-closed
     tier: protocol
@@ -1983,6 +2301,8 @@ invariants:
       otherwise.
 
   # ===== RFC 0018 host.sql parametric-only =====
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: sql-parametric-only
     tier: protocol
@@ -1997,6 +2317,8 @@ invariants:
       values flow through `params[]`, never via string interpolation.
 
   # ===== RFC 0020 host-side MCP untrusted-args invariant =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: mcp-server-untrusted-args
     tier: protocol
@@ -2018,6 +2340,8 @@ invariants:
       sample uses `-32602` (envelope-correct for pre-workflow validation).
 
   # ===== RFC 0026 provider.usage credential-leak invariant =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: provider-usage-no-credential-leak
     tier: protocol
@@ -2036,6 +2360,8 @@ invariants:
       attributes per `observability.md §"Cost attribution attributes"`.
 
   # ===== G6 / O4 cost-attribute allowlist redaction =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: cost-attribution-allowlist-redaction
     tier: protocol
@@ -2060,6 +2386,8 @@ invariants:
       additionally unit-tested at the reference host.
 
   # ===== RFC 0014 host.fs sandbox =====
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: fs-path-traversal
     tier: protocol
@@ -2080,6 +2408,8 @@ invariants:
       cleanly otherwise.
 
   # ===== RFC 0046 host.credentials redaction =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: credential-payload-redaction
     tier: protocol
@@ -2101,6 +2431,8 @@ invariants:
       skips cleanly otherwise.
 
   # ===== RFC 0159 / RFC 0163 SAML ⟷ SCIM subject linking =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: subject-link-leaver-deny
     tier: protocol
@@ -2120,6 +2452,8 @@ invariants:
       OPENWOP_TEST_SAML_IDP_URL + OPENWOP_TEST_SCIM_URL); `inapplicable` only
       on a host that does not advertise both profiles (RFC 0164). Registered 2026-09-01 at RFC 0163
       `Active` — RFC 0159 had a threat-model row (§4.5) and no invariant.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: subject-link-key-class-declared
     tier: protocol
@@ -2139,6 +2473,8 @@ invariants:
       mutable-key "link" never drives a cross-lane deny or pass. The residual
       (a host that declares a safe class and joins on email for an unprobed
       pair) is recorded as RFC 0163 UQ5.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: subject-link-same-trust-root
     tier: protocol
@@ -2156,6 +2492,8 @@ invariants:
       same-IdP positive control in the same test keeps the negative
       non-vacuous) over OPENWOP_TEST_SAML_IDP_URL + _B + OPENWOP_TEST_SCIM_URL.
       The fixture is proven in conformance/src/lib/saml-idp.test.ts.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: subject-link-mandatory-when-both-advertised
     tier: protocol
@@ -2180,6 +2518,8 @@ invariants:
       rather than `safety-fix` (COMPATIBILITY.md §4 default-on row, empty set).
 
   # ===== RFC 0049 RBAC fail-closed =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: authorization-fail-closed
     tier: protocol
@@ -2198,6 +2538,8 @@ invariants:
       `capabilities.authorization.supported`; skips cleanly otherwise.
 
   # ===== RFC 0028 Tier-2 prompt workspace-membership (read + write) =====
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-mutation-workspace-membership-enforced
     tier: protocol
@@ -2234,6 +2576,8 @@ invariants:
       possibly be a member of and asserts the host refuses (NOT a 2xx; any
       4xx/5xx refusal is acceptable — silent success is the failure mode).
       On a 403 specifically, the canonical error envelope is pinned.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: prompt-read-workspace-membership-enforced
     tier: protocol
@@ -2272,6 +2616,8 @@ invariants:
       content returned is a cross-tenant leak).
 
   # ===== RFC 0016 host.tableStorage cross-tenant isolation =====
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: table-cross-tenant-isolation
     tier: protocol
@@ -2288,6 +2634,8 @@ invariants:
       `delete`).
 
   # ===== RFC 0019 host.blobStorage cross-tenant isolation =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: blob-cross-tenant-isolation
     tier: protocol
@@ -2303,6 +2651,8 @@ invariants:
       URL minted for tenant A MUST NOT resolve under tenant B's namespace.
 
   # ===== RFC 0019 host.cache cross-tenant isolation =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: cache-cross-tenant-isolation
     tier: protocol
@@ -2318,6 +2668,8 @@ invariants:
       sibling and inherits the same isolation requirement.
 
   # ===== Phase I auth-rotation token redaction =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: auth-key-rotation-no-canary-echo
     tier: protocol
@@ -2335,6 +2687,8 @@ invariants:
       response body.
 
   # ===== RFC 0041 Phase 4 — replay-determinism portability =====
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: replay-llm-cache-key-portable
     tier: protocol
@@ -2355,6 +2709,8 @@ invariants:
       .llmCacheKeyRecipe: "spec-rfc-0041"`). Non-portable cache keys
       hide tenant-scoped state behind the cache boundary, defeating
       the SR-1 secret-redaction invariant on cached responses.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: annotation-cross-tenant-isolation
     tier: protocol
@@ -2367,6 +2723,8 @@ invariants:
       GET /v1/runs/{runId}/annotations MUST NOT return annotations from a run
       owned by a different tenant, and a run's annotation list MUST contain
       only that run's annotations. Mirrors CTI-1.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: annotation-content-redaction
     tier: protocol
@@ -2378,6 +2736,8 @@ invariants:
       RFC 0056 §E. Annotation signal.correction and note are untrusted user
       content; secret-shaped material MUST be redacted under SR-1 before
       persistence, listing, and debug-bundle export.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: memory-attribution-no-content
     tier: protocol
@@ -2391,6 +2751,8 @@ invariants:
       (memoryRef, memoryId, nodeId, agentId) and non-secret tags only. The
       entry content is served by the read-side (MemoryAdapter.get), already
       SR-1-redacted; the event MUST NOT duplicate it onto the event log.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: memory-attribution-tenant-scoped
     tier: protocol
@@ -2402,6 +2764,8 @@ invariants:
       RFC 0057 §C. memory.written events appear only on the run event stream
       of the tenant that owns the run; no memoryRef/memoryId for one tenant's
       run is disclosed on another tenant's stream. Mirrors CTI-1.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: eval-summary-no-content-leak
     tier: protocol
@@ -2420,6 +2784,8 @@ invariants:
       level; the always-on agent-eval-suite-shape.test.ts content-free
       negatives (a task entry with a taskOutput body; a safetyFinding with an
       excerpt) are the public test.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: verifier-no-content-leak
     tier: protocol
@@ -2437,6 +2803,8 @@ invariants:
       body is served by the run's normal projection. The payload schema is
       additionalProperties:false; the always-on agent-verifier-shape.test.ts
       negative (an agent.verified carrying a `result` body) is the public test.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: egress-decision-no-secret-leak
     tier: protocol
@@ -2459,6 +2827,8 @@ invariants:
       egress-provenance-shape.test.ts asserts the descriptor + event shapes and
       the decision-enum / audiences-minItems negatives. The redactionPolicy
       field governs at-most an SR-1-redacted hash.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: egress-credential-audience-bound
     tier: protocol
@@ -2494,6 +2864,8 @@ invariants:
   # scenarios: 10/10 assertions green. The RFC 0079 `egress-credential-audience-
   # bound` precedent above. The always-on anonymous-actor-shape.test.ts proves
   # the wire contract server-free.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: anon-actor-no-default-baseline
     tier: protocol
@@ -2513,6 +2885,8 @@ invariants:
       "anon-not-granted"} with no dispatch. GRADUATED reference-impl → protocol at
       RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-default-deny.test.ts
       passed non-vacuously against openwop-app rev 03d06d1f2.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: anon-actor-no-secret-reach
     tier: protocol
@@ -2531,6 +2905,8 @@ invariants:
       protocol at RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-no-secret-
       reach.test.ts passed non-vacuously against openwop-app rev 03d06d1f2 (planted
       BYOK canary never surfaced; the caller-supplied tenant was ignored).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: anon-actor-egress-ssrf-guarded
     tier: protocol
@@ -2549,6 +2925,8 @@ invariants:
       GRADUATED reference-impl → protocol at RFC 0132 Active→Accepted (2026-07-22):
       anonymous-actor-egress-guarded.test.ts passed non-vacuously against openwop-
       app rev 03d06d1f2 (out-of-audience → anon-egress-denied, credentialAttached:false).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: anon-actor-write-egress-gated
     tier: protocol
@@ -2568,6 +2946,8 @@ invariants:
       Active→Accepted (2026-07-22): anonymous-actor-write-gated.test.ts passed non-
       vacuously against openwop-app rev 03d06d1f2 (hitl control → approval interrupt
       before the durable write; uncontrolled surface → anon-write-ungated).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: anon-actor-audit-opaque
     tier: protocol
@@ -2586,6 +2966,8 @@ invariants:
       RFC 0132 Active→Accepted (2026-07-22): anonymous-actor-audit-opaque.test.ts
       passed non-vacuously against openwop-app rev 03d06d1f2 (opaque anon: id, no
       PII in the decision record; owner.principalKind:"anonymous" projected).
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: sub-chain-expansion-bounded
     tier: protocol
@@ -2612,6 +2994,8 @@ invariants:
       reference host rejects an over-bounds `from-chain` at instantiate time) is
       capability-gated on `capabilities.workflowChainPacks.subChains.supported`
       and host-pending until a reference host wires runtime child dispatch.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: sub-chain-child-tenant-scoped
     tier: protocol
@@ -2647,6 +3031,8 @@ invariants:
       (advertised `subChains {supported:true,maxDepth:8}`, co-registered children with a
       deterministic tenant-scoped id, refuse-not-flatten in the negative posture) — RFC
       0079 / RFC 0132 graduation precedent.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: budget-no-pricing-leak
     tier: protocol
@@ -2669,6 +3055,8 @@ invariants:
       instance-level rejection of a ratePerToken-bearing payload — the public test.
       The host's pricing model (how it computes costEstimateUsd) stays a host
       choice (RFC 0026); only the policy shape + events + enforcement seam are pinned.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: deployment-event-no-content-leak
     tier: protocol
@@ -2685,6 +3073,8 @@ invariants:
       additionalProperties:false; the always-on agent-deployment-shape.test.ts
       content-free negatives (a deployment.promoted carrying a manifestBody; a
       deployment.state.changed carrying a prompt) are the public test.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: roster-attribution-no-content
     tier: protocol
@@ -2701,6 +3091,8 @@ invariants:
       (SR-1). The payload $def is additionalProperties:false; the always-on
       agent-roster-shape.test.ts content-free negatives (a roster.run.initiated
       carrying a `body`; one carrying a `prompt`) are the public test.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: org-position-no-authority-escalation
     tier: protocol
@@ -2729,6 +3121,8 @@ invariants:
       other authority-escalation / approval-bypass invariants
       (prompt-injection-no-llm-approval, subrun-merge-approval-fail-closed);
       the normative section documenting the invariant is RFC 0087 §B.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: deployment-promotion-fail-closed
     tier: protocol
@@ -2752,6 +3146,8 @@ invariants:
       section documenting the invariant is RFC 0082 §E.
 
   # ===== RFC 0093 webhook delivery hardening =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: webhook-cross-tenant-isolation
     tier: protocol
@@ -2769,6 +3165,8 @@ invariants:
       `queue-cross-tenant-isolation` for the delivery direction: every
       other tenant-scoped surface already carried an explicit
       cross-tenant-isolation invariant; webhook delivery was the omission.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: webhook-delivery-egress-revalidation
     tier: reference-impl
@@ -2793,6 +3191,13 @@ invariants:
       TOCTOU left open by registration-time-only validation (a registered
       public hostname later re-pointed at `169.254.169.254`, or a `302`
       to a metadata endpoint).
+    non_testability_rationale: |
+      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
+      this invariant (tests: []). The obligation is stated in note: above and is verified,
+      if at all, by the reference implementation's own tests at its tier. Review may re-tier
+      it or attach a scenario; until then it counts against the unwitnessable ratchet.
+    witness: unwitnessable
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: connection-pack-no-credential-material
     tier: protocol
@@ -2818,6 +3223,8 @@ invariants:
       always-on schema probe (additionalProperties:false rejects every
       blocklisted name at the schema layer) + the capability-gated
       behavioral leg asserting the specific error code on a live host.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: connection-pack-api-host-shape
     tier: protocol
@@ -2843,6 +3250,8 @@ invariants:
       connection-pack-apihosts.test.ts (positive apiHosts fixture; openapi-without-
       apiHosts rejected; IP/wildcard/port/single-label/uppercase entries rejected;
       mcp-omission valid).
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: connection-pack-egress-host-bound
     tier: protocol
@@ -2870,6 +3279,8 @@ invariants:
       the capability-gated behavioral egress-allow-list leg (permit an apiHosts
       match; fail closed otherwise) driven through the
       POST /v1/host/sample/connection-packs/egress-check seam.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: proposal-inert-until-applied
     tier: protocol
@@ -2890,6 +3301,8 @@ invariants:
       (the `state` enum + open-`artifact` shape) + the capability-gated
       behavioral leg asserting a draft proposal leaves a matching run
       unchanged until applied.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: proposal-no-resynthesis
     tier: protocol
@@ -2907,6 +3320,8 @@ invariants:
       the moment I approved it" trust gap. Public test: the capability-gated
       behavioral leg asserting the installed artifact byte-matches the
       last-persisted `artifact`.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: goal-continuation-bounded
     tier: protocol
@@ -2926,6 +3341,8 @@ invariants:
       Public test: the always-on schema leg (bounds object) + the
       capability-gated behavioral leg asserting a never-satisfied goal halts
       exactly at `maxLoopIterations` with no further runs.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: goal-completion-judge-only
     tier: protocol
@@ -2943,6 +3360,8 @@ invariants:
       agreeing. Public test: the capability-gated behavioral leg asserting a
       client-supplied `state: satisfied` is refused and only a judge verdict
       transitions the goal to satisfied.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: export-bundle-no-credential-material
     tier: protocol
@@ -2966,6 +3385,8 @@ invariants:
       with an embedded literal key is rejected and export emits refs only.
 
   # ===== RFC 0099 external-event trigger ingestion =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: trigger-ingestion-ssrf
     tier: protocol
@@ -2989,6 +3410,8 @@ invariants:
       forbids handing the run a fetchable URL); the capability-gated behavioral
       leg (`triggerBridge.ingestion`) asserts an ingestion-path fetch to a
       private address is refused, reusing the `http-client-ssrf-guard` posture.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: trigger-ingestion-content-redaction
     tier: protocol
@@ -3017,6 +3440,8 @@ invariants:
       that `webhook.headers` is a host-curated allowlist (no `Authorization`).
 
   # ===== RFC 0100 async / durable A2A tasks =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2a-push-egress-ssrf
     tier: protocol
@@ -3054,6 +3479,8 @@ invariants:
       neither — an assertion that passes on half an implementation.
 
   # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2ui-action-confinement
     tier: protocol
@@ -3072,6 +3499,8 @@ invariants:
       validation. Public test: the server-free Ajv2020 leg in `a2ui-surface-shape.test.ts`
       asserts a valid resume/exchange action validates and an out-of-enum / extra-prop
       action target is rejected.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2ui-untrusted-blocks-approval
     tier: protocol
@@ -3087,6 +3516,8 @@ invariants:
       Composition of the existing untrusted-content rule for this kind; public test
       `a2ui-untrusted-blocks-approval.test.ts` asserts an untrusted-marked surface bound
       to an approval interrupt is refused.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2ui-surface-no-secret-rendering
     tier: protocol
@@ -3102,6 +3533,8 @@ invariants:
       ALL envelope payloads; the a2ui payload carries only text/label/binding fields
       (closed schema) and no opaque blob field, so there is no secret-bearing channel to
       bypass redaction.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2ui-surface-no-code-exec
     tier: reference-impl
@@ -3119,6 +3552,8 @@ invariants:
       0051). The closed `anyOf` `surface` schema (verified server-free in
       `a2ui-surface-shape.test.ts`) is the enabling precondition: a surface that smuggles a
       script-bearing field fails schema validation before it can reach a renderer.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: a2ui-surface-no-network-egress
     tier: reference-impl
@@ -3132,6 +3567,8 @@ invariants:
       Render-side guarantee, reference-app client probe (suite-version requirement). The
       schema's confined `action.target` enum (no arbitrary URL) is the structural
       precondition verified server-free in `a2ui-surface-shape.test.ts`.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: content-published-cache-no-draft
     tier: protocol
@@ -3148,6 +3585,8 @@ invariants:
       never be served from a cached published response. Unpublished authored
       content is pre-release material — leaking it via the `public,
       max-age=300` cache is the threat.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: content-response-tenant-scoped
     tier: protocol
@@ -3162,6 +3601,8 @@ invariants:
       A page/section belonging to another tenant MUST be unreachable. Mirrors
       `webhook-cross-tenant-isolation` / `kv-cross-tenant-isolation` for the
       content-delivery surface.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: content-no-cross-tenant-enumeration
     tier: protocol
@@ -3176,6 +3617,8 @@ invariants:
       distinguish "exists for another tenant" from "does not exist" (no
       existence oracle). The no-enumeration guarantee holds relative to the
       host-resolved tenant.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: voice-transcript-untrusted
     tier: protocol
@@ -3195,6 +3638,8 @@ invariants:
       REQUIRES `contentTrust: "untrusted"` (`run-event-payloads.schema.json`
       `$defs.voiceTranscript`). The behavioral "not promoted to authority" half
       is exercised by the gated reference-host leg at `Active → Accepted`.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: voice-interim-not-durable
     tier: reference-impl
@@ -3218,6 +3663,8 @@ invariants:
       interim-vs-final divergence is not yet proven; the gated leg
       `voice-interim-not-durable.test.ts` soft-skips until a host with a
       scripted-interim test-seam arm proves it, then graduates to protocol.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: voice-bargein-no-partial-leak
     tier: protocol
@@ -3236,6 +3683,8 @@ invariants:
       2026-06-23 on the openwop-app live host (rev `00293-89w`, steward-curl-verified:
       the `/v1/host/sample/voice/barge-in` seam emits chunks, then barge_in→cancelled,
       none after) — the behavioral leg `voice-bargein-no-partial-leak.test.ts`.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: voice-streamref-tenant-bound
     tier: reference-impl
@@ -3259,6 +3708,8 @@ invariants:
       a host with live `streamRef` transport proves it, then graduates to protocol.
 
   # ===== RFC 0117 front-end plugin packs (sandboxed UI extensions) =====
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-isolation
     tier: protocol
@@ -3291,6 +3742,8 @@ invariants:
       the plugin runs out of the host's execution context. Graduates reference-impl
       → protocol when the openwop-app reference host (ADR 0153) serves the live
       sandboxed frame.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-egress
     tier: protocol
@@ -3309,6 +3762,8 @@ invariants:
       and a host MAY refuse a pack whose exceptions it will not grant. The gated
       leg asserts the served CSP denies egress for a plugin with no declared
       `connectSrc`.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-rpc-allowlist
     tier: protocol
@@ -3327,6 +3782,8 @@ invariants:
       validates the `ui-plugin-message.schema.json` allowlist `enum` + the
       `method_not_allowed` error code; the gated leg drives an undeclared-method
       `request` against a live host and asserts the `method_not_allowed` refusal.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-no-byok
     tier: protocol
@@ -3345,6 +3802,8 @@ invariants:
       schema exposes no credential-bearing field and that `additionalProperties`
       is closed on the envelope; the gated leg asserts an `artifact.read` result
       crossing the boundary carries no resolved BYOK plaintext.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
 
   - id: test-seam-authenticated-when-enabled
     tier: protocol
@@ -3391,6 +3850,8 @@ invariants:
   # each was driven non-vacuously against the first A2A 1.0 / MCP 2026-07-28
   # host (openwop-app ADR 0552 P2 at main 24b9e6c9b; ADR 0553 P2 branch
   # 3c2cd839a) with the suite's dual-era fake peer / server. ─────────────────
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: a2a-card-runtime-consistent
     tier: protocol
     severity: high
@@ -3408,6 +3869,8 @@ invariants:
       it does not serve, is the drift a client's trust decision rides on.
       Witnessed 4/4 under OPENWOP_REQUIRE_BEHAVIOR=true against the first
       1.0 host; the header-less leg is red there until it follows §C.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: a2a-peer-no-authority-escalation
     tier: protocol
     severity: critical
@@ -3425,6 +3888,8 @@ invariants:
       that the peer actually saw a task (taskCount > 0 — the leg is vacuous
       otherwise). Witnessed 1/1 (4 assertions) under strict against the
       first 1.0 host with OPENWOP_A2A_FAKE_PEER=true.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: mcp-cache-tenant-scoped
     tier: protocol
     severity: high
@@ -3442,6 +3907,8 @@ invariants:
       (OPENWOP_TEST_SECONDARY_API_KEY) — the leg records blocked without one.
       Witnessed under strict with two credentials against the first
       2026-07-28 host.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: mcp-extension-no-authority
     tier: protocol
     severity: critical
@@ -3458,6 +3925,8 @@ invariants:
       false, with the fake server confirming the tool was actually called).
       Witnessed 2/2 (6 assertions) under strict against the first
       2026-07-28 host with OPENWOP_MCP_FAKE_SERVER=true.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: mcp-peer-no-authority-escalation
     tier: protocol
     severity: critical
@@ -3474,6 +3943,8 @@ invariants:
       advertised — an anonymous MCP principal MUST NOT be the production
       default (mcp-current-auth-boundary). Witnessed under strict against
       the first 2026-07-28 host.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: mcp-header-body-consistent
     tier: protocol
     severity: high
@@ -3492,6 +3963,8 @@ invariants:
       -32022 — agreement precedes selection, stated in mcp-integration.md
       §B), the method/name half in mcp-stateless-request (added 1.123.0).
       Witnessed 3/3 under strict against the first 2026-07-28 host.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02
   - id: subject-record-opaque
     tier: protocol
     severity: critical
@@ -3507,6 +3980,8 @@ invariants:
       fail validation on any host (witness class: claims-check). That a host
       never MINTS PII into an opaque-looking id is negative-existence and is
       not witnessable from outside; the invariant records the obligation.
+    witness: claims-check
+    witnessReview: initial-mechanical-2026-09-02
   - id: subject-legacy-not-linkable
     tier: protocol
     severity: high
@@ -3523,3 +3998,5 @@ invariants:
       layer down. Witness class: negative-existence, seam-gated — no seam
       mints a legacy-issuer subject bound to a SCIM record yet, so the scenario
       leg records `blocked`, never a pass.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-02

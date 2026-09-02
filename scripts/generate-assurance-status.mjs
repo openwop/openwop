@@ -28,6 +28,7 @@
  *   node scripts/generate-assurance-status.mjs --check
  */
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { listRegisterFiles, parseRegister } from './registers-lib.mjs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -111,53 +112,37 @@ function versions() {
 }
 
 function risks() {
-  const dir = resolve(ROOT, 'RFCS/registers');
+  // RFC 0166 §A: rows are read with the shared register parser (both register
+  // locations, id-keyed rows, no cell-count dependence) and their disposition
+  // is the TOKEN at the head of the Status cell — `open | mitigated | accepted |
+  // closed | transferred:<target>`. The previous regex required exactly eight
+  // cells with the score in cell five and silently lost 64 of 204 rows.
   const open = [];
   const transferredRows = [];
   let total = 0;
-  for (const f of readdirSync(dir).filter((x) => x.endsWith('.risks.md')).sort()) {
-    const rfc = f.slice(0, 4);
-    for (const line of readFileSync(join(dir, f), 'utf8').split('\n')) {
-      const m = line.match(/^\|\s*(R\d+)\s*\|\s*([^|]+?)\s*\|\s*[^|]*\|\s*[^|]*\|\s*\**(Critical|High|Medium|Low)\**\s*\|[^|]*\|[^|]*\|\s*([^|]*?)\s*\|\s*$/);
-      if (!m) continue;
+  for (const file of listRegisterFiles().filter((f) => f.kind === 'risks')) {
+    const { rows } = parseRegister(file);
+    for (const row of rows) {
       total++;
-      const [, id, title, score, status] = m;
+      const rfc = file.rfc;
+      const id = row.local;
+      const title = (row.cells[1] ?? '').trim();
+      const scoreCell = (row.cells[4] ?? '').replace(/\*/g, '').trim();
+      const score = /^(Critical|High|Medium|Low)$/.exec(scoreCell)?.[1] ?? null;
       if (score !== 'Critical' && score !== 'High') continue;
-      // A row counts as closed only on an EXPLICIT disposition marker, and never
-      // when the cell negates one. The previous test matched the bare substring
-      // `closed` anywhere in the status cell, which is the
-      // substring-of-a-different-concept failure:
-      //
-      //   · RFC 0151 R1 ("Compensation executes twice", Critical) reads
-      //     "Open — ... unwitnessed" and was counted CLOSED from 2026-08-16,
-      //     purely because the cell mentions "(G1 closed 2026-08-16)" — a
-      //     different item's closure.
-      //   · A row stating a risk "cannot be closed by repository work" was
-      //     counted closed by saying so.
-      //
-      // This count is not cosmetic: project-wide gates have been keyed to it, so a
-      // false closure silently loosens a constraint.
-      const negated = /\b(cannot|can ?not|could not|will not|never|not)\s+be\s+(closed|resolved)\b|\bnot closed\b/i.test(status);
-      const explicitlyClosed =
-        /\*\*(CLOSED|Closed)\b/.test(status) ||
-        /~~/.test(status) ||
-        /Realised and remediated/i.test(status);
-      const closed = explicitlyClosed && !negated;
-      // A risk may also be TRANSFERRED — real and open, but tracked on a named
-      // surface outside this register. a disposition of "Closed OR transferred" is what
-      // register sweeps turn on, so a count that cannot express `transferred`
-      // cannot express the condition it reports. Reported separately rather than
-      // folded into either bucket: a transferred risk is not closed, and reading
-      // it as unaddressed is equally wrong.
-      const transferred = !closed && /\*\*(?:OPEN\s+—\s+)?TRANSFERRED\b/i.test(status);
-      if (closed) continue;
-      const row = { rfc, id, score, title: title.length > 90 ? title.slice(0, 87) + '…' : title, status: status.replace(/\*\*/g, '').slice(0, 160) };
-      if (transferred) transferredRows.push(row);
-      open.push(row);
+      if (row.token === 'transferred') {
+        transferredRows.push(`${rfc}/${id}`);
+        continue;
+      }
+      if (row.token === 'open' || row.token === null) open.push({ rfc, id, title, score, status: row.dispCell.slice(0, 160) });
     }
   }
-  return { rowsScanned: total, openCriticalOrHigh: open, transferred: transferredRows.map((r) => `${r.rfc}/${r.id}`),
-    programOpenCriticalOrHigh: open.filter((r) => Number(r.rfc) >= 147).map((r) => `${r.rfc}/${r.id}`) };
+  return {
+    rowsScanned: total,
+    openCriticalOrHigh: open,
+    programOpenCriticalOrHigh: open.filter((r) => Number(r.rfc) >= 147),
+    transferred: transferredRows,
+  };
 }
 
 // -------------------------------------------------------- permitted claims
@@ -184,7 +169,7 @@ function claims(inputs) {
 
 export function derive() {
   const governance = { source: 'MAINTAINERS.md', maintainers: maintainers() };
-  const inputs = { governance, waivers: { source: 'RFCS/*.md, RFCS/registers/*', ...waivers() }, audit: { source: 'SECURITY/external-audit-engagement.md §8, SECURITY/external-audit-findings.json', ...audit() }, tier3: tier3(), versions: { source: 'conformance/package.json, CHANGELOG.md', ...versions() }, risks: { source: 'RFCS/registers/*.risks.md', ...risks() } };
+  const inputs = { governance, waivers: { source: 'RFCS/*.md, RFCS/registers/*', ...waivers() }, audit: { source: 'SECURITY/external-audit-engagement.md §8, SECURITY/external-audit-findings.json', ...audit() }, tier3: tier3(), versions: { source: 'conformance/package.json, CHANGELOG.md', ...versions() }, risks: { source: 'RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)', ...risks() } };
   const c = claims(inputs);
   return {
     $comment: 'RFC 0156 §F assurance manifest. DERIVED by scripts/generate-assurance-status.mjs from the files each section names; --check fails when this file disagrees with the tree. Hand edits are overwritten.',
