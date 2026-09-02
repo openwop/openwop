@@ -3541,7 +3541,7 @@ invariants:
     severity: critical
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
-      - openwop-app:frontend/react/src/chat/a2ui/__tests__/no-code-exec.test.ts
+      - openwop-app:frontend/react/src/chat/a2ui/__tests__/a2ui-render-invariants.test.tsx
     note: |
       RFC 0102 §A.1 / ai-envelope.md §"A2UI surfaces" rule 1. A consumer rendering a
       `ui.a2ui-surface` MUST render only components in the host's advertised catalog and
@@ -3560,7 +3560,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
-      - openwop-app:frontend/react/src/chat/a2ui/__tests__/no-egress.test.ts
+      - openwop-app:frontend/react/src/chat/a2ui/__tests__/a2ui-render-invariants.test.tsx
     note: |
       RFC 0102 §A.2. A rendered `ui.a2ui-surface` MUST NOT initiate any network egress
       (fetch/beacon/img-to-attacker-URL) — data-exfil via an injected action is the threat.

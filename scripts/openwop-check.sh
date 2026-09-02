@@ -143,6 +143,10 @@ node "$SPEC_ROOT/scripts/check-deprecations.mjs"
 node "$SPEC_ROOT/scripts/generate-gaps.mjs" --check
 node "$SPEC_ROOT/scripts/check-registers.mjs"
 node "$SPEC_ROOT/scripts/check-witness-classes.mjs"
+# v2 charter Phase 1 items 9 + 12 — the v1→v2 event codemap as data, and the cross-repo
+# evidence manifest behind every <repo>:<path> pointer.
+node "$SPEC_ROOT/scripts/generate-event-codemap.mjs" --check
+node "$SPEC_ROOT/scripts/generate-cross-repo-evidence.mjs" --check
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).
