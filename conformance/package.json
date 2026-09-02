@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-conformance",
-  "version": "1.155.0",
+  "version": "1.156.0",
   "description": "Production-ready black-box conformance suite for OpenWOP v1.0 compliant servers.",
   "repository": {
     "type": "git",
@@ -40,6 +40,7 @@
     "!src/scenarios/effect-identity-composition.test.ts",
     "!src/scenarios/effect-identity-cross-scope.test.ts",
     "!src/scenarios/error-envelope-canonical-shape.test.ts",
+    "!src/scenarios/event-codemap-complete.test.ts",
     "!src/scenarios/form-content-packs.test.ts",
     "!src/scenarios/multi-region-effect-vocabulary.test.ts",
     "!src/scenarios/normative-example-extraction.test.ts",

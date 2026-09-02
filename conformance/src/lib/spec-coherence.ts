@@ -94,6 +94,7 @@ export const SPEC_COHERENCE_SCENARIOS: ReadonlySet<string> = new Set([
   'effect-identity-composition.test.ts',
   'effect-identity-cross-scope.test.ts',
   'error-envelope-canonical-shape.test.ts',
+  'event-codemap-complete.test.ts',
   'form-content-packs.test.ts',
   'multi-region-effect-vocabulary.test.ts',
   'normative-example-extraction.test.ts',
