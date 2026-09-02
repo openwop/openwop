@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.154.0] — 2026-09-02 — the tarball carries the suite and nothing else; the vendored contract is digest-checked (v2 charter Phase 1)
+
+No new scenario file. Three packed changes:
+
+- **Corpus-coherence scenarios and suite self-tests leave the package.** The 28 `SPEC_COHERENCE_SCENARIOS` (they read `spec/v1`, assert nothing about a host, and reported `blocked`/`inapplicable` in every host bundle) and every `src/lib/*.test.ts` are excluded via `package.json` `files` negations; `scripts/check-npm-pack-contents.sh` fails if either returns. The list is published as `conformance/spec-coherence-scenarios.json`. The published layout now collects 1,430 tests across 324 files; the layout gate's floors are re-measured (1,350 / 300).
+- **`schemas/CORPUS-STAMP.json` carries per-file SHA-256 digests** of every vendored `api/` and `schemas/` file, written at `prepack`. `src/lib/corpus-stamp.ts` verifies them at global setup in the published layout and **refuses to run on a mismatch** (missing, altered, or extra vendored files are each named); repo layout and pre-1.154.0 stamps report `not checked`, never a silent pass. This removes the mechanism behind the 1.138.1 defect one layer down: a package can no longer identify its contract by a commit hash it cannot check.
+- **`--offline` is a declared property:** exactly `fixtures-valid.test.ts` (the only server-free scenario that ships and runs in the published layout). `spec-corpus-validity.test.ts` left the set with the coherence scenarios. Documented in README §"--offline".
+
 ## [1.153.0] — 2026-09-02 — per-`it` requirement rows and the requirement registry (RFC 0148 §A / G3; v2 charter Phase 1)
 
 No new scenario file. Three packed changes, all additive to bundle v2:

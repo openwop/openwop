@@ -36,7 +36,7 @@ echo "  building conformance CLI dist/..."
 
 pack_json "$SPEC_ROOT/conformance" "$CONFORMANCE_JSON"
 
-node - "$CONFORMANCE_JSON" <<'NODE'
+node - "$CONFORMANCE_JSON" "$SPEC_ROOT/conformance/spec-coherence-scenarios.json" <<'NODE'
 const { readFileSync } = require('node:fs');
 
 const [conformancePath] = process.argv.slice(2);
@@ -95,7 +95,7 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.153.0', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '1.154.0', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
@@ -125,7 +125,16 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   'coverage.md',
 ]);
 
-console.log(`  ok: ${conformancePack.name}@${conformancePack.version} packs ${conformanceFiles.length} files with vendored contracts.`);
+// Suite 1.154.0 — what the tarball must NOT carry: the suite's own self-tests and
+// the corpus-coherence scenarios (they read spec/v1, assert nothing about a host,
+// and reported `blocked`/`inapplicable` in every host bundle). A packaging change
+// that let them back in would put rows about the spec into evidence about a host.
+const forbidden = conformanceFiles.filter((f) => /^src\/lib\/.*\.test\.ts$/.test(f));
+if (forbidden.length > 0) throw new Error(`conformance tarball carries suite self-tests: ${forbidden.join(', ')}`);
+const coherence = new Set(JSON.parse(require('node:fs').readFileSync(process.argv[3], 'utf8')));
+const leaked = conformanceFiles.filter((f) => f.startsWith('src/scenarios/') && coherence.has(f.slice('src/scenarios/'.length)));
+if (leaked.length > 0) throw new Error(`conformance tarball carries corpus-coherence scenarios: ${leaked.join(', ')}`);
+console.log(`  ok: ${conformancePack.name}@${conformancePack.version} packs ${conformanceFiles.length} files with vendored contracts; ${coherence.size} coherence scenarios and every src/lib self-test excluded.`);
 NODE
 
 if [[ -e "$SPEC_ROOT/conformance/api" || -e "$SPEC_ROOT/conformance/schemas" ]]; then

@@ -55,7 +55,11 @@ const CONFORMANCE = join(ROOT, 'conformance');
  * extract or the config resolution broke, and passing on that would be the
  * vacuous green this gate exists to prevent.
  */
-const MIN_TESTS = 1500;
+// Re-measured 2026-09-02 (suite 1.154.0) after the tarball stopped carrying the
+// 28 corpus-coherence scenarios and every src/lib self-test: 1430 tests / 324
+// files collected in the published layout. Floors sit ~5% under the measurement
+// so a packaging regression that drops a whole file is caught, not absorbed.
+const MIN_TESTS = 1350;
 const MIN_FILES = 300;
 
 function run(cmd, args, cwd) {
