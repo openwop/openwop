@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('discovery: /.well-known/openwop', () => {
   it('returns 200 with required Capabilities fields per capabilities.md §2', async () => {
@@ -40,6 +41,17 @@ describe('discovery: /.well-known/openwop', () => {
       'capabilities.md §4',
       'response SHOULD carry a Cache-Control header to allow client caching',
     )).toBeTruthy();
+  });
+
+  it('IF a standard ETag is present, a matching If-None-Match yields 304 (RFC 0165 §C.2 — presence-gated)', async () => {
+    const first = await driver.get('/.well-known/openwop', { authenticated: false });
+    const etag = first.headers.get('etag');
+    if (etag === null) {
+      return softSkip('inapplicable', 'host does not send a standard ETag on the discovery document (RFC 0165 §C.2 — SHOULD, presence-gated)');
+    }
+    expect(etag.trim().length, driver.describe('RFC 0165 §C.2', 'ETag, when present, MUST be a non-empty validator')).toBeGreaterThan(0);
+    const second = await driver.get('/.well-known/openwop', { authenticated: false, headers: { 'If-None-Match': etag } });
+    expect(second.status, driver.describe('capabilities-change-detection.md §"Cache validators"', 'a matching If-None-Match SHOULD yield 304 Not Modified')).toBe(304);
   });
 
   it('IF Capabilities-Etag is present, it is non-empty and stable within the cache window', async () => {

@@ -9,8 +9,9 @@
  *   - Positive: `{ tenant }` and `{ tenant, workspace, principal }` validate.
  *   - Negative: missing `tenant` (required), or an unknown property, is rejected.
  *
- * The owner subschema is self-contained (no external $ref), so it compiles
- * standalone via ajv.
+ * The owner subschema referenced only itself until RFC 0165 added an optional
+ * `subject` member ($ref subject.schema.json); that schema is registered on the
+ * ajv instance so the owner subschema still compiles standalone.
  *
  * @see RFCS/0048-tenant-workspace-principal-identity-model.md
  * @see schemas/run-snapshot.schema.json properties.owner
@@ -24,6 +25,7 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 
 interface SnapshotSchema {
   $schema: string;
+  $id: string;
   properties: { owner?: Record<string, unknown> };
 }
 
@@ -40,7 +42,9 @@ describe('category: identity owner-triple shape (RFC 0048 §C)', () => {
   });
 
   const ajv = new Ajv2020({ allErrors: true, strict: false });
-  const ownerSchema = { $schema: snapshot.$schema, ...(snapshot.properties.owner as Record<string, unknown>) };
+  ajv.addSchema(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'subject.schema.json'), 'utf8')) as Record<string, unknown>);
+  // `$id` is the base the relative `subject.schema.json` $ref (RFC 0165) resolves against.
+  const ownerSchema = { $schema: snapshot.$schema, $id: snapshot.$id, ...(snapshot.properties.owner as Record<string, unknown>) };
   const validate = ajv.compile(ownerSchema);
 
   it('positive: tenant-only owner validates', () => {

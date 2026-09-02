@@ -4,7 +4,7 @@
   "provenance": {
     "suite": {
       "package": "@openwop/openwop-conformance",
-      "version": "1.154.0"
+      "version": "1.155.0"
     },
     "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
   },
@@ -371,6 +371,10 @@
       "$id": "https://openwop.dev/spec/v1/self-hosted-runner-result-frame.schema.json"
     },
     {
+      "file": "schemas/subject.schema.json",
+      "$id": "https://openwop.dev/spec/v1/subject.schema.json"
+    },
+    {
       "file": "schemas/suspend-request.schema.json",
       "$id": "https://openwop.dev/spec/v1/suspend-request.schema.json"
     },
@@ -415,5 +419,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "3146d715639b3f348a7df11023a9a8625500e84d32e59a3c94d5be5edabcc902"
+  "digest": "f7d3a4797e709345fb9d5bd36e8b834076d1d96d62ef38c4efee75bff76ac53c"
 }

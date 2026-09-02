@@ -121,6 +121,42 @@ An **anonymous actor** (`principalKind: "anonymous"`) represents a caller who au
 
 A host that advertises `capabilities.anonymousActor` (see `capabilities.md` §`anonymousActor`) and dispatches through a public surface MUST set `owner.principalKind: "anonymous"` on the resulting run so the authorization is observable and auditable. The `user`/`agent` values are, for now, a passive marker (RFC 0132 §Unresolved-Q1); only `anonymous` binds behavior.
 
+### The Subject record (RFC 0165 §B)
+
+`owner.principal` is an opaque string that each authentication lane mints by its own rule,
+which is why two lanes can produce two subjects for one human (RFC 0159). `owner.subject`
+(`schemas/subject.schema.json`) is the OPTIONAL, issuer-scoped form of the same identity:
+
+```json
+{ "issuer": "https://idp.example.com/entity", "subjectId": "idp-op-8f3a", "tenant": "acme",
+  "lane": "saml", "kind": "user", "keyClass": "opaque-idp" }
+```
+
+With `issuer` in the key, two trust roots issuing the same identifier are distinct by
+construction. A host that emits it:
+
+- **MUST** set `subject.tenant` equal to `owner.tenant`, `subject.subjectId` equal to
+  `owner.principal` when both are present, and `subject.kind` equal to `owner.principalKind`
+  when both are present (`workload` corresponds to `principalKind` absent).
+- **MUST** set `keyClass` when `lane` is `saml` or `scim`, equal to the advertised
+  `capabilities.auth.subjectLinkKey` when both identity profiles are advertised (RFC 0163 §A,
+  RFC 0164 §A.3).
+- **MUST NOT** put an email address, a display name, a token, or a certificate in `subjectId`
+  (SECURITY invariant `subject-record-opaque`; the schema forbids `@` and whitespace).
+- **MUST** echo the record verbatim on `run.started` (RFC 0048 §C) and copy it verbatim onto a
+  fork (`replay.md` §"Fork ownership").
+- **MUST** answer reads of runs created before it emitted subjects with a synthesized
+  **legacy subject** — `issuer: "urn:openwop:legacy"`, `subjectId: <owner.principal>`,
+  `lane: <the lane the host can attest, else "api-key">`, `kind: <principalKind ?? "user">` —
+  and **MUST NOT** treat a legacy subject as linkable (`auth-profiles.md` §"Subject linking";
+  invariant `subject-legacy-not-linkable`). A run with no `owner.principal` yields no subject.
+- MAY carry `subject.actor`: the delegating subject (RFC 0154 §B inverted to the run's point
+  of view). Depth **MUST NOT** exceed 4; a deeper chain is refused with `run_forbidden`, never
+  truncated. `actor` is provenance, not authorization; a caller **MUST NOT** self-assert it.
+
+The record is optional in v1.x so both hosts populate it before the v2 major requires it and
+removes the bare `principal`.
+
 ## Role-based authorization (RFC 0049)
 
 A host MAY advertise `capabilities.authorization` to bind an RFC 0048 `principal`'s **role** to **scopes** and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key **scope grammar** (the §Authorization scope vocabulary above) — roles resolve _to_ scopes; no new grammar is introduced.

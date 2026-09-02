@@ -103,6 +103,16 @@ Status codes:
 
 ---
 
+### Fork ownership (RFC 0165 §B.4)
+
+The child run's `owner.tenant` and, when the source carries one, `owner.subject` **MUST** be
+copied verbatim from the source run; the child's `owner.principal` SHOULD be copied. A subject
+key stamped on a run is never rewritten by a fork — the invariant the SAML ⟷ SCIM leaver
+contract depends on (`auth-profiles.md` §"Subject linking"). Why a MUST only for `subject`:
+no text bound fork ownership before this section, and a host that re-owns forks to the forking
+principal was conforming; tightening `principal` would be a `COMPATIBILITY.md` §2.2 change,
+while `subject` is a field no host emitted before RFC 0165.
+
 ## The determinism model
 
 *(Added 2026-08-19. Non-normative framing of requirements that already exist; the
