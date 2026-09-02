@@ -26,6 +26,7 @@
  * host or a vitest subprocess.
  */
 
+import { scenarioFileOfItId } from './requirement-ids.js';
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
 import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
@@ -283,6 +284,27 @@ export function deriveRequirementDispositions(
       row = { requirementId: id, scenarioId: `${prefix}*`, disposition: 'blocked', detail: `no ${prefix}* scenario executed a passing assertion (${matching.map((r) => r.disposition).join(', ')})` };
     }
     rows.push(row);
+  }
+
+  // Per-`it` rows (suite 1.153.0): every ledger entry keyed `openwop.it.<file>.<slug>`
+  // becomes its own bundle row, attributed to its scenario file. Additive — the
+  // file-level and prefix rows above are unchanged, and the floors still key on
+  // them. This is the granularity RFC 0148 §A describes and the G8 fix.
+  const emitted = new Set(rows.map((r) => r.requirementId));
+  for (const e of [...ledger].sort((a, b) => a.requirementId.localeCompare(b.requirementId))) {
+    const file = scenarioFileOfItId(e.requirementId);
+    // Attribute only to files this run reported on: a worker's ledger can carry
+    // rows from files outside the certified set (the suite's own lib tests, or
+    // a filtered run), and those are not evidence about the host.
+    if (file === null || emitted.has(e.requirementId) || !reportStates.has(file)) continue;
+    emitted.add(e.requirementId);
+    rows.push({
+      requirementId: e.requirementId,
+      scenarioId: file,
+      disposition: e.disposition,
+      ...(e.detail === undefined ? {} : { detail: e.detail }),
+      ...(e.assertionCount === undefined ? {} : { assertionCount: e.assertionCount }),
+    });
   }
 
   const totals = { executedPass: 0, executedFail: 0, skipped: 0, inapplicable: 0, blocked: 0 };

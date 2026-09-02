@@ -136,6 +136,9 @@ node "$SPEC_ROOT/scripts/check-capability-declaration-classes.mjs"
 # COMPATIBILITY.md §7 — the deprecation register is an index of deprecations the RFC
 # process already made; this keeps every cited source carrying its annotation.
 node "$SPEC_ROOT/scripts/check-deprecations.mjs"
+# RFC 0148 §A / G3 — per-`it` requirement ids: the registry must match the scenario
+# sources, and a retired id must carry an alias row so bundles that cited it resolve.
+( cd "$SPEC_ROOT/conformance" && node scripts/generate-requirement-registry.mjs --check )
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).

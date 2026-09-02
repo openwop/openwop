@@ -1,0 +1,4 @@
+{
+  "$comment": "old id → new id. Add a row when a test title is reworded so bundles citing the old id still resolve.",
+  "aliases": {}
+}
