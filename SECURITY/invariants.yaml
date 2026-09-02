@@ -2110,14 +2110,15 @@ invariants:
       - conformance/src/scenarios/auth-subject-link.test.ts
     note: |
       RFC 0159 §A.3 (auth-profiles.md §Subject linking): on a host advertising
-      `capabilities.auth.subjectLinking: true`, a SCIM deactivation
+      BOTH `openwop-auth-saml` and `openwop-auth-scim` (RFC 0164 — the profile
+      pair is the gate; `subjectLinking` is derived), a SCIM deactivation
       (`DELETE /Users/{id}` or `PATCH active:false`) MUST deny subsequent
       authorization decisions for the LINKED SAML identity, fail-closed
       (composing RFC 0049 §C) — a provisioned leaver MUST NOT still SSO in.
       Link, not merge: no durable subject key is rewritten. Witnessed by the
       cross-lane leg of auth-subject-link (opt-in seams
-      OPENWOP_TEST_SAML_IDP_URL + OPENWOP_TEST_SCIM_URL); `inapplicable` on a
-      host that does not advertise linking. Registered 2026-09-01 at RFC 0163
+      OPENWOP_TEST_SAML_IDP_URL + OPENWOP_TEST_SCIM_URL); `inapplicable` only
+      on a host that does not advertise both profiles (RFC 0164). Registered 2026-09-01 at RFC 0163
       `Active` — RFC 0159 had a threat-model row (§4.5) and no invariant.
 
   - id: subject-link-key-class-declared
@@ -2128,7 +2129,8 @@ invariants:
       - conformance/src/scenarios/auth-subject-link-key-class.test.ts
       - conformance/src/scenarios/auth-subject-link.test.ts
     note: |
-      RFC 0163 §A / RFC 0159 §A.2: a `subjectLinking:true` host MUST advertise
+      RFC 0163 §A / RFC 0159 §A.2 (RFC 0164: any host advertising both
+      openwop-auth-saml and openwop-auth-scim) MUST advertise
       `capabilities.auth.subjectLinkKey` from the closed enum
       {opaque-idp, configured-immutable} — required by schema conditional as
       well as by prose — and MUST join on the declared class only. Mutable/PII
@@ -2154,6 +2156,28 @@ invariants:
       same-IdP positive control in the same test keeps the negative
       non-vacuous) over OPENWOP_TEST_SAML_IDP_URL + _B + OPENWOP_TEST_SCIM_URL.
       The fixture is proven in conformance/src/lib/saml-idp.test.ts.
+
+  - id: subject-link-mandatory-when-both-advertised
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/auth-subject-link.test.ts
+      - conformance/src/scenarios/auth-subject-link-key-class.test.ts
+    note: |
+      RFC 0164 §A.1/§A.3 (auth-profiles.md §Subject linking): a host that
+      advertises BOTH `openwop-auth-saml` and `openwop-auth-scim` MUST honour
+      the combined leaver contract (RFC 0159 §A, RFC 0163 §A/§B) whether or not
+      `capabilities.auth.subjectLinking` is present, and MUST advertise
+      `subjectLinking: true` + `subjectLinkKey` — the flag is a DERIVED
+      statement of fact, deprecated toward v2. A document advertising both
+      profiles with the flag absent/false is the vulnerable pre-0164 shape:
+      it fails `capabilities.schema.json` (conditional on `profiles[]`) and the
+      auth-subject-link advertisement leg records `executed-fail`, never
+      `inapplicable`. A host that cannot honour the contract MUST NOT advertise
+      both profiles (RFC 0164 §A.2). Binds zero production hosts at filing —
+      none advertises both profiles — which is why RFC 0164 is `additive`
+      rather than `safety-fix` (COMPATIBILITY.md §4 default-on row, empty set).
 
   # ===== RFC 0049 RBAC fail-closed =====
 

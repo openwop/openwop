@@ -11,7 +11,7 @@
  * `capabilities.auth.subjectLinking` opt-in as RFC 0159.
  *
  * TWO LEGS:
- *   (§A) ADVERTISEMENT — a discovery read, runs whenever subjectLinking:true.
+ *   (§A) ADVERTISEMENT — a discovery read, runs whenever both profiles are advertised.
  *        A subjectLinking:true host MUST advertise a subjectLinkKey that is a
  *        member of the CLOSED enum {opaque-idp, configured-immutable}. The
  *        enum names classes, not attributes. Mutable/PII keys are
@@ -58,6 +58,12 @@ interface DiscoveryDoc {
   extensions?: { auth?: DiscoveryAuth };
 }
 
+/** RFC 0164: the gate is the profile PAIR, not the (now derived) flag. */
+function advertisesBoth(auth: DiscoveryAuth | null): auth is DiscoveryAuth {
+  const p = auth?.profiles ?? [];
+  return p.includes(SAML_PROFILE) && p.includes(SCIM_PROFILE);
+}
+
 async function readAuth(): Promise<DiscoveryAuth | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
@@ -67,11 +73,12 @@ async function readAuth(): Promise<DiscoveryAuth | null> {
 describe('auth-subject-link-key-class: advertisement shape (RFC 0163 §A)', () => {
   it('subjectLinking:true requires a subjectLinkKey drawn from the closed safe-class enum', async () => {
     const auth = await readAuth();
-    if (auth === null || auth.subjectLinking !== true) {
-      return softSkip('inapplicable', 'auth.subjectLinking not claimed');
+    if (!advertisesBoth(auth)) {
+      return softSkip('inapplicable', 'RFC 0164 gate: host does not advertise both openwop-auth-saml and openwop-auth-scim');
     }
 
-    // §A.1 — a subjectLinking:true host MUST advertise a subjectLinkKey.
+    // §A.1 — a subjectLinking:true host (RFC 0164: any host advertising both
+    // profiles) MUST advertise a subjectLinkKey.
     expect(
       typeof auth.subjectLinkKey === 'string' && auth.subjectLinkKey.length > 0,
       driver.describe(
@@ -120,7 +127,7 @@ describe('auth-subject-link-key-class: same-IdP trust root (RFC 0163 §B — beh
 
   it('a same-IdP link forms (control) but a cross-IdP collision MUST NOT link', async () => {
     const auth = await readAuth();
-    if (auth === null || auth.subjectLinking !== true) return softSkip('inapplicable', 'capability-gated on auth.subjectLinking');
+    if (!advertisesBoth(auth)) return softSkip('inapplicable', 'RFC 0164 gate: host does not advertise both openwop-auth-saml and openwop-auth-scim');
     if (!idpAUrl || !idpBUrl || !scimUrl) {
       return softSkip('inapplicable', 'opt-in: the two-trust-root seam needs OPENWOP_TEST_SAML_IDP_URL (IdP-A) + OPENWOP_TEST_SAML_IDP_URL_B (IdP-B) + OPENWOP_TEST_SCIM_URL');
     }

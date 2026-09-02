@@ -12,7 +12,7 @@ Source: `MAINTAINERS.md`. **1 maintainer(s)** across **1 organization(s)**; cros
 
 ## Bootstrap waivers
 
-Source: `RFCS/*.md, RFCS/registers/*`. **42** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163); **0** retrospective review(s) completed (RFC 0156 §B).
+Source: `RFCS/*.md, RFCS/registers/*`. **43** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164); **0** retrospective review(s) completed (RFC 0156 §B).
 
 ## Independent security audit
 
@@ -38,11 +38,11 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.150.0**; corpus release **1.10.0** (2026-08-25).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.151.0**; corpus release **1.10.0** (2026-08-25).
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md` (136 rows scanned). **72** open across all registers, of which **46** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md` (140 rows scanned). **72** open across all registers, of which **46** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **3** are explicitly **transferred** to a named tracked surface (0147/R3, 0147/R12, 0147/R14) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
