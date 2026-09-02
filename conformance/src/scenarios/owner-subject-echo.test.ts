@@ -18,6 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { pollUntil } from '../lib/polling.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -102,6 +103,12 @@ describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 
     if (snap.owner?.subject === undefined) {
       return softSkip('inapplicable', 'host does not emit owner.subject on new runs (RFC 0165 §B — optional in v1.x)');
     }
+    // Suite 1.157.0 — `run.started` is appended when the host STARTS the run,
+    // which a conforming host may do asynchronously after the 201 (openwop-app
+    // dispatches on the next tick). Reading the log straight after the POST
+    // raced that append and failed a conforming host; wait for the run to
+    // leave `pending` first, then the event is a fact, not a timing.
+    await pollUntil(runId, (s) => s.status !== 'pending', { label: 'run left pending (run.started appended)' });
     const started = (await events(runId)).find((e) => e.type === 'run.started');
     expect(started, driver.describe('RFC 0048 §C', 'run.started MUST be present in the event log')).toBeDefined();
     expect(started?.payload?.owner?.subject, driver.describe('RFC 0165 §B.2', 'run.started owner.subject MUST equal RunSnapshot.owner.subject')).toEqual(snap.owner.subject);

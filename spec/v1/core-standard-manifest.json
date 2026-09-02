@@ -4,7 +4,7 @@
   "provenance": {
     "suite": {
       "package": "@openwop/openwop-conformance",
-      "version": "1.156.0"
+      "version": "1.157.0"
     },
     "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
   },
