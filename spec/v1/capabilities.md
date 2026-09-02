@@ -911,7 +911,7 @@ interpret them without consulting the host's capability document. Where the host
 cannot honour a construct, the client learns that by a **refusal**, not by a
 different outcome.
 
-Every optional capability in v1 falls into exactly one of three classes. When
+Every optional capability in v1 falls into exactly one of three classes. When (RFC 0166 §C generalises this into the closed `witness` enum — `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence | unwitnessable` — carried on every `SECURITY/invariants.yaml` entry, `spec/v1/extensions.json` record, and `spec/v1/gaps.json` gap.)
 adding one, say in the RFC which class it is.
 
 | Class | The advertisement means | Absence means | Worked example |

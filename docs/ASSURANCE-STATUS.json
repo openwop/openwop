@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 44,
+    "bootstrapWaiversExercised": 45,
     "rfcs": [
       "0042",
       "0043",
@@ -60,7 +60,8 @@
       "0157",
       "0163",
       "0164",
-      "0165"
+      "0165",
+      "0166"
     ],
     "retrospectiveReviewsCompleted": 0
   },
@@ -97,598 +98,1067 @@
     "corpusReleaseDate": "2026-08-25"
   },
   "risks": {
-    "source": "RFCS/registers/*.risks.md",
-    "rowsScanned": 145,
+    "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
+    "rowsScanned": 384,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
         "id": "R2",
+        "title": "Hosts implement `runTimeoutMs` naively as a hard kill that drops the event log before persisting `cap.breached` + `run.failed`, leaving a run in a non-terminal state on restart.",
         "score": "High",
-        "title": "Hosts implement `runTimeoutMs` naively as a hard kill that drops the event log before p…",
         "status": "Open"
       },
       {
         "rfc": "0058",
         "id": "R3",
+        "title": "Loop-iteration counting diverges across hosts (counts orchestrator turns differently), so a workflow with `maxLoopIterations: 20` terminates at different points on different hosts → non-portable.",
         "score": "High",
-        "title": "Loop-iteration counting diverges across hosts (counts orchestrator turns differently), …",
         "status": "Open"
       },
       {
         "rfc": "0061",
         "id": "R1",
+        "title": "RFC 0058 ships (already pushed) with the wrong `agents.loop.supported` gate; if 0058 is merged before the G1 correction, the `maxLoopIterations` key references a capability no cohort RFC creates → dead gate.",
         "score": "High",
-        "title": "RFC 0058 ships (already pushed) with the wrong `agents.loop.supported` gate; if 0058 is…",
         "status": "Open"
       },
       {
         "rfc": "0063",
         "id": "R2",
+        "title": "A naive host applies `outputMapping` before the approval gate, so a bad child artifact enters parent state despite `requireApproval` (fail-open).",
         "score": "High",
-        "title": "A naive host applies `outputMapping` before the approval gate, so a bad child artifact …",
         "status": "Open"
       },
       {
         "rfc": "0068",
         "id": "R1",
-        "score": "High",
         "title": "Consolidation breaks replay determinism if a run's reads depend on pass timing",
+        "score": "High",
         "status": "Open — target before `Active`"
       },
       {
         "rfc": "0069",
-        "id": "R1",
-        "score": "High",
-        "title": "An independent implementer ships a protocol-tier `core.exec` RCE primitive, reading the…",
-        "status": "Mitigated by this RFC"
-      },
-      {
-        "rfc": "0069",
         "id": "R4",
+        "title": "Host-extension exec ships without the SHOULD safety controls (the protocol can't enforce a surface it doesn't define)",
         "score": "High",
-        "title": "Host-extension exec ships without the SHOULD safety controls (the protocol can't enforc…",
         "status": "Open (host-owned residual)"
       },
       {
         "rfc": "0071",
         "id": "R1",
+        "title": "**Schema-bomb / ReDoS via distributed artifact schemas.** A published artifact-type pack ships a JSON Schema with pathological `$ref` recursion or a catastrophic-backtracking `pattern`; the engine compiles it (Ajv) and is DoS'd at workflow-register or validate time.",
         "score": "High",
-        "title": "**Schema-bomb / ReDoS via distributed artifact schemas.** A published artifact-type pac…",
         "status": "Open — target before `Active`"
       },
       {
         "rfc": "0071",
         "id": "R2",
+        "title": "**Prompt injection through card templates.** Card `prompt.template`/`systemPrompt` interpolate workflow inputs via `placeholderMapping`; untrusted input reaches the LLM and can exfiltrate or coerce structured output.",
         "score": "High",
-        "title": "**Prompt injection through card templates.** Card `prompt.template`/`systemPrompt` inte…",
         "status": "Open — target before Phase 2 `Active`"
       },
       {
         "rfc": "0089",
         "id": "R1",
+        "title": "**False sense of certification** — a self-published bundle is read as \"certified\" when its `host.commit` + results are self-reported and unverified.",
         "score": "High",
-        "title": "**False sense of certification** — a self-published bundle is read as \"certified\" when …",
         "status": "Open"
       },
       {
         "rfc": "0095",
         "id": "R1",
+        "title": "**Credential material leaks into a published connection pack** (an author pastes a client secret / token into a manifest and signs+publishes it to packs.openwop.dev).",
         "score": "High",
-        "title": "**Credential material leaks into a published connection pack** (an author pastes a clie…",
         "status": "Open"
       },
       {
         "rfc": "0095",
         "id": "R3",
+        "title": "**Provider-id collision / squatting** — two packs claim `provider.id: \"github\"`; a typosquatted `community.evil.github` shadows the real one and points OAuth at an attacker.",
         "score": "High",
-        "title": "**Provider-id collision / squatting** — two packs claim `provider.id: \"github\"`; a typo…",
         "status": "Open"
       },
       {
         "rfc": "0095",
         "id": "R4",
+        "title": "**MCP endpoint rot** — a Tier-1 pack's `reach.mcp.server.url` goes stale (ecosystem moves monthly); connections silently fail or the provider greys out.",
         "score": "High",
-        "title": "**MCP endpoint rot** — a Tier-1 pack's `reach.mcp.server.url` goes stale (ecosystem mov…",
         "status": "Open"
       },
       {
         "rfc": "0096",
         "id": "R1",
+        "title": "**Inertness violation** — a non-`applied` proposal influences run resolution/planning/execution (the synthesizer's draft leaks into behavior before review). This is the whole point of the RFC.",
         "score": "High",
-        "title": "**Inertness violation** — a non-`applied` proposal influences run resolution/planning/e…",
         "status": "Open"
       },
       {
         "rfc": "0096",
         "id": "R2",
+        "title": "**Trace-derived secret/PII leak** — synthesized `rationale`/provenance echoes a redacted secret or personal datum read from the source run traces.",
         "score": "High",
-        "title": "**Trace-derived secret/PII leak** — synthesized `rationale`/provenance echoes a redacte…",
         "status": "Open"
       },
       {
         "rfc": "0096",
         "id": "R3",
+        "title": "**Activation privilege bypass** — a malicious or low-quality synthesized artifact is activated by an under-privileged principal, installing executable behavior.",
         "score": "High",
-        "title": "**Activation privilege bypass** — a malicious or low-quality synthesized artifact is ac…",
         "status": "Open"
       },
       {
         "rfc": "0097",
         "id": "R1",
+        "title": "**Runaway continuation** — a never-satisfied goal re-engages work forever (cost/iterations unbounded), the unattended-agent nightmare.",
         "score": "High",
-        "title": "**Runaway continuation** — a never-satisfied goal re-engages work forever (cost/iterati…",
         "status": "Open"
       },
       {
         "rfc": "0097",
         "id": "R2",
+        "title": "**Judge cost blowup** — a verifier invocation per iteration silently multiplies spend; goals become expensive in a non-obvious way.",
         "score": "High",
-        "title": "**Judge cost blowup** — a verifier invocation per iteration silently multiplies spend; …",
         "status": "Open"
       },
       {
         "rfc": "0097",
         "id": "R3",
+        "title": "**Client-side completion spoofing** — a client sets `state: satisfied` directly, bypassing the judge and declaring victory falsely.",
         "score": "High",
-        "title": "**Client-side completion spoofing** — a client sets `state: satisfied` directly, bypass…",
         "status": "Open"
       },
       {
         "rfc": "0098",
         "id": "R1",
+        "title": "**Credential material in a bundle** — an exporter (or a competitor-import adapter) writes a client secret / token / SAML cert into a `connection-ref` payload, and it travels in plaintext. The single highest-severity failure.",
         "score": "High",
-        "title": "**Credential material in a bundle** — an exporter (or a competitor-import adapter) writ…",
         "status": "Open"
       },
       {
         "rfc": "0098",
         "id": "R2",
+        "title": "**Destructive overwrite** — a non-idempotent import clobbers existing destination estate (overwrites a live agent/schedule) instead of skip/update.",
         "score": "High",
-        "title": "**Destructive overwrite** — a non-idempotent import clobbers existing destination estat…",
         "status": "Open"
       },
       {
         "rfc": "0102",
         "id": "R1",
+        "title": "**UI-redress / deceptive surface.** A malicious (or untrusted-A2A) agent crafts a surface whose labels misrepresent the action — e.g. a \"Confirm time\" button that resolves an approval to \"send to all.\"",
         "score": "High",
-        "title": "**UI-redress / deceptive surface.** A malicious (or untrusted-A2A) agent crafts a surfa…",
         "status": "Open — confirm the existing approval-block fully covers the deceptive-label case in threat review (links G6)."
-      },
-      {
-        "rfc": "0102",
-        "id": "R5",
-        "score": "High",
-        "title": "**Scope creep toward A2UI v1.0 client-to-server RPC.** Pressure to \"just add\" the RPC c…",
-        "status": "Mitigated by design — keep the exclusion explicit through the comment window."
       },
       {
         "rfc": "0103",
         "id": "R1",
+        "title": "**Draft content leaks via the public cache.** A draft section is written into a shared/public cache entry and served from a cached `published` response.",
         "score": "High",
-        "title": "**Draft content leaks via the public cache.** A draft section is written into a shared/…",
         "status": "Open — confirm cache-key scoping in the host implementation + add the SECURITY invariant."
       },
       {
         "rfc": "0103",
         "id": "R2",
+        "title": "**Cross-tenant content disclosure / enumeration oracle.** A request for another tenant's `slug`/`pageId` reveals existence (different status code/timing) or returns content.",
         "score": "High",
-        "title": "**Cross-tenant content disclosure / enumeration oracle.** A request for another tenant'…",
         "status": "Open — verify the 404-equivalence in conformance + host."
-      },
-      {
-        "rfc": "0103",
-        "id": "R3",
-        "score": "High",
-        "title": "**A second locale mechanism creeps in** (e.g. a `?locale=` shortcut in a host implement…",
-        "status": "Mitigated by design — hold the exclusion through implementation review."
-      },
-      {
-        "rfc": "0147",
-        "id": "R3",
-        "score": "Critical",
-        "title": "Split-brain hosts duplicate payments/messages before a losing run is cancelled.",
-        "status": "Target: SR-3 `Accepted`; Open — Sweep 2026-08-16: Open — unwitnessed. §D separates ownership from reconciliation on paper; no host fences and no black-box witne"
       },
       {
         "rfc": "0147",
         "id": "R4",
-        "score": "High",
         "title": "The remediation program expands the corpus further without improving implementability.",
-        "status": "Target: RFC 0147 `Active`; Open — Sweep 2026-08-16: Mitigated: §A freeze in force (no new optional wire capability landed since 0147; 0157 is a §A-compliant err"
+        "score": "High",
+        "status": "`open` Target: RFC 0147 `Active`; Open — **Sweep 2026-08-16:** **Mitigated:** §A freeze in force (no new optional wire capability landed since 0147; 0157 is a §"
       },
       {
         "rfc": "0147",
         "id": "R5",
-        "score": "High",
         "title": "A single umbrella RFC obscures incompatible compatibility classes.",
-        "status": "Target: each child intake; Mitigated by design"
+        "score": "High",
+        "status": "`open` Target: each child intake; Mitigated by design"
       },
       {
         "rfc": "0147",
         "id": "R7",
-        "score": "High",
         "title": "Tightening discovery schema closure breaks legal v1 extensions.",
-        "status": "Target: SR-2 `Active`; Open — Sweep 2026-08-16: Mitigated by design — runtime schemas stay open; only authoring/certification lints landed (`capability-example-"
+        "score": "High",
+        "status": "`open` Target: SR-2 `Active`; Open — **Sweep 2026-08-16:** **Mitigated by design** — runtime schemas stay open; only authoring/certification lints landed (`capa"
       },
       {
         "rfc": "0147",
         "id": "R8",
-        "score": "High",
         "title": "Compensation is marketed as rollback or atomicity.",
-        "status": "Target: SR-4 `Active`; Open — Sweep 2026-08-16: Mitigated in prose — `compensation.md` names best-effort durable compensation, `partial`/`manual` states, no rol"
+        "score": "High",
+        "status": "`open` Target: SR-4 `Active`; Open — **Sweep 2026-08-16:** **Mitigated in prose** — `compensation.md` names best-effort durable compensation, `partial`/`manual`"
       },
       {
         "rfc": "0147",
         "id": "R11",
-        "score": "High",
         "title": "Dual legacy/current interop profiles create downgrade attacks.",
-        "status": "Target: SR-5/SR-6 `Accepted`; Open — Sweep 2026-08-16: Mitigated in suite: `a2a-version-no-silent-downgrade` / `mcp-version-no-silent-downgrade` invariants + ne"
-      },
-      {
-        "rfc": "0147",
-        "id": "R12",
-        "score": "Critical",
-        "title": "Workload provenance is mistaken for authorization and creates a confused deputy.",
-        "status": "Target: SR-7 `Accepted`; Open — Sweep 2026-08-16: Mitigated in prose + suite: identity ≠ authorization stated (`auth.md`, `a2a-integration.md` §E, `mcp-integrat"
-      },
-      {
-        "rfc": "0147",
-        "id": "R14",
-        "score": "Critical",
-        "title": "Governance requirements cannot be satisfied because no independent maintainers volunteer.",
-        "status": "Target: before RFC 0147 `Accepted`; Open — Sweep 2026-08-16: Open, Critical, externally gated — one maintainer as of 2026-08-16; standards claims stay qualified"
+        "score": "High",
+        "status": "`open` Target: SR-5/SR-6 `Accepted`; Open — **Sweep 2026-08-16:** **Mitigated in suite:** `a2a-version-no-silent-downgrade` / `mcp-version-no-silent-downgrade` "
       },
       {
         "rfc": "0147",
         "id": "R15",
-        "score": "High",
         "title": "Security-audit funding or vendor availability delays the program.",
-        "status": "Target: contract before SR-3 `Accepted`; Open — Sweep 2026-08-16: Open, externally gated — no vendor, no start date (`SECURITY.md` §9)."
+        "score": "High",
+        "status": "`open` Target: contract before SR-3 `Accepted`; Open — **Sweep 2026-08-16:** **Open, externally gated** — no vendor, no start date (`SECURITY.md` §9)."
       },
       {
         "rfc": "0147",
         "id": "R17",
-        "score": "High",
         "title": "Retrospective review reopens many accepted RFCs and destabilizes v1.",
-        "status": "Target: SR-9 `Accepted`; Open — Sweep 2026-08-16: Open — retrospective review not started (RFC 0156 G3)."
+        "score": "High",
+        "status": "`open` Target: SR-9 `Accepted`; Open — **Sweep 2026-08-16:** **Open** — retrospective review not started (RFC 0156 G3)."
       },
       {
         "rfc": "0147",
         "id": "R18",
-        "score": "High",
         "title": "Publicly documenting critical defects creates exploitation risk before fixes ship.",
-        "status": "Target: immediate triage; Open — Sweep 2026-08-16: Mitigated — no CVE-class detail was published; program defects were spec/verifier defects, not exploitable ho"
+        "score": "High",
+        "status": "`open` Target: immediate triage; Open — **Sweep 2026-08-16:** **Mitigated** — no CVE-class detail was published; program defects were spec/verifier defects, not"
       },
       {
         "rfc": "0147",
         "id": "R19",
-        "score": "High",
         "title": "“A-grade” becomes a one-time badge rather than a maintained evidence state.",
-        "status": "Target: Workstream 9; Open — Sweep 2026-08-16: Open — evidence expiry undecided (RFC 0156 G5); bundles carry `generatedAt` + suite version, nothing expires them"
+        "score": "High",
+        "status": "`open` Target: Workstream 9; Open — **Sweep 2026-08-16:** **Open** — evidence expiry undecided (RFC 0156 G5); bundles carry `generatedAt` + suite version, nothi"
       },
       {
         "rfc": "0147",
         "id": "R20",
-        "score": "High",
         "title": "Reference-host success is again mistaken for independent protocol proof.",
-        "status": "Target: immediate claims policy; Open — Sweep 2026-08-16: Mitigated in text: `GOVERNANCE.md` tier taxonomy + `INTEROP-MATRIX.md` evidence vocabulary (2026-08-16"
+        "score": "High",
+        "status": "`open` Target: immediate claims policy; Open — **Sweep 2026-08-16:** **Mitigated in text:** `GOVERNANCE.md` tier taxonomy + `INTEROP-MATRIX.md` evidence vocabul"
       },
       {
         "rfc": "0148",
         "id": "R1",
-        "score": "Critical",
         "title": "Historic claims are materially invalid.",
-        "status": "Open — Sweep 2026-08-16: Realised, precisely scoped, remediated: Bundle 1 invalidated; four v2 reissues (`docs/CERTIFICATION-BUNDLE-INVENTORY.md`). No blanket a"
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Realised, precisely scoped, remediated:** Bundle 1 invalidated; four v2 reissues (`docs/CERTIFICATION-BUNDLE-INVENTORY.md`). No b"
       },
       {
         "rfc": "0148",
         "id": "R2",
-        "score": "High",
         "title": "Witnesses leak response or tenant content.",
-        "status": "Open — Sweep 2026-08-16: Mitigated: `--certify` scrubs the finished document with the handed credential + `OPENWOP_*` secrets + the SR-1 canary and self-verifie"
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated:** `--certify` scrubs the finished document with the handed credential + `OPENWOP_*` secrets + the SR-1 canary and self"
       },
       {
         "rfc": "0148",
         "id": "R5",
-        "score": "High",
         "title": "A malicious generator fabricates witnesses.",
-        "status": "Open — Sweep 2026-08-16: Open — bundles are reproducible and consumer-verifiable but unsigned; provenance depends on RFC 0154 G4."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — bundles are reproducible and consumer-verifiable but unsigned; provenance depends on RFC 0154 G4."
       },
       {
         "rfc": "0149",
         "id": "R3",
-        "score": "High",
         "title": "Runtime closure accidentally breaks additive v1 clients.",
-        "status": "Open — Sweep 2026-08-16: Mitigated by design — runtime schemas open; only authoring lints; `discovery-canonical-family-no-shadow` binds consumers not hosts."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated by design** — runtime schemas open; only authoring lints; `discovery-canonical-family-no-shadow` binds consumers not ho"
+      },
+      {
+        "rfc": "0149",
+        "id": "R5",
+        "title": "Version normalization hides a true incompatible host.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Closed** — no normalization is performed; `1.0.0` is rejected outright and no deployed host uses it (G3)."
+      },
+      {
+        "rfc": "0150",
+        "id": "R1",
+        "title": "Migration duplicates an effect across v1/v2 key spaces.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Closed as moot** — no v1 keys exist (G1); no dual-read needed while that holds."
       },
       {
         "rfc": "0150",
         "id": "R2",
-        "score": "High",
         "title": "A semantic provider option is omitted and digest collision remains.",
-        "status": "Open — Sweep 2026-08-16: Open (G3)."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** (G3)."
       },
       {
         "rfc": "0150",
         "id": "R3",
-        "score": "High",
         "title": "Fencing service outage halts effects.",
-        "status": "Open — Sweep 2026-08-16: Open — no fencing host (G10)."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open — no fencing host** (G10)."
       },
       {
         "rfc": "0150",
         "id": "R4",
-        "score": "High",
         "title": "Provider claims idempotency but retention is too short.",
-        "status": "Open — Sweep 2026-08-16: Open (G4)."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** (G4)."
       },
       {
         "rfc": "0151",
         "id": "R1",
-        "score": "Critical",
         "title": "Compensation executes twice.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose — inverse-action identity tuple stated; `compensation.md` §C now states the persistence shape, `attempt` outside the"
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose** — inverse-action identity tuple stated; `compensation.md` §C now states the persistence shape, `attempt` out"
       },
       {
         "rfc": "0151",
         "id": "R2",
-        "score": "Critical",
         "title": "Inverse action worsens the incident.",
-        "status": "Open — Sweep 2026-08-16: Open — unwitnessed (§E landed 2026-08-16: approval on the plan entry, RFC 0049 binding, four audited override actions; `SECURITY/threat"
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open — unwitnessed** (§E landed 2026-08-16: approval on the plan entry, RFC 0049 binding, four audited override actions; `SECURIT"
       },
       {
         "rfc": "0151",
         "id": "R3",
-        "score": "High",
         "title": "Users interpret compensation as atomic rollback.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose — best-effort language, `partial` / `manual` states, `compensationStatus: none` default; claims-test unbuilt."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose** — best-effort language, `partial` / `manual` states, `compensationStatus: none` default; claims-test unbuilt"
       },
       {
         "rfc": "0151",
         "id": "R4",
-        "score": "Critical",
         "title": "Replay re-fires inverse effects.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in suite — `compensation-replay-no-refire` invariant + `compensation-behavior.test.ts` leg (gated; `blocked` until a host adv"
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `compensation-replay-no-refire` invariant + `compensation-behavior.test.ts` leg (gated; `blocked` until a "
       },
       {
         "rfc": "0151",
         "id": "R5",
-        "score": "High",
         "title": "Compensation plan captures secrets.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in schema — `compensation-policy.schema.json` carries no credential fields; `--certify` scrubs evidence; no host to test."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in schema** — `compensation-policy.schema.json` carries no credential fields; `--certify` scrubs evidence; no host to t"
       },
       {
         "rfc": "0152",
         "id": "R1",
-        "score": "High",
         "title": "Silent downgrade exposes legacy behavior.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in suite — `a2a-version-no-silent-downgrade` + `a2a-version-negotiation.test.ts`; host legs `blocked` (no invoke seam on any "
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `a2a-version-no-silent-downgrade` + `a2a-version-negotiation.test.ts`; host legs `blocked` (no invoke seam"
       },
       {
         "rfc": "0152",
         "id": "R2",
-        "score": "High",
         "title": "Agent Card and runtime drift.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in suite — `a2a-card-runtime-consistency.test.ts` (S15, gated on `a2a.profiles ∋ a2a-1.0`)."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `a2a-card-runtime-consistency.test.ts` (S15, gated on `a2a.profiles ∋ a2a-1.0`)."
       },
       {
         "rfc": "0152",
         "id": "R4",
-        "score": "Critical",
         "title": "A2A identity is mistaken for OpenWOP authorization.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose + suite — `a2a-integration.md` §E; `a2a-peer-authority.test.ts` (host-blocked)."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — `a2a-integration.md` §E; `a2a-peer-authority.test.ts` (host-blocked)."
       },
       {
         "rfc": "0153",
         "id": "R1",
-        "score": "Critical",
         "title": "Silent downgrade re-enables weaker legacy auth/session behavior.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in suite — `mcp-version-no-silent-downgrade` + `mcp-version-negotiation.test.ts`; host legs `blocked` on current hosts."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `mcp-version-no-silent-downgrade` + `mcp-version-negotiation.test.ts`; host legs `blocked` on current host"
       },
       {
         "rfc": "0153",
         "id": "R2",
-        "score": "High",
         "title": "MRTR work duplicates after timeout/retry.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose + suite — MRTR mapping traced against RFC 0150 identity; `mcp-mrtr-roundtrip.test.ts` (client half host-blocked, ser"
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — MRTR mapping traced against RFC 0150 identity; `mcp-mrtr-roundtrip.test.ts` (client half host-bloc"
       },
       {
         "rfc": "0153",
         "id": "R3",
-        "score": "Critical",
         "title": "Cache crosses tenant or authorization scope.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose + suite — §D scoped key; `mcp-cache-tenant-scope.test.ts` (gated)."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — §D scoped key; `mcp-cache-tenant-scope.test.ts` (gated)."
       },
       {
         "rfc": "0153",
         "id": "R4",
-        "score": "High",
         "title": "Extension metadata grants unintended authority.",
-        "status": "Open — Sweep 2026-08-16: Mitigated — opaque-by-default (G5) + `mcp-extension-opacity.test.ts`."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated** — opaque-by-default (G5) + `mcp-extension-opacity.test.ts`."
       },
       {
         "rfc": "0154",
         "id": "R1",
-        "score": "Critical",
         "title": "Provenance is mistaken for authorization.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose + suite — identity ≠ authorization normative; `delegation-tenant-audience-bound` / `delegation-chain-bounded` invari"
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — identity ≠ authorization normative; `delegation-tenant-audience-bound` / `delegation-chain-bounded"
       },
       {
         "rfc": "0154",
         "id": "R2",
-        "score": "Critical",
         "title": "Delegation amplifies scopes or crosses tenants.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose + suite — intersection-only scopes + tenant/audience binding (`auth.md`); same two invariants; no advertiser."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — intersection-only scopes + tenant/audience binding (`auth.md`); same two invariants; no advertiser"
       },
       {
         "rfc": "0154",
         "id": "R3",
-        "score": "Critical",
         "title": "Bearer downgrade bypasses sender constraint.",
-        "status": "Open — Sweep 2026-08-16: Open — sender-constraint minimum-assurance policy in prose; downgrade audit leg absent; no advertiser."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — sender-constraint minimum-assurance policy in prose; downgrade audit leg absent; no advertiser."
       },
       {
         "rfc": "0154",
         "id": "R4",
-        "score": "High",
         "title": "Signing key compromise blesses malicious artifacts.",
-        "status": "Open — Sweep 2026-08-16: Open — no signing (G4)."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — no signing (G4)."
       },
       {
         "rfc": "0154",
         "id": "R5",
-        "score": "High",
         "title": "Telemetry leaks workload or user identity.",
-        "status": "Open — Sweep 2026-08-16: Mitigated in prose — opaque hashed identifiers, per-tenant salt, content-free telemetry (`observability.md`; threat model §4.4); no wit"
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose** — opaque hashed identifiers, per-tenant salt, content-free telemetry (`observability.md`; threat model §4.4)"
       },
       {
         "rfc": "0155",
         "id": "R2",
-        "score": "High",
         "title": "Extension budget becomes arbitrary gatekeeping.",
-        "status": "Open — Sweep 2026-08-16: Open — budget uncalibrated (G1)."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — budget uncalibrated (G1)."
       },
       {
         "rfc": "0155",
         "id": "R3",
-        "score": "Critical",
         "title": "Registry maturity is self-awarded without evidence.",
-        "status": "Open — Sweep 2026-08-16: Mitigated by gates — coverage generator + `--check`; maturity flips still need Tier-3/audit evidence that does not exist."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated by gates** — coverage generator + `--check`; maturity flips still need Tier-3/audit evidence that does not exist."
       },
       {
         "rfc": "0155",
         "id": "R4",
-        "score": "High",
         "title": "Stable core manifest drifts from prose.",
-        "status": "Open — Sweep 2026-08-16: Mitigated — generated manifest + bidirectional parity leg; the 2026-08-16 phantom-floor finding (`audit-log-verification.test.ts`) show"
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated** — generated manifest + bidirectional parity leg; the 2026-08-16 phantom-floor finding (`audit-log-verification.test.t"
       },
       {
         "rfc": "0156",
         "id": "R1",
-        "score": "Critical",
         "title": "Independent maintainers do not volunteer.",
-        "status": "Open — Sweep 2026-08-16: Open, Critical — unchanged."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open, Critical** — unchanged."
       },
       {
         "rfc": "0156",
         "id": "R2",
-        "score": "High",
         "title": "Audit is delayed or underfunded.",
-        "status": "Open — Sweep 2026-08-16: Open — unchanged."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — unchanged."
       },
       {
         "rfc": "0156",
         "id": "R3",
-        "score": "High",
         "title": "Sponsored Tier-3 host is effectively steward-controlled.",
-        "status": "Open — Sweep 2026-08-16: Open — moot until a Tier-3 candidate exists."
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — moot until a Tier-3 candidate exists."
       },
       {
         "rfc": "0156",
         "id": "R4",
-        "score": "High",
         "title": "Retrospective review destabilizes v1.",
-        "status": "Open — Sweep 2026-08-16: Open — not started."
+        "score": "High",
+        "status": "`open` — queue published 2026-09-02 (`docs/RETROSPECTIVE-QUEUE.md`); review itself needs a second organization; the five entries are `provisional` until then. O"
       },
       {
         "rfc": "0156",
         "id": "R6",
-        "score": "Critical",
         "title": "Governance becomes performative while lead retains de facto control.",
-        "status": "Open — Sweep 2026-08-16: Open, Critical — single maintainer; every 2026-08 decision was unilateral by construction, recorded publicly in PRs/CHANGELOG."
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open, Critical** — single maintainer; every 2026-08 decision was unilateral by construction, recorded publicly in PRs/CHANGELOG."
       },
       {
         "rfc": "0159",
         "id": "R1",
+        "title": "A host implements the link on **email/`userName`** (mutable/PII) → account-takeover join: a caller who sets their IdP email to a victim's inherits the victim's SAML subject",
         "score": "High",
-        "title": "A host implements the link on **email/`userName`** (mutable/PII) → account-takeover joi…",
         "status": "Open (mitigated by §A.2 + negative scenario)"
       },
       {
         "rfc": "0165",
         "id": "R1",
+        "title": "A v2-aware client selects v2 from `protocolVersions` against a v1.x host that listed a major it does not serve",
         "score": "High",
-        "title": "A v2-aware client selects v2 from `protocolVersions` against a v1.x host that listed a …",
         "status": "Open"
       },
       {
         "rfc": "0165",
         "id": "R2",
+        "title": "A host emits `owner.subject` on new runs but re-owns forks to the forking principal, breaking the same-key invariant the leaver contract depends on",
         "score": "High",
-        "title": "A host emits `owner.subject` on new runs but re-owns forks to the forking principal, br…",
         "status": "Open"
       },
       {
         "rfc": "0165",
         "id": "R3",
+        "title": "A host synthesizes a legacy subject with a guessed real issuer and creates an identity that never existed",
         "score": "High",
-        "title": "A host synthesizes a legacy subject with a guessed real issuer and creates an identity …",
         "status": "Open"
       },
       {
         "rfc": "0165",
         "id": "R5",
+        "title": "The SDKs keep rejecting the spec's `sha256=` form, so a host that dual-emits still fails SDK verification",
         "score": "High",
-        "title": "The SDKs keep rejecting the spec's `sha256=` form, so a host that dual-emits still fail…",
         "status": "Open"
+      },
+      {
+        "rfc": "0166",
+        "id": "R1",
+        "title": "A mechanically classified `witness` is read as a reviewed verdict and used to justify a claim",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0106",
+        "id": "R1",
+        "title": "**Scope creep into media transport.** Reviewers/implementers push to standardize WebRTC/gRPC media on the wire, dragging openwop out of its control-plane remit and coupling every host to a media stack.",
+        "score": "High",
+        "status": "Open → mitigated by §E; watch in comment window"
+      },
+      {
+        "rfc": "0108",
+        "id": "R2",
+        "title": "A host advertises `selfHosted: [\"ollama\"]` with **no** endpoint actually configured (dishonest claim) — a client routes to a dead provider and the advertisement becomes meaningless (the exact failure the surface exists to prevent).",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0118",
+        "id": "R1",
+        "title": "**Replay non-determinism.** Parallel children complete in wall-clock order; if `mergeOrder` is not recorded and re-applied, a forked/replayed run reproduces a *different* parent-variable state when two children map to the same output key — a silent correctness break that the wire's replay guarantee (RFC 0041) forbids.",
+        "score": "High",
+        "status": "Open — scenario must be green for `Accepted`"
+      },
+      {
+        "rfc": "0118",
+        "id": "R2",
+        "title": "**Worker-pool exhaustion / self-DoS.** An unbounded fan-out (e.g. 500 `nextWorkerIds`) under `parallel` floods a host's worker pool, starving other runs.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0121",
+        "id": "R1",
+        "title": "A host (or an implementer following this RFC) advertises/implements `subscription` mode using the direct-API-under-borrowed-token shape (§C shape 1) for a provider whose consumer ToS actually forbids it, exposing operators and end users to account suspension or legal exposure.",
+        "score": "Critical",
+        "status": "Open — gating condition, not yet resolved"
+      },
+      {
+        "rfc": "0121",
+        "id": "R2",
+        "title": "A host advertises `subscription` support and permits binding the resulting credential at tenant/workspace scope, silently sharing one individual's personal, single-seat subscription across a multi-user tenant — both a ToS violation and an unaudited access-sharing surface.",
+        "score": "High",
+        "status": "Open — mitigation is drafted in the RFC, unverified until a host implements it"
+      },
+      {
+        "rfc": "0124",
+        "id": "R3",
+        "title": "**Portability regression via the escape hatch.** A host implements deferred mode but leaves an embedded non-prompt `{{params.*}}` token unresolved (skips the \"resolve at expansion time\" fallback), silently reintroducing the exact non-portable state this RFC exists to prevent.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0126",
+        "id": "R1",
+        "title": "**Silent-drop on a naive host** — a host adds `nextWorkerInputs` support incompletely (or ignores the field) and dispatches N children with identical inputs, mailing/processing one item N times and skipping the rest. This is the exact motivating bug, now potentially reintroduced by a partial implementation.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0127",
+        "id": "R1",
+        "title": "**Dishonest `stream`/`change` advert** — a host advertises the new sources without behaviorally ingesting them (the exact mislabel-as-`webhook` dishonesty this RFC exists to remove, inverted).",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0128",
+        "id": "R1",
+        "title": "**Compliance-theater reading** — operators/regulators read `purposePropagation: supported` as \"the receiver *enforces* purpose limits\" when the wire only promises label *carriage* (internal use is SHOULD/declared-intent, deliberately un-gated §4). Over-claiming here damages the corpus's falsifiability-honesty posture.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0132",
+        "id": "R1",
+        "title": "**Over-grant: a host lets the anonymous actor inherit the authenticated default-on tool baseline** (ADR 0315-class), so a logged-out visitor drives an agent with full authenticated tool authority.",
+        "score": "High",
+        "status": "Open — mitigated by design; behavioral test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R2",
+        "title": "**Credential confused-deputy: a tenant BYOK credential attached to a visitor-triggered egress** → exfiltration to an attacker destination.",
+        "score": "High",
+        "status": "Open — mitigated by composition; test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R3",
+        "title": "**Secret / cross-tenant reach: an anon read tool surfaces a secret or another tenant's data.**",
+        "score": "High",
+        "status": "Open — mitigated by design; test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R4",
+        "title": "**Ungated write abuse: a public surface performs an unbounded, un-approved durable write/egress** (spam, resource exhaustion, data poisoning) at visitor scale.",
+        "score": "High",
+        "status": "Open — mitigated by design + schema; test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R5",
+        "title": "**De-anonymization / cross-linkability: a host keys the anon actor on IP / fingerprint or reuses the id across sessions**, turning an \"anonymous\" actor into a tracked identity (privacy + regulatory exposure).",
+        "score": "High",
+        "status": "Open — mitigated by design; opacity test lands at `Active`"
+      },
+      {
+        "rfc": "0133",
+        "id": "R2",
+        "title": "**Cross-tenant child aliasing: a co-registered child is registered under, or reachable from, the wrong tenant**, or two tenants instantiating the same pack converge on one shared child workflow → cross-tenant data reach.",
+        "score": "High",
+        "status": "Open — mitigated by design; host-pending witness"
+      },
+      {
+        "rfc": "0137",
+        "id": "R3",
+        "title": "**A registry adds the kind to manifest validation but not to its indexer**, so packs publish green and undiscoverable. Already measured on the reference registry — not hypothetical.",
+        "score": "High",
+        "status": "Open (tracked, PR drafted)"
+      },
+      {
+        "rfc": "0138",
+        "id": "R1",
+        "title": "**\"Opaque\" is read as \"stash it for later.\"** A host retains an unrecognized extension and later renders it, interpolates it into a prompt, or interprets it as markup. Because the value is pack-authored and untrusted, this converts a *loud publication failure* (rejected at registry `PUT`) into a *silent injection surface* (at render) — strictly worse than having no hatch at all. This is the risk the whole RFC turns on.",
+        "score": "High",
+        "status": "Open (mitigated, not closed)"
+      },
+      {
+        "rfc": "0138",
+        "id": "R4",
+        "title": "**Extensions become a de-facto capability channel.** A host infers support from an extension's presence, or makes handling of a canonical field depend on one. Packs then stop being portable in practice while remaining portable on paper — the exact failure the RFC exists to prevent, arriving through the door it opened.",
+        "score": "High",
+        "status": "Open (mitigated, not closed)"
+      },
+      {
+        "rfc": "0139",
+        "id": "R1",
+        "title": "**The differential is read as proving total opacity.** A green leg 3 gets cited as \"MUST-ignore is verified\", when it covers install-time sinks only. This RFC would then have replaced an unverified rule with a *falsely* verified one — worse, because nobody looks again.",
+        "score": "Critical",
+        "status": "Open (mitigated by disclosure, not closable)"
+      },
+      {
+        "rfc": "0139",
+        "id": "R3",
+        "title": "**A host games the differential by returning a constant projection.** A seam that returns `{}` regardless of input satisfies leg 3 trivially.",
+        "score": "High",
+        "status": "Open (bounded, not closed)"
+      },
+      {
+        "rfc": "0139",
+        "id": "R4",
+        "title": "**Only one kind and one host witness a corpus-wide rule.** The artifact-type seam is the only one with a real implementation, so a rule stated for all pack kinds is evidenced by one.",
+        "score": "High",
+        "status": "Open, deliberate"
+      },
+      {
+        "rfc": "0140",
+        "id": "R1",
+        "title": "**`none` is read as permission to re-fire.** The enum's default reads like an opt-out, and an implementer who skims the capability table will conclude that not advertising means the guarantee does not apply — reintroducing exactly the MUST-relaxation this RFC was corrected to avoid. The RFC's own first draft made that mistake.",
+        "score": "Critical",
+        "status": "Open (mitigated by placement, not closable)"
+      },
+      {
+        "rfc": "0140",
+        "id": "R2",
+        "title": "**The fail-closed witness is read as proving the happy path.** The scenario's positive evidence is `replay_source_missing` on an unrecorded node. That is unforgeable — but it does not observe whether a node *with* a recorded outcome re-fired and recorded identically.",
+        "score": "High",
+        "status": "Open (disclosed)"
+      },
+      {
+        "rfc": "0140",
+        "id": "R5",
+        "title": "**Guarding the convenience wrapper instead of the chokepoint.** A host that guards its highest-level egress helper can leave lower-level paths (raw fetch, MCP tool invocation) open while believing it is covered.",
+        "score": "High",
+        "status": "Open (guidance, not enforceable by spec)"
+      },
+      {
+        "rfc": "0143",
+        "id": "R1",
+        "title": "**The completeness leg is read as proving \"no unfenced ingress exists\"** when it proves \"no ingress *in §4* is unfenced.\" A host adds a new content path to the prompt, never updates §4, and a green suite reads as full coverage.",
+        "score": "High",
+        "status": "Open (disclosed, not closable server-free)"
+      },
+      {
+        "rfc": "0143",
+        "id": "R2",
+        "title": "**The isolation carve-out is abused** — a host declares a reader \"structurally isolated\" that can in fact reach model context or egress, and drops the trust tag legitimately-looking.",
+        "score": "High",
+        "status": "Open (bounded by definition, host-trust)"
+      }
+    ],
+    "programOpenCriticalOrHigh": [
+      {
+        "rfc": "0147",
+        "id": "R4",
+        "title": "The remediation program expands the corpus further without improving implementability.",
+        "score": "High",
+        "status": "`open` Target: RFC 0147 `Active`; Open — **Sweep 2026-08-16:** **Mitigated:** §A freeze in force (no new optional wire capability landed since 0147; 0157 is a §"
+      },
+      {
+        "rfc": "0147",
+        "id": "R5",
+        "title": "A single umbrella RFC obscures incompatible compatibility classes.",
+        "score": "High",
+        "status": "`open` Target: each child intake; Mitigated by design"
+      },
+      {
+        "rfc": "0147",
+        "id": "R7",
+        "title": "Tightening discovery schema closure breaks legal v1 extensions.",
+        "score": "High",
+        "status": "`open` Target: SR-2 `Active`; Open — **Sweep 2026-08-16:** **Mitigated by design** — runtime schemas stay open; only authoring/certification lints landed (`capa"
+      },
+      {
+        "rfc": "0147",
+        "id": "R8",
+        "title": "Compensation is marketed as rollback or atomicity.",
+        "score": "High",
+        "status": "`open` Target: SR-4 `Active`; Open — **Sweep 2026-08-16:** **Mitigated in prose** — `compensation.md` names best-effort durable compensation, `partial`/`manual`"
+      },
+      {
+        "rfc": "0147",
+        "id": "R11",
+        "title": "Dual legacy/current interop profiles create downgrade attacks.",
+        "score": "High",
+        "status": "`open` Target: SR-5/SR-6 `Accepted`; Open — **Sweep 2026-08-16:** **Mitigated in suite:** `a2a-version-no-silent-downgrade` / `mcp-version-no-silent-downgrade` "
+      },
+      {
+        "rfc": "0147",
+        "id": "R15",
+        "title": "Security-audit funding or vendor availability delays the program.",
+        "score": "High",
+        "status": "`open` Target: contract before SR-3 `Accepted`; Open — **Sweep 2026-08-16:** **Open, externally gated** — no vendor, no start date (`SECURITY.md` §9)."
+      },
+      {
+        "rfc": "0147",
+        "id": "R17",
+        "title": "Retrospective review reopens many accepted RFCs and destabilizes v1.",
+        "score": "High",
+        "status": "`open` Target: SR-9 `Accepted`; Open — **Sweep 2026-08-16:** **Open** — retrospective review not started (RFC 0156 G3)."
+      },
+      {
+        "rfc": "0147",
+        "id": "R18",
+        "title": "Publicly documenting critical defects creates exploitation risk before fixes ship.",
+        "score": "High",
+        "status": "`open` Target: immediate triage; Open — **Sweep 2026-08-16:** **Mitigated** — no CVE-class detail was published; program defects were spec/verifier defects, not"
+      },
+      {
+        "rfc": "0147",
+        "id": "R19",
+        "title": "“A-grade” becomes a one-time badge rather than a maintained evidence state.",
+        "score": "High",
+        "status": "`open` Target: Workstream 9; Open — **Sweep 2026-08-16:** **Open** — evidence expiry undecided (RFC 0156 G5); bundles carry `generatedAt` + suite version, nothi"
+      },
+      {
+        "rfc": "0147",
+        "id": "R20",
+        "title": "Reference-host success is again mistaken for independent protocol proof.",
+        "score": "High",
+        "status": "`open` Target: immediate claims policy; Open — **Sweep 2026-08-16:** **Mitigated in text:** `GOVERNANCE.md` tier taxonomy + `INTEROP-MATRIX.md` evidence vocabul"
+      },
+      {
+        "rfc": "0148",
+        "id": "R1",
+        "title": "Historic claims are materially invalid.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Realised, precisely scoped, remediated:** Bundle 1 invalidated; four v2 reissues (`docs/CERTIFICATION-BUNDLE-INVENTORY.md`). No b"
+      },
+      {
+        "rfc": "0148",
+        "id": "R2",
+        "title": "Witnesses leak response or tenant content.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated:** `--certify` scrubs the finished document with the handed credential + `OPENWOP_*` secrets + the SR-1 canary and self"
+      },
+      {
+        "rfc": "0148",
+        "id": "R5",
+        "title": "A malicious generator fabricates witnesses.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — bundles are reproducible and consumer-verifiable but unsigned; provenance depends on RFC 0154 G4."
+      },
+      {
+        "rfc": "0149",
+        "id": "R3",
+        "title": "Runtime closure accidentally breaks additive v1 clients.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated by design** — runtime schemas open; only authoring lints; `discovery-canonical-family-no-shadow` binds consumers not ho"
+      },
+      {
+        "rfc": "0149",
+        "id": "R5",
+        "title": "Version normalization hides a true incompatible host.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Closed** — no normalization is performed; `1.0.0` is rejected outright and no deployed host uses it (G3)."
+      },
+      {
+        "rfc": "0150",
+        "id": "R1",
+        "title": "Migration duplicates an effect across v1/v2 key spaces.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Closed as moot** — no v1 keys exist (G1); no dual-read needed while that holds."
+      },
+      {
+        "rfc": "0150",
+        "id": "R2",
+        "title": "A semantic provider option is omitted and digest collision remains.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** (G3)."
+      },
+      {
+        "rfc": "0150",
+        "id": "R3",
+        "title": "Fencing service outage halts effects.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open — no fencing host** (G10)."
+      },
+      {
+        "rfc": "0150",
+        "id": "R4",
+        "title": "Provider claims idempotency but retention is too short.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** (G4)."
+      },
+      {
+        "rfc": "0151",
+        "id": "R1",
+        "title": "Compensation executes twice.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose** — inverse-action identity tuple stated; `compensation.md` §C now states the persistence shape, `attempt` out"
+      },
+      {
+        "rfc": "0151",
+        "id": "R2",
+        "title": "Inverse action worsens the incident.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open — unwitnessed** (§E landed 2026-08-16: approval on the plan entry, RFC 0049 binding, four audited override actions; `SECURIT"
+      },
+      {
+        "rfc": "0151",
+        "id": "R3",
+        "title": "Users interpret compensation as atomic rollback.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose** — best-effort language, `partial` / `manual` states, `compensationStatus: none` default; claims-test unbuilt"
+      },
+      {
+        "rfc": "0151",
+        "id": "R4",
+        "title": "Replay re-fires inverse effects.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `compensation-replay-no-refire` invariant + `compensation-behavior.test.ts` leg (gated; `blocked` until a "
+      },
+      {
+        "rfc": "0151",
+        "id": "R5",
+        "title": "Compensation plan captures secrets.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in schema** — `compensation-policy.schema.json` carries no credential fields; `--certify` scrubs evidence; no host to t"
+      },
+      {
+        "rfc": "0152",
+        "id": "R1",
+        "title": "Silent downgrade exposes legacy behavior.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `a2a-version-no-silent-downgrade` + `a2a-version-negotiation.test.ts`; host legs `blocked` (no invoke seam"
+      },
+      {
+        "rfc": "0152",
+        "id": "R2",
+        "title": "Agent Card and runtime drift.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `a2a-card-runtime-consistency.test.ts` (S15, gated on `a2a.profiles ∋ a2a-1.0`)."
+      },
+      {
+        "rfc": "0152",
+        "id": "R4",
+        "title": "A2A identity is mistaken for OpenWOP authorization.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — `a2a-integration.md` §E; `a2a-peer-authority.test.ts` (host-blocked)."
+      },
+      {
+        "rfc": "0153",
+        "id": "R1",
+        "title": "Silent downgrade re-enables weaker legacy auth/session behavior.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in suite** — `mcp-version-no-silent-downgrade` + `mcp-version-negotiation.test.ts`; host legs `blocked` on current host"
+      },
+      {
+        "rfc": "0153",
+        "id": "R2",
+        "title": "MRTR work duplicates after timeout/retry.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — MRTR mapping traced against RFC 0150 identity; `mcp-mrtr-roundtrip.test.ts` (client half host-bloc"
+      },
+      {
+        "rfc": "0153",
+        "id": "R3",
+        "title": "Cache crosses tenant or authorization scope.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — §D scoped key; `mcp-cache-tenant-scope.test.ts` (gated)."
+      },
+      {
+        "rfc": "0153",
+        "id": "R4",
+        "title": "Extension metadata grants unintended authority.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated** — opaque-by-default (G5) + `mcp-extension-opacity.test.ts`."
+      },
+      {
+        "rfc": "0154",
+        "id": "R1",
+        "title": "Provenance is mistaken for authorization.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — identity ≠ authorization normative; `delegation-tenant-audience-bound` / `delegation-chain-bounded"
+      },
+      {
+        "rfc": "0154",
+        "id": "R2",
+        "title": "Delegation amplifies scopes or crosses tenants.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose + suite** — intersection-only scopes + tenant/audience binding (`auth.md`); same two invariants; no advertiser"
+      },
+      {
+        "rfc": "0154",
+        "id": "R3",
+        "title": "Bearer downgrade bypasses sender constraint.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — sender-constraint minimum-assurance policy in prose; downgrade audit leg absent; no advertiser."
+      },
+      {
+        "rfc": "0154",
+        "id": "R4",
+        "title": "Signing key compromise blesses malicious artifacts.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — no signing (G4)."
+      },
+      {
+        "rfc": "0154",
+        "id": "R5",
+        "title": "Telemetry leaks workload or user identity.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated in prose** — opaque hashed identifiers, per-tenant salt, content-free telemetry (`observability.md`; threat model §4.4)"
+      },
+      {
+        "rfc": "0155",
+        "id": "R2",
+        "title": "Extension budget becomes arbitrary gatekeeping.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — budget uncalibrated (G1)."
+      },
+      {
+        "rfc": "0155",
+        "id": "R3",
+        "title": "Registry maturity is self-awarded without evidence.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated by gates** — coverage generator + `--check`; maturity flips still need Tier-3/audit evidence that does not exist."
+      },
+      {
+        "rfc": "0155",
+        "id": "R4",
+        "title": "Stable core manifest drifts from prose.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Mitigated** — generated manifest + bidirectional parity leg; the 2026-08-16 phantom-floor finding (`audit-log-verification.test.t"
+      },
+      {
+        "rfc": "0156",
+        "id": "R1",
+        "title": "Independent maintainers do not volunteer.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open, Critical** — unchanged."
+      },
+      {
+        "rfc": "0156",
+        "id": "R2",
+        "title": "Audit is delayed or underfunded.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — unchanged."
+      },
+      {
+        "rfc": "0156",
+        "id": "R3",
+        "title": "Sponsored Tier-3 host is effectively steward-controlled.",
+        "score": "High",
+        "status": "Open — **Sweep 2026-08-16:** **Open** — moot until a Tier-3 candidate exists."
+      },
+      {
+        "rfc": "0156",
+        "id": "R4",
+        "title": "Retrospective review destabilizes v1.",
+        "score": "High",
+        "status": "`open` — queue published 2026-09-02 (`docs/RETROSPECTIVE-QUEUE.md`); review itself needs a second organization; the five entries are `provisional` until then. O"
+      },
+      {
+        "rfc": "0156",
+        "id": "R6",
+        "title": "Governance becomes performative while lead retains de facto control.",
+        "score": "Critical",
+        "status": "Open — **Sweep 2026-08-16:** **Open, Critical** — single maintainer; every 2026-08 decision was unilateral by construction, recorded publicly in PRs/CHANGELOG."
+      },
+      {
+        "rfc": "0159",
+        "id": "R1",
+        "title": "A host implements the link on **email/`userName`** (mutable/PII) → account-takeover join: a caller who sets their IdP email to a victim's inherits the victim's SAML subject",
+        "score": "High",
+        "status": "Open (mitigated by §A.2 + negative scenario)"
+      },
+      {
+        "rfc": "0165",
+        "id": "R1",
+        "title": "A v2-aware client selects v2 from `protocolVersions` against a v1.x host that listed a major it does not serve",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0165",
+        "id": "R2",
+        "title": "A host emits `owner.subject` on new runs but re-owns forks to the forking principal, breaking the same-key invariant the leaver contract depends on",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0165",
+        "id": "R3",
+        "title": "A host synthesizes a legacy subject with a guessed real issuer and creates an identity that never existed",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0165",
+        "id": "R5",
+        "title": "The SDKs keep rejecting the spec's `sha256=` form, so a host that dual-emits still fails SDK verification",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0166",
+        "id": "R1",
+        "title": "A mechanically classified `witness` is read as a reviewed verdict and used to justify a claim",
+        "score": "High",
+        "status": "`open`"
       }
     ],
     "transferred": [
+      "0147/R2",
       "0147/R3",
       "0147/R12",
       "0147/R14"
-    ],
-    "programOpenCriticalOrHigh": [
-      "0147/R3",
-      "0147/R4",
-      "0147/R5",
-      "0147/R7",
-      "0147/R8",
-      "0147/R11",
-      "0147/R12",
-      "0147/R14",
-      "0147/R15",
-      "0147/R17",
-      "0147/R18",
-      "0147/R19",
-      "0147/R20",
-      "0148/R1",
-      "0148/R2",
-      "0148/R5",
-      "0149/R3",
-      "0150/R2",
-      "0150/R3",
-      "0150/R4",
-      "0151/R1",
-      "0151/R2",
-      "0151/R3",
-      "0151/R4",
-      "0151/R5",
-      "0152/R1",
-      "0152/R2",
-      "0152/R4",
-      "0153/R1",
-      "0153/R2",
-      "0153/R3",
-      "0153/R4",
-      "0154/R1",
-      "0154/R2",
-      "0154/R3",
-      "0154/R4",
-      "0154/R5",
-      "0155/R2",
-      "0155/R3",
-      "0155/R4",
-      "0156/R1",
-      "0156/R2",
-      "0156/R3",
-      "0156/R4",
-      "0156/R6",
-      "0159/R1",
-      "0165/R1",
-      "0165/R2",
-      "0165/R3",
-      "0165/R5"
     ]
   },
   "claims": {

@@ -2,7 +2,7 @@
 
 | ID  | Section     | Question / Missing Input                                                  | Owner                 | Resolution Path                              | Blocks          |
 | --- | ----------- | ------------------------------------------------------------------------ | --------------------- | -------------------------------------------- | --------------- |
-| G1  | Proposal    | Negotiation channel: subscribe query param vs envelope-request handshake | Spec Architect        | Decision                                     | Active→Accepted |
-| G2  | Proposal    | `surfaceId` eviction / max-updates-before-forced-full                     | Spec Architect        | Decision; default host-discretionary with SHOULD | Schema finalize |
-| G3  | Proposal    | Restrict RFC 6902 op set (drop `move`/`copy`) for replay safety?          | Schema/Security       | Decision after replay analysis               | Schema finalize |
-| G4  | Conformance | No host advertises `ui.a2ui-surface.deltaUpdates` yet                     | Conformance Architect | Adoption-gated; tier-2 witness suffices      | Accepted flip   |
+| G1 | Proposal | Negotiation channel: subscribe query param vs envelope-request handshake | Spec Architect | `carried:openwop.gap.0114.1` Decision | Active→Accepted |
+| G2 | Proposal | `surfaceId` eviction / max-updates-before-forced-full | Spec Architect | `carried:openwop.gap.0114.2` Decision; default host-discretionary with SHOULD | Schema finalize |
+| G3 | Proposal | Restrict RFC 6902 op set (drop `move`/`copy`) for replay safety? | Schema/Security | `carried:openwop.gap.0114.3` Decision after replay analysis | Schema finalize |
+| G4 | Conformance | No host advertises `ui.a2ui-surface.deltaUpdates` yet | Conformance Architect | `carried:openwop.gap.0114.4` Adoption-gated; tier-2 witness suffices | Accepted flip |

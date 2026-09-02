@@ -60,6 +60,8 @@ Allowed maturity is `experimental|draft|stable|deprecated`. An extension **MUST 
 
 ### §D — Extension budget
 
+> **Repealed by RFC 0166 §C.3 (2026-09-02).** The numeric budget below was never enforced and never calibrated (73 non-stable / 41 security-high records against 12/4 at repeal). The replacement rule is the witness requirement: every extension record declares what can falsify it, and a security-high extension advertised by a host MUST NOT be `claims-check` or `unwitnessable`.
+
 The project **MUST** limit concurrent non-stable normative extensions to a published budget. The initial proposed budget is 12, with no more than four security-high extensions simultaneously Active. Exceeding the budget requires closing, withdrawing, or explicitly deferring an existing extension through governance review; a waiver by the original steward alone is forbidden.
 
 ### §E — Claims and certification

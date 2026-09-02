@@ -675,7 +675,7 @@ function renderRfcsReadmeIndex(text, rfcs) {
 
   const counts = {};
   for (const r of rfcs) counts[r.status] = (counts[r.status] ?? 0) + 1;
-  const order = ['Accepted', 'Active', 'Draft', 'Withdrawn', 'Superseded'];
+  const order = ['Accepted', 'Active', 'Draft', 'Withdrawn', 'Superseded', 'Rejected'];
   const tally = order.filter((s) => counts[s]).map((s) => `${s} ${counts[s]}`).join(' · ');
 
   // Preserve per-id annotations in the enumerations (`0038 Parked`), same rule

@@ -1,0 +1,7 @@
+{
+  "$comment": "RFC 0166 §C ratchet baseline — counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering",
+  "measured": "2026-09-02",
+  "unwitnessable": 20,
+  "unreviewedInvariants": 191,
+  "unreviewedExtensions": 73
+}

@@ -56,6 +56,7 @@
       "implementation",
       "minClientVersion",
       "observability",
+      "protocolVersions",
       "runtimeCapabilities",
       "supportedTransports",
       "testing"
@@ -72,6 +73,7 @@
       "implementation": "server identity (name / version / vendor)",
       "minClientVersion": "minimum SDK version the server interops with; a pin, not a feature",
       "observability": "hints about emitted spans/metrics/logs (observability.md); descriptive",
+      "protocolVersions": "RFC 0165 \u00a7A \u2014 every protocol major.minor the host serves; a version advertisement beside `protocolVersion`, not a capability family.",
       "runtimeCapabilities": "opaque ids NodeModules may `requires`; a vocabulary the host names, not a contract this corpus defines",
       "supportedTransports": "transport list; REST is required regardless and gRPC has its own `grpc` family",
       "testing": "testing-mode advertisement (mock providers, seams) \u2014 for suites and dev clients, not a production feature"
@@ -150,9 +152,7 @@
       "workflowChainPacks",
       "workspace"
     ],
-    "uncovered": [
-      "protocolVersions"
-    ]
+    "uncovered": []
   },
   "extensions": [
     {
@@ -166,7 +166,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.107.0",
       "evidenceTier": null,
-      "note": "RFC 0151 `Accepted`; shape landed at suite 1.89.0 (`b4796755`), the six \u00a7D events (`76195069`), the capability-gated behavioral witness `compensation-behavior.test.ts` at 1.94.0 (`4bec9e07`), and `compensationStatus` on `RunSnapshot` + `spec/v1/compensation.md` (`Draft`, landed subset only) + seams \u00a721 at 1.107.0 (`5f1978f2`). `draft`, not `stable`: no host advertises `compensation.supported`, so every behavioral leg resolves to `blocked` (RFC 0148 \u00a7A); \u00a7C/\u00a7E prose and `compensation-policy.schema.json` remain carried."
+      "note": "RFC 0151 `Accepted`; shape landed at suite 1.89.0 (`b4796755`), the six \u00a7D events (`76195069`), the capability-gated behavioral witness `compensation-behavior.test.ts` at 1.94.0 (`4bec9e07`), and `compensationStatus` on `RunSnapshot` + `spec/v1/compensation.md` (`Draft`, landed subset only) + seams \u00a721 at 1.107.0 (`5f1978f2`). `draft`, not `stable`: no host advertises `compensation.supported`, so every behavioral leg resolves to `blocked` (RFC 0148 \u00a7A); \u00a7C/\u00a7E prose and `compensation-policy.schema.json` remain carried.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-a2a-1-0",
@@ -179,7 +181,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.96.0",
       "evidenceTier": null,
-      "note": "RFC 0152 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7B negotiation witness `a2a-version-negotiation.test.ts` at 1.96.0 (`5f1a7112`), and \u2014 2026-08-16 \u2014 the 1.0 profile prose and field-by-field translation table in `spec/v1/a2a-integration.md` \u00a7\"A2A 1.0 versioned composition\" (`d77d259b`, pinned to A2A 1.0.0; JSON-RPC-at-1.0 floor; `a2a-0.3-legacy` named and time-bounded to 2027-03-12) landed; openwop-app's live origin advertises `a2a.protocolVersions` and passes the \u00a7A leg; it has not wired the invoke seam, so the \u00a7B legs are `blocked` there (corrected 2026-08-16). `draft`: the suite's fake peer is 0.3-shaped so \u00a7C/\u00a7D are unwitnessed at 1.0, and stable is additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
+      "note": "RFC 0152 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7B negotiation witness `a2a-version-negotiation.test.ts` at 1.96.0 (`5f1a7112`), and \u2014 2026-08-16 \u2014 the 1.0 profile prose and field-by-field translation table in `spec/v1/a2a-integration.md` \u00a7\"A2A 1.0 versioned composition\" (`d77d259b`, pinned to A2A 1.0.0; JSON-RPC-at-1.0 floor; `a2a-0.3-legacy` named and time-bounded to 2027-03-12) landed; openwop-app's live origin advertises `a2a.protocolVersions` and passes the \u00a7A leg; it has not wired the invoke seam, so the \u00a7B legs are `blocked` there (corrected 2026-08-16). `draft`: the suite's fake peer is 0.3-shaped so \u00a7C/\u00a7D are unwitnessed at 1.0, and stable is additionally blocked on a real upstream A2A 1.0 peer, which is not a corpus deliverable. **`capabilityPath` corrected 2026-08-13** from `a2a.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-mcp-2026-07-28",
@@ -192,7 +196,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.97.0",
       "evidenceTier": null,
-      "note": "RFC 0153 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7A/\u00a7B revision-negotiation witness `mcp-version-negotiation.test.ts` at 1.97.0 (`7b09e9aa`), and \u2014 2026-08-16 \u2014 the profile prose and MRTR mapping in `spec/v1/mcp-integration.md` \u00a7\"MCP 2026-07-28 versioned composition\" (`65ebd53a`, pinned to the upstream 2026-07-28 revision; `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12) landed; openwop-app's live origin advertises `mcp.protocolVersions` and passes the \u00a7A legs; the \u00a7B legs are `blocked` there (no invoke seam). `draft`: the suite's fake server speaks the 2025-06-18 handshake so \u00a7B stateless rules, `server/discover`, MRTR, and cache hints are unwitnessed, and stable is additionally gated on a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`."
+      "note": "RFC 0153 `Accepted`; discovery shape (`3ce1c04b`), the \u00a7A/\u00a7B revision-negotiation witness `mcp-version-negotiation.test.ts` at 1.97.0 (`7b09e9aa`), and \u2014 2026-08-16 \u2014 the profile prose and MRTR mapping in `spec/v1/mcp-integration.md` \u00a7\"MCP 2026-07-28 versioned composition\" (`65ebd53a`, pinned to the upstream 2026-07-28 revision; `mcp-2025-06-18-legacy` named and time-bounded to 2027-08-12) landed; openwop-app's live origin advertises `mcp.protocolVersions` and passes the \u00a7A legs; the \u00a7B legs are `blocked` there (no invoke seam). `draft`: the suite's fake server speaks the 2025-06-18 handshake so \u00a7B stateless rules, `server/discover`, MRTR, and cache hints are unwitnessed, and stable is additionally gated on a pinned upstream peer at the current revision. **`capabilityPath` corrected 2026-08-13** from `mcp.protocolVersion` \u2014 it did not resolve against `capabilities.schema.json`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-workload-identity-v1",
@@ -205,7 +211,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.95.0",
       "evidenceTier": null,
-      "note": "RFC 0154 `Accepted`; `workload-identity.schema.json` + `auth.workloadIdentity` (`8de95a14`), the behavioral witness `workload-identity-behavior.test.ts` + seam \u00a720 at 1.95.0 (`f27765cd`), per-section gating (`b7c52f75`), and \u2014 2026-08-16 \u2014 the auth prose (`spec/v1/auth.md` \u00a7\"Workload identity and delegated actor chain\"), the OTel mapping (`observability.md`, v0 experimental `gen_ai.*` projection), and `SECURITY/threat-model-workload-identity.md` (`31de3bbb`) landed. `draft`: no host advertises `auth.workloadIdentity` (legs resolve to `blocked`), six \u00a7F invariants are named-but-unregistered, and the provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`."
+      "note": "RFC 0154 `Accepted`; `workload-identity.schema.json` + `auth.workloadIdentity` (`8de95a14`), the behavioral witness `workload-identity-behavior.test.ts` + seam \u00a720 at 1.95.0 (`f27765cd`), per-section gating (`b7c52f75`), and \u2014 2026-08-16 \u2014 the auth prose (`spec/v1/auth.md` \u00a7\"Workload identity and delegated actor chain\"), the OTel mapping (`observability.md`, v0 experimental `gen_ai.*` projection), and `SECURITY/threat-model-workload-identity.md` (`31de3bbb`) landed. `draft`: no host advertises `auth.workloadIdentity` (legs resolve to `blocked`), six \u00a7F invariants are named-but-unregistered, and the provenance half spans `openwop-sdks` and `openwop-registry`, so it cannot reach stable from this repo alone. **`capabilityPath` corrected 2026-08-13** from `workloadIdentity.supported` \u2014 it did not resolve against `capabilities.schema.json`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-effect-identity-v2",
@@ -218,7 +226,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.86.0",
       "evidenceTier": null,
-      "note": "RFC 0150 \u00a7B/\u00a7C/\u00a7D landed with normative prose, conformance, invariants, and golden vectors \u2014 the richest evidence any extension here has. Still `draft`, not `stable`: \u00a7C requires at least one Tier-3 implementation for stable, and none exists. **No extension in this corpus can currently reach `stable` for that reason**, which is a fact about adoption rather than about the work, and is recorded here rather than worked around."
+      "note": "RFC 0150 \u00a7B/\u00a7C/\u00a7D landed with normative prose, conformance, invariants, and golden vectors \u2014 the richest evidence any extension here has. Still `draft`, not `stable`: \u00a7C requires at least one Tier-3 implementation for stable, and none exists. **No extension in this corpus can currently reach `stable` for that reason**, which is a fact about adoption rather than about the work, and is recorded here rather than worked around.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-multi-region-fenced-effects",
@@ -231,7 +241,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.78.0",
       "evidenceTier": null,
-      "note": "RFC 0150 \u00a7D vocabulary landed; no host advertises `fenced-effects`, so the effect-fencing witness (gap G10) is still corpus-structural. Its runtime witness is now SPECIFIED (RFC 0150 acceptance box 4, resolved 2026-08-21): a fence-verdict observation over the \u00a7F counters (`stale_fence_rejections_total` OR `effect_suppressions_total`) plus a per-`logicalInvocationId` effect count of 1 \u2014 never an effect-content sink \u2014 capability-gated on `crossRegion: fenced-effects` and landing with the first advertising host."
+      "note": "RFC 0150 \u00a7D vocabulary landed; no host advertises `fenced-effects`, so the effect-fencing witness (gap G10) is still corpus-structural. Its runtime witness is now SPECIFIED (RFC 0150 acceptance box 4, resolved 2026-08-21): a fence-verdict observation over the \u00a7F counters (`stale_fence_rejections_total` OR `effect_suppressions_total`) plus a per-`logicalInvocationId` effect count of 1 \u2014 never an effect-content sink \u2014 capability-gated on `crossRegion: fenced-effects` and landing with the first advertising host.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-a2ui-surface-transport",
@@ -244,7 +256,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.42.0",
       "evidenceTier": null,
-      "note": "RFC 0114 host-side transport features over the recorded `ui.a2ui-surface` envelope (RFC 0102). Owning RFC `0114` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `a2ui-surface-delta-transport.test.ts`."
+      "note": "RFC 0114 host-side transport features over the recorded `ui.a2ui-surface` envelope (RFC 0102). Owning RFC `0114` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `a2ui-surface-delta-transport.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-agent-runtime",
@@ -258,7 +272,9 @@
       "minimumSuiteVersion": "1.10.0",
       "evidenceTier": null,
       "note": "RFC 0144 host-capability declaration; the swarm/consensus superset of the agent surface. No scenario reads the family by name \u2014 the live-runtime shape leg is the nearest witness. Owning RFC `0144` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `agent-live-runtime-shape.test.ts`.",
-      "owningDoc": "spec/v1/host-capabilities.md"
+      "owningDoc": "spec/v1/host-capabilities.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-multi-agent-shift",
@@ -272,7 +288,9 @@
       "minimumSuiteVersion": "1.9.0",
       "evidenceTier": null,
       "note": "Multi-Agent Shift block (RFCs 0002\u20130008 + 0070/0072 agent runtime); the family gates every agent surface. Owning RFC `0002` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `agent-manifest-runtime.test.ts`.",
-      "owningDoc": "spec/v1/agent-identity.md"
+      "owningDoc": "spec/v1/agent-identity.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-ai-envelope-generate",
@@ -286,7 +304,9 @@
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
       "note": "RFC 0144 host-capability declaration for `ctx.aiEnvelope.generate`. Owning RFC `0144` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `aiEnvelope.universalKinds.test.ts`.",
-      "owningDoc": "spec/v1/ai-envelope.md"
+      "owningDoc": "spec/v1/ai-envelope.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-ai-providers",
@@ -300,7 +320,9 @@
       "minimumSuiteVersion": "1.21.0",
       "evidenceTier": null,
       "note": "v1 base advertisement (companion to `secrets`); later RFCs 0105/0106/0108 add modality/self-hosted sub-shapes. Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `aiproviders-input-shape.test.ts`.",
-      "owningDoc": "spec/v1/auth.md"
+      "owningDoc": "spec/v1/auth.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-anonymous-actor",
@@ -313,7 +335,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.55.0",
       "evidenceTier": null,
-      "note": "RFC 0132 anonymous-actor authorization; five protocol-tier MUST-NOTs graduated on the openwop-app witness. Owning RFC `0132` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `anonymous-actor-shape.test.ts`."
+      "note": "RFC 0132 anonymous-actor authorization; five protocol-tier MUST-NOTs graduated on the openwop-app witness. Owning RFC `0132` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `anonymous-actor-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-artifact-types",
@@ -326,7 +350,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.10.0",
       "evidenceTier": null,
-      "note": "RFC 0071/0075 artifact + card packs; declared as a host advertisement by RFC 0144. Owning RFC `0071` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `chat-card-pack-manifest-validation.test.ts`."
+      "note": "RFC 0071/0075 artifact + card packs; declared as a host advertisement by RFC 0144. Owning RFC `0071` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `chat-card-pack-manifest-validation.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-rbac-authorization",
@@ -339,7 +365,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.5.0",
       "evidenceTier": null,
-      "note": "RFC 0049 role\u2192scope mapping and `authorization.decided`. Owning RFC `0049` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `authorization-roles-shape.test.ts`."
+      "note": "RFC 0049 role\u2192scope mapping and `authorization.decided`. Owning RFC `0049` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `authorization-roles-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-blob-storage",
@@ -352,7 +380,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0019 presigned-URL blob store; per-bucket tenant isolation. Owning RFC `0019` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `blob-roundtrip.test.ts`."
+      "note": "RFC 0019 presigned-URL blob store; per-bucket tenant isolation. Owning RFC `0019` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `blob-roundtrip.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-budget-governance",
@@ -365,7 +395,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.10.0",
       "evidenceTier": null,
-      "note": "RFC 0084 per-run spend governance. Owning RFC `0084` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `budget-policy-shape.test.ts`."
+      "note": "RFC 0084 per-run spend governance. Owning RFC `0084` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `budget-policy-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-ttl-cache",
@@ -378,7 +410,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0019 TTL cache; per-tenant scoping. Owning RFC `0019` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `cache-ttl-expiry.test.ts`."
+      "note": "RFC 0019 TTL cache; per-tenant scoping. Owning RFC `0019` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `cache-ttl-expiry.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-channel-presence",
@@ -391,7 +425,9 @@
       "securityTier": "low",
       "minimumSuiteVersion": "1.37.0",
       "evidenceTier": null,
-      "note": "RFC 0110 presence/typing events. Owning RFC `0110` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `channel-presence-shape.test.ts`."
+      "note": "RFC 0110 presence/typing events. Owning RFC `0110` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `channel-presence-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-connection-packs",
@@ -404,7 +440,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.23.0",
       "evidenceTier": null,
-      "note": "RFC 0095 connection packs (provider definitions; no credential material). Owning RFC `0095` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `connection-pack-manifest-valid.test.ts`."
+      "note": "RFC 0095 connection packs (provider definitions; no credential material). Owning RFC `0095` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `connection-pack-manifest-valid.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-localized-content",
@@ -418,7 +456,9 @@
       "minimumSuiteVersion": "1.27.0",
       "evidenceTier": null,
       "note": "RFC 0103 localized authored content. Owning RFC `0103` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `localized-content-delivery.test.ts`.",
-      "owningDoc": "spec/v1/localized-content.md"
+      "owningDoc": "spec/v1/localized-content.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-contract-provenance",
@@ -431,7 +471,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.73.0",
       "evidenceTier": null,
-      "note": "RFC 0146 corpus-revision provenance; first production advertiser 2026-08-15. Owning RFC `0146` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `contract-provenance.test.ts`."
+      "note": "RFC 0146 corpus-revision provenance; first production advertiser 2026-08-15. Owning RFC `0146` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `contract-provenance.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-conversation-primitive",
@@ -445,7 +487,9 @@
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
       "note": "Multi-Agent Shift Phase 4 `core.conversationGate` + `conversation.*` interrupt kinds. Owning RFC `0005` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `conversationCapabilityNegotiation.test.ts`.",
-      "owningDoc": "spec/v1/conversation.md"
+      "owningDoc": "spec/v1/conversation.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-conversation-turn-model-provenance",
@@ -458,7 +502,9 @@
       "securityTier": "low",
       "minimumSuiteVersion": "1.37.0",
       "evidenceTier": null,
-      "note": "RFC 0109 `agent.model` stamp on conversation turns. Owning RFC `0109` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `conversation-turn-model-provenance-shape.test.ts`."
+      "note": "RFC 0109 `agent.model` stamp on conversation turns. Owning RFC `0109` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `conversation-turn-model-provenance-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-credentials",
@@ -471,7 +517,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.5.0",
       "evidenceTier": null,
-      "note": "RFC 0046 portable credential resolution + lifecycle. Owning RFC `0046` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `credentials-capability-shape.test.ts`."
+      "note": "RFC 0046 portable credential resolution + lifecycle. Owning RFC `0046` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `credentials-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-data-residency",
@@ -484,7 +532,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.54.0",
       "evidenceTier": null,
-      "note": "RFC 0129 region pinning; honors-or-rejects admission. Owning RFC `0129` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `data-residency-admission.test.ts`."
+      "note": "RFC 0129 region pinning; honors-or-rejects admission. Owning RFC `0129` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `data-residency-admission.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-dead-letter",
@@ -497,7 +547,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.5.0",
       "evidenceTier": null,
-      "note": "RFC 0053 run-level dead-letter sink. Owning RFC `0053` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `deadletter-capability-shape.test.ts`."
+      "note": "RFC 0053 run-level dead-letter sink. Owning RFC `0053` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `deadletter-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-envelope-contract-gating",
@@ -511,7 +563,9 @@
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
       "note": "AI-envelope contract gating (`ai-envelope.md` \u00a7\"Capability handshake integration\"). Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `aiEnvelope.contractRefusal.test.ts`.",
-      "owningDoc": "spec/v1/ai-envelope.md"
+      "owningDoc": "spec/v1/ai-envelope.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-envelope-strictness",
@@ -525,7 +579,9 @@
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
       "note": "AI-envelope schema-version drift handling. Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `aiEnvelope.schemaDrift.test.ts`.",
-      "owningDoc": "spec/v1/ai-envelope.md"
+      "owningDoc": "spec/v1/ai-envelope.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-envelope-hardening",
@@ -538,7 +594,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0030\u20130033 envelope-hardening track (reasoning redaction, refusal, retry, truncation, recovery). Owning RFC `0030` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `ai-envelope-shape.test.ts`."
+      "note": "RFC 0030\u20130033 envelope-hardening track (reasoning redaction, refusal, retry, truncation, recovery). Owning RFC `0030` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `ai-envelope-shape.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-event-log-multi-engine",
@@ -551,7 +609,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.3.0",
       "evidenceTier": null,
-      "note": "RFC 0036 \u00a7B cross-engine ordering advertisement. Owning RFC `0036` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `cross-engine-append-ordering.test.ts`."
+      "note": "RFC 0036 \u00a7B cross-engine ordering advertisement. Owning RFC `0036` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `cross-engine-append-ordering.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-feedback",
@@ -564,7 +624,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.6.0",
       "evidenceTier": null,
-      "note": "RFC 0056 non-blocking quality signals. Owning RFC `0056` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `feedback-capability-shape.test.ts`."
+      "note": "RFC 0056 non-blocking quality signals. Owning RFC `0056` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `feedback-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-form-content-packs",
@@ -577,7 +639,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.61.0",
       "evidenceTier": null,
-      "note": "RFC 0137 form content packs; declared as a host advertisement by RFC 0144. Owning RFC `0137` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `form-content-instantiation.test.ts`."
+      "note": "RFC 0137 form content packs; declared as a host advertisement by RFC 0144. Owning RFC `0137` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `form-content-instantiation.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-fs",
@@ -590,7 +654,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0014 sandboxed filesystem. Owning RFC `0014` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `fs-path-traversal.test.ts`."
+      "note": "RFC 0014 sandboxed filesystem. Owning RFC `0014` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `fs-path-traversal.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-grpc-transport",
@@ -604,7 +670,9 @@
       "minimumSuiteVersion": "1.22.0",
       "evidenceTier": null,
       "note": "RFC 0094 \u00a7H gRPC transport advertisement. Owning RFC `0094` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `grpc-transport.test.ts`.",
-      "owningDoc": "spec/v1/grpc-transport.md"
+      "owningDoc": "spec/v1/grpc-transport.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-heartbeat",
@@ -617,7 +685,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.6.1",
       "evidenceTier": null,
-      "note": "RFC 0060 predicate-gated polling. Owning RFC `0060` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `heartbeat-capability-shape.test.ts`."
+      "note": "RFC 0060 predicate-gated polling. Owning RFC `0060` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `heartbeat-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-http-client-egress",
@@ -630,7 +700,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
-      "note": "Host outbound-HTTP surface; SSRF guard MUST be true (RFC 0076 safeFetch). Owning RFC `0076` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `http-client-ssrf.test.ts`."
+      "note": "Host outbound-HTTP surface; SSRF guard MUST be true (RFC 0076 safeFetch). Owning RFC `0076` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `http-client-ssrf.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-i18n",
@@ -644,7 +716,9 @@
       "minimumSuiteVersion": "1.22.0",
       "evidenceTier": null,
       "note": "Locale negotiation annex. Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `i18n-negotiation.test.ts`.",
-      "owningDoc": "spec/v1/i18n.md"
+      "owningDoc": "spec/v1/i18n.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-interrupt-approver-routing",
@@ -657,7 +731,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.28.0",
       "evidenceTier": null,
-      "note": "RFC 0104 portable HITL approver routing on `kind: \"approval\"`. Owning RFC `0104` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `interrupt-approver-routing.test.ts`."
+      "note": "RFC 0104 portable HITL approver routing on `kind: \"approval\"`. Owning RFC `0104` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `interrupt-approver-routing.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-kv-storage",
@@ -670,7 +746,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0015 TTL-aware KV with CAS. Owning RFC `0015` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `kv-atomic-increment.test.ts`."
+      "note": "RFC 0015 TTL-aware KV with CAS. Owning RFC `0015` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `kv-atomic-increment.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-agent-memory",
@@ -683,7 +761,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
-      "note": "RFC 0004 MemoryAdapter + RFC 0012 compaction; SR-1 / CTI-1 invariants live here. Owning RFC `0004` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `agentMemoryRoundTrip.test.ts`."
+      "note": "RFC 0004 MemoryAdapter + RFC 0012 compaction; SR-1 / CTI-1 invariants live here. Owning RFC `0004` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `agentMemoryRoundTrip.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-model-capabilities",
@@ -696,7 +776,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.3.0",
       "evidenceTier": null,
-      "note": "RFC 0031 model-capability gating + substitution. Owning RFC `0031` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `node-module-required-capabilities-shape.test.ts`."
+      "note": "RFC 0031 model-capability gating + substitution. Owning RFC `0031` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `node-module-required-capabilities-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-multi-agent-execution-model",
@@ -709,7 +791,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.3.0",
       "evidenceTier": null,
-      "note": "RFC 0037 execution model + handoff state machine (+ RFC 0040/0041 cross-host causation, replay determinism sub-blocks). Owning RFC `0037` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `multi-agent-handoff-state-machine.test.ts`."
+      "note": "RFC 0037 execution model + handoff state machine (+ RFC 0040/0041 cross-host causation, replay determinism sub-blocks). Owning RFC `0037` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `multi-agent-handoff-state-machine.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-multi-party-conversation",
@@ -722,7 +806,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.29.0",
       "evidenceTier": null,
-      "note": "RFC 0101 group conversation with speaker attribution. Owning RFC `0101` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `multi-party-conversation-shape.test.ts`."
+      "note": "RFC 0101 group conversation with speaker attribution. Owning RFC `0101` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `multi-party-conversation-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-node-pack-runtimes",
@@ -736,7 +822,9 @@
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
       "note": "Node-pack runtime formats (RFC 0008 WASM ABI). Owning RFC `0008` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `wasm-pack-load.test.ts`.",
-      "owningDoc": "spec/v1/node-packs.md"
+      "owningDoc": "spec/v1/node-packs.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-nondeterminism-policy",
@@ -749,7 +837,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.10.0",
       "evidenceTier": null,
-      "note": "RFC 0085 honest-nondeterminism declaration for hosts without replay/fork. Owning RFC `0085` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `agent-platform-profile.test.ts`."
+      "note": "RFC 0085 honest-nondeterminism declaration for hosts without replay/fork. Owning RFC `0085` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `agent-platform-profile.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-nosql-store",
@@ -762,7 +852,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": null,
       "evidenceTier": null,
-      "note": "RFC 0018 document-store adapter. NO scenario reads this family \u2014 the shape/behaviour witness is a suite gap (`minimumSuiteVersion: null` is that gap stated). Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: none."
+      "note": "RFC 0018 document-store adapter. NO scenario reads this family \u2014 the shape/behaviour witness is a suite gap (`minimumSuiteVersion: null` is that gap stated). Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: none.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-oauth-connectors",
@@ -775,7 +867,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.5.0",
       "evidenceTier": null,
-      "note": "RFC 0047 host-performed OAuth 2.0 grants. Owning RFC `0047` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `oauth-capability-shape.test.ts`."
+      "note": "RFC 0047 host-performed OAuth 2.0 grants. Owning RFC `0047` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `oauth-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-pack-registry",
@@ -788,7 +882,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
-      "note": "RFC 0025 pack-registry surface. Owning RFC `0025` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `pack-registry-publish.test.ts`."
+      "note": "RFC 0025 pack-registry surface. Owning RFC `0025` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `pack-registry-publish.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-portability",
@@ -801,7 +897,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.23.0",
       "evidenceTier": null,
-      "note": "RFC 0098 tenant estate export/import. Owning RFC `0098` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `export-bundle-portability.test.ts`."
+      "note": "RFC 0098 tenant estate export/import. Owning RFC `0098` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `export-bundle-portability.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-prompt-library",
@@ -815,7 +913,9 @@
       "minimumSuiteVersion": null,
       "evidenceTier": null,
       "note": "RFC 0144 host-capability declaration for `ctx.promptLibrary.get`. NO scenario reads this family by name (the RFC 0027/0028 `prompts` scenarios cover the template surface) \u2014 stated as a gap. Owning RFC `0144` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: none.",
-      "owningDoc": "spec/v1/host-capabilities.md"
+      "owningDoc": "spec/v1/host-capabilities.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-prompt-templates",
@@ -828,7 +928,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.3.0",
       "evidenceTier": null,
-      "note": "RFC 0027/0028 prompt templates + resolution chain (RFC 0029). Owning RFC `0027` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `prompt-template-shape.test.ts`."
+      "note": "RFC 0027/0028 prompt templates + resolution chain (RFC 0029). Owning RFC `0027` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `prompt-template-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-provider-usage",
@@ -841,7 +943,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.2.0",
       "evidenceTier": null,
-      "note": "RFC 0026 `provider.usage` events. Owning RFC `0026` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `provider-usage.test.ts`."
+      "note": "RFC 0026 `provider.usage` events. Owning RFC `0026` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `provider-usage.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-purpose-propagation",
@@ -854,7 +958,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.53.0",
       "evidenceTier": null,
-      "note": "RFC 0128 `permittedPurposes` re-emission. Owning RFC `0128` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `purpose-propagation.test.ts`."
+      "note": "RFC 0128 `permittedPurposes` re-emission. Owning RFC `0128` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `purpose-propagation.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-queue-bus",
@@ -867,7 +973,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0017 inbound queue + stream. Owning RFC `0017` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `queue-publish-consume-roundtrip.test.ts`."
+      "note": "RFC 0017 inbound queue + stream. Owning RFC `0017` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `queue-publish-consume-roundtrip.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-replay-fork-advert",
@@ -881,7 +989,9 @@
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
       "note": "Replay/fork advertisement (profile `openwop-replay-fork`), declared by RFC 0140; RFC 0150 \u00a7C effect suppression sub-shape. Owning RFC `0140` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `replay-fork.test.ts`.",
-      "owningDoc": "spec/v1/replay.md"
+      "owningDoc": "spec/v1/replay.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-rest-transport-economy",
@@ -894,7 +1004,9 @@
       "securityTier": "low",
       "minimumSuiteVersion": "1.38.0",
       "evidenceTier": null,
-      "note": "RFC 0115 conditional GET + content encoding on run reads. Owning RFC `0115` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `run-transport-economy.test.ts`."
+      "note": "RFC 0115 conditional GET + content encoding on run reads. Owning RFC `0115` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `run-transport-economy.test.ts`.",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-sandbox",
@@ -907,7 +1019,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.3.0",
       "evidenceTier": null,
-      "note": "RFC 0035 sandbox execution contract (`Active`; steward-parked pending a fencing host). Owning RFC `0035` is `Active`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `sandbox-capability-gate-respected.test.ts`."
+      "note": "RFC 0035 sandbox execution contract (`Active`; steward-parked pending a fencing host). Owning RFC `0035` is `Active`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `sandbox-capability-gate-respected.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-scheduling",
@@ -920,7 +1034,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.5.0",
       "evidenceTier": null,
-      "note": "RFC 0052 `schedule` trigger. Owning RFC `0052` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `scheduling-capability-shape.test.ts`."
+      "note": "RFC 0052 `schedule` trigger. Owning RFC `0052` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `scheduling-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-search-index",
@@ -933,7 +1049,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0018 full-text search adapter. Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `search-bm25-roundtrip.test.ts`."
+      "note": "RFC 0018 full-text search adapter. Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `search-bm25-roundtrip.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-secrets-byok",
@@ -947,7 +1065,9 @@
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
       "note": "v1 base BYOK secret/credential resolution advertisement (`auth.md`, `SECURITY/threat-model-secret-leakage.md`). Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `byok-roundtrip.test.ts`.",
-      "owningDoc": "spec/v1/auth.md"
+      "owningDoc": "spec/v1/auth.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-self-hosted-runner",
@@ -960,7 +1080,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.48.0",
       "evidenceTier": null,
-      "note": "RFC 0122 user-controlled runner dial-out. Owning RFC `0122` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `self-hosted-runner.test.ts`."
+      "note": "RFC 0122 user-controlled runner dial-out. Owning RFC `0122` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `self-hosted-runner.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-sql-store",
@@ -973,7 +1095,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0018 SQL adapter, parametric-only. Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `sql-injection-rejection.test.ts`."
+      "note": "RFC 0018 SQL adapter, parametric-only. Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `sql-injection-rejection.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-subworkflow-extensions",
@@ -987,7 +1111,9 @@
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
       "note": "`core.subWorkflow` extension surface (RFC 0007 baseline). Owning RFC `0007` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `subworkflow-input-mapping.test.ts`.",
-      "owningDoc": "spec/v1/node-packs.md"
+      "owningDoc": "spec/v1/node-packs.md",
+      "witness": "claims-check",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-table-storage",
@@ -1000,7 +1126,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0016 structured-record store. Owning RFC `0016` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `table-schema-enforcement.test.ts`."
+      "note": "RFC 0016 structured-record store. Owning RFC `0016` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `table-schema-enforcement.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-tool-catalog",
@@ -1013,7 +1141,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.10.0",
       "evidenceTier": null,
-      "note": "RFC 0078 read-only tool projection. Owning RFC `0078` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `tool-descriptor-shape.test.ts`."
+      "note": "RFC 0078 read-only tool projection. Owning RFC `0078` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `tool-descriptor-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-tool-hooks",
@@ -1026,7 +1156,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.6.1",
       "evidenceTier": null,
-      "note": "RFC 0064 per-tool authorization, rate limiting, content-free audit. Owning RFC `0064` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `tool-hooks-shape.test.ts`."
+      "note": "RFC 0064 per-tool authorization, rate limiting, content-free audit. Owning RFC `0064` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `tool-hooks-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-trigger-bridge",
@@ -1039,7 +1171,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.10.0",
       "evidenceTier": null,
-      "note": "RFC 0083 trigger bridge composing scheduling / dead-letter / queue / webhook / cross-host. Owning RFC `0083` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `trigger-bridge-shape.test.ts`."
+      "note": "RFC 0083 trigger bridge composing scheduling / dead-letter / queue / webhook / cross-host. Owning RFC `0083` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `trigger-bridge-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-frontend-plugin-packs",
@@ -1052,7 +1186,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.43.0",
       "evidenceTier": null,
-      "note": "RFC 0117/0119 signed, sandboxed front-end plugin packs. Owning RFC `0117` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `frontend-plugin-packs.test.ts`."
+      "note": "RFC 0117/0119 signed, sandboxed front-end plugin packs. Owning RFC `0117` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `frontend-plugin-packs.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-vector-store",
@@ -1065,7 +1201,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0018 vector-DB adapter. Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `vector-knn-roundtrip.test.ts`."
+      "note": "RFC 0018 vector-DB adapter. Owning RFC `0018` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `vector-knn-roundtrip.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-webhooks",
@@ -1079,7 +1217,9 @@
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
       "note": "v1 base webhook delivery (HMAC-signed, circuit breaker; RFC 0083 composes it). Pre-RFC v1 base advertisement; `owningDoc` names the normative home. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `webhook-signed-delivery.test.ts`.",
-      "owningDoc": "spec/v1/webhooks.md"
+      "owningDoc": "spec/v1/webhooks.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-workflow-chain-packs",
@@ -1092,7 +1232,9 @@
       "securityTier": "medium",
       "minimumSuiteVersion": "1.1.1",
       "evidenceTier": null,
-      "note": "RFC 0013 workflow-chain pack expansion. Owning RFC `0013` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `workflow-chain-expansion.test.ts`."
+      "note": "RFC 0013 workflow-chain pack expansion. Owning RFC `0013` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `workflow-chain-expansion.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-workspace",
@@ -1105,7 +1247,9 @@
       "securityTier": "high",
       "minimumSuiteVersion": "1.6.1",
       "evidenceTier": null,
-      "note": "RFC 0059 versioned tenant\u00b7workspace file store. Owning RFC `0059` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `workspace-capability-shape.test.ts`."
+      "note": "RFC 0059 versioned tenant\u00b7workspace file store. Owning RFC `0059` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `workspace-capability-shape.test.ts`.",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     },
     {
       "id": "openwop-production-profile-claim",
@@ -1119,7 +1263,9 @@
       "minimumSuiteVersion": "1.0.0",
       "evidenceTier": null,
       "note": "RFC 0009 production-profile claim (`production-profile.md`): `supported: true` claims every MUST there and makes the gated scenarios mandatory. Listed as a family, not metadata, because it gates behaviour \u2014 the coverage test forbids a metadata key that carries `supported`. Owning RFC `0009` is `Accepted`. Grandfathered 2026-08-16 (RFC 0155 UQ3); scenario witness: `production-backpressure.test.ts`, `production-retention-expiry.test.ts`.",
-      "owningDoc": "spec/v1/production-profile.md"
+      "owningDoc": "spec/v1/production-profile.md",
+      "witness": "witnessable-gated",
+      "witnessReview": "initial-mechanical-2026-09-02"
     }
   ]
 }
