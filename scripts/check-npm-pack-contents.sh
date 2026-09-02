@@ -95,12 +95,12 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.152.0', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '1.153.0', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
   conformanceFiles,
-  new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'api', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'schemas', 'src', 'vectors', 'vitest.config.ts']),
+  new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'api', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'requirement-aliases.json', 'requirements.json', 'schemas', 'src', 'vectors', 'vitest.config.ts']),
 );
 assertIncludes(conformancePack.name, conformanceFiles, [
   'LICENSE',

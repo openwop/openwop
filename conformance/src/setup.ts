@@ -30,11 +30,13 @@ import { setMultiAgentCapabilities } from './lib/multi-agent-capabilities.js';
 import { OtelCollector, setCollector } from './lib/otel-collector.js';
 import { McpFakeServer, setMcpFakeServer } from './lib/mcp-fake-server.js';
 import { A2AFakePeer, setA2AFakePeer } from './lib/a2a-fake-peer.js';
-import { afterAll, afterEach, beforeAll, expect } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, expect } from 'vitest';
 import { basename } from 'node:path';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
 import { requirementIdForFile, resolveFileRecord, type FileTestState } from './lib/scenario-disposition.js';
 import { softSkipDisposition } from './lib/soft-skip.js';
+import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
+import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
 
 const SUITE_INIT_TIMEOUT_MS = 5_000;
@@ -225,6 +227,22 @@ await maybeStartA2AFakePeer();
 const _fileStates = new Map<string, FileTestState[]>();
 const _fileAssertions = new Map<string, number>();
 const _ledgerMarks = new Map<string, number>();
+// Per-`it` recording (v2 charter Phase 1, suite 1.153.0 — the durable G8 fix
+// named in scenario-disposition.ts). Each test gets its own ledger row under
+// `openwop.it.<file>.<title-slug>` so a file that asserted a positive control
+// and soft-skipped the requirement no longer certifies the requirement. The
+// file-level row is RETAINED (floors key on it); the per-`it` rows are
+// additive bundle rows (RFC 0148 §C `requirements[]` accepts any id).
+const _itAllocators = new Map<string, ItIdAllocator>();
+const _itMarks = new Map<string, number>();
+const _itAssertionsBefore = new Map<string, number>();
+function _assertionCalls(): number {
+  try {
+    return (expect.getState() as { assertionCalls?: number }).assertionCalls ?? 0;
+  } catch {
+    return 0;
+  }
+}
 function _fileOf(task: { file?: { filepath?: string; name?: string } } | undefined): string | null {
   const f = task?.file?.filepath ?? task?.file?.name;
   return typeof f === 'string' && f.length > 0 ? basename(f) : null;
@@ -235,6 +253,14 @@ beforeAll(({}, suite) => {
   const s = suite as unknown as { filepath?: string; name?: string; file?: { filepath?: string; name?: string } };
   const file = _fileOf({ file: s.file ?? s });
   if (file !== null && !_ledgerMarks.has(file)) _ledgerMarks.set(file, journalLength());
+});
+beforeEach(({ task }) => {
+  const file = _fileOf(task as { file?: { filepath?: string; name?: string } });
+  if (file === null) return;
+  // Window for this test's own gate decisions and its own assertion count.
+  _itMarks.set(file, journalLength());
+  _itAssertionsBefore.set(file, _assertionCalls());
+  takeExplicitRequirementId(); // clear any override left by a test that threw before afterEach
 });
 afterEach(({ task }) => {
   const file = _fileOf(task as { file?: { filepath?: string; name?: string } });
@@ -248,13 +274,63 @@ afterEach(({ task }) => {
   // A leg that early-returns from a gate makes zero, and a file of such legs is
   // an `executed-pass` with assertionCount 0 — visible, and unclassified for a
   // claimed floor.
-  let calls = 0;
-  try {
-    calls = (expect.getState() as { assertionCalls?: number }).assertionCalls ?? 0;
-  } catch {
-    /* no state — count 0 */
-  }
+  //
+  // `expect.getState().assertionCalls` is per-test in vitest (reset at each
+  // test start), so it is this test's count; the file total is the sum.
+  const calls = _assertionCalls();
   _fileAssertions.set(file, (_fileAssertions.get(file) ?? 0) + calls);
+
+  // Per-`it` row. Disposition follows RFC 0148 §A at test granularity:
+  //   fail                       → executed-fail (detail = the first error message)
+  //   skip (ctx.skip / it.skip)  → the gate's recorded reason since this test began, else `skipped`
+  //   pass with ≥1 assertion     → executed-pass
+  //   pass with 0 assertions     → the gate's recorded reason (softSkip / seamAbsent / behaviorGate)
+  //                                since this test began, else `blocked` (unclassified return)
+  if (!file.endsWith('.test.ts')) return;
+  // Only SCENARIO files get per-`it` rows. The setup hooks run for every file in
+  // the worker, including `src/lib/*.test.ts` — the suite's own self-tests,
+  // which prove fixtures and helpers, not a host, and must never become bundle
+  // evidence (that is why RFC 0163 G5 / RFC 0050 G1 moved them out of scenarios).
+  const filepath = (task as { file?: { filepath?: string } }).file?.filepath ?? '';
+  if (!/[\\/]src[\\/]scenarios[\\/]/.test(filepath)) {
+    takeExplicitRequirementId();
+    return;
+  }
+  const explicit = takeExplicitRequirementId();
+  const alloc = _itAllocators.get(file) ?? new ItIdAllocator();
+  _itAllocators.set(file, alloc);
+  const itId = explicit ?? alloc.allocate(file, task.name);
+  const since = journalSince(_itMarks.get(file) ?? 0);
+  const gate = since.find((e) => e.disposition === 'inapplicable') ?? since.find((e) => e.disposition === 'skipped');
+  let disposition: 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
+  let detail: string | undefined;
+  if (SPEC_COHERENCE_SCENARIOS.has(file) || SPEC_COHERENCE_SCENARIOS.has(file.replace(/\.test\.ts$/, ''))) {
+    // Corpus-coherence scenario: it reads spec/v1 and asserts nothing about a
+    // host, in any layout. Its rows are `inapplicable` to every host — the same
+    // rule `resolveFileRecord` applies to the file in the published layout.
+    disposition = 'inapplicable';
+    detail = SPEC_COHERENCE_DETAIL;
+  } else if (state === 'fail') {
+    disposition = 'executed-fail';
+    const err = (task.result?.errors ?? [])[0] as { message?: string } | undefined;
+    detail = `the test executed and failed: ${(err?.message ?? 'no message').slice(0, 300)}`;
+  } else if (state === 'pass' && calls > 0) {
+    disposition = 'executed-pass';
+  } else if (gate !== undefined) {
+    disposition = gate.disposition as 'skipped' | 'inapplicable';
+    detail = gate.detail ?? `${gate.disposition} (gate recorded no reason)`;
+  } else if (state === 'pass') {
+    disposition = 'blocked';
+    detail = 'unclassified return: the test passed with zero assertions and recorded no reason — RFC 0148 §A resolves it to blocked, never to a pass';
+  } else {
+    disposition = 'skipped';
+    detail = 'vitest skipped the test (ctx.skip / it.skip) without a recorded gate reason';
+  }
+  try {
+    recordRequirement(itId, disposition, detail, { assertionCount: calls });
+  } catch {
+    /* never fail a test for bookkeeping */
+  }
 });
 afterAll(({}, suite) => {
   // vitest 4: the suite/file task is the SECOND argument. For a file-level
@@ -306,5 +382,8 @@ afterAll(({}, suite) => {
   _fileStates.delete(file);
   _fileAssertions.delete(file);
   _ledgerMarks.delete(file);
+  _itAllocators.delete(file);
+  _itMarks.delete(file);
+  _itAssertionsBefore.delete(file);
 });
 

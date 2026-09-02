@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.153.0] — 2026-09-02 — per-`it` requirement rows and the requirement registry (RFC 0148 §A / G3; v2 charter Phase 1)
+
+No new scenario file. Three packed changes, all additive to bundle v2:
+
+- **Every test records its own ledger row.** `setup.ts` now records one RFC 0148 §A disposition per `it()` under `openwop.it.<file-stem>.<title-slug>` (`src/lib/requirement-ids.ts`), next to the retained file-level row the floors key on. A test that passes with ≥1 assertion is `executed-pass`; a failure is `executed-fail` with the first error message; a pass with zero assertions takes the gate reason recorded during that test (`softSkip` / `seamAbsent` / `behaviorGate`) or resolves to `blocked`. This is the durable fix for certification gap G8: a file that asserted a positive control and then soft-skipped the requirement no longer certifies the requirement, because the requirement's own row says `skipped`/`inapplicable`/`blocked`.
+- **`--certify` emits the per-`it` rows** in `results.requirements[]`, attributed to their scenario file. Existing verifiers accept them (the row shape is unchanged; ids are new). Expect bundles to grow from ~470 rows to ~2,400.
+- **`conformance/requirements.json`** (packed) is the generated registry: one record per test with its id, file, line, title, and the `driver.describe` / `req()` citations found in its body. `scripts/generate-requirement-registry.mjs --check` runs in `openwop:check`; a reworded title needs a row in `requirement-aliases.json` or the check fails, so a bundle that cited the old id still resolves. Measured at generation: 1,950 tests in 468 files, 1,927 stable ids, 23 interpolated titles (those rows exist at run time keyed by the rendered title and map to the registry by file+line).
+- New `req(id, section, requirement)` helper: a scenario may attach a hand-authored registry id to the current test; it doubles as the assertion message.
+
 ## [1.152.0] — 2026-09-02 — v2 charter Phase 0: `--certify` defaults to bundle v2; the RFC 0050 reference suite leaves the scenario file
 
 No new scenario file. Two packed changes:

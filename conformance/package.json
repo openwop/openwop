@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-conformance",
-  "version": "1.152.0",
+  "version": "1.153.0",
   "description": "Production-ready black-box conformance suite for OpenWOP v1.0 compliant servers.",
   "repository": {
     "type": "git",
@@ -18,6 +18,8 @@
     "fixtures",
     "fixtures.md",
     "coverage.md",
+    "requirements.json",
+    "requirement-aliases.json",
     "api",
     "schemas",
     "vectors",
