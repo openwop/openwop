@@ -12,7 +12,7 @@ Source: `MAINTAINERS.md`. **1 maintainer(s)** across **1 organization(s)**; cros
 
 ## Bootstrap waivers
 
-Source: `RFCS/*.md, RFCS/registers/*`. **41** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157); **0** retrospective review(s) completed (RFC 0156 §B).
+Source: `RFCS/*.md, RFCS/registers/*`. **42** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163); **0** retrospective review(s) completed (RFC 0156 §B).
 
 ## Independent security audit
 
@@ -38,7 +38,7 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.147.0**; corpus release **1.10.0** (2026-08-25).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.148.0**; corpus release **1.10.0** (2026-08-25).
 
 ## Open Critical / High program risks
 

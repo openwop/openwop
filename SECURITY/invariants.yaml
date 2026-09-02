@@ -2100,6 +2100,61 @@ invariants:
       against any host advertising `capabilities.credentials.supported`;
       skips cleanly otherwise.
 
+  # ===== RFC 0159 / RFC 0163 SAML ⟷ SCIM subject linking =====
+
+  - id: subject-link-leaver-deny
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/auth-subject-link.test.ts
+    note: |
+      RFC 0159 §A.3 (auth-profiles.md §Subject linking): on a host advertising
+      `capabilities.auth.subjectLinking: true`, a SCIM deactivation
+      (`DELETE /Users/{id}` or `PATCH active:false`) MUST deny subsequent
+      authorization decisions for the LINKED SAML identity, fail-closed
+      (composing RFC 0049 §C) — a provisioned leaver MUST NOT still SSO in.
+      Link, not merge: no durable subject key is rewritten. Witnessed by the
+      cross-lane leg of auth-subject-link (opt-in seams
+      OPENWOP_TEST_SAML_IDP_URL + OPENWOP_TEST_SCIM_URL); `inapplicable` on a
+      host that does not advertise linking. Registered 2026-09-01 at RFC 0163
+      `Active` — RFC 0159 had a threat-model row (§4.5) and no invariant.
+
+  - id: subject-link-key-class-declared
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/auth-subject-link-key-class.test.ts
+      - conformance/src/scenarios/auth-subject-link.test.ts
+    note: |
+      RFC 0163 §A / RFC 0159 §A.2: a `subjectLinking:true` host MUST advertise
+      `capabilities.auth.subjectLinkKey` from the closed enum
+      {opaque-idp, configured-immutable} — required by schema conditional as
+      well as by prose — and MUST join on the declared class only. Mutable/PII
+      keys (email, userName, displayName) are inexpressible in the enum by
+      construction; the RFC 0159 email-key negative leg witnesses that a
+      mutable-key "link" never drives a cross-lane deny or pass. The residual
+      (a host that declares a safe class and joins on email for an unprobed
+      pair) is recorded as RFC 0163 UQ5.
+
+  - id: subject-link-same-trust-root
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/auth-subject-link-key-class.test.ts
+    note: |
+      RFC 0163 §B: a subject link MUST NOT form unless the SAML assertion's
+      signed `<saml:Issuer>` entityID equals the IdP entityID bound to the SCIM
+      connection at configuration time; an opaque identifier that collides
+      across two different IdPs MUST NOT join two principals, and absent a
+      shared trust root the host fails closed (RFC 0159 §A.4). Witnessed by the
+      two-trust-root leg (IdP-A feeds SCIM; IdP-B mints a colliding NameID;
+      same-IdP positive control in the same test keeps the negative
+      non-vacuous) over OPENWOP_TEST_SAML_IDP_URL + _B + OPENWOP_TEST_SCIM_URL.
+      The fixture is proven in conformance/src/lib/saml-idp.test.ts.
+
   # ===== RFC 0049 RBAC fail-closed =====
 
   - id: authorization-fail-closed

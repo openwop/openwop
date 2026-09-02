@@ -3697,8 +3697,8 @@
         },
         "subjectLinkKey": {
           "type": "string",
-          "enum": ["opaque-idp", "oid", "immutable-id"],
-          "description": "RFC 0163 (auth-profiles.md \u00a7Subject linking). The CLASS of opaque, IdP-stable, non-PII identifier this host joins the SAML and SCIM lanes on. A CLOSED enum of ALLOWED classes only: `opaque-idp` (SCIM `externalId` \u2194 persistent-format SAML `NameID`), `oid` (an IdP-asserted immutable object identifier), `immutable-id` (a configured immutable-id attribute asserted by the same IdP). Mutable/PII keys (email, userName, displayName) are INEXPRESSIBLE by construction \u2014 a conforming host cannot name one, which is the witness that converts RFC 0159 \u00a7A.2/\u00a7A.4's negative-existence prohibition into a positive advertisement. REQUIRED (its own MUST in auth-profiles.md \u00a7Subject linking, not a schema `required` row) when `subjectLinking` is true: a host setting `subjectLinking:true` MUST advertise a `subjectLinkKey` in this enum and MUST honour it (advertise only what you honour). Optional at the schema level so the field is additive; absent-with-`subjectLinking:true` is a conformance violation, not a schema-validation error. RFC 0163 also requires the SAML and SCIM lanes to share an IdP trust root before a link may form (SAML assertion issuer corresponds to the SCIM provisioning IdP)."
+          "enum": ["opaque-idp", "configured-immutable"],
+          "description": "RFC 0163 (auth-profiles.md \u00a7Subject linking). The CLASS of opaque, IdP-stable, non-PII identifier this host joins the SAML and SCIM lanes on. A CLOSED enum of ALLOWED classes only, naming classes rather than vendor attributes: `opaque-idp` (SCIM `externalId` \u2194 persistent-format SAML `NameID`) or `configured-immutable` (a host-configured attribute asserted by the same IdP on both lanes that is opaque, stable for the account lifetime, never reassigned, non-PII and not user- or operator-influenceable \u2014 e.g. a directory object id or an immutable-id claim; the attribute name stays host config, the class goes on the wire). Mutable/PII keys (email, userName, displayName) are INEXPRESSIBLE by construction \u2014 a conforming host cannot name one, which is the witness that converts RFC 0159 \u00a7A.2/\u00a7A.4's negative-existence prohibition into a positive advertisement. REQUIRED when `subjectLinking` is true: expressed BOTH as the auth-profiles.md \u00a7Subject linking MUST and as this block's `if`/`then` conditional, so a discovery document claiming linking without a class fails schema validation as well as the conformance scenario. Absent when `subjectLinking` is absent/false."
         },
         "rotation": {
           "type": "object",
@@ -3861,6 +3861,14 @@
             }
           }
         }
+      },
+      "if": {
+        "properties": { "subjectLinking": { "const": true } },
+        "required": ["subjectLinking"]
+      },
+      "then": {
+        "required": ["subjectLinkKey"],
+        "$comment": "RFC 0163 \u00a7A.1 / \u00a7C: a host that claims subject linking MUST declare the class it joins on. A conditional required on a flag no host emitted when it landed is a tightening of an unemitted shape (COMPATIBILITY.md \u00a72.2), not closure of a server-emitted shape (\u00a72.1)."
       },
       "additionalProperties": true
     },

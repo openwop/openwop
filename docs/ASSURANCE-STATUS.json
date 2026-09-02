@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 41,
+    "bootstrapWaiversExercised": 42,
     "rfcs": [
       "0042",
       "0043",
@@ -57,7 +57,8 @@
       "0154",
       "0155",
       "0156",
-      "0157"
+      "0157",
+      "0163"
     ],
     "retrospectiveReviewsCompleted": 0
   },
@@ -89,7 +90,7 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "1.147.0",
+    "conformanceSuite": "1.148.0",
     "corpusRelease": "1.10.0",
     "corpusReleaseDate": "2026-08-25"
   },

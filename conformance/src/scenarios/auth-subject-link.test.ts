@@ -2,7 +2,7 @@
  * auth-subject-link — RFC 0159: SCIM ⟷ SAML subject linking (the combined
  * leaver contract).
  *
- * Status: DRAFT. RFC 0159 is `Active` (amends RFC 0050). The obligation is
+ * Status: ACCEPTED. RFC 0159 is `Accepted` (amends RFC 0050; hardened by RFC 0163). The obligation is
  * documented in `auth-profiles.md` §"Subject linking (SAML ⟷ SCIM)" and is
  * discoverable via `capabilities.auth.subjectLinking`.
  *
