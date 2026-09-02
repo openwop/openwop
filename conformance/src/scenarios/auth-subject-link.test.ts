@@ -24,7 +24,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
@@ -190,3 +190,22 @@ describe('auth-subject-link: link-key hygiene (RFC 0159 §A.2 — opt-in)', () =
     ).toBe(false);
   });
 });
+
+describe('auth-subject-link: legacy subjects are never linked (RFC 0165 §B.3 — seam-gated)', () => {
+  // Invariant `subject-legacy-not-linkable` (witness class: negative-existence,
+  // seam-gated). A run that predates `owner.subject` emission carries a synthesized
+  // `issuer: "urn:openwop:legacy"`; a SCIM deactivation MUST NOT deny it. The only
+  // causable observation is a host seam that mints a legacy-issuer subject and a
+  // linked SCIM record; no such seam is specified yet, so this leg records
+  // `blocked` honestly rather than a pass (RFC 0148 §A).
+  it('a SCIM deactivation does not deny a SAML login whose run subject is legacy-issued', async () => {
+    const res = await driver.get('/.well-known/openwop', { authenticated: false });
+    const auth = ((res.json as Record<string, unknown>)['auth'] ?? (res.json as { capabilities?: { auth?: unknown } }).capabilities?.auth) as { profiles?: string[] } | undefined;
+    const both = Array.isArray(auth?.profiles) && auth.profiles.includes('openwop-auth-saml') && auth.profiles.includes('openwop-auth-scim');
+    if (!both) {
+      return softSkip('inapplicable', 'host does not advertise both identity profiles (RFC 0164) — the legacy-link rule has no linked pair to protect');
+    }
+    return seamAbsent('no seam mints a legacy-issuer subject bound to a SCIM record (RFC 0165 §B.3); the negative cannot be caused from outside the host');
+  });
+});
+

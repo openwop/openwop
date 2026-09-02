@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.155.0] — 2026-09-02 — RFC 0165 `Draft → Active`: `protocolVersions[]`, the Subject record, header dual emission
+
+Three new scenario files (468 → 471) and four added legs, all additive:
+
+- `protocol-versions-array.test.ts` — server-free: the schema declares root `protocolVersions` with the scalar's strict grammar; presence-gated: items match, are unique, contain `protocolVersion`, and profile derivation is unchanged by the array.
+- `owner-subject-shape.test.ts` — server-free: `subject.schema.json` compiles; legacy and workload forms accepted; email/whitespace `subjectId` rejected (invariant `subject-record-opaque`); `keyClass` iff saml/scim; both `owner` sub-objects declare `subject` and the `run.started` echo declares `principalKind`.
+- `owner-subject-echo.test.ts` — gated on a snapshot carrying `owner.subject`: consistency with the owner triple, actor depth ≤ 4, `run.started` echo, fork copies tenant + subject verbatim.
+- Legs: `discovery.test.ts` (standard `ETag` + `If-None-Match` → 304, presence-gated); `webhook-signed-delivery.test.ts` (the `OpenWOP-*` family equals `X-openwop-*` and verifies, presence-gated); `auth-subject-link.test.ts` (legacy subjects never linked — seam-gated, records `blocked`); `identity-owner-shape.test.ts` registers `subject.schema.json`.
+
 ## [1.154.0] — 2026-09-02 — the tarball carries the suite and nothing else; the vendored contract is digest-checked (v2 charter Phase 1)
 
 No new scenario file. Three packed changes:

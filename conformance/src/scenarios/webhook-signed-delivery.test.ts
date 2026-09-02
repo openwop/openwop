@@ -323,6 +323,28 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
       driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST be sha256=HMAC-SHA256(secret, `${X-openwop-Timestamp}.${rawBody}`)'),
     ).toBe(expected);
 
+    // RFC 0165 §C.1 — dual emission of the `OpenWOP-*` family. SHOULD-level and
+    // presence-gated: when the new family is present, every value MUST equal its
+    // `X-openwop-*` counterpart and the signature verifies reading either.
+    const dual = first.headers['openwop-signature'];
+    if (dual === undefined) {
+      softSkip('inapplicable', 'host does not yet dual-emit the OpenWOP-* webhook header family (RFC 0165 §C.1 — SHOULD)');
+    } else {
+      for (const [neu, old] of [
+        ['openwop-webhook-id', 'x-openwop-webhook-id'],
+        ['openwop-event-type', 'x-openwop-event-type'],
+        ['openwop-timestamp', 'x-openwop-timestamp'],
+        ['openwop-signature', 'x-openwop-signature'],
+        ['openwop-signature-algorithm', 'x-openwop-signature-algorithm'],
+      ] as const) {
+        expect(first.headers[neu], driver.describe('RFC 0165 §C.1', `${neu} MUST equal ${old} when the OpenWOP-* family is emitted`)).toBe(first.headers[old]);
+      }
+      expect(
+        String(dual).replace('sha256=', ''),
+        driver.describe('RFC 0165 §C.1', 'OpenWOP-Signature MUST verify over the same bytes as X-openwop-Signature'),
+      ).toBe(expected);
+    }
+
     // Body should parse as JSON with a run event shape.
     const event = JSON.parse(first.body) as { type?: unknown; runId?: unknown };
     expect(typeof event.type).toBe('string');

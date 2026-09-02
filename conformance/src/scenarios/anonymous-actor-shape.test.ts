@@ -112,9 +112,13 @@ describe('anonymous-actor-shape: capability advertisement (RFC 0132 §B, server-
 describe('anonymous-actor-shape: owner.principalKind (RFC 0132 §A, server-free)', () => {
   it('run-snapshot owner accepts principalKind "anonymous" and rejects "guest"', () => {
     const snap = loadSchema('run-snapshot.schema.json');
-    const owner = (snap.properties as Record<string, unknown>).owner as Record<string, unknown>;
+    // RFC 0165 added an optional `subject` member ($ref subject.schema.json);
+    // register it and give the extracted sub-schema its parent's `$id` as the
+    // base the relative $ref resolves against.
+    const owner = { $id: snap.$id as string, ...((snap.properties as Record<string, unknown>).owner as Record<string, unknown>) };
     const ajv = new Ajv2020({ strict: false, allErrors: true });
     addFormats(ajv);
+    ajv.addSchema(loadSchema('subject.schema.json'));
     const validate = ajv.compile(owner);
     expect(
       validate({ tenant: 'acme', principal: 'anon:sess-3f9c', principalKind: 'anonymous' }),
@@ -136,6 +140,7 @@ describe('anonymous-actor-shape: audit reuses authorization.decided (RFC 0132 §
   const payloads = loadSchema('run-event-payloads.schema.json');
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   addFormats(ajv);
+  ajv.addSchema(loadSchema('subject.schema.json'));
   ajv.addSchema(payloads, 'payloads');
   const decided = ajv.getSchema('payloads#/$defs/authorizationDecided');
 

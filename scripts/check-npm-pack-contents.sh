@@ -95,7 +95,7 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.154.0', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '1.155.0', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
@@ -125,7 +125,7 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   'coverage.md',
 ]);
 
-// Suite 1.154.0 — what the tarball must NOT carry: the suite's own self-tests and
+// Suite 1.155.0 — what the tarball must NOT carry: the suite's own self-tests and
 // the corpus-coherence scenarios (they read spec/v1, assert nothing about a host,
 // and reported `blocked`/`inapplicable` in every host bundle). A packaging change
 // that let them back in would put rows about the spec into evidence about a host.

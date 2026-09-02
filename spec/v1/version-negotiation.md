@@ -43,6 +43,24 @@ Hosts **MUST** advertise the highest protocol minor they implement. Consumers **
 reject a different unsupported major, and **MUST** tolerate a higher minor under v1 additive
 rules while capability-gating any optional behavior it might carry.
 
+### `protocolVersions[]` — every major.minor the host speaks (RFC 0165 §A)
+
+A host MAY additionally advertise `protocolVersions: string[]` at the discovery root: every
+`<major>.<minor>` it serves, newest first by convention, each item under the grammar above
+(not the looser A2A/MCP item pattern). When present it **MUST** contain the value of
+`protocolVersion` and **MUST NOT** name a major the host does not serve; a v1.x host advertises
+`["1.<minor>"]` until it serves v2. Consumers **MUST** treat an absent array as
+`[protocolVersion]`. Profile derivation (`profiles.md`) reads the scalar only in v1.x. The
+array exists so a host can advertise both majors during the v2 transition
+(`COMPATIBILITY.md` §5); v2 defines the negotiation that acts on it.
+
+**The `engineVersion` axis is split, and this is recorded rather than fixed.** The discovery
+root declares `engineVersion` as an integer; `run-event.schema.json`, `run-snapshot.schema.json`
+and three event payloads carry it as a string. Changing either type is a `COMPATIBILITY.md`
+§2.2 break, so in v1.x the per-event value is the decimal string rendering of the root integer,
+and unification is scheduled for v2 (`spec/v1/deprecations.json`,
+`openwop.deprecation.engine-version-type-split`).
+
 > **Why a pattern and not just prose (RFC 0149 §C).** The field was specified three
 > incompatible ways at once: `capabilities.schema.json` constrained it to `minLength: 1`,
 > the suite's core predicate tested `startsWith('1.')`, and prose called it semver while

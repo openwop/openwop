@@ -109,6 +109,14 @@ paths:
       summary: Capability declaration handshake.
       operationId: getCapabilities
       security: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          schema: { type: string }
+          description: >-
+            RFC 0165 §C.2. Standard conditional request against the discovery document's `ETag`;
+            a matching value SHOULD yield `304 Not Modified`.
       responses:
         '200':
           description: Capabilities object — see `capabilities.md`.
@@ -116,13 +124,21 @@ paths:
             Cache-Control:
               schema: { type: string }
               example: 'public, max-age=300'
+            ETag:
+              schema: { type: string }
+              description: >-
+                RFC 0165 §C.2. Standard strong validator for the response bytes (SHOULD be sent).
+                Distinct from `Capabilities-Etag`, which validates negotiation safety
+                (`capabilities-change-detection.md` §"Cache validators").
             Capabilities-Etag:
               schema: { type: string }
-              description: Optional probe handle for mid-session capability change detection.
+              description: Optional probe handle for mid-session capability change detection. Deprecated toward v2 (RFC 0165 §C.2).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Capabilities'
+        '304':
+          description: RFC 0165 §C.2 — `If-None-Match` matched the current `ETag`; the body is unchanged.
         '503':
           description: Server unable to compute capabilities (transient).
           content:

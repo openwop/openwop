@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 43,
+    "bootstrapWaiversExercised": 44,
     "rfcs": [
       "0042",
       "0043",
@@ -59,7 +59,8 @@
       "0156",
       "0157",
       "0163",
-      "0164"
+      "0164",
+      "0165"
     ],
     "retrospectiveReviewsCompleted": 0
   },
@@ -91,13 +92,13 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "1.154.0",
+    "conformanceSuite": "1.155.0",
     "corpusRelease": "1.10.0",
     "corpusReleaseDate": "2026-08-25"
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md",
-    "rowsScanned": 140,
+    "rowsScanned": 145,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -602,6 +603,34 @@
         "score": "High",
         "title": "A host implements the link on **email/`userName`** (mutable/PII) → account-takeover joi…",
         "status": "Open (mitigated by §A.2 + negative scenario)"
+      },
+      {
+        "rfc": "0165",
+        "id": "R1",
+        "score": "High",
+        "title": "A v2-aware client selects v2 from `protocolVersions` against a v1.x host that listed a …",
+        "status": "Open"
+      },
+      {
+        "rfc": "0165",
+        "id": "R2",
+        "score": "High",
+        "title": "A host emits `owner.subject` on new runs but re-owns forks to the forking principal, br…",
+        "status": "Open"
+      },
+      {
+        "rfc": "0165",
+        "id": "R3",
+        "score": "High",
+        "title": "A host synthesizes a legacy subject with a guessed real issuer and creates an identity …",
+        "status": "Open"
+      },
+      {
+        "rfc": "0165",
+        "id": "R5",
+        "score": "High",
+        "title": "The SDKs keep rejecting the spec's `sha256=` form, so a host that dual-emits still fail…",
+        "status": "Open"
       }
     ],
     "transferred": [
@@ -655,7 +684,11 @@
       "0156/R3",
       "0156/R4",
       "0156/R6",
-      "0159/R1"
+      "0159/R1",
+      "0165/R1",
+      "0165/R2",
+      "0165/R3",
+      "0165/R5"
     ]
   },
   "claims": {

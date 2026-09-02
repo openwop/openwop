@@ -46,6 +46,10 @@
         "tenant": { "type": "string", "minLength": 1, "description": "Top-level isolation boundary." },
         "workspace": { "type": "string", "minLength": 1, "description": "Optional sub-tenant within the tenant (RFC 0048 workspace)." },
         "principal": { "type": "string", "minLength": 1, "description": "Acting identity (user or agent) — opaque id, never PII." },
+        "subject": {
+          "$ref": "subject.schema.json",
+          "description": "RFC 0165 \u00a7B. OPTIONAL issuer-scoped Subject record for the acting identity. When present: `subject.tenant` MUST equal `tenant`, `subject.subjectId` MUST equal `principal` when both are present, `subject.kind` MUST equal `principalKind` when both are present. A host that emits it on new runs synthesizes `issuer: \"urn:openwop:legacy\"` for runs that predate emission (\u00a7B.3) and copies it verbatim onto forks (\u00a7B.4)."
+        },
         "principalKind": {
           "type": "string",
           "enum": ["user", "agent", "anonymous"],

@@ -3492,3 +3492,34 @@ invariants:
       -32022 — agreement precedes selection, stated in mcp-integration.md
       §B), the method/name half in mcp-stateless-request (added 1.123.0).
       Witnessed 3/3 under strict against the first 2026-07-28 host.
+  - id: subject-record-opaque
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/owner-subject-shape.test.ts
+    note: |
+      RFC 0165 §B.2. `owner.subject.subjectId` MUST be an opaque, stable,
+      issuer-scoped identifier — never an email address, a display name, a
+      token, or a certificate. The wire enforces the checkable half:
+      `subject.schema.json` forbids `@` and whitespace, and both `owner`
+      sub-objects are `additionalProperties: false`, so PII-shaped values
+      fail validation on any host (witness class: claims-check). That a host
+      never MINTS PII into an opaque-looking id is negative-existence and is
+      not witnessable from outside; the invariant records the obligation.
+  - id: subject-legacy-not-linkable
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/auth-subject-link.test.ts
+    note: |
+      RFC 0165 §B.3, §B.6. A synthesized legacy subject (`issuer:
+      "urn:openwop:legacy"`, minted for runs that predate `owner.subject`
+      emission) and an A2A-forwarded anonymous actor MUST NOT participate in a
+      SAML ⟷ SCIM subject link, and a SCIM deactivation MUST NOT be taken to
+      deny them. Why: nothing can attest the issuer or lane of a historical
+      principal, and a guessed link is the RFC 0159 join-and-inherit hazard one
+      layer down. Witness class: negative-existence, seam-gated — no seam
+      mints a legacy-issuer subject bound to a SCIM record yet, so the scenario
+      leg records `blocked`, never a pass.

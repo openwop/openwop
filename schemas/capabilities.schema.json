@@ -16,6 +16,13 @@
       "description": "RFC 0149 \u00a7C \u2014 openwop protocol version the server speaks, as ASCII `<major>.<minor>` with no leading zero except zero itself. `1.0` and `1.12` are valid; `1`, `1.0.0`, `v1.0`, and `01.0` are not. The integer major is the hard compatibility boundary and the integer minor is the additive contract level; PATCH belongs to suite and SDK versions, not the spec version. Previously constrained only by `minLength: 1`, which admitted `v1.0`, `1.0.0`, and `banana` \u2014 a negotiation the wire could not decide, since neither integer can be extracted from an unconstrained string. Independent of `engineVersion` (which gates persisted-doc compatibility per version-negotiation.md).",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
     },
+    "protocolVersions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+      "description": "RFC 0165 \u00a7A. Every protocol `<major>.<minor>` this host speaks, newest first by convention. OPTIONAL in v1.x; when present it MUST contain the value of `protocolVersion` and MUST NOT name a major the host does not serve. Same grammar as `protocolVersion` (RFC 0149 \u00a7C), not the looser A2A item pattern. Consumers that do not understand it ignore it; profile derivation reads `protocolVersion` only. Reserved for v2 major negotiation."
+    },
     "contractProvenance": {
       "type": "object",
       "description": "RFC 0146 (`Active`). Which corpus revision this host's contract handling corresponds to \u2014 the copy it validates and serves against. OPTIONAL; absent \u21d2 UNSPECIFIED provenance, neither current nor stale, and a consumer MUST NOT infer a version from its absence. ADVISORY: a consumer MUST NOT reject a request, refuse interop, or fail a run solely because this differs from its own \u2014 v1.x corpus revisions are additive, so a host on an older revision is conformant and this field detects drift rather than making drift an error. Nothing else on the wire answers this: `protocolVersion` is `1.0` across the entire v1 line (the drift happens inside that value) and `schemaVersions` is per-envelope-type. NOT an integrity check \u2014 `corpusCommit` says WHICH contract, never whether the copy was modified.",

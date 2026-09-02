@@ -1019,6 +1019,15 @@
             "principal": {
               "type": "string",
               "minLength": 1
+            },
+            "principalKind": {
+              "type": "string",
+              "enum": ["user", "agent", "anonymous"],
+              "description": "RFC 0132 (declared here by RFC 0165): the echo carries the same optional kind as `RunSnapshot.owner.principalKind`, so a host that echoes its own snapshot owner emits a valid payload."
+            },
+            "subject": {
+              "$ref": "subject.schema.json",
+              "description": "RFC 0165 \u00a7B. The run's Subject record, echoed verbatim from `RunSnapshot.owner.subject` when present."
             }
           },
           "additionalProperties": false
