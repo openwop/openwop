@@ -1452,6 +1452,45 @@ invariants:
       prove it would be the vacuous-witness pattern RFC 0148 §A exists to
       close. Recorded as gap G9.
 
+  - id: layer2-invocation-claim-atomic
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-compensation.md
+    tests: []
+    note: |
+      RFC 0150 §B / `spec/v1/idempotency.md` §"Concurrent duplicates
+      (Layer 2)" (v1.7). The persist that guards a side effect MUST be an
+      **atomic claim** — a compare-and-set / insert-if-absent that at most
+      one executor can win — not a read-then-write. The clause is
+      unconditional and explicitly reaches a single-instance deployment:
+      the orphan sweeper re-dispatching a run whose owner is stalled but
+      still alive races the original without a second host.
+      Reported 2026-09-01 by a tier-1 host that had exactly the named
+      shape: read the invocation log, deliver, then
+      `INSERT OR REPLACE INTO invocation_log`. `INSERT OR REPLACE` is the
+      precise inverse of an atomic claim — it always wins and never
+      reports a conflict, so the "and the other observes the hit" half of
+      the rule cannot happen and both executors fire. Their outcome was
+      protected at the time, but by a lease longer than the maximum run
+      rather than by the mechanism this rule names, so the defect was
+      latent behind an unrelated constant.
+      **Witness is NOT black-box, and nothing else covered it.** Driving
+      it requires two executors of ONE run concurrently reaching the same
+      effect seam, which the suite cannot cause without a host seam — a
+      wire probe asserting it would be the vacuous-witness pattern
+      RFC 0148 §A exists to close. The row that WOULD cover it,
+      RFC 0158 §Conformance `durability/duplicate-delivery` ("fires each
+      effect exactly once, asserted per effect identity"), is (a) not
+      implemented in `conformance/src/scenarios/` and (b) not named in any
+      rung's required evidence — `durable-single-instance` requires only
+      `kill-after-accept` and `kill-during-execution`. So a host can hold
+      that rung honestly while violating this MUST, which is what
+      happened. Five of RFC 0158's six conformance rows have no scenario
+      at all; only `poison-exhaustion` does.
+      Recorded as gap G17. Landing a seam-driven witness is the close;
+      until then this is reference-impl tier and the gap is stated rather
+      than papered over with a probe that would pass either way.
+
   - id: multi-region-stale-owner-no-effect
     tier: protocol
     severity: high

@@ -98,6 +98,49 @@ Compensation is **a second effect, not an undo**. It reaches the same downstream
 | Duplication | Replay re-fires an inverse effect | MUST use recorded outcomes; live-effect branch only with explicit authorization + fresh IDs (§F; `compensation-replay-no-refire`, registered). |
 | Tampering | Fork of a partially compensated run claims it changed the source | Branch preserves source facts without claiming source change (§F); child rollup semantics — gap G4, open. |
 
+### 4.5 Concurrent execution of one run (`layer2-invocation-claim-atomic`)
+
+Every threat above assumes one executor. Two executors of the **same** run reaching the
+same effect seam at the same time is a different shape, and it defeats the §C identity
+mitigations rather than evading them: both executors re-execute the node from its start,
+both mint the **same** `logicalInvocationId`, and a stable identity is exactly what should
+have deduplicated them. It does not, if the thing that consumes the identity cannot report
+a conflict.
+
+| Threat | Vector | Mitigation (normative home) |
+| --- | --- | --- |
+| Duplication | Orphan sweeper re-dispatches a run whose owner is stalled but still alive; both executors read the invocation log, both miss, both fire | The persist guarding the effect **MUST** be an atomic claim — compare-and-set / insert-if-absent that at most one executor can win (`spec/v1/idempotency.md` §"Concurrent duplicates (Layer 2)", RFC 0150 §B; `layer2-invocation-claim-atomic`, registered). |
+| Duplication | The same accepted work delivered twice, no sweeper involved | Same claim; asserted per effect identity rather than by end state (RFC 0158 §Conformance `durability/duplicate-delivery`). |
+
+Why it belongs in *this* model: the inverse of a duplicated effect is a duplicated
+**inverse**. A run that charged twice and is then unwound produces two refunds against one
+charge, and §C's per-ordinal "one obligation" property is computed over a plan that already
+contains the duplicate — so the compensation layer faithfully reverses a history that was
+wrong before it saw it. No compensation-side check can recover from this; it has to be
+prevented at the claim.
+
+Three ways to get this wrong, all observed or explicitly named by the normative text:
+
+- **`INSERT OR REPLACE` / upsert.** The precise inverse of a claim: it always wins and never
+  reports a conflict, so the *"and the other observes the hit"* half of the rule cannot
+  happen. Reported 2026-09-01 by a tier-1 host with exactly this verb.
+- **Read-then-write.** Both executors miss the read before either writes. Named in the
+  clause itself.
+- **A lease standing in for the claim.** A lease is liveness-dependent — a throttled or
+  stalled instance renews nothing — so it fences only while the loser is healthy enough to
+  notice, which is the case that does not need fencing. The atomic claim is
+  liveness-independent: the loser need not be alive, scheduled, or aware, because it loses
+  at the moment it attempts the write. A host whose lease merely exceeds its maximum run
+  length has the outcome protected by an unrelated constant, not by the mitigation.
+
+**Not currently witnessed.** Driving this needs two executors of one run concurrently
+reaching one seam, which the black-box suite cannot cause without a host seam; a wire probe
+asserting it would pass either way (RFC 0148 §A). The row that would cover it,
+`durability/duplicate-delivery`, is not implemented and is not required evidence for any
+RFC 0158 rung — `durable-single-instance` names only `kill-after-accept` and
+`kill-during-execution` — so a host can hold that rung honestly while violating this MUST.
+Gap **G17**.
+
 ## 5. Relationship to other models
 
 - **`threat-model-secret-leakage.md`** owns SR-1; the plan and the events are shaped so there is nothing to redact (A5, A9).
@@ -116,6 +159,7 @@ Compensation is **a second effect, not an undo**. It reaches the same downstream
 
 - **Shape:** `compensation-profile.test.ts` — the §A family, the §B declaration and policy (closed triggers, escalate-only `approvalScope`, `onParentCancel`), the closed `compensationStatus` enum.
 - **Behaviour (gated on `compensation.supported`, hard-fails under `OPENWOP_REQUIRE_BEHAVIOR=true`):** `compensation-behavior.test.ts` via `POST /v1/host/sample/test/compensation/{unwind,replay}` (`host-sample-test-seams.md` §21) — plan before first effect, reverse-completion order, replay no-refire, content-free events, snapshot rollup ⇄ events; `compensation-recovery.test.ts` via the §21 recovery extension — retry-stable identity, tenant-bound operator authority (404 / 403-audited / 200), recorded-facts replay equality.
+- **Unwitnessed invariant:** `layer2-invocation-claim-atomic` (§4.5, reference-impl tier, gap G17) — registered with an empty `tests` list because no black-box witness exists; stated rather than covered by a probe that would pass either way.
 - **Registered invariants:** `compensation-replay-no-refire`, and — since 2026-08-16, via `compensation-recovery.test.ts` and the §21 recovery extension (`unwind` `failFirstInverseAttempts` / `hold` + `inverseActions[]`, `replay` `source[]`/`replayed[]`, NEW `operator` seam) — `compensation-effect-id-retry-stable`, `compensation-tenant-authority-bound`, `compensation-input-recorded-facts-only` (`SECURITY/invariants.yaml`, protocol tier; each `blocked` until a host wires the extension, and named as such in the ledger).
 - **How each is exercised** (the seam extension that was named here as missing, now specified):
   - `compensation-effect-id-retry-stable` — an `unwind` request option that fails the first inverse attempt on cue, with the response reporting per-action `{ ordinal, effectId, attempts }` so the scenario asserts one identity across attempts and one obligation per ordinal.

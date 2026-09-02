@@ -71,7 +71,7 @@ For an honest comparison of OpenWOP vs **Temporal, Airflow, Argo Workflows, AWS 
 >
 > **RFC status (160 RFCs excluding template):** RFCs that are `Accepted` (154), that are `Active` (4 — RFC 0035, RFC 0111, RFC 0121, RFC 0158), and that are `Draft` (2 — RFC 0038 Parked, RFC 0163). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
 >
-> **SECURITY surface:** 184 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 153 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 29 reference-impl-tier (verified by reference impls' CI), 2 advisory. Every protocol-tier MUST-NOT has at least one public conformance test. Strict-mode behavioral conformance runs under `OPENWOP_REQUIRE_BEHAVIOR=true`.
+> **SECURITY surface:** 185 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 153 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 30 reference-impl-tier (verified by reference impls' CI), 2 advisory. Every protocol-tier MUST-NOT has at least one public conformance test. Strict-mode behavioral conformance runs under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 >
 > **Reference hosts:** four — `examples/hosts/{in-memory,sqlite,postgres,python}` in [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples); the Postgres host satisfies the production-profile predicate. Per-host conformance trajectory: [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md).
 >
