@@ -63,7 +63,10 @@
       "0165",
       "0166"
     ],
-    "retrospectiveReviewsCompleted": 0
+    "retrospectiveReviewsCompleted": 0,
+    "outcomes": {
+      "not-reviewed": 45
+    }
   },
   "audit": {
     "source": "SECURITY/external-audit-engagement.md §8, SECURITY/external-audit-findings.json",

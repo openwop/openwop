@@ -62,16 +62,25 @@ function waivers() {
       rfcs.push(f.slice(0, 4));
     }
   }
-  // A retrospective review record is a `Retrospective review` heading or a
-  // register row saying so; none exists yet, and the count says so.
-  let reviewed = 0;
-  const regDir = resolve(ROOT, 'RFCS/registers');
-  if (existsSync(regDir)) {
-    for (const f of readdirSync(regDir)) {
-      if (/retrospective review (complete|closed|done)/i.test(readFileSync(join(regDir, f), 'utf8'))) reviewed++;
+  // Outcomes come from the RFC 0156 §B register, per-RFC, and ONLY `ratified`
+  // discharges the obligation.
+  //
+  // This replaced a free-text match — `/retrospective review (complete|closed|done)/i`
+  // over the gap registers — which measured whether someone had written a
+  // sentence, not whether the obligation was met. It would have counted a review
+  // whose outcome was `withdrawn` or `corrective-rfc-required` exactly like a
+  // `ratified` one, reporting compliance over an open defect. §B names four
+  // outcomes precisely so they are not interchangeable.
+  const outcomes = {};
+  const reg = resolve(ROOT, 'docs/WAIVER-RETROSPECTIVE-REGISTER.md');
+  if (existsSync(reg)) {
+    for (const line of readFileSync(reg, 'utf8').split('\n')) {
+      const m = line.match(/^\|\s*(\d{4})\s*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|\s*`?([a-z-]+)`?\s*\|/);
+      if (m) outcomes[m[2]] = (outcomes[m[2]] ?? 0) + 1;
     }
   }
-  return { bootstrapWaiversExercised: exercised, rfcs, retrospectiveReviewsCompleted: reviewed };
+  const reviewed = outcomes['ratified'] ?? 0;
+  return { bootstrapWaiversExercised: exercised, rfcs, retrospectiveReviewsCompleted: reviewed, outcomes };
 }
 
 function audit() {
@@ -196,7 +205,13 @@ function projection(m) {
   lines.push('');
   lines.push('## Bootstrap waivers');
   lines.push('');
-  lines.push(`Source: \`${m.waivers.source}\`. **${m.waivers.bootstrapWaiversExercised}** RFC(s) reached \`Accepted\` under a waived comment window (${m.waivers.rfcs.join(', ')}); **${m.waivers.retrospectiveReviewsCompleted}** retrospective review(s) completed (RFC 0156 §B).`);
+  lines.push(`Source: \`${m.waivers.source}\`. **${m.waivers.bootstrapWaiversExercised}** RFC(s) reached \`Accepted\` under a waived comment window (${m.waivers.rfcs.join(', ')}); **${m.waivers.retrospectiveReviewsCompleted}** \`ratified\` retrospective review(s) — the only outcome that discharges RFC 0156 §B.`);
+  const oc = m.waivers.outcomes ?? {};
+  const ocKeys = Object.keys(oc).sort();
+  if (ocKeys.length) {
+    lines.push('');
+    lines.push(`Per-RFC outcomes (\`docs/WAIVER-RETROSPECTIVE-REGISTER.md\`): ${ocKeys.map((k) => `\`${k}\` ${oc[k]}`).join(', ')}. \`not-reviewed\` is not one of §B's four outcomes — it records the absence of a review, so that silence is stated rather than inferred. §B review is **cross-organization**; with one maintainer listed and the non-steward tripwire unfired, a non-zero open count is the honest state rather than a backlog.`);
+  }
   lines.push('');
   lines.push('## Independent security audit');
   lines.push('');

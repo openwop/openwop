@@ -12,7 +12,9 @@ Source: `MAINTAINERS.md`. **1 maintainer(s)** across **1 organization(s)**; cros
 
 ## Bootstrap waivers
 
-Source: `RFCS/*.md, RFCS/registers/*`. **45** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164, 0165, 0166); **0** retrospective review(s) completed (RFC 0156 §B).
+Source: `RFCS/*.md, RFCS/registers/*`. **45** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164, 0165, 0166); **0** `ratified` retrospective review(s) — the only outcome that discharges RFC 0156 §B.
+
+Per-RFC outcomes (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`): `not-reviewed` 45. `not-reviewed` is not one of §B's four outcomes — it records the absence of a review, so that silence is stated rather than inferred. §B review is **cross-organization**; with one maintainer listed and the non-steward tripwire unfired, a non-zero open count is the honest state rather than a backlog.
 
 ## Independent security audit
 
