@@ -92,6 +92,15 @@ Exit code is non-zero on any failed assertion. `--certify` distinguishes: `0` �
 
 ---
 
+
+### `--offline` — a declared set
+
+`openwop-conformance --offline` runs exactly **`src/scenarios/fixtures-valid.test.ts`**: the server-free scenario that ships in the tarball and runs in the published layout. That is the whole set, by declaration (suite 1.154.0), not by whatever happens to skip cleanly. `spec-corpus-validity.test.ts` and the other 27 corpus-coherence scenarios (`spec-coherence-scenarios.json`) read `spec/v1`, assert nothing about a host, and are not packed; run them from a spec checkout with `npm run openwop:check`.
+
+### The vendored contract is digest-checked
+
+`schemas/CORPUS-STAMP.json` carries `suiteVersion`, `corpusCommit`, and — from 1.154.0 — `files`: a SHA-256 for every vendored `api/` and `schemas/` file. At global setup in the published layout the suite verifies the map and **refuses to run on a mismatch**, naming each missing, altered, or extra file. A hand-patched vendored schema therefore cannot produce evidence. In a spec checkout nothing is vendored and the log line says `corpus stamp not checked`; an older tarball without `files` says so too. Three outcomes, never folded.
+
 ## What's Covered
 
 The current suite has 468 scenario files under `src/scenarios/`.

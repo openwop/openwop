@@ -195,7 +195,7 @@ Required (unless --offline):
   --api-key <key>       Bearer-style API key (or set OPENWOP_API_KEY env var)
 
 Filtering:
-  --offline             Run only the server-free subset (fixtures + spec corpus)
+  --offline             Run only the declared server-free subset (fixtures-valid; see README §"--offline")
   --filter <pattern>    Pass through to vitest --testNamePattern
 
 Implementation labels (cosmetic — surface in failure messages):
@@ -656,10 +656,12 @@ async function main(): Promise<never> {
   // the conformance package is used as a workspace member.
   const vitestArgs: string[] = ['run', '--config', resolvePath(conformanceRoot, 'vitest.config.ts')];
   if (args.offline) {
-    vitestArgs.push(
-      'src/scenarios/fixtures-valid.test.ts',
-      'src/scenarios/spec-corpus-validity.test.ts',
-    );
+    // Suite 1.154.0: the offline set is a DECLARED property of the package —
+    // exactly the server-free scenarios that ship in the tarball and run in
+    // the published layout. `spec-corpus-validity.test.ts` left the set: it is
+    // a corpus-coherence scenario (reads spec/v1, asserts nothing about a host)
+    // and is no longer packed. See conformance/README.md §"--offline".
+    vitestArgs.push('src/scenarios/fixtures-valid.test.ts');
   }
   if (args.filter) {
     vitestArgs.push('--testNamePattern', args.filter);

@@ -58,4 +58,22 @@ cat > ./schemas/CORPUS-STAMP.json <<STAMP
 }
 STAMP
 
+# Suite 1.154.0: per-file SHA-256 digests of everything vendored, so the suite
+# can verify at global setup that the contract it validates against is the one
+# it shipped (src/lib/corpus-stamp.ts). Written INTO the stamp, no timestamp.
+node - <<'NODE'
+const { createHash } = require('node:crypto');
+const { readFileSync, readdirSync, statSync, writeFileSync } = require('node:fs');
+const { join, relative, sep } = require('node:path');
+const root = process.cwd();
+const files = {};
+const walk = (d) => { for (const n of readdirSync(d).sort()) { const p = join(d, n); if (statSync(p).isDirectory()) walk(p); else files[relative(root, p).split(sep).join('/')] = createHash('sha256').update(readFileSync(p)).digest('hex'); } };
+walk(join(root, 'api')); walk(join(root, 'schemas'));
+delete files['schemas/CORPUS-STAMP.json'];
+const stampPath = join(root, 'schemas', 'CORPUS-STAMP.json');
+const stamp = JSON.parse(readFileSync(stampPath, 'utf8'));
+stamp.files = Object.fromEntries(Object.entries(files).sort(([a], [b]) => (a < b ? -1 : 1)));
+writeFileSync(stampPath, JSON.stringify(stamp, null, 2) + '\n');
+console.log(`pack-vendor.sh: stamped ${Object.keys(files).length} vendored files with SHA-256 digests`);
+NODE
 echo "pack-vendor.sh: vendored api/ + schemas/ for npm pack (stamp ${SUITE_VERSION} @ ${CORPUS_COMMIT})"

@@ -1,0 +1,125 @@
+/**
+ * Corpus-stamp digest verification (v2 charter Phase 1, suite 1.154.0).
+ *
+ * The published suite vendors `api/` and `schemas/` at `prepack` and writes
+ * `schemas/CORPUS-STAMP.json` (RFC 0145 G2) — until 1.154.0 that stamp carried
+ * only `suiteVersion` + `corpusCommit`, so a tarball whose vendored files had
+ * been altered, partially copied, or hand-patched after install still read as
+ * "the 1.x contract". That is the generated-surface-drift class the charter's
+ * §A names (`@openwop/openwop-conformance@1.138.1` on npm was not the 1.138.1 in
+ * the tree), one layer down: the package identified its corpus by a commit
+ * hash it could not check.
+ *
+ * From 1.154.0 the stamp also carries `files`: a map of every vendored path
+ * (relative to the package root) to its SHA-256. In the PUBLISHED layout the
+ * suite verifies the map at global setup and refuses to run on a mismatch —
+ * a suite that validated a host against a schema it did not ship would be
+ * evidence about nothing. In the REPO layout (a spec checkout) there is no
+ * vendored copy and nothing to verify; the check is skipped and says so.
+ *
+ * Three outcomes, never folded (OK / FAIL / UNKNOWN): `verified` when every
+ * digest matches; `mismatch` (throws) when any file is missing or altered;
+ * `not-applicable` when the layout is not published or the stamp predates
+ * 1.154.0 (older tarballs cannot be verified and the run says so rather than
+ * pretending).
+ */
+
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
+
+export interface CorpusStamp {
+  readonly suiteVersion?: string;
+  readonly corpusCommit?: string;
+  /** `<relative path>` → lowercase hex SHA-256. Present from suite 1.154.0. */
+  readonly files?: Readonly<Record<string, string>>;
+}
+
+export type StampVerdict =
+  | { readonly kind: 'verified'; readonly files: number }
+  | { readonly kind: 'not-applicable'; readonly reason: string }
+  | { readonly kind: 'mismatch'; readonly missing: readonly string[]; readonly altered: readonly string[]; readonly extra: readonly string[] };
+
+export const STAMP_RELATIVE_PATH = join('schemas', 'CORPUS-STAMP.json');
+
+/** SHA-256 of a file's bytes, lowercase hex. */
+export function sha256File(path: string): string {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+/** Every regular file under `dir`, as package-relative POSIX paths, sorted. */
+export function listVendoredFiles(root: string, dirs: readonly string[] = ['api', 'schemas']): string[] {
+  const out: string[] = [];
+  const walk = (d: string): void => {
+    if (!existsSync(d)) return;
+    for (const name of readdirSync(d).sort()) {
+      const p = join(d, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else out.push(relative(root, p).split(sep).join('/'));
+    }
+  };
+  for (const d of dirs) walk(join(root, d));
+  return out.filter((p) => p !== STAMP_RELATIVE_PATH.split(sep).join('/')).sort();
+}
+
+/** Build the `files` map for a package root (used by pack-vendor at prepack). */
+export function digestVendoredFiles(root: string): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const rel of listVendoredFiles(root)) map[rel] = sha256File(join(root, ...rel.split('/')));
+  return map;
+}
+
+/**
+ * Compare the stamp's `files` map against the bytes on disk. Pure: reads,
+ * never writes, never throws on a mismatch — the caller decides how loud.
+ */
+export function verifyCorpusStamp(root: string, layout: string): StampVerdict {
+  if (layout !== 'published') {
+    return { kind: 'not-applicable', reason: `layout is '${layout}' — the vendored copy exists only in the published package` };
+  }
+  const stampPath = join(root, STAMP_RELATIVE_PATH);
+  if (!existsSync(stampPath)) {
+    return { kind: 'not-applicable', reason: 'schemas/CORPUS-STAMP.json is absent — not a packed suite' };
+  }
+  let stamp: CorpusStamp;
+  try {
+    stamp = JSON.parse(readFileSync(stampPath, 'utf8')) as CorpusStamp;
+  } catch (e) {
+    return { kind: 'mismatch', missing: [STAMP_RELATIVE_PATH], altered: [], extra: [] };
+  }
+  if (stamp.files === undefined) {
+    return { kind: 'not-applicable', reason: `stamp ${stamp.suiteVersion ?? '?'} predates per-file digests (suite < 1.154.0); the vendored contract cannot be verified` };
+  }
+  const expected = stamp.files;
+  const onDisk = new Set(listVendoredFiles(root));
+  const missing: string[] = [];
+  const altered: string[] = [];
+  for (const [rel, digest] of Object.entries(expected).sort()) {
+    const p = join(root, ...rel.split('/'));
+    if (!existsSync(p)) {
+      missing.push(rel);
+      continue;
+    }
+    if (sha256File(p) !== digest) altered.push(rel);
+    onDisk.delete(rel);
+  }
+  const extra = [...onDisk].sort();
+  if (missing.length > 0 || altered.length > 0 || extra.length > 0) return { kind: 'mismatch', missing, altered, extra };
+  return { kind: 'verified', files: Object.keys(expected).length };
+}
+
+/** One-line, greppable rendering for the run log. */
+export function describeVerdict(v: StampVerdict): string {
+  switch (v.kind) {
+    case 'verified':
+      return `[openwop-conformance] corpus stamp VERIFIED — ${v.files} vendored api/ + schemas/ files match their SHA-256 digests`;
+    case 'not-applicable':
+      return `[openwop-conformance] corpus stamp not checked — ${v.reason}`;
+    case 'mismatch':
+      return (
+        `[openwop-conformance] corpus stamp MISMATCH — the vendored contract is not the one this suite shipped ` +
+        `(missing ${v.missing.length}, altered ${v.altered.length}, extra ${v.extra.length}): ` +
+        [...v.missing.map((f) => `missing ${f}`), ...v.altered.map((f) => `altered ${f}`), ...v.extra.map((f) => `extra ${f}`)].slice(0, 12).join('; ')
+      );
+  }
+}
