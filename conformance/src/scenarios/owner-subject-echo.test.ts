@@ -63,7 +63,13 @@ async function snapshot(runId: string): Promise<Snapshot> {
 }
 
 async function events(runId: string): Promise<readonly RawEvent[]> {
-  const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll?lastSequence=0&timeout=1`);
+  // Suite 1.159.0 — NO cursor. `lastSequence` names the highest sequence the
+  // caller has ALREADY observed (version-negotiation.md §"events/poll"), and
+  // run-event.schema.json numbers the first event 0, so `lastSequence=0` asks
+  // a conforming host to SKIP `run.started` (MyndHyve does exactly that).
+  // Omitting the cursor is the only spec-expressible "nothing observed yet"
+  // read; the gap (no cursor value for the empty prefix) is RFC 0165 G7.
+  const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
   if (res.status !== 200) throw new Error(`events for ${runId}: ${res.status}`);
   return (res.json as { events?: RawEvent[] })?.events ?? [];
 }

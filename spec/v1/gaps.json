@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-02",
+  "updated": "2026-09-03",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -9155,6 +9155,23 @@
         {
           "file": "RFCS/registers/0165-v2-preparation-wire-shapes.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0165.7",
+      "rfc": "0165",
+      "local": "G7",
+      "section": "§Conformance",
+      "surface": "`GET …/events/poll?lastSequence=N` returns events with sequence > N and `run-event.schema.json` numbers the first event 0, so no cursor value expresses \"nothing observed yet\" — a caller wanting the first event MUST omit the cursor, and the spec does not say what omission means (openwop-app defaults to the start; MyndHyve to the start; neither is required to). Found when `owner-subject-echo` read `run.started` through `lastSequence=0` and would have failed a conforming host.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0165-v2-preparation-wire-shapes.gaps.md",
+          "token": "G7"
         }
       ]
     },
