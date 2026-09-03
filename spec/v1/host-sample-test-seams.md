@@ -646,8 +646,8 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 
 ## Open spec gaps
 
-- Capability flag for the prompt resolver seam is implicit (always-on when `prompts.supported: true`). A future minor revision MAY add `capabilities.prompts.testSeams.promptResolve` if hosts want to advertise the seam without committing to the full RFC 0029 behavior.
-- The staged-refusal seam shape extends the existing RFC 0032 mock-AI program shape with a new `mode: "refusal"` entry. A future revision MAY split this out as a dedicated `capabilities.multiAgent.executionModel.testSeams` block.
+- ~~Capability flag for the prompt resolver seam~~ — **closed by deletion 2026-09-03 (RFC 0168 §C.1):** seams are a versioned conformance profile in v2 and are forbidden from the capability namespace; no `testSeams` flag will be added.
+- ~~Dedicated `capabilities.multiAgent.executionModel.testSeams` block~~ — **closed by deletion 2026-09-03 (RFC 0168 §C.1):** same ruling.
 
 ## Cross-references
 

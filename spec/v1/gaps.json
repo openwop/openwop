@@ -9448,6 +9448,74 @@
       ]
     },
     {
+      "id": "openwop.gap.0168.1",
+      "rfc": "0168",
+      "local": "G1",
+      "section": "§E.2",
+      "surface": "Whether the bundle attestation is a bare Ed25519 envelope or an in-toto statement.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0168-v2-evidence-and-conformance.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0168.2",
+      "rfc": "0168",
+      "local": "G2",
+      "section": "§D.2",
+      "surface": "`@openwop/spec-artifacts` does not exist; its publish is tag-triggered like the suite's and needs its own identity check (`check-published-suite-identity.mjs` generalized).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0168-v2-evidence-and-conformance.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0168.3",
+      "rfc": "0168",
+      "local": "G3",
+      "section": "§A.1",
+      "surface": "23 interpolated test titles can never derive a stable id; they need explicit ids minted by hand before the lint can be total.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0168-v2-evidence-and-conformance.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0168.4",
+      "rfc": "0168",
+      "local": "G4",
+      "section": "§B.1",
+      "surface": "55 `unwitnessable` invariants exist; the protocol-tier subset must be given a path, demoted, or fail the gate at the cut. The count is measured, not decided, here.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0168-v2-evidence-and-conformance.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0169.1",
       "rfc": "0169",
       "local": "G1",
