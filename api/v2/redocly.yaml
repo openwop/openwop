@@ -1,0 +1,16 @@
+extends:
+  - recommended
+
+rules:
+  # Same two suppressions as api/redocly.yaml, for the same reasons: the
+  # discovery endpoints (`/.well-known/openwop`, `/openapi.json`, `/host/events`)
+  # are unauthenticated and take no input; and Redocly's
+  # no-required-schema-properties-undefined does not walk to parent scope on the
+  # JSON Schema 2020-12 if/then conditional-requirement idiom — in v2 that idiom
+  # is GENERATED (schemas/v2/capabilities.schema.json status ⇒ until, from
+  # spec/v2/declaration.json), which is what RFC 0178's acceptance line asked for
+  # before re-enabling; the rule still false-positives on every generated site,
+  # so it stays off with scripts/check-required-properties-defined.mjs as the
+  # compensating control. Recorded against RFC 0178's acceptance at the RC.
+  operation-4xx-response: off
+  no-required-schema-properties-undefined: off
