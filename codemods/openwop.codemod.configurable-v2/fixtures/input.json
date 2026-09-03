@@ -1,0 +1,1 @@
+{ "runId": "r1", "configurable": { "recursionLimit": 50, "model": "gpt", "ai.provider": "openai", "ai.credentialRef": "cred_1", "distillation.tokenBudget": 4000, "acme.feature_x": true, "budget": { "maxUsd": 5 } } }

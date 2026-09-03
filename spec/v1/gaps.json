@@ -9448,6 +9448,193 @@
       ]
     },
     {
+      "id": "openwop.gap.0170.1",
+      "rfc": "0170",
+      "local": "G1",
+      "section": "§A.1",
+      "surface": "The Subject MUST on the `run.started` echo is unenforceable while `runStarted` is `additionalProperties: true` (63 of 120 payload defs open).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0170-v2-identity.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0170.2",
+      "rfc": "0170",
+      "local": "G2",
+      "section": "§B.3",
+      "surface": "mTLS revocation: CRL, OCSP, or short-lived certificates — which a host advertises is its choice, but no host has any today, and the corpus has no CRL/OCSP text at all.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0170-v2-identity.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0170.3",
+      "rfc": "0170",
+      "local": "G3",
+      "section": "§B.5",
+      "surface": "DPoP availability across the three SDKs is unmeasured (RFC 0154 G2).",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0170-v2-identity.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0170.4",
+      "rfc": "0170",
+      "local": "G4",
+      "section": "§D.1",
+      "surface": "Whether `tenantId` itself needs a grammar beyond the opaque form (host-minted vs operator-chosen).",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0170-v2-identity.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0170.5",
+      "rfc": "0170",
+      "local": "G5",
+      "section": "§E.2",
+      "surface": "Eight invariants named here enter `SECURITY/invariants.yaml` only with tests (RFC 0167 §C rule); until Phase 3 they exist as falsifiability rows.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0170-v2-identity.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0170.6",
+      "rfc": "0170",
+      "local": "G6",
+      "section": "Unresolved Q2",
+      "surface": "Whether `keyClass` extends to `oidc` (a stable `sub` is `opaque-idp` by RFC 0163's argument).",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0170-v2-identity.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0171.1",
+      "rfc": "0171",
+      "local": "G1",
+      "section": "§A.2",
+      "surface": "The generator folded 21 three-segment types silently; two are recorded exceptions (`envelope.nl-to-format-engaged`, `trigger.subscription-state-changed`) and the rest fold cleanly — re-verified in this PR; the corpus gate over the enum lands in Phase 3.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0171.2",
+      "rfc": "0171",
+      "local": "G2",
+      "section": "§E.2",
+      "surface": "The poll response shape disagreed between `version-negotiation.md:300–308` (five fields, `isTerminal`) and `api/openapi.yaml:427–435` (two fields, `isComplete`) and no register recorded it; hosts implemented the OpenAPI shape.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0171.3",
+      "rfc": "0171",
+      "local": "G3",
+      "section": "§E.1",
+      "surface": "`hostEvents` (heartbeat) needs a declared delivery address; whether a normative transport is required is undecided.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0171.4",
+      "rfc": "0171",
+      "local": "G4",
+      "section": "§B.2",
+      "surface": "The suite's `LEGACY` tolerance for two retired idempotency spellings leaves at the cut; a host still emitting one fails `error-registry`.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0171.5",
+      "rfc": "0171",
+      "local": "G5",
+      "section": "§A.4",
+      "surface": "E1 (partial reassembly) and E2 (multi-turn correlation) get a contract in `spec/v2/core/events.md`; the contract text is not written here.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0172.1",
       "rfc": "0172",
       "local": "G1",

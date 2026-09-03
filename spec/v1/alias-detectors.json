@@ -188,6 +188,24 @@
       "file": "schemas/registry-version-manifest.schema.json",
       "token": "Advisory: this version is deprecated",
       "deprecation": "openwop.deprecation.manifest-deprecated-field"
+    },
+    {
+      "alias": "two-segment interrupt resume token",
+      "file": "spec/v1/interrupt.md",
+      "token": "hmac_sha256(secret, payload)",
+      "deprecation": "openwop.deprecation.interrupt-token-unversioned"
+    },
+    {
+      "alias": "details.retryAfterMs body spelling",
+      "file": "spec/v1/rest-endpoints.md",
+      "token": "retryAfterMs",
+      "deprecation": "openwop.deprecation.error-details-retry-after-spellings"
+    },
+    {
+      "alias": "dotted ai.* configurable keys",
+      "file": "spec/v1/run-options.md",
+      "token": "ai.credentialRef",
+      "deprecation": "openwop.deprecation.configurable-dotted-keys"
     }
   ]
 }

@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 50,
+    "bootstrapWaiversExercised": 52,
     "rfcs": [
       "0042",
       "0043",
@@ -64,13 +64,15 @@
       "0166",
       "0167",
       "0169",
+      "0170",
+      "0171",
       "0172",
       "0174",
       "0178"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 50
+      "not-reviewed": 52
     }
   },
   "audit": {
@@ -107,7 +109,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 405,
+    "rowsScanned": 415,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -829,6 +831,20 @@
         "title": "The declaration file becomes a fifth registry beside the four it replaces",
         "score": "High",
         "status": "`open`"
+      },
+      {
+        "rfc": "0170",
+        "id": "R1",
+        "title": "Tenant-bound ids change every run id on the wire and break a client that parses ids",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0170",
+        "id": "R5",
+        "title": "Registering eight invariants at once at the cut lands with vacuous tests",
+        "score": "High",
+        "status": "`open`"
       }
     ],
     "programOpenCriticalOrHigh": [
@@ -1200,6 +1216,20 @@
         "rfc": "0169",
         "id": "R3",
         "title": "The declaration file becomes a fifth registry beside the four it replaces",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0170",
+        "id": "R1",
+        "title": "Tenant-bound ids change every run id on the wire and break a client that parses ids",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0170",
+        "id": "R5",
+        "title": "Registering eight invariants at once at the cut lands with vacuous tests",
         "score": "High",
         "status": "`open`"
       }

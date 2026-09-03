@@ -12,9 +12,9 @@ Source: `MAINTAINERS.md`. **1 maintainer(s)** across **1 organization(s)**; cros
 
 ## Bootstrap waivers
 
-Source: `RFCS/*.md, RFCS/registers/*`. **50** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164, 0165, 0166, 0167, 0169, 0172, 0174, 0178); **0** `ratified` retrospective review(s) — the only outcome that discharges RFC 0156 §B.
+Source: `RFCS/*.md, RFCS/registers/*`. **52** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164, 0165, 0166, 0167, 0169, 0170, 0171, 0172, 0174, 0178); **0** `ratified` retrospective review(s) — the only outcome that discharges RFC 0156 §B.
 
-Per-RFC outcomes (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`): `not-reviewed` 50. `not-reviewed` is not one of §B's four outcomes — it records the absence of a review, so that silence is stated rather than inferred. §B review is **cross-organization**; with one maintainer listed and the non-steward tripwire unfired, a non-zero open count is the honest state rather than a backlog.
+Per-RFC outcomes (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`): `not-reviewed` 52. `not-reviewed` is not one of §B's four outcomes — it records the absence of a review, so that silence is stated rather than inferred. §B review is **cross-organization**; with one maintainer listed and the non-steward tripwire unfired, a non-zero open count is the honest state rather than a backlog.
 
 ## Independent security audit
 
@@ -44,7 +44,7 @@ Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **1.161.0**;
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (405 rows scanned). **103** open across all registers, of which **53** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (415 rows scanned). **105** open across all registers, of which **55** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **4** are explicitly **transferred** to a named tracked surface (0147/R2, 0147/R3, 0147/R12, 0147/R14) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
@@ -153,6 +153,8 @@ Of those, **4** are explicitly **transferred** to a named tracked surface (0147/
 | 0167 | R1 — Eleven children drift on shared vocabulary (an axis or alias named two ways) | High | `open` |
 | 0167 | R5 — Phase 2 ends with children Active and no host able to implement them (the "unimplemented MUST" pattern the charter names as v1's core defect) | High | `open` |
 | 0169 | R3 — The declaration file becomes a fifth registry beside the four it replaces | High | `open` |
+| 0170 | R1 — Tenant-bound ids change every run id on the wire and break a client that parses ids | High | `open` |
+| 0170 | R5 — Registering eight invariants at once at the cut lands with vacuous tests | High | `open` |
 
 ## Permitted claims (RFC 0147 §A)
 
