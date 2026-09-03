@@ -49,11 +49,14 @@ function metadataSchema(key) {
     case 'engineVersion': return { type: 'integer', minimum: 0, description: 'RFC 0172 §B axis 3 — integer everywhere (openwop.codemod.engine-version-unify).' };
     case 'eventLogSchemaVersion': return { type: 'integer', minimum: 2, description: 'RFC 0176 §A.2 — the era key; a v2 host writes 3.' };
     case 'minClientVersion': return { type: 'string', description: 'RFC 0172 row C5.8 — MUST (426 client_version_unsupported).' };
-    case 'extensions': return { type: 'object', additionalProperties: false, patternProperties: { [decl.extensionsKeyPattern]: { type: 'object' } }, description: 'RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: ' + decl.reservedOrgs.join(', ') + '.' };
+    case 'configurable': return { $ref: 'configurable.schema.json' };
+    case 'extensions': return { type: 'object', additionalProperties: false, patternProperties: { [decl.extensionsKeyPattern]: { type: 'object', additionalProperties: true, description: 'A vendor/host extension record; its shape is the org\'s, declared as open on purpose (RFC 0169 §A.4).' } }, description: 'RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: ' + decl.reservedOrgs.join(', ') + '.' };
     default: {
       const p = v1.properties[key];
       if (!p) throw new Error(`metadata key ${key} has no v1 property to seed from`);
-      return { ...p, 'x-openwop-seeded-from': 'v1' };
+      const seeded = stripSupported(p);
+      if (seeded.type === 'object' && seeded.additionalProperties === undefined) seeded.additionalProperties = false; // closed until the owning child decides (configurable → C.4's schema in P3-B)
+      return { ...seeded, 'x-openwop-seeded-from': 'v1' };
     }
   }
 }
@@ -72,8 +75,13 @@ function stripSupported(schema) {
 }
 
 function familyRecord(f) {
+  // A child's hand-decided facet schema (spec/v2/facets/<key>.schema.json)
+  // replaces the seeded v1 copy: its `properties` are the facets and its
+  // `required` is merged with the record's own.
+  const overridePath = join(ROOT, 'spec', 'v2', 'facets', `${f.key}.schema.json`);
+  const override = existsSync(overridePath) ? JSON.parse(readFileSync(overridePath, 'utf8')) : null;
   const v1p = v1.properties[f.key] ?? {};
-  const facets = stripSupported(v1p);
+  const facets = override ?? stripSupported(v1p);
   const props = {
     status: { enum: ['stable', 'experimental', 'deprecated'] },
     since: { type: 'string', pattern: VERSION_RE },
@@ -82,14 +90,14 @@ function familyRecord(f) {
     ...(facets.properties ?? {}),
   };
   return {
-    type: 'object', additionalProperties: false, required: ['status', 'since', 'witness'],
+    type: 'object', additionalProperties: false, required: [...new Set(['status', 'since', 'witness', ...(override?.required ?? [])])],
     properties: props,
     allOf: [
       { if: { properties: { status: { const: 'stable' } } }, then: { not: { required: ['until'] } } },
       { if: { properties: { status: { enum: ['experimental', 'deprecated'] } } }, then: { required: ['until'] } },
     ],
     description: `${f.section} — witness: ${f.witness}; maturity ${f.maturity.technical}/${f.maturity.adoption}${f.owningRfc ? `; RFC ${f.owningRfc}` : ''}`,
-    'x-openwop-seeded-from': v1.properties[f.key] ? 'v1' : 'declaration',
+    ...(override ? { 'x-openwop-facets-from': `spec/v2/facets/${f.key}.schema.json` } : { 'x-openwop-seeded-from': v1.properties[f.key] ? 'v1' : 'declaration' }),
   };
 }
 

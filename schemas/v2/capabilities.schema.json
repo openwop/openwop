@@ -30,7 +30,9 @@
       "additionalProperties": false,
       "patternProperties": {
         "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": true,
+          "description": "A vendor/host extension record; its shape is the org's, declared as open on purpose (RFC 0169 §A.4)."
         }
       },
       "description": "RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: openwop, vendor."
@@ -63,9 +65,7 @@
       "description": "RFC 0176 §A.2 — the era key; a v2 host writes 3."
     },
     "configurable": {
-      "type": "object",
-      "description": "Optional v1 per-run overlay schema — what `RunOptions.configurable` keys this server honors.",
-      "x-openwop-seeded-from": "v1"
+      "$ref": "configurable.schema.json"
     },
     "observability": {
       "type": "object",
@@ -236,10 +236,6 @@
           "type": "object",
           "description": "Auth-scoped discovery advertisement (capabilities-change-detection.md §\"Scoped capability views\"). Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The authenticated view MUST still satisfy the base capabilities.schema.json shape per the spec annex.",
           "properties": {
-            "supported": {
-              "type": "boolean",
-              "description": "Host returns an authenticated/tenant-scoped capability view when the discovery endpoint is called with valid bearer credentials."
-            },
             "mode": {
               "type": "string",
               "enum": [
@@ -1811,7 +1807,9 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "modes",
+        "effectSeamsManifest"
       ],
       "properties": {
         "status": {
@@ -1843,37 +1841,24 @@
           "items": {
             "type": "string",
             "enum": [
-              "replay",
-              "branch"
+              "fork",
+              "branch",
+              "rerun"
             ]
-          },
-          "uniqueItems": true,
-          "description": "Fork modes the host implements. `replay` = deterministic re-execution; `branch` = divergent execution with an optional `runOptionsOverlay`. A host supporting only `branch` still satisfies the `openwop-replay-fork` predicate."
-        },
-        "fork": {
-          "type": "boolean",
-          "description": "Legacy spelling retained for existing consumers; `modes` is authoritative."
+          }
         },
         "retention": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
-            "windowSeconds": {
+            "days": {
               "type": "integer",
-              "minimum": 0,
-              "description": "How long a run stays fork-eligible (`replay.md` §\"Retention and garbage collection\"). OPTIONAL — the spec requires hosts to document retention, not to advertise the window."
+              "minimum": 1
             }
-          },
-          "description": "OPTIONAL retention metadata.",
-          "additionalProperties": false
+          }
         },
-        "sideEffectSuppression": {
-          "type": "string",
-          "enum": [
-            "recorded-outcome",
-            "none"
-          ],
-          "default": "none",
-          "description": "RFC 0140. An ASSURANCE ADVERTISEMENT of the mechanism by which the host meets `replay.md` §\"Determinism guarantees\" caveat 1 for a `mode:\"replay\"` fork — NOT a gate on the obligation, which is unconditional. `recorded-outcome`: a side-effecting node does NOT execute during a replay — the host reproduces the source run's recorded terminal outcome for the same `(nodeId, attempt)`, or fails the node closed with `replay_source_missing`. The guarantee is WHOLE-RUN: a host MUST NOT advertise it if any class of side-effecting node can still fire during a replay (a partial guarantee would violate `replay.md` §C.2 observable-state equivalence for the unsuppressed classes). `none` (default; absent means this) — NO mechanism is declared. The host remains bound by `replay.md` §\"Determinism guarantees\" caveat 1 (an unconditional MUST that a node calling an external API consult the durable invocation log, so the external system is NOT called twice) exactly as before; conformance simply has nothing to probe. This is NOT permission to re-fire effects. Scoped to `replay` mode; `branch` is a new execution whose effects the operator asked for."
+        "effectSeamsManifest": {
+          "const": "/host/effect-seams"
         }
       },
       "allOf": [
@@ -1912,7 +1897,7 @@
         }
       ],
       "description": "core/capabilities.md#replay — witness: witnessable-gated; maturity experimental/none; RFC 0140",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/replay.schema.json"
     },
     "oauth": {
       "type": "object",
@@ -2728,7 +2713,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "providers"
       ],
       "properties": {
         "status": {
@@ -2755,166 +2741,53 @@
             "negative-existence"
           ]
         },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "byok": {
           "type": "array",
           "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "uniqueItems": true,
-          "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
-        },
-        "selfHosted": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "uniqueItems": true,
-          "description": "RFC 0108. Subset of `supported` whose entries are operator- or tenant-configured OpenAI-compatible endpoints (e.g. an Ollama / vLLM / LM Studio / any `/v1/chat/completions`-compatible server), as opposed to a host-managed connection to a known public vendor. Each entry MUST also appear in `supported`. An entry MAY also appear in `byok` (the endpoint requires a client/tenant-supplied key) or be absent from it (the endpoint needs no key, e.g. a default Ollama). The provider id is an OPAQUE label chosen by the host; it MUST NOT encode the endpoint's network location (scheme, host, port, path, or base-URL) per RFC 0108 §A.3, and the endpoint location MUST NOT be disclosed on any wire surface (see the `self-hosted-endpoint-no-disclosure` SECURITY invariant). A client MUST NOT infer model capabilities from a `selfHosted` id (RFC 0108 §B); the only authoritative capability sources are `modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091)."
-        },
-        "speechSynthesis": {
-          "const": "supported",
-          "description": "RFC 0105. When present (value MUST be the string `\"supported\"`), the host exposes `ctx.callSpeechSynthesizer({ text, voiceId, mimeType?, format?, languageCode?, ... })` returning a binary audio asset (host-served `url` OR inline `base64` + `mimeType`), paralleling `aiProviders.imageGeneration`. Absent ⇒ no TTS; a call MUST be rejected with `speech_synthesis_unsupported` (never a no-op). Voices are referenced by an opaque host-resolved `voiceId`; the spec does NOT enumerate voices. TTS provider ids are advertised via the existing `aiProviders.supported[]` (the call's `provider?` MUST be a member); there is no `speechSynthesis` sub-field for providers. Per-host model/voice routing is a host choice."
-        },
-        "input": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "RFC 0091. Multimodal PERCEPTION input on `ctx.callAI` — the modalities a `callAI` message ContentPart may carry as model INPUT. Absent ⇒ text-only (today's behavior); a `string` message content is always valid. Distinct from `imageGeneration` (output) and the `ai-envelope.md` media emission types (output).",
-          "properties": {
-            "modalities": {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "enum": [
-                  "text",
-                  "image",
-                  "audio",
-                  "document"
-                ]
-              },
-              "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `unsupported_modality` (never silently dropped)."
-            },
-            "maxBytesPerPart": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Optional host cap on a single inline (`data`) or `mediaRef` part."
-            }
+            "type": "string"
           }
         },
+        "selfHosted": {
+          "type": "boolean"
+        },
+        "speechSynthesis": {
+          "type": "boolean"
+        },
+        "imageGeneration": {
+          "type": "boolean"
+        },
+        "videoGeneration": {
+          "type": "boolean"
+        },
+        "realtimeVoice": {
+          "type": "boolean"
+        },
+        "promptPrefixCache": {
+          "type": "boolean"
+        },
+        "maxInlineMediaBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
         "authModes": {
-          "type": "object",
-          "description": "RFC 0067 (`Active`), extended by RFC 0121 (`Active`). Optional per-provider advertisement of HOW the host expects a provider's credential to be supplied. Keys are provider ids appearing in `supported`; values are the auth modes the host honors for that provider. Absent ⇒ no advertisement: a provider in `byok` defaults to `apiKey` semantics (client passes `ai.credentialRef`); a provider in `supported` but not in `byok` defaults to `none` (platform-managed). This map only DESCRIBES the supply mechanism — `oauth-pkce`/`oauth-device` flow mechanics compose RFC 0047 `host.oauth` and resolve credentials by `ref` (RFC 0046), never on `ai.credentialRef`. A provider with `apiKey` MUST appear in `byok`; a provider whose modes are exactly `[\"none\"]` MUST NOT appear in `byok`. `subscription` (RFC 0121) advertises that a provider credential may be supplied by reusing the caller's existing personal, non-metered consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key; a `subscription` provider MUST appear in `byok`, is referenced by `ref` (RFC 0046) like the `oauth-*` modes (never on `ai.credentialRef`), and its credential MUST bind at `host.credentials` `scope:\"user\"` — never tenant/workspace-shared (SECURITY invariant `subscription-credential-user-scope-only`). Consumers MUST ignore an auth mode they don't recognize rather than reject the discovery doc.",
-          "additionalProperties": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": {
-              "type": "string",
-              "enum": [
-                "apiKey",
-                "oauth-pkce",
-                "oauth-device",
-                "none",
-                "subscription"
-              ]
-            }
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "policies": {
           "type": "object",
-          "description": "Optional v1 host-side policy enforcement modes for per-provider gating. Omitted → no enforcement; clients see only `optional` semantics. When present, MUST declare `modes` — an empty `{}` is not a valid third state. See `capabilities.md` §`aiProviders.policies`.",
-          "required": [
-            "modes"
-          ],
-          "properties": {
-            "modes": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "disabled",
-                  "optional",
-                  "required",
-                  "restricted"
-                ]
-              },
-              "uniqueItems": true,
-              "description": "Subset of policy modes this host can enforce. `disabled` = provider may not be used; `optional` = no restriction (default); `required` = BYOK required; `restricted` = model must match the policy's `allowedModels` glob list. Hosts MAY support a subset; clients MUST tolerate any subset."
-            },
-            "scopes": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minLength": 1
-              },
-              "uniqueItems": true,
-              "description": "Resolution layers the host evaluates. Conventional ids: `workspace`, `project`, `canvas-type`. Precedence is host-defined and SHOULD be documented per-deployment."
-            },
-            "errorCode": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
-            }
-          },
-          "additionalProperties": false
+          "additionalProperties": true
         },
-        "maxInlineMediaBytes": {
-          "type": "integer",
-          "minimum": 0,
-          "default": 262144,
-          "description": "RFC 0055 §C rule 2 — optional cap (bytes) on inline base64 in `media.*` envelope payloads. A `media.{image,audio,file}` asset above this size MUST be served by a tenant-scoped `url` reference rather than inlined (bounds event-log + replay-payload size). Default 256 KiB (262144) when absent. A host MAY set 0 to force URL references for all emitted media."
-        },
-        "realtimeVoice": {
+        "input": {
           "type": "object",
-          "additionalProperties": false,
-          "description": "RFC 0106. Optional real-time voice profile. Absent ⇒ no live voice (a call to `ctx.callTranscriber` MUST be rejected with `transcription_unsupported`, and `stream:true` on `ctx.callSpeechSynthesizer` with `streaming_unsupported`). `ctx.callTranscriber` resolves a `Promise` at `turn_commit` with the settled final transcript and emits the interim/final/endpoint signals as `voice.*` run-events on the durable event log (the single canonical record); the streaming synthesis arm resolves a `Promise` at completion and announces clause-boundary chunks as `voice.synthesis_chunk` metadata run-events (bytes by `streamRef`/`url`, not inlined past the host cap).",
-          "properties": {
-            "transcription": {
-              "const": "streaming",
-              "description": "When present (value MUST be `\"streaming\"`), the host exposes `ctx.callTranscriber(...)` (streaming STT). `turnDetection` and `bargeIn` require `transcription`."
-            },
-            "synthesis": {
-              "const": "streaming",
-              "description": "When present (value MUST be `\"streaming\"`), the RFC 0105 `ctx.callSpeechSynthesizer` request honors `stream: true` (chunked synthesis). REQUIRES `aiProviders.speechSynthesis: \"supported\"` (enforced by the if/then closure on `aiProviders`)."
-            },
-            "turnDetection": {
-              "enum": [
-                "vad",
-                "semantic"
-              ],
-              "description": "Endpointing sophistication. `vad` = silence-threshold endpointing only; `semantic` = a turn detector that emits `voice.endpoint_candidate` distinct from `voice.turn_commit`. Requires `transcription`."
-            },
-            "bargeIn": {
-              "const": "supported",
-              "description": "When present, the host MUST emit `voice.barge_in` on overlapping speech during playback and `voice.cancelled` when it actually cancels downstream work. Requires `transcription`."
-            }
-          },
-          "dependentRequired": {
-            "turnDetection": [
-              "transcription"
-            ],
-            "bargeIn": [
-              "transcription"
-            ]
-          }
-        },
-        "promptPrefixCache": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "RFC 0116. Host honors the AI-envelope `generate` request's optional `cachePrefixId` as a provider-cache routing hint — tenant-namespaced (SECURITY invariant `prompt-prefix-cache-cross-tenant-isolation`), secret-free, and replay-invariant (a cache hit/miss MUST NOT change the recorded envelope or `provider.usage.inputTokens`/`outputTokens`). Absent ⇒ a host MUST ignore `cachePrefixId` (no error, no behavior change). PROVIDER-SCOPED: prefix caching is provider-specific (e.g. Anthropic ephemeral), so this is NOT a universal claim — see `providers`.",
-          "properties": {
-            "providers": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minLength": 1
-              },
-              "uniqueItems": true,
-              "description": "RFC 0116. The subset of `aiProviders.supported[]` for which the host honors `cachePrefixId` (prefix caching is provider-specific). A request whose routed provider is NOT in this list MUST have `cachePrefixId` ignored. Absent ⇒ host-defined per-provider routing; NOT a universal claim across providers."
-            }
-          }
+          "additionalProperties": true
         }
       },
       "allOf": [
@@ -2953,7 +2826,7 @@
         }
       ],
       "description": "core/capabilities.md#aiProviders — witness: witnessable-gated; maturity experimental/none",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/aiProviders.schema.json"
     },
     "agents": {
       "type": "object",
@@ -4233,7 +4106,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "deliveryChannel"
       ],
       "properties": {
         "status": {
@@ -4262,13 +4136,15 @@
         },
         "minIntervalSec": {
           "type": "integer",
-          "minimum": 1,
-          "description": "Smallest interval the host honors; requests below it clamp up."
+          "minimum": 1
         },
         "maxRuntimeMs": {
           "type": "integer",
-          "minimum": 1,
-          "description": "Per-tick predicate-evaluation budget; bounded above by `capabilities.limits.maxRunDurationMs` (RFC 0058) as the hard ceiling. Over-budget evaluation is terminated and reported as `heartbeat.evaluated { status: 'timeout' }`."
+          "minimum": 1
+        },
+        "deliveryChannel": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9._~/{}-]+$"
         }
       },
       "allOf": [
@@ -4307,7 +4183,7 @@
         }
       ],
       "description": "core/capabilities.md#heartbeat — witness: witnessable-gated; maturity experimental/none; RFC 0060",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/heartbeat.schema.json"
     },
     "toolHooks": {
       "type": "object",
@@ -5120,7 +4996,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "signatureAlgorithms"
       ],
       "properties": {
         "status": {
@@ -5149,15 +5026,13 @@
         },
         "signatureAlgorithms": {
           "type": "array",
+          "minItems": 1,
           "items": {
-            "type": "string"
-          },
-          "uniqueItems": true,
-          "description": "HMAC signature algorithm ids the host supports (e.g. `v1`)."
-        },
-        "durable": {
-          "type": "boolean",
-          "description": "RFC 0083 §A — OPTIONAL opt-in. `true` ⇒ webhook delivery is durable (a trigger-bridge source); absent/`false` ⇒ the best-effort `webhooks.md` contract, unchanged. The best-effort default is NOT relaxed."
+            "type": "string",
+            "enum": [
+              "v1"
+            ]
+          }
         }
       },
       "allOf": [
@@ -5196,7 +5071,7 @@
         }
       ],
       "description": "core/capabilities.md#webhooks — witness: witnessable-gated; maturity experimental/none",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/webhooks.schema.json"
     },
     "triggerBridge": {
       "type": "object",
@@ -5376,7 +5251,11 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "versions",
+        "preferredVersion",
+        "minimumVersion",
+        "refreshedAt"
       ],
       "properties": {
         "status": {
@@ -5403,46 +5282,45 @@
             "negative-existence"
           ]
         },
-        "agentCardUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "The A2A well-known agent card URL (`/.well-known/agent-card.json` — the same path in 0.3 and 1.0; the protocol version is discovered INSIDE the 1.0 card via `supportedInterfaces[].protocolVersion`, RFC 0152 §C)."
-        },
-        "streaming": {
-          "type": "boolean",
-          "description": "Host supports `message/stream` + `tasks/resubscribe` (0.3 names) / `SendStreamingMessage` + `SubscribeToTask` (1.0 names) — A2A `capabilities.streaming`. Gates the RFC 0100 §3 resubscribe re-attach; MUST equal the Agent Card's `capabilities.streaming` (RFC 0152 §C)."
-        },
-        "pushNotifications": {
-          "type": "boolean",
-          "description": "Host supports A2A push-notification config (A2A `capabilities.push_notifications`). Gates the RFC 0100 §4 push contract; a caller-supplied `pushConfig.url` is SSRF-validated (`a2a-push-egress-ssrf`)."
-        },
-        "durableTasks": {
-          "type": "boolean",
-          "description": "RFC 0100 §2. Host PERSISTS the projected Task (`A2ATaskState`) per backing run; `tasks/get` returns live state after disconnect. Absent/false ⇒ synchronous round-trip only."
-        },
-        "protocolVersions": {
+        "versions": {
           "type": "array",
           "minItems": 1,
-          "uniqueItems": true,
           "items": {
             "type": "string",
             "pattern": "^[0-9]+\\.[0-9]+$"
-          },
-          "description": "RFC 0152 §A — every A2A protocol version this host speaks, newest-preferred first by convention. An A2A-capable host MUST advertise a non-empty array. `supported: true` WITHOUT versions is deprecated and CANNOT substantiate a current-A2A claim: it says the host speaks some A2A, which is not a fact a peer can negotiate against."
+          }
         },
         "preferredVersion": {
           "type": "string",
-          "pattern": "^[0-9]+\\.[0-9]+$",
-          "description": "RFC 0152 §A — MUST be present in `protocolVersions`. New hosts SHOULD prefer `1.0`."
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "minimumVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "refreshedAt": {
+          "type": "string",
+          "format": "date"
         },
         "profiles": {
           "type": "array",
-          "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^a2a-[0-9]+\\.[0-9]+(-legacy)?$"
-          },
-          "description": "RFC 0152 §A — named composition profiles, e.g. `a2a-1.0`, `a2a-0.3-legacy`. A legacy-only host advertises only the `-legacy` profile, which makes the deprecation explicit and time-boundable rather than implicit in a bare `supported: true`."
+            "pattern": "^a2a-[0-9]+\\.[0-9]+$"
+          }
+        },
+        "agentCardUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "streaming": {
+          "type": "boolean"
+        },
+        "pushNotifications": {
+          "type": "boolean"
+        },
+        "durableTasks": {
+          "type": "boolean"
         }
       },
       "allOf": [
@@ -5481,7 +5359,7 @@
         }
       ],
       "description": "core/capabilities.md#a2a — witness: seam-gated; maturity experimental/none; RFC 0152",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/a2a.schema.json"
     },
     "budget": {
       "type": "object",
@@ -6604,7 +6482,11 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "revisions",
+        "preferredVersion",
+        "minimumRevision",
+        "refreshedAt"
       ],
       "properties": {
         "status": {
@@ -6631,19 +6513,49 @@
             "negative-existence"
           ]
         },
-        "serverUrls": {
+        "revisions": {
           "type": "array",
           "minItems": 1,
-          "uniqueItems": true,
           "items": {
             "type": "string",
-            "minLength": 1
-          },
-          "description": "Where the host's MCP server mount(s) answer JSON-RPC — an absolute URL or a path relative to the discovery origin (S25: a path is joined to the base URL, an absolute URL is used as-is). The v1.0 conformance baseline (`mcp-discoverability.test.ts`, spec/v1/mcp-integration.md §Conformance + interop) REQUIRES a non-empty `serverUrls` whenever `supported: true`, and since suite 1.134.0 every server-side scenario POSTs to `serverUrls[0]`. Required by the scenario and absent from this schema until 2026-08-17 (S27) — the second sibling host emitted it and measured the contradiction."
+            "format": "date"
+          }
+        },
+        "preferredVersion": {
+          "type": "string",
+          "format": "date"
+        },
+        "minimumRevision": {
+          "type": "string",
+          "format": "date"
+        },
+        "refreshedAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^mcp-[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "serverUrls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
         },
         "serverMount": {
           "type": "object",
-          "description": "Server-side MCP composition (workflow IS an MCP server). When supported, the host mounts an MCP endpoint and routes inbound tools/call, resources/read, prompts/get into workflows. Inbound MUST be treated as `trustBoundary: 'untrusted'`.",
+          "additionalProperties": false,
           "properties": {
             "transports": {
               "type": "array",
@@ -6654,54 +6566,22 @@
                   "streamable-http"
                 ]
               }
-            },
-            "samplingBridge": {
-              "type": "boolean",
-              "description": "Inbound sampling/createMessage bridges to the workflow's ctx.callAI."
-            },
-            "elicitationBridge": {
-              "type": "boolean",
-              "description": "Inbound elicitation/create bridges to ctx.suspend."
             }
-          },
-          "additionalProperties": false
+          }
         },
-        "protocolVersions": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
-          },
-          "description": "RFC 0153 §A — MCP revisions in MCP's own date form, exactly. The pattern is date-shaped rather than free string because MCP versions ARE dates: accepting `latest` or `2026-7-28` would make two hosts disagree about which revision they share while both validating."
-        },
-        "preferredVersion": {
-          "type": "string",
-          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-          "description": "RFC 0153 §A — MUST be present in `protocolVersions`."
-        },
-        "profiles": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "pattern": "^mcp-[0-9]{4}-[0-9]{2}-[0-9]{2}(-legacy)?$"
-          },
-          "description": "RFC 0153 §A — named composition profiles. Unqualified `supported: true` is deprecated and cannot substantiate a current-MCP claim."
-        },
-        "features": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "enum": [
-              "server-discover",
-              "mrtr",
-              "cacheable-lists",
-              "extensions"
-            ]
-          },
-          "description": "RFC 0153 §A — closed feature set for the current revision. Closed rather than open because an unrecognized feature name is indistinguishable from a typo, and a peer that silently ignores one negotiates a capability neither side has."
+        "mrtr": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxRounds"
+          ],
+          "properties": {
+            "maxRounds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16
+            }
+          }
         }
       },
       "allOf": [
@@ -6740,7 +6620,7 @@
         }
       ],
       "description": "core/capabilities.md#mcp — witness: seam-gated; maturity experimental/none; RFC 0153",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/mcp.schema.json"
     },
     "sandbox": {
       "type": "object",
@@ -6748,7 +6628,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "isolationModel"
       ],
       "properties": {
         "status": {
@@ -6777,24 +6658,26 @@
         },
         "isolationModel": {
           "type": "string",
-          "description": "Categorical isolation model. `wasm` = WebAssembly sandbox with explicit host imports (e.g., Wasmtime, Wasmer). `process` = OS process boundary with restricted syscalls (e.g., gVisor, seccomp, Landlock). `container` = container runtime boundary (e.g., Firecracker microVM). `vm` = full VM. Vendor-specific isolation models advertise `^x-host-<host>-<key>$` per spec/v1/host-extensions.md §'Canonical prefixes'; documentation lives at the host's discovery doc."
+          "enum": [
+            "wasm",
+            "process",
+            "container",
+            "vm"
+          ]
         },
         "allowedHostCalls": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "description": "Whitelist of host-call surfaces sandboxed code MAY invoke. Identifiers from the spec-reserved `host.*` capability set or `^x-host-<host>-<key>$` extension namespace. Empty array = pure compute only (no host I/O). Conformance verifies the sandbox refuses unlisted calls (`sandbox_capability_denied`)."
+          }
         },
         "memoryLimitBytes": {
           "type": "integer",
-          "minimum": 1048576,
-          "description": "Per-invocation memory cap (≥ 1 MiB). Host MUST enforce; exceeding fails the node with `sandbox_memory_exceeded`."
+          "minimum": 1
         },
         "wallClockLimitMs": {
           "type": "integer",
-          "minimum": 100,
-          "description": "Per-invocation wall-clock cap (≥ 100 ms). Host MUST enforce; exceeding fails the node with `sandbox_timeout`."
+          "minimum": 1
         }
       },
       "allOf": [
@@ -6833,7 +6716,7 @@
         }
       ],
       "description": "core/capabilities.md#sandbox — witness: witnessable-gated; maturity experimental/none; RFC 0035",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/sandbox.schema.json"
     },
     "compensation": {
       "type": "object",
@@ -7235,7 +7118,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "lanes"
       ],
       "properties": {
         "status": {
@@ -7262,162 +7146,88 @@
             "negative-existence"
           ]
         },
-        "profiles": {
+        "lanes": {
           "type": "array",
+          "minItems": 1,
           "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "uniqueItems": true,
-          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`, `openwop-auth-saml` + `openwop-auth-scim` + `openwop-auth-ldap` (RFC 0050 enterprise identity). Clients SHOULD tolerate unknown profile ids."
-        },
-        "subjectLinking": {
-          "type": "boolean",
-          "description": "RFC 0164: DERIVED and DEPRECATED toward v2. A host that advertises both `openwop-auth-saml` and `openwop-auth-scim` MUST set this true (schema conditional on `profiles[]`); a document advertising both with this absent/false is invalid. Kept through v1.x for clients pinned to it; clients SHOULD derive the guarantee from the profile pair. Original (RFC 0159) semantics follow. RFC 0159 (auth-profiles.md §Subject linking). When true, this host advertises BOTH `openwop-auth-saml` and `openwop-auth-scim` AND honours the cross-profile subject-linking obligation: it links the SAML and SCIM principals of one human on an opaque, IdP-stable subject id (SCIM `externalId` ↔ persistent SAML `NameID`), same-tenant only, and on SCIM deactivation fail-closes the linked SAML identity too (composing RFC 0049 §C) — so a provisioned leaver cannot still SSO in. The link key MUST NOT be a mutable/PII attribute (email, userName). Optional; absent/false means the SAML and SCIM lanes are independent and the combined leaver guarantee is NOT claimed. A host MUST NOT set this true unless both profiles are advertised and the obligation holds."
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lane",
+              "issuers",
+              "revocation",
+              "minimumAssurance"
+            ],
+            "properties": {
+              "lane": {
+                "type": "string",
+                "enum": [
+                  "api-key",
+                  "oauth2",
+                  "oidc",
+                  "mtls",
+                  "saml",
+                  "scim",
+                  "ldap",
+                  "workload",
+                  "session",
+                  "anonymous"
+                ]
+              },
+              "issuers": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "revocation": {
+                "type": "string",
+                "enum": [
+                  "next-request",
+                  "exp-and-recheck",
+                  "crl",
+                  "ocsp",
+                  "short-lived",
+                  "not-on-or-after",
+                  "bound-connection",
+                  "rebind",
+                  "delegation-expiry"
+                ]
+              },
+              "revocationWindowSeconds": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minimumAssurance": {
+                "type": "string",
+                "enum": [
+                  "bearer",
+                  "sender-constrained",
+                  "key-bound"
+                ]
+              },
+              "delegationProofs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "mtls-key-binding",
+                    "dpop",
+                    "svid-chain"
+                  ]
+                }
+              }
+            }
+          }
         },
         "subjectLinkKey": {
           "type": "string",
           "enum": [
             "opaque-idp",
             "configured-immutable"
-          ],
-          "description": "RFC 0163 (auth-profiles.md §Subject linking). The CLASS of opaque, IdP-stable, non-PII identifier this host joins the SAML and SCIM lanes on. A CLOSED enum of ALLOWED classes only, naming classes rather than vendor attributes: `opaque-idp` (SCIM `externalId` ↔ persistent-format SAML `NameID`) or `configured-immutable` (a host-configured attribute asserted by the same IdP on both lanes that is opaque, stable for the account lifetime, never reassigned, non-PII and not user- or operator-influenceable — e.g. a directory object id or an immutable-id claim; the attribute name stays host config, the class goes on the wire). Mutable/PII keys (email, userName, displayName) are INEXPRESSIBLE by construction — a conforming host cannot name one, which is the witness that converts RFC 0159 §A.2/§A.4's negative-existence prohibition into a positive advertisement. REQUIRED when `subjectLinking` is true: expressed BOTH as the auth-profiles.md §Subject linking MUST and as this block's `if`/`then` conditional, so a discovery document claiming linking without a class fails schema validation as well as the conformance scenario. Absent when `subjectLinking` is absent/false."
-        },
-        "rotation": {
-          "type": "object",
-          "description": "API-key rotation advertisement (auth-profiles.md §`openwop-auth-api-key-rotation`).",
-          "properties": {
-            "minGraceSeconds": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Minimum rotation grace window in seconds. auth-profiles.md SHOULDs production-profile hosts to ≥ 86400 (24h). The conformance scenario tolerates any non-negative value but warns in behavior mode when < 86400."
-            }
-          },
-          "additionalProperties": false
-        },
-        "oauth2": {
-          "type": "object",
-          "description": "OAuth2 client-credentials advertisement (auth-profiles.md §`openwop-auth-oauth2-client-credentials`).",
-          "properties": {
-            "issuer": {
-              "type": "string",
-              "format": "uri",
-              "description": "Token issuer URL the host trusts. Tokens MUST carry a matching `iss` claim."
-            },
-            "audience": {
-              "type": "string",
-              "description": "Audience the host requires. Tokens MUST carry a matching `aud` claim."
-            },
-            "supportedAlgorithms": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minLength": 1
-              },
-              "uniqueItems": true,
-              "description": "JWS signing algorithms the host accepts (canonical: RS256, ES256). Hosts MUST reject tokens signed with algorithms outside this list."
-            }
-          },
-          "additionalProperties": false
-        },
-        "oidc": {
-          "type": "object",
-          "description": "OIDC user-bearer advertisement (auth-profiles.md §`openwop-auth-oidc-user-bearer`).",
-          "properties": {
-            "issuers": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "format": "uri"
-              },
-              "minItems": 1,
-              "uniqueItems": true,
-              "description": "Trusted OIDC issuer URLs. The host accepts tokens whose `iss` claim matches any entry."
-            },
-            "audience": {
-              "type": "string",
-              "description": "Audience identifier the host requires in OIDC tokens."
-            },
-            "supportedScopeMapping": {
-              "type": "string",
-              "enum": [
-                "group-claim",
-                "scope-claim",
-                "host-acl"
-              ],
-              "description": "How the host derives openwop scopes from the OIDC token. `group-claim`: from `groups` claim via host config. `scope-claim`: from `scope` claim directly. `host-acl`: from a host-side mapping table (sub → scope)."
-            },
-            "introspectionIntervalSeconds": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Maximum interval at which the host SHOULD re-introspect a cached token to detect IdP revocation. auth-profiles.md recommends `min(exp - now, 300)`."
-            }
-          },
-          "additionalProperties": false
-        },
-        "mtls": {
-          "type": "object",
-          "description": "mTLS advertisement (auth-profiles.md §`openwop-auth-mtls`).",
-          "properties": {
-            "required": {
-              "type": "boolean",
-              "description": "When `true`, the host rejects bearer-only requests (mTLS required for all authenticated calls). When `false`, mTLS is optional and complements bearer auth."
-            },
-            "subjectMapping": {
-              "type": "string",
-              "enum": [
-                "cn",
-                "san-dns",
-                "san-uri"
-              ],
-              "description": "How the host derives the transport principal from the client certificate. `cn`: subject CN. `san-dns`: subjectAltName DNS entry. `san-uri`: subjectAltName URI entry."
-            }
-          },
-          "additionalProperties": false
-        },
-        "workloadIdentity": {
-          "type": "object",
-          "description": "RFC 0154 §A — workload identity profile `openwop-workload-identity-v1`. A host that advertises this cryptographically verifies the presented workload identity, binds it to the request, and resolves it to an OpenWOP principal BEFORE authorization. Unresolvable identity fails closed. **Identity is not authorization** (RFC 0147 R12): proving which workload called says nothing about what it may do, and treating the two as one is the confused-deputy shape this profile exists to prevent — tenant, audience, and policy MUST still be re-evaluated at every boundary.",
-          "additionalProperties": false,
-          "properties": {
-            "schemes": {
-              "type": "array",
-              "minItems": 1,
-              "uniqueItems": true,
-              "items": {
-                "enum": [
-                  "spiffe",
-                  "mtls-san",
-                  "cloud-subject",
-                  "oauth-client"
-                ]
-              },
-              "description": "RFC 0154 §A — closed set of identity schemes the host verifies. Closed because an unrecognized scheme is a verification path nobody implemented, and accepting the NAME without the verification is precisely the failure the profile prevents."
-            },
-            "senderConstraint": {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "enum": [
-                  "mtls",
-                  "dpop"
-                ]
-              },
-              "description": "RFC 0154 §A — proof-of-possession mechanisms. Without a sender constraint a bearer credential is replayable by anyone who observes it, so a host advertising workload identity WITHOUT one is asserting who called, not that the caller held the key."
-            },
-            "delegation": {
-              "type": "object",
-              "description": "RFC 0154 §B — delegated actor chains, advertised SEPARATELY from §A identity resolution. A host can verify workload identity without implementing delegation, and forcing one flag to cover both would make a §A-only host choose between advertising a capability it does not have and advertising nothing at all. That is the same overclaim-or-silence bind RFC 0155 §A names for `openwop-core`, and per-section advertisement is how it is avoided: `supported` means §A resolution, `delegation.supported` means §B chain verification, and a conformance run gates each section on its own flag.",
-              "additionalProperties": false,
-              "properties": {
-                "maxChainDepth": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "RFC 0154 §B — bounded chain length. Unbounded delegation is unbounded authority laundering: each hop is another party the host is trusting transitively."
-                }
-              }
-            }
-          }
+          ]
         }
       },
       "allOf": [
@@ -7456,7 +7266,7 @@
         }
       ],
       "description": "core/capabilities.md#auth — witness: seam-gated; maturity experimental/none; RFC 0154",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/auth.schema.json"
     },
     "i18n": {
       "type": "object",
@@ -7741,7 +7551,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "tokenAlgs"
       ],
       "properties": {
         "status": {
@@ -7768,28 +7579,25 @@
             "negative-existence"
           ]
         },
-        "approverRouting": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "RFC 0104. When `supported: true`, the host surfaces the OPTIONAL, ADVISORY `approverGroupRefs` / `approverRoleRefs` / `audience` fields on the approval InterruptPayload unchanged, resolves the ref kinds it advertises against its own identity/RBAC, ENFORCES eligibility at resolve time (the refs stay advisory metadata for clients; enforcement is host-side), and SHOULD route notifications to the resolved union. Refs are opaque to the engine and snapshotted at decision time for deterministic replay. Hosts that omit this block (or set `supported: false`) ignore the fields and remain conformant. Advertise only what the host actually resolves (`refKinds`) and honors (`audience`).",
-          "properties": {
-            "refKinds": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "group",
-                  "role"
-                ]
-              },
-              "uniqueItems": true,
-              "description": "Which approver ref kinds the host actually resolves. `group` ⇒ honors `approverGroupRefs`; `role` ⇒ honors `approverRoleRefs`. Absent ⇒ the host resolves neither (advisory-only passthrough). Capability honesty: advertise only the kinds the host's resolver supports."
-            },
-            "audience": {
-              "type": "boolean",
-              "default": false,
-              "description": "Host honors the `audience` notification-targeting override. Absent/`false` ⇒ the host notifies the resolved eligible union and ignores `audience`."
-            }
+        "refKinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "principal",
+              "group",
+              "role"
+            ]
+          }
+        },
+        "tokenAlgs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "hs256"
+            ]
           }
         }
       },
@@ -7829,7 +7637,7 @@
         }
       ],
       "description": "core/capabilities.md#interrupt — witness: witnessable-gated; maturity experimental/none; RFC 0104",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/interrupt.schema.json"
     }
   }
 }

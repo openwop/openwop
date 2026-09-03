@@ -1,0 +1,864 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/workflow-definition.schema.json",
+  "title": "WorkflowDefinition",
+  "description": "DAG of typed nodes, edges, triggers, and variables that an OpenWOP host executes. Canonical OpenWOP v1 workflow-definition shape.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "nodes",
+    "edges",
+    "triggers",
+    "variables",
+    "metadata",
+    "settings"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique workflow identifier. Recommended format: lowercase, hyphen-separated.",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semver-like workflow version. Tracked separately from engineVersion + eventLogSchemaVersion (see version-negotiation.md).",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "description": "Optional category for filtering."
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "draft",
+        "archived"
+      ]
+    },
+    "tenantId": {
+      "$ref": "ids.schema.json#/$defs/tenantId",
+      "description": "Optional tenant/workspace scoping. The protocol uses the neutral term `tenantId`."
+    },
+    "scopeId": {
+      "type": "string",
+      "description": "Optional project/scope correlation. The protocol uses the neutral term `scopeId`."
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-friendly slug.",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkflowNode"
+      },
+      "minItems": 1
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkflowEdge"
+      }
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkflowTrigger"
+      }
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkflowVariable"
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/NodeGroup"
+      },
+      "description": "Visual node groups (organizational only; do not affect execution)."
+    },
+    "channels": {
+      "description": "Optional typed state channels (see channels-and-reducers.md). When present, channel-aware mode applies.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/ChannelDeclaration"
+      }
+    },
+    "configurableSchema": {
+      "description": "Optional JSON Schema 2020-12 declaring which RunOptions.configurable keys this workflow accepts. When present, hosts MUST validate POST /v1/runs `configurable` payloads against this schema and reject mismatches with `validation_error`. Hosts MUST surface this schema on GET /v1/workflows/{workflowId} so clients can pre-flight-validate. See run-options.md §'Per-workflow configurableSchema'. Additive in v1.1.",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0029 §B. Workflow-author-controlled per-kind fallback values that apply at resolution chain layer 3 (`workflow-defaults`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". Applied when neither the node (layer 1) nor the node's bound agent (layer 2) specifies a value for the kind. Future RFCs MAY add sibling defaults (e.g., `defaults.temperature`, `defaults.modelClass`) without colliding.",
+      "properties": {
+        "promptRefs": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-kind PromptRef fallbacks for layer 3 of the resolution chain.",
+          "properties": {
+            "system": {
+              "$ref": "./prompt-ref.schema.json"
+            },
+            "user": {
+              "$ref": "./prompt-ref.schema.json"
+            },
+            "few-shot": {
+              "$ref": "./prompt-ref.schema.json"
+            },
+            "schema-hint": {
+              "$ref": "./prompt-ref.schema.json"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "$ref": "#/$defs/WorkflowMetadata"
+    },
+    "settings": {
+      "$ref": "#/$defs/WorkflowSettings"
+    },
+    "acceptsInheritedArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "description": "Declares which inherited artifacts this workflow accepts when run as a child of a sub-workflow."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "WorkflowNode": {
+      "type": "object",
+      "required": [
+        "id",
+        "typeId",
+        "name",
+        "position",
+        "config",
+        "inputs"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Node identifier, unique within the workflow. Intentionally has NO `maxLength` — RFC 0013 chain expansion mints ids of the form `${chainIdSlug}_${expansionId}_${fragmentId}` where `chainIdSlug` is an unbounded reverse-DNS string, so an expanded node id can exceed any short cap. A host MUST NOT reject or truncate a node id by length (no host-imposed `maxLength` stricter than this schema)."
+        },
+        "typeId": {
+          "type": "string",
+          "description": "Canonical node type ID (e.g., 'core.ai.callPrompt', 'core.chat.approvalGate'). Reserved prefixes: 'core.*' for spec-canonical, 'vendor.<org>.*' for third-party.",
+          "minLength": 1,
+          "pattern": "^[a-z][a-zA-Z0-9._-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "type": "object",
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "config": {
+          "type": "object",
+          "description": "Node configuration (pre-execution constants). The shape is per-typeId — node-pack manifests declare each typeId's `configSchema` for install-time validation. By convention, the keys `systemPromptRef`, `userPromptRef`, and `additionalPromptRefs` MAY hold PromptRef values per `spec/v1/prompts.md` §\"PromptRef\" (RFC 0027). Hosts advertising `capabilities.prompts.supported: true` MUST resolve these keys; hosts without the capability MAY treat them as opaque strings. When both an inline body (e.g., `config.systemPrompt`) and a `*PromptRef` are present, the ref wins and the host MUST emit a `log.appended` warning with `code: \"prompt_ref_supersedes_inline\"` per RFC 0027 §C.",
+          "additionalProperties": true
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/PortValue"
+          },
+          "description": "Input port connections. Keys are port names; values are PortValue references."
+        },
+        "credentialsRef": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "outputRole": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "secondary"
+          ],
+          "description": "RFC 0065 — author hint that this terminal node's output is the workflow's primary deliverable (`primary`) or an auxiliary output (`secondary`). Advisory: hosts MUST execute the workflow identically regardless of value. Tooling MAY use the hint to pick which of N terminal nodes' outputs to surface as the run's canonical artifact. Unknown values + absent values fall back to default behavior (show all terminal outputs)."
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "notes": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "agent": {
+          "$ref": "agent-ref.schema.json",
+          "description": "Multi-Agent Shift Phase 1. Optional compile-time pinning of which agent executes this node. When set, the engine surfaces this AgentRef on the `RunSnapshot.agent` field while the node is active, and emits an `agent.handoff` event when control transitions from the prior node's agent (if different). Resolution at runtime: the engine MAY override via dispatch (RFC 0012 / `core.dispatch`) or orchestrator decision (RFC 0011); the node's `agent?` is the default authoring-time pin, not a hard binding."
+        },
+        "envelopeContract": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "artifactType": {
+          "type": "string",
+          "description": "Artifact type this node produces or reviews (first-class typed field — replaces the deprecated config.outputArtifactType bag entry)."
+        },
+        "cardType": {
+          "type": "string",
+          "description": "Explicit chat card type override (first-class typed field — replaces the deprecated config.chatCard bag entry)."
+        },
+        "outputSensitivity": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Per-output-port sensitivity overrides. Map of port name → boolean. When true, the engine masks the named output value in `node.completed` event payloads. Layered on top of pack-level `nodes[].outputs[port].sensitive` declarations: workflow-level true takes precedence over pack-level false (and vice versa — last writer wins, but typically pack defaults are conservative and workflow overrides are explicit). See observability.md §Privacy classification (closes O5)."
+        },
+        "compensation": {
+          "type": "object",
+          "description": "RFC 0151 §B — the inverse action for this node. OPTIONAL and closed. `nodeTypeId` MUST resolve at registration, so an unwind cannot fail on a typo discovered only during a failure. Inputs MUST derive from RECORDED FACTS: prompt or model regeneration MUST NOT construct a compensation input during replay, because a compensation built from a re-inferred value is not the inverse of what was actually done. A host MUST reject a compensation cycle.",
+          "additionalProperties": false,
+          "required": [
+            "nodeTypeId"
+          ],
+          "properties": {
+            "nodeTypeId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Node type implementing the inverse action. MUST resolve at registration time."
+            },
+            "inputMapping": {
+              "type": "object",
+              "description": "Derived from recorded facts only — node outputs and run inputs already in the event log.",
+              "additionalProperties": true
+            },
+            "retry": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "backoffMs": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "requiresApproval": {
+              "type": "boolean",
+              "description": "RFC 0151 §C — an inverse action can itself be harmful (RFC 0147 R9), so it may be gated behind the same approval surface as a forward effect."
+            },
+            "waiveRequiresApproval": {
+              "type": "boolean",
+              "description": "RFC 0151 §B/§E (S36, 2026-08-17) — OPTIONAL. When true, ABANDONING this inverse action (§E `skip with justification` or `terminate as uncompensated`) requires an RFC 0051 approval to have resolved `approved` first — if a human must authorize RUNNING an inverse, a human must authorize deciding it will NEVER run. DEFAULT = the obligation's EFFECTIVE `requiresApproval` (after the policy's `approvalScope` escalation, §B) — NOT false — so the field is purely additive: no existing document changes meaning. Stamped onto the obligation at MINT time like `requiresApproval` (a mid-flight redefinition cannot change who had to authorize). Does NOT apply to `substitute` (still an attempt to undo; a substitution is a new planVersion whose own `requiresApproval` governs it). No policy-level counterpart: because the default inherits the effective value, an `approvalScope` escalation escalates waives with it."
+            }
+          }
+        },
+        "irreversibleEffect": {
+          "type": "boolean",
+          "description": "RFC 0151 §B (UQ4, resolved 2026-08-16) — the author states that this node's committed effect HAS NO INVERSE. OPTIONAL; absent or false means nothing (an undeclared compensator is still not implied). Mutually exclusive with `compensation`: a node declaring both is contradictory and a host MUST reject it at registration (`validation_error`). When true and the node's effect committed before an unwind starts, the plan records the node as `irreversible` (never completed) so the §D rollup caps at `partial` — a reader can no longer infer a full undo from a `completed` that quietly skipped it."
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "irreversibleEffect": {
+            "const": true
+          }
+        },
+        "required": [
+          "irreversibleEffect"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "compensation"
+          ]
+        }
+      }
+    },
+    "WorkflowEdge": {
+      "type": "object",
+      "required": [
+        "id",
+        "sourceNodeId",
+        "targetNodeId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceNodeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceOutput": {
+          "type": "string",
+          "description": "Source output port key. Default 'output'."
+        },
+        "targetNodeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetInput": {
+          "type": "string",
+          "description": "Target input port key. Default 'input'."
+        },
+        "condition": {
+          "$ref": "#/$defs/EdgeCondition"
+        },
+        "label": {
+          "type": "string"
+        },
+        "triggerRule": {
+          "type": "string",
+          "enum": [
+            "all_success",
+            "any_success",
+            "all_complete",
+            "none_failed",
+            "any_failed"
+          ],
+          "default": "all_success"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EdgeCondition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "expression",
+            "equals",
+            "notEquals",
+            "contains",
+            "regex",
+            "truthy",
+            "falsy"
+          ],
+          "description": "Operator. `equals`/`notEquals`/`contains` compare `left` to `right`; `regex` matches `left` against `right`; `expression` evaluates `expression`. RFC 0134: `truthy`/`falsy` test the resolved value at `left` for JS-style truthiness and take NO `right` operand (the edge contributes iff `left` is truthy — resp. falsy/absent). `left` is required for all operators except `expression`."
+        },
+        "left": {
+          "type": "string",
+          "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`."
+        },
+        "right": {
+          "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134) — a host MUST ignore it there, not error."
+        },
+        "expression": {
+          "type": "string",
+          "description": "Used when type='expression'."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PortValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "static"
+            },
+            "value": {}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "expression"
+          ],
+          "properties": {
+            "type": {
+              "const": "expression"
+            },
+            "expression": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "nodeId",
+            "outputKey"
+          ],
+          "properties": {
+            "type": {
+              "const": "connection"
+            },
+            "nodeId": {
+              "$ref": "ids.schema.json#/$defs/nodeId"
+            },
+            "outputKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "variableName"
+          ],
+          "properties": {
+            "type": {
+              "const": "variable"
+            },
+            "variableName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "WorkflowTrigger": {
+      "type": "object",
+      "required": [
+        "id",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "schedule",
+            "webhook",
+            "event",
+            "artifact",
+            "canvas",
+            "envelope",
+            "command",
+            "chat-message",
+            "channel-write"
+          ],
+          "description": "Trigger discriminator. The `channel-write` variant fires a node when a named channel receives a write (closes C2 — reactive cross-engine pattern). Its `config` shape: `{channel: string, onlyFrom?: 'child'|'parent'|'any', debounceMs?: integer}`. See channels-and-reducers.md §Distributed reducers."
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "eventType": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "WorkflowVariable": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "defaultValue": {},
+        "sensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the engine masks this variable's value in persisted `variable.changed` events, `state.snapshot` projections, and `RunSnapshot.variables`. Reads inside NodeModule executors work normally; only persistence + external surfaces mask. See observability.md §Privacy classification (closes O5)."
+        },
+        "format": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0136 (`Active`). ADVISORY presentational hint for a `type: \"string\"` variable, drawn from the JSON-Schema format vocabulary (`email`, `uri`, `date`, `date-time`, `time`, `duration` are the v1 recognised set). Hosts SHOULD use it to choose an input affordance (e.g. an email keyboard). It is NOT a validation contract: a host MUST NOT reject a run, refuse a variable write, or fail validation because a value does not match, and MUST NOT assume a value matches when reading it. DELIBERATELY NOT AN ENUM — an unrecognised value MUST round-trip and degrade to plain text rather than error (RFC 0136 requirement 2), which an enum would turn into a hard validation failure on a client-submitted (closed) shape. Ignored when `type` is not `\"string\"`. Orthogonal to `sensitive`: masking hides the VALUE on server-emitted surfaces, `format` describes the FIELD in the definition, so the two compose with no interaction."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NodeGroup": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "nodeIds",
+        "position",
+        "size"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "color": {
+          "type": "string"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "default": false
+        },
+        "nodeIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "position": {
+          "type": "object",
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "size": {
+          "type": "object",
+          "required": [
+            "width",
+            "height"
+          ],
+          "properties": {
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChannelDeclaration": {
+      "type": "object",
+      "required": [
+        "reducer"
+      ],
+      "properties": {
+        "reducer": {
+          "type": "string",
+          "description": "Canonical names: 'replace', 'append', 'merge', 'counter', 'votes', 'feedback', 'message' (Multi-Agent Shift Phase 1 — append-only + idempotent on `messageId`). Custom reducers MUST use 'vendor.<org>.<name>'.",
+          "pattern": "^(replace|append|merge|counter|votes|feedback|message|vendor\\.[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*)$"
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "default": {},
+        "maxSize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ttlMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 31536000000,
+          "description": "Optional entry-age TTL in milliseconds (closes C3). Applies to `append` / `votes` / `feedback` reducers; ignored on others. Engine drops entries older than this age (lazy: on read or next write). Range: 1..1 year. Replay-safe — uses original event timestamps for comparison. See channels-and-reducers.md §Channel TTL."
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "access": {
+          "$ref": "#/$defs/ChannelAccess"
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Integer version of the current `schema`. Increments whenever the channel author edits `schema`. Each `channel.written` event records this version at write time. (closes C4)"
+        },
+        "compatibleWith": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true,
+          "description": "Older schema versions whose persisted writes are forward-readable under the CURRENT schema. The engine validates each old write against the current schema during fold; pass = include, fail = hard error `channel_schema_breaking_change`. Empty/omitted = no backward compat (any older write trips the breaking-change error). For breaking edits, authors create a new channel name + a copy node — see channels-and-reducers.md §Channel schema migration."
+        },
+        "sensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the engine masks `channel.written` event payloads' `value` field. The reduced channel state in `RunSnapshot.channels` is also masked when read via the REST surface. See observability.md §Privacy classification (closes O5)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChannelAccess": {
+      "description": "Per-channel access control. See channels-and-reducers.md §Channel access control (closes C1). Three forms: 'public' (no restriction; same as omitting), 'private' (lockdown shorthand — equivalent to {readers: [], writers: []}), or an explicit {readers?, writers?} object where each side is independently scoped (omitted = open, present = strict allowlist).",
+      "oneOf": [
+        {
+          "const": "public"
+        },
+        {
+          "const": "private"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "readers": {
+              "$ref": "#/$defs/ChannelAccessList"
+            },
+            "writers": {
+              "$ref": "#/$defs/ChannelAccessList"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ChannelAccessList": {
+      "type": "array",
+      "description": "Allowlist entries. Each item matches against the requesting node's `nodeId` (exact) OR `typeId` (wildcard). Wildcard format: dotted prefix + '*' (e.g., 'core.ai.*'). Bare '*' matches any node.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^([a-z][a-zA-Z0-9._-]*\\*?|\\*)$"
+      },
+      "uniqueItems": true,
+      "maxItems": 256
+    },
+    "WorkflowMetadata": {
+      "type": "object",
+      "properties": {
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBy": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "maxItems": 100
+        },
+        "category": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "codeVersion": {
+          "type": "string"
+        },
+        "customizedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "customizedBy": {
+          "type": "string"
+        },
+        "forkedFrom": {
+          "type": "string",
+          "description": "ID of platform template this was forked from."
+        },
+        "clonedFrom": {
+          "type": "string",
+          "description": "ID of workflow this was cloned from (project clone, not template fork)."
+        },
+        "clonedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "customProperties": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "complianceClass": {
+          "type": "string",
+          "enum": [
+            "public",
+            "pii",
+            "phi",
+            "pci",
+            "regulated"
+          ],
+          "default": "public",
+          "description": "Top-level workflow sensitivity tier. Sets the `openwop.compliance_class` span attribute on every span the run produces. Drives default retention / masking / export-gating policy at observability collectors. See observability.md §Privacy classification (closes O5)."
+        },
+        "complianceConfig": {
+          "type": "object",
+          "description": "Optional per-workflow overrides for compliance behavior. The masking mode (`mask` | `omit` | `hash` | `passthrough`) defaults to the server's `Capabilities.compliance.defaultMode`; setting it here forces a specific mode for this workflow. Domain-specific extensions (HIPAA's 18 PHI identifiers, GDPR special categories) can live here as opt-in fields.",
+          "properties": {
+            "maskingMode": {
+              "type": "string",
+              "enum": [
+                "mask",
+                "omit",
+                "hash",
+                "passthrough"
+              ],
+              "description": "Per-workflow override of the server's default masking mode."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "WorkflowSettings": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum run duration in milliseconds."
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ]
+        },
+        "maxLoopbackIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5
+        },
+        "compensation": {
+          "$ref": "compensation-policy.schema.json",
+          "description": "RFC 0151 §B — the workflow-level compensation policy (WHEN an unwind starts and HOW it runs). OPTIONAL and capability-gated: a host that advertises `capabilities.compensation` MUST validate it at registration; a host that does not MUST refuse the workflow with `capability_required` rather than accept a policy it will never honour. Node-level `nodes[].compensation` declarations remain valid without it — they describe the inverse action; this key requests the unwind."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

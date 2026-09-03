@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/self-hosted-runner-dispatch-frame.schema.json",
+  "title": "SelfHostedRunnerDispatchFrame",
+  "description": "RFC 0122 §Registration + channel. A single model/tool DISPATCH STEP the host routes to a registered runner over the runner↔host channel (`self-hosted-runner.md`). The host is the sole orchestration/persistence/replay authority; this frame carries ONE step's inputs, never a whole run. `inputs` is opaque model/tool input (messages, tool arguments) and MUST NOT contain runner-credential material — the runner holds its own credential locally (SECURITY invariant `runner-credential-non-transit`). `seq` is the per-runner monotonic DISPATCH cursor, a DISTINCT sequence from the run event-log `sequence` (they MUST NOT be conflated); a reconnecting runner resumes via `Last-Event-ID` at this cursor and the host drops any redelivered `{runId, stepId}` whose result is already persisted (at-most-once).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "stepId",
+    "seq",
+    "kind",
+    "inputs"
+  ],
+  "properties": {
+    "runId": {
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "The backing OpenWOP run this dispatch belongs to. Host-owned run identity."
+    },
+    "stepId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The dispatch step within the run. The `{runId, stepId}` pair is the at-most-once idempotency key: a runner MUST return the result under the same pair, and the host MUST drop (not re-dispatch) a redelivered `{runId, stepId}` whose result is already persisted."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The per-runner monotonic dispatch cursor for the channel. DISTINCT from the run event-log `sequence` (MUST NOT be conflated — conflating them breaks resume dedup). A reconnecting runner resumes via the SSE `Last-Event-ID` at this cursor so a dispatch is never redelivered past it (`stream-modes.md §Resumption`)."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "model",
+        "tool"
+      ],
+      "description": "Whether this step dispatches a model call (`model`) or a tool call (`tool`). A host MAY advertise only a subset via `selfHostedRunner.dispatchKinds` and route only those kinds to runners."
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED when `kind == 'model'`. The model provider id the runner dispatches to under its locally-held credential (e.g. a subscription CLI login, a private endpoint). Never a host-held credential."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED when `kind == 'model'`. The model id to run."
+    },
+    "tool": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED when `kind == 'tool'`. The tool the runner executes locally."
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Opaque model/tool inputs for this step (messages, tool arguments). MUST NOT contain runner-credential material (`runner-credential-non-transit`). The host sends inputs and receives outputs; the credential stays on the runner.",
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "model"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "provider",
+          "model"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "tool"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "tool"
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "runId": "run_x",
+      "stepId": "step_3",
+      "seq": 12,
+      "kind": "model",
+      "provider": "anthropic",
+      "model": "claude-opus-4-8",
+      "inputs": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "summarize the attached notes"
+          }
+        ]
+      }
+    },
+    {
+      "runId": "run_y",
+      "stepId": "step_1",
+      "seq": 0,
+      "kind": "tool",
+      "tool": "local.shell.readFile",
+      "inputs": {
+        "path": "/home/user/notes.txt"
+      }
+    }
+  ],
+  "x-openwop-seeded-from": "v1"
+}

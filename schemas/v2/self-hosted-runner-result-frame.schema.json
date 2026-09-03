@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/self-hosted-runner-result-frame.schema.json",
+  "title": "SelfHostedRunnerResultFrame",
+  "description": "RFC 0122 §Registration + channel. The runner's answer to one `SelfHostedRunnerDispatchFrame`, POSTed back to the host over ordinary HTTP. The `{runId, stepId}` pair MUST equal the dispatch it answers (the at-most-once idempotency key); `seq` echoes the dispatch cursor. `output` is the opaque model/tool output the host persists as a normal step record — replay reads from persistence and NEVER re-dispatches. `output` MUST NOT contain runner-credential material (`runner-credential-non-transit`), and the host MUST treat it as UNTRUSTED transport: content re-entering an agent loop is fenced `<UNTRUSTED>` (`runner-output-untrusted-transport`). A provider-side error is carried inside `output` (it is still a model/tool output); host-side liveness failure is signalled out-of-band as the retriable `runner_unavailable` error, NOT as a result frame.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "stepId",
+    "seq",
+    "output"
+  ],
+  "properties": {
+    "runId": {
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "The run this result answers. MUST equal the dispatch frame's `runId`."
+    },
+    "stepId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The dispatch step this result answers. MUST equal the dispatch frame's `stepId`. The host drops the frame if a result for this `{runId, stepId}` is already persisted (at-most-once)."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Echoes the answered dispatch frame's per-runner cursor `seq`."
+    },
+    "output": {
+      "type": "object",
+      "description": "Opaque model/tool output for the step, persisted by the host as a normal step record. MUST NOT contain runner-credential material; the host fences it `<UNTRUSTED>` before it re-enters an agent loop (`runner-output-untrusted-transport`). A provider/tool error response is carried here (still an output).",
+      "additionalProperties": true
+    }
+  },
+  "examples": [
+    {
+      "runId": "run_x",
+      "stepId": "step_3",
+      "seq": 12,
+      "output": {
+        "role": "assistant",
+        "content": "Here is a summary of the notes: ..."
+      }
+    }
+  ],
+  "x-openwop-seeded-from": "v1"
+}

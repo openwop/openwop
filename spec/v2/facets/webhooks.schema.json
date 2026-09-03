@@ -1,0 +1,18 @@
+{
+  "$comment": "RFC 0173 §B — durable delivery binds with webhooks; no durable flag",
+  "properties": {
+    "signatureAlgorithms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "v1"
+        ]
+      }
+    }
+  },
+  "required": [
+    "signatureAlgorithms"
+  ]
+}
