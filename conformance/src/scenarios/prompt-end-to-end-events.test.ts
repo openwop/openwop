@@ -35,6 +35,8 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-prompt-end-to-end';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -88,7 +90,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(
       create.status,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro', 
         'spec/v1/rest-endpoints.md',
         'POST /v1/runs MUST return 201 on accepted creation',
       ),
@@ -98,7 +100,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     const terminal = await pollUntilTerminal(runId);
     expect(
       terminal.status,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro', 
         'fixtures.md conformance-prompt-end-to-end §Terminal status',
         'fixture MUST reach terminal `completed`',
       ),
@@ -108,7 +110,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     const resolved = events.find((e) => e.type === 'agent.promptResolved');
     expect(
       resolved,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro', 
         'spec/v1/prompts.md §"Resolution chain (normative)"',
         'host MUST emit `agent.promptResolved` when a node carries a `*PromptRef` and prompts.supported is advertised',
       ),
@@ -120,12 +122,12 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
       chain?: Array<{ layer?: string; applied?: boolean; source?: string }>;
       resolved?: string | null;
     };
-    expect(payload.nodeId, 'agent.promptResolved.nodeId MUST be set').toBe('writer');
-    expect(payload.kind, 'agent.promptResolved.kind MUST match the resolved kind').toBe('system');
+    expect(payload.nodeId, req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro', 'spec/v1/prompts.md §"Resolution chain (normative)"', 'agent.promptResolved.nodeId MUST be set')).toBe('writer');
+    expect(payload.kind, req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro', 'spec/v1/prompts.md §"Resolution chain (normative)"', 'agent.promptResolved.kind MUST match the resolved kind')).toBe('system');
     const applied = (payload.chain ?? []).find((c) => c.applied === true);
     expect(
       applied?.layer,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro', 
         'spec/v1/prompts.md §"Resolution chain (normative)" — Layer 1',
         'node-config ref MUST win when no higher-precedence run-configurable layer is configured',
       ),
@@ -138,7 +140,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
-    if (create.status !== 201) return;
+    if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
     const { runId } = create.json as { runId: string };
     await pollUntilTerminal(runId);
     const events = await readAllEvents(runId);
@@ -146,7 +148,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     const composed = events.find((e) => e.type === 'prompt.composed');
     expect(
       composed,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-prompt-composed-with-sha256-hex64-hash-non-empty-composed-body-for-system', 
         'spec/v1/prompts.md §"Composition + observability"',
         'host MUST emit `prompt.composed` after `agent.promptResolved` when a ref resolves and observability !== off',
       ),
@@ -162,15 +164,15 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     };
     expect(
       payload.hash && /^sha256:[0-9a-f]{64}$/.test(payload.hash),
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-prompt-composed-with-sha256-hex64-hash-non-empty-composed-body-for-system', 
         'schemas/run-event-payloads.schema.json §promptComposed.hash',
         'hash MUST match `^sha256:[0-9a-f]{64}$`',
       ),
     ).toBe(true);
-    expect(payload.kind, 'system-only kind composition').toBe('system-only');
+    expect(payload.kind, req('openwop.it.prompt-end-to-end-events.emits-prompt-composed-with-sha256-hex64-hash-non-empty-composed-body-for-system', 'schemas/run-event-payloads.schema.json §promptComposed.hash', 'system-only kind composition')).toBe('system-only');
     expect(
       typeof payload.composed === 'string' && payload.composed.length > 0,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-prompt-composed-with-sha256-hex64-hash-non-empty-composed-body-for-system', 
         'spec/v1/prompts.md §"Composition + observability"',
         'composed body MUST be non-empty for system-kind under observability: full',
       ),
@@ -183,18 +185,18 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
-    if (create.status !== 201) return;
+    if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
     const { runId } = create.json as { runId: string };
     await pollUntilTerminal(runId);
     const events = await readAllEvents(runId);
 
     const resolvedIdx = events.findIndex((e) => e.type === 'agent.promptResolved');
     const composedIdx = events.findIndex((e) => e.type === 'prompt.composed');
-    expect(resolvedIdx, 'agent.promptResolved MUST appear in the event log').toBeGreaterThanOrEqual(0);
-    expect(composedIdx, 'prompt.composed MUST appear in the event log').toBeGreaterThanOrEqual(0);
+    expect(resolvedIdx, req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-before-prompt-composed-causal-ordering', 'spec/v1/prompts.md §"Resolution chain (normative)"', 'agent.promptResolved MUST appear in the event log')).toBeGreaterThanOrEqual(0);
+    expect(composedIdx, req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-before-prompt-composed-causal-ordering', 'spec/v1/prompts.md §"Resolution chain (normative)"', 'prompt.composed MUST appear in the event log')).toBeGreaterThanOrEqual(0);
     expect(
       resolvedIdx,
-      driver.describe(
+      req('openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-before-prompt-composed-causal-ordering', 
         'spec/v1/prompts.md §"Resolution chain (normative)"',
         'agent.promptResolved MUST emit BEFORE the corresponding prompt.composed (resolution precedes composition)',
       ),

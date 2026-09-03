@@ -14,6 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readFeedbackCap } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('feedback-unsupported-501 (RFC 0056 §C)', () => {
   it('POST annotations returns 501 capability_not_provided when feedback is unadvertised', async () => {
@@ -25,7 +26,7 @@ describe('feedback-unsupported-501 (RFC 0056 §C)', () => {
     if (res.status === 404 || res.status === 405) return softSkip('blocked', 'route absent — host predates RFC 0056');
     expect(
       res.status,
-      driver.describe('rest-endpoints.md / RFC 0056 §C', 'unadvertised feedback MUST return 501, not 404'),
+      req('openwop.it.feedback-unsupported-501.post-annotations-returns-501-capability-not-provided-when-feedback-is-unadvertis', 'rest-endpoints.md / RFC 0056 §C', 'unadvertised feedback MUST return 501, not 404'),
     ).toBe(501);
     const code = (res.json as { error?: string } | undefined)?.error;
     expect(code).toBe('capability_not_provided');

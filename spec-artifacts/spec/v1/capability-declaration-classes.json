@@ -1,0 +1,176 @@
+{
+  "$comment": "Ledger for the §A rule in spec/v1/host-extensions.md — every §host.<name> section in host-capabilities.md is classified as a core DECLARED family or an EXTENSION namespace. Enforced by scripts/check-capability-declaration-classes.mjs (RFC 0144 G3). This file is REVIEWED, not derived: the classification turns on whether a section binds the shape or content of a wire artifact, which no heuristic decides correctly — see the RFC for two worked false positives.",
+  "sections": [
+    {
+      "section": "agentRuntime",
+      "class": "declared",
+      "key": "agentRuntime"
+    },
+    {
+      "section": "aiEnvelope",
+      "class": "declared",
+      "key": "aiEnvelope"
+    },
+    {
+      "section": "aiProviders",
+      "class": "declared",
+      "key": "aiProviders"
+    },
+    {
+      "section": "artifactTypes",
+      "class": "declared",
+      "key": "artifactTypes"
+    },
+    {
+      "section": "blobStorage",
+      "class": "declared",
+      "key": "blobStorage"
+    },
+    {
+      "section": "brand",
+      "class": "extension"
+    },
+    {
+      "section": "cache",
+      "class": "declared",
+      "key": "cache"
+    },
+    {
+      "section": "canvas",
+      "class": "extension"
+    },
+    {
+      "section": "chat",
+      "class": "extension",
+      "reason": "ctx.* surface. Its MUST binds trust propagation on prompt segments (`meta` / `untrusted`) — a prompt-assembly rule governed by RFC 0143 and carried on the aiEnvelope surface, which IS declared. It does not bind the shape or content of any `chat` discovery field."
+    },
+    {
+      "section": "coordination",
+      "class": "extension"
+    },
+    {
+      "section": "credentials",
+      "class": "declared",
+      "key": "credentials"
+    },
+    {
+      "section": "dataIntegration",
+      "class": "extension"
+    },
+    {
+      "section": "deadLetter",
+      "class": "declared",
+      "key": "deadLetter"
+    },
+    {
+      "section": "entities",
+      "class": "extension"
+    },
+    {
+      "section": "forms",
+      "class": "declared",
+      "key": "forms"
+    },
+    {
+      "section": "fs",
+      "class": "declared",
+      "key": "fs"
+    },
+    {
+      "section": "heartbeat",
+      "class": "declared",
+      "key": "heartbeat"
+    },
+    {
+      "section": "http",
+      "class": "declared",
+      "key": "httpClient"
+    },
+    {
+      "section": "kanban",
+      "class": "extension"
+    },
+    {
+      "section": "knowledge",
+      "class": "extension",
+      "reason": "ctx.* surface (`ctx.knowledge.retrieve`, `ctx.knowledge.embed`; Required methods: retrieve). Its MUSTs are host-side authorization — enforce workspace access, filter `collectionIds[]`, and surface `403 knowledge_workspace_forbidden`. There is no REST endpoint here, so that 403 is the error of a host-side method call, not a protocol response body. §A names a ctx.*-only section as the extension class."
+    },
+    {
+      "section": "kvStorage",
+      "class": "declared",
+      "key": "kvStorage"
+    },
+    {
+      "section": "launchStudio",
+      "class": "extension"
+    },
+    {
+      "section": "mcp",
+      "class": "declared",
+      "key": "mcp"
+    },
+    {
+      "section": "messaging",
+      "class": "extension"
+    },
+    {
+      "section": "nosql",
+      "class": "declared",
+      "key": "nosql"
+    },
+    {
+      "section": "oauth",
+      "class": "declared",
+      "key": "oauth"
+    },
+    {
+      "section": "promptLibrary",
+      "class": "declared",
+      "key": "promptLibrary"
+    },
+    {
+      "section": "queueBus",
+      "class": "declared",
+      "key": "queueBus"
+    },
+    {
+      "section": "scheduling",
+      "class": "declared",
+      "key": "scheduling"
+    },
+    {
+      "section": "searchIndex",
+      "class": "declared",
+      "key": "searchIndex"
+    },
+    {
+      "section": "secrets",
+      "class": "declared",
+      "key": "secrets"
+    },
+    {
+      "section": "sql",
+      "class": "declared",
+      "key": "sql"
+    },
+    {
+      "section": "tableStorage",
+      "class": "declared",
+      "key": "tableStorage"
+    },
+    {
+      "section": "toolHooks",
+      "class": "declared",
+      "key": "toolHooks"
+    },
+    {
+      "section": "vectorStore",
+      "class": "declared",
+      "key": "vectorStore"
+    },
+    {
+      "section": "webResearch",
+      "class": "extension"
+    }
+  ]
+}

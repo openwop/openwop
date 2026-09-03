@@ -28,6 +28,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { createHash, createPublicKey, verify as cryptoVerify } from 'node:crypto';
+import { req } from '../lib/requirement-ids.js';
 
 const REGISTRY_BASE = 'https://packs.openwop.dev';
 const ENABLED = process.env.OPENWOP_TEST_PUBLIC_REGISTRY === 'true';
@@ -59,7 +60,7 @@ describe('registry-public: packs.openwop.dev discovery document', () => {
     }
 
     const res = await get('/.well-known/openwop-registry');
-    expect(res.status).toBe(200);
+    expect(res.status, req('openwop.it.registry-public.get-well-known-openwop-registry-returns-a-valid-discovery-payload', 'spec/v1/registry-operations.md', 'GET /.well-known/openwop-registry returns a valid discovery payload')).toBe(200);
 
     const body = res.json as {
       registryVersion?: string;
@@ -105,8 +106,8 @@ describe('registry-public: packs.openwop.dev index', () => {
     expect(body.packs?.length ?? 0).toBeGreaterThan(0);
 
     for (const p of body.packs ?? []) {
-      expect(p.name, `pack name must match reverse-DNS pattern: ${p.name}`).toMatch(PACK_NAME_RE);
-      expect(p.latestVersion, `pack version must be semver: ${p.latestVersion}`).toMatch(SEMVER_RE);
+      expect(p.name, req('openwop.it.registry-public.get-v1-index-json-returns-a-non-empty-pack-list-with-valid-name-version-shapes', 'spec/v1/registry-operations.md', `pack name must match reverse-DNS pattern: ${p.name}`)).toMatch(PACK_NAME_RE);
+      expect(p.latestVersion, req('openwop.it.registry-public.get-v1-index-json-returns-a-non-empty-pack-list-with-valid-name-version-shapes', 'spec/v1/registry-operations.md', `pack version must be semver: ${p.latestVersion}`)).toMatch(SEMVER_RE);
     }
   });
 });
@@ -123,7 +124,7 @@ describe('registry-public: spec-canonical pack manifests resolve', () => {
       if (!ENABLED) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!ENABLED` returned early');
 
       const res = await get(`/v1/packs/${name}/-/${version}.json`);
-      expect(res.status).toBe(200);
+      expect(res.status, req('openwop.it.registry-public.get-v1-packs-json-returns-a-valid-manifest', 'spec/v1/registry-operations.md', 'GET /v1/packs/ /-/ .json returns a valid manifest')).toBe(200);
 
       const manifest = res.json as { name?: string; version?: string };
       expect(manifest.name).toBe(name);
@@ -178,26 +179,26 @@ describe('registry-public: tarball + signature + Ed25519 verify roundtrip', () =
 
     // 2. Tarball.
     const tarball = await getBinary(`/v1/packs/${PACK_NAME}/-/${PACK_VERSION}.tgz`);
-    expect(tarball.status, 'tarball MUST be retrievable').toBe(200);
-    expect(tarball.bytes.byteLength, 'tarball MUST be non-empty').toBeGreaterThan(0);
+    expect(tarball.status, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', 'tarball MUST be retrievable')).toBe(200);
+    expect(tarball.bytes.byteLength, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', 'tarball MUST be non-empty')).toBeGreaterThan(0);
 
     // 3. Detached signature (64-byte raw Ed25519).
     const sig = await getBinary(`/v1/packs/${PACK_NAME}/-/${PACK_VERSION}.sig`);
-    expect(sig.status, 'signature MUST be retrievable').toBe(200);
-    expect(sig.bytes.byteLength, 'Ed25519 detached signature MUST be 64 bytes').toBe(64);
+    expect(sig.status, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', 'signature MUST be retrievable')).toBe(200);
+    expect(sig.bytes.byteLength, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', 'Ed25519 detached signature MUST be 64 bytes')).toBe(64);
 
     // 4. Public key — fetch from the publisher-declared URL when present,
     //    else fall back to the canonical `/keys/<keyId>.pub` shape.
     const keyUrl = manifest.signing!.publicKeyUrl ?? `/keys/${manifest.signing!.keyId}.pub`;
     const keyRes = await getText(keyUrl);
-    expect(keyRes.status, `public key MUST be retrievable at ${keyUrl}`).toBe(200);
+    expect(keyRes.status, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', `public key MUST be retrievable at ${keyUrl}`)).toBe(200);
     const publicKey = createPublicKey(keyRes.body);
 
     // 5. SRI integrity check: `sha256-<base64>=` MUST match a fresh
     //    sha256 of the tarball bytes per registry-operations.md.
     expect(manifest.integrity).toMatch(/^sha256-[A-Za-z0-9+/]+=*$/);
     const expectedSri = `sha256-${createHash('sha256').update(tarball.bytes).digest('base64')}`;
-    expect(expectedSri, 'SRI integrity in manifest MUST match a fresh sha256 of the tarball').toBe(
+    expect(expectedSri, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', 'SRI integrity in manifest MUST match a fresh sha256 of the tarball')).toBe(
       manifest.integrity,
     );
 
@@ -217,7 +218,7 @@ describe('registry-public: tarball + signature + Ed25519 verify roundtrip', () =
     if (method !== 'ed25519') return softSkip('blocked', 'precondition not met — `method !== \'ed25519\'` returned early (seam, prior step, or fixture unavailable)');
 
     const verified = cryptoVerify(null, tarball.bytes, publicKey, sig.bytes);
-    expect(verified, `Ed25519 signature over ${PACK_NAME}@${PACK_VERSION}.tgz MUST verify against ${manifest.signing!.keyId}`)
+    expect(verified, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', `Ed25519 signature over ${PACK_NAME}@${PACK_VERSION}.tgz MUST verify against ${manifest.signing!.keyId}`))
       .toBe(true);
   });
 });

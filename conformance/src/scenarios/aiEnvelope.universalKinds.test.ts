@@ -47,10 +47,10 @@ async function readSupportedEnvelopes(): Promise<string[] | null> {
 describe('aiEnvelope.universalKinds: advertisement shape (FINAL v1.1)', () => {
   it('capabilities.envelopeContracts is either absent or a well-formed object', async () => {
     const block = await readEnvelopeContracts();
-    if (block === null) return; // host doesn't opt in — skip
+    if (block === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `block === null` returned early (host doesn\'t opt in — skip)'); // host doesn't opt in — skip
     expect(
       typeof block.advertised,
-      driver.describe(
+      req('openwop.it.aiEnvelope.universalKinds.capabilities-envelopecontracts-is-either-absent-or-a-well-formed-object', 
         'ai-envelope.md §"Capability handshake integration"',
         'capabilities.envelopeContracts.advertised MUST be a boolean when present',
       ),
@@ -59,11 +59,11 @@ describe('aiEnvelope.universalKinds: advertisement shape (FINAL v1.1)', () => {
 
   it('opted-in hosts advertise every universal kind in supportedEnvelopes', async () => {
     const block = await readEnvelopeContracts();
-    if (block === null || !block.advertised) return; // not opted in — skip
+    if (block === null || !block.advertised) return softSkip('blocked', 'precondition not met — `block === null || !block.advertised` returned early (not opted in — skip) (seam, prior step, or fixture unavailable)'); // not opted in — skip
     const advertised = await readSupportedEnvelopes();
     expect(
       Array.isArray(advertised),
-      driver.describe(
+      req('openwop.it.aiEnvelope.universalKinds.opted-in-hosts-advertise-every-universal-kind-in-supportedenvelopes', 
         'capabilities.schema.json §supportedEnvelopes',
         'supportedEnvelopes MUST be present as an array on hosts that advertise envelopeContracts',
       ),
@@ -71,7 +71,7 @@ describe('aiEnvelope.universalKinds: advertisement shape (FINAL v1.1)', () => {
     for (const kind of UNIVERSALS) {
       expect(
         advertised!.includes(kind),
-        driver.describe(
+        req('openwop.it.aiEnvelope.universalKinds.opted-in-hosts-advertise-every-universal-kind-in-supportedenvelopes', 
           'ai-envelope.md §"Universal kinds"',
           `supportedEnvelopes MUST include "${kind}" — universals are always-allowed`,
         ),
@@ -103,8 +103,8 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
       payload: { questions: [{ id: 'q1', question: 'Which provider?' }] },
       meta: baseMeta,
     });
-    if (r.status === 404) return;
-    expect(r.body.status, driver.describe('ai-envelope.md §"Universal kinds"', 'valid clarification.request MUST be accepted')).toBe('accepted');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.aiEnvelope.universalKinds.accept-clarification-request-with-valid-payload-status-accepted', 'ai-envelope.md §"Universal kinds"', 'valid clarification.request MUST be accepted')).toBe('accepted');
   });
 
   it('accept schema.request → status: accepted', async () => {
@@ -116,8 +116,8 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
       payload: { envelopeType: 'vendor.acme.prd.create' },
       meta: baseMeta,
     });
-    if (r.status === 404) return;
-    expect(r.body.status).toBe('accepted');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.aiEnvelope.universalKinds.accept-schema-request-status-accepted', 'spec/v1/ai-envelope.md', 'accept schema.request → status: accepted')).toBe('accepted');
   });
 
   it('accept schema.response (ack:true) → status: accepted', async () => {
@@ -129,8 +129,8 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
       payload: { envelopeType: 'vendor.acme.prd.create', ack: true },
       meta: baseMeta,
     });
-    if (r.status === 404) return;
-    expect(r.body.status).toBe('accepted');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.aiEnvelope.universalKinds.accept-schema-response-ack-true-status-accepted', 'spec/v1/ai-envelope.md', 'accept schema.response (ack:true) → status: accepted')).toBe('accepted');
   });
 
   it('accept error envelope (LLM-emitted) → status: accepted (distinct from host-level ErrorEnvelope)', async () => {
@@ -142,8 +142,8 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
       payload: { code: 'validation_failed', message: 'I cannot produce JSON matching that schema' },
       meta: baseMeta,
     });
-    if (r.status === 404) return;
-    expect(r.body.status, driver.describe('ai-envelope.md §error', 'LLM-emitted error envelope MUST be accepted (NOT the host HTTP ErrorEnvelope)')).toBe('accepted');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.aiEnvelope.universalKinds.accept-error-envelope-llm-emitted-status-accepted-distinct-from-host-level-error', 'ai-envelope.md §error', 'LLM-emitted error envelope MUST be accepted (NOT the host HTTP ErrorEnvelope)')).toBe('accepted');
   });
 
   it('refuse invalid clarification.request (missing questions[]) → status: invalid', async () => {
@@ -155,22 +155,24 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
       payload: { contextType: 'form-field' }, // missing required `questions`
       meta: baseMeta,
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe('ai-envelope.md §"Schema discipline"', 'malformed payload MUST be rejected with invalid'),
+      req('openwop.it.aiEnvelope.universalKinds.refuse-invalid-clarification-request-missing-questions-status-invalid', 'ai-envelope.md §"Schema discipline"', 'malformed payload MUST be rejected with invalid'),
     ).toBe('invalid');
-    expect(Array.isArray(r.body.details), 'invalid outcome MUST carry validation details').toBe(true);
+    expect(Array.isArray(r.body.details), req('openwop.it.aiEnvelope.universalKinds.refuse-invalid-clarification-request-missing-questions-status-invalid', 'ai-envelope.md §"Schema discipline"', 'invalid outcome MUST carry validation details')).toBe(true);
   });
 });
 
 // E.1 engine-projection via the test-only event-log seam.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.universalKinds: engine projection via event-log seam', () => {
   it('clarification.request MUST be lifted to interrupt.requested { kind: "clarification" } per interrupt.md', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-uk-clar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const r = await accept(
       {
@@ -183,20 +185,20 @@ describe('aiEnvelope.universalKinds: engine projection via event-log seam', () =
       },
       { projectTo: { runId, nodeId: 'n' } },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
     const events = await queryTestEvents(runId, { type: 'interrupt.requested' });
-    if (!events.ok) return;
+    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       events.events.length,
-      driver.describe('ai-envelope.md §"Universal kinds"', 'accepted clarification.request MUST project to interrupt.requested per interrupt.md'),
+      req('openwop.it.aiEnvelope.universalKinds.clarification-request-must-be-lifted-to-interrupt-requested-kind-clarification-p', 'ai-envelope.md §"Universal kinds"', 'accepted clarification.request MUST project to interrupt.requested per interrupt.md'),
     ).toBe(1);
     expect((events.events[0]!.payload as { kind?: string }).kind).toBe('clarification');
     await resetTestSeam();
   });
 
   it('error envelope MUST project to log.appended { level: "error" } — NOT node.failed', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-uk-err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -211,20 +213,20 @@ describe('aiEnvelope.universalKinds: engine projection via event-log seam', () =
     );
     const logs = await queryTestEvents(runId, { type: 'log.appended' });
     const fails = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!logs.ok || !fails.ok) return;
+    if (!logs.ok || !fails.ok) return softSkip('blocked', 'precondition not met — `!logs.ok || !fails.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       logs.events.some((e) => (e.payload as { level?: string }).level === 'error'),
-      driver.describe('ai-envelope.md §"Universal kinds"', 'LLM-emitted error envelope MUST project to log.appended at error level'),
+      req('openwop.it.aiEnvelope.universalKinds.error-envelope-must-project-to-log-appended-level-error-not-node-failed', 'ai-envelope.md §"Universal kinds"', 'LLM-emitted error envelope MUST project to log.appended at error level'),
     ).toBe(true);
     expect(
       fails.events.length,
-      driver.describe('ai-envelope.md §"Universal kinds"', 'LLM-emitted error envelope MUST NOT project to node.failed (distinct from terminal node failure)'),
+      req('openwop.it.aiEnvelope.universalKinds.error-envelope-must-project-to-log-appended-level-error-not-node-failed', 'ai-envelope.md §"Universal kinds"', 'LLM-emitted error envelope MUST NOT project to node.failed (distinct from terminal node failure)'),
     ).toBe(0);
     await resetTestSeam();
   });
 
   it('schema.request projects to log.appended (host implements next-turn injection out-of-band)', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-uk-sr-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -238,10 +240,10 @@ describe('aiEnvelope.universalKinds: engine projection via event-log seam', () =
       { projectTo: { runId, nodeId: 'n' } },
     );
     const events = await queryTestEvents(runId, { type: 'log.appended' });
-    if (!events.ok) return;
+    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       events.events.length,
-      driver.describe('ai-envelope.md §"Universal kinds"', 'schema.request MUST project to log.appended (the schema delivery itself happens out-of-band via the host\'s next-turn system prompt)'),
+      req('openwop.it.aiEnvelope.universalKinds.schema-request-projects-to-log-appended-host-implements-next-turn-injection-out', 'ai-envelope.md §"Universal kinds"', 'schema.request MUST project to log.appended (the schema delivery itself happens out-of-band via the host\'s next-turn system prompt)'),
     ).toBeGreaterThan(0);
     await resetTestSeam();
   });
@@ -256,10 +258,10 @@ describe('aiEnvelope.universalKinds: schema.response counter-policy advertisemen
     const res = await driver.get('/.well-known/openwop');
     const body = res.json as { capabilities?: { aiEnvelope?: { schemaResponseCounterPolicy?: string } } } | undefined;
     const policy = capabilityFamily<{ schemaResponseCounterPolicy?: string }>(body, 'aiEnvelope')?.schemaResponseCounterPolicy;
-    if (policy === undefined) return; // no policy advertised — host MAY omit
+    if (policy === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `policy === undefined` returned early (no policy advertised — host MAY omit)'); // no policy advertised — host MAY omit
     expect(
       ['counted', 'exempt'].includes(policy),
-      driver.describe(
+      req('openwop.it.aiEnvelope.universalKinds.host-may-count-or-exempt-schema-response-against-envelopesperturn-when-advertise', 
         'ai-envelope.md §"Universal kinds"',
         'when advertised, schemaResponseCounterPolicy MUST be either "counted" or "exempt"',
       ),

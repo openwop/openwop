@@ -23,6 +23,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const read = (f: string): Record<string, unknown> => JSON.parse(readFileSync(join(SCHEMAS_DIR, f), 'utf8')) as Record<string, unknown>;
 const subject = read('subject.schema.json');
@@ -41,28 +42,28 @@ describe('owner-subject-shape: subject.schema.json (RFC 0165 §B.1)', () => {
   const validate = ajvWithSubject().compile(subject);
 
   it('compiles and accepts a full SAML subject', () => {
-    expect(validate(VALID), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate(VALID), req('openwop.it.owner-subject-shape.compiles-and-accepts-a-full-saml-subject', 'RFC 0165 §B.1–§B.2', JSON.stringify(validate.errors))).toBe(true);
   });
 
   it('accepts the legacy issuer form (RFC 0165 §B.3) and a workload subject', () => {
-    expect(validate({ issuer: 'urn:openwop:legacy', subjectId: 'user_42', tenant: 'acme', lane: 'api-key', kind: 'user' }), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate({ issuer: 'urn:openwop:legacy', subjectId: 'user_42', tenant: 'acme', lane: 'api-key', kind: 'user' }), req('openwop.it.owner-subject-shape.accepts-the-legacy-issuer-form-rfc-0165-b-3-and-a-workload-subject', 'RFC 0165 §B.3', JSON.stringify(validate.errors))).toBe(true);
     expect(validate({ issuer: 'spiffe://trust.example', subjectId: 'spiffe://trust.example/ns/a/sa/b', tenant: 'acme', lane: 'workload', kind: 'workload' }), JSON.stringify(validate.errors)).toBe(true);
   });
 
   it('rejects an email-shaped or whitespace subjectId (invariant subject-record-opaque)', () => {
-    expect(validate({ ...VALID, subjectId: 'alice@example.com' }), 'RFC 0165 §B.2: subjectId MUST NOT be an email address').toBe(false);
-    expect(validate({ ...VALID, subjectId: 'Alice Example' }), 'RFC 0165 §B.2: subjectId MUST NOT contain whitespace (a display name)').toBe(false);
+    expect(validate({ ...VALID, subjectId: 'alice@example.com' }), req('openwop.it.owner-subject-shape.rejects-an-email-shaped-or-whitespace-subjectid-invariant-subject-record-opaque', 'RFC 0165 §B.1–§B.2', 'RFC 0165 §B.2: subjectId MUST NOT be an email address')).toBe(false);
+    expect(validate({ ...VALID, subjectId: 'Alice Example' }), req('openwop.it.owner-subject-shape.rejects-an-email-shaped-or-whitespace-subjectid-invariant-subject-record-opaque', 'RFC 0165 §B.1–§B.2', 'RFC 0165 §B.2: subjectId MUST NOT contain whitespace (a display name)')).toBe(false);
   });
 
   it('requires keyClass on the saml/scim lanes and forbids it elsewhere', () => {
     const { keyClass: _k, ...noKey } = VALID;
-    expect(validate(noKey), 'RFC 0165 §B.2: keyClass MUST be present when lane is saml or scim').toBe(false);
-    expect(validate({ ...VALID, lane: 'oidc' }), 'RFC 0165 §B.2: keyClass MUST be absent when the lane is not linkable').toBe(false);
+    expect(validate(noKey), req('openwop.it.owner-subject-shape.requires-keyclass-on-the-saml-scim-lanes-and-forbids-it-elsewhere', 'RFC 0165 §B.1–§B.2', 'RFC 0165 §B.2: keyClass MUST be present when lane is saml or scim')).toBe(false);
+    expect(validate({ ...VALID, lane: 'oidc' }), req('openwop.it.owner-subject-shape.requires-keyclass-on-the-saml-scim-lanes-and-forbids-it-elsewhere', 'RFC 0165 §B.1–§B.2', 'RFC 0165 §B.2: keyClass MUST be absent when the lane is not linkable')).toBe(false);
     expect(validate({ ...noKey, lane: 'oidc' }), JSON.stringify(validate.errors)).toBe(true);
   });
 
   it('rejects an unknown member and a missing required member', () => {
-    expect(validate({ ...VALID, email: 'x' })).toBe(false);
+    expect(validate({ ...VALID, email: 'x' }), req('openwop.it.owner-subject-shape.rejects-an-unknown-member-and-a-missing-required-member', 'RFC 0165 §B.1–§B.2', 'rejects an unknown member and a missing required member')).toBe(false);
     const { tenant: _t, ...noTenant } = VALID;
     expect(validate(noTenant)).toBe(false);
   });
@@ -70,7 +71,7 @@ describe('owner-subject-shape: subject.schema.json (RFC 0165 §B.1)', () => {
   it('accepts a nested actor chain (depth is a host obligation, RFC 0165 §B.5)', () => {
     const peer = { issuer: 'https://peer.example', subjectId: 'peer-1', tenant: 'acme', lane: 'workload', kind: 'workload' };
     const { keyClass: _k, ...anon } = { ...VALID, kind: 'anonymous', lane: 'api-key', actor: peer };
-    expect(validate(anon), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate(anon), req('openwop.it.owner-subject-shape.accepts-a-nested-actor-chain-depth-is-a-host-obligation-rfc-0165-b-5', 'RFC 0165 §B.5', JSON.stringify(validate.errors))).toBe(true);
   });
 });
 
@@ -82,14 +83,14 @@ describe('owner-subject-shape: both owner sub-objects declare `subject` (RFC 016
   it('RunSnapshot.owner accepts a subject and still rejects an undeclared member', () => {
     const v = ajvWithSubject().compile(ownerSnap);
     expect(v({ tenant: 'acme', principal: 'idp-op-8f3a', principalKind: 'user', subject: VALID }), JSON.stringify(v.errors)).toBe(true);
-    expect(v({ tenant: 'acme', role: 'admin' })).toBe(false);
+    expect(v({ tenant: 'acme', role: 'admin' }), req('openwop.it.owner-subject-shape.runsnapshot-owner-accepts-a-subject-and-still-rejects-an-undeclared-member', 'RFC 0165 §B.1–§B.2', 'RunSnapshot.owner accepts a subject and still rejects an undeclared member')).toBe(false);
   });
 
   it('run.started owner echo accepts the same subject AND principalKind (the echo matches the snapshot)', () => {
     const v = ajvWithSubject().compile(ownerEcho);
     expect(
       v({ tenant: 'acme', principal: 'idp-op-8f3a', principalKind: 'user', subject: VALID }),
-      'RFC 0165 §B.1: run.started owner MUST declare subject and principalKind so a host can echo its snapshot owner verbatim',
+      req('openwop.it.owner-subject-shape.run-started-owner-echo-accepts-the-same-subject-and-principalkind-the-echo-match', 'RFC 0165 §B.1–§B.2', 'RFC 0165 §B.1: run.started owner MUST declare subject and principalKind so a host can echo its snapshot owner verbatim'),
     ).toBe(true);
     expect(v({ tenant: 'acme', subject: { ...VALID, subjectId: 'a@b' } })).toBe(false);
   });

@@ -338,7 +338,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
-      - conformance/src/scenarios/artifact-schema-compile-bounded.test.ts
+      - conformance/src/coherence/artifact-schema-compile-bounded.test.ts
     note: |
       RFC 0071 §"Bounded schema compilation". Artifact-type packs
       (`kind: "artifact-type"`) ship third-party JSON Schemas that the
@@ -389,7 +389,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
-      - conformance/src/scenarios/form-content-packs.test.ts
+      - conformance/src/coherence/form-content-packs.test.ts
     note: |
       RFC 0137 §F1 "Trust boundary". A form-content pack (`kind: "form-content"`)
       ships PACK-AUTHORED strings — `templates[].label` / `.title` /
@@ -425,7 +425,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
-      - conformance/src/scenarios/form-content-packs.test.ts
+      - conformance/src/coherence/form-content-packs.test.ts
     note: |
       RFC 0137 §F2 "No submission routing". A form-content template describes a
       form's SHAPE; it MUST NOT describe where the resulting submissions go.
@@ -457,7 +457,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
-      - conformance/src/scenarios/tool-result-trust-monotone.test.ts
+      - conformance/src/coherence/tool-result-trust-monotone.test.ts
     note: |
       RFC 0143 — the general rule the corpus's ~ten point-invariants instance.
       Trust over content is a meet-semilattice (`untrusted ⊏ trusted`). A tool
@@ -486,7 +486,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
-      - conformance/src/scenarios/pack-manifest-extensions.test.ts
+      - conformance/src/coherence/pack-manifest-extensions.test.ts
     note: |
       RFC 0138. Pack manifests carry an `^(x-|vendor\.)` host-extension escape
       hatch on the manifest root and each kind's entry object, so that
@@ -1691,7 +1691,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - conformance/src/scenarios/effect-identity-composition.test.ts
+      - conformance/src/coherence/effect-identity-composition.test.ts
     note: |
       RFC 0150 §B. The Layer-2 logical effect identity MUST NOT
       incorporate the retry counter. `spec/v1/idempotency.md` §"Idempotency
@@ -1792,7 +1792,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - conformance/src/scenarios/multi-region-effect-vocabulary.test.ts
+      - conformance/src/coherence/multi-region-effect-vocabulary.test.ts
     note: |
       RFC 0150 §D. Run-record reconciliation MUST NOT be treated as
       authorizing an external effect. Lexicographic run-ID reconciliation
@@ -1843,7 +1843,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - conformance/src/scenarios/discovery-canonical-family-no-shadow.test.ts
+      - conformance/src/coherence/discovery-canonical-family-no-shadow.test.ts
     note: |
       RFC 0149 §E. A vendor extension MUST NOT shadow a canonical
       capability family. RFC 0073 puts canonical families at the document
@@ -2076,7 +2076,7 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-workload-identity.md
     tests:
-      - conformance/src/scenarios/workload-identity-profile.test.ts
+      - conformance/src/coherence/workload-identity-profile.test.ts
     note: |
       RFC 0154 §B, PARTIAL and named as such. The schema enforces a
       non-empty chain (a delegation context with no chain claims a

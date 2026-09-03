@@ -11,8 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readSubRunAttestationCap, invokeSubRunAttest } from '../lib/subRunAttestation.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('subrun-approval-gate (RFC 0063 §C)', () => {
   it('accept merges the child outputs; reject does not', async () => {
@@ -23,14 +23,14 @@ describe('subrun-approval-gate (RFC 0063 §C)', () => {
     if (accepted === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       accepted.merged,
-      driver.describe('RFC 0063 §C', 'an `accept` approval MUST merge the child outputs'),
+      req('openwop.it.subrun-approval-gate.accept-merges-the-child-outputs-reject-does-not', 'RFC 0063 §C', 'an `accept` approval MUST merge the child outputs'),
     ).toBe(true);
 
     const rejected = await invokeSubRunAttest({ ...base, approvalAction: 'reject' });
     if (rejected === null) return softSkip('blocked', 'precondition not met — `rejected === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       rejected.merged,
-      driver.describe('RFC 0063 §C', 'a `reject` approval MUST NOT merge the child outputs'),
+      req('openwop.it.subrun-approval-gate.accept-merges-the-child-outputs-reject-does-not', 'RFC 0063 §C', 'a `reject` approval MUST NOT merge the child outputs'),
     ).toBe(false);
   });
 });

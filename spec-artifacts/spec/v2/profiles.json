@@ -1,0 +1,45 @@
+{
+  "$comment": "GENERATED from spec/v2/declaration.json (RFC 0169 §C.1). A profile is a predicate over the declaration: every listed family present as a record (and every listed metadata key present). No profiles[] exists at the v2 root.",
+  "generatedFrom": "spec/v2/declaration.json",
+  "profiles": [
+    {
+      "id": "openwop-discovery-core",
+      "predicate": {
+        "families": [],
+        "metadata": [
+          "protocolVersions",
+          "preferredVersion"
+        ]
+      },
+      "floorScenarios": [
+        "planned:capabilities-root-closed"
+      ],
+      "requirementIds": [],
+      "note": "discovery only; the alias openwop-core is deleted (row C2.3)"
+    },
+    {
+      "id": "openwop-core-standard",
+      "predicate": {
+        "families": [
+          "interrupt",
+          "replay",
+          "webhooks",
+          "idempotency",
+          "eventLog"
+        ]
+      },
+      "floorScenarios": [],
+      "requirementIds": [],
+      "note": "seeded from spec/v1/core-standard-manifest.json at P3-B; the floor is minted with the 2.0.0 scenarios (planned)"
+    },
+    {
+      "id": "openwop-conformance-seams-v2",
+      "predicate": {
+        "families": []
+      },
+      "floorScenarios": [],
+      "requirementIds": [],
+      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace"
+    }
+  ]
+}

@@ -19,6 +19,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCENARIOS_DIR } from '../lib/paths.js';
 import { HARNESS_DOUBLE_MODULES } from '../lib/host-callback.js';
+import { req } from '../lib/requirement-ids.js';
 
 const DECLARATION = /export\s+const\s+REQUIRES_HOST_CALLBACK\s*[:=]/;
 /**
@@ -63,7 +64,7 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
     // Guard: an empty scan makes every leg below vacuously true, which is the
     // shape RFC 0148 §C found in the floor verifier. A gate that passes by
     // having looked at nothing is worse than no gate, because it reports clean.
-    expect(all.length, 'the scenario directory MUST be readable and populated').toBeGreaterThan(100);
+    expect(all.length, req('openwop.it.host-callback-declaration.the-scan-reaches-the-scenario-corpus', 'host-callback-declaration.test.ts (no spec citation in file)', 'the scenario directory MUST be readable and populated')).toBeGreaterThan(100);
     expect(
       all.filter((s) => s.doubles.length > 0).length,
       'the suite MUST contain scenarios that drive harness doubles — if this hits zero the ' +
@@ -78,14 +79,14 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
       .map((s) => `${s.file} (imports ${s.doubles.join(', ')})`);
     expect(
       undeclared,
-      'A scenario that hands the host a harness-hosted endpoint MUST export ' +
+      req('openwop.it.host-callback-declaration.every-scenario-driving-a-harness-double-declares-the-callback', 'host-callback-declaration.test.ts (no spec citation in file)', 'A scenario that hands the host a harness-hosted endpoint MUST export ' +
         '`REQUIRES_HOST_CALLBACK` naming the connection the host has to originate — or ' +
         '`HOST_CALLBACK_NOT_REQUIRED` explaining why it drives both ends itself.\n\n' +
         'Without it, a consumer running the suite off-process — against a container, VM, or ' +
         'remote origin — discovers the scenario is unwitnessable by watching it fail, and reads ' +
         'a routing problem as host non-conformance. RFC 0148 §A resolves an unwitnessed ' +
         'requirement to `blocked` rather than to a pass, and a consumer can only honour that ' +
-        'for scenarios they can identify in advance.\n  ' + undeclared.join('\n  '),
+        'for scenarios they can identify in advance.\n  ' + undeclared.join('\n  ')),
     ).toEqual([]);
   });
 
@@ -102,9 +103,9 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
     }
     expect(
       bare,
-      '`REQUIRES_HOST_CALLBACK` MUST be a string naming which connection the host originates — ' +
+      req('openwop.it.host-callback-declaration.the-declaration-states-a-reason-rather-than-a-bare-flag', 'host-callback-declaration.test.ts (no spec citation in file)', '`REQUIRES_HOST_CALLBACK` MUST be a string naming which connection the host originates — ' +
         'a bare boolean says a box was ticked, not what a consumer has to route.\n  ' +
-        bare.join('\n  '),
+        bare.join('\n  ')),
     ).toEqual([]);
   });
 
@@ -119,9 +120,9 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
       .map((s) => s.file);
     expect(
       orphaned,
-      'a scenario declaring `REQUIRES_HOST_CALLBACK` MUST actually drive a harness-hosted ' +
+      req('openwop.it.host-callback-declaration.nothing-declares-a-callback-it-does-not-make', 'host-callback-declaration.test.ts (no spec citation in file)', 'a scenario declaring `REQUIRES_HOST_CALLBACK` MUST actually drive a harness-hosted ' +
         'endpoint. A declaration that outlived its double is a routing instruction for a ' +
-        'connection nobody makes.\n  ' + orphaned.join('\n  '),
+        'connection nobody makes.\n  ' + orphaned.join('\n  ')),
     ).toEqual([]);
   });
 });

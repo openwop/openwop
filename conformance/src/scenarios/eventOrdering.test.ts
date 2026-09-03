@@ -19,6 +19,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -48,18 +50,18 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
     await pollUntilTerminal(runId);
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { events?: RawEvent[] } | undefined;
-    if (!body?.events) return;
-    if (body.events.length < 2) return; // single-event runs have no ordering to verify
+    if (!body?.events) return softSkip('blocked', 'precondition not met — `!body?.events` returned early (seam, prior step, or fixture unavailable)');
+    if (body.events.length < 2) return softSkip('blocked', 'precondition not met — `body.events.length < 2` returned early (single-event runs have no ordering to verify) (seam, prior step, or fixture unavailable)'); // single-event runs have no ordering to verify
 
     const seqs = body.events.map(getSeq);
     for (let i = 1; i < seqs.length; i++) {
       const curr = seqs[i];
       const prev = seqs[i - 1];
       if (curr === null || prev === null) continue; // host without seq fields
-      expect(curr, driver.describe(
+      expect(curr, req('openwop.it.eventOrdering.events-from-a-single-poll-have-non-decreasing-sequence-numbers', 
         'observability.md §"Event ordering"',
         `event[${i}].sequence (${curr}) MUST be >= event[${i - 1}].sequence (${prev})`,
       )).toBeGreaterThanOrEqual(prev);
@@ -74,13 +76,13 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
 
     const a = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
     const b = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (a.status !== 200 || b.status !== 200) return;
+    if (a.status !== 200 || b.status !== 200) return softSkip('blocked', 'precondition not met — `a.status !== 200 || b.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const aBody = a.json as { events?: RawEvent[] } | undefined;
     const bBody = b.json as { events?: RawEvent[] } | undefined;
-    if (!aBody?.events || !bBody?.events) return;
+    if (!aBody?.events || !bBody?.events) return softSkip('blocked', 'precondition not met — `!aBody?.events || !bBody?.events` returned early (seam, prior step, or fixture unavailable)');
 
-    expect(aBody.events.length, driver.describe(
+    expect(aBody.events.length, req('openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences', 
       'observability.md',
       'repeated polls of terminal run MUST return same number of events',
     )).toBe(bBody.events.length);
@@ -89,7 +91,7 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
       const aSeq = getSeq(aBody.events[i]!);
       const bSeq = getSeq(bBody.events[i]!);
       if (aSeq === null || bSeq === null) continue;
-      expect(aSeq, driver.describe(
+      expect(aSeq, req('openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences', 
         'observability.md',
         `event[${i}] sequence MUST be stable across repeated polls`,
       )).toBe(bSeq);
@@ -105,15 +107,15 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: terminal run has at most one term
     await pollUntilTerminal(runId);
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { events?: RawEvent[] } | undefined;
-    if (!body?.events) return;
+    if (!body?.events) return softSkip('blocked', 'precondition not met — `!body?.events` returned early (seam, prior step, or fixture unavailable)');
 
     const TERMINAL_TYPES = new Set(['run.completed', 'run.failed', 'run.cancelled']);
     const terminalCount = body.events.filter((e) => typeof e.type === 'string' && TERMINAL_TYPES.has(e.type)).length;
 
-    expect(terminalCount, driver.describe(
+    expect(terminalCount, req('openwop.it.eventOrdering.event-stream-contains-exactly-one-of-run-completed-run-failed-run-cancelled', 
       'observability.md §"Run lifecycle events"',
       'a run MUST emit exactly one terminal event (run.completed / run.failed / run.cancelled)',
     )).toBe(1);
@@ -126,16 +128,16 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: terminal run has at most one term
     await pollUntilTerminal(runId);
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { events?: RawEvent[] } | undefined;
-    if (!body?.events || body.events.length === 0) return;
+    if (!body?.events || body.events.length === 0) return softSkip('blocked', 'precondition not met — `!body?.events || body.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
     const TERMINAL_TYPES = new Set(['run.completed', 'run.failed', 'run.cancelled']);
     const lastEvent = body.events[body.events.length - 1]!;
     expect(
       typeof lastEvent.type === 'string' && TERMINAL_TYPES.has(lastEvent.type),
-      driver.describe(
+      req('openwop.it.eventOrdering.the-terminal-event-is-the-last-event-in-the-stream', 
         'observability.md §"Run lifecycle events"',
         'terminal event MUST be the last event in the stream — no events after a terminal type',
       ),

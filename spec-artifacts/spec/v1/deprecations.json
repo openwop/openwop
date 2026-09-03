@@ -1,0 +1,854 @@
+{
+  "$schema": "./deprecations.schema.json",
+  "version": 1,
+  "updated": "2026-09-03",
+  "entries": [
+    {
+      "id": "openwop.deprecation.capabilities-wrapper",
+      "status": "deprecated",
+      "surface": "top-level `capabilities` wrapper object in /.well-known/openwop",
+      "kind": "discovery-shape",
+      "deprecatedIn": "RFC 0073 (v1.1)",
+      "authority": "RFC 0073 §Proposal; spec/v1/capabilities.md §Discovery document root (\"deprecated legacy shape, tolerated only by the schema's additionalProperties: true\")",
+      "removeIn": "2.0",
+      "replacement": "capability families at the document root",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "A top-level `capabilities` wrapper object is a **deprecated legacy shape**"
+        },
+        {
+          "file": "RFCS/0073-capability-document-root-layout.md",
+          "token": "deprecated mirror"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support",
+      "note": " RFC 0176 §C.2: absent from the v2 representation at the cut; removed from the v1 representation at v1 end-of-support."
+    },
+    {
+      "id": "openwop.deprecation.host-dotted-mirror",
+      "status": "deprecated",
+      "surface": "host-side `host.<family>` dotted mirror of root capability families",
+      "kind": "discovery-shape",
+      "deprecatedIn": "RFC 0073 (v1.1)",
+      "authority": "RFC 0073 §3 \"Reference host — canonical root + deprecated mirror\"; retirement gated on the v2 major (RFC 0073 UQ1/UQ2)",
+      "removeIn": "2.0",
+      "replacement": "one declaration file: document-root key ≡ pack peer-dependency identifier ≡ spec section anchor (v2 program C.2)",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "RFCS/0073-capability-document-root-layout.md",
+          "token": "canonical root + deprecated mirror"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support",
+      "note": " RFC 0176 §C.2: absent from the v2 representation at the cut; removed from the v1 representation at v1 end-of-support."
+    },
+    {
+      "id": "openwop.deprecation.profile-openwop-core-alias",
+      "status": "deprecated",
+      "surface": "profile id `openwop-core` (alias of `openwop-discovery-core`)",
+      "kind": "profile-id",
+      "deprecatedIn": "RFC 0155 §A (v1.2, 2026-08-16)",
+      "authority": "spec/v1/profiles.md §`openwop-discovery-core` (canonical) — alias `openwop-core` (deprecated); RFC 0155 §A: removal \"no earlier than v2\"",
+      "removeIn": "2.0",
+      "replacement": "openwop-discovery-core",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/profiles.md",
+          "token": "alias `openwop-core` (deprecated)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.channel-prefix-conventions",
+      "status": "deprecated",
+      "surface": "state-key prefix conventions as a back-compat layer over typed channels",
+      "kind": "prose-convention",
+      "deprecatedIn": "spec/v1/channels-and-reducers.md (v1.0; no RFC cited — the spec text says the conventions are \"a back-compat layer that the spec deprecates over time\")",
+      "authority": "spec/v1/channels-and-reducers.md §Why this exists",
+      "removeIn": "2.0",
+      "replacement": "typed channels with explicit reducers",
+      "codemod": null,
+      "note": "The only entry whose authority is spec prose without an RFC and without a date. The v2 C.4 child RFC states the removal normatively.",
+      "sources": [
+        {
+          "file": "spec/v1/channels-and-reducers.md",
+          "token": "the prefix conventions become a back-compat layer that the spec deprecates over time"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.a2a-bare-supported",
+      "status": "deprecated",
+      "surface": "capabilities.a2a `supported: true` without `protocolVersions[]`",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0152 §A",
+      "authority": "spec/v1/a2a-integration.md §Discovery: \"`supported: true` without `protocolVersions` is deprecated\"",
+      "removeIn": "2.0",
+      "replacement": "non-empty `protocolVersions[]` + `preferredVersion` (v2: a capability facet under the closed root, v2 program C.2)",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "`supported: true` without `protocolVersions` is deprecate"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.mcp-bare-supported",
+      "status": "deprecated",
+      "surface": "capabilities.mcp `supported: true` without `protocolVersions[]`",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0153 §A",
+      "authority": "spec/v1/mcp-integration.md §Discovery: \"Unqualified `supported: true` is deprecated and cannot substantiate a current-MCP claim\"",
+      "removeIn": "2.0",
+      "replacement": "non-empty `protocolVersions[]` (MCP date form) + `preferredVersion`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Unqualified `supported: true` is deprecated"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.config-output-artifact-type",
+      "status": "deprecated",
+      "surface": "workflow node `config.outputArtifactType` bag entry",
+      "kind": "schema-field",
+      "deprecatedIn": "schemas/workflow-definition.schema.json (first-class `artifactType` field)",
+      "authority": "schemas/workflow-definition.schema.json — `artifactType` description: \"replaces the deprecated config.outputArtifactType bag entry\"",
+      "removeIn": "2.0",
+      "replacement": "node.artifactType",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/workflow-definition.schema.json",
+          "token": "replaces the deprecated config.outputArtifactType bag"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.config-chat-card",
+      "status": "deprecated",
+      "surface": "workflow node `config.chatCard` bag entry",
+      "kind": "schema-field",
+      "deprecatedIn": "schemas/workflow-definition.schema.json (first-class `chatCard` field)",
+      "authority": "schemas/workflow-definition.schema.json — `chatCard` description: \"replaces the deprecated config.chatCard bag entry\"",
+      "removeIn": "2.0",
+      "replacement": "node.chatCard",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/workflow-definition.schema.json",
+          "token": "replaces the deprecated config.chatCard bag entry"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.auth-subject-linking-flag",
+      "status": "deprecated",
+      "surface": "capabilities.auth.subjectLinking",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0164 (suite 1.151.0, 2026-09-02)",
+      "authority": "RFC 0164 §A.3: the flag is DERIVED (MUST be true whenever both `openwop-auth-saml` and `openwop-auth-scim` are advertised) and deprecated toward v2; the profile pair carries the obligation",
+      "removeIn": "2.0",
+      "replacement": "the profile pair itself; v2 Subject record with `keyClass` (v2 program C.3)",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/capabilities.schema.json",
+          "token": "RFC 0164: DERIVED and DEPRECATED"
+        },
+        {
+          "file": "RFCS/0164-mandatory-subject-linking.md",
+          "token": "deprecated toward v2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.certification-bundle-v1",
+      "status": "deprecated",
+      "surface": "certification bundle format v1 (schemas/conformance-certification-bundle.schema.json, `bundleVersion: \"1\"`)",
+      "kind": "artifact",
+      "deprecatedIn": "RFC 0148 (suite 1.114.0, 2026-08-12); `--certify` default flipped to v2 at suite 1.152.0",
+      "authority": "COMPATIBILITY.md §2 \"Measurement vs. claim\": v1 remains parseable but ceases to substantiate a new certification after the 90-day window that began 2026-08-12 (ends 2026-11-10)",
+      "removeIn": "2.0",
+      "replacement": "certification bundle v2 (schemas/certification-bundle-v2.schema.json); bundle v3 at v2.0 (v2 program C.1)",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/conformance-certification-bundle.schema.json",
+          "token": "DEPRECATED (RFC 0148"
+        },
+        {
+          "file": "COMPATIBILITY.md",
+          "token": "ceases to substantiate a new certification after the 90-day migration window"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.capabilities-etag-header",
+      "status": "deprecated",
+      "surface": "`Capabilities-Etag` response header on GET /.well-known/openwop",
+      "kind": "header",
+      "deprecatedIn": "RFC 0165 §C.2 (suite 1.155.0, 2026-09-02)",
+      "authority": "RFC 0165 §C.2: hosts SHOULD send a standard ETag on /.well-known/openwop and honor If-None-Match; Capabilities-Etag keeps its semantics through v1.x and is removed at 2.0",
+      "removeIn": "2.0",
+      "replacement": "standard `ETag` / `If-None-Match` on the discovery document (dual-emitted through v1.x)",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/capabilities-change-detection.md",
+          "token": "deprecated toward v2 (`spec/v1/deprecations.json`, `openwop.deprecation.capabilities-etag-header`)"
+        },
+        {
+          "file": "RFCS/0165-v2-preparation-wire-shapes.md",
+          "token": "§C.2 Discovery cache validator"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support",
+      "note": " RFC 0176 §C.2: absent from the v2 representation at the cut; removed from the v1 representation at v1 end-of-support."
+    },
+    {
+      "id": "openwop.deprecation.contract-provenance",
+      "status": "proposed",
+      "surface": "capabilities `contractProvenance` root block ({ suiteVersion, corpusCommit })",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "v2 charter program C.2 (proposal only; RFC 0146 added the block and no RFC has deprecated it)",
+      "removeIn": "2.0",
+      "replacement": "`protocolVersions[]` for contract level; `host.build.{kind,id}` in certification bundle v3 for build identity",
+      "codemod": null,
+      "note": "Proposed because the block is an advisory self-declaration the wire cannot falsify (its own description says it is NOT an integrity check).",
+      "sources": [
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "contractProvenance"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.webhook-x-header-family",
+      "status": "deprecated",
+      "surface": "the `X-openwop-*` webhook delivery header family (Webhook-Id, Event-Type, Timestamp, Signature, Signature-Algorithm)",
+      "kind": "header",
+      "deprecatedIn": "RFC 0165 §C.1 (suite 1.155.0, 2026-09-02)",
+      "authority": "RFC 0165 §C.1: hosts SHOULD dual-emit the `OpenWOP-*` family with identical values; subscribers SHOULD accept either; the `X-openwop-*` family MUST still be sent through v1.x and is removed at 2.0",
+      "removeIn": "2.0",
+      "replacement": "`OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature: sha256={hex}`, `OpenWOP-Signature-Algorithm`",
+      "codemod": null,
+      "note": "The un-prefixed `{hex}` signature value was corrected in place (INTEROP-MATRIX 2026-08-24), not deprecated. The SDKs' `openwop-Webhook-Signature: v1=` header appears in no spec file and is an SDK-versus-spec defect fixed in openwop-sdks alongside RFC 0165 (helpers verify OpenWOP-Signature, then X-openwop-Signature, then the legacy name).",
+      "sources": [
+        {
+          "file": "spec/v1/webhooks.md",
+          "token": "`openwop.deprecation.webhook-x-header-family`"
+        },
+        {
+          "file": "RFCS/0165-v2-preparation-wire-shapes.md",
+          "token": "§C.1 Webhook headers"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.interrupt-token-409-410-overlap",
+      "status": "proposed",
+      "surface": "`409 interrupt_already_resolved` (interrupt.md) and `410 interrupt_gone` (interrupt-profiles.md) for an invalidated interrupt token",
+      "kind": "error-code",
+      "deprecatedIn": null,
+      "authority": "v2 charter program C.4 (error registry): one code per condition",
+      "removeIn": "2.0",
+      "replacement": "one registered code for \"token invalidated\", chosen by the C.4 child RFC",
+      "codemod": null,
+      "note": "Not a deprecation today: both codes are live and normative in different documents for overlapping conditions (a token invalidated by resolution or cancel). Recorded here so the overlap is not lost before the error registry decides it.",
+      "sources": [
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "interrupt_already_resolved"
+        },
+        {
+          "file": "spec/v1/interrupt-profiles.md",
+          "token": "MUST return `410"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.engine-version-type-split",
+      "status": "proposed",
+      "surface": "`engineVersion` typed integer at the discovery root and string on run-event / run-snapshot / three event payloads",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0165 §A.4 (recorded; unification is a v2 C.5 item — changing either type is a COMPATIBILITY §2.2 break in v1.x)",
+      "removeIn": "2.0",
+      "replacement": "one integer `engineVersion` on every carrier (v2)",
+      "codemod": null,
+      "note": "In v1.x the per-event value is the decimal string rendering of the root integer (version-negotiation.md §\"Protocol version grammar\").",
+      "sources": [
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "The `engineVersion` axis is split"
+        },
+        {
+          "file": "schemas/capabilities.schema.json",
+          "token": "\"engineVersion\""
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.poll-cursor-since",
+      "status": "proposed",
+      "surface": "`since` query parameter on GET /v1/runs/{runId}/events/poll",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "v2 charter C.4 (RFC 0167 §E; version-negotiation.md names `lastSequence` authoritative and `since` back-compat for pre-v1.0 deployments)",
+      "removeIn": "2.0",
+      "replacement": "`lastSequence` in v1.x; the v2 C.4 child defines the cursor (RFC 0165 G7)",
+      "codemod": null,
+      "note": "Proposed: the prose tolerates `since` without an RFC or annotation, so there is nothing to cite as a v1.x deprecation; the v2 cut removes it with the cursor redefinition.",
+      "sources": [
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "hosts MAY also accept `since`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.custom-request-headers-x-family",
+      "status": "proposed",
+      "surface": "`X-Dedup`, `X-Force-Engine-Version`, `X-Pack-Sha`, `X-Pack-Signing-Method` request headers",
+      "kind": "header",
+      "deprecatedIn": null,
+      "authority": "v2 charter C.4 (RFC 0167 §E): `OpenWOP-*` for every non-standard header; RFC 0165 §C.1 covered only the webhook family",
+      "removeIn": "2.0",
+      "replacement": "`OpenWOP-Dedup`, `OpenWOP-Force-Engine-Version` (seam-only, moves to the seams profile), `OpenWOP-Pack-Sha`, `OpenWOP-Pack-Signing-Method`",
+      "codemod": null,
+      "note": "Proposed: the four surviving `X-` request headers on canonical or seam operations; renamed by the C.4 child under the one-header-scheme rule.",
+      "sources": [
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "X-Dedup"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "X-Force-Engine-Version"
+        },
+        {
+          "file": "api/openapi.yaml",
+          "token": "X-Pack-Sha"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.replay-fork-boolean",
+      "status": "deprecated",
+      "surface": "capabilities `replay.fork` boolean",
+      "kind": "discovery-field",
+      "deprecatedIn": "capabilities.schema.json (`replay.modes[]` is authoritative; the boolean is a retained legacy spelling)",
+      "authority": "schemas/capabilities.schema.json `replay.fork` description: \"Legacy spelling retained for existing consumers; `modes` is authoritative.\"",
+      "removeIn": "2.0",
+      "replacement": "`replay.modes[]`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/capabilities.schema.json",
+          "token": "Legacy spelling retained"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "modes"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.debug-bundle-seq",
+      "status": "deprecated",
+      "surface": "debug bundle event `seq` field",
+      "kind": "schema-field",
+      "deprecatedIn": "debug-bundle.schema.json (`sequence` is canonical; `seq` is a legacy alias hosts that pre-date the rename emit)",
+      "authority": "schemas/debug-bundle.schema.json `seq` description: \"Legacy alias for `sequence`. Hosts that pre-date the rename emit `seq`. Clients accept either.\"",
+      "removeIn": "2.0",
+      "replacement": "`sequence`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/debug-bundle.schema.json",
+          "token": "Legacy alias for `sequence`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.credential-provider-key",
+      "status": "deprecated",
+      "surface": "node config `credentialProvider` key",
+      "kind": "schema-field",
+      "deprecatedIn": "node-packs.md (`provider` is canonical; `credentialProvider` is named as the legacy alias)",
+      "authority": "spec/v1/node-packs.md §Credential resolution (\"and the legacy alias `credentialProvider`\")",
+      "removeIn": "2.0",
+      "replacement": "`provider`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "credentialProvider"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.manifest-public-key-ref",
+      "status": "deprecated",
+      "surface": "registry version manifest `signing.publicKeyRef`",
+      "kind": "schema-field",
+      "deprecatedIn": "registry-version-manifest.schema.json (`keyId` is canonical; `publicKeyRef` is its legacy alias, enforced by a oneOf)",
+      "authority": "schemas/registry-version-manifest.schema.json `signing` description: \"`publicKeyRef`: legacy alias of `keyId`\"",
+      "removeIn": "2.0",
+      "replacement": "`signing.keyId`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/registry-version-manifest.schema.json",
+          "token": "publicKeyRef"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.legacy-interrupt-payloads",
+      "status": "deprecated",
+      "surface": "`approvalRequested` / `clarificationRequested` legacy event payload definitions and the free-text `feedback` field",
+      "kind": "schema-field",
+      "deprecatedIn": "run-event-payloads.schema.json + interrupt-profiles.md (the interrupt primitive `interrupt.requested {kind}` is canonical)",
+      "authority": "schemas/run-event-payloads.schema.json $defs approvalRequested / clarificationRequested descriptions; spec/v1/interrupt-profiles.md §Approval",
+      "removeIn": "2.0",
+      "replacement": "`interrupt.requested` with `kind: approval | clarification`; `refineFeedback`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/run-event-payloads.schema.json",
+          "token": "approvalRequested"
+        },
+        {
+          "file": "schemas/run-event-payloads.schema.json",
+          "token": "clarificationRequested"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.a2a-0-3-legacy-profile",
+      "status": "deprecated",
+      "surface": "`a2a-0.3-legacy` A2A profile id",
+      "kind": "profile-id",
+      "deprecatedIn": "RFC 0152 §A (A2A 1.0.0 published 2026-03-12; legacy window ends 2027-03-12)",
+      "authority": "spec/v1/a2a-integration.md §Discovery (\"a host SHOULD NOT advertise `a2a-0.3-legacy`\" after 2027-03-12); RFC 0152 register G1/R1",
+      "removeIn": "2.0",
+      "replacement": "`a2a-1.0` only; the v2 C.8 child removes the legacy path",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "a2a-0.3-legacy"
+        },
+        {
+          "file": "RFCS/0152-a2a-1-0-versioned-composition.md",
+          "token": "legacy"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.mcp-2025-06-18-legacy-profile",
+      "status": "deprecated",
+      "surface": "`mcp-2025-06-18-legacy` MCP profile id",
+      "kind": "profile-id",
+      "deprecatedIn": "RFC 0153 §A (current profile accepted 2026-08-12; legacy window ends 2027-08-12)",
+      "authority": "spec/v1/mcp-integration.md §Discovery; RFC 0153 register G1/R1",
+      "removeIn": "2.0",
+      "replacement": "`mcp-2026-07-28` only; the v2 C.8 child removes the legacy path",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "mcp-2025-06-18-legacy"
+        },
+        {
+          "file": "RFCS/0153-mcp-2026-07-28-versioned-composition.md",
+          "token": "legacy"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.sdk-webhook-signature-header",
+      "status": "deprecated",
+      "surface": "`openwop-Webhook-Signature: v1=<hex>` header the pre-1.9.0 SDK helpers read (never in any spec file)",
+      "kind": "header",
+      "deprecatedIn": "RFC 0165 §C.3 (SDK-versus-spec defect; fixed in openwop-sdks TS 1.9.0 / Py 1.7.0 / Go v1.6.0)",
+      "authority": "RFC 0165 §C.3",
+      "removeIn": "2.0",
+      "replacement": "`X-openwop-Signature: sha256={hex}` in v1.x; `OpenWOP-Signature` in v2",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "RFCS/0165-v2-preparation-wire-shapes.md",
+          "token": "openwop-Webhook-Signature"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.undeclared-host-extension-families",
+      "status": "proposed",
+      "surface": "the 11 `§host.*` families RFC 0144 classed `extension` (brand, canvas, chat, coordination, dataIntegration, entities, kanban, knowledge, launchStudio, messaging, webResearch) — declared in neither the dotted nor the root spelling",
+      "kind": "discovery-shape",
+      "deprecatedIn": null,
+      "authority": "v2 charter C.2 (RFC 0167 §E): one declaration file; extensions live under one namespaced key; RFC 0144 §A classified them deliberately as extension namespaces",
+      "removeIn": "2.0",
+      "replacement": "the v2 extension namespace key (C.2 child); the prose sections move to spec/v2/ext/",
+      "codemod": null,
+      "note": "Proposed: RFC 0144 chose not to declare these; the v2 C.2 child gives them a home under the single extension key rather than the open root.",
+      "sources": [
+        {
+          "file": "spec/v1/capability-declaration-classes.json",
+          "token": "\"class\": \"extension\""
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.v1-path-prefix",
+      "status": "proposed",
+      "surface": "the `/v1/` path-key prefix on every versioned operation",
+      "kind": "path",
+      "deprecatedIn": null,
+      "authority": "RFC 0172 §A.2 (v2 operations are unversioned path keys on a bare origin; v1 keys retained through the overlap and removed with the v1 tree at Phase 5)",
+      "removeIn": "2.0",
+      "replacement": "unversioned path keys + `OpenWOP-Version` negotiation (RFC 0172 §A)",
+      "codemod": null,
+      "note": "Proposed: the prefix is the v1 wire surface itself and cannot be deprecated inside v1.x; the row exists so the removal has a date and the alias coverage gate sees the surface.",
+      "sources": [
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "All paths under `/v1/` are versioned"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.gap-local-alias",
+      "status": "proposed",
+      "surface": "the per-RFC `G<n>` local gap id as the register's ID column",
+      "kind": "prose-convention",
+      "deprecatedIn": null,
+      "authority": "RFC 0178 §B.2 (the `openwop.gap.<rfc>.<n>` id is canonical; `G<n>` is an alias until 2.1)",
+      "removeIn": "2.1",
+      "replacement": "`openwop.gap.<rfc>.<n>` in the ID column",
+      "codemod": null,
+      "note": "Proposed: the alias survives through 2.0 so v1 register citations keep resolving; removed at 2.1.",
+      "sources": [
+        {
+          "file": "spec/v1/gaps.schema.json",
+          "token": "\"local\""
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.manifest-deprecated-field",
+      "status": "proposed",
+      "surface": "registry version manifest `deprecated` boolean (an advisory version flag that collides with the JSON Schema `deprecated` annotation keyword)",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0178 §A.1 (renamed so the annotation keyword is unambiguous); the rename rides C.10's registry/v2 re-sign",
+      "removeIn": "2.0",
+      "replacement": "`versionDeprecated`",
+      "codemod": null,
+      "note": "Proposed: a wire field on signed, immutable manifests; the v2 manifest schema carries the new name and registry/v2 re-signs or overlays.",
+      "sources": [
+        {
+          "file": "schemas/registry-version-manifest.schema.json",
+          "token": "Advisory: this version is deprecated"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.interrupt-token-unversioned",
+      "status": "proposed",
+      "surface": "the two-segment interrupt resume token `base64url(payload).hmac` with no scheme id, algorithm, or key id",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0170 §E.1 (`ow2.<alg>.<kid>.<payload>.<mac>`); interrupt.md §Resume tokens' rotation rule references an algorithm-version discriminator the format does not contain",
+      "removeIn": "2.0",
+      "replacement": "`ow2.<alg>.<kid>.<payload>.<mac>`; issued v1 tokens resolvable under `kid: legacy` until their expiry",
+      "codemod": null,
+      "note": "Proposed: a v1.x deprecation would need a new format to point at, which is the v2 change itself; the row exists so the removal has a date.",
+      "sources": [
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "hmac_sha256(secret, payload)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.error-details-retry-after-spellings",
+      "status": "proposed",
+      "surface": "`details.retryAfter`, `details.retryAfterMs`, `details.retryAfterSeconds` on error envelopes (three body spellings beside the `Retry-After` header)",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0171 §B.2 (retry timing lives in `Retry-After` only)",
+      "removeIn": "2.0",
+      "replacement": "the `Retry-After` header",
+      "codemod": null,
+      "note": "Proposed: production-profile.md and scale-profiles.md MUST the body field equal the header; with the body field gone the header is the single source.",
+      "sources": [
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "retryAfterMs"
+        },
+        {
+          "file": "spec/v1/production-profile.md",
+          "token": "retryAfter"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.configurable-dotted-keys",
+      "status": "proposed",
+      "surface": "dotted reserved keys in `RunOptions.configurable` (`ai.provider`, `ai.model`, `ai.credentialRef`, `distillation.tokenBudget`) and the open map they live in",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0171 §D.1 (closed, nested, versioned `configurable`)",
+      "removeIn": "2.0",
+      "replacement": "`configurable.ai.*`, `configurable.distillation.*`; vendor keys under `configurable.extensions.<org>`",
+      "codemod": "openwop.codemod.configurable-v2",
+      "note": "Proposed: the reserved `ai.*` namespace is a string prefix inside an open map; the v2 object nests it.",
+      "sources": [
+        {
+          "file": "spec/v1/run-options.md",
+          "token": "ai.credentialRef"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.security-opt-in-flags",
+      "status": "proposed",
+      "surface": "discovery flags that gate a security-load-bearing MUST: the fourteen `auth.*` gates, `replay.sideEffectSuppression`, `webhooks.durable`, `interrupt.approverRouting` (as a gate), `sandbox.supported` (as a gate)",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0173 §A.1 (an obligation of the surface, never a discovery flag; RFC 0164 §22's ruling applied corpus-wide)",
+      "removeIn": "2.0",
+      "replacement": "the obligation binds when the surface is advertised; `auth.lanes[]`, `replay`, `webhooks`, `interrupt.refKinds[]`, `sandbox.isolationModel` stay as facets; relaxations are operator settings recorded in bundle v3 `host.relaxations[]`",
+      "codemod": null,
+      "note": "Proposed: each flag is a v1 advertisement an RFC minted; v2 removes the gating semantics with the flag.",
+      "sources": [
+        {
+          "file": "spec/v1/replay.md",
+          "token": "sideEffectSuppression"
+        },
+        {
+          "file": "spec/v1/webhooks.md",
+          "token": "webhooks.durable"
+        },
+        {
+          "file": "schemas/capabilities.schema.json",
+          "token": "approverRouting"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.supported-transports-field",
+      "status": "proposed",
+      "surface": "`supportedTransports[]` at the discovery root (`rest | mcp | a2a | grpc`)",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0175 §B.1 (REST is the wire; A2A and MCP are compositions with first-class facets; gRPC is demoted)",
+      "removeIn": "2.0",
+      "replacement": "none; `a2a.*` and `mcp.*` facets",
+      "codemod": "openwop.codemod.discovery-document-v2",
+      "note": "Proposed: nothing in the corpus reads the `mcp` or `a2a` members (profiles.md reads only `rest`).",
+      "sources": [
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "supportedTransports"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.grpc-transport-core",
+      "status": "proposed",
+      "surface": "`capabilities.grpc` block and `grpc-transport.md` as a core Stable document with RFC 2119 MUSTs",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0175 §A.1 (demoted to `spec/v2/ext/grpc-transport/`, `unwitnessable`, `adoption: none`; the door back into core is named)",
+      "removeIn": "2.0",
+      "replacement": "`spec/v2/ext/grpc-transport/` (documented, not advertised)",
+      "codemod": "openwop.codemod.discovery-document-v2",
+      "note": "Proposed: the suite ships no gRPC client, no host advertises the block, and the proto defers its own messages to a v1.x that never landed.",
+      "sources": [
+        {
+          "file": "spec/v1/grpc-transport.md",
+          "token": "REST + SSE remains the REQUIRED wire surface"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.well-known-wop-alias",
+      "status": "proposed",
+      "surface": "`/.well-known/wop` served byte-identically with `/.well-known/openwop` (MyndHyve, the wop → openwop rebrand alias; the C.5 precedent)",
+      "kind": "path",
+      "deprecatedIn": null,
+      "authority": "RFC 0176 §C.3",
+      "removeIn": "2.0",
+      "removalTrigger": "v1-end-of-support",
+      "replacement": "`/.well-known/openwop` (one resource; RFC 0176 §C.1)",
+      "codemod": null,
+      "note": "Proposed: the alias exists in one host and was never registered; it is the model RFC 0172 cites for overlap publication.",
+      "sources": [
+        {
+          "file": "RFCS/0176-v2-persisted-data-and-coexistence.md",
+          "token": "/.well-known/wop"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.engines-absent-ceiling",
+      "status": "proposed",
+      "surface": "`engines.openwop` ranges with no upper bound read as open (146 of 282 published versions)",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0177 §A.1 (absent ceiling ⇒ `<2.0.0`; `pack_engine_unsupported` at install on every publication path)",
+      "removeIn": "2.0",
+      "replacement": "an explicit `>=x.y.z <M.0.0` range; the v2 schema enforces the grammar",
+      "codemod": null,
+      "note": "Proposed: no codemod — the author declares compatibility; `openwop.codemod.pack-manifest-v2` refuses a manifest with no v2-satisfiable range.",
+      "sources": [
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "`engines.openwop`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.pack-peer-dependency-aliases",
+      "status": "proposed",
+      "surface": "peer-dependency identifiers that are not declaration-file keys: `host.*` dotted twins (`host.fs`/`fs`, `host.queueBus`/`queueBus`), `openwop.agents.memoryBackends`, facet paths (`aiProviders.imageGeneration`, `host.aiEnvelope.await`), the reserved-slot prose list",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0177 §B.1–§B.2 (identifier ≡ declaration-file key; `pack_peer_dependency_undefined` reads against the file; generated alias table)",
+      "removeIn": "2.0",
+      "removalTrigger": "v1-end-of-support",
+      "replacement": "`spec/v2/peer-dependency-aliases.json` through the overlap; `peerDependenciesMeta.<family>.facets[]` for facets",
+      "codemod": "openwop.codemod.pack-manifest-v2",
+      "note": "Proposed: the table is generated by `check-declaration.mjs` over the published manifests once the declaration file exists (RFC 0177 G2).",
+      "sources": [
+        {
+          "file": "spec/v1/host-capabilities.md",
+          "token": "pack_peer_dependency_undefined"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.manifest-signing-method",
+      "status": "proposed",
+      "surface": "`signing.method: manual | ed25519 | sigstore` — two values the schema calls synonymous that the verifier treats as signatures over different bytes",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0177 §C.3 (one `signing.scheme: ed25519-canonical-json`)",
+      "removeIn": "2.0",
+      "replacement": "`signing.scheme`",
+      "codemod": "openwop.codemod.pack-manifest-v2",
+      "note": "Proposed: the codemod refuses `ed25519` and `sigstore` — those packs are re-signed in `registry/v2/`, never relabeled.",
+      "sources": [
+        {
+          "file": "schemas/registry-version-manifest.schema.json",
+          "token": "synonymous in practice"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.connection-provider-version-precedence",
+      "status": "proposed",
+      "surface": "`connection-packs.md` clause 6: an installed pack takes precedence over a built-in of the same `provider.id` when its version is greater-than-or-equal",
+      "kind": "prose-convention",
+      "deprecatedIn": null,
+      "authority": "RFC 0177 §D.1 (RFC 0095 UQ4 decided: fail-closed `connection_provider_conflict`; qualified `<packName>#<id>` form)",
+      "removeIn": "2.0",
+      "replacement": "fail-closed conflict; the qualified form",
+      "codemod": null,
+      "note": "Proposed: silent precedence by version is the Axiom 2 failure UQ4 asked about.",
+      "sources": [
+        {
+          "file": "spec/v1/connection-packs.md",
+          "token": "greater-than-or-equal to the built-in's"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.seam-operations-in-canonical-api",
+      "status": "proposed",
+      "surface": "the nine `/v1/host/sample/*`, `/v1/host/workspace/files*` and `/v1/packs-test/*` seam/test operations in `api/openapi.yaml` and `spec/v1/operation-path-manifest.json`, and the `testSeams` discovery-flag proposals",
+      "kind": "path",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §C (seams are the profile `openwop-conformance-seams-v2` with `api/seams-v2.yaml`; forbidden from the capability namespace)",
+      "removeIn": "2.0",
+      "replacement": "`api/seams-v2.yaml`; `profiles[]` membership",
+      "codemod": null,
+      "note": "Proposed: a generated document, not a persisted artifact.",
+      "sources": [
+        {
+          "file": "spec/v1/operation-path-manifest.json",
+          "token": "/v1/host/sample/a2a/tasks/{taskId}"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.coherence-scenarios-in-host-bundle",
+      "status": "proposed",
+      "surface": "the 29 corpus-coherence scenarios reported `blocked` in every host bundle",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §D.1 (spec-repo CI; never in a bundle)",
+      "removeIn": "2.0",
+      "replacement": "`scripts/check-spec-coherence.mjs`",
+      "codemod": null,
+      "note": "Proposed: bundle v3's schema forbids the ids.",
+      "sources": [
+        {
+          "file": "conformance/src/lib/scenario-disposition.ts",
+          "token": "See lib/spec-coherence.ts for why not a new disposition value"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.suite-vendored-corpus",
+      "status": "proposed",
+      "surface": "the published suite tarball's vendored `api/` and `schemas/` copies (and `src`, suite self-tests)",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §D.2 (`dist`, `fixtures`, `vectors` only; corpus as the digest-checked peer dependency `@openwop/spec-artifacts`)",
+      "removeIn": "2.0",
+      "replacement": "`@openwop/spec-artifacts`",
+      "codemod": null,
+      "note": "Proposed: the 1.138.1 mechanism — one source, no copy.",
+      "sources": [
+        {
+          "file": "conformance/README.md",
+          "token": "The vendored contract is digest-checked"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.certification-bundle-v2-open-root",
+      "status": "proposed",
+      "surface": "certification bundle v2 (`bundleVersion: \"2\"`, root `additionalProperties: true`, `witnessSha256` absent, unsigned)",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §E (bundle v3: closed root, required witness/build/tier/count, Ed25519 attestation)",
+      "removeIn": "2.0",
+      "removalTrigger": "v1-end-of-support",
+      "replacement": "bundle v3 (`schemas/v2/certification-bundle.schema.json`)",
+      "codemod": null,
+      "note": "Proposed: never upgraded in place; a v2 bundle remains v2 evidence until v1 end-of-support.",
+      "sources": [
+        {
+          "file": "schemas/certification-bundle-v2.schema.json",
+          "token": "\"const\": \"2\""
+        }
+      ]
+    }
+  ]
+}

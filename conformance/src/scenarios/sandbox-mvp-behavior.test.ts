@@ -39,6 +39,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -84,20 +85,20 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.fs-escape-read');
     expect(probe.status).toBe(200);
     expect(
       probe.body.error?.code,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.host-fs-escape-fs-access-from-sandboxed-code-fails-closed', 
         'RFCS/0035-sandbox-execution-contract.md §B node-pack-sandbox-fs-gated',
         'sandboxed `require("fs")` MUST fail closed with `sandbox_escape_attempt`',
       ),
     ).toBe('sandbox_escape_attempt');
     expect(
       probe.body.error?.details?.escapeKind,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.host-fs-escape-fs-access-from-sandboxed-code-fails-closed', 
         'RFCS/0035-sandbox-execution-contract.md §B',
         'escapeKind MUST be host-fs-escape',
       ),
@@ -108,13 +109,13 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.env-leak');
     expect(probe.status).toBe(200);
     expect(
       probe.body.error?.code,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.host-env-leak-process-env-access-from-sandboxed-code-fails-closed', 
         'RFCS/0035-sandbox-execution-contract.md §B node-pack-sandbox-no-env',
         'sandboxed `process.env` access MUST fail closed with `sandbox_escape_attempt`',
       ),
@@ -126,13 +127,13 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.network-escape');
     expect(probe.status).toBe(200);
     expect(
       probe.body.error?.code,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.network-escape-http-net-access-from-sandboxed-code-fails-closed', 
         'RFCS/0035-sandbox-execution-contract.md §B node-pack-sandbox-network-gated',
         'sandboxed `require("http")` MUST fail closed with `sandbox_escape_attempt`',
       ),
@@ -144,10 +145,10 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.process-escape');
-    expect(probe.status).toBe(200);
+    expect(probe.status, req('openwop.it.sandbox-mvp-behavior.host-process-escape-child-process-access-from-sandboxed-code-fails-closed', 'RFC 0035 §B', 'host-process-escape — child_process access from sandboxed code fails closed')).toBe(200);
     expect(probe.body.error?.code).toBe('sandbox_escape_attempt');
     // The heuristic may catch this as host-fs-escape (via "require") if
     // network/process patterns don't match first. Accept either as long
@@ -159,7 +160,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const start = Date.now();
     const probe = await invoke('misbehave.timeout');
@@ -167,7 +168,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     expect(probe.status).toBe(200);
     expect(
       probe.body.error?.code,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.sandbox-timeout-runaway-loop-terminated-by-wallclocklimitms', 
         'RFCS/0035-sandbox-execution-contract.md §B node-pack-sandbox-timeout',
         'sandboxed infinite-loop MUST be terminated with `sandbox_timeout`',
       ),
@@ -175,7 +176,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     // Should terminate within ~2× wallClockLimitMs (1000ms config + overhead).
     expect(
       elapsed < 5000,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.sandbox-timeout-runaway-loop-terminated-by-wallclocklimitms', 
         'RFCS/0035-sandbox-execution-contract.md §A wallClockLimitMs',
         `timeout MUST terminate within reasonable bound (got ${elapsed}ms; cap is 1000ms)`,
       ),
@@ -186,7 +187,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const r1 = await invoke('misbehave.cross-pack-mutate');
     const r2 = await invoke('misbehave.cross-pack-mutate');
@@ -202,7 +203,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     const shared3 = (r3.body.result as { shared?: number })?.shared;
     expect(
       shared1 === 1 && shared2 === 1 && shared3 === 1,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.cross-pack-mutation-fresh-vm-context-per-invocation-no-state-leaks', 
         'RFCS/0035-sandbox-execution-contract.md §B node-pack-sandbox-isolated-context',
         `each invocation MUST see fresh state (got shared=[${shared1}, ${shared2}, ${shared3}]; expected all 1)`,
       ),
@@ -213,20 +214,20 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.capability-gate-violation', {}, []);
     expect(probe.status).toBe(200);
     expect(
       probe.body.error?.code,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.capability-gate-respected-host-call-not-in-allowedhostcalls-fails-with-sandbox-c', 
         'spec/v1/host-capabilities.md §"Error codes" + §B node-pack-sandbox-capability-gate-respected',
         'capability-gate violation MUST fail closed with `sandbox_capability_denied` — distinct from `sandbox_escape_attempt` which covers forbidden-syscall escapes per the spec\'s 4-code catalog',
       ),
     ).toBe('sandbox_capability_denied');
     expect(
       probe.body.error?.details?.requestedCapability,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.capability-gate-respected-host-call-not-in-allowedhostcalls-fails-with-sandbox-c', 
         'spec/v1/host-capabilities.md §"Error codes"',
         '`sandbox_capability_denied` MUST carry `details.requestedCapability` identifying the host method the sandboxed code attempted to call',
       ),
@@ -237,7 +238,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('misbehave.memory-bomb');
     expect(probe.status).toBe(200);
@@ -254,7 +255,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     // legacy code.
     expect(
       ['sandbox_memory_exceeded', 'sandbox_timeout'].includes(probe.body.error?.code ?? ''),
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.memory-exceeded-runaway-allocation-fails-with-sandbox-memory-exceeded', 
         'spec/v1/host-capabilities.md §"Error codes" + §B node-pack-sandbox-memory-cap',
         `memory-bomb MUST surface either \`sandbox_memory_exceeded\` (when memoryLimitBytes caught it) or \`sandbox_timeout\` (when wallClockLimitMs caught it first) — got code: ${probe.body.error?.code}`,
       ),
@@ -265,13 +266,13 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('well-behaved.host-fetch', {}, ['fetch']);
     expect(probe.status).toBe(200);
     expect(
       probe.body.error,
-      driver.describe(
+      req('openwop.it.sandbox-mvp-behavior.well-behaved-host-fetch-allowedhostcalls-fetch-permits-the-host-call', 
         'RFCS/0035-sandbox-execution-contract.md §A allowedHostCalls',
         'host call IN allowedHostCalls MUST succeed (no error envelope)',
       ),
@@ -282,10 +283,10 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     if (!(await isSandboxAdvertised())) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isSandboxAdvertised())` returned early');
     }
     const probe = await invoke('well-behaved.echo', { input: 'hello-sandbox' });
-    expect(probe.status).toBe(200);
+    expect(probe.status, req('openwop.it.sandbox-mvp-behavior.well-behaved-echo-sandboxed-code-returns-args-round-trip-when-no-escape-attempt', 'RFC 0035 §B', 'well-behaved.echo — sandboxed code returns args round-trip when no escape attempt')).toBe(200);
     expect(probe.body.error).toBeUndefined();
     expect((probe.body.result as { echoed?: string })?.echoed).toBe('hello-sandbox');
   });

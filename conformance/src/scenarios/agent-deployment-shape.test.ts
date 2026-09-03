@@ -38,9 +38,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -51,11 +49,11 @@ describe('agent-deployment-shape: capability advertisement (RFC 0082, server-fre
     const caps = loadSchema('capabilities.schema.json');
     const agents = (caps.properties as Record<string, { properties?: Record<string, { properties?: Record<string, unknown> }> }>).agents;
     const deployment = agents?.properties?.deployment;
-    expect(deployment, why('capabilities.md §agents', 'agents.deployment MUST be declared')).toBeDefined();
+    expect(deployment, req('openwop.it.agent-deployment-shape.the-capabilities-schema-declares-agents-deployment-with-its-sub-flags', 'capabilities.md §agents', 'agents.deployment MUST be declared')).toBeDefined();
     for (const flag of ['supported', 'channels', 'canary', 'rollback', 'states']) {
       expect(
         deployment?.properties?.[flag],
-        why('agent-deployment.md §F', `agents.deployment.${flag} MUST be declared`),
+        req('openwop.it.agent-deployment-shape.the-capabilities-schema-declares-agents-deployment-with-its-sub-flags', 'agent-deployment.md §F', `agents.deployment.${flag} MUST be declared`),
       ).toBeDefined();
     }
   });
@@ -69,16 +67,16 @@ describe('agent-deployment-shape: deployment record + AgentRef binding (RFC 0082
 
   it('AgentDeployment validates a conforming record and rejects a bad state / out-of-range canary', () => {
     const good = { agentId: 'core.openwop.agents.support-resolver', version: '2.4.0', state: 'active', canaryPercent: 10, channels: ['stable'] };
-    expect(record(good), why('RFC 0082 §C', 'a conforming deployment record MUST validate')).toBe(true);
-    expect(record({ ...good, state: 'live' }), why('RFC 0082 §C', 'an out-of-enum state MUST be rejected')).toBe(false);
-    expect(record({ ...good, canaryPercent: 150 }), why('RFC 0082 §C', 'canaryPercent > 100 MUST be rejected')).toBe(false);
+    expect(record(good), req('openwop.it.agent-deployment-shape.agentdeployment-validates-a-conforming-record-and-rejects-a-bad-state-out-of-ran', 'RFC 0082 §C', 'a conforming deployment record MUST validate')).toBe(true);
+    expect(record({ ...good, state: 'live' }), req('openwop.it.agent-deployment-shape.agentdeployment-validates-a-conforming-record-and-rejects-a-bad-state-out-of-ran', 'RFC 0082 §C', 'an out-of-enum state MUST be rejected')).toBe(false);
+    expect(record({ ...good, canaryPercent: 150 }), req('openwop.it.agent-deployment-shape.agentdeployment-validates-a-conforming-record-and-rejects-a-bad-state-out-of-ran', 'RFC 0082 §C', 'canaryPercent > 100 MUST be rejected')).toBe(false);
   });
 
   it('AgentRef channel XOR version: each alone and neither validate; both is rejected (RFC 0082 §A)', () => {
-    expect(agentRef({ agentId: 'core.x.y.z', version: '1.0.0' }), why('RFC 0082 §A', 'version-only AgentRef MUST validate')).toBe(true);
-    expect(agentRef({ agentId: 'core.x.y.z', channel: 'stable' }), why('RFC 0082 §A', 'channel-only AgentRef MUST validate')).toBe(true);
-    expect(agentRef({ agentId: 'core.x.y.z' }), why('RFC 0082 §A', 'a ref with neither version nor channel MUST validate (host default)')).toBe(true);
-    expect(agentRef({ agentId: 'core.x.y.z', version: '1.0.0', channel: 'stable' }), why('RFC 0082 §A', 'a ref with BOTH version and channel MUST be rejected')).toBe(false);
+    expect(agentRef({ agentId: 'core.x.y.z', version: '1.0.0' }), req('openwop.it.agent-deployment-shape.agentref-channel-xor-version-each-alone-and-neither-validate-both-is-rejected-rf', 'RFC 0082 §A', 'version-only AgentRef MUST validate')).toBe(true);
+    expect(agentRef({ agentId: 'core.x.y.z', channel: 'stable' }), req('openwop.it.agent-deployment-shape.agentref-channel-xor-version-each-alone-and-neither-validate-both-is-rejected-rf', 'RFC 0082 §A', 'channel-only AgentRef MUST validate')).toBe(true);
+    expect(agentRef({ agentId: 'core.x.y.z' }), req('openwop.it.agent-deployment-shape.agentref-channel-xor-version-each-alone-and-neither-validate-both-is-rejected-rf', 'RFC 0082 §A', 'a ref with neither version nor channel MUST validate (host default)')).toBe(true);
+    expect(agentRef({ agentId: 'core.x.y.z', version: '1.0.0', channel: 'stable' }), req('openwop.it.agent-deployment-shape.agentref-channel-xor-version-each-alone-and-neither-validate-both-is-rejected-rf', 'RFC 0082 §A', 'a ref with BOTH version and channel MUST be rejected')).toBe(false);
   });
 });
 
@@ -94,29 +92,29 @@ describe('agent-deployment-shape: deployment.* event payloads (RFC 0082, server-
   const stateChanged = ajv.getSchema('payloads#/$defs/deploymentStateChanged');
 
   it('deployment.promoted validates a content-free promotion record and requires toVersion + toState', () => {
-    expect(promoted, 'the deploymentPromoted $def MUST exist').toBeTruthy();
+    expect(promoted, req('openwop.it.agent-deployment-shape.deployment-promoted-validates-a-content-free-promotion-record-and-requires-tover', 'RFC 0082', 'the deploymentPromoted $def MUST exist')).toBeTruthy();
     expect(
       promoted!({ agentId: 'core.openwop.agents.support-resolver', toVersion: '2.4.0', toState: 'active', channel: 'stable', canaryPercent: 10, evalRunId: 'run_abc' }),
-      why('RFC 0082 §D', 'a conforming deployment.promoted payload MUST validate'),
+      req('openwop.it.agent-deployment-shape.deployment-promoted-validates-a-content-free-promotion-record-and-requires-tover', 'RFC 0082 §D', 'a conforming deployment.promoted payload MUST validate'),
     ).toBe(true);
-    expect(promoted!({ agentId: 'a' }), why('RFC 0082 §D', 'deployment.promoted without toVersion/toState MUST be rejected')).toBe(false);
+    expect(promoted!({ agentId: 'a' }), req('openwop.it.agent-deployment-shape.deployment-promoted-validates-a-content-free-promotion-record-and-requires-tover', 'RFC 0082 §D', 'deployment.promoted without toVersion/toState MUST be rejected')).toBe(false);
   });
 
   it('deployment.rolled-back / canary.adjusted / state.changed validate conforming records', () => {
-    expect(rolledBack!({ agentId: 'a', fromVersion: '2.4.0', toVersion: '2.3.1', rollbackPointer: '2.3.1' }), why('RFC 0082 §D', 'a conforming deployment.rolled-back MUST validate')).toBe(true);
-    expect(canary!({ agentId: 'a', version: '2.4.0', fromPercent: 10, toPercent: 50 }), why('RFC 0082 §D', 'a conforming deployment.canary.adjusted MUST validate')).toBe(true);
-    expect(stateChanged!({ agentId: 'a', version: '2.4.0', fromState: 'active', toState: 'paused' }), why('RFC 0082 §D', 'a conforming deployment.state.changed MUST validate')).toBe(true);
-    expect(stateChanged!({ agentId: 'a', version: '2.4.0', fromState: 'active', toState: 'live' }), why('RFC 0082 §D', 'an out-of-enum toState MUST be rejected')).toBe(false);
+    expect(rolledBack!({ agentId: 'a', fromVersion: '2.4.0', toVersion: '2.3.1', rollbackPointer: '2.3.1' }), req('openwop.it.agent-deployment-shape.deployment-rolled-back-canary-adjusted-state-changed-validate-conforming-records', 'RFC 0082 §D', 'a conforming deployment.rolled-back MUST validate')).toBe(true);
+    expect(canary!({ agentId: 'a', version: '2.4.0', fromPercent: 10, toPercent: 50 }), req('openwop.it.agent-deployment-shape.deployment-rolled-back-canary-adjusted-state-changed-validate-conforming-records', 'RFC 0082 §D', 'a conforming deployment.canary.adjusted MUST validate')).toBe(true);
+    expect(stateChanged!({ agentId: 'a', version: '2.4.0', fromState: 'active', toState: 'paused' }), req('openwop.it.agent-deployment-shape.deployment-rolled-back-canary-adjusted-state-changed-validate-conforming-records', 'RFC 0082 §D', 'a conforming deployment.state.changed MUST validate')).toBe(true);
+    expect(stateChanged!({ agentId: 'a', version: '2.4.0', fromState: 'active', toState: 'live' }), req('openwop.it.agent-deployment-shape.deployment-rolled-back-canary-adjusted-state-changed-validate-conforming-records', 'RFC 0082 §D', 'an out-of-enum toState MUST be rejected')).toBe(false);
   });
 
   it('deployment.* events are content-free — a manifest body and a prompt are rejected (deployment-event-no-content-leak)', () => {
     expect(
       promoted!({ agentId: 'a', toVersion: '2.4.0', toState: 'active', manifestBody: '{...}' }),
-      why('SECURITY invariant deployment-event-no-content-leak', 'a deployment.promoted MUST NOT carry a manifest body'),
+      req('openwop.it.agent-deployment-shape.deployment-events-are-content-free-a-manifest-body-and-a-prompt-are-rejected-dep', 'SECURITY invariant deployment-event-no-content-leak', 'a deployment.promoted MUST NOT carry a manifest body'),
     ).toBe(false);
     expect(
       stateChanged!({ agentId: 'a', version: '2.4.0', fromState: 'active', toState: 'paused', prompt: 'system: …' }),
-      why('SECURITY invariant deployment-event-no-content-leak', 'a deployment.state.changed MUST NOT carry prompt content'),
+      req('openwop.it.agent-deployment-shape.deployment-events-are-content-free-a-manifest-body-and-a-prompt-are-rejected-dep', 'SECURITY invariant deployment-event-no-content-leak', 'a deployment.state.changed MUST NOT carry prompt content'),
     ).toBe(false);
   });
 });
@@ -125,15 +123,15 @@ describe('agent-deployment-shape: §B recorded-fact pin + enum (RFC 0082, server
   it('agent.invocation.started carries the additive recorded-fact resolvedAgentVersion / resolvedChannel', () => {
     const payloads = loadSchema('run-event-payloads.schema.json');
     const started = ((payloads.$defs as Record<string, { properties?: Record<string, unknown> }>).agentInvocationStarted)?.properties ?? {};
-    expect(started.resolvedAgentVersion, why('RFC 0082 §B', 'agent.invocation.started.resolvedAgentVersion MUST be declared (the channel pin)')).toBeDefined();
-    expect(started.resolvedChannel, why('RFC 0082 §B', 'agent.invocation.started.resolvedChannel MUST be declared')).toBeDefined();
+    expect(started.resolvedAgentVersion, req('openwop.it.agent-deployment-shape.agent-invocation-started-carries-the-additive-recorded-fact-resolvedagentversion', 'RFC 0082 §B', 'agent.invocation.started.resolvedAgentVersion MUST be declared (the channel pin)')).toBeDefined();
+    expect(started.resolvedChannel, req('openwop.it.agent-deployment-shape.agent-invocation-started-carries-the-additive-recorded-fact-resolvedagentversion', 'RFC 0082 §B', 'agent.invocation.started.resolvedChannel MUST be declared')).toBeDefined();
   });
 
   it('all four deployment event names appear in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = (runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum ?? [];
     for (const e of ['deployment.promoted', 'deployment.rolled-back', 'deployment.canary.adjusted', 'deployment.state.changed']) {
-      expect(enumVals).toContain(e);
+      expect(enumVals, req('openwop.it.agent-deployment-shape.all-four-deployment-event-names-appear-in-the-runeventtype-enum', 'RFC 0082', 'all four deployment event names appear in the RunEventType enum')).toContain(e);
     }
   });
 });

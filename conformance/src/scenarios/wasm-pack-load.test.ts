@@ -17,6 +17,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-wasm-pack-roundtrip';
 
@@ -42,11 +43,11 @@ describe('wasm-pack-load: discovery surfaces WASM runtime support', () => {
       console.warn('[wasm-pack-load] host does not advertise WASM support; skipping');
       return softSkip('inapplicable', '[wasm-pack-load] host does not advertise WASM support; skipping');
     }
-    expect(Array.isArray(wasm.abiVersions), driver.describe(
+    expect(Array.isArray(wasm.abiVersions), req('openwop.it.wasm-pack-load.a-host-claiming-wasm-support-advertises-abiversions-including-1', 
       'RFCS/0008-wasm-abi.md §H',
       'capabilities.nodePackRuntimes.wasm.abiVersions MUST be an array',
     )).toBe(true);
-    expect(wasm.abiVersions?.includes(1), driver.describe(
+    expect(wasm.abiVersions?.includes(1), req('openwop.it.wasm-pack-load.a-host-claiming-wasm-support-advertises-abiversions-including-1', 
       'RFCS/0008-wasm-abi.md §H',
       'abiVersions MUST include 1 (this RFC) when supported',
     )).toBe(true);
@@ -66,7 +67,7 @@ describe('wasm-pack-load: loaded pack typeIds are dispatchable', () => {
     // WASM-provided typeId. A host that loaded the pack accepts the
     // POST /v1/runs; one that didn't would return 400/404.
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE, inputs: { name: 'world' } });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.wasm-pack-load.host-accepts-a-workflow-whose-node-typeid-is-provided-by-a-loaded-wasm-pack', 
       'RFCS/0008-wasm-abi.md §B + node-packs.md §Reserved typeIds',
       'host MUST accept runs whose nodes reference loaded-pack typeIds',
     )).toBe(201);

@@ -18,6 +18,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 // Re-use `conformance-identity` if it advertises a configurableSchema;
 // otherwise the scenario soft-skips. Hosts adopting v1.1 SHOULD seed a
@@ -44,13 +46,13 @@ describe('configurable-schema: per-workflow schema enforced', () => {
       console.warn(
         '[configurable-schema] no advertised fixture declares configurableSchema; skipping',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!fixture` returned early ([configurable-schema] no advertised fixture declares configurableSchema; skipping)');
     }
 
     const manifest = await driver.get(`/v1/workflows/${encodeURIComponent(fixture)}`);
     const schema = (manifest.json as { configurableSchema?: Record<string, unknown> })
       .configurableSchema;
-    expect(schema, driver.describe(
+    expect(schema, req('openwop.it.configurable-schema.manifest-surfaces-configurableschema-mismatched-configurable-is-rejected', 
       'run-options.md §"Per-workflow configurableSchema"',
       'GET /v1/workflows/{workflowId} MUST surface configurableSchema when the workflow declares one',
     )).toBeDefined();
@@ -64,7 +66,7 @@ describe('configurable-schema: per-workflow schema enforced', () => {
     });
     expect(
       [400, 422].includes(create.status),
-      driver.describe(
+      req('openwop.it.configurable-schema.manifest-surfaces-configurableschema-mismatched-configurable-is-rejected', 
         'run-options.md §"Per-workflow configurableSchema"',
         'configurable that violates the workflow schema MUST be rejected with 400/422',
       ),
@@ -76,12 +78,12 @@ describe('configurable-schema: per-workflow schema enforced', () => {
 
   it('configurable overlay matching configurableSchema is accepted', async () => {
     const fixture = await pickFixture();
-    if (!fixture) return; // covered by skip warning above
+    if (!fixture) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!fixture` returned early (covered by skip warning above)'); // covered by skip warning above
 
     const manifest = await driver.get(`/v1/workflows/${encodeURIComponent(fixture)}`);
     const schema = (manifest.json as { configurableSchema?: Record<string, unknown> })
       .configurableSchema;
-    if (!schema) return;
+    if (!schema) return softSkip('blocked', 'precondition not met — `!schema` returned early (seam, prior step, or fixture unavailable)');
 
     // Build a minimal valid overlay derived from the schema's first
     // `properties.*` entry. This stays generic across fixtures: we pick
@@ -106,7 +108,7 @@ describe('configurable-schema: per-workflow schema enforced', () => {
       workflowId: fixture,
       configurable: overlay,
     });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.configurable-schema.configurable-overlay-matching-configurableschema-is-accepted', 
       'run-options.md §"Per-workflow configurableSchema"',
       'configurable matching the declared schema MUST be accepted (201)',
     )).toBe(201);

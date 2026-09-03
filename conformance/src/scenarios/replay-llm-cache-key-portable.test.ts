@@ -60,6 +60,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { semanticRequestDigestV2, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -99,12 +101,12 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
     const result = await callSeam(input);
     if (result.status === 404) {
       ctx.skip(); // host doesn't expose the test seam
-      return;
+      return softSkip('blocked', 'precondition not met — `result.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(result.status).toBe(200);
     expect(
       result.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key-portable.host-cache-key-must-equal-locally-recomputed-sha-256-over-canonical-json-reprodu', 
         'SECURITY/invariants.yaml §replay-llm-cache-key-portable + replay.md §B',
         'host cache key MUST be reproducible offline from the recipe alone — no host-internal state',
       ),
@@ -121,12 +123,12 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
     const a = await callSeam(input);
     if (a.status === 404) {
       ctx.skip(); // host doesn't expose the test seam
-      return;
+      return softSkip('blocked', 'precondition not met — `a.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     const b = await callSeam(input);
     expect(
       a.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key-portable.two-identical-probes-must-yield-byte-identical-keys-intra-host-determinism', 
         'SECURITY/invariants.yaml §replay-llm-cache-key-portable',
         'two byte-identical recipe inputs MUST yield byte-identical keys (no per-request entropy)',
       ),
@@ -145,7 +147,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field inva
     const baseResult = await callSeam(base);
     if (baseResult.status === 404) {
       ctx.skip(); // host doesn't expose the test seam
-      return;
+      return softSkip('blocked', 'precondition not met — `baseResult.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // The security boundary: ANY of these fields leaking into the key
@@ -163,7 +165,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field inva
     const pollutedResult = await callSeam(polluted);
     expect(
       pollutedResult.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key-portable.transport-only-fields-request-id-trace-context-tenant-id-must-not-influence-the', 
         'SECURITY/invariants.yaml §replay-llm-cache-key-portable + replay.md §A',
         'transport-only fields (request id, trace context, tenant id, run id, timeout) MUST NOT influence the cache key — leaking them defeats the portability invariant',
       ),
@@ -178,13 +180,13 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: Phase 4 advertisement
     const version = em?.version;
     if (typeof version !== 'number' || version < 4) {
       ctx.skip(); // pre-Phase-4 or no multiAgent advertisement
-      return;
+      return softSkip('blocked', 'precondition not met — `typeof version !== \'number\' || version < 4` returned early (seam, prior step, or fixture unavailable)');
     }
 
     const recipe = em?.replayDeterminism?.llmCacheKeyRecipe;
     expect(
       typeof recipe === 'string',
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key-portable.hosts-advertising-version-4-must-advertise-replaydeterminism-llmcachekeyrecipe', 
         'RFCS/0041-multi-agent-replay-under-nondeterminism.md §D',
         'Phase 4 host MUST advertise replayDeterminism.llmCacheKeyRecipe (`spec-rfc-0041` or `x-host-<host>-<recipe>`)',
       ),
@@ -195,7 +197,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: Phase 4 advertisement
     const vendor = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(r);
     expect(
       canonical || vendor,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key-portable.hosts-advertising-version-4-must-advertise-replaydeterminism-llmcachekeyrecipe', 
         'schemas/capabilities.schema.json §replayDeterminism.llmCacheKeyRecipe',
         'llmCacheKeyRecipe MUST be `spec-rfc-0041` OR match `^x-host-<host>-<recipe>$` per host-extensions.md',
       ),

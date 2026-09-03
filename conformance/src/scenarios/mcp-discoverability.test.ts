@@ -29,6 +29,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface McpAdvertisement {
   supported?: unknown;
@@ -75,28 +77,28 @@ async function fetchMcpAdvertisements(): Promise<DiscoveredMcp[]> {
 describe('mcp: discoverability shape', () => {
   it('any advertised MCP capability has well-formed shape ({supported, serverUrls})', async () => {
     const advertisements = await fetchMcpAdvertisements();
-    if (advertisements.length === 0) return; // skip-equivalent: host does not advertise MCP
+    if (advertisements.length === 0) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `advertisements.length === 0` returned early (skip-equivalent: host does not advertise MCP)'); // skip-equivalent: host does not advertise MCP
 
     for (const { path, ad } of advertisements) {
-      expect(typeof ad.supported, driver.describe(
+      expect(typeof ad.supported, req('openwop.it.mcp-discoverability.any-advertised-mcp-capability-has-well-formed-shape-supported-serverurls', 
         'spec/v1/mcp-integration.md §"Conformance + interop"',
         `${path}.supported MUST be boolean when advertised`,
       )).toBe('boolean');
 
       if (ad.supported === true) {
-        expect(Array.isArray(ad.serverUrls), driver.describe(
+        expect(Array.isArray(ad.serverUrls), req('openwop.it.mcp-discoverability.any-advertised-mcp-capability-has-well-formed-shape-supported-serverurls', 
           'spec/v1/mcp-integration.md',
           `${path}.serverUrls MUST be an array when supported:true`,
         )).toBe(true);
 
         if (Array.isArray(ad.serverUrls)) {
-          expect(ad.serverUrls.length, driver.describe(
+          expect(ad.serverUrls.length, req('openwop.it.mcp-discoverability.any-advertised-mcp-capability-has-well-formed-shape-supported-serverurls', 
             'spec/v1/mcp-integration.md',
             `${path}.serverUrls MUST be non-empty when supported:true`,
           )).toBeGreaterThan(0);
 
           for (const url of ad.serverUrls) {
-            expect(typeof url, driver.describe(
+            expect(typeof url, req('openwop.it.mcp-discoverability.any-advertised-mcp-capability-has-well-formed-shape-supported-serverurls', 
               'spec/v1/mcp-integration.md',
               `${path}.serverUrls entries MUST be strings`,
             )).toBe('string');
@@ -108,7 +110,7 @@ describe('mcp: discoverability shape', () => {
 
   it('serverUrls are valid URL paths or absolute URLs', async () => {
     const advertisements = await fetchMcpAdvertisements();
-    if (advertisements.length === 0) return; // skip-equivalent
+    if (advertisements.length === 0) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `advertisements.length === 0` returned early (skip-equivalent)'); // skip-equivalent
 
     for (const { path, ad } of advertisements) {
       if (ad.supported !== true || !Array.isArray(ad.serverUrls)) continue;
@@ -119,7 +121,7 @@ describe('mcp: discoverability shape', () => {
         // ambiguous to a client trying to connect.
         const isHostRelative = url.startsWith('/');
         const isAbsoluteHttp = url.startsWith('http://') || url.startsWith('https://');
-        expect(isHostRelative || isAbsoluteHttp, driver.describe(
+        expect(isHostRelative || isAbsoluteHttp, req('openwop.it.mcp-discoverability.serverurls-are-valid-url-paths-or-absolute-urls', 
           'spec/v1/mcp-integration.md',
           `${path}.serverUrls entry "${url}" MUST be a leading-slash path or absolute http(s) URL`,
         )).toBe(true);

@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('blob-presign-expiry: advertisement shape (RFC 0019)', () => {
   it('capabilities.blobStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.blob-presign-expiry.capabilities-blobstorage-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §blobStorage',
         'capabilities.blobStorage.supported MUST be a boolean when present',
       ),
@@ -44,17 +46,17 @@ describe('blob-presign-expiry: advertisement shape (RFC 0019)', () => {
 
   it('presignSupported is a boolean when set', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const subParts = ["presignSupported"];
     let sub: unknown = cap;
     for (const p of subParts) {
       if (sub && typeof sub === 'object') sub = (sub as Record<string, unknown>)[p];
       else { sub = undefined; break; }
     }
-    if (sub === undefined) return; // optional sub-field
+    if (sub === undefined) return softSkip('blocked', 'precondition not met — `sub === undefined` returned early (optional sub-field) (seam, prior step, or fixture unavailable)'); // optional sub-field
     expect(
       typeof sub,
-      driver.describe(
+      req('openwop.it.blob-presign-expiry.presignsupported-is-a-boolean-when-set', 
         'RFC 0019 §A',
         'blobStorage.presignSupported MUST be boolean when present',
       ),
@@ -69,7 +71,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('blob-presign-expiry: behavioral (RFC 0019 §B point 1)', () => {
   it('presigned URL MUST resolve to the blob inside its TTL window and return 403 after expiry', async () => {
     const probe = await call('get', { key: '__probe__' });
-    if (probe.status === 404) return; // seam not exposed
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     const key = `pre-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const contentBase64 = Buffer.from('presigned-payload').toString('base64');
     await call('put', { key, contentBase64, contentType: 'text/plain' });
@@ -78,14 +80,14 @@ describe('blob-presign-expiry: behavioral (RFC 0019 §B point 1)', () => {
     const presign = await call('presign', { key, expiresInSeconds: 2 });
     expect(presign.status).toBe(200);
     const body = presign.json as { url?: string; expiresAtMs?: number };
-    expect(typeof body.url, 'presign MUST return a URL').toBe('string');
+    expect(typeof body.url, req('openwop.it.blob-presign-expiry.presigned-url-must-resolve-to-the-blob-inside-its-ttl-window-and-return-403-afte', 'RFC 0019 §B point 1', 'presign MUST return a URL')).toBe('string');
 
     // Fetch within the window — MUST return 200 + the bytes
     const within = await driver.get(body.url!);
-    if (within.status === 404) return; // host doesn't expose the resolver route — soft-skip the expiry side too
+    if (within.status === 404) return softSkip('blocked', 'precondition not met — `within.status === 404` returned early (host doesn\'t expose the resolver route — soft-skip the expiry side too) (seam, prior step, or fixture unavailable)'); // host doesn't expose the resolver route — soft-skip the expiry side too
     expect(
       within.status,
-      driver.describe('RFC 0019 §B point 1', 'presigned URL MUST resolve to 200 within its TTL window'),
+      req('openwop.it.blob-presign-expiry.presigned-url-must-resolve-to-the-blob-inside-its-ttl-window-and-return-403-afte', 'RFC 0019 §B point 1', 'presigned URL MUST resolve to 200 within its TTL window'),
     ).toBe(200);
 
     // Wait past expiry (TTL=2s + 1s buffer)
@@ -94,7 +96,7 @@ describe('blob-presign-expiry: behavioral (RFC 0019 §B point 1)', () => {
     const after = await driver.get(body.url!);
     expect(
       after.status,
-      driver.describe('RFC 0019 §B point 1', 'presigned URL MUST return 403 after TTL expiry'),
+      req('openwop.it.blob-presign-expiry.presigned-url-must-resolve-to-the-blob-inside-its-ttl-window-and-return-403-afte', 'RFC 0019 §B point 1', 'presigned URL MUST return 403 after TTL expiry'),
     ).toBe(403);
   });
 });

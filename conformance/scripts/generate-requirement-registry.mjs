@@ -91,11 +91,15 @@ function collectCitations(body, src) {
 }
 
 export function generate() {
-  const files = readdirSync(SCENARIOS_DIR).filter((f) => f.endsWith('.test.ts')).sort();
+  // Suite 2.0.0: the corpus-coherence scenarios (src/coherence/) are indexed too —
+  // their ids feed evidence/corpus-ledger.json (RFC 0168 §D.1).
+  const COHERENCE_DIR = join(CONF, 'src', 'coherence');
+  const dirs = [SCENARIOS_DIR, ...(existsSync(COHERENCE_DIR) ? [COHERENCE_DIR] : [])];
+  const files = dirs.flatMap((d) => readdirSync(d).filter((f) => f.endsWith('.test.ts')).sort().map((f) => ({ file: f, dir: d })));
   const records = [];
   let interpolatedTitles = 0;
-  for (const file of files) {
-    const full = join(SCENARIOS_DIR, file);
+  for (const { file, dir } of files) {
+    const full = join(dir, file);
     const src = ts.createSourceFile(full, readFileSync(full, 'utf8'), ts.ScriptTarget.Latest, true);
     const stem = file.replace(/\.test\.ts$/, '');
     const seen = new Map();
@@ -106,8 +110,9 @@ export function generate() {
         const body = node.arguments[1];
         const { citations, explicitId } = body !== undefined ? collectCitations(body, src) : { citations: [], explicitId: null };
         if (title === null) {
-          interpolatedTitles++;
-          records.push({ id: null, file, line, title: null, explicitId, citations });
+          // Suite 2.0.0: an interpolated title with an explicit req() id IS stable — the id is the explicit one.
+          if (explicitId === null) interpolatedTitles++;
+          records.push({ id: explicitId, file, line, title: null, explicitId, citations });
         } else {
           const base = `openwop.it.${stem}.${slugTitle(title)}`;
           const n = (seen.get(base) ?? 0) + 1;

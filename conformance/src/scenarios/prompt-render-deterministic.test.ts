@@ -24,6 +24,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -91,7 +93,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const template = await pickTemplateWithInputVar();
-    if (!template) return;
+    if (!template) return softSkip('blocked', 'precondition not met — `!template` returned early (seam, prior step, or fixture unavailable)');
 
     const variableNames = (template.variables ?? [])
       .filter((v) => v.source !== 'secret')
@@ -103,7 +105,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
 
     const ref = `prompt:${template.templateId}@${template.version}`;
     const first = await driver.post('/v1/prompts:render', { ref, variables });
-    if (first.status !== 200) return;
+    if (first.status !== 200) return softSkip('blocked', 'precondition not met — `first.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const second = await driver.post('/v1/prompts:render', { ref, variables });
     expect(second.status).toBe(200);
 
@@ -112,14 +114,14 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
 
     expect(
       a.hash,
-      driver.describe(
+      req('openwop.it.prompt-render-deterministic.identical-ref-variables-inputs-produce-identical-hash-variablehashes', 
         'spec/v1/prompts.md §Discovery & distribution',
         'render hash MUST be stable across identical (ref, variables) inputs',
       ),
     ).toBe(b.hash);
     expect(
       Object.keys(a.variableHashes).sort(),
-      driver.describe(
+      req('openwop.it.prompt-render-deterministic.identical-ref-variables-inputs-produce-identical-hash-variablehashes', 
         'spec/v1/prompts.md §Discovery & distribution',
         'variableHashes key set MUST be stable',
       ),
@@ -134,11 +136,11 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const template = await pickTemplateWithInputVar();
-    if (!template) return;
+    if (!template) return softSkip('blocked', 'precondition not met — `!template` returned early (seam, prior step, or fixture unavailable)');
     const requiredVars = (template.variables ?? []).filter(
       (v) => v.source !== 'secret' && v.required === true,
     );
-    if (requiredVars.length === 0) return; // no required var to toggle
+    if (requiredVars.length === 0) return softSkip('blocked', 'precondition not met — `requiredVars.length === 0` returned early (no required var to toggle) (seam, prior step, or fixture unavailable)'); // no required var to toggle
 
     const variables: Record<string, unknown> = {};
     for (const v of template.variables ?? []) {
@@ -148,7 +150,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
 
     const ref = `prompt:${template.templateId}@${template.version}`;
     const baseline = await driver.post('/v1/prompts:render', { ref, variables });
-    if (baseline.status !== 200) return;
+    if (baseline.status !== 200) return softSkip('blocked', 'precondition not met — `baseline.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     // Toggle one required variable.
     const toggled = { ...variables, [requiredVars[0]!.name]: 'conformance-toggled-value' };
@@ -160,14 +162,14 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
 
     expect(
       a.hash,
-      driver.describe(
+      req('openwop.it.prompt-render-deterministic.different-variable-values-produce-different-hash-at-least-one-different-variable', 
         'spec/v1/prompts.md §Discovery & distribution',
         'render hash MUST differ when any variable binding differs',
       ),
     ).not.toBe(b.hash);
     expect(
       a.variableHashes[requiredVars[0]!.name],
-      driver.describe(
+      req('openwop.it.prompt-render-deterministic.different-variable-values-produce-different-hash-at-least-one-different-variable', 
         'spec/v1/prompts.md §Discovery & distribution',
         'variableHashes[name] MUST differ when name binding differs',
       ),
@@ -179,7 +181,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const template = await pickTemplateWithInputVar();
-    if (!template) return;
+    if (!template) return softSkip('blocked', 'precondition not met — `!template` returned early (seam, prior step, or fixture unavailable)');
     const variables: Record<string, unknown> = {};
     for (const v of template.variables ?? []) {
       if (v.source === 'secret') continue;
@@ -187,12 +189,12 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     }
     const ref = `prompt:${template.templateId}@${template.version}`;
     const res = await driver.post('/v1/prompts:render', { ref, variables });
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const r = res.json as RenderResponse;
 
     expect(
       /^sha256:[0-9a-f]{64}$/.test(r.hash),
-      driver.describe(
+      req('openwop.it.prompt-render-deterministic.hash-variablehashes-must-match-sha256-hex64-pattern', 
         'schemas/run-event-payloads.schema.json §promptComposed.hash',
         'hash MUST match `^sha256:[0-9a-f]{64}$`',
       ),
@@ -200,7 +202,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     for (const [name, h] of Object.entries(r.variableHashes)) {
       expect(
         /^sha256:[0-9a-f]{64}$/.test(h),
-        `variableHashes[${name}] MUST match sha256:<hex64>; got ${h}`,
+        req('openwop.it.prompt-render-deterministic.hash-variablehashes-must-match-sha256-hex64-pattern', 'schemas/run-event-payloads.schema.json §promptComposed.hash', `variableHashes[${name}] MUST match sha256:<hex64>; got ${h}`),
       ).toBe(true);
     }
   });
@@ -214,12 +216,12 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     const d = await readDiscovery();
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const list = await driver.get('/v1/prompts?source=host&limit=200');
-    if (list.status !== 200) return;
+    if (list.status !== 200) return softSkip('blocked', 'precondition not met — `list.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const body = list.json as ListResponse;
     const nonSystemUser = body.items.find(
       (t) => t.kind === 'few-shot' || t.kind === 'schema-hint',
     );
-    if (!nonSystemUser) return; // host doesn't ship one — soft-skip
+    if (!nonSystemUser) return softSkip('blocked', 'precondition not met — `!nonSystemUser` returned early (host doesn\'t ship one — soft-skip) (seam, prior step, or fixture unavailable)'); // host doesn't ship one — soft-skip
 
     const variables: Record<string, unknown> = {};
     for (const v of nonSystemUser.variables ?? []) {
@@ -228,11 +230,11 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     }
     const ref = `prompt:${nonSystemUser.templateId}@${nonSystemUser.version}`;
     const res = await driver.post('/v1/prompts:render', { ref, variables });
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const r = res.json as RenderResponse;
     expect(
       typeof r.composed === 'string' && r.composed.length > 0,
-      driver.describe(
+      req('openwop.it.prompt-render-deterministic.renders-few-shot-schema-hint-kinds-with-non-empty-composed-body', 
         'spec/v1/prompts.md §Discovery & distribution',
         '`composed` body MUST populate for every PromptKind under observability: full',
       ),

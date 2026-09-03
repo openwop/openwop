@@ -29,10 +29,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { readManifestRuntimeCap, listManifestAgents } from '../lib/agentRuntime.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /** The CLOSED RFC 0080 §A dimension vocabulary (agent-inventory-response.schema.json
  *  `degradedMemoryDimensions` enum). NOT the `memoryShape` keys. */
@@ -62,13 +63,13 @@ describe('memory-degraded-projection (RFC 0080 §C)', () => {
     if (!behaviorGate('openwop-memory-degraded', advertised)) return;
 
     const inv = await listManifestAgents();
-    if (inv === null) return; // host advertises the cap but doesn't serve /v1/agents — soft-skip
+    if (inv === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `inv === null` returned early (host advertises the cap but doesn\'t serve /v1/agents — soft-skip)'); // host advertises the cap but doesn't serve /v1/agents — soft-skip
     const agents = (inv.agents ?? []) as InventoryEntry[];
 
     // Non-vacuity: an advertising + serving host MUST expose its inventory.
     expect(
       agents.length >= 1,
-      driver.describe('agent-memory.md §"Memory capability model"', 'GET /v1/agents MUST return the installed manifest agents'),
+      req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'agent-memory.md §"Memory capability model"', 'GET /v1/agents MUST return the installed manifest agents'),
     ).toBe(true);
 
     // §C iff-contract on EVERY entry.
@@ -79,25 +80,25 @@ describe('memory-degraded-projection (RFC 0080 §C)', () => {
       if (degraded) {
         expect(
           Array.isArray(dims) && dims.length >= 1,
-          driver.describe('RFC 0080 §C', `memoryDegraded:true MUST carry a non-empty degradedMemoryDimensions (agent ${a.agentId})`),
+          req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'RFC 0080 §C', `memoryDegraded:true MUST carry a non-empty degradedMemoryDimensions (agent ${a.agentId})`),
         ).toBe(true);
         if (Array.isArray(dims)) {
           for (const d of dims) {
             expect(
               typeof d === 'string' && DIMENSIONS.includes(d),
-              driver.describe('agent-inventory-response.schema.json', `degradedMemoryDimensions members MUST be RFC 0080 §A dimension names (got ${String(d)})`),
+              req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'agent-inventory-response.schema.json', `degradedMemoryDimensions members MUST be RFC 0080 §A dimension names (got ${String(d)})`),
             ).toBe(true);
           }
           expect(
             new Set(dims as string[]).size === dims.length,
-            driver.describe('RFC 0080 §C', 'degradedMemoryDimensions MUST be unique'),
+            req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'RFC 0080 §C', 'degradedMemoryDimensions MUST be unique'),
           ).toBe(true);
         }
       } else {
         // Not degraded ⇒ no non-empty dimension list (absent or empty both pass).
         expect(
           dims === undefined || (Array.isArray(dims) && dims.length === 0),
-          driver.describe('RFC 0080 §C', `a non-degraded entry MUST NOT carry a non-empty degradedMemoryDimensions (agent ${a.agentId})`),
+          req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'RFC 0080 §C', `a non-degraded entry MUST NOT carry a non-empty degradedMemoryDimensions (agent ${a.agentId})`),
         ).toBe(true);
       }
     }
@@ -108,12 +109,12 @@ describe('memory-degraded-projection (RFC 0080 §C)', () => {
       const target = agents.find((a) => a.agentId === degradedId);
       expect(
         target !== undefined,
-        driver.describe('RFC 0080 §C', `OPENWOP_DEGRADED_AGENT_ID=${degradedId} MUST appear in the inventory`),
+        req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'RFC 0080 §C', `OPENWOP_DEGRADED_AGENT_ID=${degradedId} MUST appear in the inventory`),
       ).toBe(true);
       if (target) {
         expect(
           target.memoryDegraded === true && Array.isArray(target.degradedMemoryDimensions) && target.degradedMemoryDimensions.length >= 1,
-          driver.describe('RFC 0080 §C', 'the named degraded agent MUST project memoryDegraded:true + a non-empty degradedMemoryDimensions'),
+          req('openwop.it.memory-degraded-projection.stamps-memorydegraded-a-closed-enum-degradedmemorydimensions-on-degraded-agents', 'RFC 0080 §C', 'the named degraded agent MUST project memoryDegraded:true + a non-empty degradedMemoryDimensions'),
         ).toBe(true);
       }
     }

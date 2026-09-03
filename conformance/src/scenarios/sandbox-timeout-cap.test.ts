@@ -17,6 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -45,7 +46,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-timeout-cap: capability shape + behavioral (
 
     expect(
       Number.isInteger(sb.wallClockLimitMs) && sb.wallClockLimitMs >= 100,
-      driver.describe(
+      req('openwop.it.sandbox-timeout-cap.wallclocklimitms-must-be-integer-100-ms-when-present-per-schema', 
         'RFCS/0035-sandbox-execution-contract.md §A',
         'wallClockLimitMs MUST be integer ≥ 100 ms',
       ),

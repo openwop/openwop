@@ -34,6 +34,7 @@ import {
   verifyProfileRequirements,
 } from '../lib/requirement-ledger.js';
 import { allRequirements, requirementsFor } from '../lib/requirement-registry.js';
+import { req } from '../lib/requirement-ids.js';
 
 // This file records REAL requirement ids as fixtures; keep them out of a live
 // --certify ledger sink (they would out-vote genuine dispositions).
@@ -47,7 +48,7 @@ describe('RFC 0148 §A — requirement execution ledger', () => {
   beforeEach(() => resetLedger());
 
   it('the disposition vocabulary is exactly the five §A names', () => {
-    expect([...DISPOSITIONS].sort()).toEqual(
+    expect([...DISPOSITIONS].sort(), req('openwop.it.requirement-ledger.the-disposition-vocabulary-is-exactly-the-five-a-names', 'RFC 0148 §A', 'the disposition vocabulary is exactly the five §A names')).toEqual(
       ['blocked', 'executed-fail', 'executed-pass', 'inapplicable', 'skipped'].sort(),
     );
   });
@@ -58,7 +59,7 @@ describe('RFC 0148 §A — requirement execution ledger', () => {
     // is "not exercised". Every vacuity in this corpus reached `pass` this way.
     expect(
       dispositionOf('openwop.never.recorded'),
-      'RFC 0148 §A: silence is evidence of nothing. An absent disposition MUST NOT read as executed-pass.',
+      req('openwop.it.requirement-ledger.an-unrecorded-requirement-resolves-to-blocked-not-to-a-pass', 'RFC 0148 §A', 'RFC 0148 §A: silence is evidence of nothing. An absent disposition MUST NOT read as executed-pass.'),
     ).toBe('blocked');
     expect(entryOf('openwop.never.recorded').detail).toMatch(/not exercised/);
   });
@@ -66,7 +67,7 @@ describe('RFC 0148 §A — requirement execution ledger', () => {
   it('blocked is not certifiable, while skipped and inapplicable are', () => {
     // "We could not check" and "we checked and it holds" are the two states this
     // whole program exists to stop conflating.
-    expect(CERTIFIABLE).not.toContain('blocked');
+    expect(CERTIFIABLE, req('openwop.it.requirement-ledger.blocked-is-not-certifiable-while-skipped-and-inapplicable-are', 'RFC 0148 §A', 'blocked is not certifiable, while skipped and inapplicable are')).not.toContain('blocked');
     expect(CERTIFIABLE).not.toContain('executed-fail');
     expect([...CERTIFIABLE].sort()).toEqual(['executed-pass', 'inapplicable', 'skipped']);
   });
@@ -78,7 +79,7 @@ describe('RFC 0148 §A — requirement execution ledger', () => {
     const verdict = verifyProfileRequirements('openwop-example', []);
     expect(
       verdict.certifiable,
-      'RFC 0148 §C / gap G6: an empty requirement set is exactly the vacuity that started this program.',
+      req('openwop.it.requirement-ledger.a-profile-with-no-requirements-is-not-certifiable', 'RFC 0148 §A', 'RFC 0148 §C / gap G6: an empty requirement set is exactly the vacuity that started this program.'),
     ).toBe(false);
   });
 
@@ -86,20 +87,20 @@ describe('RFC 0148 §A — requirement execution ledger', () => {
     recordRequirement('openwop.a', 'executed-pass');
     recordRequirement('openwop.b', 'skipped', 'profile not advertised; operator opted out');
     const verdict = verifyProfileRequirements('openwop-example', ['openwop.a', 'openwop.b', 'openwop.c']);
-    expect(verdict.certifiable, 'RFC 0148 §A: a blocked requirement invalidates the claim').toBe(false);
+    expect(verdict.certifiable, req('openwop.it.requirement-ledger.one-blocked-requirement-invalidates-the-whole-profile', 'RFC 0148 §A', 'RFC 0148 §A: a blocked requirement invalidates the claim')).toBe(false);
     expect(verdict.blocking.map((b) => b.requirementId)).toEqual(['openwop.c']);
   });
 
   it('a fully-exercised profile certifies', () => {
     recordRequirement('openwop.a', 'executed-pass');
     recordRequirement('openwop.b', 'inapplicable', 'host advertises no streaming surface');
-    expect(verifyProfileRequirements('openwop-example', ['openwop.a', 'openwop.b']).certifiable).toBe(true);
+    expect(verifyProfileRequirements('openwop-example', ['openwop.a', 'openwop.b']).certifiable, req('openwop.it.requirement-ledger.a-fully-exercised-profile-certifies', 'RFC 0148 §A', 'a fully-exercised profile certifies')).toBe(true);
   });
 
   it('a non-pass disposition without a reason is rejected', () => {
     // A `blocked` with no explanation is an outcome nobody can act on, and it is
     // the shape a lazily-instrumented scenario would emit by default.
-    expect(() => recordRequirement('openwop.a', 'blocked')).toThrow(/without a reason/);
+    expect(() => recordRequirement('openwop.a', 'blocked'), req('openwop.it.requirement-ledger.a-non-pass-disposition-without-a-reason-is-rejected', 'RFC 0148 §A', 'a non-pass disposition without a reason is rejected')).toThrow(/without a reason/);
     expect(() => recordRequirement('openwop.b', 'skipped', '   ')).toThrow(/without a reason/);
     // A pass needs no prose — the assertion itself is the evidence.
     expect(() => recordRequirement('openwop.c', 'executed-pass')).not.toThrow();
@@ -109,14 +110,14 @@ describe('RFC 0148 §A — requirement execution ledger', () => {
     // Silent overwrite would let a later soft-skip bury an earlier real failure
     // — the same conflation running the other direction.
     recordRequirement('openwop.a', 'executed-fail', 'assertion failed against target');
-    expect(() => recordRequirement('openwop.a', 'executed-pass')).toThrow(/already recorded/);
+    expect(() => recordRequirement('openwop.a', 'executed-pass'), req('openwop.it.requirement-ledger.contradictory-dispositions-for-one-requirement-throw-rather-than-last-write-wins', 'RFC 0148 §A', 'contradictory dispositions for one requirement throw rather than last-write-wins')).toThrow(/already recorded/);
     expect(dispositionOf('openwop.a')).toBe('executed-fail');
   });
 
   it('re-recording the same disposition is idempotent', () => {
     recordRequirement('openwop.a', 'executed-pass');
     recordRequirement('openwop.a', 'executed-pass');
-    expect(snapshot()).toHaveLength(1);
+    expect(snapshot(), req('openwop.it.requirement-ledger.re-recording-the-same-disposition-is-idempotent', 'RFC 0148 §A', 're-recording the same disposition is idempotent')).toHaveLength(1);
   });
 });
 
@@ -125,7 +126,7 @@ describe('RFC 0148 §A — the registry binds to the certification floor', () =>
 
   it('every profile with a runtime floor yields requirement IDs', () => {
     // Guard: an empty registry would make the legs below vacuous.
-    expect(allRequirements().length, 'the floor MUST produce requirement IDs').toBeGreaterThan(10);
+    expect(allRequirements().length, req('openwop.it.requirement-ledger.every-profile-with-a-runtime-floor-yields-requirement-ids', 'RFC 0148 §A', 'the floor MUST produce requirement IDs')).toBeGreaterThan(10);
     expect(allRequirements()).toContain('openwop.floor.runs-lifecycle');
     expect(allRequirements()).toContain('openwop.floor.any.interrupt-');
   });
@@ -137,7 +138,7 @@ describe('RFC 0148 §A — the registry binds to the certification floor', () =>
     // the caller to decide; an empty array would silently certify.
     expect(
       requirementsFor('openwop-replay-fork'),
-      'RFC 0148 §C: unevaluable MUST be distinguishable from empty-by-design',
+      req('openwop.it.requirement-ledger.an-unwritten-floor-returns-null-not-an-empty-list-and-so-does-a-conditional-floo', 'RFC 0148 §A', 'RFC 0148 §C: unevaluable MUST be distinguishable from empty-by-design'),
     ).toBeNull();
     expect(requirementsFor('openwop-does-not-exist')).toBeNull();
     // With the document, the advertised branch is required
@@ -151,7 +152,7 @@ describe('RFC 0148 §A — the registry binds to the certification floor', () =>
     expect(allRequirements()).toContain('openwop.floor.replay-fork');
     // the six formerly-unprovable profiles now have floors
     for (const p of ['openwop-interrupts', 'openwop-secrets', 'openwop-provider-policy', 'openwop-memory', 'openwop-trigger-bridge']) {
-      expect((requirementsFor(p) ?? []).length, `${p} floor MUST be non-empty`).toBeGreaterThan(0);
+      expect((requirementsFor(p) ?? []).length, req('openwop.it.requirement-ledger.an-unwritten-floor-returns-null-not-an-empty-list-and-so-does-a-conditional-floo', 'RFC 0148 §A', `${p} floor MUST be non-empty`)).toBeGreaterThan(0);
     }
   });
 
@@ -161,13 +162,13 @@ describe('RFC 0148 §A — the registry binds to the certification floor', () =>
     expect(requirementsFor('openwop-core')).toEqual([]);
     expect(
       verifyProfileRequirements('openwop-core', requirementsFor('openwop-core') ?? []).certifiable,
-      'RFC 0155 §A: an `openwop-core` badge is a statement about a document, not a running system',
+      req('openwop.it.requirement-ledger.a-discovery-only-profile-returns-an-empty-list-which-does-not-certify', 'RFC 0148 §A', 'RFC 0155 §A: an `openwop-core` badge is a statement about a document, not a running system'),
     ).toBe(false);
   });
 
   it('the real core-standard floor does not certify until every requirement is exercised', () => {
     const ids = requirementsFor('openwop-core-standard');
-    expect(ids).not.toBeNull();
+    expect(ids, req('openwop.it.requirement-ledger.the-real-core-standard-floor-does-not-certify-until-every-requirement-is-exercis', 'RFC 0148 §A', 'the real core-standard floor does not certify until every requirement is exercised')).not.toBeNull();
     const requirements = ids as readonly string[];
     // Nothing recorded yet: every requirement is blocked, so the profile fails.
     expect(verifyProfileRequirements('openwop-core-standard', requirements).blocking).toHaveLength(

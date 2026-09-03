@@ -32,6 +32,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -88,7 +90,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
         system: 'prompt:host-default@1.0.0',
       },
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as AgentPromptResolvedPayload;
@@ -96,7 +98,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
     expect(applied?.layer).toBe('workflow-defaults');
     expect(
       payload.resolved,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-fallback-cascade.workflow-defaults-win-over-host-defaults-when-both-are-set', 
         'spec/v1/prompts.md §Resolution chain (normative) — Layer 3',
         'workflow-defaults MUST win over host-defaults when both are set',
       ),
@@ -115,14 +117,14 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
         system: 'prompt:host-default@1.0.0',
       },
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as AgentPromptResolvedPayload;
     const applied = payload.chain.find((c) => c.applied);
     expect(
       applied?.layer,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-fallback-cascade.host-defaults-win-when-workflow-defaults-are-also-absent', 
         'spec/v1/prompts.md §Resolution chain (normative) — Layer 4',
         'host-defaults MUST apply when layers 1-3 yield null',
       ),
@@ -139,13 +141,13 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
       node: { nodeId: 'writer', config: {} },
       // workflowDefaults + hostDefaults intentionally omitted.
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as AgentPromptResolvedPayload;
     expect(
       payload.resolved,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-fallback-cascade.resolved-is-null-and-chain-still-lists-every-attempted-layer-when-all-four-yield', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'resolved MUST be null when all four layers yield null',
       ),
@@ -154,7 +156,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
     const appliedEntries = payload.chain.filter((c) => c.applied);
     expect(
       appliedEntries.length,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-fallback-cascade.resolved-is-null-and-chain-still-lists-every-attempted-layer-when-all-four-yield', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'zero applied entries when no layer yielded a candidate',
       ),
@@ -164,7 +166,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
     // see why the resolution returned null.
     expect(
       payload.chain.length,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-fallback-cascade.resolved-is-null-and-chain-still-lists-every-attempted-layer-when-all-four-yield', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'chain[] MUST list every layer attempted, even when none applied',
       ),

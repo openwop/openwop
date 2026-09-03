@@ -30,6 +30,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HEX = 'a'.repeat(64);
 
@@ -74,7 +75,7 @@ describe('RFC 0148 §C — certification bundle v2', () => {
   const validate = validator();
 
   it('a well-formed v2 bundle validates', () => {
-    expect(validate(bundle()), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate(bundle()), req('openwop.it.certification-bundle-v2.a-well-formed-v2-bundle-validates', 'RFC 0148 §C', JSON.stringify(validate.errors))).toBe(true);
   });
 
   it('all five totals are required, including blocked', () => {
@@ -86,8 +87,8 @@ describe('RFC 0148 §C — certification bundle v2', () => {
       delete totals[missing];
       expect(
         validate(bundle({ results: { totals, requirements: bundle().results.requirements } })),
-        `RFC 0148 §C: \`${missing}\` MUST be present — an omitted total reads as zero without ` +
-          'anyone having asserted it',
+        req('openwop.it.certification-bundle-v2.all-five-totals-are-required-including-blocked', 'RFC 0148 §C', `RFC 0148 §C: \`${missing}\` MUST be present — an omitted total reads as zero without ` +
+          'anyone having asserted it'),
       ).toBe(false);
     }
   });
@@ -95,8 +96,8 @@ describe('RFC 0148 §C — certification bundle v2', () => {
   it('the requirement list cannot be empty', () => {
     expect(
       validate(bundle({ results: { totals: bundle().results.totals, requirements: [] } })),
-      'RFC 0148 §C: a bundle with no requirement rows records no execution. An empty evidence set ' +
-        'reading as proof is the defect this section exists to close.',
+      req('openwop.it.certification-bundle-v2.the-requirement-list-cannot-be-empty', 'RFC 0148 §C', 'RFC 0148 §C: a bundle with no requirement rows records no execution. An empty evidence set ' +
+        'reading as proof is the defect this section exists to close.'),
     ).toBe(false);
   });
 
@@ -107,7 +108,7 @@ describe('RFC 0148 §C — certification bundle v2', () => {
           totals: bundle().results.totals,
           requirements: [{ requirementId: 'x', scenarioId: 'y', disposition: 'probably-fine' }],
         },
-      })),
+      })), req('openwop.it.certification-bundle-v2.a-disposition-outside-the-a-vocabulary-is-rejected', 'RFC 0148 §C', 'a disposition outside the §A vocabulary is rejected'),
     ).toBe(false);
   });
 
@@ -127,14 +128,14 @@ describe('RFC 0148 §C — certification bundle v2', () => {
     const rows = (b.results as { requirements: { disposition: string; assertionCount?: number }[] }).requirements;
     expect(
       rows.some((r) => r.disposition === 'executed-pass' && r.assertionCount === 0),
-      'the vacuous shape MUST remain inspectable in the artifact — v1 could not express it at all',
+      req('openwop.it.certification-bundle-v2.a-vacuous-pass-is-representable-and-therefore-visible', 'RFC 0148 §C', 'the vacuous shape MUST remain inspectable in the artifact — v1 could not express it at all'),
     ).toBe(true);
   });
 
   it('claimed profiles use canonical IDs, not deprecated aliases', () => {
     // RFC 0155 §E. A badge substantiated by a name that no longer means what it
     // did is the `openwop-core` ambiguity in bundle form.
-    expect(validate(bundle({ claimedProfiles: ['openwop-core-standard'] }))).toBe(true);
+    expect(validate(bundle({ claimedProfiles: ['openwop-core-standard'] })), req('openwop.it.certification-bundle-v2.claimed-profiles-use-canonical-ids-not-deprecated-aliases', 'RFC 0148 §C', 'claimed profiles use canonical IDs, not deprecated aliases')).toBe(true);
     expect(validate(bundle({ claimedProfiles: ['Legacy Core'] }))).toBe(false);
     expect(validate(bundle({ claimedProfiles: [] }))).toBe(false);
   });
@@ -146,12 +147,12 @@ describe('RFC 0148 §C — certification bundle v2', () => {
     for (const field of ['scenarioManifestSha256', 'targetConfigurationSha256']) {
       const b = bundle() as Record<string, unknown>;
       delete b[field];
-      expect(validate(b), `RFC 0147 §A.4: ${field} MUST be present`).toBe(false);
+      expect(validate(b), req('openwop.it.certification-bundle-v2.provenance-digests-are-required-and-hex-shaped', 'RFC 0148 §C', `RFC 0147 §A.4: ${field} MUST be present`)).toBe(false);
     }
     expect(validate(bundle({ scenarioManifestSha256: 'not-a-digest' }))).toBe(false);
   });
 
   it('bundleVersion is pinned to 2', () => {
-    expect(validate(bundle({ bundleVersion: '1' })), 'a v1 bundle MUST NOT validate as v2').toBe(false);
+    expect(validate(bundle({ bundleVersion: '1' })), req('openwop.it.certification-bundle-v2.bundleversion-is-pinned-to-2', 'RFC 0148 §C', 'a v1 bundle MUST NOT validate as v2')).toBe(false);
   });
 });

@@ -76,7 +76,8 @@ describe('requirement-ids: explicit override', () => {
   it('req() sets the override for the current test and returns the citation message', () => {
     takeExplicitRequirementId();
     const msg = req('openwop.auth.subject-link.leaver-deny', 'auth-profiles.md §Subject linking', 'deactivation MUST deny');
-    expect(msg).toBe('auth-profiles.md §Subject linking: deactivation MUST deny');
+    // Suite 2.0.0: req() carries the [impl@version] label driver.describe used to add (RFC 0168 §A.1).
+    expect(msg).toBe('[unknown@unknown] auth-profiles.md §Subject linking: deactivation MUST deny');
     expect(takeExplicitRequirementId()).toBe('openwop.auth.subject-link.leaver-deny');
     expect(takeExplicitRequirementId()).toBeNull();
   });

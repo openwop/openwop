@@ -34,6 +34,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const MULTI_NODE_WORKFLOW_ID = 'conformance-multi-node';
 const SKIP_NO_MULTI = !isFixtureAdvertised(MULTI_NODE_WORKFLOW_ID);
@@ -126,7 +127,7 @@ describe.skipIf(SKIP_NO_MULTI)(
       if (replay?.supported !== true) {
         softSkip('inapplicable', "host does not advertise `replay.supported: true` — the replay contract does not apply to it");
         ctx.skip();
-        return;
+        return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `replay?.supported !== true` returned early');
       }
       const modes = Array.isArray(replay.modes)
         ? replay.modes.filter((m): m is string => typeof m === 'string')
@@ -134,7 +135,7 @@ describe.skipIf(SKIP_NO_MULTI)(
       if (!modes.includes('replay')) {
         softSkip('inapplicable', "host does not advertise the `replay` fork mode — this leg's rule has no path to apply");
         ctx.skip();
-        return;
+        return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'replay\')` returned early');
       }
 
       const sourceRunId = await startAndFinishMultiNode();
@@ -146,7 +147,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         // with the standard event shape will hit the assertions below.
         softSkip('blocked', "the advertised fixture's wire shape exposes no numeric sequence for node.completed(b), so there is no mid-run point to fork from");
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `fromSeq === null` returned early (seam, prior step, or fixture unavailable)');
       }
 
       const fork = await driver.post(
@@ -156,11 +157,11 @@ describe.skipIf(SKIP_NO_MULTI)(
 
       if (forkDeclined(fork.status, 'arbitrary-event fork')) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `forkDeclined(fork.status, \'arbitrary-event fork\')` returned early (seam, prior step, or fixture unavailable)');
       }
       expect(
         fork.status,
-        driver.describe(
+        req('openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed', 
           'spec/v1/replay.md §"Replay-from-event-log internals"',
           `mid-range fromSeq=${fromSeq} replay fork MUST return 201`,
         ),
@@ -171,23 +172,23 @@ describe.skipIf(SKIP_NO_MULTI)(
         sourceRunId?: unknown;
         mode?: unknown;
       };
-      expect(typeof body.runId, 'fork response MUST include a new runId').toBe(
+      expect(typeof body.runId, req('openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed', 'spec/v1/replay.md §"Replay-from-event-log internals"', 'fork response MUST include a new runId')).toBe(
         'string',
       );
       expect(
         body.runId,
-        'forked runId MUST differ from source',
+        req('openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed', 'spec/v1/replay.md §"Replay-from-event-log internals"', 'forked runId MUST differ from source'),
       ).not.toBe(sourceRunId);
-      expect(body.sourceRunId, 'fork response MUST echo sourceRunId').toBe(
+      expect(body.sourceRunId, req('openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed', 'spec/v1/replay.md §"Replay-from-event-log internals"', 'fork response MUST echo sourceRunId')).toBe(
         sourceRunId,
       );
-      expect(body.mode, 'fork response MUST echo mode').toBe('replay');
+      expect(body.mode, req('openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed', 'spec/v1/replay.md §"Replay-from-event-log internals"', 'fork response MUST echo mode')).toBe('replay');
 
       const newRunId = body.runId as string;
       const terminal = await pollUntilTerminal(newRunId, { timeoutMs: 15_000 });
       expect(
         terminal.status,
-        driver.describe(
+        req('openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed', 
           'spec/v1/replay.md §"Replay determinism"',
           `replay fork from mid-range fromSeq=${fromSeq} MUST reach the same terminal status as the source`,
         ),
@@ -205,14 +206,14 @@ describe.skipIf(SKIP_NO_MULTI)(
         const replay = await fetchReplayCapability();
         if (replay?.supported !== true) {
           ctx.skip();
-          return;
+          return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `replay?.supported !== true` returned early');
         }
         const modes = Array.isArray(replay.modes)
           ? replay.modes.filter((m): m is string => typeof m === 'string')
           : [];
         if (!modes.includes('replay')) {
           ctx.skip();
-          return;
+          return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'replay\')` returned early');
         }
 
         const sourceRunId = await startAndFinishMultiNode();
@@ -220,7 +221,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         const fromSeq = pickMidRangeFromSeq(sourceEvents);
         if (fromSeq === null) {
           ctx.skip();
-          return;
+          return softSkip('blocked', 'precondition not met — `fromSeq === null` returned early (seam, prior step, or fixture unavailable)');
         }
 
         // Fork twice at the same mid-range point. Per replay.md, both
@@ -233,7 +234,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         );
         if (forkDeclined(fork1.status, 'arbitrary-event fork 1')) {
           ctx.skip();
-          return;
+          return softSkip('blocked', 'precondition not met — `forkDeclined(fork1.status, \'arbitrary-event fork 1\')` returned early (seam, prior step, or fixture unavailable)');
         }
         expect(fork1.status).toBe(201);
         const fork1Id = (fork1.json as { runId: string }).runId;
@@ -245,7 +246,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         );
         if (forkDeclined(fork2.status, 'arbitrary-event fork 2')) {
           ctx.skip();
-          return;
+          return softSkip('blocked', 'precondition not met — `forkDeclined(fork2.status, \'arbitrary-event fork 2\')` returned early (seam, prior step, or fixture unavailable)');
         }
         expect(fork2.status).toBe(201);
         const fork2Id = (fork2.json as { runId: string }).runId;
@@ -274,7 +275,7 @@ describe.skipIf(SKIP_NO_MULTI)(
 
         expect(
           tail1.length,
-          driver.describe(
+          req('openwop.it.replay-fork-arbitrary.mid-fromseq-determinism-same-source-same-fromseq-identical-post-fork-events-modu', 
             'spec/v1/replay.md §"Replay determinism"',
             `two replay forks at fromSeq=${fromSeq} MUST produce the same number of re-executed events`,
           ),
@@ -282,7 +283,7 @@ describe.skipIf(SKIP_NO_MULTI)(
 
         expect(
           structuralShape(tail1),
-          driver.describe(
+          req('openwop.it.replay-fork-arbitrary.mid-fromseq-determinism-same-source-same-fromseq-identical-post-fork-events-modu', 
             'spec/v1/replay.md §"Replay determinism"',
             `event sequence (type/nodeId/data) post-fromSeq=${fromSeq} MUST be identical across two replay forks`,
           ),
@@ -301,14 +302,14 @@ describe.skipIf(SKIP_NO_MULTI)(
       if (replay?.supported !== true) {
         softSkip('inapplicable', "host does not advertise `replay.supported: true` — the replay contract does not apply to it");
         ctx.skip();
-        return;
+        return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `replay?.supported !== true` returned early');
       }
       const modes = Array.isArray(replay.modes)
         ? replay.modes.filter((m): m is string => typeof m === 'string')
         : [];
       if (!modes.includes('branch')) {
         ctx.skip();
-        return;
+        return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'branch\')` returned early');
       }
 
       const sourceRunId = await startAndFinishMultiNode();
@@ -316,7 +317,7 @@ describe.skipIf(SKIP_NO_MULTI)(
       const fromSeq = pickMidRangeFromSeq(sourceEvents);
       if (fromSeq === null) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `fromSeq === null` returned early (seam, prior step, or fixture unavailable)');
       }
 
       // Branch mode with an empty overlay is the boundary case: the
@@ -331,11 +332,11 @@ describe.skipIf(SKIP_NO_MULTI)(
 
       if (fork.status === 501) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `fork.status === 501` returned early (seam, prior step, or fixture unavailable)');
       }
       expect(
         fork.status,
-        driver.describe(
+        req('openwop.it.replay-fork-arbitrary.mid-fromseq-branch-fork-with-empty-overlay-produces-a-new-run-that-reaches-compl', 
           'spec/v1/replay.md §"branch mode"',
           `mid-range fromSeq=${fromSeq} branch fork with empty overlay MUST return 201`,
         ),
@@ -345,7 +346,7 @@ describe.skipIf(SKIP_NO_MULTI)(
       const terminal = await pollUntilTerminal(newRunId, { timeoutMs: 15_000 });
       expect(
         terminal.status,
-        driver.describe(
+        req('openwop.it.replay-fork-arbitrary.mid-fromseq-branch-fork-with-empty-overlay-produces-a-new-run-that-reaches-compl', 
           'spec/v1/replay.md',
           `branch fork from mid-range fromSeq=${fromSeq} MUST reach terminal status`,
         ),

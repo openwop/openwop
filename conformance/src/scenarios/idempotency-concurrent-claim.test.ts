@@ -53,6 +53,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SEAM = '/v1/host/sample/test/idempotency/concurrent-claim';
 
@@ -64,12 +65,12 @@ type ClaimResult = {
 };
 
 /** Is the §25 seam mounted? 404/403/501 mean not mounted — anything else is a real answer. */
-async function seamPresent(): Promise<ClaimResult | null> {
+async function seamPresent(requirementId: string): Promise<ClaimResult | null> {
   const res = await driver.post(SEAM, { executors: 2 });
   if (res.status === 404 || res.status === 403 || res.status === 501) return null;
   expect(
     res.status,
-    driver.describe(
+    req(requirementId, 
       'host-sample-test-seams.md §25',
       'a mounted concurrent-claim seam MUST answer 200; a non-200 that is not 404/403/501 is a broken seam, not an absent one',
     ),
@@ -79,28 +80,28 @@ async function seamPresent(): Promise<ClaimResult | null> {
 
 describe('idempotency-concurrent-claim: two executors of one run, one effect (RFC 0150 §B, G17)', () => {
   it('every executor mints the SAME logicalInvocationId — without this, one delivery proves nothing', async () => {
-    const out = await seamPresent();
+    const out = await seamPresent('openwop.it.idempotency-concurrent-claim.every-executor-mints-the-same-logicalinvocationid-without-this-one-delivery-prov');
     if (out === null) return softSkip('blocked', `${SEAM} not mounted (host-sample-test-seams.md §25)`);
 
     const minted = out.mintedIds;
     expect(
       Array.isArray(minted),
-      driver.describe('host-sample-test-seams.md §25', 'the seam MUST report mintedIds, one per executor'),
+      req('openwop.it.idempotency-concurrent-claim.every-executor-mints-the-same-logicalinvocationid-without-this-one-delivery-prov', 'host-sample-test-seams.md §25', 'the seam MUST report mintedIds, one per executor'),
     ).toBe(true);
     const ids = minted as unknown[];
     expect(
       ids.length,
-      driver.describe('host-sample-test-seams.md §25', 'mintedIds length MUST equal the executors that reached the chokepoint'),
+      req('openwop.it.idempotency-concurrent-claim.every-executor-mints-the-same-logicalinvocationid-without-this-one-delivery-prov', 'host-sample-test-seams.md §25', 'mintedIds length MUST equal the executors that reached the chokepoint'),
     ).toBe(out.attempted);
     expect(
       ids.length >= 2,
-      driver.describe('host-sample-test-seams.md §25', 'fewer than two executors is not a race and cannot witness the rule'),
+      req('openwop.it.idempotency-concurrent-claim.every-executor-mints-the-same-logicalinvocationid-without-this-one-delivery-prov', 'host-sample-test-seams.md §25', 'fewer than two executors is not a race and cannot witness the rule'),
     ).toBe(true);
 
     const unique = new Set(ids.map((x) => JSON.stringify(x)));
     expect(
       unique.size,
-      driver.describe(
+      req('openwop.it.idempotency-concurrent-claim.every-executor-mints-the-same-logicalinvocationid-without-this-one-delivery-prov', 
         'idempotency.md §"Idempotency key composition" (Across a recovery boundary)',
         'all executors MUST mint one identity — differing ids mean they never collided, so a single delivery is a vacuous pass rather than a working claim',
       ),
@@ -108,16 +109,16 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
   });
 
   it('exactly one effect escapes, however many executors attempt it', async () => {
-    const out = await seamPresent();
+    const out = await seamPresent('openwop.it.idempotency-concurrent-claim.exactly-one-effect-escapes-however-many-executors-attempt-it');
     if (out === null) return softSkip('blocked', `${SEAM} not mounted (host-sample-test-seams.md §25)`);
 
     expect(
       typeof out.attempted === 'number' && (out.attempted as number) >= 2,
-      driver.describe('host-sample-test-seams.md §25', 'the seam MUST report how many executors attempted the effect'),
+      req('openwop.it.idempotency-concurrent-claim.exactly-one-effect-escapes-however-many-executors-attempt-it', 'host-sample-test-seams.md §25', 'the seam MUST report how many executors attempted the effect'),
     ).toBe(true);
     expect(
       out.delivered,
-      driver.describe(
+      req('openwop.it.idempotency-concurrent-claim.exactly-one-effect-escapes-however-many-executors-attempt-it', 
         'idempotency.md §"Concurrent duplicates (Layer 2)"',
         'the engine MUST ensure at most one concurrent executor performs the external effect — the guarding persist MUST be an atomic claim, not a read-then-write',
       ),
@@ -125,7 +126,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
   });
 
   it('the race is real at higher concurrency too — a claim that only holds at 2 is not a claim', async () => {
-    const probe = await seamPresent();
+    const probe = await seamPresent('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a');
     if (probe === null) return softSkip('blocked', `${SEAM} not mounted (host-sample-test-seams.md §25)`);
 
     const res = await driver.post(SEAM, { executors: 5 });
@@ -138,7 +139,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     const out = res.json as ClaimResult;
     expect(
       out.delivered,
-      driver.describe(
+      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 
         'idempotency.md §"Concurrent duplicates (Layer 2)"',
         'exactly one effect regardless of how many executors race — at most one wins the compare-and-set, the rest observe the hit',
       ),
@@ -147,7 +148,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     if (ids.length >= 2) {
       expect(
         new Set(ids.map((x) => JSON.stringify(x))).size,
-        driver.describe('idempotency.md §"Idempotency key composition"', 'one identity across all executors at any concurrency'),
+        req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'idempotency.md §"Idempotency key composition"', 'one identity across all executors at any concurrency'),
       ).toBe(1);
     }
   });

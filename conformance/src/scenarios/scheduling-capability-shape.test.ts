@@ -21,6 +21,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryScheduling {
   supported?: boolean;
@@ -46,10 +48,10 @@ async function readScheduling(): Promise<DiscoveryScheduling | null> {
 describe('scheduling-capability-shape: advertisement shape (RFC 0052 §A)', () => {
   it('capabilities.scheduling is either absent or well-formed', async () => {
     const sched = await readScheduling();
-    if (sched === null) return; // host doesn't advertise scheduling at all
+    if (sched === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `sched === null` returned early (host doesn\'t advertise scheduling at all)'); // host doesn't advertise scheduling at all
     expect(
       typeof sched.supported,
-      driver.describe(
+      req('openwop.it.scheduling-capability-shape.capabilities-scheduling-is-either-absent-or-well-formed', 
         'capabilities.schema.json §scheduling',
         'capabilities.scheduling.supported MUST be a boolean when scheduling is advertised',
       ),
@@ -58,22 +60,22 @@ describe('scheduling-capability-shape: advertisement shape (RFC 0052 §A)', () =
 
   it('cron/delayed/calendar are booleans when present + supported', async () => {
     const sched = await readScheduling();
-    if (!sched?.supported) return;
+    if (!sched?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!sched?.supported` returned early');
     for (const k of ['cron', 'delayed', 'calendar'] as const) {
       if (sched[k] === undefined) continue;
       expect(
         typeof sched[k],
-        driver.describe('RFC 0052 §A', `capabilities.scheduling.${k} MUST be a boolean when present`),
+        req('openwop.it.scheduling-capability-shape.cron-delayed-calendar-are-booleans-when-present-supported', 'RFC 0052 §A', `capabilities.scheduling.${k} MUST be a boolean when present`),
       ).toBe('boolean');
     }
   });
 
   it('maxFutureHorizon is an ISO-8601 duration when present', async () => {
     const sched = await readScheduling();
-    if (!sched?.supported || sched.maxFutureHorizon === undefined) return;
+    if (!sched?.supported || sched.maxFutureHorizon === undefined) return softSkip('blocked', 'precondition not met — `!sched?.supported || sched.maxFutureHorizon === undefined` returned early (seam, prior step, or fixture unavailable)');
     expect(
       ISO_DURATION.test(sched.maxFutureHorizon),
-      driver.describe(
+      req('openwop.it.scheduling-capability-shape.maxfuturehorizon-is-an-iso-8601-duration-when-present', 
         'RFC 0052 §A',
         `capabilities.scheduling.maxFutureHorizon MUST be an ISO-8601 duration, got: ${sched.maxFutureHorizon}`,
       ),

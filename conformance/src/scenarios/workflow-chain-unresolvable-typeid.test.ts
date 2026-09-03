@@ -36,6 +36,7 @@ import {
   ChainUnresolvableTypeIdError,
   type WorkflowChain,
 } from '../lib/workflow-chain-expansion.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CHAIN_WITH_UNKNOWN_TYPEID: WorkflowChain = {
   chainId: 'vendor.acme.someChain',
@@ -66,7 +67,7 @@ describe('category: workflow-chain expansion — unresolvable typeId rejection',
           params: {},
           isTypeIdResolvable: isKnown,
         }),
-      'Per spec §"Expansion semantics" step 3: hosts MUST reject expansion with `chain_unresolvable_typeid` when any fragment node\'s typeId can\'t be resolved by the destination host.',
+      req('openwop.it.workflow-chain-unresolvable-typeid.throws-chainunresolvabletypeiderror-when-chain-references-an-unknown-typeid', 'workflow-chain-packs.md', 'Per spec §"Expansion semantics" step 3: hosts MUST reject expansion with `chain_unresolvable_typeid` when any fragment node\'s typeId can\'t be resolved by the destination host.'),
     ).toThrow(ChainUnresolvableTypeIdError);
   });
 
@@ -79,21 +80,21 @@ describe('category: workflow-chain expansion — unresolvable typeId rejection',
       });
       expect.fail('expandChain MUST have thrown ChainUnresolvableTypeIdError');
     } catch (err) {
-      expect(err, 'expected ChainUnresolvableTypeIdError').toBeInstanceOf(
+      expect(err, req('openwop.it.workflow-chain-unresolvable-typeid.error-carries-the-offending-typeid-and-the-chainid-in-details', 'workflow-chain-packs.md', 'expected ChainUnresolvableTypeIdError')).toBeInstanceOf(
         ChainUnresolvableTypeIdError,
       );
       const e = err as ChainUnresolvableTypeIdError;
       expect(
         e.code,
-        'Per spec §"Error codes": the wire-level error code MUST be `chain_unresolvable_typeid`.',
+        req('openwop.it.workflow-chain-unresolvable-typeid.error-carries-the-offending-typeid-and-the-chainid-in-details', 'workflow-chain-packs.md', 'Per spec §"Error codes": the wire-level error code MUST be `chain_unresolvable_typeid`.'),
       ).toBe('chain_unresolvable_typeid');
       expect(
         e.typeId,
-        'The error MUST surface the offending typeId so the host editor can render an actionable diagnostic.',
+        req('openwop.it.workflow-chain-unresolvable-typeid.error-carries-the-offending-typeid-and-the-chainid-in-details', 'workflow-chain-packs.md', 'The error MUST surface the offending typeId so the host editor can render an actionable diagnostic.'),
       ).toBe('made.up.foo');
       expect(
         e.chainId,
-        'The error MUST surface the chainId so the host editor knows which chain-pack tile triggered the rejection.',
+        req('openwop.it.workflow-chain-unresolvable-typeid.error-carries-the-offending-typeid-and-the-chainid-in-details', 'workflow-chain-packs.md', 'The error MUST surface the chainId so the host editor knows which chain-pack tile triggered the rejection.'),
       ).toBe('vendor.acme.someChain');
     }
   });
@@ -115,7 +116,7 @@ describe('category: workflow-chain expansion — unresolvable typeId rejection',
     }
     expect(
       threw,
-      'Expansion MUST throw before producing any output — host editors rely on the "no partial expansion" guarantee to keep parent workflows clean on rejection.',
+      req('openwop.it.workflow-chain-unresolvable-typeid.rejection-happens-before-any-id-rewriting-or-placeholder-substitution', 'workflow-chain-packs.md', 'Expansion MUST throw before producing any output — host editors rely on the "no partial expansion" guarantee to keep parent workflows clean on rejection.'),
     ).toBe(true);
   });
 
@@ -134,7 +135,7 @@ describe('category: workflow-chain expansion — unresolvable typeId rejection',
           params: {},
           isTypeIdResolvable: isKnown,
         }),
-      'Sanity: when every typeId resolves, expansion MUST proceed without throwing.',
+      req('openwop.it.workflow-chain-unresolvable-typeid.accepts-the-chain-when-every-typeid-is-resolvable', 'workflow-chain-packs.md', 'Sanity: when every typeId resolves, expansion MUST proceed without throwing.'),
     ).not.toThrow();
   });
 
@@ -163,7 +164,7 @@ describe('category: workflow-chain expansion — unresolvable typeId rejection',
       const e = err as ChainUnresolvableTypeIdError;
       expect(
         e.typeId,
-        'When multiple nodes have unknown typeIds, the throw MUST identify the first unknown one encountered in declaration order.',
+        req('openwop.it.workflow-chain-unresolvable-typeid.throws-on-the-first-unknown-typeid-encountered-fail-fast', 'workflow-chain-packs.md', 'When multiple nodes have unknown typeIds, the throw MUST identify the first unknown one encountered in declaration order.'),
       ).toBe('made.up.foo');
     }
   });

@@ -124,6 +124,7 @@ export function resolveFileRecord(
   // them. See lib/spec-coherence.ts for why not a new disposition value.
   if (
     specCoherenceFile !== undefined
+    && process.env.OPENWOP_CORPUS_GATE !== '1' // suite 2.0.0: under the corpus gate the coherence scenario IS the subject
     && SPEC_COHERENCE_SCENARIOS.has(specCoherenceFile)
     && !states.includes('fail')
     && assertionCount === 0

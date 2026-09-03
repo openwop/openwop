@@ -24,6 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryWorkspace {
   supported?: boolean;
@@ -54,26 +55,26 @@ describe('workspace-behavior: §C CRUD round-trip (RFC 0059)', () => {
     const path = 'behavior/CRUD.md';
 
     const created = await driver.put(`${FILES}/${encodeURIComponent(path)}`, { content: 'first body' });
-    expect(created.status, driver.describe('agent-workspace.md §C PUT', 'create MUST return 200')).toBe(200);
+    expect(created.status, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C PUT', 'create MUST return 200')).toBe(200);
     const file = created.json as WorkspaceFile;
-    expect(file.version, driver.describe('agent-workspace.md §File model', 'version MUST start at 1')).toBe(1);
-    expect(typeof file.etag, driver.describe('agent-workspace.md §File model', 'PUT MUST return an etag')).toBe('string');
+    expect(file.version, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §File model', 'version MUST start at 1')).toBe(1);
+    expect(typeof file.etag, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §File model', 'PUT MUST return an etag')).toBe('string');
 
     const got = await driver.get(`${FILES}/${encodeURIComponent(path)}`);
-    expect((got.json as WorkspaceFile).content, driver.describe('agent-workspace.md §C GET', 'GET MUST return the content')).toBe('first body');
+    expect((got.json as WorkspaceFile).content, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C GET', 'GET MUST return the content')).toBe('first body');
 
     const list = await driver.get(FILES);
     const rows = (list.json as { files?: WorkspaceFile[] }).files ?? [];
     const row = rows.find((r) => r.path === path);
-    expect(row, driver.describe('agent-workspace.md §C list', 'list MUST include the created file')).toBeDefined();
-    expect('content' in (row as object), driver.describe('agent-workspace.md §C list', 'list MUST NOT include file bodies (metadata only)')).toBe(false);
+    expect(row, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C list', 'list MUST include the created file')).toBeDefined();
+    expect('content' in (row as object), req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C list', 'list MUST NOT include file bodies (metadata only)')).toBe(false);
 
     const del = await driver.del(`${FILES}/${encodeURIComponent(path)}`);
-    expect(del.status, driver.describe('agent-workspace.md §C DELETE', 'DELETE MUST return 2xx')).toBeGreaterThanOrEqual(200);
-    expect(del.status, 'DELETE MUST be < 300').toBeLessThan(300);
+    expect(del.status, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C DELETE', 'DELETE MUST return 2xx')).toBeGreaterThanOrEqual(200);
+    expect(del.status, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C DELETE', 'DELETE MUST be < 300')).toBeLessThan(300);
 
     const gone = await driver.get(`${FILES}/${encodeURIComponent(path)}`);
-    expect(gone.status, driver.describe('agent-workspace.md §C GET', 'GET after DELETE MUST be 404')).toBe(404);
+    expect(gone.status, req('openwop.it.workspace-behavior.put-creates-v1-get-returns-it-list-omits-content-delete-removes-it', 'agent-workspace.md §C GET', 'GET after DELETE MUST be 404')).toBe(404);
   });
 });
 
@@ -86,14 +87,14 @@ describe('workspace-behavior: §C optimistic concurrency (RFC 0059)', () => {
     const etag = (v1.json as WorkspaceFile).etag!;
 
     const stale = await driver.put(`${FILES}/${encodeURIComponent(path)}`, { content: 'nope' }, { headers: { 'If-Match': '"definitely-stale"' } });
-    expect(stale.status, driver.describe('agent-workspace.md §C PUT', 'a stale If-Match MUST return 409 workspace_conflict')).toBe(409);
-    expect((stale.json as { error?: string }).error, driver.describe('rest-endpoints.md workspace_conflict', 'error code MUST be workspace_conflict')).toBe('workspace_conflict');
+    expect(stale.status, req('openwop.it.workspace-behavior.stale-if-match-409-workspace-conflict-matching-if-match-bumps-version', 'agent-workspace.md §C PUT', 'a stale If-Match MUST return 409 workspace_conflict')).toBe(409);
+    expect((stale.json as { error?: string }).error, req('openwop.it.workspace-behavior.stale-if-match-409-workspace-conflict-matching-if-match-bumps-version', 'rest-endpoints.md workspace_conflict', 'error code MUST be workspace_conflict')).toBe('workspace_conflict');
     const details = (stale.json as { details?: { currentVersion?: number } }).details;
-    expect(typeof details?.currentVersion, driver.describe('agent-workspace.md §C PUT', '409 MUST carry details.currentVersion')).toBe('number');
+    expect(typeof details?.currentVersion, req('openwop.it.workspace-behavior.stale-if-match-409-workspace-conflict-matching-if-match-bumps-version', 'agent-workspace.md §C PUT', '409 MUST carry details.currentVersion')).toBe('number');
 
     const v2 = await driver.put(`${FILES}/${encodeURIComponent(path)}`, { content: 'v2' }, { headers: { 'If-Match': etag } });
-    expect(v2.status, 'a matching If-Match MUST succeed').toBe(200);
-    expect((v2.json as WorkspaceFile).version, driver.describe('agent-workspace.md §File model', 'a successful PUT MUST bump version')).toBe(2);
+    expect(v2.status, req('openwop.it.workspace-behavior.stale-if-match-409-workspace-conflict-matching-if-match-bumps-version', 'agent-workspace.md §C PUT', 'a matching If-Match MUST succeed')).toBe(200);
+    expect((v2.json as WorkspaceFile).version, req('openwop.it.workspace-behavior.stale-if-match-409-workspace-conflict-matching-if-match-bumps-version', 'agent-workspace.md §File model', 'a successful PUT MUST bump version')).toBe(2);
 
     await driver.del(`${FILES}/${encodeURIComponent(path)}`);
   });
@@ -106,8 +107,8 @@ describe('workspace-behavior: §C size ceiling (RFC 0059)', () => {
     const max = typeof cap.maxFileBytes === 'number' ? cap.maxFileBytes : 1_048_576;
     const tooBig = 'x'.repeat(max + 1);
     const res = await driver.put(`${FILES}/${encodeURIComponent('behavior/TOOBIG.md')}`, { content: tooBig });
-    expect(res.status, driver.describe('agent-workspace.md §C PUT', 'oversize content MUST be rejected (4xx)')).toBeGreaterThanOrEqual(400);
-    expect((res.json as { error?: string }).error, driver.describe('rest-endpoints.md workspace_too_large', 'error code MUST be workspace_too_large')).toBe('workspace_too_large');
+    expect(res.status, req('openwop.it.workspace-behavior.content-beyond-maxfilebytes-returns-workspace-too-large', 'agent-workspace.md §C PUT', 'oversize content MUST be rejected (4xx)')).toBeGreaterThanOrEqual(400);
+    expect((res.json as { error?: string }).error, req('openwop.it.workspace-behavior.content-beyond-maxfilebytes-returns-workspace-too-large', 'rest-endpoints.md workspace_too_large', 'error code MUST be workspace_too_large')).toBe('workspace_too_large');
   });
 });
 
@@ -124,10 +125,10 @@ describe('workspace-behavior: §D run-start snapshot (RFC 0059)', () => {
 
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
     const ws = (snap.json as { workspace?: Array<{ path: string }> }).workspace;
-    if (ws === undefined) return; // host doesn't expose the snapshot field — skip
+    if (ws === undefined) return softSkip('blocked', 'precondition not met — `ws === undefined` returned early (host doesn\'t expose the snapshot field — skip) (seam, prior step, or fixture unavailable)'); // host doesn't expose the snapshot field — skip
     expect(
       ws.some((f) => f.path === path),
-      driver.describe('agent-workspace.md §D', 'the run snapshot MUST reflect a workspace file present at run start'),
+      req('openwop.it.workspace-behavior.a-run-started-after-a-write-exposes-the-workspace-snapshot', 'agent-workspace.md §D', 'the run snapshot MUST reflect a workspace file present at run start'),
     ).toBe(true);
 
     await driver.del(`${FILES}/${encodeURIComponent(path)}`);

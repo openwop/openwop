@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CANARY = 'sk-canary-rfc0064-do-not-leak-xyz789';
 
@@ -29,7 +29,7 @@ describe('tool-hooks-secret-redaction (RFC 0064 §E)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       JSON.stringify(res).includes(CANARY),
-      driver.describe('RFC 0064 §B', 'a resolved secret MUST be redacted before hashing; the raw value MUST NOT appear in argsHash or any emitted field (SR-1)'),
+      req('openwop.it.tool-hooks-secret-redaction.a-secret-shaped-tool-arg-never-appears-in-the-emitted-events', 'RFC 0064 §B', 'a resolved secret MUST be redacted before hashing; the raw value MUST NOT appear in argsHash or any emitted field (SR-1)'),
     ).toBe(false);
   });
 });

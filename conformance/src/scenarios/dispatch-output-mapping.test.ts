@@ -22,6 +22,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-output-mapping';
 const CHILD = 'conformance-dispatch-output-mapping-child';
@@ -39,7 +41,7 @@ describe.skipIf(SKIP)('dispatch-output-mapping: child → parent variable harves
     const parentRunId = (create.json as { runId: string }).runId;
 
     const parentTerminal = (await pollUntilTerminal(parentRunId)) as RunSnapshot;
-    expect(parentTerminal.status, driver.describe(
+    expect(parentTerminal.status, req('openwop.it.dispatch-output-mapping.hvmap-1b-outputmapping-harvests-child-variables-into-parent-variables-on-termina', 
       'RFCS/0022-dispatch-input-output-mapping.md §A',
       'parent run MUST reach terminal `completed` once the dispatch loop terminates',
     )).toBe('completed');
@@ -49,7 +51,7 @@ describe.skipIf(SKIP)('dispatch-output-mapping: child → parent variable harves
     // Child declares childOutcome.defaultValue='done' so the value is
     // present in the child's variables_json at terminal time.
     const parentVars = parentTerminal.variables ?? {};
-    expect(parentVars.parentResult, driver.describe(
+    expect(parentVars.parentResult, req('openwop.it.dispatch-output-mapping.hvmap-1b-outputmapping-harvests-child-variables-into-parent-variables-on-termina', 
       'RFCS/0022-dispatch-input-output-mapping.md §A',
       'parent `parentResult` MUST be child\'s `childOutcome` projection ("done") per outputMapping',
     )).toBe('done');
@@ -99,7 +101,7 @@ async function registerParent(childFixtureId: string): Promise<string | null> {
 describe.skipIf(!isFixtureAdvertised('conformance-dispatch-deterministic-fail-child'))('dispatch-output-mapping: HVMAP-1b-failed (RFC 0022 §B)', () => {
   it('child terminates `failed` → outputMapping MUST be skipped; parent.parentResult stays at sentinel', async () => {
     const parentId = await registerParent('conformance-dispatch-deterministic-fail-child');
-    if (!parentId) return; // workflow-register seam not exposed — soft-skip
+    if (!parentId) return softSkip('blocked', 'precondition not met — `!parentId` returned early (workflow-register seam not exposed — soft-skip) (seam, prior step, or fixture unavailable)'); // workflow-register seam not exposed — soft-skip
     const create = await driver.post('/v1/runs', { workflowId: parentId });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -109,7 +111,7 @@ describe.skipIf(!isFixtureAdvertised('conformance-dispatch-deterministic-fail-ch
     const parentVars = terminal.variables ?? {};
     expect(
       parentVars.parentResult,
-      driver.describe(
+      req('openwop.it.dispatch-output-mapping.child-terminates-failed-outputmapping-must-be-skipped-parent-parentresult-stays', 
         'RFCS/0022-dispatch-input-output-mapping.md §B',
         'outputMapping MUST be SKIPPED when child terminates failed; parent variable MUST NOT be overwritten',
       ),
@@ -120,7 +122,7 @@ describe.skipIf(!isFixtureAdvertised('conformance-dispatch-deterministic-fail-ch
 describe.skipIf(!isFixtureAdvertised('conformance-dispatch-cancellable-child'))('dispatch-output-mapping: HVMAP-1b-cancelled (RFC 0022 §B)', () => {
   it('child terminates `cancelled` → outputMapping MUST be skipped; parent.parentResult stays at sentinel', async () => {
     const parentId = await registerParent('conformance-dispatch-cancellable-child');
-    if (!parentId) return; // soft-skip
+    if (!parentId) return softSkip('blocked', 'precondition not met — `!parentId` returned early (soft-skip) (seam, prior step, or fixture unavailable)'); // soft-skip
     const create = await driver.post('/v1/runs', { workflowId: parentId });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -138,7 +140,7 @@ describe.skipIf(!isFixtureAdvertised('conformance-dispatch-cancellable-child'))(
       }
       await new Promise((r) => setTimeout(r, 250));
     }
-    if (!childRunId) return; // dispatch didn't surface child run id — soft-skip
+    if (!childRunId) return softSkip('blocked', 'precondition not met — `!childRunId` returned early (dispatch didn\'t surface child run id — soft-skip) (seam, prior step, or fixture unavailable)'); // dispatch didn't surface child run id — soft-skip
     const cancelRes = await driver.post(`/v1/runs/${encodeURIComponent(childRunId)}/cancel`, { reason: 'hvmap-1b-cancelled test' });
     expect(cancelRes.status === 200 || cancelRes.status === 202).toBe(true);
 
@@ -146,7 +148,7 @@ describe.skipIf(!isFixtureAdvertised('conformance-dispatch-cancellable-child'))(
     const parentVars = terminal.variables ?? {};
     expect(
       parentVars.parentResult,
-      driver.describe(
+      req('openwop.it.dispatch-output-mapping.child-terminates-cancelled-outputmapping-must-be-skipped-parent-parentresult-sta', 
         'RFCS/0022-dispatch-input-output-mapping.md §B',
         'outputMapping MUST be SKIPPED when child terminates cancelled; parent variable MUST NOT be overwritten',
       ),

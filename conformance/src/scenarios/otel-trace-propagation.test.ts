@@ -24,6 +24,7 @@ import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host exports OTLP spans to the suite's collector.
@@ -92,7 +93,7 @@ describe('otel-trace-propagation: inbound traceparent threads to emitted spans',
     const wantTrace = traceId.toLowerCase();
     const matching = runSpans.filter((s) => s.traceId.toLowerCase() === wantTrace);
 
-    expect(matching.length, driver.describe(
+    expect(matching.length, req('openwop.it.otel-trace-propagation.host-emitted-spans-share-the-caller-supplied-traceid', 
       'observability.md §"Trace context propagation"',
       'spans emitted during a run started with an inbound traceparent MUST share its traceId',
     )).toBeGreaterThan(0);

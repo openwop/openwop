@@ -11,8 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('tool-hooks-rate-limit (RFC 0064 §D)', () => {
   it('an exhausted (principal, tool) bucket yields status:"rate_limited"', async () => {
@@ -27,7 +27,7 @@ describe('tool-hooks-rate-limit (RFC 0064 §D)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       (res.toolReturned ?? {}).status,
-      driver.describe('RFC 0064 §D', 'an exhausted token bucket MUST yield status:"rate_limited" without invoking the tool'),
+      req('openwop.it.tool-hooks-rate-limit.an-exhausted-principal-tool-bucket-yields-status-rate-limited', 'RFC 0064 §D', 'an exhausted token bucket MUST yield status:"rate_limited" without invoking the tool'),
     ).toBe('rate_limited');
   });
 });

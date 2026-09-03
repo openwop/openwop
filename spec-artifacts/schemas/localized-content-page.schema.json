@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/localized-content-page.schema.json",
+  "title": "LocalizedContentPage",
+  "description": "RFC 0103 (spec/v1/localized-content.md §B). An authored content page: an ordered composition of sections addressed by a URL `slug`. Publication status is atomic across locales for v1. SEO carries hreflang + og:locale alternates so a renderer can emit per-locale link relations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pageId", "slug", "name", "status", "sectionOrder"],
+  "properties": {
+    "pageId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier of the page within its tenant."
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "URL slug for public delivery (`GET /v1/content/pages/{slug}`). Lowercase, hyphen-separated."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-facing page name (admin/authoring label)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "published"],
+      "description": "Publication status, atomic across locales for v1. A `draft` page MUST NOT be served on the public delivery path."
+    },
+    "sectionOrder": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Ordered list of `sectionId`s defining the page's render order."
+    },
+    "seo": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional SEO metadata for per-locale link relations.",
+      "properties": {
+        "hreflang": {
+          "type": "array",
+          "description": "hreflang alternates: per-locale canonical URLs.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["locale", "href"],
+            "properties": {
+              "locale": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+              "href": { "type": "string", "format": "uri" }
+            }
+          }
+        },
+        "ogLocaleAlternates": {
+          "type": "array",
+          "description": "og:locale:alternate values.",
+          "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

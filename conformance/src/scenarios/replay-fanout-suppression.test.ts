@@ -79,6 +79,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForFile } from '../lib/scenario-disposition.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * RFC 0148 §A — the MUST NOT gets its OWN disposition, separate from the file's.
@@ -108,10 +109,10 @@ interface Delivered {
 
 async function startReceiver(): Promise<{ server: Server; url: string; received: Delivered[] }> {
   const received: Delivered[] = [];
-  const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+  const server = createServer((reqBody: IncomingMessage, res: ServerResponse) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c: Buffer) => chunks.push(c));
-    req.on('end', () => {
+    reqBody.on('data', (c: Buffer) => chunks.push(c));
+    reqBody.on('end', () => {
       received.push({ body: Buffer.concat(chunks).toString('utf8') });
       res.writeHead(204);
       res.end();
@@ -193,21 +194,21 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
           + 'set OPENWOP_WEBHOOK_ALLOW_PRIVATE=true on the host (or equivalent) to run',
       );
     }
-    expect(reg.status, driver.describe(
+    expect(reg.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 
       'webhooks.md §"Register"',
       'POST /v1/webhooks MUST return 201 on success',
     )).toBe(201);
 
     // ── LEG 1 — POSITIVE CONTROL. Prove this wiring delivers at all. ─────────
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });
-    expect(create.status, 'failed to start conformance-noop').toBe(201);
+    expect(create.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'webhooks.md §"Register"', 'failed to start conformance-noop')).toBe(201);
     const sourceRunId = (create.json as { runId: string }).runId;
     await pollUntilTerminal(sourceRunId, { timeoutMs: 10_000 });
     await quietWindow(DELIVERY_GRACE_MS);
 
     expect(
       forRun(receiver.received, sourceRunId).length,
-      driver.describe(
+      req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 
         'webhooks.md §"Register"',
         'POSITIVE CONTROL: the host must deliver the source run\'s events to this receiver — '
           + 'without this, every "no delivery" assertion below is vacuous',
@@ -236,7 +237,7 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
           + 'has nothing to constrain on this host',
       );
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `replayCap?.supported !== true` returned early');
     }
 
     // ── LEG 2 — THE MUST NOT. A replay fork re-emits; it must not deliver. ───
@@ -261,16 +262,16 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
           + 'so the absence of deliveries below would prove nothing',
       );
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `forkDeclined(replay.status, \'fanout-suppression replay fork\')` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(replay.status, 'replay fork should be accepted').toBe(201);
+    expect(replay.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'webhooks.md §"Register"', 'replay fork should be accepted')).toBe(201);
     const replayRunId = (replay.json as { runId: string }).runId;
     await pollUntilTerminal(replayRunId, { timeoutMs: 30_000 });
     await quietWindow(SUPPRESSION_WINDOW_MS);
 
     expect(
       forRun(receiver.received, replayRunId).map((d) => d.body.slice(0, 200)),
-      driver.describe(
+      req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 
         'replay.md §"Host-initiated fan-out is an external effect"',
         'a mode:"replay" fork MUST NOT emit outbound deliveries for the events it re-emits as fixed history — '
           + 'delivering one asserts to a subscriber that something happened in this run which did not',
@@ -283,11 +284,11 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     // still carries them). Without this, a host that simply failed the fork
     // would pass leg 2.
     const forkEvents = await driver.get(`/v1/runs/${encodeURIComponent(replayRunId)}/events`);
-    expect(forkEvents.status, 'fork events must be readable').toBe(200);
+    expect(forkEvents.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'replay.md §"Host-initiated fan-out is an external effect"', 'fork events must be readable')).toBe(200);
     const forkEventList = (forkEvents.json as { events?: { type?: string }[] }).events ?? [];
     expect(
       forkEventList.length,
-      driver.describe(
+      req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 
         'replay.md §"Host-initiated fan-out is an external effect"',
         'suppression is OUTBOUND ONLY — the fork\'s own event log MUST still carry the re-emitted events, '
           + 'so an empty fork log means leg 2 proved nothing',
@@ -309,16 +310,16 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     });
     if (branch.status === 501 || branch.status === 400) {
       // branch not offered on this range — leg 2 still stands on its own.
-      return;
+      return softSkip('blocked', 'precondition not met — `branch.status === 501 || branch.status === 400` returned early (branch not offered on this range — leg 2 still stands on its own.) (seam, prior step, or fixture unavailable)');
     }
-    expect(branch.status, 'branch fork should be accepted').toBe(201);
+    expect(branch.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'replay.md §"Host-initiated fan-out is an external effect"', 'branch fork should be accepted')).toBe(201);
     const branchRunId = (branch.json as { runId: string }).runId;
     await pollUntilTerminal(branchRunId, { timeoutMs: 30_000 });
     await quietWindow(DELIVERY_GRACE_MS);
 
     expect(
       forRun(receiver.received, branchRunId).length,
-      driver.describe(
+      req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 
         'replay.md §"Host-initiated fan-out is an external effect"',
         'a branch fork is deliberately OUT of scope — its events are new facts, so suppressing them '
           + 'means the host keyed on "is a fork" rather than on replay-ness read from the run',

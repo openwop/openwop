@@ -40,6 +40,8 @@ import {
   SAFETY_TIERS,
   TOOL_CONTENT_FORBIDDEN,
 } from '../lib/toolCatalog.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -49,7 +51,7 @@ function expectContentFree(d: Record<string, unknown>, where: string): void {
   for (const f of TOOL_CONTENT_FORBIDDEN) {
     expect(
       !(f in d),
-      driver.describe('RFC 0078 §F (SR-1)', `${where} MUST be content-free (no ${f})`),
+      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'RFC 0078 §F (SR-1)', `${where} MUST be content-free (no ${f})`),
     ).toBe(true);
   }
 }
@@ -67,25 +69,25 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
     const unauth = await driver.get('/v1/tools', { authenticated: false });
     expect(
       unauth.status === 401,
-      driver.describe('tool-catalog.md §B', 'GET /v1/tools MUST require authentication (401 unauthenticated)'),
+      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', 'GET /v1/tools MUST require authentication (401 unauthenticated)'),
     ).toBe(true);
 
     // ---- Leg 1: the list (§B) -------------------------------------------
     const tools = await listTools();
-    if (tools === null) return; // host advertises the cap but doesn't serve the read — soft-skip the rest
+    if (tools === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `tools === null` returned early (host advertises the cap but doesn\'t serve the read — soft-skip the rest)'); // host advertises the cap but doesn't serve the read — soft-skip the rest
 
     for (const t of tools) {
       expect(
         validate(t),
-        driver.describe('tool-descriptor.schema.json', `each ToolDescriptor MUST validate (${ajv.errorsText(validate.errors)})`),
+        req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-descriptor.schema.json', `each ToolDescriptor MUST validate (${ajv.errorsText(validate.errors)})`),
       ).toBe(true);
       expect(
         typeof t.source === 'string' && TOOL_SOURCES.includes(t.source as string),
-        driver.describe('tool-catalog.md §C', 'ToolDescriptor.source MUST be in the closed vocabulary'),
+        req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §C', 'ToolDescriptor.source MUST be in the closed vocabulary'),
       ).toBe(true);
       expect(
         typeof t.safetyTier === 'string' && SAFETY_TIERS.includes(t.safetyTier as string),
-        driver.describe('tool-catalog.md §C', 'ToolDescriptor.safetyTier MUST be pure|read|write|exec'),
+        req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §C', 'ToolDescriptor.safetyTier MUST be pure|read|write|exec'),
       ).toBe(true);
       expectContentFree(t, 'ToolDescriptor');
     }
@@ -97,14 +99,14 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
       if (one.status === 200) {
         expect(
           one.descriptor?.toolId === id,
-          driver.describe('tool-catalog.md §B', 'GET /v1/tools/{toolId} MUST return the requested descriptor'),
+          req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', 'GET /v1/tools/{toolId} MUST return the requested descriptor'),
         ).toBe(true);
       }
     }
     const unknown = await getTool('__conformance_nonexistent_tool__');
     expect(
       unknown.status === 404,
-      driver.describe('tool-catalog.md §B', 'GET /v1/tools/{unknown} MUST 404'),
+      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', 'GET /v1/tools/{unknown} MUST 404'),
     ).toBe(true);
 
     // ---- Leg 4: §F-2 cross-principal non-disclosure (env-gated) ---------
@@ -113,7 +115,7 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
       const cross = await getTool(crossId);
       expect(
         cross.status === 404,
-        driver.describe('tool-catalog.md §F-2', 'a tool owned by a different principal MUST 404 (non-disclosure)'),
+        req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §F-2', 'a tool owned by a different principal MUST 404 (non-disclosure)'),
       ).toBe(true);
     }
   });

@@ -22,6 +22,7 @@ import { driver } from '../lib/driver.js';
 import { subscribe } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-delay';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -42,13 +43,13 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
       { timeoutMs: 30_000 },
     );
 
-    expect(result.status, driver.describe(
+    expect(result.status, req('openwop.it.stream-modes-buffer.accepts-bufferms-in-range-and-emits-at-least-one-event-batch-frame', 
       'stream-modes.md §Aggregation hint',
       'GET /v1/runs/{runId}/events with valid bufferMs MUST return 200 SSE',
     )).toBe(200);
 
     const batchEvents = result.events.filter((e) => e.event === 'batch');
-    expect(batchEvents.length, driver.describe(
+    expect(batchEvents.length, req('openwop.it.stream-modes-buffer.accepts-bufferms-in-range-and-emits-at-least-one-event-batch-frame', 
       'stream-modes.md §Aggregation hint',
       'buffered mode MUST emit at least one `event: batch` SSE frame',
     )).toBeGreaterThan(0);
@@ -56,7 +57,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
     // Each batch's data is a JSON array of RunEventDoc.
     for (const batch of batchEvents) {
       const parsed = JSON.parse(batch.data);
-      expect(Array.isArray(parsed), driver.describe(
+      expect(Array.isArray(parsed), req('openwop.it.stream-modes-buffer.accepts-bufferms-in-range-and-emits-at-least-one-event-batch-frame', 
         'stream-modes.md §batch data shape',
         'event: batch data MUST parse to a JSON array',
       )).toBe(true);
@@ -77,7 +78,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
       { timeoutMs: 5_000 },
     );
 
-    expect(result.status, driver.describe(
+    expect(result.status, req('openwop.it.stream-modes-buffer.rejects-out-of-range-bufferms-with-400-validation-error', 
       'stream-modes.md §Aggregation hint range',
       'bufferMs > 5000 MUST return 400',
     )).toBe(400);
@@ -114,7 +115,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
       (e) => e.type === 'run.completed' || e.type === 'run.failed' || e.type === 'run.cancelled',
     );
 
-    expect(hasTerminal, driver.describe(
+    expect(hasTerminal, req('openwop.it.stream-modes-buffer.forces-flush-on-terminal-run-completed-arrives-bundled-in-a-batch-before-the-tim', 
       'stream-modes.md §Aggregation hint — force-flush triggers',
       'terminal events MUST be force-flushed; the stream MUST NOT close before delivering run.completed',
     )).toBe(true);
@@ -124,7 +125,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
     // bufferMs/2 as headroom for cold-start latency on the conformance
     // server, but failing here proves the timer fired before terminal
     // arrived (i.e., force-flush is broken).
-    expect(elapsedMs, driver.describe(
+    expect(elapsedMs, req('openwop.it.stream-modes-buffer.forces-flush-on-terminal-run-completed-arrives-bundled-in-a-batch-before-the-tim', 
       'stream-modes.md §Aggregation hint — force-flush is immediate',
       `terminal SHOULD arrive in well under bufferMs (${BUFFER_MS}ms); observed ${elapsedMs}ms — if elapsed is close to bufferMs, force-flush is not firing`,
     )).toBeLessThan(BUFFER_MS / 2);
@@ -140,7 +141,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
     );
 
     const batchEvents = result.events.filter((e) => e.event === 'batch');
-    expect(batchEvents.length, driver.describe(
+    expect(batchEvents.length, req('openwop.it.stream-modes-buffer.bufferms-0-behaves-identically-to-omitting-per-event-mode', 
       'stream-modes.md §Aggregation hint — bufferMs=0 sentinel',
       'bufferMs=0 MUST behave identically to omitting (no batch frames)',
     )).toBe(0);

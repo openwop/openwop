@@ -36,6 +36,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnHost, type SpawnedHost } from '../lib/multiProcess.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HOST_PACKAGE_DIR =
   process.env.OPENWOP_RESTART_DURING_RUN_HOST_DIR ?? 'examples/hosts/sqlite';
@@ -160,11 +161,11 @@ describe.skipIf(!RUN_THIS_SCENARIO)(
 
         expect(
           terminal,
-          'run MUST reach terminal status on the restarted host within 30s',
+          req('openwop.it.restart-during-run.mid-run-sigkill-on-the-host-process-restart-at-the-same-port-db-resumes-to-termi', 'spec/v1/scale-profiles.md', 'run MUST reach terminal status on the restarted host within 30s'),
         ).not.toBeNull();
         expect(
           terminal?.status,
-          'restart-recovery MUST drive the run to a non-pending terminal status',
+          req('openwop.it.restart-during-run.mid-run-sigkill-on-the-host-process-restart-at-the-same-port-db-resumes-to-termi', 'spec/v1/scale-profiles.md', 'restart-recovery MUST drive the run to a non-pending terminal status'),
         ).toMatch(/^(completed|failed|cancelled)$/);
         // For the cancellable fixture, completed is the expected
         // outcome — the workflow just exits the delay node and finishes.

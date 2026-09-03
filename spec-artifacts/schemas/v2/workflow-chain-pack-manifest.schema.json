@@ -1,0 +1,610 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/workflow-chain-pack-manifest.schema.json",
+  "title": "WorkflowChainPackManifest",
+  "description": "Manifest for a published OpenWOP workflow-chain pack — `pack.json` at the pack root with `kind: \"workflow-chain\"`. Distinct from node-pack-manifest.schema.json. See workflow-chain-packs.md for the canonical contract and RFC 0013 for the rationale. Chain packs are workflow-edit-time abstractions: a host editor expands each declared chain inline into the parent workflow at author time, so the dispatching runtime sees only concrete `core.*` (or published-vendor) typeIds.",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "kind",
+    "engines",
+    "chains"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per node-packs.md §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*` / `local.*`).",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level version per Semantic Versioning 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "kind": {
+      "type": "string",
+      "const": "workflow-chain",
+      "description": "Pack kind discriminator. MUST be the literal string `\"workflow-chain\"` for this schema. Manifests carrying `kind: \"node\"` (or omitting `kind`) validate against `node-pack-manifest.schema.json` instead."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": [
+        "openwop"
+      ],
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "description": "Semver range — which openwop protocol versions this pack works against."
+        }
+      },
+      "additionalProperties": false,
+      "$comment": "Open by design — packs MAY advertise extra engine constraints (`node`, `python`, etc.) that consumer hosts ignore but operator tooling consumes. Mirrors the shape used in node-pack-manifest.schema.json."
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Other node packs whose typeIds this pack's chains reference. Map of pack name → semver range. The host editor uses this map at expansion time to verify referenced typeIds resolve."
+    },
+    "chains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/WorkflowChain"
+      },
+      "description": "Chains the pack contributes. Each MUST have a unique `chainId` within the pack."
+    },
+    "signing": {
+      "$ref": "#/$defs/Signing"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "WorkflowChain": {
+      "type": "object",
+      "required": [
+        "chainId",
+        "version",
+        "label",
+        "description",
+        "parameters",
+        "dag"
+      ],
+      "description": "A single workflow-chain entry — a pre-configured DAG fragment + parameter schema that the host editor expands inline at author time. See workflow-chain-packs.md §Chain entry shape.",
+      "properties": {
+        "chainId": {
+          "$ref": "ids.schema.json#/$defs/chainId",
+          "description": "Canonical chain id — namespaced like a node typeId (reverse-DNS pattern). The pack's `name` prefix is recommended (e.g., pack `vendor.acme.editor-presets` exposing `vendor.acme.generatePRD`)."
+        },
+        "version": {
+          "type": "string",
+          "description": "Per-chain semver. MAY differ from the pack's overall version so a single pack can ship multiple chains that evolve independently.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable display label for the host editor's drag-tile catalog."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-paragraph description of what the chain produces. Surfaced in host editor tile hover-text."
+        },
+        "internal": {
+          "type": "boolean",
+          "description": "RFC 0135 — when true, this chain is a composition-only fragment (typically an RFC 0133 sub-chain child): hosts MUST omit it from default template-gallery/picker listings while keeping it loadable, resolvable by id, composable, and expandable exactly like any other chain. Presentational/discovery semantics only — NOT an authorization boundary (a host MUST NOT treat it as access control). Absent ⇒ false (listed). See workflow-chain-packs.md §\"Chain visibility (RFC 0135)\"."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "JSON Schema 2020-12 fragment describing the parameter values the host editor MUST collect from the author at drop time. Authors-supplied values are validated against this schema before expansion proceeds; invalid input MUST be rejected with `chain_parameter_invalid`. RECOGNIZED EXTENSION KEY (RFC 0124 / WCP4): a property MAY carry `x-openwop-sensitive: true` to declare the parameter secret-class. A host that recognizes it MUST NOT expansion-time-freeze that parameter (plaintext secret-at-rest leak, SR-1) and MUST NOT materialize it as a plaintext `source:\"variable\"` binding (the value would land in the run-scoped bag / `RunSnapshot.variables` — the same SR-1 leak one layer down). Instead, per the 2026-07-04 §Security amendment: it is deferrable ONLY in a prompt-body position, where it MUST be materialized as a `source:\"secret\"` `PromptVariable` (BYOK-resolved via `capabilities.secrets`, redacted to `[REDACTED:<secretId>]` in `prompt.composed`, never bagged); in ANY other position (whole-value `node.inputs`, embedded non-prompt `config`, or a host lacking deferred / `secrets` support) it MUST fail closed with `sensitive_param_not_deferrable` (422). Per-run supply is a `credentialRef` secret reference, never plaintext. See `workflow-chain-packs.md` §\"Deferred-parameter expansion\" / RFC 0124 §Security.",
+          "additionalProperties": true,
+          "$comment": "Open by design — this field IS a JSON Schema document, so it must accept any of the 30+ JSON Schema 2020-12 keywords (`type`, `properties`, `required`, `oneOf`, `allOf`, etc.). Strict closure would require importing the JSON Schema meta-schema."
+        },
+        "dag": {
+          "$ref": "#/$defs/WorkflowDefinitionFragment"
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ChainOutput"
+          },
+          "description": "Declared outputs the chain surfaces to the parent workflow. Keys are output names; values declare type + description."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "streamable",
+              "cacheable",
+              "side-effectful",
+              "mcp-exportable"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Capability traits to propagate to every expanded node. Hosts MUST copy this array into each expanded `WorkflowNode.capabilities` so existing capability gates apply uniformly."
+        },
+        "subChains": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubChainRef"
+          },
+          "description": "RFC 0133 §1.1. OPTIONAL. Child chains this chain composes at RUN TIME. Each entry names a chain (a sibling `chainId` in this pack, or an externally published chain) that a node references via `config.subChainRef`. Unlike RFC 0013's author-time inline splice, a referenced sub-chain is co-instantiated as its own registered workflow and dispatched by the parent as a child run (both parent and child stay owned + builder-editable). A host without runtime child dispatch MUST refuse instantiation with `sub_chain_unsupported` (422) rather than flatten. Requires `capabilities.workflowChainPacks.subChains.supported: true`. See `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\"."
+        },
+        "producedVariables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProducedVariable"
+          },
+          "description": "RFC 0133 §2.2. OPTIONAL. Run-scoped values a node writes to the executor's variable bag during the run and downstream nodes read by name via a `{ type:\"variable\", variableName }` input binding — where the value is NOT an author-time `parameter` and rides no typed output port. Prefer edges (a typed `sourceOutput`→`targetInput` hand-off) wherever a node exposes a value on a port; `producedVariables` is only for values written to the run bag with no typed port. On expansion the host emits these into `WorkflowDefinition.variables[]` as run-scoped entries (name + type, no value). Any `{ type:\"variable\" }` read of an UNDECLARED name (not here and not a materialized parameter) is a `variable_undeclared` manifest error. See `workflow-chain-packs.md` §\"Produced (run-scoped) variables (RFC 0133)\"."
+        },
+        "compensation": {
+          "type": "object",
+          "description": "RFC 0157 (RFC 0013 revision × RFC 0151 §B) — the chain-level compensation POLICY, MIRROR of `compensation-policy.schema.json` (copied inline; a conformance leg asserts equality apart from this description). On expansion it becomes the registered definition's `settings.compensation`: if the parent has none, the host MUST copy it; if the parent already carries one that is not deep-equal, expansion MUST fail `chain_compensation_policy_conflict` — a merged policy nobody wrote is exactly the guess-at-a-contract failure the policy exists to prevent. Absent ⇒ the chain expresses no policy and inherits the parent's (or none).",
+          "additionalProperties": false,
+          "required": [
+            "triggers"
+          ],
+          "properties": {
+            "profileVersion": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$",
+              "description": "The RFC 0151 profile version this policy was authored against. OPTIONAL; when present it MUST equal the host's advertised `capabilities.compensation.profileVersion` or registration fails, because `profileVersion` is part of the inverse-action identity (§C) and a workflow authored under one ordering rule MUST NOT mint identities under another."
+            },
+            "orderingModel": {
+              "type": "string",
+              "enum": [
+                "reverse-completion",
+                "dependency-graph"
+              ],
+              "default": "reverse-completion",
+              "description": "RFC 0151 §A/§C. `reverse-completion` (default) orders inverse actions by descending durable forward-completion sequence; `dependency-graph` MUST be a DAG and preserve reverse dependency order. The value MUST be one of the host's advertised `capabilities.compensation.orderingModels[]`; a host MUST refuse the workflow at registration otherwise, so an unwind never discovers at failure time that its ordering rule is unimplemented."
+            },
+            "triggers": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "node-failure",
+                  "run-cancel",
+                  "cap-breach",
+                  "operator-request"
+                ]
+              },
+              "description": "Which events start an unwind. REQUIRED and closed — a policy that names no trigger is not a policy, and an open string here would let a host and an author disagree about a word. `node-failure`: a node reaches terminal failure after its own RFC 0009 retry policy and the run cannot continue. `run-cancel`: an RFC 0094 cancel is accepted while committed effects exist. `cap-breach`: an RFC 0058 / RFC 0084 `cap.breached` hard stop. `operator-request`: an authorized operator explicitly requests an unwind (§E) — MUST be authorized per RFC 0049, binding tenant, principal, action, and plan version. A trigger not listed here does NOT start an unwind; the run ends with its committed effects in place and `compensationStatus: none`, which is the honest shape — no generic rollback is inferred from an undeclared trigger (RFC 0151 §Compatibility)."
+            },
+            "retry": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Defaults for inverse actions whose node-level `compensation.retry` is absent. A node's own bounds always win. Retries reuse the inverse action's stable identity (§C) — never a fresh one, or a transient refund failure mints a second refund.",
+              "properties": {
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "backoffMs": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-clock ceiling per inverse-action attempt, in milliseconds. A timed-out attempt counts against `retry.maxAttempts`; it is not a distinct outcome."
+            },
+            "exhaustedDisposition": {
+              "type": "string",
+              "enum": [
+                "record-outcome",
+                "manual-intervention"
+              ],
+              "default": "record-outcome",
+              "description": "RFC 0151 §E — what the host does when an inverse action exhausts its retries. Either way the run MUST route to RFC 0053 dead-letter handling and the run's `compensationStatus` follows the §D fold (`partial` or `failed`). `record-outcome` (default): record the failure and continue unwinding the remaining actions. `manual-intervention`: additionally emit `compensation.manual_intervention_required` and stop issuing further inverse actions until an authorized operator retries, skips with recorded justification, substitutes a registered action, or terminates as uncompensated — the rollup reads `manual` while that is unresolved. Requires `capabilities.compensation.manualIntervention: true`; a host that does not advertise it MUST refuse a policy that selects it."
+            },
+            "approvalScope": {
+              "type": "string",
+              "enum": [
+                "declared",
+                "all"
+              ],
+              "default": "declared",
+              "description": "RFC 0151 §E. `declared` (default): only inverse actions whose node sets `compensation.requiresApproval: true` create an RFC 0051 approval interrupt. `all`: every inverse action does, regardless of the node's declaration. This value can only ESCALATE — there is no `none`, because a policy MUST NOT strip an approval a node declared for itself (RFC 0147 R9: an inverse action can itself be harmful)."
+            },
+            "onParentCancel": {
+              "type": "string",
+              "enum": [
+                "continue",
+                "pause",
+                "manual"
+              ],
+              "default": "continue",
+              "description": "RFC 0151 §C — cancellation of the parent run MUST NOT silently abandon an active compensation. `continue`: the unwind runs to its terminal rollup. `pause`: emit `compensation.paused` and hold for authorized intervention (the run's own `status` carries the wait). `manual`: emit `compensation.manual_intervention_required` and stop; rollup reads `manual`. `pause`/`manual` require `capabilities.compensation.manualIntervention: true`."
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(openwop-|x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+        }
+      }
+    },
+    "SubChainRef": {
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "description": "RFC 0133 §1.1. A reference to a child chain the parent composes. `ref` is EITHER a string naming a SIBLING `chainId` in this pack's `chains[]`, OR an object naming an externally published chain (resolved + signature-verified like any pack dependency). A sibling `ref` that matches no `chainId`, or an external `ref` that fails resolution/verification, is `sub_chain_unresolved`. A chain that transitively composes itself is `sub_chain_cycle`.",
+      "properties": {
+        "ref": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "A sibling `chainId` in the same pack's `chains[]`.",
+              "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "object",
+              "required": [
+                "packName",
+                "chainId",
+                "version"
+              ],
+              "description": "An externally published chain, resolved + signature-verified like any pack dependency.",
+              "properties": {
+                "packName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "chainId": {
+                  "$ref": "ids.schema.json#/$defs/chainId"
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Semver range for the external chain. Co-registration SHOULD pin the resolved version into the parent's ownership record for reproducibility (RFC 0133 §Unresolved #1, resolved: pin)."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ProducedVariable": {
+      "type": "object",
+      "required": [
+        "name",
+        "producedBy",
+        "type"
+      ],
+      "description": "RFC 0133 §2.2. A run-scoped variable a chain declares: written by one node and read by others via a `{ type:\"variable\", variableName }` input binding. Run-scoped — carries NO author-time value (that is what `parameters` are for); the manifest distinguishes the two.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The variable-bag key downstream nodes read via `{ type:\"variable\", variableName:\"<name>\" }`."
+        },
+        "producedBy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The `nodes[].id` (within this same fragment) that writes the value."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ],
+          "description": "JSON-Schema type token for validation/inspection."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-line description of the produced value's meaning."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChainOutput": {
+      "type": "object",
+      "required": [
+        "type",
+        "description"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "JSON Schema type token (`string` / `number` / `boolean` / `object` / `array`)."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-line description of the output's meaning."
+        }
+      },
+      "additionalProperties": false
+    },
+    "WorkflowDefinitionFragment": {
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "description": "Subset of workflow-definition.schema.json. `id`/`name`/`version`/`triggers`/`settings`/`metadata` MUST be omitted (host generates per-expansion); `variables` is replaced by the chain's top-level `parameters`. See workflow-chain-packs.md §WorkflowDefinitionFragment.",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/FragmentNode"
+          },
+          "description": "Nodes in the fragment. Every node's `typeId` MUST reference a published node-pack typeId or a reserved `core.*` typeId."
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FragmentEdge"
+          },
+          "description": "Edges between fragment nodes. Required when `nodes.length > 1`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FragmentNode": {
+      "type": "object",
+      "description": "Mirror of `workflow-definition.schema.json#/$defs/WorkflowNode` with relaxed `required[]` (chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes). Maintenance note: when fields are added to `WorkflowNode` in `workflow-definition.schema.json`, mirror the addition here so chain packs can express the same shapes. Drift here means chain-pack authors can't use new node features.",
+      "required": [
+        "id",
+        "typeId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Node id, unique within the fragment. Hosts MUST rewrite these to globally-unique ids at expansion time."
+        },
+        "typeId": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "config": {
+          "type": "object",
+          "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time. RFC 0133: a `core.subWorkflow` / `core.dispatch` (child-run) node MAY carry `subChainRef: string` — a declared `subChains[].ref` (sibling `chainId` or external ref) the host rewrites to the minted child `workflowId` at co-expansion time (§1.3 step 3). A concrete `config.workflowId` inside a fragment remains INVALID — a chain MUST NOT pin a host-specific workflow id (the `not` guard below enforces it).",
+          "additionalProperties": false,
+          "not": {
+            "required": [
+              "workflowId"
+            ]
+          },
+          "properties": {
+            "subChainRef": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+              "description": "RFC 0133 §1.2. A declared `subChains[].ref` this node dispatches as a child run. The host rewrites it to the minted child `config.workflowId` at co-expansion time. MUST match a `subChains[].ref` (sibling `chainId` or external ref's `chainId`), else `sub_chain_unresolved`."
+            }
+          },
+          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement happens at the expansion step, not at manifest-validation time. The `not: { required: ['workflowId'] }` guard is the ONE closed constraint: RFC 0133 forbids pinning a concrete host-specific workflow id inside a portable chain fragment (use `subChainRef` instead)."
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Per-port input wiring. String values MAY contain `{{params.<name>}}` placeholders.",
+          "additionalProperties": true,
+          "$comment": "Open by design — port shapes are per-typeId, same reasoning as `config` above."
+        },
+        "compensation": {
+          "type": "object",
+          "description": "RFC 0157 (RFC 0013 revision × RFC 0151 §B) — MIRROR of `workflow-definition.schema.json#/$defs/WorkflowNode/properties/compensation`, copied inline so this manifest stays self-contained (no cross-file `$ref`); a conformance leg asserts the two stay byte-equal apart from this description. The inverse action for this fragment node. `nodeTypeId` MUST resolve at expansion (step 3) exactly as `typeId` does — `chain_unresolvable_typeid`; `inputMapping` strings MAY carry `{{params.<name>}}` and MUST be substituted at expansion (step 5); node-id references inside `inputMapping` MUST be rewritten with the expansion prefix (step 6). Survives expansion verbatim into the registered `WorkflowNode.compensation`.",
+          "additionalProperties": false,
+          "required": [
+            "nodeTypeId"
+          ],
+          "properties": {
+            "nodeTypeId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Node type implementing the inverse action. MUST resolve at registration time."
+            },
+            "inputMapping": {
+              "type": "object",
+              "description": "Derived from recorded facts only — node outputs and run inputs already in the event log.",
+              "additionalProperties": true
+            },
+            "retry": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "backoffMs": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "requiresApproval": {
+              "type": "boolean",
+              "description": "RFC 0151 §C — an inverse action can itself be harmful (RFC 0147 R9), so it may be gated behind the same approval surface as a forward effect."
+            },
+            "waiveRequiresApproval": {
+              "type": "boolean",
+              "description": "RFC 0151 §B/§E (S36, 2026-08-17) — OPTIONAL. When true, ABANDONING this inverse action (§E `skip with justification` or `terminate as uncompensated`) requires an RFC 0051 approval to have resolved `approved` first — if a human must authorize RUNNING an inverse, a human must authorize deciding it will NEVER run. DEFAULT = the obligation's EFFECTIVE `requiresApproval` (after the policy's `approvalScope` escalation, §B) — NOT false — so the field is purely additive: no existing document changes meaning. Stamped onto the obligation at MINT time like `requiresApproval` (a mid-flight redefinition cannot change who had to authorize). Does NOT apply to `substitute` (still an attempt to undo; a substitution is a new planVersion whose own `requiresApproval` governs it). No policy-level counterpart: because the default inherits the effective value, an `approvalScope` escalation escalates waives with it."
+            }
+          }
+        },
+        "irreversibleEffect": {
+          "type": "boolean",
+          "description": "RFC 0151 §B UQ4 (resolved 2026-08-16), mirrored into chain fragments per RFC 0157 — the fragment author states that this node's committed effect HAS NO INVERSE. Mutually exclusive with `compensation` (host MUST reject both at pack install / chain expansion); expansion copies it onto the expanded `WorkflowNode` unchanged. See `workflow-definition.schema.json` `WorkflowNode.irreversibleEffect`."
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "irreversibleEffect": {
+            "const": true
+          }
+        },
+        "required": [
+          "irreversibleEffect"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "compensation"
+          ]
+        }
+      }
+    },
+    "FragmentEdge": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source node id (must reference a node in `nodes[]`). MAY use `nodeId.outputPort` syntax to bind a specific output port."
+        },
+        "to": {
+          "type": "string",
+          "description": "Target node id (must reference a node in `nodes[]`). MAY use `nodeId.inputPort` syntax."
+        },
+        "condition": {
+          "$ref": "#/$defs/EdgeCondition",
+          "description": "Optional edge condition — the SAME shape as a top-level workflow edge's condition (workflow-definition.schema.json §EdgeCondition). When present, the edge contributes to the target only if the condition holds against the source node's output, letting a chain express content routing (router/switch/conditional branches). Safety-fix (RFC 0013 amendment 2026-07-03): the field was previously typed `string`, contradicting this description; no chain used the string form (hosts dropped the field at expansion), so correcting it to the object shape breaks no conformant behavior."
+        },
+        "triggerRule": {
+          "type": "string",
+          "enum": [
+            "all_success",
+            "any_success",
+            "all_complete",
+            "none_failed",
+            "any_failed"
+          ],
+          "default": "all_success",
+          "description": "Optional fan-in / error-routing rule — the SAME shape and enum as a top-level workflow edge's `triggerRule` (workflow-definition.schema.json §WorkflowEdge). Governs how the target node fires given its incoming edges: `all_success` (default — every incoming edge's source succeeded), `any_success`, `all_complete` (fire when all sources have finished regardless of success — best-effort completion), `none_failed`, `any_failed`. Additive (RFC 0125): omitting it is identical to `all_success`, the implicit prior behavior. Mirrors the RFC 0013 2026-07-03 `condition` amendment's WorkflowEdge→FragmentEdge move. Expansion MUST carry this value onto the resulting `WorkflowEdge` so the scheduler honors it (see `workflow-chain-packs.md` §\"Expansion semantics\")."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EdgeCondition": {
+      "type": "object",
+      "description": "Edge condition — identical to workflow-definition.schema.json §EdgeCondition (RFC 0013 §edges: 'same shape as a top-level workflow definition'). Inlined here so the manifest schema is self-contained for pack-loader validators. RFC 0134 added `truthy`/`falsy` (kept in sync with the top-level def).",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "expression",
+            "equals",
+            "notEquals",
+            "contains",
+            "regex",
+            "truthy",
+            "falsy"
+          ],
+          "description": "RFC 0134: `truthy`/`falsy` test the resolved value at `left` for truthiness and take NO `right` operand; `left` is required for all operators except `expression`."
+        },
+        "left": {
+          "type": "string",
+          "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`."
+        },
+        "right": {
+          "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134)."
+        },
+        "expression": {
+          "type": "string",
+          "description": "Used when type='expression'."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Signing": {
+      "type": "object",
+      "description": "Optional signing metadata. Reuses node-packs.md §signing unchanged.",
+      "properties": {
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        },
+        "signatureRef": {
+          "type": "string",
+          "description": "Path to the detached signature over `pack.json`."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "sigstore"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "patternProperties": {
+    "^(openwop-|x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

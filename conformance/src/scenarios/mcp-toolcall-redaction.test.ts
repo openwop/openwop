@@ -23,6 +23,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 async function isMcpClientSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
@@ -44,12 +45,12 @@ describe('mcp-toolcall-redaction: capability advertisement contract', () => {
       };
     }), 'mcpClient');
 
-    expect(cap?.supported, driver.describe(
+    expect(cap?.supported, req('openwop.it.mcp-toolcall-redaction.host-advertising-mcpclient-must-declare-trustboundary-untrusted', 
       'host-capabilities.md §host.mcp',
       'mcpClient.supported MUST be a boolean',
     )).toBe(true);
 
-    expect(Array.isArray(cap?.transports), driver.describe(
+    expect(Array.isArray(cap?.transports), req('openwop.it.mcp-toolcall-redaction.host-advertising-mcpclient-must-declare-trustboundary-untrusted', 
       'host-capabilities.md §host.mcp',
       'mcpClient.transports MUST be an array of transport identifiers',
     )).toBe(true);
@@ -59,7 +60,7 @@ describe('mcp-toolcall-redaction: capability advertisement contract', () => {
     // Hosts advertising mcpClient MUST encode the boundary in the
     // capability so downstream consumers (LLM nodes) treat the
     // content accordingly.
-    expect(cap?.trustBoundary, driver.describe(
+    expect(cap?.trustBoundary, req('openwop.it.mcp-toolcall-redaction.host-advertising-mcpclient-must-declare-trustboundary-untrusted', 
       'SECURITY/threat-model-prompt-injection.md §"UNTRUSTED marker"',
       'mcpClient.trustBoundary MUST be "untrusted" — downstream LLM nodes treat tool content as user data',
     )).toBe('untrusted');

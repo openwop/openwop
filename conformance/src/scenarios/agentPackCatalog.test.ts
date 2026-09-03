@@ -31,6 +31,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface PackList {
   packs?: Array<{
@@ -68,7 +70,7 @@ async function findPack(name: string): Promise<PackList['packs'] extends Array<i
   return (found ?? null) as never;
 }
 
-function assertAgentManifestShape(
+function assertAgentManifestShape(requirementId: string, 
   agent: NonNullable<NonNullable<PackList['packs']>[number]['agents']>[number],
   expectations: { agentIdEndsWith?: string; modelClass?: string; minTools?: number },
 ): void {
@@ -80,7 +82,7 @@ function assertAgentManifestShape(
   // agentId pattern (RFCS/0003 §A namespace tiers).
   expect(
     AGENT_ID_PATTERN.test(agent.agentId ?? ''),
-    driver.describe(
+    req(requirementId, 
       'schemas/agent-manifest.schema.json §agentId',
       `agentId "${agent.agentId}" MUST match the namespace-tier pattern`,
     ),
@@ -133,10 +135,10 @@ const SKIP = !isAgentSupported();
 describe.skipIf(SKIP)('core.openwop.agents.deep-research — pack catalog evidence', () => {
   it('host pack-list includes deep-research with a well-formed AgentManifest', async () => {
     const pack = await findPack('core.openwop.agents.deep-research');
-    if (pack === null) return; // host doesn't expose /v1/packs or doesn't have this pack
-    expect(pack.version, 'pack version MUST be present').toBeDefined();
-    expect(Array.isArray(pack.agents) && pack.agents.length === 1, 'deep-research ships exactly one agent').toBe(true);
-    assertAgentManifestShape(pack.agents![0]!, {
+    if (pack === null) return softSkip('blocked', 'precondition not met — `pack === null` returned early (host doesn\'t expose /v1/packs or doesn\'t have this pack) (seam, prior step, or fixture unavailable)'); // host doesn't expose /v1/packs or doesn't have this pack
+    expect(pack.version, req('openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'pack version MUST be present')).toBeDefined();
+    expect(Array.isArray(pack.agents) && pack.agents.length === 1, req('openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'deep-research ships exactly one agent')).toBe(true);
+    assertAgentManifestShape('openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest', pack.agents![0]!, {
       agentIdEndsWith: 'deep-research',
       modelClass: 'research',
       minTools: 1,
@@ -145,11 +147,11 @@ describe.skipIf(SKIP)('core.openwop.agents.deep-research — pack catalog eviden
     const tools = pack.agents![0]!.toolAllowlist ?? [];
     expect(
       tools.some((t) => t.includes('rag') || t.includes('retriever')),
-      'deep-research SHOULD allow at least one rag/retriever tool',
+      req('openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'deep-research SHOULD allow at least one rag/retriever tool'),
     ).toBe(true);
     expect(
       pack.agents![0]!.memoryShape?.longTerm,
-      'deep-research MUST request longTerm memory (it persists facts across runs)',
+      req('openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'deep-research MUST request longTerm memory (it persists facts across runs)'),
     ).toBe(true);
   });
 });
@@ -157,27 +159,27 @@ describe.skipIf(SKIP)('core.openwop.agents.deep-research — pack catalog eviden
 describe.skipIf(SKIP)('core.openwop.agents.react — pack catalog evidence', () => {
   it('host pack-list includes react with a well-formed AgentManifest', async () => {
     const pack = await findPack('core.openwop.agents.react');
-    if (pack === null) return;
+    if (pack === null) return softSkip('blocked', 'precondition not met — `pack === null` returned early (seam, prior step, or fixture unavailable)');
     expect(pack.version).toBeDefined();
-    expect(Array.isArray(pack.agents) && pack.agents.length >= 1, 'react ships at least one agent').toBe(true);
-    assertAgentManifestShape(pack.agents![0]!, {
+    expect(Array.isArray(pack.agents) && pack.agents.length >= 1, req('openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'react ships at least one agent')).toBe(true);
+    assertAgentManifestShape('openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest', pack.agents![0]!, {
       agentIdEndsWith: 'react',
     });
     // ReAct pattern requires handoff schemas (task + return).
     const handoff = pack.agents![0]!.handoff;
-    expect(handoff, 'react AgentManifest MUST include a handoff block').toBeDefined();
-    expect(typeof handoff?.taskSchemaRef, 'handoff.taskSchemaRef MUST be a string').toBe('string');
-    expect(typeof handoff?.returnSchemaRef, 'handoff.returnSchemaRef MUST be a string').toBe('string');
+    expect(handoff, req('openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'react AgentManifest MUST include a handoff block')).toBeDefined();
+    expect(typeof handoff?.taskSchemaRef, req('openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'handoff.taskSchemaRef MUST be a string')).toBe('string');
+    expect(typeof handoff?.returnSchemaRef, req('openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'handoff.returnSchemaRef MUST be a string')).toBe('string');
   });
 });
 
 describe.skipIf(SKIP)('core.openwop.agents.supervisor — pack catalog evidence', () => {
   it('host pack-list includes supervisor with a well-formed AgentManifest', async () => {
     const pack = await findPack('core.openwop.agents.supervisor');
-    if (pack === null) return;
+    if (pack === null) return softSkip('blocked', 'precondition not met — `pack === null` returned early (seam, prior step, or fixture unavailable)');
     expect(pack.version).toBeDefined();
-    expect(Array.isArray(pack.agents) && pack.agents.length >= 1, 'supervisor ships at least one agent').toBe(true);
-    assertAgentManifestShape(pack.agents![0]!, {
+    expect(Array.isArray(pack.agents) && pack.agents.length >= 1, req('openwop.it.agentPackCatalog.host-pack-list-includes-supervisor-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'supervisor ships at least one agent')).toBe(true);
+    assertAgentManifestShape('openwop.it.agentPackCatalog.host-pack-list-includes-supervisor-with-a-well-formed-agentmanifest', pack.agents![0]!, {
       agentIdEndsWith: 'supervisor',
     });
     // Supervisor pattern delegates to crew members; its modelClass should
@@ -185,10 +187,10 @@ describe.skipIf(SKIP)('core.openwop.agents.supervisor — pack catalog evidence'
     const mc = pack.agents![0]!.modelClass;
     expect(
       mc === 'delegate' || mc === 'reasoning',
-      `supervisor SHOULD have modelClass=delegate|reasoning, got "${mc}"`,
+      req('openwop.it.agentPackCatalog.host-pack-list-includes-supervisor-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', `supervisor SHOULD have modelClass=delegate|reasoning, got "${mc}"`),
     ).toBe(true);
     // Supervisor needs handoff schemas to dispatch work.
-    expect(pack.agents![0]!.handoff, 'supervisor MUST include handoff schemas').toBeDefined();
+    expect(pack.agents![0]!.handoff, req('openwop.it.agentPackCatalog.host-pack-list-includes-supervisor-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'supervisor MUST include handoff schemas')).toBeDefined();
   });
 });
 
@@ -207,10 +209,10 @@ describe.skipIf(SKIP)('agent-pack catalog summary', () => {
     // Either none are present (host doesn't ship these — skip) OR all are
     // present (host ships the full reference batch). Half-shipping is a
     // configuration error worth flagging.
-    if (found.length === 0) return;
+    if (found.length === 0) return softSkip('blocked', 'precondition not met — `found.length === 0` returned early (Either none are present (host doesn\'t ship these — skip) OR all are present (host ships the full reference batch). Half-shipping is a configuration error wor…');
     expect(
       found.length,
-      'host SHOULD ship the reference agent packs as a coherent batch (none, or all three)',
+      req('openwop.it.agentPackCatalog.all-three-2026-05-17-reference-agent-packs-are-catalog-reachable', 'RFCS/0003-agent-packs.md', 'host SHOULD ship the reference agent packs as a coherent batch (none, or all three)'),
     ).toBe(names.length);
   });
 });

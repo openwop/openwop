@@ -47,6 +47,8 @@ import { driver } from '../lib/driver.js';
 import { CANARIES, CANARY_MARKER, getCanary } from '../lib/canaries.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -66,7 +68,7 @@ describe.skipIf(SKIP_NO_NOOP)('redaction-adversarial: workflow input canaries', 
         userSuppliedField: canary,
       },
     });
-    expect(create.status, driver.describe('rest-endpoints.md', 'noop run create returns 201')).toBe(201);
+    expect(create.status, req('openwop.it.redactionAdversarial.openai-shaped-canary-in-arbitrary-input-field-must-not-appear-verbatim-in-any-ev', 'rest-endpoints.md', 'noop run create returns 201')).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     await pollUntilTerminal(runId);
@@ -76,15 +78,15 @@ describe.skipIf(SKIP_NO_NOOP)('redaction-adversarial: workflow input canaries', 
     );
     if (events.status !== 200) {
       // Host doesn't expose polling; SSE is the alternative. Skip-equivalent.
-      return;
+      return softSkip('blocked', 'precondition not met — `events.status !== 200` returned early (Host doesn\'t expose polling; SSE is the alternative. Skip-equivalent.) (seam, prior step, or fixture unavailable)');
     }
 
     const eventsText = events.text;
-    expect(eventsText.includes(canary), driver.describe(
+    expect(eventsText.includes(canary), req('openwop.it.redactionAdversarial.openai-shaped-canary-in-arbitrary-input-field-must-not-appear-verbatim-in-any-ev', 
       'capabilities.md §"Secrets" + NFR-7',
       'canary value submitted as workflow input MUST NOT appear verbatim in event poll response',
     )).toBe(false);
-    expect(eventsText.includes(CANARY_MARKER), driver.describe(
+    expect(eventsText.includes(CANARY_MARKER), req('openwop.it.redactionAdversarial.openai-shaped-canary-in-arbitrary-input-field-must-not-appear-verbatim-in-any-ev', 
       'NFR-7',
       'canary marker substring MUST NOT appear in event poll response',
     )).toBe(false);
@@ -100,7 +102,7 @@ describe('redaction-adversarial: error-envelope canaries', () => {
     });
     expect(
       [400, 404].includes(res.status),
-      driver.describe('rest-endpoints.md', 'unknown workflowId returns 400 or 404'),
+      req('openwop.it.redactionAdversarial.jwt-shaped-canary-in-workflowid-of-a-404-failing-request-must-not-echo-verbatim', 'rest-endpoints.md', 'unknown workflowId returns 400 or 404'),
     ).toBe(true);
 
     const responseText = res.text;
@@ -110,7 +112,7 @@ describe('redaction-adversarial: error-envelope canaries', () => {
     // SECURITY/invariants.yaml `secret-leakage-error-envelope`, the
     // host SHOULD sanitize entropy-shaped substrings even when echoing
     // the workflowId.
-    expect(responseText.includes(canary), driver.describe(
+    expect(responseText.includes(canary), req('openwop.it.redactionAdversarial.jwt-shaped-canary-in-workflowid-of-a-404-failing-request-must-not-echo-verbatim', 
       'SECURITY/invariants.yaml secret-leakage-error-envelope',
       'JWT-shaped canary submitted in workflowId SHOULD NOT echo verbatim in 4xx error envelope',
     )).toBe(false);
@@ -137,9 +139,9 @@ describe.skipIf(SKIP_NO_NOOP)('redaction-adversarial: bearer-shaped strings roun
     const events = await driver.get(
       `/v1/runs/${encodeURIComponent(runId)}/events/poll`,
     );
-    if (events.status !== 200) return;
+    if (events.status !== 200) return softSkip('blocked', 'precondition not met — `events.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
-    expect(events.text.includes(canary), driver.describe(
+    expect(events.text.includes(canary), req('openwop.it.redactionAdversarial.anthropic-shaped-canary-embedded-in-non-credential-input-must-not-appear-verbati', 
       'capabilities.md §"Secrets" + NFR-7',
       'Anthropic-shaped canary embedded in arbitrary input MUST NOT appear verbatim in events',
     )).toBe(false);
@@ -153,7 +155,7 @@ describe('redaction-adversarial: every canary fixture carries the marker substri
     // If this fails the canary harness has a bug — every other
     // adversarial scenario depends on this property.
     for (const c of CANARIES) {
-      expect(c.value.includes(CANARY_MARKER), driver.describe(
+      expect(c.value.includes(CANARY_MARKER), req('openwop.it.redactionAdversarial.every-canary-in-canaries-has-the-marker-substring', 
         'lib/canaries.ts',
         `every canary fixture MUST contain CANARY_MARKER (offender label: ${c.label})`,
       )).toBe(true);

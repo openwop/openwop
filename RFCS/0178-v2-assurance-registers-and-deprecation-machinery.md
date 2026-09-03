@@ -24,7 +24,7 @@ Zero `deprecated:` annotations in 88 schemas, OpenAPI, and AsyncAPI; a deprecati
 - `spec/v1/gaps.json`: 558 entries, `witness: unclassified` on 558, `requirementId: null` on 558, 389 `carried` (71%). The ratchet RFC 0166 landed has not moved.
 - The template has required a falsifiability table since 2026-08-19; nine of 164 RFCs have one; `grep Falsifiability scripts/` → nothing. RFC 0167 §C (d) requires every child's rows to resolve to `gaps.json` ids or requirement ids and nothing checks it.
 - `schemas/README.md:3` "Status: FINAL v1" over `:26` DRAFT, `:35–:39` "RFC 0114 (`Active`)", "RFC 0056 (`Draft`)", "RFC 0060 (`Active`)" — all three RFCs are Accepted. `schemas/conversation-event.schema.json:14,24,53,58` say "kept in sync" with `conversation-turn.schema.json` and `agent-ref.schema.json`; nine more files say "Mirrors X"; `capabilities.schema.json:2636` even states "the two surfaces MUST NOT disagree" with no gate. `api/redocly.yaml:20` cites step `[7/9]` for a compensator that runs in step `[4/9]`.
-- `spec/v1/artifact-type-packs.md:195` says the bounded-compilation invariant and test do not exist; `SECURITY/invariants.yaml:331` and `conformance/src/scenarios/artifact-schema-compile-bounded.test.ts` exist.
+- `spec/v1/artifact-type-packs.md:195` says the bounded-compilation invariant and test do not exist; `SECURITY/invariants.yaml:331` and `conformance/src/coherence/artifact-schema-compile-bounded.test.ts` exist.
 
 ## Proposal
 

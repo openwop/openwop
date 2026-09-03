@@ -29,6 +29,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -64,18 +65,18 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
     if (d === null) {
       softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc === undefined) {
       softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.crossHostCausation` not advertised by this host (RFC 0040 §D)');
       ctx.skip(); // host doesn't advertise — soft-skip
-      return;
+      return softSkip('blocked', 'precondition not met — `chc === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
     expect(
       typeof chc.supported,
-      driver.describe(
+      req('openwop.it.cross-host-causation-shape.crosshostcausation-when-present-conforms-to-rfc-0040-d', 
         'RFCS/0040-multi-agent-cross-host-causation.md §D',
         'crossHostCausation.supported MUST be boolean when present',
       ),
@@ -85,7 +86,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
       const version = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version as number | undefined;
       expect(
         typeof version === 'number' && version >= 3,
-        driver.describe(
+        req('openwop.it.cross-host-causation-shape.crosshostcausation-when-present-conforms-to-rfc-0040-d', 
           'RFCS/0040-multi-agent-cross-host-causation.md §D',
           'when crossHostCausation.supported: true, multiAgent.executionModel.version MUST be >= 3',
         ),
@@ -93,7 +94,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
 
       expect(
         typeof chc.hostId === 'string' && (chc.hostId as string).length >= 1,
-        driver.describe(
+        req('openwop.it.cross-host-causation-shape.crosshostcausation-when-present-conforms-to-rfc-0040-d', 
           'RFCS/0040-multi-agent-cross-host-causation.md §D',
           'when crossHostCausation.supported: true, hostId MUST be present + non-empty',
         ),
@@ -103,7 +104,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
     if (chc.ancestryEndpointSupported !== undefined) {
       expect(
         typeof chc.ancestryEndpointSupported,
-        driver.describe(
+        req('openwop.it.cross-host-causation-shape.crosshostcausation-when-present-conforms-to-rfc-0040-d', 
           'RFCS/0040-multi-agent-cross-host-causation.md §D',
           'ancestryEndpointSupported MUST be boolean when present',
         ),

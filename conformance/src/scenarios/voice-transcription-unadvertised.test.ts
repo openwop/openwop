@@ -18,6 +18,8 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-transcriber';
 
@@ -36,12 +38,12 @@ describe('voice-transcription-unadvertised (RFC 0106 §B)', () => {
     if (!behaviorGate('openwop-voice-transcription-unadvertised', !advertised)) return;
 
     const res = await driver.post(SEAM, { audio: { streamRef: 'stream:conformance/mic' } });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
-    expect(res.status !== 200, driver.describe('RFC 0106 §B', 'an unadvertising host MUST NOT return a 200 (never a no-op)')).toBe(true);
+    expect(res.status !== 200, req('openwop.it.voice-transcription-unadvertised.a-host-not-advertising-realtimevoice-transcription-must-reject-with-transcriptio', 'RFC 0106 §B', 'an unadvertising host MUST NOT return a 200 (never a no-op)')).toBe(true);
     expect(
       errCode(res.json) === 'transcription_unsupported',
-      driver.describe('RFC 0106 §B', 'the call MUST be rejected with `transcription_unsupported`'),
+      req('openwop.it.voice-transcription-unadvertised.a-host-not-advertising-realtimevoice-transcription-must-reject-with-transcriptio', 'RFC 0106 §B', 'the call MUST be rejected with `transcription_unsupported`'),
     ).toBe(true);
   });
 });

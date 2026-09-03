@@ -33,6 +33,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -81,13 +83,13 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
       bindingTrust: { userPayload: 'untrusted' },
       observability: 'full',
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as PromptComposedPayload;
     expect(
       payload.contentTrust,
-      driver.describe(
+      req('openwop.it.prompt-composed-trust-marker.sets-contenttrust-untrusted-when-any-contributing-input-is-untrusted', 
         'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.contentTrust MUST be "untrusted" when ANY contributing input is untrusted',
       ),
@@ -104,7 +106,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
       bindingTrust: { userPayload: 'untrusted' },
       observability: 'full',
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as PromptComposedPayload;
@@ -112,7 +114,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
 
     expect(
       combined.includes('<UNTRUSTED>') && combined.includes('</UNTRUSTED>'),
-      driver.describe(
+      req('openwop.it.prompt-composed-trust-marker.wraps-untrusted-segments-in-untrusted-untrusted-markers-within-composed-bodies', 
         'spec/v1/prompts.md §Composition + observability',
         'composed body MUST wrap untrusted segments with <UNTRUSTED>...</UNTRUSTED> markers',
       ),
@@ -127,14 +129,14 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
     const outsideMarkers = markerRegions.filter((_, i) => i % 2 === 0).join(' ');
     expect(
       insideMarkers.includes(UNTRUSTED_PAYLOAD),
-      driver.describe(
+      req('openwop.it.prompt-composed-trust-marker.wraps-untrusted-segments-in-untrusted-untrusted-markers-within-composed-bodies', 
         'spec/v1/prompts.md §Composition + observability',
         'untrusted payload content MUST appear inside <UNTRUSTED>...</UNTRUSTED> markers',
       ),
     ).toBe(true);
     expect(
       outsideMarkers.includes(UNTRUSTED_PAYLOAD),
-      driver.describe(
+      req('openwop.it.prompt-composed-trust-marker.wraps-untrusted-segments-in-untrusted-untrusted-markers-within-composed-bodies', 
         'spec/v1/prompts.md §Composition + observability',
         'untrusted payload content MUST NOT appear outside the markers',
       ),
@@ -151,13 +153,13 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
       bindingTrust: { userPayload: 'trusted' },
       observability: 'full',
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as PromptComposedPayload;
     expect(
       payload.contentTrust,
-      driver.describe(
+      req('openwop.it.prompt-composed-trust-marker.keeps-contenttrust-trusted-when-all-contributing-inputs-are-trusted', 
         'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.contentTrust MUST be "trusted" when no contributing input is untrusted',
       ),

@@ -37,6 +37,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const GATE = 'openwop-self-hosted-runner';
 
@@ -85,32 +87,32 @@ describe('self-hosted-runner: schema shape (RFC 0122, server-free)', () => {
   it('capabilities.schema.json declares selfHostedRunner {supported} with required supported', () => {
     const caps = readSchema('capabilities.schema.json');
     const shr = caps.properties?.selfHostedRunner;
-    expect(shr, 'capabilities.md §selfHostedRunner — the block MUST be declared').toBeDefined();
+    expect(shr, req('openwop.it.self-hosted-runner.capabilities-schema-json-declares-selfhostedrunner-supported-with-required-suppo', 'RFC 0122', 'capabilities.md §selfHostedRunner — the block MUST be declared')).toBeDefined();
     expect(
       shr?.required,
-      'RFC 0122 — selfHostedRunner.supported is REQUIRED when the block is present',
+      req('openwop.it.self-hosted-runner.capabilities-schema-json-declares-selfhostedrunner-supported-with-required-suppo', 'RFC 0122', 'RFC 0122 — selfHostedRunner.supported is REQUIRED when the block is present'),
     ).toContain('supported');
     expect(
       shr?.properties?.supported?.type,
-      'selfHostedRunner.supported MUST be a boolean',
+      req('openwop.it.self-hosted-runner.capabilities-schema-json-declares-selfhostedrunner-supported-with-required-suppo', 'RFC 0122', 'selfHostedRunner.supported MUST be a boolean'),
     ).toBe('boolean');
     expect(
       shr?.additionalProperties,
-      'selfHostedRunner MUST be a closed object',
+      req('openwop.it.self-hosted-runner.capabilities-schema-json-declares-selfhostedrunner-supported-with-required-suppo', 'RFC 0122', 'selfHostedRunner MUST be a closed object'),
     ).toBe(false);
   });
 
   it('the dispatch frame schema pins {runId, stepId, seq, kind, inputs} with an integer cursor', () => {
     const s = readSchema('self-hosted-runner-dispatch-frame.schema.json');
     for (const f of ['runId', 'stepId', 'seq', 'kind', 'inputs']) {
-      expect(s.required, `dispatch frame MUST require '${f}'`).toContain(f);
+      expect(s.required, req('openwop.it.self-hosted-runner.the-dispatch-frame-schema-pins-runid-stepid-seq-kind-inputs-with-an-integer-curs', 'RFC 0122', `dispatch frame MUST require '${f}'`)).toContain(f);
     }
-    expect(s.additionalProperties, 'dispatch frame MUST be a closed object').toBe(false);
+    expect(s.additionalProperties, req('openwop.it.self-hosted-runner.the-dispatch-frame-schema-pins-runid-stepid-seq-kind-inputs-with-an-integer-curs', 'RFC 0122', 'dispatch frame MUST be a closed object')).toBe(false);
     expect(
       s.properties?.seq?.type,
-      'RFC 0122 §Channel — the dispatch cursor `seq` MUST be an integer (distinct from the event-log sequence)',
+      req('openwop.it.self-hosted-runner.the-dispatch-frame-schema-pins-runid-stepid-seq-kind-inputs-with-an-integer-curs', 'RFC 0122', 'RFC 0122 §Channel — the dispatch cursor `seq` MUST be an integer (distinct from the event-log sequence)'),
     ).toBe('integer');
-    expect(s.properties?.kind?.enum, "dispatch kind MUST be one of {model, tool}").toEqual(
+    expect(s.properties?.kind?.enum, req('openwop.it.self-hosted-runner.the-dispatch-frame-schema-pins-runid-stepid-seq-kind-inputs-with-an-integer-curs', 'RFC 0122', "dispatch kind MUST be one of {model, tool}")).toEqual(
       expect.arrayContaining(['model', 'tool']),
     );
   });
@@ -118,25 +120,25 @@ describe('self-hosted-runner: schema shape (RFC 0122, server-free)', () => {
   it('the result frame schema pins {runId, stepId, seq, output} and is closed', () => {
     const s = readSchema('self-hosted-runner-result-frame.schema.json');
     for (const f of ['runId', 'stepId', 'seq', 'output']) {
-      expect(s.required, `result frame MUST require '${f}'`).toContain(f);
+      expect(s.required, req('openwop.it.self-hosted-runner.the-result-frame-schema-pins-runid-stepid-seq-output-and-is-closed', 'RFC 0122', `result frame MUST require '${f}'`)).toContain(f);
     }
     // additionalProperties:false is the schema-level runner-credential-non-transit rail —
     // a runner cannot smuggle a credential field onto a result frame.
     expect(
       s.additionalProperties,
-      'result frame MUST be a closed object (runner-credential-non-transit)',
+      req('openwop.it.self-hosted-runner.the-result-frame-schema-pins-runid-stepid-seq-output-and-is-closed', 'RFC 0122', 'result frame MUST be a closed object (runner-credential-non-transit)'),
     ).toBe(false);
   });
 
   it('the registration schema pins {runnerId, subject, capabilities} and is closed', () => {
     const s = readSchema('self-hosted-runner-registration.schema.json');
     for (const f of ['runnerId', 'subject', 'capabilities']) {
-      expect(s.required, `registration MUST require '${f}'`).toContain(f);
+      expect(s.required, req('openwop.it.self-hosted-runner.the-registration-schema-pins-runnerid-subject-capabilities-and-is-closed', 'RFC 0122', `registration MUST require '${f}'`)).toContain(f);
     }
-    expect(s.additionalProperties, 'registration MUST be a closed object').toBe(false);
+    expect(s.additionalProperties, req('openwop.it.self-hosted-runner.the-registration-schema-pins-runnerid-subject-capabilities-and-is-closed', 'RFC 0122', 'registration MUST be a closed object')).toBe(false);
     expect(
       s.properties?.capabilities?.additionalProperties,
-      'registration.capabilities MUST be a closed object',
+      req('openwop.it.self-hosted-runner.the-registration-schema-pins-runnerid-subject-capabilities-and-is-closed', 'RFC 0122', 'registration.capabilities MUST be a closed object'),
     ).toBe(false);
   });
 });
@@ -148,13 +150,13 @@ describe('self-hosted-runner: advertisement shape (gated)', () => {
 
     expect(
       typeof shr?.supported,
-      driver.describe('capabilities.md §selfHostedRunner', 'supported MUST be a boolean'),
+      req('openwop.it.self-hosted-runner.an-advertised-selfhostedrunner-block-is-well-formed', 'capabilities.md §selfHostedRunner', 'supported MUST be a boolean'),
     ).toBe('boolean');
     if (shr?.dispatchKinds !== undefined) {
       for (const k of shr.dispatchKinds) {
         expect(
           ['model', 'tool'],
-          driver.describe('capabilities.md §selfHostedRunner', `dispatchKinds entry '${k}' MUST be model|tool`),
+          req('openwop.it.self-hosted-runner.an-advertised-selfhostedrunner-block-is-well-formed', 'capabilities.md §selfHostedRunner', `dispatchKinds entry '${k}' MUST be model|tool`),
         ).toContain(k);
       }
     }
@@ -171,7 +173,7 @@ describe('self-hosted-runner: behavioral (seam-gated, soft-skip 404)', () => {
       subject: SUBJECT_B,
       capabilities: { providers: ['anthropic'] },
     });
-    if (reg.status === 404) return; // seam unwired — soft-skip
+    if (reg.status === 404) return softSkip('blocked', 'precondition not met — `reg.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const res = await driver.post(DISPATCH, {
       subject: SUBJECT_A,
@@ -183,19 +185,19 @@ describe('self-hosted-runner: behavioral (seam-gated, soft-skip 404)', () => {
       model: 'claude-opus-4-8',
       inputs: { messages: [] },
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     expect(
       res.status >= 400,
-      driver.describe('self-hosted-runner.md §Behavior#1', 'a subject-A dispatch MUST NOT route to a subject-B runner'),
+      req('openwop.it.self-hosted-runner.a-dispatch-for-a-subject-with-no-runner-fails-retriably-with-runner-unavailable', 'self-hosted-runner.md §Behavior#1', 'a subject-A dispatch MUST NOT route to a subject-B runner'),
     ).toBe(true);
     expect(
       errCode(res.json),
-      driver.describe('RFC 0122 §Behavior#5', 'a dispatch with no owning-subject runner MUST fail `runner_unavailable`'),
+      req('openwop.it.self-hosted-runner.a-dispatch-for-a-subject-with-no-runner-fails-retriably-with-runner-unavailable', 'RFC 0122 §Behavior#5', 'a dispatch with no owning-subject runner MUST fail `runner_unavailable`'),
     ).toBe('runner_unavailable');
     expect(
       retriable(res.json),
-      driver.describe('RFC 0122 §Behavior#5', '`runner_unavailable` MUST be retriable'),
+      req('openwop.it.self-hosted-runner.a-dispatch-for-a-subject-with-no-runner-fails-retriably-with-runner-unavailable', 'RFC 0122 §Behavior#5', '`runner_unavailable` MUST be retriable'),
     ).toBe(true);
   });
 
@@ -205,7 +207,7 @@ describe('self-hosted-runner: behavioral (seam-gated, soft-skip 404)', () => {
       subject: SUBJECT_A,
       capabilities: { providers: ['anthropic'] },
     });
-    if (reg.status === 404) return;
+    if (reg.status === 404) return softSkip('blocked', 'precondition not met — `reg.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const frame = {
       subject: SUBJECT_A,
@@ -218,16 +220,16 @@ describe('self-hosted-runner: behavioral (seam-gated, soft-skip 404)', () => {
       inputs: { messages: [] },
     };
     const first = await driver.post(DISPATCH, frame);
-    if (first.status === 404) return;
+    if (first.status === 404) return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
     // A host without a live runner backing the seam MAY answer runner_unavailable;
     // the at-most-once property is only observable when the first dispatch resolved.
-    if (errCode(first.json) === 'runner_unavailable') return;
+    if (errCode(first.json) === 'runner_unavailable') return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `errCode(first.json) === \'runner_unavailable\'` returned early (A host without a live runner backing the seam MAY answer runner_unavailable; the at-most-once pro…');
 
     const second = await driver.post(DISPATCH, frame);
     const body = second.json as { deduped?: unknown };
     expect(
       body?.deduped,
-      driver.describe(
+      req('openwop.it.self-hosted-runner.a-redelivered-runid-stepid-dispatch-is-dropped-not-re-executed-at-most-once', 
         'self-hosted-runner.md §At-most-once dispatch',
         'a redelivered {runId, stepId} with a persisted result MUST be dropped (deduped:true), not re-dispatched',
       ),

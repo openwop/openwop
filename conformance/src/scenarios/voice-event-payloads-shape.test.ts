@@ -32,8 +32,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, any> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, any>;
@@ -63,7 +62,7 @@ describe('voice-event-payloads-shape: the voice.* run-event taxonomy (RFC 0106 �
   it('all seven voice.* types are in the RunEventType enum', () => {
     const enumVals: string[] = loadSchema('run-event.schema.json').$defs.RunEventType.enum;
     for (const t of VOICE_TYPES) {
-      expect(enumVals.includes(t), why('run-event.schema.json §RunEventType', `${t} MUST be a RunEventType`)).toBe(true);
+      expect(enumVals.includes(t), req('openwop.it.voice-event-payloads-shape.all-seven-voice-types-are-in-the-runeventtype-enum', 'run-event.schema.json §RunEventType', `${t} MUST be a RunEventType`)).toBe(true);
     }
   });
 
@@ -71,8 +70,8 @@ describe('voice-event-payloads-shape: the voice.* run-event taxonomy (RFC 0106 �
     const payloads = loadSchema('run-event-payloads.schema.json');
     const typeIndex = payloads.$defs._typeIndex.properties as Record<string, { $ref: string }>;
     for (const t of VOICE_TYPES) {
-      expect(typeIndex[t], why('run-event-payloads.schema.json §typeIndex', `${t} MUST map to a $def`)).toBeDefined();
-      expect(payloads.$defs[DEF_KEY[t]], why('run-event-payloads.schema.json', `$defs.${DEF_KEY[t]} MUST exist`)).toBeDefined();
+      expect(typeIndex[t], req('openwop.it.voice-event-payloads-shape.each-voice-type-has-a-payload-def-reachable-via-typeindex', 'run-event-payloads.schema.json §typeIndex', `${t} MUST map to a $def`)).toBeDefined();
+      expect(payloads.$defs[DEF_KEY[t]], req('openwop.it.voice-event-payloads-shape.each-voice-type-has-a-payload-def-reachable-via-typeindex', 'run-event-payloads.schema.json', `$defs.${DEF_KEY[t]} MUST exist`)).toBeDefined();
     }
   });
 
@@ -84,15 +83,15 @@ describe('voice-event-payloads-shape: the voice.* run-event taxonomy (RFC 0106 �
 
     expect(
       validate({ text: 'book a table', isFinal: true, atMs: 1200, contentTrust: 'untrusted' }),
-      why('RFC 0106 §F INV-2', 'a transcript marked untrusted MUST validate'),
+      req('openwop.it.voice-event-payloads-shape.voice-transcript-requires-contenttrust-untrusted-security-voice-transcript-untru', 'RFC 0106 §F INV-2', 'a transcript marked untrusted MUST validate'),
     ).toBe(true);
     expect(
       validate({ text: 'book a table', isFinal: true, atMs: 1200 }),
-      why('RFC 0106 §F INV-2 (voice-transcript-untrusted)', 'a transcript WITHOUT contentTrust MUST be rejected'),
+      req('openwop.it.voice-event-payloads-shape.voice-transcript-requires-contenttrust-untrusted-security-voice-transcript-untru', 'RFC 0106 §F INV-2 (voice-transcript-untrusted)', 'a transcript WITHOUT contentTrust MUST be rejected'),
     ).toBe(false);
     expect(
       validate({ text: 'book a table', isFinal: true, atMs: 1200, contentTrust: 'trusted' }),
-      why('RFC 0106 §F INV-2 (voice-transcript-untrusted)', 'contentTrust MUST be the const "untrusted" — never promoted'),
+      req('openwop.it.voice-event-payloads-shape.voice-transcript-requires-contenttrust-untrusted-security-voice-transcript-untru', 'RFC 0106 §F INV-2 (voice-transcript-untrusted)', 'contentTrust MUST be the const "untrusted" — never promoted'),
     ).toBe(false);
   });
 
@@ -104,11 +103,11 @@ describe('voice-event-payloads-shape: the voice.* run-event taxonomy (RFC 0106 �
 
     expect(
       validate({ seq: 0, mimeType: 'audio/mpeg', durationMs: 240, url: 'https://host/seg/0', final: false }),
-      why('RFC 0106 §C', 'a metadata chunk referencing bytes by url MUST validate'),
+      req('openwop.it.voice-event-payloads-shape.voice-synthesis-chunk-is-metadata-shaped-seq-mimetype-required-bytes-by-referenc', 'RFC 0106 §C', 'a metadata chunk referencing bytes by url MUST validate'),
     ).toBe(true);
     expect(
       validate({ mimeType: 'audio/mpeg' }),
-      why('RFC 0106 §C', 'a chunk without seq MUST be rejected'),
+      req('openwop.it.voice-event-payloads-shape.voice-synthesis-chunk-is-metadata-shaped-seq-mimetype-required-bytes-by-referenc', 'RFC 0106 §C', 'a chunk without seq MUST be rejected'),
     ).toBe(false);
   });
 
@@ -120,7 +119,7 @@ describe('voice-event-payloads-shape: the voice.* run-event taxonomy (RFC 0106 �
       const validate = ajv.compile(payloads.$defs[key]);
       expect(
         validate({ atMs: 100, transcriptBody: 'should not be here' }),
-        why('RFC 0106 §D', `${key} MUST reject an unknown (content-bearing) property`),
+        req('openwop.it.voice-event-payloads-shape.content-free-voice-events-reject-unknown-properties-additionalproperties-false', 'RFC 0106 §D', `${key} MUST reject an unknown (content-bearing) property`),
       ).toBe(false);
     }
   });

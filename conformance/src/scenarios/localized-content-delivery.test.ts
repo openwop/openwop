@@ -32,11 +32,9 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -90,12 +88,12 @@ describe('localized-content: capability advertisement shape (localized-content.m
   it('capabilities schema declares content with its required fields', () => {
     const caps = loadSchema('capabilities.schema.json');
     const content = (caps.properties as Record<string, { required?: string[]; properties?: Record<string, unknown> }>).content;
-    expect(content, why('capabilities.schema.json §content', 'the content block MUST be declared')).toBeDefined();
-    expect(content?.required, why('localized-content.md §A', 'supported + baseLocale + supportedLocales MUST be required')).toEqual(
+    expect(content, req('openwop.it.localized-content-delivery.capabilities-schema-declares-content-with-its-required-fields', 'capabilities.schema.json §content', 'the content block MUST be declared')).toBeDefined();
+    expect(content?.required, req('openwop.it.localized-content-delivery.capabilities-schema-declares-content-with-its-required-fields', 'localized-content.md §A', 'supported + baseLocale + supportedLocales MUST be required')).toEqual(
       expect.arrayContaining(['supported', 'baseLocale', 'supportedLocales']),
     );
     for (const f of ['supported', 'baseLocale', 'supportedLocales']) {
-      expect(content?.properties?.[f], why('localized-content.md §A', `content.${f} MUST be declared`)).toBeDefined();
+      expect(content?.properties?.[f], req('openwop.it.localized-content-delivery.capabilities-schema-declares-content-with-its-required-fields', 'localized-content.md §A', `content.${f} MUST be declared`)).toBeDefined();
     }
   });
 });
@@ -119,29 +117,29 @@ describe('localized-content: schema shapes (localized-content.md §B, server-fre
   };
 
   it('a conforming section validates', () => {
-    expect(section(goodSection), why('RFC 0103 §B', `a conforming section MUST validate. Errors: ${JSON.stringify(section.errors)}`)).toBe(true);
+    expect(section(goodSection), req('openwop.it.localized-content-delivery.a-conforming-section-validates', 'RFC 0103 §B', `a conforming section MUST validate. Errors: ${JSON.stringify(section.errors)}`)).toBe(true);
   });
   it('a localizations key with wrong case/underscore is rejected', () => {
-    expect(section({ ...goodSection, localizations: { EN: { heading: 'x' } } }), why('RFC 0103 §B', 'a non-BCP-47-subset key MUST be rejected')).toBe(false);
-    expect(section({ ...goodSection, localizations: { en_US: { heading: 'x' } } }), why('RFC 0103 §B', 'an underscore locale key MUST be rejected')).toBe(false);
+    expect(section({ ...goodSection, localizations: { EN: { heading: 'x' } } }), req('openwop.it.localized-content-delivery.a-localizations-key-with-wrong-case-underscore-is-rejected', 'RFC 0103 §B', 'a non-BCP-47-subset key MUST be rejected')).toBe(false);
+    expect(section({ ...goodSection, localizations: { en_US: { heading: 'x' } } }), req('openwop.it.localized-content-delivery.a-localizations-key-with-wrong-case-underscore-is-rejected', 'RFC 0103 §B', 'an underscore locale key MUST be rejected')).toBe(false);
   });
   it('a section missing a required field is rejected', () => {
     const { status: _omit, ...noStatus } = goodSection;
-    expect(section(noStatus), why('RFC 0103 §B', 'status is REQUIRED')).toBe(false);
+    expect(section(noStatus), req('openwop.it.localized-content-delivery.a-section-missing-a-required-field-is-rejected', 'RFC 0103 §B', 'status is REQUIRED')).toBe(false);
   });
   it('a status outside the enum is rejected', () => {
-    expect(section({ ...goodSection, status: 'archived' }), why('RFC 0103 §B', 'status MUST be draft|published')).toBe(false);
+    expect(section({ ...goodSection, status: 'archived' }), req('openwop.it.localized-content-delivery.a-status-outside-the-enum-is-rejected', 'RFC 0103 §B', 'status MUST be draft|published')).toBe(false);
   });
 
   it('a conforming page validates; a bad slug is rejected', () => {
     const goodPage = { pageId: 'home', slug: 'home', name: 'Home', status: 'published', sectionOrder: ['hero'] };
-    expect(page(goodPage), why('RFC 0103 §B', `a conforming page MUST validate. Errors: ${JSON.stringify(page.errors)}`)).toBe(true);
-    expect(page({ ...goodPage, slug: 'Home Page' }), why('RFC 0103 §B', 'slug MUST match ^[a-z][a-z0-9-]*$')).toBe(false);
+    expect(page(goodPage), req('openwop.it.localized-content-delivery.a-conforming-page-validates-a-bad-slug-is-rejected', 'RFC 0103 §B', `a conforming page MUST validate. Errors: ${JSON.stringify(page.errors)}`)).toBe(true);
+    expect(page({ ...goodPage, slug: 'Home Page' }), req('openwop.it.localized-content-delivery.a-conforming-page-validates-a-bad-slug-is-rejected', 'RFC 0103 §B', 'slug MUST match ^[a-z][a-z0-9-]*$')).toBe(false);
   });
 
   it('a conforming language-settings validates', () => {
     const good = { baseLocale: 'en', supportedLocales: ['es', 'pt-BR', 'fr'], autoTranslateOnPublish: false };
-    expect(settings(good), why('RFC 0103 §B', `settings MUST validate. Errors: ${JSON.stringify(settings.errors)}`)).toBe(true);
+    expect(settings(good), req('openwop.it.localized-content-delivery.a-conforming-language-settings-validates', 'RFC 0103 §B', `settings MUST validate. Errors: ${JSON.stringify(settings.errors)}`)).toBe(true);
   });
 
   it('a conforming page-response validates', () => {
@@ -153,7 +151,7 @@ describe('localized-content: schema shapes (localized-content.md §B, server-fre
       page: { pageId: 'home', slug: 'home', name: 'Home' },
       sections: [{ sectionId: 'hero', sectionType: 'hero', data: { heading: 'Bem-vindo', cta: 'Get started' } }],
     };
-    expect(response(good), why('RFC 0103 §D', `a resolved response MUST validate. Errors: ${JSON.stringify(response.errors)}`)).toBe(true);
+    expect(response(good), req('openwop.it.localized-content-delivery.a-conforming-page-response-validates', 'RFC 0103 §D', `a resolved response MUST validate. Errors: ${JSON.stringify(response.errors)}`)).toBe(true);
   });
 });
 
@@ -164,43 +162,43 @@ describe('localized-content: per-section field merge (localized-content.md §C, 
   };
 
   it('exact-locale hit overrides matching fields', () => {
-    expect(resolveSection(section, 'es', 'en'), why('RFC 0103 §C', 'exact hit MUST overlay locale fields onto data')).toEqual({
+    expect(resolveSection(section, 'es', 'en'), req('openwop.it.localized-content-delivery.exact-locale-hit-overrides-matching-fields', 'RFC 0103 §C', 'exact hit MUST overlay locale fields onto data')).toEqual({
       heading: 'Bienvenido',
       cta: 'Empezar',
     });
   });
   it('partial translation falls through to base for missing fields', () => {
-    expect(resolveSection(section, 'pt-BR', 'en'), why('RFC 0103 §C', 'missing locale fields MUST fall through to data')).toEqual({
+    expect(resolveSection(section, 'pt-BR', 'en'), req('openwop.it.localized-content-delivery.partial-translation-falls-through-to-base-for-missing-fields', 'RFC 0103 §C', 'missing locale fields MUST fall through to data')).toEqual({
       heading: 'Bem-vindo',
       cta: 'Get started',
     });
   });
   it('language-family fallback applies when exact tag is absent', () => {
     const s: Section = { data: { h: 'Hi' }, localizations: { pt: { h: 'Oi' } } };
-    expect(resolveSection(s, 'pt-BR', 'en'), why('RFC 0103 §C', 'pt-BR MUST fall back to the pt family override')).toEqual({ h: 'Oi' });
+    expect(resolveSection(s, 'pt-BR', 'en'), req('openwop.it.localized-content-delivery.language-family-fallback-applies-when-exact-tag-is-absent', 'RFC 0103 §C', 'pt-BR MUST fall back to the pt family override')).toEqual({ h: 'Oi' });
   });
   it('unsupported/base locale returns base data unchanged', () => {
-    expect(resolveSection(section, 'de', 'en'), why('RFC 0103 §C', 'no match MUST return base data')).toEqual(section.data);
-    expect(resolveSection(section, 'en', 'en'), why('RFC 0103 §C', 'base locale MUST return base data')).toEqual(section.data);
+    expect(resolveSection(section, 'de', 'en'), req('openwop.it.localized-content-delivery.unsupported-base-locale-returns-base-data-unchanged', 'RFC 0103 §C', 'no match MUST return base data')).toEqual(section.data);
+    expect(resolveSection(section, 'en', 'en'), req('openwop.it.localized-content-delivery.unsupported-base-locale-returns-base-data-unchanged', 'RFC 0103 §C', 'base locale MUST return base data')).toEqual(section.data);
   });
 });
 
 describe('localized-content: §A capability coherence predicate (server-free)', () => {
   const i18n: I18nCap = { supported: true, defaultLocale: 'en', supportedLocales: ['en', 'es', 'pt-BR', 'fr'] };
   it('a coherent advertisement passes', () => {
-    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['es', 'pt-BR', 'fr'] }, i18n), why('RFC 0103 §A', 'a coherent content block MUST pass')).toBe(true);
+    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['es', 'pt-BR', 'fr'] }, i18n), req('openwop.it.localized-content-delivery.a-coherent-advertisement-passes', 'RFC 0103 §A', 'a coherent content block MUST pass')).toBe(true);
   });
   it('content without i18n is incoherent', () => {
-    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['es'] }, { supported: false }), why('RFC 0103 §A.1', 'content requires i18n.supported')).toBe(false);
+    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['es'] }, { supported: false }), req('openwop.it.localized-content-delivery.content-without-i18n-is-incoherent', 'RFC 0103 §A.1', 'content requires i18n.supported')).toBe(false);
   });
   it('baseLocale != i18n.defaultLocale is incoherent', () => {
-    expect(contentCoherent({ supported: true, baseLocale: 'es', supportedLocales: ['fr'] }, i18n), why('RFC 0103 §A.2', 'baseLocale MUST equal i18n.defaultLocale')).toBe(false);
+    expect(contentCoherent({ supported: true, baseLocale: 'es', supportedLocales: ['fr'] }, i18n), req('openwop.it.localized-content-delivery.baselocale-i18n-defaultlocale-is-incoherent', 'RFC 0103 §A.2', 'baseLocale MUST equal i18n.defaultLocale')).toBe(false);
   });
   it('a supportedLocales not ⊆ i18n.supportedLocales is incoherent', () => {
-    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['de'] }, i18n), why('RFC 0103 §A.3', 'content locales MUST be a subset of i18n locales')).toBe(false);
+    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['de'] }, i18n), req('openwop.it.localized-content-delivery.a-supportedlocales-not-i18n-supportedlocales-is-incoherent', 'RFC 0103 §A.3', 'content locales MUST be a subset of i18n locales')).toBe(false);
   });
   it('baseLocale appearing in supportedLocales is incoherent', () => {
-    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['en', 'es'] }, i18n), why('RFC 0103 §A.4', 'baseLocale MUST NOT appear in supportedLocales')).toBe(false);
+    expect(contentCoherent({ supported: true, baseLocale: 'en', supportedLocales: ['en', 'es'] }, i18n), req('openwop.it.localized-content-delivery.baselocale-appearing-in-supportedlocales-is-incoherent', 'RFC 0103 §A.4', 'baseLocale MUST NOT appear in supportedLocales')).toBe(false);
   });
 });
 
@@ -215,7 +213,7 @@ describe.skipIf(HTTP_SKIP)('localized-content: live advertisement coherence (loc
     const i18n = (await readCapabilityFamily<I18nCap>('i18n')) ?? {};
     expect(
       contentCoherent(content!, i18n),
-      driver.describe('localized-content.md §A', 'the advertised content block MUST satisfy the i18n-subset + baseLocale invariants'),
+      req('openwop.it.localized-content-delivery.advertised-content-block-is-coherent-with-the-advertised-i18n-block', 'localized-content.md §A', 'the advertised content block MUST satisfy the i18n-subset + baseLocale invariants'),
     ).toBe(true);
   });
 });

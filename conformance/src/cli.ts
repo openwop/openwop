@@ -57,6 +57,8 @@ interface ParsedArgs {
   readonly apiKey: string | undefined;
   readonly offline: boolean;
   readonly filter: string | undefined;
+  /** Suite 2.0.0 (RFC 0168 §D.3): which protocol major's scenarios run. Default: the host's preferredVersion, else max(protocolVersions[]), else 1. */
+  readonly targetMajor: 1 | 2 | undefined;
   readonly help: boolean;
   readonly impl: string | undefined;
   readonly implVersion: string | undefined;
@@ -85,6 +87,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   // `--bundle-version 1` through the RFC 0148 migration window (ends
   // 2026-11-10) and is removed at v2.0 (spec/v1/deprecations.json).
   let bundleVersion: '1' | '2' = '2';
+  let targetMajor: 1 | 2 | undefined;
   let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
 
   for (let i = 0; i < argv.length; i++) {
@@ -117,6 +120,12 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--api-key':
         apiKey = nextValue();
         break;
+      case '--target-major': {
+        const v = argv[++i];
+        if (v !== '1' && v !== '2') { process.stderr.write(`openwop-conformance: --target-major must be 1 or 2 (got ${String(v)})\n`); process.exit(2); }
+        targetMajor = v === '2' ? 2 : 1;
+        break;
+      }
       case '--filter':
         filter = nextValue();
         break;
@@ -165,6 +174,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     implVersion,
     certify,
     bundleVersion,
+    targetMajor,
     maxWorkers,
   };
 }
@@ -203,6 +213,9 @@ Implementation labels (cosmetic — surface in failure messages):
   --impl-version <version>  Implementation version     (env: OPENWOP_IMPLEMENTATION_VERSION)
 
 Certification (RFC 0089):
+  --target-major <1|2>    Suite 2.0.0 (RFC 0168 §D.3): run the scenarios for this protocol
+                          major. Default: the host's preferredVersion (RFC 0179), else
+                          max(protocolVersions[]), else 1. Selection is scenario-majors.json.
   --bundle-version <1|2>  Certification bundle format. Default 2 (corrected 2026-09-03, RFC 0168 §E.4; the text said 1 while the code set 2). Version 2 (RFC 0148
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
@@ -313,6 +326,28 @@ function scenarioStatesFromReport(report: VitestJsonReport): Map<string, Scenari
 }
 
 /** Generate + validate + write an RFC 0089 conformance certification bundle. */
+/**
+ * Suite 2.0.0 — resolve the target major (RFC 0168 §D.3 / RFC 0179): the flag,
+ * else the host's root `preferredVersion`, else max(protocolVersions[]), else 1.
+ * Returns the major and the scenario files that target it (scenario-majors.json).
+ */
+async function resolveTargetMajor(args: ParsedArgs, baseUrl: string | undefined, apiKey: string | undefined, conformanceRoot: string): Promise<{ major: 1 | 2; files: string[]; source: string }> {
+  let major: 1 | 2 | undefined = args.targetMajor;
+  let source = 'flag';
+  if (major === undefined && baseUrl) {
+    try {
+      const res = await fetch(`${baseUrl.replace(/\/$/, '')}/.well-known/openwop`, { headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {} });
+      const doc = (await res.json()) as { preferredVersion?: string; protocolVersions?: string[] };
+      const pv = doc.preferredVersion ?? (doc.protocolVersions ?? []).map((v) => v).sort((a, b) => Number(b.split('.')[0]) - Number(a.split('.')[0]))[0];
+      if (pv) { major = Number(pv.split('.')[0]) >= 2 ? 2 : 1; source = doc.preferredVersion ? 'preferredVersion' : 'max(protocolVersions[])'; }
+    } catch { /* unreachable host: the default below; the run itself will report the failure */ }
+  }
+  if (major === undefined) { major = 1; source = 'default'; }
+  const manifest = JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> };
+  const files = Object.entries(manifest.majors).filter(([, m]) => m.includes(major as number)).map(([f]) => `src/scenarios/${f}`);
+  return { major, files, source };
+}
+
 async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Promise<never> {
   const outPath = args.certify;
   if (outPath === undefined) process.exit(2);
@@ -357,6 +392,9 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   if (args.impl) env.OPENWOP_IMPLEMENTATION_NAME = args.impl;
   if (args.implVersion) env.OPENWOP_IMPLEMENTATION_VERSION = args.implVersion;
 
+  const target = await resolveTargetMajor(args, baseUrl, apiKey, conformanceRoot);
+  env.OPENWOP_TARGET_MAJOR = String(target.major);
+  process.stderr.write(`openwop-conformance --certify: target major ${target.major} (${target.source}); ${target.files.length} scenario file(s)\n`);
   const vitestArgs: string[] = [
     'vitest',
     'run',
@@ -365,6 +403,8 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     '--reporter=json',
     `--outputFile=${reportFile}`,
     ...maxWorkersArgs(args.maxWorkers),
+    ...(args.filter ? ['--testNamePattern', args.filter] : []),
+    ...target.files,
   ];
   const runResult = spawnSync('npx', vitestArgs, { cwd: conformanceRoot, env, stdio: 'inherit' });
   if (runResult.error) {
@@ -473,7 +513,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     // the discovery it saw. Two runs against differently-configured hosts are
     // different evidence, and this is what says so.
     const configSha = createHash('sha256')
-      .update(`${args.baseUrl}\n${sha256}\n${process.env['OPENWOP_REQUIRE_BEHAVIOR'] ?? ''}`, 'utf8')
+      .update(`${baseUrl}\n${sha256}\n${process.env['OPENWOP_REQUIRE_BEHAVIOR'] ?? ''}`, 'utf8')
       .digest('hex');
 
     // Rows come from the ledger (S6). A file that recorded nothing is
@@ -655,6 +695,12 @@ async function main(): Promise<never> {
   // ancestor config (e.g., a parent monorepo's vite.config.ts) when
   // the conformance package is used as a workspace member.
   const vitestArgs: string[] = ['run', '--config', resolvePath(conformanceRoot, 'vitest.config.ts')];
+  const target = await resolveTargetMajor(args, env.OPENWOP_BASE_URL, env.OPENWOP_API_KEY, conformanceRoot);
+  env.OPENWOP_TARGET_MAJOR = String(target.major);
+  if (!args.offline) {
+    process.stderr.write(`openwop-conformance: target major ${target.major} (${target.source}); ${target.files.length} scenario file(s)\n`);
+    vitestArgs.push(...target.files);
+  }
   if (args.offline) {
     // Suite 1.154.0: the offline set is a DECLARED property of the package —
     // exactly the server-free scenarios that ship in the tarball and run in

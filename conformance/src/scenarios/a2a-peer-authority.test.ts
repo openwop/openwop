@@ -33,6 +33,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const REQUIRES_HOST_CALLBACK = "the host issues A2A JSON-RPC calls to the suite's fake peer via /v1/host/sample/a2a/invoke (peerUrl), which the peer records";
 
@@ -75,25 +76,25 @@ describe('RFC 0152 §E — a2a-peer-no-authority-escalation (host as A2A client,
     // The peer must actually have answered with the authority-asserting message,
     // or this leg is vacuous.
     const created = peer.taskCount();
-    expect(created, driver.describe('RFCS/0152 §E', 'the host MUST have created a task on the peer for this leg to mean anything')).toBeGreaterThan(0);
+    expect(created, req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'RFCS/0152 §E', 'the host MUST have created a task on the peer for this leg to mean anything')).toBeGreaterThan(0);
     const report = (drive.json as { peerAuthority?: PeerAuthorityReport }).peerAuthority;
     if (report === undefined) {
       // Additive seam field not yet implemented: blocked, not passed.
       expect(
         report,
-        driver.describe(
+        req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 
           'host-sample-test-seams.md §22',
           'the invoke seam SHOULD report `peerAuthority: { approvalAdvanced, scopesWidened, referencedTaskDereferenced }` for ' +
             'scenario "peer-asserts-authority"; until it does this requirement is unobservable and resolves to `blocked`, not passed',
         ),
       ).toBeDefined();
-      return;
+      return softSkip('blocked', 'precondition not met — `report === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(report.approvalAdvanced, driver.describe('RFCS/0152 §E', 'peer content MUST NOT advance an approval gate (a2a-peer-no-authority-escalation)')).toBe(false);
-    expect(report.scopesWidened, driver.describe('RFCS/0152 §E', 'peer content MUST NOT widen the run’s scopes or tool allowlist')).toBe(false);
+    expect(report.approvalAdvanced, req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'RFCS/0152 §E', 'peer content MUST NOT advance an approval gate (a2a-peer-no-authority-escalation)')).toBe(false);
+    expect(report.scopesWidened, req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'RFCS/0152 §E', 'peer content MUST NOT widen the run’s scopes or tool allowlist')).toBe(false);
     expect(
       report.referencedTaskDereferenced,
-      driver.describe('a2a-integration.md §D.2', '`referenceTaskIds[]` are opaque hints — MUST NOT be dereferenced on the peer’s say-so'),
+      req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'a2a-integration.md §D.2', '`referenceTaskIds[]` are opaque hints — MUST NOT be dereferenced on the peer’s say-so'),
     ).toBe(false);
   });
 });

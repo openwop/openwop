@@ -23,6 +23,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryCredentials {
   supported?: boolean;
@@ -53,7 +54,7 @@ describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () 
     if (cred === null) return softSkip('inapplicable', 'host doesn\'t advertise host.credentials at all');
     expect(
       typeof cred.supported,
-      driver.describe(
+      req('openwop.it.credentials-capability-shape.capabilities-credentials-is-either-absent-or-well-formed', 
         'capabilities.schema.json §credentials',
         'capabilities.credentials.supported MUST be a boolean when credentials is advertised',
       ),
@@ -65,12 +66,12 @@ describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () 
     if (!cred?.supported || cred.scopes === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cred?.supported || cred.scopes === undefined` returned early');
     expect(
       Array.isArray(cred.scopes),
-      driver.describe('RFC 0046 §A', 'capabilities.credentials.scopes MUST be an array'),
+      req('openwop.it.credentials-capability-shape.scopes-is-a-subset-of-user-workspace-tenant-when-supported', 'RFC 0046 §A', 'capabilities.credentials.scopes MUST be an array'),
     ).toBe(true);
     for (const scope of cred.scopes) {
       expect(
         VALID_SCOPES.has(scope),
-        driver.describe(
+        req('openwop.it.credentials-capability-shape.scopes-is-a-subset-of-user-workspace-tenant-when-supported', 
           'RFC 0046 §A',
           `capabilities.credentials.scopes entries MUST be one of {${[...VALID_SCOPES].join(', ')}}, got: ${scope}`,
         ),
@@ -83,7 +84,7 @@ describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () 
     if (!cred?.supported || cred.rotation === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cred?.supported || cred.rotation === undefined` returned early');
     expect(
       VALID_ROTATION.has(cred.rotation),
-      driver.describe(
+      req('openwop.it.credentials-capability-shape.rotation-is-one-of-none-two-key-overlap-when-present', 
         'RFC 0046 §A',
         `capabilities.credentials.rotation MUST be one of {${[...VALID_ROTATION].join(', ')}}, got: ${cred.rotation}`,
       ),

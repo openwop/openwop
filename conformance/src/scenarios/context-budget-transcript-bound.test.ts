@@ -46,6 +46,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { queryTestEvents } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-context-budget-multiturn';
 const PROFILE = 'openwop-context-budget';
@@ -135,20 +137,20 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
     const cb = ma?.executionModel?.contextBudget;
     const budget = numberOf(cb?.transcriptTokenBudget);
     if (!behaviorGate(PROFILE, budget !== undefined)) return;
-    if (!isFixtureAdvertised(FIXTURE)) return; // fixture-gated soft-skip
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early (fixture-gated soft-skip)'); // fixture-gated soft-skip
 
     const advertisedCounter = stringOf(cb?.tokenCounter);
     expect(
       advertisedCounter,
-      driver.describe('RFC 0111', 'tokenCounter MUST be advertised when transcriptTokenBudget is present (schema if/then)'),
+      req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111', 'tokenCounter MUST be advertised when transcriptTokenBudget is present (schema if/then)'),
     ).toBeDefined();
 
     // Drive the multi-turn orchestrator run.
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = runIdOf(create.json);
-    expect(runId, 'POST /v1/runs MUST return a runId').toBeDefined();
-    if (runId === undefined) return;
+    expect(runId, req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111', 'POST /v1/runs MUST return a runId')).toBeDefined();
+    if (runId === undefined) return softSkip('blocked', 'precondition not met — `runId === undefined` returned early (seam, prior step, or fixture unavailable)');
     await pollUntilTerminal(runId);
 
     // Probe the per-iteration transcript-window seam (OPTIONAL).
@@ -158,25 +160,25 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
         `/v1/host/sample/agent/transcript-window?runId=${encodeURIComponent(runId)}&iteration=${iteration}`,
       );
       if (res.status === 404 || res.status === 405) {
-        if (iteration === 1) return; // seam unwired — soft-skip the whole scenario
+        if (iteration === 1) return softSkip('blocked', 'precondition not met — `iteration === 1` returned early (seam unwired — soft-skip the whole scenario) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip the whole scenario
         break; // iterations exhausted
       }
       if (res.status === 400 || res.status === 422) break; // iteration past the run's last turn
       expect(
         res.status === 200,
-        driver.describe('host-sample-test-seams.md §14', 'the transcript-window seam MUST return 200 for a valid iteration'),
+        req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'host-sample-test-seams.md §14', 'the transcript-window seam MUST return 200 for a valid iteration'),
       ).toBe(true);
       const window = transcriptWindowOf(res.json);
       expect(
         window,
-        driver.describe('host-sample-test-seams.md §14', 'the seam MUST return { tokenCounter, tokenCount, eventIds, summarizedRanges }'),
+        req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'host-sample-test-seams.md §14', 'the seam MUST return { tokenCounter, tokenCount, eventIds, summarizedRanges }'),
       ).toBeDefined();
-      if (window === undefined) return;
+      if (window === undefined) return softSkip('blocked', 'precondition not met — `window === undefined` returned early (seam, prior step, or fixture unavailable)');
       windows.push({ iteration, window });
     }
 
     // Non-vacuity: a wired seam MUST report at least one iteration.
-    expect(windows.length, 'a wired transcript-window seam MUST report at least one orchestrator iteration').toBeGreaterThan(0);
+    expect(windows.length, req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'host-sample-test-seams.md §14', 'a wired transcript-window seam MUST report at least one orchestrator iteration')).toBeGreaterThan(0);
 
     // Independent event-log read for the cross-check (OPTIONAL seam).
     const q = await queryTestEvents(runId);
@@ -196,14 +198,14 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
       // 1 — tokenCounter agreement.
       expect(
         window.tokenCounter,
-        driver.describe('RFC 0111', `iteration ${iteration}: seam tokenCounter MUST equal the advertised contextBudget.tokenCounter`),
+        req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111', `iteration ${iteration}: seam tokenCounter MUST equal the advertised contextBudget.tokenCounter`),
       ).toBe(advertisedCounter);
 
       // 2 — the per-turn token bound.
       if (budget !== undefined) {
         expect(
           window.tokenCount,
-          driver.describe('RFC 0111', `iteration ${iteration}: tokenCount MUST NOT exceed transcriptTokenBudget`),
+          req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111', `iteration ${iteration}: tokenCount MUST NOT exceed transcriptTokenBudget`),
         ).toBeLessThanOrEqual(budget);
       }
 
@@ -212,7 +214,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
         for (const id of window.eventIds) {
           expect(
             logEventIds.has(id),
-            driver.describe('RFC 0111 §"Conformance seam"', `iteration ${iteration}: eventId "${id}" in the seam accounting MUST be a real persisted run event`),
+            req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111 §"Conformance seam"', `iteration ${iteration}: eventId "${id}" in the seam accounting MUST be a real persisted run event`),
           ).toBe(true);
         }
       }
@@ -221,7 +223,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
       const uniqueIds = new Set(window.eventIds);
       expect(
         uniqueIds.size,
-        driver.describe('RFC 0111 §"Conformance seam"', `iteration ${iteration}: eventIds MUST be a tail with no repeated entry`),
+        req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111 §"Conformance seam"', `iteration ${iteration}: eventIds MUST be a tail with no repeated entry`),
       ).toBe(window.eventIds.length);
 
       // 5 — every summarized range references a recorded context.summarized event.
@@ -229,7 +231,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
         for (const range of window.summarizedRanges) {
           expect(
             summarizedRefs.has(range.summaryRef),
-            driver.describe('RFC 0111', `iteration ${iteration}: summarizedRanges summaryRef "${range.summaryRef}" MUST have a matching context.summarized event`),
+            req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111', `iteration ${iteration}: summarizedRanges summaryRef "${range.summaryRef}" MUST have a matching context.summarized event`),
           ).toBe(true);
         }
       }
@@ -245,7 +247,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
       for (const id of verbatimTail) {
         expect(
           summarizedIds.has(id),
-          driver.describe('RFC 0111', `a kept (verbatim) turn "${id}" MUST NOT appear inside a summarized range`),
+          req('openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi', 'RFC 0111', `a kept (verbatim) turn "${id}" MUST NOT appear inside a summarized range`),
         ).toBe(false);
       }
     }

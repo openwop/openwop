@@ -47,6 +47,8 @@ import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 
@@ -270,7 +272,7 @@ function fullSurfaceMaterializedAfterUpdates(): { [key: string]: JsonValue } {
 
 describe('a2ui-surface-delta-transport: frame schema + op set (RFC 0114)', () => {
   it('a2ui-surface-delta-frame.schema.json compiles under Ajv2020', () => {
-    expect(validateFrame, 'RFC 0114: the delta-frame schema MUST compile').toBeTypeOf('function');
+    expect(validateFrame, req('openwop.it.a2ui-surface-delta-transport.a2ui-surface-delta-frame-schema-json-compiles-under-ajv2020', 'RFC 0114 §"Delta transport', 'RFC 0114: the delta-frame schema MUST compile')).toBeTypeOf('function');
   });
 
   it('accepts a positive delta frame', () => {
@@ -281,18 +283,18 @@ describe('a2ui-surface-delta-transport: frame schema + op set (RFC 0114)', () =>
     };
     expect(
       validateFrame(frame),
-      `RFC 0114: a positive delta frame MUST validate; errors: ${JSON.stringify(validateFrame.errors)}`,
+      req('openwop.it.a2ui-surface-delta-transport.accepts-a-positive-delta-frame', 'RFC 0114 §"Delta transport', `RFC 0114: a positive delta frame MUST validate; errors: ${JSON.stringify(validateFrame.errors)}`),
     ).toBe(true);
   });
 
   it('rejects a frame missing the required `surfaceRef`/`catalogVersion`/`patch`', () => {
-    expect(validateFrame({ catalogVersion: CATALOG_VERSION, patch: [{ op: 'replace', path: '/x' }] })).toBe(false);
+    expect(validateFrame({ catalogVersion: CATALOG_VERSION, patch: [{ op: 'replace', path: '/x' }] }), req('openwop.it.a2ui-surface-delta-transport.rejects-a-frame-missing-the-required-surfaceref-catalogversion-patch', 'RFC 0114 §"Delta transport', 'rejects a frame missing the required `surfaceRef`/`catalogVersion`/`patch`')).toBe(false);
     expect(validateFrame({ surfaceRef: 'e', patch: [{ op: 'replace', path: '/x' }] })).toBe(false);
     expect(validateFrame({ surfaceRef: 'e', catalogVersion: CATALOG_VERSION })).toBe(false);
   });
 
   it('rejects an empty patch (minItems: 1)', () => {
-    expect(validateFrame({ surfaceRef: 'e', catalogVersion: CATALOG_VERSION, patch: [] })).toBe(false);
+    expect(validateFrame({ surfaceRef: 'e', catalogVersion: CATALOG_VERSION, patch: [] }), req('openwop.it.a2ui-surface-delta-transport.rejects-an-empty-patch-minitems-1', 'RFC 0114 §"Delta transport', 'rejects an empty patch (minItems: 1)')).toBe(false);
   });
 
   it('EXCLUDES the `test` op from the op enum', () => {
@@ -303,7 +305,7 @@ describe('a2ui-surface-delta-transport: frame schema + op set (RFC 0114)', () =>
     };
     expect(
       validateFrame(frame),
-      'RFC 0114: a fire-and-forget transport frame cannot act on a failed conditional; `test` is excluded',
+      req('openwop.it.a2ui-surface-delta-transport.excludes-the-test-op-from-the-op-enum', 'RFC 0114 §"Delta transport', 'RFC 0114: a fire-and-forget transport frame cannot act on a failed conditional; `test` is excluded'),
     ).toBe(false);
   });
 
@@ -313,7 +315,7 @@ describe('a2ui-surface-delta-transport: frame schema + op set (RFC 0114)', () =>
       catalogVersion: CATALOG_VERSION,
       patch: [{ op: 'replace', path: '/x', value: 1, onApply: "fetch('https://evil')" }],
     };
-    expect(validateFrame(frame)).toBe(false);
+    expect(validateFrame(frame), req('openwop.it.a2ui-surface-delta-transport.rejects-a-patch-item-carrying-an-out-of-set-property-additionalproperties-false', 'RFC 0114 §"Delta transport', 'rejects a patch item carrying an out-of-set property (additionalProperties:false)')).toBe(false);
   });
 });
 
@@ -337,11 +339,11 @@ describe('a2ui-surface-delta-transport: full + deltas reconstruct the materializ
     ];
 
     for (const frame of frames) {
-      expect(validateFrame(frame), `RFC 0114: each delta frame MUST validate; ${JSON.stringify(validateFrame.errors)}`).toBe(true);
+      expect(validateFrame(frame), req('openwop.it.a2ui-surface-delta-transport.a-full-surface-delta-frames-reconstruct-the-tree-and-equal-the-non-negotiating-f', 'RFC 0114 §"Delta transport', `RFC 0114: each delta frame MUST validate; ${JSON.stringify(validateFrame.errors)}`)).toBe(true);
       // catalogVersion on a delta MUST equal the referenced full surface's.
       expect(
         frame.catalogVersion,
-        'RFC 0114: a delta frame\'s catalogVersion MUST equal the referenced full surface\'s',
+        req('openwop.it.a2ui-surface-delta-transport.a-full-surface-delta-frames-reconstruct-the-tree-and-equal-the-non-negotiating-f', 'RFC 0114 §"Delta transport', 'RFC 0114: a delta frame\'s catalogVersion MUST equal the referenced full surface\'s'),
       ).toBe(full.catalogVersion);
     }
 
@@ -354,13 +356,13 @@ describe('a2ui-surface-delta-transport: full + deltas reconstruct the materializ
     // (a) the reconstruction equals the full surface a non-negotiating subscriber materializes.
     expect(
       reconstructed,
-      'RFC 0114: the delta reconstruction MUST equal the full surface the host materializes for a non-negotiating subscriber',
+      req('openwop.it.a2ui-surface-delta-transport.a-full-surface-delta-frames-reconstruct-the-tree-and-equal-the-non-negotiating-f', 'RFC 0114 §"Delta transport', 'RFC 0114: the delta reconstruction MUST equal the full surface the host materializes for a non-negotiating subscriber'),
     ).toEqual(fullSurfaceMaterializedAfterUpdates());
 
     // (b) the reconstruction re-validates against the closed catalog before render.
     expect(
       validateRecorded(reconstructed),
-      `RFC 0114: the post-patch surface MUST re-validate against the closed catalog; ${JSON.stringify(validateRecorded.errors)}`,
+      req('openwop.it.a2ui-surface-delta-transport.a-full-surface-delta-frames-reconstruct-the-tree-and-equal-the-non-negotiating-f', 'RFC 0114 §"Delta transport', `RFC 0114: the post-patch surface MUST re-validate against the closed catalog; ${JSON.stringify(validateRecorded.errors)}`),
     ).toBe(true);
   });
 });
@@ -390,7 +392,7 @@ describe('a2ui-surface-delta-transport: out-of-catalog delta fails closed (RFC 0
     // The `a2ui-surface-no-code-exec` boundary holds on the post-patch surface.
     expect(
       validateRecorded(postPatch),
-      'RFC 0114 / a2ui-surface-no-code-exec: an out-of-catalog component reached by a delta MUST fail closed-catalog validation post-patch',
+      req('openwop.it.a2ui-surface-delta-transport.a-delta-that-add-s-an-out-of-catalog-component-yields-a-post-patch-surface-that', 'RFC 0114 §"Delta transport', 'RFC 0114 / a2ui-surface-no-code-exec: an out-of-catalog component reached by a delta MUST fail closed-catalog validation post-patch'),
     ).toBe(false);
   });
 
@@ -411,7 +413,7 @@ describe('a2ui-surface-delta-transport: out-of-catalog delta fails closed (RFC 0
     const postPatch = applyPatch(full, frame.patch);
     expect(
       validateRecorded(postPatch),
-      'RFC 0114: a delta MUST NOT be a path by which a smuggled code field reaches render',
+      req('openwop.it.a2ui-surface-delta-transport.a-delta-replace-smuggling-a-script-bearing-property-also-fails-closed-catalog-va', 'RFC 0114 §"Delta transport', 'RFC 0114: a delta MUST NOT be a path by which a smuggled code field reaches render'),
     ).toBe(false);
   });
 });
@@ -425,14 +427,14 @@ describe('a2ui-surface-delta-transport: the recorded envelope is always full (RF
     };
     expect(
       validateRecorded(frame),
-      'RFC 0114: the recorded envelope is NEVER a delta — a delta frame MUST NOT validate as a recorded ui.a2ui-surface payload',
+      req('openwop.it.a2ui-surface-delta-transport.a-delta-frame-does-not-validate-against-the-recorded-ui-a2ui-surface-envelope-sc', 'RFC 0114 §"Delta transport', 'RFC 0114: the recorded envelope is NEVER a delta — a delta frame MUST NOT validate as a recorded ui.a2ui-surface payload'),
     ).toBe(false);
   });
 
   it('the full surface validates as the recorded ui.a2ui-surface payload (event-log read / replay shape)', () => {
     expect(
       validateRecorded(fullSurfaceV0()),
-      'RFC 0114: the event-log read / replay always sees the FULL surface, which MUST validate as the recorded payload',
+      req('openwop.it.a2ui-surface-delta-transport.the-full-surface-validates-as-the-recorded-ui-a2ui-surface-payload-event-log-rea', 'RFC 0114 §"Delta transport', 'RFC 0114: the event-log read / replay always sees the FULL surface, which MUST validate as the recorded payload'),
     ).toBe(true);
   });
 });
@@ -507,9 +509,9 @@ async function getEvents(runId: string, deltaOptIn: boolean): Promise<unknown> {
 describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transport (RFC 0114, gated)', () => {
   it('drives the emit-surface seam: a ?a2uiDelta=1 subscriber reconstruction equals the non-negotiating full', async () => {
     const disco = await driver.get('/.well-known/openwop');
-    if (disco.status !== 200) return; // no discovery — soft-skip
+    if (disco.status !== 200) return softSkip('blocked', 'precondition not met — `disco.status !== 200` returned early (no discovery — soft-skip) (seam, prior step, or fixture unavailable)'); // no discovery — soft-skip
     const cap = capabilityFamily<A2uiSurfaceCap>(disco.json, 'a2uiSurface');
-    if (cap?.deltaTransport !== true) return; // capability not advertised — soft-skip
+    if (cap?.deltaTransport !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.deltaTransport !== true` returned early (capability not advertised — soft-skip)'); // capability not advertised — soft-skip
 
     const runId = `conf-a2ui-delta-${Date.now()}`;
     const surfaceA = fullSurfaceV0();
@@ -517,53 +519,53 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transp
 
     // Baseline (surface A) through the host's REAL surface-emit path.
     const emitA = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: surfaceA });
-    if (emitA.status === 404 || emitA.status === 405) return; // seam absent — soft-skip the live leg
+    if (emitA.status === 404 || emitA.status === 405) return softSkip('blocked', 'precondition not met — `emitA.status === 404 || emitA.status === 405` returned early (seam absent — soft-skip the live leg) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip the live leg
     expect(
       emitA.status,
-      driver.describe('RFC 0114 §15', 'the emit-surface seam MUST record the baseline full surface'),
+      req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 'RFC 0114 §15', 'the emit-surface seam MUST record the baseline full surface'),
     ).toBeLessThan(300);
 
     // Second full surface (surface B) — recorded full AND transported as a delta
     // to any ?a2uiDelta=1 subscriber.
     const emitB = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: surfaceB });
-    if (emitB.status === 404 || emitB.status === 405) return;
-    expect(emitB.status, driver.describe('RFC 0114 §15', 'the second emit MUST succeed')).toBeLessThan(300);
+    if (emitB.status === 404 || emitB.status === 405) return softSkip('blocked', 'precondition not met — `emitB.status === 404 || emitB.status === 405` returned early (seam, prior step, or fixture unavailable)');
+    expect(emitB.status, req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 'RFC 0114 §15', 'the second emit MUST succeed')).toBeLessThan(300);
     const refB = (emitB.json as EmitSurfaceResponse)?.surfaceRef;
 
     // ?a2uiDelta=1 subscriber: locate the delta frame the host transported.
     const deltaEvents = await getEvents(runId, true);
-    if (deltaEvents === null) return; // events stream unavailable in JSON — soft-skip
+    if (deltaEvents === null) return softSkip('blocked', 'precondition not met — `deltaEvents === null` returned early (events stream unavailable in JSON — soft-skip) (seam, prior step, or fixture unavailable)'); // events stream unavailable in JSON — soft-skip
     const frames = collectMatching(deltaEvents, validateFrame)
       .map(readFrame)
       .filter((f): f is { surfaceRef: string; catalogVersion: string; patch: PatchOp[] } => f !== null)
       .filter((f) => refB === undefined || f.surfaceRef === refB);
-    if (frames.length === 0) return; // host streams SSE-only or buffered the frame — soft-skip
+    if (frames.length === 0) return softSkip('blocked', 'precondition not met — `frames.length === 0` returned early (host streams SSE-only or buffered the frame — soft-skip) (seam, prior step, or fixture unavailable)'); // host streams SSE-only or buffered the frame — soft-skip
     const frame = frames[frames.length - 1];
 
     // catalogVersion on the delta MUST equal the baseline full surface's.
     expect(
       frame.catalogVersion,
-      driver.describe('RFC 0114', 'a delta frame catalogVersion MUST equal the referenced full surface'),
+      req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 'RFC 0114', 'a delta frame catalogVersion MUST equal the referenced full surface'),
     ).toBe(surfaceA.catalogVersion);
 
     // Reconstruct: apply the host's real delta to the baseline, re-validate against the closed catalog.
     const reconstructed = applyPatch(surfaceA, frame.patch);
     expect(
       validateRecorded(reconstructed),
-      driver.describe('RFC 0114 §"Delta transport"', 'the post-patch surface MUST re-validate against the closed catalog'),
+      req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 'RFC 0114 §"Delta transport"', 'the post-patch surface MUST re-validate against the closed catalog'),
     ).toBe(true);
 
     // Non-negotiating subscriber: the host materializes the FULL surface for the same update.
     const fullEvents = await getEvents(runId, false);
-    if (fullEvents === null) return;
+    if (fullEvents === null) return softSkip('blocked', 'precondition not met — `fullEvents === null` returned early (seam, prior step, or fixture unavailable)');
     const fulls = collectMatching(fullEvents, validateRecorded);
-    if (fulls.length === 0) return; // soft-skip — no full surface observed on the non-delta stream
+    if (fulls.length === 0) return softSkip('blocked', 'precondition not met — `fulls.length === 0` returned early (soft-skip — no full surface observed on the non-delta stream) (seam, prior step, or fixture unavailable)'); // soft-skip — no full surface observed on the non-delta stream
     const materializedFull = fulls[fulls.length - 1];
 
     // delta and full agree — the core RFC 0114 transport guarantee, witnessed live.
     expect(
       reconstructed,
-      driver.describe(
+      req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 
         'RFC 0114 §"Delta transport"',
         'a ?a2uiDelta=1 reconstruction MUST equal the full surface a non-negotiating subscriber materializes',
       ),
@@ -572,14 +574,14 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transp
 
   it('the emit-surface seam rejects an out-of-catalog surface fail-closed (real catalog gate)', async () => {
     const disco = await driver.get('/.well-known/openwop');
-    if (disco.status !== 200) return;
+    if (disco.status !== 200) return softSkip('blocked', 'precondition not met — `disco.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const cap = capabilityFamily<A2uiSurfaceCap>(disco.json, 'a2uiSurface');
-    if (cap?.deltaTransport !== true) return;
+    if (cap?.deltaTransport !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap?.deltaTransport !== true` returned early');
 
     const runId = `conf-a2ui-delta-oob-${Date.now()}`;
     const baseline = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: fullSurfaceV0() });
-    if (baseline.status === 404 || baseline.status === 405) return; // seam absent — soft-skip
-    expect(baseline.status, driver.describe('RFC 0114 §15', 'baseline emit MUST succeed')).toBeLessThan(300);
+    if (baseline.status === 404 || baseline.status === 405) return softSkip('blocked', 'precondition not met — `baseline.status === 404 || baseline.status === 405` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
+    expect(baseline.status, req('openwop.it.a2ui-surface-delta-transport.the-emit-surface-seam-rejects-an-out-of-catalog-surface-fail-closed-real-catalog', 'RFC 0114 §15', 'baseline emit MUST succeed')).toBeLessThan(300);
 
     // An out-of-catalog surface MUST be rejected by the host's REAL closed-catalog
     // validator — no delta transported, the a2ui-surface-no-code-exec boundary holds.
@@ -588,10 +590,10 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transp
       surface: { components: [{ component: 'iframe', src: 'https://evil.example/x' }] },
     };
     const rejected = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: outOfCatalog });
-    if (rejected.status === 404 || rejected.status === 405) return;
+    if (rejected.status === 404 || rejected.status === 405) return softSkip('blocked', 'precondition not met — `rejected.status === 404 || rejected.status === 405` returned early (seam, prior step, or fixture unavailable)');
     expect(
       rejected.status,
-      driver.describe(
+      req('openwop.it.a2ui-surface-delta-transport.the-emit-surface-seam-rejects-an-out-of-catalog-surface-fail-closed-real-catalog', 
         'RFC 0114 §15 / a2ui-surface-no-code-exec',
         'an out-of-catalog surface MUST be rejected fail-closed by the host real catalog validator',
       ),

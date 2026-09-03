@@ -31,6 +31,8 @@ import { driver } from '../lib/driver.js';
 import { experimentalGate } from '../lib/behavior-gate.js';
 import { __resetEnvCacheForTests } from '../lib/env.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -62,15 +64,15 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
     const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `em === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
     if (em.tier === undefined) {
       ctx.skip(); // tier is optional with default 'stable'
-      return;
+      return softSkip('blocked', 'precondition not met — `em.tier === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       em.tier === 'stable' || em.tier === 'experimental',
-      driver.describe(
+      req('openwop.it.experimental-tier-shape.multiagent-executionmodel-tier-when-present-must-be-one-of-stable-experimental', 
         'RFCS/0042-experimental-capability-tier.md §A',
         'multiAgent.executionModel.tier MUST be one of the canonical enum values',
       ),
@@ -82,12 +84,12 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
     const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined || em.tier !== 'experimental') {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `em === undefined || em.tier !== \'experimental\'` returned early (seam, prior step, or fixture unavailable)');
     }
 
     expect(
       typeof em.experimentalUntil,
-      driver.describe(
+      req('openwop.it.experimental-tier-shape.when-tier-experimental-experimentaluntil-must-be-present-valid-date', 
         'RFCS/0042-experimental-capability-tier.md §B',
         'when tier is "experimental", experimentalUntil MUST be present (the §B sunset-rule contract)',
       ),
@@ -96,7 +98,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
     const dateStr = em.experimentalUntil as string;
     expect(
       /^\d{4}-\d{2}-\d{2}$/.test(dateStr),
-      driver.describe(
+      req('openwop.it.experimental-tier-shape.when-tier-experimental-experimentaluntil-must-be-present-valid-date', 
         'RFCS/0042-experimental-capability-tier.md §B',
         'experimentalUntil MUST match YYYY-MM-DD',
       ),
@@ -105,7 +107,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
     const parsed = new Date(dateStr + 'T00:00:00Z');
     expect(
       !Number.isNaN(parsed.getTime()),
-      driver.describe(
+      req('openwop.it.experimental-tier-shape.when-tier-experimental-experimentaluntil-must-be-present-valid-date', 
         'RFCS/0042-experimental-capability-tier.md §B',
         'experimentalUntil MUST parse as a valid ISO-8601 date',
       ),
@@ -117,18 +119,18 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
     const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined || em.tier !== 'experimental') {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `em === undefined || em.tier !== \'experimental\'` returned early (seam, prior step, or fixture unavailable)');
     }
     if (typeof em.experimentalUntil !== 'string') {
       ctx.skip(); // shape probe above will fail; don't double-fail
-      return;
+      return softSkip('blocked', 'precondition not met — `typeof em.experimentalUntil !== \'string\'` returned early (seam, prior step, or fixture unavailable)');
     }
     const target = new Date((em.experimentalUntil as string) + 'T00:00:00Z').getTime();
     const now = Date.now();
     const daysAhead = (target - now) / (1000 * 60 * 60 * 24);
     expect(
       daysAhead <= 365,
-      driver.describe(
+      req('openwop.it.experimental-tier-shape.experimentaluntil-must-be-365-days-in-the-future-sunset-bound', 
         'RFCS/0042-experimental-capability-tier.md §B',
         `experimentalUntil MUST be ≤ 365 days from now (got ${Math.floor(daysAhead)} days; advertised ${em.experimentalUntil})`,
       ),
@@ -140,17 +142,17 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
     const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined || em.tier !== 'experimental') {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `em === undefined || em.tier !== \'experimental\'` returned early (seam, prior step, or fixture unavailable)');
     }
     if (typeof em.experimentalUntil !== 'string') {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `typeof em.experimentalUntil !== \'string\'` returned early (seam, prior step, or fixture unavailable)');
     }
     const target = new Date((em.experimentalUntil as string) + 'T00:00:00Z').getTime();
     const now = Date.now();
     expect(
       target >= now,
-      driver.describe(
+      req('openwop.it.experimental-tier-shape.sunset-detection-experimentaluntil-in-the-past-is-non-conformant', 
         'RFCS/0042-experimental-capability-tier.md §B',
         `experimentalUntil MUST NOT be in the past (advertised ${em.experimentalUntil}; host MUST either flip tier to stable, retract the advertisement, or re-advertise with a future date + open deprecation RFC)`,
       ),
@@ -168,7 +170,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §D experimentalGate helper
       const result = experimentalGate('test-profile', true, 'experimental', '2027-05-22');
       expect(
         result,
-        driver.describe(
+        req('openwop.it.experimental-tier-shape.experimentalgate-returns-false-for-tier-experimental-without-openwop-require-exp', 
           'RFCS/0042-experimental-capability-tier.md §D',
           'default mode + tier="experimental" MUST soft-skip — helper returns false',
         ),
@@ -189,7 +191,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §D experimentalGate helper
     __resetEnvCacheForTests();
     try {
       // Stable + advertised → proceed.
-      expect(experimentalGate('test-stable', true, 'stable')).toBe(true);
+      expect(experimentalGate('test-stable', true, 'stable'), req('openwop.it.experimental-tier-shape.experimentalgate-routes-through-behaviorgate-when-tier-undefined-or-stable', 'RFC 0042 §A', 'experimentalGate routes through behaviorGate when tier === undefined or "stable"')).toBe(true);
       expect(experimentalGate('test-stable-undef', true, undefined)).toBe(true);
       // Stable + NOT advertised, default mode → skip (returns false, no throw).
       expect(experimentalGate('test-not-adv', false, 'stable')).toBe(false);

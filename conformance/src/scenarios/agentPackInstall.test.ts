@@ -19,6 +19,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-pack-install';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -32,9 +34,9 @@ describe.skipIf(SKIP)('agentPackInstall: pack agents[] entries surface as AgentM
     if (res.status === 404 || res.status === 501) {
       // Host doesn't expose pack registry over REST; scenario assertion is
       // skipped (capability surface is host-internal).
-      return;
+      return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 501` returned early (Host doesn\'t expose pack registry over REST; scenario assertion is skipped (capability surface is host-internal).) (seam, prior step, o…');
     }
-    expect(res.status).toBe(200);
+    expect(res.status, req('openwop.it.agentPackInstall.host-exposes-installed-agent-manifests-with-required-agentmanifest-fields', 'RFCS/0003-agent-packs.md', 'host exposes installed agent manifests with required AgentManifest fields')).toBe(200);
 
     const body = res.json as {
       packs?: Array<{ agents?: Array<{ agentId?: string; modelClass?: string }> }>;

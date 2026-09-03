@@ -1,0 +1,51 @@
+{
+  "$comment": "RFC 0175 §B.1/§C/§D",
+  "properties": {
+    "versions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]+\\.[0-9]+$"
+      }
+    },
+    "preferredVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "minimumVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "refreshedAt": {
+      "type": "string",
+      "format": "date"
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^a2a-[0-9]+\\.[0-9]+$"
+      }
+    },
+    "agentCardUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "streaming": {
+      "type": "boolean"
+    },
+    "pushNotifications": {
+      "type": "boolean"
+    },
+    "durableTasks": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "versions",
+    "preferredVersion",
+    "minimumVersion",
+    "refreshedAt"
+  ]
+}

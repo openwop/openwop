@@ -39,6 +39,7 @@ import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE_ID = 'conformance-version-fold';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(FIXTURE_ID);
@@ -94,7 +95,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
     );
     expect(
       versions.length,
-      driver.describe(
+      req('openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable', 
         'version-negotiation.md §Conformance via X-Force-Engine-Version',
         'forceEngineVersionRange MUST describe a non-empty integer range (min <= max)',
       ),
@@ -109,7 +110,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       }
       expect(
         create.status,
-        driver.describe(
+        req('openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable', 
           'version-negotiation.md §Conformance via X-Force-Engine-Version',
           `POST /v1/runs with X-Force-Engine-Version: ${v} (within the advertised range) MUST be accepted on a test key`,
         ),
@@ -120,7 +121,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       const terminal = await pollUntilTerminal(runId);
       expect(
         terminal.status,
-        driver.describe(
+        req('openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable', 
           'version-negotiation.md §Cross-version interop matrix',
           `the conformance-version-fold noop run MUST complete under forced engine version ${v} (fold-best-effort)`,
         ),
@@ -130,7 +131,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
       expect(
         snap.status,
-        driver.describe(
+        req('openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable', 
           'version-negotiation.md §Cross-version interop matrix',
           `GET /v1/runs/{runId} MUST return a readable RunSnapshot under forced engine version ${v}`,
         ),
@@ -145,7 +146,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       );
       expect(
         events.status,
-        driver.describe(
+        req('openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable', 
           'version-negotiation.md §Conformance via X-Force-Engine-Version',
           `the event log MUST be readable via events/poll under forced engine version ${v}`,
         ),
@@ -153,7 +154,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       const eventList = (events.json as { events?: unknown[] } | undefined)?.events ?? [];
       expect(
         eventList.length,
-        driver.describe(
+        req('openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable', 
           'version-negotiation.md §Conformance via X-Force-Engine-Version',
           `events/poll MUST return a non-empty events[] for the forced-version run (v=${v})`,
         ),
@@ -178,14 +179,14 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
     }
     expect(
       create.status,
-      driver.describe(
+      req('openwop.it.version-fold.a-forced-version-outside-the-advertised-range-is-rejected-with-400-unsupported-f', 
         'version-negotiation.md §Conformance via X-Force-Engine-Version',
         `X-Force-Engine-Version: ${outOfRange} (outside the advertised range) MUST return 400`,
       ),
     ).toBe(400);
     expect(
       errCode(create.json),
-      driver.describe(
+      req('openwop.it.version-fold.a-forced-version-outside-the-advertised-range-is-rejected-with-400-unsupported-f', 
         'version-negotiation.md §Conformance via X-Force-Engine-Version',
         'the out-of-range refusal MUST carry the canonical unsupported_force_engine_version code',
       ),

@@ -21,6 +21,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 async function isHttpClientSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
@@ -34,7 +36,7 @@ describe('http-client-ssrf: capability advertisement contract', () => {
     if (!(await isHttpClientSupported())) {
       // eslint-disable-next-line no-console
       console.warn('[http-client-ssrf] host does not advertise httpClient; skipping');
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isHttpClientSupported())` returned early ([http-client-ssrf] host does not advertise httpClient; skipping)');
     }
     const disco = await driver.get('/.well-known/openwop');
     const cap = capabilityFamily<{
@@ -44,23 +46,23 @@ describe('http-client-ssrf: capability advertisement contract', () => {
       methods?: unknown;
     }>(disco.json, 'httpClient');
 
-    expect(cap?.supported, driver.describe(
+    expect(cap?.supported, req('openwop.it.http-client-ssrf.host-advertising-httpclient-must-declare-ssrfguard-true-maxresponsebodybytes', 
       'capabilities.md §httpClient',
       'httpClient.supported MUST be a boolean',
     )).toBe(true);
 
-    expect(cap?.ssrfGuard, driver.describe(
+    expect(cap?.ssrfGuard, req('openwop.it.http-client-ssrf.host-advertising-httpclient-must-declare-ssrfguard-true-maxresponsebodybytes', 
       'SECURITY/threat-model-secret-leakage.md (SSRF probing analog)',
       'httpClient.ssrfGuard MUST be true — a host that lets any tenant POST a workflow with arbitrary URLs without SSRF protection enables blind probing of deployer-internal services',
     )).toBe(true);
 
-    expect(typeof cap?.maxResponseBodyBytes, driver.describe(
+    expect(typeof cap?.maxResponseBodyBytes, req('openwop.it.http-client-ssrf.host-advertising-httpclient-must-declare-ssrfguard-true-maxresponsebodybytes', 
       'capabilities.md §httpClient',
       'httpClient.maxResponseBodyBytes MUST be a number — a host that streams unbounded response bodies into variables is a DoS vector',
     )).toBe('number');
     expect((cap?.maxResponseBodyBytes ?? 0) > 0).toBe(true);
 
-    expect(Array.isArray(cap?.methods), driver.describe(
+    expect(Array.isArray(cap?.methods), req('openwop.it.http-client-ssrf.host-advertising-httpclient-must-declare-ssrfguard-true-maxresponsebodybytes', 
       'capabilities.md §httpClient',
       'httpClient.methods MUST be an array of supported HTTP methods',
     )).toBe(true);

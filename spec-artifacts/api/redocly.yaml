@@ -1,0 +1,23 @@
+extends:
+  - recommended
+
+rules:
+  # Discovery endpoints (`/.well-known/openwop`, `/v1/openapi.json`) are unauthenticated
+  # and take no input — they have no meaningful 4XX response surface. 5XX is the
+  # only honest failure mode and is documented inline.
+  operation-4xx-response: off
+
+  # The rule flags `then: { required: [<name>] }` clauses where <name> is not
+  # defined in the `then` clause's OWN `properties` block — but in the standard
+  # JSON Schema 2020-12 `if/then` conditional-requirement idiom (used by
+  # `capabilities.schema.json` to tighten required-fields when `supported: true`),
+  # the property IS defined in the parent's `properties` block. Redocly's rule
+  # doesn't walk to parent scope, so it false-positives on every valid use of
+  # the idiom. Disabling globally is safe because:
+  #
+  #   - the typo-in-required protection the rule provides is also covered by
+  #     `scripts/check-required-properties-defined.mjs` (which walks parent
+  #     scope correctly), wired into `openwop-check.sh` step [4/9] (was cited as [7/9] until RFC 0178 §E.3 corrected it);
+  #   - our only `then/required` sites are the two in `capabilities.schema.json`,
+  #     both of which are well-formed.
+  no-required-schema-properties-undefined: off

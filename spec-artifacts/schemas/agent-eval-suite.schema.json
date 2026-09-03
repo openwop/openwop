@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-eval-suite.schema.json",
+  "title": "AgentEvalSuite",
+  "description": "RFC 0081 §A. A portable, host-agnostic evaluation suite for a manifest agent (RFC 0003/0070): the tasks, the expected outputs or rubrics, the deterministic tool/memory fixtures, the allowed model classes, and the pass/fail thresholds that answer \"is this agent good enough to deploy?\". Distributed inside a pack tarball and referenced by URI exactly like `systemPromptRef` / `handoff.*SchemaRef` (RFC 0003 §C/§D) — NOT embedded in `AgentManifest`. A host advertising `capabilities.agents.evalSuite.supported: true` executes a suite as an eval run (a `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 §B) and terminates with an `eval-summary.schema.json` scorecard. The suite carries NO secret material and NO host-internal identifiers (it is authored offline and shipped in a signed pack).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["suiteId", "version", "modes", "tasks"],
+  "properties": {
+    "suiteId": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+\\.evals\\.[a-z0-9-]+$",
+      "description": "Globally unique suite identifier in the `<scope>.<org>.evals.<name>` convention (e.g. `core.openwop.evals.support-resolver`), mirroring the pack `<scope>.<author>.<pack>` namespace (RFC 0003). The `.evals.` infix distinguishes a suite from an agent/pack id."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "SemVer of the suite. A suite version is pinned on an eval run (carried on `eval.started.suiteVersion` and `eval-summary.suiteVersion`) so a regression comparison (§D `regression` mode) is between like versions."
+    },
+    "targetAgentId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MAY. The `AgentManifest.id` this suite is authored for. Absent ⇒ the suite is agent-agnostic and MAY be pointed at any `agentId` at run time (the run request carries the `agentId`). When present, a host SHOULD reject an eval run whose target `agentId` differs, unless the caller explicitly overrides."
+    },
+    "modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["golden", "rubric", "adversarial", "regression", "live-shadow"] },
+      "description": "The eval modes this suite exercises (RFC 0081 §D closed vocabulary). `golden`: exact / contains / json-match against each task's `expected`. `rubric`: a host-chosen judge scores against weighted criteria (nondeterministic — a recorded-fact score). `adversarial`: tasks probe for unsafe / jailbreak behavior; `safetyFindings` is the primary output. `regression`: re-run against a new agent/model/prompt version and diff scores vs a `baselineRunId` (composes RFC 0054 `:diff`). `live-shadow`: run against LIVE tools/memory instead of `fixtures` — the only mode that bypasses fixture injection; explicitly nondeterministic. A run MUST request only modes the suite declares here AND the host advertises (`capabilities.agents.evalSuite.modes`); an unadvertised mode is rejected at run-create with `400 validation_error`."
+    },
+    "allowedModels": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["reasoning", "writing", "coding", "research", "classification", "general"] },
+      "description": "MAY. The `AgentManifest.modelClass` values (RFC 0002) the suite is valid for. Absent ⇒ valid for any class. A host SHOULD record the `evaluatedModelClass` on the summary so a score is interpreted against the model it was produced with."
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MAY. The pass/fail bar for the suite. A task or the aggregate `passed` flag is computed against these. Absent ⇒ the host's default bar (the summary still carries raw scores).",
+      "properties": {
+        "passScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The minimum aggregate score (0.0–1.0) for `EvalSummary.passed: true`."
+        },
+        "maxCostUsd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "MAY. The maximum total cost (summed from RFC 0026 `provider.usage`) for a passing run. A run that exceeds it MUST NOT report `passed: true` even if `passScore` is met."
+        },
+        "maxP95LatencyMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "MAY. The maximum p95 per-task latency for a passing run."
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The eval tasks. Each is executed as one child agent invocation (the RFC 0077 `agent.invocation.*` bracket + the existing `agent.*` / `provider.usage` events), scored, and reported via a per-task `eval.scored` event + an `EvalSummary` entry.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "input", "expected"],
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "Suite-unique task identifier (kebab-case). Carried verbatim on `eval.scored.taskId` and the per-task summary entry."
+          },
+          "input": {
+            "description": "The run input for the task, validated against the agent's input schema by the host. An opaque object/value — content is task-defined."
+          },
+          "expected": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind"],
+            "description": "How the task is scored. `golden`: deterministic match against `match`. `rubric`: a judge scores against weighted `rubric` criteria.",
+            "properties": {
+              "kind": { "type": "string", "enum": ["golden", "rubric"], "description": "Scoring mode for this task. A suite declaring a non-`golden`/`rubric` `modes` entry (e.g. `adversarial`) still scores each task via one of these two `kind`s." },
+              "match": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Present when `kind: \"golden\"`. The deterministic expectation.",
+                "properties": {
+                  "strategy": { "type": "string", "enum": ["exact", "contains", "json-match"], "description": "`exact`: stringified output equals `value`. `contains`: output contains `value`. `json-match`: output JSON-deep-equals `value` (key order / whitespace insensitive)." },
+                  "value": { "description": "The expected value for the strategy. Opaque." }
+                },
+                "required": ["strategy", "value"]
+              },
+              "rubric": {
+                "type": "array",
+                "minItems": 1,
+                "description": "Present when `kind: \"rubric\"`. Weighted criteria a judge scores the output against; the task score is the weighted sum of met criteria, normalized to 0.0–1.0. Judge selection + scoring is host-internal (nondeterministic — the score is a recorded fact).",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["criterion", "weight"],
+                  "properties": {
+                    "criterion": { "type": "string", "minLength": 1, "description": "A human-readable scoring criterion (e.g. \"cites the 30-day refund window\")." },
+                    "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "Relative weight of this criterion (criteria weights SHOULD sum to 1.0 across the task)." }
+                  }
+                }
+              }
+            }
+          },
+          "fixtures": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "MAY. Deterministic substitutes for live tool/memory I/O so a `golden`/`regression` eval is reproducible. When present, the eval host MUST inject `toolResponses` in place of live tool calls and seed `memorySeed` before the invocation. The `live-shadow` mode is the explicit exception — it ignores `fixtures` and runs against live tools/memory.",
+            "properties": {
+              "toolResponses": {
+                "type": "array",
+                "description": "Canned tool results keyed by tool invocation, injected in place of live tool calls.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["tool"],
+                  "properties": {
+                    "tool": { "type": "string", "minLength": 1, "description": "The `<scope>:<tool-id>` (RFC 0077 `toolAllowlist` / RFC 0078) the response stands in for." },
+                    "response": { "description": "The canned result the host returns for that tool. Opaque." }
+                  }
+                }
+              },
+              "memorySeed": {
+                "type": "array",
+                "description": "Memory entries seeded into the agent's read snapshot before the invocation (RFC 0004 `MemoryAdapter` shape). Tenant-scoped + SR-1-redacted on the host side exactly like any memory write.",
+                "items": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

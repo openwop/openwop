@@ -43,6 +43,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CANONICAL_ACTIONS = ['accept', 'reject', 'refine', 'edit-accept', 'ask'] as const;
 const CANONICAL_EVENT_ACTIONS = ['accept', 'reject', 'refine', 'edit-accept', 'timeout'] as const;
@@ -73,7 +74,7 @@ describe('approval-payload: vocabulary discovery contract', () => {
     // is distinguishable from the canonical form.
     const legacyHits = text.match(/"edit"/g) ?? [];
 
-    expect(legacyHits.length, driver.describe(
+    expect(legacyHits.length, req('openwop.it.approval-payload.host-capability-declaration-does-not-regress-on-the-legacy-edit-form-7-drift-pin', 
       'interrupt.md §"`ApprovalResume`"',
       'capability declaration MUST NOT contain the legacy `"edit"` action token (use `"edit-accept"` per spec)',
     )).toBe(0);
@@ -84,7 +85,7 @@ describe('approval-payload: vocabulary discovery contract', () => {
     // accept/reject/refine/edit-accept/ask. Per-host advertisement is
     // optional; this test pins the vocabulary itself for future
     // scenarios that gate on it.
-    expect(CANONICAL_ACTIONS).toHaveLength(5);
+    expect(CANONICAL_ACTIONS, req('openwop.it.approval-payload.canonical-action-vocabulary-is-documented-in-spec-assertion-free-reference', 'capabilities.md', 'canonical action vocabulary is documented in spec (assertion-free reference)')).toHaveLength(5);
     expect(new Set(CANONICAL_ACTIONS)).toEqual(
       new Set(['accept', 'reject', 'refine', 'edit-accept', 'ask']),
     );
@@ -98,7 +99,7 @@ describe('approval-payload: vocabulary discovery contract', () => {
     // but isn't a resume action (clients can't submit a timeout).
     //
     // Pin this asymmetry so it doesn't drift.
-    expect(CANONICAL_EVENT_ACTIONS).toHaveLength(5);
+    expect(CANONICAL_EVENT_ACTIONS, req('openwop.it.approval-payload.canonical-event-action-vocabulary-differs-from-resume-timeout-instead-of-ask', 'capabilities.md', 'canonical event action vocabulary differs from resume (timeout instead of ask)')).toHaveLength(5);
     expect(new Set(CANONICAL_EVENT_ACTIONS)).toEqual(
       new Set(['accept', 'reject', 'refine', 'edit-accept', 'timeout']),
     );
@@ -112,7 +113,7 @@ describe('approval-payload: vocabulary discovery contract', () => {
     // The 3 documented scopes `whole/section/items` MUST be a stable
     // set in v1.x. Adding a scope is additive (clients tolerating
     // unknown values) but semantic changes need a spec discussion.
-    expect(CANONICAL_REFINE_SCOPES).toHaveLength(3);
+    expect(CANONICAL_REFINE_SCOPES, req('openwop.it.approval-payload.refinefeedback-scope-vocabulary-pin-7-audit-a-5-prereq', 'capabilities.md', 'refineFeedback scope vocabulary pin (§7 audit, A.5 prereq)')).toHaveLength(3);
     expect(new Set(CANONICAL_REFINE_SCOPES)).toEqual(
       new Set(['whole', 'section', 'items']),
     );

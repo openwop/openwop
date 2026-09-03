@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/effect-ledger-projection.schema.json",
+  "title": "Effect ledger projection (RFC 0173 §C.2)",
+  "description": "GET /runs/{runId}/effects — the Layer-2 effect records keyed on business identity (the activity recipe is the documented fallback). Content-free of provider payloads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "effects"
+  ],
+  "properties": {
+    "runId": {
+      "$ref": "ids.schema.json#/$defs/runId"
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "effectId",
+          "nodeId",
+          "attempt",
+          "keying",
+          "state",
+          "at"
+        ],
+        "properties": {
+          "effectId": {
+            "$ref": "ids.schema.json#/$defs/effectId"
+          },
+          "nodeId": {
+            "$ref": "ids.schema.json#/$defs/nodeId"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "invocationId": {
+            "type": "string"
+          },
+          "keying": {
+            "type": "string",
+            "enum": [
+              "business-identity",
+              "activity-recipe"
+            ]
+          },
+          "providerKey": {
+            "type": "string",
+            "description": "Redaction-safe provider-side identity (RFC 0150); never credential material."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "claimed",
+              "completed",
+              "released",
+              "escaped"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

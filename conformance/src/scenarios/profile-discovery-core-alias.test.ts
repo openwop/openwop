@@ -30,6 +30,8 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { PROFILE_NAMES, deriveProfiles, hasProfile, type DiscoveryPayload } from '../lib/profiles.js';
 import { V1_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const CANONICAL = 'openwop-discovery-core';
 const ALIAS = 'openwop-core';
@@ -59,7 +61,7 @@ describe('RFC 0155 §A — openwop-discovery-core is canonical, openwop-core is 
     expect(PROFILE_NAMES).toContain(ALIAS);
     expect(
       PROFILE_NAMES.indexOf(CANONICAL),
-      'the canonical name precedes its alias so derived sets read canonical-first',
+      req('openwop.it.profile-discovery-core-alias.both-names-are-in-the-closed-catalog-canonical-first', 'RFC 0155 §A', 'the canonical name precedes its alias so derived sets read canonical-first'),
     ).toBeLessThan(PROFILE_NAMES.indexOf(ALIAS));
   });
 
@@ -69,26 +71,26 @@ describe('RFC 0155 §A — openwop-discovery-core is canonical, openwop-core is 
     for (const [label, c] of PAYLOADS) {
       const canonical = hasProfile(c, CANONICAL);
       const alias = hasProfile(c, ALIAS);
-      expect(alias, `${label}: hasProfile(alias) MUST equal hasProfile(canonical)`).toBe(canonical);
+      expect(alias, req('openwop.it.profile-discovery-core-alias.the-alias-derives-exactly-when-the-canonical-name-derives-for-payloads-on-both-s', 'RFC 0155 §A', `${label}: hasProfile(alias) MUST equal hasProfile(canonical)`)).toBe(canonical);
       const derived = deriveProfiles(c);
       expect(
         derived.includes(ALIAS),
-        `${label}: deriveProfiles MUST emit the alias iff it emits the canonical name (never the alias alone)`,
+        req('openwop.it.profile-discovery-core-alias.the-alias-derives-exactly-when-the-canonical-name-derives-for-payloads-on-both-s', 'RFC 0155 §A', `${label}: deriveProfiles MUST emit the alias iff it emits the canonical name (never the alias alone)`),
       ).toBe(derived.includes(CANONICAL));
       if (canonical) trueCount++;
       else falseCount++;
     }
     // Non-vacuity: an equivalence over payloads that all derive (or none do)
     // proves nothing about the other side.
-    expect(trueCount, 'at least one payload MUST derive the predicate').toBeGreaterThan(0);
-    expect(falseCount, 'at least one payload MUST fail the predicate').toBeGreaterThan(0);
+    expect(trueCount, req('openwop.it.profile-discovery-core-alias.the-alias-derives-exactly-when-the-canonical-name-derives-for-payloads-on-both-s', 'RFC 0155 §A', 'at least one payload MUST derive the predicate')).toBeGreaterThan(0);
+    expect(falseCount, req('openwop.it.profile-discovery-core-alias.the-alias-derives-exactly-when-the-canonical-name-derives-for-payloads-on-both-s', 'RFC 0155 §A', 'at least one payload MUST fail the predicate')).toBeGreaterThan(0);
   });
 
   it('a derived set that carries the alias carries the canonical name immediately before it', () => {
     const derived = deriveProfiles(CORE);
     const i = derived.indexOf(CANONICAL);
     expect(i).toBeGreaterThanOrEqual(0);
-    expect(derived[i + 1], 'alias rides directly beside its canonical name').toBe(ALIAS);
+    expect(derived[i + 1], req('openwop.it.profile-discovery-core-alias.a-derived-set-that-carries-the-alias-carries-the-canonical-name-immediately-befo', 'RFC 0155 §A', 'alias rides directly beside its canonical name')).toBe(ALIAS);
   });
 });
 
@@ -99,7 +101,7 @@ describe.skipIf(V1_DIR === null)('RFC 0155 §A — profiles.md states the rename
     const md = doc();
     expect(md).toMatch(/###\s+`openwop-discovery-core`\s+\(canonical\)/);
     expect(md).toMatch(/alias `openwop-core` \(deprecated\)/);
-    expect(md, 'the alias MUST be defined as deriving exactly when the canonical name derives').toMatch(
+    expect(md, req('openwop.it.profile-discovery-core-alias.names-the-canonical-profile-and-marks-openwop-core-as-a-deprecated-alias', 'RFC 0155 §A', 'the alias MUST be defined as deriving exactly when the canonical name derives')).toMatch(
       /derives \*\*exactly when\*\* `openwop-discovery-core` derives/,
     );
   });
@@ -107,7 +109,7 @@ describe.skipIf(V1_DIR === null)('RFC 0155 §A — profiles.md states the rename
   it('states that an unqualified conformance claim means openwop-core-standard', () => {
     const md = doc();
     expect(md).toMatch(/unqualified\*\* "OpenWOP conformant".*\*\*MUST\*\* mean \*\*`openwop-core-standard`\*\*/s);
-    expect(md, 'discovery-only claims MUST say openwop-discovery-core').toMatch(
+    expect(md, req('openwop.it.profile-discovery-core-alias.states-that-an-unqualified-conformance-claim-means-openwop-core-standard', 'RFC 0155 §A', 'discovery-only claims MUST say openwop-discovery-core')).toMatch(
       /discovery-only\*\* claim \*\*MUST\*\* say \*\*`openwop-discovery-core`\*\*/,
     );
   });
@@ -116,7 +118,7 @@ describe.skipIf(V1_DIR === null)('RFC 0155 §A — profiles.md states the rename
     const md = doc();
     const canonicalLine = md.indexOf("'openwop-discovery-core'             if openwop-discovery-core(c)");
     const aliasLine = md.indexOf("'openwop-core'                       if openwop-discovery-core(c)");
-    expect(canonicalLine).toBeGreaterThan(0);
+    expect(canonicalLine, req('openwop.it.profile-discovery-core-alias.the-reference-derivation-lists-the-alias-beside-the-canonical-name-never-alone', 'RFC 0155 §A', 'the reference derivation lists the alias beside the canonical name, never alone')).toBeGreaterThan(0);
     expect(aliasLine).toBeGreaterThan(canonicalLine);
   });
 });
@@ -124,11 +126,11 @@ describe.skipIf(V1_DIR === null)('RFC 0155 §A — profiles.md states the rename
 describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0155 §A — a live host derives both names or neither', () => {
   it('the discovery payload derives the alias iff it derives the canonical name', async () => {
     const res = await driver.get('/.well-known/openwop');
-    if (res.status !== 200) return; // discovery is witnessed elsewhere; this leg is about the alias rule
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (discovery is witnessed elsewhere; this leg is about the alias rule) (seam, prior step, or fixture unavailable)'); // discovery is witnessed elsewhere; this leg is about the alias rule
     const derived = deriveProfiles(res.json as DiscoveryPayload);
     expect(
       derived.includes(ALIAS),
-      driver.describe(
+      req('openwop.it.profile-discovery-core-alias.the-discovery-payload-derives-the-alias-iff-it-derives-the-canonical-name', 
         'profiles.md §"openwop-discovery-core"',
         'the deprecated alias MUST derive exactly when the canonical name derives — a host is never `openwop-core` without being `openwop-discovery-core`',
       ),

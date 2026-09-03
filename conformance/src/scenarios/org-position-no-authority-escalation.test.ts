@@ -32,9 +32,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { seamAbsent } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readOrgChartCap, getOrgChart, getDepartmentView, AUTHORITY_FIELDS } from '../lib/agentOrgChart.js';
+import { req } from '../lib/requirement-ids.js';
 
 /** Assert an org-chart wire object carries no authority-bearing field. */
 function expectNoAuthority(obj: Record<string, unknown> | undefined, where: string): void {
@@ -42,7 +42,7 @@ function expectNoAuthority(obj: Record<string, unknown> | undefined, where: stri
   for (const f of AUTHORITY_FIELDS) {
     expect(
       !(f in obj),
-      driver.describe('RFC 0087 §B / org-position-no-authority-escalation', `${where} MUST NOT carry the authority field "${f}" — org position confers no authority`),
+      req('openwop.it.org-position-no-authority-escalation.the-live-org-chart-wire-carries-no-authority-bearing-field-on-any-member-departm', 'RFC 0087 §B / org-position-no-authority-escalation', `${where} MUST NOT carry the authority field "${f}" — org position confers no authority`),
     ).toBe(true);
   }
 }

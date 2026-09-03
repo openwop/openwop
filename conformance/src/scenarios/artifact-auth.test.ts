@@ -20,8 +20,9 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('artifact-auth: unauthenticated artifact requests are rejected', () => {
   it('GET /v1/runs/{runId}/artifacts/{artifactId} without Authorization returns 401', async () => {
@@ -31,12 +32,12 @@ describe('artifact-auth: unauthenticated artifact requests are rejected', () => 
     const res = await fetch(
       `${env.baseUrl}/v1/runs/openwop-conformance-noauth-run/artifacts/openwop-conformance-noauth-artifact`,
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.artifact-auth.get-v1-runs-runid-artifacts-artifactid-without-authorization-returns-401', 
       'rest-endpoints.md GET /v1/runs/{runId}/artifacts/{artifactId}',
       'artifact endpoint MUST reject unauthenticated requests with 401 (never 200, never redirect)',
     )).toBe(401);
-    expect(res.status, 'redirect MUST NOT be used to handle missing auth on artifact endpoint').not.toBe(301);
-    expect(res.status, 'redirect MUST NOT be used to handle missing auth on artifact endpoint').not.toBe(302);
+    expect(res.status, req('openwop.it.artifact-auth.get-v1-runs-runid-artifacts-artifactid-without-authorization-returns-401', 'rest-endpoints.md GET /v1/runs/{runId}/artifacts/{artifactId}', 'redirect MUST NOT be used to handle missing auth on artifact endpoint')).not.toBe(301);
+    expect(res.status, req('openwop.it.artifact-auth.get-v1-runs-runid-artifacts-artifactid-without-authorization-returns-401', 'rest-endpoints.md GET /v1/runs/{runId}/artifacts/{artifactId}', 'redirect MUST NOT be used to handle missing auth on artifact endpoint')).not.toBe(302);
     expect(res.status).not.toBe(200);
 
     // Canonical error envelope: error: 'unauthenticated', message: string.
@@ -46,10 +47,10 @@ describe('artifact-auth: unauthenticated artifact requests are rejected', () => 
     } catch {
       // Some hosts return a bare 401 with no body — acceptable. Skip the
       // envelope-shape assertion in that case.
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (Some hosts return a bare 401 with no body — acceptable. Skip the envelope-shape assertion in that case.) (seam, prior step, or fixture unavailable)');
     }
     if (typeof body.error === 'string') {
-      expect(body.error, driver.describe(
+      expect(body.error, req('openwop.it.artifact-auth.get-v1-runs-runid-artifacts-artifactid-without-authorization-returns-401', 
         'auth.md §"Error envelope"',
         '401 envelope SHOULD carry `error: "unauthenticated"` for missing-auth on artifact endpoint',
       )).toBe('unauthenticated');

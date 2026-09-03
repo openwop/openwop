@@ -28,8 +28,7 @@ import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
-
-const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 const CAPS = join(SCHEMAS_DIR, 'capabilities.schema.json');
 const MANIFEST = join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json');
 
@@ -40,20 +39,20 @@ function loadSchema(path: string): Record<string, unknown> {
 describe('chain-subchain-fanout §A: capability + manifest shape (RFC 0133, always-on)', () => {
   it('capabilities.schema.json §workflowChainPacks.subChains requires supported:boolean + maxDepth default 8', () => {
     const raw = readFileSync(CAPS, 'utf8');
-    expect(raw.includes('"subChains"'), cite('capabilities §workflowChainPacks', 'the subChains block MUST exist')).toBe(
+    expect(raw.includes('"subChains"'), req('openwop.it.chain-subchain-fanout.capabilities-schema-json-workflowchainpacks-subchains-requires-supported-boolean', 'capabilities §workflowChainPacks', 'the subChains block MUST exist')).toBe(
       true,
     );
     const schema = loadSchema(CAPS);
     // The subChains sub-block MUST be present somewhere in the workflowChainPacks family.
     expect(
       JSON.stringify(schema).includes('"subChains"'),
-      cite('capabilities §subChains', 'declared in the capabilities schema'),
+      req('openwop.it.chain-subchain-fanout.capabilities-schema-json-workflowchainpacks-subchains-requires-supported-boolean', 'capabilities §subChains', 'declared in the capabilities schema'),
     ).toBe(true);
     expect(
       raw.includes('sub_chain_unsupported'),
-      cite('capabilities §subChains', 'the description MUST cite the sub_chain_unsupported refusal'),
+      req('openwop.it.chain-subchain-fanout.capabilities-schema-json-workflowchainpacks-subchains-requires-supported-boolean', 'capabilities §subChains', 'the description MUST cite the sub_chain_unsupported refusal'),
     ).toBe(true);
-    expect(raw.includes('"default": 8'), cite('capabilities §subChains.maxDepth', 'RECOMMENDED default 8')).toBe(true);
+    expect(raw.includes('"default": 8'), req('openwop.it.chain-subchain-fanout.capabilities-schema-json-workflowchainpacks-subchains-requires-supported-boolean', 'capabilities §subChains.maxDepth', 'RECOMMENDED default 8')).toBe(true);
   });
 
   it('manifest schema accepts a core.dispatch fan-out over a subChainRef worker', () => {
@@ -93,7 +92,7 @@ describe('chain-subchain-fanout §A: capability + manifest shape (RFC 0133, alwa
         },
       ],
     };
-    expect(validate(pack), cite('manifest §subChains', `a subChainRef fan-out validates: ${ajv.errorsText(validate.errors)}`)).toBe(
+    expect(validate(pack), req('openwop.it.chain-subchain-fanout.manifest-schema-accepts-a-core-dispatch-fan-out-over-a-subchainref-worker', 'manifest §subChains', `a subChainRef fan-out validates: ${ajv.errorsText(validate.errors)}`)).toBe(
       true,
     );
   });
@@ -120,7 +119,7 @@ describe('chain-subchain-fanout §A: capability + manifest shape (RFC 0133, alwa
     };
     expect(
       validate(pack),
-      cite('manifest §config not-guard', 'a chain MUST NOT pin a concrete config.workflowId'),
+      req('openwop.it.chain-subchain-fanout.manifest-schema-rejects-a-concrete-config-workflowid-inside-a-fragment-the-1-2-n', 'manifest §config not-guard', 'a chain MUST NOT pin a concrete config.workflowId'),
     ).toBe(false);
   });
 });
@@ -134,6 +133,6 @@ describe('chain-subchain-fanout §B: host child fan-out (RFC 0133, capability-ga
     // invariant `sub-chain-child-tenant-scoped` (child owned by parent's tenant).
     // The from-chain response MUST carry the §1.3 contract: { workflowId,
     // subChainWorkflowIds[] (tenant-scoped, deduped), nodeCount }.
-    expect(wcp?.subChains?.supported, 'host advertising subChains.supported implements child fan-out').toBe(true);
+    expect(wcp?.subChains?.supported, req('openwop.it.chain-subchain-fanout.fans-out-n-child-runs-over-a-subchainref-worker-returns-the-from-chain-contract', 'RFC 0133 §1.2', 'host advertising subChains.supported implements child fan-out')).toBe(true);
   });
 });

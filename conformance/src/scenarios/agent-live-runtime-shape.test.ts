@@ -28,9 +28,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper (mirrors driver.describe's "spec — requirement" shape without requiring OPENWOP_BASE_URL). */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -43,12 +41,12 @@ describe('agent-live-runtime-shape: capability advertisement (RFC 0077, server-f
     const live = agents?.properties?.liveRuntime;
     expect(
       live,
-      why('capabilities.md §agents', 'agents.liveRuntime MUST be declared'),
+      req('openwop.it.agent-live-runtime-shape.the-capabilities-schema-declares-agents-liveruntime-with-its-sub-flags', 'capabilities.md §agents', 'agents.liveRuntime MUST be declared'),
     ).toBeDefined();
     for (const flag of ['supported', 'structuredOutput', 'confidenceEscalation', 'sources']) {
       expect(
         live?.properties?.[flag],
-        why('multi-agent-execution.md §Live manifest dispatch', `agents.liveRuntime.${flag} MUST be declared`),
+        req('openwop.it.agent-live-runtime-shape.the-capabilities-schema-declares-agents-liveruntime-with-its-sub-flags', 'multi-agent-execution.md §Live manifest dispatch', `agents.liveRuntime.${flag} MUST be declared`),
       ).toBeDefined();
     }
   });
@@ -64,35 +62,35 @@ describe('agent-live-runtime-shape: invocation event payloads (RFC 0077, server-
   const completed = ajv.getSchema('payloads#/$defs/agentInvocationCompleted');
 
   it('agent.invocation.started validates a content-free start record and requires source', () => {
-    expect(started, 'the agentInvocationStarted $def MUST exist').toBeTruthy();
+    expect(started, req('openwop.it.agent-live-runtime-shape.agent-invocation-started-validates-a-content-free-start-record-and-requires-sour', 'RFC 0077', 'the agentInvocationStarted $def MUST exist')).toBeTruthy();
     expect(
       started!({ invocationId: 'inv-1', agentId: 'vendor.acme.review.code-reviewer', source: 'run-api', modelClass: 'coding', toolSurfaceCount: 3, memoryBound: false }),
-      why('RFC 0077 §C', 'a conforming agent.invocation.started payload MUST validate'),
+      req('openwop.it.agent-live-runtime-shape.agent-invocation-started-validates-a-content-free-start-record-and-requires-sour', 'RFC 0077 §C', 'a conforming agent.invocation.started payload MUST validate'),
     ).toBe(true);
     // Negative: missing source — every invocation must record its entry point.
     expect(
       started!({ invocationId: 'inv-1', agentId: 'vendor.acme.review.code-reviewer' }),
-      why('RFC 0077 §C', 'agent.invocation.started without source MUST be rejected'),
+      req('openwop.it.agent-live-runtime-shape.agent-invocation-started-validates-a-content-free-start-record-and-requires-sour', 'RFC 0077 §C', 'agent.invocation.started without source MUST be rejected'),
     ).toBe(false);
   });
 
   it('agent.invocation.completed validates a content-free outcome record and pins the outcome enum', () => {
-    expect(completed, 'the agentInvocationCompleted $def MUST exist').toBeTruthy();
+    expect(completed, req('openwop.it.agent-live-runtime-shape.agent-invocation-completed-validates-a-content-free-outcome-record-and-pins-the', 'RFC 0077', 'the agentInvocationCompleted $def MUST exist')).toBeTruthy();
     expect(
       completed!({ invocationId: 'inv-1', agentId: 'vendor.acme.review.code-reviewer', outcome: 'completed', schemaValidated: true, confidence: 0.91 }),
-      why('RFC 0077 §C', 'a conforming agent.invocation.completed payload MUST validate'),
+      req('openwop.it.agent-live-runtime-shape.agent-invocation-completed-validates-a-content-free-outcome-record-and-pins-the', 'RFC 0077 §C', 'a conforming agent.invocation.completed payload MUST validate'),
     ).toBe(true);
     // Negative: out-of-enum outcome — the canonical value is `completed`, not `done`.
     expect(
       completed!({ invocationId: 'inv-1', agentId: 'a', outcome: 'done' }),
-      why('RFC 0077 §C', 'agent.invocation.completed with an out-of-enum outcome MUST be rejected'),
+      req('openwop.it.agent-live-runtime-shape.agent-invocation-completed-validates-a-content-free-outcome-record-and-pins-the', 'RFC 0077 §C', 'agent.invocation.completed with an out-of-enum outcome MUST be rejected'),
     ).toBe(false);
   });
 
   it('both invocation event names appear in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = (runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum ?? [];
-    expect(enumVals).toContain('agent.invocation.started');
+    expect(enumVals, req('openwop.it.agent-live-runtime-shape.both-invocation-event-names-appear-in-the-runeventtype-enum', 'RFC 0077', 'both invocation event names appear in the RunEventType enum')).toContain('agent.invocation.started');
     expect(enumVals).toContain('agent.invocation.completed');
   });
 });

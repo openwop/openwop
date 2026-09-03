@@ -8,7 +8,7 @@
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-05 |
 | **Updated** | 2026-08-05 — **`Active → Accepted`.** Graduated on the openwop-app reference-host witness (PR openwop-app#2976, rev `7a5c90af1`): `form-content-instantiation.test.ts` **4/4 PASS non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` against a booted host advertising `host.forms: { contentPacks: true }`, with the `POST /v1/host/sample/formcontent/instantiate` seam routing through the host's REAL loader and REAL `createForm` (a seam that reimplemented instantiation would witness itself). See [Amendment record](#amendment-record). |
-| **Affects** | `spec/v1/form-content-packs.md` (NEW); `spec/v1/registry-operations.md` §"Validation flow" #3/#7 + §"Type-ID indexing"; `spec/v1/host-capabilities.md` §host.forms (NEW); `schemas/form-content-pack-manifest.schema.json` (NEW); `schemas/registry-version-manifest.schema.json`; `SECURITY/invariants.yaml`; `SECURITY/threat-model-prompt-injection.md`; `conformance/src/scenarios/form-content-packs.test.ts` (NEW); reference registry (`openwop-registry`) indexer |
+| **Affects** | `spec/v1/form-content-packs.md` (NEW); `spec/v1/registry-operations.md` §"Validation flow" #3/#7 + §"Type-ID indexing"; `spec/v1/host-capabilities.md` §host.forms (NEW); `schemas/form-content-pack-manifest.schema.json` (NEW); `schemas/registry-version-manifest.schema.json`; `SECURITY/invariants.yaml`; `SECURITY/threat-model-prompt-injection.md`; `conformance/src/coherence/form-content-packs.test.ts` (NEW); reference registry (`openwop-registry`) indexer |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -134,8 +134,8 @@ Forward-compat: a consumer that does not understand `kind: "form-content"` ignor
 
 ## Conformance
 
-- **Existing coverage.** `conformance/src/scenarios/registry-declarative-kinds.test.ts` (RFC 0107) covers the kind discriminator + conditional-runtime contract for the six prior kinds; `registry-public.test.ts` resolves published manifests.
-- **New scenario.** `conformance/src/scenarios/form-content-packs.test.ts` — always-on + server-free, three parts:
+- **Existing coverage.** `conformance/src/coherence/registry-declarative-kinds.test.ts` (RFC 0107) covers the kind discriminator + conditional-runtime contract for the six prior kinds; `registry-public.test.ts` resolves published manifests.
+- **New scenario.** `conformance/src/coherence/form-content-packs.test.ts` — always-on + server-free, three parts:
   - **PART 1 — contract present.** `form-content-packs.md` carries the instantiation + trust-boundary rules; `registry-operations.md` selects the per-kind source schema and skips the runtime check for `form-content`; the version manifest carries the kind, the `templates` property, the `anyOf` branch, and the conditional.
   - **PART 2 — schema admits the kind and still rejects malformed ones.** A published `form-content` manifest validates; one carrying `runtime` is rejected; a node manifest is unchanged. Explicitly asserts the `anyOf` branch by validating a manifest whose ONLY payload is `templates`.
   - **PART 3 — the field vocabulary is shared, not forked.** The `fields[].type` pattern in `form-content-pack-manifest.schema.json` is asserted **identical** to `InputField.type` in `chat-card-pack-manifest.schema.json`. This is the regression guard that matters: it fails the moment someone widens one kind's vocabulary without the other.

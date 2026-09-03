@@ -20,6 +20,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-memory-redaction';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
@@ -27,7 +28,7 @@ const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
 describe.skipIf(SKIP)('agentMemoryRedactionContract: SR-1 invariant', () => {
   it('BYOK plaintext is redacted to [REDACTED:<secretId>] at the read surface', async () => {
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
-    expect(create.status).toBe(201);
+    expect(create.status, req('openwop.it.agentMemoryRedactionContract.byok-plaintext-is-redacted-to-redacted-secretid-at-the-read-surface', 'RFCS/0004-memory-layer.md', 'BYOK plaintext is redacted to [REDACTED:<secretId>] at the read surface')).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);

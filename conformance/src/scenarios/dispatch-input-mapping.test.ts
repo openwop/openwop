@@ -25,6 +25,8 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-input-mapping';
 const CHILD = 'conformance-dispatch-input-mapping-child';
@@ -49,7 +51,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     const parentRunId = (create.json as { runId: string }).runId;
 
     const parentTerminal = (await pollUntilTerminal(parentRunId)) as RunSnapshot;
-    expect(parentTerminal.status, driver.describe(
+    expect(parentTerminal.status, req('openwop.it.dispatch-input-mapping.hvmap-1a-inputmapping-projects-parent-variables-into-child-inputs', 
       'RFCS/0022-dispatch-input-output-mapping.md §A',
       'parent run MUST reach terminal `completed` once the dispatch loop terminates',
     )).toBe('completed');
@@ -61,7 +63,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     const dispatched = events.find(
       (e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD,
     );
-    expect(dispatched, driver.describe(
+    expect(dispatched, req('openwop.it.dispatch-input-mapping.hvmap-1a-inputmapping-projects-parent-variables-into-child-inputs', 
       'RFCS/0007-dispatch.md §D',
       'parent event log MUST contain a `node.dispatched` event naming the child workflow',
     )).toBeDefined();
@@ -74,12 +76,12 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     const childSnapshotRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
     expect(childSnapshotRes.status).toBe(200);
     const childSnapshot = childSnapshotRes.json as RunSnapshot;
-    expect(childSnapshot.status, driver.describe(
+    expect(childSnapshot.status, req('openwop.it.dispatch-input-mapping.hvmap-1a-inputmapping-projects-parent-variables-into-child-inputs', 
       'RFCS/0007-dispatch.md',
       'child run MUST reach terminal `completed`',
     )).toBe('completed');
     const childInputs = childSnapshot.inputs ?? {};
-    expect(childInputs.childGreeting, driver.describe(
+    expect(childInputs.childGreeting, req('openwop.it.dispatch-input-mapping.hvmap-1a-inputmapping-projects-parent-variables-into-child-inputs', 
       'RFCS/0022-dispatch-input-output-mapping.md §A',
       'child `inputs.childGreeting` MUST be parent\'s `parentName` projection ("Alice") per inputMapping',
     )).toBe('Alice');
@@ -87,7 +89,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
 
   it('HVMAP-1a-null: parent variable unset → child input surfaces as `undefined` per §A', async () => {
     const PARENT_NO_DEFAULT = 'conformance-dispatch-input-mapping-no-default';
-    if (!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)) return; // fixture not seeded — soft-skip
+    if (!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)` returned early (fixture not seeded — soft-skip)'); // fixture not seeded — soft-skip
     const create = await driver.post('/v1/runs', { workflowId: PARENT_NO_DEFAULT });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -98,7 +100,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     const dispatched = events.find(
       (e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD,
     );
-    if (!dispatched) return; // host doesn't emit node.dispatched — soft-skip
+    if (!dispatched) return softSkip('blocked', 'precondition not met — `!dispatched` returned early (host doesn\'t emit node.dispatched — soft-skip) (seam, prior step, or fixture unavailable)'); // host doesn't emit node.dispatched — soft-skip
     const childRunId = dispatched.payload?.childRunId;
 
     const childRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
@@ -111,7 +113,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     const v = inputs.childGreeting;
     expect(
       v === undefined || !('childGreeting' in inputs),
-      driver.describe(
+      req('openwop.it.dispatch-input-mapping.hvmap-1a-null-parent-variable-unset-child-input-surfaces-as-undefined-per-a', 
         'RFCS/0022-dispatch-input-output-mapping.md §A',
         'unset parent variable projection MUST surface as undefined (NOT null, NOT a default placeholder)',
       ),
@@ -123,7 +125,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
 
 describe('dispatch-input-mapping: registration refusal (RFC 0022 §C HVMAP-1a-refusal)', () => {
   it('host with agents.dispatchMapping toggled OFF MUST refuse non-empty inputMapping at registration', async () => {
-    if (!(await isToggleAvailable())) return; // seam not exposed — soft-skip
+    if (!(await isToggleAvailable())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isToggleAvailable())` returned early (seam not exposed — soft-skip)'); // seam not exposed — soft-skip
     await setHostCapability('agents.dispatchMapping', false);
     try {
       const workflow = {
@@ -142,7 +144,7 @@ describe('dispatch-input-mapping: registration refusal (RFC 0022 §C HVMAP-1a-re
       const res = await driver.post('/v1/host/sample/workflows', workflow);
       expect(
         res.status,
-        driver.describe(
+        req('openwop.it.dispatch-input-mapping.host-with-agents-dispatchmapping-toggled-off-must-refuse-non-empty-inputmapping', 
           'RFCS/0022-dispatch-input-output-mapping.md §C',
           'workflow with non-empty inputMapping MUST be refused when capabilities.agents.dispatchMapping is not advertised',
         ),
@@ -151,7 +153,7 @@ describe('dispatch-input-mapping: registration refusal (RFC 0022 §C HVMAP-1a-re
       expect(body.error).toBe('validation_error');
       expect(
         body.details?.requiredCapability,
-        driver.describe(
+        req('openwop.it.dispatch-input-mapping.host-with-agents-dispatchmapping-toggled-off-must-refuse-non-empty-inputmapping', 
           'RFCS/0022-dispatch-input-output-mapping.md §C',
           'refusal MUST surface requiredCapability: "agents.dispatchMapping"',
         ),

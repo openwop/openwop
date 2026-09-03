@@ -29,6 +29,8 @@ import { describe, it, expect } from 'vitest';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryFs {
   supported?: boolean;
@@ -57,10 +59,10 @@ const PATH_REJECTION_CODES: ReadonlySet<string> = new Set([
 describe('fs-path-traversal: advertisement shape (RFC 0014 §A)', () => {
   it('capabilities.fs is either absent or well-formed', async () => {
     const fs = await readFs();
-    if (fs === null) return; // host doesn't advertise fs at all
+    if (fs === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `fs === null` returned early (host doesn\'t advertise fs at all)'); // host doesn't advertise fs at all
     expect(
       typeof fs.supported,
-      driver.describe(
+      req('openwop.it.fs-path-traversal.capabilities-fs-is-either-absent-or-well-formed', 
         'capabilities.schema.json §fs',
         'capabilities.fs.supported MUST be a boolean when fs is advertised',
       ),
@@ -69,17 +71,17 @@ describe('fs-path-traversal: advertisement shape (RFC 0014 §A)', () => {
 
   it('fs.sandboxRoot is set + non-empty when fs.supported=true', async () => {
     const fs = await readFs();
-    if (!fs?.supported) return;
+    if (!fs?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!fs?.supported` returned early');
     expect(
       typeof fs.sandboxRoot,
-      driver.describe(
+      req('openwop.it.fs-path-traversal.fs-sandboxroot-is-set-non-empty-when-fs-supported-true', 
         'RFC 0014 §A',
         'capabilities.fs.sandboxRoot MUST be present when fs.supported=true',
       ),
     ).toBe('string');
     expect(
       (fs.sandboxRoot ?? '').length,
-      driver.describe('RFC 0014 §A', 'capabilities.fs.sandboxRoot MUST NOT be empty'),
+      req('openwop.it.fs-path-traversal.fs-sandboxroot-is-set-non-empty-when-fs-supported-true', 'RFC 0014 §A', 'capabilities.fs.sandboxRoot MUST NOT be empty'),
     ).toBeGreaterThan(0);
   });
 });
@@ -87,13 +89,13 @@ describe('fs-path-traversal: advertisement shape (RFC 0014 §A)', () => {
 describe('fs-path-traversal: MUST-NOT escape sandboxRoot (RFC 0014 §C)', () => {
   it('absolute path outside sandbox is rejected', async () => {
     const fs = await readFs();
-    if (!fs?.supported) return;
+    if (!fs?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!fs?.supported` returned early');
     const res = await driver.post('/v1/host/sample/fs/read', { path: '/etc/passwd' });
     // 404 from a host that hasn't wired the test seam is a soft-skip.
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (404 from a host that hasn\'t wired the test seam is a soft-skip.) (seam, prior step, or fixture unavailable)');
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.fs-path-traversal.absolute-path-outside-sandbox-is-rejected', 
         'SECURITY/invariants.yaml fs-path-traversal',
         'absolute paths outside sandboxRoot MUST be rejected with a 4xx envelope',
       ),
@@ -101,7 +103,7 @@ describe('fs-path-traversal: MUST-NOT escape sandboxRoot (RFC 0014 §C)', () => 
     const code = readErrorCode(res.json);
     expect(
       code !== undefined && PATH_REJECTION_CODES.has(code),
-      driver.describe(
+      req('openwop.it.fs-path-traversal.absolute-path-outside-sandbox-is-rejected', 
         'SECURITY/invariants.yaml fs-path-traversal',
         `error.code MUST be one of {${[...PATH_REJECTION_CODES].join(', ')}}, got: ${code ?? '(absent)'}`,
       ),
@@ -110,14 +112,14 @@ describe('fs-path-traversal: MUST-NOT escape sandboxRoot (RFC 0014 §C)', () => 
 
   it('relative ../ path escape is rejected', async () => {
     const fs = await readFs();
-    if (!fs?.supported) return;
+    if (!fs?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!fs?.supported` returned early');
     const res = await driver.post('/v1/host/sample/fs/read', { path: '../../etc/passwd' });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBeGreaterThanOrEqual(400);
     const code = readErrorCode(res.json);
     expect(
       code !== undefined && PATH_REJECTION_CODES.has(code),
-      driver.describe(
+      req('openwop.it.fs-path-traversal.relative-path-escape-is-rejected', 
         'SECURITY/invariants.yaml fs-path-traversal',
         `error.code MUST be one of {${[...PATH_REJECTION_CODES].join(', ')}}, got: ${code ?? '(absent)'}`,
       ),

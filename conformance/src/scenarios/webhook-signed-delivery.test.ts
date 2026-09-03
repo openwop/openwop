@@ -108,6 +108,7 @@ import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { discoverOwnedTenant, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DeliveredRequest {
   readonly headers: Record<string, string>;
@@ -116,13 +117,13 @@ interface DeliveredRequest {
 
 async function startReceiver(): Promise<{ server: Server; url: string; received: DeliveredRequest[] }> {
   const received: DeliveredRequest[] = [];
-  const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+  const server = createServer((reqBody: IncomingMessage, res: ServerResponse) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c: Buffer) => chunks.push(c));
-    req.on('end', () => {
+    reqBody.on('data', (c: Buffer) => chunks.push(c));
+    reqBody.on('end', () => {
       const body = Buffer.concat(chunks).toString('utf8');
       const headers: Record<string, string> = {};
-      for (const [k, v] of Object.entries(req.headers)) {
+      for (const [k, v] of Object.entries(reqBody.headers)) {
         if (typeof v === 'string') headers[k.toLowerCase()] = v;
         else if (Array.isArray(v)) headers[k.toLowerCase()] = v.join(',');
       }
@@ -225,7 +226,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
       }
     }
 
-    expect(reg.status, driver.describe(
+    expect(reg.status, req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 
       'webhooks.md §"Register"',
       'POST /v1/webhooks MUST return 201 with webhookId + secret on success',
     )).toBe(201);
@@ -240,7 +241,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // what the spec shows. The postgres reference host returns both names, which
     // is why nothing went red here.
     const sub = reg.json as { webhookId: string; secret: string };
-    expect(typeof sub.webhookId, driver.describe(
+    expect(typeof sub.webhookId, req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 
       'api/openapi.yaml registerWebhook 201',
       'the 201 body MUST carry `webhookId` (required) — `subscriptionId` is not in the contract',
     )).toBe('string');
@@ -276,7 +277,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // has a subscriber; if nothing arrived HERE, the delivery went somewhere
     // this process cannot see and every assertion below it would be vacuous.
     // It fails — it must never soft-skip.
-    expect(ourDeliveries.length, driver.describe(
+    expect(ourDeliveries.length, req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 
       'webhooks.md §"Delivery"',
       registration.tunnelled
         ? 'host MUST POST at least one event for THIS run to the registered subscriber. ' +
@@ -289,7 +290,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // Validate the FIRST delivery's signature contract. Other deliveries
     // share the same signing rules; checking one is sufficient.
     const first = ourDeliveries[0]!;
-    expect(first.headers['x-openwop-signature-algorithm'], driver.describe(
+    expect(first.headers['x-openwop-signature-algorithm'], req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 
       'webhooks.md §"Signature algorithm versioning"',
       'every delivery MUST set X-openwop-Signature-Algorithm: v1',
     )).toBe('v1');
@@ -301,26 +302,26 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // `X-openwop-Signature: sha256={hex}`. (Suite↔spec divergence fixed 2026-08-09.)
     expect(
       first.headers['x-openwop-webhook-id'],
-      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Webhook-Id MUST carry the subscription id'),
+      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"', 'X-openwop-Webhook-Id MUST carry the subscription id'),
     ).toBe(sub.webhookId);
 
     const timestamp = first.headers['x-openwop-timestamp'];
     expect(
       typeof timestamp === 'string' && timestamp.length > 0,
-      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Timestamp MUST be a Unix-seconds integer string'),
+      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"', 'X-openwop-Timestamp MUST be a Unix-seconds integer string'),
     ).toBe(true);
 
     const signature = first.headers['x-openwop-signature'] ?? '';
     expect(
       signature.startsWith('sha256='),
-      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST carry the `sha256=` prefix'),
+      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST carry the `sha256=` prefix'),
     ).toBe(true);
     const expected = createHmac('sha256', sub.secret)
       .update(`${timestamp}.${first.body}`, 'utf8')
       .digest('hex');
     expect(
       signature.replace('sha256=', ''),
-      driver.describe('webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST be sha256=HMAC-SHA256(secret, `${X-openwop-Timestamp}.${rawBody}`)'),
+      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"', 'X-openwop-Signature MUST be sha256=HMAC-SHA256(secret, `${X-openwop-Timestamp}.${rawBody}`)'),
     ).toBe(expected);
 
     // RFC 0165 §C.1 — dual emission of the `OpenWOP-*` family. SHOULD-level and
@@ -337,11 +338,11 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
         ['openwop-signature', 'x-openwop-signature'],
         ['openwop-signature-algorithm', 'x-openwop-signature-algorithm'],
       ] as const) {
-        expect(first.headers[neu], driver.describe('RFC 0165 §C.1', `${neu} MUST equal ${old} when the OpenWOP-* family is emitted`)).toBe(first.headers[old]);
+        expect(first.headers[neu], req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'RFC 0165 §C.1', `${neu} MUST equal ${old} when the OpenWOP-* family is emitted`)).toBe(first.headers[old]);
       }
       expect(
         String(dual).replace('sha256=', ''),
-        driver.describe('RFC 0165 §C.1', 'OpenWOP-Signature MUST verify over the same bytes as X-openwop-Signature'),
+        req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'RFC 0165 §C.1', 'OpenWOP-Signature MUST verify over the same bytes as X-openwop-Signature'),
       ).toBe(expected);
     }
 
@@ -404,7 +405,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
       }
     }
 
-    expect(reg.status, driver.describe(
+    expect(reg.status, req('openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver', 
       'webhooks.md §"SSRF protection"',
       'the server MUST reject loopback subscription URLs at registration time. ' +
         'It was accepted here, so this run cannot attribute the tunnelled test\'s pass to ' +

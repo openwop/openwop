@@ -193,7 +193,7 @@ That prefix guard is also why leg 3 is safe to run twice against a live registry
 
 ```
 ✓ src/scenarios/pack-manifest-extension-opacity.test.ts  (5 tests) 133ms
-✓ src/scenarios/pack-manifest-extensions.test.ts        (19 tests)  36ms
+✓ src/coherence/pack-manifest-extensions.test.ts        (19 tests)  36ms
 ```
 
 ### Why this is non-vacuous

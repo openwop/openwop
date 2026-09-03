@@ -18,7 +18,9 @@ EXPECTED_NPM_SCOPE="@openwop"
 # `@openwop/openwop-conformance` independently bumps minors as conformance
 # scenarios are added/removed, per `PUBLISHING.md` §"Versioning alignment".
 # Bump this when the next `openwop-conformance/v*` tag rolls.
-EXPECTED_CONFORMANCE_VERSION="1.163.0"
+EXPECTED_CONFORMANCE_VERSION="2.0.0-rc.0"
+# Suite 2.0.0 (RFC 0168 §D.2): the contract package publishes beside the suite from the same tag.
+EXPECTED_SPEC_ARTIFACTS_VERSION="2.0.0-rc.0"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
@@ -74,3 +76,20 @@ if (( fail )); then
   exit 1
 fi
 echo "=== openwop:check:publish-metadata OK — manifests are publish-ready ==="
+
+echo
+echo "[5/5] spec-artifacts package version alignment..."
+SA_VER=$(grep -E '"version":' "$SPEC_ROOT/spec-artifacts/package.json" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
+if [[ "$SA_VER" != "$EXPECTED_SPEC_ARTIFACTS_VERSION" ]]; then
+  err "spec-artifacts/package.json version is '$SA_VER', expected $EXPECTED_SPEC_ARTIFACTS_VERSION."
+else
+  ok "spec-artifacts package version is $SA_VER."
+fi
+PEER=$(node -e "console.log(require('$SPEC_ROOT/conformance/package.json').peerDependencies?.['@openwop/spec-artifacts'] ?? 'absent')")
+if [[ "$PEER" != "$EXPECTED_SPEC_ARTIFACTS_VERSION" ]]; then
+  err "conformance peerDependencies[@openwop/spec-artifacts] is '$PEER', expected the exact pin $EXPECTED_SPEC_ARTIFACTS_VERSION (RFC 0168 §D.2)."
+else
+  ok "conformance pins the spec-artifacts peer exactly ($PEER)."
+fi
+[[ $fail -eq 0 ]] || exit 1
+

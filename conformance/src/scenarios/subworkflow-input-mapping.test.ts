@@ -23,6 +23,8 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-subworkflow-input-mapping';
 const CHILD = 'conformance-subworkflow-input-mapping-child';
@@ -51,7 +53,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     const parentRunId = (create.json as { runId: string }).runId;
 
     const parentTerminal = (await pollUntilTerminal(parentRunId)) as RunSnapshot;
-    expect(parentTerminal.status, driver.describe(
+    expect(parentTerminal.status, req('openwop.it.subworkflow-input-mapping.hvmap-2-inputmapping-seeds-child-variables-overrides-defaultvalue-child-reads-pa', 
       'RFCS/0022-dispatch-input-output-mapping.md §B',
       'parent run MUST reach terminal `completed` once the child finishes',
     )).toBe('completed');
@@ -63,7 +65,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     const subwfCompleted = events.find(
       (e) => e.type === 'node.completed' && e.nodeId === 'subwf-call',
     );
-    expect(subwfCompleted, driver.describe(
+    expect(subwfCompleted, req('openwop.it.subworkflow-input-mapping.hvmap-2-inputmapping-seeds-child-variables-overrides-defaultvalue-child-reads-pa', 
       'spec/v1/node-packs.md §"`core.subWorkflow` contract"',
       'parent event log MUST contain `node.completed` for the subwf-call node',
     )).toBeDefined();
@@ -76,12 +78,12 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     const childSnapshotRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
     expect(childSnapshotRes.status).toBe(200);
     const childSnapshot = childSnapshotRes.json as RunSnapshot;
-    expect(childSnapshot.status, driver.describe(
+    expect(childSnapshot.status, req('openwop.it.subworkflow-input-mapping.hvmap-2-inputmapping-seeds-child-variables-overrides-defaultvalue-child-reads-pa', 
       'spec/v1/node-packs.md §"`core.subWorkflow` contract"',
       'child run MUST reach terminal `completed`',
     )).toBe('completed');
     const childVars = childSnapshot.variables ?? {};
-    expect(childVars.receivedPrdId, driver.describe(
+    expect(childVars.receivedPrdId, req('openwop.it.subworkflow-input-mapping.hvmap-2-inputmapping-seeds-child-variables-overrides-defaultvalue-child-reads-pa', 
       'RFCS/0022-dispatch-input-output-mapping.md §B',
       'child `receivedPrdId` MUST be parent\'s `currentPrdId` projection ("prd-1"), overriding the child\'s defaultValue "baked-in"',
     )).toBe('prd-1');
@@ -89,7 +91,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
 
   it('HVMAP-2-unset: parent.currentPrdId unset → child receivedPrdId MUST surface as `undefined`', async () => {
     const PARENT_NO_DEFAULT = 'conformance-subworkflow-input-mapping-no-default';
-    if (!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)) return; // soft-skip
+    if (!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)` returned early (soft-skip)'); // soft-skip
     const create = await driver.post('/v1/runs', { workflowId: PARENT_NO_DEFAULT });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -100,7 +102,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     const subwfCompleted = events.find(
       (e) => e.type === 'node.completed' && e.nodeId === 'subwf-call',
     );
-    if (!subwfCompleted) return;
+    if (!subwfCompleted) return softSkip('blocked', 'precondition not met — `!subwfCompleted` returned early (seam, prior step, or fixture unavailable)');
     const childRunId = subwfCompleted.payload?.outputs?.childRunId;
 
     const childRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
@@ -114,7 +116,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     // undefined the child's defaultValue should remain.
     expect(
       v === 'baked-in' || v === undefined || !('receivedPrdId' in vars),
-      driver.describe(
+      req('openwop.it.subworkflow-input-mapping.hvmap-2-unset-parent-currentprdid-unset-child-receivedprdid-must-surface-as-unde', 
         'RFCS/0022-dispatch-input-output-mapping.md §B',
         'unset parent variable MUST surface as undefined-or-defaultValue-fallback (NOT null)',
       ),
@@ -137,8 +139,8 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
   const CHILD_GATE_NODE = 'child-gate';
 
   it('HVMAP-2-no-midrun-propagation: parent mid-run mutation MUST NOT propagate into the seeded child', async () => {
-    if (!isFixtureAdvertised(MID_RUN_PARENT) || !isFixtureAdvertised(MID_RUN_CHILD)) return; // fixture not seeded — soft-skip
-    if (!(await isToggleAvailable())) return; // sample test seam not exposed — soft-skip
+    if (!isFixtureAdvertised(MID_RUN_PARENT) || !isFixtureAdvertised(MID_RUN_CHILD)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(MID_RUN_PARENT) || !isFixtureAdvertised(MID_RUN_CHILD)` returned early (fixture not seeded — soft-skip)'); // fixture not seeded — soft-skip
+    if (!(await isToggleAvailable())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isToggleAvailable())` returned early (sample test seam not exposed — soft-skip)'); // sample test seam not exposed — soft-skip
 
     const create = await driver.post('/v1/runs', { workflowId: MID_RUN_PARENT });
     expect(create.status).toBe(201);
@@ -156,7 +158,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     const parentSnap = await driver.get(`/v1/runs/${encodeURIComponent(parentRunId)}`);
     const parentJson = parentSnap.json as { childRuns?: Array<{ runId: string; status: string }> };
     const childRunId = parentJson.childRuns?.[0]?.runId;
-    expect(childRunId, driver.describe(
+    expect(childRunId, req('openwop.it.subworkflow-input-mapping.hvmap-2-no-midrun-propagation-parent-mid-run-mutation-must-not-propagate-into-th', 
       'fixtures.md conformance-subworkflow-mid-run-mutation',
       'parent snapshot MUST surface the spawned child runId via childRuns[]',
     )).toBeDefined();
@@ -185,7 +187,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     // (`seeded-id`), NOT the post-mutation parent value (`mutated-id`).
     expect(
       childTerminal.variables?.receivedPrdId,
-      driver.describe(
+      req('openwop.it.subworkflow-input-mapping.hvmap-2-no-midrun-propagation-parent-mid-run-mutation-must-not-propagate-into-th', 
         'RFCS/0022-dispatch-input-output-mapping.md §B',
         'mid-run parent mutation MUST NOT propagate; child receivedPrdId stays at dispatch-time fold',
       ),
@@ -196,7 +198,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
 
 describe('subworkflow-input-mapping: registration refusal (RFC 0022 §C HVMAP-2-refusal)', () => {
   it('host with subWorkflow.inputMapping toggled OFF MUST refuse non-empty inputMapping at registration', async () => {
-    if (!(await isToggleAvailable())) return; // seam not exposed — soft-skip
+    if (!(await isToggleAvailable())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isToggleAvailable())` returned early (seam not exposed — soft-skip)'); // seam not exposed — soft-skip
     await setHostCapability('subWorkflow.inputMapping', false);
     try {
       const workflow = {
@@ -215,7 +217,7 @@ describe('subworkflow-input-mapping: registration refusal (RFC 0022 §C HVMAP-2-
       const res = await driver.post('/v1/host/sample/workflows', workflow);
       expect(
         res.status,
-        driver.describe(
+        req('openwop.it.subworkflow-input-mapping.host-with-subworkflow-inputmapping-toggled-off-must-refuse-non-empty-inputmappin', 
           'RFCS/0022-dispatch-input-output-mapping.md §C',
           'workflow with non-empty subWorkflow.inputMapping MUST be refused when capability is not advertised',
         ),
@@ -224,7 +226,7 @@ describe('subworkflow-input-mapping: registration refusal (RFC 0022 §C HVMAP-2-
       expect(body.error).toBe('validation_error');
       expect(
         body.details?.requiredCapability,
-        driver.describe(
+        req('openwop.it.subworkflow-input-mapping.host-with-subworkflow-inputmapping-toggled-off-must-refuse-non-empty-inputmappin', 
           'RFCS/0022-dispatch-input-output-mapping.md §C',
           'refusal MUST surface requiredCapability: "subWorkflow.inputMapping"',
         ),

@@ -34,8 +34,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -49,26 +48,26 @@ describe('channel-presence-shape: the channel.presence payload (RFC 0110 §Propo
   it('a conforming presence snapshot (present + typing) validates', () => {
     expect(
       presence({ conversationId: 'chan-eng', present: ['user:alice', 'agent:iris'], typing: ['user:alice'] }),
-      why('RFC 0110 §Proposal', 'a conforming channel.presence payload MUST validate'),
+      req('openwop.it.channel-presence-shape.a-conforming-presence-snapshot-present-typing-validates', 'RFC 0110 §Proposal', 'a conforming channel.presence payload MUST validate'),
     ).toBe(true);
   });
 
   it('typing is OPTIONAL — a snapshot with nobody typing validates', () => {
     expect(
       presence({ conversationId: 'chan-eng', present: ['user:alice'] }),
-      why('RFC 0110 §Proposal', 'typing is optional'),
+      req('openwop.it.channel-presence-shape.typing-is-optional-a-snapshot-with-nobody-typing-validates', 'RFC 0110 §Proposal', 'typing is optional'),
     ).toBe(true);
   });
 
   it('conversationId and present are REQUIRED', () => {
-    expect(presence({ present: ['user:a'] }), why('RFC 0110 §Proposal', 'conversationId is required')).toBe(false);
-    expect(presence({ conversationId: 'c' }), why('RFC 0110 §Proposal', 'present is required')).toBe(false);
+    expect(presence({ present: ['user:a'] }), req('openwop.it.channel-presence-shape.conversationid-and-present-are-required', 'RFC 0110 §Proposal', 'conversationId is required')).toBe(false);
+    expect(presence({ conversationId: 'c' }), req('openwop.it.channel-presence-shape.conversationid-and-present-are-required', 'RFC 0110 §Proposal', 'present is required')).toBe(false);
   });
 
   it('the payload is CLOSED — a non-subject-ref field (ip/location) MUST be rejected (the no-PII guard)', () => {
     expect(
       presence({ conversationId: 'c', present: ['user:a'], ip: '10.0.0.1' }),
-      why('RFC 0110 §Proposal', 'channel.presence MUST forbid extra keys — no PII rides the payload'),
+      req('openwop.it.channel-presence-shape.the-payload-is-closed-a-non-subject-ref-field-ip-location-must-be-rejected-the-n', 'RFC 0110 §Proposal', 'channel.presence MUST forbid extra keys — no PII rides the payload'),
     ).toBe(false);
   });
 });
@@ -77,7 +76,7 @@ describe('channel-presence-shape: event type + capability advertisement (RFC 011
   it('run-event.schema.json enumerates `channel.presence` as a RunEvent type', () => {
     const re = loadSchema('run-event.schema.json');
     const enumVals = JSON.stringify(re);
-    expect(enumVals.includes('"channel.presence"'), why('RFC 0110 §Proposal', 'channel.presence MUST be a declared RunEvent type')).toBe(true);
+    expect(enumVals.includes('"channel.presence"'), req('openwop.it.channel-presence-shape.run-event-schema-json-enumerates-channel-presence-as-a-runevent-type', 'RFC 0110 §Proposal', 'channel.presence MUST be a declared RunEvent type')).toBe(true);
   });
 
   it('capabilities.schema.json declares channelPresence with supported, closed', () => {
@@ -85,9 +84,9 @@ describe('channel-presence-shape: event type + capability advertisement (RFC 011
     const block = (caps.properties as Record<string, Record<string, unknown>>).channelPresence as
       | { properties?: Record<string, unknown>; required?: string[]; additionalProperties?: boolean }
       | undefined;
-    expect(block, why('RFC 0110 §Conformance', 'capabilities.channelPresence MUST be declared')).toBeDefined();
-    expect(block?.properties?.supported, why('RFC 0110 §Conformance', 'channelPresence.supported MUST be declared')).toBeDefined();
-    expect(block?.required, why('RFC 0110 §Conformance', 'supported MUST be required on the block')).toContain('supported');
-    expect(block?.additionalProperties, why('RFC 0110 §Conformance', 'the block MUST be closed')).toBe(false);
+    expect(block, req('openwop.it.channel-presence-shape.capabilities-schema-json-declares-channelpresence-with-supported-closed', 'RFC 0110 §Conformance', 'capabilities.channelPresence MUST be declared')).toBeDefined();
+    expect(block?.properties?.supported, req('openwop.it.channel-presence-shape.capabilities-schema-json-declares-channelpresence-with-supported-closed', 'RFC 0110 §Conformance', 'channelPresence.supported MUST be declared')).toBeDefined();
+    expect(block?.required, req('openwop.it.channel-presence-shape.capabilities-schema-json-declares-channelpresence-with-supported-closed', 'RFC 0110 §Conformance', 'supported MUST be required on the block')).toContain('supported');
+    expect(block?.additionalProperties, req('openwop.it.channel-presence-shape.capabilities-schema-json-declares-channelpresence-with-supported-closed', 'RFC 0110 §Conformance', 'the block MUST be closed')).toBe(false);
   });
 });

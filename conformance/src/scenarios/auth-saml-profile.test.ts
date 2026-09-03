@@ -25,6 +25,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { type SamlVariant } from '../lib/saml-idp.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SAML_PROFILE = 'openwop-auth-saml';
 
@@ -46,10 +48,10 @@ async function readProfiles(): Promise<string[] | null> {
 describe('auth-saml-profile: advertisement shape (RFC 0050)', () => {
   it('auth.profiles, when present, is an array of non-empty strings', async () => {
     const profiles = await readProfiles();
-    if (profiles === null) return; // host advertises no auth profiles
+    if (profiles === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `profiles === null` returned early (host advertises no auth profiles)'); // host advertises no auth profiles
     expect(
       Array.isArray(profiles),
-      driver.describe('auth-profiles.md §Discovery', 'capabilities.auth.profiles MUST be an array'),
+      req('openwop.it.auth-saml-profile.auth-profiles-when-present-is-an-array-of-non-empty-strings', 'auth-profiles.md §Discovery', 'capabilities.auth.profiles MUST be an array'),
     ).toBe(true);
     for (const p of profiles) {
       expect(typeof p === 'string' && p.length > 0).toBe(true);
@@ -58,10 +60,10 @@ describe('auth-saml-profile: advertisement shape (RFC 0050)', () => {
 
   it('claims openwop-auth-saml as a well-formed profile id when advertised', async () => {
     const profiles = await readProfiles();
-    if (profiles === null || !profiles.includes(SAML_PROFILE)) return; // profile not claimed
+    if (profiles === null || !profiles.includes(SAML_PROFILE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `profiles === null || !profiles.includes(SAML_PROFILE)` returned early (profile not claimed)'); // profile not claimed
     expect(
       profiles.includes(SAML_PROFILE),
-      driver.describe('RFC 0050 §A', 'openwop-auth-saml MUST appear verbatim in capabilities.auth.profiles when claimed'),
+      req('openwop.it.auth-saml-profile.claims-openwop-auth-saml-as-a-well-formed-profile-id-when-advertised', 'RFC 0050 §A', 'openwop-auth-saml MUST appear verbatim in capabilities.auth.profiles when claimed'),
     ).toBe(true);
   });
 });
@@ -83,13 +85,13 @@ describe('auth-saml-profile: assertion validation (RFC 0050 §A — opt-in)', ()
 
   it('ACCEPTS a valid signed, in-window, non-wrapped assertion (synthetic IdP required)', async () => {
     const profiles = await readProfiles();
-    if (profiles === null || !profiles.includes(SAML_PROFILE)) return; // capability-gated
-    if (!gated()) return; // opt-in: synthetic-IdP harness not provided
+    if (profiles === null || !profiles.includes(SAML_PROFILE)) return softSkip('blocked', 'precondition not met — `profiles === null || !profiles.includes(SAML_PROFILE)` returned early (capability-gated) (seam, prior step, or fixture unavailable)'); // capability-gated
+    if (!gated()) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!gated()` returned early (opt-in: synthetic-IdP harness not provided)'); // opt-in: synthetic-IdP harness not provided
     const res = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid' });
-    if (res.status === 404) return; // seam unwired
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired) (seam, prior step, or fixture unavailable)'); // seam unwired
     expect(
       res.status,
-      driver.describe('RFC 0050 §A', 'a valid signed, in-window, non-wrapped SAML assertion MUST be accepted (2xx)'),
+      req('openwop.it.auth-saml-profile.accepts-a-valid-signed-in-window-non-wrapped-assertion-synthetic-idp-required', 'RFC 0050 §A', 'a valid signed, in-window, non-wrapped SAML assertion MUST be accepted (2xx)'),
     ).toBeLessThan(400);
   });
 
@@ -108,11 +110,11 @@ describe('auth-saml-profile: assertion validation (RFC 0050 §A — opt-in)', ()
   for (const [variant, requirement] of negatives) {
     it(`REJECTS the ${variant} assertion over the seam (synthetic IdP required)`, async () => {
       const profiles = await readProfiles();
-      if (profiles === null || !profiles.includes(SAML_PROFILE)) return; // capability-gated
-      if (!gated()) return; // opt-in: synthetic-IdP harness not provided
+      if (profiles === null || !profiles.includes(SAML_PROFILE)) return softSkip('blocked', 'precondition not met — `profiles === null || !profiles.includes(SAML_PROFILE)` returned early (capability-gated) (seam, prior step, or fixture unavailable)'); // capability-gated
+      if (!gated()) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!gated()` returned early (opt-in: synthetic-IdP harness not provided)'); // opt-in: synthetic-IdP harness not provided
       const res = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant });
-      if (res.status === 404) return; // seam unwired
-      expect(res.status, driver.describe('RFC 0050 §A', requirement)).toBeGreaterThanOrEqual(400);
+      if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired) (seam, prior step, or fixture unavailable)'); // seam unwired
+      expect(res.status, req('openwop.it.auth-saml-profile.rejects-the-assertion-over-the-seam-synthetic-idp-required', 'RFC 0050 §A', requirement)).toBeGreaterThanOrEqual(400);
     });
   }
 });

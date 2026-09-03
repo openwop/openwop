@@ -34,6 +34,8 @@ import { FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE_PATH = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
 
@@ -64,25 +66,25 @@ async function gate(): Promise<boolean> {
 
 describe('connection-provider-resolution (RFC 0095 §B.6/§B.8)', () => {
   it('an installed pack resolves its provider id; an unknown provider is unresolved', async () => {
-    if (!(await gate())) return;
+    if (!(await gate())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gate())` returned early');
 
     const install = await driver.post('/v1/host/sample/connection-packs/install', { manifest: fixture() });
-    if (install.status === 404 || install.status === 403) return; // seam unwired — soft-skip
+    if (install.status === 404 || install.status === 403) return softSkip('blocked', 'precondition not met — `install.status === 404 || install.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const installed = install.json as InstallResult | undefined;
     expect(
       installed?.installed,
-      driver.describe('connection-packs.md §Manifest clause 1', 'a well-formed connection pack MUST install'),
+      req('openwop.it.connection-provider-resolution.an-installed-pack-resolves-its-provider-id-an-unknown-provider-is-unresolved', 'connection-packs.md §Manifest clause 1', 'a well-formed connection pack MUST install'),
     ).toBe(true);
 
     const hit = await driver.post('/v1/host/sample/connection-packs/resolve', { provider: 'github' });
     const resolved = hit.json as ResolveResult | undefined;
     expect(
       resolved?.resolved,
-      driver.describe('connection-packs.md §Manifest clause 6', 'provider "github" MUST resolve against the installed pack whose provider.id matches'),
+      req('openwop.it.connection-provider-resolution.an-installed-pack-resolves-its-provider-id-an-unknown-provider-is-unresolved', 'connection-packs.md §Manifest clause 6', 'provider "github" MUST resolve against the installed pack whose provider.id matches'),
     ).toBe(true);
     expect(
       resolved?.source,
-      driver.describe('connection-packs.md §Manifest clause 6', 'the installed pack is the resolution source'),
+      req('openwop.it.connection-provider-resolution.an-installed-pack-resolves-its-provider-id-an-unknown-provider-is-unresolved', 'connection-packs.md §Manifest clause 6', 'the installed pack is the resolution source'),
     ).toBe('pack');
 
     const miss = await driver.post('/v1/host/sample/connection-packs/resolve', {
@@ -91,35 +93,35 @@ describe('connection-provider-resolution (RFC 0095 §B.6/§B.8)', () => {
     const unresolved = miss.json as ResolveResult | undefined;
     expect(
       unresolved?.resolved,
-      driver.describe('connection-packs.md §Manifest clause 6', 'a provider with no installed pack and no built-in MUST NOT resolve'),
+      req('openwop.it.connection-provider-resolution.an-installed-pack-resolves-its-provider-id-an-unknown-provider-is-unresolved', 'connection-packs.md §Manifest clause 6', 'a provider with no installed pack and no built-in MUST NOT resolve'),
     ).toBe(false);
     expect(
       unresolved?.code,
-      driver.describe('connection-packs.md §Manifest clause 6', 'the refusal code MUST be connection_provider_unresolved'),
+      req('openwop.it.connection-provider-resolution.an-installed-pack-resolves-its-provider-id-an-unknown-provider-is-unresolved', 'connection-packs.md §Manifest clause 6', 'the refusal code MUST be connection_provider_unresolved'),
     ).toBe('connection_provider_unresolved');
   });
 
   it('an installed prerelease does not outrank a built-in release — conflict surfaces (SemVer §11)', async () => {
-    if (!(await gate())) return;
+    if (!(await gate())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gate())` returned early');
 
     const prerelease = { ...fixture(), version: '1.0.0-alpha.1' };
     prerelease.provider = { ...prerelease.provider, id: 'conformance-prerelease-probe' };
     const install = await driver.post('/v1/host/sample/connection-packs/install', { manifest: prerelease });
-    if (install.status === 404 || install.status === 403) return; // seam unwired — soft-skip
+    if (install.status === 404 || install.status === 403) return softSkip('blocked', 'precondition not met — `install.status === 404 || install.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     expect(
       (install.json as InstallResult | undefined)?.installed,
-      driver.describe('connection-packs.md §Manifest clause 1', 'a prerelease-versioned pack is shape-valid and MUST install'),
+      req('openwop.it.connection-provider-resolution.an-installed-prerelease-does-not-outrank-a-built-in-release-conflict-surfaces-se', 'connection-packs.md §Manifest clause 1', 'a prerelease-versioned pack is shape-valid and MUST install'),
     ).toBe(true);
 
     const res = await driver.post('/v1/host/sample/connection-packs/resolve', {
       provider: 'conformance-prerelease-probe',
       simulateBuiltinVersion: '1.0.0',
     });
-    if (res.status === 404 || res.status === 403) return; // simulate knob unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (simulate knob unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // simulate knob unwired — soft-skip
     const body = res.json as ResolveResult | undefined;
     expect(
       body?.code,
-      driver.describe(
+      req('openwop.it.connection-provider-resolution.an-installed-prerelease-does-not-outrank-a-built-in-release-conflict-surfaces-se', 
         'connection-packs.md §Manifest clause 6',
         'SemVer §11: 1.0.0-alpha.1 < 1.0.0 — the installed pack is NOT greater-or-equal, so the host MUST surface connection_provider_conflict rather than silently choosing',
       ),
@@ -127,16 +129,16 @@ describe('connection-provider-resolution (RFC 0095 §B.6/§B.8)', () => {
   });
 
   it('rejection isolation: one rejected pack never takes down the install path (§B.8)', async () => {
-    if (!(await gate())) return;
+    if (!(await gate())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gate())` returned early');
 
     const leaky = fixture();
     leaky.provider = { ...leaky.provider, id: 'conformance-isolation-probe' };
     (leaky.provider.auth as Record<string, unknown>).clientSecret = 'ghs_conformance_canary';
     const bad = await driver.post('/v1/host/sample/connection-packs/install', { manifest: leaky });
-    if (bad.status === 404 || bad.status === 403) return; // seam unwired — soft-skip
+    if (bad.status === 404 || bad.status === 403) return softSkip('blocked', 'precondition not met — `bad.status === 404 || bad.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     expect(
       (bad.json as InstallResult | undefined)?.installed,
-      driver.describe('connection-packs.md §Manifest clause 2', 'the credential-carrying manifest MUST NOT install'),
+      req('openwop.it.connection-provider-resolution.rejection-isolation-one-rejected-pack-never-takes-down-the-install-path-b-8', 'connection-packs.md §Manifest clause 2', 'the credential-carrying manifest MUST NOT install'),
     ).toBe(false);
 
     const good = { ...fixture() };
@@ -144,7 +146,7 @@ describe('connection-provider-resolution (RFC 0095 §B.6/§B.8)', () => {
     const after = await driver.post('/v1/host/sample/connection-packs/install', { manifest: good });
     expect(
       (after.json as InstallResult | undefined)?.installed,
-      driver.describe(
+      req('openwop.it.connection-provider-resolution.rejection-isolation-one-rejected-pack-never-takes-down-the-install-path-b-8', 
         'connection-packs.md §Manifest clause 8',
         'a rejected pack means NOT INSTALLED — nothing more; a subsequent valid install MUST succeed',
       ),

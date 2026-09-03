@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/media.image.schema.json",
+  "title": "MediaImagePayload",
+  "description": "Payload for the OPTIONAL `media.image` AI Envelope kind (RFC 0055 §C). Carries a host-served URL reference (preferred) or, below the host's `aiProviders.maxInlineMediaBytes` cap, inline base64 image data. Pairs with the `meta.rendering.display: \"image\"` hint. This is an advertised, opt-in kind — not one of the four MUST-recognize universal kinds; a host that emits no `media.*` kind is unaffected.",
+  "type": "object",
+  "required": ["bytes"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tenant-scoped, non-guessable host-served asset URL (RFC 0055 §C rule 1 — signed-token / capability-token discipline). SHOULD be used when the asset exceeds `capabilities.aiProviders.maxInlineMediaBytes`. Enforced by the `media-asset-url-tenant-scoped` SECURITY invariant."
+    },
+    "base64": {
+      "type": "string",
+      "description": "Inline base64-encoded image, permitted only when the asset is at or below `aiProviders.maxInlineMediaBytes` (default 256 KiB, RFC 0055 §C rule 2). Above the cap the host MUST use `url`. Mutually exclusive with `url` in practice — a single envelope carries one or the other."
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Byte size of the asset. Required so a consumer can decide whether to inline-render or defer-fetch, and so the cap rule is checkable."
+    },
+    "mimeType": {
+      "type": "string",
+      "description": "IANA media type (e.g. `image/png`, `image/jpeg`, `image/webp`). SHOULD match `meta.rendering.mimeType`."
+    },
+    "alt": {
+      "type": "string",
+      "description": "Text alternative for accessibility (RFC 0055 §B). SHOULD be present so a consumer can describe the image to assistive technology; mirrors `meta.rendering.alt` when the producer also sets the rendering hint."
+    }
+  },
+  "additionalProperties": false
+}

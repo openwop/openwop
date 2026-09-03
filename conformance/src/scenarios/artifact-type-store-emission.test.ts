@@ -43,13 +43,10 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 import { readArtifactTypesCap } from '../lib/artifactTypes.js';
 import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-artifact-type-store';
-
-/** Server-free assertion message helper — leg A must not touch `driver`, whose
- *  describe() loads env and would make a "server-free" leg fail on a missing
- *  OPENWOP_BASE_URL instead of on its assertion (a vacuous red). */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 
 describe('artifact-type-store-emission: the payload fact is pinned always-on (RFC 0142 leg A)', () => {
   it('artifactCreated REQUIRES artifactType — the fact the RFC 0138 replay correction rests on', () => {
@@ -57,17 +54,17 @@ describe('artifact-type-store-emission: the payload fact is pinned always-on (RF
       readFileSync(join(SCHEMAS_DIR, 'run-event-payloads.schema.json'), 'utf8'),
     ) as { $defs?: Record<string, { properties?: Record<string, unknown>; required?: string[] }> };
     const ac = schema.$defs?.['artifactCreated'];
-    expect(ac !== undefined, 'run-event-payloads.schema.json — $defs/artifactCreated exists').toBe(true);
+    expect(ac !== undefined, req('openwop.it.artifact-type-store-emission.artifactcreated-requires-artifacttype-the-fact-the-rfc-0138-replay-correction-re', 'RFC 0138', 'run-event-payloads.schema.json — $defs/artifactCreated exists')).toBe(true);
     expect(
       ac?.required?.includes('artifactType'),
-      why(
+      req('openwop.it.artifact-type-store-emission.artifactcreated-requires-artifacttype-the-fact-the-rfc-0138-replay-correction-re', 
         'run-event-payloads.schema.json §artifactCreated',
         'artifactType is REQUIRED on the artifact.created payload — artifactTypeId values ride in the fixed event log, which is why identifier migrations MUST NOT rewrite history (RFC 0141) and why this fact must be pinned by an always-on leg rather than a gated one (RFC 0138 G8)',
       ),
     ).toBe(true);
     expect(
       Object.keys(ac?.properties ?? {}).includes('registered'),
-      why('run-event-payloads.schema.json §artifactCreated', 'the registered flag the store-tier validation promise is reported through is present'),
+      req('openwop.it.artifact-type-store-emission.artifactcreated-requires-artifacttype-the-fact-the-rfc-0138-replay-correction-re', 'run-event-payloads.schema.json §artifactCreated', 'the registered flag the store-tier validation promise is reported through is present'),
     ).toBe(true);
   });
 });
@@ -83,21 +80,21 @@ describe('artifact-type-store-emission: what `store: true` claims is stated norm
   it.skipIf(V1_DIR === null)('the claim is quantified over artifacts of the type, not over the host\'s paths', () => {
     expect(
       /\*\*every\*\* path by which the host persists an artifact carrying that registered `artifactTypeId` MUST emit `artifact\.created`/.test(doc),
-      why(
+      req('openwop.it.artifact-type-store-emission.the-claim-is-quantified-over-artifacts-of-the-type-not-over-the-host-s-paths', 
         'artifact-type-packs.md §"Sub-flags"',
         'EVERY production path emits, not at least one — the permissive reading lets a host wire the leg-B seam through its single emitting path and pass while most of its production stays silent',
       ),
     ).toBe(true);
     expect(
       /MUST NOT advertise `store: true` for that type/.test(doc),
-      why('artifact-type-packs.md §"Sub-flags"', 'a host with a silent persistence path for the type is forbidden from advertising it, rather than merely discouraged'),
+      req('openwop.it.artifact-type-store-emission.the-claim-is-quantified-over-artifacts-of-the-type-not-over-the-host-s-paths', 'artifact-type-packs.md §"Sub-flags"', 'a host with a silent persistence path for the type is forbidden from advertising it, rather than merely discouraged'),
     ).toBe(true);
   });
 
   it.skipIf(V1_DIR === null)('the obligation is scoped to REGISTERED types, so the unregistered tier does not falsify an advert', () => {
     expect(
       /a path that persists only unregistered artifacts[^.]*is outside this facet and does not falsify the advert/.test(doc),
-      why(
+      req('openwop.it.artifact-type-store-emission.the-obligation-is-scoped-to-registered-types-so-the-unregistered-tier-does-not-f', 
         'artifact-type-packs.md §"Sub-flags"',
         'the narrowing is normative, not a courtesy — without it a host holds back an honest advert on account of a path the facet never bound',
       ),
@@ -107,7 +104,7 @@ describe('artifact-type-store-emission: what `store: true` claims is stated norm
   it.skipIf(V1_DIR === null)('per-type is named as the instrument, including the case it cannot rescue', () => {
     expect(
       /cannot be advertised `store: true` at all until one of those two facts changes/.test(doc),
-      why(
+      req('openwop.it.artifact-type-store-emission.per-type-is-named-as-the-instrument-including-the-case-it-cannot-rescue', 
         'artifact-type-packs.md §"Sub-flags"',
         'a single type produced through both an emitting and a non-emitting path is not advertisable — per-type resolves a heterogeneous fleet, not a heterogeneous type',
       ),
@@ -144,7 +141,7 @@ describe('artifact-type-store-emission: a store:true host MUST emit, witnessed f
     const cap = await readArtifactTypesCap();
     // `store` is OPTIONAL. A host that does not advertise it is INAPPLICABLE —
     // not gated: strict mode must not coerce hosts into an advertisement.
-    if (!storeAdvertised(cap)) return; // scenario inapplicable
+    if (!storeAdvertised(cap)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!storeAdvertised(cap)` returned early (scenario inapplicable)'); // scenario inapplicable
 
     const requested = storeTypeId(cap) ?? 'vendor.conformance.note';
     const started = await driver.post('/v1/host/sample/artifacttypes/runproduce', {
@@ -155,7 +152,7 @@ describe('artifact-type-store-emission: a store:true host MUST emit, witnessed f
 
     expect(
       started.status >= 200 && started.status < 300,
-      driver.describe('coverage.md §"Open seams"', 'runproduce starts a real run producing one artifact of the requested registered type'),
+      req('openwop.it.artifact-type-store-emission.artifact-created-appears-in-the-event-log-with-the-bound-artifacttype-and-regist', 'coverage.md §"Open seams"', 'runproduce starts a real run producing one artifact of the requested registered type'),
     ).toBe(true);
     const runId = (started.json as Record<string, unknown> | undefined)?.['runId'];
     if (!behaviorGatePresent(PROFILE, typeof runId === 'string' ? runId : null)) return;
@@ -163,14 +160,14 @@ describe('artifact-type-store-emission: a store:true host MUST emit, witnessed f
     const events = await driver.get(`/v1/runs/${runId}/events/poll?timeout=5`);
     expect(
       events.status,
-      driver.describe('run-events surface', 'the run event log is readable over the standard poll endpoint — the same wire any consumer uses'),
+      req('openwop.it.artifact-type-store-emission.artifact-created-appears-in-the-event-log-with-the-bound-artifacttype-and-regist', 'run-events surface', 'the run event log is readable over the standard poll endpoint — the same wire any consumer uses'),
     ).toBe(200);
     const list = ((events.json as Record<string, unknown>)?.['events'] ?? []) as Array<Record<string, unknown>>;
     const created = list.filter((e) => e['type'] === 'artifact.created');
 
     expect(
       created.length > 0,
-      driver.describe(
+      req('openwop.it.artifact-type-store-emission.artifact-created-appears-in-the-event-log-with-the-bound-artifacttype-and-regist', 
         'artifact-type-packs.md §"Host capability", store row',
         'a host advertising store:true MUST emit artifact.created — persistence without emission is the exact posture the advertisement forbids',
       ),
@@ -179,14 +176,14 @@ describe('artifact-type-store-emission: a store:true host MUST emit, witnessed f
     const payload = (created[0]?.['payload'] ?? created[0]?.['data'] ?? {}) as Record<string, unknown>;
     expect(
       payload['artifactType'],
-      driver.describe(
+      req('openwop.it.artifact-type-store-emission.artifact-created-appears-in-the-event-log-with-the-bound-artifacttype-and-regist', 
         'run-event-payloads.schema.json §artifactCreated',
         'the emitted artifactType is the bound id — an event present but carrying the wrong type would let a mis-wired emitter pass a presence-only check',
       ),
     ).toBe(requested);
     expect(
       payload['registered'],
-      driver.describe(
+      req('openwop.it.artifact-type-store-emission.artifact-created-appears-in-the-event-log-with-the-bound-artifacttype-and-regist', 
         'artifact-type-packs.md §"Binding the existing artifact surfaces"',
         'a store-tier host validates before emitting and reports registered:true for a registered type',
       ),

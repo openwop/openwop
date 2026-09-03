@@ -48,8 +48,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { driver } from '../lib/driver.js';
-
-const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
+import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 const WORKFLOW_DEF = join(SCHEMAS_DIR, 'workflow-definition.schema.json');
 // S38 (2026-08-17): `spec/` is NOT in the published package (`files`), so a path built
 // from SCHEMAS_DIR/../spec ENOENTs for every npm consumer — five always-on legs reddened
@@ -83,11 +83,11 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     const wv = defs.WorkflowVariable;
     const props = wv.properties as Record<string, Record<string, unknown>>;
 
-    expect(props.format, cite('§WorkflowVariable', '`format` is declared')).toBeDefined();
-    expect(props.format.type, cite('§WorkflowVariable', '`format` is a string')).toBe('string');
+    expect(props.format, req('openwop.it.workflow-variable-format.a1-workflowvariable-declares-format-as-an-advisory-string', '§WorkflowVariable', '`format` is declared')).toBeDefined();
+    expect(props.format.type, req('openwop.it.workflow-variable-format.a1-workflowvariable-declares-format-as-an-advisory-string', '§WorkflowVariable', '`format` is a string')).toBe('string');
     expect(
       (wv.required as string[] | undefined)?.includes('format') ?? false,
-      cite('§WorkflowVariable', '`format` is OPTIONAL — additive per COMPATIBILITY.md §2.1'),
+      req('openwop.it.workflow-variable-format.a1-workflowvariable-declares-format-as-an-advisory-string', '§WorkflowVariable', '`format` is OPTIONAL — additive per COMPATIBILITY.md §2.1'),
     ).toBe(false);
   });
 
@@ -98,7 +98,7 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     const recognised = { name: 'recipientEmail', type: 'string', format: 'email' };
     expect(
       validate(recognised),
-      cite('§WorkflowVariable', `recognised format validates: ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.workflow-variable-format.a2-an-unrecognised-format-validates-requirement-2-unknown-plain-text-never-an-er', '§WorkflowVariable', `recognised format validates: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
 
     // OUTSIDE the table. This is the whole point: the property must NOT be an enum, or a
@@ -107,7 +107,7 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     const unrecognised = { name: 'ipAddress', type: 'string', format: 'vendor.acme.ipv4-or-hostname' };
     expect(
       validate(unrecognised),
-      cite('§WorkflowVariable', `unrecognised format validates (RFC 0136 req 2): ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.workflow-variable-format.a2-an-unrecognised-format-validates-requirement-2-unknown-plain-text-never-an-er', '§WorkflowVariable', `unrecognised format validates (RFC 0136 req 2): ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -116,21 +116,21 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     const both = { name: 'notifyAddress', type: 'string', format: 'email', sensitive: true };
     expect(
       validate(both),
-      cite('§WorkflowVariable', `format + sensitive compose: ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.workflow-variable-format.a3-format-and-sensitive-compose-on-one-variable-no-interaction', '§WorkflowVariable', `format + sensitive compose: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
   it.skipIf(CHAIN_DOC === null)('A4 — chain-pack spec documents deferred-mode `format` propagation as mode-scoped', () => {
     const doc = readFileSync(CHAIN_DOC as string, 'utf8');
     const step1 = doc.slice(doc.indexOf('Materialize parameters as variables'));
-    expect(step1.length > 0, cite('§Deferred-parameter expansion', 'step 1 present')).toBe(true);
+    expect(step1.length > 0, req('openwop.it.workflow-variable-format.a4-chain-pack-spec-documents-deferred-mode-format-propagation-as-mode-scoped', '§Deferred-parameter expansion', 'step 1 present')).toBe(true);
     expect(
       /`format`/.test(step1.slice(0, 1400)),
-      cite('§Deferred-parameter expansion', 'step 1 copy-list names `format`'),
+      req('openwop.it.workflow-variable-format.a4-chain-pack-spec-documents-deferred-mode-format-propagation-as-mode-scoped', '§Deferred-parameter expansion', 'step 1 copy-list names `format`'),
     ).toBe(true);
     expect(
       /this mode only|mode only/i.test(step1.slice(0, 1400)),
-      cite('§Deferred-parameter expansion', 'the `format` MUST is scoped to deferred mode, not universal'),
+      req('openwop.it.workflow-variable-format.a4-chain-pack-spec-documents-deferred-mode-format-propagation-as-mode-scoped', '§Deferred-parameter expansion', 'the `format` MUST is scoped to deferred mode, not universal'),
     ).toBe(true);
   });
 
@@ -138,7 +138,7 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     const rfc = readFileSync(RFC_DOC as string, 'utf8');
     expect(
       /configurableSchema/.test(rfc),
-      cite('RFC 0136', 'names the configurableSchema propagation path'),
+      req('openwop.it.workflow-variable-format.a5-the-rfc-forbids-format-participating-in-a-configurable-validation-decision', 'RFC 0136', 'names the configurableSchema propagation path'),
     ).toBe(true);
     // The trap: run-options.md §1 makes validating `configurable` against
     // `configurableSchema` a MUST with `validation_error` on failure. A format-asserting
@@ -147,7 +147,7 @@ describe('workflow-variable-format §A: corpus (RFC 0136, always-on)', () => {
     // closes it: annotation permitted, assertion forbidden.
     expect(
       /requirement 3[\s\S]{0,600}(back door|surface-independent)/i.test(rfc),
-      cite('RFC 0136 req 8', 'states requirement 3 is surface-independent'),
+      req('openwop.it.workflow-variable-format.a5-the-rfc-forbids-format-participating-in-a-configurable-validation-decision', 'RFC 0136 req 8', 'states requirement 3 is surface-independent'),
     ).toBe(true);
   });
 });
@@ -171,7 +171,7 @@ describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gat
   }
 
   it('B1 — deferred expansion mints `format` onto the WorkflowVariable: string copied (req 7), unknown copied (req 2), non-string omits it (req 1)', async () => {
-    if (!(await deferredParamsGateOpen())) return;
+    if (!(await deferredParamsGateOpen())) return softSkip('blocked', 'precondition not met — `!(await deferredParamsGateOpen())` returned early (seam, prior step, or fixture unavailable)');
 
     // Drive the RFC 0124 deferred-expand seam with a chain whose parameters exercise all
     // three propagation rules in one expansion; assert the minted variables[] carry (or omit)
@@ -190,15 +190,15 @@ describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gat
     });
     // A host advertising deferredParameters but not yet serving the variables[]-returning
     // seam extension soft-skips (404), as does a host with the seam disabled in this boot.
-    if (res.status === 404) return;
-    expect(res.status, cite('§Deferred-parameter expansion', 'the deferred-expand seam returns 200')).toBe(200);
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (A host advertising deferredParameters but not yet serving the variables[]-returning seam extension soft-skips (404), as does a host with the seam disabled in…');
+    expect(res.status, req('openwop.it.workflow-variable-format.b1-deferred-expansion-mints-format-onto-the-workflowvariable-string-copied-req-7', '§Deferred-parameter expansion', 'the deferred-expand seam returns 200')).toBe(200);
     const variables = (res.json as { variables?: Array<{ name: string; type?: string; format?: string }> }).variables;
-    if (!Array.isArray(variables)) return; // seam present but not returning variables[] yet — soft-skip
+    if (!Array.isArray(variables)) return softSkip('blocked', 'precondition not met — `!Array.isArray(variables)` returned early (seam present but not returning variables[] yet — soft-skip) (seam, prior step, or fixture unavailable)'); // seam present but not returning variables[] yet — soft-skip
     const fmt = (n: string): string | undefined => variables.find((v) => v.name === n)?.format;
 
-    expect(fmt('email'), cite('§WorkflowVariable', 'req 7: a string param\'s recognised `format` is minted verbatim')).toBe('email');
-    expect(fmt('note'), cite('§WorkflowVariable', 'req 2: an UNRECOGNISED `format` is minted verbatim, never dropped')).toBe('vendor.acme.freeform');
-    expect(fmt('count'), cite('§WorkflowVariable', 'req 1: a NON-STRING param mints no `format`')).toBeUndefined();
+    expect(fmt('email'), req('openwop.it.workflow-variable-format.b1-deferred-expansion-mints-format-onto-the-workflowvariable-string-copied-req-7', '§WorkflowVariable', 'req 7: a string param\'s recognised `format` is minted verbatim')).toBe('email');
+    expect(fmt('note'), req('openwop.it.workflow-variable-format.b1-deferred-expansion-mints-format-onto-the-workflowvariable-string-copied-req-7', '§WorkflowVariable', 'req 2: an UNRECOGNISED `format` is minted verbatim, never dropped')).toBe('vendor.acme.freeform');
+    expect(fmt('count'), req('openwop.it.workflow-variable-format.b1-deferred-expansion-mints-format-onto-the-workflowvariable-string-copied-req-7', '§WorkflowVariable', 'req 1: a NON-STRING param mints no `format`')).toBeUndefined();
   });
 
   const B2_FIXTURE = 'conformance-workflow-variable-format-advisory';
@@ -210,13 +210,13 @@ describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gat
     // endpoint, since registration is "POST /v1/workflows or equivalent" (capabilities.md)
     // and the create path is not a mandated portable surface. Gate on fixture advertisement:
     // req 3 is universal (not deferred-mode-specific), so it rides the host loading the fixture.
-    if (!isFixtureAdvertised(B2_FIXTURE)) return;
+    if (!isFixtureAdvertised(B2_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(B2_FIXTURE)` returned early (Portable pre-registered-workflow pattern (cf. agentPackHandoffSchemaValidation): the fixture `conformance-wor…');
 
     const run = await driver.post('/v1/runs', { workflowId: B2_FIXTURE });
-    if (run.status === 404) return; // no run surface — soft-skip
+    if (run.status === 404) return softSkip('blocked', 'precondition not met — `run.status === 404` returned early (no run surface — soft-skip) (seam, prior step, or fixture unavailable)'); // no run surface — soft-skip
     expect(
       [200, 201],
-      cite('POST /v1/runs', 'req 3: a run whose variable value violates its advisory `format` is accepted, not rejected'),
+      req('openwop.it.workflow-variable-format.b2-a-run-whose-variable-value-does-not-match-its-declared-format-is-accepted-and', 'POST /v1/runs', 'req 3: a run whose variable value violates its advisory `format` is accepted, not rejected'),
     ).toContain(run.status);
     const runId = (run.json as { runId: string }).runId;
 
@@ -232,7 +232,7 @@ describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gat
     }
     expect(
       snap?.status,
-      cite('§WorkflowVariable', 'req 3: the run COMPLETES — `format` is advisory, a value mismatch MUST NOT fail the run'),
+      req('openwop.it.workflow-variable-format.b2-a-run-whose-variable-value-does-not-match-its-declared-format-is-accepted-and', '§WorkflowVariable', 'req 3: the run COMPLETES — `format` is advisory, a value mismatch MUST NOT fail the run'),
     ).toBe('completed');
   });
 });

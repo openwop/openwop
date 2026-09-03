@@ -23,6 +23,7 @@ on:
     tags:
       - 'v*'
       - 'openwop-conformance/v*'
+      - 'openwop-spec-artifacts/v*'
 
 jobs:
   validate-tag:
@@ -38,14 +39,34 @@ jobs:
             openwop-conformance/v[0-9]*.[0-9]*.[0-9]*-*)
               echo "tag '$tag' matches expected SemVer pattern"
               ;;
+            openwop-spec-artifacts/v[0-9]*.[0-9]*.[0-9]*|\
+            openwop-spec-artifacts/v[0-9]*.[0-9]*.[0-9]*-*)
+              echo "tag '$tag' matches expected SemVer pattern (spec-artifacts)"
+              ;;
             *)
               echo "::error::tag '$tag' does not match any expected SemVer pattern"
               echo "Expected one of:"
               echo "  vX.Y.Z[-prerelease]                       (corpus-aligned release)"
               echo "  openwop-conformance/vX.Y.Z[-prerelease]       (conformance only)"
+              echo "  openwop-spec-artifacts/vX.Y.Z[-prerelease]    (spec-artifacts only)"
               exit 1
               ;;
           esac
+      # v2 charter Phase 3 (P3-E): releases come from `main` (2.x) or `release/1.x`
+      # (1.x fixes, RFC 0168 §D.3). A tag reachable from neither is refused —
+      # the identity check compares the tag's tree to npm, but nothing else
+      # proves the tag is on a release line.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Validate tag ancestry (main or release/1.x)
+        run: |
+          git fetch --no-tags origin main release/1.x 2>/dev/null || git fetch --no-tags origin main
+          ok=0
+          for line in origin/main origin/release/1.x; do
+            if git rev-parse --verify -q "$line" >/dev/null && git merge-base --is-ancestor "$GITHUB_SHA" "$line"; then ok=1; echo "tag is on $line"; fi
+          done
+          [ "$ok" = 1 ] || { echo "::error::tag commit $GITHUB_SHA is on neither main nor release/1.x"; exit 1; }
 
   preflight:
     needs: validate-tag
@@ -142,5 +163,31 @@ jobs:
             # published == this tree. Genuinely nothing to do.
             echo "✓ $PKG@$VER is on npm and byte-identical to this tree — nothing to publish."
           else
-            npm publish --access public --provenance
+            npm publish --access public --provenance $(case "$VER" in *-*) echo "--tag next";; esac)
           fi
+
+  # Suite 2.0.0 (RFC 0168 §D.2): the contract package. Published from the same
+  # corpus tag as the suite (a `v*` tag publishes both; `openwop-spec-artifacts/v*`
+  # publishes only this). Pre-release versions go to the `next` dist-tag.
+  publish-spec-artifacts:
+    needs: preflight
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/openwop-spec-artifacts/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - run: node scripts/generate-spec-artifacts.mjs --check
+      - run: node scripts/check-published-suite-identity.mjs --require-network --package spec-artifacts
+      - name: Publish @openwop/spec-artifacts
+        run: |
+          cd spec-artifacts
+          PKG=$(node -p "require('./package.json').name"); VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then echo "$PKG@$VER already published and byte-identical (identity step passed)"; exit 0; fi
+          npm publish --access public --provenance $(case "$VER" in *-*) echo "--tag next";; esac)

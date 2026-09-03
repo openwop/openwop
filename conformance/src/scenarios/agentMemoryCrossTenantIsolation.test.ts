@@ -20,6 +20,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-memory-cross-tenant';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
@@ -50,13 +51,13 @@ describe.skipIf(SKIP)('agentMemoryCrossTenantIsolation: CTI-1 invariant', () => 
       const ownerProbe = vars.ownerProbe;
       expect(
         Array.isArray(ownerProbe) && ownerProbe.length > 0,
-        driver.describe('agent-memory.md §CTI-1 / fixtures.md conformance-agent-memory-cross-tenant', 'ownerProbe MUST be a NON-EMPTY array — the run\'s own tenant can read the entry it just wrote (positive control; an unset or empty ownerProbe means the probe never ran)'),
+        req('openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary', 'agent-memory.md §CTI-1 / fixtures.md conformance-agent-memory-cross-tenant', 'ownerProbe MUST be a NON-EMPTY array — the run\'s own tenant can read the entry it just wrote (positive control; an unset or empty ownerProbe means the probe never ran)'),
       ).toBe(true);
       const ownerEntryId = vars.ownerEntryId;
       if (typeof ownerEntryId === 'string' && ownerEntryId.length > 0) {
         expect(
           (ownerProbe as Array<{ id?: unknown }>).some((e) => e && typeof e === 'object' && e.id === ownerEntryId),
-          driver.describe('agent-memory.md §CTI-1', `ownerProbe MUST contain the entry the host reports writing (ownerEntryId=${ownerEntryId})`),
+          req('openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary', 'agent-memory.md §CTI-1', `ownerProbe MUST contain the entry the host reports writing (ownerEntryId=${ownerEntryId})`),
         ).toBe(true);
       }
 
@@ -65,12 +66,12 @@ describe.skipIf(SKIP)('agentMemoryCrossTenantIsolation: CTI-1 invariant', () => 
       const crossTenantResult = vars.crossTenantProbe;
       expect(
         crossTenantResult !== undefined,
-        driver.describe('agent-memory.md §CTI-1', 'crossTenantProbe MUST be set — an unset variable means the cross-tenant probe was never issued, which proves nothing'),
+        req('openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary', 'agent-memory.md §CTI-1', 'crossTenantProbe MUST be set — an unset variable means the cross-tenant probe was never issued, which proves nothing'),
       ).toBe(true);
       if (Array.isArray(crossTenantResult)) {
-        expect(crossTenantResult.length, driver.describe('agent-memory.md §CTI-1', 'a cross-tenant memoryRef probe MUST return [] — no entries of another tenant')).toBe(0);
+        expect(crossTenantResult.length, req('openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary', 'agent-memory.md §CTI-1', 'a cross-tenant memoryRef probe MUST return [] — no entries of another tenant')).toBe(0);
       } else {
-        expect(crossTenantResult, driver.describe('agent-memory.md §CTI-1', 'a non-array cross-tenant probe result MUST be null')).toBeNull();
+        expect(crossTenantResult, req('openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary', 'agent-memory.md §CTI-1', 'a non-array cross-tenant probe result MUST be null')).toBeNull();
       }
     }
   });

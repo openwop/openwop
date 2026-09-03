@@ -53,10 +53,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isSafeFetchLiveAuditAdvertised, safeFetchViaRun } from '../lib/safeFetch.js';
 import { queryTestEvents } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-safefetch-live-audit';
 const CITE = 'host-capabilities.md §host.http';
@@ -78,7 +79,7 @@ const FETCH_URL = 'https://example.com/';
  * `false` (caller treats as host-pending soft-skip) only when the event-log
  * query seam is unavailable; otherwise asserts and returns `true`.
  */
-async function assertDurableHttpPair(runId: string, label: string): Promise<boolean> {
+async function assertDurableHttpPair(requirementId: string, runId: string, label: string): Promise<boolean> {
   const calledQ = await queryTestEvents(runId, { type: 'agent.toolCalled' });
   const returnedQ = await queryTestEvents(runId, { type: 'agent.toolReturned' });
   if (!calledQ.ok || !returnedQ.ok) {
@@ -91,7 +92,7 @@ async function assertDurableHttpPair(runId: string, label: string): Promise<bool
   const httpCall = calledQ.events.find((e) => (e.payload as { transport?: string }).transport === 'http');
   expect(
     httpCall !== undefined,
-    driver.describe(
+    req(requirementId, 
       CITE,
       `(${label}) when toolHooks.prePostEvents + safeFetch are both advertised, a production ctx.http.safeFetch call MUST persist an agent.toolCalled with transport:"http" to the durable run event log (not just the seam echo), for EVERY invocation incl. blocked ones`,
     ),
@@ -101,14 +102,14 @@ async function assertDurableHttpPair(runId: string, label: string): Promise<bool
   const callId = (httpCall.payload as { callId?: string }).callId;
   expect(
     typeof callId === 'string' && callId.length > 0,
-    driver.describe(CITE, `(${label}) the persisted agent.toolCalled MUST carry the required callId (run-event-payloads.schema.json §agentToolCalled)`),
+    req(requirementId, CITE, `(${label}) the persisted agent.toolCalled MUST carry the required callId (run-event-payloads.schema.json §agentToolCalled)`),
   ).toBe(true);
 
   // The paired agent.toolReturned — matched by the required callId (RFC 0002 §B pairing).
   const paired = returnedQ.events.find((e) => (e.payload as { callId?: string }).callId === callId);
   expect(
     paired !== undefined,
-    driver.describe(CITE, `(${label}) the agent.toolCalled MUST be followed by a callId-paired agent.toolReturned in the durable log (no quiet bypass)`),
+    req(requirementId, CITE, `(${label}) the agent.toolCalled MUST be followed by a callId-paired agent.toolReturned in the durable log (no quiet bypass)`),
   ).toBe(true);
 
   // Stricter, when the host surfaces causation: RFC 0002 §B says
@@ -117,7 +118,7 @@ async function assertDurableHttpPair(runId: string, label: string): Promise<bool
   if (paired && typeof paired.causationId === 'string') {
     expect(
       paired.causationId,
-      driver.describe('RFC 0002 §B', 'agent.toolReturned.causationId MUST equal the paired agent.toolCalled.eventId when surfaced'),
+      req(requirementId, 'RFC 0002 §B', 'agent.toolReturned.causationId MUST equal the paired agent.toolCalled.eventId when surfaced'),
     ).toBe(httpCall.eventId);
   }
   return true;
@@ -135,7 +136,7 @@ describe('safefetch-live-audit (RFC 0076 §B / RFC 0064 §B — production path,
     if (run === null) {
       // eslint-disable-next-line no-console
       console.warn(`[${PROFILE}] safe-fetch-run seam unwired (404); host-pending — skipping`);
-      return;
+      return softSkip('blocked', 'precondition not met — `run === null` returned early ([…] safe-fetch-run seam unwired (404); host-pending — skipping) (seam, prior step, or fixture unavailable)');
     }
 
     // The metadata IP MUST be refused by a conformant SSRF guard
@@ -144,9 +145,9 @@ describe('safefetch-live-audit (RFC 0076 §B / RFC 0064 §B — production path,
     // exist — this is the egress-independent floor that makes the bar non-vacuous.
     expect(
       typeof run.runId === 'string' && (run.runId as string).length > 0,
-      driver.describe(CITE, 'the safe-fetch-run seam MUST return the runId of the real run it executed the safeFetch in'),
+      req('openwop.it.safefetch-live-audit.a-blocked-real-run-safefetch-emits-the-durable-agent-toolcalled-agent-toolreturn', CITE, 'the safe-fetch-run seam MUST return the runId of the real run it executed the safeFetch in'),
     ).toBe(true);
-    await assertDurableHttpPair(run.runId as string, 'blocked');
+    await assertDurableHttpPair('openwop.it.safefetch-live-audit.a-blocked-real-run-safefetch-emits-the-durable-agent-toolcalled-agent-toolreturn', run.runId as string, 'blocked');
   });
 
   it('a FETCHED real-run safeFetch also emits the durable pair (success-path coverage — skipped without public egress)', async () => {
@@ -154,7 +155,7 @@ describe('safefetch-live-audit (RFC 0076 §B / RFC 0064 §B — production path,
     if (!behaviorGate(PROFILE, advertised)) return;
 
     const run = await safeFetchViaRun({ url: FETCH_URL });
-    if (run === null) return; // seam unwired — already warned by the floor test
+    if (run === null) return softSkip('blocked', 'precondition not met — `run === null` returned early (seam unwired — already warned by the floor test) (seam, prior step, or fixture unavailable)'); // seam unwired — already warned by the floor test
 
     if (run.outcome !== 'fetched') {
       // No public egress in this environment — the blocked-path floor already
@@ -164,12 +165,12 @@ describe('safefetch-live-audit (RFC 0076 §B / RFC 0064 §B — production path,
       console.warn(
         `[${PROFILE}] ${FETCH_URL} did not fetch (outcome=${run.outcome ?? 'n/a'}); no public egress — success-path coverage skipped (the blocked floor covers emission)`,
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `run.outcome !== \'fetched\'` returned early ([…] … did not fetch (outcome=…); no public egress — success-path coverage skipped (the blocked floor covers emission)) (seam, prior step, or fixture u…');
     }
     expect(
       typeof run.runId === 'string' && (run.runId as string).length > 0,
-      driver.describe(CITE, 'the safe-fetch-run seam MUST return the runId of the real run it executed the fetch in'),
+      req('openwop.it.safefetch-live-audit.a-fetched-real-run-safefetch-also-emits-the-durable-pair-success-path-coverage-s', CITE, 'the safe-fetch-run seam MUST return the runId of the real run it executed the fetch in'),
     ).toBe(true);
-    await assertDurableHttpPair(run.runId as string, 'fetched');
+    await assertDurableHttpPair('openwop.it.safefetch-live-audit.a-fetched-real-run-safefetch-also-emits-the-durable-pair-success-path-coverage-s', run.runId as string, 'fetched');
   });
 });

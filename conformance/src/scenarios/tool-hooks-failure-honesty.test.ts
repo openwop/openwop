@@ -17,8 +17,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('tool-hooks-failure-honesty (RFC 0064 §F)', () => {
   it('a failing tool yields a populated error, never a bare success', async () => {
@@ -42,20 +42,20 @@ describe('tool-hooks-failure-honesty (RFC 0064 §F)', () => {
     // §F: the failure carries a populated `_errorObject { code, message }`.
     expect(
       err !== undefined && typeof err['code'] === 'string' && (err['code'] as string).length > 0 && typeof err['message'] === 'string',
-      driver.describe('RFC 0064 §F', 'a failed tool MUST populate error {code, message} on agent.toolReturned'),
+      req('openwop.it.tool-hooks-failure-honesty.a-failing-tool-yields-a-populated-error-never-a-bare-success', 'RFC 0064 §F', 'a failed tool MUST populate error {code, message} on agent.toolReturned'),
     ).toBe(true);
 
     // §F: `error` and `outcome` are mutually exclusive.
     expect(
       returned['outcome'] === undefined,
-      driver.describe('RFC 0064 §F', 'error and outcome are mutually exclusive on a failed tool-return'),
+      req('openwop.it.tool-hooks-failure-honesty.a-failing-tool-yields-a-populated-error-never-a-bare-success', 'RFC 0064 §F', 'error and outcome are mutually exclusive on a failed tool-return'),
     ).toBe(true);
 
     // §F: a host advertising `prePostEvents` MUST also set `status: 'error'`.
     if (cap['prePostEvents'] === true) {
       expect(
         returned['status'] === 'error',
-        driver.describe('RFC 0064 §F', 'a host advertising prePostEvents MUST set status:"error" on a tool failure'),
+        req('openwop.it.tool-hooks-failure-honesty.a-failing-tool-yields-a-populated-error-never-a-bare-success', 'RFC 0064 §F', 'a host advertising prePostEvents MUST set status:"error" on a tool failure'),
       ).toBe(true);
     }
   });

@@ -332,12 +332,12 @@ function staleStatusFindings(rfcs) {
     {
       what: 'the published-artifacts npm entry',
       anchor: /@openwop\/openwop-conformance`\]\([^)]*\) \(npm[^)]*\)/g,
-      version: /@openwop\/openwop-conformance`\]\([^)]*\) \(npm, \*\*v([0-9][0-9.]*)\*\*\)/g,
+      version: /@openwop\/openwop-conformance`\]\([^)]*\) \(npm, \*\*v([0-9][0-9A-Za-z.-]*)\*\*\)/g, // suite 2.0.0: pre-release identifiers (2.0.0-rc.0) are versions too
     },
     {
       what: 'the "versions independently" prose',
       anchor: /conformance suite versions independently \([^)]*\)/g,
-      version: /conformance suite versions independently \(currently \*\*v([0-9][0-9.]*)\*\*\)/g,
+      version: /conformance suite versions independently \(currently \*\*v([0-9][0-9A-Za-z.-]*)\*\*\)/g,
     },
   ];
   for (const site of suiteSites) {

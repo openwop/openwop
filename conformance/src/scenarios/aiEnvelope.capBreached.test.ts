@@ -42,14 +42,14 @@ describe('aiEnvelope.capBreached: advertisement shape (already required v1)', ()
     const limits = await readLimits();
     expect(
       limits,
-      driver.describe(
+      req('openwop.it.aiEnvelope.capBreached.limits-envelopesperturn-is-a-non-negative-integer', 
         'capabilities.schema.json §limits',
         'limits MUST be present on /.well-known/openwop (required v1)',
       ),
     ).not.toBeNull();
     expect(
       Number.isInteger(limits!.envelopesPerTurn) && limits!.envelopesPerTurn >= 0,
-      driver.describe(
+      req('openwop.it.aiEnvelope.capBreached.limits-envelopesperturn-is-a-non-negative-integer', 
         'capabilities.schema.json §limits.envelopesPerTurn',
         'envelopesPerTurn MUST be a non-negative integer (required v1)',
       ),
@@ -58,10 +58,10 @@ describe('aiEnvelope.capBreached: advertisement shape (already required v1)', ()
 
   it('limits.schemaRounds is a non-negative integer', async () => {
     const limits = await readLimits();
-    if (limits === null) return;
+    if (limits === null) return softSkip('blocked', 'precondition not met — `limits === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       Number.isInteger(limits.schemaRounds) && limits.schemaRounds >= 0,
-      driver.describe(
+      req('openwop.it.aiEnvelope.capBreached.limits-schemarounds-is-a-non-negative-integer', 
         'capabilities.schema.json §limits.schemaRounds',
         'schemaRounds MUST be a non-negative integer (required v1)',
       ),
@@ -70,10 +70,10 @@ describe('aiEnvelope.capBreached: advertisement shape (already required v1)', ()
 
   it('limits.clarificationRounds is a non-negative integer', async () => {
     const limits = await readLimits();
-    if (limits === null) return;
+    if (limits === null) return softSkip('blocked', 'precondition not met — `limits === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       Number.isInteger(limits.clarificationRounds) && limits.clarificationRounds >= 0,
-      driver.describe(
+      req('openwop.it.aiEnvelope.capBreached.limits-clarificationrounds-is-a-non-negative-integer', 
         'capabilities.schema.json §limits.clarificationRounds',
         'clarificationRounds MUST be a non-negative integer (required v1)',
       ),
@@ -101,10 +101,10 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
       },
       { counters: { envelopesPerTurn: { current: 32, cap: 32 } } },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe('ai-envelope.md §"Engine-enforced limits"', 'over-cap envelope MUST be breached'),
+      req('openwop.it.aiEnvelope.capBreached.envelopesperturn-at-cap-status-breached-capkind-envelopes', 'ai-envelope.md §"Engine-enforced limits"', 'over-cap envelope MUST be breached'),
     ).toBe('breached');
     expect(r.body.capKind).toBe('envelopes');
   });
@@ -121,8 +121,8 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
       },
       { counters: { clarificationRounds: { current: 5, cap: 5 } } },
     );
-    if (r.status === 404) return;
-    expect(r.body.status).toBe('breached');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.aiEnvelope.capBreached.clarificationrounds-at-cap-status-breached-capkind-clarification', 'spec/v1/ai-envelope.md', 'clarificationRounds at cap → status: breached { capKind: "clarification" }')).toBe('breached');
     expect(r.body.capKind).toBe('clarification');
   });
 
@@ -138,8 +138,8 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
       },
       { counters: { schemaRounds: { current: 3, cap: 3 } } },
     );
-    if (r.status === 404) return;
-    expect(r.body.status).toBe('breached');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.aiEnvelope.capBreached.schemarounds-at-cap-status-breached-capkind-schema', 'spec/v1/ai-envelope.md', 'schemaRounds at cap → status: breached { capKind: "schema" }')).toBe('breached');
     expect(r.body.capKind).toBe('schema');
   });
 
@@ -155,8 +155,8 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
       },
       { counters: { envelopesPerTurn: { current: 32, cap: 32 } } },
     );
-    if (r.status === 404) return;
-    expect(r.body.reason).toContain('envelopesPerTurn');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.reason, req('openwop.it.aiEnvelope.capBreached.breached-reason-cites-the-limit-and-cap-value', 'spec/v1/ai-envelope.md', 'breached reason cites the limit and cap value')).toContain('envelopesPerTurn');
     expect(r.body.reason).toContain('32');
   });
 });
@@ -167,10 +167,12 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
 // soft-skip on HTTP 404 when the seam isn't exposed.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.capBreached: engine projection via event-log seam (capabilities.md §"cap.breached")', () => {
   it('breached outcome projects to cap.breached { kind: "envelopes" } event with causationId chain', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cap-env-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const correlationId = `${runId}:node-1:turn-0:cap-env`;
     const r = await accept(
@@ -187,14 +189,14 @@ describe('aiEnvelope.capBreached: engine projection via event-log seam (capabili
         projectTo: { runId, nodeId: 'node-1' },
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('breached');
 
     const events = await queryTestEvents(runId, { type: 'cap.breached' });
-    if (!events.ok) return;
+    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       events.events.length,
-      driver.describe('capabilities.md §"Engine-enforced limits and the cap.breached event"', 'breached outcome MUST project to exactly one cap.breached event'),
+      req('openwop.it.aiEnvelope.capBreached.breached-outcome-projects-to-cap-breached-kind-envelopes-event-with-causationid', 'capabilities.md §"Engine-enforced limits and the cap.breached event"', 'breached outcome MUST project to exactly one cap.breached event'),
     ).toBe(1);
     const evt = events.events[0]!;
     expect(evt.payload.kind).toBe('envelopes');
@@ -203,7 +205,7 @@ describe('aiEnvelope.capBreached: engine projection via event-log seam (capabili
   });
 
   it('cap.breached payload includes limit, observed, and nodeId per capabilities.md', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cap-payload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -220,19 +222,19 @@ describe('aiEnvelope.capBreached: engine projection via event-log seam (capabili
       },
     );
     const events = await queryTestEvents(runId, { type: 'cap.breached' });
-    if (!events.ok || events.events.length === 0) return;
+    if (!events.ok || events.events.length === 0) return softSkip('blocked', 'precondition not met — `!events.ok || events.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
     const evt = events.events[0]!;
     expect(evt.payload.kind).toBe('clarification');
     expect(
       typeof evt.payload.limit,
-      driver.describe('capabilities.md §"cap.breached"', 'payload.limit MUST be present as a number'),
+      req('openwop.it.aiEnvelope.capBreached.cap-breached-payload-includes-limit-observed-and-nodeid-per-capabilities-md', 'capabilities.md §"cap.breached"', 'payload.limit MUST be present as a number'),
     ).toBe('number');
     expect(evt.payload.nodeId).toBe('node-2');
     await resetTestSeam();
   });
 
   it('cap.breached MUST be paired with a terminal node.failed transition', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cap-fail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -250,11 +252,11 @@ describe('aiEnvelope.capBreached: engine projection via event-log seam (capabili
     );
     const breached = await queryTestEvents(runId, { type: 'cap.breached' });
     const failed = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!breached.ok || !failed.ok) return;
+    if (!breached.ok || !failed.ok) return softSkip('blocked', 'precondition not met — `!breached.ok || !failed.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(breached.events.length).toBe(1);
     expect(
       failed.events.length,
-      driver.describe('capabilities.md §"cap.breached"', 'cap.breached MUST be paired with a terminal node.failed event'),
+      req('openwop.it.aiEnvelope.capBreached.cap-breached-must-be-paired-with-a-terminal-node-failed-transition', 'capabilities.md §"cap.breached"', 'cap.breached MUST be paired with a terminal node.failed event'),
     ).toBe(1);
     expect((failed.events[0]!.payload.error as { code?: string }).code).toBe('cap_breached');
     await resetTestSeam();

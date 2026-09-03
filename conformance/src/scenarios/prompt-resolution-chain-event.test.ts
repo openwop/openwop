@@ -30,6 +30,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROMPT_FIXTURE_ID = 'conformance-prompt-end-to-end';
 const VALID_LAYERS = new Set([
@@ -48,17 +50,17 @@ async function promptsSupported(): Promise<boolean> {
 
 describe('prompt-resolution-chain-event (black-box): agent.promptResolved carries the precedence record (RFC 0029)', () => {
   it('the production agent.promptResolved event records the full four-layer resolution chain', async () => {
-    if (!(await promptsSupported())) return; // capability not advertised — skip
+    if (!(await promptsSupported())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await promptsSupported())` returned early (capability not advertised — skip)'); // capability not advertised — skip
 
     const create = await driver.post('/v1/runs', { workflowId: PROMPT_FIXTURE_ID });
     if (create.status !== 201) {
       // Fixture not seeded / run not accepted — not a prompt-chain failure.
       // eslint-disable-next-line no-console
       console.warn(`[prompt-resolution-chain-event] POST /v1/runs for ${PROMPT_FIXTURE_ID} returned ${create.status}; skipping the production-path assertion`);
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early ([prompt-resolution-chain-event] POST /v1/runs for … returned …; skipping the production-path assertion) (seam, prior step, or fixture unavailable)');
     }
     const runId = (create.json as { runId?: string }).runId;
-    if (!runId) return;
+    if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     await pollUntilTerminal(runId);
 
     const poll = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
@@ -69,14 +71,14 @@ describe('prompt-resolution-chain-event (black-box): agent.promptResolved carrie
       // (RFC 0029 emission is staged) — soft-skip the behavioral assertion.
       // eslint-disable-next-line no-console
       console.warn('[prompt-resolution-chain-event] host emitted no agent.promptResolved event; skipping (RFC 0029 emission staged)');
-      return;
+      return softSkip('blocked', 'precondition not met — `resolved.length === 0` returned early ([prompt-resolution-chain-event] host emitted no agent.promptResolved event; skipping (RFC 0029 emission staged)) (seam, prior step, or fixture unavailable)');
     }
 
     for (const ev of resolved) {
       const chain = ev.payload?.chain;
       expect(
         Array.isArray(chain) && chain.length > 0,
-        driver.describe('prompts.md §Resolution chain', 'agent.promptResolved MUST carry a non-empty chain[] of attempted layers'),
+        req('openwop.it.prompt-resolution-chain-event.the-production-agent-promptresolved-event-records-the-full-four-layer-resolution', 'prompts.md §Resolution chain', 'agent.promptResolved MUST carry a non-empty chain[] of attempted layers'),
       ).toBe(true);
       const entries = chain as ChainEntry[];
 
@@ -84,28 +86,28 @@ describe('prompt-resolution-chain-event (black-box): agent.promptResolved carrie
       for (const e of entries) {
         expect(
           typeof e.layer === 'string' && VALID_LAYERS.has(e.layer),
-          driver.describe('prompts.md §Resolution chain', `each chain entry MUST name a valid layer, got ${String(e.layer)}`),
+          req('openwop.it.prompt-resolution-chain-event.the-production-agent-promptresolved-event-records-the-full-four-layer-resolution', 'prompts.md §Resolution chain', `each chain entry MUST name a valid layer, got ${String(e.layer)}`),
         ).toBe(true);
-        expect(typeof e.applied, driver.describe('prompts.md §Resolution chain', 'each chain entry MUST carry a boolean `applied`')).toBe('boolean');
+        expect(typeof e.applied, req('openwop.it.prompt-resolution-chain-event.the-production-agent-promptresolved-event-records-the-full-four-layer-resolution', 'prompts.md §Resolution chain', 'each chain entry MUST carry a boolean `applied`')).toBe('boolean');
       }
 
       // Exactly one layer wins (or none, when resolved is null).
       const applied = entries.filter((e) => e.applied === true);
       expect(
         applied.length <= 1,
-        driver.describe('prompts.md §Resolution chain', 'AT MOST one chain entry MAY be applied: true (the winning layer)'),
+        req('openwop.it.prompt-resolution-chain-event.the-production-agent-promptresolved-event-records-the-full-four-layer-resolution', 'prompts.md §Resolution chain', 'AT MOST one chain entry MAY be applied: true (the winning layer)'),
       ).toBe(true);
 
       // resolved mirrors the applied entry's source (RFC 0029 §B).
       if (applied.length === 1) {
         expect(
           ev.payload?.resolved,
-          driver.describe('run-event-payloads.schema.json agentPromptResolved', '`resolved` MUST mirror the applied chain entry\'s `source`'),
+          req('openwop.it.prompt-resolution-chain-event.the-production-agent-promptresolved-event-records-the-full-four-layer-resolution', 'run-event-payloads.schema.json agentPromptResolved', '`resolved` MUST mirror the applied chain entry\'s `source`'),
         ).toBe(applied[0]?.source);
       } else {
         expect(
           ev.payload?.resolved === null || ev.payload?.resolved === undefined,
-          driver.describe('run-event-payloads.schema.json agentPromptResolved', 'with no applied layer, `resolved` MUST be null'),
+          req('openwop.it.prompt-resolution-chain-event.the-production-agent-promptresolved-event-records-the-full-four-layer-resolution', 'run-event-payloads.schema.json agentPromptResolved', 'with no applied layer, `resolved` MUST be null'),
         ).toBe(true);
       }
     }

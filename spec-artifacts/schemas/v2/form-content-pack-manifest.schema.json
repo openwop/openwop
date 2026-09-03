@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/form-content-pack-manifest.schema.json",
+  "title": "FormContentPackManifest",
+  "description": "Manifest for a published OpenWOP form-content pack — `pack.json` at the pack root with `kind: \"form-content\"`. Peer to the node / workflow-chain / prompt / artifact-type / card pack manifests; disjoint via the `kind` discriminator. See `spec/v1/form-content-packs.md` for the canonical contract and RFC 0137 for the rationale.\n\nA form-content pack distributes **form templates**: a named, versioned set of typed input fields a host instantiates into an ordinary, fully editable form through its normal create path. It is purely declarative — no `runtime`, no executor bytecode, no entry point. The pack contributes the *shape* of a form; it does not define a submission surface, a handler, or any behavior the host would not otherwise accept.\n\n**A template carries NO submission routing, and MUST NOT gain any.** There is deliberately no `intakeBinding` / destination / webhook / list-id property on `FormTemplate`, and `additionalProperties: false` rejects one. Where a tenant's form submissions go is a decision about the OPERATOR's data; a third-party pack author does not get to make it by shipping a manifest. Enforced as the `form-content-template-no-submission-routing` SECURITY invariant — see `form-content-packs.md` §\"No submission routing\".\n\n**The wire vocabulary governs the WIRE, not host storage.** A host MAY store fields under any internal representation it likes and translate at the pack boundary; the spec constrains what crosses the wire, not what sits in a host's database (`positioning.md`).\n\n**Field types are the RFC 0071 portable subset, not a second vocabulary.** `fields[].type` reuses the closed portable subset defined in `chat-card-packs.md` §\"Input fields — a closed portable subset\" (RFC 0071 Phase 2, gap G9 resolved 2026-05-27) verbatim, including its `vendor.<org>.<kind>` / `x-<kind>` extension escape hatch. Two declarative pack kinds that both collect typed user input MUST agree on what a field type means.",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "kind",
+    "engines",
+    "templates"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "form-content",
+      "description": "Pack kind discriminator. MUST be the literal string `\"form-content\"`."
+    },
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`).",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level SemVer 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`, `MIT`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": [
+        "openwop"
+      ],
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "description": "Semver range — which openwop protocol versions this pack works against."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Other packs this pack depends on. Map of pack name → semver range."
+    },
+    "peerDependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Engine-supplied capabilities the pack consumes (e.g., `{ \"host.forms.contentPacks\": \"supported\" }`). Resolved against the host's advertised capabilities at register time."
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/FormTemplate"
+      },
+      "description": "Form template definitions this pack contributes. Each MUST have a unique `templateId` within the pack — duplicates MUST be refused at registry `PUT` / install (`form-content-packs.md` §\"Unique identifiers\"); JSON Schema cannot express uniqueness-by-property, so this is a normative prose requirement, as it is for every peer pack kind. `maxItems` is an OUTER resource bound against a render bomb, not product policy — a host MAY enforce a tighter limit locally."
+    },
+    "signing": {
+      "$ref": "#/$defs/Signing"
+    }
+  },
+  "$defs": {
+    "FormTemplate": {
+      "type": "object",
+      "required": [
+        "templateId",
+        "version",
+        "label",
+        "title",
+        "fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "templateId": {
+          "$ref": "ids.schema.json#/$defs/templateId",
+          "description": "Reverse-DNS template identifier. Same pattern and reserved scopes as a pack `name`. This is the id a registry denormalizes for discovery (`registry-operations.md` §\"Type-ID indexing\") and the id a host resolves when instantiating. Third parties MUST NOT publish under `core.*`."
+        },
+        "version": {
+          "type": "string",
+          "description": "Per-template SemVer 2.0.0 — the SAME axis as the pack `version`, NOT the non-negative-integer schema-version axis used by `chat-card-pack-manifest.schema.json` `schemaVersion` / `artifact-type-pack-manifest.schema.json` `schemaVersion`. A form template is a distributable artifact whose shape changes are author-meaningful (a removed field is a breaking change to anything storing its submissions), so it carries the same SemVer contract as the pack.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Short human-readable name for a picker / gallery listing. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\". The length bound is a resource guard, NOT a trust boundary."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Heading rendered above the instantiated form. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\"."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional explanatory copy. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\"."
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Optional grouping hint for a picker. Advisory — the spec assigns no meaning to any particular value and a host MUST NOT treat it as an authorization or visibility boundary."
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/FormField"
+          },
+          "description": "Typed fields the template contributes, in presentation order. Each MUST have a unique `id` within the template — duplicates MUST be refused (`form-content-packs.md` §\"Unique identifiers\"). Two fields sharing an `id` silently overwrite one another in the submission value bag, losing data with no error, so this is a data-integrity requirement rather than a style rule. `maxItems` is an OUTER resource bound; a host MAY enforce a tighter limit locally."
+        }
+      },
+      "patternProperties": {
+        "^(openwop-|x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+        }
+      }
+    },
+    "FormField": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "label"
+      ],
+      "additionalProperties": false,
+      "description": "One typed field. `id` (not `key`) matches `chat-card-pack-manifest.schema.json#/$defs/InputField` so a host renders both declarative kinds through the same machinery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+          "description": "Field identifier, unique within the template. Mirrors `chat-card-pack-manifest.schema.json` `InputField.id`."
+        },
+        "type": {
+          "type": "string",
+          "description": "Closed portable subset OR a `vendor.<org>.<kind>` / `x-<kind>` host extension other hosts MUST ignore (degrading to a plain text input). The subset is IDENTICAL to `chat-card-pack-manifest.schema.json` `InputField.type` (RFC 0071 G9, resolved 2026-05-27): `text`, `longtext`, `number`, `boolean`, `select`, `multiselect`, `file`, `artifact-ref`. Named by DATA KIND, not widget — a host renders `boolean` as whatever toggle/checkbox it likes, and `longtext` as whatever multi-line control it likes. Validation formats (`email`, `uri`, …) are NOT types; use `format`.",
+          "pattern": "^(text|longtext|number|boolean|select|multiselect|file|artifact-ref|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
+        },
+        "format": {
+          "type": "string",
+          "description": "Optional validation-format constraint on the field's value, following the JSON Schema `format` idiom used throughout this corpus. Spec-reserved core identifiers: `email`, `uri`, `date`, `date-time`, `time`. Host extensions MUST be `x-<format>`-prefixed. Only meaningful for `type: \"text\"` / `\"longtext\"`; a host MUST ignore it on any other type. A host that recognizes the format SHOULD apply it as an input-validation constraint; a host that does NOT recognize it MUST ignore it and accept the value as plain text (the same degradation contract as an unrecognized `type`). `format` is a CONSTRAINT on a `text` field — it is deliberately not a member of the `type` vocabulary, so the portable type set stays a stable set of data kinds instead of accreting widgets.",
+          "pattern": "^(email|uri|date|date-time|time|x-[a-z][a-z0-9-]*)$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Human-readable field label. Bounded at 1000 rather than 200 because a lawful consent label (GDPR/marketing opt-in) is legitimately long-form. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\"."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional help text. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\"."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the host SHOULD require a value before accepting the instantiated form. Absent ⇒ `false`."
+        },
+        "default": {
+          "description": "Optional default value. Its JSON type SHOULD match the field `type` (string for `text`/`longtext`, number for `number`, boolean for `boolean`, string for `select`, array of string for `multiselect`); a host MUST ignore a default whose type does not match rather than fail the instantiation."
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "maxItems": 250,
+          "description": "Choices for `type: \"select\"` / `\"multiselect\"`. UNTRUSTED pack-authored content — see `form-content-packs.md` §\"Trust boundary\". Mirrors `chat-card-pack-manifest.schema.json` `InputField.options`."
+        }
+      }
+    },
+    "Signing": {
+      "type": "object",
+      "description": "Optional signing metadata. See node-packs.md §signing.",
+      "additionalProperties": false,
+      "properties": {
+        "publicKeyRef": {
+          "type": "string"
+        },
+        "signatureRef": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "sigstore"
+          ]
+        }
+      }
+    }
+  },
+  "patternProperties": {
+    "^(openwop-|x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

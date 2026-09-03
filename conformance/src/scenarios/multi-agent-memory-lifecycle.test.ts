@@ -50,6 +50,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -82,17 +83,17 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: advertisement shape (R
     if (d === null) {
       softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const ccmc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossChildMemoryConcurrency;
     if (ccmc === undefined) {
       softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.crossChildMemoryConcurrency` not advertised by this host');
       ctx.skip(); // optional advertisement — host hasn't opted in
-      return;
+      return softSkip('blocked', 'precondition not met — `ccmc === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       ccmc === 'strict' || ccmc === 'advisory',
-      driver.describe(
+      req('openwop.it.multi-agent-memory-lifecycle.crosschildmemoryconcurrency-when-advertised-must-be-one-of-strict-advisory', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B',
         'crossChildMemoryConcurrency MUST be one of {strict, advisory} when present; values outside the closed enum are non-conformant',
       ),
@@ -138,7 +139,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
     if (d === null) {
       softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const v = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;
     const memorySupported = capabilityFamily<{ supported?: unknown }>(d, 'memory')?.supported;
@@ -147,7 +148,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
     if (!phase2OrLater || memorySupported !== true || !expiredRunId) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!phase2OrLater || memorySupported !== true || !expiredRunId` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!phase2OrLater || memorySupported !== true || !expiredRunId` returned early');
     }
 
     const fromSeq = 0;
@@ -158,7 +159,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
 
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.multi-agent-memory-lifecycle.mae-3-replay-snapshot-refusal-fork-mode-replay-against-a-past-retention-runid-mu', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
         'fork mode:replay against a past-retention runId MUST refuse with 422; silent substitution of current memory is non-conformant',
       ),
@@ -171,7 +172,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
 
     expect(
       body?.error,
-      driver.describe(
+      req('openwop.it.multi-agent-memory-lifecycle.mae-3-replay-snapshot-refusal-fork-mode-replay-against-a-past-retention-runid-mu', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
         'refusal envelope error code MUST be "replay_memory_snapshot_unavailable" (distinct from the pre-flight invalid_from_seq gate)',
       ),
@@ -179,7 +180,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
 
     expect(
       body?.details?.fromSeq,
-      driver.describe(
+      req('openwop.it.multi-agent-memory-lifecycle.mae-3-replay-snapshot-refusal-fork-mode-replay-against-a-past-retention-runid-mu', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
         'refusal envelope details.fromSeq MUST echo the requested fromSeq',
       ),
@@ -187,7 +188,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
 
     expect(
       body?.details?.sourceRunId,
-      driver.describe(
+      req('openwop.it.multi-agent-memory-lifecycle.mae-3-replay-snapshot-refusal-fork-mode-replay-against-a-past-retention-runid-mu', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
         'refusal envelope details.sourceRunId MUST echo the runId from the URL',
       ),
@@ -196,7 +197,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
     const reason = body?.details?.reason;
     expect(
       reason === 'retention_expired' || reason === 'event_log_unavailable',
-      driver.describe(
+      req('openwop.it.multi-agent-memory-lifecycle.mae-3-replay-snapshot-refusal-fork-mode-replay-against-a-past-retention-runid-mu', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
         'refusal envelope details.reason MUST be one of {"retention_expired", "event_log_unavailable"}',
       ),

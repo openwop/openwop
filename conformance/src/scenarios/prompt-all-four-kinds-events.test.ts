@@ -35,6 +35,8 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-prompt-all-four-kinds';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -85,7 +87,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(
       create.status,
-      driver.describe(
+      req('openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s', 
         'spec/v1/rest-endpoints.md',
         'POST /v1/runs MUST return 201 on accepted creation',
       ),
@@ -95,7 +97,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     const terminal = await pollUntilTerminal(runId);
     expect(
       terminal.status,
-      driver.describe(
+      req('openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s', 
         'fixtures.md conformance-prompt-all-four-kinds §Terminal status',
         'fixture MUST reach terminal `completed`',
       ),
@@ -120,7 +122,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     for (const expectedKind of ['system', 'user', 'schema-hint', 'few-shot']) {
       expect(
         resolvedKinds.includes(expectedKind),
-        driver.describe(
+        req('openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s', 
           'spec/v1/prompts.md §"PromptKind"',
           `host MUST emit \`agent.promptResolved\` with kind: "${expectedKind}" when the node carries the matching ref`,
         ),
@@ -144,14 +146,14 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     for (const expectedRef of expectedTemplates) {
       expect(
         resolvedRefs.includes(expectedRef),
-        driver.describe(
+        req('openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s', 
           'spec/v1/prompts.md §"Resolution chain (normative)"',
           `\`agent.promptResolved.resolved\` MUST surface "${expectedRef}" — the fixture carries it on the node config and the resolver MUST return it (multi-entry few-shot[slotIndex] regression pin)`,
         ),
       ).toBe(true);
       expect(
         composedRefs.includes(expectedRef),
-        driver.describe(
+        req('openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s', 
           'spec/v1/prompts.md §"Composition + observability"',
           `\`prompt.composed.refs[]\` MUST contain "${expectedRef}" — one composition per resolved ref`,
         ),
@@ -161,7 +163,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     // silently dropped non-zero few-shot indices would emit fewer.
     expect(
       composedRefs.length,
-      driver.describe(
+      req('openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s', 
         'spec/v1/prompts.md §"Composition + observability"',
         'host MUST emit one `prompt.composed` event per composed body (5 refs → 5 events when all five resolve, including both few-shot entries)',
       ),
@@ -172,7 +174,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
-    if (create.status !== 201) return;
+    if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
     const { runId } = create.json as { runId: string };
     await pollUntilTerminal(runId);
     const events = await readAllEvents(runId);
@@ -186,11 +188,11 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     const firstComposedIdx = events.findIndex((e) => e.type === 'prompt.composed');
     expect(
       firstResolvedIdx >= 0 && firstComposedIdx >= 0,
-      'both event types MUST appear in the event log',
+      req('openwop.it.prompt-all-four-kinds-events.emits-the-first-agent-promptresolved-before-the-first-prompt-composed-resolution', 'spec/v1/prompts.md §"Composition + observability"', 'both event types MUST appear in the event log'),
     ).toBe(true);
     expect(
       firstResolvedIdx,
-      driver.describe(
+      req('openwop.it.prompt-all-four-kinds-events.emits-the-first-agent-promptresolved-before-the-first-prompt-composed-resolution', 
         'spec/v1/prompts.md §"Composition + observability"',
         'resolution events MUST precede the first composition event in the run log (composition cannot start before any resolution completes)',
       ),

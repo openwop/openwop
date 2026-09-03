@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/configurable.schema.json",
+  "title": "Run configurable (RFC 0171 §D.1)",
+  "description": "Closed, nested, versioned. Every reserved key is typed; a vendor key lives under extensions.<org>. The request body $refs this object (no allOf-merge of an open one).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "recursionLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runTimeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxLoopIterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "escalationThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0–1 (v1 definition kept)."
+        }
+      }
+    },
+    "ai": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "credentialRef": {
+          "type": "string"
+        },
+        "promptOverrides": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "mockProvider": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "reasoningVerbosity": {
+          "type": "string",
+          "enum": [
+            "none",
+            "summary",
+            "full"
+          ]
+        },
+        "maxRefusals": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "RFC 0171 §A.4 E5 — refusal × retry ceiling."
+        }
+      }
+    },
+    "distillation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokenBudget": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "budget": {
+      "$ref": "budget-policy.schema.json"
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9]*(-[a-z0-9]+)*$": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

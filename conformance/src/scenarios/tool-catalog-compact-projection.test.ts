@@ -46,6 +46,8 @@ import {
   findBannedInputSchemaKeyword,
   type CompactToolDescriptor,
 } from '../lib/toolCatalog.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -80,18 +82,18 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
 
     // ---- Leg 1: the compact envelope (§compact) -------------------------
     const compact = await listToolsCompact();
-    if (compact === null) return; // advertises the cap but doesn't serve the read — soft-skip the rest
+    if (compact === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `compact === null` returned early (advertises the cap but doesn\'t serve the read — soft-skip the rest)'); // advertises the cap but doesn't serve the read — soft-skip the rest
 
     for (const t of compact) {
       // ---- Leg 2: schema validity + heavy fields dropped ----------------
       expect(
         validate(t),
-        driver.describe('compact-tool-descriptor.schema.json', `each CompactToolDescriptor MUST validate (${ajv.errorsText(validate.errors)})`),
+        req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'compact-tool-descriptor.schema.json', `each CompactToolDescriptor MUST validate (${ajv.errorsText(validate.errors)})`),
       ).toBe(true);
       for (const f of COMPACT_DROPPED_FIELDS) {
         expect(
           !(f in t),
-          driver.describe('tool-catalog.md §compact', `CompactToolDescriptor MUST drop the heavy field "${f}"`),
+          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'tool-catalog.md §compact', `CompactToolDescriptor MUST drop the heavy field "${f}"`),
         ).toBe(true);
       }
 
@@ -100,14 +102,14 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
       if (input !== undefined) {
         expect(
           input.type === 'object' && typeof input.properties === 'object' && input.properties !== null,
-          driver.describe('tool-catalog.md §compact', 'compact inputSchema MUST be top-level type:"object" with a properties map'),
+          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'tool-catalog.md §compact', 'compact inputSchema MUST be top-level type:"object" with a properties map'),
         ).toBe(true);
         // Total (any-depth), schema-aware: a nested oneOf/$ref under a property
         // schema is exactly the verbosity the compact view exists to drop.
         const banned = findBannedInputSchemaKeyword(input);
         expect(
           banned,
-          driver.describe('tool-catalog.md §compact', `compact inputSchema MUST NOT use $ref/oneOf/allOf/anyOf/not/patternProperties/dependentSchemas at any nesting depth (found "${banned ?? 'none'}")`),
+          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'tool-catalog.md §compact', `compact inputSchema MUST NOT use $ref/oneOf/allOf/anyOf/not/patternProperties/dependentSchemas at any nesting depth (found "${banned ?? 'none'}")`),
         ).toBe(null);
       }
     }
@@ -123,7 +125,7 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
       standardIds.size === compactIds.size && [...standardIds].every((id) => compactIds.has(id));
     expect(
       sameSet,
-      driver.describe(
+      req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 
         'tool-catalog.md §compact',
         `compact tools[] MUST carry the same toolId set as the standard view (standard=${[...standardIds].sort().join(',')} compact=${[...compactIds].sort().join(',')})`,
       ),
@@ -136,12 +138,12 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
       if (one.status === 200) {
         expect(
           validate(one.json),
-          driver.describe('compact-tool-descriptor.schema.json', `GET /v1/tools/{toolId}?view=compact MUST return a valid CompactToolDescriptor (${ajv.errorsText(validate.errors)})`),
+          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'compact-tool-descriptor.schema.json', `GET /v1/tools/{toolId}?view=compact MUST return a valid CompactToolDescriptor (${ajv.errorsText(validate.errors)})`),
         ).toBe(true);
         const got = one.json;
         expect(
           got && typeof got === 'object' && (got as { toolId?: unknown }).toolId === id,
-          driver.describe('tool-catalog.md §compact', 'GET /v1/tools/{toolId}?view=compact MUST return the requested descriptor'),
+          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'tool-catalog.md §compact', 'GET /v1/tools/{toolId}?view=compact MUST return the requested descriptor'),
         ).toBe(true);
       }
     }

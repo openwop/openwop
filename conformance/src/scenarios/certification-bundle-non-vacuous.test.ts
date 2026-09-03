@@ -34,7 +34,8 @@ import {
   type BundleV2Like,
   type BundleV2Requirement,
 } from '../lib/certification-bundle-verify.js';
-import { UNCLASSIFIED_RETURN_DETAIL } from '../lib/soft-skip.js';
+import { UNCLASSIFIED_RETURN_DETAIL, softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'server-free: verifies bundle documents built in-process; no host is contacted';
 
@@ -103,7 +104,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const b = bundle(witnessedRows());
     expect(schemaValid(b), JSON.stringify(schemaValid.errors)).toBe(true);
     const v = verifyBundleV2(b);
-    expect(v.rejections).toEqual([]);
+    expect(v.rejections, req('openwop.it.certification-bundle-non-vacuous.valid-v2-every-required-row-witnessed-evidence-valid-and-certified-and-the-vecto', 'RFC 0148 §A/§C', 'valid-v2: every required row witnessed → evidence valid AND certified (and the vector is schema-valid)')).toEqual([]);
     expect(v.evidenceValid).toBe(true);
     expect(v.certified).toBe(true);
     const p = v.profiles.find((x) => x.profile === PROFILE);
@@ -115,7 +116,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows();
     rows[0] = { ...(rows[0] as BundleV2Requirement), assertionCount: 0 };
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.early-return-a-required-row-that-is-executed-pass-with-assertioncount-0-rejects', 'RFC 0148 §A/§C', 'early-return: a required row that is executed-pass with assertionCount 0 REJECTS the evidence')).toBe(false);
     expect(v.certified).toBe(false);
     const p = v.profiles[0];
     expect(p?.rejections.map((r) => r.kind)).toEqual(['vacuous-pass']);
@@ -127,7 +128,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const { assertionCount: _drop, ...noCount } = rows[1] as BundleV2Requirement & { assertionCount: number };
     rows[1] = noCount;
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.early-return-no-count-at-all-an-executed-pass-with-no-assertioncount-is-unwitnes', 'RFC 0148 §A/§C', 'early-return (no count at all): an executed-pass with NO assertionCount is unwitnessed and REJECTS')).toBe(false);
     expect(v.profiles[0]?.rejections[0]?.kind).toBe('vacuous-pass');
   });
 
@@ -135,7 +136,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows();
     rows[0] = { requirementId: (rows[0] as BundleV2Requirement).requirementId, scenarioId: (rows[0] as BundleV2Requirement).scenarioId, disposition: 'blocked', detail: UNCLASSIFIED_RETURN_DETAIL, assertionCount: 0 };
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.the-emitter-s-a-resolution-of-a-silent-zero-assertion-file-blocked-marker-detail', 'RFC 0148 §A/§C', 'the emitter\'s §A resolution of a silent zero-assertion file (blocked + marker detail) on a required row REJECTS as unwitnessed')).toBe(false);
     expect(v.profiles[0]?.rejections.map((r) => r.kind)).toEqual(['unwitnessed-requirement']);
   });
 
@@ -143,7 +144,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows().slice(1); // drop the first floor row
     const dropped = requirementIdForScenario(floor().files[0] as string);
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.missing-floor-a-required-requirement-with-no-row-at-all-rejects-unwitnessed-neve', 'RFC 0148 §A/§C', 'missing-floor: a required requirement with no row at all REJECTS (unwitnessed), never "not certified"')).toBe(false);
     const rej = v.profiles[0]?.rejections ?? [];
     expect(rej.map((r) => r.kind)).toEqual(['unwitnessed-requirement']);
     expect(rej[0]?.requirementId).toBe(dropped);
@@ -153,10 +154,10 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
 
   it('missing prefix witness: no `interrupt-*` scenario row and no summary row REJECTS the prefix requirement', () => {
     const { prefixes } = floor();
-    if (prefixes.length === 0) return; // floor without a prefix requirement — nothing to assert here
+    if (prefixes.length === 0) return softSkip('blocked', 'precondition not met — `prefixes.length === 0` returned early (floor without a prefix requirement — nothing to assert here) (seam, prior step, or fixture unavailable)'); // floor without a prefix requirement — nothing to assert here
     const rows = witnessedRows().filter((r) => !prefixes.some((p) => r.scenarioId.startsWith(p)));
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.missing-prefix-witness-no-interrupt-scenario-row-and-no-summary-row-rejects-the', 'RFC 0148 §A/§C', 'missing prefix witness: no `interrupt-*` scenario row and no summary row REJECTS the prefix requirement')).toBe(false);
     expect(v.profiles[0]?.rejections.some((r) => r.kind === 'unwitnessed-requirement' && r.requirementId === requirementIdForPrefix(prefixes[0] as string))).toBe(true);
   });
 
@@ -164,7 +165,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows();
     rows.push({ ...(rows[0] as BundleV2Requirement) });
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.duplicate-requirement-two-rows-for-one-requirement-rejects-exactly-one-dispositi', 'RFC 0148 §A/§C', 'duplicate-requirement: two rows for one requirement REJECTS (exactly one disposition per requirement)')).toBe(false);
     expect(v.rejections.map((r) => r.kind)).toContain('duplicate-requirement');
   });
 
@@ -173,7 +174,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const b = bundle(rows);
     const tampered = { ...b, results: { ...b.results, totals: { ...b.results.totals, blocked: 0, executedPass: b.results.totals.executedPass + 1 } } };
     const v = verifyBundleV2(tampered);
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.tampered-witness-totals-that-disagree-with-the-rows-reject-a-hand-edited-count-i', 'RFC 0148 §A/§C', 'tampered-witness: totals that disagree with the rows REJECT — a hand-edited count is not a witness')).toBe(false);
     expect(v.rejections.map((r) => r.kind)).toEqual(['totals-mismatch']);
   });
 
@@ -181,7 +182,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows();
     rows[0] = { ...(rows[0] as BundleV2Requirement), disposition: 'passed' };
     const v = verifyBundleV2(bundle(rows));
-    expect(v.rejections.some((r) => r.kind === 'unknown-disposition')).toBe(true);
+    expect(v.rejections.some((r) => r.kind === 'unknown-disposition'), req('openwop.it.certification-bundle-non-vacuous.tampered-witness-an-invented-disposition-name-rejects', 'RFC 0148 §A/§C', 'tampered-witness: an invented disposition name REJECTS')).toBe(true);
     expect(v.evidenceValid).toBe(false);
   });
 
@@ -189,7 +190,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows();
     rows[0] = { requirementId: (rows[0] as BundleV2Requirement).requirementId, scenarioId: (rows[0] as BundleV2Requirement).scenarioId, disposition: 'blocked' };
     const v = verifyBundleV2(bundle(rows));
-    expect(v.rejections.map((r) => r.kind)).toContain('reason-missing');
+    expect(v.rejections.map((r) => r.kind), req('openwop.it.certification-bundle-non-vacuous.a-non-pass-without-a-reason-rejects-rfc-0148-a-anything-other-than-executed-pass', 'RFC 0148 §A', 'a non-pass without a reason REJECTS (RFC 0148 §A: anything other than executed-pass says why)')).toContain('reason-missing');
   });
 
   it('blocked-floor: an HONEST blocked row on a required requirement is VALID evidence that does NOT certify', () => {
@@ -197,7 +198,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     rows[0] = { ...(rows[0] as BundleV2Requirement), disposition: 'blocked', detail: 'seam unreachable from this runner (host-callback)' };
     delete (rows[0] as { assertionCount?: number }).assertionCount;
     const v = verifyBundleV2(bundle(rows));
-    expect(v.rejections).toEqual([]);
+    expect(v.rejections, req('openwop.it.certification-bundle-non-vacuous.blocked-floor-an-honest-blocked-row-on-a-required-requirement-is-valid-evidence', 'RFC 0148 §A/§C', 'blocked-floor: an HONEST blocked row on a required requirement is VALID evidence that does NOT certify')).toEqual([]);
     expect(v.evidenceValid).toBe(true);
     expect(v.certified).toBe(false);
     expect(v.profiles[0]?.notCertifiable).toEqual([(rows[0] as BundleV2Requirement).requirementId]);
@@ -207,7 +208,7 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     const rows = witnessedRows();
     rows[2] = { ...(rows[2] as BundleV2Requirement), disposition: 'executed-fail', detail: 'assertion failed against target', assertionCount: 4 };
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(true);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.executed-fail-on-a-required-row-valid-evidence-not-certified', 'RFC 0148 §A/§C', 'executed-fail on a required row: valid evidence, not certified')).toBe(true);
     expect(v.certified).toBe(false);
   });
 
@@ -216,14 +217,14 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
     rows[0] = { requirementId: (rows[0] as BundleV2Requirement).requirementId, scenarioId: (rows[0] as BundleV2Requirement).scenarioId, disposition: 'inapplicable', detail: 'profile not advertised in the captured discovery set', assertionCount: 0 };
     rows[1] = { requirementId: (rows[1] as BundleV2Requirement).requirementId, scenarioId: (rows[1] as BundleV2Requirement).scenarioId, disposition: 'skipped', detail: 'operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)' };
     const v = verifyBundleV2(bundle(rows));
-    expect(v.evidenceValid).toBe(true);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.inapplicable-skipped-with-a-reason-on-a-required-row-certifies-rfc-0148-a-certif', 'RFC 0148 §A', 'inapplicable / skipped with a reason on a required row certifies (RFC 0148 §A CERTIFIABLE set)')).toBe(true);
     expect(v.certified).toBe(true);
   });
 
   it('a claim the discovery document does not derive is not certified even with perfect rows (RFC 0089 §B(1))', () => {
     const b = bundle(witnessedRows(), { discovery: { document: { protocolVersion: '1.0' } } });
     const v = verifyBundleV2(b);
-    expect(v.evidenceValid).toBe(true);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-non-vacuous.a-claim-the-discovery-document-does-not-derive-is-not-certified-even-with-perfec', 'RFC 0089 §B(1', 'a claim the discovery document does not derive is not certified even with perfect rows (RFC 0089 §B(1))')).toBe(true);
     expect(v.profiles[0]?.derivable).toBe(false);
     expect(v.certified).toBe(false);
   });
@@ -231,19 +232,19 @@ describe('RFC 0148 §A/§C — certification-bundle-non-vacuous (consumer re-der
   it('a claimed profile with NO defined floor is unprovable — floorUnspecified, never certified (G6)', () => {
     const b = bundle(witnessedRows(), { claimedProfiles: ['openwop-not-a-profile'] });
     const v = verifyBundleV2(b);
-    expect(v.profiles[0]?.floorUnspecified).toBe(true);
+    expect(v.profiles[0]?.floorUnspecified, req('openwop.it.certification-bundle-non-vacuous.a-claimed-profile-with-no-defined-floor-is-unprovable-floorunspecified-never-cer', 'RFC 0148 §A/§C', 'a claimed profile with NO defined floor is unprovable — floorUnspecified, never certified (G6)')).toBe(true);
     expect(v.certified).toBe(false);
   });
 
   it('a discovery-only profile certifies on derivation alone (RFC 0155 §A: openwop-discovery-core)', () => {
     const b = bundle(witnessedRows(), { claimedProfiles: ['openwop-discovery-core'] });
     const v = verifyBundleV2(b);
-    expect(v.certified).toBe(true);
+    expect(v.certified, req('openwop.it.certification-bundle-non-vacuous.a-discovery-only-profile-certifies-on-derivation-alone-rfc-0155-a-openwop-discov', 'RFC 0155 §A', 'a discovery-only profile certifies on derivation alone (RFC 0155 §A: openwop-discovery-core)')).toBe(true);
   });
 
   it('a v1 document handed to the v2 verifier is rejected as not-v2 rather than silently read', () => {
     const b = bundle(witnessedRows(), { bundleVersion: '1' });
     const v = verifyBundleV2(b);
-    expect(v.rejections.map((r) => r.kind)).toContain('not-v2');
+    expect(v.rejections.map((r) => r.kind), req('openwop.it.certification-bundle-non-vacuous.a-v1-document-handed-to-the-v2-verifier-is-rejected-as-not-v2-rather-than-silent', 'RFC 0148 §A/§C', 'a v1 document handed to the v2 verifier is rejected as not-v2 rather than silently read')).toContain('not-v2');
   });
 });

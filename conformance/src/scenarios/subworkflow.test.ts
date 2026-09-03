@@ -20,6 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PARENT_WORKFLOW_ID = 'conformance-subworkflow-parent';
 const CHILD_WORKFLOW_ID = 'conformance-subworkflow-child';
@@ -50,7 +51,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('subworkflow: conformance-subworkflow-parent di
     const parentRunId = (create.json as { runId: string }).runId;
 
     const parentTerminal = await pollUntilTerminal(parentRunId);
-    expect(parentTerminal.status, driver.describe(
+    expect(parentTerminal.status, req('openwop.it.subworkflow.parent-run-reaches-terminal-completed-and-child-variable-is-propagated-via-outpu', 
       'fixtures.md conformance-subworkflow-parent §Terminal status',
       'parent fixture MUST reach terminal `completed` after child finishes',
     )).toBe('completed');
@@ -59,7 +60,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('subworkflow: conformance-subworkflow-parent di
     // parent's `childOutcome`. The variable should appear on the parent's
     // final variables.
     const parentVars = (parentTerminal as RunSnapshot).variables ?? {};
-    expect(parentVars.childOutcome, driver.describe(
+    expect(parentVars.childOutcome, req('openwop.it.subworkflow.parent-run-reaches-terminal-completed-and-child-variable-is-propagated-via-outpu', 
       'node-packs.md §core.subWorkflow outputMapping',
       'parent variables MUST include `childOutcome` mapped from child `childResult`',
     )).toBeDefined();
@@ -84,7 +85,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('subworkflow: conformance-subworkflow-parent di
     const subwfCompleted = events.find(
       (e) => e.type === 'node.completed' && e.nodeId === 'subwf-call',
     );
-    expect(subwfCompleted, driver.describe(
+    expect(subwfCompleted, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 
       'node-packs.md §core.subWorkflow',
       'parent event log MUST contain node.completed for the subwf-call node',
     )).toBeDefined();
@@ -93,32 +94,32 @@ describe.skipIf(SKIP_NO_FIXTURE)('subworkflow: conformance-subworkflow-parent di
       | { outputs?: { childRunId?: string; childStatus?: string; skipped?: boolean } }
       | undefined;
     const childRunId = subwfPayload?.outputs?.childRunId;
-    expect(typeof childRunId, driver.describe(
+    expect(typeof childRunId, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 
       'node-packs.md §core.subWorkflow outputSchema',
       'core.subWorkflow output MUST include childRunId as a string',
     )).toBe('string');
 
-    expect(subwfPayload?.outputs?.childStatus, driver.describe(
+    expect(subwfPayload?.outputs?.childStatus, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 
       'node-packs.md §core.subWorkflow outputSchema',
       'core.subWorkflow output MUST include childStatus="completed" on success',
     )).toBe('completed');
 
     // Fetch the child run snapshot and verify parent linkage.
     const childRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
-    expect(childRes.status, 'child run snapshot MUST be retrievable').toBe(200);
+    expect(childRes.status, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 'node-packs.md §core.subWorkflow outputSchema', 'child run snapshot MUST be retrievable')).toBe(200);
     const child = childRes.json as RunSnapshot;
 
-    expect(child.status, driver.describe(
+    expect(child.status, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 
       'fixtures.md conformance-subworkflow-child §Terminal status',
       'child MUST reach terminal `completed`',
     )).toBe('completed');
 
-    expect(child.parentRunId, driver.describe(
+    expect(child.parentRunId, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 
       'spec gap G3 parent linkage',
       'child run MUST carry parentRunId pointing back to dispatcher',
     )).toBe(parentRunId);
 
-    expect(child.parentNodeId, driver.describe(
+    expect(child.parentNodeId, req('openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed', 
       'spec gap G3 parent linkage',
       'child run MUST carry parentNodeId pointing back to the subwf-call node',
     )).toBe('subwf-call');

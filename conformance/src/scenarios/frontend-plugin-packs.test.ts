@@ -39,6 +39,8 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const MANIFEST_SCHEMA = join(SCHEMAS_DIR, 'frontend-plugin-manifest.schema.json');
 const MESSAGE_SCHEMA = join(SCHEMAS_DIR, 'ui-plugin-message.schema.json');
@@ -68,7 +70,7 @@ describe('frontend-plugin manifest: schema layer (always-on, server-free)', () =
   it('a well-formed frontend-plugin manifest validates', () => {
     expect(
       validate(validManifest()),
-      `frontend-plugin-packs.md §The pack — a valid manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.frontend-plugin-packs.a-well-formed-frontend-plugin-manifest-validates', 'frontend-plugin-packs.md', `frontend-plugin-packs.md §The pack — a valid manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -76,20 +78,20 @@ describe('frontend-plugin manifest: schema layer (always-on, server-free)', () =
     const m = { ...validManifest(), runtime: { language: 'javascript', entry: 'index.mjs' } };
     expect(
       validate(m),
-      'node-packs.md §Pack kinds — a kind:"frontend-plugin" manifest carrying `runtime` MUST be rejected (pack_kind_invalid)',
+      req('openwop.it.frontend-plugin-packs.a-backend-runtime-member-is-rejected-a-plugin-is-sandboxed-ui-not-a-node-entry', 'frontend-plugin-packs.md', 'node-packs.md §Pack kinds — a kind:"frontend-plugin" manifest carrying `runtime` MUST be rejected (pack_kind_invalid)'),
     ).toBe(false);
   });
 
   it('a uiPlugins[] entry missing `entry` is rejected', () => {
     const m = validManifest();
     delete (m.uiPlugins as Array<Record<string, unknown>>)[0].entry;
-    expect(validate(m), 'a uiPlugins[] entry missing `entry` MUST NOT validate').toBe(false);
+    expect(validate(m), req('openwop.it.frontend-plugin-packs.a-uiplugins-entry-missing-entry-is-rejected', 'frontend-plugin-packs.md', 'a uiPlugins[] entry missing `entry` MUST NOT validate')).toBe(false);
   });
 
   it('an `entry` path with `..` traversal is rejected', () => {
     const m = validManifest();
     (m.uiPlugins as Array<Record<string, unknown>>)[0].entry = '../escape.mjs';
-    expect(validate(m), 'an `entry` path MUST NOT contain `..` (path-traversal)').toBe(false);
+    expect(validate(m), req('openwop.it.frontend-plugin-packs.an-entry-path-with-traversal-is-rejected', 'frontend-plugin-packs.md', 'an `entry` path MUST NOT contain `..` (path-traversal)')).toBe(false);
   });
 
   it('a hostApi method outside the closed allowlist is rejected (frontend-plugin-rpc-allowlist)', () => {
@@ -97,13 +99,13 @@ describe('frontend-plugin manifest: schema layer (always-on, server-free)', () =
     (m.uiPlugins as Array<Record<string, unknown>>)[0].hostApi = ['artifact.read', 'host.exec'];
     expect(
       validate(m),
-      'frontend-plugin-packs.md §Host-RPC — only the closed allowlist methods are permitted; `host.exec` MUST NOT validate',
+      req('openwop.it.frontend-plugin-packs.a-hostapi-method-outside-the-closed-allowlist-is-rejected-frontend-plugin-rpc-al', 'frontend-plugin-packs.md', 'frontend-plugin-packs.md §Host-RPC — only the closed allowlist methods are permitted; `host.exec` MUST NOT validate'),
     ).toBe(false);
   });
 
   it('an empty uiPlugins[] is rejected (a pack MUST declare at least one plugin)', () => {
     const m = { ...validManifest(), uiPlugins: [] };
-    expect(validate(m), 'a frontend-plugin pack MUST declare at least one uiPlugins[] entry').toBe(false);
+    expect(validate(m), req('openwop.it.frontend-plugin-packs.an-empty-uiplugins-is-rejected-a-pack-must-declare-at-least-one-plugin', 'frontend-plugin-packs.md', 'a frontend-plugin pack MUST declare at least one uiPlugins[] entry')).toBe(false);
   });
 
   it('a canvas-preview entry with canvasTypes + host.announce validates (RFC 0130)', () => {
@@ -117,7 +119,7 @@ describe('frontend-plugin manifest: schema layer (always-on, server-free)', () =
     };
     expect(
       validate(m),
-      `frontend-plugin-packs.md §The pack (RFC 0130) — a canvas-preview entry MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.frontend-plugin-packs.a-canvas-preview-entry-with-canvastypes-host-announce-validates-rfc-0130', 'RFC 0130', `frontend-plugin-packs.md §The pack (RFC 0130) — a canvas-preview entry MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -126,7 +128,7 @@ describe('frontend-plugin manifest: schema layer (always-on, server-free)', () =
     (m.uiPlugins as Array<Record<string, unknown>>)[0].surface = 'omni-panel';
     expect(
       validate(m),
-      'frontend-plugin-packs.md §The pack — the surface enum stays closed; an unknown surface MUST NOT validate',
+      req('openwop.it.frontend-plugin-packs.a-surface-outside-the-closed-set-is-still-rejected-rfc-0130-keeps-the-enum-close', 'RFC 0130', 'frontend-plugin-packs.md §The pack — the surface enum stays closed; an unknown surface MUST NOT validate'),
     ).toBe(false);
   });
 });
@@ -137,14 +139,14 @@ describe('ui-plugin/1 message: schema layer (always-on, server-free)', () => {
   const validate = ajv.compile(JSON.parse(readFileSync(MESSAGE_SCHEMA, 'utf8')));
 
   it('a valid artifact.write request carrying a version token validates', () => {
-    const req = {
+    const reqBody = {
       openwop: 'ui-plugin/1',
       type: 'request',
       id: 7,
       method: 'artifact.write',
       params: { artifactId: 'a-1', version: 'opaque-v1', payload: {} },
     };
-    expect(validate(req), `a valid artifact.write request MUST validate. Errors: ${JSON.stringify(validate.errors)}`).toBe(true);
+    expect(validate(reqBody), req('openwop.it.frontend-plugin-packs.a-valid-artifact-write-request-carrying-a-version-token-validates', 'frontend-plugin-packs.md', `a valid artifact.write request MUST validate. Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
   });
 
   it('an artifact_conflict response carries currentVersion (version-token concurrency)', () => {
@@ -157,28 +159,28 @@ describe('ui-plugin/1 message: schema layer (always-on, server-free)', () => {
     };
     expect(
       validate(res),
-      `frontend-plugin-packs.md §Concurrency — a stale write surfaces artifact_conflict + currentVersion. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.frontend-plugin-packs.an-artifact-conflict-response-carries-currentversion-version-token-concurrency', 'frontend-plugin-packs.md', `frontend-plugin-packs.md §Concurrency — a stale write surfaces artifact_conflict + currentVersion. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
   it('a request with a method outside the allowlist is schema-rejected', () => {
-    const req = { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'host.exec' };
-    expect(validate(req), 'a method outside the ui-plugin/1 allowlist MUST NOT validate').toBe(false);
+    const reqBody = { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'host.exec' };
+    expect(validate(reqBody), req('openwop.it.frontend-plugin-packs.a-request-with-a-method-outside-the-allowlist-is-schema-rejected', 'frontend-plugin-packs.md', 'a method outside the ui-plugin/1 allowlist MUST NOT validate')).toBe(false);
   });
 
   it('a message without the ui-plugin/1 protocol tag is rejected', () => {
-    const req = { openwop: 'ui-plugin/2', type: 'request', id: 1, method: 'artifact.read' };
-    expect(validate(req), 'a host MUST ignore messages whose ui-plugin tag it does not recognize').toBe(false);
+    const reqBody = { openwop: 'ui-plugin/2', type: 'request', id: 1, method: 'artifact.read' };
+    expect(validate(reqBody), req('openwop.it.frontend-plugin-packs.a-message-without-the-ui-plugin-1-protocol-tag-is-rejected', 'frontend-plugin-packs.md', 'a host MUST ignore messages whose ui-plugin tag it does not recognize')).toBe(false);
   });
 
   it('no credential-bearing field is admitted on the envelope (frontend-plugin-no-byok)', () => {
     // additionalProperties:false on every envelope variant — a stray apiKey/token at the
     // envelope root cannot ride the boundary.
     for (const leak of ['apiKey', 'token', 'clientSecret', 'authorization']) {
-      const req = { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'artifact.read', [leak]: 'xxx' };
+      const reqBody = { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'artifact.read', [leak]: 'xxx' };
       expect(
-        validate(req),
-        `frontend-plugin-no-byok — a credential-named envelope field ("${leak}") MUST NOT validate (additionalProperties:false)`,
+        validate(reqBody),
+        req('openwop.it.frontend-plugin-packs.no-credential-bearing-field-is-admitted-on-the-envelope-frontend-plugin-no-byok', 'frontend-plugin-packs.md', `frontend-plugin-no-byok — a credential-named envelope field ("${leak}") MUST NOT validate (additionalProperties:false)`),
       ).toBe(false);
     }
   });
@@ -194,11 +196,11 @@ describe('frontend-plugin: isolation advertisement (always-on, capability shape)
   const X_HOST = /^x-host-[a-z0-9-]+-[a-z0-9-]+$/;
   it('a host advertising uiPlugins MUST advertise a conformant isolation model', async () => {
     const uiPlugins = await readCapabilityFamily<{ supported?: boolean; isolation?: string }>('uiPlugins');
-    if (!uiPlugins?.supported) return; // unadvertised → out of scope (graceful degradation)
+    if (!uiPlugins?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!uiPlugins?.supported` returned early (unadvertised → out of scope (graceful degradation))'); // unadvertised → out of scope (graceful degradation)
     const iso = uiPlugins.isolation;
     expect(
       iso !== undefined && (CONFORMANT_ISOLATION.includes(iso) || X_HOST.test(iso)),
-      driver.describe(
+      req('openwop.it.frontend-plugin-packs.a-host-advertising-uiplugins-must-advertise-a-conformant-isolation-model', 
         'frontend-plugin-packs.md §Isolation (RFC 0119)',
         'frontend-plugin-isolation — isolation MUST be a conformant model (cross-origin-iframe default | wasm | process | container | vm | x-host-*); every value denotes the same property, in-process loading is a protocol-tier MUST NOT regardless of mechanism',
       ),
@@ -214,16 +216,16 @@ describe('frontend-plugin: host-RPC behavior (capability-gated)', () => {
     const res = await driver.post('/v1/host/sample/ui-plugin/rpc', {
       message: { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'host.exec' },
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { ok?: boolean; error?: { code?: string } } | undefined;
     expect(
       body?.ok,
-      driver.describe('frontend-plugin-packs.md §Host-RPC', 'an undeclared method MUST NOT execute'),
+      req('openwop.it.frontend-plugin-packs.an-undeclared-host-rpc-method-is-refused-with-method-not-allowed', 'frontend-plugin-packs.md §Host-RPC', 'an undeclared method MUST NOT execute'),
     ).toBe(false);
     expect(
       body?.error?.code,
-      driver.describe(
+      req('openwop.it.frontend-plugin-packs.an-undeclared-host-rpc-method-is-refused-with-method-not-allowed', 
         'frontend-plugin-packs.md §Host-RPC',
         'frontend-plugin-rpc-allowlist — an undeclared method surfaces method_not_allowed',
       ),
@@ -233,7 +235,7 @@ describe('frontend-plugin: host-RPC behavior (capability-gated)', () => {
   it('a stale artifact.write is refused with artifact_conflict + currentVersion (no persist)', async () => {
     const uiPlugins = await readCapabilityFamily<{ supported?: boolean; hostApi?: string[] }>('uiPlugins');
     if (!behaviorGate('uiPlugins.supported', uiPlugins?.supported === true)) return;
-    if (!(uiPlugins?.hostApi ?? []).includes('artifact.write')) return; // write unsupported → out of scope
+    if (!(uiPlugins?.hostApi ?? []).includes('artifact.write')) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(uiPlugins?.hostApi ?? []).includes(\'artifact.write\')` returned early (write unsupported → out of scope)'); // write unsupported → out of scope
 
     const res = await driver.post('/v1/host/sample/ui-plugin/rpc', {
       message: {
@@ -244,19 +246,19 @@ describe('frontend-plugin: host-RPC behavior (capability-gated)', () => {
         params: { artifactId: 'conformance-canary', version: 'stale-token', payload: {} },
       },
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { ok?: boolean; error?: { code?: string; currentVersion?: string } } | undefined;
     expect(
       body?.error?.code,
-      driver.describe(
+      req('openwop.it.frontend-plugin-packs.a-stale-artifact-write-is-refused-with-artifact-conflict-currentversion-no-persi', 
         'frontend-plugin-packs.md §Concurrency',
         'a stale artifact.write version surfaces artifact_conflict (host MUST NOT persist)',
       ),
     ).toBe('artifact_conflict');
     expect(
       typeof body?.error?.currentVersion,
-      driver.describe('frontend-plugin-packs.md §Concurrency', 'artifact_conflict carries the host currentVersion for re-read/merge'),
+      req('openwop.it.frontend-plugin-packs.a-stale-artifact-write-is-refused-with-artifact-conflict-currentversion-no-persi', 'frontend-plugin-packs.md §Concurrency', 'artifact_conflict carries the host currentVersion for re-read/merge'),
     ).toBe('string');
   });
 });

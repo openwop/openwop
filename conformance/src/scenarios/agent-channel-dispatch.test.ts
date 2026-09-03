@@ -43,6 +43,8 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readDeploymentCap, driveDeploymentTransition } from '../lib/agentDeployment.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE_ID = 'conformance-agent-channel-dispatch';
 const BOUND_CHANNEL = 'stable';
@@ -93,7 +95,7 @@ async function startChannelRun(): Promise<string> {
   const create = await driver.post('/v1/runs', { workflowId: FIXTURE_ID });
   expect(
     create.status,
-    driver.describe(
+    req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
       'agent-deployment.md §B',
       `a host advertising agents.deployment + the ${FIXTURE_ID} fixture MUST accept a channel-bound run (201)`,
     ),
@@ -111,12 +113,12 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       // Host advertises agents.deployment but hasn't seeded the channel-bound
       // fixture — a host-config precondition, not a conformance failure.
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE_ID)` returned early');
     }
     const modes = await fetchReplayModes();
     if (!modes.includes('replay')) {
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'replay\')` returned early');
     }
 
     // ---- Leg 1: production-path channel resolution + recorded pin (§B) ----
@@ -124,14 +126,14 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     const started = await firstInvocationStarted(sourceRunId);
     expect(
       started !== null,
-      driver.describe(
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
         'agent-deployment.md §B',
         'a @channel-bound run MUST emit agent.invocation.started',
       ),
     ).toBe(true);
     expect(
       started!.payload.resolvedChannel,
-      driver.describe(
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
         'agent-deployment.md §B',
         `agent.invocation.started MUST carry the bound channel as resolvedChannel ("${BOUND_CHANNEL}")`,
       ),
@@ -139,7 +141,7 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     const pinnedVersion = started!.payload.resolvedAgentVersion;
     expect(
       typeof pinnedVersion === 'string' && (pinnedVersion as string).length > 0,
-      driver.describe(
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
         'agent-deployment.md §B',
         'a @channel-bound run MUST record a concrete resolvedAgentVersion (the recorded fact a replay re-reads, RFC 0077)',
       ),
@@ -152,22 +154,22 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     );
     if (forkDeclined(fork1.status, 'channel-dispatch replay fork 1')) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `forkDeclined(fork1.status, \'channel-dispatch replay fork 1\')` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       fork1.status,
-      driver.describe('rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201'),
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201'),
     ).toBe(201);
     const fork1RunId = (fork1.json as { runId: string }).runId;
     await pollUntilTerminal(fork1RunId, { timeoutMs: 15_000 });
     const fork1Started = await firstInvocationStarted(fork1RunId);
     expect(
       fork1Started !== null,
-      driver.describe('agent-deployment.md §B', 'a replay fork MUST re-emit agent.invocation.started'),
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 'agent-deployment.md §B', 'a replay fork MUST re-emit agent.invocation.started'),
     ).toBe(true);
     expect(
       fork1Started!.payload.resolvedAgentVersion,
-      driver.describe(
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
         'agent-deployment.md §B',
         'a replay MUST re-read the recorded resolvedAgentVersion (NOT re-resolve the channel)',
       ),
@@ -196,7 +198,7 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       // evidence; the cross-move proof needs the seam. Honest skip of Leg 3.
       // eslint-disable-next-line no-console
       console.warn('[agent-channel-dispatch] deployment seam absent — skipping the channel-move non-re-resolution leg (Leg 3)');
-      return;
+      return softSkip('blocked', 'precondition not met — `moved === null` returned early ([agent-channel-dispatch] deployment seam absent — skipping the channel-move non-re-resolution leg (Leg 3)) (seam, prior step, or fixture unavailable)');
     }
     // Confirm the move is OBSERVABLE: a fresh channel-bound run must now resolve
     // to a DIFFERENT version. If it doesn't (canary split, no-op promote), we
@@ -207,7 +209,7 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     if (typeof movedVersion !== 'string' || movedVersion === pinnedVersion) {
       // eslint-disable-next-line no-console
       console.warn('[agent-channel-dispatch] channel did not observably move — skipping Leg 3 strict assertion');
-      return;
+      return softSkip('blocked', 'precondition not met — `typeof movedVersion !== \'string\' || movedVersion === pinnedVersion` returned early ([agent-channel-dispatch] channel did not observably move — skipping Leg 3 strict assertion) (seam, prior step…');
     }
     const fork2 = await driver.post(
       `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
@@ -215,25 +217,25 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     );
     if (forkDeclined(fork2.status, 'channel-dispatch replay fork 2')) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `forkDeclined(fork2.status, \'channel-dispatch replay fork 2\')` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       fork2.status,
-      driver.describe('rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201'),
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201'),
     ).toBe(201);
     const fork2RunId = (fork2.json as { runId: string }).runId;
     await pollUntilTerminal(fork2RunId, { timeoutMs: 15_000 });
     const fork2Started = await firstInvocationStarted(fork2RunId);
     expect(
       fork2Started?.payload.resolvedAgentVersion,
-      driver.describe(
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
         'agent-deployment.md §B',
         'after the channel moves, a replay of the original run MUST still carry the ORIGINAL pin — never re-resolving the moved channel',
       ),
     ).toBe(pinnedVersion);
     expect(
       fork2Started?.payload.resolvedAgentVersion,
-      driver.describe(
+      req('openwop.it.agent-channel-dispatch.resolves-records-the-channel-pin-on-a-real-run-and-re-reads-it-on-replay-never-r', 
         'agent-deployment.md §B',
         'a replay MUST NOT resolve to the post-move version (proves the recorded fact is re-read, not re-resolved)',
       ),

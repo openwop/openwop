@@ -35,8 +35,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -60,36 +59,36 @@ describe('conversation-turn-model-provenance-shape: agent.model on a role:agent 
   it('an agent turn carrying a conforming agent.model { provider, model } validates', () => {
     expect(
       turn({ ...agentBase, agent: { agentId: 'advisor-cfo', model: { provider: 'anthropic', model: 'claude-opus-4-8' } } }),
-      why('RFC 0109 §Proposal', "a role:'agent' turn with agent.model { provider, model } MUST validate"),
+      req('openwop.it.conversation-turn-model-provenance-shape.an-agent-turn-carrying-a-conforming-agent-model-provider-model-validates', 'RFC 0109 §Proposal', "a role:'agent' turn with agent.model { provider, model } MUST validate"),
     ).toBe(true);
   });
 
   it('agent.model REQUIRES both provider and model', () => {
     expect(
       turn({ ...agentBase, agent: { model: { provider: 'anthropic' } } }),
-      why('RFC 0109 §Proposal', 'agent.model without `model` MUST be rejected'),
+      req('openwop.it.conversation-turn-model-provenance-shape.agent-model-requires-both-provider-and-model', 'RFC 0109 §Proposal', 'agent.model without `model` MUST be rejected'),
     ).toBe(false);
     expect(
       turn({ ...agentBase, agent: { model: { model: 'claude-opus-4-8' } } }),
-      why('RFC 0109 §Proposal', 'agent.model without `provider` MUST be rejected'),
+      req('openwop.it.conversation-turn-model-provenance-shape.agent-model-requires-both-provider-and-model', 'RFC 0109 §Proposal', 'agent.model without `provider` MUST be rejected'),
     ).toBe(false);
   });
 
   it('agent.model is CLOSED — an extra key (a secret/endpoint/prompt) MUST be rejected (the SR-1 guard)', () => {
     expect(
       turn({ ...agentBase, agent: { model: { provider: 'anthropic', model: 'claude-opus-4-8', apiKey: 'sk-secret' } } }),
-      why('RFC 0109 §Proposal', 'agent.model MUST forbid extra keys — no credential/endpoint/prompt rides the provenance stamp'),
+      req('openwop.it.conversation-turn-model-provenance-shape.agent-model-is-closed-an-extra-key-a-secret-endpoint-prompt-must-be-rejected-the', 'RFC 0109 §Proposal', 'agent.model MUST forbid extra keys — no credential/endpoint/prompt rides the provenance stamp'),
     ).toBe(false);
   });
 
   it('agent.model is OPTIONAL — an agent turn that omits it still validates (additive, back-compat)', () => {
     expect(
       turn({ ...agentBase, agent: { agentId: 'advisor-cfo' } }),
-      why('RFC 0109 §Compatibility', 'agent.model is additive — a turn without it MUST still validate'),
+      req('openwop.it.conversation-turn-model-provenance-shape.agent-model-is-optional-an-agent-turn-that-omits-it-still-validates-additive-bac', 'RFC 0109 §Compatibility', 'agent.model is additive — a turn without it MUST still validate'),
     ).toBe(true);
     expect(
       turn(agentBase),
-      why('RFC 0109 §Compatibility', 'a turn with no agent object at all MUST still validate'),
+      req('openwop.it.conversation-turn-model-provenance-shape.agent-model-is-optional-an-agent-turn-that-omits-it-still-validates-additive-bac', 'RFC 0109 §Compatibility', 'a turn with no agent object at all MUST still validate'),
     ).toBe(true);
   });
 });
@@ -101,10 +100,10 @@ describe('conversation-turn-model-provenance-shape: capability advertisement (RF
     const block = props.conversationTurnModelProvenance as
       | { properties?: Record<string, unknown>; required?: string[]; additionalProperties?: boolean }
       | undefined;
-    expect(block, why('RFC 0109 §Conformance', 'capabilities.conversationTurnModelProvenance MUST be declared')).toBeDefined();
-    expect(block?.properties?.supported, why('RFC 0109 §Conformance', 'conversationTurnModelProvenance.supported MUST be declared')).toBeDefined();
-    expect(block?.required, why('RFC 0109 §Conformance', 'supported MUST be required on the block')).toContain('supported');
-    expect(block?.additionalProperties, why('RFC 0109 §Conformance', 'the block MUST be closed')).toBe(false);
+    expect(block, req('openwop.it.conversation-turn-model-provenance-shape.capabilities-schema-json-declares-conversationturnmodelprovenance-with-supported', 'RFC 0109 §Conformance', 'capabilities.conversationTurnModelProvenance MUST be declared')).toBeDefined();
+    expect(block?.properties?.supported, req('openwop.it.conversation-turn-model-provenance-shape.capabilities-schema-json-declares-conversationturnmodelprovenance-with-supported', 'RFC 0109 §Conformance', 'conversationTurnModelProvenance.supported MUST be declared')).toBeDefined();
+    expect(block?.required, req('openwop.it.conversation-turn-model-provenance-shape.capabilities-schema-json-declares-conversationturnmodelprovenance-with-supported', 'RFC 0109 §Conformance', 'supported MUST be required on the block')).toContain('supported');
+    expect(block?.additionalProperties, req('openwop.it.conversation-turn-model-provenance-shape.capabilities-schema-json-declares-conversationturnmodelprovenance-with-supported', 'RFC 0109 §Conformance', 'the block MUST be closed')).toBe(false);
   });
 
   it('the conversationTurnModelProvenance block validates a conforming advertisement and rejects extras', () => {
@@ -113,8 +112,8 @@ describe('conversation-turn-model-provenance-shape: capability advertisement (RF
     const ajv = new Ajv2020({ strict: false, allErrors: true });
     addFormats(ajv);
     const validate = ajv.compile(block);
-    expect(validate({ supported: true }), why('RFC 0109 §Conformance', 'a conforming advertisement MUST validate')).toBe(true);
-    expect(validate({}), why('RFC 0109 §Conformance', 'supported is required')).toBe(false);
-    expect(validate({ supported: true, unexpected: 1 }), why('RFC 0109 §Conformance', 'an extra key MUST be rejected (closed block)')).toBe(false);
+    expect(validate({ supported: true }), req('openwop.it.conversation-turn-model-provenance-shape.the-conversationturnmodelprovenance-block-validates-a-conforming-advertisement-a', 'RFC 0109 §Conformance', 'a conforming advertisement MUST validate')).toBe(true);
+    expect(validate({}), req('openwop.it.conversation-turn-model-provenance-shape.the-conversationturnmodelprovenance-block-validates-a-conforming-advertisement-a', 'RFC 0109 §Conformance', 'supported is required')).toBe(false);
+    expect(validate({ supported: true, unexpected: 1 }), req('openwop.it.conversation-turn-model-provenance-shape.the-conversationturnmodelprovenance-block-validates-a-conforming-advertisement-a', 'RFC 0109 §Conformance', 'an extra key MUST be rejected (closed block)')).toBe(false);
   });
 });

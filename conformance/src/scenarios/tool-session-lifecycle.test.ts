@@ -19,10 +19,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readToolCatalogCap, driveToolSession, TOOL_CONTENT_FORBIDDEN } from '../lib/toolCatalog.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SESSION_OUTCOMES = ['completed', 'failed', 'aborted', 'expired'];
 /** RFC 0064 tool-call event family bracketed by a tool session. */
@@ -35,21 +36,21 @@ describe('tool-session-lifecycle (RFC 0078 §D)', () => {
     const lifecycle = cap?.sessionLifecycle === true || (typeof cap?.sessionLifecycle === 'object' && cap?.sessionLifecycle !== null);
     if (!behaviorGate('openwop-tool-session-lifecycle', lifecycle)) return;
 
-    if (!(await isEventLogSeamAvailable())) return; // event-log seam absent — soft-skip
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (event-log seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // event-log seam absent — soft-skip
     const res = await driveToolSession({});
-    if (res === null || !res.runId) return; // session seam absent — soft-skip
+    if (res === null || !res.runId) return softSkip('blocked', 'precondition not met — `res === null || !res.runId` returned early (session seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // session seam absent — soft-skip
 
     const q = await queryTestEvents(res.runId);
-    if (!q.ok) return;
+    if (!q.ok) return softSkip('blocked', 'precondition not met — `!q.ok` returned early (seam, prior step, or fixture unavailable)');
     const events = q.events.slice().sort((a, b) => a.sequence - b.sequence);
 
     const opened = events.filter((e) => e.type === 'tool.session.opened');
     const closed = events.filter((e) => e.type === 'tool.session.closed');
     expect(
       opened.length >= 1 && closed.length >= 1,
-      driver.describe('tool-catalog.md §D', 'a tool session MUST emit tool.session.opened + tool.session.closed'),
+      req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'tool-catalog.md §D', 'a tool session MUST emit tool.session.opened + tool.session.closed'),
     ).toBe(true);
-    if (opened.length === 0 || closed.length === 0) return;
+    if (opened.length === 0 || closed.length === 0) return softSkip('blocked', 'precondition not met — `opened.length === 0 || closed.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
     const open = opened[0]!;
     const close = closed[closed.length - 1]!;
@@ -59,16 +60,16 @@ describe('tool-session-lifecycle (RFC 0078 §D)', () => {
     if (calls.length > 0) {
       expect(
         open.sequence < calls[0]!.sequence,
-        driver.describe('RFC 0078 §D', 'tool.session.opened MUST precede the first call event'),
+        req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'RFC 0078 §D', 'tool.session.opened MUST precede the first call event'),
       ).toBe(true);
       expect(
         close.sequence > calls[calls.length - 1]!.sequence,
-        driver.describe('RFC 0078 §D', 'tool.session.closed MUST follow the last call event'),
+        req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'RFC 0078 §D', 'tool.session.closed MUST follow the last call event'),
       ).toBe(true);
     } else {
       expect(
         open.sequence < close.sequence,
-        driver.describe('RFC 0078 §D', 'tool.session.opened MUST precede tool.session.closed'),
+        req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'RFC 0078 §D', 'tool.session.opened MUST precede tool.session.closed'),
       ).toBe(true);
     }
 
@@ -77,17 +78,17 @@ describe('tool-session-lifecycle (RFC 0078 §D)', () => {
     const closeSid = close.payload.sessionId;
     expect(
       typeof openSid === 'string' && openSid === closeSid,
-      driver.describe('run-event-payloads.schema.json#toolSession*', 'the bracket MUST share one sessionId'),
+      req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'run-event-payloads.schema.json#toolSession*', 'the bracket MUST share one sessionId'),
     ).toBe(true);
     expect(
       typeof open.payload.toolId === 'string' && typeof close.payload.toolId === 'string',
-      driver.describe('run-event-payloads.schema.json#toolSession*', 'tool.session.* MUST carry a toolId'),
+      req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'run-event-payloads.schema.json#toolSession*', 'tool.session.* MUST carry a toolId'),
     ).toBe(true);
 
     // Closed outcome enum discipline.
     expect(
       typeof close.payload.outcome === 'string' && SESSION_OUTCOMES.includes(close.payload.outcome as string),
-      driver.describe('run-event-payloads.schema.json#toolSessionClosed', 'outcome MUST be in the closed enum'),
+      req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'run-event-payloads.schema.json#toolSessionClosed', 'outcome MUST be in the closed enum'),
     ).toBe(true);
 
     // Content-free: identifiers + metadata only.
@@ -95,7 +96,7 @@ describe('tool-session-lifecycle (RFC 0078 §D)', () => {
       for (const forbidden of TOOL_CONTENT_FORBIDDEN) {
         expect(
           !(forbidden in evt.payload),
-          driver.describe('RFC 0078 §F (SR-1)', `tool.session.* MUST be content-free (no ${forbidden})`),
+          req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'RFC 0078 §F (SR-1)', `tool.session.* MUST be content-free (no ${forbidden})`),
         ).toBe(true);
       }
     }

@@ -16,6 +16,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-wasm-pack-roundtrip';
 
@@ -53,7 +54,7 @@ describe('wasm-pack-replay-determinism: same inputs → same output', () => {
     const a = await run();
     const b = await run();
 
-    expect(a, driver.describe(
+    expect(a, req('openwop.it.wasm-pack-replay-determinism.two-independent-runs-with-same-inputs-produce-same-wasm-output', 
       'RFCS/0008-wasm-abi.md §G',
       'WASM-node output MUST be reproducible given the same inputs',
     )).not.toBeNull();

@@ -13,9 +13,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { executionModelVersionMax } from '../lib/execution-model-version.js';
 import { readExecutionModelCap } from '../lib/agentLoop.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('agent-loop-version5-shape: advertisement (RFC 0061 §A)', () => {
   it('executionModel.statefulResume/transcriptWindow are well-formed when present', async () => {
@@ -24,13 +24,13 @@ describe('agent-loop-version5-shape: advertisement (RFC 0061 §A)', () => {
     if (em.statefulResume !== undefined) {
       expect(
         typeof em.statefulResume,
-        driver.describe('capabilities.schema.json §multiAgent.executionModel', 'statefulResume MUST be a boolean when present'),
+        req('openwop.it.agent-loop-version5-shape.executionmodel-statefulresume-transcriptwindow-are-well-formed-when-present', 'capabilities.schema.json §multiAgent.executionModel', 'statefulResume MUST be a boolean when present'),
       ).toBe('boolean');
     }
     if (em.transcriptWindow !== undefined) {
       expect(
         typeof em.transcriptWindow === 'number' && (em.transcriptWindow as number) >= 1,
-        driver.describe('capabilities.schema.json §multiAgent.executionModel', 'transcriptWindow MUST be a positive integer when present'),
+        req('openwop.it.agent-loop-version5-shape.executionmodel-statefulresume-transcriptwindow-are-well-formed-when-present', 'capabilities.schema.json §multiAgent.executionModel', 'transcriptWindow MUST be a positive integer when present'),
       ).toBe(true);
     }
     if (typeof em.version === 'number') {
@@ -40,7 +40,7 @@ describe('agent-loop-version5-shape: advertisement (RFC 0061 §A)', () => {
       const max = executionModelVersionMax();
       expect(
         (em.version as number) >= 1 && (em.version as number) <= max,
-        driver.describe('capabilities.schema.json §multiAgent.executionModel', `version MUST be within the 1–${max} ladder (schema maximum)`),
+        req('openwop.it.agent-loop-version5-shape.executionmodel-statefulresume-transcriptwindow-are-well-formed-when-present', 'capabilities.schema.json §multiAgent.executionModel', `version MUST be within the 1–${max} ladder (schema maximum)`),
       ).toBe(true);
     }
   });

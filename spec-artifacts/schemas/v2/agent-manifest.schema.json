@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/agent-manifest.schema.json",
+  "title": "AgentManifest",
+  "description": "Manifest entry for an agent shipped inside a `pack.json`'s `agents[]` array. Carries everything a host needs to instantiate the agent without reading the rest of the pack tarball — only `systemPromptRef` and the two `*SchemaRef` fields under `handoff` reference external tarball files. See RFC 0003 + `node-packs.md` §`agents[]` extension.",
+  "type": "object",
+  "required": [
+    "agentId",
+    "persona",
+    "modelClass"
+  ],
+  "properties": {
+    "agentId": {
+      "$ref": "ids.schema.json#/$defs/agentId",
+      "description": "Globally-unique manifest agentId. Pattern matches the namespace tiers from `node-packs.md` §Naming, MINUS the `host:<id>` slim-runtime form (which is reserved for host-internal AgentRefs and is NOT a valid manifest namespace). Convention: `<tier>.<org>.<pack>.<agent>` for vendor/community packs; `core.<name>` for spec-canonical agents."
+    },
+    "persona": {
+      "type": "string",
+      "description": "Human-readable agent name (e.g., `\"Workflow Supervisor\"`, `\"Brief Writer\"`). Free-form; spec doesn't constrain values. NOT the `harnessRole` enum used by some hosts for tool-tier filtering.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "modelClass": {
+      "type": "string",
+      "description": "Closed enum from RFC 0002's `AgentRef` schema. Vendor extensions follow the `<vendor>.<class>` convention from `host-extensions.md` (e.g., `openwop.creative-writing`).",
+      "enum": [
+        "reasoning",
+        "writing",
+        "coding",
+        "research",
+        "classification",
+        "general"
+      ]
+    },
+    "systemPrompt": {
+      "type": "string",
+      "description": "Inline system-prompt body. Mutually exclusive with `systemPromptRef` — exactly one MUST be present (enforced by the `oneOf` clause below).",
+      "minLength": 1
+    },
+    "systemPromptRef": {
+      "type": "string",
+      "description": "URI-reference to a prompt file inside the pack tarball (e.g., `prompts/supervisor.md`). Mutually exclusive with `systemPrompt`. Useful when the prompt body is large enough that inlining would bloat the manifest.",
+      "minLength": 1
+    },
+    "evalSuiteRef": {
+      "type": "string",
+      "description": "RFC 0081 §A. MAY. URI-reference to an `agent-eval-suite.schema.json` file inside the pack tarball (e.g., `evals/support-resolver.json`), resolved at install exactly like `systemPromptRef` / `handoff.*SchemaRef`. Declares the agent's portable evaluation suite (golden/rubric/adversarial/regression/live-shadow tasks + thresholds) so a host advertising `capabilities.agents.evalSuite.supported: true` can run it as a `mode: \"eval\"` run. Absent ⇒ the agent ships no suite (a suite MAY still be authored independently and pointed at this `agentId` at run time). Does NOT embed the suite in the manifest — the suite evolves on its own cadence and is often authored by a different role.",
+      "minLength": 1
+    },
+    "toolAllowlist": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Tool identifiers the agent MAY invoke. Format: `<scope>:<tool-id>` where scope is `openwop:` (Core/protocol tools), `mcp:` (MCP-namespaced tools), or `<vendor>.<host>` for host-extension tools. Hosts MUST enforce this allowlist when dispatching the agent (see RFC 0002 §A14 mapping for the reference-impl `ToolPermissionService.filterTools(harnessRole)` derivation pattern). Hosts MAY treat absence as `[]` (no tools) or as `*` (host-default tool surface) — that policy is host-configured."
+    },
+    "requiresCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /v1/agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "skill",
+        "assistant"
+      ],
+      "description": "RFC 0131. The manifest's kind — EXPLICIT, never inferred from other fields (`handoff` presence does NOT imply `skill`; an assistant may carry a typed entry contract for cross-host interop). `skill`: a composable, task-scoped capability invoked via `handoff` (task→return) and composed by an assistant/roster agent — stateless and replay-clean; declaring this value OPTS IN to the Skill profile (the `allOf` conditional below: MUST declare `handoff`, MUST constrain `memoryShape` to scratchpad-only). `assistant`: a top-level conversational agent a client talks to and that composes skills — no profile binds it. OPTIONAL; when ABSENT the manifest is UNCONSTRAINED — no profile binds it and its meaning is exactly today's (byte- and behavior-identical). Advisory about kind only — never widens `toolAllowlist`, `requiresCapabilities`, or any scope. See `node-packs.md` §`agents[]` (the field) and `agent-memory.md` §B (the memoryShape constraint + the §C-vs-§B reject/degrade contrast)."
+    },
+    "memoryShape": {
+      "type": "object",
+      "description": "Declares which memory backends the agent reads/writes. Hosts that advertise `capabilities.agents.memoryBackends` MAY filter manifests during install based on these flags. The full memory-shape contract lands in RFC 0004 (Phase 3); RFC 0003 only declares the descriptor field and reserves `longTerm: true` as the redaction-harness trigger. RFC 0131: a `role: \"skill\"` manifest MUST constrain `conversation`/`longTerm` to `false`/absent (the Skill profile — persistent + multi-turn memory belong to the composing assistant/roster agent, RFC 0039; a stateful worker undermines replay determinism, RFC 0041).",
+      "additionalProperties": false,
+      "properties": {
+        "scratchpad": {
+          "type": "boolean",
+          "description": "Per-task ephemeral notes. Host-managed; evicted on goal completion."
+        },
+        "conversation": {
+          "type": "boolean",
+          "description": "Per-run dialogue with user / orchestrator. Lives within the run's conversation channel (see RFC 0005, deferred to Phase 4)."
+        },
+        "longTerm": {
+          "type": "boolean",
+          "description": "Cross-run memory. Requires `memoryRef` resolution per RFC 0004. Hosts MUST honor the redaction harness when `longTerm: true` is set; the descriptor is the canonical signal."
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "description": "Default confidence calibration shipped with the agent. Host runs MAY override at run-time via `RunOptions.configurable.escalationThreshold` per RFC 0002 §F.",
+      "additionalProperties": false,
+      "properties": {
+        "defaultThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Below this threshold, an `agent.decided` event with `confidence < threshold` triggers the escalation contract from RFC 0002 §F. When unset, host falls back to the run's resolved threshold (per RFC 0002 §F: default 0.7)."
+        }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "description": "URI references to JSON Schemas pinning the agent's input contract (`taskSchemaRef`) and output contract (`returnSchemaRef`). Both refs are tarball-relative paths (e.g., `schemas/<agent>-task.schema.json`). Hosts validate inbound task payloads against `taskSchemaRef` before dispatch, and outbound results against `returnSchemaRef` before persistence. Manifests that ship without handoff schemas accept opaque task payloads — useful for free-form chat agents but weaker for cross-host interop.",
+      "additionalProperties": false,
+      "properties": {
+        "taskSchemaRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "returnSchemaRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "label": {
+      "type": "string",
+      "description": "Optional short label for UI surfaces. Falls back to `persona` when absent.",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional one-line summary for UI / catalog surfaces.",
+      "maxLength": 500
+    },
+    "promptLibraryRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+      "description": "RFC 0029 §B. Optional library identifier (per RFC 0028 §C) the agent draws fallback prompts from. When set AND `promptOverrides[kind]` is unset for a given kind, the host MAY look up a same-kind default template from this library at resolution time (layer-2 `agent-library-default` per the resolution chain in `spec/v1/prompts.md` §\"Resolution chain (normative)\"). NOT a replacement for `systemPrompt | systemPromptRef` — those remain the agent's intrinsic system-prompt declaration."
+    },
+    "promptOverrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0029 §B. Per-kind preferred PromptRefs that apply at resolution chain layer 2 (`agent-overrides`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". For `system` kind, applies ONLY when the manifest has no intrinsic `systemPrompt | systemPromptRef` (the intrinsic surface wins). For other kinds, applies whenever the node doesn't carry a layer-1 explicit override.",
+      "properties": {
+        "system": {
+          "$ref": "./prompt-ref.schema.json"
+        },
+        "user": {
+          "$ref": "./prompt-ref.schema.json"
+        },
+        "few-shot": {
+          "$ref": "./prompt-ref.schema.json"
+        },
+        "schema-hint": {
+          "$ref": "./prompt-ref.schema.json"
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "required": [
+        "systemPrompt"
+      ],
+      "not": {
+        "required": [
+          "systemPromptRef"
+        ]
+      }
+    },
+    {
+      "required": [
+        "systemPromptRef"
+      ],
+      "not": {
+        "required": [
+          "systemPrompt"
+        ]
+      }
+    }
+  ],
+  "allOf": [
+    {
+      "$comment": "RFC 0131 §B — the Skill profile. Binds ONLY manifests that opt in with `role: \"skill\"` (absent/`assistant` ⇒ unconstrained). A `role:\"skill\"` manifest MUST declare `handoff` and MUST NOT declare `memoryShape.conversation` or `memoryShape.longTerm` as `true` (scratchpad-only). A violation is a malformed manifest (RFC 0003 §C — an author error caught at publish/install validation), NOT an RFC 0072 §C `degraded[]` runtime tier.",
+      "if": {
+        "properties": {
+          "role": {
+            "const": "skill"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "then": {
+        "required": [
+          "handoff"
+        ],
+        "properties": {
+          "memoryShape": {
+            "properties": {
+              "conversation": {
+                "const": false
+              },
+              "longTerm": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "patternProperties": {
+    "^(openwop-|x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138; extended to this pack-authored document by RFC 0177 §C.2). A consumer that does not recognize one MUST ignore it."
+    }
+  }
+}

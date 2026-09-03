@@ -26,7 +26,8 @@
 
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { createRequire } from 'node:module';
+import { join, relative, sep, dirname } from 'node:path';
 
 export interface CorpusStamp {
   readonly suiteVersion?: string;
@@ -73,6 +74,33 @@ export function digestVendoredFiles(root: string): Record<string, string> {
  * Compare the stamp's `files` map against the bytes on disk. Pure: reads,
  * never writes, never throws on a mismatch — the caller decides how loud.
  */
+/**
+ * Suite 2.0.0 (RFC 0168 §D.2): the contract is the `@openwop/spec-artifacts` peer.
+ * The suite embeds, at pack time, `dist/spec-artifacts.lock.json` =
+ * { version, stampSha256 } for the peer it was built against; at start it
+ * resolves the installed peer, recomputes its stamp digest, and refuses to run
+ * on a version or digest mismatch (a floating peer makes a bundle
+ * irreproducible). The peer's own files are then verified against its stamp.
+ */
+export function verifyPeerContract(pkgRoot: string): StampVerdict {
+  const lockPath = join(pkgRoot, 'dist', 'spec-artifacts.lock.json');
+  if (!existsSync(lockPath)) return { kind: 'not-applicable', reason: 'dist/spec-artifacts.lock.json is absent — a repo checkout, not a packed 2.x suite' };
+  let lock: { version: string; stampSha256: string };
+  try { lock = JSON.parse(readFileSync(lockPath, 'utf8')); } catch { return { kind: 'mismatch', missing: ['dist/spec-artifacts.lock.json'], altered: [], extra: [] }; }
+  let peerRoot: string;
+  try { peerRoot = dirname(createRequire(join(pkgRoot, 'package.json')).resolve('@openwop/spec-artifacts/package.json')); }
+  catch { return { kind: 'mismatch', missing: ['node_modules/@openwop/spec-artifacts (peer dependency not installed)'], altered: [], extra: [] }; }
+  const stampPath = join(peerRoot, 'CORPUS-STAMP.json');
+  if (!existsSync(stampPath)) return { kind: 'mismatch', missing: ['@openwop/spec-artifacts/CORPUS-STAMP.json'], altered: [], extra: [] };
+  const stamp = JSON.parse(readFileSync(stampPath, 'utf8')) as { package: string; version: string; files: Record<string, string> };
+  const digest = createHash('sha256').update(JSON.stringify({ package: stamp.package, version: stamp.version, files: stamp.files })).digest('hex');
+  if (stamp.version !== lock.version || digest !== lock.stampSha256) return { kind: 'mismatch', missing: [], altered: [`@openwop/spec-artifacts ${stamp.version} (digest ${digest.slice(0, 12)}) ≠ the suite's lock ${lock.version} (${lock.stampSha256.slice(0, 12)})`], extra: [] };
+  const missing: string[] = []; const altered: string[] = [];
+  for (const [rel, d] of Object.entries(stamp.files)) { const p = join(peerRoot, ...rel.split('/')); if (!existsSync(p)) missing.push(rel); else if (sha256File(p) !== d) altered.push(rel); }
+  if (missing.length || altered.length) return { kind: 'mismatch', missing, altered, extra: [] };
+  return { kind: 'verified', files: Object.keys(stamp.files).length };
+}
+
 export function verifyCorpusStamp(root: string, layout: string): StampVerdict {
   if (layout !== 'published') {
     return { kind: 'not-applicable', reason: `layout is '${layout}' — the vendored copy exists only in the published package` };

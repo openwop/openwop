@@ -23,6 +23,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -88,12 +89,12 @@ describe('pack-registry-isolation: test catalog MUST NOT bleed into production (
       const stringified = body ? JSON.stringify(body) : '';
       expect(
         stringified.includes(name),
-        driver.describe(
+        req('openwop.it.pack-registry-isolation.a-pack-put-to-v1-packs-test-name-must-not-appear-in-get-v1-packs-name', 
           'RFCS/0025-test-mode-registry-namespace.md §C point 1',
           `pack name '${name}' was written via /v1/packs-test/${name}@${version} but appeared in /v1/packs/${name} response body — test-catalog isolation MUST hold`,
         ),
       ).toBe(false);
-      return;
+      return softSkip('blocked', 'precondition not met — `prodRes.status === 200` returned early (404 is the canonical "not found" — exactly what isolation requires. 200 with a payload that does NOT name our pack would mean the host returned a listing…');
     }
 
     // Acceptable: 4xx range (404 pack_not_found is the spec-canonical
@@ -101,7 +102,7 @@ describe('pack-registry-isolation: test catalog MUST NOT bleed into production (
     // signal satisfies the invariant).
     expect(
       prodRes.status >= 400 && prodRes.status < 500,
-      driver.describe(
+      req('openwop.it.pack-registry-isolation.a-pack-put-to-v1-packs-test-name-must-not-appear-in-get-v1-packs-name', 
         'RFCS/0025-test-mode-registry-namespace.md §C point 1',
         `expected production-namespace GET to return 4xx for a test-namespace-only pack '${name}', got ${prodRes.status}`,
       ),

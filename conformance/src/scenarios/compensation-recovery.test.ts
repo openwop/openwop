@@ -55,6 +55,7 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'openwop-compensation';
 const UNWIND = '/v1/host/sample/test/compensation/unwind';
@@ -112,29 +113,29 @@ describe('RFC 0151 §C — inverse-action identity is retry-stable (capability-g
   it('a transient inverse failure retries under the SAME identity and the same downstream key', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const r = await post(UNWIND, { nodes: 2, failFirstInverseAttempts: 2 });
-    if (r === null) return;
-    expect(r.status, driver.describe('spec/v1/host-sample-test-seams.md §21', 'unwind seam answers 200')).toBe(200);
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.status, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'spec/v1/host-sample-test-seams.md §21', 'unwind seam answers 200')).toBe(200);
     const body = r.json as UnwindResponse;
     if (!Array.isArray(body.inverseActions)) return extensionAbsent('`unwind` did not return `inverseActions[]`');
     // Under reverse-completion the first inverse to run is the highest forward ordinal (2).
     const first = body.inverseActions.find((a) => a.ordinal === 2) ?? body.inverseActions[0];
-    expect(first, driver.describe('spec/v1/host-sample-test-seams.md §21', 'one entry per plan entry')).toBeDefined();
+    expect(first, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'spec/v1/host-sample-test-seams.md §21', 'one entry per plan entry')).toBeDefined();
     const a = first as InverseAction;
-    expect(a.attempts, driver.describe('RFCS/0151 §C', 'two transient failures then success is THREE attempts of one obligation')).toBe(3);
-    expect(a.outcome, driver.describe('RFCS/0151 §C', 'a transient failure MUST be retryable — the action completes')).toBe('completed');
-    expect(Array.isArray(a.downstreamKeys) ? a.downstreamKeys.length : -1, driver.describe('spec/v1/host-sample-test-seams.md §21', '`downstreamKeys` has one entry per attempt')).toBe(3);
+    expect(a.attempts, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'RFCS/0151 §C', 'two transient failures then success is THREE attempts of one obligation')).toBe(3);
+    expect(a.outcome, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'RFCS/0151 §C', 'a transient failure MUST be retryable — the action completes')).toBe('completed');
+    expect(Array.isArray(a.downstreamKeys) ? a.downstreamKeys.length : -1, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'spec/v1/host-sample-test-seams.md §21', '`downstreamKeys` has one entry per attempt')).toBe(3);
     const distinct = new Set(a.downstreamKeys ?? []);
     expect(
       distinct.size,
-      driver.describe(
+      req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 
         'RFCS/0151 §C + RFC 0150 §B',
         'a retry re-presents the SAME inverse-action identity as its idempotency key — a second key at the downstream is a second obligation (two refunds). `attempt` is outside the identity for exactly this reason.',
       ),
     ).toBe(1);
     // One obligation per ordinal: no duplicate plan entries.
     const ordinals = body.inverseActions.map((x) => x.ordinal);
-    expect(new Set(ordinals).size, driver.describe('RFCS/0151 §C', 'exactly one plan entry per forward ordinal')).toBe(ordinals.length);
-    expect(typeof a.effectId === 'string' && a.effectId.length > 0, driver.describe('RFCS/0151 §D', 'the identity is carried as an opaque `effectId`')).toBe(true);
+    expect(new Set(ordinals).size, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'RFCS/0151 §C', 'exactly one plan entry per forward ordinal')).toBe(ordinals.length);
+    expect(typeof a.effectId === 'string' && a.effectId.length > 0, req('openwop.it.compensation-recovery.a-transient-inverse-failure-retries-under-the-same-identity-and-the-same-downstr', 'RFCS/0151 §D', 'the identity is carried as an opaque `effectId`')).toBe(true);
   });
 });
 
@@ -142,7 +143,7 @@ describe('RFC 0151 §E — operator authority is bound to the plan\'s tenant (ca
   it('cross-tenant is neutralized (404), same-tenant non-operator is refused and audited (403), the operator acts (200)', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const held = await post(UNWIND, { nodes: 2, hold: true });
-    if (held === null) return;
+    if (held === null) return softSkip('blocked', 'precondition not met — `held === null` returned early (seam, prior step, or fixture unavailable)');
     const body = held.json as UnwindResponse;
     const runId = body.runId;
     if (typeof runId !== 'string') return extensionAbsent('`unwind` did not return a `runId`');
@@ -151,8 +152,8 @@ describe('RFC 0151 §E — operator authority is bound to the plan\'s tenant (ca
     if (heldEntry === undefined && !manual) return extensionAbsent('`unwind` with `hold: true` produced neither a held plan entry nor `compensation.manual_intervention_required`');
     // Snapshot must read `manual` while held (§D fold).
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
-    expect(snap.status, driver.describe('rest-endpoints.md', 'GET /v1/runs/{runId} for the held run')).toBe(200);
-    expect((snap.json as { compensationStatus?: string }).compensationStatus, driver.describe('spec/v1/compensation.md §D', 'a held plan reads `manual`')).toBe('manual');
+    expect(snap.status, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'rest-endpoints.md', 'GET /v1/runs/{runId} for the held run')).toBe(200);
+    expect((snap.json as { compensationStatus?: string }).compensationStatus, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'spec/v1/compensation.md §D', 'a held plan reads `manual`')).toBe('manual');
 
     const op = async (actor: Record<string, unknown>) =>
       driver.post(OPERATOR, { runId, action: 'retry', actor });
@@ -161,28 +162,28 @@ describe('RFC 0151 §E — operator authority is bound to the plan\'s tenant (ca
     if (cross.status === 404 && readErrorCode(cross.json) === undefined && (cross.json === null || cross.json === undefined || Object.keys(cross.json as object).length === 0)) {
       return extensionAbsent(`${OPERATOR} answered a bodiless 404 — the operator seam is absent (an absent seam and a neutralized cross-tenant plan must be told apart by the envelope: RFC 0132 §A.2 answers \`not_found\` in the canonical envelope)`);
     }
-    expect(cross.status, driver.describe('RFCS/0151 §E + RFC 0132 §A.2', 'an actor from another tenant MUST NOT learn the plan exists — 404, not 403')).toBe(404);
-    expect(readErrorCode(cross.json), driver.describe('rest-endpoints.md §Error codes', '`not_found` — do not leak existence')).toBe('not_found');
+    expect(cross.status, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'RFCS/0151 §E + RFC 0132 §A.2', 'an actor from another tenant MUST NOT learn the plan exists — 404, not 403')).toBe(404);
+    expect(readErrorCode(cross.json), req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'rest-endpoints.md §Error codes', '`not_found` — do not leak existence')).toBe('not_found');
     // 2. Same tenant, no operator authority: refused AND audited.
     const plain = await op({ tenantId: 'default', principalId: 'conformance-bystander', operator: false });
-    expect(plain.status, driver.describe('RFCS/0151 §E', 'a principal without operator authority in the plan\'s tenant is refused')).toBe(403);
-    expect(readErrorCode(plain.json), driver.describe('rest-endpoints.md §Error codes', '`forbidden`')).toBe('forbidden');
-    expect(readRetriable(plain.json), driver.describe('spec/v1/host-sample-test-seams.md §21', 'a refused override is not retriable')).toBe(false);
+    expect(plain.status, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'RFCS/0151 §E', 'a principal without operator authority in the plan\'s tenant is refused')).toBe(403);
+    expect(readErrorCode(plain.json), req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'rest-endpoints.md §Error codes', '`forbidden`')).toBe('forbidden');
+    expect(readRetriable(plain.json), req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'spec/v1/host-sample-test-seams.md §21', 'a refused override is not retriable')).toBe(false);
     // 3. The operator: acts, audited, rollup moves off `manual`.
     const ok = await op({ tenantId: 'default', principalId: 'conformance-operator', operator: true });
-    expect(ok.status, driver.describe('RFCS/0151 §E', 'an authorized operator MAY retry a held inverse action')).toBe(200);
+    expect(ok.status, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'RFCS/0151 §E', 'an authorized operator MAY retry a held inverse action')).toBe(200);
     const res = ok.json as { compensationStatus?: string; audited?: boolean; planVersion?: unknown };
-    expect(res.audited, driver.describe('RFCS/0151 §E', 'every override MUST be audited (`authorization.decided`)')).toBe(true);
+    expect(res.audited, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'RFCS/0151 §E', 'every override MUST be audited (`authorization.decided`)')).toBe(true);
     expect(
       ['completed', 'partial', 'failed', 'running'],
-      driver.describe('spec/v1/compensation.md §D', 'after the operator retries, the rollup is whatever the recorded outcomes yield — never still `manual` for a resolved hold'),
+      req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'spec/v1/compensation.md §D', 'after the operator retries, the rollup is whatever the recorded outcomes yield — never still `manual` for a resolved hold'),
     ).toContain(res.compensationStatus);
     // The refusal in step 2 was audited too: the plan's events carry a reason.
     const after = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     if (after.status === 200) {
       const evs = (after.json as { events?: Array<{ type?: string; payload?: Record<string, unknown> }> }).events ?? [];
       const decided = evs.filter((e) => e.type === 'authorization.decided');
-      expect(decided.length, driver.describe('RFCS/0151 §E + RFC 0049', 'both the refusal and the override are `authorization.decided` records')).toBeGreaterThanOrEqual(2);
+      expect(decided.length, req('openwop.it.compensation-recovery.cross-tenant-is-neutralized-404-same-tenant-non-operator-is-refused-and-audited', 'RFCS/0151 §E + RFC 0049', 'both the refusal and the override are `authorization.decided` records')).toBeGreaterThanOrEqual(2);
     }
   });
 });
@@ -191,23 +192,23 @@ describe('RFC 0151 §B/§F — inverse inputs are recorded facts, not re-derived
   it('a replay executes the same inverse actions with the same inputs, and re-fires nothing', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const r = await post(REPLAY, {});
-    if (r === null) return;
-    expect(r.status, driver.describe('spec/v1/host-sample-test-seams.md §21', 'replay seam answers 200')).toBe(200);
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.status, req('openwop.it.compensation-recovery.a-replay-executes-the-same-inverse-actions-with-the-same-inputs-and-re-fires-not', 'spec/v1/host-sample-test-seams.md §21', 'replay seam answers 200')).toBe(200);
     const body = r.json as ReplayResponse;
     if (!Array.isArray(body.source) || !Array.isArray(body.replayed)) return extensionAbsent('`replay` did not return `source[]` / `replayed[]`');
-    expect(body.refiredEffects, driver.describe('RFCS/0151 §F', 'replay MUST NOT re-fire inverse effects')).toBe(0);
-    expect(body.source.length, driver.describe('spec/v1/host-sample-test-seams.md §21', 'the source run had inverse actions to compare')).toBeGreaterThan(0);
+    expect(body.refiredEffects, req('openwop.it.compensation-recovery.a-replay-executes-the-same-inverse-actions-with-the-same-inputs-and-re-fires-not', 'RFCS/0151 §F', 'replay MUST NOT re-fire inverse effects')).toBe(0);
+    expect(body.source.length, req('openwop.it.compensation-recovery.a-replay-executes-the-same-inverse-actions-with-the-same-inputs-and-re-fires-not', 'spec/v1/host-sample-test-seams.md §21', 'the source run had inverse actions to compare')).toBeGreaterThan(0);
     const norm = (xs: readonly InverseAction[]) =>
       [...xs].sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0)).map((x) => ({ ordinal: x.ordinal, effectId: x.effectId, input: x.input }));
     expect(
       norm(body.replayed),
-      driver.describe(
+      req('openwop.it.compensation-recovery.a-replay-executes-the-same-inverse-actions-with-the-same-inputs-and-re-fires-not', 
         'RFCS/0151 §B + §F',
         'a replay uses the RECORDED inverse inputs and identities — an inverse built from a re-derived (prompt / model / live) value is not the inverse of what was actually done',
       ),
     ).toEqual(norm(body.source));
     for (const x of body.source) {
-      expect(x.input, driver.describe('RFCS/0151 §B', 'each inverse action executed with a recorded input')).toBeDefined();
+      expect(x.input, req('openwop.it.compensation-recovery.a-replay-executes-the-same-inverse-actions-with-the-same-inputs-and-re-fires-not', 'RFCS/0151 §B', 'each inverse action executed with a recorded input')).toBeDefined();
     }
   });
 });

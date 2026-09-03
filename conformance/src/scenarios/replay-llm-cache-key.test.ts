@@ -28,8 +28,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { semanticRequestDigestV2, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('replay-llm-cache-key: SHA-256-over-JCS recipe, v2 (replay.md §B, RFC 0150 §C)', () => {
   it('host cache key MUST equal the locally-recomputed v2 semantic-request digest', async () => {
@@ -43,11 +44,11 @@ describe('replay-llm-cache-key: SHA-256-over-JCS recipe, v2 (replay.md §B, RFC 
       temperature: 0.7,
     };
     const result = await callSeam(input);
-    if (result.status === 404) return; // seam not exposed
+    if (result.status === 404) return softSkip('blocked', 'precondition not met — `result.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     expect(result.status).toBe(200);
     expect(
       result.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key.host-cache-key-must-equal-the-locally-recomputed-v2-semantic-request-digest', 
         'replay.md §B (RFC 0150 §C)',
         'host cache key MUST be lowercase-hex SHA-256 of the JCS-canonical v2 semantic request ' +
           '(stamped `recipe: "openwop-semantic-request-v2"`); a v1 key here is a host that has ' +
@@ -62,8 +63,8 @@ describe('replay-llm-cache-key: SHA-256-over-JCS recipe, v2 (replay.md §B, RFC 
       model: 'gpt-4',
       messages: [{ role: 'user', content: 'hi' }],
     });
-    if (result.status === 404) return;
-    expect(result.cacheKey).toMatch(/^[0-9a-f]{64}$/);
+    if (result.status === 404) return softSkip('blocked', 'precondition not met — `result.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(result.cacheKey, req('openwop.it.replay-llm-cache-key.cache-key-must-be-64-lowercase-hex-characters-sha-256-output-shape', 'replay.md §"LLM cache-key recipe', 'cache key MUST be 64 lowercase-hex characters (SHA-256 output shape)')).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 
@@ -76,7 +77,7 @@ describe('replay-llm-cache-key: transport-only fields are EXCLUDED (replay.md §
       temperature: 0.5,
     };
     const baseResult = await callSeam(base);
-    if (baseResult.status === 404) return;
+    if (baseResult.status === 404) return softSkip('blocked', 'precondition not met — `baseResult.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     // Transport / bookkeeping only. None of these can change what the model
     // returns, so none may change the key. (`max_tokens`, `stop`, and `seed`
@@ -95,7 +96,7 @@ describe('replay-llm-cache-key: transport-only fields are EXCLUDED (replay.md §
     const noisyResult = await callSeam(noisy);
     expect(
       noisyResult.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key.stream-metadata-user-request-ids-trace-context-must-not-influence-the-cache-key', 
         'replay.md §A (v2)',
         'cache key MUST be invariant under transport-only fields (stream, metadata, user, request ids, trace context, tenant, timeout)',
       ),
@@ -111,11 +112,11 @@ describe('replay-llm-cache-key: transport-only fields are EXCLUDED (replay.md §
     };
     const hotInput = { ...baseInput, temperature: 1.0 };
     const baseResult = await callSeam(baseInput);
-    if (baseResult.status === 404) return;
+    if (baseResult.status === 404) return softSkip('blocked', 'precondition not met — `baseResult.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const hotResult = await callSeam(hotInput);
     expect(
       baseResult.cacheKey === hotResult.cacheKey,
-      driver.describe('replay.md §A', 'changing a recipe field MUST yield a different cache key (no false collisions)'),
+      req('openwop.it.replay-llm-cache-key.changing-a-recipe-field-temperature-must-yield-a-different-cache-key', 'replay.md §A', 'changing a recipe field MUST yield a different cache key (no false collisions)'),
     ).toBe(false);
   });
 });
@@ -139,11 +140,11 @@ describe('replay-llm-cache-key: outcome-affecting fields are INCLUDED (RFC 0150 
     ['maxOutputTokens', { maxOutputTokens: 100 }, { maxOutputTokens: 1000 }],
   ])('%s DOES change the cache key', async (_field, a, b) => {
     const ra = await callSeam({ ...base, ...a });
-    if (ra.status === 404) return;
+    if (ra.status === 404) return softSkip('blocked', 'precondition not met — `ra.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const rb = await callSeam({ ...base, ...b });
     expect(
       ra.cacheKey === rb.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key.s-does-change-the-cache-key', 
         'replay.md §A (RFC 0150 §C)',
         `\`${_field}\` decides the completion, so two requests differing only in it MUST NOT share a cache key — ` +
           'sharing one returns a response the caller never asked for, deterministically',
@@ -151,10 +152,10 @@ describe('replay-llm-cache-key: outcome-affecting fields are INCLUDED (RFC 0150 
     ).toBe(false);
     // And each side MUST equal the locally-recomputed v2 digest, so a host cannot
     // pass this leg by salting the key with something arbitrary.
-    expect(ra.cacheKey, driver.describe('replay.md §B (v2)', 'key MUST equal the v2 digest')).toBe(
+    expect(ra.cacheKey, req('openwop.it.replay-llm-cache-key.s-does-change-the-cache-key', 'replay.md §B (v2)', 'key MUST equal the v2 digest')).toBe(
       semanticRequestDigestV2({ ...base, ...a }),
     );
-    expect(rb.cacheKey, driver.describe('replay.md §B (v2)', 'key MUST equal the v2 digest')).toBe(
+    expect(rb.cacheKey, req('openwop.it.replay-llm-cache-key.s-does-change-the-cache-key', 'replay.md §B (v2)', 'key MUST equal the v2 digest')).toBe(
       semanticRequestDigestV2({ ...base, ...b }),
     );
   });
@@ -163,17 +164,17 @@ describe('replay-llm-cache-key: outcome-affecting fields are INCLUDED (RFC 0150 
     const withOpts = { ...base, providerOptions: { 'vendor.openai.logitBias': { '50256': -100 } } };
     const withOtherOpts = { ...base, providerOptions: { 'vendor.openai.logitBias': { '50256': 100 } } };
     const r1 = await callSeam(withOpts);
-    if (r1.status === 404) return;
+    if (r1.status === 404) return softSkip('blocked', 'precondition not met — `r1.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const r2 = await callSeam(withOtherOpts);
     expect(
       r1.cacheKey === r2.cacheKey,
-      driver.describe(
+      req('openwop.it.replay-llm-cache-key.provideroptions-are-carried-into-the-key-not-dropped', 
         'replay.md §B step 1 (RFC 0150 §C)',
         'an unknown provider option MUST be carried into `providerOptions` before hashing — a dropped option ' +
           'that alters output is indistinguishable from one that was never set',
       ),
     ).toBe(false);
-    expect(r1.cacheKey, driver.describe('replay.md §B (v2)', 'key MUST equal the v2 digest')).toBe(
+    expect(r1.cacheKey, req('openwop.it.replay-llm-cache-key.provideroptions-are-carried-into-the-key-not-dropped', 'replay.md §B (v2)', 'key MUST equal the v2 digest')).toBe(
       semanticRequestDigestV2(withOpts),
     );
   });
@@ -182,7 +183,7 @@ describe('replay-llm-cache-key: outcome-affecting fields are INCLUDED (RFC 0150 
 describe('replay-llm-cache-key: cross-host parity (replay.md §D)', () => {
   it('two hosts compute the same cache key for the same input (when OPENWOP_BASE_URL_B is configured)', async () => {
     const otherBaseUrl = process.env['OPENWOP_BASE_URL_B'];
-    if (!otherBaseUrl) return; // operator-supplied second host not configured
+    if (!otherBaseUrl) return softSkip('blocked', 'precondition not met — `!otherBaseUrl` returned early (operator-supplied second host not configured) (seam, prior step, or fixture unavailable)'); // operator-supplied second host not configured
     const input = {
       provider: 'openai',
       model: 'gpt-4',
@@ -191,19 +192,19 @@ describe('replay-llm-cache-key: cross-host parity (replay.md §D)', () => {
       seed: 7,
     };
     const resA = await callSeam(input);
-    if (resA.status === 404) return;
+    if (resA.status === 404) return softSkip('blocked', 'precondition not met — `resA.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const resB = await fetch(`${otherBaseUrl.replace(/\/$/, '')}/v1/host/sample/test/llm-cache-key`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(input),
     });
-    if (resB.status === 404) return;
+    if (resB.status === 404) return softSkip('blocked', 'precondition not met — `resB.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const jsonB = (await resB.json()) as { cacheKey?: string };
     expect(
       jsonB.cacheKey,
-      driver.describe('replay.md §D', 'two compliant hosts MUST compute byte-identical cache keys for the same recipe input'),
+      req('openwop.it.replay-llm-cache-key.two-hosts-compute-the-same-cache-key-for-the-same-input-when-openwop-base-url-b', 'replay.md §D', 'two compliant hosts MUST compute byte-identical cache keys for the same recipe input'),
     ).toBe(resA.cacheKey);
-    expect(resA.cacheKey, driver.describe('replay.md §B (v2)', 'and both MUST equal the v2 digest')).toBe(
+    expect(resA.cacheKey, req('openwop.it.replay-llm-cache-key.two-hosts-compute-the-same-cache-key-for-the-same-input-when-openwop-base-url-b', 'replay.md §B (v2)', 'and both MUST equal the v2 digest')).toBe(
       semanticRequestDigestV2(input),
     );
   });

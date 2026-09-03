@@ -26,6 +26,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-idempotent';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -40,7 +42,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: openwop-Idempotent-Replay h
     const body = { workflowId: WORKFLOW_ID, inputs: { nonce: 'replay-test' } };
 
     const first = await driver.post('/v1/runs', body, { headers: { 'Idempotency-Key': key } });
-    expect(first.status, driver.describe(
+    expect(first.status, req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
       'rest-endpoints.md',
       'first POST /v1/runs returns 201',
     )).toBe(201);
@@ -50,7 +52,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: openwop-Idempotent-Replay h
     // set to "false". Pre-RFC spec only requires it on the replay.
     // Permissive assertion: if present, MUST be "false" or "true".
     if (firstReplay !== null) {
-      expect(['false', 'true'].includes(firstReplay), driver.describe(
+      expect(['false', 'true'].includes(firstReplay), req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
         'idempotency.md §Server responsibilities',
         'openwop-Idempotent-Replay value MUST be "true" or "false"',
       )).toBe(true);
@@ -59,18 +61,18 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: openwop-Idempotent-Replay h
     const replay = await driver.post('/v1/runs', body, { headers: { 'Idempotency-Key': key } });
     expect(
       [200, 201].includes(replay.status),
-      driver.describe('idempotency.md §Layer 1', 'replay returns 200 or 201'),
+      req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 'idempotency.md §Layer 1', 'replay returns 200 or 201'),
     ).toBe(true);
 
     const replayHeader = replay.headers.get('openwop-idempotent-replay');
     // Per idempotency.md §Server responsibilities #2: SHOULD be set.
     // RFC 0002 §1 promotes to MUST. Today's strictness: present on replay.
-    expect(replayHeader, driver.describe(
+    expect(replayHeader, req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
       'idempotency.md §Server responsibilities #2',
       'openwop-Idempotent-Replay SHOULD be set on idempotent replay responses',
     )).not.toBeNull();
     if (replayHeader !== null) {
-      expect(replayHeader, driver.describe(
+      expect(replayHeader, req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
         'idempotency.md §Server responsibilities #2',
         'openwop-Idempotent-Replay on replay MUST be "true"',
       )).toBe('true');
@@ -93,7 +95,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: 5-retry budget per scale-pr
     for (const res of responses) {
       expect(
         [200, 201].includes(res.status),
-        driver.describe(
+        req('openwop.it.idempotencyRetry.5-retries-100ms-apart-with-same-key-all-return-the-same-runid', 
           'scale-profiles.md §Retry semantics',
           'host MUST handle ≥5 retries 100ms apart without losing the cached response',
         ),
@@ -101,7 +103,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: 5-retry budget per scale-pr
     }
 
     const runIds = new Set(responses.map((r) => (r.json as { runId?: string })?.runId));
-    expect(runIds.size, driver.describe(
+    expect(runIds.size, req('openwop.it.idempotencyRetry.5-retries-100ms-apart-with-same-key-all-return-the-same-runid', 
       'idempotency.md §Layer 1',
       '5 retries with same key MUST collapse to exactly one runId',
     )).toBe(1);
@@ -114,18 +116,18 @@ describe('idempotency-retry: limits.idempotencyAckTimeoutSec contract per idempo
     expect(res.status).toBe(200);
 
     const limits = (res.json as { limits?: Record<string, unknown> })?.limits;
-    if (!limits) return; // limits required per capabilities.md §3 — covered elsewhere
+    if (!limits) return softSkip('blocked', 'precondition not met — `!limits` returned early (limits required per capabilities.md §3 — covered elsewhere) (seam, prior step, or fixture unavailable)'); // limits required per capabilities.md §3 — covered elsewhere
     const ack = limits.idempotencyAckTimeoutSec;
     if (ack === undefined) {
       // Per idempotency.md, the field is optional; absence implies the
       // 5-second floor. Nothing to assert.
-      return;
+      return softSkip('blocked', 'precondition not met — `ack === undefined` returned early (Per idempotency.md, the field is optional; absence implies the 5-second floor. Nothing to assert.) (seam, prior step, or fixture unavailable)');
     }
-    expect(typeof ack === 'number' && Number.isInteger(ack), driver.describe(
+    expect(typeof ack === 'number' && Number.isInteger(ack), req('openwop.it.idempotencyRetry.host-advertising-idempotencyacktimeoutsec-sets-integer-5', 
       'idempotency.md',
       'limits.idempotencyAckTimeoutSec MUST be an integer when advertised',
     )).toBe(true);
-    expect(ack as number, driver.describe(
+    expect(ack as number, req('openwop.it.idempotencyRetry.host-advertising-idempotencyacktimeoutsec-sets-integer-5', 
       'idempotency.md',
       'limits.idempotencyAckTimeoutSec MUST be ≥ 5',
     )).toBeGreaterThanOrEqual(5);

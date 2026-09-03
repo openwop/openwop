@@ -28,9 +28,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readEgressPolicyCap, driveEgress, EGRESS_DECISIONS, EGRESS_REASONS } from '../lib/egressPolicy.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('egress-audience-binding (RFC 0079 §C)', () => {
   it('denies/downgrades an out-of-audience egress without attaching the credential, and fails closed on unevaluable provenance', async () => {
@@ -39,22 +40,22 @@ describe('egress-audience-binding (RFC 0079 §C)', () => {
 
     // ---- Leg 1: out-of-audience — deny|downgrade + credential NOT attached --
     const oob = await driveEgress({ scenario: 'out-of-audience' });
-    if (oob === null) return; // egress seam absent — soft-skip the whole behavior
+    if (oob === null) return softSkip('blocked', 'precondition not met — `oob === null` returned early (egress seam absent — soft-skip the whole behavior) (seam, prior step, or fixture unavailable)'); // egress seam absent — soft-skip the whole behavior
     expect(
       oob.decision === 'denied' || oob.decision === 'downgraded',
-      driver.describe('host-capabilities.md §"Credential provenance + egress policy"', 'an out-of-audience egress MUST be denied or downgraded'),
+      req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'host-capabilities.md §"Credential provenance + egress policy"', 'an out-of-audience egress MUST be denied or downgraded'),
     ).toBe(true);
     expect(
       typeof oob.decision === 'string' && EGRESS_DECISIONS.includes(oob.decision),
-      driver.describe('run-event-payloads.schema.json#egressDecided', 'decision MUST be in the closed enum'),
+      req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'run-event-payloads.schema.json#egressDecided', 'decision MUST be in the closed enum'),
     ).toBe(true);
     expect(
       oob.reason === 'out-of-audience',
-      driver.describe('RFC 0079 §C', 'an out-of-audience denial MUST carry reason "out-of-audience"'),
+      req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'RFC 0079 §C', 'an out-of-audience denial MUST carry reason "out-of-audience"'),
     ).toBe(true);
     expect(
       oob.credentialAttached !== true,
-      driver.describe('SECURITY/invariants.yaml egress-credential-audience-bound', 'the host MUST NOT attach a credential whose audience excludes the destination (confused-deputy)'),
+      req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'SECURITY/invariants.yaml egress-credential-audience-bound', 'the host MUST NOT attach a credential whose audience excludes the destination (confused-deputy)'),
     ).toBe(true);
 
     // ---- Leg 2: provenance-unevaluable — fail closed (deny) ----------------
@@ -62,19 +63,19 @@ describe('egress-audience-binding (RFC 0079 §C)', () => {
     if (uneval !== null) {
       expect(
         uneval.decision === 'denied',
-        driver.describe('RFC 0079 §C', 'an egress with unevaluable provenance MUST fail closed (denied)'),
+        req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'RFC 0079 §C', 'an egress with unevaluable provenance MUST fail closed (denied)'),
       ).toBe(true);
       expect(
         uneval.reason === 'provenance-unevaluable',
-        driver.describe('RFC 0079 §C', 'a provenance-unevaluable denial MUST carry reason "provenance-unevaluable"'),
+        req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'RFC 0079 §C', 'a provenance-unevaluable denial MUST carry reason "provenance-unevaluable"'),
       ).toBe(true);
       expect(
         typeof uneval.reason === 'string' && EGRESS_REASONS.includes(uneval.reason),
-        driver.describe('run-event-payloads.schema.json#egressDecided', 'reason MUST be in the closed enum'),
+        req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'run-event-payloads.schema.json#egressDecided', 'reason MUST be in the closed enum'),
       ).toBe(true);
       expect(
         uneval.credentialAttached !== true,
-        driver.describe('SECURITY/invariants.yaml egress-credential-audience-bound', 'a fail-closed egress MUST NOT attach the credential'),
+        req('openwop.it.egress-audience-binding.denies-downgrades-an-out-of-audience-egress-without-attaching-the-credential-and', 'SECURITY/invariants.yaml egress-credential-audience-bound', 'a fail-closed egress MUST NOT attach the credential'),
       ).toBe(true);
     }
   });

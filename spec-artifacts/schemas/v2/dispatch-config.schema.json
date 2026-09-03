@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/dispatch-config.schema.json",
+  "title": "DispatchConfig",
+  "description": "Configuration for the `core.dispatch` node typeId (RFC 0007). Pins per-`kind` routing strategies for the dispatch loop. The dispatch node consumes the latest `OrchestratorDecision` (RFC 0006 §C) from the run's projection and acts on it per the per-`kind` semantics in RFC 0007 §D.",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "askUserRouting": {
+      "type": "string",
+      "enum": [
+        "conversation",
+        "clarification",
+        "auto"
+      ],
+      "default": "auto",
+      "description": "Routing surface for `kind: 'ask-user'` decisions. `'conversation'` requires the host to advertise `capabilities.conversationPrimitive: true` (RFC 0005) and uses `conversation.exchange`; `'clarification'` uses the existing `clarification.requested` interrupt (pre-RFC-0010 path); `'auto'` selects `conversation` when the host advertises the conversation-primitive capability and `clarification` otherwise. Hosts that select `'conversation'` without advertising the capability MUST surface a `validation_error` at workflow registration time."
+    },
+    "workerDispatchModel": {
+      "type": "string",
+      "enum": [
+        "child-run"
+      ],
+      "default": "child-run",
+      "description": "How `kind: 'next-worker'` is dispatched. v1.x normates only `'child-run'` — each `nextWorkerIds[i]` resolves to a workflow id and is dispatched as a child run via the existing `core.subWorkflow` machinery. Same-run DAG navigation is OUT OF SCOPE for v1.x (deferred to RFC 0013 / v1.3+). Hosts MAY add vendor-extension dispatch models under `vendor.<host>.<model>`; conformance scenarios validate `'child-run'` only."
+    },
+    "fanOutPolicy": {
+      "type": "string",
+      "enum": [
+        "sequential",
+        "reject",
+        "parallel"
+      ],
+      "default": "sequential",
+      "description": "Behavior when `decision.kind === 'next-worker'` and `nextWorkerIds.length > 1`. `'sequential'` (default) dispatches each in array order, blocking on each child terminal before starting the next; the dispatch node's output reports the LAST child's `childRunId`/`childStatus` (intermediate child-run identifiers surface in the run's event log via standard `node.*` events). `'reject'` fails the dispatch with a structured `'fan_out_unsupported'` error envelope per `error-envelope.md`. `'parallel'` (RFC 0118) dispatches ALL `nextWorkerIds[i]` as child runs concurrently (bounded by `maxConcurrency`) and joins on their terminals per `joinPolicy`; it REQUIRES the host to advertise `capabilities.dispatch.fanOutSupported: true` — a host that does not MUST surface a `validation_error` at `POST /v1/workflows`."
+    },
+    "joinPolicy": {
+      "type": "object",
+      "description": "RFC 0118. Completion + error-aggregation semantics for `fanOutPolicy: 'parallel'`. Meaningful ONLY when `fanOutPolicy === 'parallel'`; a host MUST surface a `validation_error` at registration if `joinPolicy` is present while `fanOutPolicy !== 'parallel'`. `mode` and `onChildFailure` are orthogonal axes (completion condition vs error aggregation).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "wait-all",
+            "quorum",
+            "first",
+            "race"
+          ],
+          "default": "wait-all",
+          "description": "When the join is satisfied. `'wait-all'` (default) — the dispatch node stays suspended until EVERY dispatched child reaches a terminal state (`completed`/`failed`/`cancelled`); the only mode that never discards a child's outcome. `'quorum'` — satisfied at `quorum` `completed` children (REQUIRES `quorum`, `1 ≤ quorum ≤ nextWorkerIds.length`; a missing/out-of-range `quorum` is a registration `validation_error`); in-flight children are cancelled per the `interrupt-profiles.md` parent-child cascade. `'first'` — satisfied at the first `completed`; remaining cancelled. `'race'` — satisfied at the first terminal of ANY kind (`completed` OR `failed`); remaining cancelled."
+        },
+        "quorum": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Required iff `mode === 'quorum'`. The number of `completed` children that satisfies the join. MUST be `1 ≤ quorum ≤ nextWorkerIds.length`."
+        },
+        "onChildFailure": {
+          "type": "string",
+          "enum": [
+            "collect",
+            "fail-fast",
+            "absorb"
+          ],
+          "default": "collect",
+          "description": "How a non-`completed` child terminal affects the dispatch node. `'collect'` (default) — no individual failure short-circuits; the node waits per `mode`, then reports per-child outcomes in its output (§D). `'fail-fast'` — the first child to reach `failed`/`cancelled` immediately fails the dispatch node and cancels the rest (equivalent to single-child `fail-parent` applied at first failure). `'absorb'` — failed children are recorded in the log + node output but never fail the parent; the join still completes per `mode`. The default deliberately DIVERGES from single-child `core.subWorkflow.onChildFailure: 'fail-parent'` because independent fan-out siblings are the common case (RFC 0118 §Resolved Q1)."
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "maxConcurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "RFC 0118. Maximum number of children dispatched concurrently under `fanOutPolicy: 'parallel'`. When `nextWorkerIds.length` exceeds this, the host dispatches in waves of at most `maxConcurrency`, starting a queued child as each in-flight child terminates (the host MUST NOT silently drop children above the ceiling). Absent → host-defined effective concurrency (a host MAY cap to protect itself and MUST advertise that cap as `capabilities.dispatch.maxFanOut`). The EFFECTIVE concurrency is `min(maxConcurrency ?? ∞, capabilities.dispatch.maxFanOut ?? ∞)`. Does not change join semantics — `joinPolicy` evaluates over the full `nextWorkerIds` set. Meaningful only under `fanOutPolicy: 'parallel'`."
+    },
+    "iterationCap": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional per-run hard cap on dispatch-node executions (across all dispatch nodes in the same run). Independent of `RunOptions.configurable.recursionLimit` / `Capabilities.limits.maxNodeExecutions` — when set, the engine MUST surface a `cap.breached` event with `kind: 'dispatch-iterations'` once exceeded and transition the run to `'failed'`. When absent, the run-level `recursionLimit` cap applies normally (each dispatch counts as one node execution against the run total)."
+    },
+    "inputMapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "RFC 0022. Default input mapping applied to every dispatched child on the `next-worker` path. Keys are CHILD variable names; values are PARENT variable names. Child receives `inputs[childKey] = parentVariables[parentKey]`. Per-worker overrides (see `perWorkerInputMappings`) take precedence. Mirrors `core.control.subWorkflow.inputMapping` semantics. Gated on `capabilities.agents.dispatchMapping: true`; hosts without that advertisement MUST surface `validation_error` at registration if this field is non-empty."
+    },
+    "outputMapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "RFC 0022. Default output mapping applied to every completed child on the `next-worker` path. Keys are PARENT variable names; values are CHILD variable names. After a child reaches terminal `completed`, parent's `parentKey` is set to `childVariables[childKey]`. Failed / cancelled children skip the mapping. Per-worker overrides (see `perWorkerOutputMappings`) take precedence. Mirrors `core.control.subWorkflow.outputMapping` semantics. Gated on `capabilities.agents.dispatchMapping: true`."
+    },
+    "perWorkerInputMappings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "description": "RFC 0022. Per-worker input mapping overrides, keyed by the child `workflowId` that the supervisor may select. When the supervisor's `next-worker` decision names a `workerId` present in this map, the dispatch node uses `perWorkerInputMappings[workerId]` instead of the default `inputMapping`. Lets authors wire distinct variable subsets per potential child."
+    },
+    "perWorkerOutputMappings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "description": "RFC 0022. Per-worker output mapping overrides, same fallback semantics as `perWorkerInputMappings`."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "askUserRouting": "auto",
+      "workerDispatchModel": "child-run",
+      "fanOutPolicy": "sequential"
+    },
+    {
+      "askUserRouting": "clarification",
+      "fanOutPolicy": "reject",
+      "iterationCap": 25
+    },
+    {
+      "workerDispatchModel": "child-run",
+      "fanOutPolicy": "parallel",
+      "maxConcurrency": 5,
+      "joinPolicy": {
+        "mode": "wait-all",
+        "onChildFailure": "collect"
+      }
+    },
+    {
+      "fanOutPolicy": "parallel",
+      "joinPolicy": {
+        "mode": "quorum",
+        "quorum": 3,
+        "onChildFailure": "fail-fast"
+      }
+    }
+  ],
+  "x-openwop-seeded-from": "v1"
+}

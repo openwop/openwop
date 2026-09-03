@@ -21,6 +21,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/voice/barge-in';
 
@@ -40,22 +42,22 @@ describe('voice-bargein-no-partial-leak (RFC 0106 §F INV-3)', () => {
     if (!behaviorGate('openwop-voice-bargein', advertised)) return;
 
     const res = await driver.post(SEAM, {});
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
-    expect(res.status === 200, driver.describe('RFC 0106 §F', 'the barge-in seam MUST return 200')).toBe(true);
+    expect(res.status === 200, req('openwop.it.voice-bargein-no-partial-leak.barge-in-cancels-with-no-synthesis-chunk-emitted-after-voice-cancelled', 'RFC 0106 §F', 'the barge-in seam MUST return 200')).toBe(true);
 
     const types = eventsOf(res.json).map((e) => e.type);
     const bargeIdx = types.indexOf('voice.barge_in');
     const cancelIdx = types.indexOf('voice.cancelled');
-    expect(bargeIdx >= 0, driver.describe('RFC 0106 §D', 'a barge-in MUST emit voice.barge_in')).toBe(true);
-    expect(cancelIdx >= 0, driver.describe('RFC 0106 §D', 'a barge-in that cancels work MUST emit voice.cancelled')).toBe(true);
-    expect(cancelIdx > bargeIdx, driver.describe('RFC 0106 §D', 'voice.cancelled MUST follow voice.barge_in')).toBe(true);
+    expect(bargeIdx >= 0, req('openwop.it.voice-bargein-no-partial-leak.barge-in-cancels-with-no-synthesis-chunk-emitted-after-voice-cancelled', 'RFC 0106 §D', 'a barge-in MUST emit voice.barge_in')).toBe(true);
+    expect(cancelIdx >= 0, req('openwop.it.voice-bargein-no-partial-leak.barge-in-cancels-with-no-synthesis-chunk-emitted-after-voice-cancelled', 'RFC 0106 §D', 'a barge-in that cancels work MUST emit voice.cancelled')).toBe(true);
+    expect(cancelIdx > bargeIdx, req('openwop.it.voice-bargein-no-partial-leak.barge-in-cancels-with-no-synthesis-chunk-emitted-after-voice-cancelled', 'RFC 0106 §D', 'voice.cancelled MUST follow voice.barge_in')).toBe(true);
 
     // The load-bearing INV-3 assertion: nothing partial after the cancel.
     const afterCancel = types.slice(cancelIdx + 1);
     expect(
       !afterCancel.includes('voice.synthesis_chunk'),
-      driver.describe('RFC 0106 §F INV-3', 'NO voice.synthesis_chunk (partial output) may be emitted AFTER voice.cancelled'),
+      req('openwop.it.voice-bargein-no-partial-leak.barge-in-cancels-with-no-synthesis-chunk-emitted-after-voice-cancelled', 'RFC 0106 §F INV-3', 'NO voice.synthesis_chunk (partial output) may be emitted AFTER voice.cancelled'),
     ).toBe(true);
   });
 });

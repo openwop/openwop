@@ -55,6 +55,8 @@ import {
   getCanary,
 } from '../lib/canaries.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -71,7 +73,7 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
 
     if (secrets === undefined) {
       // Optional v1 field — hosts MAY omit. Spec-allowed; nothing to assert.
-      return;
+      return softSkip('blocked', 'precondition not met — `secrets === undefined` returned early (Optional v1 field — hosts MAY omit. Spec-allowed; nothing to assert.) (seam, prior step, or fixture unavailable)');
     }
 
     // Per capabilities.schema.json: `secrets.supported` is REQUIRED
@@ -81,7 +83,7 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
       scopes?: unknown;
       resolution?: unknown;
     };
-    expect(typeof s.supported, driver.describe(
+    expect(typeof s.supported, req('openwop.it.redaction.secrets-is-well-formed-regardless-of-supported-value', 
       'capabilities.md §"Secrets"',
       'secrets.supported MUST be a boolean',
     )).toBe('boolean');
@@ -90,12 +92,12 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
     // (a host claiming secrets must declare at least one scope) AND
     // resolution MUST be 'host-managed' (only allowed value in v1.x).
     if (s.supported === true) {
-      expect(Array.isArray(s.scopes), driver.describe(
+      expect(Array.isArray(s.scopes), req('openwop.it.redaction.secrets-is-well-formed-regardless-of-supported-value', 
         'capabilities.md §"Secrets"',
         'when secrets.supported is true, scopes MUST be a string[]',
       )).toBe(true);
       const scopes = s.scopes as string[];
-      expect(scopes.length, driver.describe(
+      expect(scopes.length, req('openwop.it.redaction.secrets-is-well-formed-regardless-of-supported-value', 
         'capabilities.md §"Secrets"',
         'when secrets.supported is true, scopes MUST be non-empty',
       )).toBeGreaterThanOrEqual(1);
@@ -105,7 +107,7 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
         // sub-tenant scope — additive; hosts that advertise it (e.g. MyndHyve) are conformant.
         expect(['tenant', 'user', 'run', 'workspace']).toContain(scope);
       }
-      expect(s.resolution, driver.describe(
+      expect(s.resolution, req('openwop.it.redaction.secrets-is-well-formed-regardless-of-supported-value', 
         'capabilities.md §"Secrets"',
         'resolution MUST be "host-managed" in v1.x',
       )).toBe('host-managed');
@@ -119,7 +121,7 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
       | { supported?: unknown; byok?: unknown }
       | undefined;
 
-    if (ap === undefined) return; // Optional v1 field — hosts MAY omit.
+    if (ap === undefined) return softSkip('blocked', 'precondition not met — `ap === undefined` returned early (Optional v1 field — hosts MAY omit.) (seam, prior step, or fixture unavailable)'); // Optional v1 field — hosts MAY omit.
 
     if (ap.supported !== undefined) {
       expect(Array.isArray(ap.supported)).toBe(true);
@@ -130,7 +132,7 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
         expect(Array.isArray(ap.byok)).toBe(true);
         const byok = ap.byok as string[];
         for (const id of byok) {
-          expect(supportedSet.has(id), driver.describe(
+          expect(supportedSet.has(id), req('openwop.it.redaction.aiproviders-is-well-formed-when-present-byok-supported', 
             'capabilities.md §"aiProviders"',
             `byok entry "${id}" MUST appear in aiProviders.supported`,
           )).toBe(true);
@@ -177,7 +179,7 @@ describe('redaction: 401 response MUST NOT echo invalid Bearer token (NFR-7)', (
       },
     );
     const responseText = captureToText(res.json) + '\n' + res.text;
-    expect(responseText).not.toContain(CANARY_MARKER);
+    expect(responseText, req('openwop.it.redaction.the-marker-substring-alone-never-appears-in-a-401-body-universal', 'capabilities.md', 'the marker substring alone never appears in a 401 body (universal)')).not.toContain(CANARY_MARKER);
   });
 });
 
@@ -193,8 +195,8 @@ describe.skipIf(SKIP_NO_NOOP)('redaction: credentialRef value MUST NOT appear in
     if (supported !== true) {
       // Spec-allowed — this scenario only applies to hosts that opt
       // into BYOK. Pass trivially.
-      expect(supported).not.toBe(true);
-      return;
+      expect(supported, req('openwop.it.redaction.skips-when-host-does-not-advertise-secrets-supported', 'capabilities.md', 'skips when host does NOT advertise secrets.supported')).not.toBe(true);
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `supported !== true` returned early');
     }
 
     // Real assertion path: plant a canary as credentialRef on a noop
@@ -217,7 +219,7 @@ describe.skipIf(SKIP_NO_NOOP)('redaction: credentialRef value MUST NOT appear in
       // full scenario; if the key is missing or invalid, the suite's
       // earlier auth scenarios already catch that. Bail with a non-
       // assertion — this scenario is opt-in.
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `create.status !== 201` returned early (Auth-required hosts may 401 here without an API key. The conformance suite is expected to provide OPENWOP_API_KEY for th…');
     }
     const runId = (create.json as { runId: string }).runId;
 

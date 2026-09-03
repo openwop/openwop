@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/compact-tool-descriptor.schema.json",
+  "title": "CompactToolDescriptor",
+  "description": "RFC 0112. A lossy, model-facing projection of `ToolDescriptor` (tool-descriptor.schema.json) returned by `GET /v1/tools?view=compact` + `GET /v1/tools/{toolId}?view=compact` when the host advertises `capabilities.toolCatalog.compactView: true`. Heavy descriptive fields (`outputSchema`, `auth`, `egress`, `approval`, `replayPolicy`, `costHint`, `latencyHint`) are dropped, and any `inputSchema` is bounded to the self-contained compact structural subset (top-level `type: \"object\"` with `properties`; no `$ref`/`oneOf`/`allOf`/`anyOf`/`not`/`patternProperties`/`dependentSchemas`). The subset is the stable structural core of RFC 0030 Tier-1, cited as rationale but pinned HERE so conformance is machine-checkable and immune to that informative table's drift. Like the full descriptor, a CompactToolDescriptor never carries credential material (SR-1) and is not an invocation path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "toolId",
+    "source",
+    "safetyTier"
+  ],
+  "properties": {
+    "toolId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unchanged from ToolDescriptor. Stable, host-unique tool identifier in the `<scope>:<tool-id>` form; MUST be stable across catalog reads for a given host version (tool-catalog.md §C MUST 3). The compact `tools[]` MUST carry the same `toolId` set as the standard view for the same principal (projection completeness)."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "node-pack",
+        "workflow",
+        "mcp",
+        "connector",
+        "host-extension"
+      ],
+      "description": "Retained from ToolDescriptor so the `safetyTier: \"exec\" ⇒ source: \"host-extension\"` cross-field MUST (RFC 0069) stays expressible. Which surface backs the tool: `node-pack`/`workflow`/`mcp`/`connector`/`host-extension`."
+    },
+    "safetyTier": {
+      "type": "string",
+      "enum": [
+        "pure",
+        "read",
+        "write",
+        "exec"
+      ],
+      "description": "REQUIRED. The tool's DATA-EFFECT classification (`pure`/`read`/`write`/`exec`); per RFC 0069 an `exec` tool MUST be `source: \"host-extension\"`. Host-assigned, not derivable from a permission/approval/risk tier."
+    },
+    "title": {
+      "type": "string",
+      "description": "MAY — short human-readable label for a model-facing tool picker."
+    },
+    "description": {
+      "type": "string",
+      "description": "MAY — one-line summary; the host SHOULD truncate to a model-facing summary in the compact view."
+    },
+    "inputSchema": {
+      "type": "object",
+      "description": "MAY — the tool's argument schema bounded to the compact structural subset (RFC 0112). When present it MUST have top-level `type: \"object\"` with an explicit `properties` map, and MUST NOT use `$ref`, `oneOf`, `allOf`, `anyOf`, `not`, `patternProperties`, or `dependentSchemas` AT ANY NESTING DEPTH (including inside nested property schemas). Absent ⇒ opaque/host-interpreted args. NOTE: the `propertyNames` clause below is a TOP-LEVEL structural floor only; the total any-depth constraint is enforced by the RFC 0112 conformance scenario (a schema-aware recursive walk), since pure JSON Schema cannot express it without recursion gymnastics.",
+      "required": [
+        "type",
+        "properties"
+      ],
+      "properties": {
+        "type": {
+          "const": "object",
+          "description": "Top-level MUST be `\"object\"`."
+        },
+        "properties": {
+          "type": "object",
+          "description": "The argument property map (MUST be present).",
+          "additionalProperties": true
+        }
+      },
+      "propertyNames": {
+        "$comment": "RFC 0112 compact structural subset (TOP-LEVEL FLOOR): forbid the heavy/non-portable keywords as top-level inputSchema keys. The total any-depth constraint is enforced by conformance.",
+        "not": {
+          "enum": [
+            "$ref",
+            "oneOf",
+            "allOf",
+            "anyOf",
+            "not",
+            "patternProperties",
+            "dependentSchemas"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "RFC 0069 / tool-catalog.md §C-1: an exec-tier tool MUST be host-extension-sourced (exec is never protocol-tier). Mirrors tool-descriptor.schema.json.",
+      "if": {
+        "properties": {
+          "safetyTier": {
+            "const": "exec"
+          }
+        },
+        "required": [
+          "safetyTier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "const": "host-extension"
+          }
+        },
+        "required": [
+          "source"
+        ]
+      }
+    }
+  ]
+}

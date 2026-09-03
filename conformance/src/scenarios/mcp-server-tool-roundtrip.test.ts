@@ -15,8 +15,9 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -33,9 +34,9 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 
 async function rpc(method: string, params?: Record<string, unknown>): Promise<{ status: number; body: { result?: unknown; error?: { code: number; message: string } } }> {
   const id = Math.floor(Math.random() * 1e6);
-  const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
-  if (params !== undefined) req.params = params;
-  const res = await driver.post(await mcpServerMount(), req);
+  const reqBody: Record<string, unknown> = { jsonrpc: '2.0', id, method };
+  if (params !== undefined) reqBody.params = params;
+  const res = await driver.post(await mcpServerMount(), reqBody);
   return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string } } };
 }
 
@@ -67,10 +68,10 @@ async function registerToolWorkflow(): Promise<boolean> {
 describe('mcp-server-tool-roundtrip: advertisement shape (RFC 0020)', () => {
   it('capabilities.mcp.serverMount is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return;
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early');
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.mcp-server-tool-roundtrip.capabilities-mcp-servermount-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §mcp.serverMount',
         'capabilities.mcp.serverMount.supported MUST be a boolean when present',
       ),
@@ -81,30 +82,30 @@ describe('mcp-server-tool-roundtrip: advertisement shape (RFC 0020)', () => {
 describe('mcp-server-tool-roundtrip: behavioral (RFC 0020 §A points 1-2)', () => {
   it('tools/list returns the exposed workflow + tools/call returns a CallToolResult', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const registered = await registerToolWorkflow();
-    if (!registered) return; // host doesn't expose workflow registration
+    if (!registered) return softSkip('blocked', 'precondition not met — `!registered` returned early (host doesn\'t expose workflow registration) (seam, prior step, or fixture unavailable)'); // host doesn't expose workflow registration
 
     const list = await rpc('tools/list');
     if (list.status === 404) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${list.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
-    expect(list.status, 'tools/list MUST 200').toBe(200);
+    expect(list.status, req('openwop.it.mcp-server-tool-roundtrip.tools-list-returns-the-exposed-workflow-tools-call-returns-a-calltoolresult', 'RFC 0020 §A point 2', 'tools/list MUST 200')).toBe(200);
     const tools = (list.body.result as { tools?: Array<{ name: string }> } | undefined)?.tools ?? [];
     const found = tools.find((t) => t.name === TEST_TOOL_NAME);
     expect(
       found,
-      driver.describe(
+      req('openwop.it.mcp-server-tool-roundtrip.tools-list-returns-the-exposed-workflow-tools-call-returns-a-calltoolresult', 
         'RFC 0020 §A point 2',
         'tools/list MUST include workflows exposed via core.openwop.mcp.expose-tool',
       ),
     ).toBeDefined();
 
     const call = await rpc('tools/call', { name: TEST_TOOL_NAME, arguments: { text: 'hello' } });
-    expect(call.status, 'tools/call MUST 200').toBe(200);
+    expect(call.status, req('openwop.it.mcp-server-tool-roundtrip.tools-list-returns-the-exposed-workflow-tools-call-returns-a-calltoolresult', 'RFC 0020 §A point 2', 'tools/call MUST 200')).toBe(200);
     const result = call.body.result as { content?: Array<{ type: string }>; isError?: boolean } | undefined;
     expect(
       Array.isArray(result?.content),
-      driver.describe('RFC 0020 §C', 'CallToolResult MUST contain content[]'),
+      req('openwop.it.mcp-server-tool-roundtrip.tools-list-returns-the-exposed-workflow-tools-call-returns-a-calltoolresult', 'RFC 0020 §C', 'CallToolResult MUST contain content[]'),
     ).toBe(true);
-    expect(typeof result?.isError, 'CallToolResult.isError MUST be boolean').toBe('boolean');
+    expect(typeof result?.isError, req('openwop.it.mcp-server-tool-roundtrip.tools-list-returns-the-exposed-workflow-tools-call-returns-a-calltoolresult', 'RFC 0020 §C', 'CallToolResult.isError MUST be boolean')).toBe('boolean');
   });
 });

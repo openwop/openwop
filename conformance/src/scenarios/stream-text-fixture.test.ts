@@ -38,6 +38,7 @@ import { subscribe } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE_ID = 'conformance-stream-text';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(FIXTURE_ID);
@@ -105,7 +106,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
     }
     expect(
       create.status,
-      driver.describe(
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 
         'fixtures.md §conformance-stream-text',
         'a test key MUST be able to start the fixture with configurable.mockProvider',
       ),
@@ -120,7 +121,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
     // 3) server-closed, not timeout.
     expect(
       result.closedBy,
-      driver.describe('stream-modes.md §messages', 'server MUST close the messages stream on terminal run status'),
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'stream-modes.md §messages', 'server MUST close the messages stream on terminal run status'),
     ).toBe('server');
 
     // Collect ai.message.chunk payloads. Per stream-modes.md the SSE event
@@ -141,7 +142,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
 
     expect(
       chunks.length,
-      driver.describe(
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 
         'stream-modes.md §messages',
         'messages mode MUST emit ai.message.chunk SSE events for the streaming AI node',
       ),
@@ -150,7 +151,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
     // 1) Token order matches the mock config exactly.
     expect(
       chunks.map((c) => c.chunk),
-      driver.describe(
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 
         'fixtures.md §conformance-stream-text',
         'chunk arrival order MUST match the mock token order',
       ),
@@ -160,32 +161,32 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
     const last = chunks[chunks.length - 1]!;
     expect(
       last.isLast,
-      driver.describe(
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 
         'stream-modes.md §messages + RFC 0094 §D',
         'the final ai.message.chunk MUST carry isLast: true',
       ),
     ).toBe(true);
     expect(
       last.meta?.finishReason,
-      driver.describe('stream-modes.md §messages (Tier 1)', 'final chunk meta.finishReason MUST be "stop"'),
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'stream-modes.md §messages (Tier 1)', 'final chunk meta.finishReason MUST be "stop"'),
     ).toBe('stop');
     expect(
       last.meta?.usage?.completionTokens,
-      driver.describe('stream-modes.md §messages (Tier 1)', 'final chunk meta.usage.completionTokens MUST echo the mock usage'),
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'stream-modes.md §messages (Tier 1)', 'final chunk meta.usage.completionTokens MUST echo the mock usage'),
     ).toBe(4);
 
     // Minimum compliant payload fields are present on every chunk.
     for (const c of chunks) {
-      expect(typeof c.nodeId, driver.describe('run-event-payloads.schema.json §outputChunk', 'nodeId MUST be a string')).toBe('string');
-      expect(typeof c.runId, driver.describe('run-event-payloads.schema.json §outputChunk', 'runId MUST be a string')).toBe('string');
-      expect(typeof c.isLast, driver.describe('run-event-payloads.schema.json §outputChunk', 'isLast MUST be a boolean')).toBe('boolean');
+      expect(typeof c.nodeId, req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'run-event-payloads.schema.json §outputChunk', 'nodeId MUST be a string')).toBe('string');
+      expect(typeof c.runId, req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'run-event-payloads.schema.json §outputChunk', 'runId MUST be a string')).toBe('string');
+      expect(typeof c.isLast, req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'run-event-payloads.schema.json §outputChunk', 'isLast MUST be a boolean')).toBe('boolean');
     }
 
     // 4) Terminal completed.
     const terminal = await pollUntilTerminal(runId);
     expect(
       terminal.status,
-      driver.describe('fixtures.md §conformance-stream-text', 'the fixture run MUST reach terminal completed'),
+      req('openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close', 'fixtures.md §conformance-stream-text', 'the fixture run MUST reach terminal completed'),
     ).toBe('completed');
   });
 
@@ -203,11 +204,11 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
     }
     expect(
       create.status,
-      driver.describe('fixtures.md §conformance-stream-text', 'an unknown mockProvider.id MUST be rejected with 400'),
+      req('openwop.it.stream-text-fixture.an-unknown-mockprovider-id-is-rejected-with-400-unsupported-mock-provider', 'fixtures.md §conformance-stream-text', 'an unknown mockProvider.id MUST be rejected with 400'),
     ).toBe(400);
     expect(
       errCode(create.json),
-      driver.describe('fixtures.md §conformance-stream-text', 'the refusal MUST carry the canonical unsupported_mock_provider code'),
+      req('openwop.it.stream-text-fixture.an-unknown-mockprovider-id-is-rejected-with-400-unsupported-mock-provider', 'fixtures.md §conformance-stream-text', 'the refusal MUST carry the canonical unsupported_mock_provider code'),
     ).toBe('unsupported_mock_provider');
   });
 });

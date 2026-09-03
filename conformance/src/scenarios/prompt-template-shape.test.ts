@@ -34,6 +34,8 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROMPT_KIND_VALUES = ['system', 'user', 'few-shot', 'schema-hint'] as const;
 
@@ -92,11 +94,11 @@ describe('prompt-template-shape: schema compile (RFC 0027 §A)', () => {
     // Reuse the already-registered validator when present — Ajv refuses
     // to re-`compile` a schema whose `$id` it already knows.
     const validate = ajv.getSchema(schema['$id'] as string) ?? ajv.compile(schema);
-    expect(validate, 'RFC 0027 §A: prompt-kind.schema.json MUST compile').toBeTypeOf('function');
-    expect(schema.type, 'prompt-kind MUST be type: string').toBe('string');
+    expect(validate, req('openwop.it.prompt-template-shape.prompt-kind-schema-json-compiles-and-is-a-string-enum-of-the-four-canonical-kind', 'spec/v1/prompts.md §PromptTemplate', 'RFC 0027 §A: prompt-kind.schema.json MUST compile')).toBeTypeOf('function');
+    expect(schema.type, req('openwop.it.prompt-template-shape.prompt-kind-schema-json-compiles-and-is-a-string-enum-of-the-four-canonical-kind', 'spec/v1/prompts.md §PromptTemplate', 'prompt-kind MUST be type: string')).toBe('string');
     expect(
       schema.enum,
-      driver.describe(
+      req('openwop.it.prompt-template-shape.prompt-kind-schema-json-compiles-and-is-a-string-enum-of-the-four-canonical-kind', 
         'spec/v1/prompts.md §PromptTemplate',
         'prompt-kind enum MUST contain exactly the four canonical values',
       ),
@@ -106,13 +108,13 @@ describe('prompt-template-shape: schema compile (RFC 0027 §A)', () => {
   it('prompt-template.schema.json compiles with cross-ref to prompt-kind', () => {
     const schema = loadSchema('prompt-template.schema.json');
     const validate = ajv.compile(schema);
-    expect(validate, 'RFC 0027 §A: prompt-template.schema.json MUST compile').toBeTypeOf('function');
+    expect(validate, req('openwop.it.prompt-template-shape.prompt-template-schema-json-compiles-with-cross-ref-to-prompt-kind', 'RFC 0027 §A', 'RFC 0027 §A: prompt-template.schema.json MUST compile')).toBeTypeOf('function');
   });
 
   it('prompt-ref.schema.json compiles', () => {
     const schema = loadSchema('prompt-ref.schema.json');
     const validate = ajv.compile(schema);
-    expect(validate, 'RFC 0027 §B: prompt-ref.schema.json MUST compile').toBeTypeOf('function');
+    expect(validate, req('openwop.it.prompt-template-shape.prompt-ref-schema-json-compiles', 'RFC 0027 §A', 'RFC 0027 §B: prompt-ref.schema.json MUST compile')).toBeTypeOf('function');
   });
 });
 
@@ -130,7 +132,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     const ok = validate(positive);
     expect(
       ok,
-      `RFC 0027 §A: minimal PromptTemplate MUST validate; errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.prompt-template-shape.accepts-a-minimal-positive-prompttemplate-fixture', 'RFC 0027 §A', `RFC 0027 §A: minimal PromptTemplate MUST validate; errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -157,7 +159,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     const ok = validate(positive);
     expect(
       ok,
-      `RFC 0027 §A: full PromptTemplate MUST validate; errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.prompt-template-shape.accepts-a-prompttemplate-with-typed-variables-modelhints-meta', 'RFC 0027 §A', `RFC 0027 §A: full PromptTemplate MUST validate; errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -170,7 +172,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     };
     expect(
       validate(negative),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-a-prompttemplate-missing-required-text', 
         'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate MUST require text field',
       ),
@@ -186,7 +188,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     };
     expect(
       validate(negative),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-a-prompttemplate-with-non-semver-version', 
         'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate.version MUST match SemVer 2.0.0 pattern',
       ),
@@ -202,7 +204,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     };
     expect(
       validate(negative),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-a-prompttemplate-with-invalid-templateid-uppercase-letter', 
         'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate.templateId MUST match ^[a-z0-9][a-z0-9._-]{0,127}$',
       ),
@@ -218,7 +220,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     };
     expect(
       validate(negative),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-a-prompttemplate-with-kind-not-in-the-prompt-kind-enum', 
         'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate.kind MUST be one of the four canonical values',
       ),
@@ -235,7 +237,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     };
     expect(
       validate(negative),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-an-unknown-top-level-property-additionalproperties-false', 
         'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate top-level additionalProperties:false MUST reject unknown fields',
       ),
@@ -252,7 +254,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     };
     expect(
       validate(negative),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-a-promptvariable-with-bad-name-pattern-dash', 
         'spec/v1/prompts.md §PromptTemplate',
         'PromptVariable.name MUST match common-templating identifier pattern (no dashes)',
       ),
@@ -265,19 +267,19 @@ describe('prompt-template-shape: PromptRef round-trip (RFC 0027 §B)', () => {
   const validate = ajv.compile(loadSchema('prompt-ref.schema.json'));
 
   it('accepts stringy form without version', () => {
-    expect(validate('prompt:writer-system')).toBe(true);
+    expect(validate('prompt:writer-system'), req('openwop.it.prompt-template-shape.accepts-stringy-form-without-version', 'RFC 0027 §A', 'accepts stringy form without version')).toBe(true);
   });
 
   it('accepts stringy form with version', () => {
-    expect(validate('prompt:writer-system@1.2.3')).toBe(true);
+    expect(validate('prompt:writer-system@1.2.3'), req('openwop.it.prompt-template-shape.accepts-stringy-form-with-version', 'RFC 0027 §A', 'accepts stringy form with version')).toBe(true);
   });
 
   it('accepts stringy form with vendor-prefixed templateId', () => {
-    expect(validate('prompt:vendor.acme.writer.v2@2.0.0')).toBe(true);
+    expect(validate('prompt:vendor.acme.writer.v2@2.0.0'), req('openwop.it.prompt-template-shape.accepts-stringy-form-with-vendor-prefixed-templateid', 'RFC 0027 §A', 'accepts stringy form with vendor-prefixed templateId')).toBe(true);
   });
 
   it('accepts object form with templateId only', () => {
-    expect(validate({ templateId: 'writer-system' })).toBe(true);
+    expect(validate({ templateId: 'writer-system' }), req('openwop.it.prompt-template-shape.accepts-object-form-with-templateid-only', 'RFC 0027 §A', 'accepts object form with templateId only')).toBe(true);
   });
 
   it('accepts object form with libraryId, version, and variableOverrides', () => {
@@ -287,35 +289,35 @@ describe('prompt-template-shape: PromptRef round-trip (RFC 0027 §B)', () => {
         templateId: 'writer-system',
         version: '1.0.0',
         variableOverrides: { tone: 'formal' },
-      }),
+      }), req('openwop.it.prompt-template-shape.accepts-object-form-with-libraryid-version-and-variableoverrides', 'RFC 0027 §A', 'accepts object form with libraryId, version, and variableOverrides'),
     ).toBe(true);
   });
 
   it('rejects stringy form without `prompt:` prefix', () => {
     expect(
       validate('writer-system'),
-      driver.describe('spec/v1/prompts.md §PromptRef', 'stringy PromptRef MUST start with prompt:'),
+      req('openwop.it.prompt-template-shape.rejects-stringy-form-without-prompt-prefix', 'spec/v1/prompts.md §PromptRef', 'stringy PromptRef MUST start with prompt:'),
     ).toBe(false);
   });
 
   it('rejects stringy form with non-SemVer version', () => {
     expect(
       validate('prompt:writer-system@latest'),
-      driver.describe('spec/v1/prompts.md §PromptRef', 'stringy PromptRef version MUST be SemVer'),
+      req('openwop.it.prompt-template-shape.rejects-stringy-form-with-non-semver-version', 'spec/v1/prompts.md §PromptRef', 'stringy PromptRef version MUST be SemVer'),
     ).toBe(false);
   });
 
   it('rejects object form missing required templateId', () => {
     expect(
       validate({ version: '1.0.0' }),
-      driver.describe('spec/v1/prompts.md §PromptRef', 'object PromptRef MUST require templateId'),
+      req('openwop.it.prompt-template-shape.rejects-object-form-missing-required-templateid', 'spec/v1/prompts.md §PromptRef', 'object PromptRef MUST require templateId'),
     ).toBe(false);
   });
 
   it('rejects object form with unknown additional property', () => {
     expect(
       validate({ templateId: 'writer-system', unknownExtra: true }),
-      driver.describe(
+      req('openwop.it.prompt-template-shape.rejects-object-form-with-unknown-additional-property', 
         'spec/v1/prompts.md §PromptRef',
         'object PromptRef additionalProperties:false MUST reject unknown fields',
       ),
@@ -326,24 +328,24 @@ describe('prompt-template-shape: PromptRef round-trip (RFC 0027 §B)', () => {
 describe.skipIf(HTTP_SKIP)('prompt-template-shape: capabilities.prompts advertisement (RFC 0027 §D)', () => {
   it('capabilities.prompts (when present) carries the optional shape per RFC 0027 §D', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const prompts = capabilityFamily(d, 'prompts');
-    if (prompts === undefined) return; // optional block; host MAY omit
+    if (prompts === undefined) return softSkip('blocked', 'precondition not met — `prompts === undefined` returned early (optional block; host MAY omit) (seam, prior step, or fixture unavailable)'); // optional block; host MAY omit
     expect(
       typeof prompts.supported,
-      driver.describe(
+      req('openwop.it.prompt-template-shape.capabilities-prompts-when-present-carries-the-optional-shape-per-rfc-0027-d', 
         'spec/v1/prompts.md §Capability advertisement',
         'capabilities.prompts.supported MUST be boolean when block is advertised',
       ),
     ).toBe('boolean');
     if (prompts.templateKinds !== undefined) {
-      expect(Array.isArray(prompts.templateKinds), 'templateKinds MUST be an array').toBe(true);
+      expect(Array.isArray(prompts.templateKinds), req('openwop.it.prompt-template-shape.capabilities-prompts-when-present-carries-the-optional-shape-per-rfc-0027-d', 'spec/v1/prompts.md §Capability advertisement', 'templateKinds MUST be an array')).toBe(true);
       for (const k of prompts.templateKinds as unknown[]) {
         expect((PROMPT_KIND_VALUES as readonly string[]).includes(String(k))).toBe(true);
       }
     }
     if (prompts.variableSources !== undefined) {
-      expect(Array.isArray(prompts.variableSources), 'variableSources MUST be an array').toBe(true);
+      expect(Array.isArray(prompts.variableSources), req('openwop.it.prompt-template-shape.capabilities-prompts-when-present-carries-the-optional-shape-per-rfc-0027-d', 'spec/v1/prompts.md §Capability advertisement', 'variableSources MUST be an array')).toBe(true);
       for (const s of prompts.variableSources as unknown[]) {
         expect(['input', 'variable', 'secret', 'context']).toContain(String(s));
       }
@@ -352,7 +354,7 @@ describe.skipIf(HTTP_SKIP)('prompt-template-shape: capabilities.prompts advertis
       expect(['off', 'hashed', 'full']).toContain(String(prompts.observability));
     }
     if (prompts.maxTemplateBytes !== undefined) {
-      expect(typeof prompts.maxTemplateBytes, 'maxTemplateBytes MUST be integer').toBe('number');
+      expect(typeof prompts.maxTemplateBytes, req('openwop.it.prompt-template-shape.capabilities-prompts-when-present-carries-the-optional-shape-per-rfc-0027-d', 'spec/v1/prompts.md §Capability advertisement', 'maxTemplateBytes MUST be integer')).toBe('number');
       expect((prompts.maxTemplateBytes as number) > 0).toBe(true);
       expect((prompts.maxTemplateBytes as number) <= 65536).toBe(true);
     }

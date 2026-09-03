@@ -1,0 +1,837 @@
+{
+  "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
+  "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
+  "version": "2.0",
+  "updated": "2026-09-03",
+  "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
+  "rows": [
+    {
+      "code": "audience_mismatch",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1"
+    },
+    {
+      "code": "capability_not_provided",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "capability_required",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "client_version_unsupported",
+      "httpStatus": 426,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0172 row C5.8"
+    },
+    {
+      "code": "connection_provider_conflict",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/connection-packs.md; RFC 0177 §D.1 fail-closed"
+    },
+    {
+      "code": "connection_provider_unresolved",
+      "httpStatus": 400,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/connection-packs.md"
+    },
+    {
+      "code": "connector_action_unresolved",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "connector_auth_expired",
+      "httpStatus": 401,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "credential_forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "credential_not_found",
+      "httpStatus": 404,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "credential_required",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "credential_revoked",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.3"
+    },
+    {
+      "code": "credential_scope_unsupported",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "credential_unavailable",
+      "httpStatus": 501,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "delegation_chain_cyclic",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1"
+    },
+    {
+      "code": "delegation_chain_too_long",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1"
+    },
+    {
+      "code": "delegation_expired",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1"
+    },
+    {
+      "code": "delegation_scope_amplified",
+      "httpStatus": 403,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1"
+    },
+    {
+      "code": "envelope_correlation_conflict",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/ai-envelope.md E2 (correlationId type conflict)"
+    },
+    {
+      "code": "envelope_invalid",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "envelope_refusal",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "envelope_truncation_unrecoverable",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "event_type_unmapped",
+      "httpStatus": 500,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0176 §A.3 (a run whose log the host cannot translate is not readable)"
+    },
+    {
+      "code": "forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/auth.md (v1 MUST)"
+    },
+    {
+      "code": "force_engine_version_forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/run-options.md / version-negotiation.md (OpenWOP-Force-Engine-Version outside test keys)"
+    },
+    {
+      "code": "id_tenant_mismatch",
+      "httpStatus": 403,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §D.1 (an id whose tenant segment is not the caller's)"
+    },
+    {
+      "code": "idempotency_in_flight",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/idempotency.md §Concurrent duplicates (v1 MUST; RFC 0171 §B.2 keeps one mismatch code, this is the in-flight state)"
+    },
+    {
+      "code": "idempotency_key_invalid",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §D.3"
+    },
+    {
+      "code": "idempotency_key_mismatch",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/idempotency.md (the only spelling; RFC 0171 §B.2)"
+    },
+    {
+      "code": "identity_unresolvable",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1"
+    },
+    {
+      "code": "identity_unverified",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.1 / RFC 0154"
+    },
+    {
+      "code": "internal_error",
+      "httpStatus": 500,
+      "statusSource": "v1 convention",
+      "retriable": true,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "interop_version_unsupported",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "interrupt_already_resolved",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/interrupt.md (409/410 overlap: RFC 0171 row C4.6 — one code per state)"
+    },
+    {
+      "code": "interrupt_cancelled",
+      "httpStatus": 410,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/interrupt.md (the run was cancelled while suspended)"
+    },
+    {
+      "code": "interrupt_expired",
+      "httpStatus": 410,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/interrupt.md"
+    },
+    {
+      "code": "interrupt_not_found",
+      "httpStatus": 404,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/interrupt.md"
+    },
+    {
+      "code": "interrupt_token_invalid",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §E.1"
+    },
+    {
+      "code": "key_revoked",
+      "httpStatus": 401,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "loop_limit_exceeded",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "mcp_mrtr_rounds_exceeded",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0175 §E.1"
+    },
+    {
+      "code": "mock_provider_forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/run-options.md (mockProvider outside test keys)"
+    },
+    {
+      "code": "not_found",
+      "httpStatus": 404,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "oauth_provider_unsupported",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "oauth_scope_unsupported",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "pack_dependency_conflict",
+      "httpStatus": 409,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_dependency_cycle",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_engine_unsupported",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0177 §A.1"
+    },
+    {
+      "code": "pack_integrity_failure",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_integrity_mismatch",
+      "httpStatus": 409,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_kind_invalid",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_load_failure",
+      "httpStatus": 500,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_lockfile_incomplete",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_namespace_unauthorized",
+      "httpStatus": 403,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_peer_dependency_missing",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_peer_dependency_undefined",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_registry_unreachable",
+      "httpStatus": 503,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": true,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_runtime_requirement_unmet",
+      "httpStatus": 422,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_signature_invalid",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_validation_failed",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "pack_version_not_found",
+      "httpStatus": 404,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "protocol_version_mismatch",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0172 §A.3"
+    },
+    {
+      "code": "protocol_version_unsupported",
+      "httpStatus": 406,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0172 §A.3"
+    },
+    {
+      "code": "rate_limited",
+      "httpStatus": 429,
+      "statusSource": "v1 convention",
+      "retriable": true,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "recursion_limit_exceeded",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "replay_diverged_at_refusal",
+      "httpStatus": 409,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "replay_memory_snapshot_unavailable",
+      "httpStatus": 409,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "replay_source_missing",
+      "httpStatus": 404,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "residency_unavailable",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": true,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "run_already_active",
+      "httpStatus": 409,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "run_forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "run_terminal",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md (a mutation on a terminal run)"
+    },
+    {
+      "code": "run_timeout",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "runner_unavailable",
+      "httpStatus": 503,
+      "statusSource": "v1 convention",
+      "retriable": true,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "sandbox_capability_denied",
+      "httpStatus": 403,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "sandbox_escape_attempt",
+      "httpStatus": 403,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "sandbox_memory_exceeded",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "sandbox_timeout",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "schedule_horizon_exceeded",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "sender_constraint_missing",
+      "httpStatus": 401,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0170 §B.4"
+    },
+    {
+      "code": "signature_not_available",
+      "httpStatus": 404,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "api/openapi.yaml"
+    },
+    {
+      "code": "sub_chain_cycle",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0133 §Unresolved 3 (resolved: maxSubChainDepth 8, fail closed); carried into v2 by RFC 0177 §E"
+    },
+    {
+      "code": "sub_chain_depth_exceeded",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0133 §Unresolved 3 — the depth ceiling breach (distinct from a cycle)"
+    },
+    {
+      "code": "token_budget_exceeded",
+      "httpStatus": 422,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "unauthenticated",
+      "httpStatus": 401,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "unsupported_stream_mode",
+      "httpStatus": 400,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "api/openapi.yaml UnsupportedStreamMode (RFC 0171 §B.1 folds the one-member enum)"
+    },
+    {
+      "code": "until_in_past",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0169 §A.3 (validation_error details.reason in v1; a code in v2)"
+    },
+    {
+      "code": "validation_error",
+      "httpStatus": 400,
+      "statusSource": "v1 convention",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "version_conflict",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "api/openapi.yaml"
+    },
+    {
+      "code": "workspace_conflict",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "workspace_membership_required",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "workspace_too_large",
+      "httpStatus": 413,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
+    }
+  ]
+}

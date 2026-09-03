@@ -292,7 +292,8 @@ afterEach(({ task }) => {
   // which prove fixtures and helpers, not a host, and must never become bundle
   // evidence (that is why RFC 0163 G5 / RFC 0050 G1 moved them out of scenarios).
   const filepath = (task as { file?: { filepath?: string } }).file?.filepath ?? '';
-  if (!/[\\/]src[\\/]scenarios[\\/]/.test(filepath)) {
+  // Suite 2.0.0: src/coherence/ rows feed the corpus ledger (scripts/check-spec-coherence.mjs), not a host bundle.
+  if (!/[\\/]src[\\/](scenarios|coherence)[\\/]/.test(filepath)) {
     takeExplicitRequirementId();
     return;
   }
@@ -304,7 +305,8 @@ afterEach(({ task }) => {
   const gate = since.find((e) => e.disposition === 'inapplicable') ?? since.find((e) => e.disposition === 'skipped');
   let disposition: 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
   let detail: string | undefined;
-  if (SPEC_COHERENCE_SCENARIOS.has(file) || SPEC_COHERENCE_SCENARIOS.has(file.replace(/\.test\.ts$/, ''))) {
+  // Suite 2.0.0: under the corpus gate (scripts/check-spec-coherence.mjs sets OPENWOP_CORPUS_GATE) a coherence scenario IS the subject; its rows are real dispositions for evidence/corpus-ledger.json.
+  if (process.env.OPENWOP_CORPUS_GATE !== '1' && (SPEC_COHERENCE_SCENARIOS.has(file) || SPEC_COHERENCE_SCENARIOS.has(file.replace(/\.test\.ts$/, '')))) {
     // Corpus-coherence scenario: it reads spec/v1 and asserts nothing about a
     // host, in any layout. Its rows are `inapplicable` to every host — the same
     // rule `resolveFileRecord` applies to the file in the published layout.

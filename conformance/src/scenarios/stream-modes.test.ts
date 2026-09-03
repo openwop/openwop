@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { subscribe, type SseEvent } from '../lib/sse.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-delay';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -38,17 +39,17 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: updates (default) closes on term
       { timeoutMs: 15_000 },
     );
 
-    expect(closedBy, driver.describe(
+    expect(closedBy, req('openwop.it.stream-modes.emits-at-least-run-started-run-completed-and-server-closes-the-stream', 
       'stream-modes.md §updates',
       'server MUST close the connection on terminal run event',
     )).toBe('server');
 
     const types = eventTypes(events);
-    expect(types, driver.describe(
+    expect(types, req('openwop.it.stream-modes.emits-at-least-run-started-run-completed-and-server-closes-the-stream', 
       'stream-modes.md §updates',
       'updates stream MUST include run.started',
     )).toContain('run.started');
-    expect(types, driver.describe(
+    expect(types, req('openwop.it.stream-modes.emits-at-least-run-started-run-completed-and-server-closes-the-stream', 
       'stream-modes.md §updates',
       'updates stream MUST include run.completed for a successful run',
     )).toContain('run.completed');
@@ -62,7 +63,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: invalid streamMode is rejected',
       `/v1/runs/${encodeURIComponent(runId)}/events?streamMode=does-not-exist`,
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.stream-modes.returns-400-and-a-structured-error-body', 
       'stream-modes.md §Mode selection',
       'unsupported streamMode MUST return 400',
     )).toBe(400);
@@ -70,15 +71,15 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: invalid streamMode is rejected',
     const body = res.json as
       | { error?: unknown; message?: unknown; details?: { supported?: unknown } }
       | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.stream-modes.returns-400-and-a-structured-error-body', 
       'stream-modes.md §Mode selection + error-envelope.schema.json',
       'unsupported_stream_mode error body MUST include `error` string discriminator',
     )).toBe('string');
-    expect(typeof body?.message, driver.describe(
+    expect(typeof body?.message, req('openwop.it.stream-modes.returns-400-and-a-structured-error-body', 
       'error-envelope.schema.json',
       'error envelope MUST include a human-readable `message` string',
     )).toBe('string');
-    expect(Array.isArray(body?.details?.supported), driver.describe(
+    expect(Array.isArray(body?.details?.supported), req('openwop.it.stream-modes.returns-400-and-a-structured-error-body', 
       'stream-modes.md §Mode selection',
       'error body MUST include `details.supported` array of mode names (under `details` per error-envelope.schema.json)',
     )).toBe(true);
@@ -97,12 +98,12 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: values mode is reachable + close
     // spec gap S1, so we don't assert payload shape here. What's
     // canonical: the connection MUST be reachable, MUST emit at least
     // one event before terminal, AND the server MUST close on terminal.
-    expect(result.closedBy, driver.describe(
+    expect(result.closedBy, req('openwop.it.stream-modes.returns-200-emits-at-least-one-event-server-closes-per-stream-modes-md-values', 
       'stream-modes.md §values',
       'server MUST close the connection on terminal run event',
     )).toBe('server');
 
-    expect(result.events.length, driver.describe(
+    expect(result.events.length, req('openwop.it.stream-modes.returns-200-emits-at-least-one-event-server-closes-per-stream-modes-md-values', 
       'stream-modes.md §values',
       'values mode MUST emit at least one event before terminal',
     )).toBeGreaterThan(0);
@@ -126,12 +127,12 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: debug emits at least as many eve
     // Both runs are conformance-delay with the same input, so updates
     // events (run.started, node.started not in updates per spec, node.completed,
     // run.completed) should be a subset of debug events.
-    expect(debugResult.events.length, driver.describe(
+    expect(debugResult.events.length, req('openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping', 
       'stream-modes.md mode-to-event mapping',
       'debug stream event count MUST be >= updates stream event count',
     )).toBeGreaterThanOrEqual(updatesResult.events.length);
 
-    expect(debugResult.closedBy, driver.describe(
+    expect(debugResult.closedBy, req('openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping', 
       'stream-modes.md §debug',
       'debug stream MUST close on terminal event',
     )).toBe('server');

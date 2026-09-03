@@ -29,6 +29,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
 import { readErrorCode } from '../lib/error-envelope.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host issues A2A calls to the suite's fake peer, which records the negotiated version header.
@@ -63,7 +65,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
     const caps = await a2a();
     expect(
       caps?.protocolVersions ?? [],
-      driver.describe(
+      req('openwop.it.a2a-version-negotiation.the-advertised-preferred-version-is-one-the-host-actually-claims', 
         'RFCS/0152-a2a-1-0-versioned-composition.md §A',
         '`preferredVersion` MUST be present in `protocolVersions`. Preferring a version you do ' +
           'not list is a claim no peer can act on.',
@@ -74,28 +76,28 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
   it('outbound calls carry an explicit A2A-Version header', async () => {
     if (!behaviorGate(PROFILE, await negotiationAdvertised())) return;
     const peer = getA2AFakePeer();
-    if (peer === null) return; // no fake peer wired in this run
+    if (peer === null) return softSkip('blocked', 'precondition not met — `peer === null` returned early (no fake peer wired in this run) (seam, prior step, or fixture unavailable)'); // no fake peer wired in this run
     peer.reset();
     const drive = await driver.post('/v1/host/sample/a2a/invoke', { peerUrl: peer.endpoint() });
     if (drive.status === 404 || drive.status === 403) {
       // Seam absent. RFC 0148 §A: unobservable resolves to `blocked`, not a pass.
       expect(
         drive.status,
-        driver.describe(
+        req('openwop.it.a2a-version-negotiation.outbound-calls-carry-an-explicit-a2a-version-header', 
           'RFCS/0152 §B',
           'a host advertising A2A version negotiation MUST expose an invoke seam so the negotiated ' +
             'version is observable. Without it the requirement cannot be witnessed and resolves to ' +
             '`blocked` per RFC 0148 §A.',
         ),
       ).not.toBe(404);
-      return;
+      return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (seam, prior step, or fixture unavailable)');
     }
     const calls = peer.invocations().filter((i: { method: string }) => i.method !== 'GET');
-    expect(calls.length, 'the host MUST have called the peer').toBeGreaterThan(0);
+    expect(calls.length, req('openwop.it.a2a-version-negotiation.outbound-calls-carry-an-explicit-a2a-version-header', 'RFCS/0152 §B', 'the host MUST have called the peer')).toBeGreaterThan(0);
     for (const c of calls) {
       expect(
         c.headers['a2a-version'],
-        driver.describe(
+        req('openwop.it.a2a-version-negotiation.outbound-calls-carry-an-explicit-a2a-version-header', 
           'RFCS/0152 §B',
           'the sender MUST send `A2A-Version`. An absent header leaves the receiver guessing, and ' +
             'a guess that happens to be right is not a negotiation.',
@@ -107,7 +109,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
   it('an authenticated request is not silently downgraded', async () => {
     if (!behaviorGate(PROFILE, await negotiationAdvertised())) return;
     const peer = getA2AFakePeer();
-    if (peer === null) return;
+    if (peer === null) return softSkip('blocked', 'precondition not met — `peer === null` returned early (seam, prior step, or fixture unavailable)');
     const caps = await a2a();
     const preferred = caps?.preferredVersion;
     peer.reset();
@@ -116,7 +118,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
       authenticated: true,
       peerOffersOnly: '0.3',
     });
-    if (drive.status === 404 || drive.status === 403) return; // covered above
+    if (drive.status === 404 || drive.status === 403) return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (covered above) (seam, prior step, or fixture unavailable)'); // covered above
 
     // THE load-bearing leg. A silent downgrade is dangerous precisely because it
     // SUCCEEDS: the caller believes it negotiated `preferred`, the peer answered
@@ -127,7 +129,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
       const negotiated = (drive.json as { negotiatedVersion?: string }).negotiatedVersion;
       expect(
         negotiated,
-        driver.describe(
+        req('openwop.it.a2a-version-negotiation.an-authenticated-request-is-not-silently-downgraded', 
           'RFCS/0152 §B',
           'a host that proceeds after a downgrade MUST report the version it actually negotiated. ' +
             'Reporting the preferred version while having used a lower one is the silent downgrade ' +
@@ -138,7 +140,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
       for (const c of calls) {
         expect(
           c.headers['a2a-version'],
-          driver.describe('RFCS/0152 §B', 'the wire header MUST match the reported negotiated version'),
+          req('openwop.it.a2a-version-negotiation.an-authenticated-request-is-not-silently-downgraded', 'RFCS/0152 §B', 'the wire header MUST match the reported negotiated version'),
         ).toBe(negotiated);
       }
     }
@@ -147,18 +149,18 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
   it('an unsupported version fails through the canonical interop error envelope', async () => {
     if (!behaviorGate(PROFILE, await negotiationAdvertised())) return;
     const peer = getA2AFakePeer();
-    if (peer === null) return;
+    if (peer === null) return softSkip('blocked', 'precondition not met — `peer === null` returned early (seam, prior step, or fixture unavailable)');
     const drive = await driver.post('/v1/host/sample/a2a/invoke', {
       peerUrl: peer.endpoint(),
       requestVersion: '99.0',
     });
-    if (drive.status === 404 || drive.status === 403) return;
-    expect(drive.status >= 400, driver.describe('RFCS/0152 §B', 'an unsupported version MUST fail')).toBe(true);
+    if (drive.status === 404 || drive.status === 403) return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (seam, prior step, or fixture unavailable)');
+    expect(drive.status >= 400, req('openwop.it.a2a-version-negotiation.an-unsupported-version-fails-through-the-canonical-interop-error-envelope', 'RFCS/0152 §B', 'an unsupported version MUST fail')).toBe(true);
     // S28: canonical envelope is FLAT (`error: "<code>"`, error-envelope.schema.json);
     // the nested `error.code` is tolerated by the lib only through the deprecation window.
     expect(
       readErrorCode(drive.json),
-      driver.describe(
+      req('openwop.it.a2a-version-negotiation.an-unsupported-version-fails-through-the-canonical-interop-error-envelope', 
         'RFCS/0152 §B',
         'the upstream version error MUST be projected through the canonical OpenWOP interop error ' +
           'envelope when the failure crosses an OpenWOP boundary — a raw upstream body leaves the ' +

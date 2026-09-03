@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/export-bundle.schema.json",
+  "title": "ExportBundle",
+  "description": "RFC 0098 §B. A portable agent-platform export bundle — a tenant's reusable estate (agents, packs, prompt templates, connection refs, schedules, roster/org-chart) composed for migration between openwop hosts (or import from an external platform via an adapter). The bundle MUST NOT contain credential VALUES: `connection-ref` items carry only refs/provider ids per RFC 0046/0079; the importer reports unbound refs in `secretsToRebind` and re-binds secrets at the destination. All imported entities are re-owned to the caller's RFC 0048 identity; `source.originPrincipal` is informational only and grants no access. Gated on the `portability` capability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundleVersion", "source", "items"],
+  "properties": {
+    "bundleVersion": {
+      "const": "1",
+      "description": "Bundle schema version. Importers MUST reject a bundleVersion they do not understand."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin"],
+      "description": "Provenance of the bundle. Informational only — never a source of authority at the destination.",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Origin host base URL or adapter id (e.g. 'adapter:openclaw')."
+        },
+        "exportedAt": { "type": "string", "format": "date-time" },
+        "originPrincipal": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Opaque source identity, informational only. MUST NOT grant any access at the destination."
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "description": "The estate, in arbitrary order; `dependsOn` edges define apply order (topological; a cycle is a 422).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "ref", "payload"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["agent", "pack", "prompt-template", "connection-ref", "schedule", "roster", "org-chart"],
+            "description": "Estate kind. `agent` (RFC 0070), `pack` (RFC 0003/0013), `prompt-template` (RFC 0027), `connection-ref` (RFC 0045/0095 — refs only), `schedule` (RFC 0052), `roster` (RFC 0086), `org-chart` (RFC 0087)."
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable id within the bundle, used as the target of `dependsOn` edges."
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": [],
+            "description": "Refs of other items that MUST be applied before this one (topological order)."
+          },
+          "payload": {
+            "type": "object",
+            "description": "The kind's existing schema (RFC 0070 manifest, 0003/0013 pack, 0027 template, 0045/0095 connection *ref*, 0052 job, 0086 roster, 0087 org-chart). Deliberately open here because each kind validates against its own schema. For `connection-ref`, the payload MUST carry only refs/provider ids — a literal credential value is rejected (422).",
+            "$comment": "Intentionally open object — validated against the kind's own schema; connection-ref payloads MUST NOT contain credential values (export-bundle-no-credential-material)."
+          }
+        }
+      }
+    }
+  }
+}

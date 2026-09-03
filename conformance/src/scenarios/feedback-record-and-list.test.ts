@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readFeedbackCap, seedRun } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('feedback-record-and-list (RFC 0056 §C)', () => {
   it('POST an annotation then GET returns it', async () => {
@@ -21,7 +22,7 @@ describe('feedback-record-and-list (RFC 0056 §C)', () => {
     if (post.status === 501 || post.status === 404) return softSkip('blocked', 'precondition not met — `post.status === 501 || post.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       post.status,
-      driver.describe('RFC 0056 §C', 'POST annotation returns 201 with the persisted annotation'),
+      req('openwop.it.feedback-record-and-list.post-an-annotation-then-get-returns-it', 'RFC 0056 §C', 'POST annotation returns 201 with the persisted annotation'),
     ).toBe(201);
     const created = post.json as { annotationId?: string };
     expect(typeof created.annotationId).toBe('string');

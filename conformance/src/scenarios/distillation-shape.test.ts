@@ -13,8 +13,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readDistillationCap } from '../lib/distillation.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('distillation-shape: advertisement (RFC 0062 §A)', () => {
   it('capabilities.memory.distillation is absent or a well-formed object', async () => {
@@ -22,19 +22,19 @@ describe('distillation-shape: advertisement (RFC 0062 §A)', () => {
     if (cap === null) return softSkip('inapplicable', 'not advertised — valid');
     expect(
       typeof cap.supported,
-      driver.describe('capabilities.schema.json §memory.distillation', 'distillation.supported MUST be a boolean when the block is present'),
+      req('openwop.it.distillation-shape.capabilities-memory-distillation-is-absent-or-a-well-formed-object', 'capabilities.schema.json §memory.distillation', 'distillation.supported MUST be a boolean when the block is present'),
     ).toBe('boolean');
     if (cap.maxTokenBudget !== undefined) {
       expect(
         typeof cap.maxTokenBudget === 'number' && (cap.maxTokenBudget as number) >= 1,
-        driver.describe('capabilities.schema.json §memory.distillation', 'maxTokenBudget MUST be a positive integer when present'),
+        req('openwop.it.distillation-shape.capabilities-memory-distillation-is-absent-or-a-well-formed-object', 'capabilities.schema.json §memory.distillation', 'maxTokenBudget MUST be a positive integer when present'),
       ).toBe(true);
     }
     for (const k of ['scheduled', 'indexEmitted'] as const) {
       if (cap[k] !== undefined) {
         expect(
           typeof cap[k],
-          driver.describe('capabilities.schema.json §memory.distillation', `distillation.${k} MUST be a boolean when present`),
+          req('openwop.it.distillation-shape.capabilities-memory-distillation-is-absent-or-a-well-formed-object', 'capabilities.schema.json §memory.distillation', `distillation.${k} MUST be a boolean when present`),
         ).toBe('boolean');
       }
     }

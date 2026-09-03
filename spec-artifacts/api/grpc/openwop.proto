@@ -1,0 +1,251 @@
+// openwop v1 — gRPC service definition (optional alternative to REST + SSE).
+//
+// Status: FINAL v1 (2026-05-12). Closes R3 in rest-endpoints.md
+// §"Open spec gaps". Hosts that advertise `capabilities.grpc.supported:
+// true` expose this service in addition to (NOT instead of) the
+// REST + SSE surface. Per-method semantics are normatively defined by
+// the corresponding REST operation in `api/openapi.yaml`; this file
+// supplies the wire-shape only.
+//
+// Service-name canonical: openwop.v1.Engine (one service per major).
+// Method names: PascalCase form of `api/openapi.yaml` operationIds.
+// Error mapping: see `spec/v1/grpc-transport.md` §"Error mapping".
+//
+// Message shapes mirror the JSON Schemas — full shape definitions are
+// abridged here for readability; reference impls SHOULD `import` each
+// JSON Schema's corresponding `.proto` snippet from a paired
+// `schemas/grpc/<name>.proto` once those land (deferred to v1.x). For
+// the v1 reference, hosts MAY hand-roll the messages from the JSON
+// Schema definitions; the wire surface is byte-equivalent across both
+// projections.
+
+syntax = "proto3";
+
+package openwop.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/openwop/openwop/api/grpc/openwopv1";
+option java_package = "dev.openwop.api.v1";
+option csharp_namespace = "Openwop.V1";
+
+// ─────────────────────────────────────────────────────────────────────
+// Service — one per protocol major version.
+// ─────────────────────────────────────────────────────────────────────
+service Engine {
+  // Discovery — 1:1 with REST `GET /.well-known/openwop`.
+  // Unauthenticated.
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+
+  // Workflow + Run lifecycle.
+  rpc GetWorkflow(GetWorkflowRequest) returns (GetWorkflowResponse);
+  rpc CreateRun(CreateRunRequest) returns (CreateRunResponse);
+  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+  rpc BulkCancelRuns(BulkCancelRunsRequest) returns (BulkCancelRunsResponse);
+  rpc ForkRun(ForkRunRequest) returns (ForkRunResponse);
+  rpc PauseRun(PauseRunRequest) returns (PauseRunResponse);
+  rpc ResumeRun(ResumeRunRequest) returns (ResumeRunResponse);
+
+  // Events — server-streaming replaces SSE.
+  rpc StreamRunEvents(StreamRunEventsRequest) returns (stream RunEventEnvelope);
+
+  // HITL — interrupt resolution.
+  rpc ResolveInterruptByRun(ResolveInterruptByRunRequest) returns (ResolveInterruptResponse);
+  rpc ResolveInterruptByToken(ResolveInterruptByTokenRequest) returns (ResolveInterruptResponse);
+  rpc InspectInterruptByToken(InspectInterruptByTokenRequest) returns (InspectInterruptResponse);
+
+  // Artifacts + Webhooks + Audit verify.
+  rpc GetArtifact(GetArtifactRequest) returns (GetArtifactResponse);
+  rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+  rpc UnregisterWebhook(UnregisterWebhookRequest) returns (google.protobuf.Empty);
+  rpc VerifyAuditLog(VerifyAuditLogRequest) returns (VerifyAuditLogResponse);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Messages — abridged. Each message mirrors the corresponding REST
+// request/response body; field shapes use Struct for sub-trees that
+// don't yet have hand-rolled Protobuf representations. A future v1.x
+// minor expands every Struct into its typed Protobuf message.
+// ─────────────────────────────────────────────────────────────────────
+
+message GetCapabilitiesRequest {}
+
+message GetCapabilitiesResponse {
+  // Body matches schemas/capabilities.schema.json.
+  google.protobuf.Struct capabilities = 1;
+}
+
+message GetWorkflowRequest {
+  string workflow_id = 1;
+}
+
+message GetWorkflowResponse {
+  // Body matches schemas/workflow-definition.schema.json.
+  google.protobuf.Struct workflow = 1;
+}
+
+message CreateRunRequest {
+  string workflow_id = 1;
+  google.protobuf.Struct inputs = 2;       // schemas/run-options.schema.json §inputs
+  google.protobuf.Struct configurable = 3; // schemas/run-options.schema.json §configurable
+  repeated string tags = 4;
+  google.protobuf.Struct metadata = 5;
+  string idempotency_key = 6;              // Idempotency-Key, optional
+}
+
+message CreateRunResponse {
+  string run_id = 1;
+  string status = 2;
+}
+
+message GetRunRequest {
+  string run_id = 1;
+}
+
+message GetRunResponse {
+  // Body matches schemas/run-snapshot.schema.json.
+  google.protobuf.Struct snapshot = 1;
+}
+
+message CancelRunRequest {
+  string run_id = 1;
+  string reason = 2;
+}
+
+message CancelRunResponse {
+  string run_id = 1;
+  string status = 2;
+}
+
+message BulkCancelRunsRequest {
+  repeated string run_ids = 1;
+  string reason = 2;
+}
+
+message BulkCancelRunResult {
+  string run_id = 1;
+  bool ok = 2;
+  string status = 3;                       // "cancelled" / "cancelling" when ok=true
+  google.protobuf.Struct error = 4;        // error-envelope.schema.json when ok=false
+}
+
+message BulkCancelRunsResponse {
+  repeated BulkCancelRunResult results = 1;
+}
+
+message ForkRunRequest {
+  string run_id = 1;
+  int64 from_seq = 2;
+  string mode = 3;                         // "replay" | "branch"
+  google.protobuf.Struct overlay = 4;      // optional run-options overlay
+}
+
+message ForkRunResponse {
+  string forked_run_id = 1;
+  string status = 2;
+}
+
+message PauseRunRequest {
+  string run_id = 1;
+  string reason = 2;
+  string drain_policy = 3;                 // "immediate" | "drain-current-node"
+}
+
+message PauseRunResponse {
+  string run_id = 1;
+  string status = 2;
+  google.protobuf.Timestamp paused_at = 3;
+}
+
+message ResumeRunRequest {
+  string run_id = 1;
+  string reason = 2;
+}
+
+message ResumeRunResponse {
+  string run_id = 1;
+  string status = 2;
+  google.protobuf.Timestamp resumed_at = 3;
+}
+
+message StreamRunEventsRequest {
+  string run_id = 1;
+  int64 last_sequence = 2;                 // -1 = from start
+  repeated string stream_modes = 3;        // subset of stream-modes.md
+  int32 buffer_ms = 4;
+}
+
+message RunEventEnvelope {
+  string event_id = 1;
+  int64 seq = 2;
+  string run_id = 3;
+  string type = 4;
+  string node_id = 5;
+  google.protobuf.Struct payload = 6;      // run-event-payloads.schema.json §<type>
+  google.protobuf.Timestamp timestamp = 7;
+  string causation_id = 8;                 // optional, run-event.schema.json §causationId
+}
+
+message ResolveInterruptByRunRequest {
+  string run_id = 1;
+  string node_id = 2;
+  google.protobuf.Struct resume_value = 3; // shape per InterruptPayload.resumeSchema
+}
+
+message ResolveInterruptByTokenRequest {
+  string token = 1;
+  google.protobuf.Struct resume_value = 2;
+}
+
+message InspectInterruptByTokenRequest {
+  string token = 1;
+}
+
+message ResolveInterruptResponse {
+  string run_id = 1;
+  string node_id = 2;
+  string status = 3;
+}
+
+message InspectInterruptResponse {
+  // Body matches schemas/suspend-request.schema.json.
+  google.protobuf.Struct interrupt = 1;
+}
+
+message GetArtifactRequest {
+  string run_id = 1;
+  string artifact_id = 2;
+}
+
+message GetArtifactResponse {
+  string artifact_id = 1;
+  string content_type = 2;
+  bytes content = 3;
+}
+
+message RegisterWebhookRequest {
+  string url = 1;
+  repeated string event_types = 2;
+  string secret = 3;                       // operator-supplied HMAC secret
+}
+
+message RegisterWebhookResponse {
+  string webhook_id = 1;
+}
+
+message UnregisterWebhookRequest {
+  string webhook_id = 1;
+}
+
+message VerifyAuditLogRequest {
+  int64 from_seq = 1;
+  int64 to_seq = 2;
+}
+
+message VerifyAuditLogResponse {
+  // Body matches schemas/audit-verify-result.schema.json.
+  google.protobuf.Struct result = 1;
+}

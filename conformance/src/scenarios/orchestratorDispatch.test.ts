@@ -27,6 +27,7 @@ import {
   isOrchestratorSupported,
   isDispatchSupported,
 } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-orchestrator-dispatch';
 const SKIP =
@@ -55,7 +56,7 @@ describe.skipIf(SKIP)('orchestratorDispatch: supervisor → dispatch → next-wo
       const d = e.payload?.decision as { kind?: string } | undefined;
       return d?.kind === 'next-worker';
     });
-    expect(nextWorker, 'fixture emits at least one kind:next-worker decision').toBeDefined();
+    expect(nextWorker, req('openwop.it.orchestratorDispatch.emits-runorchestrator-decided-next-worker-between-supervisor-dispatch', 'RFCS/0006-orchestrator.md', 'fixture emits at least one kind:next-worker decision')).toBeDefined();
 
     const payload = nextWorker!.payload!;
     expect(typeof payload.agentId).toBe('string');

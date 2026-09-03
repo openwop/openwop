@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const ORDERING_MODELS = new Set(['lamport', 'vector-clock', 'global-sequencer']);
@@ -62,7 +63,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-ordering: advertisement shape (R
 
     expect(
       typeof ceo.supported,
-      driver.describe(
+      req('openwop.it.cross-engine-append-ordering.capabilities-eventlog-crossengineordering-when-present-conforms-to-rfc-0036-b', 
         'RFCS/0036-multi-region-and-cross-engine-guarantees.md §B',
         'capabilities.eventLog.crossEngineOrdering.supported MUST be boolean when present',
       ),
@@ -71,7 +72,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-ordering: advertisement shape (R
     if (ceo.orderingModel !== undefined) {
       expect(
         ORDERING_MODELS.has(ceo.orderingModel as string),
-        driver.describe(
+        req('openwop.it.cross-engine-append-ordering.capabilities-eventlog-crossengineordering-when-present-conforms-to-rfc-0036-b', 
           'RFCS/0036-multi-region-and-cross-engine-guarantees.md §B',
           'orderingModel MUST be one of {lamport, vector-clock, global-sequencer}',
         ),
@@ -81,7 +82,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-ordering: advertisement shape (R
     if (ceo.supported === true) {
       expect(
         ceo.orderingModel,
-        driver.describe(
+        req('openwop.it.cross-engine-append-ordering.capabilities-eventlog-crossengineordering-when-present-conforms-to-rfc-0036-b', 
           'RFCS/0036-multi-region-and-cross-engine-guarantees.md §B',
           'when supported: true, orderingModel MUST be present (the categorical claim has no operational meaning without an advertised mechanism)',
         ),

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/residency.schema.json",
+  "title": "Residency",
+  "description": "RFC 0129 — an OPTIONAL data-residency constraint on a run-creation request (`POST /v1/runs`). A host advertising `capabilities.dataResidency` MUST honor-or-reject: accept iff `region` is in the advertised `dataResidency.regions[]`, else reject `residency_unavailable` (HTTP one-of 400/404/422) and create no run — it MUST NOT silently accept-and-ignore. Absent ⇒ no constraint (host default region). Physical byte-confinement of the accepted run is a declared operator SHOULD (RFC 0129 §4), not a wire guarantee.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "region"
+  ],
+  "properties": {
+    "region": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Requested processing region — an opaque operator code from the host's own vocabulary (e.g. `\"eu\"`, `\"us\"`, `\"eu-west-1\"`). Honored only if present in the host's advertised `capabilities.dataResidency.regions[]`; otherwise the run is rejected `residency_unavailable`."
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

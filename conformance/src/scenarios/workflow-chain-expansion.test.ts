@@ -34,6 +34,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { expandChain, type WorkflowChain } from '../lib/workflow-chain-expansion.js';
+import { req } from '../lib/requirement-ids.js';
 
 /** Index helper that narrows away the `T | undefined` from `noUncheckedIndexedAccess`
  *  with an actionable error message — replaces `arr[i]!` non-null assertions so a
@@ -95,7 +96,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
     const config = at(fragment.nodes, 0, 'fragment.nodes').config as { systemPrompt: string };
     expect(
       config.systemPrompt,
-      'Per workflow-chain-packs.md §"Parameter substitution": placeholders MUST be substituted literally at expansion time.',
+      req('openwop.it.workflow-chain-expansion.substitutes-params-x-placeholders-literally-in-config-strings', 'workflow-chain-packs.md', 'Per workflow-chain-packs.md §"Parameter substitution": placeholders MUST be substituted literally at expansion time.'),
     ).toBe('Write a PRD for: AI-powered toaster\nAudience: restaurant chains');
   });
 
@@ -130,11 +131,11 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
     };
     expect(
       config.outer.middle.message,
-      'Recursive substitution MUST walk into nested objects (per spec §Parameter substitution: "Substitution MUST recurse into nested string values within `config` and `inputs`").',
+      req('openwop.it.workflow-chain-expansion.recurses-into-nested-object-structures-in-config', 'workflow-chain-packs.md', 'Recursive substitution MUST walk into nested objects (per spec §Parameter substitution: "Substitution MUST recurse into nested string values within `config` and `inputs`").'),
     ).toBe('Hello world');
     expect(
       config.outer.middle.tags,
-      'Recursive substitution MUST also walk into array elements when those elements are strings.',
+      req('openwop.it.workflow-chain-expansion.recurses-into-nested-object-structures-in-config', 'workflow-chain-packs.md', 'Recursive substitution MUST also walk into array elements when those elements are strings.'),
     ).toEqual(['static', 'world-tag']);
   });
 
@@ -156,7 +157,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
       { expansionId: 'x', params: {}, isTypeIdResolvable: RESOLVE_ALL },
     );
     const config = at(fragment.nodes, 0, 'fragment.nodes').config as { literal: string; empty: string };
-    expect(config.literal).toBe('no placeholders here');
+    expect(config.literal, req('openwop.it.workflow-chain-expansion.leaves-non-placeholder-strings-untouched', 'workflow-chain-packs.md', 'leaves non-placeholder strings untouched')).toBe('no placeholders here');
     expect(config.empty).toBe('');
   });
 
@@ -178,7 +179,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
       { expansionId: 'x', params: { who: 'Ada' }, isTypeIdResolvable: RESOLVE_ALL },
     );
     const config = at(fragment.nodes, 0, 'fragment.nodes').config as { a: string; b: string; joined: string };
-    expect(config.a).toBe('Ada');
+    expect(config.a, req('openwop.it.workflow-chain-expansion.substitutes-the-same-placeholder-name-in-multiple-positions', 'workflow-chain-packs.md', 'substitutes the same placeholder name in multiple positions')).toBe('Ada');
     expect(config.b).toBe('Ada');
     expect(config.joined).toBe('hi Ada, hi again Ada');
   });
@@ -231,7 +232,7 @@ describe('category: workflow-chain expansion — whole-value typed resolution', 
     };
     expect(
       config.retryPolicy,
-      'Per workflow-chain-packs.md §"Parameter substitution": a value that is EXACTLY one `{{params.x}}` token MUST resolve to the raw typed value — an object param MUST NOT be stringified to "[object Object]".',
+      req('openwop.it.workflow-chain-expansion.resolves-a-whole-value-params-x-token-to-the-raw-typed-value-object-array-number', 'workflow-chain-packs.md', 'Per workflow-chain-packs.md §"Parameter substitution": a value that is EXACTLY one `{{params.x}}` token MUST resolve to the raw typed value — an object param MUST NOT be stringified to "[object Object]".'),
     ).toEqual({ attempts: 3, backoff: 'exponential' });
     expect(config.allowlist).toEqual(['a', 'b']);
     expect(config.maxTokens).toBe(4096);
@@ -255,7 +256,7 @@ describe('category: workflow-chain expansion — whole-value typed resolution', 
     const config = at(fragment.nodes, 0, 'fragment.nodes').config as { label: string };
     expect(
       config.label,
-      'A token embedded in surrounding text MUST do literal string substitution (the numeric param coerces to its string form).',
+      req('openwop.it.workflow-chain-expansion.does-literal-string-coercion-for-an-embedded-token-in-surrounding-text', 'workflow-chain-packs.md', 'A token embedded in surrounding text MUST do literal string substitution (the numeric param coerces to its string form).'),
     ).toBe('items: 42');
   });
 });
@@ -290,7 +291,7 @@ describe('category: workflow-chain expansion — inputs preservation', () => {
     };
     expect(
       inputs.prompt,
-      'Per workflow-chain-packs.md §"Parameter substitution": expansion MUST preserve a present `node.inputs` (PortValue references) verbatim — only `{{params.*}}` tokens inside its string leaves are substituted.',
+      req('openwop.it.workflow-chain-expansion.preserves-a-present-node-inputs-portvalue-references-through-expansion', 'workflow-chain-packs.md', 'Per workflow-chain-packs.md §"Parameter substitution": expansion MUST preserve a present `node.inputs` (PortValue references) verbatim — only `{{params.*}}` tokens inside its string leaves are substituted.'),
     ).toEqual({ sourceNodeId: 'upstream', sourcePort: 'text' });
     expect(inputs.seed).toBe('xyz');
   });
@@ -310,7 +311,7 @@ describe('category: workflow-chain expansion — node id collision avoidance', (
     });
     expect(
       at(first.nodes, 0, 'first.nodes').id,
-      'Per spec §"Expansion semantics" step 6: each expansion MUST use a unique `expansionId` prefix so multi-expansion DAGs do not collide.',
+      req('openwop.it.workflow-chain-expansion.same-chain-expanded-twice-in-one-parent-workflow-produces-non-colliding-node-ids', 'workflow-chain-packs.md', 'Per spec §"Expansion semantics" step 6: each expansion MUST use a unique `expansionId` prefix so multi-expansion DAGs do not collide.'),
     ).not.toBe(at(second.nodes, 0, 'second.nodes').id);
     expect(at(first.nodes, 0, 'first.nodes').id).toBe('vendor_acme_generatePRD_a8f3_prd-call');
     expect(at(second.nodes, 0, 'second.nodes').id).toBe('vendor_acme_generatePRD_b9e4_prd-call');
@@ -324,7 +325,7 @@ describe('category: workflow-chain expansion — node id collision avoidance', (
     });
     expect(
       at(fragment.nodes, 0, 'fragment.nodes').id,
-      'chainId `vendor.acme.generatePRD` MUST be slugged (dots → underscores) so the resulting id is safe to use in storage backends that reserve `.` for hierarchical keys.',
+      req('openwop.it.workflow-chain-expansion.rewritten-ids-replace-dots-in-chainid-with-underscores-for-storage-key-safety', 'workflow-chain-packs.md', 'chainId `vendor.acme.generatePRD` MUST be slugged (dots → underscores) so the resulting id is safe to use in storage backends that reserve `.` for hierarchical keys.'),
     ).toMatch(/^vendor_acme_generatePRD_/);
     expect(at(fragment.nodes, 0, 'fragment.nodes').id).not.toMatch(/\./);
   });
@@ -337,7 +338,7 @@ describe('category: workflow-chain expansion — node id collision avoidance', (
     });
     expect(
       fragment.idMap.get('prd-call'),
-      'The expansion contract MUST surface the original-id → rewritten-id map so the caller can route adjacent parent-workflow edges to the right expanded node.',
+      req('openwop.it.workflow-chain-expansion.exposes-idmap-so-the-caller-can-wire-parent-workflow-edges-into-the-expansion', 'workflow-chain-packs.md', 'The expansion contract MUST surface the original-id → rewritten-id map so the caller can route adjacent parent-workflow edges to the right expanded node.'),
     ).toBe('vendor_acme_generatePRD_a8f3_prd-call');
   });
 });
@@ -367,7 +368,7 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     expect(fragment.edges).toHaveLength(1);
     expect(
       at(fragment.edges, 0, 'fragment.edges').from,
-      'Edge `from` ids that match fragment node ids MUST be rewritten with the same prefix as the nodes themselves.',
+      req('openwop.it.workflow-chain-expansion.rewrites-from-and-to-ids-that-reference-fragment-nodes', 'workflow-chain-packs.md', 'Edge `from` ids that match fragment node ids MUST be rewritten with the same prefix as the nodes themselves.'),
     ).toBe('vendor_acme_twoStep_e1_first');
     expect(at(fragment.edges, 0, 'fragment.edges').to).toBe('vendor_acme_twoStep_e1_second');
   });
@@ -387,7 +388,7 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     });
     expect(
       at(fragment.edges, 0, 'fragment.edges').from,
-      'Port-name suffix (after the `.`) MUST be preserved verbatim during id rewriting.',
+      req('openwop.it.workflow-chain-expansion.preserves-port-name-suffix-nodeid-portname-when-rewriting-edge-refs', 'workflow-chain-packs.md', 'Port-name suffix (after the `.`) MUST be preserved verbatim during id rewriting.'),
     ).toBe('vendor_acme_twoStep_e2_first.out');
     expect(at(fragment.edges, 0, 'fragment.edges').to).toBe('vendor_acme_twoStep_e2_second.in');
   });
@@ -413,7 +414,7 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     });
     expect(
       at(fragment.edges, 0, 'fragment.edges').from,
-      'Edge refs to nodes OUTSIDE the fragment MUST pass through unchanged so the parent host can wire adjacent edges post-splice.',
+      req('openwop.it.workflow-chain-expansion.leaves-edge-refs-alone-when-they-don-t-match-a-fragment-node-id', 'workflow-chain-packs.md', 'Edge refs to nodes OUTSIDE the fragment MUST pass through unchanged so the parent host can wire adjacent edges post-splice.'),
     ).toBe('parent-upstream');
     expect(at(fragment.edges, 0, 'fragment.edges').to).toBe('vendor_acme_twoStep_e3_first');
     expect(at(fragment.edges, 1, 'fragment.edges').from).toBe('vendor_acme_twoStep_e3_second');
@@ -449,11 +450,11 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     expect(edge.to).toBe('vendor_acme_twoStep_e4_second');
     expect(
       edge.condition,
-      'Per RFC 0013 amendment (2026-07-03): a present `FragmentEdge.condition` MUST be carried onto the expanded WorkflowEdge (not dropped at expansion).',
+      req('openwop.it.workflow-chain-expansion.preserves-edge-condition-and-triggerrule-onto-the-expanded-workflowedge-rfc-0013', 'RFC 0013', 'Per RFC 0013 amendment (2026-07-03): a present `FragmentEdge.condition` MUST be carried onto the expanded WorkflowEdge (not dropped at expansion).'),
     ).toEqual({ type: 'equals', left: 'status', right: 'ok' });
     expect(
       edge.triggerRule,
-      'Per RFC 0125 / workflow-chain-packs.md §"Expansion semantics": expansion MUST preserve `FragmentEdge.triggerRule` onto the resulting WorkflowEdge so the scheduler honors the fan-in / error-routing rule.',
+      req('openwop.it.workflow-chain-expansion.preserves-edge-condition-and-triggerrule-onto-the-expanded-workflowedge-rfc-0013', 'RFC 0013', 'Per RFC 0125 / workflow-chain-packs.md §"Expansion semantics": expansion MUST preserve `FragmentEdge.triggerRule` onto the resulting WorkflowEdge so the scheduler honors the fan-in / error-routing rule.'),
     ).toBe('all_complete');
   });
 
@@ -465,7 +466,7 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     });
     expect(
       at(fragment.edges, 0, 'fragment.edges').triggerRule,
-      'When a fragment edge declares no `triggerRule`, the expanded edge MUST NOT carry one — omission is identical to the `all_success` default (preserves wire-shape minimality + prior behavior).',
+      req('openwop.it.workflow-chain-expansion.omits-triggerrule-on-the-expanded-edge-when-the-fragment-edge-declares-none-defa', 'workflow-chain-packs.md', 'When a fragment edge declares no `triggerRule`, the expanded edge MUST NOT carry one — omission is identical to the `all_success` default (preserves wire-shape minimality + prior behavior).'),
     ).toBeUndefined();
   });
 });
@@ -491,7 +492,7 @@ describe('category: workflow-chain expansion — capability propagation', () => 
     for (const node of fragment.nodes) {
       expect(
         node.capabilities,
-        'Per spec §"Expansion semantics" step 8: chain-level `capabilities[]` MUST be copied to every expanded node so existing capability gates (side-effect, streamable) apply uniformly.',
+        req('openwop.it.workflow-chain-expansion.copies-chain-capabilities-into-every-expanded-node-s-capabilities', 'workflow-chain-packs.md', 'Per spec §"Expansion semantics" step 8: chain-level `capabilities[]` MUST be copied to every expanded node so existing capability gates (side-effect, streamable) apply uniformly.'),
       ).toEqual(['side-effectful', 'cacheable']);
     }
   });
@@ -504,7 +505,7 @@ describe('category: workflow-chain expansion — capability propagation', () => 
     });
     expect(
       at(fragment.nodes, 0, 'fragment.nodes').capabilities,
-      'When the chain declares no `capabilities[]`, expanded nodes MUST NOT carry an empty array (preserves wire-shape minimality).',
+      req('openwop.it.workflow-chain-expansion.omits-capabilities-on-expanded-nodes-when-the-chain-declares-none', 'workflow-chain-packs.md', 'When the chain declares no `capabilities[]`, expanded nodes MUST NOT carry an empty array (preserves wire-shape minimality).'),
     ).toBeUndefined();
   });
 });
@@ -519,7 +520,7 @@ describe('category: workflow-chain expansion — runtime-invariance contract', (
     for (const node of fragment.nodes) {
       expect(
         node.typeId,
-        'Per workflow-chain-packs.md §"What hosts dispatch": dispatching runtimes see only concrete `core.*`/published-vendor typeIds — the chain reference MUST NOT be preserved at runtime.',
+        req('openwop.it.workflow-chain-expansion.expanded-fragment-carries-only-concrete-typeids-no-chain-reference-survives', 'workflow-chain-packs.md', 'Per workflow-chain-packs.md §"What hosts dispatch": dispatching runtimes see only concrete `core.*`/published-vendor typeIds — the chain reference MUST NOT be preserved at runtime.'),
       ).not.toMatch(/^vendor\.acme\.generatePRD$/);
       expect(node.typeId).toBe('core.ai.callPrompt');
     }

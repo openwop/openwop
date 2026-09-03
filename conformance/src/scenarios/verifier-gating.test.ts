@@ -23,6 +23,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/agents/verify-run';
 
@@ -48,26 +50,26 @@ describe('verifier-gating (RFC 0090 §B)', () => {
 
     // FAIL verdict → must NOT complete as success; agent.verified{fail} emitted.
     const failRes = await driver.post(SEAM, { simulateVerdict: 'fail' });
-    if (failRes.status === 404) return; // seam unwired — soft-skip
+    if (failRes.status === 404) return softSkip('blocked', 'precondition not met — `failRes.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     expect(
       verifiedVerdict(failRes.json) === 'fail',
-      driver.describe('RFC 0090 §A', 'a verify-run forcing a fail MUST emit agent.verified{verdict:"fail"}'),
+      req('openwop.it.verifier-gating.a-fail-verdict-blocks-commit-on-a-gating-host-a-pass-verdict-completes', 'RFC 0090 §A', 'a verify-run forcing a fail MUST emit agent.verified{verdict:"fail"}'),
     ).toBe(true);
     expect(
       !isSuccess(failRes.json),
-      driver.describe('RFC 0090 §B', 'on a gating host a fail verdict MUST block commit/terminate-as-success'),
+      req('openwop.it.verifier-gating.a-fail-verdict-blocks-commit-on-a-gating-host-a-pass-verdict-completes', 'RFC 0090 §B', 'on a gating host a fail verdict MUST block commit/terminate-as-success'),
     ).toBe(true);
 
     // PASS verdict → completes normally.
     const passRes = await driver.post(SEAM, { simulateVerdict: 'pass' });
-    if (passRes.status === 404) return;
+    if (passRes.status === 404) return softSkip('blocked', 'precondition not met — `passRes.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       verifiedVerdict(passRes.json) === 'pass',
-      driver.describe('RFC 0090 §A', 'a verify-run forcing a pass MUST emit agent.verified{verdict:"pass"}'),
+      req('openwop.it.verifier-gating.a-fail-verdict-blocks-commit-on-a-gating-host-a-pass-verdict-completes', 'RFC 0090 §A', 'a verify-run forcing a pass MUST emit agent.verified{verdict:"pass"}'),
     ).toBe(true);
     expect(
       isSuccess(passRes.json),
-      driver.describe('RFC 0090 §B', 'a pass verdict MUST allow the turn to complete'),
+      req('openwop.it.verifier-gating.a-fail-verdict-blocks-commit-on-a-gating-host-a-pass-verdict-completes', 'RFC 0090 §B', 'a pass verdict MUST allow the turn to complete'),
     ).toBe(true);
   });
 });

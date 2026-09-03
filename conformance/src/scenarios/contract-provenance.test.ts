@@ -49,8 +49,8 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 function provenanceSubschema(): Record<string, unknown> {
   const caps = JSON.parse(
@@ -73,11 +73,11 @@ describe('contract-provenance (RFC 0146, always-on)', () => {
 
     expect(
       caps.properties['contractProvenance'],
-      why('capabilities.schema.json', 'declared as a root property — families live at the document root per capabilities.md §"Document-root layout", never under the deprecated wrapper'),
+      req('openwop.it.contract-provenance.a1-declared-at-the-document-root-and-optional', 'capabilities.schema.json', 'declared as a root property — families live at the document root per capabilities.md §"Document-root layout", never under the deprecated wrapper'),
     ).toBeDefined();
     expect(
       (caps.required ?? []).includes('contractProvenance'),
-      why('RFC 0146 req 1', 'OPTIONAL — absent means UNSPECIFIED provenance, not "current" and not "stale"; a host must not be non-conformant for staying silent'),
+      req('openwop.it.contract-provenance.a1-declared-at-the-document-root-and-optional', 'RFC 0146 req 1', 'OPTIONAL — absent means UNSPECIFIED provenance, not "current" and not "stale"; a host must not be non-conformant for staying silent'),
     ).toBe(false);
   });
 
@@ -86,32 +86,32 @@ describe('contract-provenance (RFC 0146, always-on)', () => {
 
     expect(
       validate({ suiteVersion: '1.72.0', corpusCommit: '93d4692eb1e28244b860da6ddcb6521b57a712b3' }),
-      why('RFC 0146 req 4', `a real stamp validates: ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.contract-provenance.a2-a-full-40-hex-commit-validates-a-short-sha-or-a-vendor-build-string-does-not', 'RFC 0146 req 4', `a real stamp validates: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
     // This is what keeps the field from decaying into a free-text version box. A short SHA is
     // ambiguous across a growing history; a vendor build id belongs in `implementation`, which
     // already exists for exactly that.
     expect(
       validate({ corpusCommit: '93d4692' }),
-      why('RFC 0146 req 4', 'a SHORT sha is REJECTED — abbreviated commits are ambiguous and this field is an identity, not a hint'),
+      req('openwop.it.contract-provenance.a2-a-full-40-hex-commit-validates-a-short-sha-or-a-vendor-build-string-does-not', 'RFC 0146 req 4', 'a SHORT sha is REJECTED — abbreviated commits are ambiguous and this field is an identity, not a hint'),
     ).toBe(false);
     expect(
       validate({ corpusCommit: 'build-4711' }),
-      why('RFC 0146 req 4', 'a vendor build identifier is REJECTED — `implementation` is the field for that'),
+      req('openwop.it.contract-provenance.a2-a-full-40-hex-commit-validates-a-short-sha-or-a-vendor-build-string-does-not', 'RFC 0146 req 4', 'a vendor build identifier is REJECTED — `implementation` is the field for that'),
     ).toBe(false);
   });
 
   it('A3 — both members optional, and unknown members rejected', () => {
     const validate = compiled();
 
-    expect(validate({}), why('RFC 0146 req 1', 'an empty object validates — a host may know neither')).toBe(true);
+    expect(validate({}), req('openwop.it.contract-provenance.a3-both-members-optional-and-unknown-members-rejected', 'RFC 0146 req 1', 'an empty object validates — a host may know neither')).toBe(true);
     expect(
       validate({ suiteVersion: '1.72.0' }),
-      why('RFC 0146 req 1', 'a host that knows only its suite version advertises only that'),
+      req('openwop.it.contract-provenance.a3-both-members-optional-and-unknown-members-rejected', 'RFC 0146 req 1', 'a host that knows only its suite version advertises only that'),
     ).toBe(true);
     expect(
       validate({ suiteVersion: '1.72.0', schemaDigest: 'abc' }),
-      why('RFC 0146 §Proposal', 'the object is closed — a digest is a DIFFERENT artifact answering a different question (tamper vs identity) and is deliberately not part of this shape'),
+      req('openwop.it.contract-provenance.a3-both-members-optional-and-unknown-members-rejected', 'RFC 0146 §Proposal', 'the object is closed — a digest is a DIFFERENT artifact answering a different question (tamper vs identity) and is deliberately not part of this shape'),
     ).toBe(false);
   });
 
@@ -135,7 +135,7 @@ describe('contract-provenance (RFC 0146, always-on)', () => {
     const rfc = rfcText ?? '';
     expect(
       /MUST NOT reject a request, refuse interop, or fail a run solely because/.test(rfc),
-      why('RFC 0146 req 3', 'a consumer MUST NOT reject on a mismatch — v1.x revisions are additive, so a host on an older revision is CONFORMANT and the field detects drift rather than creating an error'),
+      req('openwop.it.contract-provenance.a4-the-rfc-states-the-advisory-rule-which-is-what-stops-this-becoming-an-upgrade', 'RFC 0146 req 3', 'a consumer MUST NOT reject on a mismatch — v1.x revisions are additive, so a host on an older revision is CONFORMANT and the field detects drift rather than creating an error'),
     ).toBe(true);
   });
 });
@@ -156,14 +156,14 @@ function suiteStamp(): { suiteVersion?: string; corpusCommit?: string } | null {
 describe('contract-provenance: the suite READS the advert — the consumer half (RFC 0146 G3)', () => {
   it('compares the advertised revision against the suite\'s own, and reports drift', async () => {
     const mine = suiteStamp();
-    if (mine === null) return; // repo layout — inapplicable, see the docblock
+    if (mine === null) return softSkip('blocked', 'precondition not met — `mine === null` returned early (repo layout — inapplicable, see the docblock) (seam, prior step, or fixture unavailable)'); // repo layout — inapplicable, see the docblock
 
     const res = await driver.get('/.well-known/openwop');
-    if (res.status !== 200 || res.json === null || res.json === undefined) return;
+    if (res.status !== 200 || res.json === null || res.json === undefined) return softSkip('blocked', 'precondition not met — `res.status !== 200 || res.json === null || res.json === undefined` returned early (seam, prior step, or fixture unavailable)');
     const adv = (res.json as Record<string, unknown>)['contractProvenance'] as
       | { suiteVersion?: string; corpusCommit?: string }
       | undefined;
-    if (adv === undefined) return; // silent host — absent means UNSPECIFIED (req 1), not stale
+    if (adv === undefined) return softSkip('blocked', 'precondition not met — `adv === undefined` returned early (silent host — absent means UNSPECIFIED (req 1), not stale) (seam, prior step, or fixture unavailable)'); // silent host — absent means UNSPECIFIED (req 1), not stale
 
     const same = adv.corpusCommit !== undefined && adv.corpusCommit === mine.corpusCommit;
     console.log(
@@ -178,7 +178,7 @@ describe('contract-provenance: the suite READS the advert — the consumer half 
     // because an unparseable provenance is useless to every consumer, not just this one.
     expect(
       typeof adv.corpusCommit === 'string' || typeof adv.suiteVersion === 'string',
-      driver.describe(
+      req('openwop.it.contract-provenance.compares-the-advertised-revision-against-the-suite-s-own-and-reports-drift', 
         'RFC 0146 req 1 + req 4',
         'an advertised contractProvenance carries at least one of suiteVersion / corpusCommit — an object conveying neither is indistinguishable from silence while looking like an answer',
       ),
@@ -189,18 +189,18 @@ describe('contract-provenance: the suite READS the advert — the consumer half 
 describe('contract-provenance: a host advertising it makes a well-formed claim (RFC 0146)', () => {
   it('the advertised provenance validates against the declared shape', async () => {
     const res = await driver.get('/.well-known/openwop');
-    if (res.status !== 200 || res.json === null || res.json === undefined) return;
+    if (res.status !== 200 || res.json === null || res.json === undefined) return softSkip('blocked', 'precondition not met — `res.status !== 200 || res.json === null || res.json === undefined` returned early (seam, prior step, or fixture unavailable)');
 
     const doc = res.json as Record<string, unknown>;
     const adv = doc['contractProvenance'];
     // INAPPLICABLE, not gated. The field is OPTIONAL (req 1) and strict mode must not coerce a
     // host into advertising — the same call RFC 0142 makes for `store` and RFC 0145 for
     // `registrationSource`. Silence is an honest answer here.
-    if (adv === undefined) return;
+    if (adv === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `adv === undefined` returned early (INAPPLICABLE, not gated. The field is OPTIONAL (req 1) and strict mode must not coerce a host into advertising — the same ca…');
 
     expect(
       compiled()(adv),
-      driver.describe(
+      req('openwop.it.contract-provenance.the-advertised-provenance-validates-against-the-declared-shape', 
         'capabilities.schema.json §contractProvenance',
         `an advertised contractProvenance MUST match the declared shape — a full 40-hex corpusCommit and a published suiteVersion, nothing else: ${JSON.stringify(compiled().errors)}`,
       ),

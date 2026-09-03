@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                     |
 | **Created**       | 2026-08-06                                                                                                                                                                                                                                         |
 | **Updated**       | 2026-08-08                                                                                                                                                                                                                                         |
-| **Affects**       | `spec/v1/node-packs.md`, `spec/v1/host-extensions.md`, all 8 pack-manifest schemas + `schemas/registry-version-manifest.schema.json`, `SECURITY/invariants.yaml`, `SECURITY/threat-model-node-packs.md`, `conformance/src/scenarios/pack-manifest-extensions.test.ts` |
+| **Affects**       | `spec/v1/node-packs.md`, `spec/v1/host-extensions.md`, all 8 pack-manifest schemas + `schemas/registry-version-manifest.schema.json`, `SECURITY/invariants.yaml`, `SECURITY/threat-model-node-packs.md`, `conformance/src/coherence/pack-manifest-extensions.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                                                                                                                                                                                                             |
 | **Supersedes**    | —                                                                                                                                                                                                                                                  |
 | **Superseded by** | —                                                                                                                                                                                                                                                  |
@@ -142,7 +142,7 @@ Forward-compatibility guarantees, stated specifically:
 
 ## Conformance
 
-`conformance/src/scenarios/pack-manifest-extensions.test.ts` — 19 assertions, always-on and server-free (<1s), in three parts:
+`conformance/src/coherence/pack-manifest-extensions.test.ts` — 19 assertions, always-on and server-free (<1s), in three parts:
 
 1. **Coverage.** Every in-scope manifest root carries the hatch, enumerated against an explicit count of 9 rather than a naming glob. A new pack kind that forgets the hatch fails this leg; adding one requires either wiring the hatch or naming the exclusion in `OUT_OF_SCOPE`.
 2. **Narrowness.** `x-openwop-app.canvas` and `vendor.acme.rating` validate; `dispalyName` is still rejected; an unextended pack still validates. Plus a cross-schema sweep asserting no hatch pattern anywhere matches a bare canonical-looking key — a pattern widened to `^.*` would pass part 1 and fail here.

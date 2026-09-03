@@ -139,7 +139,7 @@ Sequencing once Active: (1) land the schema + `registry-operations.md` prose + c
 
 - [x] `spec/v1/registry-operations.md` §"Validation flow" amended (kind discriminator + conditional runtime + skip runtime-check for declarative kinds + denormalization extension). — PR #749 (`534a25be`).
 - [x] `schemas/registry-version-manifest.schema.json` updated (additive: `kind`, declarative payload props, `if/then/else` runtime conditional; `additionalProperties:false` preserved). — PR #749 (`534a25be`).
-- [x] ≥1 conformance scenario covering a published artifact-type + connection manifest (positive) and a declarative-with-runtime manifest (negative); fixtures catalogued. — `conformance/src/scenarios/registry-declarative-kinds.test.ts` (8 tests), PR #749; suite `1.33.0` (tag `openwop-conformance/v1.33.0`).
+- [x] ≥1 conformance scenario covering a published artifact-type + connection manifest (positive) and a declarative-with-runtime manifest (negative); fixtures catalogued. — `conformance/src/coherence/registry-declarative-kinds.test.ts` (8 tests), PR #749; suite `1.33.0` (tag `openwop-conformance/v1.33.0`).
 - [x] `CHANGELOG.md` entry under the appropriate v1.x minor. — PR #749, conformance suite `1.32.0 → 1.33.0`.
 - [x] Reference registry (`openwop-registry`) re-vendors the schema, serves a published artifact-type + connection pack, and the landing surfaces the kinds. — `openwop-registry` PR #4 (`4dde5009`): re-vendored schema + `build-index` 4-tab landing + 7 signed declarative packs (`core.openwop.artifact-types` + 6 `core.openwop.connections.*`), `registry-check` green (96 packs). Live on `packs.openwop.dev` — manifests + `.sig` served (HTTP 200), landing shows Node 58 · Agent 5 · Artifact-type 1 · Connection 6. First non-node packs ever published.
 

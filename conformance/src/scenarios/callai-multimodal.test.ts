@@ -22,6 +22,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const ALL_MODALITIES = ['text', 'image', 'audio', 'document'];
 
@@ -60,10 +62,10 @@ describe('callai-multimodal (RFC 0091 §A/§B)', () => {
     const okRes = await driver.post(SEAM, {
       messages: [{ role: 'user', content: [{ type: 'text', text: 'describe this' }, okPart] }],
     });
-    if (okRes.status === 404) return; // seam unwired — soft-skip the whole behavioral suite
+    if (okRes.status === 404) return softSkip('blocked', 'precondition not met — `okRes.status === 404` returned early (seam unwired — soft-skip the whole behavioral suite) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip the whole behavioral suite
     expect(
       errCode(okRes.json) !== 'unsupported_modality',
-      driver.describe('RFC 0091 §B', `an advertised modality (${accepted}) MUST NOT be rejected as unsupported_modality`),
+      req('openwop.it.callai-multimodal.accepts-an-advertised-non-text-modality-and-rejects-an-unadvertised-one-with-uns', 'RFC 0091 §B', `an advertised modality (${accepted}) MUST NOT be rejected as unsupported_modality`),
     ).toBe(true);
 
     // 2) An unadvertised modality MUST be rejected with unsupported_modality.
@@ -79,7 +81,7 @@ describe('callai-multimodal (RFC 0091 §A/§B)', () => {
       });
       expect(
         errCode(badRes.json) === 'unsupported_modality',
-        driver.describe('RFC 0091 §A', `an unadvertised modality (${unadvertised}) MUST be rejected with unsupported_modality (never silently dropped)`),
+        req('openwop.it.callai-multimodal.accepts-an-advertised-non-text-modality-and-rejects-an-unadvertised-one-with-uns', 'RFC 0091 §A', `an unadvertised modality (${unadvertised}) MUST be rejected with unsupported_modality (never silently dropped)`),
       ).toBe(true);
     }
   });
