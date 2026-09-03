@@ -119,11 +119,59 @@ function artifactVersions() {
   return [
     { artifact: 'Spec corpus (root)', version: readJsonVersion('package.json'), source: '`package.json`', cadence: 'bumps only on a coordinated spec release' },
     { artifact: 'Conformance suite `@openwop/openwop-conformance`', version: readJsonVersion('conformance/package.json'), source: '`conformance/package.json`', cadence: 'minor on scenario add/remove' },
+    // v2 charter §F "Identity" (RFC 0172 §B axis 14): the two API documents'
+    // info.version are version axes and were listed nowhere. Hand-maintained in
+    // v1; generated from the corpus tag at v2.
+    { artifact: 'OpenAPI `info.version`', version: yamlInfoVersion('api/openapi.yaml'), source: '`api/openapi.yaml`', cadence: 'hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 §B #14)' },
+    { artifact: 'AsyncAPI `info.version`', version: yamlInfoVersion('api/asyncapi.yaml'), source: '`api/asyncapi.yaml`', cadence: 'as above' },
+    ...siblingVersionRows(),
     // The three SDKs (`@openwop/openwop`, `openwop-client`, Go) were extracted to
     // openwop/openwop-sdks and are versioned there (tracking the spec major per
     // PUBLISHING.md). The CLI (`@openwop/cli`) publishes from openwop/openwop-cli.
     // Neither is versioned from this repo — see those repos for their release lines.
   ];
+}
+
+function yamlInfoVersion(rel) {
+  if (!exists(rel)) return 'absent';
+  const m = /^info:\s*\n(?:[ \t]+[^\n]*\n)*?[ \t]+version:\s*['"]?([^'"\n]+)['"]?/m.exec(read(rel));
+  return m ? m[1].trim() : 'unknown';
+}
+
+/**
+ * Sibling artifact versions come from the COMMITTED evidence manifest
+ * (evidence/cross-repo-manifests.json#siblingVersions, written by
+ * generate-cross-repo-evidence.mjs --write from the checkouts), never from a
+ * checkout at status time — the status page must render identically in a CI
+ * that has no siblings.
+ */
+function siblingVersionRows() {
+  if (!exists('evidence/cross-repo-manifests.json')) return [];
+  const v = JSON.parse(read('evidence/cross-repo-manifests.json')).siblingVersions ?? {};
+  const rows = [];
+  const s = v['openwop-sdks'];
+  if (s) {
+    rows.push({ artifact: 'TypeScript SDK `@openwop/openwop`', version: s.typescript ?? 'unrecorded', source: 'openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`)', cadence: 'tracks the spec major (PUBLISHING.md)' });
+    rows.push({ artifact: 'Python SDK `openwop-client`', version: s.python ?? 'unrecorded', source: 'openwop-sdks `sdk/python/pyproject.toml`', cadence: 'as above' });
+    rows.push({ artifact: 'Go SDK `github.com/openwop/openwop-sdks/go`', version: s.go ?? 'unrecorded', source: 'openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file)', cadence: 'as above' });
+    rows.push({ artifact: 'openwop-sdks corpus pin', version: s.corpusTag ?? 'unpinned', source: 'openwop-sdks `CORPUS_TAG`', cadence: 'bumped only by a re-vendor PR (RFC 0176 §E.1)' });
+  }
+  const c = v['openwop-cli'];
+  if (c) rows.push({ artifact: 'CLI `@openwop/cli`', version: c.version ?? 'unrecorded', source: 'openwop-cli `package.json`', cadence: c.dependsOnSdk ? 'SDK consumer' : 'speaks the v1 wire directly; frozen v1-only (RFC 0167 §F, decided 2026-09-03)' });
+  const r = v['openwop-registry'];
+  if (r) { rows.push({ artifact: 'Registry `registryVersion` / `protocolVersion`', version: `${r.registryVersion ?? '?'} / ${r.protocolVersion ?? '?'}`, source: 'openwop-registry `.well-known/openwop-registry.json`', cadence: 'RFC 0172 §B #18; versioned by tree at v2 (RFC 0177 §A.3)' }); rows.push({ artifact: 'openwop-registry corpus pin', version: r.corpusTag ?? 'unpinned', source: 'openwop-registry `CORPUS_TAG`', cadence: 'as the SDK pin' }); }
+  const a = v['openwop-app'];
+  if (a) rows.push({ artifact: 'openwop-app corpus pin / suite pin', version: `${a.corpusTag ?? 'unpinned'} / ${a.conformancePin ?? '?'}`, source: 'openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json`', cadence: 'tier-1 host; both must agree (RFC 0176 §E.1)' });
+  const e = v['openwop-examples'];
+  if (e) rows.push({ artifact: 'openwop-examples in-memory host / suite pin', version: `${e.inMemoryHost ?? '?'} / ${e.conformancePin ?? 'unpinned'}`, source: 'openwop-examples `examples/hosts/in-memory/package.json`', cadence: 'front-door witness host for the v2 RC (Phase 3 plan §11)' });
+  return rows;
+}
+
+/** RFC 0167 §E.1 / RFC 0172 §B — the version-axis table, read from RFC 0172 so it cannot drift from the RFC. */
+function versionAxes() {
+  const text = read('RFCS/0172-v2-versioning-and-release.md');
+  const block = text.split(/^\| # \| Axis \| v2 disposition/m)[1]?.split(/\n\n/)[0] ?? '';
+  return block.split('\n').filter((l) => /^\| \d+ \|/.test(l)).map((l) => { const c = l.split('|').map((x) => x.trim()); return { n: c[1], axis: c[2], disposition: c[3], grammar: c[4], owner: c[5] }; });
 }
 
 function parseRfcs() {
@@ -517,6 +565,14 @@ function generateStatus() {
   for (const v of artifactVersions()) {
     lines.push(tableRow([v.artifact, v.version, v.source, v.cadence]));
   }
+  lines.push('');
+  lines.push('## Version Axes');
+  lines.push('');
+  lines.push('> RFC 0167 §E.1 enumerated eighteen version axes; RFC 0172 §B dispositions each for v2. This table is read from RFC 0172 so it cannot drift from the RFC (v2 charter §F "Identity": PROTOCOL-STATUS lists every axis). Live values for the corpus-carried axes are in the Artifact Versions table above; per-host axes (#1–#7, #11–#13, #16) are read from a host\'s discovery document and bundle, not from this tree.');
+  lines.push('');
+  lines.push('| # | Axis | v2 disposition | Grammar in v2 | Owner |');
+  lines.push('|---|---|---|---|---|');
+  for (const a of versionAxes()) lines.push(tableRow([a.n, a.axis, a.disposition, a.grammar, a.owner]));
   lines.push('');
   lines.push('## OpenAPI Operations');
   lines.push('');

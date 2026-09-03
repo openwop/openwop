@@ -37,7 +37,7 @@
   "rfc": "0155 \u00a7C",
   "coverage": {
     "rule": "Derived by scripts/generate-extension-registry-coverage.mjs from the top-level keys of schemas/capabilities.schema.json. coreFields = the openwop-discovery-core predicate fields (profiles.md); metadataFields = keys that describe the document or host rather than gate an optional feature (each carries its rationale in metadataRationale; a key that gates behaviour may not be listed there); covered = extension families reached by some record capabilityPath; uncovered = every other family. Uncovered means no registry record exists \u2014 not that the family is non-compliant. Regenerate with --write; the gate runs --check.",
-    "familiesTotal": 91,
+    "familiesTotal": 92,
     "coreFields": [
       "limits",
       "protocolVersion",
@@ -152,7 +152,9 @@
       "workflowChainPacks",
       "workspace"
     ],
-    "uncovered": []
+    "uncovered": [
+      "preferredVersion"
+    ]
   },
   "extensions": [
     {
