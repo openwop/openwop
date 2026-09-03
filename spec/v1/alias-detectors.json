@@ -206,6 +206,24 @@
       "file": "spec/v1/run-options.md",
       "token": "ai.credentialRef",
       "deprecation": "openwop.deprecation.configurable-dotted-keys"
+    },
+    {
+      "alias": "replay.sideEffectSuppression gate flag",
+      "file": "spec/v1/replay.md",
+      "token": "sideEffectSuppression",
+      "deprecation": "openwop.deprecation.security-opt-in-flags"
+    },
+    {
+      "alias": "supportedTransports root field",
+      "file": "spec/v1/capabilities.md",
+      "token": "supportedTransports",
+      "deprecation": "openwop.deprecation.supported-transports-field"
+    },
+    {
+      "alias": "capabilities.grpc block / core gRPC transport doc",
+      "file": "spec/v1/grpc-transport.md",
+      "token": "REST + SSE remains the REQUIRED wire surface",
+      "deprecation": "openwop.deprecation.grpc-transport-core"
     }
   ]
 }

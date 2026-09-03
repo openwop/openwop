@@ -18,6 +18,9 @@
  *   - C2.7 rewrites `replay.fork: true` to `replay.modes` (adds `"branch"` and
  *     `"replay"` only when `modes` is absent; refuses a `fork: true` that
  *     contradicts an explicit empty `modes`);
+ *   - C8.1 strips `a2a-0.3-legacy` / `mcp-2025-06-18-legacy` and their versions
+ *     (refuses when `preferredVersion` IS the legacy version); C8.2 drops
+ *     `supportedTransports`; C8.3 drops the `grpc` block (RFC 0175);
  *   - C2.8 moves the eleven RFC 0144 extension-class `host.*` families under
  *     `extensions.<org>.<name>`, where `<org>` comes from `implementation.vendor`
  *     (refuses when absent — a namespace cannot be guessed).
@@ -66,6 +69,21 @@ export function transform(doc) {
     if (r.fork === true && !Array.isArray(r.modes)) r.modes = ['branch', 'replay'];
     delete r.fork; out.replay = r;
   }
+  // C8.1 legacy embedded-protocol profiles (RFC 0175 §C.1)
+  for (const [fam, legacyId, legacyVersion] of [['a2a', 'a2a-0.3-legacy', '0.3'], ['mcp', 'mcp-2025-06-18-legacy', '2025-06-18']]) {
+    const f = out[fam];
+    if (!f || typeof f !== 'object') continue;
+    const g = { ...f };
+    if (Array.isArray(g.profiles) && g.profiles.includes(legacyId)) {
+      if (g.preferredVersion === legacyVersion) refuse(`\`${fam}.preferredVersion\` is the legacy version ${legacyVersion}; a host that prefers the legacy era cannot be rewritten as v2`);
+      g.profiles = g.profiles.filter((p) => p !== legacyId);
+      if (Array.isArray(g.protocolVersions)) g.protocolVersions = g.protocolVersions.filter((v) => v !== legacyVersion);
+    }
+    out[fam] = g;
+  }
+  // C8.2 / C8.3 (RFC 0175 §B.1, §A.1)
+  delete out.supportedTransports;
+  delete out.grpc;
   // C2.8
   const moving = Object.keys(out).filter((k) => k.startsWith('host.') && EXTENSION_FAMILIES.includes(k.slice(5)));
   if (moving.length > 0) {

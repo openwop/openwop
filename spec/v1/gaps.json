@@ -8265,8 +8265,8 @@
       "surface": "Irreversible-effect declaration vocabulary is absent.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0151.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0151-compensation-and-partial-failure-profile.gaps.md",
@@ -8411,6 +8411,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0152.8",
+      "rfc": "0152",
+      "local": "G8",
+      "section": "§E",
+      "surface": "Interop threat-model document (downgrade, card/runtime drift, cross-tenant lookup, artifact leakage) — threats stated in §E; no `SECURITY/threat-model-interop.md` exists (row copied from `spec/v1/a2a-integration.md` §Open spec gaps under RFC 0174 §C register-drift rule).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0175.4",
+      "sources": [
+        {
+          "file": "RFCS/registers/0152-a2a-1-0-versioned-composition.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0152.9",
+      "rfc": "0152",
+      "local": "G9",
+      "section": "§Future work",
+      "surface": "Native `auth-required` interrupt kind (drift #3; RFC 0100 UQ4) — never emitted forward.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0152-a2a-1-0-versioned-composition.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0153.1",
       "rfc": "0153",
       "local": "G1",
@@ -8492,6 +8526,57 @@
         {
           "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0153.7",
+      "rfc": "0153",
+      "local": "G7",
+      "section": "§B",
+      "surface": "Dedicated content-free negotiation audit event — `authorization.decided` recommended as carrier; shared with RFC 0152 G7 (row copied from `spec/v1/mcp-integration.md` §Open spec gaps).",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0175.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0153.8",
+      "rfc": "0153",
+      "local": "G8",
+      "section": "§E",
+      "surface": "Interop threat-model document — shared with RFC 0152 G8.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0175.4",
+      "sources": [
+        {
+          "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0153.9",
+      "rfc": "0153",
+      "local": "G9",
+      "section": "§C.1",
+      "surface": "Bound on MRTR rounds per invocation — §C.1 requires a bound and leaves the number to host policy; a normative ceiling may follow evidence.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
+          "token": "G9"
         }
       ]
     },
@@ -9686,6 +9771,91 @@
       ]
     },
     {
+      "id": "openwop.gap.0173.1",
+      "rfc": "0173",
+      "local": "G1",
+      "section": "§D.1",
+      "surface": "RFC 0035 (Active, Parked on a non-steward fencing host) is superseded by this child's `packs` obligation at the cut; until then it stays Parked and its §B probes are the eight `sandbox-*` scenarios this RFC binds to execution.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0173-v2-security-defaults.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0173.2",
+      "rfc": "0173",
+      "local": "G2",
+      "section": "§C.1",
+      "surface": "The effect-seam manifest is a host self-declaration; a seam omitted from it is invisible to the suite (`negative-existence`). The RFC 0140 R5 audit class (outbound clients vs the manifest) is the only check and is not a corpus gate.",
+      "witness": "negative-existence",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0173-v2-security-defaults.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0173.3",
+      "rfc": "0173",
+      "local": "G3",
+      "section": "Unresolved Q1",
+      "surface": "`approversList` enforcement on a host with no RBAC surface (`refKinds` group or role).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0173-v2-security-defaults.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0173.4",
+      "rfc": "0173",
+      "local": "G4",
+      "section": "§B",
+      "surface": "Compensation and Layer 2 are core obligations *of their surfaces* with declared witnesses; either may still end in `ext/` at the cut if the witness (read projection, fixture provider) does not land.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0173-v2-security-defaults.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0173.5",
+      "rfc": "0173",
+      "local": "G5",
+      "section": "§B",
+      "surface": "`interrupt.approverRouting` has two named advertisers in RFC 0104's header and no INTEROP-MATRIX row; `compensation.supported`'s advertiser status is recorded three ways (extensions.json, two matrix rows).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0173-v2-security-defaults.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0174.1",
       "rfc": "0174",
       "local": "G1",
@@ -9749,6 +9919,74 @@
       "sources": [
         {
           "file": "RFCS/registers/0174-v2-governance.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0175.1",
+      "rfc": "0175",
+      "local": "G1",
+      "section": "§D.4",
+      "surface": "The 90-day refresh SLA is the shortest window both upstreams' lifecycle policies exceed; it has not been measured against an actual upstream release cadence.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0175.2",
+      "rfc": "0175",
+      "local": "G2",
+      "section": "§D.1",
+      "surface": "Authenticated negotiation and the floor are witnessed only through the C.1 seams profile (the wire toward a peer is unobservable from the host's own API); the `negotiation.decided` event is the normative surface.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0175.3",
+      "rfc": "0175",
+      "local": "G3",
+      "section": "§A.1",
+      "surface": "Whether a Phase 3 contributor generates the proto from the declaration file and lands a suite client (the named door back into core).",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "grpc-client-contributor",
+      "sources": [
+        {
+          "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0175.4",
+      "rfc": "0175",
+      "local": "G4",
+      "section": "Unresolved Q1",
+      "surface": "Whether `negotiation.decided` carries the peer origin in clear or as a digest.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
           "token": "G4"
         }
       ]

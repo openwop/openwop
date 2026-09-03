@@ -105,3 +105,5 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0178 | v2 assurance registers and deprecation machinery (RFC 0167 child C.11) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0170 | v2 identity (RFC 0167 child C.3) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0171 | v2 wire envelope (RFC 0167 child C.4) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0173 | v2 security defaults (RFC 0167 child C.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0175 | v2 transports and embedded protocols (RFC 0167 child C.8) | in-scope-pending-assessment | — | — | `not-reviewed` |
