@@ -1,0 +1,8 @@
+{
+  "name": "vendor.example.tools",
+  "version": "1.4.0",
+  "engines": { "openwop": ">=2.0.0 <3.0.0" },
+  "peerDependencies": { "host.fs": ">=1.0.0", "aiProviders": ">=1.0.0", "openwop.agents.memoryBackends": ">=1.0.0" },
+  "peerDependenciesMeta": { "host.fs": { "optional": true } },
+  "signing": { "method": "manual", "publicKeyRef": "openwop-team-1" }
+}

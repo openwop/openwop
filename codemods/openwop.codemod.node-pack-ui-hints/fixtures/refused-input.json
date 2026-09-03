@@ -1,0 +1,1 @@
+{ "name": "core.openwop.github", "version": "1.0.0", "nodes": [ { "typeId": "core.github.issue", "configSchema": { "type": "object", "properties": { "credential": { "type": "string", "x-openwop-form": { "kind": "credential-picker", "credentialProvider": "github", "provider": "gitlab" } } } } } ] }

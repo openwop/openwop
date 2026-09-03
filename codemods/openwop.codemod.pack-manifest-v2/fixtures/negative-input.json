@@ -1,0 +1,8 @@
+{
+  "name": "core.openwop.http",
+  "version": "2.0.0",
+  "kind": "node",
+  "engines": { "openwop": ">=2.0.0 <3.0.0" },
+  "peerDependencies": { "aiProviders": ">=2.0.0" },
+  "signing": { "keyId": "openwop-team-1", "scheme": "ed25519-canonical-json" }
+}

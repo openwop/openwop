@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 54,
+    "bootstrapWaiversExercised": 56,
     "rfcs": [
       "0042",
       "0043",
@@ -70,11 +70,13 @@
       "0173",
       "0174",
       "0175",
+      "0176",
+      "0177",
       "0178"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 54
+      "not-reviewed": 56
     }
   },
   "audit": {
@@ -111,7 +113,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 423,
+    "rowsScanned": 432,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -847,6 +849,34 @@
         "title": "Registering eight invariants at once at the cut lands with vacuous tests",
         "score": "High",
         "status": "`open`"
+      },
+      {
+        "rfc": "0176",
+        "id": "R2",
+        "title": "A host installs the adapter at a wrapper and forks read raw v1 rows",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0176",
+        "id": "R4",
+        "title": "`schemas/v2/` ships into a v1 image through an unpinned sync",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0177",
+        "id": "R1",
+        "title": "The re-publish wave (282 versions) is not done before a host cuts and a v2 host has zero installable packs",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0177",
+        "id": "R2",
+        "title": "A mirror or vendor registry installs a `<2.0.0` pack on a v2 host",
+        "score": "High",
+        "status": "`open`"
       }
     ],
     "programOpenCriticalOrHigh": [
@@ -1232,6 +1262,34 @@
         "rfc": "0170",
         "id": "R5",
         "title": "Registering eight invariants at once at the cut lands with vacuous tests",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0176",
+        "id": "R2",
+        "title": "A host installs the adapter at a wrapper and forks read raw v1 rows",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0176",
+        "id": "R4",
+        "title": "`schemas/v2/` ships into a v1 image through an unpinned sync",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0177",
+        "id": "R1",
+        "title": "The re-publish wave (282 versions) is not done before a host cuts and a v2 host has zero installable packs",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0177",
+        "id": "R2",
+        "title": "A mirror or vendor registry installs a `<2.0.0` pack on a v2 host",
         "score": "High",
         "status": "`open`"
       }
