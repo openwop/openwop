@@ -48,6 +48,9 @@ package openwop.v1;
 
 // One service per protocol major version. v2 would introduce
 // `openwop.v2.Engine` alongside, similar to /v1/ ↔ /v2/ in REST.
+// (Forward pointer, 2026-09-03 — retracted for v2 by RFC 0172 §A.2 (no /v2/
+// path space) and RFC 0175 §A.1 (gRPC leaves core for spec/v2/ext/grpc-transport/;
+// the proto is a non-normative sketch there). This file stands for v1.x.)
 service Engine {
   // Discovery — 1:1 with REST `GET /.well-known/openwop`.
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);

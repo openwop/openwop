@@ -10,8 +10,8 @@ This document catalogs the REST surface an OpenWOP-compliant server MUST expose,
 
 ## Versioning
 
-- All paths under `/v1/` are versioned. Breaking changes go to `/v2/`.
-- A server MAY support multiple versions concurrently (`/v1/...` and `/v2/...` side by side) for migration windows.
+- All paths under `/v1/` are versioned. Breaking changes go to `/v2/`. *(Forward pointer, 2026-09-03 — RFC 0172 §A.2 retracts this for the v2 major: v2 operations are unversioned path keys on a bare origin and there is no `/v2/` path space; the major is negotiated by `OpenWOP-Version` + `protocolVersions[]`. This v1 sentence stands for v1.x.)*
+- A server MAY support multiple versions concurrently (`/v1/...` and `/v2/...` side by side) for migration windows. *(Forward pointer — through the overlap a dual-stack host serves `/v1/...` and the unversioned v2 keys side by side, RFC 0172 §A.2; `/v2/...` never exists.)*
 - Servers MUST return `400 Bad Request` for paths under unversioned roots.
 - **Canonical resolution (RFC 0149 §A).** The version segment lives in the path key, never in a server base: `api/openapi.yaml` `servers[].url` is `https://{host}`, every versioned operation resolves to exactly one `/v1` segment, and `/.well-known/openwop` resolves unversioned. `spec/v1/operation-path-manifest.json` is the **generated canonical operation-path manifest** — one row per OpenAPI operation with `{operationId, method, pathKey, resolvedPath, tag, class}`, where `resolvedPath` is the string an SDK MUST issue against a bare base URL and `class` is `canonical` | `host-extension` (`tags: [host]`) | `test-catalog` (`tags: [packs-test]`). SDK repositories consume it (`openwop-sdks` `sdk/parity-expectations.json` MUST agree with it method-for-method and path-for-path), AsyncAPI channel addresses MUST resolve under the AsyncAPI server `pathname` to a GET path key in the same document, and `openapi-asyncapi-sdk-parity.test.ts` holds all three in place (`scripts/generate-operation-path-manifest.mjs --check` in `openwop:check`).
 

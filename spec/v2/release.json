@@ -1,0 +1,6 @@
+{
+  "$comment": "RFC 0172 §D.1 — the one release identity the v2 artifacts derive from. `version` is the next corpus tag (v<version>); api/v2/*.yaml info.version, the suite's 2.x version and @openwop/spec-artifacts read it. Bumped by the release PR that cuts the tag, never by hand elsewhere.",
+  "version": "2.0.0-rc.0",
+  "corpusTag": null,
+  "updated": "2026-09-03"
+}

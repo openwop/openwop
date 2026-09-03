@@ -55,6 +55,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+      # v2 charter Phase 3: scripts/derive-v2-api.py (stage 10) reads the v1 API
+      # documents with PyYAML — the corpus has no Node YAML parser and the outputs
+      # are committed, so a runner without PyYAML must fail loudly, not skip.
+      - name: Install PyYAML (stage 10 derive-v2-api --check)
+        run: python3 -m pip install --quiet --user pyyaml
       - name: Spec corpus consistency check
         run: npm run openwop:check
 
