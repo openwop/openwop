@@ -9132,8 +9132,8 @@
       "surface": "The §B.3 legacy-link negative has no causable seam; the scenario leg records `blocked` (RFC 0148 §A) rather than a pass. A host seam that mints a legacy-issuer subject bound to a SCIM record would make it witnessable.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0165.4",
       "sources": [
         {
           "file": "RFCS/registers/0165-v2-preparation-wire-shapes.gaps.md",
@@ -9149,12 +9149,29 @@
       "surface": "Reference-host legs: openwop-app (tier-1) and MyndHyve (tier-2) each advertise `protocolVersions`, emit `owner.subject` with the legacy rule, dual-emit headers and `ETag`; SDK webhook helpers fixed in openwop-sdks.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0165-v2-preparation-wire-shapes.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0165.6",
+      "rfc": "0165",
+      "local": "G6",
+      "section": "§B.1",
+      "surface": "The `lane` enum has no value for a host-native credential (openwop-app's durable cookie session, its anonymous chat surface; MyndHyve's Firebase session is `oidc` but a local password login would not be). Both hosts apply §B.3's floor `api-key` at mint time with an issuer that names the real authority (`urn:openwop-app:session`, `urn:openwop-app:anon-surface`) — honest, but a floor is not a lane.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0165.6",
+      "sources": [
+        {
+          "file": "RFCS/registers/0165-v2-preparation-wire-shapes.gaps.md",
+          "token": "G6"
         }
       ]
     },
@@ -9166,8 +9183,8 @@
       "surface": "`GET …/events/poll?lastSequence=N` returns events with sequence > N and `run-event.schema.json` numbers the first event 0, so no cursor value expresses \"nothing observed yet\" — a caller wanting the first event MUST omit the cursor, and the spec does not say what omission means (openwop-app defaults to the start; MyndHyve to the start; neither is required to). Found when `owner-subject-echo` read `run.started` through `lastSequence=0` and would have failed a conforming host.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0165.7",
       "sources": [
         {
           "file": "RFCS/registers/0165-v2-preparation-wire-shapes.gaps.md",
