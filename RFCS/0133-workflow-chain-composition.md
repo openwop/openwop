@@ -247,7 +247,7 @@ New capability-gated scenarios under `conformance/` (chain-composition profile):
 
 ## Unresolved questions
 
-_Register sweep at `Accepted` (per `RFCS/README.md` §"Companion gap & risk registers"): every row below is closed or transferred to a tracked surface; the companion registers are [`0133-workflow-chain-composition.gaps.md`](./0133-workflow-chain-composition.gaps.md) + [`0133-workflow-chain-composition.risks.md`](./0133-workflow-chain-composition.risks.md)._
+_Register sweep at `Accepted` (per `RFCS/README.md` §"Companion gap & risk registers"): every row below is closed or transferred to a tracked surface; the companion registers are [`0133-workflow-chain-composition.gaps.md`](./registers/0133-workflow-chain-composition.gaps.md) + [`0133-workflow-chain-composition.risks.md`](./registers/0133-workflow-chain-composition.risks.md)._
 
 1. **External sub-chain versioning + trust — RESOLVED (pin).** An external `subChainRef`
    pulls another pack into the trust + version-pin surface. Co-registration **SHOULD pin

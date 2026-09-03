@@ -1,6 +1,6 @@
 # RFC 0132 — Risk Register
 
-Companion to [`0132-anonymous-actor-authorization.md`](./0132-anonymous-actor-authorization.md). Working document (not normative). Likelihood × Impact each H/M/L; Score = combined severity. Critical/High rows name a mitigation owner.
+Companion to [`0132-anonymous-actor-authorization.md`](../0132-anonymous-actor-authorization.md). Working document (not normative). Likelihood × Impact each H/M/L; Score = combined severity. Critical/High rows name a mitigation owner.
 
 | ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |

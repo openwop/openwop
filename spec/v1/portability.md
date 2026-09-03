@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent-Platform Portability
 
-> **Status: Draft · v1.x (RFC 0098).** Normative spec for the portable agent-platform export bundle and the tenant import contract. Capability-gated on `capabilities.portability`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. This doc graduates `Draft → Stable` when RFC 0098 reaches `Accepted`.
+> **Status: Stable · v1.x (RFC 0098, `Accepted`; graduated 2026-09-03 under RFC 0174 §D.1 — the banner's own predicate had fired).** Normative spec for the portable agent-platform export bundle and the tenant import contract. Capability-gated on `capabilities.portability`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. This doc graduates `Draft → Stable` when RFC 0098 reaches `Accepted`.
 
 ## Why this exists
 

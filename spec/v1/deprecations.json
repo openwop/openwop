@@ -522,6 +522,42 @@
           "token": "All paths under `/v1/` are versioned"
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.gap-local-alias",
+      "status": "proposed",
+      "surface": "the per-RFC `G<n>` local gap id as the register's ID column",
+      "kind": "prose-convention",
+      "deprecatedIn": null,
+      "authority": "RFC 0178 §B.2 (the `openwop.gap.<rfc>.<n>` id is canonical; `G<n>` is an alias until 2.1)",
+      "removeIn": "2.1",
+      "replacement": "`openwop.gap.<rfc>.<n>` in the ID column",
+      "codemod": null,
+      "note": "Proposed: the alias survives through 2.0 so v1 register citations keep resolving; removed at 2.1.",
+      "sources": [
+        {
+          "file": "spec/v1/gaps.schema.json",
+          "token": "\"local\""
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.manifest-deprecated-field",
+      "status": "proposed",
+      "surface": "registry version manifest `deprecated` boolean (an advisory version flag that collides with the JSON Schema `deprecated` annotation keyword)",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0178 §A.1 (renamed so the annotation keyword is unambiguous); the rename rides C.10's registry/v2 re-sign",
+      "removeIn": "2.0",
+      "replacement": "`versionDeprecated`",
+      "codemod": null,
+      "note": "Proposed: a wire field on signed, immutable manifests; the v2 manifest schema carries the new name and registry/v2 re-signs or overlays.",
+      "sources": [
+        {
+          "file": "schemas/registry-version-manifest.schema.json",
+          "token": "Advisory: this version is deprecated"
+        }
+      ]
     }
   ]
 }

@@ -1,0 +1,1 @@
+{ "name": "@acme/pack", "version": "1.2.0", "engines": { "openwop": ">=1.0.0 <2.0.0" }, "integrity": "sha256-abc", "deprecated": true, "versionDeprecated": false }

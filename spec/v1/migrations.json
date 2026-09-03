@@ -597,6 +597,170 @@
       "gapIds": [],
       "deprecationId": null,
       "note": "A generator in the corpus gate, not a consumer artifact rewrite — no codemod (RFC 0167 §D.4)."
+    },
+    {
+      "id": "openwop.migration.C7.1",
+      "child": "C7",
+      "kind": "behavior",
+      "v1": {
+        "surface": "prose \"Open spec gaps\" tables in 43 spec/v1 documents"
+      },
+      "v2": {
+        "surface": "rows in spec/v1/gaps.json"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "A generator adapter (RFC 0174 §E.3), not a consumer artifact."
+    },
+    {
+      "id": "openwop.migration.C7.2",
+      "child": "C7",
+      "kind": "behavior",
+      "v1": {
+        "surface": "Active → Accepted by README sentence"
+      },
+      "v2": {
+        "surface": "scripts/check-accepted-predicate.mjs"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C7.3",
+      "child": "C7",
+      "kind": "behavior",
+      "v1": {
+        "surface": "registers in two directories; carried:<self> unbounded"
+      },
+      "v2": {
+        "surface": "one directory; self-carry ratcheted and refused where the prose says CLOSED"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C7.4",
+      "child": "C7",
+      "kind": "behavior",
+      "v1": {
+        "surface": "hand-written spec document Status: banners"
+      },
+      "v2": {
+        "surface": "checked (v1.x) then derived (v2) from the owning RFC"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C11.1",
+      "child": "C11",
+      "kind": "behavior",
+      "v1": {
+        "surface": "deprecations.json as an index; Deprecated: annotation informational"
+      },
+      "v2": {
+        "surface": "register generates deprecated:true + x-openwop-remove-in; removal dates enforced at merge"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "A generator, not a consumer artifact rewrite."
+    },
+    {
+      "id": "openwop.migration.C11.2",
+      "child": "C11",
+      "kind": "rename",
+      "v1": {
+        "surface": "pack-manifest wire field `deprecated` (advisory version flag)",
+        "path": "registry-version-manifest.schema.json#/properties/deprecated"
+      },
+      "v2": {
+        "surface": "`versionDeprecated`"
+      },
+      "codemod": "openwop.codemod.manifest-version-deprecated",
+      "persistedData": "never-upgraded",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.manifest-deprecated-field",
+      "note": "Signed manifests are immutable; the codemod produces the v2 shape and registry/v2 re-signs or overlays (C.10)."
+    },
+    {
+      "id": "openwop.migration.C11.3",
+      "child": "C11",
+      "kind": "behavior",
+      "v1": {
+        "surface": "gaps.json rows witness: unclassified, requirementId: null"
+      },
+      "v2": {
+        "surface": "witness class required; requirementId required on open v2 rows"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C11.4",
+      "child": "C11",
+      "kind": "behavior",
+      "v1": {
+        "surface": "per-RFC G<n> as the register id"
+      },
+      "v2": {
+        "surface": "openwop.gap.<rfc>.<n> as the id; G<n> alias until 2.1"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.gap-local-alias"
+    },
+    {
+      "id": "openwop.migration.C11.5",
+      "child": "C11",
+      "kind": "behavior",
+      "v1": {
+        "surface": "falsifiability tables as prose"
+      },
+      "v2": {
+        "surface": "parsed, checked, emitted into gaps.json"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C11.6",
+      "child": "C11",
+      "kind": "behavior",
+      "v1": {
+        "surface": "schemas/README.md maturity column hand-written"
+      },
+      "v2": {
+        "surface": "checked against RFC status (v1.x); generated (v2)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
     }
   ]
 }

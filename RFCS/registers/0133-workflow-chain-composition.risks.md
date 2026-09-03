@@ -1,6 +1,6 @@
 # RFC 0133 — Risk Register
 
-Companion to [`0133-workflow-chain-composition.md`](./0133-workflow-chain-composition.md). Working document (not normative). Likelihood × Impact each H/M/L; Score = combined severity. Critical/High rows name a mitigation owner.
+Companion to [`0133-workflow-chain-composition.md`](../0133-workflow-chain-composition.md). Working document (not normative). Likelihood × Impact each H/M/L; Score = combined severity. Critical/High rows name a mitigation owner.
 
 | ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |

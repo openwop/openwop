@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Runtime: Standing Goals
 
-> **Status: Draft · v1.x (RFC 0097).** Normative spec for the standing-goal primitive — a durable objective with judge-based completion and bounded continuation. Capability-gated on `capabilities.agents.goals`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. This doc graduates `Draft → Stable` when RFC 0097 reaches `Accepted`.
+> **Status: Stable · v1.x (RFC 0097, `Accepted`; graduated 2026-09-03 under RFC 0174 §D.1 — the banner's own predicate had fired).** Normative spec for the standing-goal primitive — a durable objective with judge-based completion and bounded continuation. Capability-gated on `capabilities.agents.goals`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. This doc graduates `Draft → Stable` when RFC 0097 reaches `Accepted`.
 
 ## Why this exists
 

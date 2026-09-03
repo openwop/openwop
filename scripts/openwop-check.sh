@@ -153,6 +153,13 @@ node "$SPEC_ROOT/scripts/generate-cross-repo-evidence.mjs" --check
 node "$SPEC_ROOT/scripts/check-migrations.mjs"
 node "$SPEC_ROOT/scripts/check-alias-coverage.mjs"
 node "$SPEC_ROOT/scripts/check-codemods.mjs"
+# RFC 0174 §A/§C/§D + RFC 0178 §B/§C/§E — status coherence (supersession, register location,
+# self-carry ratchet, banners, stale deferrals, schemas/README), waiver authority,
+# falsifiability tables as data, contradicting gaps.
+node "$SPEC_ROOT/scripts/check-rfc-status-coherence.mjs"
+node "$SPEC_ROOT/scripts/check-waiver-authority.mjs"
+node "$SPEC_ROOT/scripts/check-falsifiability.mjs"
+node "$SPEC_ROOT/scripts/check-gap-contradictions.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).

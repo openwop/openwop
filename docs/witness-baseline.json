@@ -3,5 +3,6 @@
   "measured": "2026-09-02",
   "unwitnessable": 20,
   "unreviewedInvariants": 166,
-  "unreviewedExtensions": 67
+  "unreviewedExtensions": 67,
+  "selfCarried": 343
 }
