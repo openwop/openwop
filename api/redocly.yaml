@@ -17,7 +17,7 @@ rules:
   #
   #   - the typo-in-required protection the rule provides is also covered by
   #     `scripts/check-required-properties-defined.mjs` (which walks parent
-  #     scope correctly), wired into `openwop-check.sh` step [7/9];
+  #     scope correctly), wired into `openwop-check.sh` step [4/9] (was cited as [7/9] until RFC 0178 §E.3 corrected it);
   #   - our only `then/required` sites are the two in `capabilities.schema.json`,
   #     both of which are well-formed.
   no-required-schema-properties-undefined: off

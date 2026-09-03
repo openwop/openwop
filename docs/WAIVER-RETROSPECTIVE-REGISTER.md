@@ -101,3 +101,5 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0167 | OpenWOP v2 — the program RFC | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0169 | v2 discovery and capabilities (RFC 0167 child C.2) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0172 | v2 versioning and release (RFC 0167 child C.5) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0174 | v2 governance (RFC 0167 child C.7) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0178 | v2 assurance registers and deprecation machinery (RFC 0167 child C.11) | in-scope-pending-assessment | — | — | `not-reviewed` |

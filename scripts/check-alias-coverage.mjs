@@ -35,7 +35,7 @@ for (const d of detectors) {
   if (!byId.has(d.deprecation)) { failures.push(`${d.alias}: present in ${d.file} but ${d.deprecation} is not in spec/v1/deprecations.json — an alias with no scheduled removal`); continue; }
   covered.add(d.deprecation);
 }
-const VISIBLE = new Set(['discovery-shape', 'discovery-field', 'profile-id', 'header', 'schema-field', 'path']);
+const VISIBLE = new Set(['discovery-shape', 'discovery-field', 'profile-id', 'header', 'schema-field', 'path', 'prose-convention', 'artifact', 'error-code']); // RFC 0178 §A.3: every kind
 for (const e of register) {
   if (VISIBLE.has(e.kind) && !covered.has(e.id)) failures.push(`${e.id} (${e.kind}) has no detector in spec/v1/alias-detectors.json — its removal can never be verified`);
 }

@@ -192,7 +192,7 @@ The RFC 0071 architect pass resolved the design questions this doc was drafted a
 | Gap                                                                                                                                                                             | Tracking                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Chat card packs (`kind: "card"`), which produce artifacts of these types via prompts.                                                                                           | RFC 0071 Phase 2 / `chat-card-packs.md` (pending) |
-| Bounded-compilation limits for distributed artifact schemas (schema-bomb / ReDoS defense) — the protocol-tier invariant + conformance test that gates this surface to `Active`. | RFC 0071 risk R1 / `SECURITY/invariants.yaml`     |
+| **Closed (2026-09-03, RFC 0178 §B.3 — first catch of `check-gap-contradictions.mjs`).** The protocol-tier invariant `artifact-schema-compile-bounded` (`SECURITY/invariants.yaml`) and `conformance/src/scenarios/artifact-schema-compile-bounded.test.ts` exist; the behavioral end-to-end leg stays capability-gated on `host.artifactTypes.supported`. Original: Bounded-compilation limits for distributed artifact schemas (schema-bomb / ReDoS defense) — the protocol-tier invariant + conformance test that gates this surface to `Active`. | RFC 0071 risk R1 / `SECURITY/invariants.yaml`     |
 
 ## References
 

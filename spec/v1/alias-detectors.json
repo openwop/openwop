@@ -176,6 +176,18 @@
       "file": "spec/v1/rest-endpoints.md",
       "token": "All paths under `/v1/` are versioned",
       "deprecation": "openwop.deprecation.v1-path-prefix"
+    },
+    {
+      "alias": "per-RFC G<n> local gap id",
+      "file": "spec/v1/gaps.schema.json",
+      "token": "\"local\"",
+      "deprecation": "openwop.deprecation.gap-local-alias"
+    },
+    {
+      "alias": "registry manifest `deprecated` version flag",
+      "file": "schemas/registry-version-manifest.schema.json",
+      "token": "Advisory: this version is deprecated",
+      "deprecation": "openwop.deprecation.manifest-deprecated-field"
     }
   ]
 }

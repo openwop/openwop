@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 48,
+    "bootstrapWaiversExercised": 50,
     "rfcs": [
       "0042",
       "0043",
@@ -64,11 +64,13 @@
       "0166",
       "0167",
       "0169",
-      "0172"
+      "0172",
+      "0174",
+      "0178"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 48
+      "not-reviewed": 50
     }
   },
   "audit": {
@@ -105,7 +107,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 397,
+    "rowsScanned": 405,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -267,6 +269,195 @@
         "title": "**Cross-tenant content disclosure / enumeration oracle.** A request for another tenant's `slug`/`pageId` reveals existence (different status code/timing) or returns content.",
         "score": "High",
         "status": "Open — verify the 404-equivalence in conformance + host."
+      },
+      {
+        "rfc": "0106",
+        "id": "R1",
+        "title": "**Scope creep into media transport.** Reviewers/implementers push to standardize WebRTC/gRPC media on the wire, dragging openwop out of its control-plane remit and coupling every host to a media stack.",
+        "score": "High",
+        "status": "Open → mitigated by §E; watch in comment window"
+      },
+      {
+        "rfc": "0108",
+        "id": "R2",
+        "title": "A host advertises `selfHosted: [\"ollama\"]` with **no** endpoint actually configured (dishonest claim) — a client routes to a dead provider and the advertisement becomes meaningless (the exact failure the surface exists to prevent).",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0118",
+        "id": "R1",
+        "title": "**Replay non-determinism.** Parallel children complete in wall-clock order; if `mergeOrder` is not recorded and re-applied, a forked/replayed run reproduces a *different* parent-variable state when two children map to the same output key — a silent correctness break that the wire's replay guarantee (RFC 0041) forbids.",
+        "score": "High",
+        "status": "Open — scenario must be green for `Accepted`"
+      },
+      {
+        "rfc": "0118",
+        "id": "R2",
+        "title": "**Worker-pool exhaustion / self-DoS.** An unbounded fan-out (e.g. 500 `nextWorkerIds`) under `parallel` floods a host's worker pool, starving other runs.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0121",
+        "id": "R1",
+        "title": "A host (or an implementer following this RFC) advertises/implements `subscription` mode using the direct-API-under-borrowed-token shape (§C shape 1) for a provider whose consumer ToS actually forbids it, exposing operators and end users to account suspension or legal exposure.",
+        "score": "Critical",
+        "status": "Open — gating condition, not yet resolved"
+      },
+      {
+        "rfc": "0121",
+        "id": "R2",
+        "title": "A host advertises `subscription` support and permits binding the resulting credential at tenant/workspace scope, silently sharing one individual's personal, single-seat subscription across a multi-user tenant — both a ToS violation and an unaudited access-sharing surface.",
+        "score": "High",
+        "status": "Open — mitigation is drafted in the RFC, unverified until a host implements it"
+      },
+      {
+        "rfc": "0124",
+        "id": "R3",
+        "title": "**Portability regression via the escape hatch.** A host implements deferred mode but leaves an embedded non-prompt `{{params.*}}` token unresolved (skips the \"resolve at expansion time\" fallback), silently reintroducing the exact non-portable state this RFC exists to prevent.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0126",
+        "id": "R1",
+        "title": "**Silent-drop on a naive host** — a host adds `nextWorkerInputs` support incompletely (or ignores the field) and dispatches N children with identical inputs, mailing/processing one item N times and skipping the rest. This is the exact motivating bug, now potentially reintroduced by a partial implementation.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0127",
+        "id": "R1",
+        "title": "**Dishonest `stream`/`change` advert** — a host advertises the new sources without behaviorally ingesting them (the exact mislabel-as-`webhook` dishonesty this RFC exists to remove, inverted).",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0128",
+        "id": "R1",
+        "title": "**Compliance-theater reading** — operators/regulators read `purposePropagation: supported` as \"the receiver *enforces* purpose limits\" when the wire only promises label *carriage* (internal use is SHOULD/declared-intent, deliberately un-gated §4). Over-claiming here damages the corpus's falsifiability-honesty posture.",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0132",
+        "id": "R1",
+        "title": "**Over-grant: a host lets the anonymous actor inherit the authenticated default-on tool baseline** (ADR 0315-class), so a logged-out visitor drives an agent with full authenticated tool authority.",
+        "score": "High",
+        "status": "Open — mitigated by design; behavioral test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R2",
+        "title": "**Credential confused-deputy: a tenant BYOK credential attached to a visitor-triggered egress** → exfiltration to an attacker destination.",
+        "score": "High",
+        "status": "Open — mitigated by composition; test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R3",
+        "title": "**Secret / cross-tenant reach: an anon read tool surfaces a secret or another tenant's data.**",
+        "score": "High",
+        "status": "Open — mitigated by design; test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R4",
+        "title": "**Ungated write abuse: a public surface performs an unbounded, un-approved durable write/egress** (spam, resource exhaustion, data poisoning) at visitor scale.",
+        "score": "High",
+        "status": "Open — mitigated by design + schema; test lands at `Active`"
+      },
+      {
+        "rfc": "0132",
+        "id": "R5",
+        "title": "**De-anonymization / cross-linkability: a host keys the anon actor on IP / fingerprint or reuses the id across sessions**, turning an \"anonymous\" actor into a tracked identity (privacy + regulatory exposure).",
+        "score": "High",
+        "status": "Open — mitigated by design; opacity test lands at `Active`"
+      },
+      {
+        "rfc": "0133",
+        "id": "R2",
+        "title": "**Cross-tenant child aliasing: a co-registered child is registered under, or reachable from, the wrong tenant**, or two tenants instantiating the same pack converge on one shared child workflow → cross-tenant data reach.",
+        "score": "High",
+        "status": "Open — mitigated by design; host-pending witness"
+      },
+      {
+        "rfc": "0137",
+        "id": "R3",
+        "title": "**A registry adds the kind to manifest validation but not to its indexer**, so packs publish green and undiscoverable. Already measured on the reference registry — not hypothetical.",
+        "score": "High",
+        "status": "Open (tracked, PR drafted)"
+      },
+      {
+        "rfc": "0138",
+        "id": "R1",
+        "title": "**\"Opaque\" is read as \"stash it for later.\"** A host retains an unrecognized extension and later renders it, interpolates it into a prompt, or interprets it as markup. Because the value is pack-authored and untrusted, this converts a *loud publication failure* (rejected at registry `PUT`) into a *silent injection surface* (at render) — strictly worse than having no hatch at all. This is the risk the whole RFC turns on.",
+        "score": "High",
+        "status": "Open (mitigated, not closed)"
+      },
+      {
+        "rfc": "0138",
+        "id": "R4",
+        "title": "**Extensions become a de-facto capability channel.** A host infers support from an extension's presence, or makes handling of a canonical field depend on one. Packs then stop being portable in practice while remaining portable on paper — the exact failure the RFC exists to prevent, arriving through the door it opened.",
+        "score": "High",
+        "status": "Open (mitigated, not closed)"
+      },
+      {
+        "rfc": "0139",
+        "id": "R1",
+        "title": "**The differential is read as proving total opacity.** A green leg 3 gets cited as \"MUST-ignore is verified\", when it covers install-time sinks only. This RFC would then have replaced an unverified rule with a *falsely* verified one — worse, because nobody looks again.",
+        "score": "Critical",
+        "status": "Open (mitigated by disclosure, not closable)"
+      },
+      {
+        "rfc": "0139",
+        "id": "R3",
+        "title": "**A host games the differential by returning a constant projection.** A seam that returns `{}` regardless of input satisfies leg 3 trivially.",
+        "score": "High",
+        "status": "Open (bounded, not closed)"
+      },
+      {
+        "rfc": "0139",
+        "id": "R4",
+        "title": "**Only one kind and one host witness a corpus-wide rule.** The artifact-type seam is the only one with a real implementation, so a rule stated for all pack kinds is evidenced by one.",
+        "score": "High",
+        "status": "Open, deliberate"
+      },
+      {
+        "rfc": "0140",
+        "id": "R1",
+        "title": "**`none` is read as permission to re-fire.** The enum's default reads like an opt-out, and an implementer who skims the capability table will conclude that not advertising means the guarantee does not apply — reintroducing exactly the MUST-relaxation this RFC was corrected to avoid. The RFC's own first draft made that mistake.",
+        "score": "Critical",
+        "status": "Open (mitigated by placement, not closable)"
+      },
+      {
+        "rfc": "0140",
+        "id": "R2",
+        "title": "**The fail-closed witness is read as proving the happy path.** The scenario's positive evidence is `replay_source_missing` on an unrecorded node. That is unforgeable — but it does not observe whether a node *with* a recorded outcome re-fired and recorded identically.",
+        "score": "High",
+        "status": "Open (disclosed)"
+      },
+      {
+        "rfc": "0140",
+        "id": "R5",
+        "title": "**Guarding the convenience wrapper instead of the chokepoint.** A host that guards its highest-level egress helper can leave lower-level paths (raw fetch, MCP tool invocation) open while believing it is covered.",
+        "score": "High",
+        "status": "Open (guidance, not enforceable by spec)"
+      },
+      {
+        "rfc": "0143",
+        "id": "R1",
+        "title": "**The completeness leg is read as proving \"no unfenced ingress exists\"** when it proves \"no ingress *in §4* is unfenced.\" A host adds a new content path to the prompt, never updates §4, and a green suite reads as full coverage.",
+        "score": "High",
+        "status": "Open (disclosed, not closable server-free)"
+      },
+      {
+        "rfc": "0143",
+        "id": "R2",
+        "title": "**The isolation carve-out is abused** — a host declares a reader \"structurally isolated\" that can in fact reach model context or egress, and drops the trust tag legitimately-looking.",
+        "score": "High",
+        "status": "Open (bounded by definition, host-trust)"
       },
       {
         "rfc": "0147",
@@ -638,195 +829,6 @@
         "title": "The declaration file becomes a fifth registry beside the four it replaces",
         "score": "High",
         "status": "`open`"
-      },
-      {
-        "rfc": "0106",
-        "id": "R1",
-        "title": "**Scope creep into media transport.** Reviewers/implementers push to standardize WebRTC/gRPC media on the wire, dragging openwop out of its control-plane remit and coupling every host to a media stack.",
-        "score": "High",
-        "status": "Open → mitigated by §E; watch in comment window"
-      },
-      {
-        "rfc": "0108",
-        "id": "R2",
-        "title": "A host advertises `selfHosted: [\"ollama\"]` with **no** endpoint actually configured (dishonest claim) — a client routes to a dead provider and the advertisement becomes meaningless (the exact failure the surface exists to prevent).",
-        "score": "High",
-        "status": "Open"
-      },
-      {
-        "rfc": "0118",
-        "id": "R1",
-        "title": "**Replay non-determinism.** Parallel children complete in wall-clock order; if `mergeOrder` is not recorded and re-applied, a forked/replayed run reproduces a *different* parent-variable state when two children map to the same output key — a silent correctness break that the wire's replay guarantee (RFC 0041) forbids.",
-        "score": "High",
-        "status": "Open — scenario must be green for `Accepted`"
-      },
-      {
-        "rfc": "0118",
-        "id": "R2",
-        "title": "**Worker-pool exhaustion / self-DoS.** An unbounded fan-out (e.g. 500 `nextWorkerIds`) under `parallel` floods a host's worker pool, starving other runs.",
-        "score": "High",
-        "status": "Open"
-      },
-      {
-        "rfc": "0121",
-        "id": "R1",
-        "title": "A host (or an implementer following this RFC) advertises/implements `subscription` mode using the direct-API-under-borrowed-token shape (§C shape 1) for a provider whose consumer ToS actually forbids it, exposing operators and end users to account suspension or legal exposure.",
-        "score": "Critical",
-        "status": "Open — gating condition, not yet resolved"
-      },
-      {
-        "rfc": "0121",
-        "id": "R2",
-        "title": "A host advertises `subscription` support and permits binding the resulting credential at tenant/workspace scope, silently sharing one individual's personal, single-seat subscription across a multi-user tenant — both a ToS violation and an unaudited access-sharing surface.",
-        "score": "High",
-        "status": "Open — mitigation is drafted in the RFC, unverified until a host implements it"
-      },
-      {
-        "rfc": "0124",
-        "id": "R3",
-        "title": "**Portability regression via the escape hatch.** A host implements deferred mode but leaves an embedded non-prompt `{{params.*}}` token unresolved (skips the \"resolve at expansion time\" fallback), silently reintroducing the exact non-portable state this RFC exists to prevent.",
-        "score": "High",
-        "status": "Open"
-      },
-      {
-        "rfc": "0126",
-        "id": "R1",
-        "title": "**Silent-drop on a naive host** — a host adds `nextWorkerInputs` support incompletely (or ignores the field) and dispatches N children with identical inputs, mailing/processing one item N times and skipping the rest. This is the exact motivating bug, now potentially reintroduced by a partial implementation.",
-        "score": "High",
-        "status": "Open"
-      },
-      {
-        "rfc": "0127",
-        "id": "R1",
-        "title": "**Dishonest `stream`/`change` advert** — a host advertises the new sources without behaviorally ingesting them (the exact mislabel-as-`webhook` dishonesty this RFC exists to remove, inverted).",
-        "score": "High",
-        "status": "Open"
-      },
-      {
-        "rfc": "0128",
-        "id": "R1",
-        "title": "**Compliance-theater reading** — operators/regulators read `purposePropagation: supported` as \"the receiver *enforces* purpose limits\" when the wire only promises label *carriage* (internal use is SHOULD/declared-intent, deliberately un-gated §4). Over-claiming here damages the corpus's falsifiability-honesty posture.",
-        "score": "High",
-        "status": "Open"
-      },
-      {
-        "rfc": "0132",
-        "id": "R1",
-        "title": "**Over-grant: a host lets the anonymous actor inherit the authenticated default-on tool baseline** (ADR 0315-class), so a logged-out visitor drives an agent with full authenticated tool authority.",
-        "score": "High",
-        "status": "Open — mitigated by design; behavioral test lands at `Active`"
-      },
-      {
-        "rfc": "0132",
-        "id": "R2",
-        "title": "**Credential confused-deputy: a tenant BYOK credential attached to a visitor-triggered egress** → exfiltration to an attacker destination.",
-        "score": "High",
-        "status": "Open — mitigated by composition; test lands at `Active`"
-      },
-      {
-        "rfc": "0132",
-        "id": "R3",
-        "title": "**Secret / cross-tenant reach: an anon read tool surfaces a secret or another tenant's data.**",
-        "score": "High",
-        "status": "Open — mitigated by design; test lands at `Active`"
-      },
-      {
-        "rfc": "0132",
-        "id": "R4",
-        "title": "**Ungated write abuse: a public surface performs an unbounded, un-approved durable write/egress** (spam, resource exhaustion, data poisoning) at visitor scale.",
-        "score": "High",
-        "status": "Open — mitigated by design + schema; test lands at `Active`"
-      },
-      {
-        "rfc": "0132",
-        "id": "R5",
-        "title": "**De-anonymization / cross-linkability: a host keys the anon actor on IP / fingerprint or reuses the id across sessions**, turning an \"anonymous\" actor into a tracked identity (privacy + regulatory exposure).",
-        "score": "High",
-        "status": "Open — mitigated by design; opacity test lands at `Active`"
-      },
-      {
-        "rfc": "0133",
-        "id": "R2",
-        "title": "**Cross-tenant child aliasing: a co-registered child is registered under, or reachable from, the wrong tenant**, or two tenants instantiating the same pack converge on one shared child workflow → cross-tenant data reach.",
-        "score": "High",
-        "status": "Open — mitigated by design; host-pending witness"
-      },
-      {
-        "rfc": "0137",
-        "id": "R3",
-        "title": "**A registry adds the kind to manifest validation but not to its indexer**, so packs publish green and undiscoverable. Already measured on the reference registry — not hypothetical.",
-        "score": "High",
-        "status": "Open (tracked, PR drafted)"
-      },
-      {
-        "rfc": "0138",
-        "id": "R1",
-        "title": "**\"Opaque\" is read as \"stash it for later.\"** A host retains an unrecognized extension and later renders it, interpolates it into a prompt, or interprets it as markup. Because the value is pack-authored and untrusted, this converts a *loud publication failure* (rejected at registry `PUT`) into a *silent injection surface* (at render) — strictly worse than having no hatch at all. This is the risk the whole RFC turns on.",
-        "score": "High",
-        "status": "Open (mitigated, not closed)"
-      },
-      {
-        "rfc": "0138",
-        "id": "R4",
-        "title": "**Extensions become a de-facto capability channel.** A host infers support from an extension's presence, or makes handling of a canonical field depend on one. Packs then stop being portable in practice while remaining portable on paper — the exact failure the RFC exists to prevent, arriving through the door it opened.",
-        "score": "High",
-        "status": "Open (mitigated, not closed)"
-      },
-      {
-        "rfc": "0139",
-        "id": "R1",
-        "title": "**The differential is read as proving total opacity.** A green leg 3 gets cited as \"MUST-ignore is verified\", when it covers install-time sinks only. This RFC would then have replaced an unverified rule with a *falsely* verified one — worse, because nobody looks again.",
-        "score": "Critical",
-        "status": "Open (mitigated by disclosure, not closable)"
-      },
-      {
-        "rfc": "0139",
-        "id": "R3",
-        "title": "**A host games the differential by returning a constant projection.** A seam that returns `{}` regardless of input satisfies leg 3 trivially.",
-        "score": "High",
-        "status": "Open (bounded, not closed)"
-      },
-      {
-        "rfc": "0139",
-        "id": "R4",
-        "title": "**Only one kind and one host witness a corpus-wide rule.** The artifact-type seam is the only one with a real implementation, so a rule stated for all pack kinds is evidenced by one.",
-        "score": "High",
-        "status": "Open, deliberate"
-      },
-      {
-        "rfc": "0140",
-        "id": "R1",
-        "title": "**`none` is read as permission to re-fire.** The enum's default reads like an opt-out, and an implementer who skims the capability table will conclude that not advertising means the guarantee does not apply — reintroducing exactly the MUST-relaxation this RFC was corrected to avoid. The RFC's own first draft made that mistake.",
-        "score": "Critical",
-        "status": "Open (mitigated by placement, not closable)"
-      },
-      {
-        "rfc": "0140",
-        "id": "R2",
-        "title": "**The fail-closed witness is read as proving the happy path.** The scenario's positive evidence is `replay_source_missing` on an unrecorded node. That is unforgeable — but it does not observe whether a node *with* a recorded outcome re-fired and recorded identically.",
-        "score": "High",
-        "status": "Open (disclosed)"
-      },
-      {
-        "rfc": "0140",
-        "id": "R5",
-        "title": "**Guarding the convenience wrapper instead of the chokepoint.** A host that guards its highest-level egress helper can leave lower-level paths (raw fetch, MCP tool invocation) open while believing it is covered.",
-        "score": "High",
-        "status": "Open (guidance, not enforceable by spec)"
-      },
-      {
-        "rfc": "0143",
-        "id": "R1",
-        "title": "**The completeness leg is read as proving \"no unfenced ingress exists\"** when it proves \"no ingress *in §4* is unfenced.\" A host adds a new content path to the prompt, never updates §4, and a green suite reads as full coverage.",
-        "score": "High",
-        "status": "Open (disclosed, not closable server-free)"
-      },
-      {
-        "rfc": "0143",
-        "id": "R2",
-        "title": "**The isolation carve-out is abused** — a host declares a reader \"structurally isolated\" that can in fact reach model context or egress, and drops the trust tag legitimately-looking.",
-        "score": "High",
-        "status": "Open (bounded by definition, host-trust)"
       }
     ],
     "programOpenCriticalOrHigh": [

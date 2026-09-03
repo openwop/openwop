@@ -853,8 +853,8 @@
       "surface": "**CLOSED 2026-09-02.** The §A \"synthetic-IdP reference suite\" (1 positive + 6 negatives) lived inside `conformance/src/scenarios/auth-saml-profile.test.ts`, so every host bundle recorded an `executed-pass` for a block that never touched the host (conformance-certification.md gap G8; named by RFC 0163 gap G5). Moved to `conformance/src/lib/saml-idp.test.ts`, which runs in the published suite but records no scenario ledger row. The acceptance evidence this RFC cites (`conformance/src/lib/saml-idp.ts` + the MyndHyve live-ACS drive) is unchanged; `coverage.md` now grades the scenario `host-pending` on its opt-in host-ACS leg.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0050.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0050-saml-scim-enterprise-identity-profiles.gaps.md",
@@ -3917,7 +3917,7 @@
       "target": "openwop.gap.0106.6",
       "sources": [
         {
-          "file": "RFCS/0106-realtime-voice-session-profile.gaps.md",
+          "file": "RFCS/registers/0106-realtime-voice-session-profile.gaps.md",
           "token": "G6"
         }
       ]
@@ -3930,11 +3930,11 @@
       "surface": "**CLOSED (2026-09-02 audit).** This row still read \"the sole open gap — the `Active → Accepted` gate\" while the RFC's `Status` is `Accepted`; a register row must not outlive the status it gates (`RFCS/README.md` §Process: a flip to `Accepted` requires a register sweep). The reference host committed at graduation is recorded in the RFC's `Updated` field. Original text follows. Reference host that will advertise `realtimeVoice` + pass gated scenarios non-vacuously is not yet *committed*. RFC 0105 had openwop-app ADR 0086 as the named consumer; 0106 has a candidate (openwop-app voice-chat over RFC 0005), now in active coordination via the `0106` crosstalk bus.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0106.7",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0106-realtime-voice-session-profile.gaps.md",
+          "file": "RFCS/registers/0106-realtime-voice-session-profile.gaps.md",
           "token": "G7"
         }
       ]
@@ -3951,7 +3951,7 @@
       "target": "openwop.gap.0107.1",
       "sources": [
         {
-          "file": "RFCS/0107-publishable-declarative-pack-kinds.gaps.md",
+          "file": "RFCS/registers/0107-publishable-declarative-pack-kinds.gaps.md",
           "token": "G1"
         }
       ]
@@ -3968,7 +3968,7 @@
       "target": "openwop.gap.0107.2",
       "sources": [
         {
-          "file": "RFCS/0107-publishable-declarative-pack-kinds.gaps.md",
+          "file": "RFCS/registers/0107-publishable-declarative-pack-kinds.gaps.md",
           "token": "G2"
         }
       ]
@@ -3985,7 +3985,7 @@
       "target": "openwop.gap.0107.3",
       "sources": [
         {
-          "file": "RFCS/0107-publishable-declarative-pack-kinds.gaps.md",
+          "file": "RFCS/registers/0107-publishable-declarative-pack-kinds.gaps.md",
           "token": "G3"
         }
       ]
@@ -4002,7 +4002,7 @@
       "target": "openwop.gap.0107.4",
       "sources": [
         {
-          "file": "RFCS/0107-publishable-declarative-pack-kinds.gaps.md",
+          "file": "RFCS/registers/0107-publishable-declarative-pack-kinds.gaps.md",
           "token": "G4"
         }
       ]
@@ -4019,7 +4019,7 @@
       "target": "openwop.gap.0107.5",
       "sources": [
         {
-          "file": "RFCS/0107-publishable-declarative-pack-kinds.gaps.md",
+          "file": "RFCS/registers/0107-publishable-declarative-pack-kinds.gaps.md",
           "token": "G5"
         }
       ]
@@ -4036,7 +4036,7 @@
       "target": "openwop.gap.0107.6",
       "sources": [
         {
-          "file": "RFCS/0107-publishable-declarative-pack-kinds.gaps.md",
+          "file": "RFCS/registers/0107-publishable-declarative-pack-kinds.gaps.md",
           "token": "G6"
         }
       ]
@@ -4053,7 +4053,7 @@
       "target": "openwop.gap.0108.1",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G1"
         }
       ]
@@ -4070,7 +4070,7 @@
       "target": "openwop.gap.0108.2",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G2"
         }
       ]
@@ -4087,7 +4087,7 @@
       "target": "openwop.gap.0108.3",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G3"
         }
       ]
@@ -4104,7 +4104,7 @@
       "target": "openwop.gap.0108.4",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G4"
         }
       ]
@@ -4121,7 +4121,7 @@
       "target": "openwop.gap.0108.5",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G5"
         }
       ]
@@ -4138,7 +4138,7 @@
       "target": "openwop.gap.0108.6",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G6"
         }
       ]
@@ -4155,7 +4155,7 @@
       "target": "openwop.gap.0108.7",
       "sources": [
         {
-          "file": "RFCS/0108-self-hosted-openai-compatible-provider-class.gaps.md",
+          "file": "RFCS/registers/0108-self-hosted-openai-compatible-provider-class.gaps.md",
           "token": "G7"
         }
       ]
@@ -4172,7 +4172,7 @@
       "target": "openwop.gap.0109.1",
       "sources": [
         {
-          "file": "RFCS/0109-conversation-turn-model-provenance.gaps.md",
+          "file": "RFCS/registers/0109-conversation-turn-model-provenance.gaps.md",
           "token": "G1"
         }
       ]
@@ -4189,7 +4189,7 @@
       "target": "openwop.gap.0109.2",
       "sources": [
         {
-          "file": "RFCS/0109-conversation-turn-model-provenance.gaps.md",
+          "file": "RFCS/registers/0109-conversation-turn-model-provenance.gaps.md",
           "token": "G2"
         }
       ]
@@ -4206,7 +4206,7 @@
       "target": "openwop.gap.0109.3",
       "sources": [
         {
-          "file": "RFCS/0109-conversation-turn-model-provenance.gaps.md",
+          "file": "RFCS/registers/0109-conversation-turn-model-provenance.gaps.md",
           "token": "G3"
         }
       ]
@@ -4223,7 +4223,7 @@
       "target": "openwop.gap.0109.4",
       "sources": [
         {
-          "file": "RFCS/0109-conversation-turn-model-provenance.gaps.md",
+          "file": "RFCS/registers/0109-conversation-turn-model-provenance.gaps.md",
           "token": "G4"
         }
       ]
@@ -4240,7 +4240,7 @@
       "target": "openwop.gap.0109.5",
       "sources": [
         {
-          "file": "RFCS/0109-conversation-turn-model-provenance.gaps.md",
+          "file": "RFCS/registers/0109-conversation-turn-model-provenance.gaps.md",
           "token": "G5"
         }
       ]
@@ -4257,7 +4257,7 @@
       "target": "openwop.gap.0110.1",
       "sources": [
         {
-          "file": "RFCS/0110-channel-presence.gaps.md",
+          "file": "RFCS/registers/0110-channel-presence.gaps.md",
           "token": "G1"
         }
       ]
@@ -4274,7 +4274,7 @@
       "target": "openwop.gap.0110.2",
       "sources": [
         {
-          "file": "RFCS/0110-channel-presence.gaps.md",
+          "file": "RFCS/registers/0110-channel-presence.gaps.md",
           "token": "G2"
         }
       ]
@@ -4291,7 +4291,7 @@
       "target": "openwop.gap.0110.3",
       "sources": [
         {
-          "file": "RFCS/0110-channel-presence.gaps.md",
+          "file": "RFCS/registers/0110-channel-presence.gaps.md",
           "token": "G3"
         }
       ]
@@ -4308,7 +4308,7 @@
       "target": "openwop.gap.0110.4",
       "sources": [
         {
-          "file": "RFCS/0110-channel-presence.gaps.md",
+          "file": "RFCS/registers/0110-channel-presence.gaps.md",
           "token": "G4"
         }
       ]
@@ -4325,7 +4325,7 @@
       "target": "openwop.gap.0110.5",
       "sources": [
         {
-          "file": "RFCS/0110-channel-presence.gaps.md",
+          "file": "RFCS/registers/0110-channel-presence.gaps.md",
           "token": "G5"
         }
       ]
@@ -4342,7 +4342,7 @@
       "target": "openwop.gap.0110.6",
       "sources": [
         {
-          "file": "RFCS/0110-channel-presence.gaps.md",
+          "file": "RFCS/registers/0110-channel-presence.gaps.md",
           "token": "G6"
         }
       ]
@@ -4359,7 +4359,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0111-context-economy.gaps.md",
+          "file": "RFCS/registers/0111-context-economy.gaps.md",
           "token": "G1"
         }
       ]
@@ -4376,7 +4376,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0111-context-economy.gaps.md",
+          "file": "RFCS/registers/0111-context-economy.gaps.md",
           "token": "G2"
         }
       ]
@@ -4393,7 +4393,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0111-context-economy.gaps.md",
+          "file": "RFCS/registers/0111-context-economy.gaps.md",
           "token": "G3"
         }
       ]
@@ -4410,7 +4410,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0111-context-economy.gaps.md",
+          "file": "RFCS/registers/0111-context-economy.gaps.md",
           "token": "G4"
         }
       ]
@@ -4427,7 +4427,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0111-context-economy.gaps.md",
+          "file": "RFCS/registers/0111-context-economy.gaps.md",
           "token": "G5"
         }
       ]
@@ -4444,7 +4444,7 @@
       "target": "openwop.gap.0112.1",
       "sources": [
         {
-          "file": "RFCS/0112-compact-tool-projection.gaps.md",
+          "file": "RFCS/registers/0112-compact-tool-projection.gaps.md",
           "token": "G1"
         }
       ]
@@ -4461,7 +4461,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0112-compact-tool-projection.gaps.md",
+          "file": "RFCS/registers/0112-compact-tool-projection.gaps.md",
           "token": "G2"
         }
       ]
@@ -4478,7 +4478,7 @@
       "target": "openwop.gap.0112.3",
       "sources": [
         {
-          "file": "RFCS/0112-compact-tool-projection.gaps.md",
+          "file": "RFCS/registers/0112-compact-tool-projection.gaps.md",
           "token": "G3"
         }
       ]
@@ -4495,7 +4495,7 @@
       "target": "openwop.gap.0112.4",
       "sources": [
         {
-          "file": "RFCS/0112-compact-tool-projection.gaps.md",
+          "file": "RFCS/registers/0112-compact-tool-projection.gaps.md",
           "token": "G4"
         }
       ]
@@ -4512,7 +4512,7 @@
       "target": "openwop.gap.0113.1",
       "sources": [
         {
-          "file": "RFCS/0113-memory-injection-budget.gaps.md",
+          "file": "RFCS/registers/0113-memory-injection-budget.gaps.md",
           "token": "G1"
         }
       ]
@@ -4529,7 +4529,7 @@
       "target": "openwop.gap.0113.2",
       "sources": [
         {
-          "file": "RFCS/0113-memory-injection-budget.gaps.md",
+          "file": "RFCS/registers/0113-memory-injection-budget.gaps.md",
           "token": "G2"
         }
       ]
@@ -4546,7 +4546,7 @@
       "target": "openwop.gap.0113.3",
       "sources": [
         {
-          "file": "RFCS/0113-memory-injection-budget.gaps.md",
+          "file": "RFCS/registers/0113-memory-injection-budget.gaps.md",
           "token": "G3"
         }
       ]
@@ -4563,7 +4563,7 @@
       "target": "openwop.gap.0113.4",
       "sources": [
         {
-          "file": "RFCS/0113-memory-injection-budget.gaps.md",
+          "file": "RFCS/registers/0113-memory-injection-budget.gaps.md",
           "token": "G4"
         }
       ]
@@ -4580,7 +4580,7 @@
       "target": "openwop.gap.0114.1",
       "sources": [
         {
-          "file": "RFCS/0114-a2ui-surface-deltas.gaps.md",
+          "file": "RFCS/registers/0114-a2ui-surface-deltas.gaps.md",
           "token": "G1"
         }
       ]
@@ -4597,7 +4597,7 @@
       "target": "openwop.gap.0114.2",
       "sources": [
         {
-          "file": "RFCS/0114-a2ui-surface-deltas.gaps.md",
+          "file": "RFCS/registers/0114-a2ui-surface-deltas.gaps.md",
           "token": "G2"
         }
       ]
@@ -4614,7 +4614,7 @@
       "target": "openwop.gap.0114.3",
       "sources": [
         {
-          "file": "RFCS/0114-a2ui-surface-deltas.gaps.md",
+          "file": "RFCS/registers/0114-a2ui-surface-deltas.gaps.md",
           "token": "G3"
         }
       ]
@@ -4631,7 +4631,7 @@
       "target": "openwop.gap.0114.4",
       "sources": [
         {
-          "file": "RFCS/0114-a2ui-surface-deltas.gaps.md",
+          "file": "RFCS/registers/0114-a2ui-surface-deltas.gaps.md",
           "token": "G4"
         }
       ]
@@ -4648,7 +4648,7 @@
       "target": "openwop.gap.0115.1",
       "sources": [
         {
-          "file": "RFCS/0115-run-transport-economy.gaps.md",
+          "file": "RFCS/registers/0115-run-transport-economy.gaps.md",
           "token": "G1"
         }
       ]
@@ -4665,7 +4665,7 @@
       "target": "openwop.gap.0115.2",
       "sources": [
         {
-          "file": "RFCS/0115-run-transport-economy.gaps.md",
+          "file": "RFCS/registers/0115-run-transport-economy.gaps.md",
           "token": "G2"
         }
       ]
@@ -4682,7 +4682,7 @@
       "target": "openwop.gap.0115.3",
       "sources": [
         {
-          "file": "RFCS/0115-run-transport-economy.gaps.md",
+          "file": "RFCS/registers/0115-run-transport-economy.gaps.md",
           "token": "G3"
         }
       ]
@@ -4699,7 +4699,7 @@
       "target": "openwop.gap.0115.4",
       "sources": [
         {
-          "file": "RFCS/0115-run-transport-economy.gaps.md",
+          "file": "RFCS/registers/0115-run-transport-economy.gaps.md",
           "token": "G4"
         }
       ]
@@ -4716,7 +4716,7 @@
       "target": "openwop.gap.0116.1",
       "sources": [
         {
-          "file": "RFCS/0116-prompt-prefix-cache.gaps.md",
+          "file": "RFCS/registers/0116-prompt-prefix-cache.gaps.md",
           "token": "G1"
         }
       ]
@@ -4733,7 +4733,7 @@
       "target": "openwop.gap.0116.2",
       "sources": [
         {
-          "file": "RFCS/0116-prompt-prefix-cache.gaps.md",
+          "file": "RFCS/registers/0116-prompt-prefix-cache.gaps.md",
           "token": "G2"
         }
       ]
@@ -4750,7 +4750,7 @@
       "target": "openwop.gap.0116.3",
       "sources": [
         {
-          "file": "RFCS/0116-prompt-prefix-cache.gaps.md",
+          "file": "RFCS/registers/0116-prompt-prefix-cache.gaps.md",
           "token": "G3"
         }
       ]
@@ -4767,7 +4767,7 @@
       "target": "openwop.gap.0116.4",
       "sources": [
         {
-          "file": "RFCS/0116-prompt-prefix-cache.gaps.md",
+          "file": "RFCS/registers/0116-prompt-prefix-cache.gaps.md",
           "token": "G4"
         }
       ]
@@ -4784,7 +4784,7 @@
       "target": "openwop.gap.0116.5",
       "sources": [
         {
-          "file": "RFCS/0116-prompt-prefix-cache.gaps.md",
+          "file": "RFCS/registers/0116-prompt-prefix-cache.gaps.md",
           "token": "G5"
         }
       ]
@@ -4801,7 +4801,7 @@
       "target": "openwop.gap.0116.6",
       "sources": [
         {
-          "file": "RFCS/0116-prompt-prefix-cache.gaps.md",
+          "file": "RFCS/registers/0116-prompt-prefix-cache.gaps.md",
           "token": "G6"
         }
       ]
@@ -4835,7 +4835,7 @@
       "target": "openwop.gap.0118.1",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G1"
         }
       ]
@@ -4852,7 +4852,7 @@
       "target": "openwop.gap.0118.2",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G2"
         }
       ]
@@ -4869,7 +4869,7 @@
       "target": "openwop.gap.0118.3",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G3"
         }
       ]
@@ -4886,7 +4886,7 @@
       "target": "openwop.gap.0118.4",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G4"
         }
       ]
@@ -4903,7 +4903,7 @@
       "target": "openwop.gap.0118.5",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G5"
         }
       ]
@@ -4920,7 +4920,7 @@
       "target": "openwop.gap.0118.6",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G6"
         }
       ]
@@ -4937,7 +4937,7 @@
       "target": "openwop.gap.0118.7",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G7"
         }
       ]
@@ -4954,7 +4954,7 @@
       "target": "openwop.gap.0118.8",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G8"
         }
       ]
@@ -4971,7 +4971,7 @@
       "target": "openwop.gap.0118.9",
       "sources": [
         {
-          "file": "RFCS/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
+          "file": "RFCS/registers/0118-parallel-subworkflow-fan-out-and-join.gaps.md",
           "token": "G9"
         }
       ]
@@ -5005,7 +5005,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G1"
         }
       ]
@@ -5022,7 +5022,7 @@
       "target": "openwop.gap.0120.2",
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G2"
         }
       ]
@@ -5039,7 +5039,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G3"
         }
       ]
@@ -5056,7 +5056,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G4"
         }
       ]
@@ -5073,7 +5073,7 @@
       "target": "openwop.gap.0120.5",
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G5"
         }
       ]
@@ -5090,7 +5090,7 @@
       "target": "openwop.gap.0120.6",
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G6"
         }
       ]
@@ -5107,7 +5107,7 @@
       "target": "openwop.gap.0120.7",
       "sources": [
         {
-          "file": "RFCS/0120-connection-pack-api-hosts.gaps.md",
+          "file": "RFCS/registers/0120-connection-pack-api-hosts.gaps.md",
           "token": "G7"
         }
       ]
@@ -5124,7 +5124,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0121-subscription-provider-auth.gaps.md",
+          "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
           "token": "G1"
         }
       ]
@@ -5141,7 +5141,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0121-subscription-provider-auth.gaps.md",
+          "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
           "token": "G2"
         }
       ]
@@ -5158,7 +5158,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0121-subscription-provider-auth.gaps.md",
+          "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
           "token": "G3"
         }
       ]
@@ -5175,7 +5175,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0121-subscription-provider-auth.gaps.md",
+          "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
           "token": "G4"
         }
       ]
@@ -5192,7 +5192,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0121-subscription-provider-auth.gaps.md",
+          "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
           "token": "G5"
         }
       ]
@@ -5209,7 +5209,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0121-subscription-provider-auth.gaps.md",
+          "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
           "token": "G6"
         }
       ]
@@ -5260,7 +5260,7 @@
       "target": "openwop.gap.0124.1",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G1"
         }
       ]
@@ -5277,7 +5277,7 @@
       "target": "openwop.gap.0124.2",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G2"
         }
       ]
@@ -5294,7 +5294,7 @@
       "target": "openwop.gap.0124.3",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G3"
         }
       ]
@@ -5311,7 +5311,7 @@
       "target": "openwop.gap.0124.4",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G4"
         }
       ]
@@ -5328,7 +5328,7 @@
       "target": "openwop.gap.0124.5",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G5"
         }
       ]
@@ -5345,7 +5345,7 @@
       "target": "openwop.gap.0124.5",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G5"
         }
       ]
@@ -5362,7 +5362,7 @@
       "target": "openwop.gap.0124.6",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G6"
         }
       ]
@@ -5379,7 +5379,7 @@
       "target": "openwop.gap.0124.6",
       "sources": [
         {
-          "file": "RFCS/0124-portable-per-run-parameter-deferral.gaps.md",
+          "file": "RFCS/registers/0124-portable-per-run-parameter-deferral.gaps.md",
           "token": "G6"
         }
       ]
@@ -5396,7 +5396,7 @@
       "target": "openwop.gap.0126.1",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G1"
         }
       ]
@@ -5413,7 +5413,7 @@
       "target": "openwop.gap.0126.1",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G1"
         }
       ]
@@ -5430,7 +5430,7 @@
       "target": "openwop.gap.0126.2",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G2"
         }
       ]
@@ -5447,7 +5447,7 @@
       "target": "openwop.gap.0126.2",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G2"
         }
       ]
@@ -5464,7 +5464,7 @@
       "target": "openwop.gap.0126.3",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G3"
         }
       ]
@@ -5481,7 +5481,7 @@
       "target": "openwop.gap.0126.3",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G3"
         }
       ]
@@ -5498,7 +5498,7 @@
       "target": "openwop.gap.0126.4",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G4"
         }
       ]
@@ -5515,7 +5515,7 @@
       "target": "openwop.gap.0126.4",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G4"
         }
       ]
@@ -5532,7 +5532,7 @@
       "target": "openwop.gap.0126.5",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G5"
         }
       ]
@@ -5549,7 +5549,7 @@
       "target": "openwop.gap.0126.5",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G5"
         }
       ]
@@ -5566,7 +5566,7 @@
       "target": "openwop.gap.0126.6",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G6"
         }
       ]
@@ -5583,7 +5583,7 @@
       "target": "openwop.gap.0126.6",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G6"
         }
       ]
@@ -5600,7 +5600,7 @@
       "target": "openwop.gap.0126.7",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G7"
         }
       ]
@@ -5617,7 +5617,7 @@
       "target": "openwop.gap.0126.7",
       "sources": [
         {
-          "file": "RFCS/0126-data-parallel-dispatch-per-item-input.gaps.md",
+          "file": "RFCS/registers/0126-data-parallel-dispatch-per-item-input.gaps.md",
           "token": "G7"
         }
       ]
@@ -5634,7 +5634,7 @@
       "target": "openwop.gap.0127.1",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G1"
         }
       ]
@@ -5651,7 +5651,7 @@
       "target": "openwop.gap.0127.1",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G1"
         }
       ]
@@ -5668,7 +5668,7 @@
       "target": "openwop.gap.0127.2",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G2"
         }
       ]
@@ -5685,7 +5685,7 @@
       "target": "openwop.gap.0127.2",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G2"
         }
       ]
@@ -5702,7 +5702,7 @@
       "target": "openwop.gap.0127.3",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G3"
         }
       ]
@@ -5719,7 +5719,7 @@
       "target": "openwop.gap.0127.3",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G3"
         }
       ]
@@ -5732,11 +5732,11 @@
       "surface": "Second witness — MyndHyve cannot witness honestly without operating a real broker/CDC consumer (RFC 0099 honesty rule). Architect ruling 2026-07-06: single-witness path approved (0124-G6 analog); second witness = first host operating a real streaming/CDC consumer. **RESOLVED 2026-07-06 (see sweep row): openwop-app became that host** — advert flipped ON (rev `00413-jcm`) + steward-fired the real consumer end-to-end (accept via `trigger.delivery`→run; bad-sig + stale rejects; dedup effectively-once).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0127.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G4"
         }
       ]
@@ -5746,14 +5746,14 @@
       "rfc": "0127",
       "local": "G4",
       "section": "**CLOSED 2026-07-06 (steward-fired real consumer, end-to-end)**",
-      "surface": "`carried:openwop.gap.0127.4` openwop-app IS now the \"first host operating a real streaming/CDC consumer\": the `stream`/`change` advert FLIPPED ON on rev `openwop-app-backend-00413-jcm` (`triggerBridge.sources[]` + `ingestion.externalSources[]` include `stream`/`change` — steward-curl-verified on `/.well-known/openwop`), and the steward **independently provisioned a real `core.openwop.streams` connection and fired the consumer boundary end-to-end** (connection `conn:d0a76f77-…`, source `stream`, BYOK HMAC): (1) **accept** — a valid signed push (`sha256=HMAC(secret,\"${ts}.${rawBody}\")`) → `202 {accepted:true,deduped:false}` → a REAL run (`694cf46f-…`, workflow `openwop-app.agents.lead-routing`, status `completed`) created via **`trigger.delivery.attempted`** (dlv-causation on `run.started`), i.e. `ingestExternalEvent` → run, **NOT** `resolveAndResume`; (2) **reject-signature** — bad signature on the REAL connection → `401`, no run (real HMAC verification, distinct from the `404` an unknown connection returns); (3) **reject-stale** — a signature VALID for a stale (`now-1h`) timestamp → `401`, no run (real ±5min replay window, isolated from the signature check by construction); (4) **dedup** — replaying the same `(topic,partition,offset)` → `202 {deduped:true}`, no second run (effectively-once, correlating the run to the steward's push identity); (5) **control** — exactly ONE run created across all legs (the two 401s + the dedup replay produced none). The steward-fired real-consumer boundary supersedes the earlier conformance-seam-only witness; MyndHyve's ruled-out status (no broker/CDC consumer) is unchanged but no longer gates — a second witness is now optional, not required.",
+      "surface": "`closed` openwop-app IS now the \"first host operating a real streaming/CDC consumer\": the `stream`/`change` advert FLIPPED ON on rev `openwop-app-backend-00413-jcm` (`triggerBridge.sources[]` + `ingestion.externalSources[]` include `stream`/`change` — steward-curl-verified on `/.well-known/openwop`), and the steward **independently provisioned a real `core.openwop.streams` connection and fired the consumer boundary end-to-end** (connection `conn:d0a76f77-…`, source `stream`, BYOK HMAC): (1) **accept** — a valid signed push (`sha256=HMAC(secret,\"${ts}.${rawBody}\")`) → `202 {accepted:true,deduped:false}` → a REAL run (`694cf46f-…`, workflow `openwop-app.agents.lead-routing`, status `completed`) created via **`trigger.delivery.attempted`** (dlv-causation on `run.started`), i.e. `ingestExternalEvent` → run, **NOT** `resolveAndResume`; (2) **reject-signature** — bad signature on the REAL connection → `401`, no run (real HMAC verification, distinct from the `404` an unknown connection returns); (3) **reject-stale** — a signature VALID for a stale (`now-1h`) timestamp → `401`, no run (real ±5min replay window, isolated from the signature check by construction); (4) **dedup** — replaying the same `(topic,partition,offset)` → `202 {deduped:true}`, no second run (effectively-once, correlating the run to the steward's push identity); (5) **control** — exactly ONE run created across all legs (the two 401s + the dedup replay produced none). The steward-fired real-consumer boundary supersedes the earlier conformance-seam-only witness; MyndHyve's ruled-out status (no broker/CDC consumer) is unchanged but no longer gates — a second witness is now optional, not required.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0127.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G4"
         }
       ]
@@ -5770,7 +5770,7 @@
       "target": "openwop.gap.0127.5",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G5"
         }
       ]
@@ -5787,7 +5787,7 @@
       "target": "openwop.gap.0127.5",
       "sources": [
         {
-          "file": "RFCS/0127-streaming-and-cdc-trigger-sources.gaps.md",
+          "file": "RFCS/registers/0127-streaming-and-cdc-trigger-sources.gaps.md",
           "token": "G5"
         }
       ]
@@ -5804,7 +5804,7 @@
       "target": "openwop.gap.0128.1",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G1"
         }
       ]
@@ -5821,7 +5821,7 @@
       "target": "openwop.gap.0128.1",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G1"
         }
       ]
@@ -5838,7 +5838,7 @@
       "target": "openwop.gap.0128.2",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G2"
         }
       ]
@@ -5855,7 +5855,7 @@
       "target": "openwop.gap.0128.2",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G2"
         }
       ]
@@ -5872,7 +5872,7 @@
       "target": "openwop.gap.0128.3",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G3"
         }
       ]
@@ -5889,7 +5889,7 @@
       "target": "openwop.gap.0128.3",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G3"
         }
       ]
@@ -5906,7 +5906,7 @@
       "target": "openwop.gap.0128.4",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G4"
         }
       ]
@@ -5916,14 +5916,14 @@
       "rfc": "0128",
       "local": "G4",
       "section": "**CLOSED** ✅",
-      "surface": "`carried:openwop.gap.0128.4` Tier-2 (MyndHyve) witness ATTEMPTED 2026-07-06 → **honest opt-out**: architect review of MyndHyve's real carriers (repo @ `789480099`) found no genuine onward OpenWOP-envelope egress for the label — A2A is ingress-only (no outbound client; task types carry no `metadata` field), trigger bridge delivers content-free in-run only, no purpose-propagation code. Serving the seam would require fabricating hop C (vacuous-witness trap), so MyndHyve declined. The tier-2/second witness = the first host with a real onward label-carrying OpenWOP-envelope egress (broker/CDC-consumer analog of RFC 0127 G4); MyndHyve becomes natural once it grows an A2A-forward or connector-destination-sink boundary.<br>**Update 2026-07-06 (reviewed defer — distinct from MyndHyve's opt-out):** tier-1 openwop-app subsequently BUILT a real onward `openwop-host` egress boundary (ADR 0280, merged + deployed on rev `openwop-app-backend-00413-jcm`) with a 10-test in-suite witness asserting `buildOnwardEnvelopes` re-emits ⊆received / never-widen / `[]`-drop — so the sender egress **exists on this host** (unlike MyndHyve, which lacked the boundary entirely). The architect ruling (2026-07-06) is that closing the sharpened G4 requires a **steward-observed live send** (Option-1: a real signed egress arriving at a steward-controlled capture), NOT the in-suite algebra witness. The maintainer (David) made a **reviewed decision to defer that live demonstration this cycle** — the demonstration vehicle (a \"sync CDP records to a peer OpenWOP host\" reference workflow: a `prepare-onward` node → `core.dispatch`/`http.fetch` fan-out firing the four legs at the steward capture bin) is deprioritized, not refused. G4 therefore stays **CARRIED-FORWARD (named), not CLOSED-for-real** — no regression (0128 remains Accepted single-witness). **Named close path:** build that reference workflow and fire the 4 legs (⊆received / never-widen / `[]`-drop + unlabelled positive control) at the steward bin; the tier-1 sender boundary is already deployed, so this is a demonstration-vehicle build, not new protocol surface.<br>**✅ CLOSED 2026-07-06 (steward-witnessed live send).** openwop-app built the vehicle — a `feature.destination-sync.nodes.prepare-onward` node + reference workflow `openwop-app.cdp.sync-to-openwop-host` (prepare-onward → the sanctioned `core.openwop.http.fetch` node → the steward capture bin; the feature never sends, the http node does — SR-1 clean; PR openwop-app#1391, ADR 0289) and fired it **local-on-`origin/main`** per the steward architect ruling: prod-origin adds ZERO falsifiability here — 0128's only testable surface is the deterministic `buildOnwardEnvelopes` algebra (byte-identical prod vs local), and the witness is the bin bytes, not a trust assertion about which binary ran; contrast 0127/0129 where the tested surface was a deployed-host decision (admission control / signed-consumer state) intrinsically tied to the running host. **The steward independently read the capture bin** (`webhook.site/4c0267e7`, run nonce `mr9ovt8u`; 4 labelled legs + an earlier connectivity probe = 5 captures, `L4-DROP` correctly ABSENT): (1) **re-emit exact** `L1` → `[\"billing\",\"support\"]` == received (MUST re-emit); (2) **narrow** `L2` → `[\"billing\"]` ⊆ received `[\"billing\",\"support\"]` (MAY narrow); (3) **never-widen** `L3` → `[\"billing\"]` only, **`marketing` DROPPED** (sync narrowTo `[\"billing\",\"marketing\"]` ∩ received `[\"billing\"]`) — the falsifiable core, a widen would have surfaced `marketing` on the wire and did not; (4) **`[]`-drop + positive control** — `L4-DROP` (`permittedPurposes:[]`) produced NO egress while the unlabelled twin `L4-TWIN` arrived with no `permittedPurposes` key (fail-closed proven, not a timeout artifact). Tier-1 openwop-app is now **the first host with a real onward label-carrying OpenWOP-envelope egress** (the broker/CDC-consumer analog named in this row) — the sharpened G4 is CLOSED-for-real. 0128 was already Accepted single-witness; this upgrades the evidence to a steward-observed real onward egress, no status/count change.",
+      "surface": "`closed` Tier-2 (MyndHyve) witness ATTEMPTED 2026-07-06 → **honest opt-out**: architect review of MyndHyve's real carriers (repo @ `789480099`) found no genuine onward OpenWOP-envelope egress for the label — A2A is ingress-only (no outbound client; task types carry no `metadata` field), trigger bridge delivers content-free in-run only, no purpose-propagation code. Serving the seam would require fabricating hop C (vacuous-witness trap), so MyndHyve declined. The tier-2/second witness = the first host with a real onward label-carrying OpenWOP-envelope egress (broker/CDC-consumer analog of RFC 0127 G4); MyndHyve becomes natural once it grows an A2A-forward or connector-destination-sink boundary.<br>**Update 2026-07-06 (reviewed defer — distinct from MyndHyve's opt-out):** tier-1 openwop-app subsequently BUILT a real onward `openwop-host` egress boundary (ADR 0280, merged + deployed on rev `openwop-app-backend-00413-jcm`) with a 10-test in-suite witness asserting `buildOnwardEnvelopes` re-emits ⊆received / never-widen / `[]`-drop — so the sender egress **exists on this host** (unlike MyndHyve, which lacked the boundary entirely). The architect ruling (2026-07-06) is that closing the sharpened G4 requires a **steward-observed live send** (Option-1: a real signed egress arriving at a steward-controlled capture), NOT the in-suite algebra witness. The maintainer (David) made a **reviewed decision to defer that live demonstration this cycle** — the demonstration vehicle (a \"sync CDP records to a peer OpenWOP host\" reference workflow: a `prepare-onward` node → `core.dispatch`/`http.fetch` fan-out firing the four legs at the steward capture bin) is deprioritized, not refused. G4 therefore stays **CARRIED-FORWARD (named), not CLOSED-for-real** — no regression (0128 remains Accepted single-witness). **Named close path:** build that reference workflow and fire the 4 legs (⊆received / never-widen / `[]`-drop + unlabelled positive control) at the steward bin; the tier-1 sender boundary is already deployed, so this is a demonstration-vehicle build, not new protocol surface.<br>**✅ CLOSED 2026-07-06 (steward-witnessed live send).** openwop-app built the vehicle — a `feature.destination-sync.nodes.prepare-onward` node + reference workflow `openwop-app.cdp.sync-to-openwop-host` (prepare-onward → the sanctioned `core.openwop.http.fetch` node → the steward capture bin; the feature never sends, the http node does — SR-1 clean; PR openwop-app#1391, ADR 0289) and fired it **local-on-`origin/main`** per the steward architect ruling: prod-origin adds ZERO falsifiability here — 0128's only testable surface is the deterministic `buildOnwardEnvelopes` algebra (byte-identical prod vs local), and the witness is the bin bytes, not a trust assertion about which binary ran; contrast 0127/0129 where the tested surface was a deployed-host decision (admission control / signed-consumer state) intrinsically tied to the running host. **The steward independently read the capture bin** (`webhook.site/4c0267e7`, run nonce `mr9ovt8u`; 4 labelled legs + an earlier connectivity probe = 5 captures, `L4-DROP` correctly ABSENT): (1) **re-emit exact** `L1` → `[\"billing\",\"support\"]` == received (MUST re-emit); (2) **narrow** `L2` → `[\"billing\"]` ⊆ received `[\"billing\",\"support\"]` (MAY narrow); (3) **never-widen** `L3` → `[\"billing\"]` only, **`marketing` DROPPED** (sync narrowTo `[\"billing\",\"marketing\"]` ∩ received `[\"billing\"]`) — the falsifiable core, a widen would have surfaced `marketing` on the wire and did not; (4) **`[]`-drop + positive control** — `L4-DROP` (`permittedPurposes:[]`) produced NO egress while the unlabelled twin `L4-TWIN` arrived with no `permittedPurposes` key (fail-closed proven, not a timeout artifact). Tier-1 openwop-app is now **the first host with a real onward label-carrying OpenWOP-envelope egress** (the broker/CDC-consumer analog named in this row) — the sharpened G4 is CLOSED-for-real. 0128 was already Accepted single-witness; this upgrades the evidence to a steward-observed real onward egress, no status/count change.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0128.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G4"
         }
       ]
@@ -5940,7 +5940,7 @@
       "target": "openwop.gap.0128.5",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G5"
         }
       ]
@@ -5957,7 +5957,7 @@
       "target": "openwop.gap.0128.5",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G5"
         }
       ]
@@ -5974,7 +5974,7 @@
       "target": "openwop.gap.0128.6",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G6"
         }
       ]
@@ -5991,7 +5991,7 @@
       "target": "openwop.gap.0128.6",
       "sources": [
         {
-          "file": "RFCS/0128-purpose-propagation-permitted-use-labels.gaps.md",
+          "file": "RFCS/registers/0128-purpose-propagation-permitted-use-labels.gaps.md",
           "token": "G6"
         }
       ]
@@ -6008,7 +6008,7 @@
       "target": "openwop.gap.0129.1",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G1"
         }
       ]
@@ -6025,7 +6025,7 @@
       "target": "openwop.gap.0129.1",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G1"
         }
       ]
@@ -6042,7 +6042,7 @@
       "target": "openwop.gap.0129.2",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G2"
         }
       ]
@@ -6059,7 +6059,7 @@
       "target": "openwop.gap.0129.2",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G2"
         }
       ]
@@ -6076,7 +6076,7 @@
       "target": "openwop.gap.0129.3",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G3"
         }
       ]
@@ -6093,7 +6093,7 @@
       "target": "openwop.gap.0129.3",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G3"
         }
       ]
@@ -6110,7 +6110,7 @@
       "target": "openwop.gap.0129.4",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G4"
         }
       ]
@@ -6127,7 +6127,7 @@
       "target": "openwop.gap.0129.4",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G4"
         }
       ]
@@ -6144,7 +6144,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G5"
         }
       ]
@@ -6161,7 +6161,7 @@
       "target": "openwop.gap.0129.5",
       "sources": [
         {
-          "file": "RFCS/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
+          "file": "RFCS/registers/0129-data-residency-region-advertisement-and-honor-or-reject.gaps.md",
           "token": "G5"
         }
       ]
@@ -6212,7 +6212,7 @@
       "target": "openwop.gap.0132.1",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G1"
         }
       ]
@@ -6229,7 +6229,7 @@
       "target": "openwop.gap.0132.2",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G2"
         }
       ]
@@ -6246,7 +6246,7 @@
       "target": "openwop.gap.0132.3",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G3"
         }
       ]
@@ -6263,7 +6263,7 @@
       "target": "openwop.gap.0132.4",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G4"
         }
       ]
@@ -6276,11 +6276,11 @@
       "surface": "A2A-forwarded anonymous interactions (Unresolved-Q3): does a peer-forwarded, never-authenticated end-user map to `principalKind:\"anonymous\"`, and does the RFC 0128 purpose label ride the anon boundary? RFC keeps anonymous a *local* public-surface concept and defers the cross-host case.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0132.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G5"
         }
       ]
@@ -6297,7 +6297,7 @@
       "target": "openwop.gap.0132.6",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G6"
         }
       ]
@@ -6314,7 +6314,7 @@
       "target": "openwop.gap.0132.7",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G7"
         }
       ]
@@ -6331,7 +6331,7 @@
       "target": "openwop.gap.0132.8",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G8"
         }
       ]
@@ -6348,7 +6348,7 @@
       "target": "openwop.gap.0132.9",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G9"
         }
       ]
@@ -6365,7 +6365,7 @@
       "target": "openwop.gap.0132.10",
       "sources": [
         {
-          "file": "RFCS/0132-anonymous-actor-authorization.gaps.md",
+          "file": "RFCS/registers/0132-anonymous-actor-authorization.gaps.md",
           "token": "G10"
         }
       ]
@@ -6378,11 +6378,11 @@
       "surface": "`subChainRef` shape: a bare string (sibling `chainId`) vs an object (external `{packName, chainId, version}`). RFC accepts BOTH via a `oneOf`. Confirm the sibling-string form cannot be ambiguous with an external `chainId` — it can't; a sibling is resolved against the same pack's `chains[]` first, an object ref is explicit.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G1"
         }
       ]
@@ -6395,11 +6395,11 @@
       "surface": "Forbidding a concrete `config.workflowId` inside a fragment: enforce at manifest-validation (schema `not`) vs expansion-time only. RFC enforces at the schema layer.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G2"
         }
       ]
@@ -6412,11 +6412,11 @@
       "surface": "Deterministic child-id derivation: key on `chainId` alone (a shared child registers once) vs fold in parameter values (WCP2 parameter-distinct identity). RFC keys on `(parentExpansionId, childChainId)` — a child is a co-registered *workflow*, not a parameter-frozen inline splice, so parameters ride the child's own run inputs, not its identity.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G3"
         }
       ]
@@ -6429,11 +6429,11 @@
       "surface": "External sub-chain version pinning for reproducibility.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G4"
         }
       ]
@@ -6450,7 +6450,7 @@
       "target": "openwop.gap.0133.5",
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G5"
         }
       ]
@@ -6463,11 +6463,11 @@
       "surface": "`maxSubChainDepth` default value.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.6",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G6"
         }
       ]
@@ -6480,11 +6480,11 @@
       "surface": "Closed-world variable validation scope: reads in `inputs` only, or also `config`? RFC validates any `{ type:\"variable\", variableName }` binding anywhere in a node's `inputs` or `config`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.7",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G7"
         }
       ]
@@ -6497,11 +6497,11 @@
       "surface": "The 5 scenarios + 2 SECURITY invariants are specified but must land with the promotion (RFC 0079 precedent: a protocol-tier MUST-NOT lands with its public test in the same PR).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.8",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G8"
         }
       ]
@@ -6518,7 +6518,7 @@
       "target": "openwop.gap.0133.9",
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G9"
         }
       ]
@@ -6531,11 +6531,11 @@
       "surface": "Amending RFC 0013's \"chain reference NOT preserved at runtime\" (spec step 9) + \"no new dispatch semantics\" — is this additive or a relaxation of an existing MUST? Additive: it adds an OPT-IN mode; the inline mode's guarantees are unchanged and a `subChains`-free chain expands byte-identically.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0133.10",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
-          "file": "RFCS/0133-workflow-chain-composition.gaps.md",
+          "file": "RFCS/registers/0133-workflow-chain-composition.gaps.md",
           "token": "G10"
         }
       ]
@@ -6603,7 +6603,7 @@
       "target": "openwop.gap.0137.1",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G1"
         }
       ]
@@ -6620,7 +6620,7 @@
       "target": "openwop.gap.0137.2",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G2"
         }
       ]
@@ -6637,7 +6637,7 @@
       "target": "openwop.gap.0137.3",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G3"
         }
       ]
@@ -6654,7 +6654,7 @@
       "target": "openwop.gap.0137.4",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G4"
         }
       ]
@@ -6671,7 +6671,7 @@
       "target": "openwop.gap.0137.5",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G5"
         }
       ]
@@ -6688,7 +6688,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G6"
         }
       ]
@@ -6705,7 +6705,7 @@
       "target": "openwop.gap.0137.7",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G7"
         }
       ]
@@ -6722,7 +6722,7 @@
       "target": "openwop.gap.0137.8",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G8"
         }
       ]
@@ -6739,7 +6739,7 @@
       "target": "openwop.gap.0137.9",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G9"
         }
       ]
@@ -6756,7 +6756,7 @@
       "target": "openwop.gap.0137.10",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G10"
         }
       ]
@@ -6773,7 +6773,7 @@
       "target": "openwop.gap.0137.11",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G11"
         }
       ]
@@ -6790,7 +6790,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G12"
         }
       ]
@@ -6807,7 +6807,7 @@
       "target": "openwop.gap.0137.13",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G13"
         }
       ]
@@ -6824,7 +6824,7 @@
       "target": "openwop.gap.0137.14",
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G14"
         }
       ]
@@ -6841,7 +6841,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G15"
         }
       ]
@@ -6858,7 +6858,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0137-form-content-packs.gaps.md",
+          "file": "RFCS/registers/0137-form-content-packs.gaps.md",
           "token": "G16"
         }
       ]
@@ -6875,7 +6875,7 @@
       "target": "openwop.gap.0138.1",
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G1"
         }
       ]
@@ -6892,7 +6892,7 @@
       "target": "openwop.gap.0138.2",
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G2"
         }
       ]
@@ -6909,7 +6909,7 @@
       "target": "openwop.gap.0138.3",
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G3"
         }
       ]
@@ -6926,7 +6926,7 @@
       "target": "openwop.gap.0138.4",
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G4"
         }
       ]
@@ -6943,7 +6943,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G5"
         }
       ]
@@ -6960,7 +6960,7 @@
       "target": "openwop.gap.0138.6",
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G6"
         }
       ]
@@ -6977,7 +6977,7 @@
       "target": "openwop.gap.0138.7",
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G7"
         }
       ]
@@ -6994,7 +6994,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0138-pack-manifest-vendor-extensions.gaps.md",
+          "file": "RFCS/registers/0138-pack-manifest-vendor-extensions.gaps.md",
           "token": "G8"
         }
       ]
@@ -7011,7 +7011,7 @@
       "target": "openwop.gap.0139.1",
       "sources": [
         {
-          "file": "RFCS/0139-extension-opacity-host-witness.gaps.md",
+          "file": "RFCS/registers/0139-extension-opacity-host-witness.gaps.md",
           "token": "G1"
         }
       ]
@@ -7028,7 +7028,7 @@
       "target": "openwop.gap.0139.2",
       "sources": [
         {
-          "file": "RFCS/0139-extension-opacity-host-witness.gaps.md",
+          "file": "RFCS/registers/0139-extension-opacity-host-witness.gaps.md",
           "token": "G2"
         }
       ]
@@ -7045,7 +7045,7 @@
       "target": "openwop.gap.0139.3",
       "sources": [
         {
-          "file": "RFCS/0139-extension-opacity-host-witness.gaps.md",
+          "file": "RFCS/registers/0139-extension-opacity-host-witness.gaps.md",
           "token": "G3"
         }
       ]
@@ -7062,7 +7062,7 @@
       "target": "openwop.gap.0139.4",
       "sources": [
         {
-          "file": "RFCS/0139-extension-opacity-host-witness.gaps.md",
+          "file": "RFCS/registers/0139-extension-opacity-host-witness.gaps.md",
           "token": "G4"
         }
       ]
@@ -7079,7 +7079,7 @@
       "target": "openwop.gap.0139.5",
       "sources": [
         {
-          "file": "RFCS/0139-extension-opacity-host-witness.gaps.md",
+          "file": "RFCS/registers/0139-extension-opacity-host-witness.gaps.md",
           "token": "G5"
         }
       ]
@@ -7096,7 +7096,7 @@
       "target": "openwop.gap.0139.6",
       "sources": [
         {
-          "file": "RFCS/0139-extension-opacity-host-witness.gaps.md",
+          "file": "RFCS/registers/0139-extension-opacity-host-witness.gaps.md",
           "token": "G6"
         }
       ]
@@ -7113,7 +7113,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G1"
         }
       ]
@@ -7130,7 +7130,7 @@
       "target": "openwop.gap.0140.2",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G2"
         }
       ]
@@ -7147,7 +7147,7 @@
       "target": "openwop.gap.0140.3",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G3"
         }
       ]
@@ -7164,7 +7164,7 @@
       "target": "openwop.gap.0140.4",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G4"
         }
       ]
@@ -7181,7 +7181,7 @@
       "target": null,
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G5"
         }
       ]
@@ -7198,7 +7198,7 @@
       "target": "openwop.gap.0140.6",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G6"
         }
       ]
@@ -7215,7 +7215,7 @@
       "target": "openwop.gap.0140.7",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G7"
         }
       ]
@@ -7232,7 +7232,7 @@
       "target": "openwop.gap.0140.8",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G8"
         }
       ]
@@ -7249,7 +7249,7 @@
       "target": "openwop.gap.0140.9",
       "sources": [
         {
-          "file": "RFCS/0140-replay-side-effect-suppression.gaps.md",
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
           "token": "G9"
         }
       ]
@@ -7300,7 +7300,7 @@
       "target": "openwop.gap.0143.1",
       "sources": [
         {
-          "file": "RFCS/0143-tool-result-trust-propagation.gaps.md",
+          "file": "RFCS/registers/0143-tool-result-trust-propagation.gaps.md",
           "token": "G1"
         }
       ]
@@ -7317,7 +7317,7 @@
       "target": "openwop.gap.0143.2",
       "sources": [
         {
-          "file": "RFCS/0143-tool-result-trust-propagation.gaps.md",
+          "file": "RFCS/registers/0143-tool-result-trust-propagation.gaps.md",
           "token": "G2"
         }
       ]
@@ -7334,7 +7334,7 @@
       "target": "openwop.gap.0143.3",
       "sources": [
         {
-          "file": "RFCS/0143-tool-result-trust-propagation.gaps.md",
+          "file": "RFCS/registers/0143-tool-result-trust-propagation.gaps.md",
           "token": "G3"
         }
       ]
@@ -7351,7 +7351,7 @@
       "target": "openwop.gap.0143.4",
       "sources": [
         {
-          "file": "RFCS/0143-tool-result-trust-propagation.gaps.md",
+          "file": "RFCS/registers/0143-tool-result-trust-propagation.gaps.md",
           "token": "G4"
         }
       ]
@@ -7368,7 +7368,7 @@
       "target": "openwop.gap.0143.5",
       "sources": [
         {
-          "file": "RFCS/0143-tool-result-trust-propagation.gaps.md",
+          "file": "RFCS/registers/0143-tool-result-trust-propagation.gaps.md",
           "token": "G5"
         }
       ]
@@ -7432,8 +7432,8 @@
       "surface": "Inventory of public conformance bundles and the exact assertions that executed versus returned early is not yet available.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7449,8 +7449,8 @@
       "surface": "The machine-readable certification schema does not yet distinguish executed, skipped, inapplicable, and failed requirements.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7466,8 +7466,8 @@
       "surface": "Whether the OpenAPI base-path correction is purely editorial for every generator has not been demonstrated.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7500,8 +7500,8 @@
       "surface": "Full list of stale lifecycle/status contradictions is not yet machine-generated.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7517,8 +7517,8 @@
       "surface": "Deployed histories and idempotency records using the existing recipes have not been inventoried.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.6",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7568,8 +7568,8 @@
       "surface": "Mandatory compensation ordering floor is undecided.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.9",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7585,8 +7585,8 @@
       "surface": "Terminal-state additions may require schema widening and client migration.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.10",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7636,8 +7636,8 @@
       "surface": "Technology-neutral workload-identity vocabulary has not been selected.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.13",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7653,8 +7653,8 @@
       "surface": "OpenTelemetry GenAI attributes may remain experimental or change.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.14",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7687,8 +7687,8 @@
       "surface": "Whether `openwop-core` can be additively aliased or needs v2 renaming is unresolved.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.16",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7806,8 +7806,8 @@
       "surface": "The child RFCs do not yet have assigned RFC numbers or named owners beyond role ownership.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.23",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7823,8 +7823,8 @@
       "surface": "The audit input is in the sibling app repository rather than the protocol corpus.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0147.24",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0147-protocol-integrity-and-standards-readiness-program.gaps.md",
@@ -7874,8 +7874,8 @@
       "surface": "Stable `requirementId` registry and alias policy do not exist. **Measured 2026-08-11** (`docs/REQUIREMENT-REGISTRY-FEASIBILITY.md`): 1,544 `driver.describe()` sites, 87.8% generatable from two string literals. Two blockers the gap did not anticipate — 168 sites interpolate the requirement text at run time, so **no text-derived ID can be stable for them by construction**; and citations use **six** addressing conventions for the same documents, so a text-derived ID encodes an authoring accident until addressing is normalized.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0148.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0148-non-vacuous-conformance-certification.gaps.md",
@@ -7908,8 +7908,8 @@
       "surface": "Vitest reporter API support for assertion-level custom events needs validation.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0148.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0148-non-vacuous-conformance-certification.gaps.md",
@@ -7942,8 +7942,8 @@
       "surface": "`openwop-replay-fork` has a **discovery-conditional** floor (`profiles.md`: scenarios \"pass on whichever mode the host advertises\") that a flat `required[]` cannot express, so it stays unprovable. Same for `openwop-interrupts`, `openwop-secrets`, `openwop-provider-policy`, `openwop-memory`, `openwop-trigger-bridge`, whose prose names no settled floor. Any host claiming these cannot be certified until the model or the prose catches up.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0148.7",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0148-non-vacuous-conformance-certification.gaps.md",
@@ -7959,8 +7959,8 @@
       "surface": "Generated-client workaround inventory is absent.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0149.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0149-machine-contract-and-version-reconciliation.gaps.md",
@@ -7976,8 +7976,8 @@
       "surface": "Typo heuristic false-positive tolerance is unmeasured.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0149.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0149-machine-contract-and-version-reconciliation.gaps.md",
@@ -7993,8 +7993,8 @@
       "surface": "Deployed `protocolVersion: 1.0.0` population is unknown.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0149.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0149-machine-contract-and-version-reconciliation.gaps.md",
@@ -8010,8 +8010,8 @@
       "surface": "Intentional historical lifecycle prose needs an annotation syntax.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0149.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0149-machine-contract-and-version-reconciliation.gaps.md",
@@ -8027,8 +8027,8 @@
       "surface": "SDK path-manifest consumer changes live in a sibling repository.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0149.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0149-machine-contract-and-version-reconciliation.gaps.md",
@@ -8231,8 +8231,8 @@
       "surface": "~~Exact run response carrying `compensationStatus` is unsettled.~~ **Closed 2026-08-16 (#1007):** `RunSnapshot` (`schemas/run-snapshot.schema.json`, `GET /v1/runs/{runId}`) is the sole owner. Traced: the run list has no summary schema of its own, and `debug-bundle.schema.json` + AsyncAPI `run.snapshot` reuse the snapshot by `$ref`, so one property covers every surface that returns a run; the six §D events already carry the transitions and do not need the rollup. OPTIONAL, capability-gated (non-advertising host MUST omit; advertising host MUST carry, `none` when idle), and the value is the normative fold in `spec/v1/compensation.md` §\"Run rollup\". Not settled by this: the value on a forked run of a partially compensated source (`compensation.md` G4).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0151.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0151-compensation-and-partial-failure-profile.gaps.md",
@@ -8248,8 +8248,8 @@
       "surface": "Operator substitution authorization and plan-version rules are open.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0151.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0151-compensation-and-partial-failure-profile.gaps.md",
@@ -8316,8 +8316,8 @@
       "surface": "~~Field-by-field A2A 1.0 translation table is not authored.~~ **Closed 2026-08-16:** `spec/v1/a2a-integration.md` §\"A2A 1.0 versioned composition\" D.1–D.7, generated by reading `a2a.proto` at tag `v1.0.0` (not hand-copied types) and reviewed against the 0.3 body.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0152.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0152-a2a-1-0-versioned-composition.gaps.md",
@@ -8350,8 +8350,8 @@
       "surface": "~~Mandatory A2A interface floor is undecided.~~ **Closed 2026-08-16:** JSON-RPC at 1.0 is the floor for `a2a-1.0`; HTTP+JSON / gRPC optional. Reasoning: continuity with the 0.3 composition and its interop evidence, the suite's fake peer, and no forced gRPC dependency.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0152.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0152-a2a-1-0-versioned-composition.gaps.md",
@@ -8367,8 +8367,8 @@
       "surface": "Delegated identity composes with RFC 0154, still Draft.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0152.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0152-a2a-1-0-versioned-composition.gaps.md",
@@ -8435,8 +8435,8 @@
       "surface": "~~Complete MRTR mapping is not authored.~~ **Closed 2026-08-16:** `mcp-integration.md` §C, C.1 (client) + C.2 (server), traced against run identity (RFC 0150 §B), interrupts (RFC 0051), cancel (RFC 0094), replay (RFC 0150 discharge). Bound on rounds left to host policy (new G9).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0153.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
@@ -8469,8 +8469,8 @@
       "surface": "~~Authorization-aware cache validator rules are undecided.~~ **Closed 2026-08-16:** `mcp-integration.md` §D — scope change ⇒ stale regardless of `ttlMs`; `\"private\"` never crosses authorization contexts; key = (tenant, workspace, principal, origin, revision, discovery context).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0153.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
@@ -8486,8 +8486,8 @@
       "surface": "Initial mapped extension set is unset.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0153.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0153-mcp-2026-07-28-versioned-composition.gaps.md",
@@ -8537,8 +8537,8 @@
       "surface": "~~First OTel GenAI mapping version is unsettled.~~ **Closed 2026-08-16 (decided):** no stable upstream version exists (GenAI conventions moved to `semantic-conventions-genai`, Development stability, untagged); mapping v0 is experimental, optional, ref-labelled, and projects no identity field (`observability.md`).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0154.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0154-workload-identity-delegation-telemetry-and-provenance.gaps.md",
@@ -8605,8 +8605,8 @@
       "surface": "Current extension registry backfill is not complete. **2026-08-16: measured and gated** — derived `coverage` block in `extensions.json` (`generate-extension-registry-coverage.mjs`, `--check` in `openwop:check`): 5 covered / 81 uncovered / 4 core of 90 families. The candidate ledger the resolution path asks for now exists as `coverage.uncovered[]`; the per-RFC review of each remains. **Closed 2026-08-16 (later the same day):** every family reviewed and recorded — **72 covered / 0 uncovered / 4 core / 14 metadata of 90**. The generator gained a `metadataFields` bucket (keys that describe the document/host — versions, identity, suite hints — each with a stated rationale, and the registry test forbids a metadata key that carries `supported`, which is how `production` ended up a record, not metadata). Six pre-RFC v1 base advertisements carry `owningRfc: null` + `owningDoc`. Two records state a suite gap honestly (`nosql`, `promptLibrary`: no scenario reads the family → `minimumSuiteVersion: null`).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0155.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0155-core-profile-and-extension-discipline.gaps.md",
@@ -8656,8 +8656,8 @@
       "surface": "Manifest packaging location is unsettled.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0155.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0155-core-profile-and-extension-discipline.gaps.md",
@@ -9283,7 +9283,7 @@
       "local": "G1",
       "section": "§B.1",
       "surface": "The C.5 header-negotiation rule has no v1 precedent: a v1 client never sends `OpenWOP-Version`, so the rule for an unversioned path with no header (default to `preferredVersion`) is asserted here and witnessed only by the Phase 3 dual-stack scenario.",
-      "witness": "unclassified",
+      "witness": "witnessable-gated",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9300,7 +9300,7 @@
       "local": "G2",
       "section": "§E.1",
       "surface": "Eighteen axes were found by grep; the umbrella cannot prove the enumeration is complete. A nineteenth found later is added to the table by the child that meets it, not silently.",
-      "witness": "unclassified",
+      "witness": "negative-existence",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9317,7 +9317,7 @@
       "local": "G3",
       "section": "§D.2",
       "surface": "Codemods are pure transforms over persisted artifacts; nothing rewrites an SDK consumer's source. The migration guide carries that; no gate proves the guide is complete.",
-      "witness": "unclassified",
+      "witness": "claims-check",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9334,7 +9334,7 @@
       "local": "G4",
       "section": "§C",
       "surface": "v2 MUST-NOTs cannot enter `SECURITY/invariants.yaml` at Draft (`check-security-invariants.sh` requires a v1 public test), so they live as child falsifiability rows in `gaps.json` until Phase 3. The witness-class gate does not see them until then.",
-      "witness": "unclassified",
+      "witness": "witnessable-unaided",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9351,7 +9351,7 @@
       "local": "G5",
       "section": "Unresolved Q1",
       "surface": "The org question for `openwop.dev/spec/v2/`.",
-      "witness": "unclassified",
+      "witness": "claims-check",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9368,7 +9368,7 @@
       "local": "G1",
       "section": "Unresolved Q1",
       "surface": "The `extensions.<org>.<name>` org form (short vs reverse-DNS).",
-      "witness": "unclassified",
+      "witness": "claims-check",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9385,7 +9385,7 @@
       "local": "G2",
       "section": "§B.3",
       "surface": "`host-capabilities.md:2186` says a host MUST NOT advertise `host.workspace`; `agent-workspace.md:27` and `capabilities.schema.json:2979` make advertising it the gate for an Accepted surface (RFC 0059). A v1.x prose contradiction, out of this RFC's v2 scope.",
-      "witness": "unclassified",
+      "witness": "witnessable-unaided",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9402,7 +9402,7 @@
       "local": "G3",
       "section": "§B.3",
       "surface": "`imageGeneration` / `videoGeneration` are prose-only under `aiProviders` (RFC 0105 G5); the gap's premise (`additionalProperties: false` on `aiProviders`) has drifted — the block is open at `capabilities.schema.json:1536`. Declared facets or deleted?",
-      "witness": "unclassified",
+      "witness": "claims-check",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9419,7 +9419,7 @@
       "local": "G4",
       "section": "§C.5",
       "surface": "The adoption-axis triage of RFCs 0112–0116 depends on Phase 4 bundle evidence that does not exist yet.",
-      "witness": "unclassified",
+      "witness": "witnessable-gated",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9436,7 +9436,7 @@
       "local": "G5",
       "section": "§C.1",
       "surface": "`agent-platform-aggregate-evidence.test.ts:37` reads a root `profiles[]` that no schema declares (the RFC 0085 annex claim). The v2 suite reads the generated profile registry; the v1 scenario keeps reading the field until the v1 suite is archived.",
-      "witness": "unclassified",
+      "witness": "witnessable-unaided",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9453,7 +9453,7 @@
       "local": "G1",
       "section": "§A.3",
       "surface": "The header-less default to `preferredVersion` has no v1 precedent on the protocol surface (the A2A lane has one); witnessed only by the dual-stack scenario on a host advertising two majors. Carried from RFC 0167 G1.",
-      "witness": "unclassified",
+      "witness": "witnessable-gated",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9470,7 +9470,7 @@
       "local": "G2",
       "section": "§C.1",
       "surface": "MAINTAINERS §\"Major bump\" step 6 edits `spec/v1/auth.md`'s status legend at the cut while RFC 0167 says the v1 tree is read-only from the cut.",
-      "witness": "unclassified",
+      "witness": "claims-check",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9487,7 +9487,7 @@
       "local": "G3",
       "section": "Unresolved Q1",
       "surface": "Whether `OpenWOP-Version` on requests accepts `major.minor`.",
-      "witness": "unclassified",
+      "witness": "claims-check",
       "requirementId": null,
       "disposition": "open",
       "target": null,
@@ -9495,6 +9495,142 @@
         {
           "file": "RFCS/registers/0172-v2-versioning-and-release.gaps.md",
           "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0174.1",
+      "rfc": "0174",
+      "local": "G1",
+      "section": "§A.3",
+      "surface": "Numbers 0160–0162 were never authored (RFC 0158's renumber note). Filing `Withdrawn` stubs after the fact would be a paper trail for nothing.",
+      "witness": "negative-existence",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0174-v2-governance.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0174.2",
+      "rfc": "0174",
+      "local": "G2",
+      "section": "§C.2",
+      "surface": "388 `carried:<self>` rows on terminal RFCs at filing (the RFC 0166 backfill default); 45 whose prose said CLOSED re-tokened here; 343 remain under the `selfCarried` ratchet.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0174-v2-governance.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0174.3",
+      "rfc": "0174",
+      "local": "G3",
+      "section": "§B.1",
+      "surface": "`check-accepted-predicate.mjs` needs `gaps.json` rows bound to requirement ids, which none are today (RFC 0178 §B.1 owns the binding).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0174-v2-governance.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0174.4",
+      "rfc": "0174",
+      "local": "G4",
+      "section": "§E.3",
+      "surface": "The 43 prose gap tables have two row shapes; the adapter into `gaps.json` must map both without inventing ids.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0174-v2-governance.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0178.1",
+      "rfc": "0178",
+      "local": "G1",
+      "section": "§B.1",
+      "surface": "558 of 558 `gaps.json` rows were `witness: unclassified` and `requirementId: null` at filing. This PR classifies the RFC 0167 family's rows; the rest is the RFC 0166 G2 ratchet.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0178.2",
+      "rfc": "0178",
+      "local": "G2",
+      "section": "§C.1",
+      "surface": "Nine of 164 RFCs carry a falsifiability table; the parser is a gate for the RFC 0167 family and advisory elsewhere.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0178.3",
+      "rfc": "0178",
+      "local": "G3",
+      "section": "§B.3",
+      "surface": "`check-gap-contradictions.mjs` resolves scenario files and OpenAPI paths only; a gap naming any other artifact is reported unchecked.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0178.4",
+      "rfc": "0178",
+      "local": "G4",
+      "section": "Unresolved Q1",
+      "surface": "Whether AsyncAPI 3.x carries a standard `deprecated` on channels and messages.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
+          "token": "G4"
         }
       ]
     }
