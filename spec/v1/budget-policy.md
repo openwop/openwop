@@ -48,4 +48,5 @@ The new protocol-tier invariant **`budget-no-pricing-leak`**: the four `budget.*
 
 ## Open spec gaps
 
-- The behavioral enforcement scenario (accrue → threshold → exhaust → `cap.breached{budget-cost}` → `run.failed{budget_exhausted}`; `budget_model_denied`; the advisory no-stop path), the `budget_exhausted`/`budget_model_denied` OpenAPI error codes, and the reference-host budget accumulator land at `Active → Accepted`; the always-on `budget-policy-shape.test.ts` + the schema + events + `cap.breached` kinds + capability ship now.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 1 row(s) this table carried are now `openwop.gap.spec.budget-policy.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

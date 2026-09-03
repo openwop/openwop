@@ -189,10 +189,7 @@ The RFC 0071 architect pass resolved the design questions this doc was drafted a
 
 ## Open spec gaps
 
-| Gap                                                                                                                                                                             | Tracking                                          |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Chat card packs (`kind: "card"`), which produce artifacts of these types via prompts.                                                                                           | RFC 0071 Phase 2 / `chat-card-packs.md` (pending) |
-| **Closed (2026-09-03, RFC 0178 §B.3 — first catch of `check-gap-contradictions.mjs`).** The protocol-tier invariant `artifact-schema-compile-bounded` (`SECURITY/invariants.yaml`) and `conformance/src/scenarios/artifact-schema-compile-bounded.test.ts` exist; the behavioral end-to-end leg stays capability-gated on `host.artifactTypes.supported`. Original: Bounded-compilation limits for distributed artifact schemas (schema-bomb / ReDoS defense) — the protocol-tier invariant + conformance test that gates this surface to `Active`. | RFC 0071 risk R1 / `SECURITY/invariants.yaml`     |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.artifact-type-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -46,7 +46,7 @@ V1 = yaml.safe_load((ROOT / 'api' / 'openapi.yaml').read_text())
 A1 = yaml.safe_load((ROOT / 'api' / 'asyncapi.yaml').read_text())
 REL = json.loads((ROOT / 'spec' / 'v2' / 'release.json').read_text())
 SEAM = re.compile(r'^/v1/(host/sample/|host/workspace/files|packs-test/)')
-HEADER_RENAME = {'X-Dedup': 'OpenWOP-Dedup', 'X-Force-Engine-Version': 'OpenWOP-Force-Engine-Version', 'X-Pack-Sha256': 'OpenWOP-Pack-Sha256', 'X-Pack-Signing-Method': 'OpenWOP-Pack-Signing-Method', 'Capabilities-Etag': 'ETag'}
+HEADER_RENAME = {'openwop-Idempotent-Replay': 'OpenWOP-Idempotent-Replay', 'X-Idempotent-Replay': 'OpenWOP-Idempotent-Replay', 'X-Dedup': 'OpenWOP-Dedup', 'X-Force-Engine-Version': 'OpenWOP-Force-Engine-Version', 'X-Pack-Sha256': 'OpenWOP-Pack-Sha256', 'X-Pack-Signing-Method': 'OpenWOP-Pack-Signing-Method', 'Capabilities-Etag': 'ETag'}
 V2_SCHEMAS = {p.relative_to(ROOT / 'schemas' / 'v2').as_posix() for p in (ROOT / 'schemas' / 'v2').rglob('*.schema.json')}
 
 def rewrite(node, depth_prefix='../../schemas/v2/'):
@@ -116,6 +116,10 @@ def v2_openapi_and_seams():
                 if isinstance(p, dict) and p.get('name') == 'token' and p.get('in') == 'path':
                     p['schema'] = {'type': 'string', 'pattern': '^(ow2\\.hs256\\.[A-Za-z0-9._~-]{1,128}\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+|[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+)$'}
                     p['description'] = 'RFC 0170 §E.1 — `ow2.<alg>.<kid>.<payload>.<mac>`; the v1 two-segment form is accepted under kid legacy until its expiresAt (RFC 0176 §B.2).'
+            for p in params:
+                if isinstance(p, dict) and p.get('name') == 'streamMode' and p.get('in') == 'query':
+                    p['schema'] = {'type': 'string', 'pattern': '^(values|(updates|messages|debug)(,(updates|messages|debug))*)$', 'default': 'updates'}
+                    p['description'] = 'RFC 0171 §E.1 — the closed set and its comma-separated combinations; `values` never combines.'
             op['parameters'] = [p for p in params if not (isinstance(p, dict) and p.get('name') == 'since')]
             for code, resp in op.get('responses', {}).items():
                 if isinstance(resp, dict) and '$ref' not in resp:
@@ -224,7 +228,11 @@ def headers_doc(doc):
     return '\n'.join(lines)
 
 def dump(obj):
-    return yaml.safe_dump(obj, sort_keys=False, allow_unicode=True, width=120)
+    text = yaml.safe_dump(obj, sort_keys=False, allow_unicode=True, width=120)
+    # prose mentions of renamed headers inside descriptions (RFC 0171 §C.1)
+    for old_name, new_name in (('openwop-Idempotent-Replay', 'OpenWOP-Idempotent-Replay'), ('X-Idempotent-Replay', 'OpenWOP-Idempotent-Replay')):
+        text = text.replace(old_name, new_name)
+    return text
 
 doc, seams = v2_openapi_and_seams(); doc = prune_unused(doc); seams = prune_unused(seams); adoc = v2_asyncapi(); man = manifest(doc, adoc)
 outputs = {ROOT / 'spec' / 'v2' / 'core' / 'headers.md': headers_doc(doc), ROOT / 'api' / 'v2' / 'openapi.yaml': dump(doc), ROOT / 'api' / 'v2' / 'asyncapi.yaml': dump(adoc), ROOT / 'api' / 'seams-v2.yaml': dump(seams), ROOT / 'spec' / 'v2' / 'path-manifest.json': json.dumps(man, indent=2, ensure_ascii=False) + '\n'}

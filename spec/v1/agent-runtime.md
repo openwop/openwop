@@ -28,11 +28,7 @@ The host serves the goal surface as a host-extension under `/v1/host/sample/goal
 
 ## Open spec gaps
 
-| Gap | Disposition |
-|---|---|
-| Normative `/v1/goals` endpoints in `api/openapi.yaml` | Deferred to graduation (pre-authored near `Active → Accepted`, per the RFC 0086 precedent). Floor surface is the host-extension seam. |
-| Judge model / planning strategy | Out of scope by design — host choice. The protocol pins only the object, lifecycle, bound-enforcement, and events. |
-| SDK methods (`goals` group) | Tracked in `openwop-sdks`; not part of the spec-corpus floor. |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.agent-runtime.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

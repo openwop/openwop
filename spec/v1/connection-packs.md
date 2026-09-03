@@ -270,13 +270,7 @@ A well-formed `openapi`-reach provider declaring its credential-egress allow-lis
 
 ## Open spec gaps
 
-| Gap | Status |
-|---|---|
-| `scopeModel` coverage — whether `groups`/`coarse`/`capabilities` captures every real consent model (Stripe coarse toggle, Notion capabilities) or needs richer per-model fields | Validate against the Tier-1 providers during reference-host impl (RFC 0095 UQ2) |
-| Per-account-host providers — whether `auth.instanceUrlTemplate` is the right shape, and where the resolved `{account}` lives (pack vs the RFC 0046 per-connection record) for Snowflake/NetSuite/ServiceNow | RFC 0095 UQ3 |
-| Provider-id precedence/namespacing — the version-based built-in-vs-installed rule (clause 6) vs scoped ids to prevent two community packs both claiming `github` | RFC 0095 UQ4 |
-| MCP endpoint freshness — `reach.mcp.server.url` is volatile (the ecosystem moves monthly); whether the registry re-verifies and the host re-validates at install | RFC 0095 UQ1 |
-| Core connection catalog — the Tier-1 `core.openwop.connections.*` packs (GitHub, Jira, Confluence, Notion, Linear, Microsoft 365, Stripe) ship as a follow-up once this mechanism is Accepted | RFC 0095 UQ5 |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.connection-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

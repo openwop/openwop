@@ -76,5 +76,5 @@ The aggregate agent-platform target is named separately by RFC 0085's `openwop-a
 
 ## Open spec gaps
 
-- **Per-profile machine-readable certification bundle (open).** RFC 0088 reached `Accepted` on the aggregate-floor evidence, but a claimed profile is not yet bound to a reproducible `{suite version, pass list, host commit, discovery document}` bundle — the floor proof today is server-free predicate coverage (§C) plus an externally-documented live aggregate. A future additive RFC SHOULD define a machine-readable certification bundle so every profile claim is mechanically reproducible from a single artifact.
-- Each Lever-2 row graduates into the floor as its Phase-4 black-box harness lands; the §C table grows by the corresponding scenario set at that point.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.core-standard-profile.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

@@ -1090,11 +1090,7 @@ The required/optional split protects implementers from over-pinning: a host can 
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                         | Owner      |
-| --- | --------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| C2  | ✅ Closed by `capabilities-change-detection.md`: `Capabilities-Etag` semantics for mid-session capability change detection. | v1.x annex |
-| C3  | ✅ Closed by `capabilities-change-detection.md`: non-HTTP discovery handoff guidance for MCP/A2A composition.               | v1.x annex |
-| C5  | ✅ Closed by `capabilities-change-detection.md`: scoped capability view rules without leaking private tenant features.      | v1.x annex |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.capabilities.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

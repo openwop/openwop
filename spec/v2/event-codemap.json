@@ -5,7 +5,7 @@
   "updated": "2026-09-03",
   "grammar": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
   "counts": {
-    "rows": 117,
+    "rows": 118,
     "review": 0,
     "overridden": 20,
     "renamed": 36
@@ -1085,6 +1085,15 @@
       "notes": [
         "case/separator normalised"
       ]
+    },
+    {
+      "v1": "negotiation.decided",
+      "v2": "negotiation.decided",
+      "payloadDef": "negotiationDecided",
+      "status": "decided",
+      "review": false,
+      "notes": [],
+      "note": "NEW in v2 (RFC 0175 §D.3): no v1 emitter; the v1 name is the v2 name so the codemap stays a total function over the v2 enum. Content-free; peer origin as a digest (RFC 0175 §Unresolved 1)."
     }
   ]
 }

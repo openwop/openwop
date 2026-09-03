@@ -1,6 +1,6 @@
 {
   "$schema": "https://openwop.dev/spec/v2/declaration.schema.json",
-  "$comment": "RFC 0169 \u00a7B \u2014 the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (\u00a7B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption is re-derived from INTEROP-MATRIX bundle evidence at each RC (generator --check).",
+  "$comment": "RFC 0169 §B — the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (§B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption is re-derived from INTEROP-MATRIX bundle evidence at each RC (generator --check).",
   "version": "2.0",
   "updated": "2026-09-03",
   "witnessClasses": [
@@ -62,7 +62,7 @@
       "key": "supportedTransports",
       "kind": "metadata",
       "schema": "metadata/supportedTransports",
-      "note": "deleted: RFC 0175 \u00a7B.1",
+      "note": "deleted: RFC 0175 §B.1",
       "disposition": "deleted"
     },
     {
@@ -132,7 +132,7 @@
       "key": "preferredVersion",
       "kind": "metadata",
       "schema": "metadata/preferredVersion",
-      "note": "root preferredVersion (RFC 0172 \u00a7A.1; v1.x additive RFC 0179)",
+      "note": "root preferredVersion (RFC 0172 §A.1; v1.x additive RFC 0179)",
       "disposition": "kept"
     }
   ],
@@ -140,7 +140,7 @@
     {
       "key": "contractProvenance",
       "anchor": "deleted",
-      "reason": "RFC 0169 \u00a7A.5 (unfalsifiable self-declaration)"
+      "reason": "RFC 0169 §A.5 (unfalsifiable self-declaration)"
     },
     {
       "key": "supportedEnvelopes",
@@ -284,7 +284,7 @@
     {
       "key": "grpc",
       "anchor": "deleted",
-      "reason": "RFC 0175 \u00a7A.1 (spec/v2/ext/grpc-transport/, not advertisable)"
+      "reason": "RFC 0175 §A.1 (spec/v2/ext/grpc-transport/, not advertisable)"
     },
     {
       "key": "nodePackRuntimes",
@@ -471,13 +471,13 @@
       },
       "facets": [
         "modes",
-        "fork",
         "retention",
-        "sideEffectSuppression"
+        "effectSeamsManifest"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0140"
+      "owningRfc": "0140",
+      "facetsFrom": "spec/v2/facets/replay.schema.json"
     },
     {
       "key": "oauth",
@@ -584,7 +584,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0037",
-      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+      "note": "RFC 0002–0008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
     },
     {
       "key": "modelCapabilities",
@@ -636,22 +636,24 @@
         "adoption": "none"
       },
       "facets": [
+        "providers",
         "byok",
         "selfHosted",
         "speechSynthesis",
-        "input",
-        "authModes",
-        "policies",
-        "maxInlineMediaBytes",
+        "imageGeneration",
+        "videoGeneration",
         "realtimeVoice",
         "promptPrefixCache",
-        "imageGeneration",
-        "videoGeneration"
+        "maxInlineMediaBytes",
+        "authModes",
+        "policies",
+        "input"
       ],
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": null,
-      "note": "imageGeneration/videoGeneration are declared facets (RFC 0169 \u00a7B.3 with RFC 0177 \u00a7B.1: facet paths are not identifiers; peerDependenciesMeta.aiProviders.facets[])"
+      "note": "imageGeneration/videoGeneration are declared facets (RFC 0169 §B.3 with RFC 0177 §B.1: facet paths are not identifiers; peerDependenciesMeta.aiProviders.facets[])",
+      "facetsFrom": "spec/v2/facets/aiProviders.schema.json"
     },
     {
       "key": "agents",
@@ -688,7 +690,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0002",
-      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+      "note": "RFC 0002–0008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
     },
     {
       "key": "memory",
@@ -715,7 +717,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0004",
-      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+      "note": "RFC 0002–0008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
     },
     {
       "key": "conversationPrimitive",
@@ -870,11 +872,13 @@
       },
       "facets": [
         "minIntervalSec",
-        "maxRuntimeMs"
+        "maxRuntimeMs",
+        "deliveryChannel"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0060"
+      "owningRfc": "0060",
+      "facetsFrom": "spec/v2/facets/heartbeat.schema.json"
     },
     {
       "key": "toolHooks",
@@ -1058,12 +1062,12 @@
         "adoption": "none"
       },
       "facets": [
-        "signatureAlgorithms",
-        "durable"
+        "signatureAlgorithms"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": null
+      "owningRfc": null,
+      "facetsFrom": "spec/v2/facets/webhooks.schema.json"
     },
     {
       "key": "triggerBridge",
@@ -1099,17 +1103,20 @@
         "adoption": "none"
       },
       "facets": [
+        "versions",
+        "preferredVersion",
+        "minimumVersion",
+        "refreshedAt",
+        "profiles",
         "agentCardUrl",
         "streaming",
         "pushNotifications",
-        "durableTasks",
-        "protocolVersions",
-        "preferredVersion",
-        "profiles"
+        "durableTasks"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0152"
+      "owningRfc": "0152",
+      "facetsFrom": "spec/v2/facets/a2a.schema.json"
     },
     {
       "key": "budget",
@@ -1357,16 +1364,20 @@
         "adoption": "none"
       },
       "facets": [
+        "revisions",
+        "preferredVersion",
+        "minimumRevision",
+        "refreshedAt",
+        "profiles",
+        "features",
         "serverUrls",
         "serverMount",
-        "protocolVersions",
-        "preferredVersion",
-        "profiles",
-        "features"
+        "mrtr"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0153"
+      "owningRfc": "0153",
+      "facetsFrom": "spec/v2/facets/mcp.schema.json"
     },
     {
       "key": "sandbox",
@@ -1389,7 +1400,8 @@
       "requirementIds": [],
       "owningRfc": "0035",
       "disposition": "externally-gated",
-      "reason": "RFC 0169 \u00a7C.4 / RFC 0035 non-steward tripwire; status experimental with until = the review date, never stable"
+      "reason": "RFC 0169 §C.4 / RFC 0035 non-steward tripwire; status experimental with until = the review date, never stable",
+      "facetsFrom": "spec/v2/facets/sandbox.schema.json"
     },
     {
       "key": "compensation",
@@ -1410,7 +1422,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0151",
-      "reason": "RFC 0173 \u00a7B core obligation with a declared witness; ext/ only by \u00a7D.1 at the cut"
+      "reason": "RFC 0173 §B core obligation with a declared witness; ext/ only by §D.1 at the cut"
     },
     {
       "key": "idempotency",
@@ -1481,18 +1493,13 @@
         "adoption": "none"
       },
       "facets": [
-        "profiles",
-        "subjectLinking",
-        "subjectLinkKey",
-        "rotation",
-        "oauth2",
-        "oidc",
-        "mtls",
-        "workloadIdentity"
+        "lanes",
+        "subjectLinkKey"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0154"
+      "owningRfc": "0154",
+      "facetsFrom": "spec/v2/facets/auth.schema.json"
     },
     {
       "key": "i18n",
@@ -1565,11 +1572,13 @@
         "adoption": "none"
       },
       "facets": [
-        "approverRouting"
+        "refKinds",
+        "tokenAlgs"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0104"
+      "owningRfc": "0104",
+      "facetsFrom": "spec/v2/facets/interrupt.schema.json"
     },
     {
       "key": "restTransport",
@@ -1589,7 +1598,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0115",
-      "reason": "RFC 0169 \u00a7C.5 (claims-check; ext/ unless a behavioral witness lands)"
+      "reason": "RFC 0169 §C.5 (claims-check; ext/ unless a behavioral witness lands)"
     },
     {
       "key": "a2uiSurface",
@@ -1608,7 +1617,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0114",
-      "reason": "RFC 0169 \u00a7C.5 (deltaTransport claims-check; ext/ unless a behavioral witness lands)"
+      "reason": "RFC 0169 §C.5 (deltaTransport claims-check; ext/ unless a behavioral witness lands)"
     },
     {
       "key": "brand",
@@ -1625,7 +1634,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "canvas",
@@ -1642,7 +1651,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "chat",
@@ -1659,7 +1668,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "coordination",
@@ -1676,7 +1685,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "dataIntegration",
@@ -1693,7 +1702,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "entities",
@@ -1710,7 +1719,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "kanban",
@@ -1727,7 +1736,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "knowledge",
@@ -1744,7 +1753,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "launchStudio",
@@ -1761,7 +1770,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "messaging",
@@ -1778,7 +1787,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "webResearch",
@@ -1795,7 +1804,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     }
   ],
   "profiles": [
@@ -1834,13 +1843,13 @@
         "families": []
       },
       "floorScenarios": [],
-      "note": "RFC 0168 \u00a7C.1 \u2014 the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace"
+      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace"
     }
   ],
   "aliases": {
     "host.webSearch": {
       "family": "webResearch",
-      "note": "two spellings of one \u00a7host.* section in published manifests (1 use); the section is webResearch"
+      "note": "two spellings of one §host.* section in published manifests (1 use); the section is webResearch"
     },
     "host.campaignMessaging": {
       "family": "messaging",

@@ -68,5 +68,5 @@ A new **`openwop-agent-platform` badge** ([`openwop.dev/badge/openwop-agent-plat
 
 ## Open spec gaps
 
-- The live aggregate-evidence assertion against a reference host (the Postgres host — already `production-profile`-satisfying — is the natural first `partial`/`full` candidate) + the badge rendering are the `Active → Accepted` step, naturally gated on a host actually reaching `partial`/`full`.
-- Promotion of the platform-plus tier (eval/deploy/budget) from RECOMMENDED to hard `full` terms is deferred to a future minor, triggered by ≥1 non-steward host advertising each.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.agent-platform-profile.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

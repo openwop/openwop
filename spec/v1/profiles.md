@@ -373,13 +373,7 @@ The derivation library is the single canonical implementation of profile members
 
 ## Open spec gaps
 
-| ID        | Description                                                                                                                                                                                                               |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PROFILE-1 | Sub-profiles (`openwop-node-packs-readonly`, `openwop-node-packs-publish`) — deferred candidate. Derivable today from which scenarios pass; will be formalized via a successor RFC if a third-party host needs the split. |
-| PROFILE-3 | RFC 0155 §A rename landed 2026-08-16 (`openwop-discovery-core` canonical, `openwop-core` deprecated alias, both derived together — `profile-discovery-core-alias.test.ts`). Open: registering `profile-claim-floor-not-overstated`; (correction 2026-08-16: `certification-bundle-v2.schema.json` has always carried `aliases`; `--certify` now populates it and keeps `openwop-core` out of `claimedProfiles`); badge artwork/text distinction is a site concern. |
-| PROFILE-2 | ✅ Closed in the v1.0 conformance baseline. Profile-gated scenarios use `describe.runIf(profile)`; the conformance runner exposes `--profile=<name>` to filter.                                                           |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.profiles.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

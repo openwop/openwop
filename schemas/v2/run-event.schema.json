@@ -101,6 +101,7 @@
             "memory.written",
             "model.capability-insufficient",
             "model.capability-substituted",
+            "negotiation.decided",
             "node.cancelled",
             "node.completed",
             "node.dispatched",

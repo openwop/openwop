@@ -545,7 +545,7 @@ components:
 
         Duplicate requests return the cached response with header
 
-        `openwop-Idempotent-Replay: true`.
+        `OpenWOP-Idempotent-Replay: true`.
 
         '
     WorkspacePath:

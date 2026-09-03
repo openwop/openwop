@@ -646,8 +646,7 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 
 ## Open spec gaps
 
-- ~~Capability flag for the prompt resolver seam~~ — **closed by deletion 2026-09-03 (RFC 0168 §C.1):** seams are a versioned conformance profile in v2 and are forbidden from the capability namespace; no `testSeams` flag will be added.
-- ~~Dedicated `capabilities.multiAgent.executionModel.testSeams` block~~ — **closed by deletion 2026-09-03 (RFC 0168 §C.1):** same ruling.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.host-sample-test-seams.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Cross-references
 

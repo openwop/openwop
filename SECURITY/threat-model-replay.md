@@ -97,3 +97,32 @@ An assertion that nothing arrived is worthless unless something could have. The 
 Falsification was demonstrated rather than assumed: with the host's suppression removed, leg 2 fails with the array it should not have received.
 
 Two techniques from that run are worth reusing. **Wall-clock refutes disposition:** the scenario cannot honestly pass in under ~7.5s (grace plus quiet window), so a green at 41ms was arithmetically impossible for a run that happened — where a scenario has a known floor on its own runtime, duration is a free vacuity check needing no instrumentation. And **the requirement records its own disposition** at every exit path, because a file-level `executed-pass` earned by leg 1's control would otherwise certify a MUST NOT that never ran (`conformance-certification.md` gap G8).
+
+
+## 6. Residual risks
+
+Limits the controls in §3 leave standing (RFC 0173 §E.2).
+
+- **Branch re-fires.** `mode: "branch"` is out of scope for suppression by design: a branch re-executes side-effecting nodes live for sequences `>= fromSeq`, so branching past an executed payment performs it again (`spec/v1/replay.md` §"branch mode"; RFC 0140 §D). The v2 effect-seam manifest states the asymmetry as data (`branchReFires: true`) and the suite witnesses it as a **permission**, not a requirement (RFC 0173 §C.1; RFC 0140 G6). A host SHOULD surface this in any operator-facing fork UI (`replay.md`).
+- **Seams outside the manifest.** `GET /v1/host/effect-seams` lists every outbound effect path the node runtime can reach; RFC 0140 G7 ("not enumerable in the spec") is answered by making the host enumerate it (RFC 0173 §C.1). The suite cannot enumerate a host's seams itself, so completeness is **negative-existence**: a seam the host omitted re-fires and no black-box scenario sees it (RFC 0173 §Falsifiability). RFC 0140 G4's three unguarded reference-host paths (`deliverToSubscribers`, `s3Blob.put`, `openSearchSearch`) become manifest rows that fail until guarded.
+- **The manifest is a self-declaration; RFC 0140 R5 is the control.** A host can omit a seam (RFC 0173 adversarial review 2). The check is the R5 audit class — guarding the convenience wrapper instead of the chokepoint: ADR 0533 found `guardedEgressFetch` guarded while `safeFetch` and MCP invocation dialled the underlying fetch directly from six modules. The mitigation is host-side and unenforceable by spec: guard the shared dispatcher and add a source-scan tripwire that greps the host for outbound clients against the manifest (RFC 0140 R5, `open`). A manifest is not a proof.
+- **Layer-2 identity gaps.** v2 keys Layer 2 effect identity on **business identity** — one logical effect id per effect, stable across transport retries, injected as the provider's idempotency key (RFC 0173 §B `idempotency` row; RFC 0150 §B). For a provider with no natural business key the v1 activity recipe is the documented **fallback** (RFC 0173 §B, C6.7), where keying is under-specified (RFC 0173 R4, `open`); which providers have a key is recorded in `spec/v2/ext/provider-idempotency/registry.json` (RFC 0150 G3). The `effect-identity-business-key` witness runs against the fixture provider that rejects a changed key (RFC 0150 G4), never a fallback-keyed one. No deployed host persists a v1 recipe key (`docs/EFFECT-IDENTITY-V1-INVENTORY.md`): nothing is migrated, and nothing is witnessed. Layer 2 retention is ≥ 14 days (RFC 0170 §D.3); a replay reaching a seam after the ledger has aged out has no record to discharge against.
+
+## 7. Verification
+
+v2 scenarios (suite 2.0.0, RFC 0173 §Conformance), with the witness class from its falsifiability table:
+
+- **`effect-seam-manifest`** — gated on `replay`: every manifest row is `guarded: true`; one seam of each `kind` (`http | queue | storage | provider-sdk | webhook-fanout`) is driven through the suite's receiver and no re-fire is observed. **Witnessable-gated.** Manifest completeness (§C.1) is **negative-existence** and has no scenario.
+- **`effect-identity-business-key`** — gated on `idempotency`: the same provider key across two transport retries, via the fixture provider. **Witnessable-gated.**
+- **`security-defaults-table`** — corpus: every `core/` obligation has a surface, an invariant, and a witness class ≠ `unwitnessable`. **Unaided (corpus).**
+- **`relaxation-recorded`** — a bundle with `host.relaxations[]` cannot certify the relaxed profile (RFC 0173 §A.2). **Unaided.**
+- **`threat-model-template`** — this file carries §1–§8. **Unaided (corpus).**
+- **`fork-a-v1-run`** (RFC 0176 §A.5; named by RFC 0173 §E.2) — gated on history or the C.1 seams profile: an era-`2` run forked on the v2 host has a prefix byte-equivalent to the translated parent under RFC 0041 §C, and `run.started` carries the legacy Subject. **Witnessable-gated.**
+
+Carried from v1: `replay-fanout-suppression.test.ts` (§4–§5 — outside every profile floor, `blocked` on an SSRF-guarded host) and `replay-side-effect-suppression.test.ts` (§3.2; in v2 it asserts the manifest, RFC 0173 §C.1). In v2 `sideEffectSuppression: none` is not a value: a host that cannot suppress does not advertise `replay` (RFC 0173 §B, C6.2).
+
+## 8. References
+
+- RFC 0041 §C; RFC 0057 §D; RFC 0140 §B, §D, G4, G6, G7, R5; RFC 0173 §A.2, §B, §C.1, §E.2, §Conformance, §Falsifiability, adversarial review 1–2, R1, R4; RFC 0176 §A.5; RFC 0150 §B, G3, G4; RFC 0170 §D.3.
+- `spec/v2/core/replay.md`; `spec/v2/core/security-defaults.md` (the obligation table); `schemas/v2/effect-seam-manifest.json`; `GET /v1/host/effect-seams`; `spec/v1/replay.md` §"Side-effect suppression in replay", §"Host-initiated fan-out is an external effect"; `spec/v1/idempotency.md`; `spec/v1/webhooks.md`; `docs/EFFECT-IDENTITY-V1-INVENTORY.md`.
+- `SECURITY/invariants.yaml` (`replay-fanout-no-refire`, `replay-llm-cache-key-portable`, `cache-cross-tenant-isolation`); `SECURITY/threat-model-secret-leakage.md`; `scripts/check-threat-model-template.mjs`.

@@ -700,13 +700,7 @@ RFC 0056 annotations are a per-run side-resource, **not** event-log entries — 
 
 ## Open spec gaps
 
-| #   | Gap                                                                                         | Owner       |
-| --- | ------------------------------------------------------------------------------------------- | ----------- |
-| RP1 | Bulk fork API — fork many runs at once for batch validation                                 | future      |
-| RP2 | Branch-with-edited-event API — modify a specific event in-place rather than overlay options | future v1.x |
-| RP3 | ✅ Closed by §"Determinism scoring" for advisory replay reports.                            | v1.x annex  |
-| RP4 | ✅ Closed by §"Retention and garbage collection".                                           | v1.x annex  |
-| RP5 | ✅ Closed by §"Privacy and replay".                                                         | v1.x annex  |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.replay.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -285,7 +285,7 @@ paths:
         '201':
           description: Run accepted.
           headers:
-            openwop-Idempotent-Replay:
+            OpenWOP-Idempotent-Replay:
               schema:
                 type: boolean
               description: Set when the response was served from the idempotency cache.
@@ -416,21 +416,9 @@ paths:
         name: streamMode
         schema:
           type: string
+          pattern: ^(values|(updates|messages|debug)(,(updates|messages|debug))*)$
           default: updates
-          pattern: ^(values|updates|messages|debug)(,(values|updates|messages|debug))*$
-        description: 'Single mode: `values` / `updates` / `messages` / `debug`.
-
-          Mixed mode: comma-separated combination (e.g., `updates,messages`)
-
-          per S4 closure — server emits union-of-filters with per-event
-
-          `event:` field labeling which mode admitted each event.
-
-          `values` MUST NOT combine with other modes (state.snapshot semantics
-
-          need exclusive ownership). See `stream-modes.md`. Default `updates`.
-
-          '
+        description: RFC 0171 §E.1 — the closed set and its comma-separated combinations; `values` never combines.
       - in: query
         name: bufferMs
         schema:
@@ -3082,7 +3070,7 @@ components:
 
         Duplicate requests return the cached response with header
 
-        `openwop-Idempotent-Replay: true`.
+        `OpenWOP-Idempotent-Replay: true`.
 
         '
     OpenWOPVersion:

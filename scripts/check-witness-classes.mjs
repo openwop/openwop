@@ -101,7 +101,12 @@ if (baseline) {
   }
 }
 if (update || !baseline) {
-  writeFileSync(BASE, JSON.stringify({ $comment: 'RFC 0166 §C ratchet baseline — counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering', measured: new Date().toISOString().slice(0, 10), ...current }, null, 2) + '\n');
+  // Other scripts keep their own ratchets in this file (check-rfc-status-coherence
+  // `selfCarried`); an update from here must not drop them — it did once
+  // (2026-09-03) and the coherence check silently ran with 'baseline unset'.
+  const existing = existsSync(BASE) ? JSON.parse(readFileSync(BASE, 'utf8')) : {};
+  const { $comment: _c, measured: _m, ...others } = existing;
+  writeFileSync(BASE, JSON.stringify({ $comment: 'RFC 0166 §C ratchet baseline — counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering', measured: new Date().toISOString().slice(0, 10), ...others, ...current }, null, 2) + '\n');
 }
 
 if (failures.length > 0) {

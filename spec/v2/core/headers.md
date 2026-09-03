@@ -27,9 +27,9 @@ RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header i
 | `Content-Language` | 1 | The BCP-47 locale actually used (equals the response `locale`). |
 | `ETag` | 3 | Optional probe handle for mid-session capability change detection. Deprecated toward v2 (RFC 0165 §C.2). |
 | `Location` | 1 | Canonical URI of the new template. |
+| `OpenWOP-Idempotent-Replay` | 1 | Set when the response was served from the idempotency cache. |
 | `OpenWOP-Version` | 51 | RFC 0172 §A.4 — the contract that produced this response; MUST equal the one used. |
 | `Retry-After` | 1 | Seconds until the active claim is stale-eligible. |
-| `openwop-Idempotent-Replay` | 1 | Set when the response was served from the idempotency cache. |
 
 ## Webhook delivery headers
 

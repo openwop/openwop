@@ -65,6 +65,8 @@ An RFC's `Active → Accepted` flip is backed by implementation evidence from a 
 2. **Tier 2 — steward-affiliated sibling host.** A separate deployment operated by the same maintainer organization — a genuinely distinct codebase and production environment, but not independent change control. Today this is **MyndHyve** (`api.myndhyve.ai`), the sibling host whose advertisements drove the RFC 0078–0092 graduations.
 3. **Tier 3 — independent-organization host.** A host built and operated by an organization with no affiliation to the steward.
 
+A fourth label exists for RFCs whose every normative requirement is a property of the corpus or the suite rather than of a host (the RFC 0167 machinery children — RFC 0169's declaration file, RFC 0174's governance predicates, RFC 0178's registers): **corpus gate — no host tier.** Such an RFC's falsifiability rows are `witnessable — unaided (corpus)` and its evidence is `evidence/corpus-ledger.json`, the per-requirement ledger `scripts/check-spec-coherence.mjs` emits (RFC 0168 §D.1; v2 charter Phase 3 plan §11). The label MUST appear in the `Updated` field in place of a tier; `scripts/check-accepted-predicate.mjs` accepts `(corpus)` rows only from that ledger. It is not a host tier and MUST NOT be cited for any requirement a host can witness.
+
 Rules:
 
 - An `Active → Accepted` flip **MUST name the tier of its evidence** in the RFC's `Updated` field (and the CHANGELOG graduation entry SHOULD repeat it).

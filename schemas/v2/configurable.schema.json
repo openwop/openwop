@@ -29,8 +29,10 @@
           "minimum": 1
         },
         "escalationThreshold": {
-          "type": "integer",
-          "minimum": 0
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0–1 (v1 definition kept)."
         }
       }
     },

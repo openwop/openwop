@@ -121,8 +121,9 @@
                 "enum": [
                   "session",
                   "deployment",
-                  "permanent"
-                ]
+                  "persisted"
+                ],
+                "description": "RFC 0173 §A.2 — session (lost on restart), deployment (set at deploy time), persisted (survives restarts and is auditable)."
               },
               "reason": {
                 "type": "string"

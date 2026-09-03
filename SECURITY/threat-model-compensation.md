@@ -167,3 +167,7 @@ Gap **G17**.
   - `compensation-input-recorded-facts-only` — an `unwind` response that echoes each inverse action's input alongside the recorded forward output it was derived from, so the scenario asserts equality and rejects a host that re-derives.
   None of these is registered against `compensation-behavior.test.ts`, which does not exercise them; each points at `compensation-recovery.test.ts`, which does.
 - **External audit scope** (RFC 0151 §G, unscheduled): double compensation, authority escalation, poisoned inverse mappings, manual override — the rows above are its checklist.
+
+## 8. References
+
+*(Section added 2026-09-03 for the corpus threat-model template — RFC 0173 §E.2 / `scripts/check-threat-model-template.mjs`.)* The RFCs and documents this model cites are those named inline in §1–§7; the canonical registers are `SECURITY/invariants.yaml` (the invariant rows this model owns) and `spec/v1/gaps.json`.

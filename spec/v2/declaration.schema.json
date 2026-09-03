@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/declaration.schema.json",
-  "title": "OpenWOP v2 capability declaration file (RFC 0169 \u00a7B)",
+  "title": "OpenWOP v2 capability declaration file (RFC 0169 §B)",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -218,6 +218,9 @@
                 "enum": [
                   "externally-gated"
                 ]
+              },
+              "facetsFrom": {
+                "type": "string"
               }
             }
           }
@@ -296,7 +299,7 @@
           }
         }
       },
-      "description": "Hand-decided alias rows for registry peer-dependency keys the mechanical rules (host.<family>, openwop.<family>.<facet>, <family>.<facet>) cannot explain (RFC 0177 \u00a7B.2)."
+      "description": "Hand-decided alias rows for registry peer-dependency keys the mechanical rules (host.<family>, openwop.<family>.<facet>, <family>.<facet>) cannot explain (RFC 0177 §B.2)."
     }
   }
 }

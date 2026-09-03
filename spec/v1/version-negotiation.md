@@ -489,13 +489,7 @@ Nothing on the wire changes for SAML-only or SCIM-only hosts.
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                                                                 | Owner       |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| V1  | Schema codemod registry (`WorkflowSchemaMigrator`) — auto-upgrade older runs on read                                                                                                                                                                | future      |
-| V2  | ✅ Concrete `protocolVersion` grammar and comparison semantics — closed by RFC 0149 §C (this doc §"Protocol version grammar", 2026-08-12). Not semver: `<major>.<minor>`, patch belongs to the suite/SDK axes.                                          | closed      |
-| V3  | `minClientVersion` enforcement — currently advisory in spec; may become MUST                                                                                                                                                                        | future v1.x |
-| V4  | Multi-region replication and split-brain version skew (region A on N, region B on N-1)                                                                                                                                                              | future      |
-| V5  | Pinned-version migration tooling — currently the only path is "drain runs holding the deprecated pin". A registered codemod surface (e.g., "rewrite the `version.pinned` event in place when reading") would let `min` bumps proceed without drains | future v1.x |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.version-negotiation.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 
