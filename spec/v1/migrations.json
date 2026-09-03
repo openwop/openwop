@@ -32,7 +32,7 @@
       "v2": {
         "surface": "none"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
@@ -49,7 +49,7 @@
       "v2": {
         "surface": "openwop-discovery-core"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "never-upgraded",
       "requirementIds": [],
       "gapIds": [],
@@ -67,7 +67,7 @@
       "v2": {
         "surface": "none"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
@@ -84,7 +84,7 @@
       "v2": {
         "surface": "none (derived from the profile pair)"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
@@ -100,11 +100,12 @@
       "v2": {
         "surface": "a2a.protocolVersions[] / mcp.protocolVersions[]"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
-      "deprecationId": "openwop.deprecation.a2a-bare-supported"
+      "deprecationId": "openwop.deprecation.a2a-bare-supported",
+      "note": "The codemod refuses a document whose bare supported:true has no protocolVersions[] beside it — it cannot invent versions."
     },
     {
       "id": "openwop.migration.C2.7",
@@ -117,7 +118,7 @@
       "v2": {
         "surface": "replay.modes[]"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
@@ -133,7 +134,7 @@
       "v2": {
         "surface": "the single extension namespace key"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
@@ -245,7 +246,7 @@
     {
       "id": "openwop.migration.C2.9",
       "child": "C2",
-      "kind": "remove",
+      "kind": "behavior",
       "v1": {
         "surface": "Capabilities-Etag header"
       },
@@ -256,7 +257,8 @@
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
-      "deprecationId": "openwop.deprecation.capabilities-etag-header"
+      "deprecationId": "openwop.deprecation.capabilities-etag-header",
+      "note": "A header is emitted, not persisted: clients read the standard ETag (RFC 0165 §C.2 dual emission through the overlap). No codemod."
     },
     {
       "id": "openwop.migration.C5.1",
@@ -268,7 +270,7 @@
       "v2": {
         "surface": "one engineVersion type and grammar"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.engine-version-unify",
       "persistedData": "legacy-stamped",
       "requirementIds": [],
       "gapIds": [],
@@ -278,7 +280,7 @@
     {
       "id": "openwop.migration.C5.2",
       "child": "C5",
-      "kind": "rename",
+      "kind": "behavior",
       "v1": {
         "surface": "channel state-key prefix conventions"
       },
@@ -289,7 +291,8 @@
       "persistedData": "translated",
       "requirementIds": [],
       "gapIds": [],
-      "deprecationId": "openwop.deprecation.channel-prefix-conventions"
+      "deprecationId": "openwop.deprecation.channel-prefix-conventions",
+      "note": "A prose convention; the C.4 typed channels and the C.9 read-time adapter are the witness. No codemod."
     },
     {
       "id": "openwop.migration.C1.1",
@@ -457,6 +460,143 @@
       "gapIds": [],
       "deprecationId": null,
       "note": "The per-store disposition table is the C.9 child's deliverable; this row exists so the register has one place that says persisted data is in scope."
+    },
+    {
+      "id": "openwop.migration.C2.10",
+      "child": "C2",
+      "kind": "add",
+      "v1": {
+        "surface": "root profiles[] (undeclared; emitted by one host)",
+        "path": "/.well-known/openwop#/profiles"
+      },
+      "v2": {
+        "surface": "none — schema-invalid under the closed root; profiles are derived (profiles.md §Why this is not a wire field)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "A host emitting it fails v2 schema validation; MyndHyve drops it in its Phase 4 leg."
+    },
+    {
+      "id": "openwop.migration.C5.3",
+      "child": "C5",
+      "kind": "add",
+      "v1": {
+        "surface": "none"
+      },
+      "v2": {
+        "surface": "root preferredVersion",
+        "path": "/.well-known/openwop#/preferredVersion"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "MUST be a member of protocolVersions[]; a v1.x additive RFC lands it before the cut."
+    },
+    {
+      "id": "openwop.migration.C5.4",
+      "child": "C5",
+      "kind": "add",
+      "v1": {
+        "surface": "none"
+      },
+      "v2": {
+        "surface": "OpenWOP-Version request/response header; protocol_version_unsupported, protocol_version_mismatch, client_version_unsupported"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "Error codes registered in C.4 errors.json."
+    },
+    {
+      "id": "openwop.migration.C5.5",
+      "child": "C5",
+      "kind": "behavior",
+      "v1": {
+        "surface": "/v1/<op> path keys"
+      },
+      "v2": {
+        "surface": "unversioned /<op> path keys for v2 (v1 keys retained through the overlap)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.v1-path-prefix",
+      "note": "No persisted artifact carries a path; a v2 SDK reads the v2 path manifest and the v1 keys stay through the overlap. An obligation on the host, not a rewrite — no codemod (RFC 0167 §D.4)."
+    },
+    {
+      "id": "openwop.migration.C5.6",
+      "child": "C5",
+      "kind": "behavior",
+      "v1": {
+        "surface": "400 for paths under unversioned roots (rest-endpoints.md §Versioning bullet 3)"
+      },
+      "v2": {
+        "surface": "unversioned roots are the v2 surface"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "A v1 MUST inverted in v2 only; retracted, not silently edited."
+    },
+    {
+      "id": "openwop.migration.C5.7",
+      "child": "C5",
+      "kind": "add",
+      "v1": {
+        "surface": "$id base https://openwop.dev/spec/v1/"
+      },
+      "v2": {
+        "surface": "$id base https://openwop.dev/spec/v2/ on new files under schemas/v2/"
+      },
+      "codemod": null,
+      "persistedData": "never-upgraded",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "v1 $ids are immutable identifiers; the v1 tree is served read-only."
+    },
+    {
+      "id": "openwop.migration.C5.8",
+      "child": "C5",
+      "kind": "require",
+      "v1": {
+        "surface": "minClientVersion advisory"
+      },
+      "v2": {
+        "surface": "minClientVersion MUST (426 client_version_unsupported)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C5.9",
+      "child": "C5",
+      "kind": "behavior",
+      "v1": {
+        "surface": "OpenAPI/AsyncAPI info.version hand-maintained"
+      },
+      "v2": {
+        "surface": "generated from the corpus tag"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "A generator in the corpus gate, not a consumer artifact rewrite — no codemod (RFC 0167 §D.4)."
     }
   ]
 }

@@ -9361,6 +9361,142 @@
           "token": "G5"
         }
       ]
+    },
+    {
+      "id": "openwop.gap.0169.1",
+      "rfc": "0169",
+      "local": "G1",
+      "section": "Unresolved Q1",
+      "surface": "The `extensions.<org>.<name>` org form (short vs reverse-DNS).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0169.2",
+      "rfc": "0169",
+      "local": "G2",
+      "section": "§B.3",
+      "surface": "`host-capabilities.md:2186` says a host MUST NOT advertise `host.workspace`; `agent-workspace.md:27` and `capabilities.schema.json:2979` make advertising it the gate for an Accepted surface (RFC 0059). A v1.x prose contradiction, out of this RFC's v2 scope.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0169.3",
+      "rfc": "0169",
+      "local": "G3",
+      "section": "§B.3",
+      "surface": "`imageGeneration` / `videoGeneration` are prose-only under `aiProviders` (RFC 0105 G5); the gap's premise (`additionalProperties: false` on `aiProviders`) has drifted — the block is open at `capabilities.schema.json:1536`. Declared facets or deleted?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0169.4",
+      "rfc": "0169",
+      "local": "G4",
+      "section": "§C.5",
+      "surface": "The adoption-axis triage of RFCs 0112–0116 depends on Phase 4 bundle evidence that does not exist yet.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0169.5",
+      "rfc": "0169",
+      "local": "G5",
+      "section": "§C.1",
+      "surface": "`agent-platform-aggregate-evidence.test.ts:37` reads a root `profiles[]` that no schema declares (the RFC 0085 annex claim). The v2 suite reads the generated profile registry; the v1 scenario keeps reading the field until the v1 suite is archived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0172.1",
+      "rfc": "0172",
+      "local": "G1",
+      "section": "§A.3",
+      "surface": "The header-less default to `preferredVersion` has no v1 precedent on the protocol surface (the A2A lane has one); witnessed only by the dual-stack scenario on a host advertising two majors. Carried from RFC 0167 G1.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0172-v2-versioning-and-release.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0172.2",
+      "rfc": "0172",
+      "local": "G2",
+      "section": "§C.1",
+      "surface": "MAINTAINERS §\"Major bump\" step 6 edits `spec/v1/auth.md`'s status legend at the cut while RFC 0167 says the v1 tree is read-only from the cut.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0172-v2-versioning-and-release.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0172.3",
+      "rfc": "0172",
+      "local": "G3",
+      "section": "Unresolved Q1",
+      "surface": "Whether `OpenWOP-Version` on requests accepts `major.minor`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0172-v2-versioning-and-release.gaps.md",
+          "token": "G3"
+        }
+      ]
     }
   ]
 }

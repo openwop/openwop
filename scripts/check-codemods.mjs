@@ -56,7 +56,8 @@ for (const id of ids) {
       if (!threw) failures.push(`${id}: refused-input.json was accepted — the codemod guessed instead of refusing`);
     }
     // self-sabotage: corrupt the expectation and prove the comparator sees it
-    const corrupted = structuredClone(expected); corrupted.__sabotage__ = true;
+    // an array ignores non-index keys under JSON.stringify — sabotage by shape, not by key
+    const corrupted = Array.isArray(expected) ? [...structuredClone(expected), { __sabotage__: true }] : { ...structuredClone(expected), __sabotage__: true };
     if (stable(out) === stable(corrupted)) failures.push(`${id}: comparator did not see a sabotaged expectation — the harness cannot witness`); else sabotageCaught++;
     if (!existsSync(join(base, 'README.md'))) failures.push(`${id}: README.md missing`);
   } catch (e) { failures.push(`${id}: ${e.message}`); }

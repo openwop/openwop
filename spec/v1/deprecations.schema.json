@@ -25,7 +25,7 @@
         "id": { "type": "string", "pattern": "^openwop\\.deprecation\\.[a-z0-9]+(-[a-z0-9]+)*$" },
         "status": { "type": "string", "enum": ["deprecated", "proposed"] },
         "surface": { "type": "string", "minLength": 1, "description": "The wire-visible name of the thing: a field path, a header, a profile id, a schema file, a prose convention." },
-        "kind": { "type": "string", "enum": ["discovery-shape", "discovery-field", "profile-id", "header", "schema-field", "prose-convention", "artifact", "error-code"] },
+        "kind": { "type": "string", "enum": ["discovery-shape", "discovery-field", "profile-id", "header", "schema-field", "prose-convention", "artifact", "error-code", "path"], "description": "`path` (RFC 0172): an operation path-key surface." },
         "deprecatedIn": { "type": ["string", "null"], "description": "Corpus or suite version, or the RFC that deprecated it. null when status is proposed." },
         "authority": { "type": "string", "minLength": 1, "description": "The RFC section or spec annotation that made (or, for proposed, would make) the deprecation." },
         "removeIn": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$", "description": "Protocol major.minor at which the surface is removed. v1.x deprecations remove no earlier than 2.0 (COMPATIBILITY.md §7)." },

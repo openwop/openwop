@@ -3,33 +3,179 @@
   "version": 1,
   "updated": "2026-09-03",
   "detectors": [
-    { "alias": "capabilities wrapper object", "file": "spec/v1/capabilities.md", "token": "deprecated legacy shape", "deprecation": "openwop.deprecation.capabilities-wrapper" },
-    { "alias": "host.* dotted mirror keys", "file": "RFCS/0073-capability-document-root-layout.md", "token": "deprecated mirror", "deprecation": "openwop.deprecation.host-dotted-mirror" },
-    { "alias": "openwop-core profile id", "file": "spec/v1/profiles.md", "token": "openwop-core", "deprecation": "openwop.deprecation.profile-openwop-core-alias" },
-    { "alias": "channel state-key prefix conventions", "file": "spec/v1/channels-and-reducers.md", "token": "prefix", "deprecation": "openwop.deprecation.channel-prefix-conventions" },
-    { "alias": "a2a bare supported:true", "file": "spec/v1/a2a-integration.md", "token": "supported: true", "deprecation": "openwop.deprecation.a2a-bare-supported" },
-    { "alias": "mcp bare supported:true", "file": "spec/v1/mcp-integration.md", "token": "supported: true", "deprecation": "openwop.deprecation.mcp-bare-supported" },
-    { "alias": "config.outputArtifactType", "file": "schemas/workflow-definition.schema.json", "token": "outputArtifactType", "deprecation": "openwop.deprecation.config-output-artifact-type" },
-    { "alias": "config.chatCard", "file": "schemas/workflow-definition.schema.json", "token": "chatCard", "deprecation": "openwop.deprecation.config-chat-card" },
-    { "alias": "capabilities.auth.subjectLinking flag", "file": "schemas/capabilities.schema.json", "token": "subjectLinking", "deprecation": "openwop.deprecation.auth-subject-linking-flag" },
-    { "alias": "certification bundle v1", "file": "schemas/conformance-certification-bundle.schema.json", "token": "\"const\": \"1\"", "deprecation": "openwop.deprecation.certification-bundle-v1" },
-    { "alias": "Capabilities-Etag header", "file": "spec/v1/capabilities-change-detection.md", "token": "Capabilities-Etag", "deprecation": "openwop.deprecation.capabilities-etag-header" },
-    { "alias": "contractProvenance root block", "file": "schemas/capabilities.schema.json", "token": "contractProvenance", "deprecation": "openwop.deprecation.contract-provenance" },
-    { "alias": "X-openwop-* webhook header family", "file": "spec/v1/webhooks.md", "token": "X-openwop-Signature", "deprecation": "openwop.deprecation.webhook-x-header-family" },
-    { "alias": "409 interrupt_already_resolved beside 410 interrupt_gone", "file": "spec/v1/interrupt-profiles.md", "token": "interrupt_already_resolved", "deprecation": "openwop.deprecation.interrupt-token-409-410-overlap" },
-    { "alias": "engineVersion integer root / string event split", "file": "spec/v1/version-negotiation.md", "token": "engineVersion` axis is split", "deprecation": "openwop.deprecation.engine-version-type-split" },
-    { "alias": "since poll cursor", "file": "spec/v1/version-negotiation.md", "token": "hosts MAY also accept `since`", "deprecation": "openwop.deprecation.poll-cursor-since" },
-    { "alias": "X-Dedup request header", "file": "spec/v1/rest-endpoints.md", "token": "X-Dedup", "deprecation": "openwop.deprecation.custom-request-headers-x-family" },
-    { "alias": "X-Force-Engine-Version request header", "file": "spec/v1/version-negotiation.md", "token": "X-Force-Engine-Version", "deprecation": "openwop.deprecation.custom-request-headers-x-family" },
-    { "alias": "replay.fork boolean", "file": "schemas/capabilities.schema.json", "token": "Legacy spelling retained", "deprecation": "openwop.deprecation.replay-fork-boolean" },
-    { "alias": "debug-bundle seq alias", "file": "schemas/debug-bundle.schema.json", "token": "Legacy alias for `sequence`", "deprecation": "openwop.deprecation.debug-bundle-seq" },
-    { "alias": "credentialProvider node config key", "file": "spec/v1/node-packs.md", "token": "credentialProvider", "deprecation": "openwop.deprecation.credential-provider-key" },
-    { "alias": "publicKeyRef manifest signing field", "file": "schemas/registry-version-manifest.schema.json", "token": "publicKeyRef", "deprecation": "openwop.deprecation.manifest-public-key-ref" },
-    { "alias": "approvalRequested legacy payload", "file": "schemas/run-event-payloads.schema.json", "token": "approvalRequested", "deprecation": "openwop.deprecation.legacy-interrupt-payloads" },
-    { "alias": "clarificationRequested legacy payload", "file": "schemas/run-event-payloads.schema.json", "token": "clarificationRequested", "deprecation": "openwop.deprecation.legacy-interrupt-payloads" },
-    { "alias": "a2a-0.3-legacy profile id", "file": "spec/v1/a2a-integration.md", "token": "a2a-0.3-legacy", "deprecation": "openwop.deprecation.a2a-0-3-legacy-profile" },
-    { "alias": "mcp-2025-06-18-legacy profile id", "file": "spec/v1/mcp-integration.md", "token": "mcp-2025-06-18-legacy", "deprecation": "openwop.deprecation.mcp-2025-06-18-legacy-profile" },
-    { "alias": "openwop-Webhook-Signature SDK header (never in spec)", "file": "RFCS/0165-v2-preparation-wire-shapes.md", "token": "openwop-Webhook-Signature", "deprecation": "openwop.deprecation.sdk-webhook-signature-header" },
-    { "alias": "RFC 0144 extension-class host.* families declared in neither spelling", "file": "spec/v1/capability-declaration-classes.json", "token": "\"class\": \"extension\"", "deprecation": "openwop.deprecation.undeclared-host-extension-families" }
+    {
+      "alias": "capabilities wrapper object",
+      "file": "spec/v1/capabilities.md",
+      "token": "deprecated legacy shape",
+      "deprecation": "openwop.deprecation.capabilities-wrapper"
+    },
+    {
+      "alias": "host.* dotted mirror keys",
+      "file": "RFCS/0073-capability-document-root-layout.md",
+      "token": "deprecated mirror",
+      "deprecation": "openwop.deprecation.host-dotted-mirror"
+    },
+    {
+      "alias": "openwop-core profile id",
+      "file": "spec/v1/profiles.md",
+      "token": "openwop-core",
+      "deprecation": "openwop.deprecation.profile-openwop-core-alias"
+    },
+    {
+      "alias": "channel state-key prefix conventions",
+      "file": "spec/v1/channels-and-reducers.md",
+      "token": "prefix",
+      "deprecation": "openwop.deprecation.channel-prefix-conventions"
+    },
+    {
+      "alias": "a2a bare supported:true",
+      "file": "spec/v1/a2a-integration.md",
+      "token": "supported: true",
+      "deprecation": "openwop.deprecation.a2a-bare-supported"
+    },
+    {
+      "alias": "mcp bare supported:true",
+      "file": "spec/v1/mcp-integration.md",
+      "token": "supported: true",
+      "deprecation": "openwop.deprecation.mcp-bare-supported"
+    },
+    {
+      "alias": "config.outputArtifactType",
+      "file": "schemas/workflow-definition.schema.json",
+      "token": "outputArtifactType",
+      "deprecation": "openwop.deprecation.config-output-artifact-type"
+    },
+    {
+      "alias": "config.chatCard",
+      "file": "schemas/workflow-definition.schema.json",
+      "token": "chatCard",
+      "deprecation": "openwop.deprecation.config-chat-card"
+    },
+    {
+      "alias": "capabilities.auth.subjectLinking flag",
+      "file": "schemas/capabilities.schema.json",
+      "token": "subjectLinking",
+      "deprecation": "openwop.deprecation.auth-subject-linking-flag"
+    },
+    {
+      "alias": "certification bundle v1",
+      "file": "schemas/conformance-certification-bundle.schema.json",
+      "token": "\"const\": \"1\"",
+      "deprecation": "openwop.deprecation.certification-bundle-v1"
+    },
+    {
+      "alias": "Capabilities-Etag header",
+      "file": "spec/v1/capabilities-change-detection.md",
+      "token": "Capabilities-Etag",
+      "deprecation": "openwop.deprecation.capabilities-etag-header"
+    },
+    {
+      "alias": "contractProvenance root block",
+      "file": "schemas/capabilities.schema.json",
+      "token": "contractProvenance",
+      "deprecation": "openwop.deprecation.contract-provenance"
+    },
+    {
+      "alias": "X-openwop-* webhook header family",
+      "file": "spec/v1/webhooks.md",
+      "token": "X-openwop-Signature",
+      "deprecation": "openwop.deprecation.webhook-x-header-family"
+    },
+    {
+      "alias": "409 interrupt_already_resolved beside 410 interrupt_gone",
+      "file": "spec/v1/interrupt-profiles.md",
+      "token": "interrupt_already_resolved",
+      "deprecation": "openwop.deprecation.interrupt-token-409-410-overlap"
+    },
+    {
+      "alias": "engineVersion integer root / string event split",
+      "file": "spec/v1/version-negotiation.md",
+      "token": "engineVersion` axis is split",
+      "deprecation": "openwop.deprecation.engine-version-type-split"
+    },
+    {
+      "alias": "since poll cursor",
+      "file": "spec/v1/version-negotiation.md",
+      "token": "hosts MAY also accept `since`",
+      "deprecation": "openwop.deprecation.poll-cursor-since"
+    },
+    {
+      "alias": "X-Dedup request header",
+      "file": "spec/v1/rest-endpoints.md",
+      "token": "X-Dedup",
+      "deprecation": "openwop.deprecation.custom-request-headers-x-family"
+    },
+    {
+      "alias": "X-Force-Engine-Version request header",
+      "file": "spec/v1/version-negotiation.md",
+      "token": "X-Force-Engine-Version",
+      "deprecation": "openwop.deprecation.custom-request-headers-x-family"
+    },
+    {
+      "alias": "replay.fork boolean",
+      "file": "schemas/capabilities.schema.json",
+      "token": "Legacy spelling retained",
+      "deprecation": "openwop.deprecation.replay-fork-boolean"
+    },
+    {
+      "alias": "debug-bundle seq alias",
+      "file": "schemas/debug-bundle.schema.json",
+      "token": "Legacy alias for `sequence`",
+      "deprecation": "openwop.deprecation.debug-bundle-seq"
+    },
+    {
+      "alias": "credentialProvider node config key",
+      "file": "spec/v1/node-packs.md",
+      "token": "credentialProvider",
+      "deprecation": "openwop.deprecation.credential-provider-key"
+    },
+    {
+      "alias": "publicKeyRef manifest signing field",
+      "file": "schemas/registry-version-manifest.schema.json",
+      "token": "publicKeyRef",
+      "deprecation": "openwop.deprecation.manifest-public-key-ref"
+    },
+    {
+      "alias": "approvalRequested legacy payload",
+      "file": "schemas/run-event-payloads.schema.json",
+      "token": "approvalRequested",
+      "deprecation": "openwop.deprecation.legacy-interrupt-payloads"
+    },
+    {
+      "alias": "clarificationRequested legacy payload",
+      "file": "schemas/run-event-payloads.schema.json",
+      "token": "clarificationRequested",
+      "deprecation": "openwop.deprecation.legacy-interrupt-payloads"
+    },
+    {
+      "alias": "a2a-0.3-legacy profile id",
+      "file": "spec/v1/a2a-integration.md",
+      "token": "a2a-0.3-legacy",
+      "deprecation": "openwop.deprecation.a2a-0-3-legacy-profile"
+    },
+    {
+      "alias": "mcp-2025-06-18-legacy profile id",
+      "file": "spec/v1/mcp-integration.md",
+      "token": "mcp-2025-06-18-legacy",
+      "deprecation": "openwop.deprecation.mcp-2025-06-18-legacy-profile"
+    },
+    {
+      "alias": "openwop-Webhook-Signature SDK header (never in spec)",
+      "file": "RFCS/0165-v2-preparation-wire-shapes.md",
+      "token": "openwop-Webhook-Signature",
+      "deprecation": "openwop.deprecation.sdk-webhook-signature-header"
+    },
+    {
+      "alias": "RFC 0144 extension-class host.* families declared in neither spelling",
+      "file": "spec/v1/capability-declaration-classes.json",
+      "token": "\"class\": \"extension\"",
+      "deprecation": "openwop.deprecation.undeclared-host-extension-families"
+    },
+    {
+      "alias": "/v1/ path-key prefix (the v1 wire surface; removed with the v1 tree)",
+      "file": "spec/v1/rest-endpoints.md",
+      "token": "All paths under `/v1/` are versioned",
+      "deprecation": "openwop.deprecation.v1-path-prefix"
+    }
   ]
 }

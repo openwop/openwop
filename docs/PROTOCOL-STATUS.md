@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 473 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 164 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 166 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 158 |
-| Active | 5 |
+| Active | 7 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -201,6 +201,8 @@
 | RFC 0165 | Three additive v1.x shapes that turn three v2 cuts into removals: a root `protocolVersions[]` array beside the scalar `protocolVersion`; an optional `owner.subject` record (issuer-scoped, lane-typed, with an actor chain) on `RunSnapshot` and the `run.started` echo, with the legacy-subject and fork-copy rules; and dual emission of `OpenWOP-*` webhook headers and a standard `ETag` on the discovery document beside their v1 forms. | Accepted |
 | RFC 0166 | Three process shapes the v2 charter's C.7 and C.11 need in place before the v2 umbrella: a closed disposition vocabulary for every gap and risk register row, machine-checked; a global `spec/v1/gaps.json` with one id namespace; a `witness` class on every `SECURITY/invariants.yaml` entry and `spec/v1/extensions.json` record; `Rejected` as a reachable RFC status; and the RFC 0147 high-risk cohort published as a retrospective queue. | Accepted |
 | RFC 0167 | OpenWOP v2 - the umbrella ("program") RFC for the second major: six axioms, an eleven-child breaking-change program (C.1-C.11), every version axis and alias in the corpus enumerated with a disposition, a migration register as data, codemods with negative controls, the per-consumer migration plan, and the cut gates | Active |
+| RFC 0169 | v2 discovery and capabilities: every family is one record type `{status, since, until?, witness, …facets}`; the discovery root is closed; the four unschema'd registries collapse into one declaration file that generates the schema, the pack peer-dependency identifiers, and the spec anchors; profiles are derived predicates in one generated registry with a two-axis maturity and an `externally-gated` disposition; the wrapper, the dotted mirror, `contractProvenance`, `Capabilities-Etag`, `auth.subjectLinking`, the bare `supported: true` in A2A/MCP, `replay.fork`, and the `openwop-core` alias are removed | Active |
+| RFC 0172 | v2 versioning and release: protocol-major negotiation by `protocolVersions[]` + root `preferredVersion` + the `OpenWOP-Version` request header on a bare origin with unversioned v2 path keys (no `/v2/` path space); every one of the 18 version axes in RFC 0167 sectionE.1 retired, unified, or made first-class with a schema-enforced grammar; `schemas/v2/` with `$id` under `/spec/v2/`; one release identity where the corpus tag is the only release event and every human-surface version is generated | Active |
 
 ## SDK Helper Coverage
 
@@ -223,7 +225,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 7 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0169, RFC 0172) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

@@ -1,0 +1,56 @@
+{
+  "protocolVersion": "1.1",
+  "supportedEnvelopes": [
+    "error"
+  ],
+  "schemaVersions": {
+    "error": 1
+  },
+  "limits": {
+    "maxNodesPerWorkflow": 200
+  },
+  "implementation": {
+    "name": "sample",
+    "version": "1.0.0",
+    "vendor": "Acme"
+  },
+  "profiles": [
+    "openwop-core",
+    "openwop-fixtures"
+  ],
+  "contractProvenance": {
+    "suiteVersion": "1.159.0",
+    "corpusCommit": "1be7b47172478567f8690acb23d570d135bf8a40"
+  },
+  "auth": {
+    "profiles": [
+      "openwop-auth-saml"
+    ],
+    "subjectLinking": false
+  },
+  "a2a": {
+    "supported": true,
+    "protocolVersions": [
+      "1.0"
+    ],
+    "preferredVersion": "1.0"
+  },
+  "replay": {
+    "fork": true
+  },
+  "forms": {
+    "contentPacks": true
+  },
+  "host.forms": {
+    "contentPacks": true
+  },
+  "host.kanban": {
+    "boards": true
+  },
+  "mcp": {
+    "supported": false
+  },
+  "host.kvStorage": {
+    "supported": true
+  }
+}
