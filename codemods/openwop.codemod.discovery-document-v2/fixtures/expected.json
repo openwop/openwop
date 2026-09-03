@@ -27,7 +27,10 @@
     "protocolVersions": [
       "1.0"
     ],
-    "preferredVersion": "1.0"
+    "preferredVersion": "1.0",
+    "profiles": [
+      "a2a-1.0"
+    ]
   },
   "replay": {
     "modes": [

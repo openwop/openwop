@@ -616,6 +616,68 @@
           "token": "ai.credentialRef"
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.security-opt-in-flags",
+      "status": "proposed",
+      "surface": "discovery flags that gate a security-load-bearing MUST: the fourteen `auth.*` gates, `replay.sideEffectSuppression`, `webhooks.durable`, `interrupt.approverRouting` (as a gate), `sandbox.supported` (as a gate)",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0173 §A.1 (an obligation of the surface, never a discovery flag; RFC 0164 §22's ruling applied corpus-wide)",
+      "removeIn": "2.0",
+      "replacement": "the obligation binds when the surface is advertised; `auth.lanes[]`, `replay`, `webhooks`, `interrupt.refKinds[]`, `sandbox.isolationModel` stay as facets; relaxations are operator settings recorded in bundle v3 `host.relaxations[]`",
+      "codemod": null,
+      "note": "Proposed: each flag is a v1 advertisement an RFC minted; v2 removes the gating semantics with the flag.",
+      "sources": [
+        {
+          "file": "spec/v1/replay.md",
+          "token": "sideEffectSuppression"
+        },
+        {
+          "file": "spec/v1/webhooks.md",
+          "token": "webhooks.durable"
+        },
+        {
+          "file": "schemas/capabilities.schema.json",
+          "token": "approverRouting"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.supported-transports-field",
+      "status": "proposed",
+      "surface": "`supportedTransports[]` at the discovery root (`rest | mcp | a2a | grpc`)",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0175 §B.1 (REST is the wire; A2A and MCP are compositions with first-class facets; gRPC is demoted)",
+      "removeIn": "2.0",
+      "replacement": "none; `a2a.*` and `mcp.*` facets",
+      "codemod": "openwop.codemod.discovery-document-v2",
+      "note": "Proposed: nothing in the corpus reads the `mcp` or `a2a` members (profiles.md reads only `rest`).",
+      "sources": [
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "supportedTransports"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.grpc-transport-core",
+      "status": "proposed",
+      "surface": "`capabilities.grpc` block and `grpc-transport.md` as a core Stable document with RFC 2119 MUSTs",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0175 §A.1 (demoted to `spec/v2/ext/grpc-transport/`, `unwitnessable`, `adoption: none`; the door back into core is named)",
+      "removeIn": "2.0",
+      "replacement": "`spec/v2/ext/grpc-transport/` (documented, not advertised)",
+      "codemod": "openwop.codemod.discovery-document-v2",
+      "note": "Proposed: the suite ships no gRPC client, no host advertises the block, and the proto defers its own messages to a v1.x that never landed.",
+      "sources": [
+        {
+          "file": "spec/v1/grpc-transport.md",
+          "token": "REST + SSE remains the REQUIRED wire surface"
+        }
+      ]
     }
   ]
 }

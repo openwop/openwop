@@ -31,9 +31,14 @@
   "a2a": {
     "supported": true,
     "protocolVersions": [
+      "0.3",
       "1.0"
     ],
-    "preferredVersion": "1.0"
+    "preferredVersion": "1.0",
+    "profiles": [
+      "a2a-0.3-legacy",
+      "a2a-1.0"
+    ]
   },
   "replay": {
     "fork": true
@@ -52,5 +57,15 @@
   },
   "host.kvStorage": {
     "supported": true
+  },
+  "supportedTransports": [
+    "rest",
+    "a2a",
+    "grpc"
+  ],
+  "grpc": {
+    "supported": true,
+    "service": "openwop.v1.Engine",
+    "tls": "required"
   }
 }

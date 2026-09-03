@@ -199,7 +199,7 @@ REST + SSE remains exposed at the host's HTTP endpoint regardless of whether gRP
 
 ## Conformance
 
-The `capabilities.grpc` block described in §"Field semantics" above is added to `capabilities.schema.json` by RFC 0094 (in flight), which also adds the capability-gated scenario `conformance/src/scenarios/grpc-transport.test.ts`. Until RFC 0094 lands, the schema does not yet carry the block. Hosts that advertise `capabilities.grpc.supported: true` are expected to pass that scenario, which verifies:
+The `capabilities.grpc` block described in §"Field semantics" above was added to `capabilities.schema.json` by RFC 0094 (Accepted; this sentence said "in flight" until RFC 0175 corrected it on 2026-09-03), which also added the capability-gated scenario `conformance/src/scenarios/grpc-transport.test.ts`. Until RFC 0094 lands, the schema does not yet carry the block. Hosts that advertise `capabilities.grpc.supported: true` are expected to pass that scenario, which verifies:
 
 1. `GetCapabilities` returns a payload byte-equivalent to the REST `/.well-known/openwop` response (after Protobuf↔JSON normalization).
 2. `CreateRun` + `GetRun` + `StreamRunEvents` round-trip a workflow run with the same event sequence the REST surface produces.
