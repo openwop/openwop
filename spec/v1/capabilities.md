@@ -433,7 +433,7 @@ Multi-Agent Shift capability block (v1+). Hosts that implement any multi-agent s
 ```json
 "agents": {
   "supported": true,
-  "profile": "wop-agents-full",
+  "profile": "openwop-agents-full",
   "modelClasses": ["reasoning", "tool-using", "chat"],
   "orchestratorPattern": "delegate.smart",
   "memoryBackends": ["long-term"],

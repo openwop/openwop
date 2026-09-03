@@ -1,0 +1,462 @@
+{
+  "$schema": "./migrations.schema.json",
+  "version": 1,
+  "updated": "2026-09-03",
+  "rows": [
+    {
+      "id": "openwop.migration.C2.1",
+      "child": "C2",
+      "kind": "remove",
+      "v1": {
+        "surface": "capabilities wrapper object",
+        "path": "/.well-known/openwop#/capabilities"
+      },
+      "v2": {
+        "surface": "none"
+      },
+      "codemod": "openwop.codemod.capabilities-wrapper-removal",
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.capabilities-wrapper",
+      "note": "The one codemod landed with the umbrella (RFC 0167 §D.3): strips the wrapper after asserting it mirrors the root."
+    },
+    {
+      "id": "openwop.migration.C2.2",
+      "child": "C2",
+      "kind": "delete-alias",
+      "v1": {
+        "surface": "host.<family> dotted mirror keys",
+        "path": "/.well-known/openwop#/host.*"
+      },
+      "v2": {
+        "surface": "none"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.host-dotted-mirror"
+    },
+    {
+      "id": "openwop.migration.C2.3",
+      "child": "C2",
+      "kind": "delete-alias",
+      "v1": {
+        "surface": "openwop-core profile id",
+        "path": "profiles[]"
+      },
+      "v2": {
+        "surface": "openwop-discovery-core"
+      },
+      "codemod": null,
+      "persistedData": "never-upgraded",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.profile-openwop-core-alias",
+      "note": "Published v1 bundles that claim the alias remain valid v1 evidence."
+    },
+    {
+      "id": "openwop.migration.C2.4",
+      "child": "C2",
+      "kind": "remove",
+      "v1": {
+        "surface": "contractProvenance",
+        "path": "/.well-known/openwop#/contractProvenance"
+      },
+      "v2": {
+        "surface": "none"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.contract-provenance"
+    },
+    {
+      "id": "openwop.migration.C2.5",
+      "child": "C2",
+      "kind": "remove",
+      "v1": {
+        "surface": "capabilities.auth.subjectLinking",
+        "path": "/.well-known/openwop#/auth/subjectLinking"
+      },
+      "v2": {
+        "surface": "none (derived from the profile pair)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.auth-subject-linking-flag"
+    },
+    {
+      "id": "openwop.migration.C2.6",
+      "child": "C2",
+      "kind": "rename",
+      "v1": {
+        "surface": "a2a.supported / mcp.supported bare booleans"
+      },
+      "v2": {
+        "surface": "a2a.protocolVersions[] / mcp.protocolVersions[]"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.a2a-bare-supported"
+    },
+    {
+      "id": "openwop.migration.C2.7",
+      "child": "C2",
+      "kind": "rename",
+      "v1": {
+        "surface": "replay.fork boolean",
+        "path": "/.well-known/openwop#/replay/fork"
+      },
+      "v2": {
+        "surface": "replay.modes[]"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.replay-fork-boolean"
+    },
+    {
+      "id": "openwop.migration.C2.8",
+      "child": "C2",
+      "kind": "rename",
+      "v1": {
+        "surface": "the 11 RFC 0144 extension-class host.* families"
+      },
+      "v2": {
+        "surface": "the single extension namespace key"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.undeclared-host-extension-families"
+    },
+    {
+      "id": "openwop.migration.C4.1",
+      "child": "C4",
+      "kind": "rename",
+      "v1": {
+        "surface": "X-openwop-* webhook headers"
+      },
+      "v2": {
+        "surface": "OpenWOP-* webhook headers"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.webhook-x-header-family",
+      "note": "Dual-emitted through the overlap (RFC 0165 §C.1); a v2 receiver accepts a v1-signed delivery."
+    },
+    {
+      "id": "openwop.migration.C4.2",
+      "child": "C4",
+      "kind": "rename",
+      "v1": {
+        "surface": "X-Dedup, X-Force-Engine-Version, X-Pack-Sha, X-Pack-Signing-Method"
+      },
+      "v2": {
+        "surface": "OpenWOP-* request headers"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.custom-request-headers-x-family"
+    },
+    {
+      "id": "openwop.migration.C4.3",
+      "child": "C4",
+      "kind": "rename",
+      "v1": {
+        "surface": "run event `type` vocabulary (117 members, mixed case)",
+        "path": "spec/v1/event-codemap.json"
+      },
+      "v2": {
+        "surface": "domain.verb-ed closed enum"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [
+        "openwop.gap.0165.7"
+      ],
+      "deprecationId": "openwop.deprecation.legacy-interrupt-payloads",
+      "note": "Event logs are read through the declared codemap adapter with sequence space preserved (C.9); the codemod is generated from event-codemap.json."
+    },
+    {
+      "id": "openwop.migration.C4.4",
+      "child": "C4",
+      "kind": "remove",
+      "v1": {
+        "surface": "approvalRequested / clarificationRequested payload definitions; free-text feedback"
+      },
+      "v2": {
+        "surface": "interrupt.requested {kind}; refineFeedback"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.legacy-interrupt-payloads"
+    },
+    {
+      "id": "openwop.migration.C4.5",
+      "child": "C4",
+      "kind": "rename",
+      "v1": {
+        "surface": "`since` poll cursor; lastSequence semantics that cannot express the empty prefix"
+      },
+      "v2": {
+        "surface": "the v2 cursor (afterSequence, omission = from the first event)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [
+        "openwop.gap.0165.7"
+      ],
+      "deprecationId": "openwop.deprecation.poll-cursor-since"
+    },
+    {
+      "id": "openwop.migration.C4.6",
+      "child": "C4",
+      "kind": "unify",
+      "v1": {
+        "surface": "409 interrupt_already_resolved beside 410 interrupt_gone"
+      },
+      "v2": {
+        "surface": "one code per state in errors.json"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.interrupt-token-409-410-overlap"
+    },
+    {
+      "id": "openwop.migration.C2.9",
+      "child": "C2",
+      "kind": "remove",
+      "v1": {
+        "surface": "Capabilities-Etag header"
+      },
+      "v2": {
+        "surface": "standard ETag / If-None-Match"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.capabilities-etag-header"
+    },
+    {
+      "id": "openwop.migration.C5.1",
+      "child": "C5",
+      "kind": "unify",
+      "v1": {
+        "surface": "engineVersion: integer at the discovery root, string on five event carriers"
+      },
+      "v2": {
+        "surface": "one engineVersion type and grammar"
+      },
+      "codemod": null,
+      "persistedData": "legacy-stamped",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.engine-version-type-split",
+      "note": "Persisted run docs keep the v1 rendering; the reader normalises."
+    },
+    {
+      "id": "openwop.migration.C5.2",
+      "child": "C5",
+      "kind": "rename",
+      "v1": {
+        "surface": "channel state-key prefix conventions"
+      },
+      "v2": {
+        "surface": "typed channels + reducers"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.channel-prefix-conventions"
+    },
+    {
+      "id": "openwop.migration.C1.1",
+      "child": "C1",
+      "kind": "retype",
+      "v1": {
+        "surface": "certification bundle v1 (bundleVersion \"1\") and v2 (open root)"
+      },
+      "v2": {
+        "surface": "bundle v3: closed root, witness/build/tier/count/signature required"
+      },
+      "codemod": null,
+      "persistedData": "never-upgraded",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.certification-bundle-v1",
+      "note": "Published v1/v2 bundles remain valid evidence at their version; never upgraded in place."
+    },
+    {
+      "id": "openwop.migration.C10.1",
+      "child": "C10",
+      "kind": "rename",
+      "v1": {
+        "surface": "signing.publicKeyRef"
+      },
+      "v2": {
+        "surface": "signing.keyId"
+      },
+      "codemod": null,
+      "persistedData": "never-upgraded",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.manifest-public-key-ref",
+      "note": "Signed manifests are immutable; registry/v2 re-signs or overlays."
+    },
+    {
+      "id": "openwop.migration.C10.2",
+      "child": "C10",
+      "kind": "rename",
+      "v1": {
+        "surface": "node config credentialProvider"
+      },
+      "v2": {
+        "surface": "provider"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.credential-provider-key"
+    },
+    {
+      "id": "openwop.migration.C10.3",
+      "child": "C10",
+      "kind": "rename",
+      "v1": {
+        "surface": "workflow definition config.outputArtifactType / config.chatCard"
+      },
+      "v2": {
+        "surface": "node.artifactType / node.chatCard"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.config-output-artifact-type"
+    },
+    {
+      "id": "openwop.migration.C8.1",
+      "child": "C8",
+      "kind": "remove",
+      "v1": {
+        "surface": "a2a-0.3-legacy / mcp-2025-06-18-legacy profiles"
+      },
+      "v2": {
+        "surface": "none (a2a-1.0, mcp-2026-07-28 only)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.a2a-0-3-legacy-profile"
+    },
+    {
+      "id": "openwop.migration.C4.7",
+      "child": "C4",
+      "kind": "rename",
+      "v1": {
+        "surface": "debug bundle event seq"
+      },
+      "v2": {
+        "surface": "sequence"
+      },
+      "codemod": null,
+      "persistedData": "never-upgraded",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.debug-bundle-seq"
+    },
+    {
+      "id": "openwop.migration.C4.8",
+      "child": "C4",
+      "kind": "remove",
+      "v1": {
+        "surface": "openwop-Webhook-Signature (SDK-only header)"
+      },
+      "v2": {
+        "surface": "none"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.sdk-webhook-signature-header"
+    },
+    {
+      "id": "openwop.migration.C3.1",
+      "child": "C3",
+      "kind": "require",
+      "v1": {
+        "surface": "owner.subject optional; owner.principal bare string"
+      },
+      "v2": {
+        "surface": "Subject required; principal removed"
+      },
+      "codemod": null,
+      "persistedData": "legacy-stamped",
+      "requirementIds": [],
+      "gapIds": [
+        "openwop.gap.0165.1",
+        "openwop.gap.0165.6"
+      ],
+      "deprecationId": null,
+      "note": "Pre-v2 runs read back with issuer urn:openwop:legacy (RFC 0165 §B.3) — never rewritten."
+    },
+    {
+      "id": "openwop.migration.C3.2",
+      "child": "C3",
+      "kind": "remove",
+      "v1": {
+        "surface": "capabilities.auth.subjectLinking derived flag"
+      },
+      "v2": {
+        "surface": "none — advertising both identity profiles implies the contract"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.auth-subject-linking-flag"
+    },
+    {
+      "id": "openwop.migration.C9.1",
+      "child": "C9",
+      "kind": "behavior",
+      "v1": {
+        "surface": "v1 event logs, bundles, resume tokens, signed manifests, Firestore/SQL run rows"
+      },
+      "v2": {
+        "surface": "read through declared adapters; per-table disposition in the C.9 child"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "The per-store disposition table is the C.9 child's deliverable; this row exists so the register has one place that says persisted data is in scope."
+    }
+  ]
+}

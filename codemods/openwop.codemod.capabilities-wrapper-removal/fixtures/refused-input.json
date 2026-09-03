@@ -1,0 +1,8 @@
+{
+  "protocolVersion": "1.1",
+  "supportedEnvelopes": ["error"],
+  "schemaVersions": { "error": 1 },
+  "limits": { "maxNodesPerWorkflow": 200 },
+  "webhooks": { "supported": true },
+  "capabilities": { "webhooks": { "supported": false } }
+}

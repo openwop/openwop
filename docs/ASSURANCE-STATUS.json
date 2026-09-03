@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 45,
+    "bootstrapWaiversExercised": 46,
     "rfcs": [
       "0042",
       "0043",
@@ -61,7 +61,8 @@
       "0163",
       "0164",
       "0165",
-      "0166"
+      "0166",
+      "0167"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
@@ -102,7 +103,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 384,
+    "rowsScanned": 389,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -612,6 +613,20 @@
         "rfc": "0166",
         "id": "R1",
         "title": "A mechanically classified `witness` is read as a reviewed verdict and used to justify a claim",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0167",
+        "id": "R1",
+        "title": "Eleven children drift on shared vocabulary (an axis or alias named two ways)",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0167",
+        "id": "R5",
+        "title": "Phase 2 ends with children Active and no host able to implement them (the \"unimplemented MUST\" pattern the charter names as v1's core defect)",
         "score": "High",
         "status": "`open`"
       },
@@ -1153,6 +1168,20 @@
         "rfc": "0166",
         "id": "R1",
         "title": "A mechanically classified `witness` is read as a reviewed verdict and used to justify a claim",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0167",
+        "id": "R1",
+        "title": "Eleven children drift on shared vocabulary (an axis or alias named two ways)",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0167",
+        "id": "R5",
+        "title": "Phase 2 ends with children Active and no host able to implement them (the \"unimplemented MUST\" pattern the charter names as v1's core defect)",
         "score": "High",
         "status": "`open`"
       }

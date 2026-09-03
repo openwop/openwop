@@ -1,0 +1,11 @@
+# RFC 0167 — Gap register
+
+Open design gaps discovered while authoring RFC 0167 (OpenWOP v2 — the program RFC). Keyed to the RFC; each row has an owner and a resolution path. Children keep their own registers; a gap that belongs to one child is carried there, not here.
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+| --- | --- | --- | --- | --- | --- |
+| G1 | §B.1 | The C.5 header-negotiation rule has no v1 precedent: a v1 client never sends `OpenWOP-Version`, so the rule for an unversioned path with no header (default to `preferredVersion`) is asserted here and witnessed only by the Phase 3 dual-stack scenario. | Spec Architect | `open` — the C.5 child (RFC 0172) states the rule normatively and the dual-stack scenario is its witness; until then this row is the only record that the rule is unwitnessed | RFC 0172 `Active` |
+| G2 | §E.1 | Eighteen axes were found by grep; the umbrella cannot prove the enumeration is complete. A nineteenth found later is added to the table by the child that meets it, not silently. | Spec Architect | `open` — each child's Adversarial review section re-checks the surfaces it touches against §E.1; a new axis is a register row on the child and an `Updated` line here | §G.2 identity gate |
+| G3 | §D.2 | Codemods are pure transforms over persisted artifacts; nothing rewrites an SDK consumer's source. The migration guide carries that; no gate proves the guide is complete. | Reference-host maintainer | `open` — the Phase 4 host migrations (openwop-app, MyndHyve) are written from the guide; a step the guide lacks is a gap on RFC 0176 (C.9) | Phase 4 |
+| G4 | §C | v2 MUST-NOTs cannot enter `SECURITY/invariants.yaml` at Draft (`check-security-invariants.sh` requires a v1 public test), so they live as child falsifiability rows in `gaps.json` until Phase 3. The witness-class gate does not see them until then. | Security Architect | `open` — RFC 0168 (C.1) lands the v2 invariants with their tests at the cut; this row closes when the first v2 invariant row exists | RFC 0168 `Accepted` |
+| G5 | Unresolved Q1 | The org question for `openwop.dev/spec/v2/`. | Steward | `open` — decided in RFC 0172 (C.5) with a fallback to the current organization | RFC 0172 `Active` |

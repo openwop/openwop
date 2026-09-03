@@ -17,7 +17,7 @@
     "bundleVersion": {
       "type": "string",
       "description": "Schema version of the bundle. v1.x bundles are '1'.",
-      "pattern": "^[0-9]+\\.[0-9]+$"
+      "pattern": "^[0-9]+(\\.[0-9]+)?$"
     },
     "generatedAt": {
       "type": "string",
