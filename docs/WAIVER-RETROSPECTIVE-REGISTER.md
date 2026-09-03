@@ -109,3 +109,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0175 | v2 transports and embedded protocols (RFC 0167 child C.8) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0176 | v2 persisted data and coexistence (RFC 0167 child C.9) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0177 | v2 registry, packs, and the extension tail (RFC 0167 child C.10) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0168 | v2 evidence and conformance (RFC 0167 child C.1) | in-scope-pending-assessment | — | — | `not-reviewed` |

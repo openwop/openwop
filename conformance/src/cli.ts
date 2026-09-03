@@ -203,7 +203,7 @@ Implementation labels (cosmetic — surface in failure messages):
   --impl-version <version>  Implementation version     (env: OPENWOP_IMPLEMENTATION_VERSION)
 
 Certification (RFC 0089):
-  --bundle-version <1|2>  Certification bundle format. Default 1. Version 2 (RFC 0148
+  --bundle-version <1|2>  Certification bundle format. Default 2 (corrected 2026-09-03, RFC 0168 §E.4; the text said 1 while the code set 2). Version 2 (RFC 0148
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
                         from "checked and it holds". See the note it prints.

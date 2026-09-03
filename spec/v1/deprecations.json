@@ -776,6 +776,79 @@
           "token": "greater-than-or-equal to the built-in's"
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.seam-operations-in-canonical-api",
+      "status": "proposed",
+      "surface": "the nine `/v1/host/sample/*`, `/v1/host/workspace/files*` and `/v1/packs-test/*` seam/test operations in `api/openapi.yaml` and `spec/v1/operation-path-manifest.json`, and the `testSeams` discovery-flag proposals",
+      "kind": "path",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §C (seams are the profile `openwop-conformance-seams-v2` with `api/seams-v2.yaml`; forbidden from the capability namespace)",
+      "removeIn": "2.0",
+      "replacement": "`api/seams-v2.yaml`; `profiles[]` membership",
+      "codemod": null,
+      "note": "Proposed: a generated document, not a persisted artifact.",
+      "sources": [
+        {
+          "file": "spec/v1/operation-path-manifest.json",
+          "token": "/v1/host/sample/a2a/tasks/{taskId}"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.coherence-scenarios-in-host-bundle",
+      "status": "proposed",
+      "surface": "the 29 corpus-coherence scenarios reported `blocked` in every host bundle",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §D.1 (spec-repo CI; never in a bundle)",
+      "removeIn": "2.0",
+      "replacement": "`scripts/check-spec-coherence.mjs`",
+      "codemod": null,
+      "note": "Proposed: bundle v3's schema forbids the ids.",
+      "sources": [
+        {
+          "file": "conformance/src/lib/scenario-disposition.ts",
+          "token": "See lib/spec-coherence.ts for why not a new disposition value"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.suite-vendored-corpus",
+      "status": "proposed",
+      "surface": "the published suite tarball's vendored `api/` and `schemas/` copies (and `src`, suite self-tests)",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §D.2 (`dist`, `fixtures`, `vectors` only; corpus as the digest-checked peer dependency `@openwop/spec-artifacts`)",
+      "removeIn": "2.0",
+      "replacement": "`@openwop/spec-artifacts`",
+      "codemod": null,
+      "note": "Proposed: the 1.138.1 mechanism — one source, no copy.",
+      "sources": [
+        {
+          "file": "conformance/README.md",
+          "token": "The vendored contract is digest-checked"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.certification-bundle-v2-open-root",
+      "status": "proposed",
+      "surface": "certification bundle v2 (`bundleVersion: \"2\"`, root `additionalProperties: true`, `witnessSha256` absent, unsigned)",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0168 §E (bundle v3: closed root, required witness/build/tier/count, Ed25519 attestation)",
+      "removeIn": "2.0",
+      "removalTrigger": "v1-end-of-support",
+      "replacement": "bundle v3 (`schemas/v2/certification-bundle.schema.json`)",
+      "codemod": null,
+      "note": "Proposed: never upgraded in place; a v2 bundle remains v2 evidence until v1 end-of-support.",
+      "sources": [
+        {
+          "file": "schemas/certification-bundle-v2.schema.json",
+          "token": "\"const\": \"2\""
+        }
+      ]
     }
   ]
 }

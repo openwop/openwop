@@ -254,6 +254,30 @@
       "file": "spec/v1/connection-packs.md",
       "token": "greater-than-or-equal to the built-in's",
       "deprecation": "openwop.deprecation.connection-provider-version-precedence"
+    },
+    {
+      "alias": "seam/test operations in the canonical path manifest",
+      "file": "spec/v1/operation-path-manifest.json",
+      "token": "/v1/host/sample/a2a/tasks/{taskId}",
+      "deprecation": "openwop.deprecation.seam-operations-in-canonical-api"
+    },
+    {
+      "alias": "corpus-coherence scenarios in host bundles",
+      "file": "conformance/src/lib/scenario-disposition.ts",
+      "token": "See lib/spec-coherence.ts for why not a new disposition value",
+      "deprecation": "openwop.deprecation.coherence-scenarios-in-host-bundle"
+    },
+    {
+      "alias": "suite tarball vendored corpus",
+      "file": "conformance/README.md",
+      "token": "The vendored contract is digest-checked",
+      "deprecation": "openwop.deprecation.suite-vendored-corpus"
+    },
+    {
+      "alias": "certification bundle v2 open root",
+      "file": "schemas/certification-bundle-v2.schema.json",
+      "token": "\"const\": \"2\"",
+      "deprecation": "openwop.deprecation.certification-bundle-v2-open-root"
     }
   ]
 }
