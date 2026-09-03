@@ -9992,6 +9992,176 @@
       ]
     },
     {
+      "id": "openwop.gap.0176.1",
+      "rfc": "0176",
+      "local": "G1",
+      "section": "§A.3",
+      "surface": "Whether the atomic per-run backfill (stamp `3`, rewrite `type` under the same key, original preserved) is allowed in v2.0 or deferred to a later RFC.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0176-v2-persisted-data-and-coexistence.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0176.2",
+      "rfc": "0176",
+      "local": "G2",
+      "section": "§A.2",
+      "surface": "MyndHyve advertises `eventLogSchemaVersion: 1` while its run documents stamp `2` and the spec says `2`; the unification is a host change this RFC requires before the codemap runs.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-phase-4-leg",
+      "sources": [
+        {
+          "file": "RFCS/registers/0176-v2-persisted-data-and-coexistence.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0176.3",
+      "rfc": "0176",
+      "local": "G3",
+      "section": "§E.1",
+      "surface": "The corpus-tag pin was recorded as a done Phase 0 item; the inventory finds 1 of 3 consumers pinned (openwop-app) — openwop-sdks tracks `main`, MyndHyve has no vendored corpus and a caret range, and the registry is unpinned and drifted (RFC 0177 §C.6).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0176-v2-persisted-data-and-coexistence.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0176.4",
+      "rfc": "0176",
+      "local": "G4",
+      "section": "§C.1",
+      "surface": "The charter chose per-major sub-objects in one document; this RFC chose header-selected representations (adversarial review 3). The charter's §C.9 text is amended at the next republish.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0176-v2-persisted-data-and-coexistence.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0176.5",
+      "rfc": "0176",
+      "local": "G5",
+      "section": "§A.4",
+      "surface": "openwop-app has 34 direct `storage.listEvents` call sites and a bypassed `eventLog.list` wrapper; the adapter seat is the interface method, and the scenario reads through poll, SSE and fork to catch a wrapper-only install.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-phase-4-leg",
+      "sources": [
+        {
+          "file": "RFCS/registers/0176-v2-persisted-data-and-coexistence.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0177.1",
+      "rfc": "0177",
+      "local": "G1",
+      "section": "§A.2",
+      "surface": "Whether `registry/v2/` carries steward re-signs of `core.openwop.*` / `vendor.openwop*` or only author re-publications.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0177.2",
+      "rfc": "0177",
+      "local": "G2",
+      "section": "§B.2",
+      "surface": "The alias table cannot be generated until `spec/v2/declaration.json` exists (RFC 0169, Phase 3); the seven guaranteed rows are known from the inventory.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0177.3",
+      "rfc": "0177",
+      "local": "G3",
+      "section": "§F",
+      "surface": "The two non-canonical publication paths (MyndHyve `PUT /v1/packs/…`, the mirror ingest) apply §A.1 only when the host leg lands.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-phase-4-leg",
+      "sources": [
+        {
+          "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0177.4",
+      "rfc": "0177",
+      "local": "G4",
+      "section": "§E.3",
+      "surface": "The portable `{{params.*}}` deferral (WCP4): expansion materializes `parameters` into workflow `variables[]` and rewrites `{{params.x}}` into a PromptTemplate `{{varName}}` with `source: \"variable\"`, gated behind a capability with replay determinism for the run-scoped bag. Not in v2.0.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0177.5",
+      "rfc": "0177",
+      "local": "G5",
+      "section": "§C.6",
+      "surface": "The registry's vendored `node-pack-manifest.schema.json` lacks the RFC 0138 hatch (drifted, unpinned) — the registry rejects the field the protocol requires; 7 of 13 vendored schemas drift from the corpus.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0178.1",
       "rfc": "0178",
       "local": "G1",

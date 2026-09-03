@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 473 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 172 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 174 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 158 |
-| Active | 13 |
+| Active | 15 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -208,6 +208,8 @@
 | RFC 0173 | v2 security defaults: every security-load-bearing behavior that v1 binds only when a host sets a flag becomes an obligation of the surface that needs it - the fourteen auth-family flags, replay side-effect suppression, webhook delivery durability, approver enforcement, the leaver contract, sandbox isolation, and compensation authority; a relaxation is an operator setting with a declared durability class recorded in the evidence bundle, never a discovery field; replay suppression is witnessed by a host-declared, machine-checkable effect-seam manifest; compensation and Layer-2 effect identity each take one of three dispositions (core obligation with a declared witness, extension, or removal) - never an unimplemented MUST; the interop threat model is written (C.8) and the replay threat model gets the sections its siblings carry | Active |
 | RFC 0174 | v2 governance: the six RFC states are reachable and used (supersession flips the superseded RFC in the same PR; rejections are filed; a number is never reserved without a file); `Active -> Accepted` is a machine predicate over the bundle and the registers; waiver authority is checked at merge against the RFC's declared class and a rule takes effect on the RFC that introduces it; register rows are typed data everywhere (the 27 stray register pairs move under `registers/`; a self-referential `carried:` is refused); document `Status:` banners are derived from the owning RFC; the RFC 0158 durability ladder is the maturity template; the front door is the core (`spec/v2/core/` under 25,000 words, the tail in `ext/` with a witness class); "Open spec gaps" tables retire into `gaps.json`; the host-inventory deprecation rule is restated normatively | Active |
 | RFC 0175 | v2 transports and embedded protocols: `grpc-transport.md` leaves `core/` for `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none` unless the proto is generated from the C.2 declaration file and the suite gains a client (decided: demoted); `supportedTransports` is deleted - A2A and MCP are compositions with first-class blocks, not transports; the `a2a-0.3-legacy` and `mcp-2025-06-18-legacy` profiles are absent from the v2 tree at the cut with the adopter inventories recorded as measured (one dual-era host each); version negotiation on both embedded protocols is authenticated, carries an advertised minimum-version policy and a refresh SLA (RFC 0147 R10), and emits a content-free `negotiation.decided` event (RFC 0152/0153 G7); MRTR rounds get a normative ceiling (RFC 0153 G9); the `auth-required` projection under durable tasks is decided (RFC 0100 UQ4); `SECURITY/threat-model-interop.md` is written (RFC 0152/0153 G8) | Active |
+| RFC 0176 | v2 persisted data and coexistence: the C.4 event rename is applied to persisted logs by a normative v1->v2 codemap shipped as data in the suite and a reader rule that keys on `eventLogSchemaVersion` (absent ⇒ `2`; v2 writes `3`) with sequence space preserved and unmapped types refused, never tolerated; a v1-pinned run a v2 host inherits continues under the adapter when its pin is still implemented and is otherwise cancelled with a named reason; `/.well-known/openwop` is one resource whose representation the RFC 0172 header selects, with the wrapper, the dotted mirror, `Capabilities-Etag` and MyndHyve's `/.well-known/wop` alias given removal triggers in `deprecations.json`; every table openwop-app persists and every collection MyndHyve persists gets a disposition here rather than during the migration; every consumer that vendors the corpus pins a tag | Active |
+| RFC 0177 | v2 registry, packs, and the extension tail: a v2 host reads an absent `engines.openwop` ceiling as `<2.0.0` and refuses with `pack_engine_unsupported` at install, on every publication path including a mirror; `registry/v2/` is a parallel published tree of re-signed manifests (a signed overlay is rejected: signatures authorize by namespace and the mirror path re-derives the signer at ingest); the peer-dependency identifier is the C.2 declaration-file key and `pack_peer_dependency_undefined` reads against that file, with a generated alias table for the four grammars in the wild and a scheduled removal; the 13 manifest schemas re-`$id` under `/spec/v2/` with the RFC 0138 hatch on every pack-authored document (RFC 0138 G4 decided); `signing.method`'s two conventions that sign different bytes become one `signing.scheme`; `publicKeyRef` and `kind`-absent are gone; the registry is versioned by tree and its `endpoints` map is the negotiation; provider-id precedence (RFC 0095 UQ4) is decided as fail-closed conflict with a qualified form; form-content packs reuse the edge-condition operator set and `i18n.md`'s localized string; chains pin exact versions (WCP2), children are reference-counted (WCP5), and the portable parameter deferral (WCP4) is a named v2.x follow-up | Active |
 | RFC 0178 | v2 assurance registers and deprecation machinery: `spec/v1/deprecations.json` becomes normative - every row generates `deprecated: true` and `x-openwop-remove-in` onto its schema and API nodes, and a removal date that has passed with the surface present fails the merge gate; `gaps.json` rows carry a real witness class and a requirement id, the per-RFC `G<n>` becomes an alias row with a scheduled removal, and the RFC falsifiability tables become the same data with a parser gate; cross-repo evidence stays resolved; schema and API hygiene (README maturity column, "kept in sync" mirrors, redocly suppressions, a stale artifact-type gap row) is fixed rather than carried into `schemas/v2/` | Active |
 
 ## SDK Helper Coverage
@@ -231,7 +233,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 13 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0169, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0174, RFC 0175, RFC 0178) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0169, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0174, RFC 0175, RFC 0176, RFC 0177, RFC 0178) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

@@ -95,7 +95,7 @@ v1 identity is a bare string that eight lanes mint by eight undocumented rules, 
 
 | Store | v1 artifact | Disposition |
 | --- | --- | --- |
-| Run rows / documents (openwop-app SQL `metadata.owner`; MyndHyve `RunDoc.subject`) | stamped subjects from RFC 0165 legs | unchanged; pre-stamp rows legacy-stamped at first v2 read and never rewritten |
+| Run rows / documents (openwop-app SQL `runs.metadata.principalKind` + `metadata.anonPrincipal`, projected to the wire `owner` triple — corrected 2026-09-03 by RFC 0176 §D.5: there is no `metadata.owner` key; MyndHyve `RunDoc.subject`) | stamped subjects from RFC 0165 legs | unchanged; pre-stamp rows legacy-stamped at first v2 read and never rewritten |
 | Event logs (`run.started` owner echo) | `principal` + optional `subject` | translated by the C.9 reader (the `principal` field is dropped on read; `subject` is the record) |
 | Interrupt tokens outstanding at the cut | two-segment HMAC tokens | drained: resolvable under `kid: legacy` until `expiresAt`; new tokens carry the prefix |
 | Idempotency caches | free-form keys | drained under their own retention |

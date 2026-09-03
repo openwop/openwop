@@ -224,6 +224,36 @@
       "file": "spec/v1/grpc-transport.md",
       "token": "REST + SSE remains the REQUIRED wire surface",
       "deprecation": "openwop.deprecation.grpc-transport-core"
+    },
+    {
+      "alias": "/.well-known/wop rebrand alias",
+      "file": "RFCS/0176-v2-persisted-data-and-coexistence.md",
+      "token": "/.well-known/wop",
+      "deprecation": "openwop.deprecation.well-known-wop-alias"
+    },
+    {
+      "alias": "engines.openwop with no upper bound",
+      "file": "spec/v1/node-packs.md",
+      "token": "`engines.openwop`",
+      "deprecation": "openwop.deprecation.engines-absent-ceiling"
+    },
+    {
+      "alias": "peer-dependency identifiers outside the declaration file",
+      "file": "spec/v1/host-capabilities.md",
+      "token": "pack_peer_dependency_undefined",
+      "deprecation": "openwop.deprecation.pack-peer-dependency-aliases"
+    },
+    {
+      "alias": "signing.method two-convention enum",
+      "file": "schemas/registry-version-manifest.schema.json",
+      "token": "synonymous in practice",
+      "deprecation": "openwop.deprecation.manifest-signing-method"
+    },
+    {
+      "alias": "connection provider version precedence (clause 6)",
+      "file": "spec/v1/connection-packs.md",
+      "token": "greater-than-or-equal to the built-in's",
+      "deprecation": "openwop.deprecation.connection-provider-version-precedence"
     }
   ]
 }
