@@ -89,12 +89,7 @@ Truthful advertisement (RFC 0031): a host that doesn't split traffic **MUST** ad
 
 ## Open spec gaps
 
-| ID       | Description                                                                                                                                                                                                                                                                  |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DEPLOY-1 | **Closed (2026-09-03, RFC 0174 §D.2 sweep).** `GET`/`POST /v1/agents/{agentId}/deployments` are in `api/openapi.yaml`; this row had said they land at `Active → Accepted` after RFC 0125 graduated. Original: `GET` + `POST /v1/agents/{agentId}/deployments` + the deployment-management run shape are described here but land in `openapi.yaml` + the `OpenwopClient` SDK helper at `Active → Accepted` (RFC 0082 §Conformance; behavioral surface deferred per the RFC 0077 precedent). |
-| DEPLOY-2 | The behavioral `agent-deployment-lifecycle.test.ts` (authz → gate → eval-verify → `deployment.promoted`; the §B replay re-read) is gated on `capabilities.agents.deployment.supported` and soft-skips until a reference host wires the deployment store + canary router.     |
-| DEPLOY-3 | `deployment-promotion-fail-closed` is `reference-impl` tier until the behavioral scenario lands, then graduates to `protocol` tier (Accepted).                                                                                                                               |
-| DEPLOY-4 | A portable cross-host deployment _migration_ (export/import of a deployment graph between hosts) is out of scope at v1.x — deployment records are host-runtime state.                                                                                                        |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.agent-deployment.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

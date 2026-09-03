@@ -1074,11 +1074,12 @@
       "description": "Emitted once when the run reaches the cancelled terminal state.",
       "properties": {
         "reason": {
-          "type": "string"
+          "type": "string",
+          "description": "`v1_pin_unsupported` (RFC 0176 §B.1) is a registered reason."
         },
         "cancelledBy": {
           "type": "string",
-          "description": "Caller identity (uid / API key fingerprint / `system`)."
+          "description": "RFC 0176 §B.1 — `v2-cutover` when a v2 host cancels an inherited run whose pin it no longer implements."
         },
         "durationMs": {
           "type": "integer",
@@ -1107,6 +1108,14 @@
       "properties": {
         "reason": {
           "type": "string"
+        },
+        "drainPolicy": {
+          "type": "string",
+          "enum": [
+            "drain",
+            "interrupt"
+          ],
+          "description": "v1 rest-endpoints.md MUST — the pause drain policy persisted on the event."
         }
       },
       "additionalProperties": false
@@ -1383,7 +1392,15 @@
           ],
           "description": "RFC 0094 §E — the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
         },
-        "resumeValue": {}
+        "resumeValue": {},
+        "resolvedBy": {
+          "$ref": "subject.schema.json",
+          "description": "v1 interrupt.md MUST (`decidedBy` on approval.received / `resolvedBy` on interrupt.resolved) carried into v2 as the resolving Subject."
+        },
+        "decision": {
+          "type": "string",
+          "description": "The decision recorded for approval-kind interrupts (granted | rejected | overridden), carried from the v1 approval.* payloads."
+        }
       },
       "additionalProperties": false
     },
@@ -4153,6 +4170,57 @@
     "clarificationResolved": {
       "$ref": "#/$defs/interruptResolved",
       "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy clarificationResolved shape (deprecation row legacy-interrupt-payloads) is the unified interruptResolved payload; the event type is kept, its payload is not a second shape."
+    },
+    "negotiationDecided": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "outcome",
+        "at"
+      ],
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "enum": [
+            "a2a",
+            "mcp"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "refused"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "description": "The version or revision decided (absent when refused below the floor)."
+        },
+        "floor": {
+          "type": "string"
+        },
+        "peerDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the peer origin; never the origin in clear (RFC 0175 §D.3)."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "below-floor",
+            "unauthenticated",
+            "unsupported",
+            "ok"
+          ]
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "RFC 0175 §D.3 — the content-free negotiation audit event."
     }
   },
   "additionalProperties": false,
@@ -4511,6 +4579,9 @@
       },
       "compensation.manual-intervention-required": {
         "$ref": "#/$defs/compensationManualInterventionRequired"
+      },
+      "negotiation.decided": {
+        "$ref": "#/$defs/negotiationDecided"
       }
     }
   }

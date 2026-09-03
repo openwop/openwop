@@ -185,10 +185,5 @@ Four protocol-tier invariants gate this surface (`SECURITY/invariants.yaml`,
 
 ## Open spec gaps
 
-| Gap | Disposition |
-| --- | --- |
-| Persistent plugin-local state beyond `artifact.write` (a scoped `host.kv` method) | Out of scope for v1 (RFC 0117 §Resolved Q1); a future additive `hostApi` method under a bumped `ui-plugin/*` vocabulary. |
-| Inter-plugin composition (a `route` embedding an `artifact-viewer`) | Forbidden in v1 — one sandbox per surface (RFC 0117 §Resolved Q2). |
-| Streaming `artifact.read` for large artifacts | Whole-response in v1 (RFC 0117 §Resolved Q4); a future additive method. |
-| Cross-host `version`-token portability | v1.x-silent — opaque, host-defined (§Concurrency), mirroring `agent-workspace.md` `etag`. |
-| `Active → Accepted` | Pending a host advertising `capabilities.uiPlugins.supported` + passing the gated scenarios non-vacuously (dual-witness per the graduation rule). |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.frontend-plugin-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

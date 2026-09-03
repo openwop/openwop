@@ -10296,6 +10296,4286 @@
           "token": "G4"
         }
       ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g1",
+      "rfc": "0152",
+      "local": "G1",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "A2A 0.3 adopter inventory",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open** — the legacy window date is fixed above (2027-03-12); who is on 0.3 is not known and is not something this document can find out.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g1"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g2",
+      "rfc": "0152",
+      "local": "G2",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Field-by-field translation table",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed** by §D (D.1–D.7).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g2"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g3",
+      "rfc": "0152",
+      "local": "G3",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Official real-peer SDK for CI",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Externally gated** — no upstream 1.0 peer is wired; the fake peer is 0.3-shaped.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g3"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g4",
+      "rfc": "0152",
+      "local": "G4",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Mandatory interface floor",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed** by §C: JSON-RPC at 1.0 is the floor; HTTP+JSON and gRPC optional.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g4"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g5",
+      "rfc": "0152",
+      "local": "G5",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Delegated identity composes with RFC 0154",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Addressed in §E; RFC 0154 §B is shape-only, so the composition is stated, not witnessed.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g5"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g6",
+      "rfc": "0152",
+      "local": "G6",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "1.0-shaped fake peer + the seven named scenarios",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Mostly closed 2026-08-16 (suite 1.112.0):** dual-era peer landed; `a2a-1.0-agent-card`, `a2a-card-runtime-consistency`, `a2a-1.0-task-roundtrip` (host half gated), `a2a-peer-authority` landed. Open: `a2a-1.0-stream-push` (no streaming peer).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g6"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g7",
+      "rfc": "0152",
+      "local": "G7",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Dedicated content-free negotiation audit event",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open** — §B recommends `authorization.decided` as the carrier; a dedicated `RunEventType` member is not minted here.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g7"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g8",
+      "rfc": "0152",
+      "local": "G8",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Interop threat-model document (downgrade, card/runtime drift, cross-tenant lookup, artifact leakage)",
+      "witness": "negative-existence",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open** — threats stated in §E; no `SECURITY/threat-model-interop.md` exists.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g8"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.a2a-integration.g9",
+      "rfc": "0152",
+      "local": "G9",
+      "section": "spec/v1/a2a-integration.md",
+      "surface": "Native `auth-required` interrupt kind (drift #3)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open** — unchanged from §\"Future work\".",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.a2a-integration.g9"
+        },
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-deployment.deploy-1",
+      "rfc": "0082",
+      "local": "DEPLOY-1",
+      "section": "spec/v1/agent-deployment.md",
+      "surface": "**Closed (2026-09-03, RFC 0174 §D.2 sweep).** `GET`/`POST /v1/agents/{agentId}/deployments` are in `api/openapi.yaml`; this row had said they land at `Active → Accepted` after RFC 0125 graduated. Original: `GET` + `POST /v1/agents/{agentId}/deployments` + the deployment-management run shape are described here but land in `openapi.yaml` + the `OpenwopClient` SDK helper at `Active → Accepted` (RFC 0082 §Conformance; behavioral surface deferred per the RFC 0077 precedent).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-deployment.deploy-1"
+        },
+        {
+          "file": "spec/v1/agent-deployment.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-deployment.deploy-2",
+      "rfc": "0082",
+      "local": "DEPLOY-2",
+      "section": "spec/v1/agent-deployment.md",
+      "surface": "The behavioral `agent-deployment-lifecycle.test.ts` (authz → gate → eval-verify → `deployment.promoted`; the §B replay re-read) is gated on `capabilities.agents.deployment.supported` and soft-skips until a reference host wires the deployment store + canary router.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-deployment.deploy-2"
+        },
+        {
+          "file": "spec/v1/agent-deployment.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-deployment.deploy-3",
+      "rfc": "0082",
+      "local": "DEPLOY-3",
+      "section": "spec/v1/agent-deployment.md",
+      "surface": "`deployment-promotion-fail-closed` is `reference-impl` tier until the behavioral scenario lands, then graduates to `protocol` tier (Accepted).",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-deployment.deploy-3"
+        },
+        {
+          "file": "spec/v1/agent-deployment.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-deployment.deploy-4",
+      "rfc": "0082",
+      "local": "DEPLOY-4",
+      "section": "spec/v1/agent-deployment.md",
+      "surface": "A portable cross-host deployment _migration_ (export/import of a deployment graph between hosts) is out of scope at v1.x — deployment records are host-runtime state.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-deployment.deploy-4"
+        },
+        {
+          "file": "spec/v1/agent-deployment.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-evaluation.eval-1",
+      "rfc": "0081",
+      "local": "EVAL-1",
+      "section": "spec/v1/agent-evaluation.md",
+      "surface": "**Closed (2026-09-02 audit).** `GET /v1/runs/{runId}/eval-summary` is in `api/openapi.yaml`; this row had said \"deferred\" after the endpoint landed. `mode: \"eval\"` is documented here and carried by the run-options schema.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-evaluation.eval-1"
+        },
+        {
+          "file": "spec/v1/agent-evaluation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-evaluation.eval-2",
+      "rfc": "0081",
+      "local": "EVAL-2",
+      "section": "spec/v1/agent-evaluation.md",
+      "surface": "The behavioral `agent-eval-run.test.ts` (event ordering, per-task scoring, `EvalSummary` round-trip) is gated on `capabilities.agents.evalSuite.supported` and soft-skips until a reference host wires the eval projection.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-evaluation.eval-2"
+        },
+        {
+          "file": "spec/v1/agent-evaluation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-evaluation.eval-3",
+      "rfc": "0081",
+      "local": "EVAL-3",
+      "section": "spec/v1/agent-evaluation.md",
+      "surface": "Suite signing/trust inherits the pack signature (RFC 0003); a standalone (non-pack) suite distribution format is deferred.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-evaluation.eval-3"
+        },
+        {
+          "file": "spec/v1/agent-evaluation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-evaluation.eval-4",
+      "rfc": "0081",
+      "local": "EVAL-4",
+      "section": "spec/v1/agent-evaluation.md",
+      "surface": "Judge-model selection + scoring for `rubric`/`adversarial` modes is host-internal at v1.x; a portable judge contract is a candidate successor RFC.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-evaluation.eval-4"
+        },
+        {
+          "file": "spec/v1/agent-evaluation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-memory.r1",
+      "rfc": "spec",
+      "local": "r1",
+      "section": "spec/v1/agent-memory.md",
+      "surface": "**Cross-host `memoryRef` portability** — v1.x silent. A `memoryRef` minted by host A is NOT guaranteed resolvable by host B; future spec amendments MAY normate a portable encoding if implementer demand surfaces.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-memory.r1"
+        },
+        {
+          "file": "spec/v1/agent-memory.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-memory.r2",
+      "rfc": "spec",
+      "local": "r2",
+      "section": "spec/v1/agent-memory.md",
+      "surface": "**`MemoryEntry.id` tenant-prefix** — recommended non-normatively for hosts that share entry-id keyspaces across tenants (e.g., `tenant-A:mem-1` rather than `mem-1`). Not hard-constrained at v1.0.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-memory.r2"
+        },
+        {
+          "file": "spec/v1/agent-memory.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-memory.r3",
+      "rfc": "spec",
+      "local": "r3",
+      "section": "spec/v1/agent-memory.md",
+      "surface": "**Authorization granularity within tenant** — silence intentional. CTI-1 is the only normative isolation surface; per-user RBAC within a tenant is host-internal.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-memory.r3"
+        },
+        {
+          "file": "spec/v1/agent-memory.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-memory.r4",
+      "rfc": "spec",
+      "local": "r4",
+      "section": "spec/v1/agent-memory.md",
+      "surface": "**Content size cap / tags cardinality cap** — host-internal.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-memory.r4"
+        },
+        {
+          "file": "spec/v1/agent-memory.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-memory.r5",
+      "rfc": "spec",
+      "local": "r5",
+      "section": "spec/v1/agent-memory.md",
+      "surface": "**Bulk-ops API** (`MemoryAdapter.listAll`, `MemoryAdapter.deleteAll`) — deferred. v1.0 read surface is per-`memoryRef` `list/get` only.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-memory.r5"
+        },
+        {
+          "file": "spec/v1/agent-memory.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-memory.r6",
+      "rfc": "0057",
+      "local": "r6",
+      "section": "spec/v1/agent-memory.md",
+      "surface": "**Per-node write attribution** — _closed by [`RFCS/0057`](../../RFCS/0057-memory-write-attribution-event.md) (Active)._ The additive, content-free `memory.written` RunEvent (capability-gated on `capabilities.memory.attribution.emitsWriteEvents`) attributes each write to the node/agent that caused it, carrying identifiers only — never entry content — so provenance is observable on the wire…",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "without reopening the SR-1 surface or replay determinism (the event records a write that already happened and is re-read from the log on replay, never regenerated). Reads remain unattributed by design.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-memory.r6"
+        },
+        {
+          "file": "spec/v1/agent-memory.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-org-chart.r1",
+      "rfc": "0087",
+      "local": "r1",
+      "section": "spec/v1/agent-org-chart.md",
+      "surface": "`GET /v1/agents/org-chart[/{departmentId}]` + org-chart-management endpoints",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed (2026-09-02 audit).** `GET /v1/agents/org-chart` and `GET /v1/agents/org-chart/{departmentId}` are in `api/openapi.yaml`; this row had said \"deferred\" after the endpoints landed. Management stays host-private at v1.x.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-org-chart.r1"
+        },
+        {
+          "file": "spec/v1/agent-org-chart.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-org-chart.r2",
+      "rfc": "0087",
+      "local": "r2",
+      "section": "spec/v1/agent-org-chart.md",
+      "surface": "Behavioral non-authority + scoping conformance",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "Deferred to `Active → Accepted` (gated on `agents.orgChart.supported`); the always-on `agent-org-chart-shape.test.ts` structural assertions (schema rejects an authority field; descriptive-only key set) assert the §B invariant now.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-org-chart.r2"
+        },
+        {
+          "file": "spec/v1/agent-org-chart.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-org-chart.r3",
+      "rfc": "0087",
+      "local": "r3",
+      "section": "spec/v1/agent-org-chart.md",
+      "surface": "Reference-host org store",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Demonstrated as a host-extension at `/v1/host/sample/org-chart` (the reference app, `openwop/openwop-app` repo; originally PR #371); the normative `GET /v1/agents/org-chart` reference wiring lands at `Active → Accepted`.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-org-chart.r3"
+        },
+        {
+          "file": "spec/v1/agent-org-chart.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-org-chart.r4",
+      "rfc": "0087",
+      "local": "r4",
+      "section": "spec/v1/agent-org-chart.md",
+      "surface": "Multi-department membership; matrixed `reportsTo` across departments",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "A member belongs to one department + role per chart at v1.x; `reportsTo` MAY cross departments (only cycles + cross-tenant edges are forbidden). A future minor MAY add `memberships[]`.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-org-chart.r4"
+        },
+        {
+          "file": "spec/v1/agent-org-chart.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-org-chart.r5",
+      "rfc": "0087",
+      "local": "r5",
+      "section": "spec/v1/agent-org-chart.md",
+      "surface": "Delegated authority (a principal granting a scope to another)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Out of scope — that is delegation-by-RBAC (RFC 0049) with its own threat model, NOT authority-by-position. §B forbids the latter.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-org-chart.r5"
+        },
+        {
+          "file": "spec/v1/agent-org-chart.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-platform-profile.r1",
+      "rfc": "0085",
+      "local": "r1",
+      "section": "spec/v1/agent-platform-profile.md",
+      "surface": "The live aggregate-evidence assertion against a reference host (the Postgres host — already `production-profile`-satisfying — is the natural first `partial`/`full` candidate) + the badge rendering are the `Active → Accepted` step, naturally gated on a host actually reaching `partial`/`full`.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-platform-profile.r1"
+        },
+        {
+          "file": "spec/v1/agent-platform-profile.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-platform-profile.r2",
+      "rfc": "0085",
+      "local": "r2",
+      "section": "spec/v1/agent-platform-profile.md",
+      "surface": "Promotion of the platform-plus tier (eval/deploy/budget) from RECOMMENDED to hard `full` terms is deferred to a future minor, triggered by ≥1 non-steward host advertising each.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-platform-profile.r2"
+        },
+        {
+          "file": "spec/v1/agent-platform-profile.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-roster.r1",
+      "rfc": "0086",
+      "local": "r1",
+      "section": "spec/v1/agent-roster.md",
+      "surface": "`GET /v1/agents/roster[/{id}]` + roster-management endpoints",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed (2026-09-02 audit).** `GET /v1/agents/roster` and `GET /v1/agents/roster/{rosterId}` are in `api/openapi.yaml`; this row had said \"deferred\" after the endpoints landed. Management stays host-private at v1.x.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-roster.r1"
+        },
+        {
+          "file": "spec/v1/agent-roster.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-roster.r2",
+      "rfc": "0086",
+      "local": "r2",
+      "section": "spec/v1/agent-roster.md",
+      "surface": "Behavioral attribution + scoping conformance",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "Deferred to `Active → Accepted` (gated on `agents.roster.supported`); the always-on `agent-roster-shape.test.ts` asserts the wire contract now.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-roster.r2"
+        },
+        {
+          "file": "spec/v1/agent-roster.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-roster.r3",
+      "rfc": "0086",
+      "local": "r3",
+      "section": "spec/v1/agent-roster.md",
+      "surface": "Reference-host roster store",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Demonstrated as a host-extension at `/v1/host/sample/roster` (the reference app, `openwop/openwop-app` repo); the normative `GET /v1/agents/roster` reference wiring lands at `Active → Accepted`.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-roster.r3"
+        },
+        {
+          "file": "spec/v1/agent-roster.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-roster.r4",
+      "rfc": "0086",
+      "local": "r4",
+      "section": "spec/v1/agent-roster.md",
+      "surface": "Dispatch-as-agent (resolving `agentRef` → the executing agent)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "The reference impl attributes by `agentRef`; executing the portfolio workflow _as_ that agent is deferred.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-roster.r4"
+        },
+        {
+          "file": "spec/v1/agent-roster.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-roster.r5",
+      "rfc": "0086",
+      "local": "r5",
+      "section": "spec/v1/agent-roster.md",
+      "surface": "`kanban.card.moved` as a normative event",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Deferred to a future `host.kanban` RFC iff cross-host demand appears (§E).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-roster.r5"
+        },
+        {
+          "file": "spec/v1/agent-roster.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-runtime.r1",
+      "rfc": "0097",
+      "local": "r1",
+      "section": "spec/v1/agent-runtime.md",
+      "surface": "Normative `/v1/goals` endpoints in `api/openapi.yaml`",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Deferred to graduation (pre-authored near `Active → Accepted`, per the RFC 0086 precedent). Floor surface is the host-extension seam.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-runtime.r1"
+        },
+        {
+          "file": "spec/v1/agent-runtime.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-runtime.r2",
+      "rfc": "0097",
+      "local": "r2",
+      "section": "spec/v1/agent-runtime.md",
+      "surface": "Judge model / planning strategy",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Out of scope by design — host choice. The protocol pins only the object, lifecycle, bound-enforcement, and events.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-runtime.r2"
+        },
+        {
+          "file": "spec/v1/agent-runtime.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-runtime.r3",
+      "rfc": "0097",
+      "local": "r3",
+      "section": "spec/v1/agent-runtime.md",
+      "surface": "SDK methods (`goals` group)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "Tracked in `openwop-sdks`; not part of the spec-corpus floor.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-runtime.r3"
+        },
+        {
+          "file": "spec/v1/agent-runtime.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-workspace.r1",
+      "rfc": "0059",
+      "local": "r1",
+      "section": "spec/v1/agent-workspace.md",
+      "surface": "**Cross-host `path` / `etag` portability**",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "v1.x silent. A workspace minted on host A is NOT guaranteed re-resolvable on host B; `etag` is opaque and host-defined. A portable encoding MAY be normated later if implementer demand surfaces.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-workspace.r1"
+        },
+        {
+          "file": "spec/v1/agent-workspace.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-workspace.r2",
+      "rfc": "0059",
+      "local": "r2",
+      "section": "spec/v1/agent-workspace.md",
+      "surface": "**`WorkspaceAdapter` host-interface contract**",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Deferred to `storage-adapters.md` at implementation (RFC 0059 §G5) — adapter authors are notified there once the reference wiring lands.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-workspace.r2"
+        },
+        {
+          "file": "spec/v1/agent-workspace.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-workspace.r3",
+      "rfc": "0059",
+      "local": "r3",
+      "section": "spec/v1/agent-workspace.md",
+      "surface": "**Version retention beyond `maxVersions`**",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Latest is the MUST; history is best-effort. Hosts MAY purge versions beyond `maxVersions` at any time; a `?version=N` for a purged version returns `404 not_found`.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-workspace.r3"
+        },
+        {
+          "file": "spec/v1/agent-workspace.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-workspace.r4",
+      "rfc": "0059",
+      "local": "r4",
+      "section": "spec/v1/agent-workspace.md",
+      "surface": "**Per-file authorization within a workspace**",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Silence intentional. WCT-1 is the only normative isolation surface; finer-grained RBAC within a `{tenant, workspace}` is host-internal (composes with RFC 0049 when present).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-workspace.r4"
+        },
+        {
+          "file": "spec/v1/agent-workspace.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-workspace.r5",
+      "rfc": "0059",
+      "local": "r5",
+      "section": "spec/v1/agent-workspace.md",
+      "surface": "**Directory / move / rename semantics**",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Out of scope for v1 — the namespace is flat. A \"rename\" is a `PUT` of the new path plus a `DELETE` of the old.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-workspace.r5"
+        },
+        {
+          "file": "spec/v1/agent-workspace.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.agent-workspace.r6",
+      "rfc": "0059",
+      "local": "r6",
+      "section": "spec/v1/agent-workspace.md",
+      "surface": "**SECURITY invariant + conformance behavior tests**",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "`workspace-cross-tenant-isolation` (WCT-1) + WSR-1 + CRUD/ETag/snapshot conformance land at the behavior milestone, not at this DRAFT. Shape-only conformance (`workspace-capability-shape.test.ts`) ships now.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.agent-workspace.r6"
+        },
+        {
+          "file": "spec/v1/agent-workspace.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.ai-envelope.e1",
+      "rfc": "0021",
+      "local": "E1",
+      "section": "spec/v1/ai-envelope.md",
+      "surface": "Streaming/partial envelope reassembly across SSE delivery — the `partial` field is specified but the cross-transport reassembly contract (when does the engine know a partial sequence is complete?) is not.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.ai-envelope.e1"
+        },
+        {
+          "file": "spec/v1/ai-envelope.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.ai-envelope.e2",
+      "rfc": "0021",
+      "local": "E2",
+      "section": "spec/v1/ai-envelope.md",
+      "surface": "Multi-turn envelope conversations (an envelope whose handler emits a follow-up `schema.request` that the LLM answers in the next turn) — the `correlationId` chaining model is described but the conversation-state surface is not.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.ai-envelope.e2"
+        },
+        {
+          "file": "spec/v1/ai-envelope.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.ai-envelope.e3",
+      "rfc": "0021",
+      "local": "E3",
+      "section": "spec/v1/ai-envelope.md",
+      "surface": "Vendor-kind registry — whether namespaced kinds (`vendor.myndhyve.prd.create`) should be advertised through a `kinds` registry parallel to the node-pack registry per `registry-operations.md`, or stay host-private.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.ai-envelope.e3"
+        },
+        {
+          "file": "spec/v1/ai-envelope.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.ai-envelope.e4",
+      "rfc": "0021",
+      "local": "E4",
+      "section": "spec/v1/ai-envelope.md",
+      "surface": "Schema sub-typing — `vendor.x.prd.create` v2 might want to declare \"everything v1 accepted, plus new optional field\" without restating the v1 schema. JSON Schema $ref vs flat duplication; not locked.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.ai-envelope.e4"
+        },
+        {
+          "file": "spec/v1/ai-envelope.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.ai-envelope.e5",
+      "rfc": "0021",
+      "local": "E5",
+      "section": "spec/v1/ai-envelope.md",
+      "surface": "Refusal-mode interaction with retry policies — `refusalMode: \"fail-node\"` plus a per-run retry policy can produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.ai-envelope.e5"
+        },
+        {
+          "file": "spec/v1/ai-envelope.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.ai-envelope.e6",
+      "rfc": "0021",
+      "local": "E6",
+      "section": "spec/v1/ai-envelope.md",
+      "surface": "✅ OTel attribute names — closed. `observability.md` §\"Envelope-reliability events (RFC 0032)\" defines the `openwop.envelope.*` span-attribute projection for the envelope event vocabulary, and the redaction discipline for `openwop.envelope_*` attributes is enforced by `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward`.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.ai-envelope.e6"
+        },
+        {
+          "file": "spec/v1/ai-envelope.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.artifact-type-packs.r1",
+      "rfc": "0071",
+      "local": "r1",
+      "section": "spec/v1/artifact-type-packs.md",
+      "surface": "Chat card packs (`kind: \"card\"`), which produce artifacts of these types via prompts.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "RFC 0071 Phase 2 / `chat-card-packs.md` (pending)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.artifact-type-packs.r1"
+        },
+        {
+          "file": "spec/v1/artifact-type-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.artifact-type-packs.r2",
+      "rfc": "0071",
+      "local": "r2",
+      "section": "spec/v1/artifact-type-packs.md",
+      "surface": "**Closed (2026-09-03, RFC 0178 §B.3 — first catch of `check-gap-contradictions.mjs`).** The protocol-tier invariant `artifact-schema-compile-bounded` (`SECURITY/invariants.yaml`) and `conformance/src/scenarios/artifact-schema-compile-bounded.test.ts` exist; the behavioral end-to-end leg stays capability-gated on `host.artifactTypes.supported`. Original: Bounded-compilation limits for distributed…",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "artifact schemas (schema-bomb / ReDoS defense) — the protocol-tier invariant + conformance test that gates this surface to `Active`. — RFC 0071 risk R1 / `SECURITY/invariants.yaml`",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.artifact-type-packs.r2"
+        },
+        {
+          "file": "spec/v1/artifact-type-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.auth.a1",
+      "rfc": "spec",
+      "local": "A1",
+      "section": "spec/v1/auth.md",
+      "surface": "✅ Closed as optional profile in `auth-profiles.md`: OAuth2 client-credentials flow.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.auth.a1"
+        },
+        {
+          "file": "spec/v1/auth.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.auth.a2",
+      "rfc": "spec",
+      "local": "A2",
+      "section": "spec/v1/auth.md",
+      "surface": "✅ Closed as optional profile in `auth-profiles.md`: mTLS deployment profile.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.auth.a2"
+        },
+        {
+          "file": "spec/v1/auth.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.auth.a3",
+      "rfc": "spec",
+      "local": "A3",
+      "section": "spec/v1/auth.md",
+      "surface": "✅ Closed as optional profile in `auth-profiles.md`: API-key rotation/grace-period semantics.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.auth.a3"
+        },
+        {
+          "file": "spec/v1/auth.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.auth.a4",
+      "rfc": "spec",
+      "local": "A4",
+      "section": "spec/v1/auth.md",
+      "surface": "Webhook HMAC is now specified in `webhooks.md`; remaining work is shared auth-profile conformance across REST and webhook verification examples",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.auth.a4"
+        },
+        {
+          "file": "spec/v1/auth.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.auth.a5",
+      "rfc": "0047",
+      "local": "A5",
+      "section": "spec/v1/auth.md",
+      "surface": "✅ Closed as optional capability `host.oauth` (RFC 0047): OAuth 2.0 **authorization-code + refresh** for a node/connector acquiring a third-party token on a user's behalf. Distinct from A1 (client-credentials = host auth); 0047 is third-party delegation — acquired tokens stored as `host.credentials` (RFC 0046) entries, resolved into the node sandbox only.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.auth.a5"
+        },
+        {
+          "file": "spec/v1/auth.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.auth.a6",
+      "rfc": "0154",
+      "local": "A6",
+      "section": "spec/v1/auth.md",
+      "surface": "Workload identity + delegated actor chain (RFC 0154 §A–§D): prose landed 2026-08-16 in §\"Workload identity and delegated actor chain\"; shape + seam + witness landed 2026-08-13. **Open:** no host advertises the profile (legs resolve to `blocked`); mandatory delegation proof format (0154 G1); DPoP SDK availability (G2); provenance attestations §E (cross-repo).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0154.1",
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.auth.a6"
+        },
+        {
+          "file": "spec/v1/auth.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.budget-policy.r1",
+      "rfc": "0084",
+      "local": "r1",
+      "section": "spec/v1/budget-policy.md",
+      "surface": "The behavioral enforcement scenario (accrue → threshold → exhaust → `cap.breached{budget-cost}` → `run.failed{budget_exhausted}`; `budget_model_denied`; the advisory no-stop path), the `budget_exhausted`/`budget_model_denied` OpenAPI error codes, and the reference-host budget accumulator land at `Active → Accepted`; the always-on `budget-policy-shape.test.ts` + the schema + events +…",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "`cap.breached` kinds + capability ship now.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.budget-policy.r1"
+        },
+        {
+          "file": "spec/v1/budget-policy.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.capabilities.c2",
+      "rfc": "spec",
+      "local": "C2",
+      "section": "spec/v1/capabilities.md",
+      "surface": "✅ Closed by `capabilities-change-detection.md`: `Capabilities-Etag` semantics for mid-session capability change detection.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "v1.x annex",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.capabilities.c2"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.capabilities.c3",
+      "rfc": "spec",
+      "local": "C3",
+      "section": "spec/v1/capabilities.md",
+      "surface": "✅ Closed by `capabilities-change-detection.md`: non-HTTP discovery handoff guidance for MCP/A2A composition.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "v1.x annex",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.capabilities.c3"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.capabilities.c5",
+      "rfc": "spec",
+      "local": "C5",
+      "section": "spec/v1/capabilities.md",
+      "surface": "✅ Closed by `capabilities-change-detection.md`: scoped capability view rules without leaking private tenant features.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "v1.x annex",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.capabilities.c5"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.channels-and-reducers.c1",
+      "rfc": "spec",
+      "local": "C1",
+      "section": "spec/v1/channels-and-reducers.md",
+      "surface": "Channel access control — done (2026-04-27: per-channel `access` field on `ChannelDeclaration`. Three forms: `'public'` / `'private'` shorthand / `{readers?, writers?}` explicit allowlists with nodeId + typeId-wildcard matching. Engine returns `400 channel_access_denied` on violation. See \"Channel access control\" §).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.channels-and-reducers.c1"
+        },
+        {
+          "file": "spec/v1/channels-and-reducers.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.channels-and-reducers.c2",
+      "rfc": "spec",
+      "local": "C2",
+      "section": "spec/v1/channels-and-reducers.md",
+      "surface": "Distributed reducers — done (2026-04-27: cross-engine writes allowed for monotonic-add reducers (`append`/`votes`/`feedback`/`counter`); forbidden for `replace`/`merge` with `400 channel_cross_engine_write_forbidden`. New `channel-write` trigger type lets parents reactively derive authoritative state from child contributions. Events carry `sourceEngineId` + `sourceRunId`. See \"Distributed reducers and cross-engine writes\" §).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.channels-and-reducers.c2"
+        },
+        {
+          "file": "spec/v1/channels-and-reducers.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.channels-and-reducers.c3",
+      "rfc": "spec",
+      "local": "C3",
+      "section": "spec/v1/channels-and-reducers.md",
+      "surface": "Channel TTL — done (2026-04-27: `ttlMs` field on `ChannelDeclaration`; lazy drop policy; replay-safe via original event timestamps. See \"Channel TTL\" §).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.channels-and-reducers.c3"
+        },
+        {
+          "file": "spec/v1/channels-and-reducers.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.channels-and-reducers.c4",
+      "rfc": "spec",
+      "local": "C4",
+      "section": "spec/v1/channels-and-reducers.md",
+      "surface": "Schema migration — done (2026-04-27: versioned schemas + auto-detect compatibility + fail-loud on breaking. `ChannelDeclaration.schemaVersion` + `compatibleWith`; `channel.written` events carry `schemaVersion` at write time. See \"Channel schema migration\" §).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.channels-and-reducers.c4"
+        },
+        {
+          "file": "spec/v1/channels-and-reducers.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.channels-and-reducers.c5",
+      "rfc": "spec",
+      "local": "C5",
+      "section": "spec/v1/channels-and-reducers.md",
+      "surface": "Cross-host channel coherence — reads from a stale projection cache could return pre-reduction state during the gap between event append and cache write. Currently the engine guarantees write-through, but the spec should formalize.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.channels-and-reducers.c5"
+        },
+        {
+          "file": "spec/v1/channels-and-reducers.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.chat-card-packs.r1",
+      "rfc": "0071",
+      "local": "r1",
+      "section": "spec/v1/chat-card-packs.md",
+      "surface": "~~Confirm the closed `inputs[].type` subset against MyndHyve's field types~~ — **resolved (G9, 2026-05-27)**; subset finalized + `multiselect`/`file` added.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "RFC 0071 G9 ✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.chat-card-packs.r1"
+        },
+        {
+          "file": "spec/v1/chat-card-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.chat-card-packs.r2",
+      "rfc": "0071",
+      "local": "r2",
+      "section": "spec/v1/chat-card-packs.md",
+      "surface": "A host passing `chat-card-pack-execution.test.ts` (R2 trust-tag propagation) end-to-end — the Phase-2 **`Accepted` (host-pass)** gate. The invariant + scenario are landed; awaits a host implementing `host.chat.cardPacks`.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0071 R2 / `SECURITY/threat-model-prompt-injection.md`",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.chat-card-packs.r2"
+        },
+        {
+          "file": "spec/v1/chat-card-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.chat-card-packs.r3",
+      "rfc": "0071",
+      "local": "r3",
+      "section": "spec/v1/chat-card-packs.md",
+      "surface": "Whether a card may be a thin reference to a `prompt`-pack template vs. always inlining `prompt.template`.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0071 (composition)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.chat-card-packs.r3"
+        },
+        {
+          "file": "spec/v1/chat-card-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g1",
+      "rfc": "0151",
+      "local": "G1",
+      "section": "spec/v1/compensation.md",
+      "surface": "~~§C lifecycle prose — plan persistence shape, the inverse-action identity tuple, crash-resume, and cancellation-of-parent rules~~",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed 2026-08-16 (§C above).** Plan contents, `planVersion`, ordering under both models, the identity tuple `(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)` with `attempt` outside it (RFC 0150 §B parity), retry, crash-resume from the persisted plan, `onParentCancel`, and per-attempt timeouts. **Still carried within it:** how the tuple composes with RFC 0150 §C's semantic-request digest — that digest is not landed.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g1"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g2",
+      "rfc": "0151",
+      "local": "G2",
+      "section": "spec/v1/compensation.md",
+      "surface": "~~§E approvals, dead-letter routing, and the operator recovery actions and their audit~~",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed 2026-08-16 (§E above)** as *outcomes*: approval-before-effect with the plan entry as `artifactData`, RFC 0049 binding to tenant/principal/action/`planVersion` audited via `authorization.decided`, RFC 0053 routing, and the four operator actions with the recorded outcome and rollup effect each yields; UQ2 decided (substitution is a new `planVersion`). **Still open — G7:** the operator actions have no canonical endpoint in v1.x; they are host-mediated. A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is the obvious additive shape and would need OpenAPI + SDK + a seam-driven witness before it is more than a sentence here.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g2"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g3",
+      "rfc": "0151",
+      "local": "G3",
+      "section": "spec/v1/compensation.md",
+      "surface": "~~`schemas/compensation-policy.schema.json` — the policy that decides which failures qualify for automatic compensation~~",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed 2026-08-16.** Landed as `settings.compensation` on `WorkflowDefinition` (§B \"Workflow policy\"): closed `triggers`, ordering model, retry/timeout defaults, `exhaustedDisposition`, escalate-only `approvalScope`, `onParentCancel`. Refusal rule for non-advertising hosts (`capability_required`) stated.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g3"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g4",
+      "rfc": "0151",
+      "local": "G4",
+      "section": "spec/v1/compensation.md",
+      "surface": "~~`compensationStatus` on a forked run (`POST /v1/runs/{runId}:fork`) of a partially compensated source~~",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed 2026-08-18** — §\"Forked runs\" above. The fold is over the run's own log, so an inherited **terminal** outcome is reported as the recorded fact it is, and an absent one yields `none`. The case the gap existed for — a plan **non-terminal** at `fromSeq` — is decided rather than derived: the child reports `none` and the source keeps its rollup, because a non-terminal plan is an in-flight obligation the fork never made and cannot discharge, and every other value asserts either activity the child lacks or an outcome that has not happened.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g4"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g5",
+      "rfc": "0151",
+      "local": "G5",
+      "section": "spec/v1/compensation.md",
+      "surface": "Compensation evidence retention minimum",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "**Open** (RFC 0151 UQ5).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g5"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g6",
+      "rfc": "0151",
+      "local": "G6",
+      "section": "spec/v1/compensation.md",
+      "surface": "The closed `reason` vocabulary on `compensation.paused` has no code for an approval hold or a parent-cancel hold; §E/§C omit `reason` for those",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open.** Adding `approval-pending` / `parent-cancelled` to the enum is additive for producers but a strict consumer validating the closed enum would reject them; decide with the G7 endpoint family so the event and the action vocabulary move together. Both ar Ordinary additive RFC work.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g6"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g7",
+      "rfc": "0151",
+      "local": "G7",
+      "section": "spec/v1/compensation.md",
+      "surface": "Canonical operator-recovery endpoints (see G2)",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open.** A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is new optional wire surface; Until this lands, the §E actions are host-mediated and witnessed only through the §21 `operator` seam (`compensation-recovery.test.ts`).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g7"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g8",
+      "rfc": "0151",
+      "local": "G8",
+      "section": "spec/v1/compensation.md",
+      "surface": "~~Irreversible-effect declaration (RFC 0151 UQ4)~~",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed 2026-08-16 (§B \"Irreversible effects\").** A sibling boolean `irreversibleEffect` on the node — NOT a variant inside `compensation`, so `required: [nodeTypeId]` is untouched and COMPATIBILITY §2.2 is not engaged; mutual exclusion enforced in the schema (`if irreversibleEffect === true then not required compensation`) and mirrored into RFC 0157 chain fragments. Plan entry `irreversible`, rollup caps at `partial`; no event, no reason code (G6 unchanged).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g8"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.compensation.g9",
+      "rfc": "0151",
+      "local": "G9",
+      "section": "spec/v1/compensation.md",
+      "surface": "§C retry-stable identity, §E operator authority and §F recorded-input replay are observable **only through the §21 test seams** (`/v1/host/sample/test/compensation/{unwind,replay,operator}`), so they can never be deployed-wire evidence — a production host does not mount test seams (RFC 0147 §A.5 asks for the deployed origin)",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open — measured 2026-08-17.** On the first deployed advertiser (`app.openwop.dev`, `756a9938d`) the advert, §B policy attach, §D rollup ⇄ events, reverse-completion order and replay-no-refire held on the wire (`compensation-behavior` 5/6, `compensation-profile` 19/19), while plan-before-first-inverse, the three recovery legs and RFC 0157 chain expansion resolved `seamAbsent` — structurally, not as a host gap. Closing this needs an observation path that is normative surface, not a seam: a read projection of the plan / attempts / `inverseActions[]` (e.g. on the run snapshot or a `GET /v1/runs/{runId}/compensation`) and the G7 operator family. Both are new optional wire capabilities, and sit with G6/G7 as ordinary additive RFC work; until they land the row in `INTEROP-MATRIX.md` says \"deployed-wire: advert/§B/§D/ordering/replay-no-refire; local-boot: §C/§E/§F/RFC 0157\", which is the truth.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.compensation.g9"
+        },
+        {
+          "file": "spec/v1/compensation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.conformance-certification.r1",
+      "rfc": "0089",
+      "local": "r1",
+      "section": "spec/v1/conformance-certification.md",
+      "surface": "**Scenario-ID stability + floor-set source (G1/G2).** §B(2) depends on stable scenario identifiers and the `PROFILE_FLOOR_SCENARIOS` map staying in sync with each profile's prose definition. **2026-08-16:** every catalog profile now has a floor — the runtime profiles transcribed from `profiles.md` (RFC 0148 §C, including the discovery-conditional `openwop-replay-fork` floor, gap G7) and the two…",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0089.1",
+      "note": "discovery-only profiles marked `discoveryOnly`. `openwop-node-packs` is runtime-derived (claimed only when held). Verifiers evaluate a conditional floor against the bundle's own captured discovery document.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.conformance-certification.r1"
+        },
+        {
+          "file": "spec/v1/conformance-certification.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.conformance-certification.r2",
+      "rfc": "0089",
+      "local": "r2",
+      "section": "spec/v1/conformance-certification.md",
+      "surface": "**Signing / tamper-evidence.** v1 bundles are unsigned. A future RFC MAY wrap the bundle in an Ed25519 / in-toto envelope. *(**Corrected 2026-08-18.** This entry read \"unsigned-but-**reproducible** (re-running the named suite against the same host commit reproduces the pass list)\". **That claim was falsified by measurement** — see §\"What a bundle attributes to\" below — and reproducibility is not…",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "a property this format can assert on a host's behalf.)*",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.conformance-certification.r2"
+        },
+        {
+          "file": "spec/v1/conformance-certification.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.conformance-certification.r3",
+      "rfc": "0089",
+      "local": "r3",
+      "section": "spec/v1/conformance-certification.md",
+      "surface": "**A bundle attributes to a BUILD, and it can only name one if the host gives it one (G3, opened 2026-08-18).** `host` carries `name` + `version` and MAY carry `commit` / `build`, all self-reported. **A commit does not determine the artifact that ran.** A tier-2 host measured this directly: the *same commit* (`21db7e21d`), rebuilt hours later into a new image with identical revision…",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0089.3",
+      "note": "configuration, scored **283 pass / 22 fail** against **303 / 2** for the first build — because its container build ran `npm install` rather than `npm ci`, so two builds resolved different transitive dependency versions. Nothing in the bundle could distinguish the two runs: same `suite.version`, same `host.name`/`version`, same `discovery.sha256`, same `targetConfigurationSha256` — that hash covers the *advertised configuration*, not the dependency closure that executed. — Consequences, stated rather than left to inference: — - A bundle is evidence about **one execution of one build**. It is not evidence about a commit, and re-running \"the same commit\" is not a re-check unless the build is deterministic. — - A host SHOULD populate `host.build` with an identifier that names **what actually executed**, and SHOULD make its builds reproducible (a lockfile-respecting install: `npm ci`, not `npm install`) so that identifier means something. — **Which identifier depends on when the bundle is produced, and the strongest one is not always reachable** *(amended 2026-08-18 after a tier-1 host pointed out the ordering constraint)*. A bundle baked **into** the image at certify time — vendored so it is servable without a runtime recompute, which is what makes it tamper-evident — is written when no image and therefore no digest yet exists. Telling such a host to record an image digest would force it either to certify post-deploy, losing the baking property, or to ship a second revision purely to stamp one. Neither is intended. In rough order of strength, and each is only as good as what it pins: — | Identifier | Available | Pins | — | --- | --- | --- | — | container image digest | after the build | the exact artifact — strongest, but not at bake time | — | builder-assigned build id | during the build | that build, if the builder's ids are unique and retained | — | digest of the **resolved dependency manifest** (e.g. the lockfile, or the resolved tree) | at certify time | the dependency closure — the thing that actually varied in the measurement above | — The last row deserves emphasis, because it is available exactly when a baked bundle is written **and** it addresses the observed failure directly: what differed between the two builds of one commit was the resolved closure, not the image identity per se. A host whose install respects its lockfile has `commit` + lockfile digest jointly determining the closure; a host whose install does not has neither pinning anything, which is the defect. Recording *which* kind of identifier `host.build` holds is more useful than recording the strongest-sounding one. — - **First bundle measured against a reproducibly built image (recorded 2026-08-19).** The same tier-2 host that measured the divergence above made its builds lockfile-respecting and published bundle v2 #15 against the result (`workflow-runtime-00572-noc`, suite `1.136.11`). Two things about the path there are worth recording, because \"just use `npm ci`\" understates it: the switch **failed the build loudly**, naming five packages missing from the lockfile, and a follow-up attempt to filter them out with `--omit=optional` also failed — the installer validates lock/manifest sync *before* honoring omit filters, so that flag can never reach the problem. What worked was pinning the installer to the version that **wrote** the lock. The seam is writer/reader agreement, not the lockfile alone. The host's own stated residual is that the lockfile is still missing entries an older installer expects and was pinned around rather than regenerated, and that its guard test can assert a pin exists but not that the pin is the right one — so this is a build that is now *re-checkable*, not one that is proven closed. — - A verifier re-checking a claim MUST re-run against the **same build**, not merely the same commit, or say which it did. — This is a host-build property, so the spec **requires** nothing here beyond honest reporting; it is recorded because a bundle that cannot name its own build inputs is weaker evidence than its shape suggests, and the format previously implied otherwise. Same family as the dispositions RFC 0148 §A introduced: the artifact must not read as attesting more than it observed.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.conformance-certification.r3"
+        },
+        {
+          "file": "spec/v1/conformance-certification.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.conformance-certification.r4",
+      "rfc": "0089",
+      "local": "r4",
+      "section": "spec/v1/conformance-certification.md",
+      "surface": "**A file-level disposition can certify a requirement the run never exercised (G8, opened 2026-08-19).** A scenario file records `executed-pass` when it ran with at least one passing assertion and no failures — the RFC 0148 §C vacuity rule, which catches a file that asserted *nothing*. It cannot distinguish a file that asserted **the requirement** from one that asserted only a **positive…",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0089.8",
+      "note": "control** or a setup precondition before soft-skipping the requirement-bearing leg. — **The mechanism is precise and was measured, not inferred** (reported by a tier-1 host calling `resolveFileRecord` directly, no host involved). The file's noted reason is honoured in exactly two branches: when `assertionCount === 0`, and when *every* test called `ctx.skip()`. A `return softSkip(...)` produces a **pass** state, not a skip — so in a file that asserts anything at all and then soft-skips, **neither branch fires, the note is silently discarded, and the row reads `executed-pass`.** `['pass'], assertionCount 1, noted blocked` resolves to `executed-pass` with the reason dropped. — This is the same defect as the one already recorded in that function's own comment — notes written *after* `ctx.skip()` threw, which left seven files carrying notes the ledger never saw. **Note-after-skip was fixed; note-after-assertion was not**, and it hid for the same reason: nothing goes red. — The perverse property is worth stating plainly: **the better the scenario, the more convincingly it mis-certifies.** A positive control is exactly what makes a negative assertion trustworthy, and it is also what supplies the assertion that suppresses the note. A thin scenario with no control trips the vacuity rule and is caught. — Scope, stated as what it is: **36 scenario files carry 75 `softSkip` calls positioned after their first assertion.** That is a count of *positions*, not of wrong rows — the note is only dropped on a run that takes that path, so on a fully-capable host most never fire. **It bites on partially-capable hosts**, which is precisely the population a matrix exists to describe and the one where `blocked` / `inapplicable` / `executed-pass` carries all the meaning. A confirmed instance: `feedback-fork-not-copied.test.ts` asserts a `201` setup precondition and then returns `softSkip('inapplicable', 'fork unsupported')`, so a fork-less host records `executed-pass` for *\"a fork of an annotated run starts with zero annotations\"* — a requirement it cannot attempt. — **This is not an RFC 0148 §A violation on §A's own terms** — §A names \"a plain test return, caught exception converted to a return, or empty assertion body\", and this case has a non-empty assertion body. It is the harm §A exists to prevent, at a granularity §A's zero-assertion test cannot see. — **Durable fix (2026-09-02, suite 1.153.0): per-`it` rows.** Every test now records its own ledger row (`openwop.it.<file>.<title-slug>`, `conformance/requirements.json`), so the requirement's own row carries the soft-skip disposition while the positive control's row carries the pass. The file-level row and its `partial-witness:` marker remain for readers of older bundles. — **Interim (2026-08-19): the note is no longer discarded.** When a file resolves to `executed-pass` and a note exists, the note is retained as `detail` behind a `partial-witness:` marker. This changes no disposition — a conservative choice, because honouring the note unconditionally would downgrade a file that legitimately completed its requirement *and* soft-skipped an optional extra leg, trading a false positive for a false negative. Affected rows are now self-identifying in every bundle (`executed-pass` with a `partial-witness:` detail), which turns a static count of positions into a measured count of real occurrences. The durable fix is per-`it` recording rather than per-file, and it should follow that evidence rather than precede it.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.conformance-certification.r4"
+        },
+        {
+          "file": "spec/v1/conformance-certification.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.conformance-certification.r5",
+      "rfc": "0089",
+      "local": "r5",
+      "section": "spec/v1/conformance-certification.md",
+      "surface": "**Reference-host generation.** The `openwop-conformance --certify` generator (`conformance/src/cli.ts`) and a committed reference-host bundle (`examples/hosts/in-memory/certification-bundle.json`) landed at RFC 0089 `Accepted`; this document defines the format + binding rule that they implement.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.conformance-certification.r5"
+        },
+        {
+          "file": "spec/v1/conformance-certification.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.connection-packs.r1",
+      "rfc": "0095",
+      "local": "r1",
+      "section": "spec/v1/connection-packs.md",
+      "surface": "`scopeModel` coverage — whether `groups`/`coarse`/`capabilities` captures every real consent model (Stripe coarse toggle, Notion capabilities) or needs richer per-model fields",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "Validate against the Tier-1 providers during reference-host impl (RFC 0095 UQ2)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.connection-packs.r1"
+        },
+        {
+          "file": "spec/v1/connection-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.connection-packs.r2",
+      "rfc": "0095",
+      "local": "r2",
+      "section": "spec/v1/connection-packs.md",
+      "surface": "Per-account-host providers — whether `auth.instanceUrlTemplate` is the right shape, and where the resolved `{account}` lives (pack vs the RFC 0046 per-connection record) for Snowflake/NetSuite/ServiceNow",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "RFC 0095 UQ3",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.connection-packs.r2"
+        },
+        {
+          "file": "spec/v1/connection-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.connection-packs.r3",
+      "rfc": "0095",
+      "local": "r3",
+      "section": "spec/v1/connection-packs.md",
+      "surface": "Provider-id precedence/namespacing — the version-based built-in-vs-installed rule (clause 6) vs scoped ids to prevent two community packs both claiming `github`",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "RFC 0095 UQ4",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.connection-packs.r3"
+        },
+        {
+          "file": "spec/v1/connection-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.connection-packs.r4",
+      "rfc": "0095",
+      "local": "r4",
+      "section": "spec/v1/connection-packs.md",
+      "surface": "MCP endpoint freshness — `reach.mcp.server.url` is volatile (the ecosystem moves monthly); whether the registry re-verifies and the host re-validates at install",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "RFC 0095 UQ1",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.connection-packs.r4"
+        },
+        {
+          "file": "spec/v1/connection-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.connection-packs.r5",
+      "rfc": "0095",
+      "local": "r5",
+      "section": "spec/v1/connection-packs.md",
+      "surface": "Core connection catalog — the Tier-1 `core.openwop.connections.*` packs (GitHub, Jira, Confluence, Notion, Linear, Microsoft 365, Stripe) ship as a follow-up once this mechanism is Accepted",
+      "witness": "negative-existence",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "RFC 0095 UQ5",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.connection-packs.r5"
+        },
+        {
+          "file": "spec/v1/connection-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.core-standard-profile.r1",
+      "rfc": "0088",
+      "local": "r1",
+      "section": "spec/v1/core-standard-profile.md",
+      "surface": "**Per-profile machine-readable certification bundle (open).** RFC 0088 reached `Accepted` on the aggregate-floor evidence, but a claimed profile is not yet bound to a reproducible `{suite version, pass list, host commit, discovery document}` bundle — the floor proof today is server-free predicate coverage (§C) plus an externally-documented live aggregate. A future additive RFC SHOULD define a…",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "machine-readable certification bundle so every profile claim is mechanically reproducible from a single artifact.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.core-standard-profile.r1"
+        },
+        {
+          "file": "spec/v1/core-standard-profile.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.core-standard-profile.r2",
+      "rfc": "0088",
+      "local": "r2",
+      "section": "spec/v1/core-standard-profile.md",
+      "surface": "Each Lever-2 row graduates into the floor as its Phase-4 black-box harness lands; the §C table grows by the corresponding scenario set at that point.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.core-standard-profile.r2"
+        },
+        {
+          "file": "spec/v1/core-standard-profile.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.debug-bundle.debug-bundle-1",
+      "rfc": "0004",
+      "local": "DEBUG-BUNDLE-1",
+      "section": "spec/v1/debug-bundle.md",
+      "surface": "✅ Closed in the v1.0 conformance baseline. `capabilities.debugBundle.supported: true` is represented in `schemas/capabilities.schema.json` as an additive optional property.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.debug-bundle.debug-bundle-1"
+        },
+        {
+          "file": "spec/v1/debug-bundle.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.debug-bundle.debug-bundle-2",
+      "rfc": "0004",
+      "local": "DEBUG-BUNDLE-2",
+      "section": "spec/v1/debug-bundle.md",
+      "surface": "OTel-span-id format conventions when the bundle is consumed cross-trace are non-normative here — assume W3C trace context per observability.md §\"Trace context propagation.\"",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.debug-bundle.debug-bundle-2"
+        },
+        {
+          "file": "spec/v1/debug-bundle.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.debug-bundle.debug-bundle-3",
+      "rfc": "0004",
+      "local": "DEBUG-BUNDLE-3",
+      "section": "spec/v1/debug-bundle.md",
+      "surface": "The 8 MB default cap is conservative. A high-throughput host serving long-running runs may need a higher cap or a streaming variant; out of scope for v1.x.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.debug-bundle.debug-bundle-3"
+        },
+        {
+          "file": "spec/v1/debug-bundle.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.form-content-packs.r1",
+      "rfc": "0137",
+      "local": "r1",
+      "section": "spec/v1/form-content-packs.md",
+      "surface": "No conditional field visibility / cross-field dependency vocabulary (\"show `dietaryNotes` iff `meal == vegetarian`\"). Deferred: it is a small expression language, and the corpus already has an edge-condition operator set that should be evaluated for reuse before a second one is minted.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0137.1",
+      "note": "RFC 0137 §Unresolved 1 / G1",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.form-content-packs.r1"
+        },
+        {
+          "file": "spec/v1/form-content-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.form-content-packs.r2",
+      "rfc": "0137",
+      "local": "r2",
+      "section": "spec/v1/form-content-packs.md",
+      "surface": "No per-field validation beyond `required` + `format` (no `minLength`, `min`/`max`, `pattern`).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0137.2",
+      "note": "RFC 0137 §Unresolved 2 / G2",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.form-content-packs.r2"
+        },
+        {
+          "file": "spec/v1/form-content-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.form-content-packs.r3",
+      "rfc": "0137",
+      "local": "r3",
+      "section": "spec/v1/form-content-packs.md",
+      "surface": "No i18n: `label` / `title` / `description` are single-language strings. RFC 0103 defines a localized content surface that may be the right host for this.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0137.3",
+      "note": "RFC 0137 §Unresolved 3 / G3",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.form-content-packs.r3"
+        },
+        {
+          "file": "spec/v1/form-content-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.form-content-packs.r4",
+      "rfc": "0137",
+      "local": "r4",
+      "section": "spec/v1/form-content-packs.md",
+      "surface": "No reference-host implementation yet; the `host.forms.contentPacks` behavioral conformance legs are capability-gated and `host-pending`.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "RFC 0137 §Acceptance criteria / R1",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.form-content-packs.r4"
+        },
+        {
+          "file": "spec/v1/form-content-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.form-content-packs.r5",
+      "rfc": "0137",
+      "local": "r5",
+      "section": "spec/v1/form-content-packs.md",
+      "surface": "The `format` reserved core set is small (5 values) and was chosen from the JSON Schema formats a form realistically needs; it may need widening on adopter evidence.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0137.4",
+      "note": "RFC 0137 §Unresolved 4 / G4",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.form-content-packs.r5"
+        },
+        {
+          "file": "spec/v1/form-content-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.frontend-plugin-packs.r1",
+      "rfc": "0117",
+      "local": "r1",
+      "section": "spec/v1/frontend-plugin-packs.md",
+      "surface": "Persistent plugin-local state beyond `artifact.write` (a scoped `host.kv` method)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "Out of scope for v1 (RFC 0117 §Resolved Q1); a future additive `hostApi` method under a bumped `ui-plugin/*` vocabulary.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.frontend-plugin-packs.r1"
+        },
+        {
+          "file": "spec/v1/frontend-plugin-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.frontend-plugin-packs.r2",
+      "rfc": "0117",
+      "local": "r2",
+      "section": "spec/v1/frontend-plugin-packs.md",
+      "surface": "Inter-plugin composition (a `route` embedding an `artifact-viewer`)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "Forbidden in v1 — one sandbox per surface (RFC 0117 §Resolved Q2).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.frontend-plugin-packs.r2"
+        },
+        {
+          "file": "spec/v1/frontend-plugin-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.frontend-plugin-packs.r3",
+      "rfc": "0117",
+      "local": "r3",
+      "section": "spec/v1/frontend-plugin-packs.md",
+      "surface": "Streaming `artifact.read` for large artifacts",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "Whole-response in v1 (RFC 0117 §Resolved Q4); a future additive method.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.frontend-plugin-packs.r3"
+        },
+        {
+          "file": "spec/v1/frontend-plugin-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.frontend-plugin-packs.r4",
+      "rfc": "0117",
+      "local": "r4",
+      "section": "spec/v1/frontend-plugin-packs.md",
+      "surface": "Cross-host `version`-token portability",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "v1.x-silent — opaque, host-defined (§Concurrency), mirroring `agent-workspace.md` `etag`.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.frontend-plugin-packs.r4"
+        },
+        {
+          "file": "spec/v1/frontend-plugin-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.frontend-plugin-packs.r5",
+      "rfc": "0117",
+      "local": "r5",
+      "section": "spec/v1/frontend-plugin-packs.md",
+      "surface": "`Active → Accepted`",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Pending a host advertising `capabilities.uiPlugins.supported` + passing the gated scenarios non-vacuously (dual-witness per the graduation rule).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.frontend-plugin-packs.r5"
+        },
+        {
+          "file": "spec/v1/frontend-plugin-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.host-sample-test-seams.r1",
+      "rfc": "0168",
+      "local": "r1",
+      "section": "spec/v1/host-sample-test-seams.md",
+      "surface": "~~Capability flag for the prompt resolver seam~~ — **closed by deletion 2026-09-03 (RFC 0168 §C.1):** seams are a versioned conformance profile in v2 and are forbidden from the capability namespace; no `testSeams` flag will be added.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.host-sample-test-seams.r1"
+        },
+        {
+          "file": "spec/v1/host-sample-test-seams.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.host-sample-test-seams.r2",
+      "rfc": "0168",
+      "local": "r2",
+      "section": "spec/v1/host-sample-test-seams.md",
+      "surface": "~~Dedicated `capabilities.multiAgent.executionModel.testSeams` block~~ — **closed by deletion 2026-09-03 (RFC 0168 §C.1):** same ruling.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.host-sample-test-seams.r2"
+        },
+        {
+          "file": "spec/v1/host-sample-test-seams.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.idempotency.i1",
+      "rfc": "spec",
+      "local": "I1",
+      "section": "spec/v1/idempotency.md",
+      "surface": "✅ Cross-region replication semantics — landed in v1.0 (this doc §\"Multi-region idempotency\", added 2026-05-10).",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.idempotency.i1"
+        },
+        {
+          "file": "spec/v1/idempotency.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.idempotency.i2",
+      "rfc": "spec",
+      "local": "I2",
+      "section": "spec/v1/idempotency.md",
+      "surface": "Garbage-collection guarantees / minimum TTL — currently RECOMMENDED 24h Layer 1 / 14d Layer 2; SHOULD be MUST after telemetry",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.idempotency.i2"
+        },
+        {
+          "file": "spec/v1/idempotency.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.idempotency.i3",
+      "rfc": "spec",
+      "local": "I3",
+      "section": "spec/v1/idempotency.md",
+      "surface": "Streaming response handling — Layer 2 currently doesn't cache; conformance suite should validate this is \"safe\" not \"broken\"",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "P2-F4",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.idempotency.i3"
+        },
+        {
+          "file": "spec/v1/idempotency.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.idempotency.i4",
+      "rfc": "spec",
+      "local": "I4",
+      "section": "spec/v1/idempotency.md",
+      "surface": "Idempotency key entropy lower bound — currently no MUST; consider 128 bits",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.idempotency.i4"
+        },
+        {
+          "file": "spec/v1/idempotency.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.idempotency.i5",
+      "rfc": "spec",
+      "local": "I5",
+      "section": "spec/v1/idempotency.md",
+      "surface": "**Known host divergence from rule 6 (recorded 2026-08-18, not a spec gap).** §\"Record shape, digest, and lease\" makes `completed` and `terminal-failure` the two **final** outcomes rule 6 caches. A tier-1 host models only `pending` / `completed`: it satisfies the `retryable-failure` MUST **behaviourally** — a `finally` releases the pending claim on every error path, so a failed attempt releases and a same-key retry re-executes — but because it releases on **all** failures, a **terminal** failure is re-executed rather than answered from the cached response. **Effect is benign** (re-running a refusal re-refuses, so no duplicate effect is reachable) but it is a real divergence, disclosed by the host rather than found in a conformance run. Recorded here so a reader of a passing bundle does not infer the state machine is modelled; the spec text is unchanged and correct.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "host-side",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.idempotency.i5"
+        },
+        {
+          "file": "spec/v1/idempotency.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.interrupt.i1",
+      "rfc": "spec",
+      "local": "I1",
+      "section": "spec/v1/interrupt.md",
+      "surface": "Multi-approver quorum execution semantics — order of votes, partial-state events, half-vote scenarios. v1 defines the final wire state; future minors may standardize intermediate quorum-state events.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.interrupt.i1"
+        },
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.interrupt.i2",
+      "rfc": "spec",
+      "local": "I2",
+      "section": "spec/v1/interrupt.md",
+      "surface": "Cancel-on-resolve semantics for cross-canvas approvals (parent waits on child interrupt — what happens when parent cancels?)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.interrupt.i2"
+        },
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.interrupt.i3",
+      "rfc": "spec",
+      "local": "I3",
+      "section": "spec/v1/interrupt.md",
+      "surface": "`external-event` correlation matching — is the spec strict (exact equality on `correlation`) or fuzzy (subset-match)?",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.interrupt.i3"
+        },
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.interrupt.i4",
+      "rfc": "spec",
+      "local": "I4",
+      "section": "spec/v1/interrupt.md",
+      "surface": "Token format alternatives — JWT, paseto, etc. Currently HMAC-SHA256 is the only spec'd format.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.interrupt.i4"
+        },
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g1",
+      "rfc": "0153",
+      "local": "G1",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Legacy adopter inventory",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open** — the window date is fixed above (2027-08-12); who is on 2025-06-18 is unknown.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g1"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g2",
+      "rfc": "0153",
+      "local": "G2",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Complete MRTR mapping",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed** by §C (C.1 client, C.2 server): identity, `requestState`, retry, timeout, cancellation, replay, interrupt composition.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g2"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g3",
+      "rfc": "0153",
+      "local": "G3",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Real current MCP peer for CI",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Externally gated**; the fake server is legacy-shaped.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g3"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g4",
+      "rfc": "0153",
+      "local": "G4",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Authorization-aware cache validators",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed** by §D: scope change ⇒ stale regardless of `ttlMs`; `\"private\"` never crosses authorization contexts; key includes tenant/workspace/principal/origin/revision/discovery context.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g4"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g5",
+      "rfc": "0153",
+      "local": "G5",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Initial mapped extension set",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Decided: none first-class.** OTel `_meta` keys and `logLevel` are the only named mappings; `io.modelcontextprotocol/tasks` is deliberately unmapped (RFC 0100 owns durable interop).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g5"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g6",
+      "rfc": "0153",
+      "local": "G6",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "2026-07-28-shaped fake server + the six named scenarios",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "**Closed 2026-08-16 (suite 1.113.0):** dual-era `McpFakeServer` and all six legs landed, gated; what remains is a host that claims the profile.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g6"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g7",
+      "rfc": "0153",
+      "local": "G7",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Dedicated content-free negotiation audit event",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0152.7",
+      "note": "**Open** — `authorization.decided` recommended as carrier; shared with RFC 0152 G7.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g7"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g8",
+      "rfc": "0153",
+      "local": "G8",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Interop threat-model document",
+      "witness": "negative-existence",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0152.8",
+      "note": "**Open** — shared with RFC 0152 G8.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g8"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.mcp-integration.g9",
+      "rfc": "0153",
+      "local": "G9",
+      "section": "spec/v1/mcp-integration.md",
+      "surface": "Bound on MRTR rounds per invocation",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "**Open** — §C.1 requires a bound and leaves the number to host policy; a normative ceiling may follow evidence.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.mcp-integration.g9"
+        },
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-1",
+      "rfc": "0039",
+      "local": "MAE-1",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 2`:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0039 (`version: 2`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-1"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-2",
+      "rfc": "0039",
+      "local": "MAE-2",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 2`:** Agent memory lifecycle across sub-runs — `MemoryEntry.ttl` semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0039 (`version: 2`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-2"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-3",
+      "rfc": "0039",
+      "local": "MAE-3",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 2`:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state?",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0039 (`version: 2`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-3"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-4",
+      "rfc": "0040",
+      "local": "MAE-4",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §\"Determinism guarantees\").",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0040 (`version: 3`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-4"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-5",
+      "rfc": "0040",
+      "local": "MAE-5",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 3`:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0040 (`version: 3`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-5"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-6",
+      "rfc": "0040",
+      "local": "MAE-6",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 3`:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain?",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0040 (`version: 3`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-6"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-7",
+      "rfc": "0041",
+      "local": "MAE-7",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 4`:** LLM cache-key recipe — `replay.md` §\"LLM cache-key recipe\" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0041 (`version: 4`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-7"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-8",
+      "rfc": "0041",
+      "local": "MAE-8",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 4`:** Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0041 (`version: 4`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-8"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.multi-agent-execution.mae-9",
+      "rfc": "0041",
+      "local": "MAE-9",
+      "section": "spec/v1/multi-agent-execution.md",
+      "surface": "**`version: 4`:** Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0041 (`version: 4`) — OpenWOP WG",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.multi-agent-execution.mae-9"
+        },
+        {
+          "file": "spec/v1/multi-agent-execution.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.node-packs.np1",
+      "rfc": "0008",
+      "local": "NP1",
+      "section": "spec/v1/node-packs.md",
+      "surface": "~~WASM ABI for `language: wasm` packs~~ — closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (`Accepted`). See §\"WASM runtime\" above.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.node-packs.np1"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.node-packs.np2",
+      "rfc": "spec",
+      "local": "NP2",
+      "section": "spec/v1/node-packs.md",
+      "surface": "~~Pack-level `dependencies` resolution (transitive packs) — currently underspecified.~~ — closed 2026-05-15 (PACK-3) by §\"Transitive dependency resolution\" above (5-step normative algorithm + override-pinning + resolver-determinism rules + new `pack_dependency_conflict` and `pack_dependency_cycle` error codes; `pack-lockfile.schema.json` extended with `overrides` map).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅ closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.node-packs.np2"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.node-packs.np3",
+      "rfc": "spec",
+      "local": "NP3",
+      "section": "spec/v1/node-packs.md",
+      "surface": "~~Mirror / federation between registries (npm-style upstream-fallback).~~ — closed 2026-05-15 (PACK-4) by `registry-operations.md` §\"Registry mirror + federation\" (workspace `fallbackRegistries[]` ordering, per-registry trust roots, no-transitive-trust rule, offline-mode behavior, 2 new error codes `pack_registry_unreachable` + `pack_namespace_unauthorized`, `capabilities.packRegistry` advertisement).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅ closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.node-packs.np3"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.node-packs.np4",
+      "rfc": "spec",
+      "local": "NP4",
+      "section": "spec/v1/node-packs.md",
+      "surface": "~~Pack deprecation flow~~ — closed by `registry-operations.md` §\"Deprecation flow\" (2026-04-29).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅ closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.node-packs.np4"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.node-packs.np5",
+      "rfc": "spec",
+      "local": "NP5",
+      "section": "spec/v1/node-packs.md",
+      "surface": "~~Signing key rotation~~ — closed by `registry-operations.md` §\"Signing-key rotation flow\" (2026-04-29).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅ closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.node-packs.np5"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.observability.o1",
+      "rfc": "spec",
+      "local": "O1",
+      "section": "spec/v1/observability.md",
+      "surface": "Full OTel metric definitions — done (2026-04-27: 13 metrics defined in semconv style under \"OpenTelemetry metrics (full)\" §, with instrument / unit / attributes / recommended histogram buckets / stability tier per metric. All 13 Stable as of O4 promotion). Cardinality bounds documented per attribute.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.observability.o1"
+        },
+        {
+          "file": "spec/v1/observability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.observability.o2",
+      "rfc": "spec",
+      "local": "O2",
+      "section": "spec/v1/observability.md",
+      "surface": "Sub-workflow span linkage — done (2026-04-27: child `openwop.run` is a parent-child span of the invoke-node's `openwop.node.<typeId>` (causal nesting); three required attributes `openwop.parent.run_id`, `openwop.parent.workflow_id`, `openwop.parent.node_id`. Parent forwards W3C `traceparent` on REST/MCP/A2A invocation. See \"Sub-workflow attributes\" §).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.observability.o2"
+        },
+        {
+          "file": "spec/v1/observability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.observability.o3",
+      "rfc": "spec",
+      "local": "O3",
+      "section": "spec/v1/observability.md",
+      "surface": "Replay/branch span linkage — done (2026-04-27: forked `openwop.run` carries an OTel `Link` to the source span + three required attributes `openwop.replay.source_run_id`, `openwop.replay.from_seq`, `openwop.replay.mode`. See \"Replay / branch attributes\" §).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.observability.o3"
+        },
+        {
+          "file": "spec/v1/observability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.observability.o4",
+      "rfc": "spec",
+      "local": "O4",
+      "section": "spec/v1/observability.md",
+      "surface": "Cost attribution attributes — done (2026-04-27: typed `openwop.cost.tokens.*` + `openwop.cost.usd` + `openwop.cost.estimated` attributes; `openwop.cost.recorded` log metric; `openwop.cost.usd` OTel metric promoted Experimental → Stable).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.observability.o4"
+        },
+        {
+          "file": "spec/v1/observability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.observability.o5",
+      "rfc": "spec",
+      "local": "O5",
+      "section": "spec/v1/observability.md",
+      "surface": "Privacy classification — done (2026-04-27: full surface — three span attributes (`openwop.pii_present`, `openwop.compliance_class`, `openwop.sensitive_fields`) + workflow-level `metadata.complianceClass` + field markers on variables/nodes/channels/pack outputs + four masking modes (`mask`/`omit`/`hash`/`passthrough`) advertised via `Capabilities.compliance.defaultMode`. See \"Privacy classification\" §).",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.observability.o5"
+        },
+        {
+          "file": "spec/v1/observability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.portability.r1",
+      "rfc": "0098",
+      "local": "r1",
+      "section": "spec/v1/portability.md",
+      "surface": "Normative `/v1/export` + `/v1/import` endpoints in `api/openapi.yaml`",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Deferred to graduation (pre-authored near `Active → Accepted`, per the RFC 0086 precedent). Floor surface is the host-extension seam.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.portability.r1"
+        },
+        {
+          "file": "spec/v1/portability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.portability.r2",
+      "rfc": "0098",
+      "local": "r2",
+      "section": "spec/v1/portability.md",
+      "surface": "Competitor adapters (e.g. an external-platform → openwop bundle reader)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Out of scope — host/tooling concern. The protocol pins only the bundle shape + import contract.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.portability.r2"
+        },
+        {
+          "file": "spec/v1/portability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.portability.r3",
+      "rfc": "0098",
+      "local": "r3",
+      "section": "spec/v1/portability.md",
+      "surface": "SDK methods (`export`/`import` group)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "Tracked in `openwop-sdks`; not part of the spec-corpus floor.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.portability.r3"
+        },
+        {
+          "file": "spec/v1/portability.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.profiles.profile-1",
+      "rfc": "spec",
+      "local": "PROFILE-1",
+      "section": "spec/v1/profiles.md",
+      "surface": "Sub-profiles (`openwop-node-packs-readonly`, `openwop-node-packs-publish`) — deferred candidate. Derivable today from which scenarios pass; will be formalized via a successor RFC if a third-party host needs the split.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.profiles.profile-1"
+        },
+        {
+          "file": "spec/v1/profiles.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.profiles.profile-2",
+      "rfc": "spec",
+      "local": "PROFILE-2",
+      "section": "spec/v1/profiles.md",
+      "surface": "✅ Closed in the v1.0 conformance baseline. Profile-gated scenarios use `describe.runIf(profile)`; the conformance runner exposes `--profile=<name>` to filter.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.profiles.profile-2"
+        },
+        {
+          "file": "spec/v1/profiles.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.profiles.profile-3",
+      "rfc": "0155",
+      "local": "PROFILE-3",
+      "section": "spec/v1/profiles.md",
+      "surface": "RFC 0155 §A rename landed 2026-08-16 (`openwop-discovery-core` canonical, `openwop-core` deprecated alias, both derived together — `profile-discovery-core-alias.test.ts`). Open: registering `profile-claim-floor-not-overstated`; (correction 2026-08-16: `certification-bundle-v2.schema.json` has always carried `aliases`; `--certify` now populates it and keeps `openwop-core` out of `claimedProfiles`); badge artwork/text distinction is a site concern.",
+      "witness": "claims-check",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.profiles.profile-3"
+        },
+        {
+          "file": "spec/v1/profiles.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p1",
+      "rfc": "0029",
+      "local": "P1",
+      "section": "spec/v1/prompts.md",
+      "surface": "Reference-host implementation of the four-layer resolution chain + `agent.promptResolved` emission in `core.ai.callPrompt`",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Acceptance-gate item per RFC 0029 (wire shape landed in this document §\"Resolution chain (normative)\")",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p1"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p2",
+      "rfc": "0027",
+      "local": "P2",
+      "section": "spec/v1/prompts.md",
+      "surface": "Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Acceptance-gate item per RFC 0027",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p2"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p3",
+      "rfc": "0027",
+      "local": "P3",
+      "section": "spec/v1/prompts.md",
+      "surface": "First non-steward host advertises `capabilities.prompts.supported: true`",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Acceptance-gate item per RFC 0027",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p3"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p4",
+      "rfc": "0028",
+      "local": "P4",
+      "section": "spec/v1/prompts.md",
+      "surface": "Reference-host implementation of `/v1/prompts*` REST endpoints + prompt-pack install flow",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Acceptance-gate item per RFC 0028",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p4"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p5",
+      "rfc": "0027",
+      "local": "P5",
+      "section": "spec/v1/prompts.md",
+      "surface": "Nested template includes (`{{include:prompt:other@1.0.0}}`) — deferred to a future RFC if demand emerges",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "(open)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p5"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p6",
+      "rfc": "0027",
+      "local": "P6",
+      "section": "spec/v1/prompts.md",
+      "surface": "Canonical enumeration of `context` source variable names — currently non-normative recommendations",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "(open)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p6"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p7",
+      "rfc": "0030",
+      "local": "P7",
+      "section": "spec/v1/prompts.md",
+      "surface": "Cross-validation of `modelHints.envelopeType` against `capabilities.supportedEnvelopes` and the Tier-1 portability subset (RFC 0030)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC 0030 (Draft, parallel track)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p7"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.prompts.p8",
+      "rfc": "0028",
+      "local": "P8",
+      "section": "spec/v1/prompts.md",
+      "surface": "Cross-pack `dependencies` semantics — `extends:` template inheritance, transitive closure resolution",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "RFC follow-up to 0028 (deferred)",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.prompts.p8"
+        },
+        {
+          "file": "spec/v1/prompts.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.replay.rp1",
+      "rfc": "spec",
+      "local": "RP1",
+      "section": "spec/v1/replay.md",
+      "surface": "Bulk fork API — fork many runs at once for batch validation",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.replay.rp1"
+        },
+        {
+          "file": "spec/v1/replay.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.replay.rp2",
+      "rfc": "spec",
+      "local": "RP2",
+      "section": "spec/v1/replay.md",
+      "surface": "Branch-with-edited-event API — modify a specific event in-place rather than overlay options",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.replay.rp2"
+        },
+        {
+          "file": "spec/v1/replay.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.replay.rp3",
+      "rfc": "spec",
+      "local": "RP3",
+      "section": "spec/v1/replay.md",
+      "surface": "✅ Closed by §\"Determinism scoring\" for advisory replay reports.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "v1.x annex",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.replay.rp3"
+        },
+        {
+          "file": "spec/v1/replay.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.replay.rp4",
+      "rfc": "spec",
+      "local": "RP4",
+      "section": "spec/v1/replay.md",
+      "surface": "✅ Closed by §\"Retention and garbage collection\".",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "v1.x annex",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.replay.rp4"
+        },
+        {
+          "file": "spec/v1/replay.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.replay.rp5",
+      "rfc": "spec",
+      "local": "RP5",
+      "section": "spec/v1/replay.md",
+      "surface": "✅ Closed by §\"Privacy and replay\".",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "v1.x annex",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.replay.rp5"
+        },
+        {
+          "file": "spec/v1/replay.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.rest-endpoints.r1",
+      "rfc": "spec",
+      "local": "R1",
+      "section": "spec/v1/rest-endpoints.md",
+      "surface": "✅ Bulk-cancel endpoint landed in v1.0 (this doc, 2026-05-12).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.rest-endpoints.r1"
+        },
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.rest-endpoints.r2",
+      "rfc": "spec",
+      "local": "R2",
+      "section": "spec/v1/rest-endpoints.md",
+      "surface": "✅ Explicit administrative pause/resume endpoints — landed in v1.0 (this doc, 2026-05-10).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.rest-endpoints.r2"
+        },
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.rest-endpoints.r3",
+      "rfc": "spec",
+      "local": "R3",
+      "section": "spec/v1/rest-endpoints.md",
+      "surface": "✅ Optional gRPC transport profile landed at `spec/v1/grpc-transport.md` (Phase B, 2026-05-12). REST + SSE remains the REQUIRED wire surface; gRPC is an additional opt-in surface advertised via `capabilities.supportedTransports: [\"grpc\"]`. Canonical service definition at `api/grpc/openwop.proto`.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.rest-endpoints.r3"
+        },
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.rest-endpoints.r4",
+      "rfc": "spec",
+      "local": "R4",
+      "section": "spec/v1/rest-endpoints.md",
+      "surface": "✅ Endpoint coverage manifest landed at `conformance/coverage.md` §\"Endpoint Coverage Manifest\". Every OpenAPI `operationId` MUST appear there (enforced by `spec-corpus-validity.test.ts`). Auto-generation tooling is a future polish; the manual manifest + the gate already close the gap.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.rest-endpoints.r4"
+        },
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.run-options.ro1",
+      "rfc": "spec",
+      "local": "RO1",
+      "section": "spec/v1/run-options.md",
+      "surface": "Positive/negative conformance coverage for advertised `Capabilities.configurable` bounds",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "conformance minor",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.run-options.ro1"
+        },
+        {
+          "file": "spec/v1/run-options.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.run-options.ro2",
+      "rfc": "spec",
+      "local": "RO2",
+      "section": "spec/v1/run-options.md",
+      "surface": "`PATCH /v1/runs/{runId}` for tag/metadata updates post-creation",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.run-options.ro2"
+        },
+        {
+          "file": "spec/v1/run-options.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.run-options.ro3",
+      "rfc": "spec",
+      "local": "RO3",
+      "section": "spec/v1/run-options.md",
+      "surface": "Default `tags` / `metadata` injection from API key (e.g., key carries `tenant:acme` automatically)",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.run-options.ro3"
+        },
+        {
+          "file": "spec/v1/run-options.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.run-options.ro4",
+      "rfc": "spec",
+      "local": "RO4",
+      "section": "spec/v1/run-options.md",
+      "surface": "Tag indexing + query syntax (`?tag=tenant:acme`)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.run-options.ro4"
+        },
+        {
+          "file": "spec/v1/run-options.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.scale-profiles.scale-1",
+      "rfc": "0004",
+      "local": "SCALE-1",
+      "section": "spec/v1/scale-profiles.md",
+      "surface": "✅ Closed in the v1.0 conformance baseline. `--scale-profile=<name>` filters scenarios by their profile tag.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.scale-profiles.scale-1"
+        },
+        {
+          "file": "spec/v1/scale-profiles.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.scale-profiles.scale-2",
+      "rfc": "0004",
+      "local": "SCALE-2",
+      "section": "spec/v1/scale-profiles.md",
+      "surface": "Latency-percentile measurement methodology (warm-up time, sample size, environment) is not specified here. Each scenario file documents its own. The `highConcurrency.test.ts` scenario seeds the methodology.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.scale-profiles.scale-2"
+        },
+        {
+          "file": "spec/v1/scale-profiles.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.scale-profiles.scale-3",
+      "rfc": "0004",
+      "local": "SCALE-3",
+      "section": "spec/v1/scale-profiles.md",
+      "surface": "Cross-region replication semantics (a single run originating in one region with replay served from another) is out of scope for v1.x.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.scale-profiles.scale-3"
+        },
+        {
+          "file": "spec/v1/scale-profiles.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.self-hosted-runner.g1",
+      "rfc": "0122",
+      "local": "G1",
+      "section": "spec/v1/self-hosted-runner.md",
+      "surface": "Runner-bearer minting/rotation endpoint shape",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Host-internal for v1; the bearer is opaque to the wire. A normative mint/rotate endpoint MAY be added additively if cross-host runner portability is pursued.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.self-hosted-runner.g1"
+        },
+        {
+          "file": "spec/v1/self-hosted-runner.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.self-hosted-runner.g2",
+      "rfc": "0122",
+      "local": "G2",
+      "section": "spec/v1/self-hosted-runner.md",
+      "surface": "Multiple runners per subject: load-balancing / affinity policy",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Implementation-defined. The spec pins only subject-first + capability match; a host MAY pick any matching free runner.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.self-hosted-runner.g2"
+        },
+        {
+          "file": "spec/v1/self-hosted-runner.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.self-hosted-runner.g3",
+      "rfc": "0122",
+      "local": "G3",
+      "section": "spec/v1/self-hosted-runner.md",
+      "surface": "Tool-dispatch conformance depth",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "The frame shape carries `kind:\"tool\"` from v1; the reference witness lands `model`-dispatch first (openwop-app ADR 0182 Phase 5). Tool-dispatch behavioral coverage graduates when a host routes it non-vacuously.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.self-hosted-runner.g3"
+        },
+        {
+          "file": "spec/v1/self-hosted-runner.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.self-hosted-runner.g4",
+      "rfc": "0122",
+      "local": "G4",
+      "section": "spec/v1/self-hosted-runner.md",
+      "surface": "A2A interaction (RFC 0100/0101)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Out of scope for v1; the runner channel is host↔runner, distinct from the client↔host A2A transport.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.self-hosted-runner.g4"
+        },
+        {
+          "file": "spec/v1/self-hosted-runner.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.stream-modes.s1",
+      "rfc": "spec",
+      "local": "S1",
+      "section": "spec/v1/stream-modes.md",
+      "surface": "`state.snapshot` payload schema — done (2026-04-27: reuses `schemas/run-snapshot.schema.json` verbatim — same shape as `GET /v1/runs/{runId}` projection).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.stream-modes.s1"
+        },
+        {
+          "file": "spec/v1/stream-modes.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.stream-modes.s2",
+      "rfc": "spec",
+      "local": "S2",
+      "section": "spec/v1/stream-modes.md",
+      "surface": "`ai.message.chunk` payload — done (2026-04-27: tiered shape — Tier 1 typed slots `finishReason / logprobs / toolCalls / model / usage`, Tier 2 `providerExtensions` escape hatch. Bare `{chunk, isLast}` remains the minimum compliant payload). Schema lives at `run-event-payloads.schema.json#$defs.outputChunk`.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.stream-modes.s2"
+        },
+        {
+          "file": "spec/v1/stream-modes.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.stream-modes.s3",
+      "rfc": "spec",
+      "local": "S3",
+      "section": "spec/v1/stream-modes.md",
+      "surface": "Subscriber-side aggregation hints — done (2026-04-27: `?bufferMs=N` query param accepts 0..5000; batched SSE events use `event: batch` with array `data:`. Forced-flush on terminal events + suspensions. See \"Aggregation hint\" §).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.stream-modes.s3"
+        },
+        {
+          "file": "spec/v1/stream-modes.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.stream-modes.s4",
+      "rfc": "spec",
+      "local": "S4",
+      "section": "spec/v1/stream-modes.md",
+      "surface": "Mixing modes — done (2026-04-27: comma-separated `?streamMode=A,B` accepted; union-of-filters semantics; per-event `event:` field labels which mode admitted it; `values` exclusive. See \"Mixed mode\" §).",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.stream-modes.s4"
+        },
+        {
+          "file": "spec/v1/stream-modes.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.tool-catalog.r1",
+      "rfc": "0078",
+      "local": "r1",
+      "section": "spec/v1/tool-catalog.md",
+      "surface": "The behavioral `GET /v1/tools` projection (over ≥1 source), the authorization-scoping check, and the `tool.session.*` reference emission land at `Active → Accepted` with a reference host; the always-on `tool-descriptor-shape.test.ts` ships now.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.tool-catalog.r1"
+        },
+        {
+          "file": "spec/v1/tool-catalog.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.tool-catalog.r2",
+      "rfc": "0078",
+      "local": "r2",
+      "section": "spec/v1/tool-catalog.md",
+      "surface": "A writable tool-registration endpoint is explicitly out of scope (tools register through their existing surfaces); revisitable in a future RFC if implementer demand surfaces.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.tool-catalog.r2"
+        },
+        {
+          "file": "spec/v1/tool-catalog.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.trigger-bridge.r1",
+      "rfc": "0083",
+      "local": "r1",
+      "section": "spec/v1/trigger-bridge.md",
+      "surface": "The behavioral delivery scenario (dedup → retry → dead-letter → causation), the `GET /v1/trigger-subscriptions` read surface + per-source management in OpenAPI, and the reference-host durable-delivery state machine land at `Active → Accepted`; the always-on `trigger-bridge-shape.test.ts` + the profile predicate + the subscription schema + the two events ship now.",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.trigger-bridge.r1"
+        },
+        {
+          "file": "spec/v1/trigger-bridge.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.trigger-bridge.r2",
+      "rfc": "0083",
+      "local": "r2",
+      "section": "spec/v1/trigger-bridge.md",
+      "surface": "A net-new unified `Trigger` primitive was rejected (it would duplicate RFC 0052/0053/0017) — this is a _profile_ that composes them.",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.trigger-bridge.r2"
+        },
+        {
+          "file": "spec/v1/trigger-bridge.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.version-negotiation.v1",
+      "rfc": "spec",
+      "local": "V1",
+      "section": "spec/v1/version-negotiation.md",
+      "surface": "Schema codemod registry (`WorkflowSchemaMigrator`) — auto-upgrade older runs on read",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.version-negotiation.v1"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.version-negotiation.v2",
+      "rfc": "0149",
+      "local": "V2",
+      "section": "spec/v1/version-negotiation.md",
+      "surface": "✅ Concrete `protocolVersion` grammar and comparison semantics — closed by RFC 0149 §C (this doc §\"Protocol version grammar\", 2026-08-12). Not semver: `<major>.<minor>`, patch belongs to the suite/SDK axes.",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "closed",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.version-negotiation.v2"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.version-negotiation.v3",
+      "rfc": "spec",
+      "local": "V3",
+      "section": "spec/v1/version-negotiation.md",
+      "surface": "`minClientVersion` enforcement — currently advisory in spec; may become MUST",
+      "witness": "witnessable-unaided",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.version-negotiation.v3"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.version-negotiation.v4",
+      "rfc": "spec",
+      "local": "V4",
+      "section": "spec/v1/version-negotiation.md",
+      "surface": "Multi-region replication and split-brain version skew (region A on N, region B on N-1)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.version-negotiation.v4"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.version-negotiation.v5",
+      "rfc": "spec",
+      "local": "V5",
+      "section": "spec/v1/version-negotiation.md",
+      "surface": "Pinned-version migration tooling — currently the only path is \"drain runs holding the deprecated pin\". A registered codemod surface (e.g., \"rewrite the `version.pinned` event in place when reading\") would let `min` bumps proceed without drains",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "future v1.x",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.version-negotiation.v5"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.workflow-chain-packs.wcp1",
+      "rfc": "0133",
+      "local": "WCP1",
+      "section": "spec/v1/workflow-chain-packs.md",
+      "surface": "Chain-to-chain composition",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "~~Can `dag.nodes[].typeId` reference another chain pack?~~ **Resolved by RFC 0133** (`Active`): a chain composes child chains via `subChains[]` + `config.subChainRef` (RUNTIME child dispatch, not inline typeId reference); recursion is bounded by a cycle check (`sub_chain_cycle`) + `maxSubChainDepth` (default 8). See §\"Sub-chain composition (RFC 0133)\".",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.workflow-chain-packs.wcp1"
+        },
+        {
+          "file": "spec/v1/workflow-chain-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.workflow-chain-packs.wcp2",
+      "rfc": "0013",
+      "local": "WCP2",
+      "section": "spec/v1/workflow-chain-packs.md",
+      "surface": "Versioning across chain references",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "When a chain references `core.ai.callPrompt@1.0.0`, what happens if a future `core.ai.callPrompt@2.0.0` ships with a breaking config-schema change? **Recommended: chain MUST pin to a specific version per referenced typeId** (config snapshot at chain author-time), with a `min` / `max` range as future enhancement.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.workflow-chain-packs.wcp2"
+        },
+        {
+          "file": "spec/v1/workflow-chain-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.workflow-chain-packs.wcp3",
+      "rfc": "0013",
+      "local": "WCP3",
+      "section": "spec/v1/workflow-chain-packs.md",
+      "surface": "Reference-host implementation",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Phase 3 of RFC 0013 — one openwop reference host (the in-memory host is the natural fit) implements expansion in its workflow editor. Tracked separately; this spec defines the contract whether or not a reference exists yet.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.workflow-chain-packs.wcp3"
+        },
+        {
+          "file": "spec/v1/workflow-chain-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.workflow-chain-packs.wcp4",
+      "rfc": "0013",
+      "local": "WCP4",
+      "section": "spec/v1/workflow-chain-packs.md",
+      "surface": "Portable per-run parameter deferral",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "note": "Some hosts (e.g., openwop-app, ADR 0237) want chain parameters to stay overridable per-run rather than frozen at drop time. Expansion-time substitution (this spec) forbids leaving `{{params.*}}` tokens in the persisted definition because they are not a spec'd runtime construct and break cross-host portability. A **portable** deferral mode would have expansion materialize the chain's `parameters` into top-level workflow `variables[]` and rewrite `{{params.x}}` into a spec'd runtime binding (for prompt-bearing config, the PromptTemplate `{{varName}}` with `source: \"variable\"` per `prompts.md` §\"Variable interpolation\"), gated behind a new capability with replay/event-log determinism for the run-scoped variable bag. **Recommended: a follow-up additive RFC**, not a relaxation of the expansion-time MUST.",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.workflow-chain-packs.wcp4"
+        },
+        {
+          "file": "spec/v1/workflow-chain-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.workflow-chain-packs.wcp5",
+      "rfc": "0133",
+      "local": "WCP5",
+      "section": "spec/v1/workflow-chain-packs.md",
+      "surface": "Co-registered child ownership lifecycle (RFC 0133)",
+      "witness": "unwitnessable",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": null,
+      "note": "When a parent chain is deleted, are co-registered children deleted too, or reference-counted (a child shared by two parents)? **Recommended (RFC 0133 §Unresolved #2, carried forward):** reference-count by deterministic child id — delete a child when its last parent is deleted. Host-side lifecycle, not a wire-shape concern; tracked in [`docs/KNOWN-LIMITS.md`](../../docs/KNOWN-LIMITS.md).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.workflow-chain-packs.wcp5"
+        },
+        {
+          "file": "spec/v1/workflow-chain-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.spec.workflow-chain-packs.wcp6",
+      "rfc": "0157",
+      "local": "WCP6",
+      "section": "spec/v1/workflow-chain-packs.md",
+      "surface": "Compensation in chains (RFC 0157)",
+      "witness": "witnessable-gated",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "note": "✅ Landed 2026-08-16 — `nodes[].compensation` + `chains[].compensation` mirrors, expansion rules 3b/5b/6b/9b, `chain_compensation_policy_conflict`. Open: host adoption (the in-memory reference host's mirrored core does not yet run `carryCompensation`); RFC 0124 deferred mode does not yet defer `inputMapping` tokens (they are frozen at drop time like the RFC 0013 default).",
+      "sources": [
+        {
+          "file": "spec/v1/spec-gaps.json",
+          "token": "openwop.gap.spec.workflow-chain-packs.wcp6"
+        },
+        {
+          "file": "spec/v1/workflow-chain-packs.md",
+          "token": "Absorbed into `spec/v1/gaps.json`"
+        }
+      ]
     }
   ]
 }

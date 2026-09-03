@@ -49,6 +49,19 @@ export function generate(prev) {
       });
     }
   }
+  // RFC 0174 §E.3 (v2 charter Phase 3, P3-D): the 43 prose "Open spec gaps"
+  // tables in spec/v1/*.md were absorbed into spec/v1/spec-gaps.json — one
+  // hand-classified row per table row (id openwop.gap.spec.<doc>.<local>) —
+  // and the tables replaced by a pointer. Those rows join the one namespace
+  // here; their witness and disposition come from that file (reviewed), not
+  // from the unclassified default.
+  const specGapsPath = join(ROOT, 'spec', 'v1', 'spec-gaps.json');
+  if (existsSync(specGapsPath)) {
+    for (const g of JSON.parse(readFileSync(specGapsPath, 'utf8')).entries ?? []) {
+      const old = prevById.get(g.id);
+      entries.push({ id: g.id, rfc: g.owningRfc ?? 'spec', local: g.local, section: g.section ?? g.doc, surface: g.surface, witness: g.witness ?? old?.witness ?? 'unclassified', requirementId: old?.requirementId ?? null, disposition: g.disposition ?? 'open', target: g.target ?? null, ...(g.resolutionPath ? { note: g.resolutionPath } : {}), sources: g.sources ?? [{ file: g.doc, token: g.local }] });
+    }
+  }
   entries.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
   return {
     $schema: './gaps.schema.json',

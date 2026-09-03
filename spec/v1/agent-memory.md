@@ -211,12 +211,7 @@ Both events (`agent.memory.consolidated`, `commitment.fired`) are defined in `sc
 
 ## Open spec gaps
 
-- **Cross-host `memoryRef` portability** — v1.x silent. A `memoryRef` minted by host A is NOT guaranteed resolvable by host B; future spec amendments MAY normate a portable encoding if implementer demand surfaces.
-- **`MemoryEntry.id` tenant-prefix** — recommended non-normatively for hosts that share entry-id keyspaces across tenants (e.g., `tenant-A:mem-1` rather than `mem-1`). Not hard-constrained at v1.0.
-- **Authorization granularity within tenant** — silence intentional. CTI-1 is the only normative isolation surface; per-user RBAC within a tenant is host-internal.
-- **Content size cap / tags cardinality cap** — host-internal.
-- **Bulk-ops API** (`MemoryAdapter.listAll`, `MemoryAdapter.deleteAll`) — deferred. v1.0 read surface is per-`memoryRef` `list/get` only.
-- **Per-node write attribution** — _closed by [`RFCS/0057`](../../RFCS/0057-memory-write-attribution-event.md) (Active)._ The additive, content-free `memory.written` RunEvent (capability-gated on `capabilities.memory.attribution.emitsWriteEvents`) attributes each write to the node/agent that caused it, carrying identifiers only — never entry content — so provenance is observable on the wire without reopening the SR-1 surface or replay determinism (the event records a write that already happened and is re-read from the log on replay, never regenerated). Reads remain unattributed by design.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.agent-memory.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Reviewable learning (RFC 0096)
 

@@ -36,11 +36,7 @@ One additive, content-free event is emitted (gated on the capability): `import.a
 
 ## Open spec gaps
 
-| Gap | Disposition |
-|---|---|
-| Normative `/v1/export` + `/v1/import` endpoints in `api/openapi.yaml` | Deferred to graduation (pre-authored near `Active → Accepted`, per the RFC 0086 precedent). Floor surface is the host-extension seam. |
-| Competitor adapters (e.g. an external-platform → openwop bundle reader) | Out of scope — host/tooling concern. The protocol pins only the bundle shape + import contract. |
-| SDK methods (`export`/`import` group) | Tracked in `openwop-sdks`; not part of the spec-corpus floor. |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.portability.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

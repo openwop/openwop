@@ -451,12 +451,7 @@ These canvas-typed routes MAY be served as aliases that map internally to the sp
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                                                                                                                       | Owner  |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| R1  | ✅ Bulk-cancel endpoint landed in v1.0 (this doc, 2026-05-12).                                                                                                                                                                                                                                            | closed |
-| R2  | ✅ Explicit administrative pause/resume endpoints — landed in v1.0 (this doc, 2026-05-10).                                                                                                                                                                                                                | closed |
-| R3  | ✅ Optional gRPC transport profile landed at `spec/v1/grpc-transport.md` (Phase B, 2026-05-12). REST + SSE remains the REQUIRED wire surface; gRPC is an additional opt-in surface advertised via `capabilities.supportedTransports: ["grpc"]`. Canonical service definition at `api/grpc/openwop.proto`. | closed |
-| R4  | ✅ Endpoint coverage manifest landed at `conformance/coverage.md` §"Endpoint Coverage Manifest". Every OpenAPI `operationId` MUST appear there (enforced by `spec-corpus-validity.test.ts`). Auto-generation tooling is a future polish; the manual manifest + the gate already close the gap.            | closed |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.rest-endpoints.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

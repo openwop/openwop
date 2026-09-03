@@ -443,12 +443,7 @@ A run **annotation** (RFC 0056 — rating / correction / label / flag) is distin
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                     | Owner       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| I1  | Multi-approver quorum execution semantics — order of votes, partial-state events, half-vote scenarios. v1 defines the final wire state; future minors may standardize intermediate quorum-state events. | future v1.x |
-| I2  | Cancel-on-resolve semantics for cross-canvas approvals (parent waits on child interrupt — what happens when parent cancels?)                                                                            | future      |
-| I3  | `external-event` correlation matching — is the spec strict (exact equality on `correlation`) or fuzzy (subset-match)?                                                                                   | future v1.x |
-| I4  | Token format alternatives — JWT, paseto, etc. Currently HMAC-SHA256 is the only spec'd format.                                                                                                          | future      |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.interrupt.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

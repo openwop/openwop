@@ -121,3 +121,7 @@
 - **Registered invariants:** `delegation-tenant-audience-bound`, `delegation-chain-bounded`, and (2026-08-16, via `workload-identity-chain-bounds.test.ts` — too-long / cyclic / amplified / a narrowing chain resolves) `delegation-chain-acyclic`, `delegation-no-scope-amplification` (`SECURITY/invariants.yaml`, protocol tier).
 - **Named by RFC 0154 §F, not registered** (each needs a witness that exercises the threat, not just the shape): `workload-identity-cryptographically-bound`, `delegation-provenance-not-authorization`, `sender-constraint-no-bearer-downgrade`, `provenance-attestation-digest-bound` (`delegation-no-scope-amplification` registered 2026-08-16; `delegation-chain-bounded-acyclic` is now the conjunction of the registered `delegation-chain-bounded` + `delegation-chain-acyclic`). Registering one against a test that does not verify it converts a known gap into an apparent guarantee (`docs/RFC-0147-SELF-AUDIT.md`).
 - **External audit scope** (RFC 0154 §F, unscheduled): confused deputy, replayed delegation proof, issuer confusion, token exchange, DPoP/mTLS binding, provenance signing keys, CI substitution, telemetry leakage — the rows above are its checklist.
+
+## 8. References
+
+*(Section added 2026-09-03 for the corpus threat-model template — RFC 0173 §E.2 / `scripts/check-threat-model-template.mjs`.)* The RFCs and documents this model cites are those named inline in §1–§7; the canonical registers are `SECURITY/invariants.yaml` (the invariant rows this model owns) and `spec/v1/gaps.json`.

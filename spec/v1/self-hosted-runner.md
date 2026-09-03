@@ -172,12 +172,7 @@ to any runner `user_42` has registered — persisted steps replay from persisten
 
 ## Open spec gaps
 
-| # | Gap | Disposition |
-| - | --- | ----------- |
-| G1 | Runner-bearer minting/rotation endpoint shape | Host-internal for v1; the bearer is opaque to the wire. A normative mint/rotate endpoint MAY be added additively if cross-host runner portability is pursued. |
-| G2 | Multiple runners per subject: load-balancing / affinity policy | Implementation-defined. The spec pins only subject-first + capability match; a host MAY pick any matching free runner. |
-| G3 | Tool-dispatch conformance depth | The frame shape carries `kind:"tool"` from v1; the reference witness lands `model`-dispatch first (openwop-app ADR 0182 Phase 5). Tool-dispatch behavioral coverage graduates when a host routes it non-vacuously. |
-| G4 | A2A interaction (RFC 0100/0101) | Out of scope for v1; the runner channel is host↔runner, distinct from the client↔host A2A transport. |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.self-hosted-runner.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

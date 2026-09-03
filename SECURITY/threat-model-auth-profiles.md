@@ -129,3 +129,7 @@ The public conformance suite verifies the baseline API-key contract plus capabil
 All four scenarios use `behaviorGate(profileName, advertised)`; `OPENWOP_REQUIRE_BEHAVIOR=true` converts capability-shape-only skips into hard failures.
 
 Until those scenarios ship, a host claiming an auth profile SHOULD publish its own test evidence and operational runbook.
+
+## 8. References
+
+*(Section added 2026-09-03 for the corpus threat-model template — RFC 0173 §E.2 / `scripts/check-threat-model-template.mjs`.)* The RFCs and documents this model cites are those named inline in §1–§7; the canonical registers are `SECURITY/invariants.yaml` (the invariant rows this model owns) and `spec/v1/gaps.json`.

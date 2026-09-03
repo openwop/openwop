@@ -3,14 +3,15 @@
   "properties": {
     "modes": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "string",
         "enum": [
-          "fork",
-          "branch",
-          "rerun"
+          "replay",
+          "branch"
         ]
-      }
+      },
+      "description": "Fork modes (POST /runs/{runId}:fork `mode`): replay = deterministic re-execution with suppression; branch = divergent execution (branchReFires seams re-fire, RFC 0140 G6)."
     },
     "retention": {
       "type": "object",

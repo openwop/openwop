@@ -840,18 +840,7 @@ See `docs/migration/v1.0-to-v1.1.md` for the field-by-field migration table once
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                                                                                                                                                                  | Owner       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| E1  | Streaming/partial envelope reassembly across SSE delivery — the `partial` field is specified but the cross-transport reassembly contract (when does the engine know a partial sequence is complete?) is not.                                                                                                                                         | future v1.x |
-| E2  | Multi-turn envelope conversations (an envelope whose handler emits a follow-up `schema.request` that the LLM answers in the next turn) — the `correlationId` chaining model is described but the conversation-state surface is not.                                                                                                                  | future v1.x |
-| E3  | Vendor-kind registry — whether namespaced kinds (`vendor.myndhyve.prd.create`) should be advertised through a `kinds` registry parallel to the node-pack registry per `registry-operations.md`, or stay host-private.                                                                                                                                | future v1.x |
-| E4  | Schema sub-typing — `vendor.x.prd.create` v2 might want to declare "everything v1 accepted, plus new optional field" without restating the v1 schema. JSON Schema $ref vs flat duplication; not locked.                                                                                                                                              | future v1.x |
-| E5  | Refusal-mode interaction with retry policies — `refusalMode: "fail-node"` plus a per-run retry policy can produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example.                                                                                                                                  | future v1.x |
-| E6  | ✅ OTel attribute names — closed. `observability.md` §"Envelope-reliability events (RFC 0032)" defines the `openwop.envelope.*` span-attribute projection for the envelope event vocabulary, and the redaction discipline for `openwop.envelope_*` attributes is enforced by `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward`. | closed      |
-
-These gaps do NOT block conformance against the Stable v1.1 surface; the open rows list candidate closures for future v1.x minors.
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.ai-envelope.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -168,6 +168,15 @@
       "source": "RFC 0170 §B.1"
     },
     {
+      "code": "envelope_correlation_conflict",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/ai-envelope.md E2 (correlationId type conflict)"
+    },
+    {
       "code": "envelope_invalid",
       "httpStatus": 422,
       "statusSource": "v1 convention",
@@ -204,6 +213,24 @@
       "source": "RFC 0176 §A.3 (a run whose log the host cannot translate is not readable)"
     },
     {
+      "code": "forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/auth.md (v1 MUST)"
+    },
+    {
+      "code": "force_engine_version_forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/run-options.md / version-negotiation.md (OpenWOP-Force-Engine-Version outside test keys)"
+    },
+    {
       "code": "id_tenant_mismatch",
       "httpStatus": 403,
       "statusSource": "v2 decision",
@@ -211,6 +238,15 @@
       "details": null,
       "since": "2.0",
       "source": "RFC 0170 §D.1 (an id whose tenant segment is not the caller's)"
+    },
+    {
+      "code": "idempotency_in_flight",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/idempotency.md §Concurrent duplicates (v1 MUST; RFC 0171 §B.2 keeps one mismatch code, this is the in-flight state)"
     },
     {
       "code": "idempotency_key_invalid",
@@ -276,8 +312,26 @@
       "source": "spec/v1/interrupt.md (409/410 overlap: RFC 0171 row C4.6 — one code per state)"
     },
     {
+      "code": "interrupt_cancelled",
+      "httpStatus": 410,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/interrupt.md (the run was cancelled while suspended)"
+    },
+    {
       "code": "interrupt_expired",
       "httpStatus": 410,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/interrupt.md"
+    },
+    {
+      "code": "interrupt_not_found",
+      "httpStatus": 404,
       "statusSource": "v1 prose",
       "retriable": false,
       "details": null,
@@ -319,6 +373,15 @@
       "details": null,
       "since": "2.0",
       "source": "RFC 0175 §E.1"
+    },
+    {
+      "code": "mock_provider_forbidden",
+      "httpStatus": 403,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/run-options.md (mockProvider outside test keys)"
     },
     {
       "code": "not_found",
@@ -582,6 +645,15 @@
       "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
+      "code": "run_terminal",
+      "httpStatus": 409,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/rest-endpoints.md (a mutation on a terminal run)"
+    },
+    {
       "code": "run_timeout",
       "httpStatus": 422,
       "statusSource": "v1 convention",
@@ -661,6 +733,24 @@
       "details": null,
       "since": "1.0",
       "source": "api/openapi.yaml"
+    },
+    {
+      "code": "sub_chain_cycle",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0133 §Unresolved 3 (resolved: maxSubChainDepth 8, fail closed); carried into v2 by RFC 0177 §E"
+    },
+    {
+      "code": "sub_chain_depth_exceeded",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "RFC 0133 §Unresolved 3 — the depth ceiling breach (distinct from a cycle)"
     },
     {
       "code": "token_budget_exceeded",

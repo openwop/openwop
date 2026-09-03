@@ -84,5 +84,5 @@ The host MAY emit `tool.session.opened { sessionId, toolId }` and `tool.session.
 
 ## Open spec gaps
 
-- The behavioral `GET /v1/tools` projection (over ≥1 source), the authorization-scoping check, and the `tool.session.*` reference emission land at `Active → Accepted` with a reference host; the always-on `tool-descriptor-shape.test.ts` ships now.
-- A writable tool-registration endpoint is explicitly out of scope (tools register through their existing surfaces); revisitable in a future RFC if implementer demand surfaces.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.tool-catalog.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

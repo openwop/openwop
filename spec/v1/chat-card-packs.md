@@ -132,11 +132,7 @@ A `WorkflowNode.cardType` value (and the `cardType` argument to `ctx.chat.emitCa
 
 ## Open spec gaps
 
-| Gap                                                                                                                                                                                                                           | Tracking                                                  |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| ~~Confirm the closed `inputs[].type` subset against MyndHyve's field types~~ — **resolved (G9, 2026-05-27)**; subset finalized + `multiselect`/`file` added.                                                                  | RFC 0071 G9 ✅                                            |
-| A host passing `chat-card-pack-execution.test.ts` (R2 trust-tag propagation) end-to-end — the Phase-2 **`Accepted` (host-pass)** gate. The invariant + scenario are landed; awaits a host implementing `host.chat.cardPacks`. | RFC 0071 R2 / `SECURITY/threat-model-prompt-injection.md` |
-| Whether a card may be a thin reference to a `prompt`-pack template vs. always inlining `prompt.template`.                                                                                                                     | RFC 0071 (composition)                                    |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.chat-card-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 
