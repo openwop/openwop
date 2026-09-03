@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/effect-seam-manifest.schema.json",
+  "title": "Effect-seam manifest (RFC 0173 §C)",
+  "description": "Host-declared, machine-checkable list of every outbound effect seam replay suppression covers. Served at GET /host/effect-seams. A seam omitted is invisible to the suite (negative-existence); the RFC 0140 R5 audit is the control.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "host",
+    "seams"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "const": "1"
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "build"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "build": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "id"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "image-digest",
+                "commit",
+                "artifact-sha256"
+              ]
+            },
+            "id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "seams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "suppression"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "http",
+              "provider",
+              "webhook",
+              "queue",
+              "storage",
+              "pack",
+              "other"
+            ]
+          },
+          "suppression": {
+            "type": "string",
+            "enum": [
+              "recorded-outcome"
+            ]
+          },
+          "witness": {
+            "type": "string",
+            "enum": [
+              "witnessable-gated",
+              "seam-gated"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

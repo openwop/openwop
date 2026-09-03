@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/self-hosted-runner-registration.schema.json",
+  "title": "SelfHostedRunnerRegistration",
+  "description": "RFC 0122 §Registration + channel. The per-subject runtime record the host keeps for a registered runner after it dials in and authenticates with a host-minted, subject-scoped runner bearer (NEVER a provider credential). This record is per-subject runtime state and MUST NOT appear on `/.well-known/openwop` (only the `selfHostedRunner` capability block does). Work is addressed by `runnerId` (direct) or by capability-match; a capability match MUST filter on `subject` FIRST, then capability, so a subject's step is never routed to another subject's runner (subject-first match, SR-1-adjacent — a normative MUST in `self-hosted-runner.md` §Behavior verified by the gated conformance scenario).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runnerId",
+    "subject",
+    "capabilities"
+  ],
+  "properties": {
+    "runnerId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The host-assigned identifier for this runner connection. Used for direct dispatch addressing."
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The owning principal — the stable RFC 0048 subject the host stamps on the backing run's `run.metadata`, NOT a fresh id. A runner is bound to exactly one owning subject; capability-match and fork-reroute MUST key on this subject FIRST."
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What this runner can serve. Empty arrays / omitted keys mean the runner serves none of that kind; capability-match considers only runners whose declared capability covers the dispatch step.",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Model provider ids the runner can dispatch to under its locally-held credentials."
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Specific model ids the runner can run (a refinement of `providers`)."
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Tool ids the runner can execute locally."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "runnerId": "runner_laptop_01",
+      "subject": "user_42",
+      "capabilities": {
+        "providers": [
+          "anthropic"
+        ],
+        "models": [
+          "claude-opus-4-8"
+        ]
+      }
+    }
+  ],
+  "x-openwop-seeded-from": "v1"
+}

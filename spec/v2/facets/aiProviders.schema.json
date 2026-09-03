@@ -1,0 +1,56 @@
+{
+  "$comment": "RFC 0169 §A.2/§B.3 — supported: string[] becomes providers[]; imageGeneration/videoGeneration are facets",
+  "properties": {
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "byok": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "selfHosted": {
+      "type": "boolean"
+    },
+    "speechSynthesis": {
+      "type": "boolean"
+    },
+    "imageGeneration": {
+      "type": "boolean"
+    },
+    "videoGeneration": {
+      "type": "boolean"
+    },
+    "realtimeVoice": {
+      "type": "boolean"
+    },
+    "promptPrefixCache": {
+      "type": "boolean"
+    },
+    "maxInlineMediaBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authModes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "providers"
+  ]
+}
