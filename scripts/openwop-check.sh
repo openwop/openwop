@@ -206,6 +206,11 @@ node "$(dirname "$0")/check-doc-tallies.mjs"
 # RFC 0147 and all three Workstream 1-3 children, i.e. the whole program spine
 # was missing from the surface that exists to make waivers auditable.
 node "$(dirname "$0")/check-waiver-ledger.mjs"
+# RFC 0156 §B outcomes need somewhere to live and a count that can tell them
+# apart. The previous count matched free text over the gap registers, so a
+# review whose outcome was `withdrawn` or `corrective-rfc-required` counted
+# exactly like a `ratified` one. Only `ratified` discharges.
+node "$(dirname "$0")/check-waiver-retrospective.mjs"
 # RFC 0156 §F — the assurance manifest is current AND no public surface carries
 # a claim token the manifest does not permit (RFC 0147 §A claim table).
 node "$(dirname "$0")/generate-assurance-status.mjs" --check

@@ -63,7 +63,7 @@ async function snapshot(runId: string): Promise<Snapshot> {
 }
 
 async function events(runId: string): Promise<readonly RawEvent[]> {
-  // Suite 1.158.0 — NO cursor. `lastSequence` names the highest sequence the
+  // Suite 1.159.0 — NO cursor. `lastSequence` names the highest sequence the
   // caller has ALREADY observed (version-negotiation.md §"events/poll"), and
   // run-event.schema.json numbers the first event 0, so `lastSequence=0` asks
   // a conforming host to SKIP `run.started` (MyndHyve does exactly that).
