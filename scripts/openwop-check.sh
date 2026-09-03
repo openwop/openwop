@@ -264,6 +264,22 @@ echo "[9/9] Published-version identity..."
 node "$(dirname "$0")/check-published-suite-identity.mjs"
 echo
 
+# ── Stage 10: the v2 tree (v2 charter Phase 3) ──────────────────────────────
+# spec/v2/, schemas/v2/, api/v2/ are in construction and never packed into the
+# 1.x suite. These gates are the RFC 0169/0172/0174/0178 machinery over that
+# tree; each is green-with-a-report while its input does not exist yet, never
+# green-by-silence. check-threat-model-template runs --pending until P3-D lands
+# the interop model and replay §6–§8 (its own header says why).
+echo "[10/10] v2 tree (declaration, generators, budget, paths, deprecation dates, Accepted predicate, threat-model template)..."
+node "$(dirname "$0")/check-declaration.mjs"
+node "$(dirname "$0")/check-core-budget.mjs"
+node "$(dirname "$0")/check-path-parity.mjs"
+node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
+node "$(dirname "$0")/check-removal-dates.mjs"
+node "$(dirname "$0")/check-accepted-predicate.mjs"
+node "$(dirname "$0")/check-threat-model-template.mjs" --pending
+echo
+
 # Advisory tail — the gate above validated the WORKING TREE. Nothing so far
 # proves the tree is what you are about to push, and the gap between them is
 # exactly one `git add`. Diagnosis from openwop-app-1: "the gate proves the tree

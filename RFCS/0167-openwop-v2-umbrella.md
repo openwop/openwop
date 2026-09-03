@@ -116,7 +116,7 @@ The nine repositories we own, what each must do, and which phase does it. This t
 | openwop-examples | four hosts, nine clients, pins from `^1.20` to `^1.73` | 3 | the four hosts pass the 2.0.0 floor from the front door |
 | openwop-registry | 282 signed manifests; `/v1` prefix; 13 manifest schemas | 3 | `registry/v2/` or a signed overlay; absent-ceiling rule |
 | openwop-site | copies `schemas/` to `public/spec/v1/` | 3 | iterate `spec/v*`; `/spec/latest` repoint |
-| openwop-cli | SDK 1 consumer | 3 | rewrite onto SDK 2, or frozen v1-only — recorded, not implied |
+| openwop-cli | speaks the v1 wire directly (no SDK dependency; 41 literal `/v1` paths; reads the singular `protocolVersion`) — corrected 2026-09-03: the earlier "SDK 1 consumer" claim was false | 3 | **decided 2026-09-03 (Phase 3 plan, /architect M11): frozen v1-only.** No SDK coupling exists to rewrite; the demo app it drove moved to openwop-app; EOL = v1 end-of-support (charter Phase 0 rule); recorded in openwop-cli's README in the P3-F leg |
 | openwop-paper | cites v1 numbers | 5 | v2 revision |
 
 ## §G. Gates

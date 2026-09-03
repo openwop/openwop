@@ -8,8 +8,13 @@
 # Each entry has:
 #   id:           unique invariant ID (matches the threat-model entry)
 #   tier:         "protocol" (verifiable via conformance suite, must
-#                 have a public-repo test) or "reference-impl"
-#                 (verifiable only via the reference impl's own CI)
+#                 have a public-repo test), "reference-impl"
+#                 (verifiable only via the reference impl's own CI), or
+#                 "advisory" (a hygiene rule with no wire or host surface;
+#                 outside the gate; documented here 2026-09-03 — the tier
+#                 existed in check-security-invariants.sh but not in this
+#                 header). A protocol-tier row may never be `unwitnessable`
+#                 (check-witness-classes.mjs; RFC 0168 §B.1).
 #   severity:     "critical" / "high" / "medium" / "low"
 #   threat_model: which threat model file documents the invariant
 #   tests:        list of file globs (relative to repo root). At least

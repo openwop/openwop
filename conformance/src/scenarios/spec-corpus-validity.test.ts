@@ -81,6 +81,11 @@ function listJsonFiles(dir: string): string[] {
     const fullPath = subPath === '' ? dir : `${dir}/${subPath}`;
     for (const entry of readdirSync(fullPath, { withFileTypes: true })) {
       if (entry.isDirectory()) {
+        // v2 charter Phase 3: `schemas/v2/` is the v2 tree ($id under /spec/v2/,
+        // its own README, published in @openwop/spec-artifacts). This is the v1
+        // leg; the v2 leg is its own describe (P3-B). Skipping it here is what
+        // keeps the v1 gate green while the v2 tree is under construction.
+        if (subPath === '' && entry.name === 'v2') continue;
         walk(subPath === '' ? entry.name : `${subPath}/${entry.name}`);
       } else if (entry.isFile() && entry.name.endsWith('.json')) {
         out.push(subPath === '' ? entry.name : `${subPath}/${entry.name}`);

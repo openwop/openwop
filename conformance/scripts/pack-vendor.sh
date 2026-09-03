@@ -32,6 +32,13 @@ rm -rf api schemas
 cp -R ../api ./api
 cp -R ../schemas ./schemas
 
+# v2 charter Phase 3 (RFC 0176 §E.1; RFC 0168 §D.2): the 1.x tarball NEVER
+# carries the v2 tree. Prune it here — after the copy and BEFORE the stamp's
+# digest walk below — so the stamp enumerates exactly what ships (a stamp that
+# names files the tarball lacks makes corpus-stamp.ts refuse to run). The v2
+# artifacts are published in @openwop/spec-artifacts, never in this package.
+rm -rf ./schemas/v2 ./api/v2 ./api/seams-v2.yaml
+
 # ── Corpus stamp (RFC 0145 G2) ───────────────────────────────────────────────
 # Write the provenance of this vendored copy INSIDE schemas/, because the
 # directory is what gets copied. The tarball already carries the version in
