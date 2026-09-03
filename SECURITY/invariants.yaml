@@ -1720,10 +1720,11 @@ invariants:
     witnessReview: initial-mechanical-2026-09-02
 
   - id: layer2-invocation-claim-atomic
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-compensation.md
-    tests: []
+    tests:
+      - conformance/src/scenarios/idempotency-concurrent-claim.test.ts
     note: |
       RFC 0150 §B / `spec/v1/idempotency.md` §"Concurrent duplicates
       (Layer 2)" (v1.7). The persist that guards a side effect MUST be an
@@ -1754,16 +1755,32 @@ invariants:
       that rung honestly while violating this MUST, which is what
       happened. Five of RFC 0158's six conformance rows have no scenario
       at all; only `poison-exhaustion` does.
-      Recorded as gap G17. Landing a seam-driven witness is the close;
-      until then this is reference-impl tier and the gap is stated rather
-      than papered over with a probe that would pass either way.
-    non_testability_rationale: |
-      Classified unwitnessable by the RFC 0166 §C.2 backfill (initial-mechanical-2026-09-02): no public test names
-      this invariant (tests: []). The obligation is stated in note: above and is verified,
-      if at all, by the reference implementation's own tests at its tier. Review may re-tier
-      it or attach a scenario; until then it counts against the unwitnessable ratchet.
-    witness: unwitnessable
-    witnessReview: initial-mechanical-2026-09-02
+      **Gap G17 — witness landed 2026-09-03.** `host-sample-test-seams.md`
+      §25 specifies a concurrent duplicate-delivery driver and
+      `idempotency-concurrent-claim.test.ts` drives it, so this moves
+      reference-impl -> protocol tier. The scenario asserts TWO things and
+      the second is why it is not decoration: every executor must mint the
+      SAME `logicalInvocationId`, checked BEFORE the delivery count. A host
+      passes `delivered === 1` trivially by minting different identities
+      and never colliding — one effect because nothing raced — which is a
+      vacuous pass wearing a green check.
+      Deliberately NOT profile-gated, so it cannot be opted out: the
+      obligation is unconditional, so no host may declare it inapplicable,
+      and flipping an unwitnessed MUST to pass-by-opt-out is what the
+      opt-out list must never be used for. A host that does not mount the
+      seam records `blocked` — applies, unwitnessed, NOT certifiable —
+      which is the honest disposition and keeps the reference-host soak
+      green without anyone claiming the requirement was met.
+      The race was thought unreproducible in-process on the reporting host
+      because its emitter noted that the shared ordinal counter hands a
+      second emit a different identity. True of two SEQUENTIAL emits, and
+      it stood as a reason not to try: identity minting runs synchronously
+      before the first await, so two UN-AWAITED calls mint the same
+      ordinal — which is what a real re-dispatch does, each executor
+      re-executing the node from the start. Measured there: 2 effects
+      without the claim, 1 with it.
+    witness: seam-gated
+    witnessReview: initial-mechanical-2026-09-03
 
   - id: multi-region-stale-owner-no-effect
     tier: protocol
