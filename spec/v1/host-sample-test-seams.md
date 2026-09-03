@@ -994,3 +994,57 @@ OPTIONAL. Registers a workflow the host will serve for the duration of the confo
 
 > **Recorded divergence.** This shape keys nodes and edges by `nodeId` / `edgeId`; the canonical `workflow-definition.schema.json` keys both by `id`. Every leg posting here has used `nodeId` since the seam existed, so the seam is documented as it behaves rather than as the canonical schema would have it. The RFC 0013 workflow-**chain** vocabulary (`edges: [{ from, to }]`) is NOT accepted here — `mcp-mrtr-roundtrip.test.ts` posted it until 2026-08-16 and the first 2026-07-28 host answered `400`, which the leg then walked past into `tools/call` on a tool that was never registered (S17). A calling leg MUST treat a `4xx` on this registration as a **suite defect** (assert `< 400`), never as seam absence. Aligning the seam to canonical `id` (accepting both during a window) is an open item for the reference host; the corpus does not change the canonical schema for it.
 
+
+### 25. Concurrent duplicate-delivery driver — `POST /v1/host/sample/test/idempotency/concurrent-claim` (RFC 0150 §B)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/test/idempotency/concurrent-claim`                              |
+| Capability gate           | none — the obligation is unconditional (`idempotency.md` §"Concurrent duplicates (Layer 2)") |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                      |
+| Introduced                | RFC 0150 §B witness, gap **G17**. The invariant `layer2-invocation-claim-atomic` shipped with an empty `tests` list because nothing could drive it; this seam is what closes that. |
+
+OPTIONAL. `idempotency.md` §"Concurrent duplicates (Layer 2)" requires the persist guarding a
+side effect to be an **atomic claim** — a compare-and-set / insert-if-absent that at most one
+executor can win — and says it **MUST** hold *within a single-instance deployment*, naming the
+orphan-sweep-races-a-live-owner case. Nothing in the corpus could witness it: driving the rule
+needs **two executors of one run concurrently reaching one effect seam**, which a black-box
+suite cannot cause. Per RFC 0148 §A that resolves to `blocked`, and a wire probe asserting it
+would pass on a host that has the defect.
+
+The seam drives the host's **real** claim path against a deterministic fake effect. It **MUST
+NOT** be a mock that returns a canned count: the invocation log, the claim, and the effect
+chokepoint must be the ones the production path uses, or the witness proves nothing.
+
+- **Request:** `{ executors?: integer }` — concurrent executors of **one** logical invocation
+  (default `2`, range `2..8`).
+- **Response 200:** `{ logicalInvocationId, mintedIds, attempted, delivered }`.
+  - `mintedIds` — the `logicalInvocationId` **each** executor minted, in start order, length
+    `attempted`.
+  - `attempted` — executors that reached the chokepoint and tried to fire.
+  - `delivered` — effects that actually escaped.
+
+**Both assertions are required, and the second is why this seam exists.** A scenario MUST assert
+`delivered === 1`, **and** that every entry in `mintedIds` is identical. Without the identity
+assertion a host passes by minting *different* identities and never colliding — `delivered === 1`
+because nothing raced. That is a vacuous pass wearing a green check, and it is exactly the
+condition `idempotency.md` §"Idempotency key composition" → *"Across a recovery boundary"*
+describes: the ordinal reproduces **iff** the resumed unit re-executes the node's logical
+activities from the start, and a host that resumes mid-node shifts every downstream identity and
+defeats Layer-2 dedup on the crash it most needs to survive. A seam reporting one id per executor
+makes that failure visible instead of green.
+
+> **Reproducing the race is the hard part, and a true statement can stand in the way of it.**
+> Reported 2026-09-02 by a tier-1 host whose emitter carried the note *"within one process the
+> shared ordinal counter hands the second emit a DIFFERENT identity, so it is not reproducible
+> single-instance."* True of two **sequential** emits — and it became a reason nobody tried. The
+> counter is module-level and monotonic, so two **un-awaited** calls both mint the same ordinal:
+> identity minting runs synchronously before the first `await`. That is not a trick; it is what a
+> real re-dispatch does, since each executor re-executes the node from the start. Measured on that
+> host: **2 effects delivered without the claim, 1 with it.** A host implementing this seam that
+> cannot make `attempted > delivered` happen with the claim removed has not reproduced the race,
+> and its green result means nothing — that negative control is the seam's own acceptance test.
+
+A host that does not mount this seam leaves the scenario recording `blocked` (unwitnessed), never
+`inapplicable`: the requirement applies to every host, so its absence is missing evidence rather
+than a requirement that does not bind.
