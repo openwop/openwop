@@ -147,6 +147,12 @@ node "$SPEC_ROOT/scripts/check-witness-classes.mjs"
 # evidence manifest behind every <repo>:<path> pointer.
 node "$SPEC_ROOT/scripts/generate-event-codemap.mjs" --check
 node "$SPEC_ROOT/scripts/generate-cross-repo-evidence.mjs" --check
+# RFC 0167 §D/§E — the v1→v2 migration register agrees with every child RFC's table,
+# every alias in the corpus has a deprecation row, and every codemod passes its
+# positive, negative, idempotence and self-sabotage legs.
+node "$SPEC_ROOT/scripts/check-migrations.mjs"
+node "$SPEC_ROOT/scripts/check-alias-coverage.mjs"
+node "$SPEC_ROOT/scripts/check-codemods.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).

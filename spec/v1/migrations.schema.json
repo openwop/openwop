@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/migrations.schema.json",
+  "title": "OpenWOP v1→v2 migration register",
+  "description": "Shape of spec/v1/migrations.json (RFC 0167 §D). One row per surface the v2 major changes: what it was in v1, what it becomes in v2, which umbrella child owns the change, the codemod that rewrites a persisted or emitted artifact, the disposition of data a v1 host already persisted, and the requirement / gap ids that witness it. Data, not a wire artifact; kept out of schemas/. Each child RFC's §Migration table is checked against this file by scripts/check-migrations.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "rows"],
+  "properties": {
+    "$schema": { "type": "string", "const": "./migrations.schema.json" },
+    "version": { "type": "integer", "const": 1 },
+    "updated": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "rows": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/row" } }
+  },
+  "$defs": {
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface"],
+      "properties": {
+        "surface": { "type": "string", "minLength": 1, "description": "Wire-visible name: a field path, header, profile id, event type, schema file, endpoint, or `none` when the v2 side removes the surface." },
+        "path": { "type": "string", "description": "Where it lives: a JSON path in a document, an HTTP header slot, a file under schemas/ or spec/." }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "child", "kind", "v1", "v2", "codemod", "persistedData", "requirementIds", "gapIds", "deprecationId"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^openwop\\.migration\\.C[0-9]{1,2}\\.[0-9]+$", "description": "openwop.migration.<child>.<n>; child is the charter item (C1…C11)." },
+        "child": { "type": "string", "pattern": "^C(?:[1-9]|1[01])$", "description": "The umbrella child (RFC 0167 §C) that owns the row." },
+        "kind": { "type": "string", "enum": ["rename", "remove", "require", "retype", "unify", "delete-alias", "behavior", "add"], "description": "rename/remove/require/retype/unify/delete-alias/add are codemod-able shape changes; behavior is an obligation change with no artifact rewrite." },
+        "v1": { "$ref": "#/$defs/surface" },
+        "v2": { "$ref": "#/$defs/surface" },
+        "codemod": { "type": ["string", "null"], "pattern": "^openwop\\.codemod\\.[a-z0-9]+(-[a-z0-9]+)*$", "description": "Id of the committed codemod under codemods/<id>/ (scripts/check-codemods.mjs). Required for kind ∈ {rename, remove, retype, unify, delete-alias} at the umbrella's Active predicate; null while the child is Draft." },
+        "persistedData": { "type": "string", "enum": ["unchanged", "translated", "drained", "legacy-stamped", "never-upgraded", "not-persisted"], "description": "What happens to data a v1 host already persisted under the v1 surface (RFC 0167 §C.9): unchanged (readable as-is), translated (read through the declared adapter / codemod), drained (in-flight only; ends by policy), legacy-stamped (marked with a legacy value, never rewritten), never-upgraded (stays valid v1 evidence), not-persisted (transient wire only)." },
+        "requirementIds": { "type": "array", "items": { "type": "string", "pattern": "^openwop\\." }, "description": "conformance/requirements.json ids (or planned v2 ids) that witness the v2 side." },
+        "gapIds": { "type": "array", "items": { "type": "string", "pattern": "^openwop\\.gap\\.[0-9]{4}\\.[0-9]+$" }, "description": "spec/v1/gaps.json rows this migration closes or carries." },
+        "deprecationId": { "type": ["string", "null"], "pattern": "^openwop\\.deprecation\\.[a-z0-9]+(-[a-z0-9]+)*$", "description": "The spec/v1/deprecations.json row for the v1 surface, when one exists (every rename/remove/delete-alias row MUST have one — scripts/check-migrations.mjs)." },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

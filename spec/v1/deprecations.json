@@ -1,7 +1,7 @@
 {
   "$schema": "./deprecations.schema.json",
   "version": 1,
-  "updated": "2026-09-02",
+  "updated": "2026-09-03",
   "entries": [
     {
       "id": "openwop.deprecation.capabilities-wrapper",
@@ -288,6 +288,220 @@
         {
           "file": "schemas/capabilities.schema.json",
           "token": "\"engineVersion\""
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.poll-cursor-since",
+      "status": "proposed",
+      "surface": "`since` query parameter on GET /v1/runs/{runId}/events/poll",
+      "kind": "discovery-field",
+      "deprecatedIn": null,
+      "authority": "v2 charter C.4 (RFC 0167 §E; version-negotiation.md names `lastSequence` authoritative and `since` back-compat for pre-v1.0 deployments)",
+      "removeIn": "2.0",
+      "replacement": "`lastSequence` in v1.x; the v2 C.4 child defines the cursor (RFC 0165 G7)",
+      "codemod": null,
+      "note": "Proposed: the prose tolerates `since` without an RFC or annotation, so there is nothing to cite as a v1.x deprecation; the v2 cut removes it with the cursor redefinition.",
+      "sources": [
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "hosts MAY also accept `since`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.custom-request-headers-x-family",
+      "status": "proposed",
+      "surface": "`X-Dedup`, `X-Force-Engine-Version`, `X-Pack-Sha`, `X-Pack-Signing-Method` request headers",
+      "kind": "header",
+      "deprecatedIn": null,
+      "authority": "v2 charter C.4 (RFC 0167 §E): `OpenWOP-*` for every non-standard header; RFC 0165 §C.1 covered only the webhook family",
+      "removeIn": "2.0",
+      "replacement": "`OpenWOP-Dedup`, `OpenWOP-Force-Engine-Version` (seam-only, moves to the seams profile), `OpenWOP-Pack-Sha`, `OpenWOP-Pack-Signing-Method`",
+      "codemod": null,
+      "note": "Proposed: the four surviving `X-` request headers on canonical or seam operations; renamed by the C.4 child under the one-header-scheme rule.",
+      "sources": [
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "X-Dedup"
+        },
+        {
+          "file": "spec/v1/version-negotiation.md",
+          "token": "X-Force-Engine-Version"
+        },
+        {
+          "file": "api/openapi.yaml",
+          "token": "X-Pack-Sha"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.replay-fork-boolean",
+      "status": "deprecated",
+      "surface": "capabilities `replay.fork` boolean",
+      "kind": "discovery-field",
+      "deprecatedIn": "capabilities.schema.json (`replay.modes[]` is authoritative; the boolean is a retained legacy spelling)",
+      "authority": "schemas/capabilities.schema.json `replay.fork` description: \"Legacy spelling retained for existing consumers; `modes` is authoritative.\"",
+      "removeIn": "2.0",
+      "replacement": "`replay.modes[]`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/capabilities.schema.json",
+          "token": "Legacy spelling retained"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "modes"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.debug-bundle-seq",
+      "status": "deprecated",
+      "surface": "debug bundle event `seq` field",
+      "kind": "schema-field",
+      "deprecatedIn": "debug-bundle.schema.json (`sequence` is canonical; `seq` is a legacy alias hosts that pre-date the rename emit)",
+      "authority": "schemas/debug-bundle.schema.json `seq` description: \"Legacy alias for `sequence`. Hosts that pre-date the rename emit `seq`. Clients accept either.\"",
+      "removeIn": "2.0",
+      "replacement": "`sequence`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/debug-bundle.schema.json",
+          "token": "Legacy alias for `sequence`"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.credential-provider-key",
+      "status": "deprecated",
+      "surface": "node config `credentialProvider` key",
+      "kind": "schema-field",
+      "deprecatedIn": "node-packs.md (`provider` is canonical; `credentialProvider` is named as the legacy alias)",
+      "authority": "spec/v1/node-packs.md §Credential resolution (\"and the legacy alias `credentialProvider`\")",
+      "removeIn": "2.0",
+      "replacement": "`provider`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "credentialProvider"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.manifest-public-key-ref",
+      "status": "deprecated",
+      "surface": "registry version manifest `signing.publicKeyRef`",
+      "kind": "schema-field",
+      "deprecatedIn": "registry-version-manifest.schema.json (`keyId` is canonical; `publicKeyRef` is its legacy alias, enforced by a oneOf)",
+      "authority": "schemas/registry-version-manifest.schema.json `signing` description: \"`publicKeyRef`: legacy alias of `keyId`\"",
+      "removeIn": "2.0",
+      "replacement": "`signing.keyId`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/registry-version-manifest.schema.json",
+          "token": "publicKeyRef"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.legacy-interrupt-payloads",
+      "status": "deprecated",
+      "surface": "`approvalRequested` / `clarificationRequested` legacy event payload definitions and the free-text `feedback` field",
+      "kind": "schema-field",
+      "deprecatedIn": "run-event-payloads.schema.json + interrupt-profiles.md (the interrupt primitive `interrupt.requested {kind}` is canonical)",
+      "authority": "schemas/run-event-payloads.schema.json $defs approvalRequested / clarificationRequested descriptions; spec/v1/interrupt-profiles.md §Approval",
+      "removeIn": "2.0",
+      "replacement": "`interrupt.requested` with `kind: approval | clarification`; `refineFeedback`",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "schemas/run-event-payloads.schema.json",
+          "token": "approvalRequested"
+        },
+        {
+          "file": "schemas/run-event-payloads.schema.json",
+          "token": "clarificationRequested"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.a2a-0-3-legacy-profile",
+      "status": "deprecated",
+      "surface": "`a2a-0.3-legacy` A2A profile id",
+      "kind": "profile-id",
+      "deprecatedIn": "RFC 0152 §A (A2A 1.0.0 published 2026-03-12; legacy window ends 2027-03-12)",
+      "authority": "spec/v1/a2a-integration.md §Discovery (\"a host SHOULD NOT advertise `a2a-0.3-legacy`\" after 2027-03-12); RFC 0152 register G1/R1",
+      "removeIn": "2.0",
+      "replacement": "`a2a-1.0` only; the v2 C.8 child removes the legacy path",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/a2a-integration.md",
+          "token": "a2a-0.3-legacy"
+        },
+        {
+          "file": "RFCS/0152-a2a-1-0-versioned-composition.md",
+          "token": "legacy"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.mcp-2025-06-18-legacy-profile",
+      "status": "deprecated",
+      "surface": "`mcp-2025-06-18-legacy` MCP profile id",
+      "kind": "profile-id",
+      "deprecatedIn": "RFC 0153 §A (current profile accepted 2026-08-12; legacy window ends 2027-08-12)",
+      "authority": "spec/v1/mcp-integration.md §Discovery; RFC 0153 register G1/R1",
+      "removeIn": "2.0",
+      "replacement": "`mcp-2026-07-28` only; the v2 C.8 child removes the legacy path",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "spec/v1/mcp-integration.md",
+          "token": "mcp-2025-06-18-legacy"
+        },
+        {
+          "file": "RFCS/0153-mcp-2026-07-28-versioned-composition.md",
+          "token": "legacy"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.sdk-webhook-signature-header",
+      "status": "deprecated",
+      "surface": "`openwop-Webhook-Signature: v1=<hex>` header the pre-1.9.0 SDK helpers read (never in any spec file)",
+      "kind": "header",
+      "deprecatedIn": "RFC 0165 §C.3 (SDK-versus-spec defect; fixed in openwop-sdks TS 1.9.0 / Py 1.7.0 / Go v1.6.0)",
+      "authority": "RFC 0165 §C.3",
+      "removeIn": "2.0",
+      "replacement": "`X-openwop-Signature: sha256={hex}` in v1.x; `OpenWOP-Signature` in v2",
+      "codemod": null,
+      "sources": [
+        {
+          "file": "RFCS/0165-v2-preparation-wire-shapes.md",
+          "token": "openwop-Webhook-Signature"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.undeclared-host-extension-families",
+      "status": "proposed",
+      "surface": "the 11 `§host.*` families RFC 0144 classed `extension` (brand, canvas, chat, coordination, dataIntegration, entities, kanban, knowledge, launchStudio, messaging, webResearch) — declared in neither the dotted nor the root spelling",
+      "kind": "discovery-shape",
+      "deprecatedIn": null,
+      "authority": "v2 charter C.2 (RFC 0167 §E): one declaration file; extensions live under one namespaced key; RFC 0144 §A classified them deliberately as extension namespaces",
+      "removeIn": "2.0",
+      "replacement": "the v2 extension namespace key (C.2 child); the prose sections move to spec/v2/ext/",
+      "codemod": null,
+      "note": "Proposed: RFC 0144 chose not to declare these; the v2 C.2 child gives them a home under the single extension key rather than the open root.",
+      "sources": [
+        {
+          "file": "spec/v1/capability-declaration-classes.json",
+          "token": "\"class\": \"extension\""
         }
       ]
     }

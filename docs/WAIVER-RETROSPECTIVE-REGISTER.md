@@ -98,3 +98,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0164 | mandatory subject linking | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0165 | v2 preparation wire shapes | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0166 | register dispositions terminal states witness classes | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0167 | OpenWOP v2 — the program RFC | in-scope-pending-assessment | — | — | `not-reviewed` |

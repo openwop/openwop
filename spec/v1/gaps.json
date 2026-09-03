@@ -9276,6 +9276,91 @@
           "token": "G5"
         }
       ]
+    },
+    {
+      "id": "openwop.gap.0167.1",
+      "rfc": "0167",
+      "local": "G1",
+      "section": "§B.1",
+      "surface": "The C.5 header-negotiation rule has no v1 precedent: a v1 client never sends `OpenWOP-Version`, so the rule for an unversioned path with no header (default to `preferredVersion`) is asserted here and witnessed only by the Phase 3 dual-stack scenario.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0167-openwop-v2-umbrella.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0167.2",
+      "rfc": "0167",
+      "local": "G2",
+      "section": "§E.1",
+      "surface": "Eighteen axes were found by grep; the umbrella cannot prove the enumeration is complete. A nineteenth found later is added to the table by the child that meets it, not silently.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0167-openwop-v2-umbrella.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0167.3",
+      "rfc": "0167",
+      "local": "G3",
+      "section": "§D.2",
+      "surface": "Codemods are pure transforms over persisted artifacts; nothing rewrites an SDK consumer's source. The migration guide carries that; no gate proves the guide is complete.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0167-openwop-v2-umbrella.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0167.4",
+      "rfc": "0167",
+      "local": "G4",
+      "section": "§C",
+      "surface": "v2 MUST-NOTs cannot enter `SECURITY/invariants.yaml` at Draft (`check-security-invariants.sh` requires a v1 public test), so they live as child falsifiability rows in `gaps.json` until Phase 3. The witness-class gate does not see them until then.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0167-openwop-v2-umbrella.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0167.5",
+      "rfc": "0167",
+      "local": "G5",
+      "section": "Unresolved Q1",
+      "surface": "The org question for `openwop.dev/spec/v2/`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0167-openwop-v2-umbrella.gaps.md",
+          "token": "G5"
+        }
+      ]
     }
   ]
 }
