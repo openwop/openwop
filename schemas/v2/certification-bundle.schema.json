@@ -100,7 +100,8 @@
           }
         },
         "signingKeyId": {
-          "$ref": "ids.schema.json#/$defs/keyId"
+          "$ref": "ids.schema.json#/$defs/keyId",
+          "description": "The host key the signature was made with (the same keyId as signature.keyId)."
         },
         "relaxations": {
           "type": "array",
@@ -349,11 +350,30 @@
             "suite.version",
             "discovery.sha256"
           ]
-        },
-        "verifierKeyId": {
-          "$ref": "ids.schema.json#/$defs/keyId"
         }
       }
+    },
+    "verifierSignature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alg",
+        "keyId",
+        "sig"
+      ],
+      "properties": {
+        "alg": {
+          "const": "ed25519"
+        },
+        "keyId": {
+          "$ref": "ids.schema.json#/$defs/keyId"
+        },
+        "sig": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      },
+      "description": "RFC 0168 §E.2 — required when any claimed profile is evidenceTier independent; the key MUST differ from the host's."
     }
   },
   "allOf": [
@@ -394,6 +414,26 @@
       "then": {
         "required": [
           "detail"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "claimedProfiles": {
+            "contains": {
+              "properties": {
+                "evidenceTier": {
+                  "const": "independent"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "verifierSignature"
         ]
       }
     }
