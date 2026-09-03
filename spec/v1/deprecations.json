@@ -504,6 +504,24 @@
           "token": "\"class\": \"extension\""
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.v1-path-prefix",
+      "status": "proposed",
+      "surface": "the `/v1/` path-key prefix on every versioned operation",
+      "kind": "path",
+      "deprecatedIn": null,
+      "authority": "RFC 0172 §A.2 (v2 operations are unversioned path keys on a bare origin; v1 keys retained through the overlap and removed with the v1 tree at Phase 5)",
+      "removeIn": "2.0",
+      "replacement": "unversioned path keys + `OpenWOP-Version` negotiation (RFC 0172 §A)",
+      "codemod": null,
+      "note": "Proposed: the prefix is the v1 wire surface itself and cannot be deprecated inside v1.x; the row exists so the removal has a date and the alias coverage gate sees the surface.",
+      "sources": [
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "All paths under `/v1/` are versioned"
+        }
+      ]
     }
   ]
 }

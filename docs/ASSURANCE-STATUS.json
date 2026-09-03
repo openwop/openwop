@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 46,
+    "bootstrapWaiversExercised": 48,
     "rfcs": [
       "0042",
       "0043",
@@ -62,11 +62,13 @@
       "0164",
       "0165",
       "0166",
-      "0167"
+      "0167",
+      "0169",
+      "0172"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 46
+      "not-reviewed": 48
     }
   },
   "audit": {
@@ -103,7 +105,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 389,
+    "rowsScanned": 397,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -627,6 +629,13 @@
         "rfc": "0167",
         "id": "R5",
         "title": "Phase 2 ends with children Active and no host able to implement them (the \"unimplemented MUST\" pattern the charter names as v1's core defect)",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0169",
+        "id": "R3",
+        "title": "The declaration file becomes a fifth registry beside the four it replaces",
         "score": "High",
         "status": "`open`"
       },
@@ -1182,6 +1191,13 @@
         "rfc": "0167",
         "id": "R5",
         "title": "Phase 2 ends with children Active and no host able to implement them (the \"unimplemented MUST\" pattern the charter names as v1's core defect)",
+        "score": "High",
+        "status": "`open`"
+      },
+      {
+        "rfc": "0169",
+        "id": "R3",
+        "title": "The declaration file becomes a fifth registry beside the four it replaces",
         "score": "High",
         "status": "`open`"
       }

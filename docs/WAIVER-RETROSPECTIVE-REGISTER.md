@@ -99,3 +99,5 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0165 | v2 preparation wire shapes | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0166 | register dispositions terminal states witness classes | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0167 | OpenWOP v2 — the program RFC | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0169 | v2 discovery and capabilities (RFC 0167 child C.2) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0172 | v2 versioning and release (RFC 0167 child C.5) | in-scope-pending-assessment | — | — | `not-reviewed` |

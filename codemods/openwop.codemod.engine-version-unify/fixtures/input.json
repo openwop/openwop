@@ -1,0 +1,4 @@
+[
+  { "runId": "r1", "workflowId": "w", "status": "completed", "startedAt": "2026-09-03T00:00:00Z", "engineVersion": "7", "eventLogSchemaVersion": 2 },
+  { "runId": "r1", "sequence": 0, "type": "run.started", "schemaVersion": 1, "engineVersion": "7", "payload": { "workflowId": "w", "engineVersion": "7" } }
+]
