@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-deployment-transition.schema.json",
+  "title": "AgentDeploymentTransition",
+  "description": "RFC 0082 §E. The request body of POST /v1/agents/{agentId}/deployments — a deployment state-transition request. The host authorizes it fail-closed against the RFC 0049 `deploy:*` scope, runs any configured RFC 0051 approvalGate, enforces the RFC 0081 eval evidence when the gate requires it, and on success emits the matching `deployment.*` event and returns the updated `agent-deployment.schema.json` record. Carries no manifest body or credential material (SR-1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "transition"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "The concrete agent-definition version the transition targets (matches `AgentManifest.version`)."
+    },
+    "transition": {
+      "type": "string",
+      "enum": ["promote", "pause", "deprecate", "rollback", "adjust-canary"],
+      "description": "The lifecycle operation. `promote`: advance toward production (draft→test→staged→active) into `toState`. `pause`: active→paused. `deprecate`: active→deprecated. `rollback`: active→rolled-back, restoring a prior version. `adjust-canary`: change the active version's `canaryPercent`. Legal transitions + the seven-state machine are normative in `agent-deployment.md` §C."
+    },
+    "toState": {
+      "type": "string",
+      "enum": ["draft", "test", "staged", "active", "paused", "deprecated", "rolled-back"],
+      "description": "MAY. The target lifecycle state for a `promote` transition. A host MUST reject a transition into a state it does not advertise in `capabilities.agents.deployment.states`."
+    },
+    "channel": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "MAY. The named deployment channel this transition targets (e.g. `stable`). The version becomes resolvable by `AgentRef.channel` = this value (RFC 0082 §A/§B)."
+    },
+    "canaryPercent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "MAY. For `promote` to `active` or `adjust-canary`, the share of channel traffic this version takes. A host advertising `capabilities.agents.deployment.canary: false` MUST reject any value < 100."
+    },
+    "evalRunId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MAY. The RFC 0081 eval run whose `EvalSummary.passed` the gate verifies before emitting `deployment.promoted` (the §E evidence). Required when the target `approvalGate` is configured with `requiredEval`; an unmet eval gate is rejected with `eval_gate_unmet`."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "MAY. A short redaction-safe reason label (NOT free-text content), surfaced on `deployment.rolled-back.reason`. Same posture as `run.dead_lettered.reason`."
+    }
+  }
+}

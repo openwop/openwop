@@ -64,10 +64,10 @@ async function emit(input: Record<string, unknown>): Promise<{ status: number; b
 describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.3 MUST)', () => {
   it('accepts a well-formed `envelope.refusal` payload + writes it to the test event log', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const reliability = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability;
-    if (!reliability || reliability.supported !== true) return;
-    if (!Array.isArray(reliability.events) || !(reliability.events as unknown[]).includes('envelope.refusal')) return;
+    if (!reliability || reliability.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!reliability || reliability.supported !== true` returned early');
+    if (!Array.isArray(reliability.events) || !(reliability.events as unknown[]).includes('envelope.refusal')) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!Array.isArray(reliability.events) || !(reliability.events as unknown[]).includes(\'envelope.refusal\')` returned early');
 
     const r = await emit({
       runId: 'conformance-refusal-1',
@@ -81,10 +81,10 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
       },
       nodeId: 'writer',
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.status,
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.accepts-a-well-formed-envelope-refusal-payload-writes-it-to-the-test-event-log', 
         'schemas/run-event-payloads.schema.json §envelopeRefusal',
         'a payload with the required {nodeId, provider, model} fields MUST be accepted by the seam',
       ),
@@ -108,10 +108,10 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
         safetyCategory: 'harmful-content',
       },
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.status,
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.rejects-payloads-with-refusaltext-containing-a-secret-canary-substring-byok-leak', 
         'SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak',
         'envelope.refusal.refusalText MUST be passed through the host BYOK redaction harness; seam refuses payloads carrying secret-canary-* substrings (defense-in-depth CI gate per RFC 0032 §B.3 + §G)',
       ),
@@ -130,8 +130,8 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
         credentialRef: 'secret-byok-abc123', // forbidden
       },
     });
-    if (r.status === 404) return;
-    expect(r.status).toBe(400);
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.status, req('openwop.it.envelope-refusal-shape.rejects-payloads-with-a-top-level-credentialref-field', 'RFC 0032 §B.3', 'rejects payloads with a top-level `credentialRef` field')).toBe(400);
     expect(readErrorCode(r.body)).toBe('envelope_reliability_credential_leak');
   });
 
@@ -145,8 +145,8 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
         model: 'claude-3-5-sonnet',
       },
     });
-    if (r.status === 404) return;
-    expect(r.status).toBe(400);
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.status, req('openwop.it.envelope-refusal-shape.rejects-payloads-missing-required-provider-field', 'RFC 0032 §B.3', 'rejects payloads missing required `provider` field')).toBe(400);
     expect(readErrorCode(r.body)).toBe('invalid_argument');
   });
 });
@@ -154,25 +154,25 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
 describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 0032 §C)', () => {
   it('capabilities.envelopes.reliability (when supported: true with non-empty events[]) MUST list both MUST-tier events', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const reliability = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability;
-    if (!reliability || reliability.supported !== true) return;
+    if (!reliability || reliability.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!reliability || reliability.supported !== true` returned early');
     // Hosts running the legacy undifferentiated retry loop advertise
     // `events: []` (per the OPENWOP_ENVELOPE_RELIABILITY_END_TO_END=false
     // operator override). The two MUST-tier events still surface through
     // the test seam in that case; the advertisement-shape MUST applies
     // only when events[] is non-empty.
-    if (!Array.isArray(reliability.events) || (reliability.events as unknown[]).length === 0) return;
+    if (!Array.isArray(reliability.events) || (reliability.events as unknown[]).length === 0) return softSkip('blocked', 'precondition not met — `!Array.isArray(reliability.events) || (reliability.events as unknown[]).length === 0` returned early (Hosts running the legacy undifferentiated retry loop advertise `events: []` (per the OPENWO…');
     expect(
       (reliability.events as unknown[]).includes('envelope.refusal'),
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.capabilities-envelopes-reliability-when-supported-true-with-non-empty-events-mus', 
         'RFCS/0032-envelope-reliability-events.md §C',
         'hosts that advertise reliability.supported: true with non-empty events[] MUST include envelope.refusal (one of the two MUST-tier events per RFC 0032 §C normative text)',
       ),
     ).toBe(true);
     expect(
       (reliability.events as unknown[]).includes('envelope.retry.exhausted'),
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.capabilities-envelopes-reliability-when-supported-true-with-non-empty-events-mus', 
         'RFCS/0032-envelope-reliability-events.md §C',
         'hosts that advertise reliability.supported: true with non-empty events[] MUST also include envelope.retry.exhausted (the other MUST-tier event; both MUSTs land together)',
       ),
@@ -192,6 +192,8 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const E2E_FIXTURE = 'conformance-envelope-refusal';
 const E2E_NODE_ID = 'structured-call';
@@ -224,17 +226,17 @@ async function runE2eAndRead(): Promise<{ events: E2eEvent[]; terminal: unknown 
 
 describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through dispatchStructured', () => {
   it('when mock provider returns stopReason: "safety" with refusalText, host emits exactly one envelope.refusal event AND does NOT retry', async () => {
-    if (!isFixtureAdvertised(E2E_FIXTURE)) return;
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(E2E_FIXTURE)` returned early');
     const seed = await programMockRefusal('I cannot help with that — safety filter triggered.');
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(seed.status).toBe(200);
 
     const result = await runE2eAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const refusals = result.events.filter((e) => e.type === 'envelope.refusal');
     expect(
       refusals.length,
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.when-mock-provider-returns-stopreason-safety-with-refusaltext-host-emits-exactly', 
         'RFCS/0032-envelope-reliability-events.md §B.3',
         'exactly one envelope.refusal event MUST fire on provider safety-stop',
       ),
@@ -243,7 +245,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through d
     const retries = result.events.filter((e) => e.type === 'envelope.retry.attempted');
     expect(
       retries.length,
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.when-mock-provider-returns-stopreason-safety-with-refusaltext-host-emits-exactly', 
         'RFCS/0033-envelope-completion-contract.md §D',
         'host MUST NOT retry after envelope.refusal (refusal is terminal — retrying with prompt mutation creates a circumvention concern)',
       ),
@@ -251,16 +253,16 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through d
   });
 
   it('node fails with RunSnapshot.error.code = "envelope_refusal" per RFC 0033 §F', async () => {
-    if (!isFixtureAdvertised(E2E_FIXTURE)) return;
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(E2E_FIXTURE)` returned early');
     const seed = await programMockRefusal('Refusal text for terminal-error-code assertion.');
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await runE2eAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const code = (result.terminal as { error?: { code?: string } }).error?.code;
     expect(
       code,
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.node-fails-with-runsnapshot-error-code-envelope-refusal-per-rfc-0033-f', 
         'RFCS/0033-envelope-completion-contract.md §F',
         'refusal-driven failure MUST surface as RunSnapshot.error.code = envelope_refusal (renamed 2026-05-21 from envelope_refused_by_provider per the MyndHyve adoption-feedback amendment)',
       ),
@@ -268,21 +270,21 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through d
   });
 
   it('RunSnapshot.error.message MUST NOT echo the providers refusal text (SECURITY invariant envelope-refusal-no-prompt-leak)', async () => {
-    if (!isFixtureAdvertised(E2E_FIXTURE)) return;
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(E2E_FIXTURE)` returned early');
     // A distinctive refusal text so the message-no-echo assertion has
     // a unique substring to scan for. Production refusal texts may
     // contain prompt content; the host MUST keep it off the error
     // message surface (event log only, scrubbed via SR-1).
     const REFUSAL_TEXT = 'REFUSAL-CANARY-A8F3-do-not-echo-this-substring-into-RunSnapshot.error.message';
     const seed = await programMockRefusal(REFUSAL_TEXT);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await runE2eAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const message = (result.terminal as { error?: { message?: string } }).error?.message ?? '';
     expect(
       message.includes(REFUSAL_TEXT),
-      driver.describe(
+      req('openwop.it.envelope-refusal-shape.runsnapshot-error-message-must-not-echo-the-providers-refusal-text-security-inva', 
         'SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak',
         'RunSnapshot.error.message MUST NOT echo refusalText — the safety-filter text may contain prompt content; spec-compliant emission carries it only on the envelope.refusal event payload (subject to SR-1 redaction at the eventLog.append boundary)',
       ),

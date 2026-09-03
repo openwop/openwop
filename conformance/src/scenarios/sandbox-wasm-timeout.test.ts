@@ -20,21 +20,20 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FIXTURES_DIR } from '../lib/paths.js';
 import { probeTimeout } from '../lib/wasm-sandbox-probe.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 const dir = join(FIXTURES_DIR, 'wasm-sandbox');
 const fix = (name: string): Uint8Array => new Uint8Array(readFileSync(join(dir, `${name}.wasm`)));
 
 describe('sandbox-wasm-timeout: wall-clock cap is engine/worker-enforced (RFC 0035 §B 6, server-free)', () => {
   it('node-pack-sandbox-timeout: a non-terminating module is killed with sandbox_timeout', async () => {
     const r = await probeTimeout(fix('misbehaving-timeout'), { memoryLimitBytes: 2 * 1024 * 1024, wallClockLimitMs: 300 });
-    expect(r.ok, why('RFC 0035 §B invariant 6', 'an over-budget invocation MUST fail')).toBe(false);
-    expect(r.code, why('RFC 0035 §C', 'the failure code MUST be sandbox_timeout')).toBe('sandbox_timeout');
+    expect(r.ok, req('openwop.it.sandbox-wasm-timeout.node-pack-sandbox-timeout-a-non-terminating-module-is-killed-with-sandbox-timeou', 'RFC 0035 §B invariant 6', 'an over-budget invocation MUST fail')).toBe(false);
+    expect(r.code, req('openwop.it.sandbox-wasm-timeout.node-pack-sandbox-timeout-a-non-terminating-module-is-killed-with-sandbox-timeou', 'RFC 0035 §C', 'the failure code MUST be sandbox_timeout')).toBe('sandbox_timeout');
   });
 
   it('positive control: a well-behaved module completes within the budget (the kill-timer does not false-positive)', async () => {
     const r = await probeTimeout(fix('well-behaved-echo'), { memoryLimitBytes: 2 * 1024 * 1024, wallClockLimitMs: 1000 }, 'invoke', 7);
-    expect(r.ok, why('RFC 0035 §B', 'a within-budget invocation completes before the kill-timer')).toBe(true);
-    expect(r.result).toBe(7);
+    expect(r.ok, req('openwop.it.sandbox-wasm-timeout.positive-control-a-well-behaved-module-completes-within-the-budget-the-kill-time', 'RFC 0035 §B', 'a within-budget invocation completes before the kill-timer')).toBe(true);
+    expect(r.result, req('openwop.it.sandbox-wasm-timeout.positive-control-a-well-behaved-module-completes-within-the-budget-the-kill-time', 'RFC 0035 §B', 'positive control: a well-behaved module completes within the budget (the kill-timer does not false-positive)')).toBe(7);
   });
 });

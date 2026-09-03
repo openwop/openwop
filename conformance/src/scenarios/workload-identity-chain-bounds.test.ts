@@ -36,7 +36,8 @@ import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 const DELEGATION_PROFILE = 'openwop-workload-identity-delegation';
 const SEAM = '/v1/host/sample/test/workload-identity/resolve';
@@ -76,10 +77,10 @@ function hop(n: number, scopes?: readonly string[]): Record<string, unknown> {
 }
 
 /** A refusal: 4xx, non-retriable, the named closed reason. */
-function expectRefusal(r: { status: number; json: unknown }, reason: string, why: string): void {
-  expect(r.status >= 400, driver.describe('RFCS/0154 §B', why)).toBe(true);
-  expect(readErrorCode(r.json), driver.describe('spec/v1/host-sample-test-seams.md §20', `closed reason \`${reason}\``)).toBe(reason);
-  expect(readRetriable(r.json), driver.describe('spec/v1/host-sample-test-seams.md §20', 'a chain the host refuses will be refused on retry')).toBe(false);
+function expectRefusal(requirementId: string, r: { status: number; json: unknown }, reason: string, why: string): void {
+  expect(r.status >= 400, req(requirementId, 'RFCS/0154 §B', why)).toBe(true);
+  expect(readErrorCode(r.json), req(requirementId, 'spec/v1/host-sample-test-seams.md §20', `closed reason \`${reason}\``)).toBe(reason);
+  expect(readRetriable(r.json), req(requirementId, 'spec/v1/host-sample-test-seams.md §20', 'a chain the host refuses will be refused on retry')).toBe(false);
 }
 
 describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)', () => {
@@ -88,13 +89,13 @@ describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)',
     if (!behaviorGate(DELEGATION_PROFILE, caps.supported)) return;
     expect(
       caps.maxChainDepth,
-      driver.describe('spec/v1/auth.md §Bounds', 'a host advertising delegation MUST advertise a positive integer `maxChainDepth`'),
+      req('openwop.it.workload-identity-chain-bounds.a-chain-longer-than-the-advertised-maxchaindepth-is-refused', 'spec/v1/auth.md §Bounds', 'a host advertising delegation MUST advertise a positive integer `maxChainDepth`'),
     ).not.toBeNull();
     const depth = caps.maxChainDepth as number;
     const chain = Array.from({ length: depth + 1 }, (_, i) => hop(i + 1));
     const r = await resolve({ identity: { ...IDENTITY, delegation: { chain, audience: 'openwop-host', expiresAt: LIVE } }, expectedAudience: 'openwop-host' });
-    if (r === null) return;
-    expectRefusal(r, 'delegation_chain_too_long', `a chain of ${depth + 1} hops exceeds the advertised bound of ${depth} — each hop is another party the host trusts transitively`);
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
+    expectRefusal('openwop.it.workload-identity-chain-bounds.a-chain-longer-than-the-advertised-maxchaindepth-is-refused', r, 'delegation_chain_too_long', `a chain of ${depth + 1} hops exceeds the advertised bound of ${depth} — each hop is another party the host trusts transitively`);
   });
 
   it('a chain that revisits a subject is refused as cyclic', async () => {
@@ -106,15 +107,15 @@ describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)',
     // and this leg accepts either reason, saying so.
     const chain = [hop(1), hop(2), hop(1)];
     const r = await resolve({ identity: { ...IDENTITY, delegation: { chain, audience: 'openwop-host', expiresAt: LIVE } }, expectedAudience: 'openwop-host' });
-    if (r === null) return;
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
     const bound = caps.maxChainDepth ?? Number.POSITIVE_INFINITY;
     if (bound < 3) {
-      expect(r.status >= 400, driver.describe('RFCS/0154 §B', 'a cyclic chain is refused')).toBe(true);
-      expect(['delegation_chain_cyclic', 'delegation_chain_too_long'], driver.describe('spec/v1/host-sample-test-seams.md §20', 'cyclic or too-long — the bound is below the cycle length')).toContain(readErrorCode(r.json));
+      expect(r.status >= 400, req('openwop.it.workload-identity-chain-bounds.a-chain-that-revisits-a-subject-is-refused-as-cyclic', 'RFCS/0154 §B', 'a cyclic chain is refused')).toBe(true);
+      expect(['delegation_chain_cyclic', 'delegation_chain_too_long'], req('openwop.it.workload-identity-chain-bounds.a-chain-that-revisits-a-subject-is-refused-as-cyclic', 'spec/v1/host-sample-test-seams.md §20', 'cyclic or too-long — the bound is below the cycle length')).toContain(readErrorCode(r.json));
       expect(readRetriable(r.json)).toBe(false);
-      return;
+      return softSkip('blocked', 'precondition not met — `bound < 3` returned early (seam, prior step, or fixture unavailable)');
     }
-    expectRefusal(r, 'delegation_chain_cyclic', 'a subject appearing twice is a chain that loops back through authority it already spent — unbounded laundering with a bounded length');
+    expectRefusal('openwop.it.workload-identity-chain-bounds.a-chain-that-revisits-a-subject-is-refused-as-cyclic', r, 'delegation_chain_cyclic', 'a subject appearing twice is a chain that loops back through authority it already spent — unbounded laundering with a bounded length');
   });
 
   it('a later hop claiming a scope the previous hop did not hold is refused', async () => {
@@ -122,8 +123,8 @@ describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)',
     if (!behaviorGate(DELEGATION_PROFILE, caps.supported)) return;
     const chain = [hop(1, ['runs:read']), hop(2, ['runs:read', 'runs:write'])];
     const r = await resolve({ identity: { ...IDENTITY, delegation: { chain, audience: 'openwop-host', expiresAt: LIVE } }, expectedAudience: 'openwop-host' });
-    if (r === null) return;
-    expectRefusal(r, 'delegation_scope_amplified', 'the effective scopes at any hop MUST NOT exceed the hop before it — a chain is provenance, and provenance cannot mint `runs:write` from `runs:read`');
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
+    expectRefusal('openwop.it.workload-identity-chain-bounds.a-later-hop-claiming-a-scope-the-previous-hop-did-not-hold-is-refused', r, 'delegation_scope_amplified', 'the effective scopes at any hop MUST NOT exceed the hop before it — a chain is provenance, and provenance cannot mint `runs:write` from `runs:read`');
   });
 
   it('a well-formed bounded, acyclic, non-amplifying chain still resolves (the negatives are not a blanket refusal)', async () => {
@@ -131,11 +132,11 @@ describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)',
     if (!behaviorGate(DELEGATION_PROFILE, caps.supported)) return;
     const chain = [hop(1, ['runs:read', 'manifest:read']), hop(2, ['runs:read'])];
     const r = await resolve({ identity: { ...IDENTITY, delegation: { chain, audience: 'openwop-host', expiresAt: LIVE } }, expectedAudience: 'openwop-host' });
-    if (r === null) return;
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
     // A host that refuses EVERY chain passes the three negatives vacuously; this
     // is the positive that keeps them honest. Scopes narrow hop-to-hop, which
     // is the one direction §B permits.
-    expect(r.status, driver.describe('RFCS/0154 §B', 'a compliant chain resolves; the bounds refuse laundering, not delegation')).toBe(200);
+    expect(r.status, req('openwop.it.workload-identity-chain-bounds.a-well-formed-bounded-acyclic-non-amplifying-chain-still-resolves-the-negatives', 'RFCS/0154 §B', 'a compliant chain resolves; the bounds refuse laundering, not delegation')).toBe(200);
     expect((r.json as { resolved?: unknown }).resolved).toBe(true);
   });
 });

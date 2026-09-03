@@ -58,12 +58,12 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0032 §C)', () => {
   it('capabilities.envelopes.reliability (when present) conforms to RFC 0032 §C', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const reliability = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability;
-    if (reliability === undefined) return;
-    expect(typeof reliability.supported, 'reliability.supported MUST be boolean').toBe('boolean');
+    if (reliability === undefined) return softSkip('blocked', 'precondition not met — `reliability === undefined` returned early (seam, prior step, or fixture unavailable)');
+    expect(typeof reliability.supported, req('openwop.it.envelope-retry-attempted.capabilities-envelopes-reliability-when-present-conforms-to-rfc-0032-c', 'RFC 0032 §C', 'reliability.supported MUST be boolean')).toBe('boolean');
     if (reliability.events !== undefined) {
-      expect(Array.isArray(reliability.events), 'reliability.events MUST be an array').toBe(true);
+      expect(Array.isArray(reliability.events), req('openwop.it.envelope-retry-attempted.capabilities-envelopes-reliability-when-present-conforms-to-rfc-0032-c', 'RFC 0032 §C', 'reliability.events MUST be an array')).toBe(true);
       const RFC_0032_EVENTS = [
         'envelope.retry.attempted',
         'envelope.retry.exhausted',
@@ -73,7 +73,7 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
         'envelope.recovery.applied',
       ];
       for (const e of reliability.events as unknown[]) {
-        expect(RFC_0032_EVENTS, `event "${String(e)}" MUST be one of the six RFC 0032 names`).toContain(String(e));
+        expect(RFC_0032_EVENTS, req('openwop.it.envelope-retry-attempted.capabilities-envelopes-reliability-when-present-conforms-to-rfc-0032-c', 'RFC 0032 §C', `event "${String(e)}" MUST be one of the six RFC 0032 names`)).toContain(String(e));
       }
       // When supported: true, MUST include the two MUST-tier events (per
       // RFC 0032 §C). Hosts that have wired end-to-end emission from
@@ -87,17 +87,17 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
         const evts = reliability.events as string[];
         expect(
           evts.includes('envelope.retry.exhausted'),
-          'RFC 0032 §C: hosts that advertise `supported: true` with non-empty `events[]` MUST include `envelope.retry.exhausted`',
+          req('openwop.it.envelope-retry-attempted.capabilities-envelopes-reliability-when-present-conforms-to-rfc-0032-c', 'RFC 0032 §C', 'RFC 0032 §C: hosts that advertise `supported: true` with non-empty `events[]` MUST include `envelope.retry.exhausted`'),
         ).toBe(true);
         expect(
           evts.includes('envelope.refusal'),
-          'RFC 0032 §C: hosts that advertise `supported: true` with non-empty `events[]` MUST include `envelope.refusal`',
+          req('openwop.it.envelope-retry-attempted.capabilities-envelopes-reliability-when-present-conforms-to-rfc-0032-c', 'RFC 0032 §C', 'RFC 0032 §C: hosts that advertise `supported: true` with non-empty `events[]` MUST include `envelope.refusal`'),
         ).toBe(true);
       }
     }
     if (reliability.maxRetryAttempts !== undefined) {
       const n = reliability.maxRetryAttempts as number;
-      expect(typeof n === 'number' && n >= 1 && n <= 16, 'maxRetryAttempts MUST be integer in [1, 16]').toBe(true);
+      expect(typeof n === 'number' && n >= 1 && n <= 16, req('openwop.it.envelope-retry-attempted.capabilities-envelopes-reliability-when-present-conforms-to-rfc-0032-c', 'RFC 0032 §C', 'maxRetryAttempts MUST be integer in [1, 16]')).toBe(true);
     }
   });
 });
@@ -115,6 +115,8 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-envelope-retry-attempted';
 const NODE_ID = 'structured-call';
@@ -154,20 +156,20 @@ async function startRunAndRead(): Promise<RunEvent[] | null> {
 
 describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032 §B.1)', () => {
   it('when mock LLM emits invalid envelope on attempt 1 then valid on attempt 2, exactly one `envelope.retry.attempted` event fires before the second attempt', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([
       { content: 'not valid json — provoke parse-error retry' },
       { content: '{"valid":true}' },
     ]);
-    if (seed.status === 404) return; // host doesn't expose the seam
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
     expect(seed.status).toBe(200);
 
     const events = await startRunAndRead();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const retries = events.filter((e) => e.type === 'envelope.retry.attempted');
     expect(
       retries.length,
-      driver.describe(
+      req('openwop.it.envelope-retry-attempted.when-mock-llm-emits-invalid-envelope-on-attempt-1-then-valid-on-attempt-2-exactl', 
         'RFCS/0032-envelope-reliability-events.md §B.1',
         'exactly one envelope.retry.attempted event MUST fire between attempts 1 and 2',
       ),
@@ -175,17 +177,17 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032
   });
 
   it('event payload carries `attempt: 2` (1-indexed; first attempt does not emit)', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'invalid' }, { content: '{"valid":true}' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await startRunAndRead();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const retry = events.find((e) => e.type === 'envelope.retry.attempted');
-    expect(retry, 'envelope.retry.attempted MUST appear in the event log').toBeDefined();
+    expect(retry, req('openwop.it.envelope-retry-attempted.event-payload-carries-attempt-2-1-indexed-first-attempt-does-not-emit', 'RFCS/0032-envelope-reliability-events.md §B.1', 'envelope.retry.attempted MUST appear in the event log')).toBeDefined();
     expect(
       retry!.payload?.attempt,
-      driver.describe(
+      req('openwop.it.envelope-retry-attempted.event-payload-carries-attempt-2-1-indexed-first-attempt-does-not-emit', 
         'RFCS/0032-envelope-reliability-events.md §B.1',
         'attempt field MUST be 2 (1-indexed; first attempt does not emit)',
       ),
@@ -193,19 +195,19 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032
   });
 
   it('`reason` is one of the spec-reserved closed-enum values OR matches the `x-host-<host>-<key>` extension pattern', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'invalid' }, { content: '{"valid":true}' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await startRunAndRead();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const retry = events.find((e) => e.type === 'envelope.retry.attempted');
     expect(retry).toBeDefined();
     const reason = retry!.payload?.reason;
     expect(typeof reason).toBe('string');
     expect(
       RFC_0032_REASONS.has(reason as string) || HOST_REASON_EXT_RE.test(reason as string),
-      driver.describe(
+      req('openwop.it.envelope-retry-attempted.reason-is-one-of-the-spec-reserved-closed-enum-values-or-matches-the-x-host-host', 
         'RFCS/0032-envelope-reliability-events.md §B.1',
         'reason MUST be in the spec-reserved set OR match x-host-<host>-<key>',
       ),
@@ -213,17 +215,17 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032
   });
 
   it('eventual success records normally via envelope acceptance + downstream RunEventDoc', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'invalid' }, { content: '{"valid":true}' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await startRunAndRead();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const nodeCompleted = events.find((e) => e.type === 'node.completed' && e.nodeId === NODE_ID);
     const runCompleted = events.find((e) => e.type === 'run.completed');
     expect(
       nodeCompleted,
-      driver.describe(
+      req('openwop.it.envelope-retry-attempted.eventual-success-records-normally-via-envelope-acceptance-downstream-runeventdoc', 
         'RFCS/0032-envelope-reliability-events.md §B.1',
         'eventual success MUST produce a node.completed for the dispatching node',
       ),
@@ -232,25 +234,25 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032
   });
 
   it('`previousError` (when populated) MUST NOT contain prompt or response substring excerpts — limit to validator output', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const PROMPT_CANARY = 'PROMPT-CANARY-RETRY-ATTEMPTED-DO-NOT-LEAK-' + Math.random().toString(36).slice(2, 10);
     const RESPONSE_CANARY = 'RESPONSE-CANARY-' + PROMPT_CANARY;
     const seed = await programMock([
       { content: `not valid json mentioning ${RESPONSE_CANARY}` },
       { content: '{"valid":true}' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await startRunAndRead();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const retry = events.find((e) => e.type === 'envelope.retry.attempted');
-    if (!retry) return;
+    if (!retry) return softSkip('blocked', 'precondition not met — `!retry` returned early (seam, prior step, or fixture unavailable)');
     const previousError = retry.payload?.previousError;
-    if (previousError === undefined || previousError === null) return; // field is optional
+    if (previousError === undefined || previousError === null) return softSkip('blocked', 'precondition not met — `previousError === undefined || previousError === null` returned early (field is optional) (seam, prior step, or fixture unavailable)'); // field is optional
     const serialized = typeof previousError === 'string' ? previousError : JSON.stringify(previousError);
     expect(
       serialized.includes(RESPONSE_CANARY),
-      driver.describe(
+      req('openwop.it.envelope-retry-attempted.previouserror-when-populated-must-not-contain-prompt-or-response-substring-excer', 
         'RFCS/0032-envelope-reliability-events.md §G',
         'previousError MUST NOT echo provider response substrings — validator output only',
       ),

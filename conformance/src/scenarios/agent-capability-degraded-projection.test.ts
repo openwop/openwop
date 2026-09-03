@@ -26,9 +26,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readManifestRuntimeCap, listManifestAgents } from '../lib/agentRuntime.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface InventoryEntry {
   agentId?: string;
@@ -43,13 +44,13 @@ describe('agent-capability-degraded-projection (RFC 0092 §B)', () => {
     if (!behaviorGate('openwop-agent-capability-degraded', mr?.supported === true)) return;
 
     const inv = await listManifestAgents();
-    if (inv === null) return; // cap advertised but /v1/agents unserved — soft-skip
+    if (inv === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `inv === null` returned early (cap advertised but /v1/agents unserved — soft-skip)'); // cap advertised but /v1/agents unserved — soft-skip
     const agents = (inv.agents ?? []) as InventoryEntry[];
 
     // Non-vacuity: an advertising + serving host MUST expose its inventory.
     expect(
       agents.length >= 1,
-      driver.describe('RFC 0072 §A', 'GET /v1/agents MUST return the installed manifest agents'),
+      req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'RFC 0072 §A', 'GET /v1/agents MUST return the installed manifest agents'),
     ).toBe(true);
 
     // §B well-formedness on EVERY entry: degraded[], when present, is a unique
@@ -59,18 +60,18 @@ describe('agent-capability-degraded-projection (RFC 0092 §B)', () => {
       if (d !== undefined) {
         expect(
           Array.isArray(d),
-          driver.describe('agent-inventory-response.schema.json', `degraded MUST be an array when present (agent ${a.agentId})`),
+          req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'agent-inventory-response.schema.json', `degraded MUST be an array when present (agent ${a.agentId})`),
         ).toBe(true);
         if (Array.isArray(d)) {
           for (const k of d) {
             expect(
               typeof k === 'string' && k.length > 0,
-              driver.describe('RFC 0072 §C', `degraded[] members MUST be non-empty strings (agent ${a.agentId}, got ${String(k)})`),
+              req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'RFC 0072 §C', `degraded[] members MUST be non-empty strings (agent ${a.agentId}, got ${String(k)})`),
             ).toBe(true);
           }
           expect(
             new Set(d as string[]).size === d.length,
-            driver.describe('RFC 0092 §B', `degraded[] MUST be unique (agent ${a.agentId})`),
+            req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'RFC 0092 §B', `degraded[] MUST be unique (agent ${a.agentId})`),
           ).toBe(true);
         }
       }
@@ -82,23 +83,23 @@ describe('agent-capability-degraded-projection (RFC 0092 §B)', () => {
       const target = agents.find((a) => a.agentId === degradedId);
       expect(
         target !== undefined,
-        driver.describe('RFC 0092 §B', `OPENWOP_DEGRADED_CAPABILITY_AGENT_ID=${degradedId} MUST appear in the inventory`),
+        req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'RFC 0092 §B', `OPENWOP_DEGRADED_CAPABILITY_AGENT_ID=${degradedId} MUST appear in the inventory`),
       ).toBe(true);
       if (target) {
         const d = target.degraded;
         expect(
           Array.isArray(d) && d.length >= 1,
-          driver.describe('RFC 0092 §B', 'the named capability-degraded agent MUST carry a non-empty degraded[]'),
+          req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'RFC 0092 §B', 'the named capability-degraded agent MUST carry a non-empty degraded[]'),
         ).toBe(true);
         // When the entry also exposes requiresCapabilities, every degraded key
         // MUST be one the agent actually requires (the projection is a subset of
         // requirements, never invented).
         if (Array.isArray(d) && Array.isArray(target.requiresCapabilities)) {
-          const req = new Set(target.requiresCapabilities as unknown[]);
+          const required = new Set(target.requiresCapabilities as unknown[]);
           for (const k of d) {
             expect(
-              req.has(k),
-              driver.describe('RFC 0092 §B', `a degraded[] key MUST be one the agent requires (got ${String(k)})`),
+              required.has(k),
+              req('openwop.it.agent-capability-degraded-projection.surfaces-unmet-requirescapabilities-in-degraded-and-nothing-on-the-rest', 'RFC 0092 §B', `a degraded[] key MUST be one the agent requires (got ${String(k)})`),
             ).toBe(true);
           }
         }

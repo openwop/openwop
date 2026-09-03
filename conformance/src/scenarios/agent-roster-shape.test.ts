@@ -35,9 +35,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -48,9 +46,9 @@ describe('agent-roster-shape: capability advertisement (RFC 0086, server-free)',
     const caps = loadSchema('capabilities.schema.json');
     const agents = (caps.properties as Record<string, { properties?: Record<string, { properties?: Record<string, unknown> }> }>).agents;
     const roster = agents?.properties?.roster;
-    expect(roster, why('capabilities.md §agents', 'agents.roster MUST be declared')).toBeDefined();
+    expect(roster, req('openwop.it.agent-roster-shape.the-capabilities-schema-declares-agents-roster-with-its-sub-flags', 'capabilities.md §agents', 'agents.roster MUST be declared')).toBeDefined();
     for (const flag of ['supported', 'installScope', 'portfolioTriggerSources']) {
-      expect(roster?.properties?.[flag], why('agent-roster.md §F', `agents.roster.${flag} MUST be declared`)).toBeDefined();
+      expect(roster?.properties?.[flag], req('openwop.it.agent-roster-shape.the-capabilities-schema-declares-agents-roster-with-its-sub-flags', 'agent-roster.md §F', `agents.roster.${flag} MUST be declared`)).toBeDefined();
     }
   });
 });
@@ -69,7 +67,7 @@ describe('agent-roster-shape: roster entry (RFC 0086 §A, server-free)', () => {
       owner: { tenantId: 'acme', workspaceId: 'growth' },
       enabled: true,
     };
-    expect(entry(good), why('RFC 0086 §A', 'a conforming roster entry MUST validate')).toBe(true);
+    expect(entry(good), req('openwop.it.agent-roster-shape.agentrosterentry-validates-a-conforming-entry', 'RFC 0086 §A', 'a conforming roster entry MUST validate')).toBe(true);
   });
 
   it('rejects a non-host: rosterId and an agentRef carrying both version and channel', () => {
@@ -79,12 +77,12 @@ describe('agent-roster-shape: roster entry (RFC 0086 §A, server-free)', () => {
       agentRef: { agentId: 'core.openwop.agents.brief-writer' },
       owner: { tenantId: 'acme' },
     };
-    expect(entry({ ...base, rosterId: 'core.openwop.agents.sally' }), why('RFC 0086 §A', 'a non-`host:` rosterId MUST be rejected')).toBe(false);
+    expect(entry({ ...base, rosterId: 'core.openwop.agents.sally' }), req('openwop.it.agent-roster-shape.rejects-a-non-host-rosterid-and-an-agentref-carrying-both-version-and-channel', 'RFC 0086 §A', 'a non-`host:` rosterId MUST be rejected')).toBe(false);
     expect(
       entry({ ...base, agentRef: { agentId: 'core.x.y.z', version: '1.0.0', channel: 'stable' } }),
-      why('RFC 0082 §A', 'an agentRef with BOTH version and channel MUST be rejected'),
+      req('openwop.it.agent-roster-shape.rejects-a-non-host-rosterid-and-an-agentref-carrying-both-version-and-channel', 'RFC 0082 §A', 'an agentRef with BOTH version and channel MUST be rejected'),
     ).toBe(false);
-    expect(entry({ persona: 'x', agentRef: { agentId: 'core.x.y.z' }, owner: { tenantId: 'acme' } }), why('RFC 0086 §A', 'a roster entry without rosterId MUST be rejected')).toBe(false);
+    expect(entry({ persona: 'x', agentRef: { agentId: 'core.x.y.z' }, owner: { tenantId: 'acme' } }), req('openwop.it.agent-roster-shape.rejects-a-non-host-rosterid-and-an-agentref-carrying-both-version-and-channel', 'RFC 0086 §A', 'a roster entry without rosterId MUST be rejected')).toBe(false);
   });
 });
 
@@ -96,23 +94,23 @@ describe('agent-roster-shape: roster.run.initiated event (RFC 0086 §C, server-f
   const initiated = ajv.getSchema('payloads#/$defs/rosterRunInitiated');
 
   it('roster.run.initiated validates a content-free attribution record and requires its ids', () => {
-    expect(initiated, 'the rosterRunInitiated $def MUST exist').toBeTruthy();
+    expect(initiated, req('openwop.it.agent-roster-shape.roster-run-initiated-validates-a-content-free-attribution-record-and-requires-it', 'RFC 0086', 'the rosterRunInitiated $def MUST exist')).toBeTruthy();
     expect(
       initiated!({ rosterId: 'host:sally-marketing', persona: 'Sally', agentId: 'core.openwop.agents.brief-writer', workflowId: 'marketing-email-campaign', triggerSource: 'schedule' }),
-      why('RFC 0086 §C', 'a conforming roster.run.initiated payload MUST validate'),
+      req('openwop.it.agent-roster-shape.roster-run-initiated-validates-a-content-free-attribution-record-and-requires-it', 'RFC 0086 §C', 'a conforming roster.run.initiated payload MUST validate'),
     ).toBe(true);
-    expect(initiated!({ rosterId: 'host:s', persona: 'S' }), why('RFC 0086 §C', 'roster.run.initiated without agentId/workflowId/triggerSource MUST be rejected')).toBe(false);
+    expect(initiated!({ rosterId: 'host:s', persona: 'S' }), req('openwop.it.agent-roster-shape.roster-run-initiated-validates-a-content-free-attribution-record-and-requires-it', 'RFC 0086 §C', 'roster.run.initiated without agentId/workflowId/triggerSource MUST be rejected')).toBe(false);
   });
 
   it('roster.run.initiated is content-free — a work-item body and a prompt are rejected (roster-attribution-no-content)', () => {
     const base = { rosterId: 'host:s', persona: 'S', agentId: 'a.b.c.d', workflowId: 'wf', triggerSource: 'queue' };
     expect(
       initiated!({ ...base, body: 'the card description' }),
-      why('SECURITY invariant roster-attribution-no-content', 'roster.run.initiated MUST NOT carry the work-item body'),
+      req('openwop.it.agent-roster-shape.roster-run-initiated-is-content-free-a-work-item-body-and-a-prompt-are-rejected', 'SECURITY invariant roster-attribution-no-content', 'roster.run.initiated MUST NOT carry the work-item body'),
     ).toBe(false);
     expect(
       initiated!({ ...base, prompt: 'system: …' }),
-      why('SECURITY invariant roster-attribution-no-content', 'roster.run.initiated MUST NOT carry prompt content'),
+      req('openwop.it.agent-roster-shape.roster-run-initiated-is-content-free-a-work-item-body-and-a-prompt-are-rejected', 'SECURITY invariant roster-attribution-no-content', 'roster.run.initiated MUST NOT carry prompt content'),
     ).toBe(false);
   });
 });
@@ -121,13 +119,13 @@ describe('agent-roster-shape: inventory projection + enum (RFC 0086 §B, server-
   it('AgentInventoryEntry carries the additive optional roster portfolio projection', () => {
     const inv = loadSchema('agent-inventory-response.schema.json');
     const entry = (inv.$defs as Record<string, { properties?: Record<string, unknown> }>).AgentInventoryEntry?.properties ?? {};
-    expect(entry.roster, why('RFC 0086 §B', 'AgentInventoryEntry.roster (the portfolio projection) MUST be declared')).toBeDefined();
+    expect(entry.roster, req('openwop.it.agent-roster-shape.agentinventoryentry-carries-the-additive-optional-roster-portfolio-projection', 'RFC 0086 §B', 'AgentInventoryEntry.roster (the portfolio projection) MUST be declared')).toBeDefined();
   });
 
   it('roster.run.initiated appears in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = (runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum ?? [];
-    expect(enumVals).toContain('roster.run.initiated');
+    expect(enumVals, req('openwop.it.agent-roster-shape.roster-run-initiated-appears-in-the-runeventtype-enum', 'RFC 0086', 'roster.run.initiated appears in the RunEventType enum')).toContain('roster.run.initiated');
   });
 
   it('the GET /v1/agents/roster response schema validates + rejects extras (RFC 0086 §B)', () => {
@@ -139,8 +137,8 @@ describe('agent-roster-shape: inventory projection + enum (RFC 0086 §B, server-
       roster: [{ rosterId: 'host:sally', persona: 'Sally', agentRef: { agentId: 'core.x.y.z' }, owner: { tenantId: 'acme' } }],
       total: 1,
     };
-    expect(resp(good), why('RFC 0086 §B', 'a conforming GET /v1/agents/roster response MUST validate')).toBe(true);
-    expect(resp({ ...good, unexpected: true }), why('RFC 0086 §B', 'an extra top-level property MUST be rejected')).toBe(false);
-    expect(resp({ roster: [] }), why('RFC 0086 §B', 'the response MUST require `total`')).toBe(false);
+    expect(resp(good), req('openwop.it.agent-roster-shape.the-get-v1-agents-roster-response-schema-validates-rejects-extras-rfc-0086-b', 'RFC 0086 §B', 'a conforming GET /v1/agents/roster response MUST validate')).toBe(true);
+    expect(resp({ ...good, unexpected: true }), req('openwop.it.agent-roster-shape.the-get-v1-agents-roster-response-schema-validates-rejects-extras-rfc-0086-b', 'RFC 0086 §B', 'an extra top-level property MUST be rejected')).toBe(false);
+    expect(resp({ roster: [] }), req('openwop.it.agent-roster-shape.the-get-v1-agents-roster-response-schema-validates-rejects-extras-rfc-0086-b', 'RFC 0086 §B', 'the response MUST require `total`')).toBe(false);
   });
 });

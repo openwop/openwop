@@ -47,7 +47,8 @@ import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host issues A2A JSON-RPC calls to the suite's fake peer.
@@ -113,7 +114,7 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
         '[a2a-task-roundtrip] no A2A endpoint configured; set OPENWOP_A2A_FAKE_PEER=true ' +
           'or OPENWOP_A2A_REAL_PEER_URL=<base-url>',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!probe` returned early (seam, prior step, or fixture unavailable)');
     }
     if (!probe.isReal) getA2AFakePeer()!.reset();
 
@@ -137,7 +138,7 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
       cardJson.supportedInterfaces?.find((i) => typeof i.protocolVersion === 'string')?.protocolVersion;
     expect(
       typeof advertisedVersion,
-      'the card MUST advertise a protocol version — top-level (0.3) or per interface (1.0)',
+      req('openwop.it.a2a-task-roundtrip.agentcard-exposes-a-protocol-version-0-3-top-level-or-1-0-per-interface-skills-m', 'spec/v1/a2a-integration.md', 'the card MUST advertise a protocol version — top-level (0.3) or per interface (1.0)'),
     ).toBe('string');
     expect(Array.isArray(cardJson.skills)).toBe(true);
     expect((cardJson.skills ?? []).length).toBeGreaterThan(0);
@@ -181,7 +182,7 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
         `[a2a-task-roundtrip] real-peer interop OK against ${probe.url} ` +
           `(skill=${firstSkill?.id ?? firstSkill?.name}, kind=${kind})`,
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.isReal` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // Fake-peer path: deterministic state forcing, assert verbatim.
@@ -224,14 +225,14 @@ describe('a2a-task-roundtrip: drift point #3 — AUTH_REQUIRED projects to waiti
     if (!peer) {
       // eslint-disable-next-line no-console
       console.warn('[a2a-task-roundtrip] peer not started; skipping drift-point #3 subtest');
-      return;
+      return softSkip('blocked', 'precondition not met — `!peer` returned early ([a2a-task-roundtrip] peer not started; skipping drift-point #3 subtest) (seam, prior step, or fixture unavailable)');
     }
     if (!isFixtureAdvertised(ROUNDTRIP_FIXTURE)) {
       // eslint-disable-next-line no-console
       console.warn(
         `[a2a-task-roundtrip] fixture ${ROUNDTRIP_FIXTURE} not advertised; skipping drift-point #3 subtest`,
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(ROUNDTRIP_FIXTURE)` returned early ([a2a-task-roundtrip] fixture … not advertised; skipping drift-point #3 subtest)');
     }
     peer.reset();
     peer.setNextState('AUTH_REQUIRED');
@@ -246,7 +247,7 @@ describe('a2a-task-roundtrip: drift point #3 — AUTH_REQUIRED projects to waiti
     // Host should project AUTH_REQUIRED into `waiting-input` per
     // a2a-integration.md §"State projection (reverse)".
     const snapshot = await pollUntilStatus(runId, 'waiting-input', { timeoutMs: 15_000 });
-    expect(snapshot.status, driver.describe(
+    expect(snapshot.status, req('openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-auth-required-projects-to-waiting-input', 
       'a2a-integration.md §"State projection" drift point #3',
       "A2A AUTH_REQUIRED MUST project to openwop 'waiting-input' (no native auth-required kind in v1)",
     )).toBe('waiting-input');
@@ -264,10 +265,10 @@ describe('a2a-task-roundtrip: drift point #4 — REJECTED projects to failed', (
     if (!peer) {
       // eslint-disable-next-line no-console
       console.warn('[a2a-task-roundtrip] peer not started; skipping drift-point #4 subtest');
-      return;
+      return softSkip('blocked', 'precondition not met — `!peer` returned early ([a2a-task-roundtrip] peer not started; skipping drift-point #4 subtest) (seam, prior step, or fixture unavailable)');
     }
     if (!isFixtureAdvertised(ROUNDTRIP_FIXTURE)) {
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(ROUNDTRIP_FIXTURE)` returned early');
     }
     peer.reset();
     peer.setNextState('REJECTED');
@@ -280,7 +281,7 @@ describe('a2a-task-roundtrip: drift point #4 — REJECTED projects to failed', (
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId, { timeoutMs: 15_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-rejected-projects-to-failed-with-rejecte', 
       'a2a-integration.md §"State projection" drift point #4',
       'A2A REJECTED MUST project to openwop terminal status `failed`',
     )).toBe('failed');
@@ -289,7 +290,7 @@ describe('a2a-task-roundtrip: drift point #4 — REJECTED projects to failed', (
     // snapshot, the final node payload, or the run-level error envelope.
     // We accept any of those: stringify the snapshot and search.
     const haystack = JSON.stringify(terminal).toLowerCase();
-    expect(haystack.includes('rejected'), driver.describe(
+    expect(haystack.includes('rejected'), req('openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-rejected-projects-to-failed-with-rejecte', 
       'a2a-integration.md §"State projection" drift point #4',
       "host SHOULD surface 'rejected_by_remote' (or equivalent) so observers can attribute the failure to the remote A2A peer",
     )).toBe(true);
@@ -322,14 +323,14 @@ describe('a2a-task-roundtrip: A2ATaskState + a2a capability shape (always-on, se
     };
     expect(
       validateTaskState(ok),
-      `a2a-task-state.schema.json MUST accept a conforming record. Errors: ${JSON.stringify(validateTaskState.errors)}`,
+      req('openwop.it.a2a-task-roundtrip.a-conforming-a2ataskstate-validates-with-the-lowercase-hyphen-state-enum-and-tas', 'spec/v1/a2a-integration.md', `a2a-task-state.schema.json MUST accept a conforming record. Errors: ${JSON.stringify(validateTaskState.errors)}`),
     ).toBe(true);
   });
 
   it('an UPPERCASE state fails (the persisted/wire form is the A2A v0.3 lowercase-hyphen variant)', () => {
     expect(
       validateTaskState({ taskId: 'r', runId: 'r', state: 'WORKING', updatedAt: '2026-06-13T19:00:00Z' }),
-      'a2a-integration.md spelling-drift note — the persisted A2ATaskState.state MUST be the lowercase-hyphen form',
+      req('openwop.it.a2a-task-roundtrip.an-uppercase-state-fails-the-persisted-wire-form-is-the-a2a-v0-3-lowercase-hyphe', 'spec/v1/a2a-integration.md', 'a2a-integration.md spelling-drift note — the persisted A2ATaskState.state MUST be the lowercase-hyphen form'),
     ).toBe(false);
   });
 
@@ -342,7 +343,7 @@ describe('a2a-task-roundtrip: A2ATaskState + a2a capability shape (always-on, se
         updatedAt: '2026-06-13T19:00:00Z',
         inputs: { secret: 'x' },
       }),
-      'SECURITY a2a-push-egress-ssrf / SR-1 — the persisted record MUST NOT carry run inputs/outputs/artifacts inline',
+      req('openwop.it.a2a-task-roundtrip.an-a2ataskstate-carrying-run-inputs-artifacts-inline-fails-additionalproperties', 'spec/v1/a2a-integration.md', 'SECURITY a2a-push-egress-ssrf / SR-1 — the persisted record MUST NOT carry run inputs/outputs/artifacts inline'),
     ).toBe(false);
   });
 
@@ -351,27 +352,27 @@ describe('a2a-task-roundtrip: A2ATaskState + a2a capability shape (always-on, se
       $ref: 'https://openwop.dev/spec/v1/a2a-task-state.schema.json#/$defs/PushConfig',
       $defs: taskStateSchema.$defs,
     });
-    expect(validatePush({ tokenFingerprint: 'a1b2' }), 'PushConfig MUST require `url`').toBe(false);
+    expect(validatePush({ tokenFingerprint: 'a1b2' }), req('openwop.it.a2a-task-roundtrip.a-pushconfig-requires-url-and-structurally-rejects-a-raw-non-truncated-push-toke', 'spec/v1/a2a-integration.md', 'PushConfig MUST require `url`')).toBe(false);
     expect(
       validatePush({ url: 'https://caller.example.com/push', tokenFingerprint: 'a'.repeat(33) }),
-      'SECURITY a2a-push-egress-ssrf — tokenFingerprint maxLength:32 structurally rejects a full-length raw token (SR-1)',
+      req('openwop.it.a2a-task-roundtrip.a-pushconfig-requires-url-and-structurally-rejects-a-raw-non-truncated-push-toke', 'spec/v1/a2a-integration.md', 'SECURITY a2a-push-egress-ssrf — tokenFingerprint maxLength:32 structurally rejects a full-length raw token (SR-1)'),
     ).toBe(false);
     expect(
       validatePush({ url: 'https://caller.example.com/push', tokenFingerprint: 'a1b2c3d4' }),
-      'a truncated fingerprint + uri url MUST validate',
+      req('openwop.it.a2a-task-roundtrip.a-pushconfig-requires-url-and-structurally-rejects-a-raw-non-truncated-push-toke', 'spec/v1/a2a-integration.md', 'a truncated fingerprint + uri url MUST validate'),
     ).toBe(true);
   });
 
   it('the capabilities.a2a block shape is declared (supported + agentCardUrl required; three optional booleans)', () => {
-    expect(a2aBlockSchema, 'capabilities.schema.json MUST declare the a2a block').toBeDefined();
+    expect(a2aBlockSchema, req('openwop.it.a2a-task-roundtrip.the-capabilities-a2a-block-shape-is-declared-supported-agentcardurl-required-thr', 'spec/v1/a2a-integration.md', 'capabilities.schema.json MUST declare the a2a block')).toBeDefined();
     expect(a2aBlockSchema.required).toEqual(expect.arrayContaining(['supported', 'agentCardUrl']));
     expect(a2aBlockSchema.additionalProperties).toBe(false);
     const validateA2A = ajv.compile({ ...a2aBlockSchema, $id: 'urn:test:a2a-block' });
     expect(
       validateA2A({ supported: true, agentCardUrl: 'https://example.com/.well-known/agent-card.json', durableTasks: true }),
-      `a conforming a2a block MUST validate. Errors: ${JSON.stringify(validateA2A.errors)}`,
+      req('openwop.it.a2a-task-roundtrip.the-capabilities-a2a-block-shape-is-declared-supported-agentcardurl-required-thr', 'spec/v1/a2a-integration.md', `a conforming a2a block MUST validate. Errors: ${JSON.stringify(validateA2A.errors)}`),
     ).toBe(true);
-    expect(validateA2A({ supported: true }), 'agentCardUrl is required').toBe(false);
+    expect(validateA2A({ supported: true }), req('openwop.it.a2a-task-roundtrip.the-capabilities-a2a-block-shape-is-declared-supported-agentcardurl-required-thr', 'spec/v1/a2a-integration.md', 'agentCardUrl is required')).toBe(false);
   });
 });
 
@@ -386,20 +387,20 @@ describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: durable tasks/get after disconne
     const start = await driver.post('/v1/host/sample/a2a/tasks/start', {
       scenario: 'paused-at-approval',
     });
-    if (start.status === 404 || start.status === 403) return; // seam unwired — soft-skip
+    if (start.status === 404 || start.status === 403) return softSkip('blocked', 'precondition not met — `start.status === 404 || start.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const taskId = (start.json as { taskId?: string })?.taskId;
-    if (!taskId) return;
+    if (!taskId) return softSkip('blocked', 'precondition not met — `!taskId` returned early (seam, prior step, or fixture unavailable)');
 
     const read = await driver.get(`/v1/host/sample/a2a/tasks/${encodeURIComponent(taskId)}`);
-    if (read.status === 404 || read.status === 403) return;
+    if (read.status === 404 || read.status === 403) return softSkip('blocked', 'precondition not met — `read.status === 404 || read.status === 403` returned early (seam, prior step, or fixture unavailable)');
     const state = read.json as { state?: string; runId?: string; metadata?: { openwop?: { interrupt?: { kind?: string } } } };
     expect(
       state.state,
-      driver.describe('a2a-integration.md §"Async / durable Tasks"', 'tasks/get after disconnect MUST return the live input-required projection (not a stale working)'),
+      req('openwop.it.a2a-task-roundtrip.a-paused-at-hitl-run-projects-a-live-input-required-task-on-a-later-tasks-get-re', 'a2a-integration.md §"Async / durable Tasks"', 'tasks/get after disconnect MUST return the live input-required projection (not a stale working)'),
     ).toBe('input-required');
     expect(
       state.runId,
-      driver.describe('a2a-task-state.schema.json', 'taskId MUST equal the backing runId'),
+      req('openwop.it.a2a-task-roundtrip.a-paused-at-hitl-run-projects-a-live-input-required-task-on-a-later-tasks-get-re', 'a2a-task-state.schema.json', 'taskId MUST equal the backing runId'),
     ).toBe(taskId);
   });
 });
@@ -451,10 +452,10 @@ describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: push-config SSRF, two-sided (gat
     // `https` on purpose: this probe is refusable ONLY by the address arm, so a
     // host that implements the scheme arm alone cannot pass it by accident.
     const res = await registerPush('https://10.0.0.5/push');
-    if (res === null) return;
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       res.status >= 400,
-      driver.describe(
+      req('openwop.it.a2a-task-roundtrip.address-arm-an-https-pushconfig-url-at-a-private-address-is-refused', 
         'a2a-integration.md §D.6 (address arm)',
         'a2a-push-egress-ssrf — a pushConfig.url at a private/loopback address MUST be refused before any push, even over https',
       ),
@@ -464,10 +465,10 @@ describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: push-config SSRF, two-sided (gat
   it('SCHEME arm: an http pushConfig.url at a public host is refused', async () => {
     // Public hostname on purpose: refusable ONLY by the scheme arm.
     const res = await registerPush('http://push.example.com/push');
-    if (res === null) return;
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       res.status >= 400,
-      driver.describe(
+      req('openwop.it.a2a-task-roundtrip.scheme-arm-an-http-pushconfig-url-at-a-public-host-is-refused', 
         'a2a-integration.md §D.6 (scheme arm)',
         'a2a-push-egress-ssrf — a plaintext `http://` pushConfig.url MUST be refused before any push. '
           + 'The RFC 0093 webhook-egress guard is the `webhooks.md` §"SSRF protection" list IN FULL, whose first entry is '

@@ -35,8 +35,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -54,32 +53,32 @@ describe('tool-descriptor-shape: ToolDescriptor (RFC 0078 §C, server-free)', ()
         egress: 'none', approval: 'never', replayPolicy: 'idempotent',
         safetyTier: 'read', costHint: 'low', latencyHint: 'low',
       }),
-      why('tool-catalog.md §C', 'a conforming ToolDescriptor MUST validate'),
+      req('openwop.it.tool-descriptor-shape.a-conforming-descriptor-validates', 'tool-catalog.md §C', 'a conforming ToolDescriptor MUST validate'),
     ).toBe(true);
   });
 
   it('a descriptor missing the REQUIRED safetyTier is rejected', () => {
     expect(
       validate({ toolId: 'x', source: 'mcp' }),
-      why('tool-catalog.md §C', 'safetyTier is REQUIRED'),
+      req('openwop.it.tool-descriptor-shape.a-descriptor-missing-the-required-safetytier-is-rejected', 'tool-catalog.md §C', 'safetyTier is REQUIRED'),
     ).toBe(false);
   });
 
   it('enforces exec ⇒ host-extension (RFC 0069; §C-1/§F-4)', () => {
     expect(
       validate({ toolId: 'x-host-acme-shell', source: 'host-extension', safetyTier: 'exec', approval: 'always', egress: 'host-owned' }),
-      why('tool-catalog.md §C-1', 'an exec tool sourced from host-extension MUST validate'),
+      req('openwop.it.tool-descriptor-shape.enforces-exec-host-extension-rfc-0069-c-1-f-4', 'tool-catalog.md §C-1', 'an exec tool sourced from host-extension MUST validate'),
     ).toBe(true);
     expect(
       validate({ toolId: 'openwop:run-shell', source: 'node-pack', safetyTier: 'exec' }),
-      why('tool-catalog.md §C-1 / RFC 0069', 'an exec tool MUST NOT be protocol-tier (node-pack)'),
+      req('openwop.it.tool-descriptor-shape.enforces-exec-host-extension-rfc-0069-c-1-f-4', 'tool-catalog.md §C-1 / RFC 0069', 'an exec tool MUST NOT be protocol-tier (node-pack)'),
     ).toBe(false);
   });
 
   it('rejects an unknown property (additionalProperties:false)', () => {
     expect(
       validate({ toolId: 'x', source: 'mcp', safetyTier: 'read', danger: true }),
-      why('tool-catalog.md §C', 'ToolDescriptor MUST be additionalProperties:false'),
+      req('openwop.it.tool-descriptor-shape.rejects-an-unknown-property-additionalproperties-false', 'tool-catalog.md §C', 'ToolDescriptor MUST be additionalProperties:false'),
     ).toBe(false);
   });
 });
@@ -90,12 +89,12 @@ describe('tool-descriptor-shape: capability advertisement (RFC 0078 §A, server-
     const toolCatalog = (caps.properties as Record<string, { properties?: Record<string, unknown> }>).toolCatalog;
     expect(
       toolCatalog,
-      why('capabilities.md §toolCatalog', 'capabilities.toolCatalog MUST be declared'),
+      req('openwop.it.tool-descriptor-shape.capabilities-toolcatalog-is-declared-with-its-sub-flags', 'capabilities.md §toolCatalog', 'capabilities.toolCatalog MUST be declared'),
     ).toBeDefined();
     for (const flag of ['supported', 'sources', 'sessionLifecycle']) {
       expect(
         toolCatalog?.properties?.[flag],
-        why('tool-catalog.md §A', `capabilities.toolCatalog.${flag} MUST be declared`),
+        req('openwop.it.tool-descriptor-shape.capabilities-toolcatalog-is-declared-with-its-sub-flags', 'tool-catalog.md §A', `capabilities.toolCatalog.${flag} MUST be declared`),
       ).toBeDefined();
     }
   });
@@ -112,22 +111,22 @@ describe('tool-descriptor-shape: session lifecycle events (RFC 0078 §D, server-
 
   it('tool.session.opened validates a content-free record', () => {
     const v = compile('toolSessionOpened');
-    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read' }), why('tool-catalog.md §D', 'opened MUST validate')).toBe(true);
-    expect(v({ toolId: 'mcp:fs.read' }), why('tool-catalog.md §D', 'opened requires sessionId')).toBe(false);
+    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read' }), req('openwop.it.tool-descriptor-shape.tool-session-opened-validates-a-content-free-record', 'tool-catalog.md §D', 'opened MUST validate')).toBe(true);
+    expect(v({ toolId: 'mcp:fs.read' }), req('openwop.it.tool-descriptor-shape.tool-session-opened-validates-a-content-free-record', 'tool-catalog.md §D', 'opened requires sessionId')).toBe(false);
   });
 
   it('tool.session.closed validates + enforces the closed outcome enum', () => {
     const v = compile('toolSessionClosed');
-    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read', outcome: 'completed' }), why('tool-catalog.md §D', 'closed MUST validate')).toBe(true);
-    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read' }), why('tool-catalog.md §D', 'closed requires outcome')).toBe(false);
-    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read', outcome: 'exploded' }), why('tool-catalog.md §D', 'outcome is a closed enum')).toBe(false);
+    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read', outcome: 'completed' }), req('openwop.it.tool-descriptor-shape.tool-session-closed-validates-enforces-the-closed-outcome-enum', 'tool-catalog.md §D', 'closed MUST validate')).toBe(true);
+    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read' }), req('openwop.it.tool-descriptor-shape.tool-session-closed-validates-enforces-the-closed-outcome-enum', 'tool-catalog.md §D', 'closed requires outcome')).toBe(false);
+    expect(v({ sessionId: 's1', toolId: 'mcp:fs.read', outcome: 'exploded' }), req('openwop.it.tool-descriptor-shape.tool-session-closed-validates-enforces-the-closed-outcome-enum', 'tool-catalog.md §D', 'outcome is a closed enum')).toBe(false);
   });
 
   it('both session event names appear in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = ((runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum) ?? [];
     for (const name of ['tool.session.opened', 'tool.session.closed']) {
-      expect(enumVals.includes(name), why('run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
+      expect(enumVals.includes(name), req('openwop.it.tool-descriptor-shape.both-session-event-names-appear-in-the-runeventtype-enum', 'run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
     }
   });
 });

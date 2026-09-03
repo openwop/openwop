@@ -20,6 +20,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-transcriber';
 
@@ -42,18 +44,18 @@ describe('voice-interim-not-durable (RFC 0106 §F INV-1)', () => {
     if (!behaviorGate('openwop-voice-interim-not-durable', advertised)) return;
 
     const res = await driver.post(SEAM, { audio: { streamRef: 'stream:conformance/mic' }, interimResults: true });
-    if (res.status === 404) return; // seam unwired — soft-skip
-    if (errCode(res.json) === 'transcription_unsupported') return; // §E live transport / no test-seam arm — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
+    if (errCode(res.json) === 'transcription_unsupported') return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `errCode(res.json) === \'transcription_unsupported\'` returned early (§E live transport / no test-seam arm — soft-skip)'); // §E live transport / no test-seam arm — soft-skip
 
     const events = eventsOf(res.json);
-    if (events.length === 0) return; // host returned only the result envelope — nothing observable to assert
+    if (events.length === 0) return softSkip('blocked', 'precondition not met — `events.length === 0` returned early (host returned only the result envelope — nothing observable to assert) (seam, prior step, or fixture unavailable)'); // host returned only the result envelope — nothing observable to assert
 
     const commitIdx = events.findIndex((e) => e.type === 'voice.turn_commit');
-    if (commitIdx < 0) return; // no commit observed — soft-skip
+    if (commitIdx < 0) return softSkip('blocked', 'precondition not met — `commitIdx < 0` returned early (no commit observed — soft-skip) (seam, prior step, or fixture unavailable)'); // no commit observed — soft-skip
     const afterCommit = events.slice(commitIdx + 1);
     expect(
       !afterCommit.some((e) => e.type === 'voice.transcript' && (e.payload ?? {}).isFinal === false),
-      driver.describe('RFC 0106 §F INV-1', 'a provisional (isFinal:false) transcript MUST NOT appear after voice.turn_commit'),
+      req('openwop.it.voice-interim-not-durable.no-provisional-isfinal-false-transcript-is-durable-past-voice-turn-commit', 'RFC 0106 §F INV-1', 'a provisional (isFinal:false) transcript MUST NOT appear after voice.turn_commit'),
     ).toBe(true);
   });
 });

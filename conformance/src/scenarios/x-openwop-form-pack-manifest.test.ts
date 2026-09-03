@@ -38,6 +38,7 @@ import { describe, it, expect } from 'vitest';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
+import { req } from '../lib/requirement-ids.js';
 
 /** The §A `x-openwop-form` annotation shape. `kind` is the only required
  *  field; it is an OPEN string (unknown kinds are valid per the forward-compat
@@ -103,11 +104,11 @@ describe('category: x-openwop-form pack-manifest shape (RFC 0066)', () => {
     let validateConfig: ReturnType<typeof ajv.compile> | undefined;
     expect(() => {
       validateConfig = ajv.compile(annotatedConfigSchema());
-    }, 'node-packs.md §x-openwop-form: an annotated configSchema MUST remain a valid 2020-12 schema').not.toThrow();
+    }, req('openwop.it.x-openwop-form-pack-manifest.positive-a-configschema-carrying-x-openwop-form-remains-a-valid-json-schema-2020', 'node-packs.md', 'node-packs.md §x-openwop-form: an annotated configSchema MUST remain a valid 2020-12 schema')).not.toThrow();
     // The annotations do not alter schema semantics: valid config passes…
     expect(
       validateConfig!({ provider: 'anthropic', model: 'claude', temperature: 1 }),
-      'x-openwop-form is advisory — it MUST NOT change what the schema accepts',
+      req('openwop.it.x-openwop-form-pack-manifest.positive-a-configschema-carrying-x-openwop-form-remains-a-valid-json-schema-2020', 'node-packs.md', 'x-openwop-form is advisory — it MUST NOT change what the schema accepts'),
     ).toBe(true);
     // …and a type violation on an annotated field still rejects.
     expect(validateConfig!({ provider: 123 })).toBe(false);
@@ -120,7 +121,7 @@ describe('category: x-openwop-form pack-manifest shape (RFC 0066)', () => {
       if (ann === undefined) continue;
       expect(
         validateShape(ann),
-        `node-packs.md §x-openwop-form: the annotation on "${name}" MUST match the §A shape. Errors: ${JSON.stringify(validateShape.errors)}`,
+        req('openwop.it.x-openwop-form-pack-manifest.positive-each-documented-x-openwop-form-annotation-matches-the-a-shape', 'node-packs.md', `node-packs.md §x-openwop-form: the annotation on "${name}" MUST match the §A shape. Errors: ${JSON.stringify(validateShape.errors)}`),
       ).toBe(true);
     }
   });
@@ -128,28 +129,28 @@ describe('category: x-openwop-form pack-manifest shape (RFC 0066)', () => {
   it('forward-compat: an unknown kind is a structurally valid annotation (renderer falls back per the §A MUST)', () => {
     expect(
       validateShape({ kind: 'unknown-future-picker' }),
-      'node-packs.md §x-openwop-form: an unknown kind MUST validate (kind is an open string, not a closed enum) so future vocabulary is forward-compatible',
+      req('openwop.it.x-openwop-form-pack-manifest.forward-compat-an-unknown-kind-is-a-structurally-valid-annotation-renderer-falls', 'node-packs.md', 'node-packs.md §x-openwop-form: an unknown kind MUST validate (kind is an open string, not a closed enum) so future vocabulary is forward-compatible'),
     ).toBe(true);
   });
 
   it('negative: an annotation missing kind is rejected', () => {
     expect(
       shapeFailsWith({ dependsOn: 'provider' }, 'required').length,
-      'node-packs.md §x-openwop-form: kind is the one REQUIRED sub-field',
+      req('openwop.it.x-openwop-form-pack-manifest.negative-an-annotation-missing-kind-is-rejected', 'node-packs.md', 'node-packs.md §x-openwop-form: kind is the one REQUIRED sub-field'),
     ).toBeGreaterThan(0);
   });
 
   it('negative: a non-string kind is rejected', () => {
     expect(
       shapeFailsWith({ kind: 42 }, 'type').length,
-      'node-packs.md §x-openwop-form: kind MUST be a string',
+      req('openwop.it.x-openwop-form-pack-manifest.negative-a-non-string-kind-is-rejected', 'node-packs.md', 'node-packs.md §x-openwop-form: kind MUST be a string'),
     ).toBeGreaterThan(0);
   });
 
   it('negative: a non-string dependsOn is rejected', () => {
     expect(
       shapeFailsWith({ kind: 'model-picker', dependsOn: ['provider'] }, 'type').length,
-      'node-packs.md §x-openwop-form: dependsOn names a sibling property — it MUST be a string',
+      req('openwop.it.x-openwop-form-pack-manifest.negative-a-non-string-dependson-is-rejected', 'node-packs.md', 'node-packs.md §x-openwop-form: dependsOn names a sibling property — it MUST be a string'),
     ).toBeGreaterThan(0);
   });
 });

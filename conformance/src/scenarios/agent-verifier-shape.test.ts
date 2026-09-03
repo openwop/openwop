@@ -25,9 +25,9 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const BASE = 'https://openwop.dev/spec/v1/';
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -52,21 +52,21 @@ describe('agent-verifier-shape: agent.verified payload (RFC 0090 §A, server-fre
   const verified = ajv.getSchema(`${BASE}run-event-payloads.schema.json#/$defs/agentVerified`);
 
   it('a conforming content-free verdict validates', () => {
-    expect(verified, 'the agentVerified $def MUST exist').toBeTruthy();
+    expect(verified, req('openwop.it.agent-verifier-shape.a-conforming-content-free-verdict-validates', 'RFC 0090', 'the agentVerified $def MUST exist')).toBeTruthy();
     expect(
       verified!({ agentId: 'core.openwop.verifier', target: 'evt-42', verdict: 'pass', criteria: ['grounded'], confidence: 0.9 }),
-      why('RFC 0090 §A', 'a conforming agent.verified payload MUST validate'),
+      req('openwop.it.agent-verifier-shape.a-conforming-content-free-verdict-validates', 'RFC 0090 §A', 'a conforming agent.verified payload MUST validate'),
     ).toBe(true);
   });
 
   it('rejects an out-of-enum verdict', () => {
-    expect(verified!({ agentId: 'c', target: 'e', verdict: 'ok' }), why('RFC 0090 §A', 'verdict MUST be pass|fail|revise')).toBe(false);
+    expect(verified!({ agentId: 'c', target: 'e', verdict: 'ok' }), req('openwop.it.agent-verifier-shape.rejects-an-out-of-enum-verdict', 'RFC 0090 §A', 'verdict MUST be pass|fail|revise')).toBe(false);
   });
 
   it('rejects a content-carrying payload (verifier-no-content-leak)', () => {
     expect(
       verified!({ agentId: 'c', target: 'e', verdict: 'fail', result: 'the secret answer' }),
-      why('RFC 0090 §SECURITY', 'agent.verified MUST be content-free (additionalProperties:false)'),
+      req('openwop.it.agent-verifier-shape.rejects-a-content-carrying-payload-verifier-no-content-leak', 'RFC 0090 §SECURITY', 'agent.verified MUST be content-free (additionalProperties:false)'),
     ).toBe(false);
   });
 });
@@ -78,7 +78,7 @@ describe('agent-verifier-shape: RunEventType + terminate + capability (RFC 0090)
     const runEvent = loadSchema('run-event.schema.json') as { $defs?: { RunEventType?: { enum?: string[] } } };
     expect(
       runEvent.$defs?.RunEventType?.enum?.includes('agent.verified'),
-      why('RFC 0090 §A', 'agent.verified MUST appear in the RunEventType enum'),
+      req('openwop.it.agent-verifier-shape.agent-verified-is-registered-in-the-runeventtype-enum', 'RFC 0090 §A', 'agent.verified MUST appear in the RunEventType enum'),
     ).toBe(true);
   });
 
@@ -86,21 +86,21 @@ describe('agent-verifier-shape: RunEventType + terminate + capability (RFC 0090)
     const decision = ajv.getSchema(`${BASE}orchestrator-decision.schema.json`)!;
     expect(
       decision({ kind: 'terminate', reason: 'goal-reached', successCriteria: [{ key: 'goal-answered', met: true }] }),
-      why('RFC 0090 §C', 'terminate MUST accept successCriteria[{key,met}]'),
+      req('openwop.it.agent-verifier-shape.the-terminate-decision-accepts-the-additive-successcriteria', 'RFC 0090 §C', 'terminate MUST accept successCriteria[{key,met}]'),
     ).toBe(true);
     expect(
       decision({ kind: 'terminate', successCriteria: [{ key: 'x' }] }),
-      why('RFC 0090 §C', 'a successCriteria entry MUST require both key and met'),
+      req('openwop.it.agent-verifier-shape.the-terminate-decision-accepts-the-additive-successcriteria', 'RFC 0090 §C', 'a successCriteria entry MUST require both key and met'),
     ).toBe(false);
   });
 
   it('capabilities accepts executionModel.version 6 + verifier sub-block', () => {
     const execModel = ajv.getSchema(`${BASE}capabilities.schema.json#/properties/multiAgent/properties/executionModel`);
-    expect(execModel, 'the executionModel sub-schema MUST exist').toBeTruthy();
+    expect(execModel, req('openwop.it.agent-verifier-shape.capabilities-accepts-executionmodel-version-6-verifier-sub-block', 'RFC 0090', 'the executionModel sub-schema MUST exist')).toBeTruthy();
     expect(
       execModel!({ supported: true, version: 6, verifier: { supported: true, gating: true } }),
-      why('RFC 0090 §D', 'version:6 + verifier{supported,gating} MUST validate'),
+      req('openwop.it.agent-verifier-shape.capabilities-accepts-executionmodel-version-6-verifier-sub-block', 'RFC 0090 §D', 'version:6 + verifier{supported,gating} MUST validate'),
     ).toBe(true);
-    expect(execModel!({ supported: true, version: 7 }), why('RFC 0090 §D', 'version above the ceiling MUST be rejected')).toBe(false);
+    expect(execModel!({ supported: true, version: 7 }), req('openwop.it.agent-verifier-shape.capabilities-accepts-executionmodel-version-6-verifier-sub-block', 'RFC 0090 §D', 'version above the ceiling MUST be rejected')).toBe(false);
   });
 });

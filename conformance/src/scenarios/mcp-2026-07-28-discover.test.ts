@@ -30,6 +30,7 @@ import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { McpFakeServer, MCP_ERR } from '../lib/mcp-fake-server.js';
+import { req } from '../lib/requirement-ids.js';
 
 // The first describe drives the in-process McpFakeServer itself; the second (gated) describe
 // talks to the host's own MCP server mount and hands it nothing harness-hosted.
@@ -58,7 +59,7 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
 
   it('server/discover: resultType complete, supportedVersions, capabilities, cache hints, _meta.serverInfo', async () => {
     const r = await call(server.endpoint(), 'server/discover', {}, { version: '2026-07-28', mcpMethod: 'server/discover' });
-    expect(r.error).toBeUndefined();
+    expect(r.error, req('openwop.it.mcp-2026-07-28-discover.server-discover-resulttype-complete-supportedversions-capabilities-cache-hints-m', 'RFC 0153 §B', 'server/discover: resultType complete, supportedVersions, capabilities, cache hints, _meta.serverInfo')).toBeUndefined();
     expect(r.result?.['resultType']).toBe('complete');
     expect(r.result?.['supportedVersions']).toEqual(['2026-07-28', '2025-06-18']);
     expect(typeof r.result?.['ttlMs']).toBe('number');
@@ -68,13 +69,13 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
 
   it('a request without _meta.protocolVersion under the current revision is refused -32020', async () => {
     const r = await call(server.endpoint(), 'tools/list', {}, { version: '2026-07-28', withMeta: false });
-    expect(r.status).toBe(400);
+    expect(r.status, req('openwop.it.mcp-2026-07-28-discover.a-request-without-meta-protocolversion-under-the-current-revision-is-refused-320', 'RFC 0153 §B', 'a request without _meta.protocolVersion under the current revision is refused -32020')).toBe(400);
     expect(r.error?.code).toBe(MCP_ERR.HEADER_MISMATCH);
   });
 
   it('header ≠ body revision ⇒ -32020 HeaderMismatch (400); Mcp-Method ≠ method ⇒ -32020', async () => {
     const r1 = await call(server.endpoint(), 'tools/list', { _meta: { [META_V]: '2025-11-25', [META_C]: {} } }, { version: '2026-07-28', withMeta: false });
-    expect(r1.status).toBe(400);
+    expect(r1.status, req('openwop.it.mcp-2026-07-28-discover.header-body-revision-32020-headermismatch-400-mcp-method-method-32020', 'RFC 0153 §B', 'header ≠ body revision ⇒ -32020 HeaderMismatch (400); Mcp-Method ≠ method ⇒ -32020')).toBe(400);
     expect(r1.error?.code).toBe(MCP_ERR.HEADER_MISMATCH);
     const r2 = await call(server.endpoint(), 'tools/list', {}, { version: '2026-07-28', mcpMethod: 'tools/call' });
     expect(r2.error?.code).toBe(MCP_ERR.HEADER_MISMATCH);
@@ -82,7 +83,7 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
 
   it('an unsupported revision ⇒ -32022 UnsupportedProtocolVersion with data.supported[] (400)', async () => {
     const r = await call(server.endpoint(), 'tools/list', {}, { version: '1999-01-01' });
-    expect(r.status).toBe(400);
+    expect(r.status, req('openwop.it.mcp-2026-07-28-discover.an-unsupported-revision-32022-unsupportedprotocolversion-with-data-supported-400', 'RFC 0153 §B', 'an unsupported revision ⇒ -32022 UnsupportedProtocolVersion with data.supported[] (400)')).toBe(400);
     expect(r.error?.code).toBe(MCP_ERR.UNSUPPORTED_PROTOCOL_VERSION);
     expect(r.error?.data?.['supported']).toEqual(['2026-07-28', '2025-06-18']);
     expect(r.error?.data?.['requested']).toBe('1999-01-01');
@@ -90,7 +91,7 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
 
   it('header-less ⇒ legacy semantics on a dual-era server (initialize works); ⇒ -32022 on a current-only server', async () => {
     const legacy = await call(server.endpoint(), 'initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'x', version: '0' } });
-    expect(legacy.error).toBeUndefined();
+    expect(legacy.error, req('openwop.it.mcp-2026-07-28-discover.header-less-legacy-semantics-on-a-dual-era-server-initialize-works-32022-on-a-cu', 'RFC 0153 §B', 'header-less ⇒ legacy semantics on a dual-era server (initialize works); ⇒ -32022 on a current-only server')).toBeUndefined();
     expect(typeof legacy.result?.['protocolVersion']).toBe('string');
     const only = new McpFakeServer({ protocolVersions: ['2026-07-28'] });
     await only.start(0);
@@ -105,13 +106,13 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
 
   it('initialize under 2026-07-28 is method-not-found — the handshake does not exist in this revision', async () => {
     const r = await call(server.endpoint(), 'initialize', {}, { version: '2026-07-28' });
-    expect(r.status).toBe(404);
+    expect(r.status, req('openwop.it.mcp-2026-07-28-discover.initialize-under-2026-07-28-is-method-not-found-the-handshake-does-not-exist-in', 'RFC 0153 §B', 'initialize under 2026-07-28 is method-not-found — the handshake does not exist in this revision')).toBe(404);
     expect(r.error?.code).toBe(-32601);
   });
 
   it('tools/list @2026-07-28 carries resultType + CacheableResult hints and lists the MRTR tool', async () => {
     const r = await call(server.endpoint(), 'tools/list', {}, { version: '2026-07-28', mcpMethod: 'tools/list' });
-    expect(r.result?.['resultType']).toBe('complete');
+    expect(r.result?.['resultType'], req('openwop.it.mcp-2026-07-28-discover.tools-list-2026-07-28-carries-resulttype-cacheableresult-hints-and-lists-the-mrt', 'RFC 0153 §B', 'tools/list @2026-07-28 carries resultType + CacheableResult hints and lists the MRTR tool')).toBe('complete');
     expect(typeof r.result?.['ttlMs']).toBe('number');
     expect(r.result?.['cacheScope']).toBe('public');
     const names = (r.result?.['tools'] as Array<{ name: string }>).map((t) => t.name);
@@ -124,7 +125,7 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
   it('MRTR: needs_input answers input_required (elicitation + opaque requestState) and completes on the retry; missing capability ⇒ -32021', async () => {
     server.reset();
     const noCap = await call(server.endpoint(), 'tools/call', { name: 'needs_input', arguments: {} }, { version: '2026-07-28', mcpMethod: 'tools/call', mcpName: 'needs_input' });
-    expect(noCap.error?.code).toBe(MCP_ERR.MISSING_REQUIRED_CLIENT_CAPABILITY);
+    expect(noCap.error?.code, req('openwop.it.mcp-2026-07-28-discover.mrtr-needs-input-answers-input-required-elicitation-opaque-requeststate-and-comp', 'RFC 0153 §B', 'MRTR: needs_input answers input_required (elicitation + opaque requestState) and completes on the retry; missing capability ⇒ -32021')).toBe(MCP_ERR.MISSING_REQUIRED_CLIENT_CAPABILITY);
     expect(noCap.error?.data?.['requiredCapabilities']).toEqual(['elicitation']);
 
     const first = await call(server.endpoint(), 'tools/call', { name: 'needs_input', arguments: {}, _meta: { [META_C]: { elicitation: {} } } }, { version: '2026-07-28', mcpMethod: 'tools/call', mcpName: 'needs_input' });
@@ -182,10 +183,10 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — host as MCP ser
     const caps = (await mcp())!;
     const r = await hostRpc('server/discover', { _meta: { [META_V]: '2026-07-28', [META_C]: {} } }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'server/discover' });
     if (r.status === 404 || r.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${r.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
-    expect(r.status, driver.describe('mcp-integration.md §B', 'server/discover is a server MUST under 2026-07-28')).toBe(200);
+    expect(r.status, req('openwop.it.mcp-2026-07-28-discover.server-discover-reports-supportedversions-equal-to-capabilities-mcp-protocolvers', 'mcp-integration.md §B', 'server/discover is a server MUST under 2026-07-28')).toBe(200);
     expect(r.body.result?.['resultType']).toBe('complete');
-    expect([...((r.body.result?.['supportedVersions'] as string[] | undefined) ?? [])].sort(), driver.describe('mcp-integration.md §B', 'server/discover.supportedVersions MUST equal capabilities.mcp.protocolVersions — two documents, one fact')).toEqual([...(caps.protocolVersions ?? [])].sort());
-    expect(typeof r.body.result?.['ttlMs'], driver.describe('mcp-integration.md §D', 'server/discover is cacheable: ttlMs REQUIRED')).toBe('number');
+    expect([...((r.body.result?.['supportedVersions'] as string[] | undefined) ?? [])].sort(), req('openwop.it.mcp-2026-07-28-discover.server-discover-reports-supportedversions-equal-to-capabilities-mcp-protocolvers', 'mcp-integration.md §B', 'server/discover.supportedVersions MUST equal capabilities.mcp.protocolVersions — two documents, one fact')).toEqual([...(caps.protocolVersions ?? [])].sort());
+    expect(typeof r.body.result?.['ttlMs'], req('openwop.it.mcp-2026-07-28-discover.server-discover-reports-supportedversions-equal-to-capabilities-mcp-protocolvers', 'mcp-integration.md §D', 'server/discover is cacheable: ttlMs REQUIRED')).toBe('number');
     expect(['public', 'private']).toContain(r.body.result?.['cacheScope']);
   });
 
@@ -199,11 +200,11 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §B — host as MCP ser
     // (mcp-integration.md §B: agreement is checked before selection).
     const mismatch = await hostRpc('tools/list', { _meta: { [META_V]: '2025-06-18', [META_C]: {} } }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' });
     if (mismatch.status === 404 || mismatch.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${mismatch.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
-    expect(mismatch.status, driver.describe('mcp-integration.md §B', 'header ≠ body MUST be refused 400 (HeaderMismatchError -32020) — fail closed')).toBe(400);
+    expect(mismatch.status, req('openwop.it.mcp-2026-07-28-discover.a-header-body-revision-mismatch-is-refused-400-32020-an-unsupported-revision-400', 'mcp-integration.md §B', 'header ≠ body MUST be refused 400 (HeaderMismatchError -32020) — fail closed')).toBe(400);
     expect(mismatch.body.error?.code).toBe(MCP_ERR.HEADER_MISMATCH);
     const unsupported = await hostRpc('tools/list', { _meta: { [META_V]: '1999-01-01', [META_C]: {} } }, { 'MCP-Protocol-Version': '1999-01-01', 'Mcp-Method': 'tools/list' });
-    expect(unsupported.status, driver.describe('mcp-integration.md §B', 'an unsupported revision MUST be refused 400 (UnsupportedProtocolVersionError -32022)')).toBe(400);
+    expect(unsupported.status, req('openwop.it.mcp-2026-07-28-discover.a-header-body-revision-mismatch-is-refused-400-32020-an-unsupported-revision-400', 'mcp-integration.md §B', 'an unsupported revision MUST be refused 400 (UnsupportedProtocolVersionError -32022)')).toBe(400);
     expect(unsupported.body.error?.code).toBe(MCP_ERR.UNSUPPORTED_PROTOCOL_VERSION);
-    expect(Array.isArray(unsupported.body.error?.data?.['supported']), driver.describe('mcp-integration.md §B', 'the refusal MUST list data.supported[]')).toBe(true);
+    expect(Array.isArray(unsupported.body.error?.data?.['supported']), req('openwop.it.mcp-2026-07-28-discover.a-header-body-revision-mismatch-is-refused-400-32020-an-unsupported-revision-400', 'mcp-integration.md §B', 'the refusal MUST list data.supported[]')).toBe(true);
   });
 });

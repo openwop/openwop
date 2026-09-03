@@ -45,6 +45,7 @@ import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -52,31 +53,31 @@ describe('data-residency: schema + error registration (always-on, server-free)',
   it('capabilities.dataResidency requires `supported` (const true) + `regions`, closed', () => {
     const caps = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8'));
     const fam = caps.properties?.dataResidency;
-    expect(fam, 'capabilities.schema.json MUST define the dataResidency family (RFC 0129 §1)').toBeDefined();
-    expect(fam.additionalProperties, 'dataResidency MUST close its shape').toBe(false);
+    expect(fam, req('openwop.it.data-residency-admission.capabilities-dataresidency-requires-supported-const-true-regions-closed', 'RFC 0129', 'capabilities.schema.json MUST define the dataResidency family (RFC 0129 §1)')).toBeDefined();
+    expect(fam.additionalProperties, req('openwop.it.data-residency-admission.capabilities-dataresidency-requires-supported-const-true-regions-closed', 'RFC 0129', 'dataResidency MUST close its shape')).toBe(false);
     expect(fam.required?.sort()).toEqual(['regions', 'supported']);
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     const vf = ajv.compile(fam);
-    expect(vf({ supported: true, regions: ['eu', 'us'] }), 'the canonical advert MUST validate').toBe(true);
-    expect(vf({ supported: true }), 'an advert without `regions` MUST fail').toBe(false);
-    expect(vf({ regions: ['eu'] }), 'an advert without `supported` MUST fail').toBe(false);
-    expect(vf({ supported: false, regions: ['eu'] }), 'dataResidency.supported is const true — false MUST fail').toBe(false);
+    expect(vf({ supported: true, regions: ['eu', 'us'] }), req('openwop.it.data-residency-admission.capabilities-dataresidency-requires-supported-const-true-regions-closed', 'RFC 0129', 'the canonical advert MUST validate')).toBe(true);
+    expect(vf({ supported: true }), req('openwop.it.data-residency-admission.capabilities-dataresidency-requires-supported-const-true-regions-closed', 'RFC 0129', 'an advert without `regions` MUST fail')).toBe(false);
+    expect(vf({ regions: ['eu'] }), req('openwop.it.data-residency-admission.capabilities-dataresidency-requires-supported-const-true-regions-closed', 'RFC 0129', 'an advert without `supported` MUST fail')).toBe(false);
+    expect(vf({ supported: false, regions: ['eu'] }), req('openwop.it.data-residency-admission.capabilities-dataresidency-requires-supported-const-true-regions-closed', 'RFC 0129', 'dataResidency.supported is const true — false MUST fail')).toBe(false);
   });
 
   it('residency.schema.json requires `region` and closes its shape', () => {
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const validate = ajv.compile(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'residency.schema.json'), 'utf8')));
-    expect(validate({ region: 'eu' }), 'RFC 0129 §2 — a `{region}` residency constraint MUST validate').toBe(true);
-    expect(validate({}), 'RFC 0129 §2 — `region` is REQUIRED').toBe(false);
-    expect(validate({ region: 'eu', extra: 1 }), 'residency MUST be closed (additionalProperties:false)').toBe(false);
+    expect(validate({ region: 'eu' }), req('openwop.it.data-residency-admission.residency-schema-json-requires-region-and-closes-its-shape', 'RFC 0129', 'RFC 0129 §2 — a `{region}` residency constraint MUST validate')).toBe(true);
+    expect(validate({}), req('openwop.it.data-residency-admission.residency-schema-json-requires-region-and-closes-its-shape', 'RFC 0129', 'RFC 0129 §2 — `region` is REQUIRED')).toBe(false);
+    expect(validate({ region: 'eu', extra: 1 }), req('openwop.it.data-residency-admission.residency-schema-json-requires-region-and-closes-its-shape', 'RFC 0129', 'residency MUST be closed (additionalProperties:false)')).toBe(false);
   });
 
   it.skipIf(V1_DIR === null)('residency_unavailable is registered in the rest-endpoints error prose', () => {
     const rest = readFileSync(join(V1_DIR as string, 'rest-endpoints.md'), 'utf8');
     expect(
       rest.includes('`residency_unavailable`'),
-      'rest-endpoints.md §"Common error codes" MUST register `residency_unavailable` (RFC 0129 §3)',
+      req('openwop.it.data-residency-admission.residency-unavailable-is-registered-in-the-rest-endpoints-error-prose', 'RFC 0129', 'rest-endpoints.md §"Common error codes" MUST register `residency_unavailable` (RFC 0129 §3)'),
     ).toBe(true);
   });
 });
@@ -99,7 +100,7 @@ describe.skipIf(HTTP_SKIP)('data-residency: admission control (capability-gated,
     // region with residency_unavailable. That specific pairing is the violation.
     expect(
       readErrorCode(ok.json) !== 'residency_unavailable',
-      driver.describe(
+      req('openwop.it.data-residency-admission.accepts-an-advertised-region-and-rejects-an-unadvertised-one-with-residency-unav', 
         'capabilities.md §dataResidency / RFC 0129 §3',
         `an ADVERTISED region ("${advertised}") MUST NOT be rejected with residency_unavailable (accept iff advertised) — got ${ok.status} ${JSON.stringify(ok.json).slice(0, 200)}`,
       ),
@@ -118,21 +119,21 @@ describe.skipIf(HTTP_SKIP)('data-residency: admission control (capability-gated,
 
     expect(
       rej.status === 400 || rej.status === 404 || rej.status === 422,
-      driver.describe(
+      req('openwop.it.data-residency-admission.accepts-an-advertised-region-and-rejects-an-unadvertised-one-with-residency-unav', 
         'rest-endpoints.md §residency_unavailable',
         `an unadvertised region MUST be rejected at HTTP one-of 400/404/422 (envelope-not-status, #815) — got ${rej.status}`,
       ),
     ).toBe(true);
     expect(
       readErrorCode(rej.json) === 'residency_unavailable',
-      driver.describe(
+      req('openwop.it.data-residency-admission.accepts-an-advertised-region-and-rejects-an-unadvertised-one-with-residency-unav', 
         'RFC 0129 §3',
         `an unadvertised region MUST be rejected with error code "residency_unavailable" (MUST NOT silently accept-and-ignore) — got ${JSON.stringify(rej.json).slice(0, 200)}`,
       ),
     ).toBe(true);
     expect(
       rejBody?.runId === undefined,
-      driver.describe('RFC 0129 §3', 'a rejected residency request MUST create NO run (no runId in the response)'),
+      req('openwop.it.data-residency-admission.accepts-an-advertised-region-and-rejects-an-unadvertised-one-with-residency-unav', 'RFC 0129 §3', 'a rejected residency request MUST create NO run (no runId in the response)'),
     ).toBe(true);
   });
 });

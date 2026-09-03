@@ -1,0 +1,165 @@
+{
+  "$comment": "GENERATED (RFC 0177 §B.2) from the registry peer-dependency key inventory recorded in evidence/cross-repo-manifests.json — never from a sibling checkout. A row with unresolved:true is a key no declaration family or facet explains; check-declaration.mjs fails on it.",
+  "generatedFrom": [
+    "spec/v2/declaration.json",
+    "evidence/cross-repo-manifests.json#registryPeerDependencyKeys"
+  ],
+  "rows": [
+    {
+      "alias": "aiProviders.imageGeneration",
+      "family": "aiProviders",
+      "facets": [
+        "imageGeneration"
+      ],
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "aiProviders.videoGeneration",
+      "family": "aiProviders",
+      "facets": [
+        "videoGeneration"
+      ],
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.agentRuntime",
+      "family": "agentRuntime",
+      "publishedUses": 41,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.aiEnvelope",
+      "family": "aiEnvelope",
+      "publishedUses": 4,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.aiEnvelope.await",
+      "family": "aiEnvelope",
+      "facets": [
+        "await"
+      ],
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.brand",
+      "family": "brand",
+      "publishedUses": 2,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.campaignMessaging",
+      "family": "messaging",
+      "facets": [
+        "campaign"
+      ],
+      "publishedUses": 2,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.canvas",
+      "family": "canvas",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.chat",
+      "family": "chat",
+      "publishedUses": 2,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.coordination",
+      "family": "coordination",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.dataIntegration",
+      "family": "dataIntegration",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.entities",
+      "family": "entities",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.fs",
+      "family": "fs",
+      "publishedUses": 2,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.kanban",
+      "family": "kanban",
+      "publishedUses": 2,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.knowledge",
+      "family": "knowledge",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.launchStudio",
+      "family": "launchStudio",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.messaging",
+      "family": "messaging",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.promptLibrary",
+      "family": "promptLibrary",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.queueBus",
+      "family": "queueBus",
+      "publishedUses": 2,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.webResearch",
+      "family": "webResearch",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "host.webSearch",
+      "family": "webResearch",
+      "publishedUses": 1,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "openwop.agents.memoryBackends",
+      "family": "agents",
+      "facets": [
+        "memoryBackends"
+      ],
+      "publishedUses": 11,
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "alias": "secrets.resolveInPack",
+      "family": "secrets",
+      "facets": [
+        "resolveInPack"
+      ],
+      "publishedUses": 3,
+      "removalTrigger": "v1-end-of-support"
+    }
+  ]
+}

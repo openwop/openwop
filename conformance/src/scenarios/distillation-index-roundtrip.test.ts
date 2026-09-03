@@ -15,8 +15,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readDistillationCap, invokeDistill } from '../lib/distillation.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('distillation-index-roundtrip (RFC 0062 §B)', () => {
   it('an indexEmitted run updates a retrievable memory-index manifest', async () => {
@@ -26,11 +26,11 @@ describe('distillation-index-roundtrip (RFC 0062 §B)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.body.indexUpdated === true || res.body.event?.distillation?.indexUpdated === true,
-      driver.describe('RFC 0062 §B', 'an indexEmitted distillation MUST report updating the memory index'),
+      req('openwop.it.distillation-index-roundtrip.an-indexemitted-run-updates-a-retrievable-memory-index-manifest', 'RFC 0062 §B', 'an indexEmitted distillation MUST report updating the memory index'),
     ).toBe(true);
     expect(
       res.body.indexFile !== undefined && res.body.indexFile !== null,
-      driver.describe('RFC 0062 §B', 'the MEMORY-INDEX.json manifest MUST be retrievable after distillation'),
+      req('openwop.it.distillation-index-roundtrip.an-indexemitted-run-updates-a-retrievable-memory-index-manifest', 'RFC 0062 §B', 'the MEMORY-INDEX.json manifest MUST be retrievable after distillation'),
     ).toBe(true);
   });
 });

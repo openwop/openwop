@@ -23,6 +23,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-identity';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -44,7 +45,7 @@ describe.skipIf(SKIP)('agentMetadata: RunSnapshot.agent + runOrchestrator wire-s
     const hasOrch = body.runOrchestrator && typeof body.runOrchestrator.agentId === 'string';
     expect(
       hasAgent || hasOrch,
-      'fixture-runs MUST populate at least one of RunSnapshot.agent / runOrchestrator',
+      req('openwop.it.agentMetadata.host-populates-agentref-shaped-agent-identity-on-runsnapshot', 'RFCS/0002-agent-identity-and-reasoning-events.md', 'fixture-runs MUST populate at least one of RunSnapshot.agent / runOrchestrator'),
     ).toBe(true);
 
     if (hasAgent) {

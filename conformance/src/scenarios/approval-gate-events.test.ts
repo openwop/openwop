@@ -22,6 +22,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface PayloadsSchema {
   $schema: string;
@@ -41,7 +42,7 @@ describe('category: approval-gate governance events (RFC 0051 §B)', () => {
   it('approval.granted requires gateId + principal; quorumProgress optional', () => {
     const v = compile('approvalGranted');
     expect(v({ gateId: 'g1', principal: 'user_1' }), JSON.stringify(v.errors)).toBe(true);
-    expect(v({ gateId: 'g1', principal: 'user_1', quorumProgress: { granted: 1, required: 2 } })).toBe(true);
+    expect(v({ gateId: 'g1', principal: 'user_1', quorumProgress: { granted: 1, required: 2 } }), req('openwop.it.approval-gate-events.approval-granted-requires-gateid-principal-quorumprogress-optional', 'RFC 0051 §B', 'approval.granted requires gateId + principal; quorumProgress optional')).toBe(true);
     expect(v({ gateId: 'g1' })).toBe(false); // missing principal
     expect(v({ gateId: 'g1', principal: 'user_1', role: 'admin' })).toBe(false); // unknown prop
   });
@@ -49,13 +50,13 @@ describe('category: approval-gate governance events (RFC 0051 §B)', () => {
   it('approval.rejected requires gateId + principal; reason optional', () => {
     const v = compile('approvalRejected');
     expect(v({ gateId: 'g1', principal: 'user_1' }), JSON.stringify(v.errors)).toBe(true);
-    expect(v({ gateId: 'g1', principal: 'user_1', reason: 'incomplete' })).toBe(true);
+    expect(v({ gateId: 'g1', principal: 'user_1', reason: 'incomplete' }), req('openwop.it.approval-gate-events.approval-rejected-requires-gateid-principal-reason-optional', 'RFC 0051 §B', 'approval.rejected requires gateId + principal; reason optional')).toBe(true);
     expect(v({ principal: 'user_1' })).toBe(false); // missing gateId
   });
 
   it('approval.overridden requires gateId + principal + reason (audit breadcrumb)', () => {
     const v = compile('approvalOverridden');
     expect(v({ gateId: 'g1', principal: 'owner_1', reason: 'emergency publish' }), JSON.stringify(v.errors)).toBe(true);
-    expect(v({ gateId: 'g1', principal: 'owner_1' })).toBe(false); // reason MUST be present
+    expect(v({ gateId: 'g1', principal: 'owner_1' }), req('openwop.it.approval-gate-events.approval-overridden-requires-gateid-principal-reason-audit-breadcrumb', 'RFC 0051 §B', 'approval.overridden requires gateId + principal + reason (audit breadcrumb)')).toBe(false); // reason MUST be present
   });
 });

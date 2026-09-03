@@ -29,6 +29,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'a2a-1.0';
 
@@ -81,14 +82,14 @@ describe('RFC 0152 §C — a2a-card-runtime-consistent (gated on a2a.profiles �
     if (!behaviorGate(PROFILE, await claims10())) return;
     const caps = (await a2a())!;
     const card = await fetchCard(caps);
-    expect(card, driver.describe('a2a-integration.md §C', '`agentCardUrl` MUST resolve to the Agent Card (200)')).not.toBeNull();
+    expect(card, req('openwop.it.a2a-card-runtime-consistency.the-card-is-1-0-shaped-and-reachable-at-agentcardurl', 'a2a-integration.md §C', '`agentCardUrl` MUST resolve to the Agent Card (200)')).not.toBeNull();
     expect(
       Array.isArray(card!.supportedInterfaces) && card!.supportedInterfaces!.length > 0,
-      driver.describe('a2a-integration.md §C', 'a host claiming `a2a-1.0` MUST publish a 1.0 card: `supportedInterfaces[]` REQUIRED (≥1)'),
+      req('openwop.it.a2a-card-runtime-consistency.the-card-is-1-0-shaped-and-reachable-at-agentcardurl', 'a2a-integration.md §C', 'a host claiming `a2a-1.0` MUST publish a 1.0 card: `supportedInterfaces[]` REQUIRED (≥1)'),
     ).toBe(true);
-    expect(card!.url, driver.describe('a2a-integration.md §C', '1.0 removed the top-level `url` — a card with both shapes is neither')).toBeUndefined();
-    expect(card!.protocolVersion, driver.describe('a2a-integration.md §C', '1.0 removed the top-level `protocolVersion` (per interface now)')).toBeUndefined();
-    expect(Array.isArray(card!.skills) && card!.skills!.length > 0, driver.describe('a2a-integration.md §C', '`skills[]` MUST be non-empty — one per invocable workflow')).toBe(true);
+    expect(card!.url, req('openwop.it.a2a-card-runtime-consistency.the-card-is-1-0-shaped-and-reachable-at-agentcardurl', 'a2a-integration.md §C', '1.0 removed the top-level `url` — a card with both shapes is neither')).toBeUndefined();
+    expect(card!.protocolVersion, req('openwop.it.a2a-card-runtime-consistency.the-card-is-1-0-shaped-and-reachable-at-agentcardurl', 'a2a-integration.md §C', '1.0 removed the top-level `protocolVersion` (per interface now)')).toBeUndefined();
+    expect(Array.isArray(card!.skills) && card!.skills!.length > 0, req('openwop.it.a2a-card-runtime-consistency.the-card-is-1-0-shaped-and-reachable-at-agentcardurl', 'a2a-integration.md §C', '`skills[]` MUST be non-empty — one per invocable workflow')).toBe(true);
   });
 
   it('a header-less card GET returns the 0.3-shaped card while a2a-0.3-legacy is advertised (§B receiver rule applied to discovery — S18 Q1)', async () => {
@@ -97,17 +98,17 @@ describe('RFC 0152 §C — a2a-card-runtime-consistent (gated on a2a.profiles �
     if (typeof caps.agentCardUrl !== 'string') return softSkip('blocked', 'no agentCardUrl advertised');
     const legacy = (caps.protocolVersions ?? []).includes('0.3');
     const res = await fetch(caps.agentCardUrl, { headers: { accept: 'application/json' } });
-    expect(res.status, driver.describe('a2a-integration.md §C', 'a header-less card GET MUST succeed — discovery must not fail')).toBe(200);
+    expect(res.status, req('openwop.it.a2a-card-runtime-consistency.a-header-less-card-get-returns-the-0-3-shaped-card-while-a2a-0-3-legacy-is-adver', 'a2a-integration.md §C', 'a header-less card GET MUST succeed — discovery must not fail')).toBe(200);
     const card = (await res.json()) as Card10 & { url?: string; protocolVersion?: string };
     if (legacy) {
       // While 0.3 is advertised the header-less card is the 0.3 shape: an
       // external 0.3 client reading `card.url` keeps working through the
       // legacy window — the point of advertising `a2a-0.3-legacy` at all.
-      expect(typeof card.url, driver.describe('a2a-integration.md §C', 'header-less = 0.3 (§B receiver rule): the card MUST carry the 0.3 top-level `url` while `protocolVersions ∋ 0.3`')).toBe('string');
-      expect(card.supportedInterfaces, driver.describe('a2a-integration.md §C', 'the header-less card MUST NOT be the 1.0 shape while 0.3 is advertised (a card with both shapes is neither)')).toBeUndefined();
+      expect(typeof card.url, req('openwop.it.a2a-card-runtime-consistency.a-header-less-card-get-returns-the-0-3-shaped-card-while-a2a-0-3-legacy-is-adver', 'a2a-integration.md §C', 'header-less = 0.3 (§B receiver rule): the card MUST carry the 0.3 top-level `url` while `protocolVersions ∋ 0.3`')).toBe('string');
+      expect(card.supportedInterfaces, req('openwop.it.a2a-card-runtime-consistency.a-header-less-card-get-returns-the-0-3-shaped-card-while-a2a-0-3-legacy-is-adver', 'a2a-integration.md §C', 'the header-less card MUST NOT be the 1.0 shape while 0.3 is advertised (a card with both shapes is neither)')).toBeUndefined();
     } else {
       // 0.3 dropped: the preferred-version (1.0) card is served header-less.
-      expect(Array.isArray(card.supportedInterfaces) && card.supportedInterfaces!.length > 0, driver.describe('a2a-integration.md §C', 'with 0.3 dropped, the header-less card is the preferredVersion (1.0) card')).toBe(true);
+      expect(Array.isArray(card.supportedInterfaces) && card.supportedInterfaces!.length > 0, req('openwop.it.a2a-card-runtime-consistency.a-header-less-card-get-returns-the-0-3-shaped-card-while-a2a-0-3-legacy-is-adver', 'a2a-integration.md §C', 'with 0.3 dropped, the header-less card is the preferredVersion (1.0) card')).toBe(true);
     }
   });
 
@@ -115,12 +116,12 @@ describe('RFC 0152 §C — a2a-card-runtime-consistent (gated on a2a.profiles �
     if (!behaviorGate(PROFILE, await claims10())) return;
     const caps = (await a2a())!;
     const card = await fetchCard(caps);
-    if (card === null) return; // asserted above
+    if (card === null) return softSkip('blocked', 'precondition not met — `card === null` returned early (asserted above) (seam, prior step, or fixture unavailable)'); // asserted above
     const fromCard = [...new Set((card.supportedInterfaces ?? []).map((i) => i.protocolVersion).filter((v): v is string => typeof v === 'string'))].sort();
     const fromDiscovery = [...new Set(caps.protocolVersions ?? [])].sort();
     expect(
       fromCard,
-      driver.describe(
+      req('openwop.it.a2a-card-runtime-consistency.the-set-of-supportedinterfaces-protocolversion-equals-capabilities-a2a-protocolv', 
         'a2a-integration.md §C',
         'the SET of `supportedInterfaces[].protocolVersion` MUST equal `capabilities.a2a.protocolVersions` — two documents, one fact; ' +
           'a version advertised in one and not the other is card/runtime drift (`a2a-card-runtime-consistent`)',
@@ -132,14 +133,14 @@ describe('RFC 0152 §C — a2a-card-runtime-consistent (gated on a2a.profiles �
     if (!behaviorGate(PROFILE, await claims10())) return;
     const caps = (await a2a())!;
     const card = await fetchCard(caps);
-    if (card === null) return;
+    if (card === null) return softSkip('blocked', 'precondition not met — `card === null` returned early (seam, prior step, or fixture unavailable)');
     const ifaces = card.supportedInterfaces ?? [];
     expect(
       ifaces.some((i) => i.protocolBinding === 'JSONRPC' && i.protocolVersion === '1.0' && typeof i.url === 'string'),
-      driver.describe('a2a-integration.md §C', 'the `a2a-1.0` profile floor is the JSON-RPC binding at 1.0; HTTP+JSON / gRPC are optional additions'),
+      req('openwop.it.a2a-card-runtime-consistency.a2a-1-0-must-serve-the-json-rpc-binding-at-1-0-the-mandatory-floor-and-should-li', 'a2a-integration.md §C', 'the `a2a-1.0` profile floor is the JSON-RPC binding at 1.0; HTTP+JSON / gRPC are optional additions'),
     ).toBe(true);
     for (const i of ifaces) {
-      expect(['JSONRPC', 'GRPC', 'HTTP+JSON'], driver.describe('a2a-integration.md §C', 'protocolBinding uses the upstream binding names')).toContain(i.protocolBinding);
+      expect(['JSONRPC', 'GRPC', 'HTTP+JSON'], req('openwop.it.a2a-card-runtime-consistency.a2a-1-0-must-serve-the-json-rpc-binding-at-1-0-the-mandatory-floor-and-should-li', 'a2a-integration.md §C', 'protocolBinding uses the upstream binding names')).toContain(i.protocolBinding);
     }
     if (typeof caps.preferredVersion === 'string' && ifaces.length > 0) {
       // SHOULD, so a soft expectation: report, do not fail.
@@ -154,14 +155,14 @@ describe('RFC 0152 §C — a2a-card-runtime-consistent (gated on a2a.profiles �
     if (!behaviorGate(PROFILE, await claims10())) return;
     const caps = (await a2a())!;
     const card = await fetchCard(caps);
-    if (card === null) return;
+    if (card === null) return softSkip('blocked', 'precondition not met — `card === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       card.capabilities?.streaming === true,
-      driver.describe('a2a-integration.md §C', '`capabilities.streaming` on the card MUST equal `capabilities.a2a.streaming` on discovery'),
+      req('openwop.it.a2a-card-runtime-consistency.card-capabilities-streaming-pushnotifications-equal-the-discovery-flags', 'a2a-integration.md §C', '`capabilities.streaming` on the card MUST equal `capabilities.a2a.streaming` on discovery'),
     ).toBe(caps.streaming === true);
     expect(
       card.capabilities?.pushNotifications === true,
-      driver.describe('a2a-integration.md §C', '`capabilities.pushNotifications` on the card MUST equal `capabilities.a2a.pushNotifications`'),
+      req('openwop.it.a2a-card-runtime-consistency.card-capabilities-streaming-pushnotifications-equal-the-discovery-flags', 'a2a-integration.md §C', '`capabilities.pushNotifications` on the card MUST equal `capabilities.a2a.pushNotifications`'),
     ).toBe(caps.pushNotifications === true);
   });
 });

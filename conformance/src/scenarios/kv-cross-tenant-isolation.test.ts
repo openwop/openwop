@@ -19,6 +19,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -39,10 +41,10 @@ async function call(tenantId: string, op: string, args: Record<string, unknown>)
 describe('kv-cross-tenant-isolation: advertisement shape (RFC 0015)', () => {
   it('capabilities.kvStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return;
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early');
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.kv-cross-tenant-isolation.capabilities-kvstorage-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §kvStorage',
         'capabilities.kvStorage.supported MUST be a boolean when present',
       ),
@@ -53,18 +55,18 @@ describe('kv-cross-tenant-isolation: advertisement shape (RFC 0015)', () => {
 describe('kv-cross-tenant-isolation: behavioral (RFC 0015 §B)', () => {
   it('set under tenant A → get under tenant B with same key returns found:false', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const key = `xtenant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const setRes = await call('tenant-a', 'set', { key, value: 'from-A' });
-    if (setRes.status === 404) return; // host doesn't expose test seam
-    expect(setRes.status, driver.describe('RFC 0015 §B', 'set MUST succeed')).toBe(200);
+    if (setRes.status === 404) return softSkip('blocked', 'precondition not met — `setRes.status === 404` returned early (host doesn\'t expose test seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose test seam
+    expect(setRes.status, req('openwop.it.kv-cross-tenant-isolation.set-under-tenant-a-get-under-tenant-b-with-same-key-returns-found-false', 'RFC 0015 §B', 'set MUST succeed')).toBe(200);
 
     const getRes = await call('tenant-b', 'get', { key });
     expect(getRes.status).toBe(200);
     const body = getRes.json as { value?: unknown; found?: boolean };
     expect(
       body.found,
-      driver.describe(
+      req('openwop.it.kv-cross-tenant-isolation.set-under-tenant-a-get-under-tenant-b-with-same-key-returns-found-false', 
         'SECURITY/invariants.yaml kv-cross-tenant-isolation',
         'tenant B MUST NOT see tenant A value at the same key',
       ),
@@ -73,14 +75,14 @@ describe('kv-cross-tenant-isolation: behavioral (RFC 0015 §B)', () => {
 
   it('same-tenant set→get round-trips the value', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const key = `roundtrip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const setRes = await call('tenant-a', 'set', { key, value: 'rt-A' });
-    if (setRes.status === 404) return;
+    if (setRes.status === 404) return softSkip('blocked', 'precondition not met — `setRes.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(setRes.status).toBe(200);
     const getRes = await call('tenant-a', 'get', { key });
     const body = getRes.json as { value?: unknown; found?: boolean };
-    expect(body.found, 'same-tenant get MUST succeed').toBe(true);
-    expect(body.value, 'same-tenant get MUST return the stored value').toBe('rt-A');
+    expect(body.found, req('openwop.it.kv-cross-tenant-isolation.same-tenant-set-get-round-trips-the-value', 'RFC 0015 §B', 'same-tenant get MUST succeed')).toBe(true);
+    expect(body.value, req('openwop.it.kv-cross-tenant-isolation.same-tenant-set-get-round-trips-the-value', 'RFC 0015 §B', 'same-tenant get MUST return the stored value')).toBe('rt-A');
   });
 });

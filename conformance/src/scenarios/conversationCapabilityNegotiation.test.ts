@@ -21,6 +21,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-conversation-capability-negotiation';
 // Inverted gate: this scenario runs when host does NOT advertise the
@@ -33,7 +34,7 @@ describe.skipIf(SKIP)('conversationCapabilityNegotiation: refusal contract', () 
     // The host MUST reject — either at workflow registration (404/400)
     // or at run-create (400). What MUST NOT happen is a successful
     // 201 followed by silent fallback.
-    expect([400, 404, 422]).toContain(create.status);
+    expect([400, 404, 422], req('openwop.it.conversationCapabilityNegotiation.host-without-conversationprimitive-capability-refuses-conversation-bearing-workf', 'RFCS/0005-conversation.md', 'host without conversationPrimitive capability refuses conversation-bearing workflow')).toContain(create.status);
     const body = create.json as { code?: string };
     const code = readErrorCode(create.json) ?? body.code ?? '';
     expect(typeof code).toBe('string');

@@ -14,6 +14,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -34,10 +36,10 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('sql-injection-rejection: advertisement shape (RFC 0018)', () => {
   it('capabilities.sql is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return;
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early');
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.sql-injection-rejection.capabilities-sql-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §sql',
         'capabilities.sql.supported MUST be a boolean when present',
       ),
@@ -48,13 +50,13 @@ describe('sql-injection-rejection: advertisement shape (RFC 0018)', () => {
 describe('sql-injection-rejection: behavioral (RFC 0018 §C)', () => {
   it('parametric SELECT with bound user input rejects injection-shape strings as data', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
 
     const create = await call('execute', {
       sql: `CREATE TABLE IF NOT EXISTS sql_inj_t (id TEXT PRIMARY KEY, body TEXT)`,
       params: [],
     });
-    if (create.status === 404) return;
+    if (create.status === 404) return softSkip('blocked', 'precondition not met — `create.status === 404` returned early (seam, prior step, or fixture unavailable)');
     await call('execute', { sql: `INSERT OR REPLACE INTO sql_inj_t VALUES (?, ?)`, params: ['k1', 'ok'] });
 
     // Parametric round-trip MUST succeed.
@@ -64,7 +66,7 @@ describe('sql-injection-rejection: behavioral (RFC 0018 §C)', () => {
     });
     expect(okRes.status).toBe(200);
     const okBody = okRes.json as { rows?: Array<Record<string, unknown>> };
-    expect(okBody.rows?.[0]?.body, 'parametric round-trip MUST return stored value').toBe('ok');
+    expect(okBody.rows?.[0]?.body, req('openwop.it.sql-injection-rejection.parametric-select-with-bound-user-input-rejects-injection-shape-strings-as-data', 'SECURITY/invariants.yaml sql-parametric-only', 'parametric round-trip MUST return stored value')).toBe('ok');
 
     // Injection-shape input MUST be bound as a literal value, not SQL.
     const attack = `' OR '1'='1`;
@@ -76,7 +78,7 @@ describe('sql-injection-rejection: behavioral (RFC 0018 §C)', () => {
     const attackBody = attackRes.json as { rows?: Array<Record<string, unknown>> };
     expect(
       Array.isArray(attackBody.rows) ? attackBody.rows.length : -1,
-      driver.describe(
+      req('openwop.it.sql-injection-rejection.parametric-select-with-bound-user-input-rejects-injection-shape-strings-as-data', 
         'SECURITY/invariants.yaml sql-parametric-only',
         'parametric binding MUST treat injection-shape input as a literal value, not SQL',
       ),

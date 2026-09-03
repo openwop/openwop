@@ -18,6 +18,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-pack-export';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -27,9 +29,9 @@ describe.skipIf(SKIP)('agentPackExport: workspace agents project to AgentManifes
     const res = await driver.get('/v1/packs/export');
     if (res.status === 404 || res.status === 501) {
       // Host doesn't expose pack-export over REST; treated as skip.
-      return;
+      return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 501` returned early (Host doesn\'t expose pack-export over REST; treated as skip.) (seam, prior step, or fixture unavailable)');
     }
-    expect(res.status).toBe(200);
+    expect(res.status, req('openwop.it.agentPackExport.exported-manifests-contain-required-agentmanifest-fields', 'RFCS/0003-agent-packs.md', 'exported manifests contain required AgentManifest fields')).toBe(200);
 
     const body = res.json as {
       manifests?: Array<{ agentId?: string; modelClass?: string; sourceManifestId?: string }>;

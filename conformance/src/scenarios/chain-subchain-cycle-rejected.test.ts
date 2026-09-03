@@ -30,8 +30,7 @@ import {
   DEFAULT_MAX_SUB_CHAIN_DEPTH,
   type WorkflowChain,
 } from '../lib/workflow-chain-expansion.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 const SPEC = 'workflow-chain-packs.md §"Sub-chain composition (RFC 0133)"';
 
 /** A chain node that dispatches a named sub-chain ref. */
@@ -88,14 +87,14 @@ const ctxFor = (siblings: Map<string, WorkflowChain>, maxDepth?: number) => ({
 describe('chain-subchain-cycle-rejected: bounded recursion (RFC 0133, server-free)', () => {
   it('rejects a chain that transitively composes itself (sub_chain_cycle)', () => {
     const siblings = new Map([[selfRef.chainId, selfRef]]);
-    expect(() => expandChainTree(selfRef, ctxFor(siblings)), why(SPEC, 'self-composition MUST reject')).toThrow(
+    expect(() => expandChainTree(selfRef, ctxFor(siblings)), req('openwop.it.chain-subchain-cycle-rejected.rejects-a-chain-that-transitively-composes-itself-sub-chain-cycle', SPEC, 'self-composition MUST reject')).toThrow(
       SubChainCycleError,
     );
     try {
       expandChainTree(selfRef, ctxFor(siblings));
     } catch (e) {
-      expect((e as SubChainCycleError).code, why(SPEC, 'wire code sub_chain_cycle')).toBe('sub_chain_cycle');
-      expect((e as SubChainCycleError).httpStatus, why(SPEC, 'HTTP 400')).toBe(400);
+      expect((e as SubChainCycleError).code, req('openwop.it.chain-subchain-cycle-rejected.rejects-a-chain-that-transitively-composes-itself-sub-chain-cycle', SPEC, 'wire code sub_chain_cycle')).toBe('sub_chain_cycle');
+      expect((e as SubChainCycleError).httpStatus, req('openwop.it.chain-subchain-cycle-rejected.rejects-a-chain-that-transitively-composes-itself-sub-chain-cycle', SPEC, 'HTTP 400')).toBe(400);
     }
   });
 
@@ -105,13 +104,13 @@ describe('chain-subchain-cycle-rejected: bounded recursion (RFC 0133, server-fre
     const { root, siblings } = linearChain(5);
     expect(
       () => expandChainTree(root, ctxFor(siblings, 2)),
-      why(SPEC, 'depth breach MUST reject (bounded recursion)'),
+      req('openwop.it.chain-subchain-cycle-rejected.rejects-nesting-past-maxsubchaindepth-with-a-distinct-sub-chain-max-depth-exceed', SPEC, 'depth breach MUST reject (bounded recursion)'),
     ).toThrow(SubChainDepthExceededError);
     try {
       expandChainTree(root, ctxFor(siblings, 2));
     } catch (e) {
-      expect((e as SubChainDepthExceededError).code, why(SPEC, 'distinct wire code')).toBe('sub_chain_max_depth_exceeded');
-      expect(e instanceof SubChainCycleError, why(SPEC, 'a depth breach is NOT a cycle')).toBe(false);
+      expect((e as SubChainDepthExceededError).code, req('openwop.it.chain-subchain-cycle-rejected.rejects-nesting-past-maxsubchaindepth-with-a-distinct-sub-chain-max-depth-exceed', SPEC, 'distinct wire code')).toBe('sub_chain_max_depth_exceeded');
+      expect(e instanceof SubChainCycleError, req('openwop.it.chain-subchain-cycle-rejected.rejects-nesting-past-maxsubchaindepth-with-a-distinct-sub-chain-max-depth-exceed', SPEC, 'a depth breach is NOT a cycle')).toBe(false);
     }
   });
 
@@ -119,7 +118,7 @@ describe('chain-subchain-cycle-rejected: bounded recursion (RFC 0133, server-fre
     const { root, siblings } = linearChain(3);
     const { children } = expandChainTree(root, ctxFor(siblings, DEFAULT_MAX_SUB_CHAIN_DEPTH));
     // 3 composing links (link.0..link.2 each compose their successor) ⇒ 3 co-registered children.
-    expect(children.length, why(SPEC, 'benign acyclic tree within the bound expands')).toBe(3);
+    expect(children.length, req('openwop.it.chain-subchain-cycle-rejected.expands-an-acyclic-tree-within-the-bound-cleanly-guard-rejects-bombs-not-benign', SPEC, 'benign acyclic tree within the bound expands')).toBe(3);
   });
 
   it('rejects a subChainRef that resolves to no sibling chain (sub_chain_unresolved)', () => {
@@ -135,7 +134,7 @@ describe('chain-subchain-cycle-rejected: bounded recursion (RFC 0133, server-fre
     const siblings = new Map([[orphan.chainId, orphan]]);
     expect(
       () => expandChainTree(orphan, ctxFor(siblings)),
-      why(SPEC, '§1.1 — unresolvable ref rejects distinctly'),
+      req('openwop.it.chain-subchain-cycle-rejected.rejects-a-subchainref-that-resolves-to-no-sibling-chain-sub-chain-unresolved', SPEC, '§1.1 — unresolvable ref rejects distinctly'),
     ).toThrow(SubChainUnresolvedError);
   });
 });

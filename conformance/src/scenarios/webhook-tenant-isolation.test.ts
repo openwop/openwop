@@ -38,6 +38,8 @@ import { describe, it, expect } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -66,26 +68,26 @@ async function gateOnWebhooks(): Promise<boolean> {
 describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: advertisement shape (webhooks.md)', () => {
   it('the webhooks block is either absent or carries a boolean supported flag', async () => {
     const cap = await readCapabilityFamily<WebhooksCap>('webhooks');
-    if (cap === undefined) return; // host doesn't advertise webhooks — conformant
+    if (cap === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === undefined` returned early (host doesn\'t advertise webhooks — conformant)'); // host doesn't advertise webhooks — conformant
     expect(
       typeof cap.supported,
-      driver.describe('capabilities.schema.json §webhooks', 'webhooks.supported MUST be a boolean when present'),
+      req('openwop.it.webhook-tenant-isolation.the-webhooks-block-is-either-absent-or-carries-a-boolean-supported-flag', 'capabilities.schema.json §webhooks', 'webhooks.supported MUST be a boolean when present'),
     ).toBe('boolean');
   });
 });
 
 describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: two-tenant proof via the test seam (RFC 0093 §A.3)', () => {
   it('a subscription registered under tenant A is invisible to tenant B', async () => {
-    if (!(await gateOnWebhooks())) return;
+    if (!(await gateOnWebhooks())) return softSkip('blocked', 'precondition not met — `!(await gateOnWebhooks())` returned early (seam, prior step, or fixture unavailable)');
 
     const reg = await seam('tenant-a', 'register', {
       url: SAFE_URL,
       events: ['run.completed'],
     });
-    if (reg.status === 404) return; // host doesn't expose the test seam — soft-skip
-    expect(reg.status, driver.describe('RFC 0093 §A.3', 'seam register under tenant A MUST succeed')).toBe(200);
+    if (reg.status === 404) return softSkip('blocked', 'precondition not met — `reg.status === 404` returned early (host doesn\'t expose the test seam — soft-skip) (seam, prior step, or fixture unavailable)'); // host doesn't expose the test seam — soft-skip
+    expect(reg.status, req('openwop.it.webhook-tenant-isolation.a-subscription-registered-under-tenant-a-is-invisible-to-tenant-b', 'RFC 0093 §A.3', 'seam register under tenant A MUST succeed')).toBe(200);
     const webhookId = (reg.json as { webhookId?: string }).webhookId;
-    expect(typeof webhookId, 'seam register MUST return the new webhookId').toBe('string');
+    expect(typeof webhookId, req('openwop.it.webhook-tenant-isolation.a-subscription-registered-under-tenant-a-is-invisible-to-tenant-b', 'RFC 0093 §A.3', 'seam register MUST return the new webhookId')).toBe('string');
 
     try {
       const listB = await seam('tenant-b', 'list', {});
@@ -94,7 +96,7 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: two-tenant proof via the t
         .map((w) => w.webhookId);
       expect(
         idsB,
-        driver.describe(
+        req('openwop.it.webhook-tenant-isolation.a-subscription-registered-under-tenant-a-is-invisible-to-tenant-b', 
           'SECURITY/invariants.yaml webhook-cross-tenant-isolation',
           'tenant B MUST NOT see tenant A subscriptions in its list',
         ),
@@ -105,7 +107,7 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: two-tenant proof via the t
         .map((w) => w.webhookId);
       expect(
         idsA,
-        driver.describe('RFC 0093 §A.3', 'tenant A MUST see its own subscription (same-tenant control)'),
+        req('openwop.it.webhook-tenant-isolation.a-subscription-registered-under-tenant-a-is-invisible-to-tenant-b', 'RFC 0093 §A.3', 'tenant A MUST see its own subscription (same-tenant control)'),
       ).toContain(webhookId);
     } finally {
       await seam('tenant-a', 'unregister', { webhookId });
@@ -115,7 +117,7 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: two-tenant proof via the t
 
 describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: black-box registration-surface scoping (webhooks.md)', () => {
   it('registering under a tenant the caller is not a member of is refused', async () => {
-    if (!(await gateOnWebhooks())) return;
+    if (!(await gateOnWebhooks())) return softSkip('blocked', 'precondition not met — `!(await gateOnWebhooks())` returned early (seam, prior step, or fixture unavailable)');
 
     const foreignTenant = `openwop-conformance-foreign-${uniqueSuffix()}`;
     const reg = await driver.post('/v1/webhooks', {
@@ -135,7 +137,7 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: black-box registration-sur
     }
     expect(
       reg.status,
-      driver.describe(
+      req('openwop.it.webhook-tenant-isolation.registering-under-a-tenant-the-caller-is-not-a-member-of-is-refused', 
         'webhooks.md §Endpoints ("the caller MUST be a member of the tenant") + RFC 0093 §A.3',
         'registration under a tenant the caller is not a member of MUST be refused (403/404/400), never 201',
       ),
@@ -143,7 +145,7 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: black-box registration-sur
   });
 
   it('a held subscription cannot be unregistered through a foreign tenant scope', async () => {
-    if (!(await gateOnWebhooks())) return;
+    if (!(await gateOnWebhooks())) return softSkip('blocked', 'precondition not met — `!(await gateOnWebhooks())` returned early (seam, prior step, or fixture unavailable)');
 
     // Register under the caller's own tenant (host defaults the scope from
     // the API key when tenantId is omitted — the same registration shape the
@@ -159,10 +161,10 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: black-box registration-sur
       console.warn(
         `[webhook-tenant-isolation] could not register a probe subscription (${reg.status}); skipping foreign-unregister leg`,
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `reg.status !== 201` returned early ([webhook-tenant-isolation] could not register a probe subscription (…); skipping foreign-unregister leg) (seam, prior step, or fixture unavailable)');
     }
     const webhookId = (reg.json as { webhookId?: string }).webhookId;
-    expect(typeof webhookId, 'registration MUST return webhookId').toBe('string');
+    expect(typeof webhookId, req('openwop.it.webhook-tenant-isolation.a-held-subscription-cannot-be-unregistered-through-a-foreign-tenant-scope', 'webhooks.md §Unregister (403 non-member / 404 not-in-scope) + RFC 0093 §A.3', 'registration MUST return webhookId')).toBe('string');
 
     try {
       const foreignTenant = `openwop-conformance-foreign-${uniqueSuffix()}`;
@@ -171,7 +173,7 @@ describe.skipIf(HTTP_SKIP)('webhook-tenant-isolation: black-box registration-sur
       );
       expect(
         del.status !== 204 && del.status < 500,
-        driver.describe(
+        req('openwop.it.webhook-tenant-isolation.a-held-subscription-cannot-be-unregistered-through-a-foreign-tenant-scope', 
           'webhooks.md §Unregister (403 non-member / 404 not-in-scope) + RFC 0093 §A.3',
           `unregister through a foreign tenant scope MUST NOT succeed (got ${del.status})`,
         ),

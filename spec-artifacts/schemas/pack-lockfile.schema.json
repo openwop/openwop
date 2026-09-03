@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/pack-lockfile.schema.json",
+  "title": "PackLockfile",
+  "description": "Reproducible-build lockfile pinning resolved versions of every pack a workspace depends on. Per spec/v1/node-packs.md §\"Dependency resolution + lockfile\". A workspace records its lockfile alongside its workflow definitions; on subsequent installs the registry resolver MUST honor the lockfile's exact versions rather than re-running semver resolution. This guarantees that a workflow that ran against `vendor.openwop.rust-hello@1.0.0` will still run against `1.0.0` even after `1.0.1` is published.",
+  "type": "object",
+  "required": ["lockfileVersion", "generatedAt", "packs"],
+  "properties": {
+    "lockfileVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Lockfile schema version. Bumped when the lockfile structure changes incompatibly. v1.0 ships at lockfileVersion 1."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp the lockfile was written. Used for audit + cache-bust diagnostics; resolvers MUST NOT use this for resolution decisions."
+    },
+    "registry": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional source-of-truth registry URL the resolved versions were fetched from (e.g., `https://packs.openwop.dev`). Multi-registry workspaces include this for audit. Single-registry workspaces MAY omit."
+    },
+    "packs": {
+      "type": "array",
+      "description": "Resolved pack records, one per pack referenced (transitively) by the workspace's workflow definitions. Order is informational only; resolvers MUST NOT rely on order. Empty arrays are allowed (a workspace with no packs).",
+      "items": { "$ref": "#/$defs/ResolvedPack" }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Optional override map per `node-packs.md` §\"Transitive dependency resolution\" §\"Override pinning\". Keys are pack names; values are exact pinned versions that resolvers MUST honor ahead of normal range resolution. The override version MUST still satisfy at least one parent's declared range — silently breaking the contract fails with `pack_dependency_conflict`. Use sparingly: security patches, conflict resolution, supply-chain pinning.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Exact pinned version that overrides this pack's normal range resolution."
+      }
+    },
+    "fallbackRegistries": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "uniqueItems": true,
+      "description": "Optional ordered list of fallback registry base URLs per `registry-operations.md` §\"Registry mirror + federation\". When a pack is not found in the primary `registry`, resolvers MUST consult each fallback in order. The first registry returning a 200 for the version manifest wins. Trust roots are per-registry — a fallback being listed here does NOT imply trust transitivity. Each pack's signature is verified against the issuing registry's `signingKeys[]` allow-list."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ResolvedPack": {
+      "type": "object",
+      "required": ["name", "version", "integrity"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "pattern": "^(core|vendor|community|private|local)\\.[a-z0-9][a-z0-9.-]*$",
+          "description": "Pack name per node-packs.md §\"Manifest format\" `name`. Reverse-DNS-style; namespace prefix is one of the canonical tiers."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Resolved exact version (no ranges). Semver MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]. The resolver MUST pin to this exact version on subsequent installs."
+        },
+        "resolved": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional canonical URL the tarball was fetched from. Audit aid; resolvers MUST verify the `integrity` field even if this URL is present."
+        },
+        "integrity": {
+          "type": "string",
+          "pattern": "^sha256-[A-Za-z0-9+/]{43}=$",
+          "description": "Subresource-integrity-style hash of the tarball: literal `sha256-` followed by 43-char base64-encoded SHA-256 digest with trailing `=` padding. Resolvers MUST verify the downloaded tarball's SHA-256 matches before extraction. Hash mismatch MUST fail the install with `pack_integrity_mismatch`."
+        },
+        "signature": {
+          "type": "object",
+          "description": "Optional pack signature material (Ed25519 per node-packs.md §Signing). When present, resolvers MUST verify the signature against the publisher's advertised public key.",
+          "required": ["algorithm", "publicKey", "value"],
+          "properties": {
+            "algorithm": { "type": "string", "enum": ["ed25519"] },
+            "publicKey": { "type": "string", "minLength": 1, "description": "Base64-encoded Ed25519 public key bytes." },
+            "value": { "type": "string", "minLength": 1, "description": "Base64-encoded Ed25519 signature over the tarball." }
+          },
+          "additionalProperties": false
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": "Pinned versions for this pack's `dependencies` (per its manifest). Each key is a pack name; each value is the resolved exact version. Pinned recursively — a transitively-installed pack appears once in the top-level `packs[]` array AND as a value in each parent's `dependencies` map."
+        },
+        "peerDependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": "Echo of this pack's manifest `peerDependencies` for audit. Resolvers MUST verify that the host's `/.well-known/openwop` advertises every key listed here (per host-capabilities.md §\"Capability negotiation\"). Lockfile records the host-capability values the workspace committed to at lockfile-write time; mismatches at install time MAY warn (host advertises richer set) but MUST fail if a peer-dep is missing."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

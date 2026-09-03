@@ -30,6 +30,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -104,14 +106,14 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-node-wins: layer-1 node-conf
         system: 'prompt:host-default@1.0.0',
       },
     });
-    if (res.status === 404) return; // host doesn't expose the seam
-    expect(res.status, 'resolve seam MUST return 200').toBe(200);
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
+    expect(res.status, req('openwop.it.prompt-resolution-chain-node-wins.node-level-systempromptref-wins-over-agent-intrinsic-workflow-defaults-host-defa', 'spec/v1/prompts.md §Resolution chain (normative)', 'resolve seam MUST return 200')).toBe(200);
 
     const payload = res.json as AgentPromptResolvedPayload;
 
     expect(
       payload.kind,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-node-wins.node-level-systempromptref-wins-over-agent-intrinsic-workflow-defaults-host-defa', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'agent.promptResolved.kind MUST match the requested kind',
       ),
@@ -119,7 +121,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-node-wins: layer-1 node-conf
 
     expect(
       payload.resolved,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-node-wins.node-level-systempromptref-wins-over-agent-intrinsic-workflow-defaults-host-defa', 
         'spec/v1/prompts.md §Resolution chain (normative) — Layer 1',
         'node-level systemPromptRef MUST win over agent intrinsic + overrides + workflow defaults + host defaults',
       ),
@@ -128,13 +130,13 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-node-wins: layer-1 node-conf
     // chain[] MUST list the layers attempted in precedence order. The
     // node layer (first entry of the resolution chain) MUST carry
     // applied: true; every other layer applied: false.
-    expect(Array.isArray(payload.chain), 'agent.promptResolved.chain MUST be an array').toBe(true);
+    expect(Array.isArray(payload.chain), req('openwop.it.prompt-resolution-chain-node-wins.node-level-systempromptref-wins-over-agent-intrinsic-workflow-defaults-host-defa', 'spec/v1/prompts.md §Resolution chain (normative) — Layer 1', 'agent.promptResolved.chain MUST be an array')).toBe(true);
     expect(payload.chain.length).toBeGreaterThan(0);
 
     const appliedEntries = payload.chain.filter((c) => c.applied);
     expect(
       appliedEntries.length,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-node-wins.node-level-systempromptref-wins-over-agent-intrinsic-workflow-defaults-host-defa', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'exactly one chain entry MUST carry applied: true',
       ),

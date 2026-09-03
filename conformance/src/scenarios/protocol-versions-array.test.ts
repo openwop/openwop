@@ -29,6 +29,7 @@ import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { isCore, type DiscoveryPayload } from '../lib/profiles.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface CapsSchema {
   $schema: string;
@@ -43,7 +44,7 @@ const caps = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json
 describe('protocol-versions-array: schema shape (RFC 0165 §A.1, server-free)', () => {
   it('declares root `protocolVersions` as a unique, non-empty string array', () => {
     const p = caps.properties.protocolVersions;
-    expect(p, 'RFC 0165 §A.1: capabilities.schema.json MUST declare root `protocolVersions`').toBeDefined();
+    expect(p, req('openwop.it.protocol-versions-array.declares-root-protocolversions-as-a-unique-non-empty-string-array', 'RFC 0165 §A', 'RFC 0165 §A.1: capabilities.schema.json MUST declare root `protocolVersions`')).toBeDefined();
     expect(p?.type).toBe('array');
     expect(p?.minItems).toBe(1);
     expect(p?.uniqueItems).toBe(true);
@@ -52,14 +53,14 @@ describe('protocol-versions-array: schema shape (RFC 0165 §A.1, server-free)', 
   it('item grammar equals the scalar grammar (one axis, one grammar)', () => {
     expect(
       caps.properties.protocolVersions?.items?.pattern,
-      'RFC 0165 §A.1: protocolVersions items MUST use the RFC 0149 §C grammar, not the A2A item pattern',
+      req('openwop.it.protocol-versions-array.item-grammar-equals-the-scalar-grammar-one-axis-one-grammar', 'RFC 0165 §A', 'RFC 0165 §A.1: protocolVersions items MUST use the RFC 0149 §C grammar, not the A2A item pattern'),
     ).toBe(caps.properties.protocolVersion?.pattern);
   });
 
   it('accepts ["1.11", "2.0"], rejects "01.0", "1.0.0", duplicates, and empty', () => {
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     const validate = ajv.compile({ $schema: caps.$schema, ...(caps.properties.protocolVersions as Record<string, unknown>) });
-    expect(validate(['1.11', '2.0'])).toBe(true);
+    expect(validate(['1.11', '2.0']), req('openwop.it.protocol-versions-array.accepts-1-11-2-0-rejects-01-0-1-0-0-duplicates-and-empty', 'RFC 0165 §A', 'accepts ["1.11", "2.0"], rejects "01.0", "1.0.0", duplicates, and empty')).toBe(true);
     expect(validate(['01.0'])).toBe(false);
     expect(validate(['1.0.0'])).toBe(false);
     expect(validate(['1.0', '1.0'])).toBe(false);
@@ -77,14 +78,14 @@ describe('protocol-versions-array: advertisement (RFC 0165 §A.2 — presence-ga
     if (arr === undefined) {
       return softSkip('inapplicable', 'host does not advertise protocolVersions (RFC 0165 §A — optional in v1.x)');
     }
-    expect(Array.isArray(arr), driver.describe('RFC 0165 §A.1', 'protocolVersions MUST be an array')).toBe(true);
+    expect(Array.isArray(arr), req('openwop.it.protocol-versions-array.when-advertised-every-item-matches-the-grammar-items-are-unique-and-the-array-co', 'RFC 0165 §A.1', 'protocolVersions MUST be an array')).toBe(true);
     const items = arr as unknown[];
-    expect(items.length, driver.describe('RFC 0165 §A.1', 'protocolVersions MUST be non-empty')).toBeGreaterThan(0);
+    expect(items.length, req('openwop.it.protocol-versions-array.when-advertised-every-item-matches-the-grammar-items-are-unique-and-the-array-co', 'RFC 0165 §A.1', 'protocolVersions MUST be non-empty')).toBeGreaterThan(0);
     for (const v of items) {
-      expect(typeof v === 'string' && GRAMMAR.test(v), driver.describe('RFC 0165 §A.1', `protocolVersions item ${JSON.stringify(v)} MUST match the RFC 0149 §C grammar`)).toBe(true);
+      expect(typeof v === 'string' && GRAMMAR.test(v), req('openwop.it.protocol-versions-array.when-advertised-every-item-matches-the-grammar-items-are-unique-and-the-array-co', 'RFC 0165 §A.1', `protocolVersions item ${JSON.stringify(v)} MUST match the RFC 0149 §C grammar`)).toBe(true);
     }
-    expect(new Set(items).size, driver.describe('RFC 0165 §A.1', 'protocolVersions items MUST be unique')).toBe(items.length);
-    expect(items, driver.describe('RFC 0165 §A.2', 'protocolVersions MUST contain the value of protocolVersion')).toContain(doc['protocolVersion']);
+    expect(new Set(items).size, req('openwop.it.protocol-versions-array.when-advertised-every-item-matches-the-grammar-items-are-unique-and-the-array-co', 'RFC 0165 §A.1', 'protocolVersions items MUST be unique')).toBe(items.length);
+    expect(items, req('openwop.it.protocol-versions-array.when-advertised-every-item-matches-the-grammar-items-are-unique-and-the-array-co', 'RFC 0165 §A.2', 'protocolVersions MUST contain the value of protocolVersion')).toContain(doc['protocolVersion']);
   });
 
   it('profile derivation is unchanged by the array (isCore reads the scalar only)', async () => {
@@ -97,7 +98,7 @@ describe('protocol-versions-array: advertisement (RFC 0165 §A.2 — presence-ga
     delete without['protocolVersions'];
     expect(
       isCore(doc),
-      driver.describe('RFC 0165 §A.2', 'openwop-discovery-core derivation MUST NOT depend on protocolVersions in v1.x'),
+      req('openwop.it.protocol-versions-array.profile-derivation-is-unchanged-by-the-array-iscore-reads-the-scalar-only', 'RFC 0165 §A.2', 'openwop-discovery-core derivation MUST NOT depend on protocolVersions in v1.x'),
     ).toBe(isCore(without as DiscoveryPayload));
   });
 });

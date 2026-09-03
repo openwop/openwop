@@ -39,24 +39,24 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
       supportedProviders: ['unknown-vendor'],
       nodeId: 'editor-node',
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.outcome?.route,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.unmet-no-fallbackmodel-declared-refuse-with-fallbackattempted-false', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4',
         'unmet capability + no fallbackModel declared → host MUST refuse',
       ),
     ).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.unmet-no-fallbackmodel-declared-refuse-with-fallbackattempted-false', 
         'schemas/run-event-payloads.schema.json §modelCapabilityInsufficient',
         'fallbackAttempted MUST be false when no fallbackModel was declared on the NodeModule',
       ),
     ).toBe(false);
     expect(
       r.body.event?.type,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.unmet-no-fallbackmodel-declared-refuse-with-fallbackattempted-false', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §D',
         'refuse path MUST emit `model.capability.insufficient` BEFORE the node failure',
       ),
@@ -81,11 +81,11 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
       // authenticate per RFC 0031 §B step 3 final clause.
       supportedProviders: ['anthropic', 'unknown-vendor'],
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.outcome?.route).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.unmet-fallback-declared-but-provider-not-in-supportedproviders-refuse-with-fallb', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 3',
         'fallback provider NOT in capabilities.aiProviders.supported[] → host cannot authenticate → fallbackAttempted MUST be true (the attempt failed at credential resolution)',
       ),
@@ -104,11 +104,11 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
       substitutionSupported: false,
       supportedProviders: ['anthropic', 'unknown-vendor'],
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.outcome?.route).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.unmet-substitutionsupported-false-host-posture-refuse-with-fallbackattempted-fal', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §E',
         'capabilities.modelCapabilities.substitutionSupported: false → host MUST NOT attempt fallback even when NodeModule.fallbackModel is declared → fallbackAttempted MUST be false (no attempt was made)',
       ),
@@ -130,11 +130,11 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
       substitutionSupported: true,
       supportedProviders: ['unknown-vendor', 'unknown-vendor-2'],
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.outcome?.route).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.recursive-fallback-not-permitted-fallback-that-itself-fails-capability-check-ref', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §"Unresolved questions" #3',
         'recursive fallback NOT permitted — when the declared fallback model itself fails the capability check, host MUST refuse with fallbackAttempted: true (NOT chain to another fallback)',
       ),
@@ -152,12 +152,14 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
 
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const E2E_FIXTURE = 'conformance-model-capability-insufficient';
 
 describe.skipIf(HTTP_SKIP)('model-capability-insufficient: end-to-end refusal through executor', () => {
   it('workflow with a node declaring requiredModelCapabilities the active provider does not satisfy fails with RunSnapshot.error.code = "capability_not_provided" AND emits model.capability.insufficient into the run event log BEFORE node.failed', async () => {
-    if (!isFixtureAdvertised(E2E_FIXTURE)) return; // fixture not seeded — soft-skip
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(E2E_FIXTURE)` returned early (fixture not seeded — soft-skip)'); // fixture not seeded — soft-skip
 
     const create = await driver.post('/v1/runs', { workflowId: E2E_FIXTURE });
     expect(create.status).toBe(201);
@@ -167,7 +169,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: end-to-end refusal th
     expect(terminal.status).toBe('failed');
     expect(
       (terminal as { error?: { code?: string } }).error?.code,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.workflow-with-a-node-declaring-requiredmodelcapabilities-the-active-provider-doe', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4',
         'unmet capability without viable fallback MUST fail with error.code = "capability_not_provided"',
       ),
@@ -178,11 +180,11 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: end-to-end refusal th
     const events = ((eventsRes.json as { events?: Array<{ type: string }> } | undefined)?.events ?? []);
     const insufficientIdx = events.findIndex((e) => e.type === 'model.capability.insufficient');
     const nodeFailedIdx = events.findIndex((e) => e.type === 'node.failed');
-    expect(insufficientIdx, 'model.capability.insufficient MUST appear in the event log').toBeGreaterThanOrEqual(0);
-    expect(nodeFailedIdx, 'node.failed MUST appear in the event log').toBeGreaterThanOrEqual(0);
+    expect(insufficientIdx, req('openwop.it.model-capability-insufficient.workflow-with-a-node-declaring-requiredmodelcapabilities-the-active-provider-doe', 'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4', 'model.capability.insufficient MUST appear in the event log')).toBeGreaterThanOrEqual(0);
+    expect(nodeFailedIdx, req('openwop.it.model-capability-insufficient.workflow-with-a-node-declaring-requiredmodelcapabilities-the-active-provider-doe', 'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4', 'node.failed MUST appear in the event log')).toBeGreaterThanOrEqual(0);
     expect(
       insufficientIdx < nodeFailedIdx,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.workflow-with-a-node-declaring-requiredmodelcapabilities-the-active-provider-doe', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §D',
         'model.capability.insufficient MUST be emitted BEFORE node.failed (cause precedes effect)',
       ),
@@ -190,7 +192,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: end-to-end refusal th
   });
 
   it('NO envelope emission occurs after the refusal (no node.completed, provider.usage, or envelope-reliability events)', async () => {
-    if (!isFixtureAdvertised(E2E_FIXTURE)) return; // fixture not seeded — soft-skip
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(E2E_FIXTURE)` returned early (fixture not seeded — soft-skip)'); // fixture not seeded — soft-skip
 
     const create = await driver.post('/v1/runs', { workflowId: E2E_FIXTURE });
     expect(create.status).toBe(201);
@@ -212,7 +214,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: end-to-end refusal th
     const leaked = events.filter((e) => forbidden.includes(e.type)).map((e) => e.type);
     expect(
       leaked,
-      driver.describe(
+      req('openwop.it.model-capability-insufficient.no-envelope-emission-occurs-after-the-refusal-no-node-completed-provider-usage-o', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4',
         'a refused dispatch MUST NOT emit any downstream envelope-emission events — the node never ran',
       ),

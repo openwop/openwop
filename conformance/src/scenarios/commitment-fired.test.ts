@@ -20,6 +20,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface CommitmentCaps {
   agents?: { commitments?: { supported?: boolean } };
@@ -54,14 +55,14 @@ describe('commitment-fired: fire contract (RFC 0068 §C, capability-gated)', () 
     });
     if (res.status === 404 || res.status === 501) return softSkip('blocked', 'seam not wired — soft-skip');
 
-    expect(res.status, driver.describe('RFC 0068 §C', 'an advertised commitment seam MUST succeed')).toBe(200);
+    expect(res.status, req('openwop.it.commitment-fired.a-fired-commitment-emits-a-content-free-event-with-memory-provenance-exactly-onc', 'RFC 0068 §C', 'an advertised commitment seam MUST succeed')).toBe(200);
     const r = res.json as FireResult;
 
     // §C — required identifiers.
-    expect(r.event?.commitmentId, driver.describe('RFC 0068 §C', 'commitment.fired MUST carry commitmentId')).toBeTruthy();
+    expect(r.event?.commitmentId, req('openwop.it.commitment-fired.a-fired-commitment-emits-a-content-free-event-with-memory-provenance-exactly-onc', 'RFC 0068 §C', 'commitment.fired MUST carry commitmentId')).toBeTruthy();
     expect(
       r.event?.memoryRef,
-      driver.describe('RFC 0068 §C.1', 'commitment.fired MUST carry the source memoryRef (CTI-1 provenance)'),
+      req('openwop.it.commitment-fired.a-fired-commitment-emits-a-content-free-event-with-memory-provenance-exactly-onc', 'RFC 0068 §C.1', 'commitment.fired MUST carry the source memoryRef (CTI-1 provenance)'),
     ).toBeTruthy();
 
     // §C.3 — content-free: the inferred intention text MUST NOT appear on the event.
@@ -69,7 +70,7 @@ describe('commitment-fired: fire contract (RFC 0068 §C, capability-gated)', () 
       const serialized = JSON.stringify(r.event ?? {});
       expect(
         serialized.includes(r.intentionCanary),
-        driver.describe('RFC 0068 §C.3', 'the inferred intention text MUST NOT appear on the commitment.fired payload'),
+        req('openwop.it.commitment-fired.a-fired-commitment-emits-a-content-free-event-with-memory-provenance-exactly-onc', 'RFC 0068 §C.3', 'the inferred intention text MUST NOT appear on the commitment.fired payload'),
       ).toBe(false);
     }
 
@@ -77,7 +78,7 @@ describe('commitment-fired: fire contract (RFC 0068 §C, capability-gated)', () 
     if (typeof r.fireCount === 'number') {
       expect(
         r.fireCount,
-        driver.describe('RFC 0068 §C.2', 'a commitment MUST fire at most once per satisfied condition'),
+        req('openwop.it.commitment-fired.a-fired-commitment-emits-a-content-free-event-with-memory-provenance-exactly-onc', 'RFC 0068 §C.2', 'a commitment MUST fire at most once per satisfied condition'),
       ).toBeLessThanOrEqual(1);
     }
   });

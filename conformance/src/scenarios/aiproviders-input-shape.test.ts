@@ -21,9 +21,9 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const BASE = 'https://openwop.dev/spec/v1/';
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -43,27 +43,27 @@ describe('aiproviders-input-shape: callAI perception input (RFC 0091 §B, server
   const input = ajv.getSchema(`${BASE}capabilities.schema.json#/properties/aiProviders/properties/input`);
 
   it('the aiProviders.input sub-schema exists', () => {
-    expect(input, 'capabilities.aiProviders.input MUST be declared').toBeTruthy();
+    expect(input, req('openwop.it.aiproviders-input-shape.the-aiproviders-input-sub-schema-exists', 'RFC 0091', 'capabilities.aiProviders.input MUST be declared')).toBeTruthy();
   });
 
   it('accepts a conforming modalities advertisement', () => {
     expect(
       input!({ modalities: ['text', 'image', 'document'], maxBytesPerPart: 1048576 }),
-      why('RFC 0091 §B', 'a conforming input advertisement MUST validate'),
+      req('openwop.it.aiproviders-input-shape.accepts-a-conforming-modalities-advertisement', 'RFC 0091 §B', 'a conforming input advertisement MUST validate'),
     ).toBe(true);
   });
 
   it('rejects an out-of-enum modality', () => {
     expect(
       input!({ modalities: ['text', 'video'] }),
-      why('RFC 0091 §B', 'modalities is a closed enum (text/image/audio/document)'),
+      req('openwop.it.aiproviders-input-shape.rejects-an-out-of-enum-modality', 'RFC 0091 §B', 'modalities is a closed enum (text/image/audio/document)'),
     ).toBe(false);
   });
 
   it('rejects a non-positive maxBytesPerPart', () => {
     expect(
       input!({ modalities: ['text'], maxBytesPerPart: 0 }),
-      why('RFC 0091 §B', 'maxBytesPerPart MUST be a positive integer'),
+      req('openwop.it.aiproviders-input-shape.rejects-a-non-positive-maxbytesperpart', 'RFC 0091 §B', 'maxBytesPerPart MUST be a positive integer'),
     ).toBe(false);
   });
 });

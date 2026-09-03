@@ -19,6 +19,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SCIM_PROFILE = 'openwop-auth-scim';
 
@@ -43,7 +44,7 @@ describe('auth-scim-profile: advertisement shape (RFC 0050)', () => {
     if (profiles === null || !profiles.includes(SCIM_PROFILE)) return softSkip('inapplicable', 'profile not claimed');
     expect(
       profiles.includes(SCIM_PROFILE),
-      driver.describe('RFC 0050 §B', 'openwop-auth-scim MUST appear verbatim in capabilities.auth.profiles when claimed'),
+      req('openwop.it.auth-scim-profile.claims-openwop-auth-scim-as-a-well-formed-profile-id-when-advertised', 'RFC 0050 §B', 'openwop-auth-scim MUST appear verbatim in capabilities.auth.profiles when claimed'),
     ).toBe(true);
   });
 });
@@ -61,7 +62,7 @@ describe('auth-scim-profile: provisioning roundtrip (RFC 0050 §B — opt-in)', 
     if (res.status === 404) return softSkip('blocked', 'seam unwired');
     expect(
       res.status,
-      driver.describe('RFC 0050 §B', 'a SCIM user provisioning MUST succeed (2xx) and upsert an RFC 0048 principal'),
+      req('openwop.it.auth-scim-profile.provisions-a-scim-user-principal-scim-endpoint-required', 'RFC 0050 §B', 'a SCIM user provisioning MUST succeed (2xx) and upsert an RFC 0048 principal'),
     ).toBeLessThan(400);
   });
 });

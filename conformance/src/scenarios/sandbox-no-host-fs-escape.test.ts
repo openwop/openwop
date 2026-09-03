@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -58,7 +59,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-no-host-fs-escape: capability shape (RFC 003
     const sb = await readSandboxCaps();
     if (sb === null) return softSkip('inapplicable', 'host omits the block — soft-skip cleanly (sb === null)');
 
-    expect(typeof sb.supported, 'capabilities.sandbox.supported MUST be boolean when present').toBe('boolean');
+    expect(typeof sb.supported, req('openwop.it.sandbox-no-host-fs-escape.capabilities-sandbox-when-present-conforms-to-rfc-0035-a', 'RFCS/0035-sandbox-execution-contract.md §A', 'capabilities.sandbox.supported MUST be boolean when present')).toBe('boolean');
 
     if (sb.supported === true) {
       const m = sb.isolationModel as string;
@@ -66,7 +67,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-no-host-fs-escape: capability shape (RFC 003
       const isExtension = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(m);
       expect(
         isCategorical || isExtension,
-        driver.describe(
+        req('openwop.it.sandbox-no-host-fs-escape.capabilities-sandbox-when-present-conforms-to-rfc-0035-a', 
           'RFCS/0035-sandbox-execution-contract.md §A',
           'isolationModel MUST be one of {wasm, process, container, vm} OR match ^x-host-<host>-<key>$ pattern',
         ),

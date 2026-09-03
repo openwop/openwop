@@ -23,6 +23,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-message-reducer';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -44,7 +45,7 @@ describe.skipIf(SKIP)('agentMessageReducer: message reducer idempotency + append
     // fixture convention is `conversation` or `messages`).
     const channelEntries = Object.entries(body.channels ?? {});
     const messageChannel = channelEntries.find(([, val]) => Array.isArray(val));
-    expect(messageChannel, 'fixture MUST expose at least one message-reducer channel').toBeDefined();
+    expect(messageChannel, req('openwop.it.agentMessageReducer.duplicate-messageid-emissions-fold-to-a-single-channel-entry', 'RFCS/0002-agent-identity-and-reasoning-events.md', 'fixture MUST expose at least one message-reducer channel')).toBeDefined();
 
     const messages = messageChannel![1] as Array<{ messageId?: string }>;
     const messageIds = messages

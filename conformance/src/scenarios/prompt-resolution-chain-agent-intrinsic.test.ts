@@ -31,6 +31,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -101,7 +103,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-agent-intrinsic: layer-2 age
         system: 'prompt:host-default@1.0.0',
       },
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
 
     const payload = res.json as AgentPromptResolvedPayload;
@@ -109,14 +111,14 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-agent-intrinsic: layer-2 age
     const appliedEntries = payload.chain.filter((c) => c.applied);
     expect(
       appliedEntries.length,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-agent-intrinsic.agent-intrinsic-systempromptref-wins-over-workflow-defaults-host-defaults-when-n', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'exactly one chain entry MUST carry applied: true',
       ),
     ).toBe(1);
     expect(
       appliedEntries[0]?.layer,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-agent-intrinsic.agent-intrinsic-systempromptref-wins-over-workflow-defaults-host-defaults-when-n', 
         'spec/v1/prompts.md §Resolution chain (normative) — Layer 2',
         'system-kind resolution MUST prefer agent intrinsic (systemPromptRef) over agent-overrides when both are set',
       ),
@@ -124,7 +126,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-agent-intrinsic: layer-2 age
 
     expect(
       payload.resolved,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-agent-intrinsic.agent-intrinsic-systempromptref-wins-over-workflow-defaults-host-defaults-when-n', 
         'spec/v1/prompts.md §Resolution chain (normative) — Layer 2',
         'resolved MUST mirror the winning chain entry source',
       ),
@@ -132,7 +134,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-agent-intrinsic: layer-2 age
 
     expect(
       payload.agentId,
-      driver.describe(
+      req('openwop.it.prompt-resolution-chain-agent-intrinsic.agent-intrinsic-systempromptref-wins-over-workflow-defaults-host-defaults-when-n', 
         'spec/v1/prompts.md §Resolution chain (normative)',
         'agent.promptResolved.agentId MUST be set when config.agentId resolves to a known agent',
       ),

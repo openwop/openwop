@@ -26,6 +26,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /** SHA-256 hex regex — 64 lowercase hex chars exactly. */
 const SHA256_HEX_RE = /^[0-9a-f]{64}$/;
@@ -42,17 +44,17 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
     // Fixture absent OR canary not provisioned — host doesn't opt in.
     // Scenario passes trivially.
     if (create.status === 404 || create.status === 422) {
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `create.status === 404 || create.status === 422` returned early (Fixture absent OR canary not provisioned — host doesn\'t opt in. Scenario passes trivially.)');
     }
 
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h', 
       'rest-endpoints.md POST /v1/runs',
       'starting openwop-smoke-byok-roundtrip MUST succeed when OPENWOP_CONFORMANCE_FIXTURES=1 is advertised AND openwop-conformance-canary-secret is provisioned',
     )).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h', 
       'auth.md §"Secret resolution"',
       'BYOK fixture run MUST reach terminal completed when canary is provisioned',
     )).toBe('completed');
@@ -79,17 +81,17 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
       // Host doesn't expose node outputs in variables/outputs map —
       // some hosts only expose them on the events stream. Skip the
       // shape check; the run-completed assertion above is sufficient.
-      return;
+      return softSkip('blocked', 'precondition not met — `!candidate || typeof candidate !== \'object\'` returned early (Host doesn\'t expose node outputs in variables/outputs map — some hosts only expose them on the events stream. Skip the shape check; …');
     }
 
     if ('secretSha256' in candidate && typeof candidate.secretSha256 === 'string') {
-      expect(candidate.secretSha256, driver.describe(
+      expect(candidate.secretSha256, req('openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h', 
         'auth.md §"Secret resolution"',
         'fixture-emitted SHA-256 hex MUST be 64 lowercase hex chars',
       )).toMatch(SHA256_HEX_RE);
     }
     if ('secretLength' in candidate && typeof candidate.secretLength === 'number') {
-      expect(candidate.secretLength, driver.describe(
+      expect(candidate.secretLength, req('openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h', 
         'auth.md §"Secret resolution"',
         'resolved canary length MUST be > 0 (non-empty)',
       )).toBeGreaterThan(0);
@@ -101,7 +103,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
       workflowId: 'openwop-smoke-byok-roundtrip',
     });
     if (create.status === 404 || create.status === 422) {
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -116,7 +118,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
     const completed = events.filter(
       (e) => e.type === 'node.completed' && e.nodeId === 'resolve-secret',
     );
-    expect(completed.length, driver.describe(
+    expect(completed.length, req('openwop.it.byok-roundtrip.byok-fixture-run-must-emit-a-node-completed-event-for-the-resolve-step', 
       'event-log.md §node.completed',
       'BYOK fixture node MUST emit exactly one node.completed event when secrets.resolve succeeds',
     )).toBe(1);
@@ -127,7 +129,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
       workflowId: 'openwop-smoke-byok-roundtrip',
     });
     if (create.status === 404 || create.status === 422) {
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -157,7 +159,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
       /"raw_secret"\s*:\s*"[^"]{8,}"/,
     ];
     for (const pat of suspiciousPatterns) {
-      expect(dump, driver.describe(
+      expect(dump, req('openwop.it.byok-roundtrip.byok-fixture-run-event-log-must-not-echo-the-resolved-secret-value-redaction', 
         'observability.md §"Redaction"',
         `event log MUST NOT contain a payload matching ${pat} — secret.echo fixture only emits hash + length`,
       )).not.toMatch(pat);

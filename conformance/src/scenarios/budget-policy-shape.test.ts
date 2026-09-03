@@ -35,8 +35,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -52,17 +51,17 @@ describe('budget-policy-shape: BudgetPolicy (RFC 0084 §A, server-free)', () => 
   it('a conforming budget policy validates', () => {
     expect(
       validate({ maxTokens: 200000, maxCostUsd: 1.0, maxToolCalls: 50, maxRetries: 10, modelAllow: ['claude-*'], modelDeny: ['gpt-4-32k'], thresholdPercent: 80, onExhaustion: 'fail' }),
-      why('budget-policy.md §A', 'a conforming BudgetPolicy MUST validate'),
+      req('openwop.it.budget-policy-shape.a-conforming-budget-policy-validates', 'budget-policy.md §A', 'a conforming BudgetPolicy MUST validate'),
     ).toBe(true);
   });
 
   it('the orthogonality guard: a wall-time field is rejected (it is RFC 0058 runTimeoutMs)', () => {
-    expect(validate({ maxCostUsd: 1.0, maxWallTimeMs: 60000 }), why('budget-policy.md §A/§E', 'wall-time is NOT a budget dimension')).toBe(false);
+    expect(validate({ maxCostUsd: 1.0, maxWallTimeMs: 60000 }), req('openwop.it.budget-policy-shape.the-orthogonality-guard-a-wall-time-field-is-rejected-it-is-rfc-0058-runtimeoutm', 'budget-policy.md §A/§E', 'wall-time is NOT a budget dimension')).toBe(false);
   });
 
   it('rejects an out-of-range thresholdPercent and an out-of-enum onExhaustion', () => {
-    expect(validate({ thresholdPercent: 120 }), why('budget-policy.md §A', 'thresholdPercent MUST be 0..100')).toBe(false);
-    expect(validate({ onExhaustion: 'explode' }), why('budget-policy.md §A', 'onExhaustion is a closed enum')).toBe(false);
+    expect(validate({ thresholdPercent: 120 }), req('openwop.it.budget-policy-shape.rejects-an-out-of-range-thresholdpercent-and-an-out-of-enum-onexhaustion', 'budget-policy.md §A', 'thresholdPercent MUST be 0..100')).toBe(false);
+    expect(validate({ onExhaustion: 'explode' }), req('openwop.it.budget-policy-shape.rejects-an-out-of-range-thresholdpercent-and-an-out-of-enum-onexhaustion', 'budget-policy.md §A', 'onExhaustion is a closed enum')).toBe(false);
   });
 });
 
@@ -76,21 +75,21 @@ describe('budget-policy-shape: budget.* events + cap.breached kinds (RFC 0084 §
   } as Record<string, unknown>);
 
   it('the four budget.* payloads validate conforming content-free records', () => {
-    expect(compile('budgetReserved')({ effectiveBudget: { maxCostUsd: 1.0 }, scope: 'run' }), why('budget-policy.md §C', 'budget.reserved MUST validate')).toBe(true);
-    expect(compile('budgetConsumed')({ dimension: 'cost', consumed: 0.7, limit: 1.0, remaining: 0.3 }), why('budget-policy.md §C', 'budget.consumed MUST validate')).toBe(true);
-    expect(compile('budgetThresholdCrossed')({ dimension: 'cost', consumed: 0.8, limit: 1.0, percent: 80 }), why('budget-policy.md §C', 'budget.threshold.crossed MUST validate')).toBe(true);
-    expect(compile('budgetExhausted')({ dimension: 'cost', consumed: 1.02, limit: 1.0 }), why('budget-policy.md §C', 'budget.exhausted MUST validate')).toBe(true);
+    expect(compile('budgetReserved')({ effectiveBudget: { maxCostUsd: 1.0 }, scope: 'run' }), req('openwop.it.budget-policy-shape.the-four-budget-payloads-validate-conforming-content-free-records', 'budget-policy.md §C', 'budget.reserved MUST validate')).toBe(true);
+    expect(compile('budgetConsumed')({ dimension: 'cost', consumed: 0.7, limit: 1.0, remaining: 0.3 }), req('openwop.it.budget-policy-shape.the-four-budget-payloads-validate-conforming-content-free-records', 'budget-policy.md §C', 'budget.consumed MUST validate')).toBe(true);
+    expect(compile('budgetThresholdCrossed')({ dimension: 'cost', consumed: 0.8, limit: 1.0, percent: 80 }), req('openwop.it.budget-policy-shape.the-four-budget-payloads-validate-conforming-content-free-records', 'budget-policy.md §C', 'budget.threshold.crossed MUST validate')).toBe(true);
+    expect(compile('budgetExhausted')({ dimension: 'cost', consumed: 1.02, limit: 1.0 }), req('openwop.it.budget-policy-shape.the-four-budget-payloads-validate-conforming-content-free-records', 'budget-policy.md §C', 'budget.exhausted MUST validate')).toBe(true);
   });
 
   it('rejects an out-of-enum dimension and a missing required field', () => {
-    expect(compile('budgetConsumed')({ dimension: 'vibes', consumed: 1, limit: 2 }), why('budget-policy.md §C', 'dimension is a closed enum')).toBe(false);
-    expect(compile('budgetExhausted')({ dimension: 'cost', consumed: 1.0 }), why('budget-policy.md §C', 'limit is REQUIRED')).toBe(false);
+    expect(compile('budgetConsumed')({ dimension: 'vibes', consumed: 1, limit: 2 }), req('openwop.it.budget-policy-shape.rejects-an-out-of-enum-dimension-and-a-missing-required-field', 'budget-policy.md §C', 'dimension is a closed enum')).toBe(false);
+    expect(compile('budgetExhausted')({ dimension: 'cost', consumed: 1.0 }), req('openwop.it.budget-policy-shape.rejects-an-out-of-enum-dimension-and-a-missing-required-field', 'budget-policy.md §C', 'limit is REQUIRED')).toBe(false);
   });
 
   it('the cap.breached kind enum carries the four budget-* values', () => {
     const kinds = ((payloads.$defs as Record<string, { properties?: Record<string, { enum?: string[] }> }>).capBreached.properties?.kind?.enum) ?? [];
     for (const k of ['budget-tokens', 'budget-cost', 'budget-tool-calls', 'budget-retries']) {
-      expect(kinds.includes(k), why('budget-policy.md §D', `cap.breached.kind MUST include ${k}`)).toBe(true);
+      expect(kinds.includes(k), req('openwop.it.budget-policy-shape.the-cap-breached-kind-enum-carries-the-four-budget-values', 'budget-policy.md §D', `cap.breached.kind MUST include ${k}`)).toBe(true);
     }
   });
 
@@ -98,7 +97,7 @@ describe('budget-policy-shape: budget.* events + cap.breached kinds (RFC 0084 §
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = ((runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum) ?? [];
     for (const name of ['budget.reserved', 'budget.consumed', 'budget.threshold.crossed', 'budget.exhausted']) {
-      expect(enumVals.includes(name), why('run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
+      expect(enumVals.includes(name), req('openwop.it.budget-policy-shape.all-four-budget-event-names-appear-in-the-runeventtype-enum', 'run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
     }
   });
 
@@ -106,7 +105,7 @@ describe('budget-policy-shape: budget.* events + cap.breached kinds (RFC 0084 §
     const defs = payloads.$defs as Record<string, { properties?: Record<string, unknown> }>;
     for (const def of ['budgetReserved', 'budgetConsumed', 'budgetThresholdCrossed', 'budgetExhausted']) {
       for (const p of Object.keys(defs[def].properties ?? {})) {
-        expect(PRICING_PROP_NAMES.includes(p.toLowerCase()), why('budget-no-pricing-leak', `${def} MUST NOT declare a pricing-bearing property (${p})`)).toBe(false);
+        expect(PRICING_PROP_NAMES.includes(p.toLowerCase()), req('openwop.it.budget-policy-shape.the-budget-payloads-declare-no-pricing-credential-property-budget-no-pricing-lea', 'budget-no-pricing-leak', `${def} MUST NOT declare a pricing-bearing property (${p})`)).toBe(false);
       }
     }
   });
@@ -114,10 +113,10 @@ describe('budget-policy-shape: budget.* events + cap.breached kinds (RFC 0084 §
   it('the budget.* payloads are additionalProperties:false — a rate-card field on an INSTANCE is rejected', () => {
     // The aggregate cost total (the user's own budget) is permitted; the host's per-unit rate card is not.
     // additionalProperties:false makes the rejection structural, not just a declared-property check.
-    expect(compile('budgetConsumed')({ dimension: 'cost', consumed: 0.8, limit: 1.0 }), why('budget-policy.md §F', 'an aggregate cost total (the user budget) MUST validate')).toBe(true);
+    expect(compile('budgetConsumed')({ dimension: 'cost', consumed: 0.8, limit: 1.0 }), req('openwop.it.budget-policy-shape.the-budget-payloads-are-additionalproperties-false-a-rate-card-field-on-an-insta', 'budget-policy.md §F', 'an aggregate cost total (the user budget) MUST validate')).toBe(true);
     expect(
       compile('budgetConsumed')({ dimension: 'cost', consumed: 0.8, limit: 1.0, ratePerToken: 0.000003 }),
-      why('budget-no-pricing-leak', 'a rate-card / per-token-price field MUST be rejected (additionalProperties:false)'),
+      req('openwop.it.budget-policy-shape.the-budget-payloads-are-additionalproperties-false-a-rate-card-field-on-an-insta', 'budget-no-pricing-leak', 'a rate-card / per-token-price field MUST be rejected (additionalProperties:false)'),
     ).toBe(false);
   });
 });
@@ -127,10 +126,10 @@ describe('budget-policy-shape: capability advertisement (RFC 0084 §E, server-fr
     const caps = loadSchema('capabilities.schema.json');
     const props = caps.properties as Record<string, { properties?: Record<string, unknown> }>;
     for (const flag of ['supported', 'dimensions', 'enforce', 'scopes']) {
-      expect(props.budget?.properties?.[flag], why('budget-policy.md §E', `capabilities.budget.${flag} MUST be declared`)).toBeDefined();
+      expect(props.budget?.properties?.[flag], req('openwop.it.budget-policy-shape.capabilities-budget-limits-maxbudget-tokens-costusd-are-declared', 'budget-policy.md §E', `capabilities.budget.${flag} MUST be declared`)).toBeDefined();
     }
     for (const ceiling of ['maxBudgetTokens', 'maxBudgetCostUsd']) {
-      expect(props.limits?.properties?.[ceiling], why('budget-policy.md §E', `limits.${ceiling} MUST be declared`)).toBeDefined();
+      expect(props.limits?.properties?.[ceiling], req('openwop.it.budget-policy-shape.capabilities-budget-limits-maxbudget-tokens-costusd-are-declared', 'budget-policy.md §E', `limits.${ceiling} MUST be declared`)).toBeDefined();
     }
   });
 });

@@ -36,6 +36,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -97,13 +99,13 @@ const CANONICAL_MARKER = `[REDACTED:${CANARY_SECRET_ID}]`;
 describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: advertisement shape (RFC 0030 §E)', () => {
   it('hosts advertising envelope reasoning + BYOK honor SR-1 carry-forward for the reasoning field', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const reasoning = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reasoning?.supported;
     const secrets = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported;
-    if (reasoning !== true || secrets !== true) return; // soft-skip when either is absent
+    if (reasoning !== true || secrets !== true) return softSkip('blocked', 'precondition not met — `reasoning !== true || secrets !== true` returned early (soft-skip when either is absent) (seam, prior step, or fixture unavailable)'); // soft-skip when either is absent
     // The contract is invariant-based, not capability-flag-based — the
     // advertisement-shape check here just confirms both surfaces are claimed.
-    expect(true).toBe(true);
+    expect(true, req('openwop.it.envelope-reasoning-secret-redaction.hosts-advertising-envelope-reasoning-byok-honor-sr-1-carry-forward-for-the-reaso', 'RFC 0030 §E', 'hosts advertising envelope reasoning + BYOK honor SR-1 carry-forward for the reasoning field')).toBe(true);
   });
 });
 
@@ -124,22 +126,22 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: BYOK redaction 
       },
       { byokCanaries: CANARIES },
     );
-    if (r.status === 404) return; // host doesn't expose the seam
-    expect(r.body.status, 'envelope MUST be accepted; redaction is a post-validation pass').toBe('accepted');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
+    expect(r.body.status, req('openwop.it.envelope-reasoning-secret-redaction.canary-in-reasoning-substituted-with-canonical-redacted-secretid-marker-per-agen', 'ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'envelope MUST be accepted; redaction is a post-validation pass')).toBe('accepted');
     expect(
       r.body.redactionCount,
-      'RFC 0030 §E: redactionCount MUST be > 0 when a canary appears in `reasoning`',
+      req('openwop.it.envelope-reasoning-secret-redaction.canary-in-reasoning-substituted-with-canonical-redacted-secretid-marker-per-agen', 'ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'RFC 0030 §E: redactionCount MUST be > 0 when a canary appears in `reasoning`'),
     ).toBeGreaterThan(0);
     expect(
       JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE),
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.canary-in-reasoning-substituted-with-canonical-redacted-secretid-marker-per-agen', 
         'ai-envelope.md §"Redaction (SR-1 carry-forward)"',
         'canary plaintext MUST NOT remain anywhere in the redacted view — `reasoning` field included',
       ),
     ).toBe(false);
     expect(
       JSON.stringify(r.body.redactedPayload),
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.canary-in-reasoning-substituted-with-canonical-redacted-secretid-marker-per-agen', 
         'agent-memory.md §SR-1 line 66',
         'persisted entry MUST carry [REDACTED:<secretId>] in place of the plaintext',
       ),
@@ -162,15 +164,15 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: BYOK redaction 
       },
       { byokCanaries: CANARIES },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
     expect(
       JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE),
-      'no canary plaintext remnant anywhere — `reasoning` + `message` both walked recursively',
+      req('openwop.it.envelope-reasoning-secret-redaction.canary-in-reasoning-and-another-payload-field-both-occurrences-scrubbed-with-sin', 'RFC 0030 §E', 'no canary plaintext remnant anywhere — `reasoning` + `message` both walked recursively'),
     ).toBe(false);
     expect(
       r.body.redactionCount,
-      'recursive walk substitutes once per occurrence; 2 occurrences = redactionCount: 2',
+      req('openwop.it.envelope-reasoning-secret-redaction.canary-in-reasoning-and-another-payload-field-both-occurrences-scrubbed-with-sin', 'RFC 0030 §E', 'recursive walk substitutes once per occurrence; 2 occurrences = redactionCount: 2'),
     ).toBe(2);
   });
 
@@ -190,13 +192,13 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: BYOK redaction 
       },
       { byokCanaries: CANARIES }, // canary in fixture, but NOT in payload
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
-    expect(r.body.redactionCount, 'no canary occurrence → redactionCount: 0').toBe(0);
+    expect(r.body.redactionCount, req('openwop.it.envelope-reasoning-secret-redaction.absent-canary-in-reasoning-reasoning-passes-through-unchanged-no-false-positive', 'RFC 0030 §E', 'no canary occurrence → redactionCount: 0')).toBe(0);
     const payload = (r.body.redactedPayload ?? {}) as { reasoning?: string };
     expect(
       payload.reasoning,
-      'reasoning field MUST pass through unchanged when no canary substring matches',
+      req('openwop.it.envelope-reasoning-secret-redaction.absent-canary-in-reasoning-reasoning-passes-through-unchanged-no-false-positive', 'RFC 0030 §E', 'reasoning field MUST pass through unchanged when no canary substring matches'),
     ).toBe('The input was empty; I declined to fabricate a response.');
   });
 
@@ -215,8 +217,8 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: BYOK redaction 
       },
       { byokCanaries: CANARIES },
     );
-    if (r.status === 404) return;
-    expect(r.body.status).toBe('accepted');
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.body.status, req('openwop.it.envelope-reasoning-secret-redaction.canary-in-clarification-request-reasoning-universal-kind-with-reasoning-property', 'RFC 0030 §E', 'canary in `clarification.request.reasoning` (universal kind with reasoning property)')).toBe('accepted');
     expect(JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE)).toBe(false);
     expect(JSON.stringify(r.body.redactedPayload)).toContain(CANONICAL_MARKER);
   });
@@ -259,13 +261,13 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
     // Hosts that don't advertise it soft-skip; hosts that DO advertise MUST serve a valid response.
     const d = await readDiscovery();
     const otelScrapeAdvertised = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.otelScrape === true;
-    if (!otelScrapeAdvertised) return; // soft-skip — host honest about not implementing per RFC 0034 §A
+    if (!otelScrapeAdvertised) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!otelScrapeAdvertised` returned early (soft-skip — host honest about not implementing per RFC 0034 §A)'); // soft-skip — host honest about not implementing per RFC 0034 §A
 
     const r = await acceptForRun(
       `Reasoning trace mentioning ${CANARY_VALUE} verbatim.`,
       'env-otel-redact-1',
     );
-    if (r.status === 404) return; // envelope-accept seam itself not exposed — separate gate
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (envelope-accept seam itself not exposed — separate gate) (seam, prior step, or fixture unavailable)'); // envelope-accept seam itself not exposed — separate gate
     expect(r.body.status).toBe('accepted');
 
     const spansRes = await driver.get(
@@ -273,7 +275,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
     );
     expect(
       spansRes.status,
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.otel-span-attributes-for-the-envelope-emitting-node-must-not-include-plaintext-s', 
         'RFCS/0034-otel-collector-test-seam.md §B',
         'host advertising capabilities.observability.testSeams.otelScrape MUST serve the seam (200) — 404 is non-conformant',
       ),
@@ -282,7 +284,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
     const serialized = JSON.stringify(spans);
     expect(
       serialized.includes(CANARY_VALUE),
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.otel-span-attributes-for-the-envelope-emitting-node-must-not-include-plaintext-s', 
         'SECURITY/invariants.yaml secret-leakage-otel-attribute',
         'no canary plaintext from the envelope `reasoning` field may appear in any OTel span attribute',
       ),
@@ -293,19 +295,19 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
     // RFC 0034 §B: gate on capabilities.observability.testSeams.debugBundleExport.
     const d = await readDiscovery();
     const debugBundleAdvertised = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.debugBundleExport === true;
-    if (!debugBundleAdvertised) return; // soft-skip — host honest about not implementing per RFC 0034 §A
+    if (!debugBundleAdvertised) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!debugBundleAdvertised` returned early (soft-skip — host honest about not implementing per RFC 0034 §A)'); // soft-skip — host honest about not implementing per RFC 0034 §A
 
     const r = await acceptForRun(
       `Step-by-step reasoning that surfaces ${CANARY_VALUE} from a prior tool result.`,
       'env-bundle-redact-1',
     );
-    if (r.status === 404) return; // envelope-accept seam itself not exposed — separate gate
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (envelope-accept seam itself not exposed — separate gate) (seam, prior step, or fixture unavailable)'); // envelope-accept seam itself not exposed — separate gate
     expect(r.body.status).toBe('accepted');
 
     const bundleRes = await driver.post('/v1/host/sample/test/debug-bundle/export', { runId: RUN_ID });
     expect(
       bundleRes.status,
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.debug-bundle-export-must-not-include-plaintext-secret-prefixed-substrings-from-e', 
         'RFCS/0034-otel-collector-test-seam.md §B',
         'host advertising capabilities.observability.testSeams.debugBundleExport MUST serve the seam (200) — 404 is non-conformant',
       ),
@@ -313,7 +315,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
     const serialized = JSON.stringify(bundleRes.json);
     expect(
       serialized.includes(CANARY_VALUE),
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.debug-bundle-export-must-not-include-plaintext-secret-prefixed-substrings-from-e', 
         'SECURITY/invariants.yaml secret-leakage-debug-bundle-otel',
         'no canary plaintext from envelope.reasoning may appear in the debug-bundle export',
       ),
@@ -330,12 +332,12 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
       `reasoning-variant-B with embedded ${CANARY_VALUE} canary — host MUST NOT route differently.`,
       'env-route-B',
     );
-    if (aResp.status === 404 || bResp.status === 404) return;
+    if (aResp.status === 404 || bResp.status === 404) return softSkip('blocked', 'precondition not met — `aResp.status === 404 || bResp.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(aResp.body.status).toBe('accepted');
     expect(bResp.body.status).toBe('accepted');
     expect(
       aResp.body.status,
-      driver.describe(
+      req('openwop.it.envelope-reasoning-secret-redaction.envelope-acceptance-must-not-route-on-reasoning-contents-rfc-0030-a-normative-mu', 
         'RFCS/0030-envelope-reasoning-and-tier-one-subset.md §A',
         'reasoning is informational only; routing decision MUST NOT depend on its contents',
       ),

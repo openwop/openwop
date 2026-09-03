@@ -24,6 +24,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface ConsolidationCaps {
   agents?: { memoryConsolidation?: { supported?: boolean } };
@@ -50,11 +51,11 @@ describe('memory-consolidation-idempotent: pass contract (RFC 0068 §D, capabili
     });
     if (first.status === 404 || first.status === 501) return softSkip('blocked', 'seam not wired — soft-skip');
 
-    expect(first.status, driver.describe('RFC 0068 §D', 'an advertised consolidation seam MUST succeed')).toBe(200);
+    expect(first.status, req('openwop.it.memory-consolidation-idempotent.a-consolidation-pass-reduces-or-holds-entry-count-and-is-idempotent-on-a-stable', 'RFC 0068 §D', 'an advertised consolidation seam MUST succeed')).toBe(200);
     const r1 = first.json as ConsolidateResult;
     const in1 = r1.event?.inputCount ?? 0;
     const out1 = r1.event?.outputCount ?? 0;
-    expect(out1, driver.describe('RFC 0068 §D.1', 'outputCount MUST be <= inputCount for a merge/dedup pass')).toBeLessThanOrEqual(in1);
+    expect(out1, req('openwop.it.memory-consolidation-idempotent.a-consolidation-pass-reduces-or-holds-entry-count-and-is-idempotent-on-a-stable', 'RFC 0068 §D.1', 'outputCount MUST be <= inputCount for a merge/dedup pass')).toBeLessThanOrEqual(in1);
 
     // §D.2 — a second pass over the unchanged corpus is a no-op.
     const second = await driver.post('/v1/host/sample/memory/consolidate', {
@@ -64,14 +65,14 @@ describe('memory-consolidation-idempotent: pass contract (RFC 0068 §D, capabili
     const r2 = second.json as ConsolidateResult;
     expect(
       r2.event?.inputCount,
-      driver.describe('RFC 0068 §D.2', 'a second pass over an unchanged corpus MUST be a no-op (inputCount == outputCount)'),
+      req('openwop.it.memory-consolidation-idempotent.a-consolidation-pass-reduces-or-holds-entry-count-and-is-idempotent-on-a-stable', 'RFC 0068 §D.2', 'a second pass over an unchanged corpus MUST be a no-op (inputCount == outputCount)'),
     ).toBe(r2.event?.outputCount);
 
     // §D.3 — SR-1 carry-forward: a redacted secret stays redacted in the consolidated entry.
     if (typeof r1.secretLeaked === 'boolean') {
       expect(
         r1.secretLeaked,
-        driver.describe('RFC 0068 §D.3 / agent-memory.md §SR-1', 'a redacted secret MUST NOT re-appear in a consolidated entry'),
+        req('openwop.it.memory-consolidation-idempotent.a-consolidation-pass-reduces-or-holds-entry-count-and-is-idempotent-on-a-stable', 'RFC 0068 §D.3 / agent-memory.md §SR-1', 'a redacted secret MUST NOT re-appear in a consolidated entry'),
       ).toBe(false);
     }
   });

@@ -17,6 +17,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const UNIVERSAL_KINDS = ['clarification.request', 'schema.request', 'schema.response', 'error'];
@@ -25,7 +27,7 @@ describe('a2ui-surface-degrades: optional-advertised, not universal (RFC 0102 §
   it('ui.a2ui-surface is NOT a MUST-recognize universal kind', () => {
     expect(
       UNIVERSAL_KINDS.includes('ui.a2ui-surface'),
-      'ai-envelope.md §"A2UI surfaces": ui.a2ui-surface MUST be optional/advertised so an unrecognizing consumer may store-without-render',
+      req('openwop.it.a2ui-surface-degrades.ui-a2ui-surface-is-not-a-must-recognize-universal-kind', 'RFC 0102 §A', 'ai-envelope.md §"A2UI surfaces": ui.a2ui-surface MUST be optional/advertised so an unrecognizing consumer may store-without-render'),
     ).toBe(false);
   });
 });
@@ -43,12 +45,12 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-degrades: unadvertised kind is gated, r
       },
       hostSupportedEnvelopes: ['clarification.request'], // does not advertise ui.a2ui-surface
     });
-    if (res.status === 404) return; // seam absent — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
     expect(res.status).toBe(200);
     const body = res.json as { status?: string };
     expect(
       body.status,
-      driver.describe('RFC 0102 §A (N6)', 'an unadvertised ui.a2ui-surface MUST be gated, never crash the run'),
+      req('openwop.it.a2ui-surface-degrades.posting-ui-a2ui-surface-to-a-host-that-does-not-advertise-it-gated-not-failed', 'RFC 0102 §A (N6)', 'an unadvertised ui.a2ui-surface MUST be gated, never crash the run'),
     ).toBe('gated');
   });
 });

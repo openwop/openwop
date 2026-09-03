@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('queue-ack-nack-dlq: advertisement shape (RFC 0017)', () => {
   it('capabilities.queueBus is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.queue-ack-nack-dlq.capabilities-queuebus-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §queueBus',
         'capabilities.queueBus.supported MUST be a boolean when present',
       ),
@@ -44,17 +46,17 @@ describe('queue-ack-nack-dlq: advertisement shape (RFC 0017)', () => {
 
   it('deadLetterSupported is a boolean when set', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const subParts = ["deadLetterSupported"];
     let sub: unknown = cap;
     for (const p of subParts) {
       if (sub && typeof sub === 'object') sub = (sub as Record<string, unknown>)[p];
       else { sub = undefined; break; }
     }
-    if (sub === undefined) return; // optional sub-field
+    if (sub === undefined) return softSkip('blocked', 'precondition not met — `sub === undefined` returned early (optional sub-field) (seam, prior step, or fixture unavailable)'); // optional sub-field
     expect(
       typeof sub,
-      driver.describe(
+      req('openwop.it.queue-ack-nack-dlq.deadlettersupported-is-a-boolean-when-set', 
         'RFC 0017 §A',
         'queueBus.deadLetterSupported MUST be boolean when present',
       ),
@@ -69,7 +71,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('queue-ack-nack-dlq: behavioral (RFC 0017 §B point 2 — nack + DLQ)', () => {
   it('nack(requeue=true) → message is redelivered on next consume with deliveryCount incremented', async () => {
     const probe = await call('consume', { subject: '__probe__' });
-    if (probe.status === 404) return;
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const subject = `q-nack-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await call('publish', { subject, payload: { v: 'redeliver-me' } });
 
@@ -83,18 +85,18 @@ describe('queue-ack-nack-dlq: behavioral (RFC 0017 §B point 2 — nack + DLQ)',
     const secondBody = second.json as { found?: boolean; payload?: unknown; deliveryCount?: number };
     expect(
       secondBody.found,
-      driver.describe('RFC 0017 §B point 2', 'nack(requeue=true) MUST make the message available to next consume'),
+      req('openwop.it.queue-ack-nack-dlq.nack-requeue-true-message-is-redelivered-on-next-consume-with-deliverycount-incr', 'RFC 0017 §B point 2', 'nack(requeue=true) MUST make the message available to next consume'),
     ).toBe(true);
     expect(secondBody.payload).toEqual(firstBody.payload);
     expect(
       secondBody.deliveryCount,
-      driver.describe('RFC 0017 §B point 2', 'redelivered message MUST have incremented deliveryCount'),
+      req('openwop.it.queue-ack-nack-dlq.nack-requeue-true-message-is-redelivered-on-next-consume-with-deliverycount-incr', 'RFC 0017 §B point 2', 'redelivered message MUST have incremented deliveryCount'),
     ).toBe(2);
   });
 
   it('deadLetter → message appears on the <subject>.dlq subject; original subject is empty', async () => {
     const probe = await call('consume', { subject: '__probe__' });
-    if (probe.status === 404) return;
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const subject = `q-dlq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await call('publish', { subject, payload: { v: 'poison' } });
 
@@ -114,7 +116,7 @@ describe('queue-ack-nack-dlq: behavioral (RFC 0017 §B point 2 — nack + DLQ)',
     const dlqBody = dlqMsg.json as { found?: boolean; payload?: { original?: unknown; deadLetterReason?: string } };
     expect(
       dlqBody.found,
-      driver.describe('RFC 0017 §B point 2', 'deadLetter MUST route the message to the <subject>.dlq subject'),
+      req('openwop.it.queue-ack-nack-dlq.deadletter-message-appears-on-the-subject-dlq-subject-original-subject-is-empty', 'RFC 0017 §B point 2', 'deadLetter MUST route the message to the <subject>.dlq subject'),
     ).toBe(true);
     expect(dlqBody.payload?.deadLetterReason).toBe('unparseable_payload');
     expect(dlqBody.payload?.original).toEqual({ v: 'poison' });

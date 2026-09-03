@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('table-cursor-pagination: advertisement shape (RFC 0016)', () => {
   it('capabilities.tableStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.table-cursor-pagination.capabilities-tablestorage-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §tableStorage',
         'capabilities.tableStorage.supported MUST be a boolean when present',
       ),
@@ -50,7 +52,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('table-cursor-pagination: behavioral (RFC 0016 §B point 3)', () => {
   it('first page returns N rows + nextCursor; second page resumes; final page returns nextCursor:null', async () => {
     const probe = await call('query', { table: '__probe__', limit: 1 });
-    if (probe.status === 404) return; // seam not exposed
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     const table = `pag-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     // Seed 5 rows with deterministic ids so cursor ordering is testable.
     for (let i = 1; i <= 5; i++) {
@@ -62,7 +64,7 @@ describe('table-cursor-pagination: behavioral (RFC 0016 §B point 3)', () => {
     expect(Array.isArray(b1.rows) && b1.rows.length === 2).toBe(true);
     expect(
       typeof b1.nextCursor === 'string' && b1.nextCursor.length > 0,
-      driver.describe('RFC 0016 §B point 3', 'first page MUST surface nextCursor when more results remain'),
+      req('openwop.it.table-cursor-pagination.first-page-returns-n-rows-nextcursor-second-page-resumes-final-page-returns-next', 'RFC 0016 §B point 3', 'first page MUST surface nextCursor when more results remain'),
     ).toBe(true);
 
     // Page 2: cursor from page 1, limit=2
@@ -71,7 +73,7 @@ describe('table-cursor-pagination: behavioral (RFC 0016 §B point 3)', () => {
     expect(b2.rows?.length).toBe(2);
     expect(
       b2.rows![0]!.id > b1.rows![1]!.id,
-      driver.describe('RFC 0016 §B point 3', 'second page MUST resume AFTER the last id of the previous page'),
+      req('openwop.it.table-cursor-pagination.first-page-returns-n-rows-nextcursor-second-page-resumes-final-page-returns-next', 'RFC 0016 §B point 3', 'second page MUST resume AFTER the last id of the previous page'),
     ).toBe(true);
 
     // Page 3: final page — only 1 row left, nextCursor MUST be null
@@ -80,7 +82,7 @@ describe('table-cursor-pagination: behavioral (RFC 0016 §B point 3)', () => {
     expect(b3.rows?.length).toBe(1);
     expect(
       b3.nextCursor,
-      driver.describe('RFC 0016 §B point 3', 'final page (no more results) MUST surface nextCursor: null'),
+      req('openwop.it.table-cursor-pagination.first-page-returns-n-rows-nextcursor-second-page-resumes-final-page-returns-next', 'RFC 0016 §B point 3', 'final page (no more results) MUST surface nextCursor: null'),
     ).toBe(null);
   });
 });

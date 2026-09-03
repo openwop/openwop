@@ -1,0 +1,20 @@
+{
+  "$comment": "RFC 0171 §E.1 — the hostEvents channel address is declared here",
+  "properties": {
+    "minIntervalSec": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maxRuntimeMs": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deliveryChannel": {
+      "type": "string",
+      "pattern": "^/[A-Za-z0-9._~/{}-]+$"
+    }
+  },
+  "required": [
+    "deliveryChannel"
+  ]
+}

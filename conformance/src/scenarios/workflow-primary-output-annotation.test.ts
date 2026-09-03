@@ -23,6 +23,7 @@ import addFormats from 'ajv-formats';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 function compileWorkflowDefinition(): ReturnType<Ajv2020['compile']> {
   const ajv = new Ajv2020({ strict: false, allErrors: true });
@@ -78,7 +79,7 @@ describe('workflow-primary-output-annotation: outputRole shape (RFC 0065)', () =
       baseNode('b'),
     ]);
     const ok = validate(def);
-    expect(ok, JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(ok, req('openwop.it.workflow-primary-output-annotation.accepts-a-workflow-with-one-node-declaring-outputrole-primary', 'RFC 0065', JSON.stringify(validate.errors, null, 2))).toBe(true);
   });
 
   it('accepts primary AND secondary annotations on different nodes', () => {
@@ -88,7 +89,7 @@ describe('workflow-primary-output-annotation: outputRole shape (RFC 0065)', () =
       baseNode('c'),
     ]);
     const ok = validate(def);
-    expect(ok, JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(ok, req('openwop.it.workflow-primary-output-annotation.accepts-primary-and-secondary-annotations-on-different-nodes', 'RFC 0065', JSON.stringify(validate.errors, null, 2))).toBe(true);
   });
 
   it('accepts a workflow with the field absent (additive promise)', () => {
@@ -97,7 +98,7 @@ describe('workflow-primary-output-annotation: outputRole shape (RFC 0065)', () =
       baseNode('b'),
     ]);
     const ok = validate(def);
-    expect(ok, JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(ok, req('openwop.it.workflow-primary-output-annotation.accepts-a-workflow-with-the-field-absent-additive-promise', 'RFC 0065', JSON.stringify(validate.errors, null, 2))).toBe(true);
   });
 
   it('rejects an unknown outputRole enum value', () => {
@@ -105,7 +106,7 @@ describe('workflow-primary-output-annotation: outputRole shape (RFC 0065)', () =
       baseNode('a', { outputRole: 'tertiary' }),
     ]);
     const ok = validate(def);
-    expect(ok).toBe(false);
+    expect(ok, req('openwop.it.workflow-primary-output-annotation.rejects-an-unknown-outputrole-enum-value', 'RFC 0065', 'rejects an unknown outputRole enum value')).toBe(false);
     expect(validate.errors).toBeTruthy();
   });
 
@@ -114,7 +115,7 @@ describe('workflow-primary-output-annotation: outputRole shape (RFC 0065)', () =
       baseNode('a', { outputRole: 1 }),
     ]);
     const ok = validate(def);
-    expect(ok).toBe(false);
+    expect(ok, req('openwop.it.workflow-primary-output-annotation.rejects-outputrole-set-to-a-non-string', 'RFC 0065', 'rejects outputRole set to a non-string')).toBe(false);
   });
 
   it('permits multiple nodes declaring outputRole="primary" (tooling decides)', () => {
@@ -127,6 +128,6 @@ describe('workflow-primary-output-annotation: outputRole shape (RFC 0065)', () =
       baseNode('b', { outputRole: 'primary' }),
     ]);
     const ok = validate(def);
-    expect(ok, JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(ok, req('openwop.it.workflow-primary-output-annotation.permits-multiple-nodes-declaring-outputrole-primary-tooling-decides', 'RFC 0065', JSON.stringify(validate.errors, null, 2))).toBe(true);
   });
 });

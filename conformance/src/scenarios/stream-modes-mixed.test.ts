@@ -21,6 +21,7 @@ import { driver } from '../lib/driver.js';
 import { subscribe, type SseEvent } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-delay';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -43,18 +44,18 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
       { timeoutMs: 15_000 },
     );
 
-    expect(result.status, driver.describe(
+    expect(result.status, req('openwop.it.stream-modes-mixed.accepts-streammode-updates-messages-and-emits-a-server-closed-stream', 
       'stream-modes.md §Mixed mode',
       'streamMode=updates,messages MUST return 200',
     )).toBe(200);
 
-    expect(result.closedBy, driver.describe(
+    expect(result.closedBy, req('openwop.it.stream-modes-mixed.accepts-streammode-updates-messages-and-emits-a-server-closed-stream', 
       'stream-modes.md §Mixed mode + §updates',
       'server MUST close the stream on terminal run event',
     )).toBe('server');
 
     const types = eventTypes(result.events);
-    expect(types, driver.describe(
+    expect(types, req('openwop.it.stream-modes-mixed.accepts-streammode-updates-messages-and-emits-a-server-closed-stream', 
       'stream-modes.md §Mixed mode (union semantics)',
       'mixed updates,messages MUST include run.completed (admitted by updates)',
     )).toContain('run.completed');
@@ -70,7 +71,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
     const res = await driver.get(
       `/v1/runs/${encodeURIComponent(runId)}/events?streamMode=values,updates`,
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.stream-modes-mixed.rejects-streammode-values-updates-with-400-unsupported-stream-mode', 
       'stream-modes.md §Mixed mode',
       'values combined with another mode MUST return 400',
     )).toBe(400);
@@ -78,15 +79,15 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
     const body = res.json as
       | { error?: string; message?: string; details?: { supported?: string[] } }
       | undefined;
-    expect(body?.error, driver.describe(
+    expect(body?.error, req('openwop.it.stream-modes-mixed.rejects-streammode-values-updates-with-400-unsupported-stream-mode', 
       'stream-modes.md §Mode selection error envelope + error-envelope.schema.json',
       'unsupported_stream_mode error envelope MUST carry an `error` string discriminator',
     )).toBe('unsupported_stream_mode');
-    expect(typeof body?.message, driver.describe(
+    expect(typeof body?.message, req('openwop.it.stream-modes-mixed.rejects-streammode-values-updates-with-400-unsupported-stream-mode', 
       'error-envelope.schema.json',
       'error envelope MUST carry a human-readable `message` string',
     )).toBe('string');
-    expect(Array.isArray(body?.details?.supported), driver.describe(
+    expect(Array.isArray(body?.details?.supported), req('openwop.it.stream-modes-mixed.rejects-streammode-values-updates-with-400-unsupported-stream-mode', 
       'stream-modes.md §Mode selection error envelope',
       'error body MUST carry `details.supported` array (NOT top-level — `details` is the canonical contextual-data slot per error-envelope.schema.json)',
     )).toBe(true);
@@ -104,7 +105,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
     const res = await driver.get(
       `/v1/runs/${encodeURIComponent(runId)}/events?streamMode=updates,bogus`,
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.stream-modes-mixed.rejects-streammode-updates-bogus-one-bad-mode-fails-the-whole-list', 
       'stream-modes.md §Mixed mode + §Mode selection',
       'partial-unknown lists MUST return 400',
     )).toBe(400);
@@ -140,7 +141,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
     const mixedTypes = new Set(eventTypes(mixed.events));
 
     for (const t of updatesTypes) {
-      expect(mixedTypes.has(t), driver.describe(
+      expect(mixedTypes.has(t), req('openwop.it.stream-modes-mixed.mixed-mode-union-updates-debug-sees-every-event-updates-sees', 
         'stream-modes.md §Mixed mode (union)',
         `updates,debug MUST include every event type updates produces (missing: ${t})`,
       )).toBe(true);

@@ -31,6 +31,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 const schema = JSON.parse(
@@ -70,7 +71,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
   it('ui.a2ui-surface.schema.json compiles under Ajv2020', () => {
     expect(
       validate,
-      'RFC 0102 §A: the core ui.a2ui-surface payload schema MUST compile',
+      req('openwop.it.a2ui-surface-shape.ui-a2ui-surface-schema-json-compiles-under-ajv2020', 'RFC 0102 §A', 'RFC 0102 §A: the core ui.a2ui-surface payload schema MUST compile'),
     ).toBeTypeOf('function');
   });
 
@@ -78,7 +79,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     const ok = validate(positivePayload());
     expect(
       ok,
-      `RFC 0102 §A: positive surface MUST validate; errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.a2ui-surface-shape.accepts-a-positive-surface-payload-closed-catalog-confined-action', 'RFC 0102 §A', `RFC 0102 §A: positive surface MUST validate; errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -87,19 +88,19 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     (p.surface as { components: Array<Record<string, unknown>> }).components = [
       { component: 'action.button', id: 'send', label: 'Send', action: { target: 'exchange' } },
     ];
-    expect(validate(p)).toBe(true);
+    expect(validate(p), req('openwop.it.a2ui-surface-shape.accepts-an-exchange-targeted-action-the-other-confined-target', 'RFC 0102 §A', 'accepts an exchange-targeted action (the other confined target)')).toBe(true);
   });
 
   it('rejects a payload missing required `catalogVersion`', () => {
     const p = positivePayload();
     delete p.catalogVersion;
-    expect(validate(p), 'RFC 0102 §A: `catalogVersion` is REQUIRED').toBe(false);
+    expect(validate(p), req('openwop.it.a2ui-surface-shape.rejects-a-payload-missing-required-catalogversion', 'RFC 0102 §A', 'RFC 0102 §A: `catalogVersion` is REQUIRED')).toBe(false);
   });
 
   it('rejects a payload missing required `surface`', () => {
     const p = positivePayload();
     delete p.surface;
-    expect(validate(p), 'RFC 0102 §A: `surface` is REQUIRED').toBe(false);
+    expect(validate(p), req('openwop.it.a2ui-surface-shape.rejects-a-payload-missing-required-surface', 'RFC 0102 §A', 'RFC 0102 §A: `surface` is REQUIRED')).toBe(false);
   });
 
   it('rejects a `catalogVersion` the schema does not enumerate (unknown version)', () => {
@@ -107,7 +108,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     p.catalogVersion = '9.9.9';
     expect(
       validate(p),
-      'RFC 0102 §A.3: an unadvertised catalogVersion MUST fail the enumerated set',
+      req('openwop.it.a2ui-surface-shape.rejects-a-catalogversion-the-schema-does-not-enumerate-unknown-version', 'RFC 0102 §A', 'RFC 0102 §A.3: an unadvertised catalogVersion MUST fail the enumerated set'),
     ).toBe(false);
   });
 
@@ -118,7 +119,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     ];
     expect(
       validate(p),
-      'RFC 0102 §A.1: an out-of-catalog component MUST fail the closed anyOf',
+      req('openwop.it.a2ui-surface-shape.rejects-an-out-of-catalog-component-object-additionalproperties-false', 'RFC 0102 §A', 'RFC 0102 §A.1: an out-of-catalog component MUST fail the closed anyOf'),
     ).toBe(false);
   });
 
@@ -129,7 +130,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     ];
     expect(
       validate(p),
-      'RFC 0102 §A.1: additionalProperties:false MUST reject a smuggled code field',
+      req('openwop.it.a2ui-surface-shape.rejects-a-known-component-carrying-an-extra-script-bearing-property', 'RFC 0102 §A', 'RFC 0102 §A.1: additionalProperties:false MUST reject a smuggled code field'),
     ).toBe(false);
   });
 
@@ -140,7 +141,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     ];
     expect(
       validate(p),
-      'RFC 0102 §A.4 / SECURITY a2ui-action-confinement: an action target outside resume/exchange MUST be rejected',
+      req('openwop.it.a2ui-surface-shape.rejects-an-action-whose-target-is-outside-enum-resume-exchange-action-confinemen', 'RFC 0102 §A', 'RFC 0102 §A.4 / SECURITY a2ui-action-confinement: an action target outside resume/exchange MUST be rejected'),
     ).toBe(false);
   });
 
@@ -156,7 +157,7 @@ describe('a2ui-surface-shape: schema compile + round-trip (RFC 0102 §A)', () =>
     ];
     expect(
       validate(p),
-      'RFC 0102 §A.4: action additionalProperties:false MUST reject an arbitrary URL target',
+      req('openwop.it.a2ui-surface-shape.rejects-an-action-carrying-an-arbitrary-url-field-no-unconfined-egress-target', 'RFC 0102 §A', 'RFC 0102 §A.4: action additionalProperties:false MUST reject an arbitrary URL target'),
     ).toBe(false);
   });
 });

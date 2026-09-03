@@ -68,6 +68,8 @@ import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -100,12 +102,12 @@ describe.skipIf(HTTP_SKIP)(
       const d = await readDiscovery();
       if (d === null) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       }
       const promptsSupported = capabilityFamily(d, 'prompts')?.supported;
       if (promptsSupported !== true) {
         ctx.skip();
-        return;
+        return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `promptsSupported !== true` returned early');
       }
 
       const nonMemberWorkspaceId =
@@ -125,18 +127,18 @@ describe.skipIf(HTTP_SKIP)(
           const body = res.json as { error?: unknown } | null;
           expect(
             body?.error,
-            driver.describe(
+            req('openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve', 
               'spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required',
               `403 refusal of a workspace-scoped read MUST carry error: "workspace_membership_required"; got error: ${JSON.stringify(body?.error)}`,
             ),
           ).toBe('workspace_membership_required');
         }
-        return;
+        return softSkip('blocked', 'precondition not met — `res.status >= 400 && res.status < 500` returned early (4xx — refused. Acceptable shape for the membership-required failure (and any other refusal mode the host chooses: 401, 404 for existence-d…');
       }
 
       // 5xx — refused (infrastructure failure is acceptable; envelope shape
       // unconstrained).
-      if (res.status >= 500) return;
+      if (res.status >= 500) return softSkip('blocked', 'precondition not met — `res.status >= 500` returned early (5xx — refused (infrastructure failure is acceptable; envelope shape unconstrained).) (seam, prior step, or fixture unavailable)');
 
       // 2xx — must inspect the response body. The failure mode this
       // invariant guards against is a 200 response that LEAKS templates
@@ -154,13 +156,13 @@ describe.skipIf(HTTP_SKIP)(
           // workspace-scoped reads, and a host without that surface is
           // simply out of scope.
           ctx.skip();
-          return;
+          return softSkip('blocked', 'precondition not met — `body === null || typeof body !== \'object\' || !(\'templates\' in body)` returned early (seam, prior step, or fixture unavailable)');
         }
         const templates = body.templates;
         if (!Array.isArray(templates)) {
           // Same: unrecognized shape, skip.
           ctx.skip();
-          return;
+          return softSkip('blocked', 'precondition not met — `!Array.isArray(templates)` returned early (seam, prior step, or fixture unavailable)');
         }
 
         // A random non-member workspaceId can never legitimately contain
@@ -168,12 +170,12 @@ describe.skipIf(HTTP_SKIP)(
         // is a cross-tenant data leak.
         expect(
           templates.length,
-          driver.describe(
+          req('openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve', 
             'spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes',
             `GET /v1/prompts?workspaceId=<random-non-member> MUST NOT return any templates; got ${templates.length} templates which is a cross-tenant data leak (the random workspaceId is freshly generated per probe and cannot legitimately contain authorized content)`,
           ),
         ).toBe(0);
-        return;
+        return softSkip('blocked', 'precondition not met — `res.status >= 200 && res.status < 300` returned early (2xx — must inspect the response body. The failure mode this invariant guards against is a 200 response that LEAKS templates from a workspa…');
       }
 
       // Other status codes (1xx, 3xx) — soft-skip with note. Not a clear

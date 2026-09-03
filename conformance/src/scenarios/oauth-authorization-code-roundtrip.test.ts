@@ -38,6 +38,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryOAuth {
   supported?: boolean;
@@ -100,7 +101,7 @@ describe('oauth-authorization-code-roundtrip: the grant dance (RFC 0047 §C)', (
 
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.oauth-authorization-code-roundtrip.acquires-a-token-via-authorization-code-and-returns-a-reference-never-the-token', 
         'RFC 0047 §C',
         'the authorize-code-roundtrip seam MUST perform the authorization_code grant against the synthetic provider and return the run observable surfaces',
       ),
@@ -109,7 +110,7 @@ describe('oauth-authorization-code-roundtrip: the grant dance (RFC 0047 §C)', (
     const body = (res.json ?? {}) as { credentialRef?: unknown };
     expect(
       typeof body.credentialRef === 'string' && body.credentialRef.length > 0,
-      driver.describe(
+      req('openwop.it.oauth-authorization-code-roundtrip.acquires-a-token-via-authorization-code-and-returns-a-reference-never-the-token', 
         'RFC 0047 §C',
         'a successful roundtrip MUST resolve to a credential REFERENCE (token persisted as a host.credentials entry), not the raw token',
       ),
@@ -120,7 +121,7 @@ describe('oauth-authorization-code-roundtrip: the grant dance (RFC 0047 §C)', (
     for (const secret of SECRET_VALUES) {
       expect(
         serialized.includes(secret),
-        driver.describe(
+        req('openwop.it.oauth-authorization-code-roundtrip.acquires-a-token-via-authorization-code-and-returns-a-reference-never-the-token', 
           'RFC 0047 §C / SECURITY/invariants.yaml credential-payload-redaction',
           `the authorization code, state, PKCE verifier, and acquired token material MUST NOT appear on any run-visible surface — leaked: ${secret.slice(0, 16)}…`,
         ),
@@ -135,7 +136,7 @@ describe('oauth-authorization-code-roundtrip: the grant dance (RFC 0047 §C)', (
         const keys = Object.keys(authorized.payload);
         expect(
           keys.includes('credentialRef') && !keys.includes('access_token') && !keys.includes('refresh_token'),
-          driver.describe(
+          req('openwop.it.oauth-authorization-code-roundtrip.acquires-a-token-via-authorization-code-and-returns-a-reference-never-the-token', 
             'RFC 0047 §C',
             'connector.authorized MUST carry { provider, credentialRef, scopes } and MUST NOT carry token material',
           ),

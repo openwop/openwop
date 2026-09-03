@@ -29,11 +29,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readBudgetCap, driveBudgetRun, BUDGET_CAP_KINDS, BUDGET_CONTENT_FORBIDDEN } from '../lib/budgetPolicy.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import type { TestEvent } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 function seq(events: TestEvent[], type: string): number {
   const e = events.find((x) => x.type === type);
@@ -45,7 +46,7 @@ function expectContentFree(events: TestEvent[]): void {
     for (const f of BUDGET_CONTENT_FORBIDDEN) {
       expect(
         !(f in e.payload),
-        driver.describe('RFC 0084 §F (SR-1) / budget-no-pricing-leak', `budget.* MUST be content-free (no ${f})`),
+        req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §F (SR-1) / budget-no-pricing-leak', `budget.* MUST be content-free (no ${f})`),
       ).toBe(true);
     }
   }
@@ -55,11 +56,11 @@ describe('budget-enforcement (RFC 0084 §C/§D)', () => {
   it('runs the reserved→consumed→threshold→exhausted→cap.breached→run.failed chain, refuses denied models, and honors advisory mode', async () => {
     const cap = await readBudgetCap();
     if (!behaviorGate('openwop-budget-enforcement', cap?.supported === true)) return;
-    if (!(await isEventLogSeamAvailable())) return; // event-log seam absent — soft-skip
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (event-log seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // event-log seam absent — soft-skip
 
     // ---- Leg 1: hard cost exhaust (§C/§D) -------------------------------
     const hard = await driveBudgetRun({ scenario: 'hard-cost-exhaust' });
-    if (hard === null) return; // budget seam absent — soft-skip the whole behavior
+    if (hard === null) return softSkip('blocked', 'precondition not met — `hard === null` returned early (budget seam absent — soft-skip the whole behavior) (seam, prior step, or fixture unavailable)'); // budget seam absent — soft-skip the whole behavior
     if (hard.runId) {
       const q = await queryTestEvents(hard.runId);
       if (q.ok) {
@@ -72,39 +73,39 @@ describe('budget-enforcement (RFC 0084 §C/§D)', () => {
 
         expect(
           reserved >= 0 && exhausted >= 0,
-          driver.describe('budget-policy.md §C', 'a hard budget run MUST emit budget.reserved + budget.exhausted'),
+          req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'budget-policy.md §C', 'a hard budget run MUST emit budget.reserved + budget.exhausted'),
         ).toBe(true);
         // §C ordering: reserved < threshold.crossed < exhausted < run.failed.
         if (threshold >= 0) {
           expect(
             reserved < threshold && threshold < exhausted,
-            driver.describe('RFC 0084 §C', 'ordering MUST be reserved < threshold.crossed < exhausted'),
+            req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §C', 'ordering MUST be reserved < threshold.crossed < exhausted'),
           ).toBe(true);
           const tc = ev.find((e) => e.type === 'budget.threshold.crossed');
           expect(
             typeof tc?.payload.percent === 'number',
-            driver.describe('run-event-payloads.schema.json#budgetThresholdCrossed', 'threshold.crossed MUST carry a numeric percent'),
+            req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'run-event-payloads.schema.json#budgetThresholdCrossed', 'threshold.crossed MUST carry a numeric percent'),
           ).toBe(true);
         }
         // §D hard-stop: exhausted → cap.breached{budget-*} → run.failed{budget_exhausted}.
         expect(
           capBreached !== undefined,
-          driver.describe('RFC 0084 §D', 'exhaustion MUST emit cap.breached with a budget-* kind'),
+          req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'exhaustion MUST emit cap.breached with a budget-* kind'),
         ).toBe(true);
         if (capBreached) {
           expect(
             BUDGET_CAP_KINDS.includes(capBreached.payload.kind as string),
-            driver.describe('RFC 0084 §D', 'cap.breached.kind MUST be in the closed budget vocabulary'),
+            req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'cap.breached.kind MUST be in the closed budget vocabulary'),
           ).toBe(true);
           expect(
             exhausted <= capBreached.sequence && capBreached.sequence <= failed,
-            driver.describe('RFC 0084 §D', 'ordering MUST be exhausted ≤ cap.breached ≤ run.failed'),
+            req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'ordering MUST be exhausted ≤ cap.breached ≤ run.failed'),
           ).toBe(true);
         }
         const failedEvt = ev.find((e) => e.type === 'run.failed');
         expect(
           failedEvt?.payload.error === 'budget_exhausted',
-          driver.describe('RFC 0084 §D', 'a hard-budget overrun MUST fail the run with error budget_exhausted'),
+          req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'a hard-budget overrun MUST fail the run with error budget_exhausted'),
         ).toBe(true);
         expectContentFree(ev);
       }
@@ -115,11 +116,11 @@ describe('budget-enforcement (RFC 0084 §C/§D)', () => {
     if (denied !== null) {
       expect(
         denied.error === 'budget_model_denied',
-        driver.describe('RFC 0084 §D', 'a model violating the budget allow/deny list MUST be refused with budget_model_denied'),
+        req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'a model violating the budget allow/deny list MUST be refused with budget_model_denied'),
       ).toBe(true);
       expect(
         denied.modelCalled !== true,
-        driver.describe('RFC 0084 §D', 'a denied model MUST be refused BEFORE the provider call (fail-closed)'),
+        req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'a denied model MUST be refused BEFORE the provider call (fail-closed)'),
       ).toBe(true);
     }
 
@@ -139,7 +140,7 @@ describe('budget-enforcement (RFC 0084 §C/§D)', () => {
           if (hasBudgetEvents) {
             expect(
               !stopped,
-              driver.describe('RFC 0084 §D', 'advisory enforcement MUST emit budget.* events without stopping the run'),
+              req('openwop.it.budget-enforcement.runs-the-reserved-consumed-threshold-exhausted-cap-breached-run-failed-chain-ref', 'RFC 0084 §D', 'advisory enforcement MUST emit budget.* events without stopping the run'),
             ).toBe(true);
           }
           expectContentFree(ev);

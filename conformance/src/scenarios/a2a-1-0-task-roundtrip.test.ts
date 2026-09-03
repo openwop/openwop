@@ -27,6 +27,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'a2a-1.0';
 const STATES_10 = [
@@ -75,27 +76,27 @@ describe('RFC 0152 §D — a2a-1.0-task-roundtrip (host as A2A 1.0 server, gated
   it('SendMessage @1.0 creates a task whose id is the runId, in 1.0 spelling; GetTask reads it back; unknown id is TASK_NOT_FOUND', async () => {
     if (!behaviorGate(PROFILE, await claims10())) return;
     const url = await jsonrpc10Url();
-    expect(url, driver.describe('a2a-integration.md §C', 'a `a2a-1.0` host MUST publish a JSONRPC/1.0 interface in its card')).not.toBeNull();
+    expect(url, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §C', 'a `a2a-1.0` host MUST publish a JSONRPC/1.0 interface in its card')).not.toBeNull();
     const sent = await rpc10(url!, 'SendMessage', {
       message: { messageId: `conf-${Date.now()}`, role: 'ROLE_USER', parts: [{ text: 'openwop conformance a2a-1.0 roundtrip' }] },
       configuration: { returnImmediately: true },
     }, 1);
-    expect(sent.status, driver.describe('a2a-integration.md §D.1', 'SendMessage MUST be accepted on the 1.0 interface')).toBe(200);
-    expect(sent.error, driver.describe('a2a-integration.md §D.1', `SendMessage MUST NOT error: ${JSON.stringify(sent.error)}`)).toBeUndefined();
+    expect(sent.status, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.1', 'SendMessage MUST be accepted on the 1.0 interface')).toBe(200);
+    expect(sent.error, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.1', `SendMessage MUST NOT error: ${JSON.stringify(sent.error)}`)).toBeUndefined();
     const result = sent.result ?? {};
     // SendMessageResponse is a oneof: { task } | { message }. A run-creating host answers with a task.
     const task = (result['task'] ?? (result['id'] !== undefined ? result : undefined)) as { id?: string; contextId?: string; status?: { state?: string; timestamp?: string }; history?: Array<{ role?: string; parts?: Array<Record<string, unknown>> }>; kind?: unknown } | undefined;
-    expect(task, driver.describe('a2a-integration.md §D.1', 'SendMessage without taskId MUST create a run and return `{ task }`')).toBeDefined();
-    expect(task!.kind, driver.describe('a2a-integration.md §D.5', '1.0 has no `kind` discriminator')).toBeUndefined();
+    expect(task, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.1', 'SendMessage without taskId MUST create a run and return `{ task }`')).toBeDefined();
+    expect(task!.kind, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.5', '1.0 has no `kind` discriminator')).toBeUndefined();
     expect(typeof task!.id).toBe('string');
-    expect(STATES_10, driver.describe('a2a-integration.md §D.4', 'status.state MUST use the 1.0 TASK_STATE_* spelling')).toContain(task!.status?.state);
+    expect(STATES_10, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.4', 'status.state MUST use the 1.0 TASK_STATE_* spelling')).toContain(task!.status?.state);
     for (const m of task!.history ?? []) {
-      expect(['ROLE_USER', 'ROLE_AGENT'], driver.describe('a2a-integration.md §D.2', 'history roles are ROLE_*')).toContain(m.role);
-      for (const p of m.parts ?? []) expect(p['kind'], driver.describe('a2a-integration.md §D.3', 'Part is a oneof — no `kind`')).toBeUndefined();
+      expect(['ROLE_USER', 'ROLE_AGENT'], req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.2', 'history roles are ROLE_*')).toContain(m.role);
+      for (const p of m.parts ?? []) expect(p['kind'], req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.3', 'Part is a oneof — no `kind`')).toBeUndefined();
     }
     // Task.id IS the runId (RFC 0100): the OpenWOP snapshot for it MUST exist for the same caller.
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(task!.id!)}`);
-    expect(snap.status, driver.describe('a2a-integration.md §D.4', '`Task.id` MUST be the backing runId — GET /v1/runs/{id} resolves it for the same principal')).toBe(200);
+    expect(snap.status, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.4', '`Task.id` MUST be the backing runId — GET /v1/runs/{id} resolves it for the same principal')).toBe(200);
     // GetTask reads it back with the same id and a valid 1.0 state.
     const got = await rpc10(url!, 'GetTask', { id: task!.id }, 2);
     expect(got.error).toBeUndefined();
@@ -104,7 +105,7 @@ describe('RFC 0152 §D — a2a-1.0-task-roundtrip (host as A2A 1.0 server, gated
     expect(STATES_10).toContain(gotTask.status?.state);
     // Unknown id — and, per §E, a cross-tenant id — MUST be TASK_NOT_FOUND, never forbidden.
     const missing = await rpc10(url!, 'GetTask', { id: `run_does_not_exist_${Date.now()}` }, 3);
-    expect(missing.error?.code, driver.describe('a2a-integration.md §D.7/§E', 'an unknown or unreadable task MUST be TASK_NOT_FOUND (-32001) — no enumeration')).toBe(-32001);
+    expect(missing.error?.code, req('openwop.it.a2a-1-0-task-roundtrip.sendmessage-1-0-creates-a-task-whose-id-is-the-runid-in-1-0-spelling-gettask-rea', 'a2a-integration.md §D.7/§E', 'an unknown or unreadable task MUST be TASK_NOT_FOUND (-32001) — no enumeration')).toBe(-32001);
     // Tidy: cancel the run we created (best effort; terminal runs answer TASK_NOT_CANCELABLE which is fine).
     await rpc10(url!, 'CancelTask', { id: task!.id }, 4);
   });

@@ -20,6 +20,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-pack-provenance';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -48,7 +49,7 @@ describe.skipIf(SKIP)('agentPackProvenance: sourceManifestId survives install + 
     const withProvenance = refs.filter((r) => typeof r.sourceManifestId === 'string');
     expect(
       withProvenance.length,
-      'pack-installed agents MUST surface sourceManifestId on their runtime AgentRef projection',
+      req('openwop.it.agentPackProvenance.run-level-agentref-carries-sourcemanifestid-pointing-back-to-the-install-source', 'RFCS/0003-agent-packs.md', 'pack-installed agents MUST surface sourceManifestId on their runtime AgentRef projection'),
     ).toBeGreaterThan(0);
   });
 });

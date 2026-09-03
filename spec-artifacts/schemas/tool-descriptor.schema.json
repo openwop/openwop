@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/tool-descriptor.schema.json",
+  "title": "ToolDescriptor",
+  "description": "RFC 0078. A portable, read-only description of one tool, unifying the five openwop tool surfaces (node-pack / workflow / MCP / connector / host-extension) behind one stable shape. Returned by `GET /v1/tools` + `GET /v1/tools/{toolId}` when the host advertises `capabilities.toolCatalog.supported: true`. The descriptor DESCRIBES a tool; it never carries credential material (SR-1) and is not an invocation path (tools are invoked on their existing surfaces).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["toolId", "source", "safetyTier"],
+  "properties": {
+    "toolId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable, host-unique tool identifier in the `<scope>:<tool-id>` form RFC 0077 `toolAllowlist` references (`openwop:` core, `mcp:` MCP-namespaced, `connector:` connector, `<vendor>.<host>` / `x-host-<vendor>-*` host-extension). The keyspace SPANS sources so a single allowlist entry resolves to exactly one descriptor; the `<scope>` prefix disambiguates by construction (RFC 0078 §UQ1). MUST be stable across catalog reads for a given host version so an agent's `toolAllowlist` keeps resolving."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["node-pack", "workflow", "mcp", "connector", "host-extension"],
+      "description": "Which surface backs the tool. `node-pack`: a pack typeId (RFC 0003); `workflow`: a workflow-as-tool (`core.subWorkflow` / RFC 0013); `mcp`: an MCP server tool (`host.mcp`); `connector`: an RFC 0045 connector action; `host-extension`: an `x-host-<vendor>-*` scope (RFC 0069)."
+    },
+    "title": { "type": "string", "description": "MAY — human-readable name for UI." },
+    "description": { "type": "string", "description": "MAY — one-line summary for a tool picker." },
+    "inputSchema": { "type": "object", "description": "MAY — JSON Schema (2020-12) for the tool's arguments. Absent ⇒ opaque/host-interpreted args. RECOMMENDED (not required) to be the RFC 0030 Tier-1 universal subset for tools that feed an LLM tool-call (RFC 0078 §UQ2)." },
+    "outputSchema": { "type": "object", "description": "MAY — JSON Schema for the tool's result." },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MAY — what the caller must supply/hold to invoke. Composes RFC 0049 (scopes) + RFC 0046 (credentials).",
+      "properties": {
+        "scopes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "RFC 0049 scopes the principal MUST hold; per-tool authorization fails closed (RFC 0064 §C)." },
+        "credentialRef": { "type": "boolean", "description": "true ⇒ the tool needs a host-stored credential reference (RFC 0046); the catalog NEVER carries credential material (SR-1)." }
+      }
+    },
+    "egress": {
+      "type": "string",
+      "enum": ["none", "safe-fetch", "host-mediated", "host-owned"],
+      "description": "MAY — outbound-network posture. `none`: no egress; `safe-fetch`: via the host's RFC 0076 §B `ctx.http.safeFetch` (SSRF-guarded); `host-mediated`: host-proxied non-safeFetch; `host-owned`: the host owns the egress story (e.g. a host-extension)."
+    },
+    "approval": {
+      "type": "string",
+      "enum": ["never", "conditional", "always"],
+      "description": "MAY — whether invocation requires an RFC 0051 approval interrupt. `conditional` ⇒ host-policy (e.g. over a cost/scope threshold)."
+    },
+    "replayPolicy": {
+      "type": "string",
+      "enum": ["deterministic", "idempotent", "non-deterministic"],
+      "description": "MAY — replay posture (`replay.md`). `deterministic`: pure/replay-safe; `idempotent`: safe under the Layer-2 idempotency key (`idempotency.md`); `non-deterministic`: the host MUST cache the observable result (RFC 0041 §C) so replay reproduces the sequence."
+    },
+    "safetyTier": {
+      "type": "string",
+      "enum": ["pure", "read", "write", "exec"],
+      "description": "REQUIRED. The tool's DATA-EFFECT classification: `pure`: no external side effects; `read`: reads external state; `write`: mutates external state; `exec`: arbitrary-command/`exec`-class — per RFC 0069 this MUST have `source: \"host-extension\"` (exec is never protocol-tier). A consumer uses this to gate/warn. The host MUST ASSIGN `safetyTier` explicitly as per-tool metadata; it is NOT derivable from a permission / approval / risk tier — those are an ORTHOGONAL authorization axis (a read-only tool can be high-approval/restricted while being `safetyTier:\"read\"`). A host that mechanically maps its risk tier onto `safetyTier` mis-advertises."
+    },
+    "costHint": { "type": "string", "enum": ["low", "medium", "high"], "description": "MAY — advisory cost magnitude for planning UX. Non-normative." },
+    "latencyHint": { "type": "string", "enum": ["low", "medium", "high"], "description": "MAY — advisory latency magnitude. Non-normative." }
+  },
+  "allOf": [
+    {
+      "$comment": "RFC 0078 §C-1 / §F-4: an exec-tier tool MUST be host-extension-sourced (RFC 0069 — exec is never protocol-tier).",
+      "if": { "properties": { "safetyTier": { "const": "exec" } }, "required": ["safetyTier"] },
+      "then": { "properties": { "source": { "const": "host-extension" } }, "required": ["source"] }
+    }
+  ]
+}

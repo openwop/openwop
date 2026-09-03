@@ -19,6 +19,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-memory-roundtrip';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
@@ -26,7 +27,7 @@ const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
 describe.skipIf(SKIP)('agentMemoryRoundTrip: write → read via MemoryAdapter', () => {
   it('memory entries written during a run are readable via the resolved memoryRef', async () => {
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
-    expect(create.status).toBe(201);
+    expect(create.status, req('openwop.it.agentMemoryRoundTrip.memory-entries-written-during-a-run-are-readable-via-the-resolved-memoryref', 'RFCS/0004-memory-layer.md', 'memory entries written during a run are readable via the resolved memoryRef')).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);

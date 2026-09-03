@@ -32,6 +32,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface RetentionCaps {
   supported?: boolean;
@@ -63,12 +65,12 @@ describe('production-retention-expiry: capability shape', () => {
       return;
     }
 
-    expect(prod?.retention?.supported, driver.describe(
+    expect(prod?.retention?.supported, req('openwop.it.production-retention-expiry.host-claiming-openwop-production-with-retention-advertises-required-fields', 
       'production-profile.md §"Event retention"',
       'capabilities.production.retention.supported MUST be true for production-profile claimants',
     )).toBe(true);
 
-    expect(prod?.retention?.minWindowSeconds, driver.describe(
+    expect(prod?.retention?.minWindowSeconds, req('openwop.it.production-retention-expiry.host-claiming-openwop-production-with-retention-advertises-required-fields', 
       'production-profile.md §"Event retention"',
       'capabilities.production.retention.minWindowSeconds MUST be advertised when retention.supported is true',
     )).toBeDefined();
@@ -76,7 +78,7 @@ describe('production-retention-expiry: capability shape', () => {
     expect(
       Number.isInteger(prod?.retention?.minWindowSeconds) &&
         (prod?.retention?.minWindowSeconds ?? 0) >= SEVEN_DAYS_SECONDS,
-      driver.describe(
+      req('openwop.it.production-retention-expiry.host-claiming-openwop-production-with-retention-advertises-required-fields', 
         'production-profile.md §"Event retention"',
         'minWindowSeconds MUST be an integer ≥ 604800 (7 days) for public production-profile claimants',
       ),
@@ -126,14 +128,14 @@ describe('production-retention-expiry: 410/404 envelope on expired run', () => {
       console.warn(
         '[production-retention-expiry] no expired runId available (set OPENWOP_TEST_EXPIRED_RUN_ID or advertise testForceExpire + provide OPENWOP_TEST_FORCE_EXPIRE_URL); skipping envelope assertion',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `expiredRunId === undefined` returned early ([production-retention-expiry] no expired runId available (set OPENWOP_TEST_EXPIRED_RUN_ID or advertise testForceExp…');
     }
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(expiredRunId)}`);
 
     expect(
       res.status === 410 || res.status === 404,
-      driver.describe(
+      req('openwop.it.production-retention-expiry.get-v1-runs-expiredrunid-returns-410-or-404-with-canonical-envelope', 
         'production-profile.md §"Event retention"',
         'expired run MUST return 410 Gone (preferred) or 404 Not Found',
       ),
@@ -145,7 +147,7 @@ describe('production-retention-expiry: 410/404 envelope on expired run', () => {
       details?: { expiredAt?: string };
     };
 
-    expect(typeof body.error, driver.describe(
+    expect(typeof body.error, req('openwop.it.production-retention-expiry.get-v1-runs-expiredrunid-returns-410-or-404-with-canonical-envelope', 
       'production-profile.md §"Event retention"',
       'expired-run response MUST use the canonical error envelope ({error, message, details?})',
     )).toBe('string');

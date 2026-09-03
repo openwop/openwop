@@ -30,6 +30,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateKeyPairSync, sign, verify } from 'node:crypto';
+import { req } from '../lib/requirement-ids.js';
 
 /** Canonical workflow-chain pack manifest used as the signing target.
  *  Mirrors the spec doc's Positive example, kept tight so the test
@@ -76,7 +77,7 @@ describe('category: workflow-chain pack signature — Ed25519 verification reuse
     const ok = verify(null, manifest, publicKey, signature);
     expect(
       ok,
-      'Per workflow-chain-packs.md §"Expansion semantics" step 2: the signature recipe is IDENTICAL to node-packs (Ed25519 over pack.json bytes). A valid pair MUST verify with the canonical recipe.',
+      req('openwop.it.workflow-chain-pack-signature-verification.valid-manifest-valid-signature-must-verify-positive-path', 'workflow-chain-packs.md', 'Per workflow-chain-packs.md §"Expansion semantics" step 2: the signature recipe is IDENTICAL to node-packs (Ed25519 over pack.json bytes). A valid pair MUST verify with the canonical recipe.'),
     ).toBe(true);
   });
 
@@ -92,7 +93,7 @@ describe('category: workflow-chain pack signature — Ed25519 verification reuse
     const ok = verify(null, tampered, publicKey, signature);
     expect(
       ok,
-      'Per node-packs.md §Signing (reused unchanged for chain packs): Ed25519 verification MUST detect any byte-level tamper to the signed payload.',
+      req('openwop.it.workflow-chain-pack-signature-verification.tampered-manifest-must-fail-verification-sha-level-tamper-detection', 'workflow-chain-packs.md', 'Per node-packs.md §Signing (reused unchanged for chain packs): Ed25519 verification MUST detect any byte-level tamper to the signed payload.'),
     ).toBe(false);
   });
 
@@ -108,7 +109,7 @@ describe('category: workflow-chain pack signature — Ed25519 verification reuse
     const ok = verify(null, manifest, attackerPubKey, signature);
     expect(
       ok,
-      'Ed25519 verification MUST fail when the public key doesn\'t match the private key that produced the signature — the spec\'s trust model depends on this property.',
+      req('openwop.it.workflow-chain-pack-signature-verification.wrong-key-signature-must-fail-verification', 'workflow-chain-packs.md', 'Ed25519 verification MUST fail when the public key doesn\'t match the private key that produced the signature — the spec\'s trust model depends on this property.'),
     ).toBe(false);
   });
 
@@ -130,7 +131,7 @@ describe('category: workflow-chain pack signature — Ed25519 verification reuse
     };
     expect(
       signedManifest.signing.method,
-      'workflow-chain packs MUST accept the same signing block keys as node packs (publicKeyRef + signatureRef + method) per spec design.',
+      req('openwop.it.workflow-chain-pack-signature-verification.chain-pack-manifests-carry-the-same-signing-block-shape-as-node-packs', 'workflow-chain-packs.md', 'workflow-chain packs MUST accept the same signing block keys as node packs (publicKeyRef + signatureRef + method) per spec design.'),
     ).toBe('manual');
     expect(signedManifest.signing.publicKeyRef).toBe('keys/2026-05.pem');
     expect(signedManifest.signing.signatureRef).toBe('pack.json.sig');

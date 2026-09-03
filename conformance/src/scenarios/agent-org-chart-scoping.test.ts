@@ -29,9 +29,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readOrgChartCap, getOrgChart, getDepartmentView } from '../lib/agentOrgChart.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const ROSTER_ID_RE = /^host:[a-z0-9][a-z0-9._-]*$/;
 
@@ -43,17 +44,17 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
     const installScope = typeof cap?.installScope === 'string' ? cap.installScope : 'tenant';
     expect(
       installScope === 'host' || installScope === 'tenant',
-      driver.describe('RFC 0087 §E / RFC 0074', "agents.orgChart.installScope (when present) MUST be 'host' or 'tenant'"),
+      req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'RFC 0087 §E / RFC 0074', "agents.orgChart.installScope (when present) MUST be 'host' or 'tenant'"),
     ).toBe(true);
 
     // ---- Leg 1: normative read (black-box) -------------------------------
     const chart = await getOrgChart();
-    if (chart === null) return; // advertised but read not served yet — soft-skip
+    if (chart === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chart === null` returned early (advertised but read not served yet — soft-skip)'); // advertised but read not served yet — soft-skip
     const departments = chart.departments ?? [];
     const members = chart.members ?? [];
     expect(
       Array.isArray(departments) && Array.isArray(members),
-      driver.describe('agent-org-chart.schema.json', 'GET /v1/agents/org-chart MUST return departments[] + members[]'),
+      req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.schema.json', 'GET /v1/agents/org-chart MUST return departments[] + members[]'),
     ).toBe(true);
 
     const deptIds = new Set(departments.map((d) => d.departmentId).filter((x): x is string => typeof x === 'string'));
@@ -62,7 +63,7 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
       if (parent !== undefined && parent !== null) {
         expect(
           deptIds.has(parent),
-          driver.describe('agent-org-chart.md §A', 'every parentDepartmentId MUST resolve to a department in the chart (a tree)'),
+          req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §A', 'every parentDepartmentId MUST resolve to a department in the chart (a tree)'),
         ).toBe(true);
       }
     }
@@ -79,18 +80,18 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
       }
       expect(
         steps <= departments.length,
-        driver.describe('agent-org-chart.md §A', 'the department parent graph MUST be acyclic'),
+        req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §A', 'the department parent graph MUST be acyclic'),
       ).toBe(true);
     }
     for (const m of members) {
       expect(
         typeof m.rosterId === 'string' && ROSTER_ID_RE.test(m.rosterId),
-        driver.describe('agent-org-chart.md §A', 'each member MUST reference a roster entry (host:<id> rosterId)'),
+        req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §A', 'each member MUST reference a roster entry (host:<id> rosterId)'),
       ).toBe(true);
       if (typeof m.departmentId === 'string') {
         expect(
           deptIds.size === 0 || deptIds.has(m.departmentId),
-          driver.describe('agent-org-chart.md §A', "a member's departmentId MUST be a department in the chart"),
+          req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §A', "a member's departmentId MUST be a department in the chart"),
         ).toBe(true);
       }
     }
@@ -102,23 +103,23 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
       if (status === 200 && view) {
         expect(
           Array.isArray(view.responsibilities),
-          driver.describe('agent-org-chart.md §D', 'the responsibility view MUST carry a responsibilities[] roll-up'),
+          req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §D', 'the responsibility view MUST carry a responsibilities[] roll-up'),
         ).toBe(true);
         const r = view.responsibilities ?? [];
         expect(
           r.length === new Set(r).size,
-          driver.describe('agent-org-chart.md §D', 'responsibilities MUST be a deduped union (no duplicate workflow ids)'),
+          req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §D', 'responsibilities MUST be a deduped union (no duplicate workflow ids)'),
         ).toBe(true);
         expect(
           r.every((w) => typeof w === 'string'),
-          driver.describe('org-chart-responsibility-view.schema.json', 'responsibilities[] entries MUST be workflow-id strings'),
+          req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'org-chart-responsibility-view.schema.json', 'responsibilities[] entries MUST be workflow-id strings'),
         ).toBe(true);
         // recursive=false MUST keep the response shape (a subset roll-up).
         const direct = await getDepartmentView(probeDeptId, false);
         if (direct.status === 200 && direct.view) {
           expect(
             Array.isArray(direct.view.responsibilities),
-            driver.describe('agent-org-chart.md §D', 'recursive=false MUST return the same shape, scoped to direct members'),
+            req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §D', 'recursive=false MUST return the same shape, scoped to direct members'),
           ).toBe(true);
         }
       }
@@ -130,7 +131,7 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
       const probe = await getDepartmentView(crossTenantDept);
       expect(
         probe.status === 404,
-        driver.describe('agent-org-chart.md §C / RFC 0074', 'GET /v1/agents/org-chart/{id} for a cross-tenant department MUST 404 (no cross-tenant disclosure)'),
+        req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §C / RFC 0074', 'GET /v1/agents/org-chart/{id} for a cross-tenant department MUST 404 (no cross-tenant disclosure)'),
       ).toBe(true);
     }
   });

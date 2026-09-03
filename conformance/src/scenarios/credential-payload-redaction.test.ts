@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryCredentials {
   supported?: boolean;
@@ -54,7 +55,7 @@ describe('credential-payload-redaction: advertisement shape (RFC 0046 §A)', () 
     if (cred === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cred === null` returned early');
     expect(
       typeof cred.supported,
-      driver.describe(
+      req('openwop.it.credential-payload-redaction.capabilities-credentials-supported-is-a-boolean-when-advertised', 
         'capabilities.schema.json §credentials',
         'capabilities.credentials.supported MUST be a boolean when credentials is advertised',
       ),
@@ -75,7 +76,7 @@ describe('credential-payload-redaction: resolved material MUST NOT cross the wir
 
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.credential-payload-redaction.canary-plaintext-is-absent-from-every-observable-run-surface', 
         'SECURITY/invariants.yaml credential-payload-redaction',
         'the credentials echo seam MUST resolve the seeded credential and return its observable surfaces',
       ),
@@ -86,7 +87,7 @@ describe('credential-payload-redaction: resolved material MUST NOT cross the wir
     const serialized = JSON.stringify(res.json ?? {});
     expect(
       serialized.includes(CANARY),
-      driver.describe(
+      req('openwop.it.credential-payload-redaction.canary-plaintext-is-absent-from-every-observable-run-surface', 
         'SECURITY/invariants.yaml credential-payload-redaction',
         'resolved credential material MUST NOT appear in inputs, variables, channels, events, snapshot, or debug bundle — only the reference may cross the wire',
       ),

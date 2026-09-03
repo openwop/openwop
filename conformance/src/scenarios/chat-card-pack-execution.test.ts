@@ -27,9 +27,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 import { readCardPacksCap, cardPacksSupported, executeCard } from '../lib/cardPacks.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'openwop-chat-card-packs';
 
@@ -40,13 +40,13 @@ describe('chat-card-pack-execution: prompt -> envelope -> typed artifact (RFC 00
     if (!behaviorGatePresent(PROFILE, res)) return; // seam absent: skip default, FAIL strict
     expect(
       res.json['validated'],
-      driver.describe('chat-card-packs.md "Card execution"', 'the host MUST validate the LLM output against the linked outputArtifactType schema'),
+      req('openwop.it.chat-card-pack-execution.a-registered-card-produces-a-schema-validated-artifact', 'chat-card-packs.md "Card execution"', 'the host MUST validate the LLM output against the linked outputArtifactType schema'),
     ).toBe(true);
     const evt = res.json['artifactCreated'] as { registered?: unknown } | undefined;
     if (evt && 'registered' in evt) {
       expect(
         evt.registered,
-        driver.describe('run-event-payloads.schema.json artifactCreated', 'a validated card output MUST emit artifact.created with registered:true'),
+        req('openwop.it.chat-card-pack-execution.a-registered-card-produces-a-schema-validated-artifact', 'run-event-payloads.schema.json artifactCreated', 'a validated card output MUST emit artifact.created with registered:true'),
       ).toBe(true);
     }
   });
@@ -62,7 +62,7 @@ describe('chat-card-pack-execution: prompt -> envelope -> typed artifact (RFC 00
     if (!behaviorGatePresent(PROFILE, res.json['contentTrust'])) return; // FAIL strict
     expect(
       res.json['contentTrust'],
-      driver.describe('chat-card-packs.md "Trust boundary" (R2)', 'a prompt segment derived from a card input MUST carry contentTrust:"untrusted"'),
+      req('openwop.it.chat-card-pack-execution.card-input-derived-prompt-content-propagates-contenttrust-untrusted-r2', 'chat-card-packs.md "Trust boundary" (R2)', 'a prompt segment derived from a card input MUST carry contentTrust:"untrusted"'),
     ).toBe('untrusted');
   });
 });

@@ -27,6 +27,7 @@ import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 import { seamAbsent, softSkipDisposition, resetSoftSkips } from '../lib/soft-skip.js';
 import { dispositionOf, resetLedger, suspendSinkForFixtures } from '../lib/requirement-ledger.js';
 import { __resetEnvCacheForTests } from '../lib/env.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'server-free: toggles OPENWOP_REQUIRE_BEHAVIOR in-process and pins the advertised-missing-seam rule';
 
@@ -71,7 +72,7 @@ describe('RFC 0148 §B — conformance-advertised-seam-required', () => {
     delete process.env['OPENWOP_REQUIRE_BEHAVIOR'];
     __resetEnvCacheForTests();
     delete process.env['OPENWOP_OPTED_OUT_PROFILES'];
-    expect(behaviorGate(PROFILE, false)).toBe(false);
+    expect(behaviorGate(PROFILE, false), req('openwop.it.conformance-advertised-seam-required.default-mode-an-unadvertised-profile-records-inapplicable-and-gates-false-never', 'RFC 0148 §B', 'default mode: an unadvertised profile records inapplicable and gates false — never a pass')).toBe(false);
     expect(dispositionOf(`openwop.profile.${PROFILE}`)).toBe('inapplicable');
   });
 
@@ -79,14 +80,14 @@ describe('RFC 0148 §B — conformance-advertised-seam-required', () => {
     process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
     __resetEnvCacheForTests();
     delete process.env['OPENWOP_OPTED_OUT_PROFILES'];
-    expect(() => behaviorGate(PROFILE, false)).toThrow(/OPENWOP_REQUIRE_BEHAVIOR=true/);
+    expect(() => behaviorGate(PROFILE, false), req('openwop.it.conformance-advertised-seam-required.strict-mode-an-unadvertised-un-opted-out-profile-fails-advertise-or-opt-out-expl', 'RFC 0148 §B', 'strict mode: an unadvertised, un-opted-out profile FAILS (advertise or opt out explicitly)')).toThrow(/OPENWOP_REQUIRE_BEHAVIOR=true/);
   });
 
   it('strict mode: an advertised capability whose seam helper returned nothing FAILS (behaviorGatePresent)', () => {
     process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
     __resetEnvCacheForTests();
     delete process.env['OPENWOP_OPTED_OUT_PROFILES'];
-    expect(() => behaviorGatePresent(PROFILE, null)).toThrow();
+    expect(() => behaviorGatePresent(PROFILE, null), req('openwop.it.conformance-advertised-seam-required.strict-mode-an-advertised-capability-whose-seam-helper-returned-nothing-fails-be', 'RFC 0148 §B', 'strict mode: an advertised capability whose seam helper returned nothing FAILS (behaviorGatePresent)')).toThrow();
     // and with a value present it narrows and passes through
     delete process.env['OPENWOP_REQUIRE_BEHAVIOR'];
     __resetEnvCacheForTests();
@@ -96,7 +97,7 @@ describe('RFC 0148 §B — conformance-advertised-seam-required', () => {
   it('strict mode: seamAbsent (advertised, seam answered 404/403 mid-scenario) FAILS; default mode notes blocked with the reason', () => {
     process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
     __resetEnvCacheForTests();
-    expect(() => seamAbsent('host advertises X but /v1/host/sample/x answered 404')).toThrow(/RFC 0148 §B/);
+    expect(() => seamAbsent('host advertises X but /v1/host/sample/x answered 404'), req('openwop.it.conformance-advertised-seam-required.strict-mode-seamabsent-advertised-seam-answered-404-403-mid-scenario-fails-defau', 'RFC 0148 §B', 'strict mode: seamAbsent (advertised, seam answered 404/403 mid-scenario) FAILS; default mode notes blocked with the reason')).toThrow(/RFC 0148 §B/);
     delete process.env['OPENWOP_REQUIRE_BEHAVIOR'];
     __resetEnvCacheForTests();
     resetSoftSkips();
@@ -111,7 +112,7 @@ describe('RFC 0148 §B — conformance-advertised-seam-required', () => {
     __resetEnvCacheForTests();
     process.env['OPENWOP_OPTED_OUT_PROFILES'] = PROFILE;
     __resetEnvCacheForTests();
-    expect(behaviorGate(PROFILE, false)).toBe(false);
+    expect(behaviorGate(PROFILE, false), req('openwop.it.conformance-advertised-seam-required.the-sanctioned-escape-is-an-explicit-opt-out-which-records-skipped-with-the-reas', 'RFC 0148 §B', 'the sanctioned escape is an explicit opt-out, which records skipped with the reason — still never a pass')).toBe(false);
     expect(dispositionOf(`openwop.profile.${PROFILE}`)).toBe('skipped');
   });
 });

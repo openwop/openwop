@@ -26,9 +26,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper (mirrors driver.describe's "spec — requirement" shape without requiring OPENWOP_BASE_URL). */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -40,11 +38,11 @@ describe('memory-consolidation-shape: capability advertisement (RFC 0068, server
     const agents = (caps.properties as Record<string, { properties?: Record<string, unknown> }>).agents;
     expect(
       agents?.properties?.memoryConsolidation,
-      why('capabilities.md §agents', 'agents.memoryConsolidation MUST be declared'),
+      req('openwop.it.memory-consolidation-shape.the-capabilities-schema-declares-agents-memoryconsolidation-agents-commitments', 'capabilities.md §agents', 'agents.memoryConsolidation MUST be declared'),
     ).toBeDefined();
     expect(
       agents?.properties?.commitments,
-      why('capabilities.md §agents', 'agents.commitments MUST be declared'),
+      req('openwop.it.memory-consolidation-shape.the-capabilities-schema-declares-agents-memoryconsolidation-agents-commitments', 'capabilities.md §agents', 'agents.commitments MUST be declared'),
     ).toBeDefined();
   });
 });
@@ -59,32 +57,32 @@ describe('memory-consolidation-shape: event payloads (RFC 0068, server-free)', (
   const fired = ajv.getSchema('payloads#/$defs/commitmentFired');
 
   it('agent.memory.consolidated validates a content-free pass summary', () => {
-    expect(consolidated, 'the agentMemoryConsolidated $def MUST exist').toBeTruthy();
+    expect(consolidated, req('openwop.it.memory-consolidation-shape.agent-memory-consolidated-validates-a-content-free-pass-summary', 'RFC 0068', 'the agentMemoryConsolidated $def MUST exist')).toBeTruthy();
     expect(
       consolidated!({ memoryRef: 'mem://a/agent-1', inputCount: 240, outputCount: 201, trigger: 'host-managed' }),
-      why('RFC 0068 §B', 'a conforming agent.memory.consolidated payload MUST validate'),
+      req('openwop.it.memory-consolidation-shape.agent-memory-consolidated-validates-a-content-free-pass-summary', 'RFC 0068 §B', 'a conforming agent.memory.consolidated payload MUST validate'),
     ).toBe(true);
     // Negative: outputCount as string fails the integer type.
     expect(consolidated!({ memoryRef: 'mem://a/agent-1', inputCount: 1, outputCount: 'x' })).toBe(false);
   });
 
   it('commitment.fired validates a content-free fire record and requires memoryRef', () => {
-    expect(fired, 'the commitmentFired $def MUST exist').toBeTruthy();
+    expect(fired, req('openwop.it.memory-consolidation-shape.commitment-fired-validates-a-content-free-fire-record-and-requires-memoryref', 'RFC 0068', 'the commitmentFired $def MUST exist')).toBeTruthy();
     expect(
       fired!({ commitmentId: 'cmt-1', memoryRef: 'mem://a/agent-1', condition: 'predicate', enqueuedRunId: 'run-1' }),
-      why('RFC 0068 §C', 'a conforming commitment.fired payload MUST validate'),
+      req('openwop.it.memory-consolidation-shape.commitment-fired-validates-a-content-free-fire-record-and-requires-memoryref', 'RFC 0068 §C', 'a conforming commitment.fired payload MUST validate'),
     ).toBe(true);
     // Negative: missing memoryRef — a commitment with no provenance breaks CTI-1 binding.
     expect(
       fired!({ commitmentId: 'cmt-1', condition: 'time' }),
-      why('RFC 0068 §C', 'commitment.fired without memoryRef MUST be rejected'),
+      req('openwop.it.memory-consolidation-shape.commitment-fired-validates-a-content-free-fire-record-and-requires-memoryref', 'RFC 0068 §C', 'commitment.fired without memoryRef MUST be rejected'),
     ).toBe(false);
   });
 
   it('both event names appear in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = (runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum ?? [];
-    expect(enumVals).toContain('agent.memory.consolidated');
+    expect(enumVals, req('openwop.it.memory-consolidation-shape.both-event-names-appear-in-the-runeventtype-enum', 'RFC 0068', 'both event names appear in the RunEventType enum')).toContain('agent.memory.consolidated');
     expect(enumVals).toContain('commitment.fired');
   });
 });

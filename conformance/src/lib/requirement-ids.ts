@@ -24,6 +24,20 @@
  * `~3`, … (vitest allows duplicate titles; the ledger does not allow duplicate
  * ids). A scenario MAY override the derived id for the current test with
  * `req()` when it wants a hand-authored, registry-listed id.
+ *
+ * requireExplicitIds (suite 2.0.0, RFC 0168 §A.1): from 2.0.0 `req(id, section,
+ * requirement)` is the ONLY assertion-message form in `src/scenarios` and
+ * `src/coherence` — `driver.describe(section, requirement)` is gone from every
+ * scenario, and `scripts/check-req-only.mjs` (root) fails the gate when a
+ * scenario reintroduces it, when an `expect` carries a bare string message,
+ * when an `it` body returns without `softSkip` / `seamAbsent`, or when two
+ * `it`s in one file share an explicit id. Every `it` therefore names the
+ * requirement it witnesses on the wire; the title-derived allocator below is
+ * the fallback for an `it` that makes no cited assertion at all. The ids the
+ * 2.0.0 sweep wrote are exactly the ids the allocator derived in 1.x (same
+ * stem + slug + `~n` order), so no bundle id changed at the cut-over; an `it`
+ * with an interpolated title carries a hand-minted id from the static parts of
+ * its title, unique within the file.
  */
 
 export const IT_ID_PREFIX = 'openwop.it.';
@@ -70,7 +84,11 @@ export class ItIdAllocator {
 
   allocate(scenarioFile: string, title: string): string {
     const base = itRequirementId(scenarioFile, title);
-    const n = (this.seen.get(base) ?? 0) + 1;
+    let n = (this.seen.get(base) ?? 0) + 1;
+    // An id a sibling `it` already claimed through `req()` never reached this
+    // allocator, so a same-titled `it` that cites nothing must skip past it —
+    // otherwise the first explicit `exists` and the derived `exists` collide.
+    while (claimedExplicit.has(n === 1 ? base : `${base}~${n}`)) n++;
     this.seen.set(base, n);
     return n === 1 ? base : `${base}~${n}`;
   }
@@ -85,14 +103,22 @@ export class ItIdAllocator {
 // ---------------------------------------------------------------------------
 
 let explicitId: string | null = null;
+/** Every id handed to `req()` in this worker — consulted by `ItIdAllocator`. */
+const claimedExplicit = new Set<string>();
 
 /**
  * Attach a hand-authored requirement id to the CURRENT test. The per-`it`
  * ledger row for this test is recorded under `id` instead of the derived
- * title id. Returns the usual `driver.describe`-style message so the call
- * doubles as the assertion message:
+ * title id. Returns the SAME message shape `driver.describe` returns —
+ * `[<impl>@<version>] <section>: <requirement>` — so a failure still names
+ * the implementation under test:
  *
  *   expect(x, req('openwop.auth.subject-link.leaver-deny', 'auth-profiles.md §Subject linking', 'deactivation MUST deny')).toBe(true)
+ *
+ * The implementation label is read straight from `OPENWOP_IMPLEMENTATION_NAME`
+ * / `OPENWOP_IMPLEMENTATION_VERSION` with the defaults `env.ts` uses (`unknown`)
+ * rather than through `loadEnv()`, so a suite self-test can call `req()`
+ * without `OPENWOP_BASE_URL` set.
  *
  * The id MUST be listed in `conformance/requirements.json` (the generator
  * collects `req(` first-argument literals); an unlisted id fails the registry
@@ -100,7 +126,10 @@ let explicitId: string | null = null;
  */
 export function req(id: string, specSection: string, requirement: string): string {
   explicitId = id;
-  return `${specSection}: ${requirement}`;
+  claimedExplicit.add(id);
+  const impl = process.env['OPENWOP_IMPLEMENTATION_NAME']?.trim() ?? 'unknown';
+  const version = process.env['OPENWOP_IMPLEMENTATION_VERSION']?.trim() ?? 'unknown';
+  return `[${impl}@${version}] ${specSection}: ${requirement}`;
 }
 
 /** setup.ts reads and clears the override after each test. */

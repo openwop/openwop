@@ -20,9 +20,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readEgressPolicyCap, driveEgress, EGRESS_REASONS, EGRESS_CONTENT_FORBIDDEN } from '../lib/egressPolicy.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('egress-decision-content-free (RFC 0079 §F / SR-1)', () => {
   it('never leaks the credential value or the blocked destination into the egress.decided payload', async () => {
@@ -30,19 +31,19 @@ describe('egress-decision-content-free (RFC 0079 §F / SR-1)', () => {
     if (!behaviorGate('openwop-egress-decision-content-free', cap?.supported === true)) return;
 
     const res = await driveEgress({ scenario: 'canary' });
-    if (res === null) return; // seam absent — soft-skip
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
 
     // The canary sentinel MUST NOT appear anywhere observable.
     expect(
       res.canaryLeaked !== true,
-      driver.describe('RFC 0079 §F (SR-1)', 'the credential value (canary) MUST NOT leak into any observable surface'),
+      req('openwop.it.egress-decision-content-free.never-leaks-the-credential-value-or-the-blocked-destination-into-the-egress-deci', 'RFC 0079 §F (SR-1)', 'the credential value (canary) MUST NOT leak into any observable surface'),
     ).toBe(true);
 
     // No forbidden content keys on the decision payload.
     for (const forbidden of EGRESS_CONTENT_FORBIDDEN) {
       expect(
         !(forbidden in res),
-        driver.describe('RFC 0079 §F (SR-1)', `egress.decided MUST be content-free (no ${forbidden})`),
+        req('openwop.it.egress-decision-content-free.never-leaks-the-credential-value-or-the-blocked-destination-into-the-egress-deci', 'RFC 0079 §F (SR-1)', `egress.decided MUST be content-free (no ${forbidden})`),
       ).toBe(true);
     }
 
@@ -50,7 +51,7 @@ describe('egress-decision-content-free (RFC 0079 §F / SR-1)', () => {
     if (res.reason !== undefined) {
       expect(
         typeof res.reason === 'string' && EGRESS_REASONS.includes(res.reason),
-        driver.describe('run-event-payloads.schema.json#egressDecided', 'reason MUST be in the closed enum (no free-form spill)'),
+        req('openwop.it.egress-decision-content-free.never-leaks-the-credential-value-or-the-blocked-destination-into-the-egress-deci', 'run-event-payloads.schema.json#egressDecided', 'reason MUST be in the closed enum (no free-form spill)'),
       ).toBe(true);
     }
   });

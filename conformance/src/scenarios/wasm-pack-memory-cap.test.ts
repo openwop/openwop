@@ -28,6 +28,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CAP_BREACH_FIXTURE = 'conformance-wasm-pack-memory-cap-breach';
 
@@ -41,7 +42,7 @@ describe('wasm-pack-memory-cap: host advertises maxMemoryBytes', () => {
 
     // The cap is REQUIRED to enforce §K. Hosts MUST surface the configured
     // ceiling so clients can size their packs accordingly.
-    expect(typeof wasm.maxMemoryBytes, driver.describe(
+    expect(typeof wasm.maxMemoryBytes, req('openwop.it.wasm-pack-memory-cap.capabilities-nodepackruntimes-wasm-maxmemorybytes-is-a-plausible-number', 
       'RFCS/0008-wasm-abi.md §K',
       'capabilities.nodePackRuntimes.wasm.maxMemoryBytes MUST be advertised as a number when WASM is supported',
     )).toBe('number');
@@ -75,7 +76,7 @@ describe('wasm-pack-memory-cap: positive path via misbehaving pack', () => {
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId, { timeoutMs: 15_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.wasm-pack-memory-cap.misbehaving-pack-triggers-cap-breached-with-kind-wasm-memory-and-terminal-failed', 
       'RFCS/0008-wasm-abi.md §K',
       'WASM memory-cap breach MUST drive terminal `failed` (RFC 0008 §K: "kill the instance, emit cap.breached")',
     )).toBe('failed');
@@ -83,14 +84,14 @@ describe('wasm-pack-memory-cap: positive path via misbehaving pack', () => {
     const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     const list = (events.json as { events?: Array<{ type: string; payload?: unknown }> }).events ?? [];
     const breachEvent = list.find((e) => e.type === 'cap.breached');
-    expect(breachEvent, driver.describe(
+    expect(breachEvent, req('openwop.it.wasm-pack-memory-cap.misbehaving-pack-triggers-cap-breached-with-kind-wasm-memory-and-terminal-failed', 
       'RFCS/0008-wasm-abi.md §K',
       'host MUST emit cap.breached when a WASM module exceeds its memory ceiling',
     )).toBeDefined();
     // Event detail rides under the canonical `payload` envelope field (per
     // run-event-payloads.schema.json + every other event scenario), not `data`.
     const breachKind = (breachEvent?.payload as { kind?: string } | undefined)?.kind;
-    expect(breachKind, driver.describe(
+    expect(breachKind, req('openwop.it.wasm-pack-memory-cap.misbehaving-pack-triggers-cap-breached-with-kind-wasm-memory-and-terminal-failed', 
       'RFCS/0008-wasm-abi.md §K',
       'cap.breached payload MUST carry kind: "wasm-memory" for memory-ceiling breaches',
     )).toBe('wasm-memory');

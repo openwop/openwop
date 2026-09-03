@@ -25,6 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryWorkspace {
   supported?: boolean;
@@ -52,7 +53,7 @@ describe('workspace-capability-shape: advertisement shape (RFC 0059 §A)', () =>
     if (ws === null) return softSkip('inapplicable', 'optional advertisement — `capabilities.workspace` not advertised by this host (RFC 0059 §A)');
     expect(
       typeof ws.supported,
-      driver.describe(
+      req('openwop.it.workspace-capability-shape.capabilities-workspace-is-either-absent-or-well-formed', 
         'capabilities.schema.json §workspace',
         'capabilities.workspace.supported MUST be a boolean when workspace is advertised',
       ),
@@ -67,7 +68,7 @@ describe('workspace-capability-shape: advertisement shape (RFC 0059 §A)', () =>
       if (v === undefined) continue;
       expect(
         Number.isInteger(v) && v >= 1,
-        driver.describe('RFC 0059 §A', `capabilities.workspace.${field} MUST be an integer >= 1, got: ${v}`),
+        req('openwop.it.workspace-capability-shape.maxfilebytes-maxfiles-maxversions-are-positive-integers-when-present', 'RFC 0059 §A', `capabilities.workspace.${field} MUST be an integer >= 1, got: ${v}`),
       ).toBe(true);
     }
   });

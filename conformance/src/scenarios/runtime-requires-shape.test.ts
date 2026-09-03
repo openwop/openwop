@@ -37,6 +37,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject, ValidateFunction } from 'ajv';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'node-pack-manifest.schema.json');
 
@@ -89,21 +90,21 @@ describe('category: runtime.requires vocabulary + shape (RFC 0076 §A)', () => {
     const ok = validate(manifest(['net.dns', 'net.outbound']));
     expect(
       ok,
-      `node-packs.md §"Runtime platform requirements": a well-formed runtime.requires MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.runtime-requires-shape.positive-a-manifest-declaring-valid-primitives-validates-cleanly', 'node-packs.md', `node-packs.md §"Runtime platform requirements": a well-formed runtime.requires MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
   it('positive: runtime.requires is OPTIONAL — a manifest omitting it validates (additive)', () => {
     expect(
       validate(manifest(undefined)),
-      'node-pack-manifest.schema.json: runtime.requires is additive/OPTIONAL — packs predating RFC 0076 validate unchanged',
+      req('openwop.it.runtime-requires-shape.positive-runtime-requires-is-optional-a-manifest-omitting-it-validates-additive', 'node-packs.md', 'node-pack-manifest.schema.json: runtime.requires is additive/OPTIONAL — packs predating RFC 0076 validate unchanged'),
     ).toBe(true);
   });
 
   it('positive: an empty requires[] validates (equivalent to omission per §A)', () => {
     expect(
       validate(manifest([])),
-      'node-packs.md §"Runtime platform requirements": runtime.requires:[] is valid and equivalent to omission',
+      req('openwop.it.runtime-requires-shape.positive-an-empty-requires-validates-equivalent-to-omission-per-a', 'node-packs.md', 'node-packs.md §"Runtime platform requirements": runtime.requires:[] is valid and equivalent to omission'),
     ).toBe(true);
   });
 
@@ -111,7 +112,7 @@ describe('category: runtime.requires vocabulary + shape (RFC 0076 §A)', () => {
     for (const token of VOCABULARY) {
       expect(
         validate(manifest([token])),
-        `node-pack-manifest.schema.json: "${token}" is in the RFC 0076 §A vocabulary. Errors: ${JSON.stringify(validate.errors)}`,
+        req('openwop.it.runtime-requires-shape.positive-every-vocabulary-token-individually-validates', 'node-packs.md', `node-pack-manifest.schema.json: "${token}" is in the RFC 0076 §A vocabulary. Errors: ${JSON.stringify(validate.errors)}`),
       ).toBe(true);
     }
   });
@@ -120,7 +121,7 @@ describe('category: runtime.requires vocabulary + shape (RFC 0076 §A)', () => {
     const errs = errorsOn(manifest(['node:dns/promises']));
     expect(
       errs.some((e) => e.instancePath.includes('/runtime/requires')),
-      'node-packs.md §"Runtime platform requirements": raw language builtin names are NOT in the closed vocabulary — the abstract net.dns is the portable equivalent; the registry/host surfaces this as invalid_manifest',
+      req('openwop.it.runtime-requires-shape.negative-a-raw-builtin-name-node-dns-promises-is-rejected-invalid-manifest', 'node-packs.md', 'node-packs.md §"Runtime platform requirements": raw language builtin names are NOT in the closed vocabulary — the abstract net.dns is the portable equivalent; the registry/host surfaces this as invalid_manifest'),
     ).toBe(true);
   });
 
@@ -128,7 +129,7 @@ describe('category: runtime.requires vocabulary + shape (RFC 0076 §A)', () => {
     const errs = errorsOn(manifest(['net.dns', 'net.dns']));
     expect(
       errs.some((e) => e.keyword === 'uniqueItems'),
-      'node-pack-manifest.schema.json: runtime.requires has uniqueItems:true',
+      req('openwop.it.runtime-requires-shape.negative-a-duplicate-token-is-rejected-uniqueitems', 'node-packs.md', 'node-pack-manifest.schema.json: runtime.requires has uniqueItems:true'),
     ).toBe(true);
   });
 });

@@ -21,6 +21,8 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /** RFC 0031 §C — spec-reserved capability identifiers. */
 const RESERVED_IDENTIFIERS: ReadonlySet<string> = new Set([
@@ -84,7 +86,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
     if (SKIP_REASON) {
       // eslint-disable-next-line no-console
       console.warn(`[node-module-required-capabilities-shape] skip: ${SKIP_REASON}`);
-      return;
+      return softSkip('skipped', 'operator opted out — gate `SKIP_REASON` returned early ([node-module-required-capabilities-shape] skip: …)');
     }
     const aiNodes = CATALOG.filter((n) => /^core\.ai\./.test(n.typeId));
     const missing: string[] = [];
@@ -103,7 +105,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
     // node was inspected (otherwise the test is vacuous). MUST hold.
     expect(
       aiNodes.length,
-      driver.describe(
+      req('openwop.it.node-module-required-capabilities-shape.every-nodemodule-with-typeid-matching-core-ai-declares-non-empty-requiredmodelca', 
         'RFC 0031 §B',
         'host MUST advertise at least one core.ai.* NodeModule in the node catalog (otherwise the SHOULD has no surface to bind to)',
       ),
@@ -111,7 +113,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
   });
 
   it('every declared identifier MUST match the spec-reserved set OR the `x-host-<host>-<key>` extension pattern', () => {
-    if (SKIP_REASON) return;
+    if (SKIP_REASON) return softSkip('skipped', 'operator opted out — gate `SKIP_REASON` returned early');
     const violations: Array<{ typeId: string; identifier: string }> = [];
     for (const n of CATALOG) {
       if (!Array.isArray(n.requiredModelCapabilities)) continue;
@@ -127,7 +129,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
     }
     expect(
       violations,
-      driver.describe(
+      req('openwop.it.node-module-required-capabilities-shape.every-declared-identifier-must-match-the-spec-reserved-set-or-the-x-host-host-ke', 
         'RFC 0031 §C "Reservation policy"',
         'every requiredModelCapabilities identifier MUST be spec-reserved OR match x-host-<host>-<key>',
       ),
@@ -135,7 +137,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
   });
 
   it('NodeModule.fallbackModel.provider (when declared) MUST be in `capabilities.aiProviders.supported[]`', () => {
-    if (SKIP_REASON) return;
+    if (SKIP_REASON) return softSkip('skipped', 'operator opted out — gate `SKIP_REASON` returned early');
     const violations: Array<{ typeId: string; provider: string }> = [];
     for (const n of CATALOG) {
       const fm = n.fallbackModel;
@@ -148,7 +150,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
     }
     expect(
       violations,
-      driver.describe(
+      req('openwop.it.node-module-required-capabilities-shape.nodemodule-fallbackmodel-provider-when-declared-must-be-in-capabilities-aiprovid', 
         'RFC 0031 §B',
         'every fallbackModel.provider MUST appear in capabilities.aiProviders.supported[]',
       ),
@@ -156,7 +158,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
   });
 
   it('a NodeModule declaring `requiredModelCapabilities` without `fallbackModel` is conformant — refusal-only (no substitution) is the default posture', () => {
-    if (SKIP_REASON) return;
+    if (SKIP_REASON) return softSkip('skipped', 'operator opted out — gate `SKIP_REASON` returned early');
     // The check is structural: catalog entries are not malformed when
     // they carry requiredModelCapabilities AND lack fallbackModel. This
     // asserts the host doesn't synthesize a default fallbackModel for
@@ -176,7 +178,7 @@ describe('node-module-required-capabilities-shape: authoring convention (RFC 003
     for (const n of refusalOnly) {
       expect(
         n.fallbackModel,
-        driver.describe(
+        req('openwop.it.node-module-required-capabilities-shape.a-nodemodule-declaring-requiredmodelcapabilities-without-fallbackmodel-is-confor', 
           'RFC 0031 §B',
           `${n.typeId}: refusal-only posture MUST surface as absent fallbackModel (not as {} or null wrapper)`,
         ),

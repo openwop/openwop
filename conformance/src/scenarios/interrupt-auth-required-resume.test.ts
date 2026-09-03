@@ -23,6 +23,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-interrupt-auth-required';
 const NODE_ID = 'gate';
@@ -40,7 +42,7 @@ describe.skipIf(SKIP)('interrupt: auth-required — bearer resume succeeds', () 
       `/v1/runs/${encodeURIComponent(runId)}/interrupts/${encodeURIComponent(NODE_ID)}`,
       { resumeValue: { action: 'accept' } },
     );
-    expect(resolve.status, driver.describe(
+    expect(resolve.status, req('openwop.it.interrupt-auth-required-resume.valid-bearer-with-approvals-respond-drives-terminal-completed', 
       'interrupt-profiles.md §openwop-interrupt-auth-required',
       'bearer-token resume with approvals:respond scope MUST succeed',
     )).toBeGreaterThanOrEqual(200);
@@ -63,7 +65,7 @@ describe.skipIf(SKIP)('interrupt: auth-required — insufficient scope returns 4
         '[interrupt-auth-required-resume] skipping insufficient-scope subtest: ' +
           'OPENWOP_TEST_LOW_SCOPE_KEY not set',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!lowScopeKey` returned early (seam, prior step, or fixture unavailable)');
     }
 
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
@@ -76,7 +78,7 @@ describe.skipIf(SKIP)('interrupt: auth-required — insufficient scope returns 4
       { resumeValue: { action: 'accept' } },
       { headers: { Authorization: `Bearer ${lowScopeKey}` } },
     );
-    expect(resolve.status, driver.describe(
+    expect(resolve.status, req('openwop.it.interrupt-auth-required-resume.bearer-without-approvals-respond-scope-is-rejected', 
       'auth.md §scopes + interrupt-profiles.md §openwop-interrupt-auth-required',
       'bearer without approvals:respond scope MUST return 403',
     )).toBe(403);

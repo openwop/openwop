@@ -41,6 +41,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
+import { req } from '../lib/requirement-ids.js';
 
 function memoryIdOf(payload: Record<string, unknown> | undefined): string | null {
   const id = (payload ?? {})['memoryId'];
@@ -56,7 +57,7 @@ describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (seam, prior step, or fixture unavailable)');
     }
     const original = await memoryWrittenEvents(runId);
     if (original.length === 0) return softSkip('blocked', 'run wrote no memory — nothing to test');
@@ -83,7 +84,7 @@ describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
     const missing = [...recordedIds].filter((id) => !replayedIds.has(id));
     expect(
       missing,
-      driver.describe(
+      req('openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid', 
         'replay.md §"Determinism guarantees" caveat 5',
         'recorded-fact events are fixed history: a replay MUST re-emit the source run\'s ' +
           '`memory.written` events from the log. A replay whose log is SHORT of the source\'s is not ' +
@@ -97,7 +98,7 @@ describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
       const id = memoryIdOf(e.payload);
       expect(
         id !== null && recordedIds.has(id),
-        driver.describe('RFC 0057 §D', 'a replay MUST NOT regenerate memoryId — every replayed memory.written reuses a recorded id'),
+        req('openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid', 'RFC 0057 §D', 'a replay MUST NOT regenerate memoryId — every replayed memory.written reuses a recorded id'),
       ).toBe(true);
     }
   });

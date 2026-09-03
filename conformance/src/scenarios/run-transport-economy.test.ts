@@ -40,6 +40,8 @@ import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const APPROVAL_FIXTURE = 'conformance-approval';
@@ -80,7 +82,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: conditional GET on run reads 
     const caps = await readRestTransport();
     if (caps?.conditionalRunGet !== true) {
       ctx.skip(); // host does not advertise restTransport.conditionalRunGet
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `caps?.conditionalRunGet !== true` returned early');
     }
 
     // Use the approval fixture: it parks at a stable `waiting-approval` state,
@@ -88,7 +90,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: conditional GET on run reads 
     const create = await driver.post('/v1/runs', { workflowId: APPROVAL_FIXTURE });
     if (create.status === 404 || create.status === 422) {
       ctx.skip(); // fixture not advertised by this host
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -100,7 +102,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: conditional GET on run reads 
     const etagSuspended = etagOf(suspendedRead);
     expect(
       etagSuspended,
-      driver.describe(
+      req('openwop.it.run-transport-economy.emits-a-sequence-derived-strong-etag-honors-if-none-match-with-304-and-rotates-t', 
         'rest-endpoints.md §GET /v1/runs/{runId} conditional read (RFC 0115)',
         'a host advertising restTransport.conditionalRunGet MUST return a strong ETag on the 200',
       ),
@@ -112,14 +114,14 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: conditional GET on run reads 
     });
     expect(
       revalidate.status,
-      driver.describe(
+      req('openwop.it.run-transport-economy.emits-a-sequence-derived-strong-etag-honors-if-none-match-with-304-and-rotates-t', 
         'rest-endpoints.md §GET /v1/runs/{runId} conditional read (RFC 0115)',
         'If-None-Match matching the current ETag MUST return 304 Not Modified',
       ),
     ).toBe(304);
     expect(
       revalidate.text,
-      driver.describe(
+      req('openwop.it.run-transport-economy.emits-a-sequence-derived-strong-etag-honors-if-none-match-with-304-and-rotates-t', 
         'rest-endpoints.md §GET /v1/runs/{runId} conditional read (RFC 0115)',
         '304 Not Modified MUST carry no body',
       ),
@@ -141,7 +143,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: conditional GET on run reads 
     expect(etagCompleted).toBeTruthy();
     expect(
       etagCompleted,
-      driver.describe(
+      req('openwop.it.run-transport-economy.emits-a-sequence-derived-strong-etag-honors-if-none-match-with-304-and-rotates-t', 
         'rest-endpoints.md §GET /v1/runs/{runId} conditional read (RFC 0115)',
         'the ETag MUST change once the run advances (it is derived from the latest event-log sequence); a stable ETag across an observable transition would leave a 304 stale',
       ),
@@ -153,7 +155,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: conditional GET on run reads 
     });
     expect(
       revalidateTerminal.status,
-      driver.describe(
+      req('openwop.it.run-transport-economy.emits-a-sequence-derived-strong-etag-honors-if-none-match-with-304-and-rotates-t', 
         'rest-endpoints.md §GET /v1/runs/{runId} conditional read (RFC 0115)',
         'the terminal ETag MUST be stable — If-None-Match against it returns 304',
       ),
@@ -167,14 +169,14 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: Content-Encoding round-trips 
     const encodings = advertisedEncodings(caps);
     if (encodings.length === 0) {
       ctx.skip(); // host advertises no run-read content encodings
-      return;
+      return softSkip('blocked', 'precondition not met — `encodings.length === 0` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // A terminal run gives a stable body to compare encodings against.
     const create = await driver.post('/v1/runs', { workflowId: NOOP_FIXTURE });
     if (create.status === 404 || create.status === 422) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -219,7 +221,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: Content-Encoding round-trips 
       const contentEncoding = res.headers.get('content-encoding');
       expect(
         contentEncoding,
-        driver.describe(
+        req('openwop.it.run-transport-economy.each-advertised-contentencodings-value-decodes-to-the-identity-body-byte-for-byt', 
           'rest-endpoints.md §GET /v1/runs/{runId} conditional read + Content-Encoding (RFC 0115)',
           `a host advertising restTransport.contentEncodings:["...","${enc}"] MUST set Content-Encoding: ${enc} when that encoding is requested`,
         ),
@@ -249,7 +251,7 @@ describe.skipIf(HTTP_SKIP)('run-transport-economy: Content-Encoding round-trips 
       }
       expect(
         decoded.equals(identityBytes),
-        driver.describe(
+        req('openwop.it.run-transport-economy.each-advertised-contentencodings-value-decodes-to-the-identity-body-byte-for-byt', 
           'rest-endpoints.md §GET /v1/runs/{runId} conditional read + Content-Encoding (RFC 0115)',
           `the ${enc}-decoded body MUST be byte-identical to the identity body (Content-Encoding MUST NOT alter decoded bytes or semantics)`,
         ),

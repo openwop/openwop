@@ -33,6 +33,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-channel-presence';
 const SUBJECT_REF = /^(user|agent):.+/;
@@ -47,37 +49,37 @@ describe('channel-presence-behavioral (RFC 0110 §Conformance)', () => {
 
     const conversationId = 'conf:channel-presence:c1';
     const res = await driver.post('/v1/host/sample/channel-presence/snapshot', { conversationId, member: 'user:conformance-runner' });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — host witnesses via its own route test (dual-staging)
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — host witnesses via its own route test (dual-staging)) (seam, prior step, or fixture unavailable)'); // seam unwired — host witnesses via its own route test (dual-staging)
 
     expect(
       res.status === 200,
-      driver.describe('RFC 0110 §Proposal', 'the presence snapshot seam MUST return 200 for a member'),
+      req('openwop.it.channel-presence-behavioral.a-presence-snapshot-is-the-closed-members-only-non-vacuous-channel-presence-shap', 'RFC 0110 §Proposal', 'the presence snapshot seam MUST return 200 for a member'),
     ).toBe(true);
     const snap = res.json as PresenceSnapshot;
 
     // MUST 1 — CLOSED shape: exactly conversationId / present / typing (no PII field rides).
     expect(
       Object.keys(snap).sort().join(','),
-      driver.describe('RFC 0110 §Proposal', 'channel.presence carries ONLY conversationId/present/typing (no PII)'),
+      req('openwop.it.channel-presence-behavioral.a-presence-snapshot-is-the-closed-members-only-non-vacuous-channel-presence-shap', 'RFC 0110 §Proposal', 'channel.presence carries ONLY conversationId/present/typing (no PII)'),
     ).toBe('conversationId,present,typing');
-    expect(snap.conversationId, driver.describe('RFC 0110 §Proposal', 'the snapshot echoes the conversationId')).toBe(conversationId);
+    expect(snap.conversationId, req('openwop.it.channel-presence-behavioral.a-presence-snapshot-is-the-closed-members-only-non-vacuous-channel-presence-shap', 'RFC 0110 §Proposal', 'the snapshot echoes the conversationId')).toBe(conversationId);
 
     // MUST 2 — every ref is an opaque RFC 0041 subject ref (no PII).
     for (const ref of [...snap.present, ...snap.typing]) {
       expect(
         SUBJECT_REF.test(ref),
-        driver.describe('RFC 0110 §Proposal / RFC 0041', `present/typing ref "${ref}" MUST be an opaque user:/agent: subject ref`),
+        req('openwop.it.channel-presence-behavioral.a-presence-snapshot-is-the-closed-members-only-non-vacuous-channel-presence-shap', 'RFC 0110 §Proposal / RFC 0041', `present/typing ref "${ref}" MUST be an opaque user:/agent: subject ref`),
       ).toBe(true);
     }
     // typing is a subset of present.
     for (const ref of snap.typing) {
-      expect(snap.present.includes(ref), driver.describe('RFC 0110 §Proposal', 'every typing ref MUST also be present')).toBe(true);
+      expect(snap.present.includes(ref), req('openwop.it.channel-presence-behavioral.a-presence-snapshot-is-the-closed-members-only-non-vacuous-channel-presence-shap', 'RFC 0110 §Proposal', 'every typing ref MUST also be present')).toBe(true);
     }
 
     // MUST 3 — NON-VACUOUS: the snapshotting member is present.
     expect(
       snap.present.includes('user:conformance-runner'),
-      driver.describe('RFC 0110 §Proposal', 'the snapshotting member MUST appear in present (members-only, real)'),
+      req('openwop.it.channel-presence-behavioral.a-presence-snapshot-is-the-closed-members-only-non-vacuous-channel-presence-shap', 'RFC 0110 §Proposal', 'the snapshotting member MUST appear in present (members-only, real)'),
     ).toBe(true);
   });
 });

@@ -26,6 +26,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -47,7 +48,7 @@ describe('version-negotiation: Capabilities advertises a protocolVersion', () =>
     expect(res.status).toBe(200);
 
     const caps = res.json as { protocolVersion?: unknown };
-    expect(typeof caps.protocolVersion, driver.describe(
+    expect(typeof caps.protocolVersion, req('openwop.it.version-negotiation.get-well-known-openwop-returns-capabilities-with-protocolversion-string', 
       'capabilities.md §3 + version-negotiation.md',
       'Capabilities.protocolVersion MUST be a non-empty string',
     )).toBe('string');
@@ -69,34 +70,34 @@ describe.skipIf(SKIP_NO_NOOP)('version-negotiation: persisted events carry the c
     expect(eventsRes.status).toBe(200);
 
     const events = (eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? [];
-    expect(events.length, 'noop run MUST emit at least one event').toBeGreaterThan(0);
+    expect(events.length, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 'run-event.schema.json §required', 'noop run MUST emit at least one event')).toBeGreaterThan(0);
 
     for (const e of events) {
-      expect(typeof e.eventId, driver.describe(
+      expect(typeof e.eventId, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 
         'run-event.schema.json §required',
         'eventId MUST be a string',
       )).toBe('string');
-      expect(typeof e.runId, driver.describe(
+      expect(typeof e.runId, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 
         'run-event.schema.json §required',
         'runId MUST be a string',
       )).toBe('string');
-      expect(typeof e.type, driver.describe(
+      expect(typeof e.type, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 
         'run-event.schema.json §required',
         'type MUST be a string (RunEventType discriminator)',
       )).toBe('string');
-      expect(e.payload, driver.describe(
+      expect(e.payload, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 
         'run-event.schema.json §required',
         'payload MUST be present (any JSON value, including null)',
       )).not.toBe(undefined);
-      expect(typeof e.timestamp, driver.describe(
+      expect(typeof e.timestamp, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 
         'run-event.schema.json §required',
         'timestamp MUST be an ISO 8601 string',
       )).toBe('string');
-      expect(Number.isInteger(e.sequence), driver.describe(
+      expect(Number.isInteger(e.sequence), req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 
         'run-event.schema.json §required',
         'sequence MUST be a non-negative integer',
       )).toBe(true);
-      expect(e.sequence, 'sequence MUST be >= 0').toBeGreaterThanOrEqual(0);
+      expect(e.sequence, req('openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json', 'run-event.schema.json §required', 'sequence MUST be >= 0')).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -118,7 +119,7 @@ describe.skipIf(SKIP_NO_NOOP)('version-negotiation: persisted events carry the c
       const curr = sequences[i] ?? -1;
       expect(
         curr,
-        driver.describe(
+        req('openwop.it.version-negotiation.event-sequences-within-a-run-are-strictly-monotonic', 
           'run-event.schema.json §sequence + idempotency.md',
           `event[${i}].sequence (${curr}) MUST be > event[${i - 1}].sequence (${prev}) — strictly monotonic per run`,
         ),
@@ -144,7 +145,7 @@ describe.skipIf(SKIP_NO_NOOP)('version-negotiation: events/poll forward-compat t
 
     expect(
       eventsRes.status,
-      driver.describe(
+      req('openwop.it.version-negotiation.events-poll-with-lastsequence-past-current-end-returns-empty-events-iscomplete', 
         'rest-endpoints.md GET /v1/runs/{runId}/events/poll',
         'lastSequence beyond the current end MUST return 200 with empty events, not 4xx',
       ),

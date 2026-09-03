@@ -54,6 +54,7 @@ import {
   type ChainCompensationPolicy,
   type FragmentNodeCompensation,
 } from '../lib/workflow-chain-expansion.js';
+import { req } from '../lib/requirement-ids.js';
 
 function schema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -131,7 +132,7 @@ describe('RFC 0157 — schema: the chain manifest mirrors the compensation shape
       $defs: { FragmentNode: { properties: Record<string, unknown> }; WorkflowChain: { properties: Record<string, unknown> } };
     };
     const wd = schema('workflow-definition.schema.json') as { $defs: { WorkflowNode: { properties: Record<string, unknown> } } };
-    expect(chainSchema.$defs.FragmentNode.properties['compensation'], 'FragmentNode MUST carry `compensation`').toBeDefined();
+    expect(chainSchema.$defs.FragmentNode.properties['compensation'], req('openwop.it.chain-compensation-expansion.fragmentnode-compensation-is-a-byte-mirror-of-workflownode-compensation', 'RFC 0157', 'FragmentNode MUST carry `compensation`')).toBeDefined();
     expect(stripDescription(chainSchema.$defs.FragmentNode.properties['compensation'])).toEqual(
       stripDescription(wd.$defs.WorkflowNode.properties['compensation']),
     );
@@ -140,14 +141,14 @@ describe('RFC 0157 — schema: the chain manifest mirrors the compensation shape
   it('WorkflowChain.compensation is a byte-mirror of compensation-policy.schema.json', () => {
     const chainSchema = schema('workflow-chain-pack-manifest.schema.json') as { $defs: { WorkflowChain: { properties: Record<string, unknown> } } };
     const policy = schema('compensation-policy.schema.json');
-    expect(chainSchema.$defs.WorkflowChain.properties['compensation'], 'WorkflowChain MUST carry the policy').toBeDefined();
+    expect(chainSchema.$defs.WorkflowChain.properties['compensation'], req('openwop.it.chain-compensation-expansion.workflowchain-compensation-is-a-byte-mirror-of-compensation-policy-schema-json', 'RFC 0157', 'WorkflowChain MUST carry the policy')).toBeDefined();
     expect(stripDescription(chainSchema.$defs.WorkflowChain.properties['compensation'])).toEqual(stripDescription(policy));
   });
 
   it('the manifest stays self-contained — no cross-file $ref was introduced', () => {
     const raw = readFileSync(join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json'), 'utf8');
     const refs = [...raw.matchAll(/"\$ref":\s*"([^"]+)"/g)].map((m) => m[1]);
-    for (const r of refs) expect(r.startsWith('#/'), `cross-file $ref ${r} would break fixed-list validators downstream`).toBe(true);
+    for (const r of refs) expect(r.startsWith('#/'), req('openwop.it.chain-compensation-expansion.the-manifest-stays-self-contained-no-cross-file-ref-was-introduced', 'RFC 0157', `cross-file $ref ${r} would break fixed-list validators downstream`)).toBe(true);
   });
 
   it('a manifest declaring both surfaces validates; a foreign key inside either is rejected', () => {
@@ -155,13 +156,13 @@ describe('RFC 0157 — schema: the chain manifest mirrors the compensation shape
     expect(validate(manifestWith(CHAIN)), JSON.stringify(validate.errors)).toBe(true);
     const badNode = structuredClone(CHAIN) as unknown as { dag: { nodes: Array<Record<string, unknown>> } };
     (badNode.dag.nodes[0]!['compensation'] as Record<string, unknown>)['rollback'] = true;
-    expect(validate(manifestWith(badNode)), 'the mirrored node declaration MUST stay closed').toBe(false);
+    expect(validate(manifestWith(badNode)), req('openwop.it.chain-compensation-expansion.a-manifest-declaring-both-surfaces-validates-a-foreign-key-inside-either-is-reje', 'RFC 0157', 'the mirrored node declaration MUST stay closed')).toBe(false);
     const badPolicy = structuredClone(CHAIN) as unknown as { compensation: Record<string, unknown> };
     badPolicy.compensation['approvalScope'] = 'none';
-    expect(validate(manifestWith(badPolicy)), 'the mirrored policy keeps the escalate-only approval scope').toBe(false);
+    expect(validate(manifestWith(badPolicy)), req('openwop.it.chain-compensation-expansion.a-manifest-declaring-both-surfaces-validates-a-foreign-key-inside-either-is-reje', 'RFC 0157', 'the mirrored policy keeps the escalate-only approval scope')).toBe(false);
     const noTriggers = structuredClone(CHAIN) as unknown as { compensation: Record<string, unknown> };
     noTriggers.compensation = {};
-    expect(validate(manifestWith(noTriggers)), 'a policy without triggers is not a policy').toBe(false);
+    expect(validate(manifestWith(noTriggers)), req('openwop.it.chain-compensation-expansion.a-manifest-declaring-both-surfaces-validates-a-foreign-key-inside-either-is-reje', 'RFC 0157', 'a policy without triggers is not a policy')).toBe(false);
   });
 
   it('FragmentNode.irreversibleEffect (RFC 0151 UQ4) is a sibling boolean, mutually exclusive with compensation — in the manifest and in expansion', () => {
@@ -180,7 +181,7 @@ describe('RFC 0157 — schema: the chain manifest mirrors the compensation shape
     // Both on one node: the schema rejects it AND expansion refuses fail-closed before emitting.
     const both = structuredClone(CHAIN) as unknown as { dag: { nodes: Array<Record<string, unknown>> } };
     both.dag.nodes[0]!['irreversibleEffect'] = true; // node 0 (`reserve`) declares a compensation
-    expect(validate(manifestWith(both)), 'compensation.md §B: irreversibleEffect: true + compensation is contradictory').toBe(false);
+    expect(validate(manifestWith(both)), req('openwop.it.chain-compensation-expansion.fragmentnode-irreversibleeffect-rfc-0151-uq4-is-a-sibling-boolean-mutually-exclu', 'RFC 0151', 'compensation.md §B: irreversibleEffect: true + compensation is contradictory')).toBe(false);
     let thrown: unknown;
     try {
       expandChainWithCompensation(both as unknown as typeof CHAIN, CTX);
@@ -206,7 +207,7 @@ describe('RFC 0157 — expansion carries the declaration and the policy', () => 
     expect(reserve?.compensation?.inputMapping?.['reservationId']).toBe(`\${nodes.${reserve?.id}.output.id}`);
     expect(charge?.compensation?.inputMapping?.['chargeId']).toBe(`nodes.${charge?.id}.output.chargeId`);
     expect(charge?.compensation?.requiresApproval).toBe(true);
-    expect(notify?.compensation, 'a node that declared none gains none').toBeUndefined();
+    expect(notify?.compensation, req('openwop.it.chain-compensation-expansion.the-declaration-survives-verbatim-onto-the-expanded-node-params-substituted-node', 'RFC 0157', 'a node that declared none gains none')).toBeUndefined();
     // the mirrored core is untouched: plain expandChain still knows nothing of it
     const plain = expandChain(CHAIN, CTX);
     expect((plain.nodes[0] as { compensation?: unknown }).compensation).toBeUndefined();
@@ -220,7 +221,7 @@ describe('RFC 0157 — expansion carries the declaration and the policy', () => 
     const out = expandChainWithCompensation(chain, CTX);
     const nodes = out.nodes as ReadonlyArray<(typeof out.nodes)[number] & { compensation?: FragmentNodeCompensation }>;
     const reserve = nodes.find((n) => n.id.endsWith('_reserve'));
-    expect(reserve?.compensation?.inputMapping?.['parentRef']).toBe('${nodes.upstream-in-parent.output.x}');
+    expect(reserve?.compensation?.inputMapping?.['parentRef'], req('openwop.it.chain-compensation-expansion.a-reference-to-a-non-fragment-node-id-inside-inputmapping-passes-through-unchang', 'RFC 0157', 'a reference to a NON-fragment node id inside inputMapping passes through unchanged')).toBe('${nodes.upstream-in-parent.output.x}');
   });
 
   it('an unresolvable compensation.nodeTypeId fails with chain_unresolvable_typeid before any node is emitted', () => {
@@ -231,7 +232,7 @@ describe('RFC 0157 — expansion carries the declaration and the policy', () => 
     } catch (e) {
       thrown = e;
     }
-    expect(thrown).toBeInstanceOf(ChainUnresolvableTypeIdError);
+    expect(thrown, req('openwop.it.chain-compensation-expansion.an-unresolvable-compensation-nodetypeid-fails-with-chain-unresolvable-typeid-bef', 'RFC 0157', 'an unresolvable compensation.nodeTypeId fails with chain_unresolvable_typeid before any node is emitted')).toBeInstanceOf(ChainUnresolvableTypeIdError);
     expect((thrown as ChainUnresolvableTypeIdError).typeId).toBe('vendor.pay.refund');
     expect(String((thrown as Error).message)).toContain('chain_unresolvable_typeid');
   });
@@ -239,12 +240,12 @@ describe('RFC 0157 — expansion carries the declaration and the policy', () => 
   it('the chain policy becomes settings.compensation when the parent has none', () => {
     const out = expandChainWithCompensation(CHAIN, CTX);
     expect(out.settingsCompensation).toEqual(POLICY);
-    expect(out.settingsCompensation, 'a copy, not the same object').not.toBe(POLICY);
+    expect(out.settingsCompensation, req('openwop.it.chain-compensation-expansion.the-chain-policy-becomes-settings-compensation-when-the-parent-has-none', 'RFC 0157', 'a copy, not the same object')).not.toBe(POLICY);
   });
 
   it('a parent policy that is deep-equal (any key order) is accepted; a differing one is refused, never merged', () => {
     const sameOtherOrder: ChainCompensationPolicy = { approvalScope: 'declared', triggers: ['node-failure', 'run-cancel'] };
-    expect(expandChainWithCompensation(CHAIN, CTX, sameOtherOrder).settingsCompensation).toEqual(sameOtherOrder);
+    expect(expandChainWithCompensation(CHAIN, CTX, sameOtherOrder).settingsCompensation, req('openwop.it.chain-compensation-expansion.a-parent-policy-that-is-deep-equal-any-key-order-is-accepted-a-differing-one-is', 'RFC 0157', 'a parent policy that is deep-equal (any key order) is accepted; a differing one is refused, never merged')).toEqual(sameOtherOrder);
     const differs: ChainCompensationPolicy = { triggers: ['node-failure'] };
     let thrown: unknown;
     try {
@@ -262,7 +263,7 @@ describe('RFC 0157 — expansion carries the declaration and the policy', () => 
     for (const n of chain.dag.nodes as unknown as Array<{ compensation?: unknown }>) delete n.compensation;
     const parent: ChainCompensationPolicy = { triggers: ['operator-request'] };
     const withParent = expandChainWithCompensation(chain, CTX, parent);
-    expect(withParent.settingsCompensation).toBe(parent);
+    expect(withParent.settingsCompensation, req('openwop.it.chain-compensation-expansion.a-chain-with-no-policy-inherits-the-parent-policy-or-none-and-carries-no-declara', 'RFC 0157', 'a chain with no policy inherits the parent policy (or none) and carries no declaration it did not make')).toBe(parent);
     const nodes = withParent.nodes as ReadonlyArray<{ compensation?: unknown }>;
     expect(nodes.every((n) => n.compensation === undefined)).toBe(true);
     const withoutParent = carryCompensation(chain, expandChain(chain, CTX), CTX);

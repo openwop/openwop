@@ -20,6 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryOAuthProvider {
   id?: string;
@@ -58,7 +59,7 @@ describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {
     if (oauth === null) return softSkip('inapplicable', 'host doesn\'t advertise host.oauth at all');
     expect(
       typeof oauth.supported,
-      driver.describe(
+      req('openwop.it.oauth-capability-shape.capabilities-oauth-is-either-absent-or-well-formed', 
         'capabilities.schema.json §oauth',
         'capabilities.oauth.supported MUST be a boolean when oauth is advertised',
       ),
@@ -70,12 +71,12 @@ describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {
     if (!oauth?.supported || oauth.grants === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!oauth?.supported || oauth.grants === undefined` returned early');
     expect(
       Array.isArray(oauth.grants),
-      driver.describe('RFC 0047 §A', 'capabilities.oauth.grants MUST be an array'),
+      req('openwop.it.oauth-capability-shape.grants-is-a-subset-of-the-canonical-grant-set-when-supported', 'RFC 0047 §A', 'capabilities.oauth.grants MUST be an array'),
     ).toBe(true);
     for (const grant of oauth.grants) {
       expect(
         VALID_GRANTS.has(grant),
-        driver.describe(
+        req('openwop.it.oauth-capability-shape.grants-is-a-subset-of-the-canonical-grant-set-when-supported', 
           'RFC 0047 §A',
           `capabilities.oauth.grants entries MUST be one of {${[...VALID_GRANTS].join(', ')}}, got: ${grant}`,
         ),
@@ -89,7 +90,7 @@ describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {
     for (const provider of oauth.providers) {
       expect(
         typeof provider.id === 'string' && provider.id.length > 0,
-        driver.describe(
+        req('openwop.it.oauth-capability-shape.every-advertised-provider-has-a-non-empty-id-when-supported', 
           'RFC 0047 §A',
           'each capabilities.oauth.providers[] entry MUST declare a non-empty id',
         ),

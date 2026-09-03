@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('stream-subscribe-from-beginning: advertisement shape (RFC 0017)', () => {
   it('capabilities.queueBus is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.stream-subscribe-from-beginning.capabilities-queuebus-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §queueBus',
         'capabilities.queueBus.supported MUST be a boolean when present',
       ),
@@ -44,17 +46,17 @@ describe('stream-subscribe-from-beginning: advertisement shape (RFC 0017)', () =
 
   it('stream.supported is a boolean when set', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const subParts = ["stream","supported"];
     let sub: unknown = cap;
     for (const p of subParts) {
       if (sub && typeof sub === 'object') sub = (sub as Record<string, unknown>)[p];
       else { sub = undefined; break; }
     }
-    if (sub === undefined) return; // optional sub-field
+    if (sub === undefined) return softSkip('blocked', 'precondition not met — `sub === undefined` returned early (optional sub-field) (seam, prior step, or fixture unavailable)'); // optional sub-field
     expect(
       typeof sub,
-      driver.describe(
+      req('openwop.it.stream-subscribe-from-beginning.stream-supported-is-a-boolean-when-set', 
         'RFC 0017 §A',
         'queueBus.stream.supported MUST be boolean when present',
       ),
@@ -69,7 +71,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('stream-subscribe-from-beginning: behavioral (RFC 0017 §A stream.fromBeginning)', () => {
   it('streamPublish 5 records then streamSubscribe({fromBeginning:true}) MUST surface all 5 in the snapshot', async () => {
     const probe = await call('streamSubscribe', { stream: '__probe__', fromBeginning: true });
-    if (probe.status === 404) return; // seam not exposed
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     const stream = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     for (let i = 1; i <= 5; i++) {
       const r = await call('streamPublish', { stream, record: { seq: i, value: `rec-${i}` } });
@@ -80,7 +82,7 @@ describe('stream-subscribe-from-beginning: behavioral (RFC 0017 §A stream.fromB
     const body = sub.json as { records?: Array<{ payload?: { seq?: number } }>; fromBeginningSnapshot?: boolean };
     expect(
       Array.isArray(body.records) && body.records.length === 5,
-      driver.describe('RFC 0017 §A.stream.fromBeginning', 'subscribe with fromBeginning:true MUST return ALL records previously published on the stream'),
+      req('openwop.it.stream-subscribe-from-beginning.streampublish-5-records-then-streamsubscribe-frombeginning-true-must-surface-all', 'RFC 0017 §A.stream.fromBeginning', 'subscribe with fromBeginning:true MUST return ALL records previously published on the stream'),
     ).toBe(true);
     // Order MUST be preserved (publish-order = sequential on the same stream).
     const seqs = body.records!.map((r) => r.payload?.seq);
@@ -90,14 +92,14 @@ describe('stream-subscribe-from-beginning: behavioral (RFC 0017 §A stream.fromB
 
   it('streamSubscribe({fromBeginning:false}) MUST NOT include pre-subscribe records (live-tail semantics)', async () => {
     const probe = await call('streamSubscribe', { stream: '__probe__', fromBeginning: true });
-    if (probe.status === 404) return;
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const stream = `s-live-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await call('streamPublish', { stream, record: { v: 'before' } });
     const sub = await call('streamSubscribe', { stream, fromBeginning: false });
     const body = sub.json as { records?: unknown[]; fromBeginningSnapshot?: boolean };
     expect(
       Array.isArray(body.records) && body.records.length === 0,
-      driver.describe('RFC 0017 §A.stream.fromBeginning', 'subscribe with fromBeginning:false MUST omit pre-subscribe records'),
+      req('openwop.it.stream-subscribe-from-beginning.streamsubscribe-frombeginning-false-must-not-include-pre-subscribe-records-live', 'RFC 0017 §A.stream.fromBeginning', 'subscribe with fromBeginning:false MUST omit pre-subscribe records'),
     ).toBe(true);
     expect(body.fromBeginningSnapshot).toBe(false);
   });

@@ -44,6 +44,7 @@ import {
   verifyWebhookDelivery,
   SIGNATURE_PREFIX,
 } from '../lib/webhook-receiver.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('webhook-receiver-adversarial: receiver rejects five canonical attacks', () => {
   const secret = 'test-secret-do-not-use-in-prod';
@@ -65,7 +66,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
     );
     expect(
       result.accepted,
-      'webhooks.md §"Signature recipe": valid signature + fresh timestamp + correct algorithm MUST be accepted',
+      req('openwop.it.webhook-receiver-adversarial.positive-control-receiver-accepts-a-freshly-signed-valid-delivery', 'spec/v1/webhooks.md', 'webhooks.md §"Signature recipe": valid signature + fresh timestamp + correct algorithm MUST be accepted'),
     ).toBe(true);
   });
 
@@ -86,7 +87,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
     if (!result.accepted) {
       expect(
         result.reason,
-        'webhooks.md §"Signature recipe": tampered body MUST be rejected with signature_mismatch',
+        req('openwop.it.webhook-receiver-adversarial.case-1-tampered-body-signature-mismatch', 'spec/v1/webhooks.md', 'webhooks.md §"Signature recipe": tampered body MUST be rejected with signature_mismatch'),
       ).toBe('signature_mismatch');
     }
   });
@@ -113,7 +114,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
       state,
       { nowSeconds: nowSec },
     );
-    expect(result.accepted).toBe(false);
+    expect(result.accepted, req('openwop.it.webhook-receiver-adversarial.case-2-tampered-hmac-signature-mismatch', 'spec/v1/webhooks.md', 'case 2: tampered HMAC → signature_mismatch')).toBe(false);
     if (!result.accepted) {
       expect(result.reason).toBe('signature_mismatch');
     }
@@ -136,7 +137,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
     if (!result.accepted) {
       expect(
         result.reason,
-        'webhooks.md §"Replay-attack resistance": timestamp older than freshness window MUST be rejected with timestamp_expired',
+        req('openwop.it.webhook-receiver-adversarial.case-3-stale-timestamp-timestamp-expired', 'spec/v1/webhooks.md', 'webhooks.md §"Replay-attack resistance": timestamp older than freshness window MUST be rejected with timestamp_expired'),
       ).toBe('timestamp_expired');
     }
   });
@@ -170,7 +171,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
     if (!replay.accepted) {
       expect(
         replay.reason,
-        'webhooks.md §"Replay-attack resistance": replay of an already-accepted signature MUST be rejected with duplicate_signature',
+        req('openwop.it.webhook-receiver-adversarial.case-4-replayed-signature-duplicate-signature', 'spec/v1/webhooks.md', 'webhooks.md §"Replay-attack resistance": replay of an already-accepted signature MUST be rejected with duplicate_signature'),
       ).toBe('duplicate_signature');
     }
   });
@@ -191,7 +192,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
     if (!result.accepted) {
       expect(
         result.reason,
-        'webhooks.md §"Signature algorithm versioning": algorithm other than v1 MUST be rejected with wrong_algorithm by a v1-only receiver',
+        req('openwop.it.webhook-receiver-adversarial.case-5-wrong-algorithm-wrong-algorithm', 'spec/v1/webhooks.md', 'webhooks.md §"Signature algorithm versioning": algorithm other than v1 MUST be rejected with wrong_algorithm by a v1-only receiver'),
       ).toBe('wrong_algorithm');
     }
   });
@@ -208,7 +209,7 @@ describe('webhook-receiver-adversarial: receiver rejects five canonical attacks'
       state,
       { nowSeconds: nowSec },
     );
-    expect(result.accepted).toBe(false);
+    expect(result.accepted, req('openwop.it.webhook-receiver-adversarial.case-6-malformed-signature-header-malformed-signature-header', 'spec/v1/webhooks.md', 'case 6: malformed signature header → malformed_signature_header')).toBe(false);
     if (!result.accepted) {
       expect(result.reason).toBe('malformed_signature_header');
     }

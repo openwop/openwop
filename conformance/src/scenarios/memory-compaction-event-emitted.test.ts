@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const MEMORY_REF = 'mem_tenant:default_agent:conformance-rfc0012-event_longTerm';
 
@@ -79,26 +80,26 @@ describe('memory-compaction-event-emitted: canonical memory.compacted payload sh
       payload?: Record<string, unknown>;
     };
 
-    expect(event.type, driver.describe(
+    expect(event.type, req('openwop.it.memory-compaction-event-emitted.compaction-run-returns-a-canonical-memorycompacted-payload', 
       'observability.md §"Canonical run lifecycle event names"',
       'event MUST be type=memory.compacted',
     )).toBe('memory.compacted');
 
     const payload = event.payload ?? {};
 
-    expect(typeof payload.memoryRef, driver.describe(
+    expect(typeof payload.memoryRef, req('openwop.it.memory-compaction-event-emitted.compaction-run-returns-a-canonical-memorycompacted-payload', 
       'RFC 0012 §B / run-event-payloads.schema.json §memoryCompacted',
       'memoryRef MUST be a non-empty string',
     )).toBe('string');
     expect((payload.memoryRef as string).length).toBeGreaterThan(0);
 
-    expect(typeof payload.outputId, driver.describe(
+    expect(typeof payload.outputId, req('openwop.it.memory-compaction-event-emitted.compaction-run-returns-a-canonical-memorycompacted-payload', 
       'RFC 0012 §B',
       'outputId MUST be a string identifying the distilled entry',
     )).toBe('string');
     expect((payload.outputId as string).length).toBeGreaterThan(0);
 
-    expect(Number.isInteger(payload.sourceCount), driver.describe(
+    expect(Number.isInteger(payload.sourceCount), req('openwop.it.memory-compaction-event-emitted.compaction-run-returns-a-canonical-memorycompacted-payload', 
       'RFC 0012 §B',
       'sourceCount MUST be an integer',
     )).toBe(true);
@@ -106,7 +107,7 @@ describe('memory-compaction-event-emitted: canonical memory.compacted payload sh
 
     expect(['host-managed', 'client-requested', 'both']).toContain(payload.trigger);
 
-    expect(Number.isInteger(payload.byteSize), driver.describe(
+    expect(Number.isInteger(payload.byteSize), req('openwop.it.memory-compaction-event-emitted.compaction-run-returns-a-canonical-memorycompacted-payload', 
       'RFC 0012 §B',
       'byteSize MUST be an integer',
     )).toBe(true);
@@ -115,7 +116,7 @@ describe('memory-compaction-event-emitted: canonical memory.compacted payload sh
     if (payload.sourceIds !== undefined) {
       expect(Array.isArray(payload.sourceIds)).toBe(true);
       for (const id of payload.sourceIds as unknown[]) {
-        expect(typeof id, 'sourceIds entries MUST be strings').toBe('string');
+        expect(typeof id, req('openwop.it.memory-compaction-event-emitted.compaction-run-returns-a-canonical-memorycompacted-payload', 'RFC 0012 §B', 'sourceIds entries MUST be strings')).toBe('string');
         expect((id as string).length).toBeGreaterThan(0);
       }
     }

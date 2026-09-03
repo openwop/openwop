@@ -27,6 +27,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SAML_PROFILE = 'openwop-auth-saml';
 const SCIM_PROFILE = 'openwop-auth-scim';
@@ -65,7 +66,7 @@ describe('auth-subject-link: advertisement shape (RFC 0159 §B + RFC 0164 §A.3)
     const profiles = auth.profiles ?? [];
     expect(
       profiles.includes(SAML_PROFILE) && profiles.includes(SCIM_PROFILE),
-      driver.describe(
+      req('openwop.it.auth-subject-link.subjectlinking-true-is-only-claimed-alongside-both-saml-and-scim-profiles', 
         'auth-profiles.md §Subject linking',
         'a host MUST NOT set capabilities.auth.subjectLinking:true unless BOTH openwop-auth-saml and openwop-auth-scim are advertised',
       ),
@@ -83,14 +84,14 @@ describe('auth-subject-link: advertisement shape (RFC 0159 §B + RFC 0164 §A.3)
     // absence alongside both profiles is a conformance FAILURE.
     expect(
       auth.subjectLinking,
-      driver.describe(
+      req('openwop.it.auth-subject-link.advertising-both-profiles-requires-subjectlinking-true-a-subjectlinkkey-rfc-0164', 
         'auth-profiles.md §Subject linking (RFC 0164)',
         'RFC 0164 §A.3: a host advertising BOTH openwop-auth-saml and openwop-auth-scim MUST advertise capabilities.auth.subjectLinking:true — the leaver contract follows the profile pair; omitting the flag is the vulnerable pre-0164 shape',
       ),
     ).toBe(true);
     expect(
       typeof auth.subjectLinkKey === 'string' && SUBJECT_LINK_KEY_CLASSES.includes(auth.subjectLinkKey),
-      driver.describe(
+      req('openwop.it.auth-subject-link.advertising-both-profiles-requires-subjectlinking-true-a-subjectlinkkey-rfc-0164', 
         'auth-profiles.md §Subject linking (RFC 0164)',
         `RFC 0164 §A.3 / RFC 0163 §A.1: a host advertising both profiles MUST advertise subjectLinkKey ∈ {${SUBJECT_LINK_KEY_CLASSES.join(', ')}}`,
       ),
@@ -116,7 +117,7 @@ describe('auth-subject-link: cross-lane deactivation (RFC 0159 §A.3 — opt-in)
       userName: 'r.smith',
     });
     if (provision.status === 404) return softSkip('blocked', 'seam unwired');
-    expect(provision.status, driver.describe('auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
+    expect(provision.status, req('openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity', 'auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
 
     // 2. A valid SAML assertion whose persistent NameID equals the externalId
     //    links to the same subject and authenticates.
@@ -124,19 +125,19 @@ describe('auth-subject-link: cross-lane deactivation (RFC 0159 §A.3 — opt-in)
     if (before.status === 404) return softSkip('blocked', 'seam unwired');
     expect(
       (before.json as { authenticated?: boolean } | undefined)?.authenticated,
-      driver.describe('auth-profiles.md §Subject linking', 'a valid linked SAML assertion authenticates before deactivation'),
+      req('openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity', 'auth-profiles.md §Subject linking', 'a valid linked SAML assertion authenticates before deactivation'),
     ).toBe(true);
 
     // 3. SCIM-deactivate the provisioned user.
     const deactivate = await driver.post('/v1/host/sample/auth/scim/provision', { scimUrl, op: 'deactivate-user', externalId });
-    expect(deactivate.status, driver.describe('auth-profiles.md §Subject linking', 'SCIM deactivation MUST succeed')).toBeLessThan(400);
+    expect(deactivate.status, req('openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity', 'auth-profiles.md §Subject linking', 'SCIM deactivation MUST succeed')).toBeLessThan(400);
 
     // 4. THE CONTRACT: a subsequent SAML assertion for the linked subject MUST
     //    NOT yield an authorized decision (fail-closed across the link).
     const after = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid', nameId: externalId });
     expect(
       (after.json as { authenticated?: boolean } | undefined)?.authenticated === true,
-      driver.describe(
+      req('openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity', 
         'auth-profiles.md §Subject linking',
         'RFC 0159 §A.3: after a SCIM deactivation the LINKED SAML identity MUST be denied (a provisioned leaver cannot still SSO in)',
       ),
@@ -169,9 +170,9 @@ describe('auth-subject-link: link-key hygiene (RFC 0159 §A.2 — opt-in)', () =
       // Conforming: the host rejected a mutable-key link outright.
       expect(
         link.status,
-        driver.describe('auth-profiles.md §Subject linking', 'RFC 0159 §A.2: a link on a mutable/PII key (email) MUST be rejected'),
+        req('openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass', 'auth-profiles.md §Subject linking', 'RFC 0159 §A.2: a link on a mutable/PII key (email) MUST be rejected'),
       ).toBeGreaterThanOrEqual(400);
-      return;
+      return softSkip('blocked', 'precondition not met — `link.status >= 400` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // If the host accepted the request, it MUST NOT have formed a cross-lane
@@ -183,7 +184,7 @@ describe('auth-subject-link: link-key hygiene (RFC 0159 §A.2 — opt-in)', () =
     const other = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid', nameId: 'idp-op-DIFFERENT' });
     expect(
       (other.json as { linkedDenied?: boolean } | undefined)?.linkedDenied === true,
-      driver.describe(
+      req('openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass', 
         'auth-profiles.md §Subject linking',
         'RFC 0159 §A.2: a mutable-key (email) operation MUST NOT drive a cross-lane deny on any opaque subject',
       ),

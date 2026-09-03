@@ -81,16 +81,21 @@ echo "[1/9] Conformance suite (typecheck + server-free scenarios)..."
   npx tsc --noEmit
   npx vitest run \
     src/scenarios/fixtures-valid.test.ts \
-    src/scenarios/spec-corpus-validity.test.ts \
     src/scenarios/ai-envelope-shape.test.ts \
     src/scenarios/aiproviders-speechsynth-shape.test.ts \
     src/scenarios/artifact-type-pack-manifest-validation.test.ts \
-    src/scenarios/artifact-schema-compile-bounded.test.ts \
     src/scenarios/chat-card-pack-manifest-validation.test.ts \
-    src/scenarios/form-content-packs.test.ts \
     src/scenarios/x-openwop-form-pack-manifest.test.ts \
     src/scenarios/anonymous-actor-shape.test.ts
+  # Suite 2.0.0 (RFC 0168 §D.1): the corpus-coherence scenarios live in
+  # src/coherence/ (spec-corpus-validity, artifact-schema-compile-bounded,
+  # form-content-packs, … 29 files) and run here through their own config,
+  # emitting evidence/corpus-ledger.json — the "corpus gate" evidence tier.
+  # The suite's self-tests run under vitest.selftest.config.ts.
+  npx vitest run --config vitest.selftest.config.ts
 )
+node "$SPEC_ROOT/scripts/check-spec-coherence.mjs" --check
+node "$SPEC_ROOT/scripts/check-req-only.mjs"
 echo
 
 # 2. OpenAPI lint via redocly. Uses a PINNED version (not @latest) — the
@@ -262,6 +267,8 @@ echo
 
 echo "[9/9] Published-version identity..."
 node "$(dirname "$0")/check-published-suite-identity.mjs"
+node "$(dirname "$0")/check-published-suite-identity.mjs" --package spec-artifacts
+node "$(dirname "$0")/generate-spec-artifacts.mjs" --check
 echo
 
 # ── Stage 10: the v2 tree (v2 charter Phase 3) ──────────────────────────────

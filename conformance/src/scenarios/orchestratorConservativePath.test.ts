@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isOrchestratorSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-orchestrator-low-confidence';
 const SKIP = !isOrchestratorSupported() || !isFixtureAdvertised(FIXTURE);
@@ -51,7 +52,7 @@ describe.skipIf(SKIP)('orchestratorConservativePath: CP-1 low-confidence suspend
     const decisionsBeforeResume = list.filter((e) => e.type === 'runOrchestrator.decided');
     expect(
       decisionsBeforeResume.length,
-      'CP-1: low-confidence holds the decision until human ratification',
+      req('openwop.it.orchestratorConservativePath.supervisor-below-threshold-suspends-with-reason-low-confidence-ratified-decision', 'RFCS/0006-orchestrator.md', 'CP-1: low-confidence holds the decision until human ratification'),
     ).toBe(0);
 
     // node.suspended with reason=low-confidence is present.

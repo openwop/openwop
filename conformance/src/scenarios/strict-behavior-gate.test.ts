@@ -30,6 +30,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { dispositionOf, resetLedger } from '../lib/requirement-ledger.js';
 import { __resetEnvCacheForTests } from '../lib/env.js';
+import { req } from '../lib/requirement-ids.js';
 
 const ENV_KEYS = ['OPENWOP_REQUIRE_BEHAVIOR', 'OPENWOP_OPTED_OUT_PROFILES', 'OPENWOP_BASE_URL', 'OPENWOP_API_KEY'] as const;
 let saved: Record<string, string | undefined> = {};
@@ -65,16 +66,16 @@ describe('RFC 0148 §B — advertise and opt-out are mutually exclusive', () => 
     __resetEnvCacheForTests();
     expect(
       () => behaviorGate('openwop-audit-log-integrity', true),
-      'RFC 0148 §B: "A host MUST NOT both advertise and opt out of the same profile." ' +
+      req('openwop.it.strict-behavior-gate.advertising-and-opting-out-of-the-same-profile-fails', 'RFC 0148 §B', 'RFC 0148 §B: "A host MUST NOT both advertise and opt out of the same profile." ' +
         'The two claims are opposite in kind — one says the host implements the profile, the ' +
         'other says the operator declares it does not. A run where both hold has no defensible ' +
         'reading, and resolving it in favour of advertisement extracts MORE certification claim ' +
-        'from a MORE contradictory input.',
+        'from a MORE contradictory input.'),
     ).toThrow(/MUST NOT both advertise and opt out/);
   });
 
   it('advertising alone proceeds', () => {
-    expect(behaviorGate('openwop-audit-log-integrity', true)).toBe(true);
+    expect(behaviorGate('openwop-audit-log-integrity', true), req('openwop.it.strict-behavior-gate.advertising-alone-proceeds', 'RFC 0148 §B', 'advertising alone proceeds')).toBe(true);
   });
 
   it('opting out alone skips, in strict mode too', () => {
@@ -82,13 +83,13 @@ describe('RFC 0148 §B — advertise and opt-out are mutually exclusive', () => 
     __resetEnvCacheForTests();
     process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
     __resetEnvCacheForTests();
-    expect(behaviorGate('openwop-audit-log-integrity', false)).toBe(false);
+    expect(behaviorGate('openwop-audit-log-integrity', false), req('openwop.it.strict-behavior-gate.opting-out-alone-skips-in-strict-mode-too', 'RFC 0148 §B', 'opting out alone skips, in strict mode too')).toBe(false);
   });
 
   it('strict mode fails an unadvertised, non-opted-out profile', () => {
     process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
     __resetEnvCacheForTests();
-    expect(() => behaviorGate('openwop-audit-log-integrity', false)).toThrow();
+    expect(() => behaviorGate('openwop-audit-log-integrity', false), req('openwop.it.strict-behavior-gate.strict-mode-fails-an-unadvertised-non-opted-out-profile', 'RFC 0148 §B', 'strict mode fails an unadvertised, non-opted-out profile')).toThrow();
   });
 });
 
@@ -100,7 +101,7 @@ describe('RFC 0148 §B — gate decisions record a ledger disposition', () => {
     process.env['OPENWOP_OPTED_OUT_PROFILES'] = 'openwop-audit-log-integrity';
     __resetEnvCacheForTests();
     behaviorGate('openwop-audit-log-integrity', false);
-    expect(dispositionOf('openwop.profile.openwop-audit-log-integrity')).toBe('skipped');
+    expect(dispositionOf('openwop.profile.openwop-audit-log-integrity'), req('openwop.it.strict-behavior-gate.an-honest-opt-out-records-skipped-not-silence', 'RFC 0148 §B', 'an honest opt-out records `skipped`, not silence')).toBe('skipped');
   });
 
   it('a default-mode soft-skip records `inapplicable`', () => {
@@ -109,12 +110,12 @@ describe('RFC 0148 §B — gate decisions record a ledger disposition', () => {
     // statement from "we could not check", and it is certifiable where
     // `blocked` is not.
     behaviorGate('openwop-audit-log-integrity', false);
-    expect(dispositionOf('openwop.profile.openwop-audit-log-integrity')).toBe('inapplicable');
+    expect(dispositionOf('openwop.profile.openwop-audit-log-integrity'), req('openwop.it.strict-behavior-gate.a-default-mode-soft-skip-records-inapplicable', 'RFC 0148 §B', 'a default-mode soft-skip records `inapplicable`')).toBe('inapplicable');
   });
 
   it('an unexercised profile stays `blocked`', () => {
     // Nothing called the gate at all. §A's default holds: silence is not a pass,
     // and it is not certifiable either.
-    expect(dispositionOf('openwop.profile.openwop-never-touched')).toBe('blocked');
+    expect(dispositionOf('openwop.profile.openwop-never-touched'), req('openwop.it.strict-behavior-gate.an-unexercised-profile-stays-blocked', 'RFC 0148 §B', 'an unexercised profile stays `blocked`')).toBe('blocked');
   });
 });

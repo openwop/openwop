@@ -53,6 +53,8 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const SEAM = '/v1/host/sample/purpose-propagation/forward';
@@ -79,30 +81,30 @@ describe('purpose-propagation: label schema (always-on, server-free)', () => {
 
   it('a labelled TriggerEvent validates; a non-array label fails', () => {
     const ev = JSON.parse(readFileSync(FIXTURE, 'utf8'));
-    expect(validate(ev), `a labelled TriggerEvent MUST validate (RFC 0128 §1). Errors: ${JSON.stringify(validate.errors)}`).toBe(true);
+    expect(validate(ev), req('openwop.it.purpose-propagation.a-labelled-triggerevent-validates-a-non-array-label-fails', 'RFC 0128', `a labelled TriggerEvent MUST validate (RFC 0128 §1). Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
 
     ev.permittedPurposes = 'analytics';
-    expect(validate(ev), 'RFC 0128 §1 — permittedPurposes MUST be string[]').toBe(false);
+    expect(validate(ev), req('openwop.it.purpose-propagation.a-labelled-triggerevent-validates-a-non-array-label-fails', 'RFC 0128', 'RFC 0128 §1 — permittedPurposes MUST be string[]')).toBe(false);
   });
 
   it('absent and [] are BOTH wire-valid — distinct states (unlabelled vs no-onward-use)', () => {
     const ev = JSON.parse(readFileSync(FIXTURE, 'utf8'));
     delete ev.permittedPurposes;
-    expect(validate(ev), 'RFC 0128 §1 — an unlabelled event (absent label) MUST validate').toBe(true);
+    expect(validate(ev), req('openwop.it.purpose-propagation.absent-and-are-both-wire-valid-distinct-states-unlabelled-vs-no-onward-use', 'RFC 0128', 'RFC 0128 §1 — an unlabelled event (absent label) MUST validate')).toBe(true);
     ev.permittedPurposes = [];
-    expect(validate(ev), 'RFC 0128 §1 — a []-labelled event MUST validate (behavioral meaning: no onward use)').toBe(true);
+    expect(validate(ev), req('openwop.it.purpose-propagation.absent-and-are-both-wire-valid-distinct-states-unlabelled-vs-no-onward-use', 'RFC 0128', 'RFC 0128 §1 — a []-labelled event MUST validate (behavioral meaning: no onward use)')).toBe(true);
   });
 
   it('the capabilities.purposePropagation family requires `supported` and closes its shape', () => {
     const caps = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8'));
     const fam = caps.properties?.purposePropagation;
-    expect(fam, 'capabilities.schema.json MUST define the purposePropagation family (RFC 0128 §2)').toBeDefined();
-    expect(fam.required, 'purposePropagation MUST require `supported`').toContain('supported');
-    expect(fam.additionalProperties, 'purposePropagation MUST close its shape').toBe(false);
+    expect(fam, req('openwop.it.purpose-propagation.the-capabilities-purposepropagation-family-requires-supported-and-closes-its-sha', 'RFC 0128', 'capabilities.schema.json MUST define the purposePropagation family (RFC 0128 §2)')).toBeDefined();
+    expect(fam.required, req('openwop.it.purpose-propagation.the-capabilities-purposepropagation-family-requires-supported-and-closes-its-sha', 'RFC 0128', 'purposePropagation MUST require `supported`')).toContain('supported');
+    expect(fam.additionalProperties, req('openwop.it.purpose-propagation.the-capabilities-purposepropagation-family-requires-supported-and-closes-its-sha', 'RFC 0128', 'purposePropagation MUST close its shape')).toBe(false);
     const ajvFam = new Ajv2020({ allErrors: true, strict: false });
     const vf = ajvFam.compile(fam);
-    expect(vf({ supported: true, propagatesOnward: true }), 'the canonical advert MUST validate').toBe(true);
-    expect(vf({ propagatesOnward: true }), 'an advert without `supported` MUST fail').toBe(false);
+    expect(vf({ supported: true, propagatesOnward: true }), req('openwop.it.purpose-propagation.the-capabilities-purposepropagation-family-requires-supported-and-closes-its-sha', 'RFC 0128', 'the canonical advert MUST validate')).toBe(true);
+    expect(vf({ propagatesOnward: true }), req('openwop.it.purpose-propagation.the-capabilities-purposepropagation-family-requires-supported-and-closes-its-sha', 'RFC 0128', 'an advert without `supported` MUST fail')).toBe(false);
   });
 });
 
@@ -127,17 +129,17 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (seam-g
   it('a forwarded label survives ⊆ the received set (re-emit; MAY narrow, MUST NOT widen)', async () => {
     const input = ['analytics', 'marketing-email'];
     const res = await seamPost({ mode: 'forward', records: [{ id: 'r1', permittedPurposes: input, data: { k: 1 } }] });
-    if (res === null) return;
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam, prior step, or fixture unavailable)');
 
     const onward = res.onward ?? [];
     expect(
       onward.length > 0,
-      driver.describe('RFC 0128 §3', 'an advertising host MUST re-emit a received label on the onward hop — silent loss fails (the promise is propagation)'),
+      req('openwop.it.purpose-propagation.a-forwarded-label-survives-the-received-set-re-emit-may-narrow-must-not-widen', 'RFC 0128 §3', 'an advertising host MUST re-emit a received label on the onward hop — silent loss fails (the promise is propagation)'),
     ).toBe(true);
     for (const o of onward) {
       expect(
         Array.isArray(o.permittedPurposes) && subsetOf(o.permittedPurposes, input),
-        driver.describe('RFC 0128 §3', `the onward label MUST be a subset of what the host received — got ${JSON.stringify(o.permittedPurposes)} vs input ${JSON.stringify(input)} (widening is the testable violation)`),
+        req('openwop.it.purpose-propagation.a-forwarded-label-survives-the-received-set-re-emit-may-narrow-must-not-widen', 'RFC 0128 §3', `the onward label MUST be a subset of what the host received — got ${JSON.stringify(o.permittedPurposes)} vs input ${JSON.stringify(input)} (widening is the testable violation)`),
       ).toBe(true);
     }
   });
@@ -150,13 +152,13 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (seam-g
         { id: 'b', permittedPurposes: ['analytics'], data: { k: 2 } },
       ],
     });
-    if (res === null) return;
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam, prior step, or fixture unavailable)');
     const onward = res.onward ?? [];
-    expect(onward.length > 0, driver.describe('RFC 0128 §3', 'a merge of forwardable labelled inputs MUST produce an onward emission')).toBe(true);
+    expect(onward.length > 0, req('openwop.it.purpose-propagation.a-derived-merged-output-arrives-the-intersection-of-contributing-labelled-inputs', 'RFC 0128 §3', 'a merge of forwardable labelled inputs MUST produce an onward emission')).toBe(true);
     for (const o of onward) {
       expect(
         subsetOf(o.permittedPurposes, ['analytics']),
-        driver.describe('RFC 0128 §3', `a derived output MUST NOT carry a purpose absent from any contributing labelled input — transformation does not launder a grant; got ${JSON.stringify(o.permittedPurposes)}, allowed ⊆ ["analytics"]`),
+        req('openwop.it.purpose-propagation.a-derived-merged-output-arrives-the-intersection-of-contributing-labelled-inputs', 'RFC 0128 §3', `a derived output MUST NOT carry a purpose absent from any contributing labelled input — transformation does not launder a grant; got ${JSON.stringify(o.permittedPurposes)}, allowed ⊆ ["analytics"]`),
       ).toBe(true);
     }
   });
@@ -169,11 +171,11 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (seam-g
         { id: 'b', data: { k: 2 } },
       ],
     });
-    if (res === null) return;
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam, prior step, or fixture unavailable)');
     for (const o of res.onward ?? []) {
       expect(
         subsetOf(o.permittedPurposes, ['analytics']),
-        driver.describe('RFC 0128 §3', 'an unlabelled input asserts no constraint — the derived label is still bounded by the labelled input(s)'),
+        req('openwop.it.purpose-propagation.an-unlabelled-input-adds-no-constraint-to-a-merge', 'RFC 0128 §3', 'an unlabelled input asserts no constraint — the derived label is still bounded by the labelled input(s)'),
       ).toBe(true);
     }
   });
@@ -186,20 +188,20 @@ describe.skipIf(HTTP_SKIP)('purpose-propagation: two-hop onward behavior (seam-g
         { id: 'control', data: { k: 1 } },
       ],
     });
-    if (res === null) return;
+    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam, prior step, or fixture unavailable)');
 
     const onwardIds = (res.onward ?? []).map((o) => o.recordId);
     expect(
       !onwardIds.includes('blocked'),
-      driver.describe('RFC 0128 §3', 'permittedPurposes: [] means no onward use — a conformant host MUST NOT forward []-labelled data to a further sink at all'),
+      req('openwop.it.purpose-propagation.labelled-data-is-fail-closed-dropped-from-onward-emission-positive-control-unlab', 'RFC 0128 §3', 'permittedPurposes: [] means no onward use — a conformant host MUST NOT forward []-labelled data to a further sink at all'),
     ).toBe(true);
     expect(
       (res.dropped ?? []).includes('blocked'),
-      driver.describe('RFC 0128 §3', 'the []-labelled record MUST be reported dropped (fail-closed, observable)'),
+      req('openwop.it.purpose-propagation.labelled-data-is-fail-closed-dropped-from-onward-emission-positive-control-unlab', 'RFC 0128 §3', 'the []-labelled record MUST be reported dropped (fail-closed, observable)'),
     ).toBe(true);
     expect(
       onwardIds.includes('control'),
-      driver.describe('RFC 0128 §3', 'the unlabelled twin (positive control) MUST forward — proving the non-arrival of the []-labelled record is the rule firing, not a dead seam'),
+      req('openwop.it.purpose-propagation.labelled-data-is-fail-closed-dropped-from-onward-emission-positive-control-unlab', 'RFC 0128 §3', 'the unlabelled twin (positive control) MUST forward — proving the non-arrival of the []-labelled record is the rule firing, not a dead seam'),
     ).toBe(true);
   });
 });

@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readSubRunAttestationCap, invokeSubRunAttest } from '../lib/subRunAttestation.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('subrun-checksum-stable (RFC 0063 §B)', () => {
   it('identical child outputs produce an identical sha256 attestation checksum', async () => {
@@ -30,15 +30,15 @@ describe('subrun-checksum-stable (RFC 0063 §B)', () => {
     const att = a.attestation ?? {};
     expect(
       typeof att.checksum === 'string' && (att.checksum as string).length > 0,
-      driver.describe('RFC 0063 §B', 'output.harvested MUST carry a non-empty attestation.checksum when checksum:true'),
+      req('openwop.it.subrun-checksum-stable.identical-child-outputs-produce-an-identical-sha256-attestation-checksum', 'RFC 0063 §B', 'output.harvested MUST carry a non-empty attestation.checksum when checksum:true'),
     ).toBe(true);
     expect(
       att.algorithm,
-      driver.describe('RFC 0063 §B', 'attestation.algorithm MUST be "sha256" (the v1 recipe)'),
+      req('openwop.it.subrun-checksum-stable.identical-child-outputs-produce-an-identical-sha256-attestation-checksum', 'RFC 0063 §B', 'attestation.algorithm MUST be "sha256" (the v1 recipe)'),
     ).toBe('sha256');
     expect(
       (b.attestation ?? {}).checksum,
-      driver.describe('RFC 0063 §B', 'JCS canonicalization MUST make the checksum invariant to key order — same content, same hash'),
+      req('openwop.it.subrun-checksum-stable.identical-child-outputs-produce-an-identical-sha256-attestation-checksum', 'RFC 0063 §B', 'JCS canonicalization MUST make the checksum invariant to key order — same content, same hash'),
     ).toBe(att.checksum);
   });
 });

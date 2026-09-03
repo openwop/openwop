@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface ErrorEnvelope {
   error: unknown;
@@ -16,28 +17,28 @@ interface ErrorEnvelope {
   [key: string]: unknown;
 }
 
-function assertErrorEnvelope(body: unknown, specSection: string): void {
-  expect(typeof body, driver.describe(specSection, 'error response MUST be a JSON object')).toBe(
+function assertErrorEnvelope(requirementId: string, body: unknown, specSection: string): void {
+  expect(typeof body, req(requirementId, specSection, 'error response MUST be a JSON object')).toBe(
     'object',
   );
   const env = body as ErrorEnvelope;
 
-  expect(typeof env.error, driver.describe(
+  expect(typeof env.error, req(requirementId, 
     specSection,
     'error envelope MUST include `error` (machine-readable string)',
   )).toBe('string');
 
-  expect(typeof env.message, driver.describe(
+  expect(typeof env.message, req(requirementId, 
     specSection,
     'error envelope MUST include `message` (human-readable string)',
   )).toBe('string');
 
   if (env.details !== undefined) {
-    expect(typeof env.details, driver.describe(
+    expect(typeof env.details, req(requirementId, 
       specSection,
       'error envelope `details` (when present) MUST be a JSON object',
     )).toBe('object');
-    expect(env.details, driver.describe(
+    expect(env.details, req(requirementId, 
       specSection,
       'error envelope `details` (when present) MUST NOT be null',
     )).not.toBeNull();
@@ -51,7 +52,7 @@ function assertErrorEnvelope(body: unknown, specSection: string): void {
   const extraneousKeys = Object.keys(env as Record<string, unknown>).filter(
     (k) => !allowedKeys.has(k),
   );
-  expect(extraneousKeys, driver.describe(
+  expect(extraneousKeys, req(requirementId, 
     'schemas/error-envelope.schema.json (additionalProperties:false)',
     `error envelope MUST NOT have keys outside {error, message, details}; extraneous: [${extraneousKeys.join(', ')}]`,
   )).toEqual([]);
@@ -64,7 +65,7 @@ function assertErrorEnvelope(body: unknown, specSection: string): void {
  * RECOMMENDED, not REQUIRED — hosts that don't emit trace IDs are still
  * conformant. This helper just pins the placement.
  */
-function assertCorrelationIdShape(body: unknown, specSection: string): void {
+function assertCorrelationIdShape(requirementId: string, body: unknown, specSection: string): void {
   const env = body as ErrorEnvelope;
   // Top-level correlationId would be a spec violation; the assertErrorEnvelope
   // additionalProperties check above catches it. This helper additionally
@@ -72,11 +73,11 @@ function assertCorrelationIdShape(body: unknown, specSection: string): void {
   if (env.details && typeof env.details === 'object') {
     const det = env.details as Record<string, unknown>;
     if (det.correlationId !== undefined) {
-      expect(typeof det.correlationId, driver.describe(
+      expect(typeof det.correlationId, req(requirementId, 
         specSection,
         'when present, details.correlationId MUST be a string',
       )).toBe('string');
-      expect((det.correlationId as string).length, driver.describe(
+      expect((det.correlationId as string).length, req(requirementId, 
         specSection,
         'details.correlationId MUST be a non-empty string',
       )).toBeGreaterThan(0);
@@ -90,11 +91,11 @@ describe('errors: 404 envelope', () => {
 
     expect(
       [403, 404].includes(res.status),
-      driver.describe('rest-endpoints.md', 'unknown run MUST return 404 (or 403 if leaking existence is forbidden)'),
+      req('openwop.it.errors.get-v1-runs-nonexistentid-returns-canonical-envelope', 'rest-endpoints.md', 'unknown run MUST return 404 (or 403 if leaking existence is forbidden)'),
     ).toBe(true);
 
-    assertErrorEnvelope(res.json, 'rest-endpoints.md error envelope');
-    assertCorrelationIdShape(res.json, 'rest-endpoints.md §error-envelope');
+    assertErrorEnvelope('openwop.it.errors.get-v1-runs-nonexistentid-returns-canonical-envelope', res.json, 'rest-endpoints.md error envelope');
+    assertCorrelationIdShape('openwop.it.errors.get-v1-runs-nonexistentid-returns-canonical-envelope', res.json, 'rest-endpoints.md §error-envelope');
   });
 });
 
@@ -107,12 +108,12 @@ describe('errors: 400 envelope (validation)', () => {
     // not the status code.
     expect(
       res.status,
-      driver.describe('rest-endpoints.md', 'malformed POST /v1/runs MUST return 4xx'),
+      req('openwop.it.errors.post-v1-runs-with-empty-body-returns-canonical-envelope', 'rest-endpoints.md', 'malformed POST /v1/runs MUST return 4xx'),
     ).toBeGreaterThanOrEqual(400);
     expect(res.status).toBeLessThan(500);
 
-    assertErrorEnvelope(res.json, 'rest-endpoints.md error envelope');
-    assertCorrelationIdShape(res.json, 'rest-endpoints.md §error-envelope');
+    assertErrorEnvelope('openwop.it.errors.post-v1-runs-with-empty-body-returns-canonical-envelope', res.json, 'rest-endpoints.md error envelope');
+    assertCorrelationIdShape('openwop.it.errors.post-v1-runs-with-empty-body-returns-canonical-envelope', res.json, 'rest-endpoints.md §error-envelope');
   });
 });
 
@@ -131,12 +132,12 @@ describe('errors: details.correlationId placement convention', () => {
     const res = await driver.get('/v1/runs/openwop-conformance-correlation-probe-' + Date.now());
     expect(
       [400, 403, 404].includes(res.status),
-      driver.describe('rest-endpoints.md', 'unknown run returns 4xx envelope'),
+      req('openwop.it.errors.correlationid-when-emitted-on-5xx-must-be-in-details-never-top-level', 'rest-endpoints.md', 'unknown run returns 4xx envelope'),
     ).toBe(true);
     const body = res.json as Record<string, unknown>;
-    expect(body, driver.describe('rest-endpoints.md', 'response MUST be a JSON object')).toBeDefined();
+    expect(body, req('openwop.it.errors.correlationid-when-emitted-on-5xx-must-be-in-details-never-top-level', 'rest-endpoints.md', 'response MUST be a JSON object')).toBeDefined();
     // The structural constraint: no top-level correlationId.
-    expect(body.correlationId, driver.describe(
+    expect(body.correlationId, req('openwop.it.errors.correlationid-when-emitted-on-5xx-must-be-in-details-never-top-level', 
       'spec/v1/rest-endpoints.md §error-envelope (correlationId convention)',
       'correlationId MUST NOT appear at the top level of the error envelope; canonical home is `details.correlationId`',
     )).toBeUndefined();

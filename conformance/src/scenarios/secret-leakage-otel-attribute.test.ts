@@ -57,6 +57,8 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host exports OTLP spans to the suite's collector, which scans them for the BYOK canary.
@@ -106,25 +108,25 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
     it('NO OTel span attribute MUST contain the BYOK canary plaintext for a run that resolved it', async (ctx) => {
       if (!CANARY_VALUE) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `!CANARY_VALUE` returned early (seam, prior step, or fixture unavailable)');
       }
       const d = await readDiscovery();
       const secretsOk = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported === true;
       const seamOk = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.otelScrape === true;
       if (!secretsOk || !seamOk) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `!secretsOk || !seamOk` returned early (seam, prior step, or fixture unavailable)');
       }
 
       const runId = await startByokRun();
       if (runId === null) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `runId === null` returned early (seam, prior step, or fixture unavailable)');
       }
       const terminal = await pollUntilTerminal(runId);
       expect(
         terminal.status,
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-otel-span-attribute-must-contain-the-byok-canary-plaintext-for-a-run-that-res', 
           'auth.md §"Secret resolution"',
           'BYOK fixture run MUST terminate `completed` when the canary is provisioned',
         ),
@@ -135,7 +137,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       );
       expect(
         spansRes.status,
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-otel-span-attribute-must-contain-the-byok-canary-plaintext-for-a-run-that-res', 
           'RFCS/0034-otel-collector-test-seam.md §B',
           'host advertising capabilities.observability.testSeams.otelScrape MUST serve GET /v1/host/sample/test/otel/spans (200) — 404 is non-conformant',
         ),
@@ -145,7 +147,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       const spans = body.spans ?? [];
       expect(
         Array.isArray(spans),
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-otel-span-attribute-must-contain-the-byok-canary-plaintext-for-a-run-that-res', 
           'RFCS/0034-otel-collector-test-seam.md §B',
           'response body MUST have a `spans` array',
         ),
@@ -160,7 +162,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
 
       expect(
         serialized.includes(CANARY_VALUE),
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-otel-span-attribute-must-contain-the-byok-canary-plaintext-for-a-run-that-res', 
           'SECURITY/invariants.yaml secret-leakage-otel-attribute',
           'no OTel span attribute may contain the BYOK canary plaintext — host instrumentation MUST redact or omit secret material before any span emission. Per `agent-memory.md` §SR-1, the canonical redaction marker is `[REDACTED:<secretId>]`.',
         ),
@@ -175,20 +177,20 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
     it('NO debug-bundle field MUST contain the BYOK canary plaintext for a run that resolved it', async (ctx) => {
       if (!CANARY_VALUE) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `!CANARY_VALUE` returned early (seam, prior step, or fixture unavailable)');
       }
       const d = await readDiscovery();
       const secretsOk = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported === true;
       const seamOk = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.debugBundleExport === true;
       if (!secretsOk || !seamOk) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `!secretsOk || !seamOk` returned early (seam, prior step, or fixture unavailable)');
       }
 
       const runId = await startByokRun();
       if (runId === null) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `runId === null` returned early (seam, prior step, or fixture unavailable)');
       }
       const terminal = await pollUntilTerminal(runId);
       expect(terminal.status).toBe('completed');
@@ -196,7 +198,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       const bundleRes = await driver.post('/v1/host/sample/test/debug-bundle/export', { runId });
       expect(
         bundleRes.status,
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-debug-bundle-field-must-contain-the-byok-canary-plaintext-for-a-run-that-reso', 
           'RFCS/0034-otel-collector-test-seam.md §B',
           'host advertising capabilities.observability.testSeams.debugBundleExport MUST serve POST /v1/host/sample/test/debug-bundle/export (200) — 404 is non-conformant',
         ),
@@ -205,7 +207,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       const serialized = JSON.stringify(bundleRes.json ?? {});
       expect(
         serialized.includes(CANARY_VALUE),
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-debug-bundle-field-must-contain-the-byok-canary-plaintext-for-a-run-that-reso', 
           'SECURITY/invariants.yaml secret-leakage-debug-bundle-otel',
           'no debug-bundle field may contain the BYOK canary plaintext — debug-bundle export MUST redact or omit secret material. Per `debug-bundle.md` §"Redaction", the canonical marker is `[REDACTED:<secretId>]`.',
         ),
@@ -229,21 +231,21 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       const collector = getCollector();
       if (!collector || !CANARY_VALUE) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `!collector || !CANARY_VALUE` returned early (seam, prior step, or fixture unavailable)');
       }
       const d = await readDiscovery();
       const secretsOk = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported === true;
       const obsOk = capabilityFamily<unknown>(d, 'observability') !== undefined;
       if (!secretsOk || !obsOk) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `!secretsOk || !obsOk` returned early (seam, prior step, or fixture unavailable)');
       }
 
       collector.reset();
       const runId = await startByokRun();
       if (runId === null) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `runId === null` returned early (seam, prior step, or fixture unavailable)');
       }
       const terminal = await pollUntilTerminal(runId);
       expect(terminal.status).toBe('completed');
@@ -256,7 +258,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       const leaks = collector.findCanaryLeakage(CANARY_VALUE);
       expect(
         leaks,
-        driver.describe(
+        req('openwop.it.secret-leakage-otel-attribute.no-real-exported-otel-span-metric-attribute-must-contain-the-byok-canary-plainte', 
           'SECURITY/invariants.yaml secret-leakage-otel-attribute',
           `no real-exported OTel span/metric attribute may contain the BYOK canary plaintext. Leaking surfaces: ${JSON.stringify(leaks)}`,
         ),
@@ -272,17 +274,17 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       const d = await readDiscovery();
       if (capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported !== true) {
         ctx.skip();
-        return;
+        return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `capabilityFamily<{ supported?: unknown }>(d, \'secrets\')?.supported !== true` returned early');
       }
       const seams = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams;
       if (seams === undefined) {
         ctx.skip(); // host honest about not exposing the seams — Drift #17 path
-        return;
+        return softSkip('blocked', 'precondition not met — `seams === undefined` returned early (seam, prior step, or fixture unavailable)');
       }
       if ('otelScrape' in seams && seams.otelScrape !== undefined) {
         expect(
           typeof seams.otelScrape,
-          driver.describe(
+          req('openwop.it.secret-leakage-otel-attribute.when-secrets-supported-is-true-observability-testseams-advertisements-must-be-bo', 
             'RFCS/0034-otel-collector-test-seam.md §A',
             'capabilities.observability.testSeams.otelScrape MUST be boolean when present',
           ),
@@ -291,7 +293,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
       if ('debugBundleExport' in seams && seams.debugBundleExport !== undefined) {
         expect(
           typeof seams.debugBundleExport,
-          driver.describe(
+          req('openwop.it.secret-leakage-otel-attribute.when-secrets-supported-is-true-observability-testseams-advertisements-must-be-bo', 
             'RFCS/0034-otel-collector-test-seam.md §A',
             'capabilities.observability.testSeams.debugBundleExport MUST be boolean when present',
           ),

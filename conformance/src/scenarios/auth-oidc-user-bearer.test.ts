@@ -48,6 +48,8 @@ import {
   type SyntheticOIDCIssuer,
 } from '../lib/oidc-issuer.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host fetches JWKS and discovery from the suite's synthetic OIDC issuer.
@@ -94,19 +96,19 @@ describe('auth-oidc-user-bearer: capability shape', () => {
       return;
     }
 
-    expect(auth?.profiles?.includes(PROFILE), driver.describe(
+    expect(auth?.profiles?.includes(PROFILE), req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
       'capabilities.auth.profiles MUST include openwop-auth-oidc-user-bearer when the profile is claimed',
     )).toBe(true);
 
-    expect(auth?.oidc?.supported, driver.describe(
+    expect(auth?.oidc?.supported, req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
       'capabilities.auth.oidc.supported MUST be true when the profile is claimed',
     )).toBe(true);
 
     expect(
       Array.isArray(auth?.oidc?.issuers) && (auth?.oidc?.issuers?.length ?? 0) > 0,
-      driver.describe(
+      req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 
         'capabilities.schema.json auth.oidc.issuers',
         'issuers MUST be a non-empty array when the profile is claimed',
       ),
@@ -115,14 +117,14 @@ describe('auth-oidc-user-bearer: capability shape', () => {
     for (const issuer of auth?.oidc?.issuers ?? []) {
       expect(
         typeof issuer === 'string' && issuer.length > 0,
-        'each issuer entry MUST be a non-empty string',
+        req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 'capabilities.schema.json auth.oidc.issuers', 'each issuer entry MUST be a non-empty string'),
       ).toBe(true);
     }
 
     if (auth?.oidc?.audience !== undefined) {
       expect(
         typeof auth.oidc.audience === 'string' && auth.oidc.audience.length > 0,
-        'audience MUST be a non-empty string when advertised',
+        req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 'capabilities.schema.json auth.oidc.issuers', 'audience MUST be a non-empty string when advertised'),
       ).toBe(true);
     }
 
@@ -131,7 +133,7 @@ describe('auth-oidc-user-bearer: capability shape', () => {
         ['group-claim', 'scope-claim', 'host-acl'].includes(
           auth.oidc.supportedScopeMapping,
         ),
-        driver.describe(
+        req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 
           'capabilities.schema.json auth.oidc.supportedScopeMapping',
           'supportedScopeMapping MUST be one of group-claim/scope-claim/host-acl',
         ),
@@ -142,7 +144,7 @@ describe('auth-oidc-user-bearer: capability shape', () => {
       expect(
         Number.isInteger(auth.oidc.introspectionIntervalSeconds) &&
           auth.oidc.introspectionIntervalSeconds >= 0,
-        'introspectionIntervalSeconds MUST be a non-negative integer when advertised',
+        req('openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields', 'capabilities.schema.json auth.oidc.supportedScopeMapping', 'introspectionIntervalSeconds MUST be a non-negative integer when advertised'),
       ).toBe(true);
     }
   });
@@ -175,16 +177,16 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
     const parsed = new URL(harnessUrl);
     const port = parsed.port ? Number.parseInt(parsed.port, 10) : 80;
 
-    server = createServer((req, res) => {
+    server = createServer((reqBody, res) => {
       if (!issuer) {
         res.writeHead(503);
         res.end();
         return;
       }
-      if (req.url === '/.well-known/jwks.json') {
+      if (reqBody.url === '/.well-known/jwks.json') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(issuer.jwksJson);
-      } else if (req.url === '/.well-known/openid-configuration') {
+      } else if (reqBody.url === '/.well-known/openid-configuration') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(issuer.discoveryJson);
       } else {
@@ -230,7 +232,7 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
       console.warn(
         '[auth-oidc-user-bearer] harness not wired or host trust not configured; skipping wrong-iss case',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!issuer || !trustWired` returned early ([auth-oidc-user-bearer] harness not wired or host trust not configured; skipping wrong-iss case) (seam, prior step, or fixture unavailable)');
     }
 
     const wrongIssIssuer = createSyntheticOIDCIssuer({
@@ -248,14 +250,14 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
       },
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oidc-user-bearer.wrong-iss-401', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
       'token with non-trusted iss MUST return 401',
     )).toBe(401);
   });
 
   it('wrong aud → 401', async () => {
-    if (!issuer || !trustWired) return;
+    if (!issuer || !trustWired) return softSkip('blocked', 'precondition not met — `!issuer || !trustWired` returned early (seam, prior step, or fixture unavailable)');
     const wrongAud = issuer.mint({ aud: 'wrong-audience', sub: 'attacker' });
     const res = await driver.post(
       '/v1/runs',
@@ -265,14 +267,14 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
         headers: { Authorization: `Bearer ${wrongAud.token}` },
       },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oidc-user-bearer.wrong-aud-401', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
       'token with wrong aud MUST return 401',
     )).toBe(401);
   });
 
   it('expired exp → 401', async () => {
-    if (!issuer || !trustWired) return;
+    if (!issuer || !trustWired) return softSkip('blocked', 'precondition not met — `!issuer || !trustWired` returned early (seam, prior step, or fixture unavailable)');
     const expired = issuer.mint(
       { sub: 'conformance-suite' },
       { expiresInSeconds: -3600 },
@@ -285,14 +287,14 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
         headers: { Authorization: `Bearer ${expired.token}` },
       },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oidc-user-bearer.expired-exp-401', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
       'expired token (exp < now) MUST return 401',
     )).toBe(401);
   });
 
   it('unknown kid → 401', async () => {
-    if (!issuer || !trustWired) return;
+    if (!issuer || !trustWired) return softSkip('blocked', 'precondition not met — `!issuer || !trustWired` returned early (seam, prior step, or fixture unavailable)');
     const unknownKid = issuer.mint(
       { sub: 'conformance-suite' },
       { keyId: 'openwop-conformance-key-NEVER-PUBLISHED' },
@@ -305,15 +307,15 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
         headers: { Authorization: `Bearer ${unknownKid.token}` },
       },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oidc-user-bearer.unknown-kid-401', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer` + threat-model-auth-profiles.md A3',
       'token referencing a kid not in JWKS MUST return 401',
     )).toBe(401);
   });
 
   it('valid token → 201 or 403 (depending on host scope mapping)', async () => {
-    if (!issuer || !trustWired) return;
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!issuer || !trustWired) return softSkip('blocked', 'precondition not met — `!issuer || !trustWired` returned early (seam, prior step, or fixture unavailable)');
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
 
     const valid = issuer.mint({
       sub: 'conformance-suite',
@@ -334,7 +336,7 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
     // decision is a separate host-side policy not normated by RFC 0010.
     expect(
       [201, 403].includes(res.status),
-      driver.describe(
+      req('openwop.it.auth-oidc-user-bearer.valid-token-201-or-403-depending-on-host-scope-mapping', 
         'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
         'host-trusted token MUST yield 201 (mapped scope) or 403 (unmapped sub), NOT 401',
       ),
@@ -342,14 +344,14 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
   });
 
   it('scope-insufficient → 403 (when host uses group-claim mapping)', async () => {
-    if (!issuer || !trustWired) return;
+    if (!issuer || !trustWired) return softSkip('blocked', 'precondition not met — `!issuer || !trustWired` returned early (seam, prior step, or fixture unavailable)');
     const auth = await readAuthCaps();
     if (auth?.oidc?.supportedScopeMapping !== 'group-claim') {
       // eslint-disable-next-line no-console
       console.warn(
         '[auth-oidc-user-bearer] host scope mapping is not group-claim; skipping scope-insufficient case',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `auth?.oidc?.supportedScopeMapping !== \'group-claim\'` returned early ([auth-oidc-user-bearer] host scope mapping is not group-claim; skipping scope-insufficient…');
     }
 
     const noGroups = issuer.mint({ sub: 'conformance-suite', groups: [] });
@@ -362,7 +364,7 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
       },
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oidc-user-bearer.scope-insufficient-403-when-host-uses-group-claim-mapping', 
       'auth-profiles.md §`openwop-auth-oidc-user-bearer`',
       'token-valid-but-empty-groups against group-claim host MUST return 403 (forbidden), NOT 401',
     )).toBe(403);

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/effect-seam-manifest.schema.json",
+  "title": "Effect-seam manifest (RFC 0173 §C)",
+  "description": "Host-declared, machine-checkable list of every outbound effect path the node runtime can reach (RFC 0173 §C.1: `{ seam, kind, guarded: true, guardedBy }`; `branchReFires` states the RFC 0140 G6 asymmetry). Served at GET /host/effect-seams (canonical, not a test seam). A seam omitted is invisible to the suite (negative-existence); the RFC 0140 R5 audit is the control.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "host",
+    "seams"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "const": "1"
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "build"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "build": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "id"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "image-digest",
+                "commit",
+                "artifact-sha256"
+              ]
+            },
+            "id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "seams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "seam",
+          "kind",
+          "guarded",
+          "guardedBy"
+        ],
+        "properties": {
+          "seam": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+            "description": "The outbound effect path, host-named (e.g. `http.fetch`, `provider.openai.chat`)."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "http",
+              "queue",
+              "storage",
+              "provider-sdk",
+              "webhook-fanout"
+            ]
+          },
+          "guarded": {
+            "const": true,
+            "description": "RFC 0173 §C.1 — every row MUST be guarded; the scenario asserts it and drives one seam of each kind through the suite's receiver."
+          },
+          "guardedBy": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The suppression mechanism (module, interceptor, or policy) that records the outcome instead of re-firing."
+          },
+          "branchReFires": {
+            "type": "boolean",
+            "description": "RFC 0140 G6 — a `branch` fork re-fires this seam by design; stated here and witnessed as a permission."
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

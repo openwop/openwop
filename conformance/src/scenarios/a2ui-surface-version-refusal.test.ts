@@ -20,6 +20,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const schema = JSON.parse(
@@ -42,14 +44,14 @@ describe('a2ui-surface-version-refusal: enumerated catalogVersion (RFC 0102 §A.
     const ok = validate({ catalogVersion: '9.9.9', surface: { components: [] } });
     expect(
       ok,
-      'RFC 0102 §A.3: a catalogVersion outside the host-enumerated set MUST fail (→ unknown_schema_version at runtime)',
+      req('openwop.it.a2ui-surface-version-refusal.catalogversion-is-a-closed-enum-an-unadvertised-version-fails-validation', 'RFC 0102 §A.3', 'RFC 0102 §A.3: a catalogVersion outside the host-enumerated set MUST fail (→ unknown_schema_version at runtime)'),
     ).toBe(false);
   });
 
   it('surface payload is self-contained — no external $ref (replay determinism)', () => {
     expect(
       hasAbsoluteRef(schema),
-      'RFC 0102 §A.3: the surface MUST be self-contained, never a live external-catalog reference',
+      req('openwop.it.a2ui-surface-version-refusal.surface-payload-is-self-contained-no-external-ref-replay-determinism', 'RFC 0102 §A.3', 'RFC 0102 §A.3: the surface MUST be self-contained, never a live external-catalog reference'),
     ).toBe(false);
   });
 });
@@ -67,11 +69,11 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-version-refusal: live host refuses unad
       },
       hostSupportedEnvelopes: ['ui.a2ui-surface'],
     });
-    if (res.status === 404) return; // seam absent — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
     const body = res.json as { status?: string; reason?: string };
     expect(
       body.status === 'invalid' || body.status === 'refused',
-      driver.describe('RFC 0102 §A.3', 'an unadvertised catalogVersion MUST be refused'),
+      req('openwop.it.a2ui-surface-version-refusal.ui-a2ui-surface-with-an-unadvertised-catalogversion-refused', 'RFC 0102 §A.3', 'an unadvertised catalogVersion MUST be refused'),
     ).toBe(true);
   });
 });

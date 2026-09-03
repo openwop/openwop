@@ -35,8 +35,8 @@ import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -81,12 +81,12 @@ describe('interrupt-approver-routing: capability advertisement shape (capabiliti
   const interrupt = (caps.properties as Record<string, { properties?: Record<string, { required?: string[]; properties?: Record<string, unknown> }> }>).interrupt;
 
   it('capabilities schema declares interrupt.approverRouting', () => {
-    expect(interrupt, why('capabilities.schema.json §interrupt', 'the interrupt block MUST be declared')).toBeDefined();
+    expect(interrupt, req('openwop.it.interrupt-approver-routing.capabilities-schema-declares-interrupt-approverrouting', 'capabilities.schema.json §interrupt', 'the interrupt block MUST be declared')).toBeDefined();
     const ar = interrupt?.properties?.approverRouting;
-    expect(ar, why('RFC 0104', 'interrupt.approverRouting MUST be declared')).toBeDefined();
-    expect(ar?.required, why('RFC 0104', 'approverRouting.supported MUST be required')).toEqual(expect.arrayContaining(['supported']));
+    expect(ar, req('openwop.it.interrupt-approver-routing.capabilities-schema-declares-interrupt-approverrouting', 'RFC 0104', 'interrupt.approverRouting MUST be declared')).toBeDefined();
+    expect(ar?.required, req('openwop.it.interrupt-approver-routing.capabilities-schema-declares-interrupt-approverrouting', 'RFC 0104', 'approverRouting.supported MUST be required')).toEqual(expect.arrayContaining(['supported']));
     for (const f of ['supported', 'refKinds', 'audience']) {
-      expect(ar?.properties?.[f], why('RFC 0104', `approverRouting.${f} MUST be declared`)).toBeDefined();
+      expect(ar?.properties?.[f], req('openwop.it.interrupt-approver-routing.capabilities-schema-declares-interrupt-approverrouting', 'RFC 0104', `approverRouting.${f} MUST be declared`)).toBeDefined();
     }
   });
 });
@@ -104,7 +104,7 @@ describe('interrupt-approver-routing: ApprovalData additive optionality (interru
   };
 
   it('an approval payload WITHOUT the routing fields still validates (additive, optional)', () => {
-    expect(validate(baseApproval), why('RFC 0104 Compatibility', `the fields are optional — Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
+    expect(validate(baseApproval), req('openwop.it.interrupt-approver-routing.an-approval-payload-without-the-routing-fields-still-validates-additive-optional', 'RFC 0104 Compatibility', `the fields are optional — Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
   });
   it('an approval payload WITH group/role refs + audience validates', () => {
     const withRouting = {
@@ -116,11 +116,11 @@ describe('interrupt-approver-routing: ApprovalData additive optionality (interru
         audience: { groups: ['grp:finance-approvers'], roles: ['role:controller'], subjects: ['user:cfo'] },
       },
     };
-    expect(validate(withRouting), why('RFC 0104 §Proposal', `routing fields MUST validate — Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
+    expect(validate(withRouting), req('openwop.it.interrupt-approver-routing.an-approval-payload-with-group-role-refs-audience-validates', 'RFC 0104 §Proposal', `routing fields MUST validate — Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
   });
   it('an audience with an unknown key is rejected (audience object is closed)', () => {
     const badAudience = { ...baseApproval, data: { ...baseApproval.data, audience: { teams: ['grp:x'] } } };
-    expect(validate(badAudience), why('RFC 0104', 'audience MUST be additionalProperties:false')).toBe(false);
+    expect(validate(badAudience), req('openwop.it.interrupt-approver-routing.an-audience-with-an-unknown-key-is-rejected-audience-object-is-closed', 'RFC 0104', 'audience MUST be additionalProperties:false')).toBe(false);
   });
 });
 
@@ -128,17 +128,17 @@ describe('interrupt-approver-routing: audience default/override rule (interrupt.
   it('omitted audience ⇒ notify the resolved eligibility union', () => {
     expect(
       notifyTargets({ approversList: ['user:a'], approverGroupRefs: ['grp:fin'], approverRoleRefs: ['role:ctrl'] }),
-      why('RFC 0104', 'omitted audience MUST default to the eligibility union'),
+      req('openwop.it.interrupt-approver-routing.omitted-audience-notify-the-resolved-eligibility-union', 'RFC 0104', 'omitted audience MUST default to the eligibility union'),
     ).toEqual(['user:a', 'grp:fin', 'role:ctrl']);
   });
   it('present audience ⇒ overrides the eligibility union', () => {
     expect(
       notifyTargets({ approverGroupRefs: ['grp:fin'], audience: { subjects: ['user:cfo'], groups: ['grp:audit'] } }),
-      why('RFC 0104', 'present audience MUST override the default'),
+      req('openwop.it.interrupt-approver-routing.present-audience-overrides-the-eligibility-union', 'RFC 0104', 'present audience MUST override the default'),
     ).toEqual(['user:cfo', 'grp:audit']);
   });
   it('no eligibility refs and no audience ⇒ empty target set', () => {
-    expect(notifyTargets({}), why('RFC 0104', 'nothing to route when no refs')).toEqual([]);
+    expect(notifyTargets({}), req('openwop.it.interrupt-approver-routing.no-eligibility-refs-and-no-audience-empty-target-set', 'RFC 0104', 'nothing to route when no refs')).toEqual([]);
   });
 });
 
@@ -148,7 +148,7 @@ describe('interrupt-approver-routing: audience default/override rule (interrupt.
 
 describe('interrupt-approver-routing: advertised shape is honest (capability-gated)', () => {
   it('an advertising host advertises a coherent approverRouting block', async () => {
-    if (!process.env.OPENWOP_BASE_URL) return; // no live host → nothing to read
+    if (!process.env.OPENWOP_BASE_URL) return softSkip('blocked', 'precondition not met — `!process.env.OPENWOP_BASE_URL` returned early (no live host → nothing to read) (seam, prior step, or fixture unavailable)'); // no live host → nothing to read
     const interrupt = await readCapabilityFamily<InterruptCap>('interrupt');
     const ar = interrupt?.approverRouting;
     // Soft-skip: host does not advertise the capability (fields ignored; still conformant).
@@ -157,10 +157,10 @@ describe('interrupt-approver-routing: advertised shape is honest (capability-gat
     // Opt-in established (supported === true): the advertised shape MUST be honest.
     const allowed = new Set(['group', 'role']);
     for (const k of ar?.refKinds ?? []) {
-      expect(allowed.has(k), why('RFC 0104 capabilities.md', `refKinds MUST be a subset of {group, role} — saw ${k}`)).toBe(true);
+      expect(allowed.has(k), req('openwop.it.interrupt-approver-routing.an-advertising-host-advertises-a-coherent-approverrouting-block', 'RFC 0104 capabilities.md', `refKinds MUST be a subset of {group, role} — saw ${k}`)).toBe(true);
     }
     if (ar?.audience !== undefined) {
-      expect(typeof ar.audience, why('RFC 0104 capabilities.md', 'approverRouting.audience MUST be boolean')).toBe('boolean');
+      expect(typeof ar.audience, req('openwop.it.interrupt-approver-routing.an-advertising-host-advertises-a-coherent-approverrouting-block', 'RFC 0104 capabilities.md', 'approverRouting.audience MUST be boolean')).toBe('boolean');
     }
   });
 });

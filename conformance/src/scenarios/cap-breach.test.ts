@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-cap-breach';
 const RECURSION_LIMIT = 3;
@@ -42,7 +43,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
       workflowId: WORKFLOW_ID,
       configurable: { recursionLimit: RECURSION_LIMIT },
     });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'rest-endpoints.md POST /v1/runs',
       'run creation MUST accept the request even when configurable.recursionLimit is below the workflow size',
     )).toBe(201);
@@ -50,17 +51,17 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
 
     const terminal = await pollUntilTerminal(runId);
 
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'fixtures.md conformance-cap-breach §Terminal status',
       'fixture MUST reach terminal `failed` when recursion limit is exceeded',
     )).toBe('failed');
 
-    expect(terminal.error?.code, driver.describe(
+    expect(terminal.error?.code, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'run-options.md §recursionLimit',
       'RunSnapshot.error.code MUST equal "recursion_limit_exceeded"',
     )).toBe('recursion_limit_exceeded');
 
-    expect(typeof terminal.error?.message, driver.describe(
+    expect(typeof terminal.error?.message, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'rest-endpoints.md RunSnapshot.error.message',
       'RunSnapshot.error.message MUST be a string',
     )).toBe('string');
@@ -72,7 +73,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
     const events = (eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? [];
 
     const capBreachEvents = events.filter((e) => e.type === 'cap.breached');
-    expect(capBreachEvents.length, driver.describe(
+    expect(capBreachEvents.length, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'observability.md §cap.breached',
       'exactly one cap.breached event MUST be emitted on recursion-limit exceedance',
     )).toBe(1);
@@ -82,23 +83,23 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
       | { kind?: string; limit?: number; observed?: number; nodeId?: string }
       | undefined;
 
-    expect(payload?.kind, driver.describe(
+    expect(payload?.kind, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'run-event-payloads.schema.json §capBreached.kind',
       'cap.breached payload MUST carry kind="node-executions"',
     )).toBe('node-executions');
 
-    expect(payload?.limit, driver.describe(
+    expect(payload?.limit, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'run-event-payloads.schema.json §capBreached.limit',
       'cap.breached payload MUST carry the resolved limit (3 from configurable.recursionLimit)',
     )).toBe(RECURSION_LIMIT);
 
-    expect(typeof payload?.observed, driver.describe(
+    expect(typeof payload?.observed, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'run-event-payloads.schema.json §capBreached.observed',
       'cap.breached payload MUST carry the observed count as a number',
     )).toBe('number');
     expect(payload?.observed).toBeGreaterThan(RECURSION_LIMIT);
 
-    expect(typeof payload?.nodeId, driver.describe(
+    expect(typeof payload?.nodeId, req('openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim', 
       'run-event-payloads.schema.json §capBreached.nodeId',
       'cap.breached payload MUST carry the offending nodeId for node-executions kind',
     )).toBe('string');
@@ -121,10 +122,10 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
     const capBreach = events.find((e) => e.type === 'cap.breached');
     const runFailed = events.find((e) => e.type === 'run.failed');
 
-    expect(capBreach, 'cap.breached MUST be emitted').toBeDefined();
-    expect(runFailed, 'run.failed MUST be emitted').toBeDefined();
+    expect(capBreach, req('openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov', 'observability.md §event ordering', 'cap.breached MUST be emitted')).toBeDefined();
+    expect(runFailed, req('openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov', 'observability.md §event ordering', 'run.failed MUST be emitted')).toBeDefined();
 
-    expect(capBreach!.sequence, driver.describe(
+    expect(capBreach!.sequence, req('openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov', 
       'observability.md §event ordering',
       'cap.breached MUST precede run.failed in sequence (breach detected BEFORE over-limit node fires)',
     )).toBeLessThan(runFailed!.sequence);
@@ -137,11 +138,11 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
     // short) — those would emit fewer than `RECURSION_LIMIT` started
     // events while still satisfying the invariant.
     const nodeStarted = events.filter((e) => e.type === 'node.started');
-    expect(nodeStarted.length, driver.describe(
+    expect(nodeStarted.length, req('openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov', 
       'run-options.md §recursionLimit',
       'at most `limit` node.started events MUST be emitted; the over-limit node MUST NOT receive node.started',
     )).toBeLessThanOrEqual(RECURSION_LIMIT);
-    expect(nodeStarted.length, driver.describe(
+    expect(nodeStarted.length, req('openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov', 
       'run-options.md §recursionLimit',
       'at least one node MUST start before the breach (otherwise the workflow never executed)',
     )).toBeGreaterThan(0);

@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts), with the openwop-app reference host                                                                                                |
 | **Created**       | 2026-08-08                                                                                                                                                         |
 | **Updated**       | 2026-08-08                                                                                                                                                         |
-| **Affects**       | `spec/v1/artifact-type-packs.md`, `conformance/src/scenarios/artifact-type-legacy-ids.test.ts`                                                                     |
+| **Affects**       | `spec/v1/artifact-type-packs.md`, `conformance/src/coherence/artifact-type-legacy-ids.test.ts`                                                                     |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — prose clarification; no schema, endpoint, or event change                                                                 |
 | **Supersedes**    | — (corrects the superseded text of RFC 0138 §"On the `artifactTypeId` constraint", already amended in place 2026-08-07)                                            |
 | **Superseded by** | —                                                                                                                                                                  |

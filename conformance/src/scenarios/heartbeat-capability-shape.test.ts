@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readHeartbeatCap } from '../lib/heartbeat.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('heartbeat-capability-shape: advertisement (RFC 0060 §A)', () => {
   it('capabilities.heartbeat is absent or a well-formed object', async () => {
@@ -21,14 +21,14 @@ describe('heartbeat-capability-shape: advertisement (RFC 0060 §A)', () => {
     if (cap === null) return softSkip('inapplicable', 'not advertised — valid');
     expect(
       typeof cap.supported,
-      driver.describe('capabilities.schema.json §heartbeat', 'heartbeat.supported MUST be a boolean when the block is present'),
+      req('openwop.it.heartbeat-capability-shape.capabilities-heartbeat-is-absent-or-a-well-formed-object', 'capabilities.schema.json §heartbeat', 'heartbeat.supported MUST be a boolean when the block is present'),
     ).toBe('boolean');
     for (const k of ['minIntervalSec', 'maxRuntimeMs'] as const) {
       if (cap[k] !== undefined) {
         const v = cap[k];
         expect(
           typeof v === 'number' && Number.isInteger(v) && v >= 1,
-          driver.describe('capabilities.schema.json §heartbeat', `heartbeat.${k} MUST be a positive integer when present`),
+          req('openwop.it.heartbeat-capability-shape.capabilities-heartbeat-is-absent-or-a-well-formed-object', 'capabilities.schema.json §heartbeat', `heartbeat.${k} MUST be a positive integer when present`),
         ).toBe(true);
       }
     }

@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-clarification';
 const NODE_ID = 'ask';
@@ -22,7 +23,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('interrupt: clarification answers resume to `co
     const runId = (create.json as { runId: string }).runId;
 
     const suspended = await pollUntilStatus(runId, 'waiting-input', { timeoutMs: 10_000 });
-    expect(suspended.currentNodeId, driver.describe(
+    expect(suspended.currentNodeId, req('openwop.it.interrupt-clarification.run-suspends-at-ask-answers-payload-drives-terminal-completed', 
       'fixtures.md conformance-clarification',
       'suspended run MUST report currentNodeId === "ask"',
     )).toBe(NODE_ID);
@@ -31,13 +32,13 @@ describe.skipIf(SKIP_NO_FIXTURE)('interrupt: clarification answers resume to `co
       `/v1/runs/${encodeURIComponent(runId)}/interrupts/${encodeURIComponent(NODE_ID)}`,
       { resumeValue: { answers: { q1: 'blue' } } },
     );
-    expect(resolve.status, driver.describe(
+    expect(resolve.status, req('openwop.it.interrupt-clarification.run-suspends-at-ask-answers-payload-drives-terminal-completed', 
       'rest-endpoints.md POST /v1/runs/{runId}/interrupts/{nodeId}',
       'valid clarification resolve MUST return 200',
     )).toBe(200);
 
     const terminal = await pollUntilTerminal(runId, { timeoutMs: 10_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.interrupt-clarification.run-suspends-at-ask-answers-payload-drives-terminal-completed', 
       'fixtures.md conformance-clarification §Terminal status',
       'fixture after resolve MUST reach terminal `completed`',
     )).toBe('completed');

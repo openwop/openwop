@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/run-snapshot.schema.json",
+  "title": "RunSnapshot",
+  "description": "Projected run state returned by `GET /v1/runs/{runId}`. Source is the run's append-only event log (run-event.schema.json) folded through the `RunProjection`. Forward-compat tolerant: readers MUST ignore unknown fields rather than reject.",
+  "type": "object",
+  "required": [
+    "eventLogSchemaVersion",
+    "owner",
+    "runId",
+    "status",
+    "workflowId"
+  ],
+  "properties": {
+    "runId": {
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "Globally unique run identifier."
+    },
+    "workflowId": {
+      "$ref": "ids.schema.json#/$defs/workflowId",
+      "description": "ID of the workflow this run executes."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "paused",
+        "waiting-approval",
+        "waiting-input",
+        "waiting-external",
+        "completed",
+        "failed",
+        "cancelling",
+        "cancelled"
+      ],
+      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md §openwop-interrupt-external-event` — distinguishes external-event waits from HITL waits at the wire level. `cancelling` (RFC 0094 §B) is the transitional state between a cancel request being accepted and the terminal `cancelled` — `rest-endpoints.md` and the OpenAPI cancel responses already document the transition; a snapshot read during the cancel cascade carries it. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
+    },
+    "compensationStatus": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "running",
+        "completed",
+        "partial",
+        "failed",
+        "manual"
+      ],
+      "description": "RFC 0151 §D — the run's compensation (unwind) rollup, kept separate from `status` on purpose: `status` is the FORWARD execution state and a closed union exported by the SDK, so RFC 0151 forbids reinterpreting it (there is deliberately no `compensating` run status). OPTIONAL and capability-gated — a host that does not advertise `capabilities.compensation` MUST omit this field; a host that advertises it MUST include it on every snapshot, `none` when no compensation was ever requested for the run. Presence is therefore a wire witness of the advert, and a `none` cannot be read as \"unwind is monitored here\" from a host that would never unwind. Values are the deterministic fold of the six `compensation.*` events over the persisted plan, defined normatively in `spec/v1/compensation.md §\"Run rollup: compensationStatus\"`: `none` (no `compensation.requested`), `pending` (requested, no `started`), `running` (started, plan active — a §E approval pause does NOT change it; the run's own `status: waiting-approval` carries the wait), `completed` (every inverse action completed), `partial` (plan inactive; some completed and some did not — reported, never rounded), `failed` (plan inactive; none completed), `manual` (`manual_intervention_required` recorded and unresolved; takes precedence over `partial`/`failed` while unresolved). Content-free by construction. Resolves RFC 0151 UQ3: `RunSnapshot` (`GET /v1/runs/{runId}`) is the sole owner; debug bundles and the AsyncAPI `run.snapshot` reuse it by `$ref`."
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant",
+        "subject"
+      ],
+      "properties": {
+        "tenant": {
+          "$ref": "ids.schema.json#/$defs/tenantId"
+        },
+        "workspace": {
+          "$ref": "ids.schema.json#/$defs/workspaceId"
+        },
+        "subject": {
+          "$ref": "subject.schema.json"
+        }
+      },
+      "description": "RFC 0170 §A.1 — the Subject is the owner; principal/principalKind removed. Copied verbatim onto a fork (§A.4)."
+    },
+    "currentNodeId": {
+      "type": "string",
+      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input` / `waiting-external`) — identifies which node holds the interrupt."
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "agent": {
+      "$ref": "agent-ref.schema.json",
+      "description": "Optional run-level agent identity (Multi-Agent Shift Phase 1). When the run is driven by a single agent, this field carries that agent's `AgentRef`. In supervisor-orchestrated runs (Phase 5), this field rotates as workers hand off — it always carries the active worker for the current node. See `runOrchestrator` for the run-lifetime supervisor identity. Absent for runs with no agent provenance (legacy single-actor host)."
+    },
+    "runOrchestrator": {
+      "$ref": "agent-ref.schema.json",
+      "description": "Optional orchestrator-supervisor identity (Multi-Agent Shift Phase 5). When set, this agent owns dispatch decisions across the run's lifetime; `runOrchestrator.decided` events emitted during the run carry this agent's `agentId`. Distinct from `agent` — `agent` rotates with each worker; `runOrchestrator` is set at run start (or first `core.orchestrator.supervisor` node) and MUST NOT change for the run's lifetime. In single-agent runs (no supervisor), this field is absent; in supervisor runs both fields MAY co-exist."
+    },
+    "nodeStates": {
+      "type": "object",
+      "description": "Per-node state map. Keys are nodeIds; values are implementation-shaped state objects. Spec doesn't constrain the inner shape — see version-negotiation.md §node-states.",
+      "additionalProperties": true
+    },
+    "variables": {
+      "type": "object",
+      "description": "Workflow-level variables (caller-supplied inputs + per-node outputs that survive the projection).",
+      "additionalProperties": true
+    },
+    "channels": {
+      "type": "object",
+      "description": "Optional typed state channels (see channels-and-reducers.md). Present when the workflow declares channel-aware mode.",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "object",
+      "description": "Set on terminal `failed`. Structured so consumers can route on code without parsing message text.",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "engineVersion": {
+      "type": "integer",
+      "description": "Engine version the run was started under. Used by the projection for forward-compat folds. v2: integer everywhere (RFC 0172 §B axis 3).",
+      "minimum": 0
+    },
+    "eventLogSchemaVersion": {
+      "type": "integer",
+      "minimum": 2,
+      "description": "RFC 0176 §A.2 — the era key; a v2 host writes 3; a v1-era run reads 2."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 256
+      },
+      "maxItems": 100,
+      "description": "Caller-supplied tags from `RunOptions.tags`."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Caller-supplied metadata from `RunOptions.metadata`.",
+      "additionalProperties": true
+    },
+    "configurable": {
+      "type": "object",
+      "description": "Per-run overlay from `RunOptions.configurable` (see run-options.md). Reserved keys: `recursionLimit`, `model`, `temperature`, `maxTokens`, `promptOverrides`.",
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Aggregate run-level metrics. Forward-compat: readers MUST tolerate missing/unknown fields. Fields are populated lazily as the engine emits them — absence does NOT mean zero. Implementation-specific fields (e.g., legacy `cost: number` estimates) MAY appear alongside the spec-canonical fields below.",
+      "properties": {
+        "openwopCost": {
+          "type": "object",
+          "description": "Spec-canonical cost rollup aggregated from per-node `recordCost()` calls. Keys mirror the `openwop.cost.*` OTel attribute allowlist (see `observability.md` §Cost attribution). Named `openwopCost` rather than `cost` because some implementations carry a legacy `metrics.cost: number` estimate that predates the typed rollup; using a distinct name avoids collision. Multi-provider runs report `provider`/`model` of the LAST contributing call; SDKs that need per-call detail SHOULD subscribe to OTel spans instead of reading this rollup.",
+          "properties": {
+            "usd": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Total USD cost across all node-level recordCost emissions."
+            },
+            "tokens": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "output": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            "model": {
+              "type": "string",
+              "description": "Model identifier of the most recent recordCost emission (e.g., `claude-opus-4-7`). For multi-model runs, surfaces the last value."
+            },
+            "provider": {
+              "type": "string",
+              "description": "Normalized provider name (e.g., `anthropic`, `openai`, `gemini`)."
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Sum of per-call durations across all recordCost emissions in this run."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

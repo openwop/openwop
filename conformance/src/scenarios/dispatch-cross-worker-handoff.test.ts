@@ -25,6 +25,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-cross-worker-handoff';
 const CHILD_A = 'conformance-dispatch-cross-worker-handoff-child-a';
@@ -53,14 +55,14 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
     const parentRunId = (create.json as { runId: string }).runId;
 
     const parentTerminal = (await pollUntilTerminal(parentRunId)) as RunSnapshot;
-    expect(parentTerminal.status, driver.describe(
+    expect(parentTerminal.status, req('openwop.it.dispatch-cross-worker-handoff.hvmap-1c-child-a-writes-via-perworkeroutputmappings-child-b-reads-via-perworkeri', 
       'RFCS/0022-dispatch-input-output-mapping.md §D',
       'parent run MUST reach terminal `completed` once both children finish sequentially',
     )).toBe('completed');
 
     // Parent's sharedVar MUST be 'hello' — set by child-a's outputMapping.
     const parentVars = parentTerminal.variables ?? {};
-    expect(parentVars.sharedVar, driver.describe(
+    expect(parentVars.sharedVar, req('openwop.it.dispatch-cross-worker-handoff.hvmap-1c-child-a-writes-via-perworkeroutputmappings-child-b-reads-via-perworkeri', 
       'RFCS/0022-dispatch-input-output-mapping.md §A',
       'parent `sharedVar` MUST be child-a\'s `output` projection ("hello") via perWorkerOutputMappings',
     )).toBe('hello');
@@ -72,7 +74,7 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
     const dispatchedB = events.find(
       (e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_B,
     );
-    expect(dispatchedB, driver.describe(
+    expect(dispatchedB, req('openwop.it.dispatch-cross-worker-handoff.hvmap-1c-child-a-writes-via-perworkeroutputmappings-child-b-reads-via-perworkeri', 
       'RFCS/0022-dispatch-input-output-mapping.md §D',
       'parent event log MUST contain a `node.dispatched` event for child-b after child-a completes (sequential fan-out)',
     )).toBeDefined();
@@ -86,7 +88,7 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
     const childBSnapshot = childBSnapshotRes.json as RunSnapshot;
     expect(childBSnapshot.status).toBe('completed');
     const childBInputs = childBSnapshot.inputs ?? {};
-    expect(childBInputs.input, driver.describe(
+    expect(childBInputs.input, req('openwop.it.dispatch-cross-worker-handoff.hvmap-1c-child-a-writes-via-perworkeroutputmappings-child-b-reads-via-perworkeri', 
       'RFCS/0022-dispatch-input-output-mapping.md §A + §D',
       'child-b `inputs.input` MUST be parent\'s `sharedVar` ("hello") — written by child-a, read by child-b via shared parent variable bag',
     )).toBe('hello');
@@ -94,7 +96,7 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
 
   it('HVMAP-1c-override: per-worker mapping overrides default mapping per §A effectiveInputMapping precedence', async () => {
     const PARENT_OVERRIDE = 'conformance-dispatch-per-worker-override';
-    if (!isFixtureAdvertised(PARENT_OVERRIDE)) return; // fixture not seeded — soft-skip
+    if (!isFixtureAdvertised(PARENT_OVERRIDE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(PARENT_OVERRIDE)` returned early (fixture not seeded — soft-skip)'); // fixture not seeded — soft-skip
     const create = await driver.post('/v1/runs', { workflowId: PARENT_OVERRIDE });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -104,7 +106,7 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
     const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
     const dispatchedA = events.find((e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_A);
     const dispatchedB = events.find((e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_B);
-    if (!dispatchedA || !dispatchedB) return;
+    if (!dispatchedA || !dispatchedB) return softSkip('blocked', 'precondition not met — `!dispatchedA || !dispatchedB` returned early (seam, prior step, or fixture unavailable)');
 
     const childARes = await driver.get(`/v1/runs/${encodeURIComponent(dispatchedA.payload!.childRunId!)}`);
     const childBRes = await driver.get(`/v1/runs/${encodeURIComponent(dispatchedB.payload!.childRunId!)}`);
@@ -113,14 +115,14 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
 
     expect(
       childAInputs.input,
-      driver.describe(
+      req('openwop.it.dispatch-cross-worker-handoff.hvmap-1c-override-per-worker-mapping-overrides-default-mapping-per-a-effectivein', 
         'RFCS/0022-dispatch-input-output-mapping.md §A',
         'child-a uses the DEFAULT inputMapping; input MUST come from parent.defaultX',
       ),
     ).toBe('default-x-value');
     expect(
       childBInputs.input,
-      driver.describe(
+      req('openwop.it.dispatch-cross-worker-handoff.hvmap-1c-override-per-worker-mapping-overrides-default-mapping-per-a-effectivein', 
         'RFCS/0022-dispatch-input-output-mapping.md §A',
         'child-b uses the per-worker OVERRIDE; input MUST come from parent.sharedVar (NOT defaultX)',
       ),

@@ -1,0 +1,657 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/node-pack-manifest.schema.json",
+  "title": "NodePackManifest",
+  "description": "Manifest for a published OpenWOP node pack — `pack.json` at the pack root. Language-neutral. See node-packs.md for the canonical contract.",
+  "type": "object",
+  "required": [
+    "engines",
+    "kind",
+    "name",
+    "runtime",
+    "version"
+  ],
+  "anyOf": [
+    {
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1
+        }
+      },
+      "required": [
+        "nodes"
+      ]
+    },
+    {
+      "properties": {
+        "agents": {
+          "type": "array",
+          "minItems": 1
+        }
+      },
+      "required": [
+        "agents"
+      ]
+    }
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "node",
+      "description": "Pack kind discriminator. For node packs (the default and original kind) `kind` is either omitted entirely OR set to the literal string `\"node\"`. Manifests carrying `kind: \"workflow-chain\"` validate against `workflow-chain-pack-manifest.schema.json` instead — see workflow-chain-packs.md and RFC 0013."
+    },
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name. Reserved scopes: `core.*` (spec-canonical), `vendor.<org>.*` (vendor-published), `community.<author>.*` (individual), `private.<host>.*` (host-internal — MUST NOT appear in `packs.openwop.dev`). `local.*` is for in-repo unpublished packs and MUST NOT appear in any registry. See node-packs.md §Naming for the full reservation table.",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack version per Semantic Versioning 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`, `MIT`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openwop"
+      ],
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "pattern": "^>=\\d+(\\.\\d+){0,2} <\\d+\\.0\\.0$",
+          "description": "RFC 0177 §A.1 — explicit upper bound required."
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Other node packs this pack depends on. Map of pack name → semver range. Engine resolves transitively at workflow-register time."
+    },
+    "peerDependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Engine-supplied capabilities the pack consumes (e.g., a particular AI provider extension). Resolved against `Capabilities` at register time. Each entry is REQUIRED by default — an unmet entry fails install with `pack_peer_dependency_missing` — unless marked optional in `peerDependenciesMeta` (RFC 0072 §C)."
+    },
+    "peerDependenciesMeta": {
+      "type": "object",
+      "description": "Per-peer-dependency metadata (RFC 0072 §C). Keys mirror `peerDependencies` keys. Marking an entry `optional: true` makes it degrade-if-unmet instead of refuse-if-unmet: a host that does not satisfy it MUST install the pack with that capability inert AND surface it in the affected agents' inventory `degraded[]` (RFC 0072 §A); it MUST NOT silently ignore the declared dependency. Default (absent entry) is required. Packs published before RFC 0072 validate unchanged.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, an unmet peer dependency degrades (inert + surfaced in `degraded[]`) rather than failing install."
+          }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PackNode"
+      },
+      "description": "Node typeIds the pack contributes. Each MUST have a unique `typeId` within the pack. A pack MAY omit `nodes` entirely if it ships only `agents[]` — the top-level `anyOf` constraint requires at least one of `nodes` or `agents` to be non-empty."
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "$ref": "agent-manifest.schema.json"
+      },
+      "description": "Optional agent manifests shipped alongside this pack. Each entry is an AgentManifest (see agent-manifest.schema.json + RFC 0003 §`agents[]` extension). Pure-agent packs MUST set `runtime.language: 'remote'` — agents are interpreted by the host, not bundled as executable artifacts. Mixed packs (nodes + agents) declare the runtime that loads the node implementations; agents remain host-interpreted."
+    },
+    "runtime": {
+      "$ref": "#/$defs/Runtime"
+    },
+    "signing": {
+      "$ref": "#/$defs/Signing"
+    },
+    "connector": {
+      "$ref": "#/$defs/Connector"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "PackNode": {
+      "type": "object",
+      "required": [
+        "typeId",
+        "version",
+        "category",
+        "role"
+      ],
+      "properties": {
+        "typeId": {
+          "type": "string",
+          "description": "Canonical node type ID. MUST match the same pattern as `WorkflowNode.typeId` in workflow-definition.schema.json. The pack's `name` prefix is recommended (e.g., a pack `vendor.acme.salesforce-tools` exposing `vendor.acme.salesforce.upsert`).",
+          "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "description": "Per-node semver. MAY differ from the pack's overall version — useful when a single pack ships multiple nodes that evolve independently."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "chat",
+            "control",
+            "data",
+            "canvas",
+            "coordination",
+            "integration"
+          ],
+          "description": "Engine-side classification used for scheduling and UI grouping."
+        },
+        "role": {
+          "type": "string",
+          "description": "Semantic role from the `NodeRole` taxonomy. Drives engine scheduling. Common values: `pure`, `side-effect`, `human-input`, `streaming-output`, `gate`."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "streamable",
+              "cacheable",
+              "side-effectful",
+              "mcp-exportable"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Orthogonal capability traits. The engine uses these to decide caching, MCP exposure, idempotency enforcement."
+        },
+        "configSchemaRef": {
+          "type": "string",
+          "description": "Path inside the pack tarball to the JSON Schema for the node's config. Server fetches the file when resolving the pack."
+        },
+        "inputSchemaRef": {
+          "type": "string",
+          "description": "Path to the JSON Schema for the node's input ports."
+        },
+        "outputSchemaRef": {
+          "type": "string",
+          "description": "Path to the JSON Schema for the node's output ports."
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "sensitive": {
+                "type": "boolean",
+                "default": false,
+                "description": "When true, the engine masks this output port's value in `node.completed` event payloads. Use when a NodeModule ALWAYS handles sensitive data (e.g., a Salesforce upsert always touches PII). Workflows MAY override per-instance via `WorkflowNode.outputSensitivity`. See observability.md §Privacy classification (closes O5)."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Per-output-port metadata. Keys are output port names; values are per-port markers. Currently the only marker is `sensitive`; future additions live alongside (additionalProperties: true on each port)."
+        },
+        "envelopeContractRef": {
+          "type": "string",
+          "description": "Optional path to a JSON document declaring the LLM envelope contract for AI-backed nodes."
+        },
+        "artifact": {
+          "type": "object",
+          "properties": {
+            "typeId": {
+              "type": "string"
+            },
+            "syncOn": {
+              "type": "string",
+              "enum": [
+                "completion",
+                "approval",
+                "manual"
+              ]
+            },
+            "supportsCheckpoint": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "exposeAsTool": {
+              "type": "boolean"
+            },
+            "toolName": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "requiresSecrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SecretRequirement"
+          },
+          "description": "Secrets the node needs to execute. Resolved by the host's secret-resolution adapter at dispatch time. Hosts that don't advertise `Capabilities.secrets.supported` MUST refuse to dispatch a node with non-empty `requiresSecrets` and return `credential_unavailable`."
+        },
+        "requiredCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CredentialRequirement"
+          },
+          "description": "RFC 0046. Credentials the node needs, resolved by the host's `host.credentials` resolver at dispatch time (distinct from `requiresSecrets`, which targets the informal BYOK annex). Hosts that don't advertise `Capabilities.credentials.supported` MUST refuse to dispatch a node with non-empty `requiredCredentials` and return `credential_unavailable` (peerDependency `credentials: 'supported'`)."
+        },
+        "auth": {
+          "$ref": "#/$defs/NodeAuth",
+          "description": "RFC 0047. The node's third-party authentication need. The host acquires + refreshes the token via the `host.oauth` flow and resolves it into the node sandbox as a bearer token. Hosts that don't advertise `Capabilities.oauth.supported` (or lack the named provider/scope) MUST refuse to register the pack (`oauth_provider_unsupported` / `oauth_scope_unsupported`)."
+        },
+        "requiredModelCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
+          },
+          "uniqueItems": true,
+          "maxItems": 32,
+          "description": "RFC 0031 §B. Model capabilities this NodeModule requires the active model to advertise in `capabilities.modelCapabilities.advertised[]`. Distinct from `requires`, which gates on HOST capabilities (`capabilities.runtimeCapabilities[]`) — this field gates on MODEL capabilities. Spec-reserved identifiers: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-` per `host-extensions.md` §\"Canonical-prefix table\". Empty array (or absent field) means no model-capability requirements. When the active model does not satisfy the declared set, the host MUST follow the dispatch flow in RFC 0031 §B: substitute to `fallbackModel` (emit `model.capability.substituted`) or refuse (emit `model.capability.insufficient` + terminate with `capability_not_provided`)."
+        },
+        "fallbackModel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "model"
+          ],
+          "description": "RFC 0031 §B. Substitute model coordinates the host MAY use if the active model lacks the declared `requiredModelCapabilities`. When the host substitutes, it MUST emit `model.capability.substituted` per RFC 0031 §D. Absent means no substitution permitted; the host MUST refuse to dispatch with `capability_not_provided` when capabilities are unmet. The fallback is single-shot — if the fallback itself fails capability checks or authentication, the host emits `model.capability.insufficient` with `fallbackAttempted: true` and refuses (no recursive fallback chains per RFC 0031 §\"Unresolved questions\" #3).",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Provider id per `capabilities.aiProviders.supported` (e.g., `anthropic`, `openai`, `gemini`). MUST be in the host's `capabilities.aiProviders.supported[]` for the substitution to fire; otherwise the host emits `model.capability.insufficient` with `fallbackAttempted: true`."
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Provider-stamped model id (e.g., `claude-opus-4-7`, `gpt-5`, `gemini-2.5-pro`)."
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(openwop-|x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+        }
+      }
+    },
+    "SecretRequirement": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "description": "Declared secret requirement. The engine surfaces this to the host's `SecretResolver` which returns an opaque `ResolvedSecret` reference; the executor passes the reference to provider adapters that dereference internally. Raw key material NEVER reaches the protocol surface (events, logs, traces, etc.).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier the node executor uses to look up the resolved secret (e.g., `'primary-anthropic-key'`)."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ai-provider",
+            "api-key",
+            "oauth-token",
+            "custom"
+          ],
+          "description": "Coarse classification driving host-side resolution policy. `ai-provider` triggers the BYOK / aiProviders flow; `api-key` is generic; `oauth-token` integrates with the host's OAuth refresh flow; `custom` is host-extensible."
+        },
+        "provider": {
+          "type": "string",
+          "description": "For `kind: 'ai-provider'`, the provider id (`anthropic`, `openai`, `gemini`, etc.). MUST be in `Capabilities.aiProviders.supported`. Optional for other kinds."
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "tenant",
+            "user",
+            "run"
+          ],
+          "description": "Where the host should look up the secret. MUST match a scope in `Capabilities.secrets.scopes`. Defaults to `tenant` when omitted."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CredentialRequirement": {
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "description": "RFC 0046. A credential the node needs, resolved by the host's `host.credentials` resolver into the node sandbox at dispatch time. The node declares only the requirement; raw key material NEVER reaches the protocol surface (events, logs, traces, replay) per the `credential-payload-redaction` invariant.",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier the node executor uses to look up the resolved credential (e.g., `'slack-bot-token'`)."
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "user",
+            "workspace",
+            "tenant"
+          ],
+          "description": "Resolution scope. MUST match a scope in `Capabilities.credentials.scopes`. Defaults to the host's default scope when omitted."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Optional human-readable label for credential-management UIs."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NodeAuth": {
+      "type": "object",
+      "required": [
+        "type",
+        "provider"
+      ],
+      "description": "RFC 0047. A node's third-party authentication declaration. The node declares only which provider + scopes it needs; the host performs the OAuth dance and resolves the token in-sandbox. Raw token material NEVER reaches the protocol surface (`credential-payload-redaction` invariant).",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "oauth2"
+          ],
+          "description": "Authentication mechanism. `oauth2` routes through the `host.oauth` flow."
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Provider id; MUST match an advertised `capabilities.oauth.providers[].id` (e.g. `slack`, `google`)."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OAuth scopes the node requires; each MUST be in the provider's advertised `scopesSupported`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConnectorAuth": {
+      "description": "RFC 0045. The auth declaration shared by a connector's actions. Either an RFC 0047 OAuth2 declaration or an RFC 0046 stored-credential reference.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/NodeAuth"
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "key"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "credential"
+              ],
+              "description": "Static stored-credential auth via the RFC 0046 host.credentials resolver."
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "CredentialRequirement key the host resolves into the node sandbox."
+            },
+            "scope": {
+              "type": "string",
+              "enum": [
+                "user",
+                "workspace",
+                "tenant"
+              ],
+              "description": "Resolution scope; MUST match a scope in `capabilities.credentials.scopes`."
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Connector": {
+      "type": "object",
+      "required": [
+        "id",
+        "displayName"
+      ],
+      "description": "RFC 0045. Declares this pack a named connector — a typed integration exposing actions (and reusing the existing trigger model). Optional; packs without it remain plain node packs. Actions are normal side-effectful nodes from this pack's `nodes[]` annotated with scheduler hints; the connector block adds metadata, not a new execution kind.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9.-]*$",
+          "description": "Stable connector id, e.g. `salesforce`."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "auth": {
+          "$ref": "#/$defs/ConnectorAuth",
+          "description": "RFC 0047/0046 auth declaration shared by the connector's actions."
+        },
+        "actions": {
+          "type": "array",
+          "description": "Typed actions the connector exposes. Each `typeId` MUST resolve to a node typeId defined in this pack's `nodes[]` (validation error `connector_action_unresolved` otherwise).",
+          "items": {
+            "type": "object",
+            "required": [
+              "typeId",
+              "displayName"
+            ],
+            "properties": {
+              "typeId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "MUST match a `nodes[].typeId` in this manifest."
+              },
+              "displayName": {
+                "type": "string",
+                "minLength": 1
+              },
+              "idempotent": {
+                "type": "boolean",
+                "description": "Action is safe to auto-retry without an idempotency key. Absent/false ⇒ the host MUST NOT auto-retry without one (composes with idempotency.md)."
+              },
+              "rateLimit": {
+                "type": "object",
+                "properties": {
+                  "requests": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "perSeconds": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Advertised rate-limit hint the host scheduler SHOULD honor. Does not change the node's wire shape."
+              },
+              "paginated": {
+                "type": "boolean",
+                "description": "Action returns paginated results."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "typeIds of triggers (from the existing trigger model) this connector exposes. Each MUST resolve to a node/trigger typeId in this pack."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Runtime": {
+      "type": "object",
+      "required": [
+        "language",
+        "entry"
+      ],
+      "properties": {
+        "language": {
+          "type": "string",
+          "enum": [
+            "javascript",
+            "python",
+            "go",
+            "wasm",
+            "wasm-component",
+            "remote"
+          ],
+          "description": "How the engine loads the pack. See node-packs.md §runtime formats. `wasm` is the core-module WASM ABI (RFC 0008). `wasm-component` is the WASM Component Model variant (WIT-defined interfaces); hosts that advertise `capabilities.nodePackRuntimes.wasmComponent.supported: true` load it via wasmtime / wasmer Component Model runtimes. Both share the openwop ABI envelope; the wasm-component variant uses WIT interfaces instead of hand-rolled imports/exports."
+        },
+        "entry": {
+          "type": "string",
+          "description": "Path inside the tarball to the runtime artifact, OR a URL when `language: remote`."
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "esm",
+            "cjs",
+            "wheel",
+            "binary",
+            "shared-library",
+            "wasm",
+            "wasm-component"
+          ],
+          "description": "Runtime-specific format hint. `esm`/`cjs` for JS, `wheel` for Python, `binary`/`shared-library` for Go, `wasm` for core-module WASM (RFC 0008), `wasm-component` for WASM Component Model preview 3+ (WIT-defined interfaces, additive RFC 0008.1)."
+        },
+        "minRuntimeVersion": {
+          "type": "string",
+          "description": "Minimum host runtime version (e.g., `node>=20`, `python>=3.10`, `go>=1.22`)."
+        },
+        "requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "RFC 0076. Abstract platform primitives the pack's runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not language builtin names). Absent or [] ⇒ no elevated platform needs. A sandbox host MUST evaluate this at install time and refuse (`pack_runtime_requirement_unmet`) any primitive it will not grant; see node-packs.md §\"Runtime platform requirements\".",
+          "items": {
+            "oneOf": [
+              {
+                "const": "net.dns",
+                "description": "Resolves hostnames (e.g., SSRF pre-flight)."
+              },
+              {
+                "const": "net.outbound",
+                "description": "Opens outbound network connections / fetch."
+              },
+              {
+                "const": "crypto",
+                "description": "Primitives beyond the standard hashing the host already provides."
+              },
+              {
+                "const": "subprocess",
+                "description": "Spawns a child process (composes with the RFC 0069 exec-class contract when the host advertises it)."
+              },
+              {
+                "const": "fs.read",
+                "description": "Reads the local filesystem."
+              },
+              {
+                "const": "fs.write",
+                "description": "Writes the local filesystem."
+              },
+              {
+                "const": "env.read",
+                "description": "Reads the process environment (may expose deployment secrets if the host does not scrub it)."
+              },
+              {
+                "const": "clock",
+                "description": "Reads wall-clock time as a behavioral input — gated for REPLAY determinism, not access control. A pack that branches on the clock is non-deterministic on replay (replay.md)."
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Signing": {
+      "type": "object",
+      "description": "Optional signing metadata. See node-packs.md §signing.",
+      "properties": {
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        },
+        "signatureRef": {
+          "type": "string",
+          "description": "Path to the detached signature over `pack.json`."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "sigstore"
+          ],
+          "description": "Signing method. `manual` uses publicKeyRef + signatureRef; `sigstore` uses a Sigstore bundle at `pack.json.sigstore`."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "patternProperties": {
+    "^(openwop-|x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+    }
+  },
+  "x-openwop-anyOf-note": "constraint fragments (kind-conditional requirements) — closure is the root's"
+}

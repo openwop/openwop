@@ -80,38 +80,21 @@
  * is no longer the only place the exclusion reason lives.
  */
 
-/** Scenarios whose subject is the corpus. Kept honest by `spec-coherence-registry.test.ts`. */
-export const SPEC_COHERENCE_SCENARIOS: ReadonlySet<string> = new Set([
-  'artifact-schema-compile-bounded.test.ts',
-  'artifact-type-legacy-ids.test.ts',
-  'capability-example-root-layout.test.ts',
-  'certification-floor-enforcement.test.ts',
-  'chain-subchain-unsupported-refused.test.ts',
-  'compensation-profile.test.ts',
-  'core-manifest-and-extension-registry.test.ts',
-  'discovery-canonical-family-no-shadow.test.ts',
-  'edge-condition-truthy-falsy.test.ts',
-  'effect-identity-composition.test.ts',
-  'effect-identity-cross-scope.test.ts',
-  'error-envelope-canonical-shape.test.ts',
-  'event-codemap-complete.test.ts',
-  'form-content-packs.test.ts',
-  'multi-region-effect-vocabulary.test.ts',
-  'normative-example-extraction.test.ts',
-  'openapi-asyncapi-sdk-parity.test.ts',
-  'pack-manifest-extensions.test.ts',
-  'protocol-version-grammar.test.ts',
-  'registry-declarative-kinds.test.ts',
-  'rfc-0147-self-audit.test.ts',
-  'rfc-lifecycle-coherence.test.ts',
-  'semantic-digest-v2.test.ts',
-  'spec-corpus-validity.test.ts',
-  'spec-section-citations.test.ts',
-  'tool-result-trust-monotone.test.ts',
-  'versioned-composition-profiles.test.ts',
-  'workflow-chain-internal-flag.test.ts',
-  'workload-identity-profile.test.ts',
-]);
+/**
+ * Scenarios whose subject is the corpus. Suite 2.0.0 (RFC 0168 §D.1): they
+ * live in `src/coherence/`, not `src/scenarios/`, and the set is the DIRECTORY
+ * LISTING — one source of truth instead of four (this list, the package.json
+ * negations, spec-coherence-scenarios.json and the registry self-test used to
+ * each carry a copy). They run in the spec repo's CI (scripts/check-spec-coherence.mjs)
+ * and never enter a host bundle; the published tarball excludes the directory.
+ */
+import { existsSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+const COHERENCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'coherence');
+export const SPEC_COHERENCE_SCENARIOS: ReadonlySet<string> = new Set(
+  existsSync(COHERENCE_DIR) ? readdirSync(COHERENCE_DIR).filter((f) => f.endsWith('.test.ts')).sort() : [],
+);
 
 /**
  * Scenarios that gate on `V1_DIR` **and** drive the host, so their `blocked` is

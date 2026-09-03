@@ -47,6 +47,8 @@ import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'connection-pack-manifest.schema.json');
 const APIHOSTS_FIXTURE = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-apihosts-valid.json');
@@ -90,7 +92,7 @@ describe('category: connection-pack apiHosts — schema shape (RFC 0120 §A; inv
   it('positive: an openapi-reach provider declaring apiHosts validates', () => {
     expect(
       validate(apiHostsFixture()),
-      `connection-packs.md §Manifest item 10: a well-formed apiHosts allow-list MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-apihosts.positive-an-openapi-reach-provider-declaring-apihosts-validates', 'RFC 0120', `connection-packs.md §Manifest item 10: a well-formed apiHosts allow-list MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -100,16 +102,16 @@ describe('category: connection-pack apiHosts — schema shape (RFC 0120 §A; inv
     const errs = failsWith(m, 'required');
     expect(
       errs.some((e) => (e.params as { missingProperty?: string }).missingProperty === 'apiHosts'),
-      'connection-packs.md §Manifest item 13: when reach is openapi, apiHosts is REQUIRED (the provider-level allOf)',
+      req('openwop.it.connection-pack-apihosts.conditional-must-item-13-a-allof-an-openapi-reach-provider-that-omits-apihosts-i', 'RFC 0120', 'connection-packs.md §Manifest item 13: when reach is openapi, apiHosts is REQUIRED (the provider-level allOf)'),
     ).toBe(true);
   });
 
   it('omission OK off the conditional: an mcp-reach provider without apiHosts validates', () => {
     const m = mcpFixture();
-    expect(m.provider.apiHosts, 'precondition: the github fixture is mcp-reach and declares no apiHosts').toBeUndefined();
+    expect(m.provider.apiHosts, req('openwop.it.connection-pack-apihosts.omission-ok-off-the-conditional-an-mcp-reach-provider-without-apihosts-validates', 'RFC 0120', 'precondition: the github fixture is mcp-reach and declares no apiHosts')).toBeUndefined();
     expect(
       validate(m),
-      `connection-packs.md §Manifest item 13: a non-openapi provider MAY omit apiHosts. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-apihosts.omission-ok-off-the-conditional-an-mcp-reach-provider-without-apihosts-validates', 'RFC 0120', `connection-packs.md §Manifest item 13: a non-openapi provider MAY omit apiHosts. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -120,7 +122,7 @@ describe('category: connection-pack apiHosts — schema shape (RFC 0120 §A; inv
       const errs = failsWith(m, 'pattern');
       expect(
         errs.length,
-        `connection-packs.md §Manifest item 11: "${bad}" MUST be rejected — apiHosts entries are bare, lowercase, alphabetic-TLD registrable hostnames (connection_pack_invalid_api_host)`,
+        req('openwop.it.connection-pack-apihosts.entry-shape-item-11-ipv4-literal-wildcard-port-single-label-uppercase-entries-ar', 'RFC 0120', `connection-packs.md §Manifest item 11: "${bad}" MUST be rejected — apiHosts entries are bare, lowercase, alphabetic-TLD registrable hostnames (connection_pack_invalid_api_host)`),
       ).toBeGreaterThan(0);
     }
   });
@@ -128,16 +130,16 @@ describe('category: connection-pack apiHosts — schema shape (RFC 0120 §A; inv
 
 describe('category: connection-pack apiHosts — matching rule (RFC 0120 item 10; invariant connection-pack-egress-host-bound)', () => {
   it('permits the entry host and its subdomains (eTLD+1 floor)', () => {
-    expect(matchesApiHost('facebook.com', 'facebook.com'), 'item 10: a request host equal to the entry matches').toBe(true);
-    expect(matchesApiHost('graph.facebook.com', 'facebook.com'), 'item 10: a subdomain of the entry matches (eTLD+1 floor)').toBe(true);
-    expect(matchesApiHost('api.example.com', 'example.com'), 'item 10: a subdomain matches').toBe(true);
+    expect(matchesApiHost('facebook.com', 'facebook.com'), req('openwop.it.connection-pack-apihosts.permits-the-entry-host-and-its-subdomains-etld-1-floor', 'RFC 0120', 'item 10: a request host equal to the entry matches')).toBe(true);
+    expect(matchesApiHost('graph.facebook.com', 'facebook.com'), req('openwop.it.connection-pack-apihosts.permits-the-entry-host-and-its-subdomains-etld-1-floor', 'RFC 0120', 'item 10: a subdomain of the entry matches (eTLD+1 floor)')).toBe(true);
+    expect(matchesApiHost('api.example.com', 'example.com'), req('openwop.it.connection-pack-apihosts.permits-the-entry-host-and-its-subdomains-etld-1-floor', 'RFC 0120', 'item 10: a subdomain matches')).toBe(true);
   });
 
   it('a pack MAY tighten to an exact host without admitting siblings', () => {
-    expect(matchesApiHost('googleads.googleapis.com', 'googleads.googleapis.com'), 'item 10: the tighter exact host matches itself').toBe(true);
+    expect(matchesApiHost('googleads.googleapis.com', 'googleads.googleapis.com'), req('openwop.it.connection-pack-apihosts.a-pack-may-tighten-to-an-exact-host-without-admitting-siblings', 'RFC 0120', 'item 10: the tighter exact host matches itself')).toBe(true);
     expect(
       matchesApiHost('bigquery.googleapis.com', 'googleads.googleapis.com'),
-      'item 10: a sibling subdomain MUST NOT match a tighter exact-host entry',
+      req('openwop.it.connection-pack-apihosts.a-pack-may-tighten-to-an-exact-host-without-admitting-siblings', 'RFC 0120', 'item 10: a sibling subdomain MUST NOT match a tighter exact-host entry'),
     ).toBe(false);
   });
 
@@ -145,7 +147,7 @@ describe('category: connection-pack apiHosts — matching rule (RFC 0120 item 10
     for (const evil of ['notexample.com', 'evil.com', 'example.com.evil.com', 'myexample.com']) {
       expect(
         matchesApiHost(evil, 'example.com'),
-        `item 10: "${evil}" MUST NOT match "example.com" (dot-anchored containment, never a bare substring)`,
+        req('openwop.it.connection-pack-apihosts.no-substring-suffix-prefix-escape-non-matching-hosts-fail-closed', 'RFC 0120', `item 10: "${evil}" MUST NOT match "example.com" (dot-anchored containment, never a bare substring)`),
       ).toBe(false);
     }
   });
@@ -163,10 +165,10 @@ async function gate(): Promise<boolean> {
 
 describe('connection-pack apiHosts — behavioral egress allow-list (RFC 0120 item 10; capability-gated)', () => {
   it('permits a credential-bearing egress to an apiHosts match; fails closed otherwise (no substring escape)', async () => {
-    if (!(await gate())) return;
+    if (!(await gate())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gate())` returned early');
 
     const install = await driver.post('/v1/host/sample/connection-packs/install', { manifest: apiHostsFixture() });
-    if (install.status === 404 || install.status === 403) return; // seam unwired — soft-skip
+    if (install.status === 404 || install.status === 403) return softSkip('blocked', 'precondition not met — `install.status === 404 || install.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const probe = async (requestHost: string): Promise<EgressResult | undefined> => {
       const res = await driver.post('/v1/host/sample/connection-packs/egress-check', {
@@ -178,18 +180,18 @@ describe('connection-pack apiHosts — behavioral egress allow-list (RFC 0120 it
     };
 
     const allowed = await probe('graph.facebook.com');
-    if (allowed === undefined) return; // soft-skip
+    if (allowed === undefined) return softSkip('blocked', 'precondition not met — `allowed === undefined` returned early (soft-skip) (seam, prior step, or fixture unavailable)'); // soft-skip
     expect(
       allowed.allowed,
-      driver.describe('connection-packs.md §Manifest item 10', 'a credential-bearing egress to a host matching apiHosts MUST be permitted'),
+      req('openwop.it.connection-pack-apihosts.permits-a-credential-bearing-egress-to-an-apihosts-match-fails-closed-otherwise', 'connection-packs.md §Manifest item 10', 'a credential-bearing egress to a host matching apiHosts MUST be permitted'),
     ).toBe(true);
 
     for (const evil of ['evil.com', 'notfacebook.com', 'facebook.com.evil.com']) {
       const denied = await probe(evil);
-      if (denied === undefined) return; // soft-skip
+      if (denied === undefined) return softSkip('blocked', 'precondition not met — `denied === undefined` returned early (soft-skip) (seam, prior step, or fixture unavailable)'); // soft-skip
       expect(
         denied.allowed,
-        driver.describe('connection-packs.md §Manifest item 10', `egress to "${evil}" (no apiHosts match) MUST fail closed — no credential sent`),
+        req('openwop.it.connection-pack-apihosts.permits-a-credential-bearing-egress-to-an-apihosts-match-fails-closed-otherwise', 'connection-packs.md §Manifest item 10', `egress to "${evil}" (no apiHosts match) MUST fail closed — no credential sent`),
       ).toBe(false);
     }
   });

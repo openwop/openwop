@@ -19,6 +19,7 @@ import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { pollUntil } from '../lib/polling.js';
+import { req } from '../lib/requirement-ids.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -88,19 +89,19 @@ describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 
     if (subject === undefined) {
       return softSkip('inapplicable', 'host does not emit owner.subject on new runs (RFC 0165 §B — optional in v1.x)');
     }
-    expect(subject.tenant, driver.describe('RFC 0165 §B.2', 'subject.tenant MUST equal owner.tenant')).toBe(snap.owner?.tenant);
+    expect(subject.tenant, req('openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b', 'RFC 0165 §B.2', 'subject.tenant MUST equal owner.tenant')).toBe(snap.owner?.tenant);
     if (snap.owner?.principal !== undefined) {
-      expect(subject.subjectId, driver.describe('RFC 0165 §B.2', 'subject.subjectId MUST equal owner.principal when both are present')).toBe(snap.owner.principal);
+      expect(subject.subjectId, req('openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b', 'RFC 0165 §B.2', 'subject.subjectId MUST equal owner.principal when both are present')).toBe(snap.owner.principal);
     }
     if (snap.owner?.principalKind !== undefined) {
-      expect(subject.kind, driver.describe('RFC 0165 §B.2', 'subject.kind MUST equal owner.principalKind when both are present')).toBe(snap.owner.principalKind);
+      expect(subject.kind, req('openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b', 'RFC 0165 §B.2', 'subject.kind MUST equal owner.principalKind when both are present')).toBe(snap.owner.principalKind);
     }
     if (subject.lane === 'saml' || subject.lane === 'scim') {
-      expect(subject.keyClass, driver.describe('RFC 0165 §B.2', 'keyClass MUST be present on a linkable lane')).toBeDefined();
+      expect(subject.keyClass, req('openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b', 'RFC 0165 §B.2', 'keyClass MUST be present on a linkable lane')).toBeDefined();
     } else {
-      expect(subject.keyClass, driver.describe('RFC 0165 §B.2', 'keyClass MUST be absent off the linkable lanes')).toBeUndefined();
+      expect(subject.keyClass, req('openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b', 'RFC 0165 §B.2', 'keyClass MUST be absent off the linkable lanes')).toBeUndefined();
     }
-    expect(actorDepth(subject), driver.describe('RFC 0165 §B.5', 'actor chain depth MUST NOT exceed 4')).toBeLessThanOrEqual(4);
+    expect(actorDepth(subject), req('openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b', 'RFC 0165 §B.5', 'actor chain depth MUST NOT exceed 4')).toBeLessThanOrEqual(4);
   });
 
   it('run.started echoes the snapshot subject verbatim (§B.2, RFC 0048 §C)', async () => {
@@ -116,8 +117,8 @@ describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 
     // leave `pending` first, then the event is a fact, not a timing.
     await pollUntil(runId, (s) => s.status !== 'pending', { label: 'run left pending (run.started appended)' });
     const started = (await events(runId)).find((e) => e.type === 'run.started');
-    expect(started, driver.describe('RFC 0048 §C', 'run.started MUST be present in the event log')).toBeDefined();
-    expect(started?.payload?.owner?.subject, driver.describe('RFC 0165 §B.2', 'run.started owner.subject MUST equal RunSnapshot.owner.subject')).toEqual(snap.owner.subject);
+    expect(started, req('openwop.it.owner-subject-echo.run-started-echoes-the-snapshot-subject-verbatim-b-2-rfc-0048-c', 'RFC 0048 §C', 'run.started MUST be present in the event log')).toBeDefined();
+    expect(started?.payload?.owner?.subject, req('openwop.it.owner-subject-echo.run-started-echoes-the-snapshot-subject-verbatim-b-2-rfc-0048-c', 'RFC 0165 §B.2', 'run.started owner.subject MUST equal RunSnapshot.owner.subject')).toEqual(snap.owner.subject);
   });
 
   it('a fork copies owner.tenant and owner.subject verbatim onto the child (§B.4)', async () => {
@@ -130,11 +131,11 @@ describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 
     if (fork.status === 404 || fork.status === 501 || fork.status === 403) {
       return softSkip('inapplicable', `host does not offer :fork on this run (${fork.status}); the fork-copy rule has no fork to check`);
     }
-    expect(fork.status, driver.describe('replay.md §"Fork ownership"', ':fork MUST return 201 for a completed noop run')).toBe(201);
+    expect(fork.status, req('openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4', 'replay.md §"Fork ownership"', ':fork MUST return 201 for a completed noop run')).toBe(201);
     const childId = (fork.json as { runId?: string }).runId;
-    expect(typeof childId, 'fork response MUST include the child runId').toBe('string');
+    expect(typeof childId, req('openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4', 'replay.md §"Fork ownership"', 'fork response MUST include the child runId')).toBe('string');
     const child = await snapshot(childId as string);
-    expect(child.owner?.tenant, driver.describe('RFC 0165 §B.4', 'the child owner.tenant MUST equal the source')).toBe(source.owner.tenant);
-    expect(child.owner?.subject, driver.describe('RFC 0165 §B.4', 'the child owner.subject MUST be copied verbatim from the source')).toEqual(source.owner.subject);
+    expect(child.owner?.tenant, req('openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4', 'RFC 0165 §B.4', 'the child owner.tenant MUST equal the source')).toBe(source.owner.tenant);
+    expect(child.owner?.subject, req('openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4', 'RFC 0165 §B.4', 'the child owner.subject MUST be copied verbatim from the source')).toEqual(source.owner.subject);
   });
 });

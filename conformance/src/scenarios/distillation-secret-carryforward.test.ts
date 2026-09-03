@@ -13,8 +13,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readDistillationCap, invokeDistill } from '../lib/distillation.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CANARY = 'sk-canary-rfc0062-do-not-leak-qrs456';
 
@@ -30,7 +30,7 @@ describe('distillation-secret-carryforward (RFC 0062 §B)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       JSON.stringify(res.body).includes(CANARY),
-      driver.describe('RFC 0062 §B', 'SR-1 carry-forward: a redacted secret MUST NOT re-appear in the archive or memory.compacted event'),
+      req('openwop.it.distillation-secret-carryforward.a-redacted-secret-in-source-memory-never-appears-in-the-distilled-output', 'RFC 0062 §B', 'SR-1 carry-forward: a redacted secret MUST NOT re-appear in the archive or memory.compacted event'),
     ).toBe(false);
   });
 });

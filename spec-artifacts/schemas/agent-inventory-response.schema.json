@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-inventory-response.schema.json",
+  "title": "AgentInventoryResponse",
+  "description": "Response body for `GET /v1/agents` (RFC 0072 §A). A read-only projection of the manifest agents a host has installed into its AgentRegistry (RFC 0003 / RFC 0070). Served only when the host advertises `capabilities.agents.manifestRuntime.supported: true`. Each entry MUST NOT carry the agent's system-prompt body, resolved handoff schemas, or any credential material (SR-1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agents", "total"],
+  "properties": {
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AgentInventoryEntry" },
+      "description": "Installed manifest agents, in a stable (agentId-sorted) order."
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of installed manifest agents (== agents.length)."
+    }
+  },
+  "$defs": {
+    "AgentInventoryEntry": {
+      "type": "object",
+      "title": "AgentInventoryEntry",
+      "description": "Read projection of an installed `AgentManifest` (agent-manifest.schema.json). Also the body of `GET /v1/agents/{agentId}`.",
+      "additionalProperties": false,
+      "required": ["agentId", "persona", "label", "modelClass", "packName", "packVersion", "toolAllowlist", "hasHandoffSchemas"],
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "description": "The manifest agentId (matches `AgentManifest.agentId` / `AgentRef.agentId`)."
+        },
+        "persona": {
+          "type": "string",
+          "description": "Human-readable agent name from the manifest."
+        },
+        "label": {
+          "type": "string",
+          "description": "Short UI label; falls back to `persona` when the manifest omits `label`."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional one-line catalog summary from the manifest."
+        },
+        "modelClass": {
+          "type": "string",
+          "description": "The manifest's `modelClass` (see agent-manifest.schema.json)."
+        },
+        "packName": {
+          "type": "string",
+          "description": "The pack this agent was installed from."
+        },
+        "packVersion": {
+          "type": "string",
+          "description": "The installed pack version."
+        },
+        "toolAllowlist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tool identifiers the agent MAY invoke (RFC 0002 §A14). The host MUST enforce this at dispatch; an empty array means no tools."
+        },
+        "hasHandoffSchemas": {
+          "type": "boolean",
+          "description": "Whether the manifest declares handoff task/return schemas (the host validates dispatch payloads against them when it advertises `agents.manifestRuntime.handoffValidation`). The schemas themselves are NOT exposed here."
+        },
+        "memoryShape": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The manifest's declared memory shape, when present.",
+          "properties": {
+            "scratchpad": { "type": "boolean" },
+            "conversation": { "type": "boolean" },
+            "longTerm": { "type": "boolean" }
+          }
+        },
+        "confidenceThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The manifest's `confidence.defaultThreshold`, when present (RFC 0002 §F)."
+        },
+        "degraded": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Capability keys this agent declared as `peerDependenciesMeta.optional` that this host does NOT satisfy, and which are therefore inert for this installation (RFC 0072 §C). Absent or empty means the agent runs at full declared capability here."
+        },
+        "memoryDegraded": {
+          "type": "boolean",
+          "description": "RFC 0080 §C. `true` when this agent's `memoryShape` declares a memory dimension the host's reconciled memory model (RFC 0080 §A) does NOT satisfy — the agent MAY still dispatch at the RFC 0070 floor, but the degradation MUST be observable here (a silent satisfied-looking entry for an unsatisfiable `memoryShape` is non-conformant). Absent ⇒ memory fully satisfied, or an older host that does not compute the projection (consumers treat absence as not-degraded/unknown and MAY probe)."
+        },
+        "degradedMemoryDimensions": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["read", "write", "search", "long-term-durability", "compaction", "attribution", "replay-snapshot", "retention"] },
+          "uniqueItems": true,
+          "description": "RFC 0080 §C. The RFC 0080 §A dimension names (NOT the `memoryShape` keys) this host cannot satisfy for this agent. Present (non-empty) iff `memoryDegraded: true`; OPTIONAL/absent when `memoryDegraded` is false or absent. The dimension name `long-term-durability` is deliberately distinct from the `agents.memoryBackends` *value* `long-term` (a backend id) to avoid wire ambiguity. The §A→`memoryShape` mapping: `longTerm`⇒`long-term-durability`, `scratchpad`/`conversation`⇒`write`+`read` as applicable."
+        },
+        "roster": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "RFC 0086 §B. OPTIONAL/additive. The standing roster INSTANCES of this manifest agent visible to the caller (tenant-scoped per RFC 0074), each with its persona + owned workflow portfolio — so a single GET /v1/agents call surfaces responsibilities without a second round-trip. Present only when the host advertises `capabilities.agents.roster.supported: true`; absent ⇒ no roster surface (today's default).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["rosterId", "persona", "workflows"],
+            "properties": {
+              "rosterId": { "type": "string", "minLength": 1, "description": "The roster entry's `host:<id>` instance id (agent-roster-entry.schema.json)." },
+              "persona": { "type": "string", "minLength": 1, "description": "The instance's human display name." },
+              "workflows": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true, "description": "The workflow ids this instance owns by role (its portfolio)." }
+            }
+          }
+        }
+      }
+    }
+  }
+}

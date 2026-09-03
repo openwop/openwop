@@ -1,0 +1,91 @@
+{
+  "$comment": "RFC 0170 §B.2–§B.5; the fourteen gate flags and subjectLinking are gone (RFC 0173 §A.1, RFC 0170 §C.2)",
+  "properties": {
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lane",
+          "issuers",
+          "revocation",
+          "minimumAssurance"
+        ],
+        "properties": {
+          "lane": {
+            "type": "string",
+            "enum": [
+              "api-key",
+              "oauth2",
+              "oidc",
+              "mtls",
+              "saml",
+              "scim",
+              "ldap",
+              "workload",
+              "session",
+              "anonymous"
+            ]
+          },
+          "issuers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "revocation": {
+            "type": "string",
+            "enum": [
+              "next-request",
+              "exp-and-recheck",
+              "crl",
+              "ocsp",
+              "short-lived",
+              "not-on-or-after",
+              "bound-connection",
+              "rebind",
+              "delegation-expiry"
+            ]
+          },
+          "revocationWindowSeconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minimumAssurance": {
+            "type": "string",
+            "enum": [
+              "bearer",
+              "sender-constrained",
+              "key-bound"
+            ]
+          },
+          "delegationProofs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mtls-key-binding",
+                "dpop",
+                "svid-chain"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "subjectLinkKey": {
+      "type": "string",
+      "enum": [
+        "opaque-idp",
+        "configured-immutable"
+      ]
+    }
+  },
+  "required": [
+    "lanes"
+  ]
+}

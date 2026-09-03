@@ -57,7 +57,7 @@ const MAX_ROWS = 40;
 // a ledger field and this file stops building instead of silently degrading.
 import type { LedgerEntry } from './lib/requirement-ledger.js';
 import { LAYOUT, PKG_ROOT_PATH } from './lib/paths.js';
-import { describeVerdict, verifyCorpusStamp } from './lib/corpus-stamp.js';
+import { describeVerdict, verifyCorpusStamp, verifyPeerContract } from './lib/corpus-stamp.js';
 
 /** What a JSONL line parses to before validation — every field may be absent. */
 type LedgerLine = Partial<Record<keyof LedgerEntry, unknown>>;
@@ -72,7 +72,8 @@ export function setup(): void {
   // aborts the run (a suite validating a host against a schema it did not ship
   // is evidence about nothing). Repo layout: nothing vendored, nothing to check,
   // and the log line says so rather than implying a pass.
-  const stamp = verifyCorpusStamp(PKG_ROOT_PATH, LAYOUT);
+  // Suite 2.0.0: in the published layout the contract is the spec-artifacts peer (RFC 0168 §D.2).
+  const stamp = LAYOUT === 'published' ? verifyPeerContract(PKG_ROOT_PATH) : verifyCorpusStamp(PKG_ROOT_PATH, LAYOUT);
   process.stderr.write(`${describeVerdict(stamp)}\n`);
   if (stamp.kind === 'mismatch') {
     throw new Error('openwop-conformance: refusing to run — schemas/CORPUS-STAMP.json digests do not match the vendored api/ + schemas/ files. Reinstall the package; do not hand-patch vendored contract files.');

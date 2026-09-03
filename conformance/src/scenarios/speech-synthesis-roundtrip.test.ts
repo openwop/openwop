@@ -24,6 +24,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-speech-synthesizer';
 const VOICE_ID = 'host:narrator-test';
@@ -44,35 +46,35 @@ describe('speech-synthesis-roundtrip (RFC 0105 §A)', () => {
       text: 'Welcome to the weekly digest.',
       voiceId: VOICE_ID,
     });
-    if (res.status === 404) return; // seam unwired — soft-skip the behavioral suite
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip the behavioral suite) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip the behavioral suite
 
     expect(
       res.status === 200,
-      driver.describe('RFC 0105 §A', 'an advertised host MUST synthesize and return 200'),
+      req('openwop.it.speech-synthesis-roundtrip.synthesizes-an-audio-asset-with-exactly-one-of-url-base64-and-echoes-the-voiceid', 'RFC 0105 §A', 'an advertised host MUST synthesize and return 200'),
     ).toBe(true);
 
     const audio = audioOf(res.json);
     expect(
       audio !== undefined,
-      driver.describe('RFC 0105 §A', 'the response MUST carry an `audio` object'),
+      req('openwop.it.speech-synthesis-roundtrip.synthesizes-an-audio-asset-with-exactly-one-of-url-base64-and-echoes-the-voiceid', 'RFC 0105 §A', 'the response MUST carry an `audio` object'),
     ).toBe(true);
-    if (!audio) return;
+    if (!audio) return softSkip('blocked', 'precondition not met — `!audio` returned early (seam, prior step, or fixture unavailable)');
 
     const hasUrl = typeof audio.url === 'string' && (audio.url as string).length > 0;
     const hasBase64 = typeof audio.base64 === 'string' && (audio.base64 as string).length > 0;
     expect(
       hasUrl !== hasBase64,
-      driver.describe('RFC 0105 §A', 'audio MUST carry EXACTLY ONE of `url` / `base64`'),
+      req('openwop.it.speech-synthesis-roundtrip.synthesizes-an-audio-asset-with-exactly-one-of-url-base64-and-echoes-the-voiceid', 'RFC 0105 §A', 'audio MUST carry EXACTLY ONE of `url` / `base64`'),
     ).toBe(true);
 
     expect(
       typeof audio.mimeType === 'string' && (audio.mimeType as string).length > 0,
-      driver.describe('RFC 0105 §A', 'audio.mimeType MUST be a non-empty string'),
+      req('openwop.it.speech-synthesis-roundtrip.synthesizes-an-audio-asset-with-exactly-one-of-url-base64-and-echoes-the-voiceid', 'RFC 0105 §A', 'audio.mimeType MUST be a non-empty string'),
     ).toBe(true);
 
     expect(
       audio.voiceId === VOICE_ID,
-      driver.describe('RFC 0105 §A', 'audio.voiceId MUST echo the input voiceId'),
+      req('openwop.it.speech-synthesis-roundtrip.synthesizes-an-audio-asset-with-exactly-one-of-url-base64-and-echoes-the-voiceid', 'RFC 0105 §A', 'audio.voiceId MUST echo the input voiceId'),
     ).toBe(true);
   });
 });

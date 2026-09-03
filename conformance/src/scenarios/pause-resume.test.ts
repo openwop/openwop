@@ -22,6 +22,8 @@ import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE =
   (isFixtureAdvertised('conformance-cancellable') && 'conformance-cancellable') ||
@@ -54,9 +56,9 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return;
+      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early ([pause-resume] host returned 404 for :pause — endpoint not implemented; skipping rest) (seam, prior step, or fixture unavailable)');
     }
-    expect(pause.status, driver.describe(
+    expect(pause.status, req('openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running', 
       'rest-endpoints.md POST /v1/runs/{runId}:pause',
       ':pause MUST return 202 on a pausable run',
     )).toBe(202);
@@ -66,7 +68,7 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
     const resume = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:resume`, {
       reason: 'conformance-test',
     });
-    expect(resume.status, driver.describe(
+    expect(resume.status, req('openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running', 
       'rest-endpoints.md POST /v1/runs/{runId}:resume',
       ':resume MUST return 202 on a paused run',
     )).toBe(202);
@@ -92,9 +94,9 @@ describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', (
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return;
+      return softSkip('blocked', 'precondition not met — `resume.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(resume.status, driver.describe(
+    expect(resume.status, req('openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus', 
       'rest-endpoints.md POST /v1/runs/{runId}:resume',
       ':resume on a non-paused run MUST return 409',
     )).toBe(409);
@@ -124,7 +126,7 @@ describe.skipIf(SKIP)('pause/resume: pause is idempotent when already paused', (
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return;
+      return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect([200, 202]).toContain(first.status);
     await pollUntilStatus(runId, 'paused', { timeoutMs: 10_000 });
@@ -135,7 +137,7 @@ describe.skipIf(SKIP)('pause/resume: pause is idempotent when already paused', (
     const second = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {});
     expect(
       [200, 202].includes(second.status),
-      driver.describe(
+      req('openwop.it.pause-resume.pause-on-an-already-paused-run-is-a-no-op-200-202-idempotent', 
         'rest-endpoints.md POST /v1/runs/{runId}:pause',
         ':pause on an already-paused run MUST be idempotent (200/202), not 409',
       ),
@@ -152,13 +154,13 @@ describe.skipIf(SKIP)('pause/resume: :pause on a terminal run returns 409', () =
     const create = await driver.post('/v1/runs', {
       workflowId: 'conformance-noop',
     });
-    if (create.status !== 201) return; // conformance-noop not seeded; skip cleanly
+    if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (conformance-noop not seeded; skip cleanly) (seam, prior step, or fixture unavailable)'); // conformance-noop not seeded; skip cleanly
     const runId = (create.json as { runId: string }).runId;
     await pollUntilTerminal(runId, { timeoutMs: 10_000 });
 
     const pause = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {});
-    if (pause.status === 404) return;
-    expect(pause.status, driver.describe(
+    if (pause.status === 404) return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(pause.status, req('openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409', 
       'rest-endpoints.md POST /v1/runs/{runId}:pause',
       ':pause on a terminal run MUST return 409',
     )).toBe(409);
@@ -185,7 +187,7 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
       console.warn(
         '[pause-resume] conformance-approval not advertised; skipping :pause-during-suspend race subtest',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(\'conformance-approval\')` returned early ([pause-resume] conformance-approval not advertised; skipping :pause-during-suspend race subtest)');
     }
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-approval' });
     expect(create.status).toBe(201);
@@ -200,13 +202,13 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return;
+      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // Either rejection (preferred) or stacked-pause is OK; silent override is not.
     if (pause.status === 409) {
       const body = pause.json as { details?: { runStatus?: string } };
-      expect(body.details?.runStatus, driver.describe(
+      expect(body.details?.runStatus, req('openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend', 
         'rest-endpoints.md POST /v1/runs/{runId}:pause',
         ':pause-during-suspend MUST surface the active waiting-* status in the conflict envelope',
       )).toMatch(/^waiting-/);
@@ -218,7 +220,7 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
       const status = (snap.json as { status: string }).status;
       expect(
         status === 'paused' || status.startsWith('waiting-'),
-        ':pause-during-suspend MUST NOT silently discard the active interrupt',
+        req('openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend', 'rest-endpoints.md POST /v1/runs/{runId}:pause', ':pause-during-suspend MUST NOT silently discard the active interrupt'),
       ).toBe(true);
     }
 
@@ -241,7 +243,7 @@ describe.skipIf(SKIP)('pause/resume: drainPolicy discrimination per capabilities
     if (drainPolicies.length === 0) {
       // eslint-disable-next-line no-console
       console.warn('[pause-resume] host advertises no drainPolicies; skipping policy-discrimination subtest');
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `drainPolicies.length === 0` returned early ([pause-resume] host advertises no drainPolicies; skipping policy-discrimination subtest)');
     }
 
     for (const policy of drainPolicies) {
@@ -258,7 +260,7 @@ describe.skipIf(SKIP)('pause/resume: drainPolicy discrimination per capabilities
         reason: `conformance-drainpolicy-${policy}`,
         drainPolicy: policy,
       });
-      expect(pause.status, driver.describe(
+      expect(pause.status, req('openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause', 
         'capabilities.md §`runs.pauseResume.drainPolicies` + rest-endpoints.md POST /v1/runs/{runId}:pause',
         `host-advertised drainPolicy='${policy}' MUST be accepted on :pause`,
       )).toBe(202);

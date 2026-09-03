@@ -1,0 +1,31 @@
+{
+  "$comment": "RFC 0173 §B — isolation binds with pack execution; node:vm is not a value",
+  "properties": {
+    "isolationModel": {
+      "type": "string",
+      "enum": [
+        "wasm",
+        "process",
+        "container",
+        "vm"
+      ]
+    },
+    "allowedHostCalls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "memoryLimitBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "wallClockLimitMs": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": [
+    "isolationModel"
+  ]
+}

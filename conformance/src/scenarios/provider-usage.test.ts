@@ -28,6 +28,8 @@ import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -45,21 +47,21 @@ async function readProviderUsageCap(): Promise<{ supported?: boolean; costEstima
 describe('provider-usage: capability advertisement (RFC 0026 §E)', () => {
   it('capabilities.providerUsage is either absent or a well-formed object', async () => {
     const cap = await readProviderUsageCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe('RFC 0026 §E', 'capabilities.providerUsage.supported MUST be a boolean when the block is present'),
+      req('openwop.it.provider-usage.capabilities-providerusage-is-either-absent-or-a-well-formed-object', 'RFC 0026 §E', 'capabilities.providerUsage.supported MUST be a boolean when the block is present'),
     ).toBe('boolean');
     if (cap.costEstimates !== undefined) {
       expect(
         typeof cap.costEstimates,
-        driver.describe('RFC 0026 §E', 'capabilities.providerUsage.costEstimates MUST be a boolean when present'),
+        req('openwop.it.provider-usage.capabilities-providerusage-is-either-absent-or-a-well-formed-object', 'RFC 0026 §E', 'capabilities.providerUsage.costEstimates MUST be a boolean when present'),
       ).toBe('boolean');
     }
     if (cap.currency !== undefined) {
       expect(
         /^[A-Z]{3}$/.test(cap.currency),
-        driver.describe('RFC 0026 §E', 'capabilities.providerUsage.currency MUST be a 3-letter uppercase ISO 4217 code when present'),
+        req('openwop.it.provider-usage.capabilities-providerusage-is-either-absent-or-a-well-formed-object', 'RFC 0026 §E', 'capabilities.providerUsage.currency MUST be a 3-letter uppercase ISO 4217 code when present'),
       ).toBe(true);
     }
   });
@@ -84,7 +86,7 @@ describe('provider-usage: schema round-trip (RFC 0026 §A)', () => {
       cacheHit: false,
       nodeId: 'chat-respond',
     });
-    expect(ok, `positive fixture MUST validate; errors: ${JSON.stringify(validate.errors)}`).toBe(true);
+    expect(ok, req('openwop.it.provider-usage.positive-fixture-validates', 'RFC 0026', `positive fixture MUST validate; errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
   });
 
   it('negative fixture (missing required field) MUST be rejected', () => {
@@ -96,7 +98,7 @@ describe('provider-usage: schema round-trip (RFC 0026 §A)', () => {
     });
     expect(
       ok,
-      driver.describe('RFC 0026 §A', 'payload missing required `outputTokens` MUST fail schema validation'),
+      req('openwop.it.provider-usage.negative-fixture-missing-required-field-must-be-rejected', 'RFC 0026 §A', 'payload missing required `outputTokens` MUST fail schema validation'),
     ).toBe(false);
   });
 
@@ -110,7 +112,7 @@ describe('provider-usage: schema round-trip (RFC 0026 §A)', () => {
     });
     expect(
       ok,
-      driver.describe('RFC 0026 §D', 'additionalProperties:false MUST reject credentialRef-shaped fields per provider-usage-no-credential-leak'),
+      req('openwop.it.provider-usage.negative-fixture-additionalproperties-credentialref-leak-must-be-rejected', 'RFC 0026 §D', 'additionalProperties:false MUST reject credentialRef-shaped fields per provider-usage-no-credential-leak'),
     ).toBe(false);
   });
 
@@ -121,13 +123,13 @@ describe('provider-usage: schema round-trip (RFC 0026 §A)', () => {
       inputTokens: 100.5, // non-integer
       outputTokens: 50,
     });
-    expect(ok, 'inputTokens MUST be integer per §A').toBe(false);
+    expect(ok, req('openwop.it.provider-usage.negative-fixture-non-integer-token-count-must-be-rejected', 'RFC 0026', 'inputTokens MUST be integer per §A')).toBe(false);
   });
 });
 
 describe('provider-usage: event presence via emit-seam + event-log query (RFC 0026 §B)', () => {
   it('emit-seam projects exactly one provider.usage event with required fields populated', async () => {
-    if (!(await isEventLogSeamAvailable())) return; // E.1 seam not exposed — soft-skip
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (E.1 seam not exposed — soft-skip) (seam, prior step, or fixture unavailable)'); // E.1 seam not exposed — soft-skip
     const runId = `r-pu-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const correlationId = `${runId}:node-1:turn-0:pu-1`;
     const payload = {
@@ -139,14 +141,14 @@ describe('provider-usage: event presence via emit-seam + event-log query (RFC 00
       nodeId: 'node-1',
     };
     const emit = await driver.post('/v1/host/sample/test/emit-provider-usage', { runId, payload, correlationId, nodeId: 'node-1' });
-    if (emit.status === 404) return; // emit seam not exposed
+    if (emit.status === 404) return softSkip('blocked', 'precondition not met — `emit.status === 404` returned early (emit seam not exposed) (seam, prior step, or fixture unavailable)'); // emit seam not exposed
     expect(emit.status).toBe(200);
 
     const events = await queryTestEvents(runId, { type: 'provider.usage' });
-    if (!events.ok) return;
+    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       events.events.length,
-      driver.describe('RFC 0026 §B', 'emit-seam MUST project exactly one provider.usage event'),
+      req('openwop.it.provider-usage.emit-seam-projects-exactly-one-provider-usage-event-with-required-fields-populat', 'RFC 0026 §B', 'emit-seam MUST project exactly one provider.usage event'),
     ).toBe(1);
     const e = events.events[0]!;
     expect(e.payload.provider).toBe('anthropic');
@@ -159,7 +161,7 @@ describe('provider-usage: event presence via emit-seam + event-log query (RFC 00
   });
 
   it('emit-seam refuses payloads containing credentialRef-shaped content (provider-usage-no-credential-leak invariant)', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-pu-leak-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     // Inject a credentialRef-shaped field via a synthetic payload that
     // contains 'secret:' in a string field. The seam's defense-in-depth
@@ -175,10 +177,10 @@ describe('provider-usage: event presence via emit-seam + event-log query (RFC 00
         nodeId: 'secret:tenant:byok-anthropic:v1', // banned content
       },
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       res.status,
-      driver.describe('SECURITY/invariants.yaml provider-usage-no-credential-leak', 'payload with credentialRef-shaped content MUST be refused'),
+      req('openwop.it.provider-usage.emit-seam-refuses-payloads-containing-credentialref-shaped-content-provider-usag', 'SECURITY/invariants.yaml provider-usage-no-credential-leak', 'payload with credentialRef-shaped content MUST be refused'),
     ).toBe(400);
     expect(readErrorCode(res.json)).toBe('provider_usage_credential_leak');
     await resetTestSeam();

@@ -1,0 +1,4588 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/run-event-payloads.schema.json",
+  "title": "RunEventPayloads",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n117 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`). v2: every definition closed; _typeIndex normative; the legacy interrupt payloads (approval*/clarification*) removed per deprecation row legacy-interrupt-payloads.",
+  "type": "object",
+  "$defs": {
+    "_typeIndex": {
+      "description": "Lookup map: RunEventType → $defs key. Informative — consumers can derive this themselves but having it explicit aids tooling.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run.started": {
+          "$ref": "#/$defs/runStarted"
+        },
+        "run.completed": {
+          "$ref": "#/$defs/runCompleted"
+        },
+        "run.failed": {
+          "$ref": "#/$defs/runFailed"
+        },
+        "run.cancelled": {
+          "$ref": "#/$defs/runCancelled"
+        },
+        "run.resuming": {
+          "$ref": "#/$defs/runResuming"
+        },
+        "run.paused": {
+          "$ref": "#/$defs/runPaused"
+        },
+        "run.resumed": {
+          "$ref": "#/$defs/runResumed"
+        },
+        "run.restored-from-snapshot": {
+          "$ref": "#/$defs/runRestoredFromSnapshot"
+        },
+        "run.dead_lettered": {
+          "$ref": "#/$defs/runDeadLettered"
+        },
+        "node.started": {
+          "$ref": "#/$defs/nodeStarted"
+        },
+        "node.completed": {
+          "$ref": "#/$defs/nodeCompleted"
+        },
+        "node.failed": {
+          "$ref": "#/$defs/nodeFailed"
+        },
+        "node.suspended": {
+          "$ref": "#/$defs/nodeSuspended"
+        },
+        "node.suspend-failed": {
+          "$ref": "#/$defs/nodeSuspendFailed"
+        },
+        "node.resumed": {
+          "$ref": "#/$defs/nodeResumed"
+        },
+        "node.retried": {
+          "$ref": "#/$defs/nodeRetried"
+        },
+        "node.skipped": {
+          "$ref": "#/$defs/nodeSkipped"
+        },
+        "node.cancelled": {
+          "$ref": "#/$defs/nodeCancelled"
+        },
+        "approval.requested": {
+          "$ref": "#/$defs/approvalRequested"
+        },
+        "approval.received": {
+          "$ref": "#/$defs/approvalReceived"
+        },
+        "approval.granted": {
+          "$ref": "#/$defs/approvalGranted"
+        },
+        "approval.rejected": {
+          "$ref": "#/$defs/approvalRejected"
+        },
+        "approval.overridden": {
+          "$ref": "#/$defs/approvalOverridden"
+        },
+        "clarification.requested": {
+          "$ref": "#/$defs/clarificationRequested"
+        },
+        "clarification.resolved": {
+          "$ref": "#/$defs/clarificationResolved"
+        },
+        "interrupt.requested": {
+          "$ref": "#/$defs/interruptRequested"
+        },
+        "interrupt.resolved": {
+          "$ref": "#/$defs/interruptResolved"
+        },
+        "channel.written": {
+          "$ref": "#/$defs/channelWritten"
+        },
+        "channel.presence": {
+          "$ref": "#/$defs/channelPresence"
+        },
+        "context.summarized": {
+          "$ref": "#/$defs/contextSummarized"
+        },
+        "artifact.created": {
+          "$ref": "#/$defs/artifactCreated"
+        },
+        "output.chunk": {
+          "$ref": "#/$defs/outputChunk"
+        },
+        "variable.changed": {
+          "$ref": "#/$defs/variableChanged"
+        },
+        "log.appended": {
+          "$ref": "#/$defs/logAppended"
+        },
+        "version.pinned": {
+          "$ref": "#/$defs/versionPinned"
+        },
+        "workflow.restored": {
+          "$ref": "#/$defs/workflowRestored"
+        },
+        "workflow.loopback-limit": {
+          "$ref": "#/$defs/workflowLoopbackLimit"
+        },
+        "workflow.stalled": {
+          "$ref": "#/$defs/workflowStalled"
+        },
+        "cap.breached": {
+          "$ref": "#/$defs/capBreached"
+        },
+        "lease.acquired": {
+          "$ref": "#/$defs/leaseLifecycle"
+        },
+        "lease.renewed": {
+          "$ref": "#/$defs/leaseLifecycle"
+        },
+        "lease.lost": {
+          "$ref": "#/$defs/leaseLifecycle"
+        },
+        "lease.handed-off": {
+          "$ref": "#/$defs/leaseHandedOff"
+        },
+        "replay.diverged": {
+          "$ref": "#/$defs/replayDiverged"
+        },
+        "replay.divergedAtRefusal": {
+          "$ref": "#/$defs/replayDivergedAtRefusal"
+        },
+        "agent.reasoned": {
+          "$ref": "#/$defs/agentReasoned"
+        },
+        "agent.reasoning.delta": {
+          "$ref": "#/$defs/agentReasoningDelta"
+        },
+        "provider.usage": {
+          "$ref": "#/$defs/providerUsage"
+        },
+        "prompt.composed": {
+          "$ref": "#/$defs/promptComposed"
+        },
+        "agent.promptResolved": {
+          "$ref": "#/$defs/agentPromptResolved"
+        },
+        "model.capability.substituted": {
+          "$ref": "#/$defs/modelCapabilitySubstituted"
+        },
+        "model.capability.insufficient": {
+          "$ref": "#/$defs/modelCapabilityInsufficient"
+        },
+        "envelope.retry.attempted": {
+          "$ref": "#/$defs/envelopeRetryAttempted"
+        },
+        "envelope.retry.exhausted": {
+          "$ref": "#/$defs/envelopeRetryExhausted"
+        },
+        "envelope.refusal": {
+          "$ref": "#/$defs/envelopeRefusal"
+        },
+        "envelope.truncated": {
+          "$ref": "#/$defs/envelopeTruncated"
+        },
+        "envelope.nlToFormat.engaged": {
+          "$ref": "#/$defs/envelopeNlToFormatEngaged"
+        },
+        "envelope.recovery.applied": {
+          "$ref": "#/$defs/envelopeRecoveryApplied"
+        },
+        "agent.toolCalled": {
+          "$ref": "#/$defs/agentToolCalled"
+        },
+        "agent.toolReturned": {
+          "$ref": "#/$defs/agentToolReturned"
+        },
+        "agent.handoff": {
+          "$ref": "#/$defs/agentHandoff"
+        },
+        "agent.decided": {
+          "$ref": "#/$defs/agentDecided"
+        },
+        "agent.verified": {
+          "$ref": "#/$defs/agentVerified"
+        },
+        "runOrchestrator.decided": {
+          "$ref": "#/$defs/runOrchestratorDecided"
+        },
+        "node.dispatched": {
+          "$ref": "#/$defs/nodeDispatched"
+        },
+        "core.dispatch.fanOut": {
+          "$ref": "#/$defs/dispatchFanOut"
+        },
+        "core.dispatch.join": {
+          "$ref": "#/$defs/dispatchJoin"
+        },
+        "conversation.opened": {
+          "$ref": "#/$defs/conversationOpened"
+        },
+        "conversation.exchanged": {
+          "$ref": "#/$defs/conversationExchanged"
+        },
+        "conversation.closed": {
+          "$ref": "#/$defs/conversationClosed"
+        },
+        "memory.compacted": {
+          "$ref": "#/$defs/memoryCompacted"
+        },
+        "memory.written": {
+          "$ref": "#/$defs/memoryWritten"
+        },
+        "agent.memory.consolidated": {
+          "$ref": "#/$defs/agentMemoryConsolidated"
+        },
+        "commitment.fired": {
+          "$ref": "#/$defs/commitmentFired"
+        },
+        "agent.invocation.started": {
+          "$ref": "#/$defs/agentInvocationStarted"
+        },
+        "agent.invocation.completed": {
+          "$ref": "#/$defs/agentInvocationCompleted"
+        },
+        "workspace.updated": {
+          "$ref": "#/$defs/workspaceUpdated"
+        },
+        "core.workflowChain.event": {
+          "$ref": "#/$defs/coreWorkflowChainEvent"
+        },
+        "core.workflowChain.confidence-escalated": {
+          "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated"
+        },
+        "connector.authorized": {
+          "$ref": "#/$defs/connectorAuthorized"
+        },
+        "connector.auth_expired": {
+          "$ref": "#/$defs/connectorAuthExpired"
+        },
+        "authorization.decided": {
+          "$ref": "#/$defs/authorizationDecided"
+        },
+        "eval.started": {
+          "$ref": "#/$defs/evalStarted"
+        },
+        "eval.scored": {
+          "$ref": "#/$defs/evalScored"
+        },
+        "eval.completed": {
+          "$ref": "#/$defs/evalCompleted"
+        },
+        "deployment.promoted": {
+          "$ref": "#/$defs/deploymentPromoted"
+        },
+        "deployment.rolled-back": {
+          "$ref": "#/$defs/deploymentRolledBack"
+        },
+        "deployment.canary.adjusted": {
+          "$ref": "#/$defs/deploymentCanaryAdjusted"
+        },
+        "deployment.state.changed": {
+          "$ref": "#/$defs/deploymentStateChanged"
+        },
+        "roster.run.initiated": {
+          "$ref": "#/$defs/rosterRunInitiated"
+        },
+        "tool.session.opened": {
+          "$ref": "#/$defs/toolSessionOpened"
+        },
+        "tool.session.closed": {
+          "$ref": "#/$defs/toolSessionClosed"
+        },
+        "egress.decided": {
+          "$ref": "#/$defs/egressDecided"
+        },
+        "trigger.subscription.state.changed": {
+          "$ref": "#/$defs/triggerSubscriptionStateChanged"
+        },
+        "trigger.delivery.attempted": {
+          "$ref": "#/$defs/triggerDeliveryAttempted"
+        },
+        "budget.reserved": {
+          "$ref": "#/$defs/budgetReserved"
+        },
+        "budget.consumed": {
+          "$ref": "#/$defs/budgetConsumed"
+        },
+        "budget.threshold.crossed": {
+          "$ref": "#/$defs/budgetThresholdCrossed"
+        },
+        "budget.exhausted": {
+          "$ref": "#/$defs/budgetExhausted"
+        },
+        "proposal.created": {
+          "$ref": "#/$defs/proposalCreated"
+        },
+        "proposal.activated": {
+          "$ref": "#/$defs/proposalActivated"
+        },
+        "goal.evaluated": {
+          "$ref": "#/$defs/goalEvaluated"
+        },
+        "goal.closed": {
+          "$ref": "#/$defs/goalClosed"
+        },
+        "import.applied": {
+          "$ref": "#/$defs/importApplied"
+        },
+        "voice.speech_start": {
+          "$ref": "#/$defs/voiceSpeechStart"
+        },
+        "voice.transcript": {
+          "$ref": "#/$defs/voiceTranscript"
+        },
+        "voice.endpoint_candidate": {
+          "$ref": "#/$defs/voiceEndpointCandidate"
+        },
+        "voice.turn_commit": {
+          "$ref": "#/$defs/voiceTurnCommit"
+        },
+        "voice.synthesis_chunk": {
+          "$ref": "#/$defs/voiceSynthesisChunk"
+        },
+        "voice.barge_in": {
+          "$ref": "#/$defs/voiceBargeIn"
+        },
+        "voice.cancelled": {
+          "$ref": "#/$defs/voiceCancelled"
+        },
+        "compensation.requested": {
+          "$ref": "#/$defs/compensationRequested"
+        },
+        "compensation.started": {
+          "$ref": "#/$defs/compensationStarted"
+        },
+        "compensation.completed": {
+          "$ref": "#/$defs/compensationCompleted"
+        },
+        "compensation.failed": {
+          "$ref": "#/$defs/compensationFailed"
+        },
+        "compensation.paused": {
+          "$ref": "#/$defs/compensationPaused"
+        },
+        "compensation.manual_intervention_required": {
+          "$ref": "#/$defs/compensationManualInterventionRequired"
+        }
+      }
+    },
+    "voiceSpeechStart": {
+      "description": "RFC 0106 §D. Emitted when inbound user speech onset is detected in a live voice session. Content-free (a timestamp only). MUST NOT be emitted unless `aiProviders.realtimeVoice.transcription: \"streaming\"` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atMs"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Session-relative onset timestamp (ms)."
+        }
+      }
+    },
+    "voiceTranscript": {
+      "description": "RFC 0106 §B/§D. A settled or provisional transcript part for the current turn, emitted on the durable event log as the single canonical record (the `ctx.callTranscriber` Promise resolves separately at `turn_commit`). `text` is the recognized speech — UNTRUSTED input (anyone in acoustic range is an unauthenticated writer): it MUST carry `contentTrust: \"untrusted\"` and MUST NOT be promoted to system/developer authority (SECURITY invariant `voice-transcript-untrusted`). A part with `isFinal: false` is provisional and MUST NOT be persisted to durable memory / the replay log / RAG or drive a side-effecting tool call before it finalizes (`voice-interim-not-durable`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "isFinal",
+        "atMs",
+        "contentTrust"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The current hypothesis for this segment (editable tail when `isFinal:false`)."
+        },
+        "isFinal": {
+          "type": "boolean",
+          "description": "true ⇒ this segment's text is settled and will not change."
+        },
+        "committedPrefix": {
+          "type": "string",
+          "description": "The leading portion the host guarantees will not change (Deepgram/Web-Speech model)."
+        },
+        "stability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Graded tail confidence (Google `stability`); omit/1.0 for immutable ASR."
+        },
+        "formatted": {
+          "type": "boolean",
+          "description": "Punctuation/casing/ITN applied; absent ⇒ raw."
+        },
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contentTrust": {
+          "const": "untrusted",
+          "description": "MUST be `\"untrusted\"` — live transcript is untrusted ingress (`voice-transcript-untrusted`); never promote to higher authority."
+        }
+      }
+    },
+    "voiceEndpointCandidate": {
+      "description": "RFC 0106 §B/§D. A silence boundary / likely end-of-turn appeared (only when `turnDetection: \"semantic\"`), DISTINCT from `voice.turn_commit` (Deepgram `UtteranceEnd` vs `speech_final`). Content-free.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atMs"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional end-of-turn confidence."
+        }
+      }
+    },
+    "voiceTurnCommit": {
+      "description": "RFC 0106 §B/§D. The user yielded the floor (turn boundary). This is where the `ctx.callTranscriber` Promise resolves. `finalText` is the settled transcript and is UNTRUSTED (it inherits the `voice.transcript` boundary).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atMs",
+        "finalText"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "finalText": {
+          "type": "string",
+          "description": "The settled transcript for the committed turn (untrusted input)."
+        }
+      }
+    },
+    "voiceSynthesisChunk": {
+      "description": "RFC 0106 §C. Announces a clause-boundary streaming-synthesis chunk. METADATA ONLY — the audio bytes are referenced by a session-scoped `streamRef`/`url`, NOT inlined on the event log past the host's inline cap (RFC 0055 256 KiB precedent; spill to a tenant-scoped `url`), so replay/`:fork` stays bounded over long sessions. MUST NOT be emitted unless `aiProviders.realtimeVoice.synthesis: \"streaming\"` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seq",
+        "mimeType"
+      ],
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonic chunk sequence."
+        },
+        "mimeType": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Audio chunk type (e.g. `audio/mpeg`)."
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Optional chunk duration."
+        },
+        "url": {
+          "type": "string",
+          "description": "Tenant-scoped, SSRF-guarded (RFC 0076) reference to the chunk bytes."
+        },
+        "streamRef": {
+          "type": "string",
+          "description": "Session-scoped live-stream handle for the chunk bytes."
+        },
+        "base64": {
+          "type": "string",
+          "description": "OPTIONAL inline bytes, permitted ONLY while under the host's inline cap; past the cap the host MUST use `url`/`streamRef`."
+        },
+        "final": {
+          "type": "boolean",
+          "description": "true on the terminal chunk."
+        }
+      }
+    },
+    "voiceBargeIn": {
+      "description": "RFC 0106 §D. User speech overlapped active assistant playback (probable cut-in). A host advertising `realtimeVoice.bargeIn: \"supported\"` MUST emit this on detected overlap. Content-free. Distinct from `voice.cancelled` (a backchannel \"uh-huh\" MAY produce `barge_in` with no `cancelled`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atMs"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "voiceCancelled": {
+      "description": "RFC 0106 §D. Downstream LLM/TTS work was cancelled (barge-in or explicit). A cancellation MUST NOT emit partial tool outputs or partial un-guardrailed model output and MUST roll back or fully complete an in-flight side effect (SECURITY invariant `voice-bargein-no-partial-leak`). Content-free.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atMs"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "barge-in",
+            "explicit"
+          ],
+          "description": "Why downstream work was cancelled."
+        }
+      }
+    },
+    "authorizationDecided": {
+      "description": "RFC 0049 — emitted on a role-based authorization decision (allow or deny). Redaction-safe: `principal` is an opaque RFC 0048 id; `reason` carries no credential material. Every deny SHOULD be emitted and SHOULD feed the audit log (RFC 0009/0010). MUST NOT be emitted unless `capabilities.authorization.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principal",
+        "action",
+        "resource",
+        "allowed"
+      ],
+      "properties": {
+        "principal": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque RFC 0048 principal id — never PII."
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The attempted action, e.g. `runs:cancel`."
+        },
+        "resource": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The target, e.g. a runId or workflowId."
+        },
+        "allowed": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable, redaction-safe — no credential material."
+        }
+      }
+    },
+    "proposalCreated": {
+      "description": "RFC 0096 §D. Emitted when the host synthesizes a reviewable-learning draft. Content-free: ids / kind / content-free references only — NEVER the artifact body or the rationale text (those live behind the authed read). Redaction-safe (SECURITY invariant `proposal-inert-until-applied` covers the behavior; SR-1 covers the payload). MUST NOT be emitted unless `capabilities.agents.proposals` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalId",
+        "kind"
+      ],
+      "properties": {
+        "proposalId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The created proposal's stable id."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "agent-pack",
+            "workflow-chain-pack",
+            "prompt-template",
+            "automation"
+          ],
+          "description": "The proposed artifact kind."
+        },
+        "sourceRunIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Runs whose traces produced the draft (RFC 0040 causation-compatible). Ids only — no trace content."
+        },
+        "duplicateOf": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Existing artifact ref the proposal restates/overlaps, when duplication detection is on; else null."
+        }
+      }
+    },
+    "proposalActivated": {
+      "description": "RFC 0096 §D. Emitted on a successful `apply`. Content-free: ids / content-free references only — NEVER the installed artifact body. MUST NOT be emitted unless `capabilities.agents.proposals` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalId",
+        "kind",
+        "installedArtifactRef"
+      ],
+      "properties": {
+        "proposalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "agent-pack",
+            "workflow-chain-pack",
+            "prompt-template",
+            "automation"
+          ]
+        },
+        "approvalId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "RFC 0051 approval id when activation routed through an approval gate; null for direct-rbac."
+        },
+        "installedArtifactRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Ref of the artifact installed on apply (RFC 0043)."
+        }
+      }
+    },
+    "goalEvaluated": {
+      "description": "RFC 0097 §D. Emitted after each judge check on a standing goal. Content-free: NO objective text. The verdict (`satisfied`/`confidence`) is non-deterministic judge output — it is RECORDED here and MUST NOT be recomputed on replay/fork (`replay.md`). MUST NOT be emitted unless `capabilities.agents.goals` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goalId",
+        "satisfied",
+        "runId",
+        "iterations"
+      ],
+      "properties": {
+        "goalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "satisfied": {
+          "type": "boolean",
+          "description": "The judge's verdict for this check."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Judge confidence in [0,1]."
+        },
+        "runId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "The run this verdict evaluated (RFC 0040 causation-compatible)."
+        },
+        "iterations": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Contributing iterations so far."
+        }
+      }
+    },
+    "goalClosed": {
+      "description": "RFC 0097 §D. Emitted when a standing goal stops continuation. Content-free. MUST NOT be emitted unless `capabilities.agents.goals` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goalId",
+        "finalState"
+      ],
+      "properties": {
+        "goalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finalState": {
+          "type": "string",
+          "enum": [
+            "satisfied",
+            "escalated",
+            "abandoned",
+            "bound-exceeded"
+          ],
+          "description": "Terminal state the goal closed in."
+        }
+      }
+    },
+    "importApplied": {
+      "description": "RFC 0098 §D. Emitted when an estate import is applied. Content-free: counts + ref-only — NO item payloads, NO secret values (SECURITY invariant `export-bundle-no-credential-material`). MUST NOT be emitted unless `capabilities.portability` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundleOrigin",
+        "counts"
+      ],
+      "properties": {
+        "bundleOrigin": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The bundle's `source.origin` — informational only."
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-action item tallies.",
+          "properties": {
+            "created": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "updated": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "secretsToRebind": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Provider/ref ids whose secrets must be re-bound at the destination. Refs only — never secret values."
+        }
+      }
+    },
+    "connectorAuthorized": {
+      "description": "RFC 0047 — emitted when the host acquires (or re-authorizes) a third-party OAuth token on a user's behalf via the `host.oauth` flow. Redaction-safe: carries the credential REFERENCE (RFC 0046), never token material. MUST NOT be emitted unless `capabilities.oauth.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "credentialRef"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Provider id, matching an advertised `capabilities.oauth.providers[].id` (e.g. `slack`, `google`)."
+        },
+        "credentialRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque RFC 0046 credential reference where the acquired token is stored. NEVER the token itself."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Scopes granted for the acquired token."
+        }
+      }
+    },
+    "connectorAuthExpired": {
+      "description": "RFC 0047 — emitted when a stored OAuth token's refresh fails terminally (revoked/expired refresh token). Redaction-safe: no token material. MUST NOT be emitted unless `capabilities.oauth.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "credentialRef"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Provider id, matching an advertised `capabilities.oauth.providers[].id`."
+        },
+        "credentialRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque RFC 0046 credential reference for the expired token."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Redaction-safe human-readable reason (e.g. `refresh_token_revoked`)."
+        }
+      }
+    },
+    "coreWorkflowChainEvent": {
+      "description": "RFC 0037 — emitted on every planner→worker handoff state-machine transition. Required when `capabilities.multiAgent.executionModel.supported: true`; MUST NOT be emitted otherwise. RFC 0040 §A extends with optional `causationHostId` (when `crossHostCausation.supported: true`): present + non-empty when the `causationId` points at an event on a different host; absent when the chained-event is on the same host (existing semantics).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "workerId",
+        "parentRunId"
+      ],
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": [
+            "dispatch.began",
+            "dispatch.succeeded",
+            "dispatch.failed",
+            "child.completed",
+            "child.failed",
+            "child.cancelled",
+            "output.harvested"
+          ],
+          "description": "Which handoff-state-machine transition this event records. See spec/v1/multi-agent-execution.md §'Handoff state machine'."
+        },
+        "workerId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The dispatched worker's workflowId — matches the entry in the supervisor's OrchestratorDecision.nextWorkerIds[]."
+        },
+        "parentRunId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "The orchestrator-driven parent run's runId."
+        },
+        "childRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The dispatched child run's runId. REQUIRED on phases `dispatch.succeeded` and beyond; absent on `dispatch.began` and `dispatch.failed`."
+        },
+        "harvestedKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "On phase `output.harvested`: which parent-variable keys were populated by the dispatch config's outputMapping per RFC 0022 §A. SHOULD be present; conformance asserts presence when outputMapping is non-empty."
+        },
+        "attestation": {
+          "type": "object",
+          "description": "RFC 0063 (when `capabilities.agents.subRunAttestation: true` AND the `core.subWorkflow` node sets `outputAttestation.checksum: true`). A content checksum over the child's harvested output object, computed BEFORE `outputMapping` is applied so the parent (or a downstream node) can verify integrity — host-independent because the recipe is RFC 8785 JCS canonicalization + SHA-256 (the `replay.md` recipe, RFC 0041), enabling verification of a child that ran on a different host (RFC 0040). Advisory: the host does NOT itself reject on checksum mismatch; that is parent policy.",
+          "additionalProperties": false,
+          "required": [
+            "checksum",
+            "algorithm"
+          ],
+          "properties": {
+            "checksum": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Lowercase hex digest of the canonicalized harvested-output object. Content-free: a hash, never the outputs themselves."
+            },
+            "algorithm": {
+              "type": "string",
+              "enum": [
+                "sha256"
+              ],
+              "description": "Hash algorithm. `sha256` is the only v1 value; the enum reserves the axis for a future agility migration without a wire-shape break."
+            }
+          }
+        },
+        "error": {
+          "$ref": "#/$defs/_errorObject",
+          "description": "On phases `dispatch.failed` / `child.failed` / `child.cancelled`: the canonical error envelope."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` (top-level on RunEventDoc) points at an event on a DIFFERENT host; absent when the chained-event is on the SAME host (existing semantics). Value MUST equal the originating host's `capabilities.multiAgent.executionModel.crossHostCausation.hostId` advertisement. Hosts that don't advertise crossHostCausation MUST NOT emit this field."
+        }
+      }
+    },
+    "coreWorkflowChainConfidenceEscalated": {
+      "description": "RFC 0039 §A — emitted when a supervisor's OrchestratorDecision carries `confidence` below the active confidence floor (spec floor 0.5 OR operator-stricter `capabilities.multiAgent.executionModel.confidenceEscalationFloor`). Recorded BEFORE the host fires the matching clarify-or-escalate interrupt so the run event log carries the decision point even if the user later confirms the original decision. MUST NOT be emitted unless `capabilities.multiAgent.executionModel.version >= 2`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "confidence",
+        "floor",
+        "escalationKind",
+        "parentRunId"
+      ],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The supervisor's stated confidence on the escalated decision, copied verbatim from `OrchestratorDecision.confidence`."
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1,
+          "description": "The floor that triggered escalation — either the spec floor (0.5) when the host doesn't advertise a stricter `confidenceEscalationFloor`, or the host-advertised stricter value."
+        },
+        "escalationKind": {
+          "type": "string",
+          "enum": [
+            "clarify",
+            "escalate"
+          ],
+          "description": "Which interrupt-kind the host fired in response. `clarify` is preferred per RFC 0039 §A; `escalate` is permitted when the host doesn't expose a clarification UI."
+        },
+        "workerId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The decision's intended next-worker workflowId (when the escalated decision's kind is `next-worker`). OMITTED for `kind: 'terminate'` escalations — terminate decisions have no worker to name, so absent-field is the correct signal rather than empty-string."
+        },
+        "parentRunId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "The orchestrator-driven parent run's runId."
+        },
+        "originalDecision": {
+          "$ref": "orchestrator-decision.schema.json",
+          "description": "The OrchestratorDecision that triggered escalation, captured verbatim. The host's existing event-payload redaction harness (the same one enforcing SECURITY invariant `secret-leakage-eventlog-payload` per `conformance/src/scenarios/redaction.test.ts`) applies uniformly across all RunEventType payloads including this one — no per-event-type opt-in is required. The protocol-tier MUST-NOT for raw key material in persisted payloads is the canonical contract; this field inherits that protection."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host (existing semantics). Value MUST equal the originating host's `crossHostCausation.hostId` advertisement."
+        }
+      }
+    },
+    "_errorObject": {
+      "description": "Reusable error shape used by run.failed / node.failed / workflow.stalled / etc.",
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "_inputsObject": {
+      "type": "object",
+      "description": "Caller-supplied workflow inputs (from POST /v1/runs body).",
+      "additionalProperties": true
+    },
+    "_outputsObject": {
+      "type": "object",
+      "description": "Node output map. Keys are output port names; values are JSON.",
+      "additionalProperties": true
+    },
+    "runStarted": {
+      "type": "object",
+      "description": "Emitted once per run when execution begins.",
+      "required": [
+        "workflowId"
+      ],
+      "properties": {
+        "workflowId": {
+          "$ref": "ids.schema.json#/$defs/workflowId"
+        },
+        "inputs": {
+          "$ref": "#/$defs/_inputsObject"
+        },
+        "transport": {
+          "type": "string",
+          "enum": [
+            "rest",
+            "mcp",
+            "a2a",
+            "ui"
+          ]
+        },
+        "engineVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "v2: integer everywhere (RFC 0172 §B axis 3)."
+        },
+        "owner": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tenant",
+            "subject"
+          ],
+          "properties": {
+            "tenant": {
+              "$ref": "ids.schema.json#/$defs/tenantId"
+            },
+            "workspace": {
+              "$ref": "ids.schema.json#/$defs/workspaceId"
+            },
+            "subject": {
+              "$ref": "subject.schema.json"
+            }
+          },
+          "description": "RFC 0170 §A.1 — the same block as RunSnapshot.owner."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "runCompleted": {
+      "type": "object",
+      "description": "Emitted once when the run reaches a successful terminal state. Closes the SSE stream.",
+      "properties": {
+        "outputs": {
+          "$ref": "#/$defs/_outputsObject"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "runFailed": {
+      "type": "object",
+      "description": "Emitted once when the run reaches a failed terminal state.",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/_errorObject"
+        },
+        "failedNodeId": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "runCancelled": {
+      "type": "object",
+      "description": "Emitted once when the run reaches the cancelled terminal state.",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "`v1_pin_unsupported` (RFC 0176 §B.1) is a registered reason."
+        },
+        "cancelledBy": {
+          "type": "string",
+          "description": "RFC 0176 §B.1 — `v2-cutover` when a v2 host cancels an inherited run whose pin it no longer implements."
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parentRunId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "When this cancellation was triggered by a parent-cancel cascade (`interrupt-profiles.md §openwop-interrupt-cascade-cancel`), the parent runId that initiated it. Pairs with `reason: 'parent-cancelled'`. Absent for direct cancellations."
+        }
+      },
+      "additionalProperties": false
+    },
+    "runResuming": {
+      "type": "object",
+      "description": "Emitted when an explicit resume is dispatched (browser bootstrap or `:resume` callable).",
+      "properties": {
+        "fromStatus": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "runPaused": {
+      "type": "object",
+      "description": "Emitted when the run is paused (manual pause / cap.breached pause-and-checkpoint).",
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "drainPolicy": {
+          "type": "string",
+          "enum": [
+            "drain",
+            "interrupt"
+          ],
+          "description": "v1 rest-endpoints.md MUST — the pause drain policy persisted on the event."
+        }
+      },
+      "additionalProperties": false
+    },
+    "runResumed": {
+      "type": "object",
+      "description": "Emitted when the run resumes from `paused`.",
+      "additionalProperties": true
+    },
+    "runRestoredFromSnapshot": {
+      "type": "object",
+      "description": "Emitted on cold-start when the engine rebuilds run state from event log.",
+      "properties": {
+        "snapshotSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "engineVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "v2: integer everywhere (RFC 0172 §B axis 3)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "runDeadLettered": {
+      "description": "RFC 0053 — emitted when a run/node exhausts its retry policy (RFC 0009) and is routed to the durable dead-letter sink. The run remains fork-eligible (RFC 0011) for `capabilities.deadLetter.retentionDays`. Redaction-safe: `reason` carries no credential material. MUST NOT be emitted unless `capabilities.deadLetter.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "reason",
+        "attempts"
+      ],
+      "properties": {
+        "runId": {
+          "$ref": "ids.schema.json#/$defs/runId"
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "The node whose retry exhaustion dead-lettered the run; absent for run-level failures."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Redaction-safe terminal-failure reason."
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total attempts made before dead-lettering."
+        }
+      }
+    },
+    "nodeStarted": {
+      "type": "object",
+      "description": "Emitted when a node begins execution.",
+      "required": [
+        "nodeId",
+        "typeId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "typeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based retry counter."
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeCompleted": {
+      "type": "object",
+      "description": "Emitted when a node successfully completes.",
+      "required": [
+        "nodeId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "outputs": {
+          "$ref": "#/$defs/_outputsObject"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeFailed": {
+      "type": "object",
+      "description": "Emitted on terminal node failure (after retries exhausted).",
+      "required": [
+        "nodeId",
+        "error"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "error": {
+          "$ref": "#/$defs/_errorObject"
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeSuspended": {
+      "type": "object",
+      "description": "Emitted when a node calls `ctx.interrupt(...)`. Carries the InterruptPayload (suspend-request.schema.json).",
+      "required": [
+        "nodeId",
+        "interruptId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "interruptId": {
+          "$ref": "ids.schema.json#/$defs/interruptId"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "approval",
+            "clarification",
+            "external-event",
+            "custom",
+            "conversation.start",
+            "conversation.exchange",
+            "conversation.close",
+            "low-confidence"
+          ],
+          "description": "RFC 0094 §E — the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeSuspendFailed": {
+      "type": "object",
+      "description": "Emitted when a suspension attempt fails (storage write error, signed-token issue).",
+      "required": [
+        "nodeId",
+        "error"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "error": {
+          "$ref": "#/$defs/_errorObject"
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeResumed": {
+      "type": "object",
+      "description": "Emitted when a suspended node receives its resume value and continues.",
+      "required": [
+        "nodeId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "interruptId": {
+          "$ref": "ids.schema.json#/$defs/interruptId"
+        },
+        "resumeValue": {}
+      },
+      "additionalProperties": false
+    },
+    "nodeRetried": {
+      "type": "object",
+      "description": "Emitted on each retry attempt within a node's retry budget.",
+      "required": [
+        "nodeId",
+        "attempt"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "delayMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lastError": {
+          "$ref": "#/$defs/_errorObject"
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeSkipped": {
+      "type": "object",
+      "description": "Emitted when a node is skipped (edge condition failed, gate veto, conditional branch).",
+      "required": [
+        "nodeId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeCancelled": {
+      "type": "object",
+      "description": "Emitted when an in-flight node is cancelled (run-level cancel or upstream failure cascade).",
+      "required": [
+        "nodeId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "interruptRequested": {
+      "description": "Canonical HITL primitive — discriminated union over kind. Payload mirrors `suspend-request.schema.json` (InterruptPayload) plus engine-assigned identity fields.",
+      "$ref": "https://openwop.dev/spec/v2/suspend-request.schema.json"
+    },
+    "interruptResolved": {
+      "type": "object",
+      "description": "Emitted when an interrupt is resolved (any kind).",
+      "required": [
+        "nodeId",
+        "interruptId"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "interruptId": {
+          "$ref": "ids.schema.json#/$defs/interruptId"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "approval",
+            "clarification",
+            "external-event",
+            "custom",
+            "conversation.start",
+            "conversation.exchange",
+            "conversation.close",
+            "low-confidence"
+          ],
+          "description": "RFC 0094 §E — the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
+        },
+        "resumeValue": {},
+        "resolvedBy": {
+          "$ref": "subject.schema.json",
+          "description": "v1 interrupt.md MUST (`decidedBy` on approval.received / `resolvedBy` on interrupt.resolved) carried into v2 as the resolving Subject."
+        },
+        "decision": {
+          "type": "string",
+          "description": "The decision recorded for approval-kind interrupts (granted | rejected | overridden), carried from the v1 approval.* payloads."
+        }
+      },
+      "additionalProperties": false
+    },
+    "channelWritten": {
+      "$ref": "https://openwop.dev/spec/v2/channel-written-payload.schema.json"
+    },
+    "channelPresence": {
+      "$ref": "https://openwop.dev/spec/v2/channel-presence-payload.schema.json"
+    },
+    "contextSummarized": {
+      "type": "object",
+      "description": "RFC 0111. Emitted when the host replaces older in-window orchestrator transcript turns with a host-produced summary to honor `multiAgent.executionModel.contextBudget.transcriptTokenBudget`. CONTENT-FREE: the summary text is NEVER inlined — `summaryRef` is an artifactId resolved via `GET /v1/runs/{runId}/artifacts/{artifactId}`. The summary is a NONDETERMINISTIC host output governed like an RFC 0041 envelope: on `:fork mode:replay` the host MUST reuse this recorded `summaryRef` and MUST NOT re-summarize (see multi-agent-execution.md §\"Context economy (RFC 0111)\"). `replacedTurns` lists the event ids the summary stands in for, so a replay engine reconstructs the exact transcript.",
+      "required": [
+        "iteration",
+        "replacedTurns",
+        "summaryRef",
+        "tokenCounter",
+        "tokensBefore",
+        "tokensAfter"
+      ],
+      "properties": {
+        "iteration": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The orchestrator-loop iteration (the `runOrchestrator.decided.iteration` counter) whose transcript assembly triggered this summarization."
+        },
+        "replacedTurns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Event ids (run event-log entries) the summary stands in for. A replay engine reconstructs the exact model-facing transcript by substituting the `summaryRef` artifact for this contiguous range."
+        },
+        "summaryRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "ArtifactId of the persisted summary (read via `GET /v1/runs/{runId}/artifacts/{artifactId}`). The summary text is NOT on the wire. MUST be persisted/readable as-of the iteration's event-log index; a host that cannot serve it at the requested `fromSeq` MUST refuse the fork (mirrors `replay_memory_snapshot_unavailable`)."
+        },
+        "tokenCounter": {
+          "type": "string",
+          "enum": [
+            "o200k_base",
+            "cl100k_base",
+            "chars",
+            "host-defined"
+          ],
+          "description": "The unit `tokensBefore`/`tokensAfter` are denominated in. MUST equal the advertised `contextBudget.tokenCounter`."
+        },
+        "tokensBefore": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Token count of the `replacedTurns` range before summarization, in `tokenCounter` units."
+        },
+        "tokensAfter": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Token count of the summary that replaced the range, in `tokenCounter` units. Expected ≤ `tokensBefore`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifactCreated": {
+      "type": "object",
+      "description": "Emitted when a node produces a typed artifact (PRD, theme, plan, etc.).",
+      "required": [
+        "artifactId",
+        "artifactType"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifactType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "version": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "registered": {
+          "type": "boolean",
+          "description": "RFC 0071. True when `artifactType` resolves to a registered artifact type (pack- or host-registered) and the payload was validated against its schema; false for unregistered/host-local types accepted without schema validation. Optional; absent ⇒ treat as true, preserving pre-RFC-0071 semantics. See artifact-type-packs.md §\"Binding the existing artifact surfaces\"."
+        },
+        "registrationSource": {
+          "type": "string",
+          "enum": [
+            "pack",
+            "host"
+          ],
+          "description": "RFC 0075. Provenance of a registered type: `pack` (matches an installed artifact-type pack) or `host` (a host-native type the host validates against a host-known schema, independent of any pack — e.g. an AI host's built-in artifact types). Optional; meaningful only when `registered: true`. Absent ⇒ unspecified provenance (existing semantics)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "outputChunk": {
+      "type": "object",
+      "description": "Emitted for streaming output (e.g., LLM token chunks). Stream-mode `messages` consumers see these. RFC 0094 §D single-sources the `ai.message.chunk` payload here: bare {nodeId, runId, chunk, isLast} is the minimum compliant payload per stream-modes.md §messages (the prior {nodeId, chunk}-only required set was the defective restatement). Tiered metadata per stream-modes.md §messages (S2 closure): `meta` adds Tier 1 typed slots and a Tier 2 provider-pass-through escape hatch.",
+      "required": [
+        "nodeId",
+        "runId",
+        "chunk",
+        "isLast"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "runId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "Run this chunk belongs to. Required so multiplexed consumers (mixed-mode streams, fan-in UIs) can route chunks without out-of-band context."
+        },
+        "chunk": {
+          "type": "string"
+        },
+        "isLast": {
+          "type": "boolean",
+          "description": "True for the final chunk of a given AI node call. Required — both reference consumers rely on it for fold termination."
+        },
+        "channel": {
+          "type": "string",
+          "description": "Optional sub-stream identifier when a node emits multiple parallel streams."
+        },
+        "meta": {
+          "$ref": "#/$defs/_chunkMeta"
+        }
+      },
+      "additionalProperties": false
+    },
+    "_chunkMeta": {
+      "type": "object",
+      "description": "Tiered metadata for ai.message.chunk / outputChunk payloads. See stream-modes.md §messages.",
+      "properties": {
+        "finishReason": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "length",
+            "tool_calls",
+            "content_filter"
+          ],
+          "description": "Tier 1: normalized termination reason. Set on the final chunk of a generation. Forward-compat: future values MAY be added; consumers MUST tolerate unknown values."
+        },
+        "logprobs": {
+          "type": "array",
+          "description": "Tier 1: per-token log-probability info. Shape mirrors OpenAI / Anthropic / Gemini conventions; servers SHOULD normalize to `[{token: string, logprob: number, topLogprobs?: [{token, logprob}]}]`."
+        },
+        "toolCalls": {
+          "type": "array",
+          "description": "Tier 1: structured tool / function calls emitted in this chunk. Each item: `{id, name, arguments}` — `arguments` is a string (JSON-encoded args, may be partial when streaming)."
+        },
+        "model": {
+          "type": "string",
+          "description": "Tier 1: model identifier the chunk was produced by (e.g., `claude-opus-4-7`, `gpt-5`). Useful when a workflow node fans out across multiple models."
+        },
+        "usage": {
+          "type": "object",
+          "description": "Tier 1: token-billing metadata. Pairs with O4 cost-attribution attributes (`openwop.cost.tokens.*`).",
+          "properties": {
+            "promptTokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "completionTokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "totalTokens": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "provider": {
+          "type": "string",
+          "description": "Tier 2: provider name when `providerExtensions` is present. Examples: `openai`, `anthropic`, `google`, `minimax`. Consumers MUST NOT branch on this for behavior — use Tier 1 fields. Provided for observability + debugging only."
+        },
+        "providerExtensions": {
+          "type": "object",
+          "description": "Tier 2: provider pass-through for fields the spec hasn't typed yet. Consumers using this opt into per-provider knowledge; spec evolution may move fields up into Tier 1 over time (additive — typed slot wins).",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "variableChanged": {
+      "type": "object",
+      "description": "Emitted on workflow-variable mutation (debug/values stream modes). NOT emitted for typed channels (those use channel.written).",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous": {},
+        "next": {},
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "logAppended": {
+      "type": "object",
+      "description": "Emitted on `ctx.log.*` calls. Debug-stream-mode only.",
+      "required": [
+        "level",
+        "message"
+      ],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "versionPinned": {
+      "type": "object",
+      "description": "Emitted via `ctx.getVersion(changeId)` per Temporal-style versioning. See version-negotiation.md.",
+      "required": [
+        "changeId",
+        "version"
+      ],
+      "properties": {
+        "changeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "workflowRestored": {
+      "type": "object",
+      "description": "Emitted when an in-flight run is recovered from the event log on a fresh engine boot.",
+      "properties": {
+        "fromSnapshotSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "engineVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "v2: integer everywhere (RFC 0172 §B axis 3)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "workflowLoopbackLimit": {
+      "type": "object",
+      "description": "Emitted when a request-changes loop hits its `maxLoopbackIterations` cap.",
+      "required": [
+        "nodeId",
+        "iterations"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "iterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "workflowStalled": {
+      "type": "object",
+      "description": "Emitted when the engine detects a stalled run (no progress for N seconds).",
+      "properties": {
+        "stalledForMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lastNodeId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "capBreached": {
+      "type": "object",
+      "description": "Emitted when a CapabilityLimit is exceeded. Protocol-level limits use the engine kinds (clarificationRounds / schemaRounds / envelopesPerTurn / maxNodeExecutions). RFC 0008 §K WASM-runtime caps use the wasm-* kinds (memory ceiling, fuel exhaustion, execution-time wall-clock). RFC 0058 run-execution bounds use the run-scoped run-duration (wall-clock timeout; limit=resolvedMs, observed=elapsedMs) and loop-iterations (agent-loop ceiling; limit=resolvedMax, observed=iterationCount) kinds.",
+      "required": [
+        "kind",
+        "limit",
+        "observed"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "clarification",
+            "schema",
+            "envelopes",
+            "node-executions",
+            "wasm-memory",
+            "wasm-fuel",
+            "wasm-execution-time",
+            "run-duration",
+            "loop-iterations",
+            "budget-tokens",
+            "budget-cost",
+            "budget-tool-calls",
+            "budget-retries"
+          ]
+        },
+        "limit": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The effective ceiling. A whole number for the engine/WASM/RFC 0058 integer kinds; a fractional value for budget-cost (dollars, matching budget.exhausted + maxCostUsd — RFC 0084 §D)."
+        },
+        "observed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The observed value at breach. Same numeric domain as limit for the kind."
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "leaseLifecycle": {
+      "type": "object",
+      "description": "Shared payload for lease.acquired / lease.renewed / lease.lost.",
+      "required": [
+        "leaseId",
+        "host"
+      ],
+      "properties": {
+        "leaseId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "host": {
+          "type": "string",
+          "enum": [
+            "browser",
+            "cloud"
+          ]
+        },
+        "instanceId": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "previousHost": {
+          "type": "string",
+          "enum": [
+            "browser",
+            "cloud"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "leaseHandedOff": {
+      "type": "object",
+      "description": "Emitted when a run's executing lease is transferred from one host to another (e.g., browser → cloud failover).",
+      "required": [
+        "leaseId",
+        "fromHost",
+        "toHost"
+      ],
+      "properties": {
+        "leaseId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fromHost": {
+          "type": "string",
+          "enum": [
+            "browser",
+            "cloud"
+          ]
+        },
+        "toHost": {
+          "type": "string",
+          "enum": [
+            "browser",
+            "cloud"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "replayDivergedAtRefusal": {
+      "type": "object",
+      "description": "RFC 0041 §B — emitted by `:fork` mode `replay` when the replay's LLM call returns a refusal but the original run got a valid envelope (or vice-versa: the original refused, the replay succeeded). Distinct from the generic `replay.diverged` event (which covers structural output/missing/extra/type-mismatch divergence) to let operators audit safety-policy shifts without filtering through the generic divergence stream. When this event fires, the host MUST also fail the replay with `error.code: \"replay_diverged_at_refusal\"` per `spec/v1/rest-endpoints.md` §\"Common error codes\". Capability-gated on `capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true`; non-Phase-4 hosts MUST NOT emit this event.",
+      "required": [
+        "sourceRunId",
+        "atSequence",
+        "originalEnvelopeKind",
+        "replayEnvelopeKind"
+      ],
+      "properties": {
+        "sourceRunId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "The original run's runId (the source of the replay)."
+        },
+        "atSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Event-log index at which the refusal-divergence was detected (the index of the LLM call whose envelope shifted)."
+        },
+        "originalEventId": {
+          "type": "string",
+          "description": "Optional eventId of the original event whose envelope is being compared. SHOULD be set when the host has a stable identifier for the event; MAY be omitted when only the sequence index is known."
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "ID of the node whose LLM call diverged. Operators use this to localize the safety-policy shift in the workflow definition."
+        },
+        "originalEnvelopeKind": {
+          "type": "string",
+          "enum": [
+            "valid",
+            "refusal"
+          ],
+          "description": "Whether the original run's LLM envelope was a valid response or a refusal."
+        },
+        "replayEnvelopeKind": {
+          "type": "string",
+          "enum": [
+            "valid",
+            "refusal"
+          ],
+          "description": "Whether the replay's LLM envelope was a valid response or a refusal. MUST differ from `originalEnvelopeKind` — otherwise there is no divergence to report."
+        },
+        "refusalReason": {
+          "type": "string",
+          "description": "Provider-supplied refusal reason when available (e.g., the model's `refusal` field on a chat-completion response). OPTIONAL; hosts MAY include for operator triage but MUST redact provider-specific identifiers per `SECURITY/threat-model-secret-leakage.md`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "replayDiverged": {
+      "type": "object",
+      "description": "Emitted by `:fork` when a replay re-execution produces a different output than the original at a given sequence. See replay.md §divergence detection. `divergencePoint` (RFC 0027 §F) is the canonical optional field for naming which event-emission diverged; the two fields are complementary, not mutually exclusive.",
+      "required": [
+        "sourceRunId",
+        "atSequence"
+      ],
+      "properties": {
+        "sourceRunId": {
+          "$ref": "ids.schema.json#/$defs/runId"
+        },
+        "atSequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "originalEventId": {
+          "type": "string"
+        },
+        "divergenceKind": {
+          "type": "string",
+          "enum": [
+            "output",
+            "missing",
+            "extra",
+            "type-mismatch"
+          ]
+        },
+        "divergencePoint": {
+          "type": "string",
+          "description": "RFC 0027 §F. Verbatim `RunEventType` enum string identifying which event-emission the replay diverged at (e.g., `\"prompt.composed\"` per RFC 0027, `\"agent.promptResolved\"` per RFC 0029, `\"envelope.retry.exhausted\"` / `\"envelope.recovery.applied\"` per RFC 0032). Set when divergence is detected on a specific cross-kind operational event's payload. When divergence is purely structural (output/missing/extra at the event-array level rather than within a typed payload), `divergenceKind` carries the shape and `divergencePoint` MAY be omitted. The two fields are complementary: a single `replay.diverged` event MAY carry both (e.g., `{ divergenceKind: \"output\", divergencePoint: \"prompt.composed\" }` reads as \"the `prompt.composed` event at sequence N had a different output on replay than the original\"). The field is defined by RFC 0027; values are contributed by consuming RFCs (0029 adds `agent.promptResolved`, 0032 adds the envelope-reliability event names)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentReasoned": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when an agent produces a reasoning trace (typically pre-tool-call, pre-decision, or pre-handoff). The reasoning text MAY be a summary or full trace depending on the run's resolved `RunOptions.configurable.reasoningVerbosity`. Replay-deterministic over the event log.",
+      "required": [
+        "agentId",
+        "reasoning"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "AgentRef.agentId of the reasoning agent."
+        },
+        "reasoning": {
+          "type": "string",
+          "description": "Reasoning text. Bounded by `capabilities.agents.reasoning.tokenLimit` when verbosity is `summary` (default 512 tokens)."
+        },
+        "verbosity": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "full",
+            "off"
+          ],
+          "description": "Verbosity mode this trace was produced under. Hosts MAY emit `'off'` to record the suppression decision without payload content."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentReasoningDelta": {
+      "type": "object",
+      "description": "RFC 0024. Incremental reasoning chunk for live-streaming UX. Emitted while a reasoning block is still open, BEFORE the corresponding `agent.reasoned` finalization. Consumers concatenate `delta` strings in arrival order to reconstruct the in-progress trace; the closing `agent.reasoned` event carries the FULL authoritative `reasoning`. Gated on `capabilities.agents.reasoning.streaming: true`. NOTE: `additionalProperties: true` mirrors the Phase-1 multi-agent-shift carve-out applied to the sibling `agentReasoned` schema — a deliberate forward-compat exception per RFC 0024 §Compatibility, not a precedent generalizable to other event payloads.",
+      "required": [
+        "agentId",
+        "delta",
+        "sequence"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "AgentRef.agentId of the reasoning agent. MUST match the eventual closing `agent.reasoned`."
+        },
+        "delta": {
+          "type": "string",
+          "description": "New reasoning content since the previous delta event in this block (or since block open, if `sequence` is 0)."
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonically-increasing index within the current reasoning block. Starts at 0 for the first delta in a block; resets at each new block open. Consumers MAY use this to detect dropped events."
+        },
+        "verbosity": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "full",
+            "off"
+          ],
+          "description": "Verbosity mode the host resolved for this block. SHOULD match the verbosity reported on the closing `agent.reasoned`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "providerUsage": {
+      "type": "object",
+      "description": "RFC 0026. Per-call usage record emitted after every LLM provider invocation. Durably persisted in the run event log; consumed by replay, webhook subscribers, billing reconciliation. The OTel `openwop.cost.*` attribute group (per `observability.md §\"Cost attribution attributes\"`) is the observability sibling — this event type is the durable record. Replay determinism: `inputTokens` + `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay, and so MAY the RFC 0116 cost-only `cacheReadTokens`/`cacheWriteTokens` (they are NOT replay-asserted — a prompt-prefix cache hit vs miss MUST NOT change `inputTokens`/`outputTokens` or the recorded envelope). The payload MUST NOT carry credentialRefs, hashed credential identifiers, or prompt/response substrings per `SECURITY/threat-model-secret-leakage.md §SR-1` (enforced by SECURITY invariant `provider-usage-no-credential-leak`).",
+      "required": [
+        "provider",
+        "model",
+        "inputTokens",
+        "outputTokens"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Canonical provider id (lowercase ASCII, e.g. \"anthropic\", \"openai\", \"google\"). Same value as the `openwop.cost.provider` OTel attribute."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Provider-stamped model id as the model expects it. Same value used in the LLM cache-key recipe per `replay.md §A`."
+        },
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Input/prompt tokens billed for this call. Matches the provider response's input-token count verbatim."
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Output/completion tokens billed for this call. Matches the provider response's output-token count verbatim."
+        },
+        "totalTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Convenience sum (inputTokens + outputTokens). Consumers MAY compute themselves; emitters MAY include for readability."
+        },
+        "costEstimateUsd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "ADVISORY estimate in USD computed by the host's static rate table. MUST NOT be used for billing — real billing is external. Hosts SHOULD omit when no rate is known rather than emit 0."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "ISO 4217 code when `costEstimateUsd` is non-USD; the field name stays `costEstimateUsd` for back-compat but `currency` overrides the implied denomination."
+        },
+        "cacheHit": {
+          "type": "boolean",
+          "description": "True iff this call was served from the LLM response cache per `replay.md §\"LLM cache-key recipe\"`. When true, inputTokens/outputTokens reflect the ORIGINAL call's billed values; the cached invocation incurred zero new provider cost."
+        },
+        "cacheReadTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "RFC 0116. Optional, cost-only. Provider-reported tokens served from the prompt-prefix context cache on this call — a cache HIT shows > 0. This is a cost hint, NOT a semantic input: it MAY be omitted on replay (NOT replay-asserted, like `costEstimateUsd`), and a hit-vs-miss difference MUST NOT change `inputTokens`/`outputTokens` or the recorded envelope (RFC 0116 replay-invariance MUST). MUST NOT carry prompt/response substrings per `SECURITY/threat-model-secret-leakage.md §SR-1`."
+        },
+        "cacheWriteTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "RFC 0116. Optional, cost-only. Provider-reported tokens written to the prompt-prefix context cache on this call (a cache PRIME). MAY be omitted on replay (NOT replay-asserted). MUST NOT change `inputTokens`/`outputTokens` or the recorded envelope, and MUST NOT carry prompt/response substrings (SR-1)."
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "The node id that initiated the provider call. Required for per-node cost attribution dashboards."
+        },
+        "traceId": {
+          "$ref": "ids.schema.json#/$defs/traceId",
+          "description": "OTel trace id linking this event to the matching `openwop.cost.*` span. Lets observability backends correlate event-log entries with traces."
+        }
+      },
+      "additionalProperties": false
+    },
+    "promptComposed": {
+      "type": "object",
+      "description": "RFC 0027. Emitted once per (nodeId, kind) composition when a host resolves a PromptRef on a node and assembles its body for an LLM call. Gated on `capabilities.prompts.supported: true` AND `capabilities.prompts.observability !== 'off'`. Body fields (`systemPrompt`, `userPrompt`, `variableBindings`) are populated only under `observability: 'full'`; under `hashed` the event carries only `hash` + `variableHashes`. Replay-deterministic over `(refs, variableHashes, contentTrust)` per `spec/v1/prompts.md §\"Replay determinism\"`. Secret-source variable values MUST be replaced with `[REDACTED:<secretId>]` markers per SECURITY invariant `prompt-composed-secret-redaction`; untrusted-input segments MUST be wrapped with `<UNTRUSTED>...</UNTRUSTED>` markers per SECURITY invariant `prompt-composed-trust-marker`.",
+      "required": [
+        "nodeId",
+        "refs",
+        "kind",
+        "hash"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "Lifted to top-level RunEventDoc.nodeId; mirrored here for self-contained payload validation."
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^prompt:[a-z0-9][a-z0-9._-]{0,127}(@\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)?$"
+          },
+          "description": "Ordered list of PromptRef values (stringy form) that contributed to this composition: typically system, then user, then any few-shot or schema-hint additions. Object-form refs are projected to their stringy equivalent for stability."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "system+user",
+            "system-only",
+            "user-only",
+            "agent-reasoning"
+          ],
+          "description": "Composition shape — what the host actually assembled. `system+user`: both system and user templates resolved. `system-only`: only a system template applied (e.g., agent intrinsic). `user-only`: only a user template applied. `agent-reasoning`: composition was emitted ahead of an agent reasoning trace per RFC 0024."
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the composed body (post-substitution, post-redaction). Stable across replay. Always present, including under observability=hashed."
+        },
+        "composed": {
+          "type": "string",
+          "description": "Generic composed-body field. Present only when `capabilities.prompts.observability` is `full`. Populated for ALL four PromptKind values (system / user / few-shot / schema-hint) so consumers have a single body field to read — necessary for few-shot + schema-hint templates that don't fit the system/user split below. Same secret-redaction + trust-marker invariants apply as for the kind-specific fields. The kind-specific `systemPrompt` + `userPrompt` fields below remain populated for system/user kinds so existing consumers that key off them continue to work; both fields carry identical content for those kinds."
+        },
+        "systemPrompt": {
+          "type": "string",
+          "description": "Composed system prompt body. Present only when `capabilities.prompts.observability` is `full` AND template `kind: \"system\"`. Secret-sourced variable values MUST be replaced with `[REDACTED:<secretId>]` markers. Untrusted-content `<UNTRUSTED>...</UNTRUSTED>` markers MUST be preserved verbatim. Identical to `composed` when present."
+        },
+        "userPrompt": {
+          "type": "string",
+          "description": "Composed user prompt body. Same presence + redaction rules as `systemPrompt`."
+        },
+        "variableBindings": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Variable-name → bound-value map. Secret-source bindings MUST appear as `[REDACTED:<secretId>]`. Only present under `observability: 'full'`."
+        },
+        "variableHashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "description": "Variable-name → sha256(value) map. Always present (under both `hashed` and `full`). Enables replay-determinism checks without exposing values."
+        },
+        "contentTrust": {
+          "type": "string",
+          "enum": [
+            "trusted",
+            "untrusted"
+          ],
+          "description": "Aggregate trust marker. `untrusted` iff ANY contributing input was tagged untrusted per RFC 0020 §D / AIEnvelope.meta.contentTrust propagation. When `untrusted`, the composed bodies MUST contain `<UNTRUSTED>...</UNTRUSTED>` markers around the untrusted segments."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentPromptResolved": {
+      "type": "object",
+      "description": "RFC 0029 §B. Emitted once per (nodeId, kind) pair BEFORE the corresponding `prompt.composed` event (when emitted). Surfaces the four-layer resolution chain per `spec/v1/prompts.md` §\"Resolution chain (normative)\" so cross-host debuggers and multi-agent visualizers can render which PromptRef applied at this node and why. Gated on `capabilities.prompts.supported: true`; payload is durable in the event log and participates in replay. Carries refs (not bodies), so emission is safe regardless of `capabilities.prompts.observability` — the secret-redaction + trust-marker invariants on `prompt.composed` (RFC 0027 §G) don't apply here.",
+      "required": [
+        "nodeId",
+        "kind",
+        "chain",
+        "resolved"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "Lifted to top-level RunEventDoc.nodeId; mirrored here for self-contained payload validation."
+        },
+        "kind": {
+          "$ref": "./prompt-kind.schema.json"
+        },
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "AgentManifest.agentId when the node has `config.agentId` set; omitted otherwise."
+        },
+        "chain": {
+          "type": "array",
+          "description": "Ordered traversal of the four normative resolution layers. Hosts MUST emit one entry per layer attempted; skipped layers produce an entry with `applied: false` and `reason: \"...\"` describing why (e.g., `\"agentId unresolved\"`, `\"no candidate at this layer\"`, `\"superseded by node-config layer\"`).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "layer",
+              "applied"
+            ],
+            "properties": {
+              "layer": {
+                "type": "string",
+                "enum": [
+                  "run-configurable",
+                  "node",
+                  "agent-intrinsic",
+                  "agent-overrides",
+                  "agent-library-default",
+                  "workflow-defaults",
+                  "host-defaults"
+                ],
+                "description": "Identifies which precedence layer this chain entry represents. The four normative layers per RFC 0029 §A are `node`, `agent-*`, `workflow-defaults`, `host-defaults`. `run-configurable` is reserved for the optional `RunOptions.configurable.promptOverrides` extension described in RFC 0029 §\"Alternatives considered\" #5; hosts that honor that extension MUST emit a chain entry with this layer value above the `node` entry."
+              },
+              "source": {
+                "type": "string",
+                "description": "The PromptRef stringy form this layer would have applied (e.g., `prompt:writer@1.0.0`). Object-form refs are projected to their stringy equivalent for stability. Present only when this layer had a candidate."
+              },
+              "applied": {
+                "type": "boolean",
+                "description": "True for exactly one entry in the chain — the layer whose ref was selected. False for layers that yielded null OR were skipped after a higher-precedence layer already applied."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Non-normative human-readable explanation. Hosts MAY omit; clients MUST tolerate absence."
+              }
+            }
+          }
+        },
+        "resolved": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The winning PromptRef in stringy form (`prompt:templateId@version`), or null if no layer yielded a candidate. Mirrors the `chain[].source` whose `applied: true` when present."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "modelCapabilitySubstituted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0031 §D. Emitted when a host substitutes the active model with a NodeModule's declared `fallbackModel` because the active model lacks one or more of the `requiredModelCapabilities`. MUST event per RFC 0031 §B step 3. The `fallbackProvider` + `fallbackModel` pair MAY be redacted as all-or-nothing `\"[REDACTED]\"` when workspace policy treats multi-vendor posture as confidential per SECURITY invariant `model-capability-substituted-no-credential-disclosure`. The other fields are not redactable — `originalProvider` is already public via `RunOptions.configurable.ai.provider`, and `nodeId` / `missingCapabilities` carry no provider-possession information.",
+      "required": [
+        "nodeId",
+        "originalProvider",
+        "originalModel",
+        "fallbackProvider",
+        "fallbackModel",
+        "missingCapabilities"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "The node whose dispatch triggered the substitution."
+        },
+        "originalProvider": {
+          "type": "string",
+          "description": "Provider id of the active model the host was about to use."
+        },
+        "originalModel": {
+          "type": "string",
+          "description": "Model id of the active model."
+        },
+        "fallbackProvider": {
+          "type": "string",
+          "description": "Provider id of the substitute model from `NodeModule.fallbackModel.provider`, or `\"[REDACTED]\"` when the host's workspace policy redacts multi-vendor posture."
+        },
+        "fallbackModel": {
+          "type": "string",
+          "description": "Model id of the substitute model from `NodeModule.fallbackModel.model`, or `\"[REDACTED]\"` when redacted (always paired all-or-nothing with `fallbackProvider`)."
+        },
+        "missingCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "description": "Subset of `NodeModule.requiredModelCapabilities` that the active model did not satisfy."
+        }
+      }
+    },
+    "modelCapabilityInsufficient": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0031 §D. Emitted when a host refuses to dispatch a NodeModule because the active model lacks declared `requiredModelCapabilities` AND no viable fallback is available (no `fallbackModel` declared, OR the host cannot authenticate to the fallback provider). MUST event per RFC 0031 §B step 4. Pairs with `RunSnapshot.error.code = \"capability_not_provided\"` per `capabilities.md` §\"Unsupported capability — refusal contract\". Recursive fallback is NOT permitted (RFC 0031 §\"Unresolved questions\" #3): if a host attempts substitution and the fallback itself fails, the host MUST emit this event with `fallbackAttempted: true` and refuse, not chain to another fallback.",
+      "required": [
+        "nodeId",
+        "provider",
+        "model",
+        "missingCapabilities"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "The node whose dispatch was refused."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider id of the active model the host attempted to use."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model id of the active model."
+        },
+        "missingCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "description": "Subset of `NodeModule.requiredModelCapabilities` that the active model did not satisfy."
+        },
+        "fallbackAttempted": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if the host attempted to authenticate to a declared `fallbackModel` and that attempt failed (e.g., no credential resolvable, or the fallback provider was outside `capabilities.aiProviders.supported`). False if no `fallbackModel` was declared on the NodeModule."
+        }
+      }
+    },
+    "envelopeRetryAttempted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.1. Emitted when a host retries an envelope emission after a parse or validation failure on a prior attempt. The first attempt does NOT emit this event; the second attempt emits with `attempt: 2`, etc. SHOULD-tier — hosts that don't implement retry don't emit; hosts that DO retry on validation failure SHOULD emit per attempt past the first.",
+      "required": [
+        "nodeId",
+        "attempt",
+        "reason"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "The node whose envelope emission is being retried."
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "1-indexed attempt counter. The first attempt does NOT emit this event; the second attempt emits with `attempt: 2`, etc."
+        },
+        "reason": {
+          "type": "string",
+          "anyOf": [
+            {
+              "enum": [
+                "schema-violation",
+                "truncation",
+                "type-drift",
+                "type-mismatch",
+                "refusal",
+                "parse-error",
+                "unknown"
+              ]
+            },
+            {
+              "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$"
+            }
+          ],
+          "description": "Why the prior attempt failed. Spec-reserved values: `schema-violation` (model emitted wrong-shape JSON; corrective fragment + retry per RFC 0033 §C), `truncation` (stop_reason: max_tokens; budget-double + retry per RFC 0033 §B), `type-drift` (envelope `type` discriminator drifted from what was advertised mid-run), `type-mismatch` (a typed payload field was emitted with the wrong runtime type — e.g., string where number was declared), `refusal` (provider safety-stop; NO retry per RFC 0032 §B.3), `parse-error` (response was not extractable as JSON even after lenient parsing), `unknown` (host could not classify). Host-private extensions MUST prefix with `x-host-<host>-` per `host-extensions.md` §\"Canonical-prefix table\"; matches the RFC 0031 §B `requiredModelCapabilities` precedent."
+        },
+        "previousError": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Diagnostic text from the failing attempt. MUST NOT contain prompt or response substring excerpts; hosts SHOULD limit to validator output (e.g., \"required field 'steps' missing\"). Subject to SR-1 redaction per `ai-envelope.md` §\"Redaction (SR-1 carry-forward)\"."
+        }
+      }
+    },
+    "envelopeRetryExhausted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.2. Emitted when a host has exhausted its retry budget and is about to surface a terminal envelope failure to the node. MUST-tier — alternative is silent terminal failure with no event surface, leaving conformance suites unable to assert correct give-up behavior. Hosts that don't retry MUST still emit this event when an envelope attempt terminally fails (with `totalAttempts: 1`). Pairs with `cap.breached` when the failure mode is schema-violation or truncation per RFC 0033 §B + §C.",
+      "required": [
+        "nodeId",
+        "totalAttempts",
+        "finalReason"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "totalAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "finalReason": {
+          "type": "string",
+          "anyOf": [
+            {
+              "enum": [
+                "schema-violation",
+                "truncation",
+                "type-drift",
+                "type-mismatch",
+                "refusal",
+                "parse-error",
+                "unknown"
+              ]
+            },
+            {
+              "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$"
+            }
+          ],
+          "description": "Same value set as `envelope.retry.attempted.reason` (§B.1). Spec-reserved closed enum plus `x-host-<host>-` extensions."
+        },
+        "finalError": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Diagnostic text from the final attempt. Same redaction discipline as `envelope.retry.attempted.previousError`."
+        }
+      }
+    },
+    "envelopeRefusal": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.3. Emitted when the underlying LLM provider returns an explicit refusal (e.g., OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). MUST-tier. Hosts MUST NOT retry on refusal — retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent) per RFC 0032 §B.3 + RFC 0033 §D. The node MUST fail with `error.code = \"envelope_refusal\"` per RFC 0033 §F (renamed from `envelope_refused_by_provider` per the 2026-05-21 RFC adoption-feedback amendment).",
+      "required": [
+        "nodeId",
+        "provider",
+        "model"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "refusalText": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Provider-returned refusal message, if any. MUST be passed through the host's BYOK redaction harness AND prompt-content redaction pipeline before emission (per SECURITY invariant `envelope-refusal-no-prompt-leak`). Provider safety-refusal messages can echo offending prompt substrings; emitting them verbatim would create a side channel for prompt-injection-attack telemetry exfiltration AND for SR-1 secret-leak. Replay consumers MUST tolerate `null` even when the original was non-null (host redaction policies legitimately tighten over time)."
+        },
+        "safetyCategory": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Provider-specific safety category if available (e.g., Anthropic `harmful-content`, Gemini `SAFETY_BLOCK_HARASSMENT`, OpenAI `policy_violation`). Verbatim from provider; no normalization."
+        }
+      }
+    },
+    "envelopeTruncated": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.4. Emitted when the LLM emission was cut off before the envelope was complete (typically `stop_reason: \"max_tokens\"`). SHOULD-tier — hosts that distinguish truncation from schema-violation per RFC 0033 §A MUST emit this event when truncation occurs. Hosts that conflate truncation with schema-violation (legacy behavior) MAY omit; they then fail RFC 0033 conformance.",
+      "required": [
+        "nodeId",
+        "provider",
+        "model",
+        "stopReason"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "stopReason": {
+          "type": "string",
+          "enum": [
+            "max_tokens",
+            "length",
+            "stop_sequence",
+            "unknown"
+          ],
+          "description": "Provider-normalized stop reason. `max_tokens` covers OpenAI `length` + Anthropic `max_tokens`; `length` preserved as a separate value for hosts that distinguish provider-side `length` (model self-determined length cap) from `max_tokens` (host-side budget cap)."
+        },
+        "partialPayloadAvailable": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if the host recovered a partial envelope before truncation. Hosts MAY use this signal to route to a recovery path (e.g., budget-doubled retry per RFC 0033 §B)."
+        },
+        "outputTokenCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Tokens emitted before truncation. Sourced from the provider response's usage block. MUST replay identically."
+        }
+      }
+    },
+    "envelopeNlToFormatEngaged": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.5. Emitted when the host has escalated to a two-call NL-to-Format fallback after retry exhaustion (per Tam et al., arXiv 2408.02442 mitigation strategy: free-form reasoning in the first call → schema coercion in the second call). MAY-tier — NL-to-Format is one of many possible recovery strategies; hosts that don't implement it don't advertise it.",
+      "required": [
+        "nodeId",
+        "originalEnvelopeType"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "originalEnvelopeType": {
+          "type": "string",
+          "description": "The envelope kind the original attempt was trying to emit."
+        },
+        "fallbackCalls": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of secondary LLM calls used to reformat free-form output into the envelope's schema."
+        }
+      }
+    },
+    "envelopeRecoveryApplied": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.6. Emitted when lenient parsing recovered a malformed envelope (e.g., JSON repair via `jsonrepair`, markdown fence stripping, last-balanced-object extraction). Recovery is internal to the parsing step, BEFORE validation; recovery does NOT consume a retry attempt per RFC 0033 §D. MAY-tier — lenient parsing is a host-discretion recovery path. The event payload MUST NOT carry the recovered envelope content or any substring from the model's pre-recovery output per SECURITY invariant `envelope-recovery-no-content-leak`; only the recovery path identifier and the optional `byteOffset` are emitted. The recovered content rides on the subsequent envelope acceptance + downstream `RunEventDoc`, NOT on this event.",
+      "required": [
+        "nodeId",
+        "path"
+      ],
+      "properties": {
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "path": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "jsonrepair",
+            "markdown-fence",
+            "brace-walker",
+            "custom"
+          ],
+          "description": "Which recovery path succeeded. `direct` is reserved for the no-recovery-needed path and is informational; hosts MAY omit emission when `path: \"direct\"`. MUST replay identically (deterministic parsing → deterministic recovery outcome)."
+        },
+        "byteOffset": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Byte position where recovery succeeded. Useful for debugging which fraction of the model's output was salvageable."
+        }
+      }
+    },
+    "agentToolCalled": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when an agent invokes a tool. Pairs with `agent.toolReturned` via shared `callId`.",
+      "required": [
+        "agentId",
+        "toolName",
+        "callId"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId"
+        },
+        "toolName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tool identifier (typically a node-pack typeId or function name)."
+        },
+        "callId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique correlation id linking this call to the subsequent `agent.toolReturned`. Hosts SHOULD use UUIDs or content-addressable hashes."
+        },
+        "inputs": {
+          "description": "Tool inputs. Shape is tool-specific; consumers MUST NOT assume an object."
+        },
+        "argsHash": {
+          "type": "string",
+          "description": "RFC 0064 (when `capabilities.toolHooks.prePostEvents`). SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets already redacted (SR-1) — the SIEM-safe, content-free alternative to `inputs`. Raw key material MUST NOT enter the hash input."
+        },
+        "principal": {
+          "type": "string",
+          "description": "RFC 0064. RFC 0048 principal id the call is attributed to (`core.system` for non-agent host egress)."
+        },
+        "transport": {
+          "type": "string",
+          "enum": [
+            "mcp",
+            "http",
+            "native"
+          ],
+          "description": "RFC 0064. How the tool was reached."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentToolReturned": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when a tool invocation completes (success or failure). Pairs with `agent.toolCalled` via `callId`.",
+      "required": [
+        "agentId",
+        "toolName",
+        "callId"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId"
+        },
+        "toolName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "callId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "description": "Tool result. Discriminated by host on success vs error; payload shape is tool-specific."
+        },
+        "error": {
+          "$ref": "#/$defs/_errorObject",
+          "description": "Set on tool-execution failure. Mutually exclusive with `outcome`."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "error",
+            "forbidden",
+            "rate_limited"
+          ],
+          "description": "RFC 0064 (when `capabilities.toolHooks.prePostEvents`). Tool-hooks outcome. `forbidden`/`rate_limited` mean the tool was never invoked (per-tool authz / rate-limit gate)."
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "RFC 0064. Wall-clock tool duration; recorded in the event and re-emitted verbatim on replay/`:fork` (MUST NOT be recomputed from a clock, per `replay.md`). Absent when the call never started (`forbidden`/`rate_limited`)."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentHandoff": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when control transfers from one agent to another mid-run (e.g., orchestrator → worker, worker → worker via `core.dispatch`). Pairs with the receiving agent's subsequent `agent.decided` / `agent.toolCalled` / `node.started`.",
+      "required": [
+        "fromAgentId",
+        "toAgentId"
+      ],
+      "properties": {
+        "fromAgentId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "description": "Agent surrendering control."
+        },
+        "toAgentId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "description": "Agent receiving control."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Optional handoff rationale (e.g., 'specialist routing', 'escalation', 'dispatch-loop-iteration')."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentDecided": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when an agent produces a typed decision (routing, classification, judgement). Carries optional `confidence` in `[0, 1]`; when below the run's resolved `escalationThreshold` (default 0.7), hosts MUST suspend with `node.suspended { reason: 'low-confidence' }` per the confidence-escalation contract.",
+      "required": [
+        "agentId",
+        "decision"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId"
+        },
+        "decision": {
+          "description": "Typed decision payload. Shape is decision-specific; consumers MUST NOT assume an object."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional confidence in `[0, 1]`. Below the threshold → escalate via `node.suspended { reason: 'low-confidence' }`. Absent values are treated as 'no signal' — no escalation."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentVerified": {
+      "type": "object",
+      "description": "RFC 0090 (`multiAgent.executionModel.version >= 6`). A critic agent's independent verdict over a prior result, emitted before the result is committed/merged. Content-free: names the target + verdict + (optional) criteria KEYS, never the verified content (SECURITY invariant `verifier-no-content-leak`). A `fail` verdict on a `verifier.gating: true` host MUST block the merge/terminate; `revise` SHOULD route back to another actor turn (bounded by `maxLoopIterations`, RFC 0058).",
+      "required": [
+        "agentId",
+        "target",
+        "verdict"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "AgentRef.agentId of the verifying (critic) agent. SHOULD differ from the agent whose work is checked; a host MAY allow self-verification but MUST keep verifier identity inspectable."
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque reference to what was checked — the eventId of the verified `agent.decided`, a child runId, or a tool callId. Chains the verdict to its subject."
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "revise"
+          ],
+          "description": "`pass`: acceptable, MAY commit/terminate. `fail`: rejected; a `verifier.gating` host MUST NOT commit it. `revise`: needs another actor turn; SHOULD route back, not terminate."
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Optional closed list of the criteria KEYS evaluated (e.g. `[\"schema-valid\",\"grounded\"]`). Keys only — never per-criterion verdict text — for SIEM safety."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional verifier confidence in `[0,1]` — the critic's confidence in its OWN verdict, distinct from the actor's `agent.decided.confidence`. MAY drive the RFC 0039 escalation contract."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — cross-host causation pointer when the verified target lives on a different host."
+        }
+      },
+      "additionalProperties": false
+    },
+    "runOrchestratorDecided": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 5. Emitted exactly once per orchestrator decision by a `core.orchestrator.supervisor` node (or host-extension equivalent). Carries the deciding agent's identity and the typed `OrchestratorDecision` (see `orchestrator-decision.schema.json`). The envelope's top-level `nodeId` carries the supervisor node-id; the payload does NOT duplicate it.",
+      "required": [
+        "agentId",
+        "decision"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "AgentRef.agentId of the orchestrator. MUST equal `RunSnapshot.runOrchestrator.agentId` for the run's lifetime — orchestrator identity is set at first decision and does not change."
+        },
+        "decision": {
+          "$ref": "orchestrator-decision.schema.json"
+        },
+        "iteration": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0061 (`multiAgent.executionModel.version >= 5`). 1-based, monotonic count of orchestrator turns in this run — the observable loop-iteration counter that `maxLoopIterations` (RFC 0058) bounds; a breach emits `cap.breached { kind: 'loop-iterations', observed: <this+1> }`. A `version >= 5` host MUST set it on every `runOrchestrator.decided`, incrementing by exactly 1 per turn and surviving a stateful HITL resume unchanged. Recorded in the event and re-emitted verbatim on replay/`:fork`, never recomputed (`replay.md`). Omitted by hosts on `version < 5`."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeDispatched": {
+      "type": "object",
+      "description": "Emitted by `core.dispatch` (RFC 0007 §D + RFC 0022 §A) for each child workflow spawned by a `next-worker` OrchestratorDecision. The envelope's top-level `nodeId` carries the dispatching `core.dispatch` node's id; the payload names the spawned child run + its terminal status at the moment of emission. Lets observers reconstruct the parent → child linkage without scanning the runs table.",
+      "required": [
+        "childRunId",
+        "childWorkflowId"
+      ],
+      "properties": {
+        "childRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RunId of the spawned child run."
+        },
+        "childWorkflowId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "WorkflowId of the spawned child."
+        },
+        "childStatus": {
+          "type": "string",
+          "description": "Status of the child run at the moment the dispatch step returned (typically `completed`, `failed`, `cancelled`, or one of the `waiting-*` states when the child suspended)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dispatchFanOut": {
+      "type": "object",
+      "description": "RFC 0118. Emitted by `core.dispatch` when a `fanOutPolicy: 'parallel'` wave BEGINS, so the parent stays observable while children run concurrently. The envelope's `nodeId` carries the dispatching `core.dispatch` node id; `causationId` is set to the consumed `runOrchestrator.decided` event so replay reconstructs decision → fan-out. Emitted ONLY on the parallel path.",
+      "required": [
+        "fanOutPolicy",
+        "childCount"
+      ],
+      "properties": {
+        "fanOutPolicy": {
+          "const": "parallel",
+          "description": "Always `\"parallel\"` — this event is emitted only on the parallel fan-out path."
+        },
+        "childCount": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Number of children dispatched in this fan-out (`nextWorkerIds.length`; > 1 by construction)."
+        },
+        "maxConcurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Effective concurrency ceiling for the wave (`min(config.maxConcurrency ?? ∞, capabilities.dispatch.maxFanOut ?? ∞)`), when bounded."
+        },
+        "joinMode": {
+          "type": "string",
+          "enum": [
+            "wait-all",
+            "quorum",
+            "first",
+            "race"
+          ],
+          "description": "The `joinPolicy.mode` governing this fan-out."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dispatchJoin": {
+      "type": "object",
+      "description": "RFC 0118. Emitted by `core.dispatch` when a `fanOutPolicy: 'parallel'` join is SATISFIED (or fails). The envelope's `nodeId` carries the dispatching node id; `causationId` matches the paired `core.dispatch.fanOut`. `mergeOrder` is the canonical replay-deterministic record of the output-merge tiebreak: a replay MUST re-apply `outputMapping` in `mergeOrder` (the parent host's observed wall-clock terminal order), NOT in `nextWorkerIds` order.",
+      "required": [
+        "joinOutcome",
+        "completedCount",
+        "failedCount",
+        "mergeOrder"
+      ],
+      "properties": {
+        "joinOutcome": {
+          "type": "string",
+          "enum": [
+            "satisfied",
+            "failed",
+            "partial"
+          ],
+          "description": "`'satisfied'` — `mode` met and `onChildFailure` did not fail the node. `'failed'` — `onChildFailure: 'fail-fast'` tripped, or `mode` could not be satisfied (e.g. quorum unreachable); the dispatch node fails. `'partial'` — `mode` satisfied but ≥1 child is non-`completed` under `collect`/`absorb`; the node SUCCEEDS."
+        },
+        "completedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of children that reached `completed`."
+        },
+        "failedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of children that reached `failed`."
+        },
+        "cancelledCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of children cancelled (e.g. in-flight when `quorum`/`first`/`race`/`fail-fast` short-circuited the join)."
+        },
+        "mergeOrder": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "`childRunId`s in the parent host's observed wall-clock terminal order — the replay-deterministic tiebreak for colliding `outputMapping` keys. Recorded at terminal-fold time; never recomputed from child timestamps."
+        }
+      },
+      "additionalProperties": false
+    },
+    "conversationOpened": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 4. Emitted when a `core.conversationGate` (or host-extension equivalent) opens a new multi-turn conversation context. Pairs with the closing `conversation.closed` via shared `conversationId`.",
+      "required": [
+        "conversationId"
+      ],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Opaque conversation identifier. Tenant-unique invariant: hosts MUST ensure no two distinct conversations in the same tenant share an id. Cross-host portability not normative."
+        },
+        "openedBy": {
+          "type": "string",
+          "description": "Optional `AgentRef.agentId` of the agent that opened the conversation."
+        }
+      },
+      "additionalProperties": false
+    },
+    "conversationExchanged": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 4. Emitted when a single turn completes within an open conversation (`core.conversationGate.exchange`). Carries the validated outcome of the suspend/resume cycle.",
+      "required": [
+        "conversationId",
+        "turnIndex"
+      ],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "turnIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-indexed turn within this conversation. Strictly monotonic."
+        },
+        "outcome": {
+          "description": "Validated turn outcome per the per-turn schema declared in `core.conversationGate` config."
+        }
+      },
+      "additionalProperties": false
+    },
+    "conversationClosed": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 4. Emitted when a conversation context terminates (`core.conversationGate.close`). Final event in the conversation's lifecycle; no further `conversation.exchanged` events MAY follow for the same `conversationId` in this run.",
+      "required": [
+        "conversationId"
+      ],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "reason": {
+          "type": "string",
+          "description": "Optional close reason (e.g., 'goal-reached', 'max-turns', 'user-cancelled')."
+        },
+        "turnCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total turns completed in this conversation (number of `conversation.exchanged` events emitted)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "memoryCompacted": {
+      "type": "object",
+      "description": "RFC 0012 (Memory Compaction Profile). Emitted by a host advertising `capabilities.memory.compaction.supported: true` each time a compaction run completes, regardless of trigger. `outputId` MUST be readable via `MemoryAdapter.get(memoryRef, outputId)` until normal TTL eviction. SR-1 carry-forward (RFC 0012 §D) applies: the host MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`.",
+      "required": [
+        "memoryRef",
+        "outputId",
+        "sourceCount",
+        "trigger",
+        "byteSize"
+      ],
+      "properties": {
+        "memoryRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque MemoryAdapter handle per RFC 0004 §C. Bounds compaction to a single memory scope."
+        },
+        "outputId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Id of the new MemoryEntry created by compaction."
+        },
+        "sourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Ids of entries collapsed into outputId. Hosts MAY omit when sourceCount > 100; the `compacted-from:<runId>` tag convention (RFC 0012 §C) becomes the authoritative provenance signal. When present, MUST be exhaustive within the array (no 'and N more' semantics)."
+        },
+        "sourceCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total source entries collapsed, including any not enumerated in `sourceIds`."
+        },
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "host-managed",
+            "client-requested",
+            "both"
+          ],
+          "description": "Matches `capabilities.memory.compaction.trigger`; indicates which trigger path drove this run. v1.x normates only `host-managed`."
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Byte size of the resulting MemoryEntry.content."
+        },
+        "distillation": {
+          "type": "object",
+          "description": "RFC 0062 (when `capabilities.memory.distillation.supported: true`). Present when this compaction is part of a budgeted distillation run (a scheduled or on-demand 'dream'). Absent for a plain RFC 0012 compaction. Carries the token-budget accounting + whether the memory index was refreshed — not a parallel `memory.distilled` event.",
+          "additionalProperties": false,
+          "required": [
+            "tokenBudget",
+            "tokensUsed"
+          ],
+          "properties": {
+            "tokenBudget": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Effective per-run budget honored (≤ advertised `maxTokenBudget`), counted against the advertised `tokenizerName`."
+            },
+            "tokensUsed": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total input+output tokens the distillation consumed, best-effort-honest per the advertised tokenizer (±10% tolerance). MUST be ≤ `tokenBudget` on a successful run."
+            },
+            "indexUpdated": {
+              "type": "boolean",
+              "description": "Whether this run refreshed the memory-index workspace file (`MEMORY-INDEX.json`, RFC 0059). When `true`, a `workspace.updated` event was also emitted for that path."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "memoryWritten": {
+      "type": "object",
+      "description": "RFC 0057. Emitted by a host advertising `capabilities.memory.attribution.emitsWriteEvents: true` for each memory write a run makes, attributing it to the node (and agent, when known) that caused it. Content-free: identifiers + non-secret tags only — the entry content is served by the read-side (`MemoryAdapter.get`), already SR-1-redacted. On replay the event is re-read from the log, never regenerated (the host MUST NOT mint a new `memoryId` or timestamp at replay time). SECURITY invariants `memory-attribution-no-content` + `memory-attribution-tenant-scoped` apply.",
+      "required": [
+        "memoryRef",
+        "memoryId"
+      ],
+      "properties": {
+        "memoryRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque MemoryAdapter handle (RFC 0004 §C) the entry was written under; resolvable via the read-side."
+        },
+        "memoryId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Host-issued, stable entry id; correlates to `MemoryAdapter.get(memoryRef, memoryId)`."
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "SHOULD — the node whose execution caused the write. Omitted only for writes with no node attribution (e.g. host session-end auto-memory)."
+        },
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "MAY — the agent identity (AgentRef per RFC 0002) behind the write, when known."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "MAY — the entry's non-secret labels. MUST NOT carry secret material (the no-content invariant covers payload bodies)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentMemoryConsolidated": {
+      "type": "object",
+      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `capabilities.agents.memoryConsolidation.supported: true` after a background consolidation pass over LONG-TERM memory (merge/dedup/supersede/strengthen). Content-free: identifiers + counts only — entry content is served by the SR-1-redacted read-side (`MemoryAdapter.get`). On replay the event is re-read from the log, never regenerated. Distinct from RFC 0062 `memory.compacted` (token-budgeted distillation of transactional memory). SR-1 carry-forward (RFC 0004) + CTI-1 apply to the consolidated entries.",
+      "required": [
+        "memoryRef",
+        "inputCount",
+        "outputCount"
+      ],
+      "properties": {
+        "memoryRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque MemoryAdapter handle (RFC 0004 §C) the consolidation pass operated over. Bounds the pass to a single memory scope (CTI-1)."
+        },
+        "inputCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Long-term entries considered by the pass."
+        },
+        "outputCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Long-term entries remaining after the pass. MUST be <= inputCount for a pass that only merges/dedups; a strengthen-only pass MAY leave outputCount == inputCount."
+        },
+        "mergedIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "MAY — ids of entries collapsed/superseded by the pass. Hosts MAY omit when inputCount is large; consumers MUST tolerate absence."
+        },
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "host-managed",
+            "scheduled",
+            "on-demand"
+          ],
+          "description": "MAY — which initiation path drove this pass (mirrors `agents.memoryConsolidation.schedule`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "commitmentFired": {
+      "type": "object",
+      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `capabilities.agents.commitments.supported: true` when an inferred standing commitment fires. Content-free: identifiers + condition kind only — the intention text lives in SR-1-redacted memory (`MemoryAdapter.get(memoryRef, memoryId)`). The fired arm composes RFC 0052 (time) or RFC 0060 (predicate). On replay the event is re-read from the log, never regenerated (the host MUST NOT re-infer or re-fire a commitment at replay time). CTI-1: the commitment, its memory provenance, and any run it enqueues MUST share the source memory's tenant.",
+      "required": [
+        "commitmentId",
+        "memoryRef",
+        "condition"
+      ],
+      "properties": {
+        "commitmentId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Host-issued, stable id for the inferred commitment. Correlates repeated observability across re-evaluations of the same commitment."
+        },
+        "memoryRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque MemoryAdapter handle of the memory scope the commitment was inferred from (provenance + CTI-1 tenant binding)."
+        },
+        "memoryId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — id of the source `MemoryEntry` the commitment was inferred from, when a single entry is attributable. Resolvable via `MemoryAdapter.get`; content is read SR-1-redacted from the read-side."
+        },
+        "condition": {
+          "type": "string",
+          "enum": [
+            "time",
+            "predicate"
+          ],
+          "description": "Which fire-condition kind triggered. `time` composes RFC 0052; `predicate` composes RFC 0060."
+        },
+        "enqueuedRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — id of the run the fired commitment enqueued, when the host initiates one. Absent when the commitment fires as a notification without a run."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentInvocationStarted": {
+      "type": "object",
+      "description": "RFC 0077. Emitted by a host advertising `capabilities.agents.liveRuntime.supported: true` as the FIRST agent-scoped event of a live manifest invocation, bracketing the existing `agent.*` family with `agent.invocation.completed`. Content-free: identifiers + selection metadata only — prompt/task content is served by the run's normal projection, never on this event. A recorded-fact event per `replay.md` §\"Recorded-fact events\": on replay it is re-emitted from the log and the host MUST NOT regenerate its `invocationId` (or any identifier). Distinct from the deterministic RFC 0070 sample floor.",
+      "required": [
+        "invocationId",
+        "agentId",
+        "source"
+      ],
+      "properties": {
+        "invocationId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Host-defined id correlating this agent invocation within its run, UNIQUE-WITHIN-RUN (not a mandated global id-space). Distinct from `runId` — one run MAY dispatch several invocations (multiple agent nodes, or a handoff chain) — but a host MAY derive it from an existing per-node-execution receipt id (e.g. `runId:nodeId:seq`) or mint a UUID; a single-invocation run MAY reuse `runId`. Recorded-fact: re-read from the log on replay, never regenerated (`replay.md` §\"Recorded-fact events\"). Correlates to the matching `agent.invocation.completed`."
+        },
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The manifest agentId being invoked (matches `AgentManifest.agentId`)."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "workflow-node",
+            "run-api",
+            "chat-mention"
+          ],
+          "description": "Which entry point launched the invocation. All sources emit this identical family."
+        },
+        "modelClass": {
+          "type": "string",
+          "description": "MAY — the manifest's abstract `modelClass`. Always populatable at start."
+        },
+        "resolvedModel": {
+          "type": "string",
+          "description": "MAY — the concrete model the host selected. OPTIONAL: modelClass→concrete resolution MAY happen downstream (with capability-gated fallback substitution), so a dispatch-time start event genuinely may not know it; a host MAY also omit for deployment-privacy."
+        },
+        "resolvedProvider": {
+          "type": "string",
+          "description": "MAY — the concrete provider the host routed to (aligns with `capabilities.aiProviders.supported` / RFC 0067 `authModes`). OPTIONAL, same rationale as `resolvedModel`."
+        },
+        "resolvedAgentVersion": {
+          "type": "string",
+          "description": "MAY — RFC 0082 §B. When this invocation's `AgentRef` bound a `channel` (rather than an exact `version`), the concrete agent-definition version the host pinned per-(run, agentId, channel) at first resolution. A RECORDED FACT: re-read from the log on replay and NEVER re-resolved against a moved channel (the whole event is recorded-fact). Absent when the ref used an exact `version` or host-default resolution."
+        },
+        "resolvedChannel": {
+          "type": "string",
+          "description": "MAY — RFC 0082 §B. The named `channel` the `AgentRef` bound (mirrors `AgentRef.channel`), for which `resolvedAgentVersion` is the pinned resolution. Content-free label; present only when the ref bound a channel."
+        },
+        "toolSurfaceCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "MAY — number of tools in the constructed surface after `toolAllowlist` filtering. Content-free count, not the tool ids."
+        },
+        "memoryBound": {
+          "type": "boolean",
+          "description": "MAY — whether a long-term memory backend was bound for the invocation."
+        }
+      },
+      "additionalProperties": false
+    },
+    "agentInvocationCompleted": {
+      "type": "object",
+      "description": "RFC 0077. Emitted by a host advertising `capabilities.agents.liveRuntime.supported: true` as the LAST agent-scoped event of a live manifest invocation (after the terminal `agent.decided`). Content-free: identifiers + outcome metadata only — the result body is served by the run's normal projection. A recorded-fact event per `replay.md` §\"Recorded-fact events\": re-read from the log on replay, never regenerated.",
+      "required": [
+        "invocationId",
+        "agentId",
+        "outcome"
+      ],
+      "properties": {
+        "invocationId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Correlates to the `agent.invocation.started` `invocationId`. Recorded-fact: never regenerated on replay."
+        },
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The manifest agentId."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "handed-off",
+            "escalated",
+            "refused",
+            "failed"
+          ],
+          "description": "Terminal disposition. `completed`: produced a (schema-valid, if enforced) terminal result. `handed-off`: control passed to another agent (`agent.handoff`). `escalated`: confidence escalation fired (RFC 0002 §F). `refused`: the model refused (RFC 0032 refusal envelope) — never a silent substitution. `failed`: an error terminated the invocation."
+        },
+        "schemaValidated": {
+          "type": "boolean",
+          "description": "MAY — whether the terminal result was validated against `handoff.returnSchemaRef` (true only when `liveRuntime.structuredOutput` is advertised and a `returnSchemaRef` exists)."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "MAY — the terminal `agent.decided` confidence, mirrored for convenience. Content-free scalar."
+        },
+        "enqueuedRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — id of a follow-on run the invocation enqueued (e.g. a sub-run), when applicable."
+        }
+      },
+      "additionalProperties": false
+    },
+    "workspaceUpdated": {
+      "description": "RFC 0059. Emitted by a host advertising `capabilities.workspace.supported: true` on each successful `PUT`/`DELETE` of a workspace file, attributing the change to the file `path` + resulting `version`. Content-free: carries the path + version only — the file body is served by the read-side (`GET /v1/host/workspace/files/{path}`), already SR-1-redacted (RFC 0059 §E WSR-1). On replay the event is re-read from the log, never regenerated. MUST NOT be emitted unless `capabilities.workspace.supported: true`. The proposed SECURITY invariant `workspace-cross-tenant-isolation` (WCT-1) applies to the read-side that resolves these paths.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "version"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Workspace-relative path of the file that changed (matches `workspace-file.schema.json#path`)."
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The file's resulting monotonic version after the write. On delete, the tombstone version when `versioned: true`."
+        }
+      }
+    },
+    "evalStarted": {
+      "type": "object",
+      "description": "RFC 0081 §C. Emitted ONCE at the start of an eval run (a `mode: \"eval\"` run, RFC 0081 §B) by a host advertising `capabilities.agents.evalSuite.supported: true`. Content-free: suite provenance + counts only. A recorded-fact event per `replay.md` §\"Recorded-fact events\".",
+      "required": [
+        "suiteId",
+        "suiteVersion",
+        "taskCount",
+        "modes"
+      ],
+      "properties": {
+        "suiteId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The `agent-eval-suite.schema.json#suiteId` being run."
+        },
+        "suiteVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The pinned suite SemVer."
+        },
+        "taskCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of tasks the run will execute."
+        },
+        "modes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "golden",
+              "rubric",
+              "adversarial",
+              "regression",
+              "live-shadow"
+            ]
+          },
+          "description": "The eval modes this run exercises (RFC 0081 §D)."
+        },
+        "baselineRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — for `regression` mode, the prior eval run this run is scored against."
+        }
+      },
+      "additionalProperties": false
+    },
+    "evalScored": {
+      "type": "object",
+      "description": "RFC 0081 §C. Emitted ONCE PER TASK, after that task's terminal `agent.decided`, so a streaming consumer sees results land incrementally. Content-free: the task id + scalars + counts ONLY — NEVER the task output, rubric prose, or model completion (SECURITY invariant `eval-summary-no-content-leak`). A recorded-fact event.",
+      "required": [
+        "taskId",
+        "score",
+        "passed"
+      ],
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The `agent-eval-suite` task id."
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Task score (0.0–1.0)."
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "Whether the task met its bar."
+        },
+        "costUsd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "MAY — task cost (scalar; summed from RFC 0026 `provider.usage`). NEVER a pricing breakdown."
+        },
+        "latencyMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "MAY — task wall-clock latency."
+        },
+        "schemaValid": {
+          "type": "boolean",
+          "description": "MAY — whether the output validated against `handoff.returnSchemaRef`."
+        },
+        "safetyFindingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "MAY — count of safety findings for the task (the redaction-safe descriptors live on `EvalSummary`; the event carries the count only)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "evalCompleted": {
+      "type": "object",
+      "description": "RFC 0081 §C. Emitted ONCE, after all tasks and before `run.completed`. Content-free: aggregate scalars only. A recorded-fact event. The full scorecard is the run's output (`eval-summary.schema.json`), served by `GET /v1/runs/{runId}/eval-summary`.",
+      "required": [
+        "aggregateScore",
+        "passed",
+        "taskCount",
+        "passedCount"
+      ],
+      "properties": {
+        "aggregateScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The suite-level score (0.0–1.0)."
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "Whether the run cleared the suite thresholds — the flag an RFC 0082 deployment gate MAY require."
+        },
+        "taskCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks executed."
+        },
+        "passedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks that individually passed."
+        },
+        "regressionVsBaseline": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "MAY — for `regression` mode, `aggregateScore` minus the baseline's (negative ⇒ regression)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "toolSessionOpened": {
+      "type": "object",
+      "description": "RFC 0078 §D. Emitted when the host opens a multi-step tool session, bracketing one or more RFC 0064 `agent.toolCalled`/`agent.toolReturned` call events. Content-free: identifiers only — never tool arguments, results, or credential material (SR-1). Emitted only when `capabilities.toolCatalog.sessionLifecycle: true`.",
+      "required": [
+        "sessionId",
+        "toolId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Host-unique id correlating the opened/closed pair + the bracketed call events."
+        },
+        "toolId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The `ToolDescriptor.toolId` the session is for (`<scope>:<tool-id>`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "toolSessionClosed": {
+      "type": "object",
+      "description": "RFC 0078 §D. Emitted when the host closes a multi-step tool session opened by `tool.session.opened`. Content-free: identifiers + a closed-enum outcome only — never tool arguments, results, or credential material (SR-1).",
+      "required": [
+        "sessionId",
+        "toolId",
+        "outcome"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Matches the `tool.session.opened` `sessionId`."
+        },
+        "toolId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The `ToolDescriptor.toolId` the session was for."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "description": "Terminal disposition of the session. Content-free — no failure detail/result on the payload."
+        }
+      },
+      "additionalProperties": false
+    },
+    "egressDecided": {
+      "type": "object",
+      "description": "RFC 0079 §B. Emitted when a host evaluates a credentialed egress (via `ctx.http.safeFetch` / a tool) against credential provenance + the SSRF guard. Content-free: identifiers + decision only — no credential value, no request/response body (SR-1). On replay re-read from the log, never regenerated (the decision is a recorded fact). Emitted only when `capabilities.httpClient.egressPolicy.supported: true`.",
+      "required": [
+        "decision",
+        "destination"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "denied",
+            "downgraded",
+            "approval-required"
+          ],
+          "description": "`allowed`: egress proceeds with the credential; `denied`: blocked (out-of-audience / expired / SSRF / unevaluable provenance — fail-closed); `downgraded`: proceeds WITHOUT the credential (anonymous egress, when host policy permits); `approval-required`: suspended pending an RFC 0051 approval interrupt."
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The egress destination **host/authority ONLY** (`api.stripe.com`) — NOT a path, query, or full URL (SR-1: a path/query can carry secrets; the host MUST strip them for this canonical content-free event). A host whose internal audit retains the path keeps that on its vendor `x-host-*` variant, never here."
+        },
+        "credentialId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — the provenance `credentialId` considered (absent for an anonymous / denied-pre-credential egress)."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "out-of-audience",
+            "expired",
+            "ssrf-blocked",
+            "provenance-unevaluable",
+            "scope-denied",
+            "policy-denied"
+          ],
+          "description": "MAY — a machine-stable reason code (a CLOSED enum — a free-form reason is a leak vector that would let a host spill the blocked URL/host/header into it, defeating `egress-decision-no-secret-leak`). The load-bearing field is `decision`."
+        },
+        "auditCorrelationId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — correlates to the provenance descriptor + host audit log."
+        }
+      },
+      "additionalProperties": false
+    },
+    "triggerSubscriptionStateChanged": {
+      "type": "object",
+      "description": "RFC 0083 §C. Emitted when a trigger subscription changes state (the §B four-state machine). Content-free: identifiers + states only — no inbound payload, headers, or credential material (SR-1). Emitted only when `capabilities.triggerBridge.supported: true`.",
+      "required": [
+        "subscriptionId",
+        "source",
+        "fromState",
+        "toState"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "$ref": "ids.schema.json#/$defs/subscriptionId",
+          "description": "The TriggerSubscription this state change is for."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "webhook",
+            "schedule",
+            "queue",
+            "email",
+            "form",
+            "stream",
+            "change"
+          ],
+          "description": "The subscription source."
+        },
+        "fromState": {
+          "type": "string",
+          "enum": [
+            "active",
+            "paused",
+            "failed",
+            "dead-lettered"
+          ],
+          "description": "Prior state."
+        },
+        "toState": {
+          "type": "string",
+          "enum": [
+            "active",
+            "paused",
+            "failed",
+            "dead-lettered"
+          ],
+          "description": "New state."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "retry-exhausted",
+            "operator-paused",
+            "signature-invalid",
+            "backpressure",
+            "source-removed",
+            "provenance-unevaluable"
+          ],
+          "description": "MAY — a machine-stable reason code (a CLOSED enum — a free-form reason is a leak vector that would let a host spill an inbound URL/host/header into it). The load-bearing field is `toState`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "triggerDeliveryAttempted": {
+      "type": "object",
+      "description": "RFC 0083 §C. Emitted on each inbound-delivery attempt against an active subscription. Content-free: the subscription id, the dedup key, the attempt counter, the outcome, and the resulting runId only — NEVER the inbound body, headers, or credential material (SR-1).",
+      "required": [
+        "subscriptionId",
+        "dedupKey",
+        "attempt",
+        "outcome"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "$ref": "ids.schema.json#/$defs/subscriptionId",
+          "description": "The TriggerSubscription the delivery is for."
+        },
+        "dedupKey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The de-duplication key (§C-1). MUST be a **host-opaque** stable key (e.g. `hash(subscriptionId + inbound-event-id)`); it MUST NOT embed inbound body / path / header content in cleartext (SR-1 — a key like `POST /webhook/orders/12345?token=…` would leak). A repeat within retention is a no-op returning the prior runId."
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based attempt counter."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "delivered",
+            "retrying",
+            "dead-lettered"
+          ],
+          "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, routed to the RFC 0053 sink (no run)."
+        },
+        "runId": {
+          "$ref": "ids.schema.json#/$defs/runId",
+          "description": "MAY — the run started by a `delivered` outcome (the run's `run.started` carries this delivery's id as `causationId`, RFC 0040). Absent for `retrying` / `dead-lettered`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "budgetReserved": {
+      "type": "object",
+      "description": "RFC 0084 §C. Emitted once at run start with the resolved effective budget (`min` across run/workflow/agent/project scopes, clamped to the host ceiling). A recorded fact — replay re-reads it, never re-resolves (§B). Content-free: dimension ceilings + scope only, no pricing breakdown (SR-1, `budget-no-pricing-leak`).",
+      "required": [
+        "effectiveBudget",
+        "scope"
+      ],
+      "properties": {
+        "effectiveBudget": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The resolved per-dimension ceilings (a subset of the BudgetPolicy dimensions).",
+          "properties": {
+            "maxTokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxCostUsd": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxToolCalls": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxRetries": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "run",
+            "workflow",
+            "agent",
+            "project"
+          ],
+          "description": "The binding scope the effective budget resolved from (§B)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "budgetConsumed": {
+      "type": "object",
+      "description": "RFC 0084 §C. A running projection of spend, derived from the existing events (`provider.usage` tokens/cost, `agent.toolCalled`, `node.retried`) — NOT a new measurement (no double-counting). The host MAY coalesce. Content-free: dimension name + integers only, no pricing breakdown / rate card (SR-1).",
+      "required": [
+        "dimension",
+        "consumed",
+        "limit"
+      ],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "enum": [
+            "tokens",
+            "cost",
+            "toolCalls",
+            "retries"
+          ],
+          "description": "Which budget dimension this projection is for."
+        },
+        "consumed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Amount consumed so far (tokens/calls/retries are integers; cost is a number in the host's `costEstimateUsd` units)."
+        },
+        "limit": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The effective ceiling for the dimension."
+        },
+        "remaining": {
+          "type": "number",
+          "description": "MAY — `limit - consumed`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "budgetThresholdCrossed": {
+      "type": "object",
+      "description": "RFC 0084 §C. Emitted once per dimension when consumption crosses `thresholdPercent`. Content-free.",
+      "required": [
+        "dimension",
+        "consumed",
+        "limit",
+        "percent"
+      ],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "enum": [
+            "tokens",
+            "cost",
+            "toolCalls",
+            "retries"
+          ]
+        },
+        "consumed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "The percent-of-limit threshold crossed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "budgetExhausted": {
+      "type": "object",
+      "description": "RFC 0084 §C. Emitted when a dimension hits its limit. For a hard dimension this is followed by `cap.breached{kind:\"budget-*\"}` → `run.failed{budget_exhausted}` (or, with `onExhaustion:\"interrupt\"`, an approval interrupt). Content-free.",
+      "required": [
+        "dimension",
+        "consumed",
+        "limit"
+      ],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "enum": [
+            "tokens",
+            "cost",
+            "toolCalls",
+            "retries"
+          ]
+        },
+        "consumed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "deploymentPromoted": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted on the deployment-management run when a version is promoted into a new lifecycle state (the §E contract: authorized via RFC 0049 `deploy:*`, gated via RFC 0051 `approvalGate`, eval-verified via RFC 0081 when `requiredEval` is configured). Content-free: ids / state / scalars / content-free references only — NEVER a manifest body, prompt, or credential (SECURITY invariant `deployment-event-no-content-leak`; `additionalProperties:false` enforces it). A recorded-fact event per `replay.md` §\"Recorded-fact events\". Audit-logged with the acting principal (`auth.md`).",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "toVersion",
+        "toState"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The promoted agent's id."
+        },
+        "fromVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — the version previously occupying the target channel/state (absent on a first promotion)."
+        },
+        "toVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The version promoted."
+        },
+        "toState": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "test",
+            "staged",
+            "active",
+            "paused",
+            "deprecated",
+            "rolled-back"
+          ],
+          "description": "The lifecycle state entered."
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — the named channel this promotion targets (when promoting to a channel)."
+        },
+        "canaryPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "MAY — the canary traffic share assigned (when promoting `active` at < 100)."
+        },
+        "evalRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — the RFC 0081 eval run whose `EvalSummary.passed` gated this promotion (the §E evidence)."
+        },
+        "approvalGateId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — the RFC 0051 approvalGate that authorized this promotion."
+        }
+      }
+    },
+    "deploymentRolledBack": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted when an `active` version is rolled back and a prior version restored to `active`. Content-free (`deployment-event-no-content-leak`). Recorded-fact; audit-logged.",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "fromVersion",
+        "toVersion",
+        "rollbackPointer"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The agent's id."
+        },
+        "fromVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The version that was rolled back (left `active`)."
+        },
+        "toVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The version restored to `active`."
+        },
+        "rollbackPointer": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The recovery target the rolled-back record points to (= `toVersion`)."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY — a short redaction-safe rollback reason label (NOT free-text content; same posture as `run.dead_lettered.reason`)."
+        }
+      }
+    },
+    "deploymentCanaryAdjusted": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted when an `active` version's canary traffic share changes. Content-free (`deployment-event-no-content-leak`). Recorded-fact; audit-logged.",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "version",
+        "fromPercent",
+        "toPercent"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The agent's id."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The version whose canary share changed."
+        },
+        "fromPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "The prior canary percent."
+        },
+        "toPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "The new canary percent."
+        }
+      }
+    },
+    "deploymentStateChanged": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted on any non-promotion lifecycle transition (pause / resume / deprecate). Content-free (`deployment-event-no-content-leak`). Recorded-fact; audit-logged.",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "version",
+        "fromState",
+        "toState"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The agent's id."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The version whose state changed."
+        },
+        "fromState": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "test",
+            "staged",
+            "active",
+            "paused",
+            "deprecated",
+            "rolled-back"
+          ],
+          "description": "The prior state."
+        },
+        "toState": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "test",
+            "staged",
+            "active",
+            "paused",
+            "deprecated",
+            "rolled-back"
+          ],
+          "description": "The new state."
+        }
+      }
+    },
+    "rosterRunInitiated": {
+      "type": "object",
+      "description": "RFC 0086 §C. Emitted once, immediately after `run.started` and before any agent invocation, when a trigger (RFC 0052 schedule / RFC 0083 durable work item) fires a workflow in a roster member's portfolio — attributing the run to the standing agent. Content-free (`roster-attribution-no-content`): ids + persona + trigger source ONLY — never the work-item body, prompt, or credential material (SR-1). A recorded-fact event (replay.md §'Recorded-fact events'): re-emitted from the log on replay, identifiers never regenerated, so the run stays attributed to the same member even if the entry was since renamed or deleted.",
+      "additionalProperties": false,
+      "required": [
+        "rosterId",
+        "persona",
+        "agentId",
+        "workflowId",
+        "triggerSource"
+      ],
+      "properties": {
+        "rosterId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The standing agent instance the run is attributed to (a `host:<id>` AgentRef agentId)."
+        },
+        "persona": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The member's human display name (e.g. \"Sally\")."
+        },
+        "agentId": {
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "The manifest agentId the member instantiates (`agentRef.agentId`)."
+        },
+        "workflowId": {
+          "$ref": "ids.schema.json#/$defs/workflowId",
+          "description": "The portfolio workflow this run executes."
+        },
+        "triggerSource": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What fired the run: an RFC 0083 source (`schedule`/`webhook`/`queue`/`email`/`form`) or a host-extension source name (e.g. a vendor Kanban bridge)."
+        },
+        "triggerSubscriptionId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MAY. The RFC 0083 trigger-subscription id when the fire came through the durable trigger bridge, so trigger → run → roster is traceable via /ancestry (RFC 0040)."
+        }
+      }
+    },
+    "compensationRequested": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0151 §D — plan persisted, before the first inverse action. Content-free: opaque node/effect IDs, attempt, ordering model, and closed reason codes. Provider bodies and credentials MUST NOT appear (§D/§G) — these land in the durable log, the least revocable place a credential can reach.",
+      "properties": {
+        "compensationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "effectId": {
+          "$ref": "ids.schema.json#/$defs/effectId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orderingModel": {
+          "enum": [
+            "reverse-completion",
+            "dependency-graph"
+          ]
+        }
+      }
+    },
+    "compensationStarted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0151 §D — first inverse action started. Content-free: opaque node/effect IDs, attempt, ordering model, and closed reason codes. Provider bodies and credentials MUST NOT appear (§D/§G) — these land in the durable log, the least revocable place a credential can reach.",
+      "properties": {
+        "compensationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "effectId": {
+          "$ref": "ids.schema.json#/$defs/effectId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orderingModel": {
+          "enum": [
+            "reverse-completion",
+            "dependency-graph"
+          ]
+        }
+      }
+    },
+    "compensationCompleted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0151 §D — every inverse action succeeded. Content-free: opaque node/effect IDs, attempt, ordering model, and closed reason codes. Provider bodies and credentials MUST NOT appear (§D/§G) — these land in the durable log, the least revocable place a credential can reach.",
+      "properties": {
+        "compensationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "effectId": {
+          "$ref": "ids.schema.json#/$defs/effectId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orderingModel": {
+          "enum": [
+            "reverse-completion",
+            "dependency-graph"
+          ]
+        }
+      }
+    },
+    "compensationFailed": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0151 §D — an inverse action exhausted its retries. Content-free: opaque node/effect IDs, attempt, ordering model, and closed reason codes. Provider bodies and credentials MUST NOT appear (§D/§G) — these land in the durable log, the least revocable place a credential can reach.",
+      "properties": {
+        "compensationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "effectId": {
+          "$ref": "ids.schema.json#/$defs/effectId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orderingModel": {
+          "enum": [
+            "reverse-completion",
+            "dependency-graph"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "retries-exhausted",
+            "approval-denied",
+            "authority-denied",
+            "dead-lettered",
+            "operator-terminated"
+          ],
+          "description": "Closed reason vocabulary. An open string here would invite a provider error body."
+        }
+      }
+    },
+    "compensationPaused": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0151 §D — paused for authorized intervention. Content-free: opaque node/effect IDs, attempt, ordering model, and closed reason codes. Provider bodies and credentials MUST NOT appear (§D/§G) — these land in the durable log, the least revocable place a credential can reach.",
+      "properties": {
+        "compensationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "effectId": {
+          "$ref": "ids.schema.json#/$defs/effectId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orderingModel": {
+          "enum": [
+            "reverse-completion",
+            "dependency-graph"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "retries-exhausted",
+            "approval-denied",
+            "authority-denied",
+            "dead-lettered",
+            "operator-terminated"
+          ],
+          "description": "Closed reason vocabulary. An open string here would invite a provider error body."
+        }
+      }
+    },
+    "compensationManualInterventionRequired": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0151 §D — operator action required. Content-free: opaque node/effect IDs, attempt, ordering model, and closed reason codes. Provider bodies and credentials MUST NOT appear (§D/§G) — these land in the durable log, the least revocable place a credential can reach.",
+      "properties": {
+        "compensationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId"
+        },
+        "effectId": {
+          "$ref": "ids.schema.json#/$defs/effectId"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orderingModel": {
+          "enum": [
+            "reverse-completion",
+            "dependency-graph"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "retries-exhausted",
+            "approval-denied",
+            "authority-denied",
+            "dead-lettered",
+            "operator-terminated"
+          ],
+          "description": "Closed reason vocabulary. An open string here would invite a provider error body."
+        }
+      }
+    },
+    "approvalRequested": {
+      "$ref": "#/$defs/interruptRequested",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy approvalRequested shape (deprecation row legacy-interrupt-payloads) is the unified interruptRequested payload; the event type is kept, its payload is not a second shape."
+    },
+    "clarificationRequested": {
+      "$ref": "#/$defs/interruptRequested",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy clarificationRequested shape (deprecation row legacy-interrupt-payloads) is the unified interruptRequested payload; the event type is kept, its payload is not a second shape."
+    },
+    "approvalReceived": {
+      "$ref": "#/$defs/interruptResolved",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy approvalReceived shape (deprecation row legacy-interrupt-payloads) is the unified interruptResolved payload; the event type is kept, its payload is not a second shape."
+    },
+    "approvalGranted": {
+      "$ref": "#/$defs/interruptResolved",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy approvalGranted shape (deprecation row legacy-interrupt-payloads) is the unified interruptResolved payload; the event type is kept, its payload is not a second shape."
+    },
+    "approvalRejected": {
+      "$ref": "#/$defs/interruptResolved",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy approvalRejected shape (deprecation row legacy-interrupt-payloads) is the unified interruptResolved payload; the event type is kept, its payload is not a second shape."
+    },
+    "approvalOverridden": {
+      "$ref": "#/$defs/interruptResolved",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy approvalOverridden shape (deprecation row legacy-interrupt-payloads) is the unified interruptResolved payload; the event type is kept, its payload is not a second shape."
+    },
+    "clarificationResolved": {
+      "$ref": "#/$defs/interruptResolved",
+      "description": "RFC 0171 §A.4 E4 — sub-typing is $ref composition, not duplication: the legacy clarificationResolved shape (deprecation row legacy-interrupt-payloads) is the unified interruptResolved payload; the event type is kept, its payload is not a second shape."
+    },
+    "negotiationDecided": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "outcome",
+        "at"
+      ],
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "enum": [
+            "a2a",
+            "mcp"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "refused"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "description": "The version or revision decided (absent when refused below the floor)."
+        },
+        "floor": {
+          "type": "string"
+        },
+        "peerDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the peer origin; never the origin in clear (RFC 0175 §D.3)."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "below-floor",
+            "unauthenticated",
+            "unsupported",
+            "ok"
+          ]
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "RFC 0175 §D.3 — the content-free negotiation audit event."
+    }
+  },
+  "additionalProperties": false,
+  "_typeIndex": {
+    "description": "NORMATIVE (RFC 0171 §A.4): v2 event type → $defs key, generated from spec/v2/event-codemap.json.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "run.started": {
+        "$ref": "#/$defs/runStarted"
+      },
+      "run.completed": {
+        "$ref": "#/$defs/runCompleted"
+      },
+      "run.failed": {
+        "$ref": "#/$defs/runFailed"
+      },
+      "run.cancelled": {
+        "$ref": "#/$defs/runCancelled"
+      },
+      "run.resume-started": {
+        "$ref": "#/$defs/runResuming"
+      },
+      "run.paused": {
+        "$ref": "#/$defs/runPaused"
+      },
+      "run.resumed": {
+        "$ref": "#/$defs/runResumed"
+      },
+      "run.restored-from-snapshot": {
+        "$ref": "#/$defs/runRestoredFromSnapshot"
+      },
+      "run.dead-lettered": {
+        "$ref": "#/$defs/runDeadLettered"
+      },
+      "node.started": {
+        "$ref": "#/$defs/nodeStarted"
+      },
+      "node.completed": {
+        "$ref": "#/$defs/nodeCompleted"
+      },
+      "node.failed": {
+        "$ref": "#/$defs/nodeFailed"
+      },
+      "node.suspended": {
+        "$ref": "#/$defs/nodeSuspended"
+      },
+      "node.suspend-failed": {
+        "$ref": "#/$defs/nodeSuspendFailed"
+      },
+      "node.resumed": {
+        "$ref": "#/$defs/nodeResumed"
+      },
+      "node.retried": {
+        "$ref": "#/$defs/nodeRetried"
+      },
+      "node.skipped": {
+        "$ref": "#/$defs/nodeSkipped"
+      },
+      "node.cancelled": {
+        "$ref": "#/$defs/nodeCancelled"
+      },
+      "approval.requested": {
+        "$ref": "#/$defs/approvalRequested"
+      },
+      "approval.received": {
+        "$ref": "#/$defs/approvalReceived"
+      },
+      "approval.granted": {
+        "$ref": "#/$defs/approvalGranted"
+      },
+      "approval.rejected": {
+        "$ref": "#/$defs/approvalRejected"
+      },
+      "approval.overridden": {
+        "$ref": "#/$defs/approvalOverridden"
+      },
+      "clarification.requested": {
+        "$ref": "#/$defs/clarificationRequested"
+      },
+      "clarification.resolved": {
+        "$ref": "#/$defs/clarificationResolved"
+      },
+      "interrupt.requested": {
+        "$ref": "#/$defs/interruptRequested"
+      },
+      "interrupt.resolved": {
+        "$ref": "#/$defs/interruptResolved"
+      },
+      "channel.written": {
+        "$ref": "#/$defs/channelWritten"
+      },
+      "channel.presence": {
+        "$ref": "#/$defs/channelPresence"
+      },
+      "context.summarized": {
+        "$ref": "#/$defs/contextSummarized"
+      },
+      "artifact.created": {
+        "$ref": "#/$defs/artifactCreated"
+      },
+      "output.chunk": {
+        "$ref": "#/$defs/outputChunk"
+      },
+      "variable.changed": {
+        "$ref": "#/$defs/variableChanged"
+      },
+      "log.appended": {
+        "$ref": "#/$defs/logAppended"
+      },
+      "version.pinned": {
+        "$ref": "#/$defs/versionPinned"
+      },
+      "workflow.restored": {
+        "$ref": "#/$defs/workflowRestored"
+      },
+      "workflow.loopback-limit": {
+        "$ref": "#/$defs/workflowLoopbackLimit"
+      },
+      "workflow.stalled": {
+        "$ref": "#/$defs/workflowStalled"
+      },
+      "cap.breached": {
+        "$ref": "#/$defs/capBreached"
+      },
+      "lease.acquired": {
+        "$ref": "#/$defs/leaseLifecycle"
+      },
+      "lease.renewed": {
+        "$ref": "#/$defs/leaseLifecycle"
+      },
+      "lease.lost": {
+        "$ref": "#/$defs/leaseLifecycle"
+      },
+      "lease.handed-off": {
+        "$ref": "#/$defs/leaseHandedOff"
+      },
+      "replay.diverged": {
+        "$ref": "#/$defs/replayDiverged"
+      },
+      "replay.diverged-at-refusal": {
+        "$ref": "#/$defs/replayDivergedAtRefusal"
+      },
+      "agent.reasoned": {
+        "$ref": "#/$defs/agentReasoned"
+      },
+      "agent.reasoning-delta": {
+        "$ref": "#/$defs/agentReasoningDelta"
+      },
+      "provider.usage": {
+        "$ref": "#/$defs/providerUsage"
+      },
+      "prompt.composed": {
+        "$ref": "#/$defs/promptComposed"
+      },
+      "agent.prompt-resolved": {
+        "$ref": "#/$defs/agentPromptResolved"
+      },
+      "model.capability-substituted": {
+        "$ref": "#/$defs/modelCapabilitySubstituted"
+      },
+      "model.capability-insufficient": {
+        "$ref": "#/$defs/modelCapabilityInsufficient"
+      },
+      "envelope.retry-attempted": {
+        "$ref": "#/$defs/envelopeRetryAttempted"
+      },
+      "envelope.retry-exhausted": {
+        "$ref": "#/$defs/envelopeRetryExhausted"
+      },
+      "envelope.refusal": {
+        "$ref": "#/$defs/envelopeRefusal"
+      },
+      "envelope.truncated": {
+        "$ref": "#/$defs/envelopeTruncated"
+      },
+      "envelope.nl-to-format-engaged": {
+        "$ref": "#/$defs/envelopeNlToFormatEngaged"
+      },
+      "envelope.recovery-applied": {
+        "$ref": "#/$defs/envelopeRecoveryApplied"
+      },
+      "agent.tool-called": {
+        "$ref": "#/$defs/agentToolCalled"
+      },
+      "agent.tool-returned": {
+        "$ref": "#/$defs/agentToolReturned"
+      },
+      "agent.handoff": {
+        "$ref": "#/$defs/agentHandoff"
+      },
+      "agent.decided": {
+        "$ref": "#/$defs/agentDecided"
+      },
+      "agent.verified": {
+        "$ref": "#/$defs/agentVerified"
+      },
+      "agent.invocation-started": {
+        "$ref": "#/$defs/agentInvocationStarted"
+      },
+      "agent.invocation-completed": {
+        "$ref": "#/$defs/agentInvocationCompleted"
+      },
+      "eval.started": {
+        "$ref": "#/$defs/evalStarted"
+      },
+      "eval.scored": {
+        "$ref": "#/$defs/evalScored"
+      },
+      "eval.completed": {
+        "$ref": "#/$defs/evalCompleted"
+      },
+      "deployment.promoted": {
+        "$ref": "#/$defs/deploymentPromoted"
+      },
+      "deployment.rolled-back": {
+        "$ref": "#/$defs/deploymentRolledBack"
+      },
+      "deployment.canary-adjusted": {
+        "$ref": "#/$defs/deploymentCanaryAdjusted"
+      },
+      "deployment.state-changed": {
+        "$ref": "#/$defs/deploymentStateChanged"
+      },
+      "roster.run-initiated": {
+        "$ref": "#/$defs/rosterRunInitiated"
+      },
+      "tool.session-opened": {
+        "$ref": "#/$defs/toolSessionOpened"
+      },
+      "tool.session-closed": {
+        "$ref": "#/$defs/toolSessionClosed"
+      },
+      "egress.decided": {
+        "$ref": "#/$defs/egressDecided"
+      },
+      "trigger.subscription-state-changed": {
+        "$ref": "#/$defs/triggerSubscriptionStateChanged"
+      },
+      "trigger.delivery-attempted": {
+        "$ref": "#/$defs/triggerDeliveryAttempted"
+      },
+      "budget.reserved": {
+        "$ref": "#/$defs/budgetReserved"
+      },
+      "budget.consumed": {
+        "$ref": "#/$defs/budgetConsumed"
+      },
+      "budget.threshold-crossed": {
+        "$ref": "#/$defs/budgetThresholdCrossed"
+      },
+      "budget.exhausted": {
+        "$ref": "#/$defs/budgetExhausted"
+      },
+      "orchestrator.decided": {
+        "$ref": "#/$defs/runOrchestratorDecided"
+      },
+      "node.dispatched": {
+        "$ref": "#/$defs/nodeDispatched"
+      },
+      "dispatch.fanned-out": {
+        "$ref": "#/$defs/dispatchFanOut"
+      },
+      "dispatch.joined": {
+        "$ref": "#/$defs/dispatchJoin"
+      },
+      "conversation.opened": {
+        "$ref": "#/$defs/conversationOpened"
+      },
+      "conversation.exchanged": {
+        "$ref": "#/$defs/conversationExchanged"
+      },
+      "conversation.closed": {
+        "$ref": "#/$defs/conversationClosed"
+      },
+      "memory.compacted": {
+        "$ref": "#/$defs/memoryCompacted"
+      },
+      "memory.written": {
+        "$ref": "#/$defs/memoryWritten"
+      },
+      "agent.memory-consolidated": {
+        "$ref": "#/$defs/agentMemoryConsolidated"
+      },
+      "commitment.fired": {
+        "$ref": "#/$defs/commitmentFired"
+      },
+      "workspace.updated": {
+        "$ref": "#/$defs/workspaceUpdated"
+      },
+      "workflow-chain.event": {
+        "$ref": "#/$defs/coreWorkflowChainEvent"
+      },
+      "workflow-chain.confidence-escalated": {
+        "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated"
+      },
+      "connector.authorized": {
+        "$ref": "#/$defs/connectorAuthorized"
+      },
+      "connector.auth-expired": {
+        "$ref": "#/$defs/connectorAuthExpired"
+      },
+      "authorization.decided": {
+        "$ref": "#/$defs/authorizationDecided"
+      },
+      "proposal.created": {
+        "$ref": "#/$defs/proposalCreated"
+      },
+      "proposal.activated": {
+        "$ref": "#/$defs/proposalActivated"
+      },
+      "goal.evaluated": {
+        "$ref": "#/$defs/goalEvaluated"
+      },
+      "goal.closed": {
+        "$ref": "#/$defs/goalClosed"
+      },
+      "import.applied": {
+        "$ref": "#/$defs/importApplied"
+      },
+      "voice.speech-start": {
+        "$ref": "#/$defs/voiceSpeechStart"
+      },
+      "voice.transcript": {
+        "$ref": "#/$defs/voiceTranscript"
+      },
+      "voice.endpoint-candidate": {
+        "$ref": "#/$defs/voiceEndpointCandidate"
+      },
+      "voice.turn-commit": {
+        "$ref": "#/$defs/voiceTurnCommit"
+      },
+      "voice.synthesis-chunk": {
+        "$ref": "#/$defs/voiceSynthesisChunk"
+      },
+      "voice.barge-in": {
+        "$ref": "#/$defs/voiceBargeIn"
+      },
+      "voice.cancelled": {
+        "$ref": "#/$defs/voiceCancelled"
+      },
+      "compensation.requested": {
+        "$ref": "#/$defs/compensationRequested"
+      },
+      "compensation.started": {
+        "$ref": "#/$defs/compensationStarted"
+      },
+      "compensation.completed": {
+        "$ref": "#/$defs/compensationCompleted"
+      },
+      "compensation.failed": {
+        "$ref": "#/$defs/compensationFailed"
+      },
+      "compensation.paused": {
+        "$ref": "#/$defs/compensationPaused"
+      },
+      "compensation.manual-intervention-required": {
+        "$ref": "#/$defs/compensationManualInterventionRequired"
+      },
+      "negotiation.decided": {
+        "$ref": "#/$defs/negotiationDecided"
+      }
+    }
+  }
+}

@@ -30,6 +30,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const CANONICAL_MODES = ['disabled', 'optional', 'required', 'restricted'] as const;
 
@@ -57,16 +59,16 @@ async function fetchPolicies(): Promise<PoliciesShape | null> {
 describe('provider-policy-enforcement: closed mode set per spec/v1/capabilities.md §`aiProviders.policies`', () => {
   it('every advertised mode is one of the four canonical values', async () => {
     const policies = await fetchPolicies();
-    if (policies === null || !Array.isArray(policies.modes)) return;
+    if (policies === null || !Array.isArray(policies.modes)) return softSkip('blocked', 'precondition not met — `policies === null || !Array.isArray(policies.modes)` returned early (seam, prior step, or fixture unavailable)');
 
     for (const mode of policies.modes) {
-      expect(typeof mode, driver.describe(
+      expect(typeof mode, req('openwop.it.providerPolicyEnforcement.every-advertised-mode-is-one-of-the-four-canonical-values', 
         'capabilities.md §"`aiProviders.policies`"',
         'each entry in policies.modes MUST be a string',
       )).toBe('string');
       expect(
         (CANONICAL_MODES as readonly string[]).includes(mode as string),
-        driver.describe(
+        req('openwop.it.providerPolicyEnforcement.every-advertised-mode-is-one-of-the-four-canonical-values', 
           'capabilities.md §"`aiProviders.policies`"',
           `mode "${String(mode)}" is not in the closed canonical set [${CANONICAL_MODES.join(', ')}]`,
         ),
@@ -76,10 +78,10 @@ describe('provider-policy-enforcement: closed mode set per spec/v1/capabilities.
 
   it('hosts that support `restricted` MUST also support `optional` (default no-restriction case)', async () => {
     const policies = await fetchPolicies();
-    if (policies === null || !Array.isArray(policies.modes)) return;
+    if (policies === null || !Array.isArray(policies.modes)) return softSkip('blocked', 'precondition not met — `policies === null || !Array.isArray(policies.modes)` returned early (seam, prior step, or fixture unavailable)');
     const modes = policies.modes as string[];
-    if (!modes.includes('restricted')) return;
-    expect(modes.includes('optional'), driver.describe(
+    if (!modes.includes('restricted')) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'restricted\')` returned early');
+    expect(modes.includes('optional'), req('openwop.it.providerPolicyEnforcement.hosts-that-support-restricted-must-also-support-optional-default-no-restriction', 
       'spec/v1/profiles.md §`openwop-provider-policy`',
       'a host advertising `restricted` MUST also advertise `optional` so workflows without policy hit the default permissive case',
     )).toBe(true);
@@ -87,12 +89,12 @@ describe('provider-policy-enforcement: closed mode set per spec/v1/capabilities.
 
   it('errorCode is a non-empty string when present', async () => {
     const policies = await fetchPolicies();
-    if (policies === null || policies.errorCode === undefined) return;
-    expect(typeof policies.errorCode, driver.describe(
+    if (policies === null || policies.errorCode === undefined) return softSkip('blocked', 'precondition not met — `policies === null || policies.errorCode === undefined` returned early (seam, prior step, or fixture unavailable)');
+    expect(typeof policies.errorCode, req('openwop.it.providerPolicyEnforcement.errorcode-is-a-non-empty-string-when-present', 
       'capabilities.md §"`aiProviders.policies`"',
       'aiProviders.policies.errorCode MUST be a string when present',
     )).toBe('string');
-    expect((policies.errorCode as string).length, driver.describe(
+    expect((policies.errorCode as string).length, req('openwop.it.providerPolicyEnforcement.errorcode-is-a-non-empty-string-when-present', 
       'capabilities.md §"`aiProviders.policies`"',
       'aiProviders.policies.errorCode MUST be non-empty when present',
     )).toBeGreaterThan(0);
@@ -102,11 +104,11 @@ describe('provider-policy-enforcement: closed mode set per spec/v1/capabilities.
 describe('provider-policy-enforcement: scope advertisement', () => {
   it('scopes contains only non-empty strings when present', async () => {
     const policies = await fetchPolicies();
-    if (policies === null) return;
-    if (!Array.isArray(policies.scopes)) return;
+    if (policies === null) return softSkip('blocked', 'precondition not met — `policies === null` returned early (seam, prior step, or fixture unavailable)');
+    if (!Array.isArray(policies.scopes)) return softSkip('blocked', 'precondition not met — `!Array.isArray(policies.scopes)` returned early (seam, prior step, or fixture unavailable)');
 
     for (const scope of policies.scopes) {
-      expect(typeof scope === 'string' && scope.length > 0, driver.describe(
+      expect(typeof scope === 'string' && scope.length > 0, req('openwop.it.providerPolicyEnforcement.scopes-contains-only-non-empty-strings-when-present', 
         'capabilities.md §"`aiProviders.policies`"',
         'each entry in policies.scopes MUST be a non-empty string',
       )).toBe(true);
@@ -120,11 +122,11 @@ describe('provider-policy-enforcement: documented denial reasons enumeration', (
     // file isn't updated, scenario authors will be surprised. This
     // assertion catches that — an empty CANONICAL_MODES or DOCUMENTED_
     // DENIAL_REASONS would indicate the test file got truncated.
-    expect(CANONICAL_MODES.length, driver.describe(
+    expect(CANONICAL_MODES.length, req('openwop.it.providerPolicyEnforcement.lists-are-non-empty-sanity-check-on-documentation-drift', 
       'spec/v1/capabilities.md §"`aiProviders.policies`"',
       'closed mode set MUST be the four canonical values',
     )).toBe(4);
-    expect(DOCUMENTED_DENIAL_REASONS.length, driver.describe(
+    expect(DOCUMENTED_DENIAL_REASONS.length, req('openwop.it.providerPolicyEnforcement.lists-are-non-empty-sanity-check-on-documentation-drift', 
       'openwop/openwop@0bebfb0 — denial-reason enum alignment',
       'documented denial-reason set is non-empty',
     )).toBeGreaterThan(0);

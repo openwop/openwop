@@ -33,6 +33,8 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -78,15 +80,15 @@ describe('envelope-reasoning-shape: universal-kind schemas (RFC 0030 §A)', () =
       const required = (schema.required as string[] | undefined) ?? [];
       expect(
         properties?.reasoning,
-        `RFC 0030 §A: ${kind}.schema.json MUST declare a \`reasoning\` property`,
+        req('openwop.it.envelope-reasoning-shape.schema-json-declares-optional-reasoning-string-per-rfc-0030-a', 'RFC 0030 §A', `RFC 0030 §A: ${kind}.schema.json MUST declare a \`reasoning\` property`),
       ).toBeDefined();
       expect(
         properties?.reasoning?.type,
-        'RFC 0030 §A: `reasoning` MUST be type: string on universal-kind schemas',
+        req('openwop.it.envelope-reasoning-shape.schema-json-declares-optional-reasoning-string-per-rfc-0030-a', 'RFC 0030 §A', 'RFC 0030 §A: `reasoning` MUST be type: string on universal-kind schemas'),
       ).toBe('string');
       expect(
         required.includes('reasoning'),
-        `RFC 0030 §A: ${kind}.schema.json MUST NOT list \`reasoning\` in required (OPTIONAL field; absence is a valid envelope shape)`,
+        req('openwop.it.envelope-reasoning-shape.schema-json-declares-optional-reasoning-string-per-rfc-0030-a', 'RFC 0030 §A', `RFC 0030 §A: ${kind}.schema.json MUST NOT list \`reasoning\` in required (OPTIONAL field; absence is a valid envelope shape)`),
       ).toBe(false);
     });
   }
@@ -96,7 +98,7 @@ describe('envelope-reasoning-shape: universal-kind schemas (RFC 0030 §A)', () =
     const properties = schema.properties as Record<string, Record<string, unknown>> | undefined;
     expect(
       properties?.reasoning,
-      'RFC 0030 §A: `schema.response` is a side-channel ack envelope; it MUST NOT declare `reasoning`',
+      req('openwop.it.envelope-reasoning-shape.schema-response-schema-json-deliberately-omits-reasoning-side-channel-ack-per-rf', 'RFC 0030 §A', 'RFC 0030 §A: `schema.response` is a side-channel ack envelope; it MUST NOT declare `reasoning`'),
     ).toBeUndefined();
   });
 });
@@ -115,7 +117,7 @@ describe('envelope-reasoning-shape: backward-compat round-trip (RFC 0030 §A)', 
     const payload = { questions: [{ id: 'q1', question: 'What do you mean by X?' }] };
     expect(
       validateClarification(payload),
-      'RFC 0030 §A: existing v1.1 envelope without `reasoning` MUST remain valid',
+      req('openwop.it.envelope-reasoning-shape.clarification-request-validates-a-payload-without-reasoning-backward-compat', 'RFC 0030 §A', 'RFC 0030 §A: existing v1.1 envelope without `reasoning` MUST remain valid'),
     ).toBe(true);
   });
 
@@ -126,13 +128,13 @@ describe('envelope-reasoning-shape: backward-compat round-trip (RFC 0030 §A)', 
     };
     expect(
       validateClarification(payload),
-      'RFC 0030 §A: envelope with optional `reasoning` populated MUST be accepted',
+      req('openwop.it.envelope-reasoning-shape.clarification-request-validates-a-payload-with-reasoning', 'RFC 0030 §A', 'RFC 0030 §A: envelope with optional `reasoning` populated MUST be accepted'),
     ).toBe(true);
   });
 
   it('error envelope validates without reasoning (backward compat)', () => {
     const payload = { code: 'validation_failed', message: 'Could not match the schema.' };
-    expect(validateError(payload)).toBe(true);
+    expect(validateError(payload), req('openwop.it.envelope-reasoning-shape.error-envelope-validates-without-reasoning-backward-compat', 'RFC 0030 §A', 'error envelope validates without reasoning (backward compat)')).toBe(true);
   });
 
   it('error envelope validates with reasoning', () => {
@@ -141,11 +143,11 @@ describe('envelope-reasoning-shape: backward-compat round-trip (RFC 0030 §A)', 
       code: 'validation_failed',
       message: 'Could not match the schema.',
     };
-    expect(validateError(payload)).toBe(true);
+    expect(validateError(payload), req('openwop.it.envelope-reasoning-shape.error-envelope-validates-with-reasoning', 'RFC 0030 §A', 'error envelope validates with reasoning')).toBe(true);
   });
 
   it('schema.request validates without reasoning', () => {
-    expect(validateSchemaRequest({ envelopeType: 'vendor.acme.prd.create' })).toBe(true);
+    expect(validateSchemaRequest({ envelopeType: 'vendor.acme.prd.create' }), req('openwop.it.envelope-reasoning-shape.schema-request-validates-without-reasoning', 'RFC 0030 §A', 'schema.request validates without reasoning')).toBe(true);
   });
 
   it('rejects reasoning of non-string type (universal kinds use plain string, not string|null union)', () => {
@@ -155,7 +157,7 @@ describe('envelope-reasoning-shape: backward-compat round-trip (RFC 0030 §A)', 
     };
     expect(
       validateClarification(payload),
-      'RFC 0030 §A: universal-kind `reasoning` MUST be type: string; numbers reject',
+      req('openwop.it.envelope-reasoning-shape.rejects-reasoning-of-non-string-type-universal-kinds-use-plain-string-not-string', 'RFC 0030 §A', 'RFC 0030 §A: universal-kind `reasoning` MUST be type: string; numbers reject'),
     ).toBe(false);
   });
 });
@@ -163,29 +165,29 @@ describe('envelope-reasoning-shape: backward-compat round-trip (RFC 0030 §A)', 
 describe.skipIf(HTTP_SKIP)('envelope-reasoning-shape: capabilities.envelopes advertisement (RFC 0030 §C)', () => {
   it('capabilities.envelopes.reasoning (when present) conforms to RFC 0030 §C', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const reasoning = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reasoning;
-    if (reasoning === undefined) return; // optional block; host MAY omit
+    if (reasoning === undefined) return softSkip('blocked', 'precondition not met — `reasoning === undefined` returned early (optional block; host MAY omit) (seam, prior step, or fixture unavailable)'); // optional block; host MAY omit
     expect(
       typeof reasoning.supported,
-      'RFC 0030 §C: capabilities.envelopes.reasoning.supported MUST be boolean when block is advertised',
+      req('openwop.it.envelope-reasoning-shape.capabilities-envelopes-reasoning-when-present-conforms-to-rfc-0030-c', 'RFC 0030 §C', 'RFC 0030 §C: capabilities.envelopes.reasoning.supported MUST be boolean when block is advertised'),
     ).toBe('boolean');
     if (reasoning.promptDirective !== undefined) {
       expect(
         ['mandatory', 'advisory', 'off'],
-        'RFC 0030 §C: promptDirective MUST be one of the three documented values',
+        req('openwop.it.envelope-reasoning-shape.capabilities-envelopes-reasoning-when-present-conforms-to-rfc-0030-c', 'RFC 0030 §C', 'RFC 0030 §C: promptDirective MUST be one of the three documented values'),
       ).toContain(String(reasoning.promptDirective));
     }
   });
 
   it('capabilities.envelopes.tierOneSubsetCompliance (when present) conforms to RFC 0030 §B', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const compliance = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.tierOneSubsetCompliance;
-    if (compliance === undefined) return; // optional; host MAY omit
+    if (compliance === undefined) return softSkip('blocked', 'precondition not met — `compliance === undefined` returned early (optional; host MAY omit) (seam, prior step, or fixture unavailable)'); // optional; host MAY omit
     expect(
       ['strict', 'warn', 'off'],
-      'RFC 0030 §B: tierOneSubsetCompliance MUST be one of strict|warn|off',
+      req('openwop.it.envelope-reasoning-shape.capabilities-envelopes-tieronesubsetcompliance-when-present-conforms-to-rfc-0030', 'RFC 0030 §B', 'RFC 0030 §B: tierOneSubsetCompliance MUST be one of strict|warn|off'),
     ).toContain(String(compliance));
   });
 });

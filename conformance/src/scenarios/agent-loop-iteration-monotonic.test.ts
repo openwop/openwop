@@ -11,8 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readExecutionModelCap, isVersion5, invokeAgentLoop } from '../lib/agentLoop.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('agent-loop-iteration-monotonic (RFC 0061 §B)', () => {
   it('iteration increments by exactly 1 per orchestrator turn, 1-based', async () => {
@@ -22,13 +22,13 @@ describe('agent-loop-iteration-monotonic (RFC 0061 §B)', () => {
     const decisions = res.decisions ?? [];
     expect(
       decisions.length >= 1,
-      driver.describe('RFC 0061 §B', 'a multi-turn loop MUST emit one runOrchestrator.decided per turn'),
+      req('openwop.it.agent-loop-iteration-monotonic.iteration-increments-by-exactly-1-per-orchestrator-turn-1-based', 'RFC 0061 §B', 'a multi-turn loop MUST emit one runOrchestrator.decided per turn'),
     ).toBe(true);
     const iterations = decisions.map((d) => d.iteration);
     const expected = decisions.map((_, k) => k + 1);
     expect(
       JSON.stringify(iterations),
-      driver.describe('RFC 0061 §B', 'iteration MUST be 1-based + monotonic, incrementing by exactly 1 per turn'),
+      req('openwop.it.agent-loop-iteration-monotonic.iteration-increments-by-exactly-1-per-orchestrator-turn-1-based', 'RFC 0061 §B', 'iteration MUST be 1-based + monotonic, incrementing by exactly 1 per turn'),
     ).toBe(JSON.stringify(expected));
   });
 });

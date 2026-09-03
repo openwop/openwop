@@ -16,6 +16,15 @@ The suite is intentionally self-contained — it does NOT depend on the referenc
 
 ---
 
+
+## Suite 2.0.0 (v2 charter Phase 3; RFC 0168) — what changed for hosts
+
+- **The contract is a peer package.** `@openwop/openwop-conformance@2.x` no longer vendors `api/` and `schemas/`; it declares `@openwop/spec-artifacts` as an exact-pinned peer dependency (install both), resolves the installed peer through Node's resolver, and refuses to start when the peer's version or `CORPUS-STAMP.json` digest differs from `dist/spec-artifacts.lock.json` (RFC 0168 §D.2). `schemas/CORPUS-STAMP.json` in this package is a copy of the peer's stamp, kept at the path hosts already read for provenance.
+- **`--target-major 1|2`** (RFC 0168 §D.3): one package runs the scenarios for either protocol major; `scenario-majors.json` names each file's majors; the default comes from the host's root `preferredVersion` (RFC 0179), else `max(protocolVersions[])`, else 1.
+- **`req()` is the only assertion form** (RFC 0168 §A.1): every assertion carries a requirement id; `requirements.json` lists every id; `requirement-aliases.json` maps a reworded id to its successor. `scripts/check-req-only.mjs` is the gate.
+- **Corpus-coherence scenarios never run against a host.** They live in `src/coherence/`, run in the spec repo's CI (`scripts/check-spec-coherence.mjs`) and produce `evidence/corpus-ledger.json`; a host bundle never contains them. The `--offline` set is `fixtures-valid` only.
+- **1.x continues on `release/1.x`** (`openwop-conformance/v1.16x.y` tags); pre-release 2.x versions publish under the npm dist-tag `next`.
+
 ## Quickstart
 
 Two ways to run: the friendly `openwop-conformance` CLI (recommended for
@@ -103,7 +112,7 @@ Exit code is non-zero on any failed assertion. `--certify` distinguishes: `0` �
 
 ## What's Covered
 
-The current suite has 473 scenario files under `src/scenarios/`.
+The current suite has 444 scenario files under `src/scenarios/`.
 - 2026-09-03 (suite `1.157.0 -> 1.158.0`, gap G17): NEW `idempotency-concurrent-claim.test.ts` — drives the new `host-sample-test-seams.md` §25 concurrent duplicate-delivery seam for the RFC 0150 §B / `idempotency.md` §"Concurrent duplicates (Layer 2)" atomic-claim MUST, which is unconditional and had no witness of any kind. Asserts every executor mints the SAME `logicalInvocationId` **before** asserting `delivered === 1` — without the identity check a host passes by minting different ids and never colliding, one effect because nothing raced. Not profile-gated and so not opt-out-able (the obligation is unconditional); an unmounted seam records `blocked`, which is not certifiable. Graduates `layer2-invocation-claim-atomic` reference-impl -> protocol.
 - 2026-08-19 (suite `1.137.0 → 1.138.0`): NEW `durability-poison-exhaustion.test.ts` — RFC 0158 §C.8, the FIRST row of that RFC's conformance table to land. Asserts what `failure-path.test.ts` cannot: not just that deterministically failing work reaches terminal, but that attempts STOP — counted on the log, re-counted after a scaled quiet window, asserted unchanged. A host still redelivering records more. Seam-gated on the existing event-log seam (`blocked` = unobservable, not unmet) and outside every profile floor.
 - 2026-08-19 (suite `1.136.15 → 1.137.0`): NEW `replay-fanout-suppression.test.ts` — capability-gated on `webhooks.supported`, **outside every profile floor**; witnesses `replay.md` §"Host-initiated fan-out is an external effect", which was the largest normative MUST NOT on the replay surface with no scenario and no SECURITY invariant. Three legs in ONE `it` against ONE receiver and ONE subscription — a positive control, the MUST NOT, and a `branch` boundary leg — because "no delivery arrived" passes identically when delivery never worked, so absence is asserted only after presence is proven on that exact wiring. A host with an SSRF guard correctly refuses the loopback receiver and records `blocked`: **unobservable, not unmet.**
@@ -448,7 +457,7 @@ Server-required (added in 1.7.0):
 | ------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 473 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 444 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 

@@ -36,7 +36,7 @@ echo "  building conformance CLI dist/..."
 
 pack_json "$SPEC_ROOT/conformance" "$CONFORMANCE_JSON"
 
-node - "$CONFORMANCE_JSON" "$SPEC_ROOT/conformance/spec-coherence-scenarios.json" <<'NODE'
+node - "$CONFORMANCE_JSON" <<'NODE'
 const { readFileSync } = require('node:fs');
 
 const [conformancePath] = process.argv.slice(2);
@@ -95,21 +95,22 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.163.0', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '2.0.0-rc.0', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
   conformanceFiles,
-  new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'api', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'requirement-aliases.json', 'requirements.json', 'schemas', 'src', 'vectors', 'vitest.config.ts']),
+  // Suite 2.0.0 (RFC 0168 §D.2): api/ and the schemas are the @openwop/spec-artifacts peer, not
+  // tarball contents; schemas/ carries ONLY the provenance stamp copy hosts read.
+  new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'requirement-aliases.json', 'requirements.json', 'scenario-majors.json', 'schemas', 'src', 'vectors', 'vitest.config.ts']),
 );
 assertIncludes(conformancePack.name, conformanceFiles, [
   'LICENSE',
   'README.md',
   'package.json',
   'dist/cli.js',
-  'api/openapi.yaml',
-  'api/asyncapi.yaml',
-  'schemas/README.md',
+  'dist/spec-artifacts.lock.json',
+  'scenario-majors.json',
   // The contract copies a host is told to depend on instead of hand-vendoring
   // (conformance/README.md §"Resolving the contract"). Pinned by path because a
   // packaging change that dropped them would silently push hosts back to copying
@@ -118,9 +119,6 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   // (RFC 0145 G2). It rides INSIDE schemas/ because the directory is what gets
   // copied — package.json's version does not survive `cp -R schemas/ vendor/`.
   'schemas/CORPUS-STAMP.json',
-  'schemas/capabilities.schema.json',
-  'schemas/run-event-payloads.schema.json',
-  'schemas/workflow-definition.schema.json',
   'fixtures.md',
   'coverage.md',
 ]);
@@ -131,10 +129,10 @@ assertIncludes(conformancePack.name, conformanceFiles, [
 // that let them back in would put rows about the spec into evidence about a host.
 const forbidden = conformanceFiles.filter((f) => /^src\/lib\/.*\.test\.ts$/.test(f));
 if (forbidden.length > 0) throw new Error(`conformance tarball carries suite self-tests: ${forbidden.join(', ')}`);
-const coherence = new Set(JSON.parse(require('node:fs').readFileSync(process.argv[3], 'utf8')));
-const leaked = conformanceFiles.filter((f) => f.startsWith('src/scenarios/') && coherence.has(f.slice('src/scenarios/'.length)));
-if (leaked.length > 0) throw new Error(`conformance tarball carries corpus-coherence scenarios: ${leaked.join(', ')}`);
-console.log(`  ok: ${conformancePack.name}@${conformancePack.version} packs ${conformanceFiles.length} files with vendored contracts; ${coherence.size} coherence scenarios and every src/lib self-test excluded.`);
+// Suite 2.0.0 (RFC 0168 §D.1): the corpus-coherence scenarios live in src/coherence/ and are never packed — one directory, no list to keep in sync.
+const leaked = conformanceFiles.filter((f) => f.startsWith('src/coherence/') || f.startsWith('api/') || (f.startsWith('schemas/') && f !== 'schemas/CORPUS-STAMP.json'));
+if (leaked.length > 0) throw new Error(`conformance tarball carries corpus-coherence scenarios or vendored contract files (the contract is the @openwop/spec-artifacts peer): ${leaked.join(', ')} — src/coherence/ is excluded by package.json files`);
+console.log(`  ok: ${conformancePack.name}@${conformancePack.version} packs ${conformanceFiles.length} files with vendored contracts; 0 coherence scenarios and every src/lib self-test excluded.`);
 NODE
 
 if [[ -e "$SPEC_ROOT/conformance/api" || -e "$SPEC_ROOT/conformance/schemas" ]]; then

@@ -18,6 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readErrorCode } from '../lib/error-envelope.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-idempotent';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -34,7 +35,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + same body replays per 
     const first = await driver.post('/v1/runs', body, {
       headers: { 'Idempotency-Key': key },
     });
-    expect(first.status, driver.describe(
+    expect(first.status, req('openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay', 
       'rest-endpoints.md',
       'first POST /v1/runs MUST return 201',
     )).toBe(201);
@@ -45,20 +46,20 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + same body replays per 
     });
     expect(
       [200, 201].includes(replay.status),
-      driver.describe(
+      req('openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay', 
         'idempotency.md §Layer 1',
         'replay request with same key + same body MUST return success status (200/201)',
       ),
     ).toBe(true);
 
     const replayRunId = (replay.json as { runId: string }).runId;
-    expect(replayRunId, driver.describe(
+    expect(replayRunId, req('openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay', 
       'idempotency.md §Layer 1',
       'replay MUST return the SAME runId (no new run created)',
     )).toBe(firstRunId);
 
     const replayHeader = replay.headers.get('openwop-idempotent-replay');
-    expect(replayHeader, driver.describe(
+    expect(replayHeader, req('openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay', 
       'rest-endpoints.md POST /v1/runs response headers',
       'openwop-Idempotent-Replay header MUST be set on cache-served responses',
     )).toBeTruthy();
@@ -82,7 +83,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
       { headers: { 'Idempotency-Key': key } },
     );
 
-    expect(conflict.status, driver.describe(
+    expect(conflict.status, req('openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key', 
       'idempotency.md §Layer 1',
       'same Idempotency-Key with a different body MUST return 409',
     )).toBe(409);
@@ -107,7 +108,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
     const LEGACY = ['idempotency_key_conflict', 'idempotency_key_replay_mismatch'];
     expect(
       code === 'idempotency_key_mismatch' || LEGACY.includes(code ?? ''),
-      driver.describe(
+      req('openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key', 
         'idempotency.md §"Record shape, digest, and lease"',
         `a different request digest under the same scoped key MUST fail with the canonical ` +
           `\`idempotency_key_mismatch\` (legacy \`${LEGACY.join('` / `')}\` tolerated through the ` +
@@ -120,7 +121,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
     const conflictRunId = (conflict.json as { runId?: unknown } | undefined)?.runId;
     expect(
       conflictRunId,
-      driver.describe(
+      req('openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key', 
         'idempotency.md §"Record shape, digest, and lease"',
         'a digest mismatch MUST NOT return the cached body (no runId on the 409)',
       ),

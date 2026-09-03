@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/channel-written-payload.schema.json",
+  "title": "ChannelWrittenPayload",
+  "description": "Payload of the `channel.written` RunEvent. Carries the WRITE INPUT (pre-reduction), NOT the post-reduction channel state. Replay reconstructs the post-reduction state by folding all `channel.written` events through the declared reducer. See channels-and-reducers.md §Channel write event.",
+  "type": "object",
+  "required": ["channel", "value", "reducer", "writtenAt"],
+  "properties": {
+    "channel": {
+      "type": "string",
+      "description": "Channel name. MUST match a key declared under `WorkflowDefinition.channels`.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "value": {
+      "description": "The write payload (any JSON value). Validated against `ChannelDeclaration.schema` if declared. The semantic shape depends on the channel's reducer — see per-reducer §Examples below.",
+      "type": ["object", "array", "string", "number", "boolean", "null"]
+    },
+    "reducer": {
+      "type": "string",
+      "description": "The reducer name in effect at write time. Persisted on the event so replays remain deterministic even if the channel's reducer is later renamed/swapped. Canonical names: `replace`, `append`, `merge`, `counter`, `votes`, `feedback`. Custom reducers MUST use `vendor.<org>.<name>`.",
+      "pattern": "^(replace|append|merge|counter|votes|feedback|vendor\\.[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*)$"
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "Optional — node that performed the write. Set for writes from `ctx.channels.write(...)`; absent for system-initiated writes.",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "writtenAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp. The engine MAY normalize between this canonical form and platform-specific representations (e.g., Firestore Timestamp)."
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The `ChannelDeclaration.schemaVersion` that was live at write time. Persisted on the event so replays + later folds can detect breaking schema changes — the engine validates each event's value against the channel's CURRENT schema and refuses with `channel_schema_breaking_change` when the event's version is older than `current` AND not in `compatibleWith`. Defaults to 1 when omitted (back-compat with pre-C4 servers that didn't track versions). See channels-and-reducers.md §Channel schema migration. (closes C4)"
+    },
+    "sourceEngineId": {
+      "type": "string",
+      "description": "Identifier of the engine instance that performed the write. Set when the writing engine differs from the engine that owns the parent run (e.g., a sub-workflow / cross-canvas-invoke writing to a parent's channel). Absent when the parent's own engine wrote. The fold side uses this to disambiguate origins for `channel-write` trigger filtering (`onlyFrom: 'child'` matches when this field is set and references a known child engine). See channels-and-reducers.md §Distributed reducers. (closes C2)",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "sourceRunId": {
+      "type": "string",
+      "description": "RunId of the cross-engine writer when `sourceEngineId` is set. Absent for owner-engine writes. Lets debugging surfaces (Run Timeline View per replay.md) link the write back to the originating sub-workflow / invoke run. (closes C2)",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "additionalProperties": false,
+  "$comment": "Per-reducer expectations on the `value` field (informative — not enforced at this schema level; servers SHOULD validate against `ChannelDeclaration.schema` if declared):\n\n  - `replace`: any value; supersedes prior state.\n  - `append`:  any value; appended to the channel's array. Bounded by `ChannelDeclaration.maxSize` if set.\n  - `merge`:   MUST be a JSON object (`{...}`); shallow-merged into prior state.\n  - `counter`: MUST be a number; added to the running total. Negative allowed.\n  - `votes`:   typically `{voter: string, vote: string|boolean|number, ...}`; the reducer accumulates per-voter latest-wins.\n  - `feedback`: typically `{author: string, text: string, timestamp: string, ...}`; the reducer appends bounded by `maxSize`.\n  - `vendor.*`: implementation-defined; external clients SHOULD treat as `replace` if the reducer name is unknown."
+}

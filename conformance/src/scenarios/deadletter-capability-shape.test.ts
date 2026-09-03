@@ -20,6 +20,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDeadLetter {
   supported?: boolean;
@@ -39,10 +41,10 @@ async function readDeadLetter(): Promise<DiscoveryDeadLetter | null> {
 describe('deadletter-capability-shape: advertisement shape (RFC 0053 §A)', () => {
   it('capabilities.deadLetter is either absent or well-formed', async () => {
     const dl = await readDeadLetter();
-    if (dl === null) return; // host doesn't advertise deadLetter at all
+    if (dl === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `dl === null` returned early (host doesn\'t advertise deadLetter at all)'); // host doesn't advertise deadLetter at all
     expect(
       typeof dl.supported,
-      driver.describe(
+      req('openwop.it.deadletter-capability-shape.capabilities-deadletter-is-either-absent-or-well-formed', 
         'capabilities.schema.json §deadLetter',
         'capabilities.deadLetter.supported MUST be a boolean when deadLetter is advertised',
       ),
@@ -51,10 +53,10 @@ describe('deadletter-capability-shape: advertisement shape (RFC 0053 §A)', () =
 
   it('retentionDays is an integer >= 1 when present + supported', async () => {
     const dl = await readDeadLetter();
-    if (!dl?.supported || dl.retentionDays === undefined) return;
+    if (!dl?.supported || dl.retentionDays === undefined) return softSkip('blocked', 'precondition not met — `!dl?.supported || dl.retentionDays === undefined` returned early (seam, prior step, or fixture unavailable)');
     expect(
       Number.isInteger(dl.retentionDays) && dl.retentionDays >= 1,
-      driver.describe('RFC 0053 §A', `capabilities.deadLetter.retentionDays MUST be an integer >= 1, got: ${dl.retentionDays}`),
+      req('openwop.it.deadletter-capability-shape.retentiondays-is-an-integer-1-when-present-supported', 'RFC 0053 §A', `capabilities.deadLetter.retentionDays MUST be an integer >= 1, got: ${dl.retentionDays}`),
     ).toBe(true);
   });
 });

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/compensation-projection.schema.json",
+  "title": "Compensation projection (RFC 0173 §C.1)",
+  "description": "GET /runs/{runId}/compensation — the plan and every attempt, keyed on the node and attempt the operator family already uses (RFC 0151 §D events). The deployed-wire witness for the compensation obligation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "status",
+    "plan",
+    "attempts"
+  ],
+  "properties": {
+    "runId": {
+      "$ref": "ids.schema.json#/$defs/runId"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "running",
+        "completed",
+        "partial",
+        "failed",
+        "manual-intervention"
+      ]
+    },
+    "plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nodeId",
+          "order"
+        ],
+        "properties": {
+          "nodeId": {
+            "$ref": "ids.schema.json#/$defs/nodeId"
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "policy": {
+            "$ref": "compensation-policy.schema.json"
+          },
+          "irreversibleEffect": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nodeId",
+          "attempt",
+          "outcome",
+          "at"
+        ],
+        "properties": {
+          "nodeId": {
+            "$ref": "ids.schema.json#/$defs/nodeId"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "succeeded",
+              "failed",
+              "skipped",
+              "manual"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

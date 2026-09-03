@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-low-confidence';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -51,7 +52,7 @@ describe.skipIf(SKIP)('agentConfidenceEscalation: confidence < threshold → low
     const lowConfSuspend = list.find(
       (e) => e.type === 'node.suspended' && e.payload?.reason === 'low-confidence',
     );
-    expect(lowConfSuspend, 'CP-1: low-confidence agent.decided MUST emit node.suspended { reason: low-confidence }').toBeDefined();
+    expect(lowConfSuspend, req('openwop.it.agentConfidenceEscalation.low-confidence-agent-decided-suspends-with-reason-low-confidence-and-run-reaches', 'RFCS/0002-agent-identity-and-reasoning-events.md', 'CP-1: low-confidence agent.decided MUST emit node.suspended { reason: low-confidence }')).toBeDefined();
 
     const payload = lowConfSuspend!.payload as Record<string, unknown>;
     expect(typeof payload.agentId).toBe('string');

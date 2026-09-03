@@ -34,6 +34,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { queryTestEvents, type TestEvent } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-context-budget-multiturn';
 const PROFILE = 'openwop-context-summarization';
@@ -98,55 +100,55 @@ describe('context-summarization-replay (RFC 0111 §"Replay determinism")', () =>
     const ma = await readCapabilityFamily<MultiAgentCap>('multiAgent');
     const summarizationSupported = ma?.executionModel?.contextBudget?.summarization?.supported === true;
     if (!behaviorGate(PROFILE, summarizationSupported)) return;
-    if (!isFixtureAdvertised(FIXTURE)) return; // fixture-gated soft-skip
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early (fixture-gated soft-skip)'); // fixture-gated soft-skip
 
     // Drive the multi-turn orchestrator run.
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const sourceRunId = runIdOf(create.json);
-    expect(sourceRunId, 'POST /v1/runs MUST return a runId').toBeDefined();
-    if (sourceRunId === undefined) return;
+    expect(sourceRunId, req('openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes', 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'POST /v1/runs MUST return a runId')).toBeDefined();
+    if (sourceRunId === undefined) return softSkip('blocked', 'precondition not met — `sourceRunId === undefined` returned early (seam, prior step, or fixture unavailable)');
     await pollUntilTerminal(sourceRunId);
 
     // Read the recorded summarization records (OPTIONAL event-log seam).
     const sourceQ = await queryTestEvents(sourceRunId, { type: 'context.summarized' });
-    if (!sourceQ.ok) return; // event-log seam unwired — soft-skip
+    if (!sourceQ.ok) return softSkip('blocked', 'precondition not met — `!sourceQ.ok` returned early (event-log seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // event-log seam unwired — soft-skip
     const sourceFingerprints = summaryFingerprints(sourceQ.events);
     if (sourceFingerprints.length === 0) {
       // The run did not summarize (budget not exceeded on this host) — nothing
       // to prove about reuse. Honest soft-skip; not a vacuous pass of the MUST.
       // eslint-disable-next-line no-console
       console.warn(`[${PROFILE}] run produced no context.summarized events; replay-reuse leg soft-skipped`);
-      return;
+      return softSkip('blocked', 'precondition not met — `sourceFingerprints.length === 0` returned early ([…] run produced no context.summarized events; replay-reuse leg soft-skipped) (seam, prior step, or fixture unavailable)');
     }
 
     // Only attempt replay when the host advertises the replay fork mode.
     const wellKnown = await driver.get('/.well-known/openwop');
-    if (!replayModesOf(wellKnown.json).includes('replay')) return;
+    if (!replayModesOf(wellKnown.json).includes('replay')) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!replayModesOf(wellKnown.json).includes(\'replay\')` returned early');
 
     const fork = await driver.post(
       `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
       { fromSeq: 0, mode: 'replay' },
     );
-    if (fork.status === 501 || fork.status === 404) return; // replay not implemented for this run — soft-skip
+    if (fork.status === 501 || fork.status === 404) return softSkip('blocked', 'precondition not met — `fork.status === 501 || fork.status === 404` returned early (replay not implemented for this run — soft-skip) (seam, prior step, or fixture unavailable)'); // replay not implemented for this run — soft-skip
     expect(
       fork.status,
-      driver.describe('rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201'),
+      req('openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes', 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201'),
     ).toBe(201);
     const forkRunId = runIdOf(fork.json);
-    expect(forkRunId, 'replay fork MUST return a runId').toBeDefined();
-    if (forkRunId === undefined) return;
+    expect(forkRunId, req('openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes', 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return a runId')).toBeDefined();
+    if (forkRunId === undefined) return softSkip('blocked', 'precondition not met — `forkRunId === undefined` returned early (seam, prior step, or fixture unavailable)');
     await pollUntilTerminal(forkRunId);
 
     const forkQ = await queryTestEvents(forkRunId, { type: 'context.summarized' });
-    if (!forkQ.ok) return; // event-log seam unwired for the fork — soft-skip
+    if (!forkQ.ok) return softSkip('blocked', 'precondition not met — `!forkQ.ok` returned early (event-log seam unwired for the fork — soft-skip) (seam, prior step, or fixture unavailable)'); // event-log seam unwired for the fork — soft-skip
     const forkFingerprints = summaryFingerprints(forkQ.events);
 
     // The replay MUST reuse the recorded summaries (same summaryRef + replacedTurns),
     // NOT regenerate them — the direct analogue of RFC 0041 envelope-refusal recovery.
     expect(
       forkFingerprints,
-      driver.describe(
+      req('openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes', 
         'RFC 0111 §"Replay determinism"',
         'a replay fork MUST reuse the recorded context.summarized summaryRef (never re-summarize to a different transcript)',
       ),

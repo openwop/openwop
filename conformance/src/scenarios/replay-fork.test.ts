@@ -29,6 +29,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SOURCE_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(SOURCE_WORKFLOW_ID);
@@ -64,7 +65,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in replay mode', () =
       // unexercised tests apart from honest passes.
       softSkip('inapplicable', "host does not advertise the `replay` fork mode — this leg's rule has no path to apply");
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'replay\')` returned early');
     }
     const sourceRunId = await startAndFinishNoop();
 
@@ -73,27 +74,27 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in replay mode', () =
       { fromSeq: 0, mode: 'replay' },
     );
 
-    if (forkDeclined(fork.status, 'replay fork')) return;
-    expect(fork.status, driver.describe(
+    if (forkDeclined(fork.status, 'replay fork')) return softSkip('blocked', 'precondition not met — `forkDeclined(fork.status, \'replay fork\')` returned early (seam, prior step, or fixture unavailable)');
+    expect(fork.status, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed', 
       'rest-endpoints.md POST /v1/runs/{runId}:fork',
       'fork MUST return 201 on accepted replay',
     )).toBe(201);
 
     const body = fork.json as { runId?: unknown; sourceRunId?: unknown; mode?: unknown };
-    expect(typeof body.runId, driver.describe(
+    expect(typeof body.runId, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed', 
       'replay.md',
       'fork response MUST include a new runId',
     )).toBe('string');
-    expect(body.runId, 'forked runId MUST differ from source').not.toBe(sourceRunId);
-    expect(body.sourceRunId, driver.describe(
+    expect(body.runId, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed', 'replay.md', 'forked runId MUST differ from source')).not.toBe(sourceRunId);
+    expect(body.sourceRunId, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed', 
       'replay.md',
       'fork response MUST echo sourceRunId',
     )).toBe(sourceRunId);
-    expect(body.mode, 'fork response MUST echo mode').toBe('replay');
+    expect(body.mode, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed', 'replay.md', 'fork response MUST echo mode')).toBe('replay');
 
     const newRunId = body.runId as string;
     const terminal = await pollUntilTerminal(newRunId, { timeoutMs: 15_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed', 
       'replay.md',
       'replay of a successful run MUST reach the same terminal status',
     )).toBe('completed');
@@ -106,7 +107,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in branch mode with e
     if (!modes.includes('branch')) {
       softSkip('inapplicable', "host does not advertise the `branch` fork mode — this leg's rule has no path to apply");
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'branch\')` returned early');
     }
     const sourceRunId = await startAndFinishNoop();
 
@@ -115,8 +116,8 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in branch mode with e
       { fromSeq: 0, mode: 'branch', runOptionsOverlay: {} },
     );
 
-    if (forkDeclined(fork.status, 'branch fork')) return;
-    expect(fork.status, driver.describe(
+    if (forkDeclined(fork.status, 'branch fork')) return softSkip('blocked', 'precondition not met — `forkDeclined(fork.status, \'branch fork\')` returned early (seam, prior step, or fixture unavailable)');
+    expect(fork.status, req('openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed~2', 
       'rest-endpoints.md POST /v1/runs/{runId}:fork',
       'branch fork MUST return 201',
     )).toBe(201);
@@ -143,7 +144,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
     if (modes.length === 0) {
       softSkip('inapplicable', "host advertises no usable fork mode for this leg");
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `modes.length === 0` returned early');
     }
     const mode = modes.includes('branch') ? 'branch' : 'replay';
     const sourceRunId = await startAndFinishNoop();
@@ -151,7 +152,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
       `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
       { fromSeq: -1, mode },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.replay-fork.rejects-negative-fromseq-with-400', 
       'rest-endpoints.md',
       'negative fromSeq MUST return 400',
     )).toBe(400);
@@ -162,7 +163,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
     if (modes.length === 0) {
       softSkip('inapplicable', "host advertises no usable fork mode for this leg");
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `modes.length === 0` returned early');
     }
     const mode = modes.includes('branch') ? 'branch' : 'replay';
     const sourceRunId = await startAndFinishNoop();
@@ -172,7 +173,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
       `/v1/runs/${encodeURIComponent(sourceRunId)}:fork`,
       { fromSeq: 99999, mode },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.replay-fork.rejects-fromseq-beyond-source-event-log-length-with-422', 
       'rest-endpoints.md POST /v1/runs/{runId}:fork',
       'fromSeq beyond source event log MUST return 422',
     )).toBe(422);
@@ -187,7 +188,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
       // Visible skip rather than silent vacuous pass.
       softSkip('inapplicable', "host does not advertise the `replay` fork mode — the runOptionsOverlay rejection rule only applies to hosts that do");
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!modes.includes(\'replay\')` returned early');
     }
     const sourceRunId = await startAndFinishNoop();
     const res = await driver.post(
@@ -198,7 +199,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
         runOptionsOverlay: { configurable: { recursionLimit: 50 } },
       },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.replay-fork.rejects-replay-mode-with-non-empty-runoptionsoverlay-overlay-is-branch-only', 
       'rest-endpoints.md POST /v1/runs/{runId}:fork',
       'replay mode + non-empty overlay MUST return 400 (overlay is branch-only)',
     )).toBe(400);
@@ -209,7 +210,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
     if (modes.length === 0) {
       softSkip('inapplicable', "host advertises no usable fork mode for this leg");
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `modes.length === 0` returned early');
     }
     const mode = modes.includes('branch') ? 'branch' : 'replay';
     const res = await driver.post(
@@ -218,7 +219,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
     );
     expect(
       [403, 404].includes(res.status),
-      driver.describe('rest-endpoints.md', 'fork on unknown run MUST return 404 or 403'),
+      req('openwop.it.replay-fork.rejects-fork-on-a-non-existent-run-with-404', 'rest-endpoints.md', 'fork on unknown run MUST return 404 or 403'),
     ).toBe(true);
   });
 });

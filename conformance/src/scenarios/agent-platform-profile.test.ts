@@ -29,8 +29,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { isAgentPlatformPartial, isAgentPlatformFull, agentPlatformStatus, agentPlatformSatisfiedTerms } from '../lib/profiles.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 const CORE = {
   protocolVersion: '1.0',
@@ -59,24 +58,24 @@ function floorPayload(extra: Record<string, unknown> = {}): Record<string, unkno
 describe('agent-platform-profile: floor (partial) predicate (RFC 0085 §B, server-free)', () => {
   it('a host meeting all floor flags is partial', () => {
     const c = floorPayload();
-    expect(isAgentPlatformPartial(c), why('agent-platform-profile.md §B', 'all floor flags ⇒ partial')).toBe(true);
-    expect(agentPlatformStatus(c)).toBe('partial');
+    expect(isAgentPlatformPartial(c), req('openwop.it.agent-platform-profile.a-host-meeting-all-floor-flags-is-partial', 'agent-platform-profile.md §B', 'all floor flags ⇒ partial')).toBe(true);
+    expect(agentPlatformStatus(c), req('openwop.it.agent-platform-profile.a-host-meeting-all-floor-flags-is-partial', 'RFC 0085', 'a host meeting all floor flags is partial')).toBe('partial');
   });
 
   it('missing a single floor flag (feedback) ⇒ none', () => {
     const c = floorPayload({ feedback: { supported: false } });
-    expect(isAgentPlatformPartial(c), why('agent-platform-profile.md §B', 'a missing floor flag ⇒ not partial')).toBe(false);
-    expect(agentPlatformStatus(c)).toBe('none');
+    expect(isAgentPlatformPartial(c), req('openwop.it.agent-platform-profile.missing-a-single-floor-flag-feedback-none', 'agent-platform-profile.md §B', 'a missing floor flag ⇒ not partial')).toBe(false);
+    expect(agentPlatformStatus(c), req('openwop.it.agent-platform-profile.missing-a-single-floor-flag-feedback-none', 'RFC 0085', 'missing a single floor flag (feedback) ⇒ none')).toBe('none');
   });
 
   it('replay-OR-nondeterminism: no replay but declared nondeterminism still meets the floor', () => {
     const c = floorPayload({ replay: { supported: false }, nondeterminismPolicy: { declared: true } });
-    expect(isAgentPlatformPartial(c), why('agent-platform-profile.md §B', 'declared nondeterminism satisfies the replay-OR term')).toBe(true);
+    expect(isAgentPlatformPartial(c), req('openwop.it.agent-platform-profile.replay-or-nondeterminism-no-replay-but-declared-nondeterminism-still-meets-the-f', 'agent-platform-profile.md §B', 'declared nondeterminism satisfies the replay-OR term')).toBe(true);
   });
 
   it('neither replay nor declared nondeterminism ⇒ floor unmet', () => {
     const c = floorPayload({ replay: { supported: false } });
-    expect(isAgentPlatformPartial(c), why('agent-platform-profile.md §B', 'neither replay nor declared policy ⇒ not partial')).toBe(false);
+    expect(isAgentPlatformPartial(c), req('openwop.it.agent-platform-profile.neither-replay-nor-declared-nondeterminism-floor-unmet', 'agent-platform-profile.md §B', 'neither replay nor declared policy ⇒ not partial')).toBe(false);
   });
 });
 
@@ -92,8 +91,8 @@ describe('agent-platform-profile: full predicate + honest-advertisement (RFC 008
 
   it('a host meeting floor + all governance terms is full', () => {
     const c = floorPayload(fullExtra);
-    expect(isAgentPlatformFull(c), why('agent-platform-profile.md §B', 'floor + governance ⇒ full')).toBe(true);
-    expect(agentPlatformStatus(c)).toBe('full');
+    expect(isAgentPlatformFull(c), req('openwop.it.agent-platform-profile.a-host-meeting-floor-all-governance-terms-is-full', 'agent-platform-profile.md §B', 'floor + governance ⇒ full')).toBe(true);
+    expect(agentPlatformStatus(c), req('openwop.it.agent-platform-profile.a-host-meeting-floor-all-governance-terms-is-full', 'RFC 0085', 'a host meeting floor + all governance terms is full')).toBe('full');
   });
 
   it('a host advertising governance flags but missing tenant installScope reports partial, not full', () => {
@@ -101,13 +100,13 @@ describe('agent-platform-profile: full predicate + honest-advertisement (RFC 008
       ...fullExtra,
       agents: { manifestRuntime: { supported: true, installScope: 'host' }, liveRuntime: { supported: true } },
     });
-    expect(isAgentPlatformFull(c), why('agent-platform-profile.md §D', 'missing a governance term ⇒ MUST NOT be full')).toBe(false);
-    expect(agentPlatformStatus(c)).toBe('partial');
+    expect(isAgentPlatformFull(c), req('openwop.it.agent-platform-profile.a-host-advertising-governance-flags-but-missing-tenant-installscope-reports-part', 'agent-platform-profile.md §D', 'missing a governance term ⇒ MUST NOT be full')).toBe(false);
+    expect(agentPlatformStatus(c), req('openwop.it.agent-platform-profile.a-host-advertising-governance-flags-but-missing-tenant-installscope-reports-part', 'RFC 0085', 'a host advertising governance flags but missing tenant installScope reports partial, not full')).toBe('partial');
   });
 
   it('eval/deploy/budget are NOT hard full terms (a full host without them is still full)', () => {
     const c = floorPayload(fullExtra); // no agents.evalSuite / agents.deployment / budget
-    expect(isAgentPlatformFull(c), why('agent-platform-profile.md §B', 'platform-plus tier is advisory, not a hard full term')).toBe(true);
+    expect(isAgentPlatformFull(c), req('openwop.it.agent-platform-profile.eval-deploy-budget-are-not-hard-full-terms-a-full-host-without-them-is-still-ful', 'agent-platform-profile.md §B', 'platform-plus tier is advisory, not a hard full term')).toBe(true);
   });
 });
 
@@ -126,12 +125,12 @@ describe('agent-platform-profile: satisfiedTerms[] non-contiguous adoption (RFC 
       feedback: { supported: true },
       replay: { supported: true },
     } as Record<string, unknown>;
-    expect(agentPlatformStatus(c), why('agent-platform-profile.md §D', 'floor unmet ⇒ none')).toBe('none');
+    expect(agentPlatformStatus(c), req('openwop.it.agent-platform-profile.a-host-honoring-full-tier-terms-but-failing-floor-terms-is-status-none-yet-has-a', 'agent-platform-profile.md §D', 'floor unmet ⇒ none')).toBe('none');
     const terms = agentPlatformSatisfiedTerms(c);
-    expect(terms.includes('full:authorization'), why('§D', 'a satisfied full term is reported even at none')).toBe(true);
-    expect(terms.includes('full:memory.attribution')).toBe(true);
+    expect(terms.includes('full:authorization'), req('openwop.it.agent-platform-profile.a-host-honoring-full-tier-terms-but-failing-floor-terms-is-status-none-yet-has-a', '§D', 'a satisfied full term is reported even at none')).toBe(true);
+    expect(terms.includes('full:memory.attribution'), req('openwop.it.agent-platform-profile.a-host-honoring-full-tier-terms-but-failing-floor-terms-is-status-none-yet-has-a', 'RFC 0085', 'a host honoring full-tier terms but failing floor terms is status none yet has a non-empty satisfiedTerms[]')).toBe(true);
     expect(terms.includes('full:tenant-installScope')).toBe(true);
-    expect(terms.includes('floor:agents.liveRuntime'), why('§D', 'an unmet floor term is NOT reported')).toBe(false);
+    expect(terms.includes('floor:agents.liveRuntime'), req('openwop.it.agent-platform-profile.a-host-honoring-full-tier-terms-but-failing-floor-terms-is-status-none-yet-has-a', '§D', 'an unmet floor term is NOT reported')).toBe(false);
     expect(terms.length).toBeGreaterThan(0); // distinguishable from a 0/16 do-nothing host
   });
 
@@ -144,7 +143,7 @@ describe('agent-platform-profile: satisfiedTerms[] non-contiguous adoption (RFC 
       triggerBridge: { supported: true },
       httpClient: { safeFetch: { supported: true }, egressPolicy: { supported: true } },
     });
-    expect(agentPlatformSatisfiedTerms(c).length, why('§D', 'a full host satisfies all 16 terms')).toBe(16);
+    expect(agentPlatformSatisfiedTerms(c).length, req('openwop.it.agent-platform-profile.a-full-host-reports-all-sixteen-terms-satisfied', '§D', 'a full host satisfies all 16 terms')).toBe(16);
   });
 });
 
@@ -153,7 +152,7 @@ describe('agent-platform-profile: capability shape (RFC 0085, server-free)', () 
     const caps = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8')) as { properties?: Record<string, { properties?: Record<string, unknown> }> };
     expect(
       caps.properties?.nondeterminismPolicy?.properties?.declared,
-      why('agent-platform-profile.md §B', 'capabilities.nondeterminismPolicy.declared MUST be declared'),
+      req('openwop.it.agent-platform-profile.capabilities-nondeterminismpolicy-declared-is-declared', 'agent-platform-profile.md §B', 'capabilities.nondeterminismPolicy.declared MUST be declared'),
     ).toBeDefined();
   });
 });

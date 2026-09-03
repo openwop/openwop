@@ -52,6 +52,7 @@ import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntil } from '../lib/polling.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-multi-agent-confidence-escalation';
@@ -92,7 +93,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-confidence-escalation: capability shape 
     if (floor === undefined) return softSkip('blocked', 'precondition not met — `floor === undefined` returned early (seam, prior step, or fixture unavailable)');
     expect(
       typeof floor === 'number' && Number.isFinite(floor) && floor >= 0.5 && floor <= 1.0,
-      driver.describe(
+      req('openwop.it.multi-agent-confidence-escalation.confidenceescalationfloor-when-advertised-must-be-in-0-5-1-0', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A',
         'confidenceEscalationFloor MUST be number in [0.5, 1.0]; values below the spec floor are non-conformant',
       ),
@@ -140,7 +141,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
       const expectedStatus = advertisedKind === 'clarification' ? 'waiting-clarification' : 'waiting-approval';
       expect(
         terminal.status,
-        driver.describe(
+        req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 
           'RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md §B',
           `host advertising confidenceEscalationInterruptKind: "${advertisedKind}" MUST surface the run as "${expectedStatus}" per spec/v1/interrupt.md §"Interrupt kinds"`,
         ),
@@ -149,7 +150,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
       const status = terminal.status as string;
       expect(
         typeof status === 'string' && status.startsWith('waiting-'),
-        driver.describe(
+        req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 
           'RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md §B',
           `host advertising vendor confidenceEscalationInterruptKind ("${advertisedKind}") MUST surface the run as a waiting-* status; the suffix is determined by the host's interrupt.md mapping (see the host's vendor-extensions doc per RFC 0044 §C)`,
         ),
@@ -159,7 +160,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
       const acceptedStatuses = ['waiting-clarification', 'waiting-approval'];
       expect(
         acceptedStatuses.includes(terminal.status as string),
-        driver.describe(
+        req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 
           'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A + spec/v1/interrupt.md',
           'a host below the confidence floor MUST surface the run as `waiting-clarification` (clarify-kind escalation) OR `waiting-approval` (escalate-kind escalation) per RFC 0039 §A; the low-confidence decision MUST NOT reach `completed` because no dispatch fired',
         ),
@@ -171,21 +172,21 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
 
     const escalated = events.filter((e) => e.type === 'core.workflowChain.confidence-escalated');
-    expect(escalated.length, driver.describe(
+    expect(escalated.length, req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 
       'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A',
       'low-confidence decision MUST emit exactly one core.workflowChain.confidence-escalated event',
     )).toBe(1);
 
     const ev = escalated[0]!;
     const payload = (ev.payload ?? {}) as { confidence?: number; floor?: number; escalationKind?: string; workerId?: string };
-    expect(payload.confidence, 'payload.confidence echoes the decision').toBe(0.3);
+    expect(payload.confidence, req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A', 'payload.confidence echoes the decision')).toBe(0.3);
     expect(
       typeof payload.floor === 'number' && payload.floor >= 0.5 && payload.floor <= 1.0,
-      'payload.floor is the host-advertised floor (in [0.5, 1.0])',
+      req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A', 'payload.floor is the host-advertised floor (in [0.5, 1.0])'),
     ).toBe(true);
     expect(
       payload.escalationKind === 'clarify' || payload.escalationKind === 'escalate',
-      'payload.escalationKind ∈ {clarify, escalate}',
+      req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A', 'payload.escalationKind ∈ {clarify, escalate}'),
     ).toBe(true);
 
     // Causation (S32, 2026-08-17): this leg used to REQUIRE `causationId` → a
@@ -202,7 +203,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
       const cause = events.find((e) => e.eventId === ev.causationId);
       expect(
         cause !== undefined,
-        driver.describe(
+        req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 
           'spec/v1/multi-agent-execution.md §"Confidence escalation"',
           `confidence-escalated causationId (${ev.causationId}) MUST resolve to an event on this run's log when present`,
         ),
@@ -211,14 +212,14 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     const original = (ev.payload as { originalDecision?: unknown } | undefined)?.originalDecision;
     expect(
       original !== null && typeof original === 'object',
-      driver.describe('run-event-payloads.schema.json §confidence-escalated', 'payload.originalDecision carries the escalated OrchestratorDecision verbatim — the decision is on the log HERE, not on a prior decided event'),
+      req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 'run-event-payloads.schema.json §confidence-escalated', 'payload.originalDecision carries the escalated OrchestratorDecision verbatim — the decision is on the log HERE, not on a prior decided event'),
     ).toBe(true);
 
     // Load-bearing: NO dispatch event fired. RFC 0039 gates BEFORE the loop.
     const chainEvents = events.filter((e) => e.type === 'core.workflowChain.event');
     expect(
       chainEvents.length,
-      driver.describe(
+      req('openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte', 
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A',
         'low-confidence decision MUST NOT produce any core.workflowChain.event records — the escalation fires before any dispatch.began per the spec ordering',
       ),

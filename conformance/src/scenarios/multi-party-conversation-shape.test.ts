@@ -44,9 +44,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -59,7 +57,7 @@ describe('multi-party-conversation-shape: participant roster on conversation.ope
   const opened = ajv.getSchema('conversation-event#/$defs/ConversationOpenedPayload');
 
   it('the ConversationOpenedPayload $def exists and declares participants: AgentRef[]', () => {
-    expect(opened, 'the ConversationOpenedPayload $def MUST exist').toBeTruthy();
+    expect(opened, req('openwop.it.multi-party-conversation-shape.the-conversationopenedpayload-def-exists-and-declares-participants-agentref', 'RFC 0101', 'the ConversationOpenedPayload $def MUST exist')).toBeTruthy();
   });
 
   it('a conforming 3-agent council transcript (participant roster + user opening turn) validates', () => {
@@ -80,7 +78,7 @@ describe('multi-party-conversation-shape: participant roster on conversation.ope
         turnIndex: 0,
       },
     };
-    expect(opened!(good), why('RFC 0101 §Schema', 'a conversation.opened with a participant roster MUST validate')).toBe(true);
+    expect(opened!(good), req('openwop.it.multi-party-conversation-shape.a-conforming-3-agent-council-transcript-participant-roster-user-opening-turn-val', 'RFC 0101 §Schema', 'a conversation.opened with a participant roster MUST validate')).toBe(true);
   });
 
   it('a participant entry that is not a valid AgentRef (no agentId) is rejected', () => {
@@ -96,7 +94,7 @@ describe('multi-party-conversation-shape: participant roster on conversation.ope
         turnIndex: 0,
       },
     };
-    expect(opened!(bad), why('RFC 0101 §Schema', 'a participants[] item without agentId MUST be rejected')).toBe(false);
+    expect(opened!(bad), req('openwop.it.multi-party-conversation-shape.a-participant-entry-that-is-not-a-valid-agentref-no-agentid-is-rejected', 'RFC 0101 §Schema', 'a participants[] item without agentId MUST be rejected')).toBe(false);
   });
 
   it('participants is OPTIONAL — a single-agent conversation.opened (no roster) still validates (back-compat)', () => {
@@ -112,7 +110,7 @@ describe('multi-party-conversation-shape: participant roster on conversation.ope
         turnIndex: 0,
       },
     };
-    expect(opened!(noRoster), why('RFC 0101 §Compatibility', 'participants is additive — a roster-less conversation MUST still validate')).toBe(true);
+    expect(opened!(noRoster), req('openwop.it.multi-party-conversation-shape.participants-is-optional-a-single-agent-conversation-opened-no-roster-still-vali', 'RFC 0101 §Compatibility', 'participants is additive — a roster-less conversation MUST still validate')).toBe(true);
   });
 });
 
@@ -133,25 +131,25 @@ describe('multi-party-conversation-shape: per-turn speaker attribution (RFC 0101
   it('an agent turn WITH a roster-instance speakerId validates', () => {
     expect(
       turn({ ...agentBase, speakerId: 'host:advisor-cfo' }),
-      why('RFC 0101 §Schema', "a role:'agent' turn carrying speakerId MUST validate"),
+      req('openwop.it.multi-party-conversation-shape.an-agent-turn-with-a-roster-instance-speakerid-validates', 'RFC 0101 §Schema', "a role:'agent' turn carrying speakerId MUST validate"),
     ).toBe(true);
   });
 
   it("a role:'agent' turn MISSING speakerId MUST fail schema validation (the attribution MUST)", () => {
     expect(
       turn(agentBase),
-      why('RFC 0101 §Schema', "a role:'agent' turn that omits speakerId MUST be rejected (the conditional required)"),
+      req('openwop.it.multi-party-conversation-shape.a-role-agent-turn-missing-speakerid-must-fail-schema-validation-the-attribution', 'RFC 0101 §Schema', "a role:'agent' turn that omits speakerId MUST be rejected (the conditional required)"),
     ).toBe(false);
   });
 
   it("speakerId is OPTIONAL for role:'user' / role:'system' turns (additive — pre-RFC-0101 producers)", () => {
     expect(
       turn({ messageId: 'council-q1:0:user', from: 'user', content: 'Q3 or Q4?', ts: 1, role: 'user', turnIndex: 0 }),
-      why('RFC 0101 §Compatibility', "a role:'user' turn without speakerId MUST still validate"),
+      req('openwop.it.multi-party-conversation-shape.speakerid-is-optional-for-role-user-role-system-turns-additive-pre-rfc-0101-prod', 'RFC 0101 §Compatibility', "a role:'user' turn without speakerId MUST still validate"),
     ).toBe(true);
     expect(
       turn({ messageId: 'council-q1:9:system', from: 'system', content: 'conversation timed out', ts: 1, role: 'system', turnIndex: 9 }),
-      why('RFC 0101 §Compatibility', "a role:'system' turn without speakerId MUST still validate"),
+      req('openwop.it.multi-party-conversation-shape.speakerid-is-optional-for-role-user-role-system-turns-additive-pre-rfc-0101-prod', 'RFC 0101 §Compatibility', "a role:'system' turn without speakerId MUST still validate"),
     ).toBe(true);
   });
 });
@@ -166,13 +164,13 @@ describe('multi-party-conversation-shape: non-participant turn detection (RFC 01
   const roster = new Set(['host:advisor-cfo', 'host:advisor-cmo', 'host:advisor-cto']);
 
   it('a turn whose speakerId IS a participant is admissible', () => {
-    expect(roster.has('host:advisor-cmo'), why('RFC 0101 §Spec', 'an agent in the roster MAY speak')).toBe(true);
+    expect(roster.has('host:advisor-cmo'), req('openwop.it.multi-party-conversation-shape.a-turn-whose-speakerid-is-a-participant-is-admissible', 'RFC 0101 §Spec', 'an agent in the roster MAY speak')).toBe(true);
   });
 
   it('a turn whose speakerId is NOT a participant MUST be rejected by the host (roster membership)', () => {
     expect(
       roster.has('host:advisor-intruder'),
-      why('RFC 0101 §Spec', 'a turn from a non-participant agent MUST be rejected'),
+      req('openwop.it.multi-party-conversation-shape.a-turn-whose-speakerid-is-not-a-participant-must-be-rejected-by-the-host-roster', 'RFC 0101 §Spec', 'a turn from a non-participant agent MUST be rejected'),
     ).toBe(false);
   });
 });
@@ -184,11 +182,11 @@ describe('multi-party-conversation-shape: capability advertisement (RFC 0101 §S
     const mpc = props.multiPartyConversation as
       | { properties?: Record<string, unknown>; required?: string[]; additionalProperties?: boolean }
       | undefined;
-    expect(mpc, why('RFC 0101 §Schema', 'capabilities.multiPartyConversation MUST be declared')).toBeDefined();
-    expect(mpc?.properties?.supported, why('RFC 0101 §Schema', 'multiPartyConversation.supported MUST be declared')).toBeDefined();
-    expect(mpc?.properties?.maxParticipants, why('RFC 0101 §Schema', 'multiPartyConversation.maxParticipants MUST be declared (optional)')).toBeDefined();
-    expect(mpc?.required, why('RFC 0101 §Schema', 'supported MUST be required on the block')).toContain('supported');
-    expect(mpc?.additionalProperties, why('RFC 0101 §Schema', 'the multiPartyConversation block MUST be closed')).toBe(false);
+    expect(mpc, req('openwop.it.multi-party-conversation-shape.capabilities-schema-json-declares-multipartyconversation-with-supported-optional', 'RFC 0101 §Schema', 'capabilities.multiPartyConversation MUST be declared')).toBeDefined();
+    expect(mpc?.properties?.supported, req('openwop.it.multi-party-conversation-shape.capabilities-schema-json-declares-multipartyconversation-with-supported-optional', 'RFC 0101 §Schema', 'multiPartyConversation.supported MUST be declared')).toBeDefined();
+    expect(mpc?.properties?.maxParticipants, req('openwop.it.multi-party-conversation-shape.capabilities-schema-json-declares-multipartyconversation-with-supported-optional', 'RFC 0101 §Schema', 'multiPartyConversation.maxParticipants MUST be declared (optional)')).toBeDefined();
+    expect(mpc?.required, req('openwop.it.multi-party-conversation-shape.capabilities-schema-json-declares-multipartyconversation-with-supported-optional', 'RFC 0101 §Schema', 'supported MUST be required on the block')).toContain('supported');
+    expect(mpc?.additionalProperties, req('openwop.it.multi-party-conversation-shape.capabilities-schema-json-declares-multipartyconversation-with-supported-optional', 'RFC 0101 §Schema', 'the multiPartyConversation block MUST be closed')).toBe(false);
   });
 
   it('the multiPartyConversation block validates a conforming advertisement and rejects extras', () => {
@@ -197,10 +195,10 @@ describe('multi-party-conversation-shape: capability advertisement (RFC 0101 §S
     const ajv = new Ajv2020({ strict: false, allErrors: true });
     addFormats(ajv);
     const validate = ajv.compile(mpc);
-    expect(validate({ supported: true, maxParticipants: 8 }), why('RFC 0101 §Schema', 'a conforming advertisement MUST validate')).toBe(true);
-    expect(validate({ supported: true }), why('RFC 0101 §Schema', 'maxParticipants is optional')).toBe(true);
-    expect(validate({ maxParticipants: 8 }), why('RFC 0101 §Schema', 'supported is required')).toBe(false);
-    expect(validate({ supported: true, unexpected: 1 }), why('RFC 0101 §Schema', 'an extra key MUST be rejected (closed block)')).toBe(false);
-    expect(validate({ supported: true, maxParticipants: 1 }), why('RFC 0101 §Schema', 'maxParticipants minimum is 2 (a council has ≥2)')).toBe(false);
+    expect(validate({ supported: true, maxParticipants: 8 }), req('openwop.it.multi-party-conversation-shape.the-multipartyconversation-block-validates-a-conforming-advertisement-and-reject', 'RFC 0101 §Schema', 'a conforming advertisement MUST validate')).toBe(true);
+    expect(validate({ supported: true }), req('openwop.it.multi-party-conversation-shape.the-multipartyconversation-block-validates-a-conforming-advertisement-and-reject', 'RFC 0101 §Schema', 'maxParticipants is optional')).toBe(true);
+    expect(validate({ maxParticipants: 8 }), req('openwop.it.multi-party-conversation-shape.the-multipartyconversation-block-validates-a-conforming-advertisement-and-reject', 'RFC 0101 §Schema', 'supported is required')).toBe(false);
+    expect(validate({ supported: true, unexpected: 1 }), req('openwop.it.multi-party-conversation-shape.the-multipartyconversation-block-validates-a-conforming-advertisement-and-reject', 'RFC 0101 §Schema', 'an extra key MUST be rejected (closed block)')).toBe(false);
+    expect(validate({ supported: true, maxParticipants: 1 }), req('openwop.it.multi-party-conversation-shape.the-multipartyconversation-block-validates-a-conforming-advertisement-and-reject', 'RFC 0101 §Schema', 'maxParticipants minimum is 2 (a council has ≥2)')).toBe(false);
   });
 });

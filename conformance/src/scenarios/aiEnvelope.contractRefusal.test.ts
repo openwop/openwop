@@ -35,10 +35,10 @@ describe('aiEnvelope.contractRefusal: advertisement shape (FINAL v1.1)', () => {
     const body = res.json as DiscoveryDoc | undefined;
     const top = discoveryFamilies(body);
     const block = top && typeof top === 'object' ? top['envelopeContracts'] : undefined;
-    if (block === undefined) return; // absent — skip
+    if (block === undefined) return softSkip('blocked', 'precondition not met — `block === undefined` returned early (absent — skip) (seam, prior step, or fixture unavailable)'); // absent — skip
     expect(
       typeof (block as Record<string, unknown>)['advertised'],
-      driver.describe(
+      req('openwop.it.aiEnvelope.contractRefusal.opted-in-hosts-advertise-envelopecontracts-advertised-as-a-boolean', 
         'ai-envelope.md §"Capability handshake integration"',
         'envelopeContracts.advertised MUST be a boolean when present',
       ),
@@ -69,10 +69,10 @@ describe('aiEnvelope.contractRefusal: behavioral accept-gate (FINAL v1.1)', () =
         nodeAllowedKinds: ['vendor.x.foo.create'],
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe('ai-envelope.md §"Envelope Contract"', 'envelope outside node accepts[] MUST be refused'),
+      req('openwop.it.aiEnvelope.contractRefusal.node-with-nodeallowedkinds-vendor-x-foo-create-emits-vendor-x-bar-create-status', 'ai-envelope.md §"Envelope Contract"', 'envelope outside node accepts[] MUST be refused'),
     ).toBe('gated');
   });
 
@@ -91,9 +91,9 @@ describe('aiEnvelope.contractRefusal: behavioral accept-gate (FINAL v1.1)', () =
         nodeAllowedKinds: ['vendor.x.foo.create'],
       },
     );
-    if (r.status === 404) return;
-    expect(Array.isArray(r.body.allowedKinds), 'allowedKinds MUST be an array').toBe(true);
-    expect(r.body.allowedKinds, 'allowedKinds MUST include universals + declared accepts').toEqual(
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(Array.isArray(r.body.allowedKinds), req('openwop.it.aiEnvelope.contractRefusal.gated-outcome-carries-the-union-of-universals-node-declared-accepts-as-allowedki', 'spec/v1/ai-envelope.md', 'allowedKinds MUST be an array')).toBe(true);
+    expect(r.body.allowedKinds, req('openwop.it.aiEnvelope.contractRefusal.gated-outcome-carries-the-union-of-universals-node-declared-accepts-as-allowedki', 'spec/v1/ai-envelope.md', 'allowedKinds MUST include universals + declared accepts')).toEqual(
       expect.arrayContaining(['clarification.request', 'schema.request', 'schema.response', 'error', 'vendor.x.foo.create']),
     );
   });
@@ -110,10 +110,10 @@ describe('aiEnvelope.contractRefusal: behavioral accept-gate (FINAL v1.1)', () =
       },
       { nodeAllowedKinds: ['vendor.x.foo.create'] }, // doesn't include clarification.request
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe('ai-envelope.md §"Universal kinds"', 'universal kinds MUST be accepted regardless of node accepts[]'),
+      req('openwop.it.aiEnvelope.contractRefusal.universals-are-accepted-regardless-of-nodeallowedkinds-always-allowed', 'ai-envelope.md §"Universal kinds"', 'universal kinds MUST be accepted regardless of node accepts[]'),
     ).toBe('accepted');
   });
 
@@ -132,20 +132,22 @@ describe('aiEnvelope.contractRefusal: behavioral accept-gate (FINAL v1.1)', () =
         nodeAllowedKinds: ['vendor.unadvertised.kind'], // node would allow but host doesn't
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe('ai-envelope.md §"Capability handshake integration"', 'host gate MUST fire before node gate'),
+      req('openwop.it.aiEnvelope.contractRefusal.host-supportedenvelopes-gate-fires-before-node-accepts-gate-kind-unadvertised-ga', 'ai-envelope.md §"Capability handshake integration"', 'host gate MUST fire before node gate'),
     ).toBe('gated');
   });
 });
 
 // E.1 engine-projection via the test-only event-log seam.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () => {
   it('gated (fail-node) → node.failed { error.code: "envelope_contract_violation" }', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cr-fail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const r = await accept(
       {
@@ -162,19 +164,19 @@ describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () 
         projectTo: { runId, nodeId: 'n', refusalMode: 'fail-node' },
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('gated');
     const events = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!events.ok || events.events.length === 0) return;
+    if (!events.ok || events.events.length === 0) return softSkip('blocked', 'precondition not met — `!events.ok || events.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
     const err = events.events[0]!.payload.error as { code?: string; details?: { refusedType?: string; acceptedTypes?: string[] } };
     expect(
       err.code,
-      driver.describe('ai-envelope.md §"Envelope Contract"', 'gated outcome MUST project to node.failed with error.code = envelope_contract_violation'),
+      req('openwop.it.aiEnvelope.contractRefusal.gated-fail-node-node-failed-error-code-envelope-contract-violation', 'ai-envelope.md §"Envelope Contract"', 'gated outcome MUST project to node.failed with error.code = envelope_contract_violation'),
     ).toBe('envelope_contract_violation');
   });
 
   it('refused envelope: error.details.refusedType names emitted kind; acceptedTypes lists allowed kinds', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cr-details-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -192,17 +194,17 @@ describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () 
       },
     );
     const events = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!events.ok || events.events.length === 0) return;
+    if (!events.ok || events.events.length === 0) return softSkip('blocked', 'precondition not met — `!events.ok || events.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
     const details = (events.events[0]!.payload.error as { details?: { refusedType?: string; acceptedTypes?: string[] } }).details;
     expect(details?.refusedType).toBe('vendor.x.bar.create');
     expect(
       Array.isArray(details?.acceptedTypes) && details!.acceptedTypes!.includes('vendor.x.foo.create'),
-      driver.describe('ai-envelope.md §"Envelope Contract"', 'error.details.acceptedTypes MUST list the node\'s declared accepts[] (plus universals)'),
+      req('openwop.it.aiEnvelope.contractRefusal.refused-envelope-error-details-refusedtype-names-emitted-kind-acceptedtypes-list', 'ai-envelope.md §"Envelope Contract"', 'error.details.acceptedTypes MUST list the node\'s declared accepts[] (plus universals)'),
     ).toBe(true);
   });
 
   it('refusalMode:"discard-and-warn" → log.appended { level: "warn" } instead of node.failed', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cr-warn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -221,20 +223,20 @@ describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () 
     );
     const warnEvents = await queryTestEvents(runId, { type: 'log.appended' });
     const failEvents = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!warnEvents.ok || !failEvents.ok) return;
+    if (!warnEvents.ok || !failEvents.ok) return softSkip('blocked', 'precondition not met — `!warnEvents.ok || !failEvents.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       warnEvents.events.some((e) => (e.payload as { level?: string }).level === 'warn'),
-      driver.describe('ai-envelope.md §"Envelope Contract"', 'discard-and-warn MUST emit log.appended at warn level'),
+      req('openwop.it.aiEnvelope.contractRefusal.refusalmode-discard-and-warn-log-appended-level-warn-instead-of-node-failed', 'ai-envelope.md §"Envelope Contract"', 'discard-and-warn MUST emit log.appended at warn level'),
     ).toBe(true);
     expect(
       failEvents.events.length,
-      driver.describe('ai-envelope.md §"Envelope Contract"', 'discard-and-warn MUST NOT emit node.failed'),
+      req('openwop.it.aiEnvelope.contractRefusal.refusalmode-discard-and-warn-log-appended-level-warn-instead-of-node-failed', 'ai-envelope.md §"Envelope Contract"', 'discard-and-warn MUST NOT emit node.failed'),
     ).toBe(0);
     await resetTestSeam();
   });
 
   it('host-gate refusal (hostSupportedEnvelopes) projects to node.failed with envelope_contract_violation', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cr-host-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -252,10 +254,10 @@ describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () 
       },
     );
     const events = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!events.ok || events.events.length === 0) return;
+    if (!events.ok || events.events.length === 0) return softSkip('blocked', 'precondition not met — `!events.ok || events.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
     expect(
       (events.events[0]!.payload.error as { code?: string }).code,
-      driver.describe('ai-envelope.md §"Capability handshake integration"', 'host-gate refusal MUST project to node.failed envelope_contract_violation (stacks above node-gate)'),
+      req('openwop.it.aiEnvelope.contractRefusal.host-gate-refusal-hostsupportedenvelopes-projects-to-node-failed-with-envelope-c', 'ai-envelope.md §"Capability handshake integration"', 'host-gate refusal MUST project to node.failed envelope_contract_violation (stacks above node-gate)'),
     ).toBe('envelope_contract_violation');
   });
 });
@@ -277,10 +279,10 @@ describe('aiEnvelope.contractRefusal: capability-stacking (FINAL v1.1)', () => {
   });
 
   it('host.aiEnvelope.supported = false → envelope/accept refuses with capability_required BEFORE envelope contract gates', async () => {
-    if (!(await isToggleAvailable())) return; // seam not exposed — soft-skip
+    if (!(await isToggleAvailable())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isToggleAvailable())` returned early (seam not exposed — soft-skip)'); // seam not exposed — soft-skip
 
     const toggle = await setHostCapability('host.aiEnvelope.supported', false);
-    if (!toggle.ok) return;
+    if (!toggle.ok) return softSkip('blocked', 'precondition not met — `!toggle.ok` returned early (seam, prior step, or fixture unavailable)');
 
     // Same envelope shape that the existing host-gate scenario uses
     // (line 233-257 above) — the type IS in hostSupportedEnvelopes AND
@@ -301,17 +303,17 @@ describe('aiEnvelope.contractRefusal: capability-stacking (FINAL v1.1)', () => {
         nodeAllowedKinds: ['vendor.advertised.kind'],
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.contractRefusal.host-aienvelope-supported-false-envelope-accept-refuses-with-capability-required', 
         'ai-envelope.md §"Capability handshake integration"',
         'capability-absent host MUST refuse envelope acceptance regardless of host-gate / node-gate match',
       ),
     ).toBe('invalid');
     expect(
       r.body.reason,
-      driver.describe(
+      req('openwop.it.aiEnvelope.contractRefusal.host-aienvelope-supported-false-envelope-accept-refuses-with-capability-required', 
         'capabilities.md §"Unsupported capability — refusal contract"',
         'refusal reason MUST be capability_required (NOT envelope_contract_violation) — capability gate stacks above the envelope-contract gate',
       ),
@@ -319,9 +321,9 @@ describe('aiEnvelope.contractRefusal: capability-stacking (FINAL v1.1)', () => {
   });
 
   it('host.aiEnvelope.supported = true → envelope/accept falls through to envelope-contract gates', async () => {
-    if (!(await isToggleAvailable())) return;
+    if (!(await isToggleAvailable())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isToggleAvailable())` returned early');
     const toggle = await setHostCapability('host.aiEnvelope.supported', true);
-    if (!toggle.ok) return;
+    if (!toggle.ok) return softSkip('blocked', 'precondition not met — `!toggle.ok` returned early (seam, prior step, or fixture unavailable)');
 
     // With capability advertised, a normally-rejected envelope (type
     // not in hostSupportedEnvelopes) reaches the envelope-contract
@@ -343,10 +345,10 @@ describe('aiEnvelope.contractRefusal: capability-stacking (FINAL v1.1)', () => {
         nodeAllowedKinds: ['vendor.unadvertised.kind'],
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.contractRefusal.host-aienvelope-supported-true-envelope-accept-falls-through-to-envelope-contrac', 
         'ai-envelope.md §"Capability handshake integration"',
         'when capability IS advertised, envelope-contract gates run normally',
       ),

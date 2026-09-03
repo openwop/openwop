@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/clarification.request.schema.json",
+  "title": "ClarificationRequestPayload",
+  "description": "Payload for the universal `clarification.request` AI Envelope kind. Emitted by an LLM when it needs additional information from the user before continuing. The engine MUST lift this payload to a `kind: \"clarification\"` `InterruptPayload` per `spec/v1/interrupt.md` §\"`kind: 'clarification'`\" and pause the node, OR refuse the run with `not-applicable` if the host does not implement clarification (clarifications are part of the `openwop-interrupts` profile per `profiles.md`). Counts against `Capabilities.limits.clarificationRounds`; on breach the engine emits `cap.breached { kind: 'clarification' }` and fails the node per `capabilities.md` §\"Engine-enforced limits\".",
+  "type": "object",
+  "required": ["questions"],
+  "properties": {
+    "reasoning": {
+      "type": "string",
+      "description": "OPTIONAL chain-of-thought field per RFC 0030 §A. Hosts SHOULD instruct the model to populate this with its analytical process before emitting the structured fields when reasoning materially improves output quality. The field is informational only — hosts SHALL NOT route on its contents. Hosts MUST NOT reject envelopes where `reasoning` is absent. Subject to the same SR-1 redaction harness as other envelope payload fields per `ai-envelope.md` §\"Redaction (SR-1 carry-forward)\" and the `envelope-reasoning-secret-redaction` SECURITY invariant."
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One or more clarification questions to surface to the user. The engine MUST preserve ordering when lifting to the interrupt's `ClarificationData.questions[]`.",
+      "items": {
+        "type": "object",
+        "required": ["id", "question"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Stable id for this question within the envelope. Used by the matching `ClarificationResume.answers[].id`. SHOULD be deterministic across re-emissions of the same logical clarification (so replay can match answers to questions)."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable question text. Localization is host-handled; the spec does not normate a per-locale variant on the envelope."
+          },
+          "schema": {
+            "description": "Optional JSON Schema constraining the answer shape (choices, free-text length, etc.). When present, the host's resolve endpoint SHOULD validate the answer against this schema before returning it to the engine.",
+            "type": "object"
+          },
+          "context": {
+            "description": "Optional open-shape metadata bag the LLM MAY use to surface per-question UI hints, trace pointers, or related context. Host-defined. The engine treats this as opaque; SR-1 redaction (`ai-envelope.md` §\"Redaction (SR-1 carry-forward)\") walks every payload field recursively, so any BYOK material that ends up here is scrubbed before persistence.",
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "contextType": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Optional UI hint for the host (e.g., `\"approval-feedback\"`, `\"form-field\"`). Not normative; passed through to the lifted `ClarificationData.contextType`."
+    }
+  },
+  "additionalProperties": false
+}

@@ -51,6 +51,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { queryTestEvents, requireEvents } from '../lib/event-log-query.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForFile } from '../lib/scenario-disposition.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-failure';
 const FILE = 'durability-poison-exhaustion.test.ts';
@@ -90,7 +91,7 @@ if (SKIP_NO_FIXTURE) {
 describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates within a bounded number of attempts', () => {
   it('reaches terminal AND stops being retried, asserted on the log rather than on the status alone', async () => {
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
       'rest-endpoints.md',
       'POST /v1/runs MUST return 201 even for work that fails at runtime',
     )).toBe(201);
@@ -98,7 +99,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates with
 
     // ── First clause: a terminal, OPERATOR-VISIBLE state ─────────────────────
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
       'RFC 0158 §C.8',
       'deterministically failing work MUST reach a terminal, operator-visible state',
     )).toBe('failed');
@@ -118,13 +119,13 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates with
     // Non-vacuity: the failure must actually be ON the log. Without this, a host
     // returning an empty array would sail through every count comparison below,
     // since 0 === 0 after any wait.
-    expect(events.some((e) => e.type === 'node.failed'), driver.describe(
+    expect(events.some((e) => e.type === 'node.failed'), req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
       'RFC 0158 §C.8',
       'the run log MUST record the deterministic failure — an empty log makes every attempt count vacuous',
     )).toBe(true);
 
     const attemptsBefore = events.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
-    expect(attemptsBefore, driver.describe(
+    expect(attemptsBefore, req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
       'RFC 0158 §C.8',
       'at least one attempt MUST be recorded — zero attempts means nothing was delivered',
     )).toBeGreaterThan(0);
@@ -135,7 +136,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates with
     const after = requireEvents(second, 'RFC 0158 §C.8 attempt counting (post-terminal)');
     const attemptsAfter = after.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
 
-    expect(attemptsAfter, driver.describe(
+    expect(attemptsAfter, req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
       'RFC 0158 §C.8',
       'attempts MUST NOT continue after the run reports terminal — a host still redelivering records more',
     )).toBe(attemptsBefore);
@@ -143,7 +144,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates with
     // ── Optional ceiling, only when the operator supplies the declared bound ─
     const bound = declaredAttemptBound();
     if (bound !== null) {
-      expect(attemptsAfter, driver.describe(
+      expect(attemptsAfter, req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
         'RFC 0158 §C.8 + §B.5',
         'total attempts MUST NOT exceed the operator-declared attempt bound',
       )).toBeLessThanOrEqual(bound);

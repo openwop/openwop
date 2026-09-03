@@ -17,6 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -45,7 +46,7 @@ describe.skipIf(HTTP_SKIP)('sandbox-memory-cap: capability shape + behavioral (R
 
     expect(
       Number.isInteger(sb.memoryLimitBytes) && sb.memoryLimitBytes >= 1048576,
-      driver.describe(
+      req('openwop.it.sandbox-memory-cap.memorylimitbytes-must-be-integer-1-mib-when-present-per-schema', 
         'RFCS/0035-sandbox-execution-contract.md §A',
         'memoryLimitBytes MUST be integer ≥ 1 MiB (1048576)',
       ),

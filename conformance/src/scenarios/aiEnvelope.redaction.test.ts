@@ -40,11 +40,11 @@ async function isBYOKAdvertised(): Promise<boolean> {
 
 describe('aiEnvelope.redaction: advertisement shape (FINAL v1.1)', () => {
   it('hosts advertising envelopeContracts AND secrets honor SR-1 carry-forward', async () => {
-    if (!(await isBYOKAdvertised())) return; // BYOK not advertised — skip
+    if (!(await isBYOKAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isBYOKAdvertised())` returned early (BYOK not advertised — skip)'); // BYOK not advertised — skip
     // The contract is invariant-based, not capability-flag-based. The
     // advertisement-shape check is just "the host claims a BYOK surface";
     // behavioral assertions below exercise the redaction invariant.
-    expect(true).toBe(true);
+    expect(true, req('openwop.it.aiEnvelope.redaction.hosts-advertising-envelopecontracts-and-secrets-honor-sr-1-carry-forward', 'spec/v1/ai-envelope.md', 'hosts advertising envelopeContracts AND secrets honor SR-1 carry-forward')).toBe(true);
   });
 });
 
@@ -78,16 +78,16 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
       },
       { byokCanaries: CANARIES },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
-    expect(r.body.redactionCount, 'redactionCount MUST be > 0 when canary appears').toBeGreaterThan(0);
+    expect(r.body.redactionCount, req('openwop.it.aiEnvelope.redaction.canary-in-payload-substituted-with-canonical-sr-1-redacted-secretid-marker-per-a', 'ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'redactionCount MUST be > 0 when canary appears')).toBeGreaterThan(0);
     expect(
       JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE),
-      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'canary plaintext MUST be absent from the redacted view'),
+      req('openwop.it.aiEnvelope.redaction.canary-in-payload-substituted-with-canonical-sr-1-redacted-secretid-marker-per-a', 'ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'canary plaintext MUST be absent from the redacted view'),
     ).toBe(false);
     expect(
       JSON.stringify(r.body.redactedPayload),
-      driver.describe('agent-memory.md §SR-1 line 66', 'persisted entry MUST carry [REDACTED:<secretId>] in place of the plaintext'),
+      req('openwop.it.aiEnvelope.redaction.canary-in-payload-substituted-with-canonical-sr-1-redacted-secretid-marker-per-a', 'agent-memory.md §SR-1 line 66', 'persisted entry MUST carry [REDACTED:<secretId>] in place of the plaintext'),
     ).toContain(CANONICAL_MARKER);
   });
 
@@ -108,11 +108,11 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
       },
       { byokCanaries: CANARIES },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
     expect(
       JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE),
-      'no canary plaintext remnant anywhere in the redacted view (recursive scrub)',
+      req('openwop.it.aiEnvelope.redaction.canary-across-nested-object-fields-all-occurrences-scrubbed-with-canonical-marke', 'spec/v1/ai-envelope.md', 'no canary plaintext remnant anywhere in the redacted view (recursive scrub)'),
     ).toBe(false);
     // q1's question (1 occurrence), q2's context.trace (2 occurrences) = total 3
     expect(r.body.redactionCount).toBe(3);
@@ -132,14 +132,14 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
       },
       { byokCanaries: [C1, C2] },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
     const view = JSON.stringify(r.body.redactedPayload);
     expect(view.includes(C1.value)).toBe(false);
     expect(view.includes(C2.value)).toBe(false);
     expect(
       view.includes(`[REDACTED:${C1.secretId}]`) && view.includes(`[REDACTED:${C2.secretId}]`),
-      driver.describe('agent-memory.md §SR-1', 'each canary MUST be substituted with its OWN [REDACTED:<secretId>] marker'),
+      req('openwop.it.aiEnvelope.redaction.multiple-canaries-each-substituted-with-its-own-secretid-marker', 'agent-memory.md §SR-1', 'each canary MUST be substituted with its OWN [REDACTED:<secretId>] marker'),
     ).toBe(true);
   });
 
@@ -157,10 +157,10 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
       },
       { byokCanaries: CANARIES }, // canary NOT in payload; substitution count expected 0
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'redaction MUST run AFTER schema validation; pre-existing markers do not affect validation'),
+      req('openwop.it.aiEnvelope.redaction.redaction-runs-after-schema-validation-payload-with-redacted-shaped-substrings-s', 'ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'redaction MUST run AFTER schema validation; pre-existing markers do not affect validation'),
     ).toBe('accepted');
     // No canary present → redactionCount absent or 0
     expect(r.body.redactionCount ?? 0).toBe(0);
@@ -181,12 +181,12 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
       },
       { byokCanaries: CANARIES },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('invalid');
     const bodyString = JSON.stringify(r.body);
     expect(
       bodyString.includes(CANARY_VALUE),
-      driver.describe(
+      req('openwop.it.aiEnvelope.redaction.canary-in-invalid-envelope-validation-refusal-error-response-must-not-echo-the-c', 
         'SECURITY/threat-model-secret-leakage.md §SR-1',
         'error response on validation refusal MUST NOT echo BYOK canary plaintext',
       ),
@@ -197,10 +197,12 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
 // E.2 OTel scrape + E.3 debug-bundle seams.
 import { queryTestSpans, exportDebugBundle, isOtelSeamAvailable } from '../lib/otel-scrape.js';
 import { resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.redaction: OTel + debug-bundle scrape (E.2 + E.3)', () => {
   it('redacted canary plaintext MUST be absent from OTel envelope_* span attributes', async () => {
-    if (!(await isOtelSeamAvailable())) return;
+    if (!(await isOtelSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isOtelSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-red-otel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -214,11 +216,11 @@ describe('aiEnvelope.redaction: OTel + debug-bundle scrape (E.2 + E.3)', () => {
       { byokCanaries: CANARIES, projectTo: { runId, nodeId: 'n' } },
     );
     const spans = await queryTestSpans({ runId });
-    if (!spans.ok) return;
+    if (!spans.ok) return softSkip('blocked', 'precondition not met — `!spans.ok` returned early (seam, prior step, or fixture unavailable)');
     const allAttrs = spans.data.flatMap((s) => Object.values(s.attributes).map((v) => String(v)));
     expect(
       allAttrs.some((v) => v.includes(CANARY_VALUE)),
-      driver.describe(
+      req('openwop.it.aiEnvelope.redaction.redacted-canary-plaintext-must-be-absent-from-otel-envelope-span-attributes', 
         'SECURITY/threat-model-secret-leakage.md §SR-1',
         'BYOK canary plaintext MUST NOT appear in any OTel envelope_* span attribute',
       ),
@@ -227,7 +229,7 @@ describe('aiEnvelope.redaction: OTel + debug-bundle scrape (E.2 + E.3)', () => {
   });
 
   it('redacted canary plaintext MUST be absent from debug-bundle export', async () => {
-    if (!(await isOtelSeamAvailable())) return;
+    if (!(await isOtelSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isOtelSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-red-bundle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await accept(
       {
@@ -241,11 +243,11 @@ describe('aiEnvelope.redaction: OTel + debug-bundle scrape (E.2 + E.3)', () => {
       { byokCanaries: CANARIES, projectTo: { runId, nodeId: 'n' } },
     );
     const bundle = await exportDebugBundle(runId);
-    if (!bundle.ok) return;
+    if (!bundle.ok) return softSkip('blocked', 'precondition not met — `!bundle.ok` returned early (seam, prior step, or fixture unavailable)');
     const serialized = JSON.stringify(bundle.data);
     expect(
       serialized.includes(CANARY_VALUE),
-      driver.describe(
+      req('openwop.it.aiEnvelope.redaction.redacted-canary-plaintext-must-be-absent-from-debug-bundle-export', 
         'SECURITY/threat-model-secret-leakage.md §SR-1',
         'BYOK canary plaintext MUST NOT appear in the debug-bundle export (events + spans)',
       ),

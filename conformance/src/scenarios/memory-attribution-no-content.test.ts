@@ -13,9 +13,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('memory-attribution-no-content (RFC 0057 §C)', () => {
   it('memory.written payloads carry no entry content', async () => {
@@ -26,7 +26,7 @@ describe('memory-attribution-no-content (RFC 0057 §C)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (seam, prior step, or fixture unavailable)');
     }
     const events = await memoryWrittenEvents(runId);
     if (events.length === 0) return softSkip('blocked', 'run wrote no memory — soft-skip (events.length === 0)');
@@ -34,12 +34,12 @@ describe('memory-attribution-no-content (RFC 0057 §C)', () => {
       const payload = e.payload ?? {};
       expect(
         'content' in payload,
-        driver.describe('RFC 0057 §C', 'memory.written MUST NOT carry the entry content field'),
+        req('openwop.it.memory-attribution-no-content.memory-written-payloads-carry-no-entry-content', 'RFC 0057 §C', 'memory.written MUST NOT carry the entry content field'),
       ).toBe(false);
       expect(
         typeof (payload as { memoryRef?: unknown }).memoryRef === 'string' &&
           typeof (payload as { memoryId?: unknown }).memoryId === 'string',
-        driver.describe('RFC 0057 §B', 'memory.written MUST carry memoryRef + memoryId identifiers'),
+        req('openwop.it.memory-attribution-no-content.memory-written-payloads-carry-no-entry-content', 'RFC 0057 §B', 'memory.written MUST carry memoryRef + memoryId identifiers'),
       ).toBe(true);
     }
   });

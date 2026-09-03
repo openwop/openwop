@@ -13,8 +13,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('tool-hooks-authorization-fail-closed (RFC 0064 §C)', () => {
   it('a principal lacking a tool scope is denied and the tool is not invoked', async () => {
@@ -30,11 +30,11 @@ describe('tool-hooks-authorization-fail-closed (RFC 0064 §C)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       (res.toolReturned ?? {}).status,
-      driver.describe('RFC 0064 §C', 'a missing/unevaluable tool scope MUST fail closed → status:"forbidden"'),
+      req('openwop.it.tool-hooks-authorization-fail-closed.a-principal-lacking-a-tool-scope-is-denied-and-the-tool-is-not-invoked', 'RFC 0064 §C', 'a missing/unevaluable tool scope MUST fail closed → status:"forbidden"'),
     ).toBe('forbidden');
     expect(
       (res.toolReturned ?? {}).durationMs,
-      driver.describe('RFC 0064 §C', 'a forbidden call never starts, so durationMs MUST be absent'),
+      req('openwop.it.tool-hooks-authorization-fail-closed.a-principal-lacking-a-tool-scope-is-denied-and-the-tool-is-not-invoked', 'RFC 0064 §C', 'a forbidden call never starts, so durationMs MUST be absent'),
     ).toBeUndefined();
   });
 });

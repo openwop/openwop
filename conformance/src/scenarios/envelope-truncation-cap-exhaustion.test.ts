@@ -19,6 +19,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-truncation-cap-exhaustion';
@@ -57,24 +59,24 @@ const PERPETUAL_TRUNCATION = Array.from({ length: 16 }, () => ({
 
 describe.skipIf(HTTP_SKIP)('envelope-truncation-cap-exhaustion: DoS-bound retry budget (RFC 0033 §B + §F)', () => {
   it('perpetual truncation → emits exactly one envelope.retry.exhausted with finalReason: "truncation"', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(PERPETUAL_TRUNCATION);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(seed.status).toBe(200);
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const exhausted = result.events.filter((e) => e.type === 'envelope.retry.exhausted');
     expect(
       exhausted.length,
-      driver.describe(
+      req('openwop.it.envelope-truncation-cap-exhaustion.perpetual-truncation-emits-exactly-one-envelope-retry-exhausted-with-finalreason', 
         'RFCS/0032-envelope-reliability-events.md §B.2',
         'exactly one envelope.retry.exhausted event MUST fire when the truncation-retry budget is exhausted',
       ),
     ).toBe(1);
     expect(
       exhausted[0]!.payload?.finalReason,
-      driver.describe(
+      req('openwop.it.envelope-truncation-cap-exhaustion.perpetual-truncation-emits-exactly-one-envelope-retry-exhausted-with-finalreason', 
         'RFCS/0033-envelope-completion-contract.md §B',
         'finalReason MUST be "truncation" when the host exhausts truncation retries (distinguished from schema-violation per RFC 0033 §A)',
       ),
@@ -82,16 +84,16 @@ describe.skipIf(HTTP_SKIP)('envelope-truncation-cap-exhaustion: DoS-bound retry 
   });
 
   it('node fails with RunSnapshot.error.code: "envelope_truncation_unrecoverable" per RFC 0033 §F', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(PERPETUAL_TRUNCATION);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const code = (result.terminal as { error?: { code?: string } }).error?.code;
     expect(
       code,
-      driver.describe(
+      req('openwop.it.envelope-truncation-cap-exhaustion.node-fails-with-runsnapshot-error-code-envelope-truncation-unrecoverable-per-rfc', 
         'RFCS/0033-envelope-completion-contract.md §F',
         'truncation-retry-exhaustion MUST surface as RunSnapshot.error.code = envelope_truncation_unrecoverable (distinct from envelope_invalid which surfaces schema-violation-exhaustion)',
       ),
@@ -99,18 +101,18 @@ describe.skipIf(HTTP_SKIP)('envelope-truncation-cap-exhaustion: DoS-bound retry 
   });
 
   it('total LLM calls bounded by maxRetryAttempts (DoS-bound — no infinite loop)', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(PERPETUAL_TRUNCATION);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     // Count envelope.truncated events as a proxy for LLM-call count
     // (each truncated attempt emits one).
     const truncatedCount = result.events.filter((e) => e.type === 'envelope.truncated').length;
     expect(
       truncatedCount,
-      driver.describe(
+      req('openwop.it.envelope-truncation-cap-exhaustion.total-llm-calls-bounded-by-maxretryattempts-dos-bound-no-infinite-loop', 
         'RFCS/0033-envelope-completion-contract.md §B',
         'truncation-retry count MUST be bounded — host cannot loop indefinitely doubling budget; expected upper-bound matches advertised maxRetryAttempts',
       ),
@@ -123,19 +125,19 @@ describe.skipIf(HTTP_SKIP)('envelope-truncation-cap-exhaustion: DoS-bound retry 
   });
 
   it('envelope.retry.exhausted is emitted BEFORE node.failed (cause precedes effect)', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(PERPETUAL_TRUNCATION);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const exhaustedIdx = result.events.findIndex((e) => e.type === 'envelope.retry.exhausted');
     const failedIdx = result.events.findIndex((e) => e.type === 'node.failed');
     expect(exhaustedIdx).toBeGreaterThanOrEqual(0);
     expect(failedIdx).toBeGreaterThanOrEqual(0);
     expect(
       exhaustedIdx < failedIdx,
-      driver.describe(
+      req('openwop.it.envelope-truncation-cap-exhaustion.envelope-retry-exhausted-is-emitted-before-node-failed-cause-precedes-effect', 
         'RFCS/0032-envelope-reliability-events.md §B.2',
         'envelope.retry.exhausted MUST be emitted BEFORE node.failed',
       ),

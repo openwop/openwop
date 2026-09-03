@@ -33,6 +33,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface ReplayRetentionCaps {
   windowSeconds?: number;
@@ -66,14 +68,14 @@ describe('replay-retention-expiry: capability shape', () => {
       return;
     }
 
-    expect(replay?.supported, driver.describe(
+    expect(replay?.supported, req('openwop.it.replay-retention-expiry.host-advertising-replay-surfaces-well-formed-retention-metadata-when-present', 
       'replay.md §"Retention and garbage collection"',
       'replay.supported MUST be true when the host claims the openwop-replay-fork profile',
     )).toBe(true);
 
     expect(
       Array.isArray(replay?.modes) && (replay?.modes?.length ?? 0) > 0,
-      driver.describe(
+      req('openwop.it.replay-retention-expiry.host-advertising-replay-surfaces-well-formed-retention-metadata-when-present', 
         'profiles.md §`openwop-replay-fork`',
         'replay.modes MUST be a non-empty array',
       ),
@@ -86,7 +88,7 @@ describe('replay-retention-expiry: capability shape', () => {
       expect(
         Number.isInteger(replay.retention.windowSeconds) &&
           replay.retention.windowSeconds >= 0,
-        driver.describe(
+        req('openwop.it.replay-retention-expiry.host-advertising-replay-surfaces-well-formed-retention-metadata-when-present', 
           'replay.md §"Retention and garbage collection"',
           'replay.retention.windowSeconds MUST be a non-negative integer when advertised',
         ),
@@ -109,7 +111,7 @@ describe('replay-retention-expiry: 410/422 on expired-range fork', () => {
       console.warn(
         '[replay-retention-expiry] OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID not supplied; skipping envelope assertion (operator must produce a known-expired run id and pass it via env)',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!expiredRunId` returned early ([replay-retention-expiry] OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID not supplied; skipping envelope assertion (operator must produce a known-expired run id and pass it v…');
     }
 
     const fromSeqEnv = process.env.OPENWOP_TEST_EXPIRED_REPLAY_FROM_SEQ;
@@ -119,7 +121,7 @@ describe('replay-retention-expiry: 410/422 on expired-range fork', () => {
       console.warn(
         `[replay-retention-expiry] OPENWOP_TEST_EXPIRED_REPLAY_FROM_SEQ=${String(fromSeqEnv)} is not a non-negative integer; skipping`,
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!Number.isFinite(fromSeq) || fromSeq < 0` returned early ([replay-retention-expiry] OPENWOP_TEST_EXPIRED_REPLAY_FROM_SEQ=… is not a non-negative integer; skipping) (seam, prior step, or fixture…');
     }
 
     // Pick a mode the host advertises. Per replay.md the envelope
@@ -134,7 +136,7 @@ describe('replay-retention-expiry: 410/422 on expired-range fork', () => {
 
     expect(
       res.status === 410 || res.status === 422,
-      driver.describe(
+      req('openwop.it.replay-retention-expiry.post-v1-runs-expiredrunid-fork-returns-410-or-422-with-canonical-envelope', 
         'replay.md §"Retention and garbage collection"',
         'fork against expired event range MUST return 410 Gone or 422 Unprocessable Entity',
       ),
@@ -150,7 +152,7 @@ describe('replay-retention-expiry: 410/422 on expired-range fork', () => {
       };
     };
 
-    expect(typeof body.error, driver.describe(
+    expect(typeof body.error, req('openwop.it.replay-retention-expiry.post-v1-runs-expiredrunid-fork-returns-410-or-422-with-canonical-envelope', 
       'replay.md §"Retention and garbage collection"',
       'expired-fork response MUST use the canonical error envelope ({error, message, details?})',
     )).toBe('string');
@@ -162,14 +164,14 @@ describe('replay-retention-expiry: 410/422 on expired-range fork', () => {
     // details.{sourceRunId, fromSeq, retentionBoundary} are SHOULD —
     // soft-check when present, MUST NOT mismatch when present.
     if (body.details?.sourceRunId !== undefined) {
-      expect(body.details.sourceRunId, driver.describe(
+      expect(body.details.sourceRunId, req('openwop.it.replay-retention-expiry.post-v1-runs-expiredrunid-fork-returns-410-or-422-with-canonical-envelope', 
         'replay.md §"Retention and garbage collection"',
         'details.sourceRunId (when present) MUST match the runId in the request path',
       )).toBe(expiredRunId);
     }
 
     if (body.details?.fromSeq !== undefined) {
-      expect(body.details.fromSeq, driver.describe(
+      expect(body.details.fromSeq, req('openwop.it.replay-retention-expiry.post-v1-runs-expiredrunid-fork-returns-410-or-422-with-canonical-envelope', 
         'replay.md §"Retention and garbage collection"',
         'details.fromSeq (when present) MUST match the fromSeq supplied in the request body',
       )).toBe(fromSeq);

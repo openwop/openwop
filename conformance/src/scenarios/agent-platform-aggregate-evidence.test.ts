@@ -29,6 +29,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isAgentPlatformPartial, isAgentPlatformFull, agentPlatformStatus, agentPlatformSatisfiedTerms } from '../lib/profiles.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('agent-platform-aggregate-evidence (RFC 0085 §C)', () => {
   it('a host claiming openwop-agent-platform satisfies the §B floor on live discovery; full when the operator certifies full', async () => {
@@ -43,13 +44,13 @@ describe('agent-platform-aggregate-evidence (RFC 0085 §C)', () => {
     // the profile string alone.
     expect(
       isAgentPlatformPartial(disco!),
-      driver.describe('agent-platform-profile.md §C', 'claiming openwop-agent-platform MUST satisfy the §B floor predicate on live discovery (claim backed by per-capability evidence)'),
+      req('openwop.it.agent-platform-aggregate-evidence.a-host-claiming-openwop-agent-platform-satisfies-the-b-floor-on-live-discovery-f', 'agent-platform-profile.md §C', 'claiming openwop-agent-platform MUST satisfy the §B floor predicate on live discovery (claim backed by per-capability evidence)'),
     ).toBe(true);
 
     const status = agentPlatformStatus(disco!);
     expect(
       status === 'partial' || status === 'full',
-      driver.describe('agent-platform-profile.md §D', 'a claimed openwop-agent-platform host MUST derive to partial or full, never none'),
+      req('openwop.it.agent-platform-aggregate-evidence.a-host-claiming-openwop-agent-platform-satisfies-the-b-floor-on-live-discovery-f', 'agent-platform-profile.md §D', 'a claimed openwop-agent-platform host MUST derive to partial or full, never none'),
     ).toBe(true);
 
     // Non-vacuous FULL bar: when the operator declares the cert tier `full`,
@@ -57,11 +58,11 @@ describe('agent-platform-aggregate-evidence (RFC 0085 §C)', () => {
     if (process.env.OPENWOP_AGENT_PLATFORM_TIER === 'full') {
       expect(
         isAgentPlatformFull(disco!),
-        driver.describe('agent-platform-profile.md §B/§D', 'a host certifying `full` MUST satisfy every governance term: authorization + tenant installScope + memory.attribution + debugBundle + triggerBridge + httpClient.egressPolicy'),
+        req('openwop.it.agent-platform-aggregate-evidence.a-host-claiming-openwop-agent-platform-satisfies-the-b-floor-on-live-discovery-f', 'agent-platform-profile.md §B/§D', 'a host certifying `full` MUST satisfy every governance term: authorization + tenant installScope + memory.attribution + debugBundle + triggerBridge + httpClient.egressPolicy'),
       ).toBe(true);
       expect(
         agentPlatformSatisfiedTerms(disco!).length,
-        driver.describe('agent-platform-profile.md §D', 'a host certifying `full` satisfies all 16 §D terms'),
+        req('openwop.it.agent-platform-aggregate-evidence.a-host-claiming-openwop-agent-platform-satisfies-the-b-floor-on-live-discovery-f', 'agent-platform-profile.md §D', 'a host certifying `full` satisfies all 16 §D terms'),
       ).toBe(16);
     }
   });

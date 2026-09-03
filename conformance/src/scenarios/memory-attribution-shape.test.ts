@@ -10,16 +10,17 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { readMemoryAttributionCap } from '../lib/memoryAttribution.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('memory-attribution-shape: advertisement (RFC 0057 §A)', () => {
   it('capabilities.memory.attribution is absent or a well-formed object', async () => {
     const cap = await readMemoryAttributionCap();
-    if (cap === null) return; // not advertised — valid
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (not advertised — valid)'); // not advertised — valid
     expect(
       cap.supported,
-      driver.describe('capabilities.schema.json §memory.attribution', 'memory.attribution.supported MUST be the literal true when the block is present'),
+      req('openwop.it.memory-attribution-shape.capabilities-memory-attribution-is-absent-or-a-well-formed-object', 'capabilities.schema.json §memory.attribution', 'memory.attribution.supported MUST be the literal true when the block is present'),
     ).toBe(true);
     if (cap.emitsWriteEvents !== undefined) {
       expect(typeof cap.emitsWriteEvents).toBe('boolean');
