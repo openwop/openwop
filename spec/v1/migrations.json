@@ -143,7 +143,7 @@
     {
       "id": "openwop.migration.C4.1",
       "child": "C4",
-      "kind": "rename",
+      "kind": "behavior",
       "v1": {
         "surface": "X-openwop-* webhook headers"
       },
@@ -155,23 +155,24 @@
       "requirementIds": [],
       "gapIds": [],
       "deprecationId": "openwop.deprecation.webhook-x-header-family",
-      "note": "Dual-emitted through the overlap (RFC 0165 §C.1); a v2 receiver accepts a v1-signed delivery."
+      "note": "Headers are emitted, not persisted; dual-emitted through the overlap (RFC 0165 §C.1). No codemod."
     },
     {
       "id": "openwop.migration.C4.2",
       "child": "C4",
-      "kind": "rename",
+      "kind": "behavior",
       "v1": {
-        "surface": "X-Dedup, X-Force-Engine-Version, X-Pack-Sha, X-Pack-Signing-Method"
+        "surface": "X-Dedup, X-Force-Engine-Version, X-Pack-Sha256, X-Pack-Signing-Method, openwop-Idempotent-Replay"
       },
       "v2": {
-        "surface": "OpenWOP-* request headers"
+        "surface": "OpenWOP-Dedup, OpenWOP-Force-Engine-Version (seams profile), OpenWOP-Pack-Sha256, OpenWOP-Pack-Signing-Method, OpenWOP-Idempotent-Replay"
       },
       "codemod": null,
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
-      "deprecationId": "openwop.deprecation.custom-request-headers-x-family"
+      "deprecationId": "openwop.deprecation.custom-request-headers-x-family",
+      "note": "Request headers; clients change; nothing persisted. No codemod."
     },
     {
       "id": "openwop.migration.C4.3",
@@ -184,14 +185,14 @@
       "v2": {
         "surface": "domain.verb-ed closed enum"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.event-type-codemap",
       "persistedData": "translated",
       "requirementIds": [],
       "gapIds": [
         "openwop.gap.0165.7"
       ],
       "deprecationId": "openwop.deprecation.legacy-interrupt-payloads",
-      "note": "Event logs are read through the declared codemap adapter with sequence space preserved (C.9); the codemod is generated from event-codemap.json."
+      "note": "The codemod is generated from event-codemap.json (20 hand decisions recorded as v2Override); the C.9 reader applies the same file; sequence space preserved."
     },
     {
       "id": "openwop.migration.C4.4",
@@ -203,7 +204,7 @@
       "v2": {
         "surface": "interrupt.requested {kind}; refineFeedback"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.event-type-codemap",
       "persistedData": "translated",
       "requirementIds": [],
       "gapIds": [],
@@ -212,12 +213,12 @@
     {
       "id": "openwop.migration.C4.5",
       "child": "C4",
-      "kind": "rename",
+      "kind": "behavior",
       "v1": {
         "surface": "`since` poll cursor; lastSequence semantics that cannot express the empty prefix"
       },
       "v2": {
-        "surface": "the v2 cursor (afterSequence, omission = from the first event)"
+        "surface": "afterSequence; omission = from the first event; since removed"
       },
       "codemod": null,
       "persistedData": "not-persisted",
@@ -225,12 +226,13 @@
       "gapIds": [
         "openwop.gap.0165.7"
       ],
-      "deprecationId": "openwop.deprecation.poll-cursor-since"
+      "deprecationId": "openwop.deprecation.poll-cursor-since",
+      "note": "A query parameter; clients change, nothing persisted. No codemod. The first event stays 0 (RFC 0165 G7 option 1)."
     },
     {
       "id": "openwop.migration.C4.6",
       "child": "C4",
-      "kind": "unify",
+      "kind": "behavior",
       "v1": {
         "surface": "409 interrupt_already_resolved beside 410 interrupt_gone"
       },
@@ -241,7 +243,8 @@
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
-      "deprecationId": "openwop.deprecation.interrupt-token-409-410-overlap"
+      "deprecationId": "openwop.deprecation.interrupt-token-409-410-overlap",
+      "note": "Error responses are not persisted. No codemod."
     },
     {
       "id": "openwop.migration.C2.9",
@@ -386,7 +389,7 @@
       "v2": {
         "surface": "sequence"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.debug-bundle-seq",
       "persistedData": "never-upgraded",
       "requirementIds": [],
       "gapIds": [],
@@ -395,7 +398,7 @@
     {
       "id": "openwop.migration.C4.8",
       "child": "C4",
-      "kind": "remove",
+      "kind": "behavior",
       "v1": {
         "surface": "openwop-Webhook-Signature (SDK-only header)"
       },
@@ -406,7 +409,8 @@
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
-      "deprecationId": "openwop.deprecation.sdk-webhook-signature-header"
+      "deprecationId": "openwop.deprecation.sdk-webhook-signature-header",
+      "note": "An SDK-only header; nothing persisted. No codemod."
     },
     {
       "id": "openwop.migration.C3.1",
@@ -438,7 +442,7 @@
       "v2": {
         "surface": "none — advertising both identity profiles implies the contract"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.discovery-document-v2",
       "persistedData": "not-persisted",
       "requirementIds": [],
       "gapIds": [],
@@ -761,6 +765,277 @@
       "requirementIds": [],
       "gapIds": [],
       "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C3.3",
+      "child": "C3",
+      "kind": "add",
+      "v1": {
+        "surface": "none (host-internal deny sets)"
+      },
+      "v2": {
+        "surface": "subject-link.schema.json; SubjectLink records with deniedAt"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "No wire artifact existed; host deny sets are re-expressed as records in Phase 4."
+    },
+    {
+      "id": "openwop.migration.C3.4",
+      "child": "C3",
+      "kind": "add",
+      "v1": {
+        "surface": "lane enum of 8"
+      },
+      "v2": {
+        "surface": "+ session, anonymous; kind: anonymous ⇔ lane: anonymous"
+      },
+      "codemod": null,
+      "persistedData": "legacy-stamped",
+      "requirementIds": [],
+      "gapIds": [
+        "openwop.gap.0165.6"
+      ],
+      "deprecationId": null,
+      "note": "A subject minted with the api-key floor for a session reads back as stamped unless the host attested the lane."
+    },
+    {
+      "id": "openwop.migration.C3.5",
+      "child": "C3",
+      "kind": "require",
+      "v1": {
+        "surface": "305 of 329 id/ref sites unpatterned; runId unconstrained in six response bodies"
+      },
+      "v2": {
+        "surface": "ids.schema.json kinds; tenant-bound where the invariant needs it"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "Ids are minted, not rewritten; a v1 id that fails the v2 grammar is read through the C.9 adapter."
+    },
+    {
+      "id": "openwop.migration.C3.6",
+      "child": "C3",
+      "kind": "add",
+      "v1": {
+        "surface": "four handles 'v1.x silent' (memoryRef, workspace path/etag, plugin version token, {{params.*}})"
+      },
+      "v2": {
+        "surface": "one handle grammar with resolvability: run | host | portable"
+      },
+      "codemod": null,
+      "persistedData": "unchanged",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C3.7",
+      "child": "C3",
+      "kind": "require",
+      "v1": {
+        "surface": "Idempotency-Key free-form; L2 retention RECOMMENDED"
+      },
+      "v2": {
+        "surface": "grammar + 128-bit floor + idempotency_key_invalid; L1 ≥ 24h, L2 ≥ 14d MUST"
+      },
+      "codemod": null,
+      "persistedData": "drained",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "Cached v1 keys expire under their own retention."
+    },
+    {
+      "id": "openwop.migration.C3.8",
+      "child": "C3",
+      "kind": "behavior",
+      "v1": {
+        "surface": "base64url(payload).mac interrupt token; rotation rule names a nonexistent discriminator"
+      },
+      "v2": {
+        "surface": "ow2.<alg>.<kid>.<payload>.<mac>; v1 tokens resolvable under kid: legacy until expiry"
+      },
+      "codemod": null,
+      "persistedData": "drained",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.interrupt-token-unversioned",
+      "note": "Tokens are issued, never rewritten; no codemod (RFC 0167 §D.4)."
+    },
+    {
+      "id": "openwop.migration.C3.9",
+      "child": "C3",
+      "kind": "behavior",
+      "v1": {
+        "surface": "trust root named on the wire by 2 of 8 lanes; no revocation MUST"
+      },
+      "v2": {
+        "surface": "every lane advertises { issuers[], revocation, minimumAssurance, delegationProofs[] } and binds through one pipeline"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C3.10",
+      "child": "C3",
+      "kind": "behavior",
+      "v1": {
+        "surface": "RFC 0154 §F six invariants named, unregistered"
+      },
+      "v2": {
+        "surface": "registered with tests at the cut, or demoted"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C4.9",
+      "child": "C4",
+      "kind": "require",
+      "v1": {
+        "surface": "63 of 120 payload defs open (runStarted among them)"
+      },
+      "v2": {
+        "surface": "every payload def closed; _typeIndex normative"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [
+        "openwop.gap.0170.1"
+      ],
+      "deprecationId": null,
+      "note": "Schema closure; a v1 event with extra keys is read through the C.9 adapter."
+    },
+    {
+      "id": "openwop.migration.C4.10",
+      "child": "C4",
+      "kind": "add",
+      "v1": {
+        "surface": "none (42 codes in prose; details a bare object)"
+      },
+      "v2": {
+        "surface": "errors.json; generated envelope with a closed enum and per-code details"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C4.11",
+      "child": "C4",
+      "kind": "behavior",
+      "v1": {
+        "surface": "details.retryAfter / retryAfterMs / retryAfterSeconds beside Retry-After"
+      },
+      "v2": {
+        "surface": "Retry-After only"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.error-details-retry-after-spellings",
+      "note": "Error responses are not persisted. No codemod."
+    },
+    {
+      "id": "openwop.migration.C4.12",
+      "child": "C4",
+      "kind": "retype",
+      "v1": {
+        "surface": "configurable open map: 15 reserved keys, 6 typed, 4 dotted",
+        "path": "run-options.schema.json#/$defs/Configurable"
+      },
+      "v2": {
+        "surface": "closed, nested, versioned configurable"
+      },
+      "codemod": "openwop.codemod.configurable-v2",
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.configurable-dotted-keys",
+      "note": "Persisted run rows carry configurable verbatim; read through the adapter or backfilled."
+    },
+    {
+      "id": "openwop.migration.C4.13",
+      "child": "C4",
+      "kind": "behavior",
+      "v1": {
+        "surface": "four AsyncAPI channels on one address + address:null heartbeat"
+      },
+      "v2": {
+        "surface": "one runEvents channel with a typed streamMode; one hostEvents channel with a declared address"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C4.14",
+      "child": "C4",
+      "kind": "behavior",
+      "v1": {
+        "surface": "poll response {runId, events, lastEventSeq, runStatus, isTerminal} (prose) vs {events, isComplete} (OpenAPI)"
+      },
+      "v2": {
+        "surface": "{ runId, events, lastSequence, status, isTerminal } from one definition"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "A response shape, generated; no consumer artifact rewrite (RFC 0167 §D.4)."
+    },
+    {
+      "id": "openwop.migration.C4.15",
+      "child": "C4",
+      "kind": "add",
+      "v1": {
+        "surface": "none"
+      },
+      "v2": {
+        "surface": "the closed-enum growth rule (RFC 0171 §A.5)"
+      },
+      "codemod": null,
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null
+    },
+    {
+      "id": "openwop.migration.C4.16",
+      "child": "C4",
+      "kind": "require",
+      "v1": {
+        "surface": "meta.source SHOULD; vendor kinds RECOMMENDED; correlationId synthesized"
+      },
+      "v2": {
+        "surface": "meta.source required; <org>. kinds required; correlationId required"
+      },
+      "codemod": null,
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": null,
+      "note": "Envelopes are transient; a persisted envelope.* event is read through the adapter."
     }
   ]
 }

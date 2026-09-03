@@ -558,6 +558,64 @@
           "token": "Advisory: this version is deprecated"
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.interrupt-token-unversioned",
+      "status": "proposed",
+      "surface": "the two-segment interrupt resume token `base64url(payload).hmac` with no scheme id, algorithm, or key id",
+      "kind": "artifact",
+      "deprecatedIn": null,
+      "authority": "RFC 0170 §E.1 (`ow2.<alg>.<kid>.<payload>.<mac>`); interrupt.md §Resume tokens' rotation rule references an algorithm-version discriminator the format does not contain",
+      "removeIn": "2.0",
+      "replacement": "`ow2.<alg>.<kid>.<payload>.<mac>`; issued v1 tokens resolvable under `kid: legacy` until their expiry",
+      "codemod": null,
+      "note": "Proposed: a v1.x deprecation would need a new format to point at, which is the v2 change itself; the row exists so the removal has a date.",
+      "sources": [
+        {
+          "file": "spec/v1/interrupt.md",
+          "token": "hmac_sha256(secret, payload)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.error-details-retry-after-spellings",
+      "status": "proposed",
+      "surface": "`details.retryAfter`, `details.retryAfterMs`, `details.retryAfterSeconds` on error envelopes (three body spellings beside the `Retry-After` header)",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0171 §B.2 (retry timing lives in `Retry-After` only)",
+      "removeIn": "2.0",
+      "replacement": "the `Retry-After` header",
+      "codemod": null,
+      "note": "Proposed: production-profile.md and scale-profiles.md MUST the body field equal the header; with the body field gone the header is the single source.",
+      "sources": [
+        {
+          "file": "spec/v1/rest-endpoints.md",
+          "token": "retryAfterMs"
+        },
+        {
+          "file": "spec/v1/production-profile.md",
+          "token": "retryAfter"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.configurable-dotted-keys",
+      "status": "proposed",
+      "surface": "dotted reserved keys in `RunOptions.configurable` (`ai.provider`, `ai.model`, `ai.credentialRef`, `distillation.tokenBudget`) and the open map they live in",
+      "kind": "schema-field",
+      "deprecatedIn": null,
+      "authority": "RFC 0171 §D.1 (closed, nested, versioned `configurable`)",
+      "removeIn": "2.0",
+      "replacement": "`configurable.ai.*`, `configurable.distillation.*`; vendor keys under `configurable.extensions.<org>`",
+      "codemod": "openwop.codemod.configurable-v2",
+      "note": "Proposed: the reserved `ai.*` namespace is a string prefix inside an open map; the v2 object nests it.",
+      "sources": [
+        {
+          "file": "spec/v1/run-options.md",
+          "token": "ai.credentialRef"
+        }
+      ]
     }
   ]
 }
