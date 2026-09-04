@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 538,
-    "tests": 2104,
-    "withStableId": 2104,
+    "tests": 2106,
+    "withStableId": 2106,
     "interpolatedTitles": 0,
-    "explicitIds": 2054
+    "explicitIds": 2057
   },
   "records": [
     {
@@ -26365,8 +26365,19 @@
       "file": "v2-effect-identity-business-key.test.ts",
       "line": 96,
       "title": "the same provider key is presented across two transport retries",
-      "explicitId": null,
-      "citations": []
+      "explicitId": "openwop.requirement.0173.effect-identity-business-key.retry",
+      "citations": [
+        {
+          "section": "spec/v2/core/replay.md §Effect identity",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/replay.md §Effect identity",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
     },
     {
       "id": "openwop.it.v2-effect-seam-manifest.get-host-effect-seams-validates-and-every-row-is-guarded",
@@ -26433,8 +26444,14 @@
       "file": "v2-effect-seam-manifest.test.ts",
       "line": 117,
       "title": "driving one seam of each kind observes no re-fire on replay",
-      "explicitId": null,
-      "citations": []
+      "explicitId": "openwop.requirement.0173.effect-seam-manifest.no-re-fire",
+      "citations": [
+        {
+          "section": "spec/v2/core/replay.md §The effect-seam manifest",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
     },
     {
       "id": "openwop.it.v2-enum-growth-rule.the-envelope-accepts-a-registered-but-unknown-to-this-suite-vendor-member",
@@ -27595,6 +27612,20 @@
         {
           "section": "spec/v2/core/capabilities.md §1",
           "requirement": "the v1 representation MUST carry protocolVersions[] and preferredVersion additively so a single fetch names the other major"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-preferred-version-default.through-the-overlap-preferredversion-names-a-1-x-member",
+      "file": "v2-preferred-version-default.test.ts",
+      "line": 70,
+      "title": "through the overlap preferredVersion names a 1.x member",
+      "explicitId": "openwop.requirement.0172.preferred-version-default.overlap",
+      "citations": [
+        {
+          "section": "spec/v2/core/versioning.md §1.1",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
@@ -34401,6 +34432,33 @@
           "section": null,
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-event-naming-rule.the-closed-enum-and-the-vendor-branch-are-disjoint-every-registered-type-validat",
+      "file": "v2-event-naming-rule.test.ts",
+      "line": 51,
+      "title": "the closed enum and the vendor branch are disjoint: every registered type validates, and a typo of a registered domain does not",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "RFC 0171 §A.1",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0171 §A.1",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0171 §A.1",
+          "requirement": "a genuine vendor type under an unregistered org MUST still validate"
+        },
+        {
+          "section": "RFC 0171 §A.1",
+          "requirement": "`openwop.` is reserved and MUST NOT match the vendor branch"
         }
       ]
     },

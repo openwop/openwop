@@ -1062,6 +1062,7 @@
         "adoption": "none"
       },
       "facets": [
+        "retryPolicy",
         "signatureAlgorithms"
       ],
       "floorScenarios": [],

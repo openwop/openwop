@@ -180,6 +180,10 @@
           "type": "string",
           "format": "uri",
           "description": "OPTIONAL (RFC 0089). URL of the host's most recent conformance certification bundle (`conformance-certification-bundle.schema.json`) — a machine-readable attestation binding this host's claimed profiles to the reproducible run that substantiates them. Omitting it is fully conformant; clients MUST tolerate its absence."
+        },
+        "seamsProfile": {
+          "const": "openwop-conformance-seams-v2",
+          "description": "RFC 0168 §C.1 — the host serves the conformance seams profile (api/seams-v2.yaml) at /conformance/seams/…. Absent means the seam-driven scenarios record `blocked`, never a pass."
         }
       },
       "additionalProperties": false,
@@ -5034,6 +5038,29 @@
               "v1"
             ]
           }
+        },
+        "retryPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxAttempts",
+            "backoff"
+          ],
+          "properties": {
+            "maxAttempts": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "backoff": {
+              "type": "string",
+              "enum": [
+                "none",
+                "fixed",
+                "exponential"
+              ]
+            }
+          },
+          "description": "spec/v2/core/webhooks.md §Delivery — the policy a host retries a failed attempt under. The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."
         }
       },
       "allOf": [

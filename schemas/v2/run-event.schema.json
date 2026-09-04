@@ -153,7 +153,8 @@
         },
         {
           "type": "string",
-          "pattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)?$"
+          "pattern": "^(?!openwop\\.)(?!(?:agent|approval|artifact|authorization|budget|cap|channel|clarification|commitment|compensation|connector|context|conversation|deployment|dispatch|egress|envelope|eval|goal|import|interrupt|lease|log|memory|model|negotiation|node|orchestrator|output|prompt|proposal|provider|replay|roster|run|tool|trigger|variable|version|voice|workflow|workflow-chain|workspace)\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)?$",
+          "description": "RFC 0171 §A.1 — the positive vendor branch `<org>.<domain-or-name>`. The lookahead bans `openwop.` and every first segment the closed enum registers (agent, approval, artifact, authorization, budget, cap, channel, clarification, commitment, compensation, connector, context, conversation, deployment, dispatch, egress, envelope, eval, goal, import, interrupt, lease, log, memory, model, negotiation, node, orchestrator, output, prompt, proposal, provider, replay, roster, run, tool, trigger, variable, version, voice, workflow, workflow-chain, workspace), so the two branches are disjoint (a registered type matches exactly one) and a typo of a registered domain (`run.startd`) is refused instead of validating as a vendor type — the v1 defect this rule replaces. Regenerate the segment list with scripts/check-v2-schemas.mjs when the enum grows; the corpus wrapper v2-event-naming-rule asserts it."
         }
       ],
       "description": "RFC 0171 §A.1 — a registered protocol type (closed enum generated from spec/v2/event-codemap.json) or a vendor event under <org>.<name>; openwop. is the only reserved prefix. Consumers MUST accept an unknown registered member and MUST NOT act on it (§A.5)."

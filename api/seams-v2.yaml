@@ -585,6 +585,99 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthenticated'
+  /conformance/seams/sample/effect-seams/fire:
+    post:
+      tags:
+      - Seams
+      operationId: fireEffectSeam
+      summary: Fire one named effect-seam manifest row inside a run — RFC 0173 §C no-re-fire witness
+      description: 'The host runs a workflow that drives the named seam once. The scenario then forks the run in `replay`
+        mode and reads `GET /runs/{runId}/effects` on the fork: a seam whose manifest row says `branchReFires: false` MUST
+        NOT produce a new effect attempt there. The witness is the host own Layer-2 ledger, so the leg needs no externally
+        reachable receiver. Without this seam the replay-suppression obligation is only claims-checkable.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - seam
+              properties:
+                seam:
+                  type: string
+                  minLength: 1
+                  description: The `seam` value of a row in GET /host/effect-seams.
+                receiverUrl:
+                  type: string
+                  format: uri
+                  description: Optional destination for seams whose kind needs one. Omitted, the host uses its own unreachable
+                    fixture destination — the witness is the effect ledger, not delivery.
+      responses:
+        '201':
+          description: The run that fired the seam.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - runId
+                properties:
+                  runId:
+                    $ref: ../schemas/v2/ids.schema.json#/$defs/runId
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/test/idempotency/effect-retry:
+    post:
+      tags:
+      - Seams
+      operationId: forceEffectTransportRetry
+      summary: Drive one effect through the suite fixture provider with a forced transport retry — RFC 0173 §D.2 G4 witness
+      description: 'The host issues one outbound effect to `providerUrl` and retries it at the transport layer. The suite
+        fixture provider records the idempotency key of each attempt: a Layer-2 host MUST present the SAME business-identity
+        key across both attempts, so a provider that sees a changed key fails the leg. Without this seam the effect-identity
+        obligation is only claims-checkable.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - providerUrl
+              properties:
+                providerUrl:
+                  type: string
+                  format: uri
+                  description: The suite's fixture provider; it records each attempt's idempotency key.
+      responses:
+        '201':
+          description: The run and effect that were retried.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - runId
+                - effectId
+                properties:
+                  runId:
+                    $ref: ../schemas/v2/ids.schema.json#/$defs/runId
+                  effectId:
+                    type: string
+                    minLength: 1
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
   /conformance/seams/sample/webhooks/receive:
     post:
       tags:

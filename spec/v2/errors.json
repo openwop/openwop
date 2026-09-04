@@ -231,6 +231,15 @@
       "source": "spec/v1/run-options.md / version-negotiation.md (OpenWOP-Force-Engine-Version outside test keys)"
     },
     {
+      "code": "fork_point_invalid",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "spec/v2/core/runs.md §Fork"
+    },
+    {
       "code": "id_tenant_mismatch",
       "httpStatus": 403,
       "statusSource": "v2 decision",
@@ -805,6 +814,15 @@
       "details": null,
       "since": "1.0",
       "source": "api/openapi.yaml"
+    },
+    {
+      "code": "webhook_url_rejected",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.0",
+      "source": "spec/v2/core/webhooks.md §Egress"
     },
     {
       "code": "workspace_conflict",

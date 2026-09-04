@@ -98,7 +98,7 @@ A non-terminal run a v2 host inherits from v1 whose `version.pinned` change ids 
 
 ## Fork
 
-`forkRun` accepts `{ mode: replay | branch, fromSeq?, runOptionsOverlay? }`: events with `sequence < fromSeq` are fixed history and events `≥ fromSeq` re-execute. `fromSeq` is REQUIRED for `branch` and defaults to `0` for `replay`; `runOptionsOverlay` is `branch`-only, and a `replay` with a non-empty overlay MUST be rejected with `400`. A `fromSeq` not in the source log MUST be rejected with `422`. The `201` response is `{ runId, sourceRunId, fromSeq?, mode, status, eventsUrl }`. The child's `owner` is copied verbatim from the parent (RFC 0170 §A.4). Determinism, side-effect suppression, and forking an era-2 parent are in replay.md.
+`forkRun` accepts `{ mode: replay | branch, fromSeq?, runOptionsOverlay? }`: events with `sequence < fromSeq` are fixed history and events `≥ fromSeq` re-execute. `fromSeq` is REQUIRED for `branch` and defaults to `0` for `replay`; `runOptionsOverlay` is `branch`-only, and a `replay` with a non-empty overlay MUST be rejected with `400`. A `fromSeq` not in the source log MUST be rejected with `422 fork_point_invalid`. The `201` response is `{ runId, sourceRunId, fromSeq?, mode, status, eventsUrl }`. The child's `owner` is copied verbatim from the parent (RFC 0170 §A.4). Determinism, side-effect suppression, and forking an era-2 parent are in replay.md.
 
 ## Diff and ancestry
 

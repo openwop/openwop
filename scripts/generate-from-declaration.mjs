@@ -50,6 +50,15 @@ function metadataSchema(key) {
     case 'eventLogSchemaVersion': return { type: 'integer', minimum: 2, description: 'RFC 0176 §A.2 — the era key; a v2 host writes 3.' };
     case 'minClientVersion': return { type: 'string', description: 'RFC 0172 row C5.8 — MUST (426 client_version_unsupported).' };
     case 'configurable': return { $ref: 'configurable.schema.json' };
+    case 'conformance': {
+      // RFC 0168 §C.1: the seams are a versioned profile a host ADVERTISES; they are never a
+      // capability flag. `lib/seams.ts` gates every seam-driven scenario on this exact value,
+      // so the key has to exist in the closed root or the profile is unadvertisable.
+      const seeded = stripSupported(v1.properties.conformance);
+      return { ...seeded, additionalProperties: false, properties: { ...seeded.properties,
+        seamsProfile: { const: 'openwop-conformance-seams-v2', description: 'RFC 0168 §C.1 — the host serves the conformance seams profile (api/seams-v2.yaml) at /conformance/seams/…. Absent means the seam-driven scenarios record `blocked`, never a pass.' } },
+        'x-openwop-seeded-from': 'v1' };
+    }
     case 'extensions': return { type: 'object', additionalProperties: false, patternProperties: { [decl.extensionsKeyPattern]: { type: 'object', additionalProperties: true, description: 'A vendor/host extension record; its shape is the org\'s, declared as open on purpose (RFC 0169 §A.4).' } }, description: 'RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: ' + decl.reservedOrgs.join(', ') + '.' };
     default: {
       const p = v1.properties[key];
