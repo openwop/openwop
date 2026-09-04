@@ -261,16 +261,39 @@ jobs:
           # 20:48:39, visible 20:52:48; rc.31 published ~21:24, visible ~21:28).
           # The old 3-minute budget was set by guess against a delay already
           # measured at four.
+          # ONE PACKUMENT IS NOT ENOUGH. rc.33 failed here with the suite's
+          # packument visible and its exact-pinned peer's not yet — the two
+          # publish jobs finish minutes apart and the registry propagates each
+          # on its own clock (rc.33: conformance visible 22:24:46, spec-artifacts
+          # 22:27:19). Probing only the pinning package answered "published" and
+          # the install then died on the peer, which is the rc.20-rc.28 failure
+          # shape with a 150-second cause instead of a nine-version one — and the
+          # gate written to tell those apart could not. So: probe the suite's
+          # packument, READ the peer version it pins, probe THAT packument, and
+          # only then install. A peer that is genuinely unpublished still fails
+          # here, at step 2, with its own message.
+          pkjson() { curl -sf "https://registry.npmjs.org/${1/\//%2F}"; }
+          hasver() { node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{try{process.exit(JSON.parse(b).versions[process.argv[1]]?0:1)}catch{process.exit(1)}})" "$2"; }
           seen=""
           for i in $(seq 1 40); do
-            if curl -sf "https://registry.npmjs.org/${PKG/\//%2F}" \
-                 | node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{try{process.exit(JSON.parse(b).versions[process.argv[1]]?0:1)}catch{process.exit(1)}})" "$VER"; then
-              seen=yes; echo "packument carries $VER after $((i*15))s"; break
-            fi
+            if pkjson "$PKG" | hasver "$PKG" "$VER"; then seen=yes; echo "packument carries $PKG@$VER after $((i*15))s"; break; fi
             sleep 15
           done
           if [ -z "$seen" ]; then
             echo "::error::$PKG@$VER never appeared on the registry after 10 minutes — the PUBLISH did not take effect."
+            exit 1
+          fi
+          PEER=@openwop/spec-artifacts
+          PEERVER=$(pkjson "$PKG" | node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{const m=JSON.parse(b).versions[process.argv[1]];console.log((m&&m.peerDependencies&&m.peerDependencies['$PEER'])||'')})" "$VER")
+          if [ -z "$PEERVER" ]; then echo "::error::$PKG@$VER declares no $PEER peer — the manifest is not the one this repo builds."; exit 1; fi
+          echo "$PKG@$VER pins $PEER@$PEERVER"
+          seen=""
+          for i in $(seq 1 40); do
+            if pkjson "$PEER" | hasver "$PEER" "$PEERVER"; then seen=yes; echo "packument carries $PEER@$PEERVER after $((i*15))s"; break; fi
+            sleep 15
+          done
+          if [ -z "$seen" ]; then
+            echo "::error::$PEER@$PEERVER — the exact peer $PKG@$VER pins — never appeared on the registry after 10 minutes. This is the rc.20-rc.28 defect: the suite is published and cannot be installed."
             exit 1
           fi
 
