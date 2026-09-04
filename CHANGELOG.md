@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Fixed
 
+- **`webhook-delivery.schema.json` required `workspaceId`; `identity.md` makes `owner.workspace` optional.** The envelope was tighter than the identity model it renders: a run in a single-workspace tenant has no workspace, so the only conforming emission was to put the tenant id in the workspace field — which is precisely what a tier-1 host proposed (`owner.workspace ?? tenantId`) and asked to have vetoed. Vetoed. `workspaceId` is now optional and present exactly when `owner.workspace` is; §Delivery says so and forbids the substitution. Six hours old, same defect class as the check-tighter-than-its-prose it was written beside.
+
+### Fixed
+
 - **`removalTrigger` could not express what RFC 0176 §C.2 requires.** The wrapper, the dotted mirror, `Capabilities-Etag` and the `/.well-known/wop` alias have **two** independent removal events — absent from the v2 representation at the cut, *and* removed from the v1 representation at end-of-support — and the field was a scalar. The four rows carried `v1-end-of-support` alone while `v2-well-known-one-resource` asserted the `v2.0-cut` obligation by name: the scenario was right about the effect and the data could not say so. The field now accepts a set (a bare string stays valid); the four rows carry both. Phase 5 planning had proposed deleting the "unused" `v2.0-cut` value — it was not unused, it was inexpressible.
 
 ### Fixed
