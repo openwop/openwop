@@ -44,7 +44,16 @@ const notAKind = map.notAKind ?? {};
 
 const problems = [];
 
-/** Every `*Id` property in a v2 schema, with the JSON pointer that reaches it. */
+/**
+ * Every `*Id` property in a v2 schema, with the JSON pointer that reaches it —
+ * AND every `*Ids` array property, yielding its `items` schema as the thing to
+ * bind. The plural form was a blind spot in the first version of this check: a
+ * `/Id$/` predicate cannot see `runIds`, and `POST /runs:bulk-cancel` takes
+ * `runIds[]` from the body typed `{type: string, minLength: 1}`. A tier-1 host
+ * found it the hard way — a v2 client sent the tenant-bound ids it had been
+ * handed, and every one answered `not_found`, silently. The projection covered
+ * the way out and not the way in.
+ */
 function* idProps(node, file, path = '') {
   if (Array.isArray(node)) {
     for (let i = 0; i < node.length; i += 1) yield* idProps(node[i], file, `${path}[${i}]`);
@@ -54,8 +63,11 @@ function* idProps(node, file, path = '') {
   for (const [k, v] of Object.entries(node)) {
     if (k === 'properties' && v && typeof v === 'object') {
       for (const [pn, pv] of Object.entries(v)) {
-        if (/Id$/.test(pn) && pv && typeof pv === 'object') {
+        if (!pv || typeof pv !== 'object') continue;
+        if (/Id$/.test(pn)) {
           yield { file, pointer: `${path}/properties/${pn}`, name: pn, schema: pv };
+        } else if (/Ids$/.test(pn) && pv.items && typeof pv.items === 'object') {
+          yield { file, pointer: `${path}/properties/${pn}/items`, name: pn, schema: pv.items };
         }
       }
     }
@@ -128,6 +140,24 @@ if (existsSync(oapi)) {
       if (!body.includes(`ids.schema.json#/$defs/${kind}`)) {
         problems.push(`api/v2/openapi.yaml components/parameters/${m[1]}: parameter '${pname}' MUST $ref ids.schema.json#/$defs/${kind} (identity.md §5)`);
       }
+    }
+  }
+}
+
+// Request BODIES in the derived OpenAPI. `runIds[]` on `POST /runs:bulk-cancel`
+// is the one plural id array the v2 path space accepts inbound, and it was the
+// surface a tier-1 host found unbound. The parameter scan above cannot see it —
+// it lives in an inline request schema — so it is asserted by name here, and
+// the fix lives in derive-v2-api.py rather than in this file's output.
+if (existsSync(oapi)) {
+  const text = readFileSync(oapi, 'utf8');
+  const at = text.indexOf('/runs:bulk-cancel');
+  if (at !== -1) {
+    const body = text.slice(at, at + 4000);
+    const runIdsAt = body.indexOf('runIds:');
+    const window = runIdsAt === -1 ? '' : body.slice(runIdsAt, runIdsAt + 400);
+    if (!window.includes('ids.schema.json#/$defs/runId')) {
+      problems.push(`api/v2/openapi.yaml POST /runs:bulk-cancel: body 'runIds[]' items MUST $ref ids.schema.json#/$defs/runId (identity.md §5) — a v2 client sends the tenant-bound ids it was handed, and an unbound inbound array answers not_found for every one`);
     }
   }
 }

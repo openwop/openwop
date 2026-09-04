@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/proposal.schema.json",
   "title": "Proposal",
-  "description": "RFC 0096 §B. A reviewable-learning proposal — an INERT, draft-state reusable artifact (skill/pack/template/automation) the host synthesized from run/tool traces, that MUST NOT influence the resolution, planning, or execution of any run while in any state other than `applied`. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC (no new authorization path). On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). `rationale` and `provenance.sourceRunIds` are SR-1 redaction-safe (no secrets/PII). Gated on the `agents.proposals` capability.",
+  "description": "RFC 0096 \u00a7B. A reviewable-learning proposal \u2014 an INERT, draft-state reusable artifact (skill/pack/template/automation) the host synthesized from run/tool traces, that MUST NOT influence the resolution, planning, or execution of any run while in any state other than `applied`. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC (no new authorization path). On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). `rationale` and `provenance.sourceRunIds` are SR-1 redaction-safe (no secrets/PII). Gated on the `agents.proposals` capability.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -47,12 +47,12 @@
     },
     "rationale": {
       "type": "string",
-      "description": "Plain-language justification. SR-1 redaction-safe — no secrets/PII."
+      "description": "Plain-language justification. SR-1 redaction-safe \u2014 no secrets/PII."
     },
     "artifact": {
       "type": "object",
-      "description": "The proposed artifact, shaped by `kind` (an RFC 0003 pack manifest, an RFC 0013 chain pack, an RFC 0027 template, an RFC 0052 job spec). Inert until applied. Deliberately open (`additionalProperties` not constrained here) because the payload conforms to the kind's own existing schema, validated by the host at `apply` (malformed-for-kind ⇒ 422).",
-      "$comment": "Intentionally open object — the artifact body is validated against the kind's own schema, not this envelope.",
+      "description": "The proposed artifact, shaped by `kind` (an RFC 0003 pack manifest, an RFC 0013 chain pack, an RFC 0027 template, an RFC 0052 job spec). Inert until applied. Deliberately open (`additionalProperties` not constrained here) because the payload conforms to the kind's own existing schema, validated by the host at `apply` (malformed-for-kind \u21d2 422).",
+      "$comment": "Intentionally open object \u2014 the artifact body is validated against the kind's own schema, not this envelope.",
       "additionalProperties": true
     },
     "provenance": {
@@ -66,8 +66,7 @@
         "sourceRunIds": {
           "type": "array",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "$ref": "ids.schema.json#/$defs/runId"
           },
           "description": "Runs whose traces produced this proposal (RFC 0040 causation-compatible). SR-1 redaction-safe."
         },
@@ -91,7 +90,7 @@
       "required": [
         "tenant"
       ],
-      "description": "RFC 0048 identity triple that owns this proposal. Redaction-safe — `principal` is an opaque id, never PII or credential material. Single-tenant hosts populate at least `tenant`.",
+      "description": "RFC 0048 identity triple that owns this proposal. Redaction-safe \u2014 `principal` is an opaque id, never PII or credential material. Single-tenant hosts populate at least `tenant`.",
       "properties": {
         "tenant": {
           "type": "string",
@@ -106,7 +105,7 @@
         "principal": {
           "type": "string",
           "minLength": 1,
-          "description": "Acting identity (user or agent) — opaque id, never PII."
+          "description": "Acting identity (user or agent) \u2014 opaque id, never PII."
         }
       }
     },

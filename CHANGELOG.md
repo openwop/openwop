@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **The id-kind binding check could not see plural arrays, and the one inbound v2 surface that takes them was unbound.** `check-id-kinds-bound.mjs` matched `/Id$/`; `runIds`, `sourceRunIds`, `contributingRunIds`, `nodeIds` are `*Ids`. `POST /runs:bulk-cancel` inherited v1's `items: {type: string}` through the derived OpenAPI, so a v2 client sent the tenant-bound ids it had been handed and every one answered `not_found`, per id, silently — a tier-1 host found it while auditing its own inbound paths. The projection had covered the way out and not the way in. The check now yields each `*Ids` property's `items` schema; four arrays bind to their kinds, four are triaged not-a-kind (`nextWorkerIds` is a documented union of node-ids and agent-ids, so no single kind can hold it), and the bulk-cancel body is bound at the generator. Sabotage-tested.
+
 ### Added
 
 - **`docs/migration/v1-to-v2.md` — the v1→v2 migration guide, written from the two migrations that actually happened.** A Phase 5 deliverable landing early: neither host has finished, so it does not yet cite both PR series (it says so at the top). What it does carry is what the migrations have already cost — the projection that reached only "JSON senders" and silently unmatched every webhook, the `--target-major` default that ran v2 scenarios over v1 requests and produced three phantom host defects, the bundle that passed with every row `blocked`, and the nine suite versions (rc.20–rc.28) that no consumer can install. Organised around the one shape all of them share: a signal that reads the same whether it is true or false.

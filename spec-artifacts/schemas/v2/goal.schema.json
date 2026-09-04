@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/goal.schema.json",
   "title": "Goal",
-  "description": "RFC 0097 §B. A standing goal — a durable objective with explicit completion criteria, evaluated by a host-side judge (RFC 0090 verifier verdict or an opaque host evaluator), that keeps an agent working across turns and runs until the judge is satisfied, a declared RFC 0058 bound is crossed, or the agent escalates (RFC 0044). Completion MUST be the judge's verdict — a client MUST NOT set `state: satisfied` directly. Continuation MUST be bounded. `objective` and any verdict payload are SR-1 redaction-safe. Gated on the `agents.goals` capability.",
+  "description": "RFC 0097 \u00a7B. A standing goal \u2014 a durable objective with explicit completion criteria, evaluated by a host-side judge (RFC 0090 verifier verdict or an opaque host evaluator), that keeps an agent working across turns and runs until the judge is satisfied, a declared RFC 0058 bound is crossed, or the agent escalates (RFC 0044). Completion MUST be the judge's verdict \u2014 a client MUST NOT set `state: satisfied` directly. Continuation MUST be bounded. `objective` and any verdict payload are SR-1 redaction-safe. Gated on the `agents.goals` capability.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,7 +23,7 @@
     },
     "objective": {
       "type": "string",
-      "description": "The standing objective. SR-1 redaction-safe — no secrets/PII."
+      "description": "The standing objective. SR-1 redaction-safe \u2014 no secrets/PII."
     },
     "state": {
       "type": "string",
@@ -67,7 +67,7 @@
           ],
           "default": null,
           "additionalProperties": false,
-          "description": "Most recent judge verdict. Content-free re: objective text. Non-deterministic judge output — MUST be persisted (carried in the `goal.evaluated` event / checkpoint) and never recomputed on replay/fork.",
+          "description": "Most recent judge verdict. Content-free re: objective text. Non-deterministic judge output \u2014 MUST be persisted (carried in the `goal.evaluated` event / checkpoint) and never recomputed on replay/fork.",
           "properties": {
             "satisfied": {
               "type": "boolean"
@@ -147,7 +147,7 @@
         "contributingRunIds": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "ids.schema.json#/$defs/runId"
           },
           "description": "RFC 0040 causation-compatible."
         }
@@ -159,7 +159,7 @@
       "required": [
         "tenant"
       ],
-      "description": "RFC 0048 identity triple. Redaction-safe — `principal` is an opaque id, never PII or credential material.",
+      "description": "RFC 0048 identity triple. Redaction-safe \u2014 `principal` is an opaque id, never PII or credential material.",
       "properties": {
         "tenant": {
           "type": "string",
