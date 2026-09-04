@@ -86,14 +86,14 @@ v2 scenarios (suite 2.0.0): `no-transport-advertisement` (unaided: `supportedTra
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 no `grpc` block; ext header declares class | discovery + corpus | the suite, unaided; the corpus gate | witnessable — unaided |
-| §B.1 no `supportedTransports` | discovery | the suite, unaided | witnessable — unaided |
-| §C.1 no `-legacy` id | discovery schema | the suite, unaided | witnessable — unaided |
-| §D.1 unauthenticated exchange cannot downgrade | event log + peer capture | the suite via the C.1 seams profile | seam-gated |
-| §D.2 floor refused | `interop_version_unsupported` + event | the suite via the seams profile | seam-gated |
-| §D.3 `negotiation.decided` on every outcome | the host's event log | the suite, gated on `a2a`/`mcp` (the exchange is driven through the seam, the event is read on the normative surface) | witnessable — gated |
-| §D.4 refresh SLA | `refreshedAt` | the suite, unaided | witnessable — unaided |
-| §E.1 MRTR ceiling | refusal at `maxRounds + 1` | the suite's fake MCP server, gated | witnessable — gated |
+| §A.1 no `grpc` block; ext header declares class | discovery + corpus — `openwop.requirement.0175.no-transport-advertisement` | the suite, unaided; the corpus gate | witnessable — unaided |
+| §B.1 no `supportedTransports` | discovery — `openwop.requirement.0175.no-transport-advertisement` | the suite, unaided | witnessable — unaided |
+| §C.1 no `-legacy` id | discovery schema — `openwop.requirement.0175.legacy-profiles-absent` | the suite, unaided | witnessable — unaided |
+| §D.1 unauthenticated exchange cannot downgrade | event log + peer capture — `openwop.requirement.0175.negotiation-authenticated` | the suite via the C.1 seams profile | seam-gated |
+| §D.2 floor refused | `interop_version_unsupported` + event — `openwop.requirement.0175.minimum-version-refused` | the suite via the seams profile | seam-gated |
+| §D.3 `negotiation.decided` on every outcome | the host's event log — `openwop.requirement.0175.negotiation-decided-emitted` | the suite, gated on `a2a`/`mcp` (the exchange is driven through the seam, the event is read on the normative surface) | witnessable — gated |
+| §D.4 refresh SLA | `refreshedAt` — `openwop.requirement.0175.refresh-sla` | the suite, unaided | witnessable — unaided |
+| §E.1 MRTR ceiling | refusal at `maxRounds + 1` — `openwop.requirement.0175.mrtr-rounds-ceiling` | the suite's fake MCP server, gated | witnessable — gated |
 | §F.1 threat model present with the template | corpus gate | the corpus gate | witnessable — unaided (corpus) |
 
 ## Adversarial review

@@ -4042,3 +4042,155 @@ invariants:
       leg records `blocked`, never a pass.
     witness: seam-gated
     witnessReview: reviewed-2026-09-02
+
+  # ===== v2 cut (RFC 0170 §E.2, RFC 0175 §F.1) — registered with their scenarios =====
+
+  - id: interop-negotiation-authenticated
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-interop.md
+    tests:
+      - conformance/src/scenarios/v2-negotiation-authenticated.test.ts
+    note: |
+      RFC 0175 §D.1 / `interop.md` §Authentication. Version negotiation on
+      both embedded protocols (A2A, MCP) is authenticated: an exchange under
+      an unauthenticated principal MUST NOT lower the version below
+      `preferredVersion`, and the wire toward the peer MUST NOT carry the
+      lower version. Seam-gated: the host's own A2A/MCP client is driven
+      against a suite-owned peer that offers only a lower version through
+      the seams profile; `blocked` (named) until a host wires the seam.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-03
+
+  - id: interop-minimum-version-enforced
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-interop.md
+    tests:
+      - conformance/src/scenarios/v2-minimum-version-refused.test.ts
+    note: |
+      RFC 0175 §D.2. A peer below the advertised minimum-version policy MUST
+      be refused with `interop_version_unsupported` and the refusal MUST be
+      recorded as a `negotiation.decided` outcome — never negotiated down to
+      a floor the policy does not admit. Seam-gated as
+      `interop-negotiation-authenticated`.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-03
+
+  - id: subject-required-on-owner
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/v2-owner-subject-required.test.ts
+    note: |
+      RFC 0170 §A.1 / `identity.md` §1.1. `RunSnapshot.owner` is the closed
+      `{ tenant, workspace?, subject }`: `subject` REQUIRED and validating
+      against `subject.schema.json`; `principal` and `principalKind` removed,
+      so no consumer can key on the weaker bare string beside the record.
+      Witnessed unaided: a run created through `POST /runs` reads back with
+      the block, and any extra key fails the closed shape.
+    witness: witnessable-unaided
+    witnessReview: reviewed-2026-09-03
+
+  - id: subject-link-record-shape
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/v2-subject-link-record.test.ts
+    note: |
+      RFC 0170 §C.1 / `identity.md` §3. The SAML ⟷ SCIM link is the closed
+      record `{ a, b, keyClass, issuer, tenant, formedAt, deniedAt? }` of two
+      distinct SubjectRefs, tenant-scoped, never a legacy or anonymous
+      subject (schema-rejected), with `deniedAt` set on deactivation and
+      consulted by the SAML decision path. Seam-gated on the RFC 0163
+      SCIM/SAML seams plus the operator opt-in URLs; `blocked` (named) when
+      the host surfaces no link record.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-03
+
+  - id: sender-constraint-no-bearer-downgrade
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests:
+      - conformance/src/scenarios/v2-assurance-downgrade-audited.test.ts
+    note: |
+      RFC 0154 §F / RFC 0170 §B.4. A request below a lane's advertised
+      `minimumAssurance` MUST be refused (`sender_constraint_missing`), and an
+      audit fact MUST record the assurance actually used — a bearer-verified
+      identity never inherits a sender-constrained label. Seam-gated on the
+      workload seam; the refusal and the audit fact are the two legs.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-03
+
+  - id: delegation-chain-bounded-acyclic
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests:
+      - conformance/src/scenarios/v2-owner-subject-required.test.ts
+    note: |
+      RFC 0154 §F, the v2 registration RFC 0170 §E.2 names. In v2 the actor
+      chain rides `subject.actor` with its depth bound (≤ 4) expressed in
+      `subject.schema.json` (RFC 0170 §A.2), so a chain longer than the bound
+      cannot validate — witnessed unaided wherever the Subject is validated
+      (`v2-owner-subject-required`). The delegation-chain halves stay
+      registered on their own rows: `delegation-chain-bounded` (length,
+      `maxChainDepth`) and `delegation-chain-acyclic` (a subject twice,
+      `delegation_chain_cyclic`), both seam-gated; this row is their v2 name
+      and does not claim more than the schema bound it cites.
+    witness: witnessable-unaided
+    witnessReview: reviewed-2026-09-03
+
+  - id: workload-identity-cryptographically-bound
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests:
+      - conformance/src/scenarios/v2-assurance-downgrade-audited.test.ts
+    note: |
+      RFC 0154 §F / RFC 0170 §B.4. A lane whose floor is `key-bound` (the v1
+      `mtls.required` gate, now `minimumAssurance: key-bound`) MUST refuse a
+      request that presents no cryptographic sender binding; the refusal is
+      `sender_constraint_missing` and the assurance actually used is the
+      audited fact. Seam-gated on the workload seam alongside
+      `sender-constraint-no-bearer-downgrade`; `blocked` (named) until an
+      advertising host wires it.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-03
+
+  - id: delegation-provenance-not-authorization
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests: []
+    note: |
+      RFC 0154 §B / §F. A delegation chain is provenance, never a grant: the
+      effective principal, tenant, audience, scopes and action MUST be
+      authorized at every boundary, and a hop MUST NOT authorize what the
+      caller could not. Named by RFC 0154 §F and RFC 0170 §E.2; no v2
+      scenario names a witness at the cut.
+    non_testability_rationale: |
+      no v2 scenario names a witness at the cut — demoted per RFC 0170 §E.2;
+      re-tiered when a scenario lands
+    witness: unwitnessable
+    witnessReview: reviewed-2026-09-03
+
+  - id: provenance-attestation-digest-bound
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-workload-identity.md
+    tests: []
+    note: |
+      RFC 0154 §E / §F. A build attestation binds the artifact digest, the
+      source revision, the builder / workflow identity, the build invocation,
+      the lock digest and the publication identity, and verification fails
+      closed on any mismatch. Named by RFC 0154 §F and RFC 0170 §E.2; no v2
+      scenario names a witness at the cut.
+    non_testability_rationale: |
+      no v2 scenario names a witness at the cut — demoted per RFC 0170 §E.2;
+      re-tiered when a scenario lands
+    witness: unwitnessable
+    witnessReview: reviewed-2026-09-03

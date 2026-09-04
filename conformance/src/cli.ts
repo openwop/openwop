@@ -36,7 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve as resolvePath, join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
@@ -44,12 +44,14 @@ import { SCHEMAS_DIR } from './lib/paths.js';
 import { readLedgerFile } from './lib/requirement-ledger.js';
 import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
 import { scrubEvidence, evidenceSecretsFromEnv, verifyBundleV2 } from './lib/certification-bundle-verify.js';
+import { publicKeyFromPrivate, signBundleV3, verifierSign, verifyBundleV3, witnessDigest, type BundleV3, type BundleV3Requirement } from './lib/certification-bundle-v3.js';
 import {
   deriveProfiles,
   isCoreStandard,
   agentPlatformStatus,
   DEPRECATED_PROFILE_ALIASES,
   type DiscoveryPayload,
+  PROFILE_FLOOR_SCENARIOS,
 } from './lib/profiles.js';
 
 interface ParsedArgs {
@@ -64,7 +66,14 @@ interface ParsedArgs {
   readonly implVersion: string | undefined;
   /** RFC 0089 — emit a conformance certification bundle to this path. */
   readonly certify: string | undefined;
-  readonly bundleVersion: '1' | '2';
+  readonly bundleVersion: '2' | '3';
+  /** Suite 2.0.0 (RFC 0168 §E): v3 needs the build identity, the signing key, and the tier. */
+  readonly hostBuild: { kind: 'image-digest' | 'commit' | 'artifact-sha256'; id: string } | undefined;
+  readonly evidenceTier: 'self' | 'steward' | 'independent';
+  readonly signingKeyPath: string | undefined;
+  readonly signingKeyId: string | undefined;
+  readonly verifierKeyPath: string | undefined;
+  readonly verifierKeyId: string | undefined;
   /**
    * S43 (2026-08-18) — cap on concurrently running scenario FILES, forwarded to
    * vitest `--maxWorkers`. Unset = vitest's default (one worker per CPU), which
@@ -86,7 +95,10 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   // Suite 1.152.0: bundle v2 (RFC 0148) is the default. v1 stays reachable via
   // `--bundle-version 1` through the RFC 0148 migration window (ends
   // 2026-11-10) and is removed at v2.0 (spec/v1/deprecations.json).
-  let bundleVersion: '1' | '2' = '2';
+  let bundleVersion: '2' | '3' = '3';
+  let hostBuild: ParsedArgs['hostBuild'];
+  let evidenceTier: ParsedArgs['evidenceTier'] = 'self';
+  let signingKeyPath: string | undefined, signingKeyId: string | undefined, verifierKeyPath: string | undefined, verifierKeyId: string | undefined;
   let targetMajor: 1 | 2 | undefined;
   let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
 
@@ -138,19 +150,29 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
         implVersion = nextValue();
         break;
       case '--bundle-version': {
-        const v = nextValue();
-        if (v !== '1' && v !== '2') {
-          process.stderr.write(`--bundle-version must be 1 or 2 (got '${v}')\n`);
-          process.exit(2);
-        }
+        const v = argv[++i];
+        if (v !== '2' && v !== '3') { process.stderr.write(`openwop-conformance: --bundle-version must be 2 or 3 (got ${String(v)}); v1 is gone in suite 2.0.0 (RFC 0168 §E.3)\n`); process.exit(2); }
+        if (v === '2') process.stderr.write('openwop-conformance: --bundle-version 2 is DEPRECATED — v2 bundles stop substantiating a certification at v1 end-of-support (RFC 0168 §E.3); the default is 3.\n');
         bundleVersion = v;
-        if (v === '1') {
-          process.stderr.write(
-            'openwop-conformance: --bundle-version 1 is DEPRECATED (RFC 0148). A v1 bundle ceases to substantiate a new certification after 2026-11-10 and the format is removed at v2.0; omit the flag to emit bundle v2.\n',
-          );
-        }
         break;
       }
+      case '--host-build': {
+        const v = argv[++i] ?? '';
+        const mm = /^(image-digest|commit|artifact-sha256):(.+)$/.exec(v);
+        if (!mm) { process.stderr.write(`openwop-conformance: --host-build must be <image-digest|commit|artifact-sha256>:<id> (got ${JSON.stringify(v)})\n`); process.exit(2); }
+        hostBuild = { kind: mm[1] as 'image-digest' | 'commit' | 'artifact-sha256', id: mm[2] };
+        break;
+      }
+      case '--evidence-tier': {
+        const v = argv[++i];
+        if (v !== 'self' && v !== 'steward' && v !== 'independent') { process.stderr.write('openwop-conformance: --evidence-tier must be self, steward or independent\n'); process.exit(2); }
+        evidenceTier = v;
+        break;
+      }
+      case '--signing-key': signingKeyPath = argv[++i]; break;
+      case '--signing-key-id': signingKeyId = argv[++i]; break;
+      case '--verifier-key': verifierKeyPath = argv[++i]; break;
+      case '--verifier-key-id': verifierKeyId = argv[++i]; break;
       case '--certify':
         certify = nextValue();
         break;
@@ -175,6 +197,12 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     certify,
     bundleVersion,
     targetMajor,
+    hostBuild,
+    evidenceTier,
+    signingKeyPath,
+    signingKeyId,
+    verifierKeyPath,
+    verifierKeyId,
     maxWorkers,
   };
 }
@@ -216,7 +244,11 @@ Certification (RFC 0089):
   --target-major <1|2>    Suite 2.0.0 (RFC 0168 §D.3): run the scenarios for this protocol
                           major. Default: the host's preferredVersion (RFC 0179), else
                           max(protocolVersions[]), else 1. Selection is scenario-majors.json.
-  --bundle-version <1|2>  Certification bundle format. Default 2 (corrected 2026-09-03, RFC 0168 §E.4; the text said 1 while the code set 2). Version 2 (RFC 0148
+  --host-build <k>:<id>   v3: the build identity (image-digest|commit|artifact-sha256), or OPENWOP_HOST_BUILD.
+  --signing-key <pem>     v3: Ed25519 private key (PKCS8 PEM) that signs the bundle, or OPENWOP_BUNDLE_SIGNING_KEY.
+  --signing-key-id <id>   v3: the keyId the host publishes for that key, or OPENWOP_BUNDLE_SIGNING_KEY_ID.
+  --evidence-tier <t>     v3: self | steward | independent (independent needs --verifier-key/--verifier-key-id).
+  --bundle-version <2|3>  Certification bundle format. Default 2 (corrected 2026-09-03, RFC 0168 §E.4; the text said 1 while the code set 2). Version 2 (RFC 0148
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
                         from "checked and it holds". See the note it prints.
@@ -504,6 +536,79 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
         '  evidence is inspectable, but it does not certify and this process exits 3.\n' +
         rejectedProfiles.map((v) => `  - ${v.profile}: ${v.unclassified.join(', ')}\n`).join(''),
     );
+  }
+
+  if (args.bundleVersion === '3') {
+    // ── Bundle v3 (RFC 0168 §E) ─────────────────────────────────────────────
+    const build = args.hostBuild ?? (() => {
+      const mm = /^(image-digest|commit|artifact-sha256):(.+)$/.exec(process.env['OPENWOP_HOST_BUILD'] ?? '');
+      return mm ? { kind: mm[1] as BundleV3['host']['build']['kind'], id: mm[2] } : undefined;
+    })();
+    const signingKeyPem = args.signingKeyPath ? readFileSync(args.signingKeyPath, 'utf8') : process.env['OPENWOP_BUNDLE_SIGNING_KEY'];
+    const keyId = args.signingKeyId ?? process.env['OPENWOP_BUNDLE_SIGNING_KEY_ID'];
+    if (!build || !signingKeyPem || !keyId) {
+      process.stderr.write('openwop-conformance --certify: a v3 bundle needs --host-build <kind>:<id> (or OPENWOP_HOST_BUILD), --signing-key <pem> (or OPENWOP_BUNDLE_SIGNING_KEY) and --signing-key-id (or OPENWOP_BUNDLE_SIGNING_KEY_ID) — an unsigned bundle does not exist in v3 (RFC 0168 §E.2).\n');
+      process.exit(2);
+    }
+    const rows3: BundleV3Requirement[] = derived.requirements.map((r) => ({ id: r.requirementId, scenario: r.scenarioId, result: r.disposition as BundleV3Requirement['result'], ...(r.assertionCount === undefined ? {} : { assertions: r.assertionCount }), ...(r.detail === undefined ? {} : { detail: r.detail }) }));
+    const totals3 = derived.totals;
+    const doc3 = document as Record<string, unknown>;
+    const protocolVersions = Array.isArray(doc3['protocolVersions']) ? (doc3['protocolVersions'] as string[]) : [String(doc3['protocolVersion'] ?? '')];
+    const preferredVersion = typeof doc3['preferredVersion'] === 'string' ? (doc3['preferredVersion'] as string) : (protocolVersions[0] ?? '');
+    // witnessCount: executed-pass rows on the profile's floor (PROFILE_FLOOR_SCENARIOS required + requiredAnyPrefix).
+    const witnessCountFor = (profile: string): number => {
+      const floor = PROFILE_FLOOR_SCENARIOS[profile];
+      if (!floor) return 0;
+      const onFloor = (scenario: string): boolean => floor.required.includes(scenario) || (floor.requiredAnyPrefix ?? []).some((pre) => scenario.startsWith(pre));
+      return derived.requirements.filter((r) => r.disposition === 'executed-pass' && onFloor(r.scenarioId)).length;
+    };
+    const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
+    let relaxations: BundleV3['host']['relaxations'];
+    if (process.env['OPENWOP_HOST_RELAXATIONS']) { try { relaxations = JSON.parse(process.env['OPENWOP_HOST_RELAXATIONS']) as BundleV3['host']['relaxations']; } catch { process.stderr.write('openwop-conformance --certify: OPENWOP_HOST_RELAXATIONS is not JSON\n'); process.exit(2); } }
+    const lockPath = resolvePath(conformanceRoot, 'dist', 'spec-artifacts.lock.json');
+    const lock = existsSync(lockPath) ? (JSON.parse(readFileSync(lockPath, 'utf8')) as { version: string; stampSha256: string }) : undefined;
+    const nonPass = rows3.filter((r) => r.result !== 'executed-pass');
+    const unsigned: Omit<BundleV3, 'signature'> = {
+      bundleVersion: '3',
+      generatedAt: new Date().toISOString(),
+      suite: { name: '@openwop/openwop-conformance', version, targetMajor: process.env['OPENWOP_TARGET_MAJOR'] === '2' ? 2 : 1, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
+      host: { name: host.name, version: host.version, ...(host.vendor ? { vendor: host.vendor } : {}), build, signingKeyId: keyId, ...(relaxations && relaxations.length ? { relaxations } : {}) },
+      discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion },
+      claimedProfiles: claimed3,
+      results: { totals: totals3, requirements: rows3 },
+      witnessSha256: witnessDigest(rows3),
+      assertionCount: rows3.reduce((n, r) => n + (r.assertions ?? 0), 0),
+      ...(nonPass.length ? { detail: { nonPass: nonPass.map((r) => ({ id: r.id, result: r.result, reason: r.detail ?? '' })) } } : {}),
+    };
+    const signature = signBundleV3(unsigned, signingKeyPem, keyId);
+    const v3: BundleV3 = { ...unsigned, signature };
+    if (args.evidenceTier === 'independent') {
+      const vk = args.verifierKeyPath ? readFileSync(args.verifierKeyPath, 'utf8') : process.env['OPENWOP_BUNDLE_VERIFIER_KEY'];
+      const vkId = args.verifierKeyId ?? process.env['OPENWOP_BUNDLE_VERIFIER_KEY_ID'];
+      if (!vk || !vkId) { process.stderr.write('openwop-conformance --certify: --evidence-tier independent needs --verifier-key and --verifier-key-id (RFC 0168 §E.2)\n'); process.exit(2); }
+      v3.verifierSignature = verifierSign(unsigned, vk, vkId);
+    }
+    const secrets3 = evidenceSecretsFromEnv(process.env, [apiKey, signingKeyPem]);
+    const scrubbed3 = scrubEvidence(v3, secrets3);
+    const v3Out = scrubbed3.value as BundleV3;
+    const audit3 = verifyBundleV3(v3Out, { hostPublicKeyPem: publicKeyFromPrivate(signingKeyPem) });
+    const emitterDefects = audit3.rejections.filter((r) => !['blocked-certified', 'relaxed-profile-certified', 'independent-unverifiable'].includes(r.kind));
+    if (emitterDefects.length > 0) {
+      process.stderr.write('openwop-conformance --certify: assembled v3 bundle FAILED self-verification (emitter defect):\n' + emitterDefects.map((r) => `  - [${r.kind}] ${r.detail}`).join('\n') + '\n');
+      process.exit(2);
+    }
+    const v3Schema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'certification-bundle.schema.json'), 'utf8')) as Record<string, unknown>;
+    const v3Ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(v3Ajv);
+    v3Ajv.addSchema(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'ids.schema.json'), 'utf8')) as Record<string, unknown>);
+    const v3Validate = v3Ajv.compile(v3Schema);
+    if (!v3Validate(v3Out)) {
+      process.stderr.write('openwop-conformance --certify: assembled v3 bundle FAILED schema validation:\n' + `${JSON.stringify(v3Validate.errors, null, 2)}\n`);
+      process.exit(2);
+    }
+    writeFileSync(outPath, `${JSON.stringify(v3Out, null, 2)}\n`);
+    process.stdout.write(`openwop-conformance --certify: wrote bundle v3 → ${outPath} (${rows3.length} requirement rows, ${v3Out.assertionCount} assertions, witness ${v3Out.witnessSha256.slice(0, 12)}, signed by ${keyId}; certified: ${audit3.certifiedProfiles.join(', ') || 'none'})\n`);
+    process.exit(rejectedProfiles.length > 0 ? 3 : failed.length > 0 ? 1 : 0);
   }
 
   if (args.bundleVersion === '2') {

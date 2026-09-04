@@ -283,9 +283,10 @@ node "$(dirname "$0")/generate-error-envelope.mjs" --check
 node "$(dirname "$0")/check-v2-schemas.mjs"
 node "$(dirname "$0")/check-core-budget.mjs"
 python3 "$(dirname "$0")/derive-v2-api.py" --check
-( cd "$SPEC_ROOT/api/v2" && npx -y @redocly/cli@2.31.4 lint openapi.yaml --format=summary 2>&1 | tail -2 )
-npx -y @redocly/cli@2.31.4 lint "$SPEC_ROOT/api/seams-v2.yaml" --config "$SPEC_ROOT/api/v2/redocly.yaml" --format=summary 2>&1 | tail -2
-npx -y @asyncapi/cli@4.1.1 validate "$SPEC_ROOT/api/v2/asyncapi.yaml" 2>&1 | /usr/bin/grep -E "is valid|error" | head -3
+# Same pinned + cached invocations as steps 2/3: a bare `npx -y @pkg` here re-resolved and reinstalled both CLIs (7 minutes on CI, which timed the job out).
+( cd "$SPEC_ROOT/api/v2" && npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml --format=summary 2>&1 | tail -2 )
+npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint "$SPEC_ROOT/api/seams-v2.yaml" --config "$SPEC_ROOT/api/v2/redocly.yaml" --format=summary 2>&1 | tail -2
+npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/v2/asyncapi.yaml" 2>&1 | /usr/bin/grep -E "is valid|error" | head -3
 node "$(dirname "$0")/check-path-parity.mjs"
 node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
 node "$(dirname "$0")/check-removal-dates.mjs"

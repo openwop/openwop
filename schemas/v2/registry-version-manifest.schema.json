@@ -158,29 +158,8 @@
       }
     },
     "runtime": {
-      "type": "object",
-      "required": [
-        "language"
-      ],
-      "properties": {
-        "language": {
-          "type": "string",
-          "enum": [
-            "javascript",
-            "typescript",
-            "wasm",
-            "remote"
-          ],
-          "description": "Pack runtime. `javascript`/`typescript` for in-process Node executors; `wasm` for sandboxed WASM (RFC 0008 ABI); `remote` for agent-only packs that dispatch via remote LLM providers + don't ship local executor bytecode."
-        },
-        "entry": {
-          "type": "string"
-        },
-        "abiVersion": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
+      "$ref": "node-pack-manifest.schema.json#/$defs/Runtime",
+      "description": "The pack runtime block, byte-for-byte the node-pack manifest's (`format`, `minRuntimeVersion`, `requires` included)."
     },
     "peerDependencies": {
       "type": "object",
@@ -188,6 +167,9 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "peerDependenciesMeta": {
+      "$ref": "node-pack-manifest.schema.json#/properties/peerDependenciesMeta"
     },
     "dependencies": {
       "type": "object",
@@ -246,13 +228,13 @@
     },
     "tarballUrl": {
       "type": "string",
-      "description": "Registry-relative URL for the signed tarball. Always `/v1/packs/{name}/-/{version}.tgz`.",
-      "pattern": "^/v1/packs/[^/]+/-/[^/]+\\.tgz$"
+      "description": "Registry-relative URL for the signed tarball. Always `/v2/packs/{name}/-/{version}.tgz` (RFC 0177 §A.3 full-path templates).",
+      "pattern": "^/v2/packs/[^/]+/-/[^/]+\\.tgz$"
     },
     "signatureUrl": {
       "type": "string",
-      "description": "Registry-relative URL for the detached Ed25519 signature. Always `/v1/packs/{name}/-/{version}.sig`.",
-      "pattern": "^/v1/packs/[^/]+/-/[^/]+\\.sig$"
+      "description": "Registry-relative URL for the detached signature. Always `/v2/packs/{name}/-/{version}.sig`.",
+      "pattern": "^/v2/packs/[^/]+/-/[^/]+\\.sig$"
     },
     "yanked": {
       "type": "boolean",

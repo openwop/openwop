@@ -111,16 +111,16 @@ v2 scenarios (suite 2.0.0): `event-type-closed` (unaided: a typo'd protocol type
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 closed `type`; positive vendor pattern | schema validation of injected types | the suite, unaided | witnessable — unaided |
+| §A.1 closed `type`; positive vendor pattern | schema validation of injected types — `openwop.requirement.0171.event-type-closed`, `openwop.requirement.0171.enum-growth-rule` | the suite, unaided | witnessable — unaided |
 | §A.2 naming rule and recorded exceptions | corpus gate over the enum | the corpus gate | witnessable — unaided (corpus) |
-| §A.4 every payload closed; `_typeIndex` normative | corpus gate + an event with an extra key | the suite, unaided | witnessable — unaided |
-| §A.5 growth rule: consumer accepts, producer never emits unregistered | the suite's reader on a registered-unknown member; a host emitting an unregistered member fails `event-type-closed` | the suite, unaided | witnessable — unaided |
-| §B.1 every code registered; `details` typed | every error response | the suite, unaided | witnessable — unaided |
-| §B.2 `Retry-After` only | a rate-limited response | the suite (gated on a host advertising limits) | witnessable — gated |
-| §C.1 `OpenWOP-*` only; every header declared | every response; OpenAPI vs prose parity | the suite, unaided; the corpus gate | witnessable — unaided |
-| §D.1 `configurable` closed standalone | schema validation | the suite, unaided | witnessable — unaided |
+| §A.4 every payload closed; `_typeIndex` normative | corpus gate + an event with an extra key — `openwop.requirement.0171.payload-registry-closed` | the suite, unaided | witnessable — unaided |
+| §A.5 growth rule: consumer accepts, producer never emits unregistered | the suite's reader on a registered-unknown member; a host emitting an unregistered member fails `event-type-closed` — `openwop.requirement.0171.enum-growth-rule`, `openwop.requirement.0171.event-type-closed` | the suite, unaided | witnessable — unaided |
+| §B.1 every code registered; `details` typed | every error response — `openwop.requirement.0171.error-registry` | the suite, unaided | witnessable — unaided |
+| §B.2 `Retry-After` only | a rate-limited response — `openwop.requirement.0171.error-registry` | the suite (gated on a host advertising limits) | witnessable — gated |
+| §C.1 `OpenWOP-*` only; every header declared | every response; OpenAPI vs prose parity — `openwop.requirement.0171.header-scheme` | the suite, unaided; the corpus gate | witnessable — unaided |
+| §D.1 `configurable` closed standalone | schema validation — `openwop.requirement.0171.configurable-closed` | the suite, unaided | witnessable — unaided |
 | §E.1 one channel; path parity | corpus gate | the corpus gate | witnessable — unaided (corpus) |
-| §E.2 `afterSequence` semantics; response shape | poll responses | the suite, unaided | witnessable — unaided |
+| §E.2 `afterSequence` semantics; response shape | poll responses — `openwop.requirement.0171.poll-cursor-v2` | the suite, unaided | witnessable — unaided |
 
 ## Adversarial review
 

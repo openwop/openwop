@@ -84,15 +84,15 @@ The child's own witnesses are corpus gates and the suite's self-tests: `req-only
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 `req()` only; reword fails | suite lint + generator diff | the corpus gate | witnessable — unaided (corpus) |
+| §A.1 `req()` only; reword fails | suite lint + generator diff — `openwop.requirement.0168.req-only-assertions`, `openwop.requirement.0168.alias-covers-reword` | the corpus gate | witnessable — unaided (corpus) |
 | §A.2 soft-skip never records pass | bundle `results[].requirements[]` | the suite's self-test | witnessable — unaided (corpus) |
-| §B.1 witness required; protocol-tier `unwitnessable` fails | corpus gate | the corpus gate | witnessable — unaided (corpus) |
+| §B.1 witness required; protocol-tier `unwitnessable` fails | corpus gate — `openwop.requirement.0168.witness-required` | the corpus gate | witnessable — unaided (corpus) |
 | §B.3 seam-gated MUST minted or demoted | ratchet + falsifiability tables | the corpus gate | witnessable — unaided (corpus) |
-| §C.2 no seam op in the canonical documents | OpenAPI + manifest | the corpus gate | witnessable — unaided (corpus) |
-| §D.1 coherence ids absent from bundles | bundle schema | the suite, unaided | witnessable — unaided |
-| §D.2 corpus digest-checked at start | suite refusal | the suite's self-test | witnessable — unaided (corpus) |
-| §E.1 closed root, required fields | bundle schema | the suite, unaided | witnessable — unaided |
-| §E.2 signature verifies; self-signed `independent` refused | verifier | the suite's self-test with a tampering vector | witnessable — unaided |
+| §C.2 no seam op in the canonical documents | OpenAPI + manifest — `openwop.requirement.0168.seams-not-in-canonical` | the corpus gate | witnessable — unaided (corpus) |
+| §D.1 coherence ids absent from bundles | bundle schema — `openwop.requirement.0168.coherence-not-in-bundle` | the suite, unaided | witnessable — unaided |
+| §D.2 corpus digest-checked at start | suite refusal — `openwop.requirement.0168.spec-artifacts-digest` | the suite's self-test | witnessable — unaided (corpus) |
+| §E.1 closed root, required fields | bundle schema — `openwop.requirement.0168.bundle-v3-signed` | the suite, unaided | witnessable — unaided |
+| §E.2 signature verifies; self-signed `independent` refused | verifier — `openwop.requirement.0168.bundle-v3-signed` | the suite's self-test with a tampering vector | witnessable — unaided |
 
 ## Adversarial review
 
