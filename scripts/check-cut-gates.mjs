@@ -10,7 +10,7 @@
  * evidence so a reader can re-derive the verdict without trusting this file.
  *
  * Usage:
- *   node scripts/check-cut-gates.mjs --host-bundle <bundle-v3.json> [--network]
+ *   node scripts/check-cut-gates.mjs --host-bundle <bundle-v3.json> [--host-discovery <doc.json>] [--network]
  *   node scripts/check-cut-gates.mjs --corpus-only        # the host gates report `blocked`
  *
  * Exit 1 when any gate fails, or when a host gate is `blocked` and
@@ -25,6 +25,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { createPublicKey, verify as edVerify } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,6 +36,7 @@ const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1
 const corpusOnly = flag('--corpus-only');
 const network = flag('--network');
 const bundlePath = opt('--host-bundle');
+const discoveryPath = opt('--host-discovery');
 
 // The four §F Coexistence scenarios, by id PREFIX: each mints one id per leg
 // (`.cross-major-read`, `.prefix`, `.facet`, …), and the gate is that every leg
@@ -80,6 +82,72 @@ function v2RequirementIds() {
     }
   }
   return ids;
+}
+
+// ── Signature attribution (RFC 0168 §E.2) ─────────────────────────────────────
+// The Front-door gate used to accept `typeof signature.sig === 'string'`. That
+// is satisfied by any string, so it could not tell a host key from a keypair
+// minted seconds earlier by whoever wrote the bundle — which is exactly what
+// both Phase 4 hosts did, and both said so. A signature nobody can attribute is
+// not evidence; RFC 0168 disposed of that objection by naming `signingKeys[]`
+// in the host's discovery document, so this resolves the id THERE and verifies.
+const canonicalJSON = (v) => {
+  if (v === null || typeof v !== 'object') return JSON.stringify(v);
+  if (Array.isArray(v)) return `[${v.map(canonicalJSON).join(',')}]`;
+  return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonicalJSON(v[k])}`).join(',')}}`;
+};
+const attestationPayload = (b) => Buffer.from(canonicalJSON({
+  witnessSha256: b.witnessSha256, 'host.build': b.host?.build,
+  'suite.version': b.suite?.version, 'discovery.sha256': b.discovery?.sha256,
+}), 'utf8');
+/** base64url, unpadded — the form `signingKeys[].publicKey` and `signature.sig` both use. */
+const fromB64u = (x) => Buffer.from(String(x).replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+/** Wrap a raw 32-byte Ed25519 public key in the SPKI prefix node's KeyObject wants. */
+const ed25519KeyFromRaw = (raw) => createPublicKey({
+  key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), raw]),
+  format: 'der', type: 'spki',
+});
+
+function loadDiscovery() {
+  if (!discoveryPath) return null;
+  const p = resolve(discoveryPath);
+  if (!existsSync(p)) throw new Error(`--host-discovery ${p} does not exist`);
+  return { path: p, doc: JSON.parse(readFileSync(p, 'utf8')) };
+}
+
+/**
+ * Four outcomes, deliberately distinct — collapsing any two is how the old
+ * check went wrong:
+ *   no discovery supplied      → blocked (the attribution evidence was not read)
+ *   keyId not in signingKeys[] → FAIL    (read, and it does not attribute)
+ *   signature does not verify  → FAIL
+ *   verifies                   → ok
+ */
+function signatureCheck(hb, hd) {
+  const sig = hb.bundle.signature;
+  const where = `${hb.path} signature`;
+  if (!sig || typeof sig.sig !== 'string' || !sig.keyId) {
+    return { ok: false, evidence: where, tail: 'unsigned — an unsigned v3 bundle does not exist (RFC 0168 §E.2)' };
+  }
+  if (!hd) {
+    return { ok: false, blocked: true, evidence: '--host-discovery',
+      tail: `signed by ${sig.keyId}, but no discovery document was given to resolve it against — the signature attests INTEGRITY only (the bundle was not altered after signing) and attributes to nobody` };
+  }
+  const keys = Array.isArray(hd.doc.signingKeys) ? hd.doc.signingKeys : [];
+  const match = keys.find((k) => k && k.keyId === sig.keyId);
+  if (!match) {
+    return { ok: false, evidence: `${hd.path} signingKeys[]`,
+      tail: keys.length === 0
+        ? `the bundle is signed by ${sig.keyId} and the host publishes NO signingKeys[] — nothing binds that key to this host, so the signature is unaccountable (RFC 0168 §E.2)`
+        : `the bundle is signed by ${sig.keyId}, which is not among the ${keys.length} key(s) this host publishes (${keys.map((k) => k.keyId).join(', ')})` };
+  }
+  let verified = false, err = '';
+  try { verified = edVerify(null, attestationPayload(hb.bundle), ed25519KeyFromRaw(fromB64u(match.publicKey)), fromB64u(sig.sig)); }
+  catch (e) { err = `: ${e.message}`; }
+  return { ok: verified, evidence: `${hd.path} signingKeys[${sig.keyId}]`,
+    tail: verified
+      ? `attestation verifies under the host's published key ${sig.keyId}`
+      : `the attestation does NOT verify under the host's published key ${sig.keyId}${err} — the bundle was altered after signing, or was signed by a different key` };
 }
 
 function loadBundle() {
@@ -145,6 +213,8 @@ gate('Waiver', [node('check-waiver-ledger.mjs'), node('check-waiver-authority.mj
 const corpusWitness = [node('check-declaration.mjs'), node('check-core-budget.mjs')];
 let hb = null;
 try { hb = loadBundle(); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-bundle', tail: e.message }); }
+let hd = null;
+try { hd = loadDiscovery(); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-discovery', tail: e.message }); }
 
 if (!hb) {
   // A bundle that was GIVEN but could not be read is a failure, not a block —
@@ -208,7 +278,7 @@ if (!hb) {
     corpusWitness[1],
     { ok: totals.executedFail === 0, evidence: `${hb.path} results.totals`, tail: `executedFail=${totals.executedFail} executedPass=${totals.executedPass} blocked=${totals.blocked}` },
     { ok: matrix.includes(hostName), evidence: 'INTEROP-MATRIX.md', tail: matrix.includes(hostName) ? `row for ${hostName}` : `no row names host ${hostName}` },
-    { ok: typeof hb.bundle.signature?.sig === 'string', evidence: `${hb.path} signature`, tail: hb.bundle.signature ? `signed by ${hb.bundle.signature.keyId}` : 'unsigned' },
+    signatureCheck(hb, hd),
   ]);
 }
 

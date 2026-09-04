@@ -122,6 +122,13 @@
       "disposition": "kept"
     },
     {
+      "key": "signingKeys",
+      "kind": "metadata",
+      "schema": "metadata/signingKeys",
+      "note": "host bundle-signing public keys (RFC 0168 §E.2); v2-only — the surface the RFC named when it disposed of \"a signature nobody can check\"",
+      "disposition": "kept"
+    },
+    {
       "key": "discovery",
       "kind": "metadata",
       "schema": "metadata/discovery",

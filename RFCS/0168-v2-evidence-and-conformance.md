@@ -92,6 +92,7 @@ The child's own witnesses are corpus gates and the suite's self-tests: `req-only
 | §D.1 coherence ids absent from bundles | bundle schema — `openwop.requirement.0168.coherence-not-in-bundle` | the suite, unaided | witnessable — unaided |
 | §D.2 corpus digest-checked at start | suite refusal — `openwop.requirement.0168.spec-artifacts-digest` | the suite's self-test | witnessable — unaided (corpus) |
 | §E.1 closed root, required fields | bundle schema — `openwop.requirement.0168.bundle-v3-signed` | the suite, unaided | witnessable — unaided |
+| §E.2 `signingKeys[]` published; `keyId` resolves; attestation verifies under it | `openwop.requirement.0168.bundle-signature-attributable` | `check-cut-gates.mjs` Front door + the gate's four-way self-test | witnessable — unaided |
 | §E.2 signature verifies; self-signed `independent` refused | verifier — `openwop.requirement.0168.bundle-v3-signed` | the suite's self-test with a tampering vector | witnessable — unaided |
 | §C.3 an advertised fixture id is one the corpus defines and the host can create | `openwop.requirement.0168.advertised-fixtures-exist` — the advertised set is a subset of the catalog, and a bounded sample is creatable | a host whose advertised list and seeded set drift | witnessable — unaided |
 
