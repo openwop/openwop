@@ -78,7 +78,28 @@ export function floorFilesFor(profile: string, document?: Readonly<Record<string
  * discovery-conditional floor (RFC 0148 §C G7 — `openwop-replay-fork`): without
  * it such a floor is UNEVALUABLE and this returns `null`, never `[]`.
  */
+/**
+ * Major-2 floors come from `spec/v2/profiles.json`, not from the v1 table.
+ * `PROFILE_FLOOR_SCENARIOS` names v1 scenario FILES (`runs-lifecycle.test.ts`,
+ * `discovery.test.ts`, …) that `scenario-majors.json` assigns to major 1 and a
+ * major-2 run therefore never executes — so every one of them came back
+ * unclassified and a v2 host was refused certification for not running v1
+ * scenarios. Set by the runner before deriving; empty means the registry
+ * declares no floor for that profile, which is a real "witnesses nothing yet",
+ * not an unclassified return.
+ */
+let v2Floors: Readonly<Record<string, readonly string[]>> | null = null;
+
+export function setV2ProfileFloors(floors: Readonly<Record<string, readonly string[]>> | null): void {
+  v2Floors = floors;
+}
+
 export function requirementsFor(profile: string, document?: Readonly<Record<string, unknown>>): readonly string[] | null {
+  if (v2Floors !== null) {
+    const files = v2Floors[profile];
+    if (files === undefined) return null;
+    return files.map(requirementIdForScenario);
+  }
   const floor = PROFILE_FLOOR_SCENARIOS[profile];
   if (floor === undefined) return null;
   if (floor.discoveryOnly === true) return [];
