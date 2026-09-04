@@ -52,6 +52,27 @@ For a program whose thesis is independent witness, that is a defect in operator 
 
 ---
 
+## Your merge gate cannot be green mid-migration — and that is not a defect
+
+The moment you pin to the v2 suite, a conformance lane wired into your merge gate starts measuring **the whole v2 contract**, including surfaces you have not built. If that lane is your merge gate, nothing merges until the migration is finished — which blocks the migration itself.
+
+**Do not run the merge gate with `--require-behavior`.** That flag means *"I claim to implement all of v2; fail me if I do not advertise it."* Mid-migration you are not making that claim, so asserting it is not strictness — it is a false statement about your own host that you then fail. The flag's own contract says the default exists precisely so *"a v1.0-only host doesn't suddenly fail the suite when new optional profiles ship."*
+
+| lane | flag | what it answers |
+|---|---|---|
+| merge gate | **no** `--require-behavior` | did I break something I had already built? |
+| certification | `--require-behavior`, or `OPENWOP_OPTED_OUT_PROFILES` for deliberate non-implementation | is my advertised claim true? |
+
+For reds that survive with the flag off — a surface you advertise but have not finished — keep a **named-scenario baseline that may only shrink**. This corpus ratchets the same way in two places already (`docs/witness-baseline.json`; the threat-model pointer count, reported as *"at baseline — a ratchet, not a pass"*).
+
+**The baseline MUST name scenarios with reasons, never a count.** A count lets one red be swapped for another silently, and you stay green while learning nothing.
+
+> **The real hazard is not a red gate — it is how someone eventually makes it green.** Quarantining scenarios is excused evidence wearing a gate's clothes, and it is indistinguishable from absent evidence at exactly the moment you need to tell them apart. Turning off a flag that asserts a claim you are not making is honest. Suppressing a scenario that measures a surface you *do* advertise is not.
+
+**Keep a clean reference host as a control.** A tier-1 host mid-migration has legitimate failures, and a *wrong* check hides inside a set of correct ones almost perfectly — the same camouflage as a false red inside a load-induced one. Two suite defects in this program were caught only because the reference host has no legitimate failures for them to hide behind, and were invisible on the migrating host, where they had been filed under "unimplemented v2 legs". A host with a clean baseline is a better instrument than a host mid-migration.
+
+---
+
 ## Phase 1 — The wire, first
 
 **Land the dual-stack advertisement before anything else.** This ordering is not aesthetic. Every v2 conformance scenario reaches the host through v2 discovery, so until the v2 root exists, **nothing you build can be witnessed** — you would be writing migration code with no way to tell whether it works.
