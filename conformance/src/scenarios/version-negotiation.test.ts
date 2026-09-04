@@ -7,9 +7,20 @@
  *
  * What we CAN test cheaply:
  *   1. Server advertises a `protocolVersion` in `Capabilities`.
- *   2. The four version axes (`engineVersion`,
- *      `eventLogSchemaVersion`, per-event `schemaVersion`,
- *      `pinnedVersions`) appear where the spec says they should.
+ *   2. `protocolVersion` is advertised, and every event carries the six
+ *      required `RunEventDoc` fields.
+ *
+ *   This file previously claimed to check "the four version axes
+ *   (`engineVersion`, `eventLogSchemaVersion`, per-event `schemaVersion`,
+ *   `pinnedVersions`)". IT DID NOT. `protocolVersion` was the only axis
+ *   asserted, and across all 444 v1 scenario files the sole occurrence of the
+ *   identifier `eventLogSchemaVersion` was that sentence — a docstring
+ *   describing a check that did not exist. A comment claiming coverage is
+ *   worse than no comment: it answers "is this tested?" for anyone who greps,
+ *   and answers it wrongly. `eventLogSchemaVersion` is now witnessed by
+ *   `era-key-stamped-v1.test.ts`; `engineVersion`, per-event `schemaVersion`
+ *   and `pinnedVersions` remain UNASSERTED and this docstring no longer
+ *   pretends otherwise.
  *   3. Forward-compat read: events carrying an UNKNOWN
  *      `schemaVersion` SHOULD still be readable via the events/poll
  *      endpoint without 5xx (best-effort fold per
