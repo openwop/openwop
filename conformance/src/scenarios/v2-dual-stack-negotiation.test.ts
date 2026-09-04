@@ -76,7 +76,32 @@ describe('v2 dual-stack-negotiation (RFC 0172 §A.3–§A.4 — gated on two maj
     const read = await http(() => driver.get(`/runs/${encodeURIComponent(runId)}`, { headers: { 'OpenWOP-Version': '2.0' } }));
     if (read === null) return softSkip('blocked', 'GET /runs/{runId} unreachable (fetch failed)');
     expect(read.status, req('openwop.requirement.0172.dual-stack-negotiation.cross-major-read', 'spec/v2/core/versioning.md §5', 'the overlap: a run created through /v1/runs MUST be readable through GET /runs/{runId} with OpenWOP-Version: 2.0')).toBe(200);
-    expect((read.json as { runId?: unknown } | undefined)?.runId, req('openwop.requirement.0172.dual-stack-negotiation.cross-major-read', 'spec/v2/core/versioning.md §5', 'the v2 read MUST name the same run')).toBe(runId);
+    // NAMES the same run — not byte-identical to the v1 id.
+    //
+    // This asserted `.toBe(runId)` until 2026-09-04, which invented a
+    // requirement. `versioning.md` §5 describes the dual-stack scenario's SHAPE
+    // ("creates one run through /v1/runs … and reads it through /runs with
+    // OpenWOP-Version: 2; the response headers name the contract used") and says
+    // nothing about the identifier. `identity.md` §5 does: under major 2 a
+    // `runId` is tenant-bound `<tenantId>/<opaque>`, a grammar in
+    // `ids.schema.json`. A host implementing BOTH sections faithfully cannot
+    // satisfy byte-equality, and one turned its P4-D branch red on exactly this.
+    //
+    // The assertion tighter than its own prose is the mirror of the schema
+    // looser than its own prose: both are gaps between a check and the text it
+    // cites, and both are invisible until a host implements the text.
+    //
+    // What §5 actually requires is that the v2 read resolves to the SAME RUN.
+    // Accept the identical id (a host that does not project) or the tenant-bound
+    // projection of it (a host that does); reject anything else, which would be
+    // a different run.
+    const readId = (read.json as { runId?: unknown } | undefined)?.runId;
+    const namesSameRun =
+      readId === runId || (typeof readId === 'string' && readId.endsWith(`/${runId}`) && readId.split('/').length === 2);
+    expect(
+      namesSameRun,
+      req('openwop.requirement.0172.dual-stack-negotiation.cross-major-read', 'spec/v2/core/versioning.md §5', `the v2 read MUST name the same run: either the v1 id verbatim, or its tenant-bound projection <tenantId>/${'${runId}'} per identity.md §5. Got ${JSON.stringify(readId)} for a run created as ${JSON.stringify(runId)}`),
+    ).toBe(true);
     expect(major(read), req('openwop.requirement.0172.dual-stack-negotiation.cross-major-read', 'spec/v2/core/versioning.md §1.4', 'the v2 read MUST report the 2.x contract that produced it')).toBe('2');
   });
 

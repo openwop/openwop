@@ -26328,7 +26328,8 @@
         },
         {
           "section": "spec/v2/core/versioning.md §5",
-          "requirement": "the v2 read MUST name the same run"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "spec/v2/core/versioning.md §1.4",
@@ -26339,7 +26340,7 @@
     {
       "id": "openwop.it.v2-dual-stack-negotiation.an-unlisted-major-is-406-protocol-version-unsupported-with-details-protocolversi",
       "file": "v2-dual-stack-negotiation.test.ts",
-      "line": 83,
+      "line": 108,
       "title": "an unlisted major is 406 protocol_version_unsupported with details.protocolVersions[]",
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.unlisted-major",
       "citations": [
@@ -26363,7 +26364,7 @@
     {
       "id": "openwop.it.v2-dual-stack-negotiation.openwop-version-2-0-on-a-v1-path-is-400-protocol-version-mismatch",
       "file": "v2-dual-stack-negotiation.test.ts",
-      "line": 94,
+      "line": 119,
       "title": "OpenWOP-Version: 2.0 on a /v1/ path is 400 protocol_version_mismatch",
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.v1-path-mismatch",
       "citations": [
@@ -26382,7 +26383,7 @@
     {
       "id": "openwop.it.v2-dual-stack-negotiation.every-response-reports-the-contract-that-produced-it",
       "file": "v2-dual-stack-negotiation.test.ts",
-      "line": 103,
+      "line": 128,
       "title": "every response reports the contract that produced it",
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.response-header",
       "citations": [
