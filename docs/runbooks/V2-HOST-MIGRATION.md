@@ -27,6 +27,8 @@ You operate a host that serves major 1 in production, with persisted event logs 
 | a green negative control | the guard **fired** vs the guard tested the wrong file |
 | a valid signature | attributable to a host vs signed by a keypair minted seconds ago |
 | a schema-valid document | **specified** vs merely **not-yet-forbidden** by an open root |
+| a `200` with the whole log | the cursor was **honored** vs **accepted and ignored** by a permissive parser |
+| a requirement nobody violates | genuinely **upheld** vs **never asserted by anything** |
 
 Every check you add should be able to fail. If you cannot describe the input that makes it fail, it is not a check.
 
@@ -165,16 +167,40 @@ The exit code is precisely the thing a kill destroys, so logging it fails silent
 
 **Ask instead:** did the file appear? Does it validate? Is the deployed revision serving what you think? Those are checkable.
 
+**Verify in the environment the artifact will actually RUN in — "on a live boot" is not enough.**
+
+Measured: a change resolved a package path at module scope. `tsc` passed. A live **local** boot passed. **The production image would not have started at all** — the package is a `devDependency` and the runtime stage installs with `--omit=dev`, so the resolve throws at import time, before the server listens. Not a degraded feature: no boot, every instance.
+
+A dev tree has devDependencies installed. The image does not. **That verification was structurally incapable of seeing the failure, and looked exactly like verification that could.** Check inside the runtime stage, or against a deployed revision.
+
+> And read the files next to the one you are editing. That repo had already measured this exact mechanism on a sibling package and written it down two files away. **The knowledge was adjacent and unread.**
+
 The same rule applies to publishing: a green publish job is a wrapper claim. A registry `404` immediately after a successful publish is indistinguishable from a failed publish — propagation ran 2 to 9 minutes in practice. **Read the job log for the confirmation line before raising an alarm.**
 
 ---
 
 ## Deploy notes
 
+- **Read the serving revision by traffic percentage, never by index or "latest ready".** On Cloud Run, `status.latestReadyRevisionName` returns the most recently *ready* revision — which a 0%-traffic tagged revision satisfies. The serving revision is the traffic entry at `percent === 100`. Two sessions independently reported the wrong revision from that field on the same day; one of them drew a correct conclusion from it **by luck**, because both candidate revisions happened to predate the thing being checked.
+- **Writing a secret is a promise; a revision serving it is the witness.** A secret reference resolved as `latest` is resolved **once, at revision start**. Appending a new version does nothing until something redeploys — the credential returns `401`, which reads exactly like a missing credential.
 - **Backend first, then frontend**, if you serve both.
 - **Redeploy a content-identical half rather than leave build stamps disagreeing.** It feels wasteful. It is not: a verifier that reports "frontend MISMATCH ← someone else's deploy is live" *falsely and permanently* sends the next operator hunting a parallel deployer who does not exist. **A gate that cries wolf once gets ignored the time it is right.**
 - **Re-read traffic after the build, before promoting.** The build is minutes long; that is the window in which something moves under you.
 - **Confirm the change on the wire by measuring the delta**, not the value: fetch the outgoing revision and the incoming one and diff them. Observing that a field is `3` is weaker than observing it was absent and became `3`.
+
+---
+
+## Two ways a requirement goes unenforced, and they look the same from inside
+
+Both were measured on real hosts in one afternoon, and neither produced an error anywhere.
+
+**A requirement that lives only in a JSON Schema `description` has no witness and no `MUST`.** The event `sequence` field said *"first event is 0"* since v1. No prose stated it; no scenario asserted it across the entire v1 line. One host was 1-based for the life of the product and **could not have been told, because nothing was capable of telling it**. Of two independent hosts, the one that got it right did so by luck of implementation.
+
+**A parameter that is accepted and ignored produces the same silence.** A host still serving the v1 cursor name, with a permissive request schema, accepted the v2 `afterSequence` and discarded it — returning `200` with a full replay of the log on every poll. A client resuming from a cursor loops forever and nothing errors.
+
+> **A parameter accepted and ignored, and a requirement written and unasserted, are the same failure seen from two sides.** The host cannot distinguish either from working, and neither can its operator.
+
+The defence is the same in both cases and it is not "write it down more carefully": **assert the effect, not the acceptance.** Check that the cursor *excluded* rows, not that the field was tolerated. Check that the first sequence *is* what the contract says, not that the field exists. A check on an effect cannot be satisfied by a permissive parser or by prose nobody reads.
 
 ---
 
