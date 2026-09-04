@@ -61,6 +61,15 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
       return softSkip('blocked', `GET /runs/${runId}/events/poll answered ${before?.status ?? 'no response'} on the seeded era-2 run — the log cannot be read back`);
     }
     const seedCount = eventsOf(before).length;
+    // The seam returning ok is a WRAPPER claim; the readable log is the artifact.
+    // A seam that reports success and seeds nothing leaves no era-2 log to append
+    // to, so there is nothing here to witness the writer rule with — that is
+    // `blocked`, not a writer-rule failure. Asserting against an empty log would
+    // charge this requirement for a seam defect, which is the misattribution the
+    // suite exists to avoid.
+    if (seedCount === 0) {
+      return softSkip('blocked', `seedEra2Log reported success but the log reads back empty (0 events) — the seam's return value is not evidence that a log exists, and without a seeded era-2 log the writer rule is unwitnessed here`);
+    }
 
     // One canonical mutation so the HOST's own writer appends. Cancel is the
     // universally available terminal transition; a host that refuses it on a

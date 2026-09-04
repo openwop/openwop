@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 544,
-    "tests": 2119,
-    "withStableId": 2119,
+    "tests": 2118,
+    "withStableId": 2118,
     "interpolatedTitles": 0,
     "explicitIds": 2057
   },
@@ -25742,23 +25742,9 @@
       ]
     },
     {
-      "id": "openwop.it.v2-advertised-fixtures-exist.every-advertised-fixture-id-is-one-the-corpus-defines",
-      "file": "v2-advertised-fixtures-exist.test.ts",
-      "line": 60,
-      "title": "every advertised fixture id is one the corpus defines",
-      "explicitId": null,
-      "citations": [
-        {
-          "section": null,
-          "requirement": null,
-          "interpolated": true
-        }
-      ]
-    },
-    {
       "id": "openwop.it.v2-advertised-fixtures-exist.a-sampled-advertised-fixture-is-actually-creatable-not-just-listed",
       "file": "v2-advertised-fixtures-exist.test.ts",
-      "line": 80,
+      "line": 62,
       "title": "a sampled advertised fixture is actually creatable, not just listed",
       "explicitId": null,
       "citations": [
@@ -26561,7 +26547,7 @@
     {
       "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
       "file": "v2-era-2-append-vocabulary.test.ts",
-      "line": 119,
+      "line": 128,
       "title": "the run keeps the era it was created with; an append does not promote it to era 3",
       "explicitId": null,
       "citations": [

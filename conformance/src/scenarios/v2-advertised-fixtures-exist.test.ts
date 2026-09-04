@@ -3,40 +3,42 @@
  * the host must be able to honour (suite 2.0.0, target major 2; unaided).
  *
  * `fixtures[]` in discovery gates scenarios: `isFixtureAdvertised(id)` decides
- * whether a scenario runs at all. Nothing checked that an advertised id names a
- * fixture the corpus actually defines, or that the host can serve it. A host
- * whose advertised list and seeded set drift apart therefore fails somewhere
- * else entirely — the scenario gated on the missing fixture attempts, fails on
- * a run that cannot be created, and the failure is attributed to that
- * scenario's requirement rather than to the advertisement that was wrong.
+ * whether a scenario runs at all. So a host whose advertised list and seeded set
+ * drift apart fails somewhere else entirely — the scenario gated on the missing
+ * fixture attempts, fails on a run that cannot be created, and the failure is
+ * attributed to that scenario's requirement rather than to the advertisement
+ * that was wrong. That misattribution is what this scenario exists to catch.
  *
- * No host is currently known to exhibit this. A tier-2 host was thought to
- * (46 seeded against 47 advertised) and then verified and retracted it — the
- * count had been eyeballed from an array literal rather than measured, and the
- * two sets are in fact identical. The scenario is kept because the failure mode
- * is a property of the gating mechanism, not of that host: `fixtures[]` decides
- * whether a scenario runs, so a wrong advertisement is charged to whatever runs
- * next. Leg 1 is also the stronger check — an id the corpus catalog does not
- * define is wrong however well a host's own two lists agree with each other.
+ * **This scenario shipped with a second leg that was wrong, and the correction
+ * matters more than the check.** That leg asserted the advertised ids are a
+ * SUBSET of `conformance/fixtures/` — "the vocabulary is closed, so an id the
+ * corpus does not define is a typo or an invention". The vocabulary is not
+ * closed. Host-supplied fixtures are the normal case: dozens of ids the
+ * scenarios gate on are deliberately not shipped, and `v2-approver-enforced`
+ * says so in its own docstring — it needs an approval fixture whose
+ * `approversList` names a principal the suite is not, and records `blocked`
+ * naming it precisely because "no such fixture ships in `conformance/fixtures/`".
  *
- * Two legs, both cheap:
- *   1. the advertised ids are a subset of the corpus fixture catalog — the
- *      vocabulary is closed, so an id the corpus does not define is a typo or
- *      an invention, not a capability;
- *   2. a bounded sample of advertised fixtures is actually creatable, so the
- *      list is a claim about reachable state rather than a wish.
+ * So the leg failed a host for doing exactly what the corpus asks. It was found
+ * by running the suite against the reference host, which advertised two
+ * host-supplied fixtures and was marked non-conformant for it. Set membership
+ * cannot distinguish a typo from a legitimate host fixture, and a check that
+ * cannot tell those apart is not a check — it is a coin flip that happens to
+ * land on "fail" for correct hosts.
+ *
+ * What survives is the leg that was always sound: an advertised fixture MUST be
+ * creatable. That holds whoever defines it, and it is the one that catches the
+ * drift the misattribution comes from.
  *
  * @see spec/v2/core/conformance.md
- * @see conformance/fixtures.md
+ * @see conformance/src/scenarios/v2-approver-enforced.test.ts (a host-supplied fixture, by design)
  */
 
 import { describe, it, expect } from 'vitest';
-import { existsSync, readdirSync } from 'node:fs';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { FIXTURES_DIR } from '../lib/paths.js';
 
 const ID = 'openwop.requirement.0168.advertised-fixtures-exist';
 const DOC = 'spec/v2/core/conformance.md §Fixtures';
@@ -57,26 +59,6 @@ function advertisedIds(doc: Record<string, unknown>): string[] {
 }
 
 describe('v2-advertised-fixtures-exist (conformance.md §Fixtures)', () => {
-  it('every advertised fixture id is one the corpus defines', async () => {
-    const doc = await v2Discovery().catch(() => null);
-    if (!doc) return softSkip('blocked', 'v2 discovery unreachable');
-    const ids = advertisedIds(doc);
-    if (ids.length === 0) return softSkip('inapplicable', 'the host advertises no fixtures[] — there is no claim to falsify');
-    if (FIXTURES_DIR === null || !existsSync(FIXTURES_DIR)) {
-      return softSkip('blocked', 'the fixture catalog is absent from this layout, so an advertised id cannot be checked against it');
-    }
-    const catalog = new Set(
-      readdirSync(FIXTURES_DIR)
-        .filter((f) => f.endsWith('.json'))
-        .map((f) => f.replace(/\.json$/, '')),
-    );
-    const unknown = ids.filter((id) => !catalog.has(id));
-    expect(
-      unknown,
-      req(ID, DOC, `every id in fixtures[] MUST name a fixture the corpus defines — the vocabulary is closed, so an id the catalog does not carry is a typo or an invention rather than a capability (${unknown.length} unknown of ${ids.length}: ${unknown.slice(0, 5).join(', ')})`),
-    ).toEqual([]);
-  });
-
   it('a sampled advertised fixture is actually creatable, not just listed', async () => {
     const doc = await v2Discovery().catch(() => null);
     if (!doc) return softSkip('blocked', 'v2 discovery unreachable');
