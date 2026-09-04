@@ -34,6 +34,23 @@ A v2 host reading a run in era `2` MUST translate every event through the codema
 
 The rule binds every reader: poll, SSE, fork, replay divergence, debug bundle, summary memory. The translation is a read projection. A host MUST NOT rewrite era-`2` rows in place; a background backfill that stamps `3` and rewrites `type` under the same `(runId, sequence)` key is permitted only as an atomic per-run operation with the original preserved, because the fork prefix must stay byte-equivalent to the translated parent (replay.md, RFC 0041 §C).
 
+### The writer rule
+
+The era key is fixed when the run is created and fixes the log's vocabulary for
+the run's lifetime. An append to a run in era `2` MUST use v1 vocabulary — the
+name the codemap maps *from*, not the v2 name it maps to. A host that upgrades
+mid-flight MUST NOT begin writing v2 names into a log the reader translates as
+era `2`: the reader would map an already-mapped name a second time, or fail the
+read with `event_type_unmapped` on a name the codemap does not carry on its v1
+side. A run created after the upgrade is era `3` and is written in v2
+vocabulary, untranslated.
+
+This binds every writer for as long as an era-`2` run stays open, which on a
+host with human-approval interrupts can be days. Draining era-`2` runs before
+serving v2 is not the path — see §"Runs pinned to v1" — so the writer rule is
+what makes an in-flight run safe across the cut. Its witness is
+`v2-era-2-append-vocabulary`.
+
 ### The seat
 
 The adapter MUST sit at the storage boundary every reader passes through — the storage interface's event-list method, not a wrapper some call sites bypass. A host leg MUST name its seat in its ADR; the `v1-events-translated` scenario reads through poll, SSE, and a fork so a wrapper-only adapter is caught (conformance.md).

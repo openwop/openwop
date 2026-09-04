@@ -121,6 +121,7 @@ v2 scenarios (suite 2.0.0): `v1-events-translated` (gated on the seams profile t
 | §C.2 aliases absent from v2 | the v2 representation — `openwop.requirement.0176.well-known-one-resource.v2-representation` | the suite, unaided | witnessable — unaided |
 | §D.2 v1-signed delivery accepted | receiver acceptance — `openwop.requirement.0176.v1-signed-webhook-accepted` | the suite, gated on `webhooks` | witnessable — gated |
 | §E.1 tag pinned | evidence manifest | the corpus gate over the cross-repo manifest | witnessable — unaided (corpus) |
+| §A.6 an append to an era-`2` run uses v1 vocabulary; the era key is fixed at run creation | `openwop.requirement.0176.era-2-append-vocabulary` — seed an open era-`2` run, drive one canonical mutation, read the whole log back | a host that upgrades with runs in flight | witnessable — gated on the seams profile |
 
 ## Adversarial review
 
