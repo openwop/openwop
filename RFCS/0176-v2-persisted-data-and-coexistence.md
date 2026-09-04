@@ -123,6 +123,7 @@ v2 scenarios (suite 2.0.0): `v1-events-translated` (gated on the seams profile t
 | §E.1 tag pinned | evidence manifest | the corpus gate over the cross-repo manifest | witnessable — unaided (corpus) |
 | §A.6 an append to an era-`2` run uses v1 vocabulary; the era key is fixed at run creation | `openwop.requirement.0176.era-2-append-vocabulary` — seed an open era-`2` run, drive one canonical mutation, read the whole log back | a host that upgrades with runs in flight | witnessable — gated on the seams profile |
 | §A.7 every creation path stamps era `3` in one change; discovery advertises one collapsed constant; the snapshot era MAY be synthesized from absent-⇒-`2` | `openwop.requirement.0176.era-stamp-universal` — a run created after the cut carries `3` on every path, and the advertised value equals what every path writes | a host with more than one run-creation path | witnessable — unaided |
+| §A.8 an era-`3` log reads on `/v1/…` in v1 vocabulary, via the same codemap row inverted | the codemap is a bijection (118 rows, 118 distinct on each side) and a host verifies that at load | a host serving both majors with runs created after the cut | witnessable — gated on the overlap |
 
 ## Adversarial review
 

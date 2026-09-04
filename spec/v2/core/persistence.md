@@ -77,6 +77,31 @@ serving v2 is not the path — see §"Runs pinned to v1" — so the writer rule 
 what makes an in-flight run safe across the cut. Its witness is
 `v2-era-2-append-vocabulary`.
 
+### The v1 wire of an era-`3` log
+
+The reader rule above is written for a v2 reader of an era-`2` log. Through the
+overlap a host serves BOTH majors (`versioning.md` §5) and v1 operations keep
+their `/v1/…` path keys unchanged (§1.2), so the mirror case is forced and the
+corpus owed it a rule: a run created today is era `3` and its log is stored in
+v2 vocabulary, yet the same log must still be readable on `/v1/…` exactly as it
+was before the cut.
+
+A host serving both majors MUST therefore map an era-`3` log's `type` back to
+its v1 spelling on the v1 read path, through the **same codemap row, inverted**.
+This is well defined and not a private mapping: `spec/v2/event-codemap.json` is
+a bijection — 118 rows, 118 distinct `v1` names, 118 distinct `v2` names, no
+many-to-one fold — so the inverse of a row is exact. A host MUST verify that
+property at load rather than assume it; if a future row folds two v1 names onto
+one v2 name, the inverse stops being a function and the host MUST refuse to
+serve the v1 representation rather than guess which spelling to emit.
+
+Two alternatives are rejected, and naming them is the point of this section.
+Storing v1 spellings under an era-`3` stamp makes the stamp a lie, and the
+closed-enum scenario would pass it by luck on any run whose types happen to be
+identity rows. Serving v2 names on `/v1/…` breaks the v1 wire, which the
+overlap exists to preserve. Neither is a smaller change than the inverse map;
+they are the same change with the honesty removed.
+
 ### The seat
 
 The adapter MUST sit at the storage boundary every reader passes through — the storage interface's event-list method, not a wrapper some call sites bypass. A host leg MUST name its seat in its ADR; the `v1-events-translated` scenario reads through poll, SSE, and a fork so a wrapper-only adapter is caught (conformance.md).
