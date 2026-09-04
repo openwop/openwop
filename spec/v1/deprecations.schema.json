@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/deprecations.schema.json",
   "title": "OpenWOP deprecation register",
-  "description": "Shape of spec/v1/deprecations.json — the index of every surface an RFC or spec annotation has deprecated in v1.x (status: deprecated), plus surfaces the v2 program proposes to deprecate but no RFC has yet (status: proposed). In v1.x the register records deprecations; it never creates one (COMPATIBILITY.md §7). It is not a wire artifact and is deliberately kept out of schemas/.",
+  "description": "Shape of spec/v1/deprecations.json \u2014 the index of every surface an RFC or spec annotation has deprecated in v1.x (status: deprecated), plus surfaces the v2 program proposes to deprecate but no RFC has yet (status: proposed). In v1.x the register records deprecations; it never creates one (COMPATIBILITY.md \u00a77). It is not a wire artifact and is deliberately kept out of schemas/.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -95,7 +95,7 @@
         "removeIn": {
           "type": "string",
           "pattern": "^[0-9]+\\.[0-9]+$",
-          "description": "Protocol major.minor at which the surface is removed. v1.x deprecations remove no earlier than 2.0 (COMPATIBILITY.md §7)."
+          "description": "Protocol major.minor at which the surface is removed. v1.x deprecations remove no earlier than 2.0 (COMPATIBILITY.md \u00a77)."
         },
         "replacement": {
           "type": "string",
@@ -136,12 +136,28 @@
           }
         },
         "removalTrigger": {
-          "type": "string",
-          "enum": [
-            "v2.0-cut",
-            "v1-end-of-support"
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "v2.0-cut",
+                "v1-end-of-support"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "v2.0-cut",
+                  "v1-end-of-support"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
           ],
-          "description": "RFC 0176 §C.2: the event that removes the surface. v2.0-cut — absent from the v2 representation from the cut; v1-end-of-support — removed from the v1 representation when every INTEROP-MATRIX host has produced a non-vacuous v2 bundle plus 90 days (charter Phase 0 rule). Optional; removeIn stays the version."
+          "description": "RFC 0176 \u00a7C.2: the event(s) that remove the surface. `v2.0-cut` \u2014 absent from the v2 representation from the cut; `v1-end-of-support` \u2014 removed from the v1 representation when every INTEROP-MATRIX host has produced a non-vacuous v2 bundle plus 90 days (charter Phase 0 rule). A SET, because \u00a7C.2 gives one row two independent removal events: the wrapper, the dotted mirror and Capabilities-Etag are absent from v2 at the cut AND removed from v1 at end-of-support, and a scalar could express only one. Until 2026-09-04 those rows carried `v1-end-of-support` alone while `v2-well-known-one-resource` asserted the `v2.0-cut` obligation by name \u2014 the scenario was right about the effect and the data could not say so. A bare string remains valid for rows with one trigger. Optional; removeIn stays the version."
         }
       },
       "allOf": [
