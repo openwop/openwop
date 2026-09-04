@@ -210,13 +210,18 @@ Both were measured on real hosts in one afternoon, and neither produced an error
 
 The defence is the same in both cases and it is not "write it down more carefully": **assert the effect, not the acceptance.** Check that the cursor *excluded* rows, not that the field was tolerated. Check that the first sequence *is* what the contract says, not that the field exists. A check on an effect cannot be satisfied by a permissive parser or by prose nobody reads.
 
+**A third shape, found the same day by both hosts: a scoped signal quoted as if it were unscoped, with the scope nowhere in the output.** A preflight tool answered *"competing: none"* at load 146, because it enumerated one repo's worktrees and looked for one process shape — it was right about the set it could see and wrong about the machine. A harness reported exit `0` over a real exit `1` five times in a day. `executedFail: 0` was true at one target major and quoted as if true of the host. In every case the instrument measured something real and the reader took it for something larger, and nothing in the output said which. **When a signal is green, ask what it was scoped to before you ask what it proves.** A tool that answers a shared question from a private vantage is not merely incomplete; two sessions running it get the same false answer simultaneously and both act on it.
+
+And one rule for the guards you write in response, in the tier-2 host's words after auditing its own inbound paths: **"not-exploitable-because-of-something-else is a coincidence, not a control."** A tenant-segment check that only *happens* to be safe because a downstream SQL layer binds parameters is not holding the property — the code that states the rule has to be the code that holds it. The host found this by applying the sabotage pair (break it each way; confirm both redden with disjoint sets) to a guard it had shipped an hour earlier, and finding it covered the sites where the bug had been found rather than every site that consumes an id. **A guard that covers the paths someone enumerated has the same shape as the projection that covered "both JSON senders."**
+
 ---
 
 ## Open items a third host should expect
 
 - `keyId` is documented as registry-minted, but self-tier attribution only needs a host to vouch for its own key. Minting a local id is currently the honest thing to do at `self` tier; a registry mint is what `independent` tier will need.
 - Certification refuses with one message for two different states — "a claimed profile has UNCLASSIFIED floor requirements" prints when **nothing ran**, which reads as forty failures.
-- Installing the suite may require `--legacy-peer-deps`, which **silently skips the `spec-artifacts` peer**, after which the suite refuses to start on a corpus-stamp mismatch. Name the peer explicitly rather than relying on the flag.
+- **Suite versions `2.0.0-rc.20` through `2.0.0-rc.28` are permanently uninstallable** — each pins a `spec-artifacts` peer that was never published, and npm versions cannot be repaired. `rc.29` is the floor. Do not reach for `--legacy-peer-deps` to get past the `ERESOLVE`: it **silently skips the peer**, after which the suite refuses to start on a corpus-stamp mismatch and you have traded a loud failure for a quiet one. Since #1231 a conformance tag publishes both packages together and verifies the result from an empty directory; the trailing `verify-installable` job is the one that speaks for consumers.
+- Verify any install **from outside a checkout** — `cd "$(mktemp -d)" && npm init -y && npm install @openwop/openwop-conformance@<v>`. Inside a checkout the peer resolves from the monorepo whether or not it exists on npm, and every gate in the repo is blind to the difference.
 
 ---
 
