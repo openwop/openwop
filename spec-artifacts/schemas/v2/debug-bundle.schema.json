@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/debug-bundle.schema.json",
   "title": "RunDebugBundle",
-  "description": "Portable JSON export of a single run's diagnostic state. See spec/v1/debug-bundle.md. Additive over v1 per COMPATIBILITY.md §2.1: optional endpoint; hosts MAY omit.",
+  "description": "Portable JSON export of a single run's diagnostic state. See spec/v1/debug-bundle.md. Additive over v1 per COMPATIBILITY.md \u00a72.1: optional endpoint; hosts MAY omit.",
   "type": "object",
   "required": [
     "bundleVersion",
@@ -16,7 +16,7 @@
   "properties": {
     "bundleVersion": {
       "const": "2",
-      "description": "RFC 0172 §B axis 10 — one const family; this bundle is \"2\" in v2."
+      "description": "RFC 0172 \u00a7B axis 10 \u2014 one const family; this bundle is \"2\" in v2."
     },
     "generatedAt": {
       "type": "string",
@@ -47,7 +47,7 @@
     },
     "run": {
       "type": "object",
-      "description": "Run snapshot — same shape as GET /v1/runs/{runId}. See run-snapshot.schema.json.",
+      "description": "Run snapshot \u2014 same shape as GET /v1/runs/{runId}. See run-snapshot.schema.json.",
       "required": [
         "runId",
         "workflowId",
@@ -121,7 +121,7 @@
         "currentNodeId": {
           "oneOf": [
             {
-              "type": "string"
+              "$ref": "ids.schema.json#/$defs/nodeId"
             },
             {
               "type": "null"
@@ -167,7 +167,7 @@
           "nodeId": {
             "oneOf": [
               {
-                "type": "string"
+                "$ref": "ids.schema.json#/$defs/nodeId"
               },
               {
                 "type": "null"
@@ -198,7 +198,7 @@
           "parentSpanId": {
             "oneOf": [
               {
-                "type": "string"
+                "$ref": "ids.schema.json#/$defs/spanId"
               },
               {
                 "type": "null"

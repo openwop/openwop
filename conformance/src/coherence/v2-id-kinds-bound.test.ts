@@ -43,7 +43,8 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const ID = 'openwop.requirement.0170.id-kinds-bound';
@@ -54,6 +55,9 @@ const tail = (r: { stdout?: string; stderr?: string }) =>
 
 describe('v2-id-kinds-bound (identity.md §5)', () => {
   it('every v2 id field $refs its kind, and every *Id property is triaged', () => {
+    // Reads the spec tree and drives no host: a corpus-coherence row, which the
+    // registry recognises by this gate (spec-coherence-registry.test.ts).
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const r = spawnSync('node', [join(root, 'scripts', 'check-id-kinds-bound.mjs')], {
       cwd: root,
       encoding: 'utf8',
