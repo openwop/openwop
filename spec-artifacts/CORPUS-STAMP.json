@@ -116,7 +116,7 @@
     "schemas/v2/audit-verify-result.schema.json": "cb54c4d89ba5dfb73f49aa8959a980be65c2dc2a87a12f71ba36d3e836fe85da",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
     "schemas/v2/capabilities.schema.json": "b6191deddf6bee19470eee9a45bb520de0d17385c195de6e3b8c5cb6d9520238",
-    "schemas/v2/certification-bundle.schema.json": "10715faee02f2b16e2cd92ed457648c65aa727e238e6e6f6e4846c5a3b296e1f",
+    "schemas/v2/certification-bundle.schema.json": "02aa15f17644d902a9df06a99cfdaf51273b0a9cca0d0ef515d5da03be01fb09",
     "schemas/v2/channel-presence-payload.schema.json": "9475d46f358d21c19126e78204987a5633979917a2293653354ef5c5e044d54e",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
     "schemas/v2/chat-card-pack-manifest.schema.json": "566982ce509a96d1619d58a72e383eff0773fe43fc65e4bfc85a4fe158f4eaff",
@@ -204,7 +204,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d52caf29071e3784d4c20259cdbd5a7b533986548a440bb632a80b82cadd7ea5",
     "spec/v1/extensions.json": "4d7ba68bae7c7f50cc655b94646ad25945a5dd63b703d43c1d015470141cd668",
-    "spec/v1/gaps.json": "1986d648cd1ade06823f33edd20bd00d3ccf09781aa0a9992bb5f4117687b484",
+    "spec/v1/gaps.json": "96ca051cb20f1a669b355d67a89421c56fef28aa5e6710c9519f592f26af33a3",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "8839497d6a4830b53fa7867014a8336f0d725ef2346352e54fb580b7947897af",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -230,5 +230,5 @@
     "spec/v2/profiles.json": "1f0ee40491131cf561ef19a0394c47ba476b4567514fe16befb6cada4a10a5a4",
     "spec/v2/release.json": "41b69aed1e0c366cb287b05133ad561a1d4975b7a9e6786edf355ce976f4f12e"
   },
-  "corpusCommit": "3b5e7b6330161c886a5e60c24bd80d1a72f5791b"
+  "corpusCommit": "a830ce1a185f3e31ab042f5200b43cd255f9d18a"
 }

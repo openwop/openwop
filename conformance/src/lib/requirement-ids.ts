@@ -75,6 +75,27 @@ export function scenarioFileOfItId(requirementId: string): string | null {
 }
 
 /**
+ * Every FILE-derived id back to its file: the per-test `openwop.it.<stem>.<title>`
+ * plus the per-file rows the ledger also carries, `openwop.scenario.<stem>` and
+ * `openwop.floor.<stem>`. Gate rows (`openwop.profile.*`, `openwop.family.*`),
+ * explicit `req()` ids and the `openwop.floor.any.<prefix>` GROUP name no single
+ * file and return null. A caller that understood only `it` ids read a per-file
+ * row as an un-cited requirement and demanded a `req()` literal that, by
+ * construction, never exists.
+ */
+export function scenarioFileOfId(requirementId: string): string | null {
+  const it = scenarioFileOfItId(requirementId);
+  if (it !== null) return it;
+  for (const prefix of ['openwop.scenario.', 'openwop.floor.']) {
+    if (!requirementId.startsWith(prefix)) continue;
+    const rest = requirementId.slice(prefix.length);
+    if (rest.length === 0 || rest.startsWith('any.')) return null;
+    return `${rest}.test.ts`;
+  }
+  return null;
+}
+
+/**
  * Collision suffixing: the first occurrence keeps the bare id, later ones get
  * `~2`, `~3`, … Keyed per file so a worker running many files never crosses
  * streams. Reset per file by `setup.ts` when the file finishes.

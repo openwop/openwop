@@ -26,7 +26,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import { join } from 'node:path';
 import { SCHEMAS_DIR, SCENARIOS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
-import { scenarioFileOfItId } from '../lib/requirement-ids.js';
+import { scenarioFileOfId } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { v2Validator } from '../lib/v2.js';
 import { signBundleV3, witnessDigest, type BundleV3, type BundleV3Requirement } from '../lib/certification-bundle-v3.js';
@@ -68,7 +68,13 @@ describe('v2-coherence-not-in-bundle (RFC 0168 §D.1)', () => {
     const coherenceText = [...coherence.values()].join('\n');
     const scenariosText = [...scenarios.values()].join('\n');
     for (const id of ids) {
-      const file = scenarioFileOfItId(id);
+      // `openwop.profile.*` / `openwop.family.*` are capability-GATE rows minted
+      // at run time by gateFamily(), not by a `req()` literal and not derived
+      // from a file. The same gate id is recorded by a corpus run and a host run
+      // alike, so it is shared by construction and carries no corpus content —
+      // the disjointness rule does not reach it.
+      if (id.startsWith('openwop.profile.') || id.startsWith('openwop.family.')) continue;
+      const file = scenarioFileOfId(id);
       if (file !== null) {
         expect(coherence.has(file), req('openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction', SECTION, `${id} MUST belong to a src/coherence scenario (${file})`)).toBe(true);
         expect(scenarios.has(file), req('openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction', SECTION, `${id} MUST NOT belong to a src/scenarios file (${file}) — it would enter a host bundle`)).toBe(false);

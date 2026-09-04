@@ -366,15 +366,21 @@ function scenarioStatesFromReport(report: VitestJsonReport): Map<string, Scenari
 async function resolveTargetMajor(args: ParsedArgs, baseUrl: string | undefined, apiKey: string | undefined, conformanceRoot: string): Promise<{ major: 1 | 2; files: string[]; source: string }> {
   let major: 1 | 2 | undefined = args.targetMajor;
   let source = 'flag';
+  let dualStack = false;
   if (major === undefined && baseUrl) {
     try {
       const res = await fetch(`${baseUrl.replace(/\/$/, '')}/.well-known/openwop`, { headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {} });
       const doc = (await res.json()) as { preferredVersion?: string; protocolVersions?: string[] };
       const pv = doc.preferredVersion ?? (doc.protocolVersions ?? []).map((v) => v).sort((a, b) => Number(b.split('.')[0]) - Number(a.split('.')[0]))[0];
+      if ((doc.protocolVersions ?? []).some((v) => v.startsWith('2.'))) dualStack = true;
       if (pv) { major = Number(pv.split('.')[0]) >= 2 ? 2 : 1; source = doc.preferredVersion ? 'preferredVersion' : 'max(protocolVersions[])'; }
     } catch { /* unreachable host: the default below; the run itself will report the failure */ }
   }
   if (major === undefined) { major = 1; source = 'default'; }
+  // Through the overlap `preferredVersion` names the 1.x member (versioning.md
+  // §1.1), so auto-detection on a dual-stack host resolves to major 1 by design.
+  // Say so, or an operator reads a v1 run as the host's only option.
+  if (major === 1 && dualStack) source += ' (the host also serves 2.x — pass --target-major 2 to measure it)';
   const manifest = JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> };
   const files = Object.entries(manifest.majors).filter(([, m]) => m.includes(major as number)).map(([f]) => `src/scenarios/${f}`);
   return { major, files, source };
@@ -385,10 +391,19 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   if (outPath === undefined) process.exit(2);
 
   // (a) Fetch /.well-known/openwop verbatim + its canonical-JSON SHA-256.
+  // The target is resolved FIRST: `/.well-known/openwop` is one resource whose
+  // representation the `OpenWOP-Version` header selects, and through the overlap
+  // the header-less representation is the v1 document (spec/v2/core/versioning.md
+  // §1.1). Fetching it header-less on a major-2 run captured the v1 rendering, so
+  // `claimedProfiles` came out as the v1 set and the bundle described a contract
+  // the run never measured.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const conformanceRoot = resolvePath(here, '..');
+  const target = await resolveTargetMajor(args, baseUrl, apiKey, conformanceRoot);
   const discoveryUrl = `${baseUrl.replace(/\/$/, '')}/.well-known/openwop`;
   let document: DiscoveryPayload;
   try {
-    const resp = await fetch(discoveryUrl, { headers: { Accept: 'application/json' } });
+    const resp = await fetch(discoveryUrl, { headers: { Accept: 'application/json', ...(target.major === 2 ? { 'OpenWOP-Version': '2.0' } : {}) } });
     if (!resp.ok) {
       process.stderr.write(
         `openwop-conformance --certify: GET ${discoveryUrl} returned HTTP ${resp.status}.\n`,
@@ -409,8 +424,6 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
 
   // (c) Run the suite, capturing per-scenario terminal state via the vitest
   // JSON reporter. server-targeted scenarios live under src/scenarios/.
-  const here = dirname(fileURLToPath(import.meta.url));
-  const conformanceRoot = resolvePath(here, '..');
   const reportDir = mkdtempSync(join(tmpdir(), 'owp-certify-'));
   const reportFile = join(reportDir, 'vitest-report.json');
   // RFC 0148 §A ledger sink (S6): every scenario file records its disposition
@@ -424,7 +437,6 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   if (args.impl) env.OPENWOP_IMPLEMENTATION_NAME = args.impl;
   if (args.implVersion) env.OPENWOP_IMPLEMENTATION_VERSION = args.implVersion;
 
-  const target = await resolveTargetMajor(args, baseUrl, apiKey, conformanceRoot);
   env.OPENWOP_TARGET_MAJOR = String(target.major);
   process.stderr.write(`openwop-conformance --certify: target major ${target.major} (${target.source}); ${target.files.length} scenario file(s)\n`);
   const vitestArgs: string[] = [
@@ -571,7 +583,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     const unsigned: Omit<BundleV3, 'signature'> = {
       bundleVersion: '3',
       generatedAt: new Date().toISOString(),
-      suite: { name: '@openwop/openwop-conformance', version, targetMajor: process.env['OPENWOP_TARGET_MAJOR'] === '2' ? 2 : 1, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
+      suite: { name: '@openwop/openwop-conformance', version, targetMajor: target.major, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
       host: { name: host.name, version: host.version, ...(host.vendor ? { vendor: host.vendor } : {}), build, signingKeyId: keyId, ...(relaxations && relaxations.length ? { relaxations } : {}) },
       discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion },
       claimedProfiles: claimed3,
