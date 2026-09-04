@@ -135,6 +135,26 @@ for (const dir of DIRS) {
   }
 }
 
+// The bundle schema refuses corpus-coherence ids by name (RFC 0168 §D.1:
+// coherence checks run in the spec repo's CI and never enter a host bundle).
+// The list is a regex, so it drifts silently when a coherence file is added or
+// renamed — and a drifted list would let that file's ids into a bundle.
+{
+  const coherenceDir = join(CONF, 'src', 'coherence');
+  const schemaPath = join(CONF, '..', 'schemas', 'v2', 'certification-bundle.schema.json');
+  if (existsSync(coherenceDir) && existsSync(schemaPath)) {
+    const stems = readdirSync(coherenceDir).filter((f) => f.endsWith('.test.ts')).map((f) => f.replace(/\.test\.ts$/, '')).sort();
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+    const pattern = schema?.properties?.results?.properties?.requirements?.items?.properties?.id?.pattern ?? '';
+    const listed = (/\(\?!it\\\.\(\?:([^)]*)\)/.exec(pattern) ?? [, ''])[1].split('|').map((x) => x.replace(/\\/g, '')).filter(Boolean).sort();
+    const missing = stems.filter((x) => !listed.includes(x));
+    const extra = listed.filter((x) => !stems.includes(x));
+    if (missing.length || extra.length) {
+      failures.push(`schemas/v2/certification-bundle.schema.json id pattern is out of step with conformance/src/coherence/${missing.length ? ` — not excluded: ${missing.join(', ')}` : ''}${extra.length ? ` — excluded but absent: ${extra.join(', ')}` : ''}`);
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error(`=== check-req-only FAILED — ${failures.length} problem(s) in ${files} scenario files ===`);
   for (const f of failures) console.error(`  ${f}`);

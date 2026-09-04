@@ -14,6 +14,7 @@ import {
   ItIdAllocator,
   itRequirementId,
   req,
+  scenarioFileOfId,
   scenarioFileOfItId,
   slugTitle,
   takeExplicitRequirementId,
@@ -52,6 +53,19 @@ describe('requirement-ids: slug grammar', () => {
     expect(scenarioFileOfItId('openwop.it.auth-subject-link.leaver-deny~2')).toBe('auth-subject-link.test.ts');
     expect(scenarioFileOfItId('openwop.floor.auth')).toBeNull();
     expect(scenarioFileOfItId('openwop.scenario.auth')).toBeNull();
+  });
+
+  it('scenarioFileOfId also resolves the per-file rows, and nothing else', () => {
+    expect(scenarioFileOfId('openwop.it.auth-subject-link.leaver-deny')).toBe('auth-subject-link.test.ts');
+    expect(scenarioFileOfId('openwop.floor.auth')).toBe('auth.test.ts');
+    expect(scenarioFileOfId('openwop.scenario.v2-era-key')).toBe('v2-era-key.test.ts');
+    // A prefix GROUP names no single file.
+    expect(scenarioFileOfId('openwop.floor.any.interrupt-')).toBeNull();
+    // Gate rows are minted at run time and shared by corpus and host runs.
+    expect(scenarioFileOfId('openwop.profile.workflowChainPacks.supported')).toBeNull();
+    expect(scenarioFileOfId('openwop.family.replay')).toBeNull();
+    // An explicit req() id is authored, not derived.
+    expect(scenarioFileOfId('openwop.requirement.0168.coherence-not-in-bundle')).toBeNull();
   });
 });
 

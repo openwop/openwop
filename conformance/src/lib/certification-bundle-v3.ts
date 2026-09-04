@@ -158,8 +158,18 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     else if (p.certified) certifiedProfiles.push(p.id);
   }
   if (expected.blocked > 0 && certifiedProfiles.length > 0) rejections.push({ kind: 'blocked-certified', detail: `${expected.blocked} blocked row(s): a bundle with blocked > 0 does not certify (RFC 0168 §E.1)` });
-  // RFC 0168 §E.2: the verifier REFUSES, it does not warn. A bundle carrying any
-  // rejection substantiates nothing — a self-signed `independent` claim certified
-  // while its own rejection sat in the list, which is the failure mode R5 names.
-  return { rejections, signatureVerified, verifierSignatureVerified, certifiedProfiles: rejections.length > 0 ? [] : certifiedProfiles };
+  // RFC 0168 §E.2: the verifier REFUSES, it does not warn — but a refusal is
+  // scoped to what it names. A rejection carrying a `profile` removes that
+  // profile only (a relaxation on one obligation does not poison an unrelated
+  // one, RFC 0173 §A.2); a rejection that names no profile is a statement about
+  // the bundle — a bad witness digest, an unverifiable signature, a self-signed
+  // `independent` claim, a blocked row — and nothing in it certifies.
+  const bundleWide = rejections.filter((r) => !('profile' in r) || !r.profile);
+  const scoped = new Set(rejections.map((r) => r.profile).filter((p): p is string => typeof p === 'string'));
+  return {
+    rejections,
+    signatureVerified,
+    verifierSignatureVerified,
+    certifiedProfiles: bundleWide.length > 0 ? [] : certifiedProfiles.filter((p) => !scoped.has(p)),
+  };
 }
