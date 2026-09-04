@@ -6,26 +6,123 @@
   "type": "object",
   "additionalProperties": false,
   "$defs": {
-    "opaque": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{16,128}$", "description": "Host-minted opaque token: no `@`, no whitespace, no `/`; 16–128 characters." },
-    "tenantId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}$", "x-openwop-minted": "host" },
-    "workspaceId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}$", "x-openwop-minted": "host" },
-    "subjectId": { "type": "string", "pattern": "^[^\\s/]{1,256}$", "description": "Issuer-scoped, stable, opaque (RFC 0170 §A); the issuer's grammar, never PII.", "x-openwop-minted": "host" },
-    "runId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$", "description": "Tenant-bound: `<tenantId>/<opaque>`.", "x-openwop-minted": "host", "x-openwop-tenant-bound": true },
-    "interruptId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$", "x-openwop-minted": "host", "x-openwop-tenant-bound": true },
-    "subscriptionId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$", "x-openwop-minted": "host", "x-openwop-tenant-bound": true },
-    "deliveryId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$", "x-openwop-minted": "host", "x-openwop-tenant-bound": true },
-    "effectId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$", "x-openwop-minted": "host", "x-openwop-tenant-bound": true },
-    "eventId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{16,128}$", "x-openwop-minted": "host" },
-    "traceId": { "type": "string", "pattern": "^[0-9a-f]{32}$", "description": "W3C trace-context trace-id.", "x-openwop-minted": "host" },
-    "spanId": { "type": "string", "pattern": "^[0-9a-f]{16}$", "description": "W3C trace-context parent-id.", "x-openwop-minted": "host" },
-    "keyId": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,128}$", "description": "A signing-key identifier (registry `signingKeys[].keyId`, resume-token `kid`, bundle signature `keyId`).", "x-openwop-minted": "registry" },
-    "nodeId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "description": "Author-chosen within a workflow definition.", "x-openwop-minted": "author" },
-    "workflowId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "x-openwop-minted": "author" },
-    "agentId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "x-openwop-minted": "author" },
-    "chainId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "x-openwop-minted": "author" },
-    "pluginId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "x-openwop-minted": "author" },
-    "templateId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "x-openwop-minted": "author" },
-    "libraryId": { "type": "string", "pattern": "^[A-Za-z0-9._~:-]{1,128}$", "x-openwop-minted": "author" },
-    "typeId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-zA-Z0-9-]*)+$", "description": "A node type id (`core.ai.callPrompt`); the RFC 0107 grammar.", "x-openwop-minted": "author" }
+    "opaque": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{16,128}$",
+      "description": "Host-minted opaque token: no `@`, no whitespace, no `/`; 16–128 characters."
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}$",
+      "x-openwop-minted": "host",
+      "description": "A tenant identifier. The optional `anon:` prefix is the ONLY colon admitted, and it exists because RFC 0132 anonymous tenants are `anon:<hash>` while RFC 0170 §A.5 makes the anonymous surface first-class — without it a conforming host can serve an anonymous run with neither a valid `owner.tenant` nor a valid tenant-bound `runId`. `:` is a legal path character (RFC 3986 pchar), so this stays safe inside the `<tenantId>/<opaque>` run-id form. The alternative — renaming anonymous tenants at the cut — was rejected: it is a write to historical identity, which is the one thing the v2 migration does not do."
+    },
+    "workspaceId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}$",
+      "x-openwop-minted": "host"
+    },
+    "subjectId": {
+      "type": "string",
+      "pattern": "^[^\\s/]{1,256}$",
+      "description": "Issuer-scoped, stable, opaque (RFC 0170 §A); the issuer's grammar, never PII.",
+      "x-openwop-minted": "host"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "description": "Tenant-bound: `<tenantId>/<opaque>`.",
+      "x-openwop-minted": "host",
+      "x-openwop-tenant-bound": true
+    },
+    "interruptId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "x-openwop-minted": "host",
+      "x-openwop-tenant-bound": true
+    },
+    "subscriptionId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "x-openwop-minted": "host",
+      "x-openwop-tenant-bound": true
+    },
+    "deliveryId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "x-openwop-minted": "host",
+      "x-openwop-tenant-bound": true
+    },
+    "effectId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "x-openwop-minted": "host",
+      "x-openwop-tenant-bound": true
+    },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{16,128}$",
+      "x-openwop-minted": "host"
+    },
+    "traceId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "description": "W3C trace-context trace-id.",
+      "x-openwop-minted": "host"
+    },
+    "spanId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "W3C trace-context parent-id.",
+      "x-openwop-minted": "host"
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}$",
+      "description": "A signing-key identifier (registry `signingKeys[].keyId`, resume-token `kid`, bundle signature `keyId`).",
+      "x-openwop-minted": "registry"
+    },
+    "nodeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "description": "Author-chosen within a workflow definition.",
+      "x-openwop-minted": "author"
+    },
+    "workflowId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "x-openwop-minted": "author"
+    },
+    "agentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "x-openwop-minted": "author"
+    },
+    "chainId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "x-openwop-minted": "author"
+    },
+    "pluginId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "x-openwop-minted": "author"
+    },
+    "templateId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "x-openwop-minted": "author"
+    },
+    "libraryId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~:-]{1,128}$",
+      "x-openwop-minted": "author"
+    },
+    "typeId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-zA-Z0-9-]*)+$",
+      "description": "A node type id (`core.ai.callPrompt`); the RFC 0107 grammar.",
+      "x-openwop-minted": "author"
+    }
   }
 }

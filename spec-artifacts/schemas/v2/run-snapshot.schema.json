@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-snapshot.schema.json",
   "title": "RunSnapshot",
-  "description": "Projected run state returned by `GET /v1/runs/{runId}`. Source is the run's append-only event log (run-event.schema.json) folded through the `RunProjection`. Forward-compat tolerant: readers MUST ignore unknown fields rather than reject.",
+  "description": "Projected run state returned by `GET /runs/{runId}`. Source is the run’s append-only event log (run-event.schema.json) folded through the `RunProjection`. CLOSED in v2 (`additionalProperties: false`): a reader MUST NOT expect to ignore unknown root fields, because there are none to ignore — host-specific state goes in `extensions`. The v1 schema was open and therefore never had to declare what hosts actually served; closing the object is what made that visible.",
   "type": "object",
   "required": [
     "eventLogSchemaVersion",
@@ -201,6 +201,27 @@
         }
       },
       "additionalProperties": false
+    },
+    "parentRunId": {
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "RFC 0022 / `runs.md` §forkRun — the run this one was forked from, absent on a root run. Declared because the object is closed: a fork’s lineage is real protocol state, and an undeclared field on a closed object is deleted rather than ignored."
+    },
+    "inputs": {
+      "type": "object",
+      "description": "RFC 0022 §A — the inputs the run was created with. Declared for the same reason as parentRunId: the v1 wire carried it under an open schema, and closing the object without a seat would force every host to drop it.",
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "A vendor/host extension record; its shape is the org’s, declared open on purpose."
+        }
+      },
+      "description": "RFC 0169 §A.4 — the seat for host-specific snapshot state, keyed `<org>.<name>`. Closing an object without an extension seat does not make hosts stop having extra state; it makes them delete it or serve an invalid document. Every other closed v2 surface has this seat and the snapshot was the omission."
     }
   },
   "additionalProperties": false
