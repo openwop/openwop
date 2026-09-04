@@ -17,10 +17,21 @@
  *   identifier `eventLogSchemaVersion` was that sentence — a docstring
  *   describing a check that did not exist. A comment claiming coverage is
  *   worse than no comment: it answers "is this tested?" for anyone who greps,
- *   and answers it wrongly. `eventLogSchemaVersion` is now witnessed by
- *   `era-key-stamped-v1.test.ts`; `engineVersion`, per-event `schemaVersion`
- *   and `pinnedVersions` remain UNASSERTED and this docstring no longer
- *   pretends otherwise.
+ *   and answers it wrongly.
+ *
+ *   Current state of the four, stated so this comment can be checked rather
+ *   than trusted: `eventLogSchemaVersion` and `engineVersion` are witnessed by
+ *   `era-key-stamped-v1.test.ts` (both are run-document `MUST`s in
+ *   `version-negotiation.md` §Stamping, and both were unasserted until
+ *   2026-09-04). Per-event `schemaVersion` and `pinnedVersions` are **not
+ *   asserted here and carry no `MUST` in that document** — checked, rather
+ *   than assumed to be a gap.
+ *
+ *   This paragraph was itself wrong for one release candidate: it said
+ *   `engineVersion` "remains UNASSERTED" after the leg asserting it had
+ *   landed. A docstring that describes coverage goes stale the moment
+ *   coverage changes, which is the argument for stating what can be
+ *   re-derived rather than what was true once.
  *   3. Forward-compat read: events carrying an UNKNOWN
  *      `schemaVersion` SHOULD still be readable via the events/poll
  *      endpoint without 5xx (best-effort fold per
