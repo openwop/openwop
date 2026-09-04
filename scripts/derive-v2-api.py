@@ -134,6 +134,31 @@ def v2_openapi_and_seams():
     comps = doc.setdefault('components', {})
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': 'RFC 0172 §A.3 — selects a listed major.minor; absent ⇒ the host\'s `preferredVersion`; unlisted ⇒ 406 protocol_version_unsupported.'}
     comps.setdefault('headers', {})['OpenWOPVersion'] = {'schema': {'type': 'string'}, 'description': 'RFC 0172 §A.4 — the contract that produced this response; MUST equal the one used.', 'required': True}
+    # Re-bind every id path parameter to its v2 KIND.
+    #
+    # This document is derived from api/openapi.yaml, so it inherits v1's
+    # parameter typing — including for identifiers whose GRAMMAR CHANGED at the
+    # major boundary. v1's `RunId` is `{type: string, maxLength: 128}`, correct
+    # for a bare v1 id and carried into v2 verbatim, where a runId is
+    # tenant-bound `<tenantId>/<opaque>` and reaches 128 + 1 + 128 = 257
+    # characters. The derived v2 parameter could not express a conforming v2
+    # runId: a host with a long tenant segment was forbidden by the spec's own
+    # path parameter from naming its own runs.
+    #
+    # identity.md §5 already required the binding — "every id field in every v2
+    # schema and every api/v2/openapi.yaml parameter and response body MUST
+    # `$ref` its kind" — and nothing checked it, which is how an inherited v1
+    # constraint sat in the v2 contract unnoticed. Inheritance is the default
+    # here, so anything the majors DISAGREE about has to be overridden by name.
+    for pname, kind in (('RunId', 'runId'), ('WorkflowId', 'workflowId')):
+        p = comps.setdefault('parameters', {}).get(pname)
+        if p is not None:
+            p['schema'] = {'$ref': f'../../schemas/v2/ids.schema.json#/$defs/{kind}'}
+            if kind == 'runId':
+                p['description'] = (
+                    'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5). The `/` is part of the\n'
+                    'identifier and MUST be percent-encoded as `%2F` in the path segment.\n'
+                )
     # poll cursor + interrupt token grammar + per-operation header + one-member enums
     for key, item in doc['paths'].items():
         for method, op in list(item.items()):

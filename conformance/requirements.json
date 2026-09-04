@@ -26340,7 +26340,7 @@
     {
       "id": "openwop.it.v2-dual-stack-negotiation.an-unlisted-major-is-406-protocol-version-unsupported-with-details-protocolversi",
       "file": "v2-dual-stack-negotiation.test.ts",
-      "line": 108,
+      "line": 111,
       "title": "an unlisted major is 406 protocol_version_unsupported with details.protocolVersions[]",
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.unlisted-major",
       "citations": [
@@ -26364,7 +26364,7 @@
     {
       "id": "openwop.it.v2-dual-stack-negotiation.openwop-version-2-0-on-a-v1-path-is-400-protocol-version-mismatch",
       "file": "v2-dual-stack-negotiation.test.ts",
-      "line": 119,
+      "line": 122,
       "title": "OpenWOP-Version: 2.0 on a /v1/ path is 400 protocol_version_mismatch",
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.v1-path-mismatch",
       "citations": [
@@ -26383,7 +26383,7 @@
     {
       "id": "openwop.it.v2-dual-stack-negotiation.every-response-reports-the-contract-that-produced-it",
       "file": "v2-dual-stack-negotiation.test.ts",
-      "line": 128,
+      "line": 131,
       "title": "every response reports the contract that produced it",
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.response-header",
       "citations": [
