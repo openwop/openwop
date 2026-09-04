@@ -127,7 +127,7 @@ function loadDiscovery() {
  *   verifies                   → ok
  */
 /**
- * The bundle must measure THE CONTRACT BEING CUT.
+ * The bundle must have witnessed EVERY REQUIREMENT THIS CORPUS APPLIES TO IT.
  *
  * This gate exists to answer "is every §F predicate machine-true on the release
  * candidate". A bundle carries `suite.version` — the corpus it actually ran
@@ -141,16 +141,62 @@ function loadDiscovery() {
  * Measured 2026-09-04: a bundle at `2.0.0-rc.2` passed every host gate for a
  * corpus at `2.0.0-rc.15` — thirteen candidates and nineteen corpus defects
  * later. It looked identical to evidence that was current.
+ *
+ * The first fix compared `suite.version` for EQUALITY, which was too strict in a
+ * way a tier-2 host measured: between its `rc.8` and `rc.16` bundles, the count
+ * of scenario rows added at `--target-major 1` was ZERO — every candidate in
+ * that span added only `v2-*` files, which do not run against a major-1 host. So
+ * the equality check rejected a bundle that had executed precisely the same
+ * applicable requirement set, and charged 15 minutes plus real production runs
+ * for a different signature over identical evidence.
+ *
+ * The property that actually matters is not "which version string" but "did this
+ * bundle run everything this corpus now requires of a host at its major". That is
+ * decidable from the bundle's own rows plus `scenario-majors.json`, needs no
+ * checkout of the older corpus, and keeps the original guarantee in full: the
+ * `rc.2`-for-`rc.15` case still fails loudly, because thirteen candidates DID add
+ * applicable requirements — and now the failure names them instead of naming a
+ * version. Proposed with the measurement by myndhyve-1.
  */
 function suiteVersionCheck(hb) {
   const measured = hb.bundle.suite?.version;
-  if (measured === CUT_VERSION) {
-    return { ok: true, evidence: `${hb.path} suite.version`, tail: `measured against ${CUT_VERSION}, the corpus being cut` };
+  const major = hb.bundle.suite?.targetMajor;
+  const where = `${hb.path} suite`;
+  if (major !== 1 && major !== 2) {
+    return { ok: false, evidence: where, tail: `suite.targetMajor is ${JSON.stringify(major)} — without it the applicable requirement set is undefined and this cannot be judged` };
+  }
+
+  // The corpus files applicable to the major this bundle measured.
+  let applicable;
+  try {
+    const majors = JSON.parse(readFileSync(join(ROOT, 'conformance', 'scenario-majors.json'), 'utf8')).majors ?? {};
+    applicable = new Set(Object.keys(majors).filter((f) => (majors[f] ?? []).includes(major)));
+  } catch (e) {
+    return { ok: false, evidence: 'conformance/scenario-majors.json', tail: `unreadable, so the applicable set cannot be derived: ${e.message}` };
+  }
+
+  // The files this bundle actually witnessed, read off its per-scenario rows.
+  const witnessed = new Set();
+  for (const row of hb.bundle.results?.requirements ?? []) {
+    const m = /^openwop\.(?:scenario|floor)\.(.+)$/.exec(String(row.id));
+    if (m) witnessed.add(`${m[1]}.test.ts`);
+  }
+
+  const missing = [...applicable].filter((f) => !witnessed.has(f)).sort();
+  const same = measured === CUT_VERSION;
+  if (missing.length === 0) {
+    return {
+      ok: true,
+      evidence: where,
+      tail: same
+        ? `measured against ${CUT_VERSION}, the corpus being cut`
+        : `measured against ${measured}, not ${CUT_VERSION} — but it witnessed every one of the ${applicable.size} scenario file(s) applicable at major ${major}, so nothing this corpus requires of it went unrun`,
+    };
   }
   return {
     ok: false,
-    evidence: `${hb.path} suite.version`,
-    tail: `the bundle measured suite ${JSON.stringify(measured)} but this corpus is ${CUT_VERSION} — a bundle is evidence about the contract it RAN against, and later candidates added scenarios this one never executed, so its totals say nothing about them. Re-certify the host against ${CUT_VERSION}.`,
+    evidence: where,
+    tail: `the bundle measured suite ${JSON.stringify(measured)} and this corpus is ${CUT_VERSION}; ${missing.length} of ${applicable.size} scenario file(s) applicable at major ${major} have no row in it, so its totals say nothing about them: ${missing.slice(0, 6).join(', ')}. Re-certify against ${CUT_VERSION}.`,
   };
 }
 
