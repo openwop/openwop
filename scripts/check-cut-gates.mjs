@@ -30,6 +30,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+/** The corpus version this run is gating. A bundle measures the contract it RAN
+ *  against, so evidence from another version is evidence about another contract. */
+const CUT_VERSION = JSON.parse(readFileSync(join(ROOT, 'spec', 'v2', 'release.json'), 'utf8')).version;
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(name);
 const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
@@ -123,6 +126,34 @@ function loadDiscovery() {
  *   signature does not verify  → FAIL
  *   verifies                   → ok
  */
+/**
+ * The bundle must measure THE CONTRACT BEING CUT.
+ *
+ * This gate exists to answer "is every §F predicate machine-true on the release
+ * candidate". A bundle carries `suite.version` — the corpus it actually ran
+ * against — and nothing compared it to the version being cut, so evidence from
+ * an older candidate satisfied the gate silently. That is not a small gap: the
+ * candidates in this program have ADDED scenarios (the era-2 writer rule, the
+ * version-header check, era-stamp-universal), so a stale bundle is not merely
+ * old — it never ran the checks the newer contract requires, and its clean
+ * totals say nothing about them.
+ *
+ * Measured 2026-09-04: a bundle at `2.0.0-rc.2` passed every host gate for a
+ * corpus at `2.0.0-rc.15` — thirteen candidates and nineteen corpus defects
+ * later. It looked identical to evidence that was current.
+ */
+function suiteVersionCheck(hb) {
+  const measured = hb.bundle.suite?.version;
+  if (measured === CUT_VERSION) {
+    return { ok: true, evidence: `${hb.path} suite.version`, tail: `measured against ${CUT_VERSION}, the corpus being cut` };
+  }
+  return {
+    ok: false,
+    evidence: `${hb.path} suite.version`,
+    tail: `the bundle measured suite ${JSON.stringify(measured)} but this corpus is ${CUT_VERSION} — a bundle is evidence about the contract it RAN against, and later candidates added scenarios this one never executed, so its totals say nothing about them. Re-certify the host against ${CUT_VERSION}.`,
+  };
+}
+
 function signatureCheck(hb, hd) {
   const sig = hb.bundle.signature;
   const where = `${hb.path} signature`;
@@ -271,11 +302,13 @@ if (!hb) {
       tail: legs.length ? `${legs.length} leg(s): ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join(' ')}` : 'no row — the scenario did not run',
     };
   }));
+  const suiteRow = suiteVersionCheck(hb);
   const totals = hb.bundle.results?.totals ?? {};
   const matrix = readFileSync(join(ROOT, 'INTEROP-MATRIX.md'), 'utf8');
   const hostName = hb.bundle.host?.name ?? '?';
   gate('Front door', [
     corpusWitness[1],
+    suiteRow,
     { ok: totals.executedFail === 0, evidence: `${hb.path} results.totals`, tail: `executedFail=${totals.executedFail} executedPass=${totals.executedPass} blocked=${totals.blocked}` },
     { ok: matrix.includes(hostName), evidence: 'INTEROP-MATRIX.md', tail: matrix.includes(hostName) ? `row for ${hostName}` : `no row names host ${hostName}` },
     signatureCheck(hb, hd),
