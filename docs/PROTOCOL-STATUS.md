@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.0.0-rc.6 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.0.0-rc.7 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 161 |
-| Active | 14 |
+| Accepted | 160 |
+| Active | 15 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -234,7 +234,7 @@
 | RFC 0159 | A subject-linking obligation for hosts advertising **both** `openwop-auth-saml` and `openwop-auth-scim`: a SCIM deactivation MUST fail-close the linked SAML identity, keyed on an opaque IdP-stable subject id - so a provisioned leaver cannot still SSO in | Accepted |
 | RFC 0163 | Subject-linking hardening - a **declarable, witnessable** link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) plus a **same-IdP trust-root MUST** before a SAML⟷SCIM link may form. The additive follow-on to RFC 0159 that converts its sectionA.2/sectionA.4 negative-existence claims-check into a positive advertisement and closes its cross-IdP collision gap. | Accepted |
 | RFC 0164 | The SCIM ⟷ SAML leaver contract (RFC 0159 sectionA, hardened by RFC 0163) becomes **mandatory** for any host that advertises **both** `openwop-auth-saml` and `openwop-auth-scim`. `capabilities.auth.subjectLinking` stops being an opt-in gate and becomes a **derived** advertisement that MUST be `true` whenever both profiles are advertised; it is deprecated toward v2. | Accepted |
-| RFC 0165 | Three additive v1.x shapes that turn three v2 cuts into removals: a root `protocolVersions[]` array beside the scalar `protocolVersion`; an optional `owner.subject` record (issuer-scoped, lane-typed, with an actor chain) on `RunSnapshot` and the `run.started` echo, with the legacy-subject and fork-copy rules; and dual emission of `OpenWOP-*` webhook headers and a standard `ETag` on the discovery document beside their v1 forms. | Accepted |
+| RFC 0165 | Three additive v1.x shapes that turn three v2 cuts into removals: a root `protocolVersions[]` array beside the scalar `protocolVersion`; an optional `owner.subject` record (issuer-scoped, lane-typed, with an actor chain) on `RunSnapshot` and the `run.started` echo, with the legacy-subject and fork-copy rules; and dual emission of `OpenWOP-*` webhook headers and a standard `ETag` on the discovery document beside their v1 forms. | Active |
 | RFC 0166 | Three process shapes the v2 charter's C.7 and C.11 need in place before the v2 umbrella: a closed disposition vocabulary for every gap and risk register row, machine-checked; a global `spec/v1/gaps.json` with one id namespace; a `witness` class on every `SECURITY/invariants.yaml` entry and `spec/v1/extensions.json` record; `Rejected` as a reachable RFC status; and the RFC 0147 high-risk cohort published as a retrospective queue. | Accepted |
 | RFC 0167 | OpenWOP v2 - the umbrella ("program") RFC for the second major: six axioms, an eleven-child breaking-change program (C.1-C.11), every version axis and alias in the corpus enumerated with a disposition, a migration register as data, codemods with negative controls, the per-consumer migration plan, and the cut gates | Active |
 | RFC 0168 | v2 evidence and conformance: `expect(x, req('openwop.<id>', …))` is the assertion form and the ledger records per `it` with a reword-without-alias CI failure (the Phase 1 helper exists with `explicitIds: 0` and an empty alias file - v2 makes it the only form); the witness verdict is a required field on every capability record, requirement and invariant from the closed six-class set, with `unwitnessable` requiring a rationale and failing the gate on a protocol-tier invariant; the six things v1 admits it cannot certify are the migration set, each mapped to one class; a seam-gated MUST mints a normative observation path or is demoted; `host-sample-test-seams.md` becomes the profile `openwop-conformance-seams-v2` with its own `api/seams-v2.yaml`, validated against the canonical schemas with no tolerance path, forbidden from the capability namespace, and its nine operations evicted from the canonical OpenAPI and the SDK path manifest; the 29 corpus-coherence scenarios leave host bundles for the spec repo's CI; the published suite is `dist`, `fixtures`, `vectors` only with the corpus as a digest-checked peer dependency `@openwop/spec-artifacts`; suite 2.0.0 is one package with `--target-major` and a shared scenario-id namespace; bundle v3 has a closed root, `bundleVersion: "3"`, `witnessSha256`, `assertionCount`, `detail`, `host.build`, per-profile `evidenceTier`/`witnessCount` required, and an Ed25519 attestation over `{witnessSha256, host.build, suite.version, discovery.sha256}` with `independent` requiring a verifier key distinct from the host's | Active |
@@ -271,7 +271,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 14 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0165, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

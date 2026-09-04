@@ -67,6 +67,24 @@ An RFC's `Active → Accepted` flip is backed by implementation evidence from a 
 
 A fourth label exists for RFCs whose every normative requirement is a property of the corpus or the suite rather than of a host (the RFC 0167 machinery children — RFC 0169's declaration file, RFC 0174's governance predicates, RFC 0178's registers): **corpus gate — no host tier.** Such an RFC's falsifiability rows are `witnessable — unaided (corpus)` and its evidence is `evidence/corpus-ledger.json`, the per-requirement ledger `scripts/check-spec-coherence.mjs` emits (RFC 0168 §D.1; v2 charter Phase 3 plan §11). The label MUST appear in the `Updated` field in place of a tier; `scripts/check-accepted-predicate.mjs` accepts `(corpus)` rows only from that ledger. It is not a host tier and MUST NOT be cited for any requirement a host can witness.
 
+**Deployed, not merged.** Every tier above says "host", and a host is a thing
+that serves traffic. Evidence for a criterion phrased as a live-surface claim —
+*advertises*, *emits*, *refuses* — is a bundle from the DEPLOYED revision, never
+a merged pull request. A merge is a promise; only a deployment is a witness.
+
+This is not a hypothetical distinction. RFC 0165 was flipped `Accepted` on two
+merged host PRs on 2026-09-03 and reverted on 2026-09-04, when fetching the two
+hosts showed neither served the shapes: the tier-2 host was ten days behind its
+own main branch, and the tier-1 host had not shipped it either. The gated
+scenarios record `inapplicable` rather than fail when a shape is absent, so a
+bundle built against such a host looks clean while witnessing nothing — the
+evidence machinery cannot catch this on its own, because absent evidence and
+excused evidence are the same shape to it. What catches it is fetching the host.
+
+So: an acceptance citing host evidence names the DEPLOYED revision (an image
+digest, or a commit the deployment records), and the flip is checked against the
+live `/.well-known/openwop` at the moment of the flip.
+
 Rules:
 
 - An `Active → Accepted` flip **MUST name the tier of its evidence** in the RFC's `Updated` field (and the CHANGELOG graduation entry SHOULD repeat it).
