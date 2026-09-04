@@ -70,6 +70,18 @@
         "scenario": null
       }
     ],
+    "openwop.requirement.0169.externally-gated-never-stable": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-externally-gated-never-stable": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.finds-at-least-three-schemas-workflow-definition-run-event-suspend-request": [
       {
         "result": "executed-pass",
@@ -470,6 +482,18 @@
         "scenario": null
       }
     ],
+    "openwop.requirement.0168.witness-required": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-witness-required": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-section-citations.every-cited-section-of-a-checked-doc-exists-as-a-heading-in-that-doc": [
       {
         "result": "executed-pass",
@@ -506,37 +530,49 @@
         "scenario": null
       }
     ],
-    "openwop.it.normative-example-extraction.the-extractor-finds-fenced-examples-and-the-corpus-declares-normative-ones-non-v": [
+    "openwop.it.discovery-canonical-family-no-shadow.the-canonical-family-list-and-the-example-corpus-are-both-non-empty": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.normative-example-extraction.every-marker-names-a-schema-that-exists-and-sits-immediately-above-a-json-jsonc": [
+    "openwop.it.discovery-canonical-family-no-shadow.no-vendor-namespaced-object-re-declares-a-canonical-family": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.normative-example-extraction.every-declared-example-parses-as-strict-json-jsonc-comments-and-ellipses-are-pro": [
+    "openwop.it.discovery-canonical-family-no-shadow.no-discovery-example-carries-credential-material": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.normative-example-extraction.every-declared-example-validates-against-its-declared-schema-the-same-schema-fil": [
+    "openwop.scenario.discovery-canonical-family-no-shadow": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.requirement.0169.declaration-parity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-declaration-parity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.edge-condition-truthy-falsy.workflow-definition-manifest-edgecondition-type-enums-both-include-truthy-falsy": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
     "openwop.it.spec-corpus-validity.schemas-readme-md-exists-next-to-schema-files": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.workflow-chain-internal-flag.the-manifest-workflowchain-declares-a-boolean-internal-property": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -1086,13 +1122,41 @@
         "scenario": null
       }
     ],
-    "openwop.it.normative-example-extraction.every-fenced-json-block-that-is-a-whole-instance-of-a-non-permissive-schema-is-d": [
+    "openwop.it.edge-condition-truthy-falsy.a-truthy-falsy-edge-condition-no-right-validates-against-the-manifest-schema": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
+    "openwop.it.edge-condition-truthy-falsy.the-spec-documents-the-no-right-required-left-truthy-falsy-semantics": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.profile.workflowChainPacks.supported": [
+      {
+        "result": "inapplicable",
+        "scenario": null
+      },
+      {
+        "result": "inapplicable",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.payload-type-index-refs-point-to-declared-payload-defs": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.edge-condition-truthy-falsy.a-host-expanding-chains-maps-truthy-falsy-edge-conditions-onto-the-expanded-work": [
+      {
+        "result": "inapplicable",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.edge-condition-truthy-falsy": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -1110,12 +1174,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.normative-example-extraction.every-discovery-shaped-example-is-declared-against-capabilities-schema-json-and": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.declares-openapi-3-1-required-top-level-keys": [
       {
         "result": "executed-pass",
@@ -1123,24 +1181,6 @@
       }
     ],
     "openwop.it.spec-corpus-validity.every-ref-to-schemas-json-resolves-to-a-real-file": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.normative-example-extraction.e-no-declared-discovery-example-carries-credential-or-tenant-shaped-keys": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.normative-example-extraction.sabotage-a-declared-example-with-a-wrong-enum-value-is-caught-by-the-same-valida": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.normative-example-extraction": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -1212,43 +1252,25 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0169.declaration-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-declaration-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.every-openapi-operation-has-a-matching-method-path-row-in-rest-endpoints-md": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.workflow-chain-internal-flag.a-chain-declaring-internal-true-validates-a-non-boolean-internal-is-rejected": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.workflow-chain-internal-flag.the-spec-documents-the-must-omit-from-default-gallery-not-an-authz-boundary-rule": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.workflow-chain-internal-flag": [
+    "openwop.requirement.0168.req-only-assertions": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
     "openwop.it.spec-corpus-validity.rest-catalog-auth-scope-columns-match-openapi-security-overrides": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-req-only-assertions": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -1263,6 +1285,12 @@
         "result": "executed-pass",
         "scenario": null
       },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.workflow-chain-internal-flag.the-manifest-workflowchain-declares-a-boolean-internal-property": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -2336,13 +2364,43 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0168.req-only-assertions": [
+    "openwop.it.workflow-chain-internal-flag.a-chain-declaring-internal-true-validates-a-non-boolean-internal-is-rejected": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.v2-req-only-assertions": [
+    "openwop.it.workflow-chain-internal-flag.the-spec-documents-the-must-omit-from-default-gallery-not-an-authz-boundary-rule": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.workflow-chain-internal-flag": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.requirement.0172.release-identity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-release-identity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.requirement.0168.spec-artifacts-digest": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-spec-artifacts-digest": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -2426,12 +2484,6 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0172.release-identity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-0014-host-fs-capability-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
@@ -2501,18 +2553,6 @@
     "openwop.it.spec-corpus-validity.rfcs-0026-provider-usage-event-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-release-identity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.capability-example-root-layout.the-scan-finds-fenced-examples-at-all": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -2588,6 +2628,18 @@
         "scenario": null
       }
     ],
+    "openwop.requirement.0168.alias-covers-reword": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-alias-covers-reword": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.rfcs-0057-memory-write-attribution-event-md-has-no-broken-local-markdown-file-li": [
       {
         "result": "blocked",
@@ -2630,6 +2682,12 @@
         "scenario": null
       }
     ],
+    "openwop.it.capability-example-root-layout.the-scan-finds-fenced-examples-at-all": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.rfcs-0076-pack-runtime-requirements-and-host-safe-fetch-md-has-no-broken-local-m": [
       {
         "result": "blocked",
@@ -2637,24 +2695,6 @@
       }
     ],
     "openwop.it.capability-example-root-layout.no-spec-v1-example-wraps-capability-families-in-a-top-level-capabilities-object": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.capability-example-root-layout.every-rfc-still-showing-the-wrapper-predates-rfc-0073-which-established-root-lay": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.capability-example-root-layout.the-uq2-predicate-is-pinned-a-typo-only-snippet-is-flagged-an-event-object-is-ou": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.edge-condition-truthy-falsy.workflow-definition-manifest-edgecondition-type-enums-both-include-truthy-falsy": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -2684,6 +2724,12 @@
         "scenario": null
       }
     ],
+    "openwop.it.capability-example-root-layout.every-rfc-still-showing-the-wrapper-predates-rfc-0073-which-established-root-lay": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.rfcs-0095-connection-packs-portable-provider-definitions-md-has-no-broken-local": [
       {
         "result": "blocked",
@@ -2708,7 +2754,7 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0169.externally-gated-never-stable": [
+    "openwop.it.capability-example-root-layout.the-uq2-predicate-is-pinned-a-typo-only-snippet-is-flagged-an-event-object-is-ou": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -2765,12 +2811,6 @@
     "openwop.it.spec-corpus-validity.rfcs-0112-compact-tool-projection-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-externally-gated-never-stable": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -2840,12 +2880,6 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0168.alias-covers-reword": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-0125-chain-fragment-edge-trigger-rule-md-has-no-broken-local-markdown-file": [
       {
         "result": "blocked",
@@ -2861,12 +2895,6 @@
     "openwop.it.spec-corpus-validity.rfcs-0127-streaming-and-cdc-trigger-sources-md-has-no-broken-local-markdown-file": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.it.capability-example-root-layout.no-discovery-shaped-example-in-spec-v1-or-a-post-0149-rfc-has-a-root-key-within": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -2891,18 +2919,6 @@
     "openwop.it.spec-corpus-validity.rfcs-0131-agent-manifest-role-and-skill-profile-md-has-no-broken-local-markdown": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-alias-covers-reword": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.capability-example-root-layout": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -2978,37 +2994,15 @@
         "scenario": null
       }
     ],
-    "openwop.it.edge-condition-truthy-falsy.a-truthy-falsy-edge-condition-no-right-validates-against-the-manifest-schema": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-0146-contract-provenance-advertisement-md-has-no-broken-local-markdown-file": [
       {
         "result": "blocked",
         "scenario": null
       }
     ],
-    "openwop.it.edge-condition-truthy-falsy.the-spec-documents-the-no-right-required-left-truthy-falsy-semantics": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-0148-non-vacuous-conformance-certification-md-has-no-broken-local-markdown": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.profile.workflowChainPacks.supported": [
-      {
-        "result": "inapplicable",
-        "scenario": null
-      },
-      {
-        "result": "inapplicable",
         "scenario": null
       }
     ],
@@ -3162,13 +3156,25 @@
         "scenario": null
       }
     ],
-    "openwop.it.edge-condition-truthy-falsy.a-host-expanding-chains-maps-truthy-falsy-edge-conditions-onto-the-expanded-work": [
+    "openwop.requirement.0171.events-channel-parity": [
       {
-        "result": "inapplicable",
+        "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.edge-condition-truthy-falsy": [
+    "openwop.scenario.v2-events-channel-parity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.requirement.0172.path-parity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-path-parity": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -3588,12 +3594,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.core-manifest-and-extension-registry.the-manifest-exists-and-is-non-trivial": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0073-capability-document-root-layout-gaps-md-has-no-broken-local": [
       {
         "result": "blocked",
@@ -3756,12 +3756,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.core-manifest-and-extension-registry.the-manifest-floor-matches-the-floor-the-suite-actually-enforces": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0096-reviewable-learning-skill-proposal-lifecycle-risks-md-has-no": [
       {
         "result": "blocked",
@@ -3798,12 +3792,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.core-manifest-and-extension-registry.the-manifest-requirement-ids-match-the-requirement-registry": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0100-async-durable-a2a-tasks-gaps-md-has-no-broken-local-markdown": [
       {
         "result": "blocked",
@@ -3819,12 +3807,6 @@
     "openwop.it.spec-corpus-validity.rfcs-registers-0102-a2ui-agent-authored-interface-surfaces-gaps-md-has-no-broken": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.it.core-manifest-and-extension-registry.every-schema-the-manifest-lists-declares-an-id": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -4020,6 +4002,18 @@
         "scenario": null
       }
     ],
+    "openwop.it.capability-example-root-layout.no-discovery-shaped-example-in-spec-v1-or-a-post-0149-rfc-has-a-root-key-within": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.capability-example-root-layout": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0120-connection-pack-api-hosts-gaps-md-has-no-broken-local-markdo": [
       {
         "result": "blocked",
@@ -4050,6 +4044,42 @@
         "scenario": null
       }
     ],
+    "openwop.it.openapi-asyncapi-sdk-parity.spec-v1-operation-path-manifest-json-exists-in-the-corpus-layout-and-re-derives": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.openapi-asyncapi-sdk-parity.every-operation-resolves-to-exactly-one-v1-segment-none-for-well-known-has-an-op": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.openapi-asyncapi-sdk-parity.the-asyncapi-server-pathname-carries-the-version-segment-exactly-once": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.rfc-lifecycle-coherence.the-scan-reaches-accepted-rfcs-in-the-governed-range": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.rfc-lifecycle-coherence.every-unticked-acceptance-item-states-why-it-is-unticked": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.rfc-lifecycle-coherence.the-rule-binds-the-cohort-that-proposed-it": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0123-connection-pack-vendor-grouping-gaps-md-has-no-broken-local": [
       {
         "result": "blocked",
@@ -4059,6 +4089,12 @@
     "openwop.it.spec-corpus-validity.rfcs-registers-0124-portable-per-run-parameter-deferral-gaps-md-has-no-broken-lo": [
       {
         "result": "blocked",
+        "scenario": null
+      }
+    ],
+    "openwop.it.rfc-lifecycle-coherence.the-scan-finds-the-non-terminal-rfcs-it-is-meant-to-govern": [
+      {
+        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -4137,6 +4173,36 @@
     "openwop.it.spec-corpus-validity.rfcs-registers-0131-agent-manifest-role-and-skill-profile-gaps-md-has-no-broken": [
       {
         "result": "blocked",
+        "scenario": null
+      }
+    ],
+    "openwop.it.rfc-lifecycle-coherence.every-parked-rfc-names-a-falsifiable-tripwire": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.rfc-lifecycle-coherence.no-parked-rfc-claims-to-be-accepted": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.rfc-lifecycle-coherence": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.openapi-asyncapi-sdk-parity.every-addressed-channel-resolves-server-pathname-address-to-an-openapi-path-key": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.openapi-asyncapi-sdk-parity.logical-address-null-channels-are-the-only-ones-without-a-wire-address-and-they": [
+      {
+        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -4260,6 +4326,18 @@
         "scenario": null
       }
     ],
+    "openwop.requirement.rfc0149.sdk-path-parity": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.openapi-asyncapi-sdk-parity.sdk-parity-expectations-json-covers-every-canonical-operation-with-the-same-meth": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0149-machine-contract-and-version-reconciliation-gaps-md-has-no-b": [
       {
         "result": "blocked",
@@ -4275,6 +4353,12 @@
     "openwop.it.spec-corpus-validity.rfcs-registers-0150-effect-identity-replay-and-split-brain-safety-gaps-md-has-no": [
       {
         "result": "blocked",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.openapi-asyncapi-sdk-parity": [
+      {
+        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -4368,33 +4452,15 @@
         "scenario": null
       }
     ],
-    "openwop.it.core-manifest-and-extension-registry.the-registry-exists-and-every-record-is-closed": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0159-scim-saml-subject-linking-gaps-md-has-no-broken-local-markdo": [
       {
         "result": "blocked",
         "scenario": null
       }
     ],
-    "openwop.it.core-manifest-and-extension-registry.no-extension-is-stable-without-a-tier-3-implementation": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.rfcs-registers-0159-scim-saml-subject-linking-risks-md-has-no-broken-local-markd": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.it.core-manifest-and-extension-registry.every-dependency-resolves-to-a-known-profile-or-listed-extension": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -4455,12 +4521,6 @@
     "openwop.it.spec-corpus-validity.rfcs-registers-0167-openwop-v2-umbrella-risks-md-has-no-broken-local-markdown-fi": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.it.core-manifest-and-extension-registry.every-capabilitypath-resolves-against-the-capability-schema": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -4860,54 +4920,6 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0168.witness-required": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.core-manifest-and-extension-registry.the-coverage-block-is-present-and-accounts-for-every-capability-family-rfc-0155": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-witness-required": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.rfc-lifecycle-coherence.the-scan-reaches-accepted-rfcs-in-the-governed-range": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.core-manifest-and-extension-registry.every-record-names-the-rfc-or-for-a-v1-base-advertisement-the-spec-document-that": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.core-manifest-and-extension-registry": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.rfc-lifecycle-coherence.every-unticked-acceptance-item-states-why-it-is-unticked": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.rfc-lifecycle-coherence.the-rule-binds-the-cohort-that-proposed-it": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.docs-packs-mvp-plan-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
@@ -4968,12 +4980,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.discovery-canonical-family-no-shadow.the-canonical-family-list-and-the-example-corpus-are-both-non-empty": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.docs-handoffs-myndhyve-rfc-0030-0033-adoption-feedback-2026-05-20-md-has-no-brok": [
       {
         "result": "blocked",
@@ -4989,12 +4995,6 @@
     "openwop.it.spec-corpus-validity.docs-recruitment-external-pack-author-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.it.rfc-lifecycle-coherence.the-scan-finds-the-non-terminal-rfcs-it-is-meant-to-govern": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -5034,12 +5034,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.rfc-lifecycle-coherence.every-parked-rfc-names-a-falsifiable-tripwire": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.spec-v1-agent-runtime-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
@@ -5058,18 +5052,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.rfc-lifecycle-coherence.no-parked-rfc-claims-to-be-accepted": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.rfc-lifecycle-coherence": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.spec-corpus-validity.spec-v1-channels-and-reducers-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
@@ -5082,7 +5064,25 @@
         "scenario": null
       }
     ],
-    "openwop.it.discovery-canonical-family-no-shadow.no-vendor-namespaced-object-re-declares-a-canonical-family": [
+    "openwop.it.core-manifest-and-extension-registry.the-manifest-exists-and-is-non-trivial": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.core-manifest-and-extension-registry.the-manifest-floor-matches-the-floor-the-suite-actually-enforces": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.core-manifest-and-extension-registry.the-manifest-requirement-ids-match-the-requirement-registry": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.core-manifest-and-extension-registry.every-schema-the-manifest-lists-declares-an-id": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -5094,13 +5094,19 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0168.seams-not-in-canonical": [
+    "openwop.it.core-manifest-and-extension-registry.the-registry-exists-and-every-record-is-closed": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.v2-seams-not-in-canonical": [
+    "openwop.it.core-manifest-and-extension-registry.no-extension-is-stable-without-a-tier-3-implementation": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.core-manifest-and-extension-registry.every-dependency-resolves-to-a-known-profile-or-listed-extension": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -5124,13 +5130,49 @@
         "scenario": null
       }
     ],
-    "openwop.it.discovery-canonical-family-no-shadow.no-discovery-example-carries-credential-material": [
+    "openwop.it.core-manifest-and-extension-registry.every-capabilitypath-resolves-against-the-capability-schema": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.discovery-canonical-family-no-shadow": [
+    "openwop.requirement.0168.seams-not-in-canonical": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-seams-not-in-canonical": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.requirement.0173.threat-model-template": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-threat-model-template": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.core-manifest-and-extension-registry.the-coverage-block-is-present-and-accounts-for-every-capability-family-rfc-0155": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.core-manifest-and-extension-registry.every-record-names-the-rfc-or-for-a-v1-base-advertisement-the-spec-document-that": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.core-manifest-and-extension-registry": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -5145,18 +5187,6 @@
     "openwop.it.spec-corpus-validity.spec-v1-production-profile-md-has-no-broken-local-markdown-file-links": [
       {
         "result": "blocked",
-        "scenario": null
-      }
-    ],
-    "openwop.requirement.0168.spec-artifacts-digest": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-spec-artifacts-digest": [
-      {
-        "result": "executed-pass",
         "scenario": null
       }
     ],
@@ -6060,61 +6090,107 @@
         "scenario": null
       }
     ],
-    "openwop.it.openapi-asyncapi-sdk-parity.spec-v1-operation-path-manifest-json-exists-in-the-corpus-layout-and-re-derives": [
+    "openwop.requirement.0171.event-naming-rule": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.openapi-asyncapi-sdk-parity.every-operation-resolves-to-exactly-one-v1-segment-none-for-well-known-has-an-op": [
+    "openwop.it.certification-floor-enforcement.a-profile-with-no-floor-definition-is-unprovable-not-proven": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.openapi-asyncapi-sdk-parity.the-asyncapi-server-pathname-carries-the-version-segment-exactly-once": [
+    "openwop.it.certification-floor-enforcement.g7-a-discovery-conditional-floor-openwop-replay-fork-requires-the-branch-the-doc": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.openapi-asyncapi-sdk-parity.every-addressed-channel-resolves-server-pathname-address-to-an-openapi-path-key": [
+    "openwop.it.certification-floor-enforcement.a-discovery-only-profile-with-an-explicit-empty-floor-is-proven-by-its-predicate": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.openapi-asyncapi-sdk-parity.logical-address-null-channels-are-the-only-ones-without-a-wire-address-and-they": [
+    "openwop.scenario.v2-event-naming-rule": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.requirement.rfc0149.sdk-path-parity": [
+    "openwop.it.certification-floor-enforcement.a-claimed-streaming-profile-whose-floor-scenarios-failed-is-rejected": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.openapi-asyncapi-sdk-parity.sdk-parity-expectations-json-covers-every-canonical-operation-with-the-same-meth": [
+    "openwop.it.certification-floor-enforcement.a-claimed-streaming-profile-whose-floor-scenarios-all-passed-is-accepted": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.openapi-asyncapi-sdk-parity": [
+    "openwop.it.certification-floor-enforcement.one-unprovable-claim-invalidates-the-whole-bundle": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.requirement.0173.threat-model-template": [
+    "openwop.it.certification-floor-enforcement.every-transcribed-floor-names-scenario-files-that-exist-in-this-suite": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.v2-threat-model-template": [
+    "openwop.it.certification-floor-enforcement.no-floor-scenario-is-corpus-only-a-floor-must-be-provable-from-the-published-pac": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.certification-floor-enforcement": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.normative-example-extraction.the-extractor-finds-fenced-examples-and-the-corpus-declares-normative-ones-non-v": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.normative-example-extraction.every-marker-names-a-schema-that-exists-and-sits-immediately-above-a-json-jsonc": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.normative-example-extraction.every-declared-example-parses-as-strict-json-jsonc-comments-and-ellipses-are-pro": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.event-codemap-complete.every-runeventtype-enum-member-has-exactly-one-row-and-every-row-names-an-enum-m": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.normative-example-extraction.every-declared-example-validates-against-its-declared-schema-the-same-schema-fil": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.event-codemap-complete.every-payloaddef-exists-in-run-event-payloads-schema-json-defs": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6138,19 +6214,119 @@
         "scenario": null
       }
     ],
-    "openwop.requirement.0172.path-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-path-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.it.artifact-schema-compile-bounded.rejects-a-ref-depth-bomb": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.the-schema-declares-protocolversion-at-all": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.event-codemap-complete.every-proposed-v2-name-is-unique-grammatical-two-segments-and-never-under-the-re": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.the-schema-constrains-protocolversion-by-pattern-not-merely-by-length": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.accepts-s": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.rejects-s": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      },
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.event-codemap-complete": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.core-derivation-applies-the-grammar-rather-than-a-prefix-test": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.a-different-major-is-not-core-a-higher-minor-is": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.protocol-version-grammar.the-spec-states-the-grammar-normatively": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.protocol-version-grammar": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6163,18 +6339,6 @@
       }
     ],
     "openwop.it.spec-corpus-validity.every-fixture-json-file-is-referenced-by-fixtures-md": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.requirement.0171.events-channel-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-events-channel-parity": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6234,35 +6398,61 @@
         "scenario": null
       }
     ],
+    "openwop.it.registry-declarative-kinds.registry-operations-md-validation-flow-selects-the-manifest-schema-by-kind": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.registry-operations-md-validation-flow-skips-the-runtime-check-for-declarative-k": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.registry-version-manifest-schema-json-carries-the-kind-discriminator-declarative": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.a-published-artifact-type-version-manifest-validates-kind-artifacttypes-no-runti": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.normative-example-extraction.every-fenced-json-block-that-is-a-whole-instance-of-a-non-permissive-schema-is-d": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.scenario.spec-corpus-validity": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.chain-subchain-unsupported-refused.spec-corpus-pins-sub-chain-unsupported-as-a-422-refusal-never-flatten": [
+    "openwop.it.normative-example-extraction.every-discovery-shaped-example-is-declared-against-capabilities-schema-json-and": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.chain-subchain-unsupported-refused.a-host-without-subchains-support-refuses-a-subchains-bearing-chain-with-sub-chai": [
-      {
-        "result": "inapplicable",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.chain-subchain-unsupported-refused": [
+    "openwop.it.normative-example-extraction.e-no-declared-discovery-example-carries-credential-or-tenant-shaped-keys": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.requirement.0171.event-naming-rule": [
+    "openwop.it.normative-example-extraction.sabotage-a-declared-example-with-a-wrong-enum-value-is-caught-by-the-same-valida": [
       {
         "result": "executed-pass",
         "scenario": null
-      },
+      }
+    ],
+    "openwop.scenario.normative-example-extraction": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6281,12 +6471,6 @@
       }
     ],
     "openwop.it.form-content-packs.registry-operations-md-extends-the-declarative-id-denormalization-to-templateid": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-event-naming-rule": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6323,6 +6507,48 @@
       }
     ],
     "openwop.it.form-content-packs.the-anyof-payload-gate-carries-a-templates-branch-necessary-enum-property-alone": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.a-published-connection-version-manifest-validates-kind-provider-no-runtime": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.a-published-chat-card-version-manifest-validates-kind-card-per-rfc-0071-cards-no": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.the-legacy-chat-card-kind-string-is-rejected-rfc-0071-kind-is-card": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.an-unchanged-node-version-manifest-still-validates-no-kind-runtime-nodes": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.a-declarative-manifest-carrying-runtime-is-rejected-declarative-kinds-carry-no-r": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.registry-declarative-kinds.a-node-manifest-missing-runtime-is-still-rejected-executable-kinds-require-runti": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.registry-declarative-kinds": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6466,25 +6692,73 @@
         "scenario": null
       }
     ],
-    "openwop.it.event-codemap-complete.every-runeventtype-enum-member-has-exactly-one-row-and-every-row-names-an-enum-m": [
+    "openwop.it.tool-result-trust-monotone.every-invariant-the-4-stride-table-cites-actually-exists-no-dangling-fence": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.event-codemap-complete.every-payloaddef-exists-in-run-event-payloads-schema-json-defs": [
+    "openwop.it.tool-result-trust-monotone.the-curated-floor-of-prompt-ingress-surfaces-each-has-a-real-fencing-invariant": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.event-codemap-complete.every-proposed-v2-name-is-unique-grammatical-two-segments-and-never-under-the-re": [
+    "openwop.it.tool-result-trust-monotone.the-general-rule-itself-is-a-declared-invariant": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.scenario.event-codemap-complete": [
+    "openwop.it.tool-result-trust-monotone.2a-exists-and-states-monotone-composition-the-meet": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.tool-result-trust-monotone.a-tool-ran-is-explicitly-not-a-basis-for-trust": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.tool-result-trust-monotone.no-laundering-through-storage-and-both-strategies-are-blessed": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.tool-result-trust-monotone.the-structurally-isolated-reader-carve-out-is-present-and-narrow": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.tool-result-trust-monotone.ai-envelope-md-trust-boundary-cross-references-2a-rfc-0143": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.tool-result-trust-monotone": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.chain-subchain-unsupported-refused.spec-corpus-pins-sub-chain-unsupported-as-a-422-refusal-never-flatten": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.chain-subchain-unsupported-refused.a-host-without-subchains-support-refuses-a-subchains-bearing-chain-with-sub-chai": [
+      {
+        "result": "inapplicable",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.chain-subchain-unsupported-refused": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6534,6 +6808,12 @@
         "scenario": null
       }
     ],
+    "openwop.it.effect-identity-cross-scope.the-layer-2-section-is-found-at-all": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.pack-manifest-extensions.an-x-extension-on-an-entry-validates-the-motivating-case": [
       {
         "result": "executed-pass",
@@ -6553,6 +6833,24 @@
       }
     ],
     "openwop.it.pack-manifest-extensions.an-unextended-pack-still-validates-rfc-0138-is-additive": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.effect-identity-cross-scope.the-spec-states-that-layer-2-identity-is-run-scoped": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.effect-identity-cross-scope.the-spec-requires-a-business-identity-when-the-effect-escapes-the-run": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.effect-identity-cross-scope.the-run-scope-cost-is-tied-to-the-fork-limitation-it-shares-a-cause-with": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6594,6 +6892,12 @@
         "scenario": null
       }
     ],
+    "openwop.scenario.effect-identity-cross-scope": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.error-envelope-canonical-shape.the-schema-says-error-is-a-string-requires-message-and-forbids-other-top-level-k": [
       {
         "result": "executed-pass",
@@ -6601,184 +6905,6 @@
       }
     ],
     "openwop.it.error-envelope-canonical-shape.readerrorcode-readretriable-read-the-canonical-shape-and-tolerate-the-legacy-nes": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.error-envelope-canonical-shape.rest-endpoints-md-states-the-precedence-the-details-retriable-convention-and-car": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.error-envelope-canonical-shape": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.registry-operations-md-validation-flow-selects-the-manifest-schema-by-kind": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.registry-operations-md-validation-flow-skips-the-runtime-check-for-declarative-k": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.registry-version-manifest-schema-json-carries-the-kind-discriminator-declarative": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.a-published-artifact-type-version-manifest-validates-kind-artifacttypes-no-runti": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.a-published-connection-version-manifest-validates-kind-provider-no-runtime": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.a-published-chat-card-version-manifest-validates-kind-card-per-rfc-0071-cards-no": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.the-legacy-chat-card-kind-string-is-rejected-rfc-0071-kind-is-card": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.an-unchanged-node-version-manifest-still-validates-no-kind-runtime-nodes": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.a-declarative-manifest-carrying-runtime-is-rejected-declarative-kinds-carry-no-r": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.registry-declarative-kinds.a-node-manifest-missing-runtime-is-still-rejected-executable-kinds-require-runti": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.registry-declarative-kinds": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.the-schema-declares-protocolversion-at-all": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.the-schema-constrains-protocolversion-by-pattern-not-merely-by-length": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.accepts-s": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.rejects-s": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      },
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.core-derivation-applies-the-grammar-rather-than-a-prefix-test": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.a-different-major-is-not-core-a-higher-minor-is": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.protocol-version-grammar.the-spec-states-the-grammar-normatively": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.protocol-version-grammar": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6821,6 +6947,72 @@
       }
     ],
     "openwop.scenario.artifact-type-legacy-ids": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.the-idempotency-capability-family-is-found-at-all": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.crossregion-offers-the-three-rfc-0150-d-postures": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.crossregion-does-not-carry-strict-which-was-a-latency-claim-in-a-safety-slot": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.partitionrecoverystrategy-offers-no-time-ordered-rule": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.partitionrecoverystrategy-names-the-rule-the-annex-actually-requires": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.error-envelope-canonical-shape.rest-endpoints-md-states-the-precedence-the-details-retriable-convention-and-car": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.error-envelope-canonical-shape": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.the-spec-states-that-reconciliation-does-not-authorize-effects": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.a-host-that-can-neither-fence-nor-rely-on-provider-dedup-must-say-so": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.it.multi-region-effect-vocabulary.the-capability-advertisement-example-parses-as-json": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.multi-region-effect-vocabulary": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -6904,67 +7096,43 @@
         "scenario": null
       }
     ],
-    "openwop.it.certification-floor-enforcement.a-profile-with-no-floor-definition-is-unprovable-not-proven": [
+    "openwop.it.semantic-digest-v2.the-digest-recipe-section-is-found-at-all": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.certification-floor-enforcement.g7-a-discovery-conditional-floor-openwop-replay-fork-requires-the-branch-the-doc": [
+    "openwop.it.semantic-digest-v2.outcome-affecting-fields-are-covered-not-excluded": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.certification-floor-enforcement.a-discovery-only-profile-with-an-explicit-empty-floor-is-proven-by-its-predicate": [
+    "openwop.it.semantic-digest-v2.no-unicode-normalization-is-prescribed-outside-jcs": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.certification-floor-enforcement.a-claimed-streaming-profile-whose-floor-scenarios-failed-is-rejected": [
+    "openwop.it.semantic-digest-v2.the-recipe-carries-a-version-stamp-so-v1-and-v2-digests-cannot-collide": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.certification-floor-enforcement.a-claimed-streaming-profile-whose-floor-scenarios-all-passed-is-accepted": [
+    "openwop.it.semantic-digest-v2.unknown-provider-options-are-carried-not-dropped": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.certification-floor-enforcement.one-unprovable-claim-invalidates-the-whole-bundle": [
+    "openwop.it.semantic-digest-v2.the-layer-2-cross-reference-matches-the-composition-that-actually-exists": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.requirement.0171.error-registry-prose-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.certification-floor-enforcement.every-transcribed-floor-names-scenario-files-that-exist-in-this-suite": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-error-registry-prose-parity": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.certification-floor-enforcement.no-floor-scenario-is-corpus-only-a-floor-must-be-provable-from-the-published-pac": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.certification-floor-enforcement": [
+    "openwop.scenario.semantic-digest-v2": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -7018,6 +7186,12 @@
         "scenario": null
       }
     ],
+    "openwop.requirement.0173.security-defaults-table": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
     "openwop.it.versioned-composition-profiles.versions-use-mcp-date-form-exactly": [
       {
         "result": "executed-pass",
@@ -7025,6 +7199,12 @@
       }
     ],
     "openwop.it.versioned-composition-profiles.the-feature-list-is-closed": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-security-defaults-table": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -7048,121 +7228,13 @@
         "scenario": null
       }
     ],
-    "openwop.it.multi-region-effect-vocabulary.the-idempotency-capability-family-is-found-at-all": [
+    "openwop.requirement.0171.error-registry-prose-parity": [
       {
         "result": "executed-pass",
         "scenario": null
       }
     ],
-    "openwop.it.multi-region-effect-vocabulary.crossregion-offers-the-three-rfc-0150-d-postures": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.multi-region-effect-vocabulary.crossregion-does-not-carry-strict-which-was-a-latency-claim-in-a-safety-slot": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.multi-region-effect-vocabulary.partitionrecoverystrategy-offers-no-time-ordered-rule": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.multi-region-effect-vocabulary.partitionrecoverystrategy-names-the-rule-the-annex-actually-requires": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.multi-region-effect-vocabulary.the-spec-states-that-reconciliation-does-not-authorize-effects": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.multi-region-effect-vocabulary.a-host-that-can-neither-fence-nor-rely-on-provider-dedup-must-say-so": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.multi-region-effect-vocabulary.the-capability-advertisement-example-parses-as-json": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.multi-region-effect-vocabulary": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.requirement.0176.corpus-tag-pinned": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-corpus-tag-pinned": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.every-invariant-the-4-stride-table-cites-actually-exists-no-dangling-fence": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.the-curated-floor-of-prompt-ingress-surfaces-each-has-a-real-fencing-invariant": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.the-general-rule-itself-is-a-declared-invariant": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.2a-exists-and-states-monotone-composition-the-meet": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.a-tool-ran-is-explicitly-not-a-basis-for-trust": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.no-laundering-through-storage-and-both-strategies-are-blessed": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.the-structurally-isolated-reader-carve-out-is-present-and-narrow": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.tool-result-trust-monotone.ai-envelope-md-trust-boundary-cross-references-2a-rfc-0143": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.tool-result-trust-monotone": [
+    "openwop.scenario.v2-error-registry-prose-parity": [
       {
         "result": "executed-pass",
         "scenario": null
@@ -7240,90 +7312,6 @@
         "scenario": null
       }
     ],
-    "openwop.it.semantic-digest-v2.the-digest-recipe-section-is-found-at-all": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.semantic-digest-v2.outcome-affecting-fields-are-covered-not-excluded": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.semantic-digest-v2.no-unicode-normalization-is-prescribed-outside-jcs": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.semantic-digest-v2.the-recipe-carries-a-version-stamp-so-v1-and-v2-digests-cannot-collide": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.semantic-digest-v2.unknown-provider-options-are-carried-not-dropped": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.semantic-digest-v2.the-layer-2-cross-reference-matches-the-composition-that-actually-exists": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.semantic-digest-v2": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.effect-identity-cross-scope.the-layer-2-section-is-found-at-all": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.effect-identity-cross-scope.the-spec-states-that-layer-2-identity-is-run-scoped": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.effect-identity-cross-scope.the-spec-requires-a-business-identity-when-the-effect-escapes-the-run": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.it.effect-identity-cross-scope.the-run-scope-cost-is-tied-to-the-fork-limitation-it-shares-a-cause-with": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.effect-identity-cross-scope": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.requirement.0173.security-defaults-table": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
-    "openwop.scenario.v2-security-defaults-table": [
-      {
-        "result": "executed-pass",
-        "scenario": null
-      }
-    ],
     "openwop.requirement.0177.one-signing-scheme": [
       {
         "result": "executed-pass",
@@ -7331,6 +7319,18 @@
       }
     ],
     "openwop.scenario.v2-one-signing-scheme": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.requirement.0176.corpus-tag-pinned": [
+      {
+        "result": "executed-pass",
+        "scenario": null
+      }
+    ],
+    "openwop.scenario.v2-corpus-tag-pinned": [
       {
         "result": "executed-pass",
         "scenario": null

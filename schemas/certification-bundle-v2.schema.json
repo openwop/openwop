@@ -5,26 +5,58 @@
   "description": "A certification bundle that records what EXECUTED, not merely what passed.\n\nThe v1 bundle carried `{passed, failed, skipped}` scenario-file lists. Those three cannot express the distinction the whole program turns on: a scenario file counted as `passed` whether its assertions ran or its runner returned early, and a `skipped` entry could mean 'the operator excluded this', 'the requirement does not apply', or 'we could not check' — three claims with different consequences flattened into one word.\n\nv2 replaces the lists with per-requirement dispositions from RFC 0148 §A, and adds the counts §A.4 requires so a reader can tell a thorough run from a thin one without re-running it. `blocked` is its own total precisely because it is the one that invalidates a claim.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["bundleVersion", "suite", "host", "discovery", "claimedProfiles", "results", "scenarioManifestSha256", "targetConfigurationSha256"],
+  "required": [
+    "bundleVersion",
+    "suite",
+    "host",
+    "discovery",
+    "claimedProfiles",
+    "results",
+    "scenarioManifestSha256",
+    "targetConfigurationSha256"
+  ],
   "properties": {
-    "bundleVersion": { "const": "2" },
+    "bundleVersion": {
+      "const": "2"
+    },
     "suite": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["package", "version"],
+      "required": [
+        "package",
+        "version"
+      ],
       "properties": {
-        "package": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+        "package": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$",
+          "description": "The suite version that produced this bundle. A SemVer prerelease is admitted because RFC 0168 §D.3 makes the 2.x suite one package with `--target-major`: a v1 host measured by a prerelease 2.x suite legitimately emits a v2 bundle whose `suite.version` is `2.0.0-rc.N`. The original three-part-only pattern predates that decision and made such a bundle unvalidatable — found in Phase 4 when a host pinned to the RC line tried to certify."
+        }
       }
     },
     "host": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 },
-        "vendor": { "type": "string" },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vendor": {
+          "type": "string"
+        },
         "commit": {
           "type": "string",
           "minLength": 1,
@@ -40,41 +72,80 @@
     "discovery": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["sha256", "document"],
+      "required": [
+        "sha256",
+        "document"
+      ],
       "properties": {
-        "url": { "type": "string" },
-        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "document": { "type": "object" }
+        "url": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "document": {
+          "type": "object"
+        }
       }
     },
     "claimedProfiles": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^openwop-[a-z0-9-]+$" },
+      "items": {
+        "type": "string",
+        "pattern": "^openwop-[a-z0-9-]+$"
+      },
       "description": "RFC 0155 §E — canonical profile IDs only. Deprecated aliases go in `aliases`, never here, so a badge cannot be substantiated by a name that no longer means what it did."
     },
     "aliases": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "results": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["totals", "requirements"],
+      "required": [
+        "totals",
+        "requirements"
+      ],
       "properties": {
         "totals": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["executedPass", "executedFail", "skipped", "inapplicable", "blocked"],
+          "required": [
+            "executedPass",
+            "executedFail",
+            "skipped",
+            "inapplicable",
+            "blocked"
+          ],
           "description": "RFC 0148 §A/§C. All five are REQUIRED — an omitted total is indistinguishable from zero, and `blocked: 0` asserted is a different claim from `blocked` unstated.",
           "properties": {
-            "executedPass": { "type": "integer", "minimum": 0 },
-            "executedFail": { "type": "integer", "minimum": 0 },
-            "skipped": { "type": "integer", "minimum": 0 },
-            "inapplicable": { "type": "integer", "minimum": 0 },
-            "blocked": { "type": "integer", "minimum": 0 }
+            "executedPass": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "executedFail": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "inapplicable": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "blocked": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "requirements": {
@@ -84,17 +155,38 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["requirementId", "scenarioId", "disposition"],
+            "required": [
+              "requirementId",
+              "scenarioId",
+              "disposition"
+            ],
             "properties": {
-              "requirementId": { "type": "string", "minLength": 1 },
-              "scenarioId": { "type": "string", "minLength": 1 },
-              "disposition": { "enum": ["executed-pass", "executed-fail", "skipped", "inapplicable", "blocked"] },
+              "requirementId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scenarioId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "disposition": {
+                "enum": [
+                  "executed-pass",
+                  "executed-fail",
+                  "skipped",
+                  "inapplicable",
+                  "blocked"
+                ]
+              },
               "assertionCount": {
                 "type": "integer",
                 "minimum": 0,
                 "description": "How many assertions actually ran. `executed-pass` with `assertionCount: 0` is the vacuous pass this program exists to close, and a reader can now see it."
               },
-              "witnessSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+              "witnessSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
               "detail": {
                 "type": "string",
                 "description": "Required by RFC 0148 §A for any disposition other than `executed-pass` — an unexplained `blocked` is an outcome nobody can act on."

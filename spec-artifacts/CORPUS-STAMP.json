@@ -32,7 +32,7 @@
     "schemas/audit-verify-result.schema.json": "e8fd013fb610ba5db27ab0113ec2eb18e7da5f9310dd3de2dd3dc87a259c21fe",
     "schemas/budget-policy.schema.json": "3d4fe30ae129fe136ab9ece395f2a2a42a76360786b1b9a1d5f1cbc753eb5b39",
     "schemas/capabilities.schema.json": "e672c35d503532d8039b5552115f5ec150d60317f537f13180d830b0fe315947",
-    "schemas/certification-bundle-v2.schema.json": "3540232676086869ae78d24f3b9c2154f9c4a8a5eeb976512d6a7409f8cf19bb",
+    "schemas/certification-bundle-v2.schema.json": "2f85530dd04824a15810c94e96869362dee1e78396eca21fdd18e5501416bb7d",
     "schemas/channel-presence-payload.schema.json": "f9d0ef4219814c2b765baf3e68cbe5eea2cb42379f516a93a0459dcd5f7db47e",
     "schemas/channel-written-payload.schema.json": "54723a56bc5a35232f64544ca686ac1ac959a5fb05b32b2401facca6b3ef51a3",
     "schemas/chat-card-pack-manifest.schema.json": "402f7e9081cc39857a52e772061f4e034a957dcbc17501fe6e8e0bcb3d337e42",
@@ -230,5 +230,5 @@
     "spec/v2/profiles.json": "1f0ee40491131cf561ef19a0394c47ba476b4567514fe16befb6cada4a10a5a4",
     "spec/v2/release.json": "f2ef4468ef76f5da0580bd7ca2b8f2237fb4e4ce82f81afba34b1819bc238e68"
   },
-  "corpusCommit": "5aed442e995fbbd61284e486804026a07a992c40"
+  "corpusCommit": "fa9baad71198fd4994360a8331dbbffd41165bd4"
 }
