@@ -19,7 +19,9 @@ A subscription MUST receive only events from runs within its tenant scope; cross
 
 ## Delivery
 
-The delivery envelope is generated from the same payload definition as the event itself and the CloudEvents mapping — one source, three renderings (RFC 0171 §A.4). The body is `{ runId, workspaceId, event }` where `event` is the verbatim run event (events.md).
+The delivery envelope is generated from the same payload definition as the event itself and the CloudEvents mapping — one source, three renderings (RFC 0171 §A.4). The body is `{ runId, workspaceId, event }` where `event` is the verbatim run event (events.md), and it MUST validate against `schemas/v2/webhook-delivery.schema.json`.
+
+The envelope's `runId` is tenant-bound (`identity.md` §5), like every other rendering of a v2 `runId`. An outbound emission is not a response to a versioned request, so nothing in the request cycle supplies the form — the grammar does. **A host that projects on responses and not on emissions hands the subscriber an identifier the client has never seen**, and the failure is silent: the subscriber's correlation matches nothing, with no error, no `4xx` and no log line. Until 2026-09-04 the nested `event.runId` was bound by `run-event.schema.json` while the envelope's own was carried by this paragraph alone, which is how a real host shipped the split.
 
 ### Headers
 
