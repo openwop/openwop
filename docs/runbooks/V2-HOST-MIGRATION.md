@@ -38,6 +38,10 @@ Every check you add should be able to fail. If you cannot describe the input tha
 
 **0.2 Know your version sites.** In this corpus a release-candidate bump touches **six** hand-kept sites plus several generated ones. In your host it will be fewer, but find them before you need them. The one that bites is any **exact-pinned peer dependency**: bumping a package's own version while leaving its peer pin behind produces an `ERESOLVE` that no local gate sees, because a repo checkout resolves the peer by path and only a packed-tarball install reproduces it.
 
+**0.2b Pin both peers to the same explicit version — never to a dist-tag.** The suite and `@openwop/spec-artifacts` are declared exact peers published by two jobs in one workflow, so a moving tag like `next` advances **per package**. For the minutes between them, `@next` resolves a pair that was never published together, and the suite refuses to start. Confirm *both* resolve at your chosen version before installing.
+
+> **On propagation windows generally:** a negative result measured inside one is not evidence at all. A host checking for a just-published package twice, twenty seconds apart, got "not found" both times and the correct answer on the third look; observed windows ran 2 to 9 minutes. Either wait it out, or check something not subject to the window — the publish job's own `+ package@version` line.
+
 **0.3 Check your tenant's daily run ceiling.** A full certification lane creates runs. If your conformance tenant has a per-day run cap, one lane can exhaust it — measured: `429 session_runs_per_day`, retry ≈ 8.9 hours. The consequence is not merely inconvenient:
 
 > A host that cannot be certified twice in a day is a host whose evidence **a second party cannot re-run**.

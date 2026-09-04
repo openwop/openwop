@@ -75,6 +75,17 @@ export function setup(): void {
   // Suite 2.0.0: in the published layout the contract is the spec-artifacts peer (RFC 0168 §D.2).
   const stamp = LAYOUT === 'published' ? verifyPeerContract(PKG_ROOT_PATH) : verifyCorpusStamp(PKG_ROOT_PATH, LAYOUT);
   process.stderr.write(`${describeVerdict(stamp)}\n`);
+  // A version skew and a digest mismatch both have to refuse, but they are
+  // different faults with different fixes, and reporting them in the same words
+  // sends the reader to debug a corrupt install when nothing is corrupt.
+  if (stamp.kind === 'peer-version') {
+    throw new Error(
+      `openwop-conformance: refusing to run — this suite was packed against @openwop/spec-artifacts@${stamp.lockVersion}, ` +
+      `but @openwop/spec-artifacts@${stamp.peerVersion} is installed. They are declared EXACT peers. ` +
+      `Install both at the same explicit version; do NOT install at a dist-tag such as \`next\`, which moves per package ` +
+      `and can name a pair that was never published together.`,
+    );
+  }
   if (stamp.kind === 'mismatch') {
     throw new Error('openwop-conformance: refusing to run — schemas/CORPUS-STAMP.json digests do not match the vendored api/ + schemas/ files. Reinstall the package; do not hand-patch vendored contract files.');
   }

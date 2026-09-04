@@ -39,7 +39,17 @@ export interface CorpusStamp {
 export type StampVerdict =
   | { readonly kind: 'verified'; readonly files: number }
   | { readonly kind: 'not-applicable'; readonly reason: string }
-  | { readonly kind: 'mismatch'; readonly missing: readonly string[]; readonly altered: readonly string[]; readonly extra: readonly string[] };
+  | { readonly kind: 'mismatch'; readonly missing: readonly string[]; readonly altered: readonly string[]; readonly extra: readonly string[] }
+  /**
+   * The peer is INSTALLED and INTACT but is a different version than the suite
+   * was packed against. Its own kind because the remedy is completely different
+   * from a digest mismatch — nothing is corrupt, two versions are simply out of
+   * step — and because the generic message sends readers to debug a broken
+   * install. Reported by a tier-2 host that hit it through the `next` dist-tag:
+   * the tag moves per package, so `@next` can name an exact-peer PAIR that was
+   * never published together.
+   */
+  | { readonly kind: 'peer-version'; readonly peerVersion: string; readonly lockVersion: string };
 
 export const STAMP_RELATIVE_PATH = join('schemas', 'CORPUS-STAMP.json');
 
@@ -94,7 +104,11 @@ export function verifyPeerContract(pkgRoot: string): StampVerdict {
   if (!existsSync(stampPath)) return { kind: 'mismatch', missing: ['@openwop/spec-artifacts/CORPUS-STAMP.json'], altered: [], extra: [] };
   const stamp = JSON.parse(readFileSync(stampPath, 'utf8')) as { package: string; version: string; files: Record<string, string> };
   const digest = createHash('sha256').update(JSON.stringify({ package: stamp.package, version: stamp.version, files: stamp.files })).digest('hex');
-  if (stamp.version !== lock.version || digest !== lock.stampSha256) return { kind: 'mismatch', missing: [], altered: [`@openwop/spec-artifacts ${stamp.version} (digest ${digest.slice(0, 12)}) ≠ the suite's lock ${lock.version} (${lock.stampSha256.slice(0, 12)})`], extra: [] };
+  // A plain version difference is NOT corruption; report it as itself so the
+  // message names the two versions and the fix, instead of sending the reader
+  // to hunt a damaged install.
+  if (stamp.version !== lock.version) return { kind: 'peer-version', peerVersion: stamp.version, lockVersion: lock.version };
+  if (digest !== lock.stampSha256) return { kind: 'mismatch', missing: [], altered: [`@openwop/spec-artifacts ${stamp.version} stamp digest ${digest.slice(0, 12)} ≠ the suite's lock ${lock.stampSha256.slice(0, 12)} — same version, different contents`], extra: [] };
   const missing: string[] = []; const altered: string[] = [];
   for (const [rel, d] of Object.entries(stamp.files)) { const p = join(peerRoot, ...rel.split('/')); if (!existsSync(p)) missing.push(rel); else if (sha256File(p) !== d) altered.push(rel); }
   if (missing.length || altered.length) return { kind: 'mismatch', missing, altered, extra: [] };
@@ -143,6 +157,14 @@ export function describeVerdict(v: StampVerdict): string {
       return `[openwop-conformance] corpus stamp VERIFIED — ${v.files} vendored api/ + schemas/ files match their SHA-256 digests`;
     case 'not-applicable':
       return `[openwop-conformance] corpus stamp not checked — ${v.reason}`;
+    case 'peer-version':
+      return (
+        `[openwop-conformance] peer version MISMATCH — this suite was packed against ` +
+        `@openwop/spec-artifacts@${v.lockVersion} but @openwop/spec-artifacts@${v.peerVersion} is installed. ` +
+        `Nothing is corrupt: the two are declared EXACT peers and are simply out of step. ` +
+        `Install both at the same explicit version — never at a dist-tag such as \`next\`, which moves per package ` +
+        `and can therefore name a pair that was never published together.`
+      );
     case 'mismatch':
       return (
         `[openwop-conformance] corpus stamp MISMATCH — the vendored contract is not the one this suite shipped ` +

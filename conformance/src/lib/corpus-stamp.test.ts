@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { digestVendoredFiles, listVendoredFiles, verifyCorpusStamp, describeVerdict, STAMP_RELATIVE_PATH } from './corpus-stamp.js';
+import { digestVendoredFiles, listVendoredFiles, verifyCorpusStamp, describeVerdict, STAMP_RELATIVE_PATH, type StampVerdict } from './corpus-stamp.js';
 
 function fakePackage(): string {
   const root = mkdtempSync(join(tmpdir(), 'owp-stamp-'));
@@ -87,5 +87,33 @@ describe('corpus-stamp: three-outcome verification', () => {
     writeFileSync(join(root, STAMP_RELATIVE_PATH), 'not json');
     expect(verifyCorpusStamp(root, 'published').kind).toBe('mismatch');
     rmSync(root, { recursive: true, force: true });
+  });
+});
+
+describe('peer-version is its own verdict, not a digest mismatch', () => {
+  // Reported by a tier-2 host: the `next` dist-tag moves per package, so `@next`
+  // can resolve @openwop/spec-artifacts@rc.11 alongside the suite at rc.10 —
+  // declared EXACT peers that were never published together. The old code folded
+  // that into `mismatch`, whose message says the vendored contract "is not the
+  // one this suite shipped", and the reader goes hunting a corrupted install.
+  const v: StampVerdict = { kind: 'peer-version', peerVersion: '2.0.0-rc.11', lockVersion: '2.0.0-rc.10' };
+
+  it('names BOTH versions, so the reader can see the skew without guessing', () => {
+    const msg = describeVerdict(v);
+    expect(msg).toContain('2.0.0-rc.11');
+    expect(msg).toContain('2.0.0-rc.10');
+  });
+
+  it('says nothing is corrupt, and names the dist-tag as the cause', () => {
+    const msg = describeVerdict(v);
+    expect(msg).toContain('Nothing is corrupt');
+    expect(msg).toContain('next');
+    // The remedy has to be in the message. A diagnosis the reader cannot act on
+    // is the same cost as no diagnosis.
+    expect(msg).toContain('same explicit version');
+  });
+
+  it('does not reuse the digest-mismatch wording that sent readers to debug an install', () => {
+    expect(describeVerdict(v)).not.toContain('not the one this suite shipped');
   });
 });
