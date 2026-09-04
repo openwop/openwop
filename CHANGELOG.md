@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Added
+
+- **`schemas/v2/webhook-delivery.schema.json` — the delivery envelope had no schema.** `webhooks.md` §Delivery specified the body as `{ runId, workspaceId, event }` in one sentence and nothing bound it, while the NESTED `event.runId` was bound all along via `run-event.schema.json`. A host that projected `runId` on responses but not on outbound emissions handed subscribers an id the client never saw — correlation matching nothing, with no error, no 4xx and no log line. Two production hosts found the asymmetry independently and both concluded it was a missing artifact rather than a missing paragraph. §Delivery now cites the schema and states the tenant-bound rule for emissions.
+
 ### Fixed
 
 - **v2 overlap: a run minted under major 1 MUST be named by its tenant-bound projection when read under major 2.** `spec/v2/core/versioning.md` §5 described the dual-stack scenario's shape and said nothing about the identifier, so `v2-dual-stack-negotiation` asserted byte-equality with the v1 id while `identity.md` §5 mandated `<tenantId>/<opaque>` — a host implementing both faithfully could not satisfy either check. §5 now states the rule, and states why it is a MUST: a bare id carries no tenant segment for the mandatory `403 id_tenant_mismatch` refusal to read, so a legacy unprefixed form would exempt exactly the v1-carried ids from major 2's tenant isolation. `ids.schema.json` gets no legacy branch.

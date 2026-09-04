@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/webhook-delivery.schema.json",
+  "title": "Webhook delivery envelope (webhooks.md §Delivery)",
+  "description": "The body of an outbound webhook delivery. Written 2026-09-04 because it did not exist: the envelope was specified by one sentence in webhooks.md §Delivery ('the body is `{ runId, workspaceId, event }` where `event` is the verbatim run event') and no artifact bound it, while the NESTED event.runId was bound all along through run-event.schema.json. Two production hosts arrived at that asymmetry independently — one asking what major an outbound payload speaks, the other answering from the $ref graph — and both concluded the gap was a missing artifact rather than a missing paragraph. An emitter that projects correctly could be asserted but not checked, which is the wrong way round.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "workspaceId",
+    "event"
+  ],
+  "properties": {
+    "runId": {
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "The run this delivery is about, tenant-bound per identity.md §5. An outbound emission is not a response to a versioned request, so nothing about the request cycle supplies the form — the grammar does, and it is the same grammar everywhere a v2 runId is rendered. A host that projects on responses and not on emissions hands the subscriber an id the client never saw: the correlation filter matches nothing, with no error, no 4xx and no log line. A tier-1 host hit exactly that, and the silence is why this field is bound here rather than left to the prose."
+    },
+    "workspaceId": {
+      "$ref": "ids.schema.json#/$defs/workspaceId",
+      "description": "The workspace the run belongs to."
+    },
+    "event": {
+      "$ref": "run-event.schema.json",
+      "description": "The verbatim run event (events.md). 'Verbatim' is load-bearing: the envelope is one of the three renderings generated from a single payload definition (RFC 0171 §A.4), so this is the event as persisted, not a re-serialization. Its own runId is bound by run-event.schema.json to the same $def as the envelope's, which is what made the envelope's omission survivable for as long as it did — and invisible for just as long."
+    }
+  }
+}

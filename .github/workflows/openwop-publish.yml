@@ -6,10 +6,18 @@
 # CLI publishes from openwop/openwop-cli. The pack registry deploys from
 # openwop/openwop-registry.
 #
-#   Tag pattern                Triggers              Use case
-#   -----------------          ----------------      -----------------------
-#   v*                         publish-conformance   Corpus-aligned release
-#   openwop-conformance/v*     publish-conformance   Scenario addition / suite fix
+#   Tag pattern                Triggers                        Use case
+#   -----------------          ---------------------------     ----------------------
+#   v*                         both packages, then verify      Corpus-aligned release
+#   openwop-conformance/v*     both packages, then verify      Scenario addition / suite fix
+#   openwop-spec-artifacts/v*  spec-artifacts only             Contract-package fix
+#
+# A conformance tag publishes BOTH because conformance pins
+# `peerDependencies['@openwop/spec-artifacts']` to an EXACT version: they are one
+# release under two names. While the tag scheme said otherwise, conformance
+# shipped rc.20 through rc.28 against a peer that stopped at rc.19 — nine
+# published versions no consumer could install. `verify-installable` runs last,
+# outside any checkout, because that is the only place the difference shows.
 #
 # A coordinated spec release (v*) must also push the matching SDK release tags in
 # openwop/openwop-sdks — see PUBLISHING.md §"Versioning alignment".
@@ -113,7 +121,10 @@ jobs:
             || echo "issue creation failed (non-blocking)"
 
   publish-conformance:
-    needs: preflight
+    # Ordered AFTER spec-artifacts, not merely alongside it: the peer must exist
+    # on the registry before the package that exactly pins it does, or there is a
+    # window in which the published suite is uninstallable.
+    needs: [preflight, publish-spec-artifacts]
     if: |
       startsWith(github.ref, 'refs/tags/v') ||
       startsWith(github.ref, 'refs/tags/openwop-conformance/v')
@@ -169,9 +180,25 @@ jobs:
   # Suite 2.0.0 (RFC 0168 §D.2): the contract package. Published from the same
   # corpus tag as the suite (a `v*` tag publishes both; `openwop-spec-artifacts/v*`
   # publishes only this). Pre-release versions go to the `next` dist-tag.
+  # An `openwop-conformance/v*` tag ALSO publishes this package, and that is not
+  # a convenience. `conformance/package.json` pins
+  # `peerDependencies['@openwop/spec-artifacts']` to an EXACT version, so the two
+  # packages are one release wearing two names. The tag scheme said otherwise,
+  # and the gap ran for nine versions: conformance published rc.20 through rc.28
+  # while spec-artifacts stopped at rc.19, so every one of those pins a peer that
+  # DOES NOT EXIST on npm and fails for any consumer.
+  #
+  # Nothing caught it because every gate above runs inside a checkout of this
+  # repo, where the peer resolves from the monorepo and its absence from the
+  # registry is invisible by construction. A tier-1 host found it the only way it
+  # can be found: by trying to install the thing we said was ready.
+  #
+  #   The workspace witnesses what the code does. npm witnesses what a consumer
+  #   can obtain. A publish is a claim about the second, and a green run in the
+  #   first cannot make it.
   publish-spec-artifacts:
     needs: preflight
-    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/openwop-spec-artifacts/v')
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/openwop-spec-artifacts/v') || startsWith(github.ref, 'refs/tags/openwop-conformance/v')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -191,3 +218,60 @@ jobs:
           PKG=$(node -p "require('./package.json').name"); VER=$(node -p "require('./package.json').version")
           if npm view "$PKG@$VER" version >/dev/null 2>&1; then echo "$PKG@$VER already published and byte-identical (identity step passed)"; exit 0; fi
           npm publish --access public --provenance $(case "$VER" in *-*) echo "--tag next";; esac)
+
+  # The consumer test. Everything above runs inside a checkout of this repo,
+  # where `@openwop/spec-artifacts` resolves from the monorepo whether or not it
+  # exists on npm. This job installs the PUBLISHED suite into an empty directory
+  # with no checkout at all — the only environment that can witness what an
+  # outside consumer actually gets.
+  #
+  # It is the registry-side twin of the lockfile installability gate a tier-1
+  # host built (openwop-app#3637) before it had a live case. It has one now, and
+  # the case was ours.
+  verify-installable:
+    needs: [publish-conformance, publish-spec-artifacts]
+    if: always() && needs.publish-conformance.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - name: Install the published suite as an outside consumer
+        run: |
+          set -uo pipefail
+          tag="${GITHUB_REF#refs/tags/}"
+          VER="${tag##*/v}"
+          echo "verifying @openwop/openwop-conformance@$VER is installable by a consumer"
+          work="$(mktemp -d)"
+          cd "$work"
+          npm init -y >/dev/null
+          # A just-published version can 404 briefly while the registry
+          # propagates. Retry, because on a single attempt a propagation flake
+          # and a real unresolvable peer look identical — which is the failure
+          # shape this job exists to stop repeating.
+          for i in $(seq 1 12); do
+            if npm install "@openwop/openwop-conformance@$VER" --no-audit --no-fund; then
+              echo "✓ installed cleanly; peer resolved to $(node -p "require('./node_modules/@openwop/spec-artifacts/package.json').version")"
+              exit 0
+            fi
+            echo "attempt $i failed; waiting for registry propagation"
+            sleep 15
+          done
+          echo "::error::@openwop/openwop-conformance@$VER is NOT installable by a consumer."
+          echo "The most likely cause is an exact peerDependency whose version was never published."
+          node -e "
+            const https=require('https');
+            https.get('https://registry.npmjs.org/@openwop%2Fopenwop-conformance',r=>{
+              let b='';r.on('data',d=>b+=d);r.on('end',()=>{
+                try{
+                  const m=JSON.parse(b).versions[process.env.VER];
+                  console.log('published peerDependencies:',JSON.stringify(m&&m.peerDependencies));
+                }catch(e){console.log('could not read the published manifest');}
+              });
+            });
+          " || true
+          exit 1
+        env:
+          VER: ${{ github.ref_name }}
