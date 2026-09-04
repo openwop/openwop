@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-03",
+  "updated": "2026-09-04",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -9523,7 +9523,7 @@
       "surface": "The `extensions.<org>.<name>` org form (short vs reverse-DNS).",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9540,8 +9540,8 @@
       "surface": "`host-capabilities.md:2186` says a host MUST NOT advertise `host.workspace`; `agent-workspace.md:27` and `capabilities.schema.json:2979` make advertising it the gate for an Accepted surface (RFC 0059). A v1.x prose contradiction, out of this RFC's v2 scope.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.spec.agent-workspace.r6",
       "sources": [
         {
           "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
@@ -9557,7 +9557,7 @@
       "surface": "`imageGeneration` / `videoGeneration` are prose-only under `aiProviders` (RFC 0105 G5); the gap's premise (`additionalProperties: false` on `aiProviders`) has drifted — the block is open at `capabilities.schema.json:1536`. Declared facets or deleted?",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9574,8 +9574,8 @@
       "surface": "The adoption-axis triage of RFCs 0112–0116 depends on Phase 4 bundle evidence that does not exist yet.",
       "witness": "witnessable-gated",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "phase-4-host-bundles",
       "sources": [
         {
           "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
@@ -9591,8 +9591,8 @@
       "surface": "`agent-platform-aggregate-evidence.test.ts:37` reads a root `profiles[]` that no schema declares (the RFC 0085 annex claim). The v2 suite reads the generated profile registry; the v1 scenario keeps reading the field until the v1 suite is archived.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.spec.agent-platform-profile.r1",
       "sources": [
         {
           "file": "RFCS/registers/0169-v2-discovery-and-capabilities.gaps.md",
@@ -9931,7 +9931,7 @@
       "surface": "Numbers 0160–0162 were never authored (RFC 0158's renumber note). Filing `Withdrawn` stubs after the fact would be a paper trail for nothing.",
       "witness": "negative-existence",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9948,8 +9948,8 @@
       "surface": "388 `carried:<self>` rows on terminal RFCs at filing (the RFC 0166 backfill default); 45 whose prose said CLOSED re-tokened here; 343 remain under the `selfCarried` ratchet.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.3",
       "sources": [
         {
           "file": "RFCS/registers/0174-v2-governance.gaps.md",
@@ -9965,7 +9965,7 @@
       "surface": "`check-accepted-predicate.mjs` needs `gaps.json` rows bound to requirement ids, which none are today (RFC 0178 §B.1 owns the binding).",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9982,7 +9982,7 @@
       "surface": "The 43 prose gap tables have two row shapes; the adapter into `gaps.json` must map both without inventing ids.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10237,8 +10237,8 @@
       "surface": "558 of 558 `gaps.json` rows were `witness: unclassified` and `requirementId: null` at filing. This PR classifies the RFC 0167 family's rows; the rest is the RFC 0166 G2 ratchet.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.2",
       "sources": [
         {
           "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
@@ -10254,7 +10254,7 @@
       "surface": "Nine of 164 RFCs carry a falsifiability table; the parser is a gate for the RFC 0167 family and advisory elsewhere.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10271,8 +10271,8 @@
       "surface": "`check-gap-contradictions.mjs` resolves scenario files and OpenAPI paths only; a gap naming any other artifact is reported unchecked.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0166.4",
       "sources": [
         {
           "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
@@ -10288,7 +10288,7 @@
       "surface": "Whether AsyncAPI 3.x carries a standard `deprecated` on channels and messages.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
