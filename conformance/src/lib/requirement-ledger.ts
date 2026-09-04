@@ -61,6 +61,11 @@ export interface LedgerEntry {
    *  program exists to make visible; the runner treats it as unclassified for
    *  a claimed profile's floor. */
   readonly assertionCount?: number;
+  /** The scenario file that recorded it. An explicit `req()` id carries no file
+   *  in its own text, so without this the `--certify` runner cannot attribute
+   *  the row to a file and drops it — which is how every explicit requirement id
+   *  went missing from bundle v3 while the per-`it` ids came through. */
+  readonly scenarioFile?: string;
 }
 
 const ledger = new Map<string, LedgerEntry>();
@@ -82,7 +87,7 @@ export function recordRequirement(
   requirementId: string,
   disposition: Disposition,
   detail?: string,
-  extras?: { assertionCount?: number },
+  extras?: { assertionCount?: number; scenarioFile?: string },
 ): void {
   const prior = ledger.get(requirementId);
   if (prior !== undefined && prior.disposition !== disposition) {
@@ -102,6 +107,7 @@ export function recordRequirement(
     disposition,
     ...(detail === undefined ? {} : { detail }),
     ...(extras?.assertionCount === undefined ? {} : { assertionCount: extras.assertionCount }),
+    ...(extras?.scenarioFile === undefined ? {} : { scenarioFile: extras.scenarioFile }),
   };
   ledger.set(requirementId, entry);
   journal.push(entry);

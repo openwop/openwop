@@ -293,7 +293,11 @@ export function deriveRequirementDispositions(
   // them. This is the granularity RFC 0148 §A describes and the G8 fix.
   const emitted = new Set(rows.map((r) => r.requirementId));
   for (const e of [...ledger].sort((a, b) => a.requirementId.localeCompare(b.requirementId))) {
-    const file = scenarioFileOfItId(e.requirementId);
+    // Prefer the file the entry recorded: an explicit `req()` id
+    // (`openwop.requirement.…`) is authored, not file-derived, so deriving a
+    // file from the id alone returned null and the row was dropped — every
+    // explicit requirement id was missing from bundle v3 for that reason.
+    const file = e.scenarioFile ?? scenarioFileOfItId(e.requirementId);
     // Attribute only to files this run reported on: a worker's ledger can carry
     // rows from files outside the certified set (the suite's own lib tests, or
     // a filtered run), and those are not evidence about the host.
