@@ -10,10 +10,14 @@
  * a run that cannot be created, and the failure is attributed to that
  * scenario's requirement rather than to the advertisement that was wrong.
  *
- * A tier-2 host found exactly this drift in review: its seed script defined 46
- * fixtures while its advertised literal carried 47, and its own drift test
- * asserted shape but not numeric parity, so the two could diverge by one
- * without failing anything.
+ * No host is currently known to exhibit this. A tier-2 host was thought to
+ * (46 seeded against 47 advertised) and then verified and retracted it — the
+ * count had been eyeballed from an array literal rather than measured, and the
+ * two sets are in fact identical. The scenario is kept because the failure mode
+ * is a property of the gating mechanism, not of that host: `fixtures[]` decides
+ * whether a scenario runs, so a wrong advertisement is charged to whatever runs
+ * next. Leg 1 is also the stronger check — an id the corpus catalog does not
+ * define is wrong however well a host's own two lists agree with each other.
  *
  * Two legs, both cheap:
  *   1. the advertised ids are a subset of the corpus fixture catalog — the
