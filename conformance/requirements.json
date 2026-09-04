@@ -25744,7 +25744,7 @@
     {
       "id": "openwop.it.v2-advertised-fixtures-exist.every-advertised-fixture-id-is-one-the-corpus-defines",
       "file": "v2-advertised-fixtures-exist.test.ts",
-      "line": 56,
+      "line": 60,
       "title": "every advertised fixture id is one the corpus defines",
       "explicitId": null,
       "citations": [
@@ -25758,7 +25758,7 @@
     {
       "id": "openwop.it.v2-advertised-fixtures-exist.a-sampled-advertised-fixture-is-actually-creatable-not-just-listed",
       "file": "v2-advertised-fixtures-exist.test.ts",
-      "line": 76,
+      "line": 80,
       "title": "a sampled advertised fixture is actually creatable, not just listed",
       "explicitId": null,
       "citations": [
