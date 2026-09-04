@@ -66,12 +66,18 @@ function readJson(rel) { return JSON.parse(readFileSync(join(ROOT, rel), 'utf8')
 function v2RequirementIds() {
   const majors = readJson('conformance/scenario-majors.json').majors ?? {};
   const dir = join(ROOT, 'conformance', 'src', 'scenarios');
-  const ids = new Set();
+  const ids = new Map();
   for (const [file, m] of Object.entries(majors)) {
     if (!m.includes(2)) continue;
     const path = join(dir, file);
     if (!existsSync(path)) continue;
-    for (const [, id] of readFileSync(path, 'utf8').matchAll(/'(openwop\.requirement\.[a-z0-9.-]+)'/g)) ids.add(id);
+    // Harvest `req(` CALL SITES, not every quoted literal: a scenario's fixtures
+    // carry ids as data (`v2-bundle-v3-signed` builds bundles whose rows name
+    // `…fixture-a`), and no bundle can ever carry those — they are inputs to an
+    // assertion, not requirements a host witnesses.
+    for (const [, id] of readFileSync(path, 'utf8').matchAll(/\breq\(\s*'(openwop\.requirement\.[a-z0-9.-]+)'/g)) {
+      ids.set(id, file);
+    }
   }
   return ids;
 }
@@ -154,7 +160,18 @@ if (!hb) {
   const byId = new Map();
   for (const r of rows) { if (!byId.has(r.id)) byId.set(r.id, []); byId.get(r.id).push(r); }
   const ids = v2RequirementIds();
-  const missing = [...ids].filter((id) => !byId.has(id));
+  // A host that honestly omits an optional family never reaches that family's
+  // legs — `capabilities.md` §2 REQUIRES the omission — so its per-leg ids have
+  // no rows. The file row is what carries the evidence there, and it must say
+  // `inapplicable` or `blocked` WITH a reason (checked below). Anything else and
+  // every id of a scenario the host actually ran must have its own row.
+  const fileRow = new Map();
+  for (const r of rows) if (r.scenario) fileRow.set(r.scenario, r);
+  const excused = (file) => {
+    const r = fileRow.get(file);
+    return r !== undefined && (r.result === 'inapplicable' || r.result === 'blocked') && typeof r.detail === 'string' && r.detail.trim() !== '';
+  };
+  const missing = [...ids.entries()].filter(([id, file]) => !byId.has(id) && !excused(file)).map(([id]) => id);
   const nonPass = rows.filter((r) => r.result !== 'executed-pass' && !r.detail && r.result !== 'inapplicable');
   gate('Witness', [
     corpusWitness[0],
@@ -163,7 +180,7 @@ if (!hb) {
       evidence: `${hb.path} results.requirements`,
       tail: missing.length === 0
         ? `${ids.size} v2 requirement ids each carry ≥1 ledger row`
-        : `${missing.length}/${ids.size} v2 requirement ids have no ledger row: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ', …' : ''}`,
+        : `${missing.length}/${ids.size} v2 requirement ids have no ledger row and no excusing file row: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ', …' : ''}`,
     },
     {
       // RFC 0168 §A.2: a soft-skip never records a pass, and every non-pass

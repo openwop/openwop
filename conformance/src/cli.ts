@@ -310,6 +310,48 @@ function claimedProfilesFor(doc: DiscoveryPayload): string[] {
   return profiles;
 }
 
+/**
+ * The v2 profile registry is a set of predicates over the DECLARATION
+ * (RFC 0169 §C.1): every listed family present as a record, every listed
+ * metadata key present. The v1 derivation cannot stand in — `isCore` wants a
+ * root `protocolVersion` plus `supportedEnvelopes`/`schemaVersions`/`limits`,
+ * shapes a closed v2 root does not have — so a major-2 run claimed NOTHING and
+ * no v2 host could ever certify. Falls back to the empty set only when the
+ * registry is genuinely absent from the layout, and says so.
+ */
+function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): string[] {
+  const candidates = [
+    resolvePath(conformanceRoot, 'spec', 'v2', 'profiles.json'),
+    resolvePath(conformanceRoot, '..', 'spec', 'v2', 'profiles.json'),
+    resolvePath(conformanceRoot, 'node_modules', '@openwop', 'spec-artifacts', 'spec', 'v2', 'profiles.json'),
+  ];
+  const found = candidates.find((c) => existsSync(c));
+  if (found === undefined) {
+    process.stderr.write('openwop-conformance --certify: spec/v2/profiles.json not found in this layout; claimedProfiles is empty (RFC 0169 §C.1).\n');
+    return [];
+  }
+  let registry: { profiles?: Array<{ id?: unknown; predicate?: { families?: unknown; metadata?: unknown } }> };
+  try {
+    registry = JSON.parse(readFileSync(found, 'utf8'));
+  } catch {
+    process.stderr.write(`openwop-conformance --certify: ${found} is unreadable; claimedProfiles is empty.\n`);
+    return [];
+  }
+  const root = doc as unknown as Record<string, unknown>;
+  const isRecord = (k: string): boolean => {
+    const v = root[k];
+    return typeof v === 'object' && v !== null && !Array.isArray(v);
+  };
+  const out: string[] = [];
+  for (const p of registry.profiles ?? []) {
+    if (typeof p.id !== 'string') continue;
+    const families = Array.isArray(p.predicate?.families) ? (p.predicate.families as unknown[]).map(String) : [];
+    const metadata = Array.isArray(p.predicate?.metadata) ? (p.predicate.metadata as unknown[]).map(String) : [];
+    if (families.every(isRecord) && metadata.every((k) => root[k] !== undefined)) out.push(p.id);
+  }
+  return out;
+}
+
 /** A single scenario test file's terminal state, derived from the vitest JSON report. */
 type ScenarioState = 'passed' | 'failed' | 'skipped';
 
@@ -420,7 +462,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   const sha256 = createHash('sha256').update(canonicalJSON(document)).digest('hex');
 
   // (b) Derive claimedProfiles from the captured document.
-  const claimedProfiles = claimedProfilesFor(document);
+  const claimedProfiles = target.major === 2 ? claimedProfilesForV2(document, conformanceRoot) : claimedProfilesFor(document);
 
   // (c) Run the suite, capturing per-scenario terminal state via the vitest
   // JSON reporter. server-targeted scenarios live under src/scenarios/.
