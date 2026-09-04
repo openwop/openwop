@@ -1,5 +1,5 @@
 /**
- * RFC 0172 §A.1 / `spec/v2/core/versioning.md` §5 — a host that advertises
+ * RFC 0172 §A.1 / `spec/v2/core/versioning.md` §1.2 — a host that advertises
  * major 2 serves the major-2 PATH SPACE, not just the major-2 discovery
  * document (suite 2.0.0, target major 2; unaided).
  *
@@ -36,7 +36,7 @@
  * need no fixture, mutate nothing, and a route that is not mounted answers 404
  * regardless of auth, so the check is unaided and safe against a live host.
  *
- * @see spec/v2/core/versioning.md §5
+ * @see spec/v2/core/versioning.md §1.2
  * @see RFCS/0172-v2-versioning-and-release.md §A.1
  */
 
@@ -49,7 +49,7 @@ import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 
 const ID = 'openwop.requirement.0172.advertised-path-space-served';
-const DOC = 'spec/v2/core/versioning.md §5';
+const DOC = 'spec/v2/core/versioning.md §1.2';
 
 /** The well-known resource is the one the HEADER selects; it has no /v1 twin to pair against. */
 const NOT_PAIRABLE = new Set(['/.well-known/openwop']);
