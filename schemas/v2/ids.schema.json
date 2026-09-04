@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/ids.schema.json",
-  "title": "OpenWOP v2 identifier grammars (RFC 0170 §D.1)",
+  "title": "OpenWOP v2 identifier grammars (RFC 0170 \u00a7D.1)",
   "description": "One $defs entry per id kind. Every id field in every v2 schema, OpenAPI parameter and response body $refs its kind. `minted` records who mints the id: host (opaque, checkable: `^[A-Za-z0-9._~-]{16,128}$` after any tenant segment), author (a workflow/pack author chooses it; the v1 grammar stands), registry (the pack registry mints it). Tenant-bound kinds (runId, interruptId, subscriptionId, deliveryId, effectId) carry the tenant segment: a host MUST reject an id whose tenant segment is not the caller's.",
   "type": "object",
   "additionalProperties": false,
@@ -9,13 +9,13 @@
     "opaque": {
       "type": "string",
       "pattern": "^[A-Za-z0-9._~-]{16,128}$",
-      "description": "Host-minted opaque token: no `@`, no whitespace, no `/`; 16–128 characters."
+      "description": "Host-minted opaque token: no `@`, no whitespace, no `/`; 16\u2013128 characters."
     },
     "tenantId": {
       "type": "string",
       "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}$",
       "x-openwop-minted": "host",
-      "description": "A tenant identifier. The optional `anon:` prefix is the ONLY colon admitted, and it exists because RFC 0132 anonymous tenants are `anon:<hash>` while RFC 0170 §A.5 makes the anonymous surface first-class — without it a conforming host can serve an anonymous run with neither a valid `owner.tenant` nor a valid tenant-bound `runId`. `:` is a legal path character (RFC 3986 pchar), so this stays safe inside the `<tenantId>/<opaque>` run-id form. The alternative — renaming anonymous tenants at the cut — was rejected: it is a write to historical identity, which is the one thing the v2 migration does not do."
+      "description": "A tenant identifier. The optional `anon:` prefix is the ONLY colon admitted, and it exists because RFC 0132 anonymous tenants are `anon:<hash>` while RFC 0170 \u00a7A.5 makes the anonymous surface first-class \u2014 without it a conforming host can serve an anonymous run with neither a valid `owner.tenant` nor a valid tenant-bound `runId`. `:` is a legal path character (RFC 3986 pchar), so this stays safe inside the `<tenantId>/<opaque>` run-id form. The alternative \u2014 renaming anonymous tenants at the cut \u2014 was rejected: it is a write to historical identity, which is the one thing the v2 migration does not do."
     },
     "workspaceId": {
       "type": "string",
@@ -25,7 +25,7 @@
     "subjectId": {
       "type": "string",
       "pattern": "^[^\\s/]{1,256}$",
-      "description": "Issuer-scoped, stable, opaque (RFC 0170 §A); the issuer's grammar, never PII.",
+      "description": "Issuer-scoped, stable, opaque (RFC 0170 \u00a7A); the issuer's grammar, never PII.",
       "x-openwop-minted": "host"
     },
     "runId": {
@@ -120,9 +120,10 @@
     },
     "typeId": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-zA-Z0-9-]*)+$",
-      "description": "A node type id (`core.ai.callPrompt`); the RFC 0107 grammar.",
-      "x-openwop-minted": "author"
+      "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "description": "A node type id (`core.ai.callPrompt`); the RFC 0107 grammar. Underscore is admitted because node-pack-manifest.schema.json's `name` pattern admits it and a pack's node type ids are DERIVED from its name \u2014 a pack legally named `vendor.acme.my_tools` must be able to declare `vendor.acme.my_tools.echo`. Without the underscore this kind rejected type ids that a legal pack name generates, which is a constraint that cannot express a legitimate value. maxLength is present because this was the ONLY kind whose pattern left length unbounded \u2014 every other $def bounds it inside the pattern ({1,128}, {16,128}). 256 is taken from the bound node-pack-manifest already carried locally, so this relocates it rather than inventing one, and binding those properties to this kind no longer drops it.",
+      "x-openwop-minted": "author",
+      "maxLength": 256
     }
   }
 }

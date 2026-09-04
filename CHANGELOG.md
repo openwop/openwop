@@ -15,6 +15,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Added
 
+- **`identity.md` §5 is now enforced — `scripts/check-id-kinds-bound.mjs` + `spec/v2/id-field-bindings.json` + a coherence scenario.** The rule ("every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and response body MUST `$ref` its kind") was published and never checked. **34 violations**, not the 7 a name-matching check would find: only 20 of 88 `*Id` properties share a name with a kind, and `childRunId` sat as `{type: string, minLength: 1}` in the same file where `parentRunId` was correctly bound — so a child run's identifier carried no tenant segment for the mandatory `403 id_tenant_mismatch` refusal to read. `nodeStarted.typeId` had no pattern at all. Coverage is now explicit: every `*Id` property is either bound to a kind or declared not-a-kind with a reason, and an untriaged field fails.
+
+### Fixed
+
+- **The `typeId` kind rejected ids that a legal pack name generates.** `node-pack-manifest.schema.json`'s `name` admits `_`; the kind did not, and a pack's node type ids are derived from its name — so `vendor.acme.my_tools` could not declare `vendor.acme.my_tools.echo`. The kind now admits `_`. A scan of 539 distinct `typeId` values found zero affected either way: the conflict was between the two **grammars**, not in the population, which is why counting values did not reveal it.
+- **`typeId` was the only kind with no length bound.** Every other `$def` bounds length inside its pattern (`{1,128}`, `{16,128}`); `typeId`'s quantifiers were open-ended, so binding the node-pack properties to it would have *dropped* their local `maxLength: 256` rather than relocating it — a loosening disguised as a tightening. The bound now lives on the kind.
+
+### Added
+
 - **`schemas/v2/webhook-delivery.schema.json` — the delivery envelope had no schema.** `webhooks.md` §Delivery specified the body as `{ runId, workspaceId, event }` in one sentence and nothing bound it, while the NESTED `event.runId` was bound all along via `run-event.schema.json`. A host that projected `runId` on responses but not on outbound emissions handed subscribers an id the client never saw — correlation matching nothing, with no error, no 4xx and no log line. Two production hosts found the asymmetry independently and both concluded it was a missing artifact rather than a missing paragraph. §Delivery now cites the schema and states the tenant-bound rule for emissions.
 
 ### Fixed

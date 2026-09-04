@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-snapshot.schema.json",
   "title": "RunSnapshot",
-  "description": "Projected run state returned by `GET /runs/{runId}`. Source is the run’s append-only event log (run-event.schema.json) folded through the `RunProjection`. CLOSED in v2 (`additionalProperties: false`): a reader MUST NOT expect to ignore unknown root fields, because there are none to ignore — host-specific state goes in `extensions`. The v1 schema was open and therefore never had to declare what hosts actually served; closing the object is what made that visible.",
+  "description": "Projected run state returned by `GET /runs/{runId}`. Source is the run\u2019s append-only event log (run-event.schema.json) folded through the `RunProjection`. CLOSED in v2 (`additionalProperties: false`): a reader MUST NOT expect to ignore unknown root fields, because there are none to ignore \u2014 host-specific state goes in `extensions`. The v1 schema was open and therefore never had to declare what hosts actually served; closing the object is what made that visible.",
   "type": "object",
   "required": [
     "eventLogSchemaVersion",
@@ -34,7 +34,7 @@
         "cancelling",
         "cancelled"
       ],
-      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md §openwop-interrupt-external-event` — distinguishes external-event waits from HITL waits at the wire level. `cancelling` (RFC 0094 §B) is the transitional state between a cancel request being accepted and the terminal `cancelled` — `rest-endpoints.md` and the OpenAPI cancel responses already document the transition; a snapshot read during the cancel cascade carries it. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
+      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md \u00a7openwop-interrupt-external-event` \u2014 distinguishes external-event waits from HITL waits at the wire level. `cancelling` (RFC 0094 \u00a7B) is the transitional state between a cancel request being accepted and the terminal `cancelled` \u2014 `rest-endpoints.md` and the OpenAPI cancel responses already document the transition; a snapshot read during the cancel cascade carries it. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
     },
     "compensationStatus": {
       "type": "string",
@@ -47,7 +47,7 @@
         "failed",
         "manual"
       ],
-      "description": "RFC 0151 §D — the run's compensation (unwind) rollup, kept separate from `status` on purpose: `status` is the FORWARD execution state and a closed union exported by the SDK, so RFC 0151 forbids reinterpreting it (there is deliberately no `compensating` run status). OPTIONAL and capability-gated — a host that does not advertise `capabilities.compensation` MUST omit this field; a host that advertises it MUST include it on every snapshot, `none` when no compensation was ever requested for the run. Presence is therefore a wire witness of the advert, and a `none` cannot be read as \"unwind is monitored here\" from a host that would never unwind. Values are the deterministic fold of the six `compensation.*` events over the persisted plan, defined normatively in `spec/v1/compensation.md §\"Run rollup: compensationStatus\"`: `none` (no `compensation.requested`), `pending` (requested, no `started`), `running` (started, plan active — a §E approval pause does NOT change it; the run's own `status: waiting-approval` carries the wait), `completed` (every inverse action completed), `partial` (plan inactive; some completed and some did not — reported, never rounded), `failed` (plan inactive; none completed), `manual` (`manual_intervention_required` recorded and unresolved; takes precedence over `partial`/`failed` while unresolved). Content-free by construction. Resolves RFC 0151 UQ3: `RunSnapshot` (`GET /v1/runs/{runId}`) is the sole owner; debug bundles and the AsyncAPI `run.snapshot` reuse it by `$ref`."
+      "description": "RFC 0151 \u00a7D \u2014 the run's compensation (unwind) rollup, kept separate from `status` on purpose: `status` is the FORWARD execution state and a closed union exported by the SDK, so RFC 0151 forbids reinterpreting it (there is deliberately no `compensating` run status). OPTIONAL and capability-gated \u2014 a host that does not advertise `capabilities.compensation` MUST omit this field; a host that advertises it MUST include it on every snapshot, `none` when no compensation was ever requested for the run. Presence is therefore a wire witness of the advert, and a `none` cannot be read as \"unwind is monitored here\" from a host that would never unwind. Values are the deterministic fold of the six `compensation.*` events over the persisted plan, defined normatively in `spec/v1/compensation.md \u00a7\"Run rollup: compensationStatus\"`: `none` (no `compensation.requested`), `pending` (requested, no `started`), `running` (started, plan active \u2014 a \u00a7E approval pause does NOT change it; the run's own `status: waiting-approval` carries the wait), `completed` (every inverse action completed), `partial` (plan inactive; some completed and some did not \u2014 reported, never rounded), `failed` (plan inactive; none completed), `manual` (`manual_intervention_required` recorded and unresolved; takes precedence over `partial`/`failed` while unresolved). Content-free by construction. Resolves RFC 0151 UQ3: `RunSnapshot` (`GET /v1/runs/{runId}`) is the sole owner; debug bundles and the AsyncAPI `run.snapshot` reuse it by `$ref`."
     },
     "owner": {
       "type": "object",
@@ -67,11 +67,11 @@
           "$ref": "subject.schema.json"
         }
       },
-      "description": "RFC 0170 §A.1 — the Subject is the owner; principal/principalKind removed. Copied verbatim onto a fork (§A.4)."
+      "description": "RFC 0170 \u00a7A.1 \u2014 the Subject is the owner; principal/principalKind removed. Copied verbatim onto a fork (\u00a7A.4)."
     },
     "currentNodeId": {
-      "type": "string",
-      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input` / `waiting-external`) — identifies which node holds the interrupt."
+      "$ref": "ids.schema.json#/$defs/nodeId",
+      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input` / `waiting-external`) \u2014 identifies which node holds the interrupt."
     },
     "startedAt": {
       "type": "string",
@@ -83,15 +83,15 @@
     },
     "agent": {
       "$ref": "agent-ref.schema.json",
-      "description": "Optional run-level agent identity (Multi-Agent Shift Phase 1). When the run is driven by a single agent, this field carries that agent's `AgentRef`. In supervisor-orchestrated runs (Phase 5), this field rotates as workers hand off — it always carries the active worker for the current node. See `runOrchestrator` for the run-lifetime supervisor identity. Absent for runs with no agent provenance (legacy single-actor host)."
+      "description": "Optional run-level agent identity (Multi-Agent Shift Phase 1). When the run is driven by a single agent, this field carries that agent's `AgentRef`. In supervisor-orchestrated runs (Phase 5), this field rotates as workers hand off \u2014 it always carries the active worker for the current node. See `runOrchestrator` for the run-lifetime supervisor identity. Absent for runs with no agent provenance (legacy single-actor host)."
     },
     "runOrchestrator": {
       "$ref": "agent-ref.schema.json",
-      "description": "Optional orchestrator-supervisor identity (Multi-Agent Shift Phase 5). When set, this agent owns dispatch decisions across the run's lifetime; `runOrchestrator.decided` events emitted during the run carry this agent's `agentId`. Distinct from `agent` — `agent` rotates with each worker; `runOrchestrator` is set at run start (or first `core.orchestrator.supervisor` node) and MUST NOT change for the run's lifetime. In single-agent runs (no supervisor), this field is absent; in supervisor runs both fields MAY co-exist."
+      "description": "Optional orchestrator-supervisor identity (Multi-Agent Shift Phase 5). When set, this agent owns dispatch decisions across the run's lifetime; `runOrchestrator.decided` events emitted during the run carry this agent's `agentId`. Distinct from `agent` \u2014 `agent` rotates with each worker; `runOrchestrator` is set at run start (or first `core.orchestrator.supervisor` node) and MUST NOT change for the run's lifetime. In single-agent runs (no supervisor), this field is absent; in supervisor runs both fields MAY co-exist."
     },
     "nodeStates": {
       "type": "object",
-      "description": "Per-node state map. Keys are nodeIds; values are implementation-shaped state objects. Spec doesn't constrain the inner shape — see version-negotiation.md §node-states.",
+      "description": "Per-node state map. Keys are nodeIds; values are implementation-shaped state objects. Spec doesn't constrain the inner shape \u2014 see version-negotiation.md \u00a7node-states.",
       "additionalProperties": true
     },
     "variables": {
@@ -129,13 +129,13 @@
     },
     "engineVersion": {
       "type": "integer",
-      "description": "Engine version the run was started under. Used by the projection for forward-compat folds. v2: integer everywhere (RFC 0172 §B axis 3).",
+      "description": "Engine version the run was started under. Used by the projection for forward-compat folds. v2: integer everywhere (RFC 0172 \u00a7B axis 3).",
       "minimum": 0
     },
     "eventLogSchemaVersion": {
       "type": "integer",
       "minimum": 2,
-      "description": "RFC 0176 §A.2 — the era key; a v2 host writes 3; a v1-era run reads 2."
+      "description": "RFC 0176 \u00a7A.2 \u2014 the era key; a v2 host writes 3; a v1-era run reads 2."
     },
     "tags": {
       "type": "array",
@@ -158,11 +158,11 @@
     },
     "metrics": {
       "type": "object",
-      "description": "Aggregate run-level metrics. Forward-compat: readers MUST tolerate missing/unknown fields. Fields are populated lazily as the engine emits them — absence does NOT mean zero. Implementation-specific fields (e.g., legacy `cost: number` estimates) MAY appear alongside the spec-canonical fields below.",
+      "description": "Aggregate run-level metrics. Forward-compat: readers MUST tolerate missing/unknown fields. Fields are populated lazily as the engine emits them \u2014 absence does NOT mean zero. Implementation-specific fields (e.g., legacy `cost: number` estimates) MAY appear alongside the spec-canonical fields below.",
       "properties": {
         "openwopCost": {
           "type": "object",
-          "description": "Spec-canonical cost rollup aggregated from per-node `recordCost()` calls. Keys mirror the `openwop.cost.*` OTel attribute allowlist (see `observability.md` §Cost attribution). Named `openwopCost` rather than `cost` because some implementations carry a legacy `metrics.cost: number` estimate that predates the typed rollup; using a distinct name avoids collision. Multi-provider runs report `provider`/`model` of the LAST contributing call; SDKs that need per-call detail SHOULD subscribe to OTel spans instead of reading this rollup.",
+          "description": "Spec-canonical cost rollup aggregated from per-node `recordCost()` calls. Keys mirror the `openwop.cost.*` OTel attribute allowlist (see `observability.md` \u00a7Cost attribution). Named `openwopCost` rather than `cost` because some implementations carry a legacy `metrics.cost: number` estimate that predates the typed rollup; using a distinct name avoids collision. Multi-provider runs report `provider`/`model` of the LAST contributing call; SDKs that need per-call detail SHOULD subscribe to OTel spans instead of reading this rollup.",
           "properties": {
             "usd": {
               "type": "number",
@@ -204,11 +204,11 @@
     },
     "parentRunId": {
       "$ref": "ids.schema.json#/$defs/runId",
-      "description": "RFC 0022 / `runs.md` §forkRun — the run this one was forked from, absent on a root run. Declared because the object is closed: a fork’s lineage is real protocol state, and an undeclared field on a closed object is deleted rather than ignored."
+      "description": "RFC 0022 / `runs.md` \u00a7forkRun \u2014 the run this one was forked from, absent on a root run. Declared because the object is closed: a fork\u2019s lineage is real protocol state, and an undeclared field on a closed object is deleted rather than ignored."
     },
     "inputs": {
       "type": "object",
-      "description": "RFC 0022 §A — the inputs the run was created with. Declared for the same reason as parentRunId: the v1 wire carried it under an open schema, and closing the object without a seat would force every host to drop it.",
+      "description": "RFC 0022 \u00a7A \u2014 the inputs the run was created with. Declared for the same reason as parentRunId: the v1 wire carried it under an open schema, and closing the object without a seat would force every host to drop it.",
       "additionalProperties": true
     },
     "extensions": {
@@ -218,10 +218,10 @@
         "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$": {
           "type": "object",
           "additionalProperties": true,
-          "description": "A vendor/host extension record; its shape is the org’s, declared open on purpose."
+          "description": "A vendor/host extension record; its shape is the org\u2019s, declared open on purpose."
         }
       },
-      "description": "RFC 0169 §A.4 — the seat for host-specific snapshot state, keyed `<org>.<name>`. Closing an object without an extension seat does not make hosts stop having extra state; it makes them delete it or serve an invalid document. Every other closed v2 surface has this seat and the snapshot was the omission."
+      "description": "RFC 0169 \u00a7A.4 \u2014 the seat for host-specific snapshot state, keyed `<org>.<name>`. Closing an object without an extension seat does not make hosts stop having extra state; it makes them delete it or serve an invalid document. Every other closed v2 surface has this seat and the snapshot was the omission."
     }
   },
   "additionalProperties": false
