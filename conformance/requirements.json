@@ -34543,7 +34543,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-v2-discovery-root-publishes-signingkeys-the-surface-the-rfc-named",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 94,
+      "line": 103,
       "title": "the v2 discovery root publishes signingKeys[] — the surface the RFC named",
       "explicitId": null,
       "citations": [
@@ -34572,7 +34572,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-front-door-gate-verifies-the-attestation-instead-of-inspecting-the-string",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 125,
+      "line": 134,
       "title": "the Front-door gate verifies the attestation instead of inspecting the string",
       "explicitId": null,
       "citations": [
@@ -34591,7 +34591,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-four-signature-outcomes-stay-distinct-collapsing-any-two-restores-the-defect",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 140,
+      "line": 149,
       "title": "the four signature outcomes stay distinct — collapsing any two restores the defect",
       "explicitId": null,
       "citations": [
@@ -34605,7 +34605,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.signingkeys-is-reachable-from-a-v1-root-too-a-bundle-is-v3-regardless-of-major",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 161,
+      "line": 170,
       "title": "signingKeys[] is reachable from a v1 root too — a bundle is v3 regardless of major",
       "explicitId": null,
       "citations": [
