@@ -159,6 +159,20 @@ def v2_openapi_and_seams():
                     'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5). The `/` is part of the\n'
                     'identifier and MUST be percent-encoded as `%2F` in the path segment.\n'
                 )
+    # The same inheritance, one surface over: `POST /runs:bulk-cancel` takes
+    # `runIds[]` in the BODY, typed by v1 as `{type: string, minLength: 1}`. A
+    # v2 client is handed tenant-bound ids by every create and read, sends them
+    # to the one bulk surface it has, and — measured on a tier-1 host — every id
+    # it owns answers `not_found`, per id, silently. The projection covered the
+    # way out and not the way in. Bind the items to the kind so the inbound
+    # contract states what the outbound one already does.
+    bc = paths.get('/runs:bulk-cancel', {}).get('post', {})
+    try:
+        items = bc['requestBody']['content']['application/json']['schema']['properties']['runIds']['items']
+        items.clear()
+        items['$ref'] = '../../schemas/v2/ids.schema.json#/$defs/runId'
+    except (KeyError, TypeError):
+        pass
     # poll cursor + interrupt token grammar + per-operation header + one-member enums
     for key, item in doc['paths'].items():
         for method, op in list(item.items()):

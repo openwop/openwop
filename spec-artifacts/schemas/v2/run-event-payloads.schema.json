@@ -600,7 +600,7 @@
         "sourceRunIds": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "ids.schema.json#/$defs/runId"
           },
           "description": "Runs whose traces produced the draft (RFC 0040 causation-compatible). Ids only \u2014 no trace content."
         },
