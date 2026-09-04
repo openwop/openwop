@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Added
 
+- **`docs/migration/v1-to-v2.md` — the v1→v2 migration guide, written from the two migrations that actually happened.** A Phase 5 deliverable landing early: neither host has finished, so it does not yet cite both PR series (it says so at the top). What it does carry is what the migrations have already cost — the projection that reached only "JSON senders" and silently unmatched every webhook, the `--target-major` default that ran v2 scenarios over v1 requests and produced three phantom host defects, the bundle that passed with every row `blocked`, and the nine suite versions (rc.20–rc.28) that no consumer can install. Organised around the one shape all of them share: a signal that reads the same whether it is true or false.
+
+### Added
+
 - **`identity.md` §5 is now enforced — `scripts/check-id-kinds-bound.mjs` + `spec/v2/id-field-bindings.json` + a coherence scenario.** The rule ("every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and response body MUST `$ref` its kind") was published and never checked. **34 violations**, not the 7 a name-matching check would find: only 20 of 88 `*Id` properties share a name with a kind, and `childRunId` sat as `{type: string, minLength: 1}` in the same file where `parentRunId` was correctly bound — so a child run's identifier carried no tenant segment for the mandatory `403 id_tenant_mismatch` refusal to read. `nodeStarted.typeId` had no pattern at all. Coverage is now explicit: every `*Id` property is either bound to a kind or declared not-a-kind with a reason, and an untriaged field fails.
 
 ### Fixed
