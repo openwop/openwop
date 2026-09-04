@@ -232,6 +232,45 @@
       "additionalProperties": true,
       "x-openwop-seeded-from": "v1"
     },
+    "signingKeys": {
+      "type": "array",
+      "description": "RFC 0168 §E.2 — the public keys this host signs certification bundles with. A bundle signature names a keyId; a verifier resolves it HERE, in the discovery document of the host the bundle is about, and checks the Ed25519 signature with the matching publicKey. Without this array a signature attests integrity only: it proves the bundle was not altered after signing and says nothing about who signed it, because a signer can mint a keypair and a keyId at will. RFC 0168 disposed of \"an Ed25519 attestation without a key registry is a signature nobody can check\" by naming this surface; this is that surface.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "keyId",
+          "alg",
+          "publicKey"
+        ],
+        "properties": {
+          "keyId": {
+            "$ref": "ids.schema.json#/$defs/keyId",
+            "description": "The identifier a bundle signature carries in signature.keyId. Unique within this array."
+          },
+          "alg": {
+            "const": "ed25519",
+            "description": "RFC 0168 §E.2 fixes the attestation algorithm; no other value is defined."
+          },
+          "publicKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "The Ed25519 public key, base64url, unpadded (32 bytes) — the half that verifies, never the half that signs."
+          },
+          "use": {
+            "enum": [
+              "certification-bundle"
+            ],
+            "description": "What the key signs. Closed, so a future use is an explicit addition rather than a reinterpretation of a key already published for something else."
+          },
+          "retiredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the key stopped signing. A retired key stays listed so bundles it already signed remain verifiable; dropping it would silently invalidate historical evidence, which is the opposite of what an evidence trail is for."
+          }
+        }
+      }
+    },
     "discovery": {
       "type": "object",
       "description": "Discovery advertisement (capabilities-change-detection.md). Optional in v1; absence means the host serves only the public unauthenticated payload at /.well-known/openwop. Landed by RFC 0011.",
