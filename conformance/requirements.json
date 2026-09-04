@@ -28477,7 +28477,7 @@
     {
       "id": "openwop.it.version-negotiation.get-well-known-openwop-returns-capabilities-with-protocolversion-string",
       "file": "version-negotiation.test.ts",
-      "line": 57,
+      "line": 68,
       "title": "GET /.well-known/openwop returns Capabilities with protocolVersion (string)",
       "explicitId": "openwop.it.version-negotiation.get-well-known-openwop-returns-capabilities-with-protocolversion-string",
       "citations": [
@@ -28490,7 +28490,7 @@
     {
       "id": "openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json",
       "file": "version-negotiation.test.ts",
-      "line": 71,
+      "line": 82,
       "title": "every event has the 6 required RunEventDoc fields per run-event.schema.json",
       "explicitId": "openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json",
       "citations": [
@@ -28531,7 +28531,7 @@
     {
       "id": "openwop.it.version-negotiation.event-sequences-within-a-run-are-strictly-monotonic",
       "file": "version-negotiation.test.ts",
-      "line": 115,
+      "line": 126,
       "title": "event sequences within a run are strictly monotonic",
       "explicitId": "openwop.it.version-negotiation.event-sequences-within-a-run-are-strictly-monotonic",
       "citations": [
@@ -28545,7 +28545,7 @@
     {
       "id": "openwop.it.version-negotiation.events-poll-with-lastsequence-past-current-end-returns-empty-events-iscomplete",
       "file": "version-negotiation.test.ts",
-      "line": 143,
+      "line": 154,
       "title": "events/poll with lastSequence past current end returns empty events + isComplete",
       "explicitId": "openwop.it.version-negotiation.events-poll-with-lastsequence-past-current-end-returns-empty-events-iscomplete",
       "citations": [
