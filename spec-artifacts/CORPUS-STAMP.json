@@ -156,7 +156,7 @@
     "schemas/v2/localized-content-section.schema.json": "29c7bad0ad9ebc6c45211282e8afb3fdb35a4ca075ce0404b6e2c29f35fa5313",
     "schemas/v2/memory-entry.schema.json": "290576ae84f4fef4cdf975932b87963283b11c50ea3d2654b32cd96aa6537c3d",
     "schemas/v2/memory-list-options.schema.json": "f66703bccb68efb28391c273abb66aa117ee5b5ce475c477846ed700c336afcd",
-    "schemas/v2/node-pack-manifest.schema.json": "3b7343dffbbaa4a539760e14714968ab9855d55a226f62bcb110f78a2ee47b56",
+    "schemas/v2/node-pack-manifest.schema.json": "771328fa73691e7f08fca3c628c4e8ba68fa4e43529faaf1a6358aecf26b13f2",
     "schemas/v2/orchestrator-decision.schema.json": "2da17538e84cfbe70151eb118f1ccf670cff58b8697148e394074d32ac4af6b4",
     "schemas/v2/org-chart-responsibility-view.schema.json": "ebac7d2889bfd659bcf30311efb0d6eb0c7e940b972b6b62da69c7351b5bb586",
     "schemas/v2/pack-lockfile.schema.json": "2685417702c105146b780cd99154296a46578fbb10d81c8c713348ee26fea898",
@@ -165,7 +165,7 @@
     "schemas/v2/prompt-ref.schema.json": "11538fa36a7a652c93100cac4f1857eb4130137b546e3d94890618636d44b729",
     "schemas/v2/prompt-template.schema.json": "494fc83028cb3af5dbb8a943d0e83b2348f7775e9fa02369162bcb58a6f81559",
     "schemas/v2/proposal.schema.json": "72623553611f00e87b4c7972d69ebeba73c2222b01ead75a44a0c2114b679fea",
-    "schemas/v2/registry-version-manifest.schema.json": "e704e08b11be9a5c7dc7237c8cb8b99b079d7c29615909320c2bb9bad285b8c1",
+    "schemas/v2/registry-version-manifest.schema.json": "270704ebc6bae63be949efbf9503578938b103733db9da3cb8fcbee1cd7684dd",
     "schemas/v2/residency.schema.json": "af2658a7104cbcacd0e20a91226271c4a77f91ef46ae97612768fe743e6091d8",
     "schemas/v2/run-ancestry-response.schema.json": "907e36341ba83a2147a5d76963950b6dcd47506b663ecbccae9dfa553f3724d3",
     "schemas/v2/run-diff-response.schema.json": "6ab6cd265dc7e0a2086c6659c46aa0e7b43e6302949f0adac5d7deb1c7c0ecd3",
@@ -230,5 +230,5 @@
     "spec/v2/profiles.json": "1f0ee40491131cf561ef19a0394c47ba476b4567514fe16befb6cada4a10a5a4",
     "spec/v2/release.json": "41b69aed1e0c366cb287b05133ad561a1d4975b7a9e6786edf355ce976f4f12e"
   },
-  "corpusCommit": "5378f1982f0f90a37018efd18fd65207ffb500e8"
+  "corpusCommit": "fab509b5b53d05287eea322c8172c60d51fc144e"
 }

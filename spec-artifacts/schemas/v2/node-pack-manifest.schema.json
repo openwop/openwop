@@ -119,6 +119,16 @@
             "type": "boolean",
             "default": false,
             "description": "When true, an unmet peer dependency degrades (inert + surfaced in `degraded[]`) rather than failing install."
+          },
+          "facets": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][A-Za-z0-9]*$"
+            },
+            "description": "Facets of the peer family the pack needs (packs.md §Peer dependencies; RFC 0177 §B.1). Each MUST be a facet the declaration file lists for that family; the family key alone means the family's presence."
           }
         }
       }
