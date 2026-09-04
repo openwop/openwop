@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/agent-eval-suite.schema.json",
   "title": "AgentEvalSuite",
-  "description": "RFC 0081 §A. A portable, host-agnostic evaluation suite for a manifest agent (RFC 0003/0070): the tasks, the expected outputs or rubrics, the deterministic tool/memory fixtures, the allowed model classes, and the pass/fail thresholds that answer \"is this agent good enough to deploy?\". Distributed inside a pack tarball and referenced by URI exactly like `systemPromptRef` / `handoff.*SchemaRef` (RFC 0003 §C/§D) — NOT embedded in `AgentManifest`. A host advertising `capabilities.agents.evalSuite.supported: true` executes a suite as an eval run (a `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 §B) and terminates with an `eval-summary.schema.json` scorecard. The suite carries NO secret material and NO host-internal identifiers (it is authored offline and shipped in a signed pack).",
+  "description": "RFC 0081 \u00a7A. A portable, host-agnostic evaluation suite for a manifest agent (RFC 0003/0070): the tasks, the expected outputs or rubrics, the deterministic tool/memory fixtures, the allowed model classes, and the pass/fail thresholds that answer \"is this agent good enough to deploy?\". Distributed inside a pack tarball and referenced by URI exactly like `systemPromptRef` / `handoff.*SchemaRef` (RFC 0003 \u00a7C/\u00a7D) \u2014 NOT embedded in `AgentManifest`. A host advertising `capabilities.agents.evalSuite.supported: true` executes a suite as an eval run (a `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 \u00a7B) and terminates with an `eval-summary.schema.json` scorecard. The suite carries NO secret material and NO host-internal identifiers (it is authored offline and shipped in a signed pack).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -20,12 +20,11 @@
     "version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "SemVer of the suite. A suite version is pinned on an eval run (carried on `eval.started.suiteVersion` and `eval-summary.suiteVersion`) so a regression comparison (§D `regression` mode) is between like versions."
+      "description": "SemVer of the suite. A suite version is pinned on an eval run (carried on `eval.started.suiteVersion` and `eval-summary.suiteVersion`) so a regression comparison (\u00a7D `regression` mode) is between like versions."
     },
     "targetAgentId": {
-      "type": "string",
-      "minLength": 1,
-      "description": "MAY. The `AgentManifest.id` this suite is authored for. Absent ⇒ the suite is agent-agnostic and MAY be pointed at any `agentId` at run time (the run request carries the `agentId`). When present, a host SHOULD reject an eval run whose target `agentId` differs, unless the caller explicitly overrides."
+      "$ref": "ids.schema.json#/$defs/agentId",
+      "description": "MAY. The `AgentManifest.id` this suite is authored for. Absent \u21d2 the suite is agent-agnostic and MAY be pointed at any `agentId` at run time (the run request carries the `agentId`). When present, a host SHOULD reject an eval run whose target `agentId` differs, unless the caller explicitly overrides."
     },
     "modes": {
       "type": "array",
@@ -41,7 +40,7 @@
           "live-shadow"
         ]
       },
-      "description": "The eval modes this suite exercises (RFC 0081 §D closed vocabulary). `golden`: exact / contains / json-match against each task's `expected`. `rubric`: a host-chosen judge scores against weighted criteria (nondeterministic — a recorded-fact score). `adversarial`: tasks probe for unsafe / jailbreak behavior; `safetyFindings` is the primary output. `regression`: re-run against a new agent/model/prompt version and diff scores vs a `baselineRunId` (composes RFC 0054 `:diff`). `live-shadow`: run against LIVE tools/memory instead of `fixtures` — the only mode that bypasses fixture injection; explicitly nondeterministic. A run MUST request only modes the suite declares here AND the host advertises (`capabilities.agents.evalSuite.modes`); an unadvertised mode is rejected at run-create with `400 validation_error`."
+      "description": "The eval modes this suite exercises (RFC 0081 \u00a7D closed vocabulary). `golden`: exact / contains / json-match against each task's `expected`. `rubric`: a host-chosen judge scores against weighted criteria (nondeterministic \u2014 a recorded-fact score). `adversarial`: tasks probe for unsafe / jailbreak behavior; `safetyFindings` is the primary output. `regression`: re-run against a new agent/model/prompt version and diff scores vs a `baselineRunId` (composes RFC 0054 `:diff`). `live-shadow`: run against LIVE tools/memory instead of `fixtures` \u2014 the only mode that bypasses fixture injection; explicitly nondeterministic. A run MUST request only modes the suite declares here AND the host advertises (`capabilities.agents.evalSuite.modes`); an unadvertised mode is rejected at run-create with `400 validation_error`."
     },
     "allowedModels": {
       "type": "array",
@@ -57,18 +56,18 @@
           "general"
         ]
       },
-      "description": "MAY. The `AgentManifest.modelClass` values (RFC 0002) the suite is valid for. Absent ⇒ valid for any class. A host SHOULD record the `evaluatedModelClass` on the summary so a score is interpreted against the model it was produced with."
+      "description": "MAY. The `AgentManifest.modelClass` values (RFC 0002) the suite is valid for. Absent \u21d2 valid for any class. A host SHOULD record the `evaluatedModelClass` on the summary so a score is interpreted against the model it was produced with."
     },
     "thresholds": {
       "type": "object",
       "additionalProperties": false,
-      "description": "MAY. The pass/fail bar for the suite. A task or the aggregate `passed` flag is computed against these. Absent ⇒ the host's default bar (the summary still carries raw scores).",
+      "description": "MAY. The pass/fail bar for the suite. A task or the aggregate `passed` flag is computed against these. Absent \u21d2 the host's default bar (the summary still carries raw scores).",
       "properties": {
         "passScore": {
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "The minimum aggregate score (0.0–1.0) for `EvalSummary.passed: true`."
+          "description": "The minimum aggregate score (0.0\u20131.0) for `EvalSummary.passed: true`."
         },
         "maxCostUsd": {
           "type": "number",
@@ -101,7 +100,7 @@
             "description": "Suite-unique task identifier (kebab-case). Carried verbatim on `eval.scored.taskId` and the per-task summary entry."
           },
           "input": {
-            "description": "The run input for the task, validated against the agent's input schema by the host. An opaque object/value — content is task-defined."
+            "description": "The run input for the task, validated against the agent's input schema by the host. An opaque object/value \u2014 content is task-defined."
           },
           "expected": {
             "type": "object",
@@ -145,7 +144,7 @@
               "rubric": {
                 "type": "array",
                 "minItems": 1,
-                "description": "Present when `kind: \"rubric\"`. Weighted criteria a judge scores the output against; the task score is the weighted sum of met criteria, normalized to 0.0–1.0. Judge selection + scoring is host-internal (nondeterministic — the score is a recorded fact).",
+                "description": "Present when `kind: \"rubric\"`. Weighted criteria a judge scores the output against; the task score is the weighted sum of met criteria, normalized to 0.0\u20131.0. Judge selection + scoring is host-internal (nondeterministic \u2014 the score is a recorded fact).",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
@@ -173,7 +172,7 @@
           "fixtures": {
             "type": "object",
             "additionalProperties": false,
-            "description": "MAY. Deterministic substitutes for live tool/memory I/O so a `golden`/`regression` eval is reproducible. When present, the eval host MUST inject `toolResponses` in place of live tool calls and seed `memorySeed` before the invocation. The `live-shadow` mode is the explicit exception — it ignores `fixtures` and runs against live tools/memory.",
+            "description": "MAY. Deterministic substitutes for live tool/memory I/O so a `golden`/`regression` eval is reproducible. When present, the eval host MUST inject `toolResponses` in place of live tool calls and seed `memorySeed` before the invocation. The `live-shadow` mode is the explicit exception \u2014 it ignores `fixtures` and runs against live tools/memory.",
             "properties": {
               "toolResponses": {
                 "type": "array",

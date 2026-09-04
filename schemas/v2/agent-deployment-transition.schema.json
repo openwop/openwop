@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/agent-deployment-transition.schema.json",
   "title": "AgentDeploymentTransition",
-  "description": "RFC 0082 §E. The request body of POST /v1/agents/{agentId}/deployments — a deployment state-transition request. The host authorizes it fail-closed against the RFC 0049 `deploy:*` scope, runs any configured RFC 0051 approvalGate, enforces the RFC 0081 eval evidence when the gate requires it, and on success emits the matching `deployment.*` event and returns the updated `agent-deployment.schema.json` record. Carries no manifest body or credential material (SR-1).",
+  "description": "RFC 0082 \u00a7E. The request body of POST /v1/agents/{agentId}/deployments \u2014 a deployment state-transition request. The host authorizes it fail-closed against the RFC 0049 `deploy:*` scope, runs any configured RFC 0051 approvalGate, enforces the RFC 0081 eval evidence when the gate requires it, and on success emits the matching `deployment.*` event and returns the updated `agent-deployment.schema.json` record. Carries no manifest body or credential material (SR-1).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,7 +24,7 @@
         "rollback",
         "adjust-canary"
       ],
-      "description": "The lifecycle operation. `promote`: advance toward production (draft→test→staged→active) into `toState`. `pause`: active→paused. `deprecate`: active→deprecated. `rollback`: active→rolled-back, restoring a prior version. `adjust-canary`: change the active version's `canaryPercent`. Legal transitions + the seven-state machine are normative in `agent-deployment.md` §C."
+      "description": "The lifecycle operation. `promote`: advance toward production (draft\u2192test\u2192staged\u2192active) into `toState`. `pause`: active\u2192paused. `deprecate`: active\u2192deprecated. `rollback`: active\u2192rolled-back, restoring a prior version. `adjust-canary`: change the active version's `canaryPercent`. Legal transitions + the seven-state machine are normative in `agent-deployment.md` \u00a7C."
     },
     "toState": {
       "type": "string",
@@ -43,7 +43,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 64,
-      "description": "MAY. The named deployment channel this transition targets (e.g. `stable`). The version becomes resolvable by `AgentRef.channel` = this value (RFC 0082 §A/§B)."
+      "description": "MAY. The named deployment channel this transition targets (e.g. `stable`). The version becomes resolvable by `AgentRef.channel` = this value (RFC 0082 \u00a7A/\u00a7B)."
     },
     "canaryPercent": {
       "type": "integer",
@@ -52,9 +52,8 @@
       "description": "MAY. For `promote` to `active` or `adjust-canary`, the share of channel traffic this version takes. A host advertising `capabilities.agents.deployment.canary: false` MUST reject any value < 100."
     },
     "evalRunId": {
-      "type": "string",
-      "minLength": 1,
-      "description": "MAY. The RFC 0081 eval run whose `EvalSummary.passed` the gate verifies before emitting `deployment.promoted` (the §E evidence). Required when the target `approvalGate` is configured with `requiredEval`; an unmet eval gate is rejected with `eval_gate_unmet`."
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "MAY. The RFC 0081 eval run whose `EvalSummary.passed` the gate verifies before emitting `deployment.promoted` (the \u00a7E evidence). Required when the target `approvalGate` is configured with `requiredEval`; an unmet eval gate is rejected with `eval_gate_unmet`."
     },
     "reason": {
       "type": "string",

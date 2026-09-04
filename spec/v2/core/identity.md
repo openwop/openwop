@@ -110,6 +110,10 @@ Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and 
 | `nodeId`, `workflowId`, `agentId`, `chainId`, `pluginId`, `templateId`, `libraryId` | `^[A-Za-z0-9._~:-]{1,128}$` | author |
 | `typeId` | `^[a-z][a-z0-9-]*(\.[a-z][a-zA-Z0-9-]*)+$` | author |
 
+This obligation is enforced by `scripts/check-id-kinds-bound.mjs` against `spec/v2/id-field-bindings.json`, which places every `*Id` property in a v2 schema into one of two sets: it **is** one of the kinds above (and MUST `$ref` it), or nothing here governs it (with the reason recorded). A property in neither **fails**, so a new id field cannot be added without someone deciding which it is. The map exists rather than a name-matching rule because only 20 of the 88 `*Id` properties share a name with a kind: `childRunId` sat as `{type: string, minLength: 1}` in the same file where `parentRunId` was correctly bound, and a check keyed on names would have reported green over it. The rule above says *every id field*, not *every field whose name matches*.
+
+The `typeId` grammar admits `_` because `node-pack-manifest.schema.json`'s `name` pattern does and a pack's node type ids are derived from its name — a pack legally named `vendor.acme.my_tools` MUST be able to declare `vendor.acme.my_tools.echo`. A kind that rejects an id a legal name generates is a constraint that cannot express a legitimate value.
+
 A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`. A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`: no `@`, no whitespace, no `/`. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
 
 ## 6. Identity error codes (`spec/v2/errors.json`)

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/chat-card-pack-manifest.schema.json",
   "title": "ChatCardPackManifest",
-  "description": "Manifest for a published OpenWOP AI chat card pack — `pack.json` at the pack root with `kind: \"card\"`. Peer to the node / workflow-chain / prompt / artifact-type pack manifests; disjoint via the `kind` discriminator. See `spec/v1/chat-card-packs.md` for the canonical contract and RFC 0071 Phase 2 for the rationale.\n\nA chat card pack distributes AI step cards: each card binds a prompt template (with typed input slots) to a typed output artifact. When a host advertises `host.chat.cardPacks: supported` and a registered card is invoked, the host substitutes inputs into the prompt, routes the call through `ctx.aiEnvelope.generate`, and (when `outputArtifactType` is set) validates the result against the referenced artifact-type pack's schema before emitting `artifact.created`.",
+  "description": "Manifest for a published OpenWOP AI chat card pack \u2014 `pack.json` at the pack root with `kind: \"card\"`. Peer to the node / workflow-chain / prompt / artifact-type pack manifests; disjoint via the `kind` discriminator. See `spec/v1/chat-card-packs.md` for the canonical contract and RFC 0071 Phase 2 for the rationale.\n\nA chat card pack distributes AI step cards: each card binds a prompt template (with typed input slots) to a typed output artifact. When a host advertises `host.chat.cardPacks: supported` and a registered card is invoked, the host substitutes inputs into the prompt, routes the call through `ctx.aiEnvelope.generate`, and (when `outputArtifactType` is set) validates the result against the referenced artifact-type pack's schema before emitting `artifact.created`.",
   "type": "object",
   "required": [
     "name",
@@ -20,7 +20,7 @@
     },
     "name": {
       "type": "string",
-      "description": "Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`).",
+      "description": "Reverse-DNS pack name per `node-packs.md` \u00a7Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`).",
       "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
       "minLength": 1,
       "maxLength": 256
@@ -65,7 +65,7 @@
       "properties": {
         "openwop": {
           "type": "string",
-          "description": "Semver range — which openwop protocol versions this pack works against."
+          "description": "Semver range \u2014 which openwop protocol versions this pack works against."
         }
       },
       "additionalProperties": false
@@ -75,7 +75,7 @@
       "additionalProperties": {
         "type": "string"
       },
-      "description": "Other packs this pack depends on (e.g., the artifact-type pack declaring this card's `outputArtifactType`). Map of pack name → semver range."
+      "description": "Other packs this pack depends on (e.g., the artifact-type pack declaring this card's `outputArtifactType`). Map of pack name \u2192 semver range."
     },
     "peerDependencies": {
       "type": "object",
@@ -106,16 +106,20 @@
       "additionalProperties": false,
       "properties": {
         "cardTypeId": {
-          "type": "string",
-          "description": "Reverse-DNS card identifier. Same pattern and reserved scopes as a pack `name`. The value `WorkflowNode.cardType` / `ctx.chat.emitCard` MAY reference. Third parties MUST NOT publish under `core.*`.",
-          "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
-          "minLength": 1,
-          "maxLength": 256
+          "allOf": [
+            {
+              "$ref": "ids.schema.json#/$defs/typeId"
+            },
+            {
+              "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$"
+            }
+          ],
+          "description": "Reverse-DNS card identifier. Same pattern and reserved scopes as a pack `name`. The value `WorkflowNode.cardType` / `ctx.chat.emitCard` MAY reference. Third parties MUST NOT publish under `core.*`."
         },
         "schemaVersion": {
           "type": "integer",
           "minimum": 0,
-          "description": "Non-negative integer card-schema version (the envelope/artifact integer-version axis). Absent ⇒ treated as 0."
+          "description": "Non-negative integer card-schema version (the envelope/artifact integer-version axis). Absent \u21d2 treated as 0."
         },
         "prompt": {
           "$ref": "#/$defs/PromptSpec"
@@ -150,7 +154,7 @@
       },
       "patternProperties": {
         "^(openwop-|x-|vendor\\.)": {
-          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
         }
       }
     },
@@ -177,7 +181,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Map of `{{placeholder}}` name → input path (e.g. `\"spec\": \"inputs.spec\"`)."
+          "description": "Map of `{{placeholder}}` name \u2192 input path (e.g. `\"spec\": \"inputs.spec\"`)."
         },
         "temperature": {
           "type": "number",
@@ -205,7 +209,7 @@
         },
         "type": {
           "type": "string",
-          "description": "Closed portable subset OR a `vendor.<org>.<kind>` / `x-<kind>` host extension other hosts ignore. The portable subset (G9, resolved 2026-05-27 against MyndHyve's `CardFieldType`): `text`, `longtext`, `number`, `boolean`, `select`, `multiselect`, `file`, `artifact-ref`. MyndHyve maps `textarea`→`longtext` and `toggle`→`boolean`; its product-specific kinds (`canvas-reference`, `collection-reference`, `color`) are host extensions (`vendor.myndhyve.*`), not portable.",
+          "description": "Closed portable subset OR a `vendor.<org>.<kind>` / `x-<kind>` host extension other hosts ignore. The portable subset (G9, resolved 2026-05-27 against MyndHyve's `CardFieldType`): `text`, `longtext`, `number`, `boolean`, `select`, `multiselect`, `file`, `artifact-ref`. MyndHyve maps `textarea`\u2192`longtext` and `toggle`\u2192`boolean`; its product-specific kinds (`canvas-reference`, `collection-reference`, `color`) are host extensions (`vendor.myndhyve.*`), not portable.",
           "pattern": "^(text|longtext|number|boolean|select|multiselect|file|artifact-ref|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
         },
         "label": {
@@ -226,7 +230,7 @@
     },
     "Signing": {
       "type": "object",
-      "description": "Optional signing metadata. See node-packs.md §signing.",
+      "description": "Optional signing metadata. See node-packs.md \u00a7signing.",
       "additionalProperties": false,
       "properties": {
         "publicKeyRef": {
@@ -247,7 +251,7 @@
   },
   "patternProperties": {
     "^(openwop-|x-|vendor\\.)": {
-      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
     }
   },
   "x-openwop-seeded-from": "v1"

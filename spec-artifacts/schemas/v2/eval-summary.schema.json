@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/eval-summary.schema.json",
   "title": "EvalSummary",
-  "description": "RFC 0081 §C. The terminal scorecard of an eval run (the `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 §B): the aggregate + per-task scores, cost, latency, schema-validity, and safety findings, plus the suite provenance and (for `regression` mode) the score delta vs a baseline. Set as the eval run's output and served by `GET /v1/runs/{runId}/eval-summary`. SECURITY invariant `eval-summary-no-content-leak`: the summary carries scores, ids, counts, and redaction-safe safety descriptors only — NEVER task output bodies, rubric prose, model completions, prompts, or credential material (SR-1). A consumer reads the run's normal projection for any body.",
+  "description": "RFC 0081 \u00a7C. The terminal scorecard of an eval run (the `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 \u00a7B): the aggregate + per-task scores, cost, latency, schema-validity, and safety findings, plus the suite provenance and (for `regression` mode) the score delta vs a baseline. Set as the eval run's output and served by `GET /v1/runs/{runId}/eval-summary`. SECURITY invariant `eval-summary-no-content-leak`: the summary carries scores, ids, counts, and redaction-safe safety descriptors only \u2014 NEVER task output bodies, rubric prose, model completions, prompts, or credential material (SR-1). A consumer reads the run's normal projection for any body.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -41,11 +41,11 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1,
-      "description": "The suite-level score (0.0–1.0): the aggregation (host-defined, typically the mean) of per-task scores."
+      "description": "The suite-level score (0.0\u20131.0): the aggregation (host-defined, typically the mean) of per-task scores."
     },
     "passed": {
       "type": "boolean",
-      "description": "Whether the run cleared the suite's `thresholds` (RFC 0081 §A) — `aggregateScore >= passScore` AND, when declared, `totalCostUsd <= maxCostUsd` AND the p95 latency bar. The load-bearing flag an RFC 0082 deployment gate may require (`requiredEval`)."
+      "description": "Whether the run cleared the suite's `thresholds` (RFC 0081 \u00a7A) \u2014 `aggregateScore >= passScore` AND, when declared, `totalCostUsd <= maxCostUsd` AND the p95 latency bar. The load-bearing flag an RFC 0082 deployment gate may require (`requiredEval`)."
     },
     "taskCount": {
       "type": "integer",
@@ -60,7 +60,7 @@
     "totalCostUsd": {
       "type": "number",
       "minimum": 0,
-      "description": "MAY. Total cost of the run, summed from the per-task RFC 0026 `provider.usage` events (the scalar only — never a pricing breakdown or rate card; `eval-summary-no-content-leak`)."
+      "description": "MAY. Total cost of the run, summed from the per-task RFC 0026 `provider.usage` events (the scalar only \u2014 never a pricing breakdown or rate card; `eval-summary-no-content-leak`)."
     },
     "tasks": {
       "type": "array",
@@ -83,7 +83,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Task score (0.0–1.0)."
+            "description": "Task score (0.0\u20131.0)."
           },
           "passed": {
             "type": "boolean",
@@ -105,7 +105,7 @@
           },
           "safetyFindings": {
             "type": "array",
-            "description": "MAY. Redaction-safe safety findings (primarily `adversarial` mode). Each is a `{kind, severity}` descriptor — NO excerpted content, prompt, or completion text (`eval-summary-no-content-leak`).",
+            "description": "MAY. Redaction-safe safety findings (primarily `adversarial` mode). Each is a `{kind, severity}` descriptor \u2014 NO excerpted content, prompt, or completion text (`eval-summary-no-content-leak`).",
             "items": {
               "type": "object",
               "additionalProperties": false,
@@ -117,7 +117,7 @@
                 "kind": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "Finding category (e.g. `jailbreak`, `pii-leak`, `unsafe-tool-call`) — a category label, not excerpted content."
+                  "description": "Finding category (e.g. `jailbreak`, `pii-leak`, `unsafe-tool-call`) \u2014 a category label, not excerpted content."
                 },
                 "severity": {
                   "type": "string",
@@ -145,15 +145,14 @@
       ],
       "properties": {
         "baselineRunId": {
-          "type": "string",
-          "minLength": 1,
+          "$ref": "ids.schema.json#/$defs/runId",
           "description": "The prior eval run this run is compared against."
         },
         "scoreDelta": {
           "type": "number",
           "minimum": -1,
           "maximum": 1,
-          "description": "`aggregateScore` minus the baseline's (negative ⇒ regression)."
+          "description": "`aggregateScore` minus the baseline's (negative \u21d2 regression)."
         },
         "diffRef": {
           "type": "string",
