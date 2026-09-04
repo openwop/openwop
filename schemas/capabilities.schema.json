@@ -1089,7 +1089,7 @@
             "confidenceEscalationFloor": {
               "type": "number",
               "minimum": 0.5,
-              "maximum": 1.0,
+              "maximum": 1,
               "description": "RFC 0039 §A. Operator-declared confidence floor at or above the spec floor of 0.5; when an OrchestratorDecision carries `confidence` below this floor, the host MUST escalate via a `clarify` or `escalate` interrupt instead of executing the decision. Absent: the spec floor 0.5 applies. Values < 0.5 are non-conformant; values > 1.0 are nonsense. Applies only when `version >= 2`."
             },
             "confidenceEscalationInterruptKind": {
@@ -4152,6 +4152,45 @@
         "deltaTransport": {
           "type": "boolean",
           "description": "RFC 0114. Host delivers RFC 6902 (`a2ui-surface-delta-frame.schema.json`) delta frames over the run event stream to subscribers that negotiate `?a2uiDelta=1`; the full surface is materialized for everyone else, the event-log read, and replay. The recorded `ui.a2ui-surface` envelope stays full. The consumer re-validates the post-patch surface against the closed `catalogVersion` catalog before render and falls back fail-closed on any apply/validation failure (the host then re-materializes full)."
+        }
+      }
+    },
+    "signingKeys": {
+      "type": "array",
+      "description": "RFC 0168 §E.2, v1.x additive half (the same shape RFC 0179 used for root `preferredVersion`). The public keys this host signs certification bundles with; a bundle signature names a `keyId` and a verifier resolves it HERE. OPTIONAL in v1.x. It belongs on the v1 root and not only the v2 root because a certification bundle is v3 REGARDLESS OF MAJOR: under the one-package decision (RFC 0168 §D.3) a v1 host measured by a 2.x suite at `--target-major 1` emits a v3 bundle whose signature needs attribution exactly as much as a v2 host does, and a v1-only host has only this document to hand a verifier. Without it, every v1 host bundle is permanently unattributable: the signature attests INTEGRITY only — that the bundle was not altered after signing — and says nothing about who signed it, because a signer can mint a keypair and a key id at will. A host that publishes no key MUST NOT be read as having made a verifiable claim.",
+      "items": {
+        "type": "object",
+        "required": [
+          "keyId",
+          "alg",
+          "publicKey"
+        ],
+        "properties": {
+          "keyId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._~-]{1,128}$",
+            "description": "The identifier a bundle signature carries in `signature.keyId`. Unique within this array."
+          },
+          "alg": {
+            "const": "ed25519",
+            "description": "RFC 0168 §E.2 fixes the attestation algorithm; no other value is defined."
+          },
+          "publicKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "The Ed25519 public key: raw 32 bytes, base64url, unpadded — NOT PEM. One encoding on purpose; admitting two would mean every verifier handles both. Note that a plausible 43-character string can still fail to import as a curve point, so a publisher SHOULD verify the value imports as a real Ed25519 key rather than only checking its shape."
+          },
+          "use": {
+            "enum": [
+              "certification-bundle"
+            ],
+            "description": "What the key signs. Closed, so a future use is an explicit addition rather than a reinterpretation of a key already published for something else."
+          },
+          "retiredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the key stopped signing. A retired key MUST stay listed: dropping it silently invalidates every bundle it already signed, which is the opposite of what an evidence trail is for."
+          }
         }
       }
     }

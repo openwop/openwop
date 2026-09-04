@@ -48,6 +48,7 @@ const ID = 'openwop.requirement.0168.bundle-signature-attributable';
 const ID_SURFACE = `${ID}.surface`;
 const ID_VERIFIES = `${ID}.verifies`;
 const ID_OUTCOMES = `${ID}.outcomes`;
+const ID_V1ROOT = `${ID}.v1-root`;
 const SECTION = 'RFC 0168 §E.2';
 const DOC = 'spec/v2/core/conformance.md';
 
@@ -68,6 +69,14 @@ const corpusAbsent = (): boolean => V1_DIR === null;
 function readCapabilities(): Record<string, unknown> | null {
   try {
     return JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'capabilities.schema.json'), 'utf8')) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function readV1Capabilities(): Record<string, unknown> | null {
+  try {
+    return JSON.parse(readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8')) as Record<string, unknown>;
   } catch {
     return null;
   }
@@ -147,5 +156,23 @@ describe('v2-bundle-signature-attributable (RFC 0168 §E.2)', () => {
       missing,
       req(ID_OUTCOMES, `${SECTION} / ${DOC}`, `the gate MUST report these outcomes distinctly; a check that cannot tell them apart reports the unaccountable case in the same words as the verified one, which is the shape of the original defect (missing: ${missing.join('; ')})`),
     ).toEqual([]);
+  });
+
+  it('signingKeys[] is reachable from a v1 root too — a bundle is v3 regardless of major', () => {
+    if (corpusAbsent()) return softSkip('inapplicable', 'the corpus is not present in this layout — this scenario checks the spec repo, not a host');
+    const v1 = readV1Capabilities();
+    if (!v1) return softSkip('blocked', 'schemas/capabilities.schema.json is unreadable from this layout');
+    const props = (v1['properties'] ?? {}) as Record<string, unknown>;
+
+    // The one-package decision (RFC 0168 SD.3) means a v1 host measured by a 2.x
+    // suite at --target-major 1 still emits a bundle v3, carrying a signature
+    // that needs attribution exactly as much as a v2 host's does. A v1-only host
+    // has only its v1 document to hand a verifier, so a v2-only field would make
+    // every v1 host's bundle permanently unattributable -- the same gap this
+    // scenario exists to close, reintroduced one major down.
+    expect(
+      props['signingKeys'] !== undefined,
+      req(ID_V1ROOT, `${SECTION} / spec/v1/capabilities.md`, 'the v1 discovery root MUST also carry signingKeys[]: a certification bundle is v3 regardless of major, and a v1-only host has only this document to resolve signature.keyId against — putting the key on the v2 root alone leaves every v1 host bundle unattributable'),
+    ).toBe(true);
   });
 });
