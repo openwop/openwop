@@ -40,7 +40,7 @@ describe('v2 interrupt-token-scheme (RFC 0170 §E.1)', () => {
     if (res === null) return softSkip('blocked', 'GET /interrupts/{token} unreachable (fetch failed)');
     expect([401, 404].includes(res.status), req('openwop.requirement.0170.interrupt-token-scheme.unprefixed-refused', DOC, `a token outside the ow2.<alg>.<kid>.<payload>.<mac> grammar MUST NOT resolve — 401 interrupt_token_invalid (or 404 not_found where the signed-token surface is not mounted); got ${res.status}`)).toBe(true);
     const code = readErrorCode(res.json);
-    expect(res.status === 401 ? code === 'interrupt_token_invalid' : code === 'not_found', req('openwop.requirement.0170.interrupt-token-scheme.unprefixed-refused', 'spec/v2/core/interrupt.md §Tokens', `the refusal MUST carry its registered code (401 → interrupt_token_invalid, 404 → not_found); got ${String(code)}`)).toBe(true);
+    expect(res.status === 401 ? code === 'interrupt_token_invalid' : (code === 'not_found' || code === 'interrupt_not_found'), req('openwop.requirement.0170.interrupt-token-scheme.unprefixed-refused', 'spec/v2/core/interrupt.md §Tokens', `the refusal MUST carry a registered code (401 → interrupt_token_invalid; 404 → not_found OR the more precise interrupt_not_found, both registered in spec/v2/errors.json for this state — a scenario narrower than its own registry fails the host that answers more precisely); got ${String(code)}`)).toBe(true);
   });
 
   it('a well-formed token under a kid the host does not hold is 401 interrupt_token_invalid', async () => {
