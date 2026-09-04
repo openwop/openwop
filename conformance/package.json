@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-conformance",
-  "version": "2.0.0-rc.6",
+  "version": "2.0.0-rc.7",
   "description": "Production-ready black-box conformance suite for OpenWOP v1.0 compliant servers.",
   "repository": {
     "type": "git",
@@ -56,6 +56,6 @@
     "@openwop/spec-artifacts": "file:../spec-artifacts"
   },
   "peerDependencies": {
-    "@openwop/spec-artifacts": "2.0.0-rc.6"
+    "@openwop/spec-artifacts": "2.0.0-rc.7"
   }
 }
