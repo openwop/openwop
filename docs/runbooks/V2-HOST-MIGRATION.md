@@ -87,6 +87,12 @@ An adversarial review of the original plan caught this as an ordering inversion:
 >
 > This is not hypothetical. It is the shape that let an RFC sit `Accepted` on a host serving none of it. **Verify by fetching the resource twice, with and without the header, and comparing bytes.** A host advertising two majors that returns identical bytes for both has advertised a major it does not serve.
 
+> **Advertising a major is a claim about the PATH SPACE, not about the discovery document.** Every probe that naturally comes to hand when you flip the advertisement — `protocolVersions`, `preferredVersion`, the response header, comparing the two representations — hits `/.well-known/openwop`, the one resource whose representation the header selects. **They all pass while almost nothing else is mounted.**
+>
+> Measured on a tier-1 host: advertising `["1.1","2.0"]` while serving **two of fifteen** top-level segments of the v2 path space. Its unversioned mount was a deliberate allowlist — chosen over a blanket `/v1`-strip because the host serves a large non-`/v1` surface a blanket rewrite would shadow, which is sound reasoning — and the list was simply incomplete. `POST /webhooks` under major 2 returned `404` while `POST /v1/webhooks` returned `201`.
+>
+> **Check it with a PAIR, never a single probe.** "This host does not implement webhooks" and "this host implements webhooks and did not mount them under major 2" are different facts that a lone `404` cannot separate. If `/v1<path>` answers and `<path>` under major 2 is `404`, the advertisement overstates. `v2-advertised-path-space-served` does exactly this against the parameterless GETs in `spec/v2/path-manifest.json`.
+
 **Reversibility check:** through this whole phase a v1 client sees no change. If it does, stop — something is reading `protocolVersions[]` that should be reading `preferredVersion`.
 
 ---
