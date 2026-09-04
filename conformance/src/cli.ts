@@ -54,6 +54,7 @@ import {
   type DiscoveryPayload,
   PROFILE_FLOOR_SCENARIOS,
 } from './lib/profiles.js';
+import { setV2ProfileFloors } from './lib/requirement-registry.js';
 
 interface ParsedArgs {
   readonly baseUrl: string | undefined;
@@ -320,14 +321,8 @@ function claimedProfilesFor(doc: DiscoveryPayload): string[] {
  * no v2 host could ever certify. Falls back to the empty set only when the
  * registry is genuinely absent from the layout, and says so.
  */
-function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): string[] {
-  // Resolve the peer the way `lib/paths.ts` does — through Node's resolver from
-  // this package — instead of guessing directory shapes. Hand-rolled candidates
-  // found the registry in a repo checkout and missed it in every published
-  // install, where npm hoists the peer to a SIBLING package dir: the probe that
-  // walked one level up landed on the `@openwop/` scope directory, not a
-  // package, so a real host run silently claimed nothing.
-  const candidates = [];
+function v2RegistryPath(conformanceRoot: string): string | null {
+  const candidates: string[] = [];
   try {
     const req = createRequire(resolvePath(conformanceRoot, 'package.json'));
     candidates.push(resolvePath(dirname(req.resolve('@openwop/spec-artifacts/package.json')), 'spec', 'v2', 'profiles.json'));
@@ -337,8 +332,18 @@ function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): s
     resolvePath(conformanceRoot, '..', 'spec', 'v2', 'profiles.json'),
     resolvePath(conformanceRoot, '..', 'spec-artifacts', 'spec', 'v2', 'profiles.json'),
   );
-  const found = candidates.find((c) => existsSync(c));
-  if (found === undefined) {
+  return candidates.find((c) => existsSync(c)) ?? null;
+}
+
+function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): string[] {
+  // Resolve the peer the way `lib/paths.ts` does — through Node's resolver from
+  // this package — instead of guessing directory shapes. Hand-rolled candidates
+  // found the registry in a repo checkout and missed it in every published
+  // install, where npm hoists the peer to a SIBLING package dir: the probe that
+  // walked one level up landed on the `@openwop/` scope directory, not a
+  // package, so a real host run silently claimed nothing.
+  const found = v2RegistryPath(conformanceRoot);
+  if (found === null) {
     process.stderr.write('openwop-conformance --certify: spec/v2/profiles.json not found in this layout; claimedProfiles is empty (RFC 0169 §C.1).\n');
     return [];
   }
@@ -360,6 +365,42 @@ function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): s
     const families = Array.isArray(p.predicate?.families) ? (p.predicate.families as unknown[]).map(String) : [];
     const metadata = Array.isArray(p.predicate?.metadata) ? (p.predicate.metadata as unknown[]).map(String) : [];
     if (families.every(isRecord) && metadata.every((k) => root[k] !== undefined)) out.push(p.id);
+  }
+  return out;
+}
+
+/**
+ * `spec/v2/profiles.json` `floorScenarios` → scenario file names. A
+ * `planned:<name>` entry names a scenario the registry expects but that may not
+ * exist yet; it resolves to `v2-<name>.test.ts` when that file is in the
+ * manifest and is dropped otherwise, so a planned-but-unwritten floor cannot
+ * fail a host for the corpus's own backlog.
+ */
+function v2ProfileFloors(conformanceRoot: string): Record<string, readonly string[]> {
+  const registryPath = v2RegistryPath(conformanceRoot);
+  if (registryPath === null) return {};
+  let known: Set<string>;
+  try {
+    known = new Set(Object.keys((JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> }).majors));
+  } catch {
+    known = new Set();
+  }
+  let registry: { profiles?: Array<{ id?: unknown; floorScenarios?: unknown }> };
+  try {
+    registry = JSON.parse(readFileSync(registryPath, 'utf8'));
+  } catch {
+    return {};
+  }
+  const out: Record<string, readonly string[]> = {};
+  for (const p of registry.profiles ?? []) {
+    if (typeof p.id !== 'string') continue;
+    const raw = Array.isArray(p.floorScenarios) ? (p.floorScenarios as unknown[]).map(String) : [];
+    const files: string[] = [];
+    for (const entry of raw) {
+      const name = entry.startsWith('planned:') ? `v2-${entry.slice('planned:'.length)}.test.ts` : entry.endsWith('.test.ts') ? entry : `${entry}.test.ts`;
+      if (known.size === 0 || known.has(name)) files.push(name);
+    }
+    out[p.id] = files;
   }
   return out;
 }
@@ -475,6 +516,10 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
 
   // (b) Derive claimedProfiles from the captured document.
   const claimedProfiles = target.major === 2 ? claimedProfilesForV2(document, conformanceRoot) : claimedProfilesFor(document);
+  // Major-2 floors come from spec/v2/profiles.json. Without this the derivation
+  // measures a v2 host against v1 scenario files a major-2 run never executes,
+  // and refuses certification for not running them.
+  setV2ProfileFloors(target.major === 2 ? v2ProfileFloors(conformanceRoot) : null);
 
   // (c) Run the suite, capturing per-scenario terminal state via the vitest
   // JSON reporter. server-targeted scenarios live under src/scenarios/.

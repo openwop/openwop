@@ -65,9 +65,9 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     // One canonical mutation so the HOST's own writer appends. Cancel is the
     // universally available terminal transition; a host that refuses it on a
     // seeded run records `blocked` rather than a pass.
-    const cancelled = await http(() => driver.post(`/runs/${encodeURIComponent(runId)}:cancel`, {}));
+    const cancelled = await http(() => driver.post(`/runs/${encodeURIComponent(runId)}/cancel`, {}));
     if (cancelled === null || (cancelled.status !== 200 && cancelled.status !== 202 && cancelled.status !== 204)) {
-      return softSkip('blocked', `POST /runs/{runId}:cancel answered ${cancelled?.status ?? 'no response'} on a seeded era-2 run — no canonical mutation drove the host's writer, so the append is unwitnessed`);
+      return softSkip('blocked', `POST /runs/{runId}/cancel answered ${cancelled?.status ?? 'no response'} on a seeded era-2 run — no canonical mutation drove the host's writer, so the append is unwitnessed`);
     }
 
     const after = await pollEvents(runId);
@@ -125,7 +125,7 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     if (!seeded.ok) return softSkip(seeded.kind, seeded.reason);
     const runId = seeded.runId;
 
-    await http(() => driver.post(`/runs/${encodeURIComponent(runId)}:cancel`, {}));
+    await http(() => driver.post(`/runs/${encodeURIComponent(runId)}/cancel`, {}));
 
     const snap = await http(() => driver.get(`/runs/${encodeURIComponent(runId)}`));
     if (snap === null || snap.status !== 200) {
