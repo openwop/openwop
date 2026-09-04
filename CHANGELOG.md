@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Fixed
 
+- **`removalTrigger` could not express what RFC 0176 §C.2 requires.** The wrapper, the dotted mirror, `Capabilities-Etag` and the `/.well-known/wop` alias have **two** independent removal events — absent from the v2 representation at the cut, *and* removed from the v1 representation at end-of-support — and the field was a scalar. The four rows carried `v1-end-of-support` alone while `v2-well-known-one-resource` asserted the `v2.0-cut` obligation by name: the scenario was right about the effect and the data could not say so. The field now accepts a set (a bare string stays valid); the four rows carry both. Phase 5 planning had proposed deleting the "unused" `v2.0-cut` value — it was not unused, it was inexpressible.
+
+### Fixed
+
 - **The id-kind binding check could not see plural arrays, and the one inbound v2 surface that takes them was unbound.** `check-id-kinds-bound.mjs` matched `/Id$/`; `runIds`, `sourceRunIds`, `contributingRunIds`, `nodeIds` are `*Ids`. `POST /runs:bulk-cancel` inherited v1's `items: {type: string}` through the derived OpenAPI, so a v2 client sent the tenant-bound ids it had been handed and every one answered `not_found`, per id, silently — a tier-1 host found it while auditing its own inbound paths. The projection had covered the way out and not the way in. The check now yields each `*Ids` property's `items` schema; four arrays bind to their kinds, four are triaged not-a-kind (`nextWorkerIds` is a documented union of node-ids and agent-ids, so no single kind can hold it), and the bulk-cancel body is bound at the generator. Sabotage-tested.
 
 ### Added
