@@ -22,7 +22,7 @@ v1 operations keep their `/v1/…` path keys unchanged through the overlap. v2 o
 
 ### 1.3 The request header
 
-A request on an unversioned path MAY carry `OpenWOP-Version: <major>` (integer major only, e.g. `OpenWOP-Version: 2`).
+A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWOP-Version: <major>.<minor>` — `2` and `2.0` select the same major and a host MUST accept both. Only the major selects; a minor in the header is informational, and what pins a minor is `minClientVersion` plus the additive rules.
 
 | Condition | Host behavior |
 | --- | --- |
@@ -41,7 +41,7 @@ A response on any path MUST carry `OpenWOP-Version: <major>.<minor>` naming the 
 
 When both majors are advertised, a v2 client MUST select the highest major it implements that the host lists; a v1 client (no header, `/v1/` paths) is unaffected. `minClientVersion` (axis 15, grammar as axis 1) is a MUST: a host MAY refuse a client below it with `426` `client_version_unsupported`.
 
-`OpenWOP-Version` on a request carries an integer major only; a minor pin is what `minClientVersion` and the additive rules cover (RFC 0172 UQ1, recommended disposition).
+`OpenWOP-Version` on a request selects by MAJOR; the `<major>.<minor>` spelling is accepted because `protocolVersions[]` members are `<major>.<minor>` and a client echoing one back is the obvious thing to do — the conformance driver does exactly that. A minor pin is what `minClientVersion` and the additive rules cover (RFC 0172 UQ1, recommended disposition; the integer-only reading was corrected in Phase 4 after it contradicted the suite that tests it).
 
 ## 2. The 18 version axes (RFC 0172 §B; RFC 0167 §E.1)
 
