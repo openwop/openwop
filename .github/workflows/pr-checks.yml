@@ -73,7 +73,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.conformance == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 20, not 5: `npm install` of the suite spends most of its wall clock inside
+    # npm's peer resolver, because vitest 4.1.x (a RUNTIME dependency of the
+    # suite — F-2026-05-06-C) declares optional peers on `@vitest/ui@5.0.0` and
+    # the other 5.0.0 tooling packages, each of which requires `vitest@5.0.0`.
+    # Resolving that contradiction takes npm 12 about seven minutes and makes
+    # npm 10.9 abort outright (`Cannot read properties of null (reading
+    # 'edgesOut')`). Measured 2026-09-03. This is the real consumer path, so the
+    # guardrail keeps running it unaltered rather than hiding it behind
+    # `--legacy-peer-deps`; the budget is raised until the suite moves to
+    # vitest 5.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
