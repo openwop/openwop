@@ -83,7 +83,7 @@ describe('v2-era-stamp-universal (RFC 0176 §A.7)', () => {
     const advertised = doc['eventLogSchemaVersion'];
     if (advertised === undefined) return softSkip('inapplicable', 'the host advertises no eventLogSchemaVersion');
     if (advertised !== 3) {
-      return softSkip('inapplicable', `the host advertises era ${JSON.stringify(advertised)}, not 3 — it has not moved its writers to the v2 era, which is legitimate through the overlap`);
+      return softSkip('inapplicable', `the host advertises era ${JSON.stringify(advertised)}, not 3 — this scenario checks that the advertised value AGREES with what the creation paths write, whatever that value is. Whether it MUST be 3 is v2-era-key's assertion, not this one; a host reached under target major 2 is a v2 host and persistence.md requires 3 there`);
     }
 
     const created = await http(() => driver.post('/runs', { workflowId: 'conformance-noop', inputs: {} }));
