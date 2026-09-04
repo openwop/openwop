@@ -34538,7 +34538,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-v2-discovery-root-publishes-signingkeys-the-surface-the-rfc-named",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 75,
+      "line": 85,
       "title": "the v2 discovery root publishes signingKeys[] — the surface the RFC named",
       "explicitId": null,
       "citations": [
@@ -34567,7 +34567,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-front-door-gate-verifies-the-attestation-instead-of-inspecting-the-string",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 105,
+      "line": 116,
       "title": "the Front-door gate verifies the attestation instead of inspecting the string",
       "explicitId": null,
       "citations": [
@@ -34586,7 +34586,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-four-signature-outcomes-stay-distinct-collapsing-any-two-restores-the-defect",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 119,
+      "line": 131,
       "title": "the four signature outcomes stay distinct — collapsing any two restores the defect",
       "explicitId": null,
       "citations": [

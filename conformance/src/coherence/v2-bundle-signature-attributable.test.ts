@@ -37,7 +37,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
@@ -51,9 +51,19 @@ const ID_OUTCOMES = `${ID}.outcomes`;
 const SECTION = 'RFC 0168 §E.2';
 const DOC = 'spec/v2/core/conformance.md';
 
-/** The repo root. SCHEMAS_DIR is `<root>/schemas` and is always a string;
- *  V1_DIR is nullable in a published layout, so it is the wrong anchor here. */
+/** The repo root. SCHEMAS_DIR is `<root>/schemas` and is always a string, so it
+ *  is the anchor; V1_DIR is nullable and is used only as the corpus sentinel. */
 const ROOT = join(SCHEMAS_DIR, '..');
+
+/**
+ * This wrapper reads `scripts/check-cut-gates.mjs`, which exists only in a repo
+ * checkout — the published package ships neither `spec/` nor `scripts/`. So it
+ * takes the same corpus gate every coherence scenario takes: when `V1_DIR` is
+ * null the corpus is not present and there is nothing here to check, which is
+ * `inapplicable` (this scenario is about the spec repo, not about any host) and
+ * NOT `blocked` (which would claim evidence went unread on a host).
+ */
+const corpusAbsent = (): boolean => V1_DIR === null;
 
 function readCapabilities(): Record<string, unknown> | null {
   try {
@@ -73,6 +83,7 @@ function readGate(): string | null {
 
 describe('v2-bundle-signature-attributable (RFC 0168 §E.2)', () => {
   it('the v2 discovery root publishes signingKeys[] — the surface the RFC named', () => {
+    if (corpusAbsent()) return softSkip('inapplicable', 'the corpus is not present in this layout — this scenario checks the spec repo, not a host');
     const schema = readCapabilities();
     if (!schema) return softSkip('blocked', 'schemas/v2/capabilities.schema.json is unreadable from this layout');
     const props = (schema['properties'] ?? {}) as Record<string, { items?: Record<string, unknown> }>;
@@ -103,6 +114,7 @@ describe('v2-bundle-signature-attributable (RFC 0168 §E.2)', () => {
   });
 
   it('the Front-door gate verifies the attestation instead of inspecting the string', () => {
+    if (corpusAbsent()) return softSkip('inapplicable', 'the corpus is not present in this layout — this scenario checks the spec repo, not a host');
     const src = readGate();
     if (!src) return softSkip('blocked', 'scripts/check-cut-gates.mjs is unreadable from this layout');
 
@@ -117,6 +129,7 @@ describe('v2-bundle-signature-attributable (RFC 0168 §E.2)', () => {
   });
 
   it('the four signature outcomes stay distinct — collapsing any two restores the defect', () => {
+    if (corpusAbsent()) return softSkip('inapplicable', 'the corpus is not present in this layout — this scenario checks the spec repo, not a host');
     const src = readGate();
     if (!src) return softSkip('blocked', 'scripts/check-cut-gates.mjs is unreadable from this layout');
 
