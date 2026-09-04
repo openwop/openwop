@@ -198,7 +198,7 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "fee4594ef49953953ffcd0b3813300067d16b3e65ebff2aac722034ac9b3f545",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "b30f65bc32a0d1af8dad079d16a00321cc06d38e80c2ab62a3935580b7e2d21b",
+    "spec/v1/core-standard-manifest.json": "322b72364fa918dd3d5dd939d947f7a66a410f7c39a9ffd6dd331c1916e38ceb",
     "spec/v1/deprecations.json": "520d79927a8ed43ccf62c207a7cf6cf7b19b16e00bbbbdf0410667e939c19d85",
     "spec/v1/deprecations.schema.json": "4cdbbb8eb9c0092913a5704c943880f0c8581bcf0f640a7df5a84105d53c8aee",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
@@ -230,5 +230,5 @@
     "spec/v2/profiles.json": "1f0ee40491131cf561ef19a0394c47ba476b4567514fe16befb6cada4a10a5a4",
     "spec/v2/release.json": "d8dc6315c0716621625edad0b150c5daa77e1352984f439ee4d1d8627efeec13"
   },
-  "corpusCommit": "31410460b2ba88550a6f7e948d8621edc4c21dfa"
+  "corpusCommit": "e3480a200a224fb906d0c3f54043b6e229c5dff9"
 }
