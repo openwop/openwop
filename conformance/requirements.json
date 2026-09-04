@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 546,
-    "tests": 2121,
-    "withStableId": 2121,
+    "tests": 2122,
+    "withStableId": 2122,
     "interpolatedTitles": 0,
     "explicitIds": 2057
   },
@@ -12265,7 +12265,7 @@
     {
       "id": "openwop.it.era-key-stamped-v1.a-run-the-host-just-created-carries-eventlogschemaversion",
       "file": "era-key-stamped-v1.test.ts",
-      "line": 74,
+      "line": 75,
       "title": "a run the host just created carries eventLogSchemaVersion",
       "explicitId": null,
       "citations": [
@@ -12284,12 +12284,31 @@
     {
       "id": "openwop.it.era-key-stamped-v1.a-freshly-created-run-is-not-classified-legacy-by-the-host-s-own-rule",
       "file": "era-key-stamped-v1.test.ts",
-      "line": 97,
+      "line": 98,
       "title": "a freshly created run is not classified legacy by the host's own rule",
       "explicitId": null,
       "citations": [
         {
           "section": "spec/v1/version-negotiation.md §Legacy detection",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.era-key-stamped-v1.a-run-the-host-just-created-carries-engineversion-the-legacy-escape-cannot-reach",
+      "file": "era-key-stamped-v1.test.ts",
+      "line": 124,
+      "title": "a run the host just created carries engineVersion — the legacy escape cannot reach it",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": null,
+          "requirement": "every persisted run document MUST carry engineVersion; the \"MAY omit\" escape applies only to legacy runs that predate the contract, and this run was created moments ago",
+          "interpolated": true
+        },
+        {
+          "section": null,
           "requirement": null,
           "interpolated": true
         }

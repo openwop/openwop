@@ -1,7 +1,7 @@
 /**
- * `spec/v1/version-negotiation.md` §Stamping / §Legacy detection — every
- * persisted run document carries `eventLogSchemaVersion`, and a run the host
- * just created is not legacy (suite 2.0.0, target major 1; unaided).
+ * `spec/v1/version-negotiation.md` §Stamping / §Legacy detection — the two
+ * run-document stamping MUSTs, and the legacy rule that makes their absence
+ * actively harmful (suite 2.0.0, target major 1; unaided).
  *
  * The rule is a v1 `MUST` and has been since the contract was written:
  *
@@ -48,9 +48,10 @@ import { req } from '../lib/requirement-ids.js';
 
 const ID_STAMPED = 'openwop.requirement.version-negotiation.era-key-stamped';
 const ID_NOT_LEGACY = 'openwop.requirement.version-negotiation.era-key-not-legacy';
+const ID_ENGINE = 'openwop.requirement.version-negotiation.engine-version-stamped';
 const DOC = 'spec/v1/version-negotiation.md §Stamping';
 
-interface Snapshot { readonly eventLogSchemaVersion?: unknown }
+interface Snapshot { readonly eventLogSchemaVersion?: unknown; readonly engineVersion?: unknown }
 
 /** A run this host created moments ago — the one case where "legacy" cannot apply. */
 async function freshRun(): Promise<{ runId: string } | { skip: string }> {
@@ -117,6 +118,39 @@ describe('era-key-stamped-v1 (version-negotiation.md §Stamping)', () => {
     expect(
       typeof value === 'number' && value >= 2,
       req(ID_NOT_LEGACY, 'spec/v1/version-negotiation.md §Legacy detection', `a run created moments ago MUST NOT be legacy: legacy is "undefined or < 2", and a legacy run is specified to have no event subcollection so readers MUST fall back to the snapshot. Stamping ${JSON.stringify(value)} on a new run instructs a CONFORMING client to ignore the event log this host is serving it — the failure lands on the correct reader and spares the careless one`),
+    ).toBe(true);
+  });
+
+  it('a run the host just created carries engineVersion — the legacy escape cannot reach it', async () => {
+    const r = await freshRun();
+    if ('skip' in r) return softSkip('blocked', r.skip);
+
+    let snap;
+    try {
+      snap = await driver.get(`/v1/runs/${encodeURIComponent(r.runId)}`);
+    } catch {
+      return softSkip('blocked', 'GET /v1/runs/{runId} unreachable');
+    }
+    if (snap.status !== 200) return softSkip('blocked', `GET /v1/runs/{runId} answered ${snap.status}`);
+
+    // §Stamping: "Every persisted run document MUST carry an `engineVersion:
+    // number` field … Servers MAY omit this field on legacy runs that predate
+    // the contract." The escape is scoped to runs that PREDATE the contract, so
+    // it cannot cover a run created seconds ago — which is why this leg creates
+    // one rather than inspecting whatever happens to be in the store.
+    //
+    // Asserted here because nothing else asserts it ON A RUN: version-fold.test.ts
+    // reads engineVersion from the DISCOVERY document, and wasm-pack-load.test.ts
+    // carries it only as a type field. Both mention the identifier, so a grep
+    // suggests coverage that does not exist for this requirement.
+    const value = (snap.json as Snapshot | null)?.engineVersion;
+    expect(
+      value,
+      req(ID_ENGINE, DOC, 'every persisted run document MUST carry engineVersion; the "MAY omit" escape applies only to legacy runs that predate the contract, and this run was created moments ago'),
+    ).not.toBeUndefined();
+    expect(
+      typeof value === 'number',
+      req(ID_ENGINE, DOC, `engineVersion MUST be a number set to the writer engine's CURRENT_ENGINE_VERSION at write time (got ${JSON.stringify(value)})`),
     ).toBe(true);
   });
 });
