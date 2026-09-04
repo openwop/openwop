@@ -23,6 +23,32 @@ The v2 cut renames event types that are persisted, indexed, and unique-keyed in 
 
 Discovery MUST advertise the value the host writes for new runs and nothing else; a host MUST hold one constant for this axis.
 
+**Absent stays era `2` forever; it is never backfilled.** A host MUST NOT rewrite
+historical rows to add an explicit `2`, and a reader MUST NOT require one. The
+trichotomy is sound only because a v2 host stamps `3` on *every* run it creates:
+if any creation path is left unstamped after the cut, the runs it makes are
+indistinguishable from pre-cut runs and every reader will translate them as era
+`2` — a silent wrong read, not an error. So a host with more than one creation
+path MUST begin stamping `3` on **all** of them in the same change; staging that
+across deploys is the failure this rule exists to prevent.
+
+**Collapsing to one constant is a precondition for advertising, not a
+consequence.** A host whose creation paths disagree — one writing `2`, another
+writing nothing — has no single value to advertise, and whatever it publishes is
+false for some of its own runs. Unify the writers first, then advertise. This is
+the same class of constraint as the writer rule below and is ordered the same
+way: the store is made coherent before the wire describes it.
+
+**The snapshot field is required on the wire, and MAY be synthesized.**
+`schemas/v2/run-snapshot.schema.json` requires `eventLogSchemaVersion`, but an
+era-`2` run predates the key and has nothing stored. The snapshot is a read
+projection, so the host MUST supply `2` from the absent-⇒-`2` rule rather than
+fail the read; a missing *stored* era is not a read error. The consequence is
+worth stating plainly: on the wire this field is never absent, so it cannot
+falsify a host's era handling on its own. What falsifies that is the vocabulary
+of the events themselves, which is why the reader and writer rules below carry
+the obligation and this field only reports it.
+
 ## The reader rule
 
 A v2 host reading a run in era `2` MUST translate every event through the codemap at the storage boundary:
