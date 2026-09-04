@@ -4,7 +4,11 @@
   "title": "RunSnapshot",
   "description": "Projected run state returned by `GET /v1/runs/{runId}`. Source is the run's append-only event log (run-event.schema.json) folded through the `RunProjection`. Forward-compat tolerant: readers MUST ignore unknown fields rather than reject.",
   "type": "object",
-  "required": ["runId", "workflowId", "status"],
+  "required": [
+    "runId",
+    "workflowId",
+    "status"
+  ],
   "properties": {
     "runId": {
       "type": "string",
@@ -31,50 +35,82 @@
         "cancelling",
         "cancelled"
       ],
-      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md §openwop-interrupt-external-event` — distinguishes external-event waits from HITL waits at the wire level. `cancelling` (RFC 0094 §B) is the transitional state between a cancel request being accepted and the terminal `cancelled` — `rest-endpoints.md` and the OpenAPI cancel responses already document the transition; a snapshot read during the cancel cascade carries it. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
+      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md \u00a7openwop-interrupt-external-event` \u2014 distinguishes external-event waits from HITL waits at the wire level. `cancelling` (RFC 0094 \u00a7B) is the transitional state between a cancel request being accepted and the terminal `cancelled` \u2014 `rest-endpoints.md` and the OpenAPI cancel responses already document the transition; a snapshot read during the cancel cascade carries it. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
     },
     "compensationStatus": {
       "type": "string",
-      "enum": ["none", "pending", "running", "completed", "partial", "failed", "manual"],
-      "description": "RFC 0151 §D — the run's compensation (unwind) rollup, kept separate from `status` on purpose: `status` is the FORWARD execution state and a closed union exported by the SDK, so RFC 0151 forbids reinterpreting it (there is deliberately no `compensating` run status). OPTIONAL and capability-gated — a host that does not advertise `capabilities.compensation` MUST omit this field; a host that advertises it MUST include it on every snapshot, `none` when no compensation was ever requested for the run. Presence is therefore a wire witness of the advert, and a `none` cannot be read as \"unwind is monitored here\" from a host that would never unwind. Values are the deterministic fold of the six `compensation.*` events over the persisted plan, defined normatively in `spec/v1/compensation.md §\"Run rollup: compensationStatus\"`: `none` (no `compensation.requested`), `pending` (requested, no `started`), `running` (started, plan active — a §E approval pause does NOT change it; the run's own `status: waiting-approval` carries the wait), `completed` (every inverse action completed), `partial` (plan inactive; some completed and some did not — reported, never rounded), `failed` (plan inactive; none completed), `manual` (`manual_intervention_required` recorded and unresolved; takes precedence over `partial`/`failed` while unresolved). Content-free by construction. Resolves RFC 0151 UQ3: `RunSnapshot` (`GET /v1/runs/{runId}`) is the sole owner; debug bundles and the AsyncAPI `run.snapshot` reuse it by `$ref`."
+      "enum": [
+        "none",
+        "pending",
+        "running",
+        "completed",
+        "partial",
+        "failed",
+        "manual"
+      ],
+      "description": "RFC 0151 \u00a7D \u2014 the run's compensation (unwind) rollup, kept separate from `status` on purpose: `status` is the FORWARD execution state and a closed union exported by the SDK, so RFC 0151 forbids reinterpreting it (there is deliberately no `compensating` run status). OPTIONAL and capability-gated \u2014 a host that does not advertise `capabilities.compensation` MUST omit this field; a host that advertises it MUST include it on every snapshot, `none` when no compensation was ever requested for the run. Presence is therefore a wire witness of the advert, and a `none` cannot be read as \"unwind is monitored here\" from a host that would never unwind. Values are the deterministic fold of the six `compensation.*` events over the persisted plan, defined normatively in `spec/v1/compensation.md \u00a7\"Run rollup: compensationStatus\"`: `none` (no `compensation.requested`), `pending` (requested, no `started`), `running` (started, plan active \u2014 a \u00a7E approval pause does NOT change it; the run's own `status: waiting-approval` carries the wait), `completed` (every inverse action completed), `partial` (plan inactive; some completed and some did not \u2014 reported, never rounded), `failed` (plan inactive; none completed), `manual` (`manual_intervention_required` recorded and unresolved; takes precedence over `partial`/`failed` while unresolved). Content-free by construction. Resolves RFC 0151 UQ3: `RunSnapshot` (`GET /v1/runs/{runId}`) is the sole owner; debug bundles and the AsyncAPI `run.snapshot` reuse it by `$ref`."
     },
     "owner": {
       "type": "object",
-      "description": "RFC 0048. The identity triple that owns this run. Redaction-safe — `principal` is an opaque identifier, never PII or credential material. Optional: single-tenant hosts omit it. A principal scoped to one `workspace` MUST NOT read a run owned by another (`run_forbidden`).",
-      "required": ["tenant"],
+      "description": "RFC 0048. The identity triple that owns this run. Redaction-safe \u2014 `principal` is an opaque identifier, never PII or credential material. Optional: single-tenant hosts omit it. A principal scoped to one `workspace` MUST NOT read a run owned by another (`run_forbidden`).",
+      "required": [
+        "tenant"
+      ],
       "properties": {
-        "tenant": { "type": "string", "minLength": 1, "description": "Top-level isolation boundary." },
-        "workspace": { "type": "string", "minLength": 1, "description": "Optional sub-tenant within the tenant (RFC 0048 workspace)." },
-        "principal": { "type": "string", "minLength": 1, "description": "Acting identity (user or agent) — opaque id, never PII." },
+        "tenant": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Top-level isolation boundary."
+        },
+        "workspace": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional sub-tenant within the tenant (RFC 0048 workspace)."
+        },
+        "principal": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Acting identity (user or agent) \u2014 opaque id, never PII."
+        },
         "subject": {
           "$ref": "subject.schema.json",
           "description": "RFC 0165 \u00a7B. OPTIONAL issuer-scoped Subject record for the acting identity. When present: `subject.tenant` MUST equal `tenant`, `subject.subjectId` MUST equal `principal` when both are present, `subject.kind` MUST equal `principalKind` when both are present. A host that emits it on new runs synthesizes `issuer: \"urn:openwop:legacy\"` for runs that predate emission (\u00a7B.3) and copies it verbatim onto forks (\u00a7B.4)."
         },
         "principalKind": {
           "type": "string",
-          "enum": ["user", "agent", "anonymous"],
-          "description": "RFC 0132. The kind of the acting principal. OPTIONAL and EXPLICIT — absent ⇒ unconstrained (today's RFC 0048 behavior; a host that does not distinguish kinds omits it). `anonymous` ⇒ the RFC 0132 §A anonymous-actor rules and the §C default-deny per-surface grant bind: the `principal` id MUST be opaque, origin-bound, ephemeral, non-cross-linkable, non-PII, and never inherit a role or a default-on tool baseline. A host that advertises `capabilities.anonymousActor` and dispatches through a public surface MUST set `anonymous` on the resulting run. Resolves RFC 0048 §Unresolved-Q1 for the anonymous case."
+          "enum": [
+            "user",
+            "agent",
+            "anonymous"
+          ],
+          "description": "RFC 0132. The kind of the acting principal. OPTIONAL and EXPLICIT \u2014 absent \u21d2 unconstrained (today's RFC 0048 behavior; a host that does not distinguish kinds omits it). `anonymous` \u21d2 the RFC 0132 \u00a7A anonymous-actor rules and the \u00a7C default-deny per-surface grant bind: the `principal` id MUST be opaque, origin-bound, ephemeral, non-cross-linkable, non-PII, and never inherit a role or a default-on tool baseline. A host that advertises `capabilities.anonymousActor` and dispatches through a public surface MUST set `anonymous` on the resulting run. Resolves RFC 0048 \u00a7Unresolved-Q1 for the anonymous case."
         }
       },
       "additionalProperties": false
     },
     "currentNodeId": {
       "type": "string",
-      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input` / `waiting-external`) — identifies which node holds the interrupt."
+      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input` / `waiting-external`) \u2014 identifies which node holds the interrupt."
     },
-    "startedAt": { "type": "string", "format": "date-time" },
-    "completedAt": { "type": "string", "format": "date-time" },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
     "agent": {
       "$ref": "agent-ref.schema.json",
-      "description": "Optional run-level agent identity (Multi-Agent Shift Phase 1). When the run is driven by a single agent, this field carries that agent's `AgentRef`. In supervisor-orchestrated runs (Phase 5), this field rotates as workers hand off — it always carries the active worker for the current node. See `runOrchestrator` for the run-lifetime supervisor identity. Absent for runs with no agent provenance (legacy single-actor host)."
+      "description": "Optional run-level agent identity (Multi-Agent Shift Phase 1). When the run is driven by a single agent, this field carries that agent's `AgentRef`. In supervisor-orchestrated runs (Phase 5), this field rotates as workers hand off \u2014 it always carries the active worker for the current node. See `runOrchestrator` for the run-lifetime supervisor identity. Absent for runs with no agent provenance (legacy single-actor host)."
     },
     "runOrchestrator": {
       "$ref": "agent-ref.schema.json",
-      "description": "Optional orchestrator-supervisor identity (Multi-Agent Shift Phase 5). When set, this agent owns dispatch decisions across the run's lifetime; `runOrchestrator.decided` events emitted during the run carry this agent's `agentId`. Distinct from `agent` — `agent` rotates with each worker; `runOrchestrator` is set at run start (or first `core.orchestrator.supervisor` node) and MUST NOT change for the run's lifetime. In single-agent runs (no supervisor), this field is absent; in supervisor runs both fields MAY co-exist."
+      "description": "Optional orchestrator-supervisor identity (Multi-Agent Shift Phase 5). When set, this agent owns dispatch decisions across the run's lifetime; `runOrchestrator.decided` events emitted during the run carry this agent's `agentId`. Distinct from `agent` \u2014 `agent` rotates with each worker; `runOrchestrator` is set at run start (or first `core.orchestrator.supervisor` node) and MUST NOT change for the run's lifetime. In single-agent runs (no supervisor), this field is absent; in supervisor runs both fields MAY co-exist."
     },
     "nodeStates": {
       "type": "object",
-      "description": "Per-node state map. Keys are nodeIds; values are implementation-shaped state objects. Spec doesn't constrain the inner shape — see version-negotiation.md §node-states."
+      "description": "Per-node state map. Keys are nodeIds; values are implementation-shaped state objects. Spec doesn't constrain the inner shape \u2014 see version-negotiation.md \u00a7node-states."
     },
     "variables": {
       "type": "object",
@@ -87,26 +123,40 @@
     "error": {
       "type": "object",
       "description": "Set on terminal `failed`. Structured so consumers can route on code without parsing message text.",
-      "required": ["code", "message"],
+      "required": [
+        "code",
+        "message"
+      ],
       "properties": {
-        "code": { "type": "string", "minLength": 1 },
-        "message": { "type": "string", "minLength": 1 },
-        "details": { "type": "object" }
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "details": {
+          "type": "object"
+        }
       },
       "additionalProperties": false
     },
     "engineVersion": {
-      "type": "string",
-      "description": "Engine version the run was started under. Used by the projection for forward-compat folds."
+      "type": "number",
+      "description": "Engine version the run was started under. Used by the projection for forward-compat folds. TYPE CORRECTED 2026-09-04: this was `string`, contradicting version-negotiation.md \u00a7Stamping \u2014 \"Every persisted run document MUST carry an `engineVersion: number` field\" \u2014 so a host obeying the prose emitted a document failing its own schema, and a host obeying the schema violated the MUST. Unimplementable as written. `spec/v1/extensions.json` already described the axis as \"a number, not a feature\", and schemas/v2 types it `integer` (RFC 0172 \u00a7B axis 3), so prose, register and v2 agreed and only this file dissented. Safe to correct: measured on both production hosts 2026-09-04, NEITHER emits the field at all, so no existing document is invalidated."
     },
     "eventLogSchemaVersion": {
       "type": "integer",
       "minimum": 0,
-      "description": "Per-run event-log subcollection schema version. See version-negotiation.md."
+      "description": "Per-run event-log subcollection schema version. See version-negotiation.md. `minimum: 0` is DELIBERATE and MUST NOT be raised to 2 in v1: \u00a7Legacy detection identifies a legacy run as one whose value is \"undefined or < 2\", so a legacy document carrying 0 or 1 is contemplated by the contract and MUST still validate. schemas/v2 uses `minimum: 2` correctly, because the v2 era key admits only 2 and 3."
     },
     "tags": {
       "type": "array",
-      "items": { "type": "string", "maxLength": 256 },
+      "items": {
+        "type": "string",
+        "maxLength": 256
+      },
       "maxItems": 100,
       "description": "Caller-supplied tags from `RunOptions.tags`."
     },
@@ -120,24 +170,44 @@
     },
     "metrics": {
       "type": "object",
-      "description": "Aggregate run-level metrics. Forward-compat: readers MUST tolerate missing/unknown fields. Fields are populated lazily as the engine emits them — absence does NOT mean zero. Implementation-specific fields (e.g., legacy `cost: number` estimates) MAY appear alongside the spec-canonical fields below.",
+      "description": "Aggregate run-level metrics. Forward-compat: readers MUST tolerate missing/unknown fields. Fields are populated lazily as the engine emits them \u2014 absence does NOT mean zero. Implementation-specific fields (e.g., legacy `cost: number` estimates) MAY appear alongside the spec-canonical fields below.",
       "properties": {
         "openwopCost": {
           "type": "object",
-          "description": "Spec-canonical cost rollup aggregated from per-node `recordCost()` calls. Keys mirror the `openwop.cost.*` OTel attribute allowlist (see `observability.md` §Cost attribution). Named `openwopCost` rather than `cost` because some implementations carry a legacy `metrics.cost: number` estimate that predates the typed rollup; using a distinct name avoids collision. Multi-provider runs report `provider`/`model` of the LAST contributing call; SDKs that need per-call detail SHOULD subscribe to OTel spans instead of reading this rollup.",
+          "description": "Spec-canonical cost rollup aggregated from per-node `recordCost()` calls. Keys mirror the `openwop.cost.*` OTel attribute allowlist (see `observability.md` \u00a7Cost attribution). Named `openwopCost` rather than `cost` because some implementations carry a legacy `metrics.cost: number` estimate that predates the typed rollup; using a distinct name avoids collision. Multi-provider runs report `provider`/`model` of the LAST contributing call; SDKs that need per-call detail SHOULD subscribe to OTel spans instead of reading this rollup.",
           "properties": {
-            "usd": { "type": "number", "minimum": 0, "description": "Total USD cost across all node-level recordCost emissions." },
+            "usd": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Total USD cost across all node-level recordCost emissions."
+            },
             "tokens": {
               "type": "object",
               "properties": {
-                "input": { "type": "integer", "minimum": 0 },
-                "output": { "type": "integer", "minimum": 0 }
+                "input": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "output": {
+                  "type": "integer",
+                  "minimum": 0
+                }
               },
               "additionalProperties": false
             },
-            "model": { "type": "string", "description": "Model identifier of the most recent recordCost emission (e.g., `claude-opus-4-7`). For multi-model runs, surfaces the last value." },
-            "provider": { "type": "string", "description": "Normalized provider name (e.g., `anthropic`, `openai`, `gemini`)." },
-            "duration_ms": { "type": "integer", "minimum": 0, "description": "Sum of per-call durations across all recordCost emissions in this run." }
+            "model": {
+              "type": "string",
+              "description": "Model identifier of the most recent recordCost emission (e.g., `claude-opus-4-7`). For multi-model runs, surfaces the last value."
+            },
+            "provider": {
+              "type": "string",
+              "description": "Normalized provider name (e.g., `anthropic`, `openai`, `gemini`)."
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Sum of per-call durations across all recordCost emissions in this run."
+            }
           },
           "additionalProperties": false
         }
