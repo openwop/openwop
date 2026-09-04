@@ -4,7 +4,7 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0178                                                            |
 | **Title**         | v2 assurance registers and deprecation machinery: `spec/v1/deprecations.json` becomes normative — every row generates `deprecated: true` and `x-openwop-remove-in` onto its schema and API nodes, and a removal date that has passed with the surface present fails the merge gate; `gaps.json` rows carry a real witness class and a requirement id, the per-RFC `G<n>` becomes an alias row with a scheduled removal, and the RFC falsifiability tables become the same data with a parser gate; cross-repo evidence stays resolved; schema and API hygiene (README maturity column, "kept in sync" mirrors, redocly suppressions, a stale artifact-type gap row) is fixed rather than carried into `schemas/v2/` |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-03                                                      |
 | **Updated**       | 2026-09-03 (`Draft → Active` in the filing PR. **Comment window waived** under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`; RFC 0001 §5 cross-org rule not yet active; RFC 0147 §A.6 overridden and named in the parent, RFC 0167. Adversarial review recorded below.) · 2026-09-03 (filed). Evidence tier: corpus gate — no host tier is claimed at the release candidate (GOVERNANCE.md §"Acceptance evidence tiers"; the openwop-app bundle is a Phase 4 entry item). |

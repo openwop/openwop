@@ -35,6 +35,7 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve as resolvePath, join } from 'node:path';
+import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -320,11 +321,22 @@ function claimedProfilesFor(doc: DiscoveryPayload): string[] {
  * registry is genuinely absent from the layout, and says so.
  */
 function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): string[] {
-  const candidates = [
+  // Resolve the peer the way `lib/paths.ts` does — through Node's resolver from
+  // this package — instead of guessing directory shapes. Hand-rolled candidates
+  // found the registry in a repo checkout and missed it in every published
+  // install, where npm hoists the peer to a SIBLING package dir: the probe that
+  // walked one level up landed on the `@openwop/` scope directory, not a
+  // package, so a real host run silently claimed nothing.
+  const candidates = [];
+  try {
+    const req = createRequire(resolvePath(conformanceRoot, 'package.json'));
+    candidates.push(resolvePath(dirname(req.resolve('@openwop/spec-artifacts/package.json')), 'spec', 'v2', 'profiles.json'));
+  } catch { /* not installed as a package; the repo-layout candidates below */ }
+  candidates.push(
     resolvePath(conformanceRoot, 'spec', 'v2', 'profiles.json'),
     resolvePath(conformanceRoot, '..', 'spec', 'v2', 'profiles.json'),
-    resolvePath(conformanceRoot, 'node_modules', '@openwop', 'spec-artifacts', 'spec', 'v2', 'profiles.json'),
-  ];
+    resolvePath(conformanceRoot, '..', 'spec-artifacts', 'spec', 'v2', 'profiles.json'),
+  );
   const found = candidates.find((c) => existsSync(c));
   if (found === undefined) {
     process.stderr.write('openwop-conformance --certify: spec/v2/profiles.json not found in this layout; claimedProfiles is empty (RFC 0169 §C.1).\n');

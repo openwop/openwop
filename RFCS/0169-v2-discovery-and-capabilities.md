@@ -4,7 +4,7 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0169                                                            |
 | **Title**         | v2 discovery and capabilities: every family is one record type `{status, since, until?, witness, …facets}`; the discovery root is closed; the four unschema'd registries collapse into one declaration file that generates the schema, the pack peer-dependency identifiers, and the spec anchors; profiles are derived predicates in one generated registry with a two-axis maturity and an `externally-gated` disposition; the wrapper, the dotted mirror, `contractProvenance`, `Capabilities-Etag`, `auth.subjectLinking`, the bare `supported: true` in A2A/MCP, `replay.fork`, and the `openwop-core` alias are removed |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-03                                                      |
 | **Updated**       | 2026-09-03 (`Draft → Active` in the filing PR. **Comment window waived** under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`; RFC 0001 §5 cross-org rule not yet active; RFC 0147 §A.6 overridden and named in the parent, RFC 0167. Adversarial review recorded in §"Adversarial review".) · 2026-09-03 (filed). Evidence tier: corpus gate — no host tier is claimed at the release candidate (GOVERNANCE.md §"Acceptance evidence tiers"; the openwop-app bundle is a Phase 4 entry item). |
