@@ -92,7 +92,13 @@ A consumer that vendors any file from `schemas/`, `api/`, or `spec/` MUST pin to
 
 ## 5. The overlap (RFC 0167 §B.5; RFC 0176)
 
-Through the overlap a host MUST advertise both majors (§1.1), MUST emit `OpenWOP-Version` on every response (§1.4), and MUST serve `/.well-known/openwop` as one resource whose representation the request header selects (`capabilities.md`). The dual-stack scenario creates one run through `/v1/runs` with no header and reads it through `/runs` with `OpenWOP-Version: 2`; the response headers name the contract used. The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]` drops the `1.<n>` member and every alias carrying the `v1-end-of-support` trigger is removed.
+Through the overlap a host MUST advertise both majors (§1.1), MUST emit `OpenWOP-Version` on every response (§1.4), and MUST serve `/.well-known/openwop` as one resource whose representation the request header selects (`capabilities.md`). The dual-stack scenario creates one run through `/v1/runs` with no header and reads it through `/runs` with `OpenWOP-Version: 2`; the response headers name the contract used.
+
+**A run minted under major 1 and read under major 2 MUST be named by its tenant-bound projection** `<tenantId>/<the v1 id>` (`identity.md` §5). A host MUST NOT return the bare v1 id in a major-2 response body. This paragraph is normative because its absence was a real defect: until 2026-09-04 §5 described the overlap's shape and said nothing about the identifier, so a conformance check asserted byte-equality with the v1 id, a host implemented `identity.md` §5 instead, and the two could not both hold. Neither reading was wrong about §5 — §5 had no reading.
+
+The projection is mandatory rather than optional for a reason that is not stylistic. A tenant-bound id carries the tenant segment that §5's `403 id_tenant_mismatch` check reads. **A bare, unprefixed id has no tenant segment, so the mandatory cross-tenant refusal cannot run on it at all.** Admitting a legacy unprefixed form under major 2 would therefore create a class of identifiers — exactly the long-lived ones, carried over from v1 — on which major 2's tenant-isolation check is structurally inapplicable. The grammar in `ids.schema.json` has no legacy branch, and it MUST NOT acquire one.
+
+The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]` drops the `1.<n>` member and every alias carrying the `v1-end-of-support` trigger is removed.
 
 ## 6. Migration rows (RFC 0172)
 
