@@ -31,7 +31,9 @@ import { OtelCollector, setCollector } from './lib/otel-collector.js';
 import { McpFakeServer, setMcpFakeServer } from './lib/mcp-fake-server.js';
 import { A2AFakePeer, setA2AFakePeer } from './lib/a2a-fake-peer.js';
 import { afterAll, afterEach, beforeAll, beforeEach, expect } from 'vitest';
-import { basename } from 'node:path';
+import { basename, join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { PKG_ROOT_PATH } from './lib/paths.js';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
 import { requirementIdForFile, resolveFileRecord, type FileTestState } from './lib/scenario-disposition.js';
 import { softSkipDisposition } from './lib/soft-skip.js';
@@ -243,6 +245,34 @@ function _assertionCalls(): number {
     return 0;
   }
 }
+
+/**
+ * (file, title) → the explicit `req()` id the scenario cites, read from the
+ * generated `requirements.json` that ships with the package. Only ids under
+ * `openwop.requirement.` are returned: a per-`it` id is what the allocator
+ * would mint anyway.
+ */
+let _registry: Map<string, string> | undefined;
+function registeredExplicitId(file: string, title: string): string | null {
+  if (_registry === undefined) {
+    _registry = new Map();
+    for (const root of [PKG_ROOT_PATH, join(PKG_ROOT_PATH, '..')]) {
+      const path = join(root, 'requirements.json');
+      if (!existsSync(path)) continue;
+      try {
+        const doc = JSON.parse(readFileSync(path, 'utf8')) as { records?: Array<{ file?: unknown; title?: unknown; explicitId?: unknown }> };
+        for (const r of doc.records ?? []) {
+          if (typeof r.file === 'string' && typeof r.title === 'string' && typeof r.explicitId === 'string' && r.explicitId.startsWith('openwop.requirement.')) {
+            _registry.set(`${r.file}\u0000${r.title}`, r.explicitId);
+          }
+        }
+      } catch { /* an unreadable registry simply yields no fallback */ }
+      break;
+    }
+  }
+  return _registry.get(`${file}\u0000${title}`) ?? null;
+}
+
 function _fileOf(task: { file?: { filepath?: string; name?: string } } | undefined): string | null {
   const f = task?.file?.filepath ?? task?.file?.name;
   return typeof f === 'string' && f.length > 0 ? basename(f) : null;
@@ -297,7 +327,13 @@ afterEach(({ task }) => {
     takeExplicitRequirementId();
     return;
   }
-  const explicit = takeExplicitRequirementId();
+  // A leg that soft-skips before its first assertion never calls `req()`, so the
+  // runtime override is empty and the row lands under the per-`it` id instead of
+  // the requirement the leg is about — leaving that requirement with no row in
+  // any bundle, which is the §F Witness gate's subject. The generated registry
+  // already knows (file, title) → explicit id statically, so fall back to it and
+  // the disposition is attributed either way.
+  const explicit = takeExplicitRequirementId() ?? registeredExplicitId(file, task.name);
   const alloc = _itAllocators.get(file) ?? new ItIdAllocator();
   _itAllocators.set(file, alloc);
   const itId = explicit ?? alloc.allocate(file, task.name);
