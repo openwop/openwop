@@ -257,10 +257,13 @@ jobs:
           #
           # So: wait on the PACKUMENT (authoritative — it is what publish writes)
           # and only then attempt the install. The two failures are now distinct.
-          # Budget is 10 minutes because the measured delay is ~4 (rc.29 published
-          # 20:48:39, visible 20:52:48; rc.31 published ~21:24, visible ~21:28).
-          # The old 3-minute budget was set by guess against a delay already
-          # measured at four.
+          # Budget is 20 minutes. Measured suite-packument delays in one evening:
+          # rc.29 ~4 min, rc.31 ~4, rc.34 210 s, rc.35 180 s, rc.36 480 s — the
+          # last one 2 minutes inside the 10-minute budget that had itself been
+          # set from a 210 s measurement. Every earlier budget on this job was
+          # set below a value already observed; this one is set at 2.5x the
+          # worst observed, and on the happy path it exits the moment the
+          # packument appears, so the width costs nothing.
           # ONE PACKUMENT IS NOT ENOUGH. rc.33 failed here with the suite's
           # packument visible and its exact-pinned peer's not yet — the two
           # publish jobs finish minutes apart and the registry propagates each
@@ -275,12 +278,12 @@ jobs:
           pkjson() { curl -sf "https://registry.npmjs.org/${1/\//%2F}"; }
           hasver() { node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{try{process.exit(JSON.parse(b).versions[process.argv[1]]?0:1)}catch{process.exit(1)}})" "$2"; }
           seen=""
-          for i in $(seq 1 40); do
+          for i in $(seq 1 80); do
             if pkjson "$PKG" | hasver "$PKG" "$VER"; then seen=yes; echo "packument carries $PKG@$VER after $((i*15))s"; break; fi
             sleep 15
           done
           if [ -z "$seen" ]; then
-            echo "::error::$PKG@$VER never appeared on the registry after 10 minutes — the PUBLISH did not take effect."
+            echo "::error::$PKG@$VER never appeared on the registry after 20 minutes — the PUBLISH did not take effect."
             exit 1
           fi
           PEER=@openwop/spec-artifacts
@@ -288,12 +291,12 @@ jobs:
           if [ -z "$PEERVER" ]; then echo "::error::$PKG@$VER declares no $PEER peer — the manifest is not the one this repo builds."; exit 1; fi
           echo "$PKG@$VER pins $PEER@$PEERVER"
           seen=""
-          for i in $(seq 1 40); do
+          for i in $(seq 1 80); do
             if pkjson "$PEER" | hasver "$PEER" "$PEERVER"; then seen=yes; echo "packument carries $PEER@$PEERVER after $((i*15))s"; break; fi
             sleep 15
           done
           if [ -z "$seen" ]; then
-            echo "::error::$PEER@$PEERVER — the exact peer $PKG@$VER pins — never appeared on the registry after 10 minutes. This is the rc.20-rc.28 defect: the suite is published and cannot be installed."
+            echo "::error::$PEER@$PEERVER — the exact peer $PKG@$VER pins — never appeared on the registry after 20 minutes. This is the rc.20-rc.28 defect: the suite is published and cannot be installed."
             exit 1
           fi
 
