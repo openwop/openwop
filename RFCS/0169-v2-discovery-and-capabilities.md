@@ -109,12 +109,12 @@ v2 scenarios (suite 2.0.0, C.1 packaging): `capabilities-root-closed` (unaided: 
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 record shape required fields | discovery document | the suite, unaided | witnessable — unaided |
-| §A.1/§A.3 `until` rules | discovery document with `until` in the past | the suite (fixture) / a host | witnessable — unaided |
-| §A.2 no `supported` | schema validation | the suite | witnessable — unaided |
-| §A.4 closed root, one extension key with a grammar | schema validation of an injected key | the suite | witnessable — unaided |
+| §A.1 record shape required fields | discovery document — `openwop.requirement.0169.capability-record-shape` | the suite, unaided | witnessable — unaided |
+| §A.1/§A.3 `until` rules | discovery document with `until` in the past — `openwop.requirement.0169.capability-record-shape` | the suite (fixture) / a host | witnessable — unaided |
+| §A.2 no `supported` | schema validation — `openwop.requirement.0169.capability-record-shape` | the suite | witnessable — unaided |
+| §A.4 closed root, one extension key with a grammar | schema validation of an injected key — `openwop.requirement.0169.capabilities-root-closed` | the suite | witnessable — unaided |
 | §B.2 declaration parity | corpus gate | the corpus gate | witnessable — unaided (corpus) |
-| §C.1 no root `profiles[]` | schema validation | the suite | witnessable — unaided |
+| §C.1 no root `profiles[]` | schema validation — `openwop.requirement.0169.capabilities-root-closed`, `openwop.requirement.0169.profiles-derived-only` | the suite | witnessable — unaided |
 | §C.2 adoption axis derived from bundles | generated registry vs INTEROP-MATRIX | the corpus gate | witnessable — unaided (corpus) |
 | §C.4 externally-gated never `stable` | generated registry | the corpus gate | witnessable — unaided (corpus) |
 

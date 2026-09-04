@@ -84,7 +84,7 @@ Corpus gates, not host scenarios: `check-rfc-status-coherence.mjs` (supersession
 | §B.2 waiver authority | `check-waiver-authority.mjs` | the corpus gate; this RFC is the first subject | witnessable — unaided (corpus) |
 | §C.1 register location | `check-rfc-status-coherence.mjs` | the corpus gate | witnessable — unaided (corpus) |
 | §C.2 self-carry ratchet; CLOSED-prose self-carry refused | `check-rfc-status-coherence.mjs` | the corpus gate | witnessable — unaided (corpus) |
-| §D.1 banner agrees with the RFC | `check-rfc-status-coherence.mjs` | the corpus gate | witnessable — unaided (corpus) |
+| §D.1 banner agrees with the RFC | `check-rfc-status-coherence.mjs` — `openwop.requirement.0172.release-identity` | the corpus gate | witnessable — unaided (corpus) |
 | §E.2 core budget; `ext/` headers | `check-core-budget.mjs` (Phase 3) | the corpus gate | witnessable — unaided (corpus) |
 | §B.4 the v1 end date is computed from the matrix | Phase 5 script | the steward | witnessable — gated on the matrix |
 

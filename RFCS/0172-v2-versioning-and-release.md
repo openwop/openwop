@@ -115,12 +115,12 @@ v2 scenarios (suite 2.0.0): `dual-stack-negotiation` (gated on a host advertisin
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 `preferredVersion` ∈ `protocolVersions[]` | discovery document | the suite, unaided | witnessable — unaided |
-| §A.3 header selects a listed major; unlisted ⇒ `406`; wrong header on `/v1/` ⇒ `400` | response status and headers | the suite, on a dual-advertising host | witnessable — gated on two majors |
-| §A.3 absent header ⇒ `preferredVersion` | response `OpenWOP-Version` | the suite, unaided | witnessable — unaided |
-| §A.4 response header equals the contract used | dual-stack scenario | the suite | witnessable — gated |
-| §A.5 `minClientVersion` refusal | `426` | the suite, gated on a host that sets it | witnessable — gated |
-| §B.3 `engineVersion` integer everywhere | schema validation of snapshot and events | the suite, unaided | witnessable — unaided |
+| §A.1 `preferredVersion` ∈ `protocolVersions[]` | discovery document — `openwop.requirement.0172.preferred-version-default` | the suite, unaided | witnessable — unaided |
+| §A.3 header selects a listed major; unlisted ⇒ `406`; wrong header on `/v1/` ⇒ `400` | response status and headers — `openwop.requirement.0172.dual-stack-negotiation` | the suite, on a dual-advertising host | witnessable — gated on two majors |
+| §A.3 absent header ⇒ `preferredVersion` | response `OpenWOP-Version` — `openwop.requirement.0172.preferred-version-default` | the suite, unaided | witnessable — unaided |
+| §A.4 response header equals the contract used | dual-stack scenario — `openwop.requirement.0172.dual-stack-negotiation`, `openwop.requirement.0171.header-scheme` | the suite | witnessable — gated |
+| §A.5 `minClientVersion` refusal | `426` — `openwop.requirement.0172.min-client-version` | the suite, gated on a host that sets it | witnessable — gated |
+| §B.3 `engineVersion` integer everywhere | schema validation of snapshot and events — `openwop.requirement.0170.id-grammar`, `openwop.requirement.0171.event-type-closed` | the suite, unaided | witnessable — unaided |
 | §C.2 path parity; no seam in canonical OpenAPI | corpus gate | the corpus gate | witnessable — unaided (corpus) |
 | §D.1 generated versions; tarball digest | corpus gate; publish preflight | the corpus gate | witnessable — unaided (corpus) |
 

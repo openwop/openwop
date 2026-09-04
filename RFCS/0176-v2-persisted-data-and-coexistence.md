@@ -112,14 +112,14 @@ v2 scenarios (suite 2.0.0): `v1-events-translated` (gated on the seams profile t
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 codemap is the only mapping | corpus gate + `v1-events-translated` | the corpus gate; the suite via seams | witnessable — gated |
-| §A.2 absent ⇒ `2`; v2 writes `3` | run snapshot | the suite, unaided (`eventLogSchemaVersion` on a new run) | witnessable — unaided |
-| §A.3 translated read with sequence preserved; unmapped refused | poll/SSE/fork; `event_type_unmapped` | the suite via the seams profile | seam-gated |
-| §A.5 fork a v1 run byte-equivalent | fork prefix | the suite via seams | seam-gated |
-| §B.1 continue or cancel with the named reason | `run.cancelled` payload | the suite via seams | seam-gated |
-| §C.1 one resource, header-selected | two GETs | the suite, unaided on a dual host | witnessable — gated on two majors |
-| §C.2 aliases absent from v2 | the v2 representation | the suite, unaided | witnessable — unaided |
-| §D.2 v1-signed delivery accepted | receiver acceptance | the suite, gated on `webhooks` | witnessable — gated |
+| §A.1 codemap is the only mapping | corpus gate + `v1-events-translated` — `openwop.requirement.0176.v1-events-translated` | the corpus gate; the suite via seams | witnessable — gated |
+| §A.2 absent ⇒ `2`; v2 writes `3` | run snapshot — `openwop.requirement.0176.era-key` | the suite, unaided (`eventLogSchemaVersion` on a new run) | witnessable — unaided |
+| §A.3 translated read with sequence preserved; unmapped refused | poll/SSE/fork; `event_type_unmapped` — `openwop.requirement.0176.v1-events-translated`, `openwop.requirement.0176.unmapped-type-refused` | the suite via the seams profile | seam-gated |
+| §A.5 fork a v1 run byte-equivalent | fork prefix — `openwop.requirement.0176.fork-a-v1-run` | the suite via seams | seam-gated |
+| §B.1 continue or cancel with the named reason | `run.cancelled` payload — `openwop.requirement.0176.pinned-run-disposition` | the suite via seams | seam-gated |
+| §C.1 one resource, header-selected | two GETs — `openwop.requirement.0176.well-known-one-resource` | the suite, unaided on a dual host | witnessable — gated on two majors |
+| §C.2 aliases absent from v2 | the v2 representation — `openwop.requirement.0176.well-known-one-resource.v2-representation` | the suite, unaided | witnessable — unaided |
+| §D.2 v1-signed delivery accepted | receiver acceptance — `openwop.requirement.0176.v1-signed-webhook-accepted` | the suite, gated on `webhooks` | witnessable — gated |
 | §E.1 tag pinned | evidence manifest | the corpus gate over the cross-repo manifest | witnessable — unaided (corpus) |
 
 ## Adversarial review

@@ -104,17 +104,17 @@ v2 scenarios (suite 2.0.0): `manifest-ceiling-refused` (gated on `packs`: an unb
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 unbounded/`<2.0.0` refused at install | `pack_engine_unsupported` | the suite, gated on `packs` | witnessable — gated |
+| §A.1 unbounded/`<2.0.0` refused at install | `pack_engine_unsupported` — `openwop.requirement.0177.manifest-ceiling-refused` | the suite, gated on `packs` | witnessable — gated |
 | §A.2 `registry/v2/` verifies under the same keys | registry gate | the registry's `registry-check.sh` | witnessable — unaided (corpus) |
 | §A.3 `endpoints` names both trees | the well-known registry document | the suite, unaided | witnessable — unaided |
-| §B.1 undeclared key refused; facet paths not identifiers | `pack_peer_dependency_undefined` | the suite, gated on `packs` | witnessable — gated |
-| §B.2 alias table generated, not hand-kept | `check-declaration.mjs` over the manifests | the corpus gate | witnessable — unaided (corpus) |
-| §C.2 hatch on `agents[]`/`prompts[]` | install accepts the `x-` field | the suite, gated on `packs` | witnessable — gated |
-| §C.3–§C.5 one scheme, `keyId`, `kind` | schema + registry gate | the corpus gate | witnessable — unaided (corpus) |
-| §D.1 conflict fails closed | `connection_provider_conflict` | the suite via the RFC 0095 `install`/`resolve` seams | seam-gated |
-| §E.1 exact pin | refusal at register | the suite, gated on `workflowChains` | witnessable — gated |
+| §B.1 undeclared key refused; facet paths not identifiers | `pack_peer_dependency_undefined` — `openwop.requirement.0177.peer-dependency-declared` | the suite, gated on `packs` | witnessable — gated |
+| §B.2 alias table generated, not hand-kept | `check-declaration.mjs` over the manifests — `openwop.requirement.0169.declaration-parity` | the corpus gate | witnessable — unaided (corpus) |
+| §C.2 hatch on `agents[]`/`prompts[]` | install accepts the `x-` field — `openwop.requirement.0177.manifest-hatch-carried` | the suite, gated on `packs` | witnessable — gated |
+| §C.3–§C.5 one scheme, `keyId`, `kind` | schema + registry gate — `openwop.requirement.0177.one-signing-scheme` | the corpus gate | witnessable — unaided (corpus) |
+| §D.1 conflict fails closed | `connection_provider_conflict` — `openwop.requirement.0177.provider-conflict` | the suite via the RFC 0095 `install`/`resolve` seams | seam-gated |
+| §E.1 exact pin | refusal at register — `openwop.requirement.0177.chain-pin-exact` | the suite, gated on `workflowChains` | witnessable — gated |
 | §E.2 reference counting | host-side lifecycle | the suite via the chain seams | seam-gated |
-| §E.4 `when` is the edge-condition grammar | schema + a form pack fixture | the suite, gated on `forms` (no reference host: `host-pending`) | witnessable — gated |
+| §E.4 `when` is the edge-condition grammar | schema + a form pack fixture — `openwop.requirement.0177.form-when-reuses-edge-conditions` | the suite, gated on `forms` (no reference host: `host-pending`) | witnessable — gated |
 
 ## Adversarial review
 

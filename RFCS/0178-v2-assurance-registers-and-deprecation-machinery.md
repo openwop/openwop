@@ -94,7 +94,7 @@ Corpus gates: `check-falsifiability.mjs`, `check-gap-contradictions.mjs`, `check
 | §B.1 v2 rows carry witness + requirementId | `generate-gaps.mjs --check` | the corpus gate | witnessable — unaided (corpus) |
 | §B.3 a contradicting gap fails | `check-gap-contradictions.mjs` | the corpus gate | witnessable — unaided (corpus) |
 | §C.1 every child's table parses and resolves | `check-falsifiability.mjs` | the corpus gate | witnessable — unaided (corpus) |
-| §E.1 README maturity words agree with RFC status | `check-rfc-status-coherence.mjs` | the corpus gate | witnessable — unaided (corpus) |
+| §E.1 README maturity words agree with RFC status | `check-rfc-status-coherence.mjs` — `openwop.requirement.0172.release-identity` | the corpus gate | witnessable — unaided (corpus) |
 
 ## Adversarial review
 

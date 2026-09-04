@@ -114,17 +114,17 @@ v2 scenarios (suite 2.0.0): `owner-subject-required` (unaided: a snapshot withou
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 subject required, principal absent | snapshot schema validation | the suite, unaided | witnessable — unaided |
-| §A.2 lane/kind pairing; actor depth ≤ 4 | schema validation | the suite, unaided | witnessable — unaided |
-| §A.3 legacy stamp on pre-v2 reads; never rewritten | fork-a-v1-run scenario | a host with history (C.9) | witnessable — gated |
-| §B.1 pipeline reason codes | refusal envelopes | the suite via seams (§20 family) | seam-gated |
-| §B.2 issuers advertised per lane | discovery document | the suite, unaided | witnessable — unaided |
-| §B.3 revocation per lane | a revoked credential is refused | the suite via a per-lane revoke seam | seam-gated |
-| §B.4 assurance floor + downgrade audit | refusal + audit fact | the suite via the workload seam | seam-gated |
-| §C.1 link record shape; no legacy/anon in a link | schema + seam | the suite via the SCIM/SAML seams | seam-gated |
-| §D.1 id grammar; tenant binding refused | responses; a crafted foreign id | the suite, unaided | witnessable — unaided |
-| §D.3 key grammar and entropy floor | `idempotency_key_invalid` | the suite, unaided | witnessable — unaided |
-| §E.1 token scheme | refusal of an unprefixed or unknown-kid token | the suite, unaided | witnessable — unaided |
+| §A.1 subject required, principal absent | snapshot schema validation — `openwop.requirement.0170.owner-subject-required` | the suite, unaided | witnessable — unaided |
+| §A.2 lane/kind pairing; actor depth ≤ 4 | schema validation — `openwop.requirement.0170.owner-subject-required` | the suite, unaided | witnessable — unaided |
+| §A.3 legacy stamp on pre-v2 reads; never rewritten | fork-a-v1-run scenario — `openwop.requirement.0176.fork-a-v1-run` | a host with history (C.9) | witnessable — gated |
+| §B.1 pipeline reason codes | refusal envelopes — `openwop.requirement.0170.assurance-downgrade-audited`, `openwop.requirement.0170.revocation-honored` | the suite via seams (§20 family) | seam-gated |
+| §B.2 issuers advertised per lane | discovery document — `openwop.requirement.0170.lane-issuer-advertised` | the suite, unaided | witnessable — unaided |
+| §B.3 revocation per lane | a revoked credential is refused — `openwop.requirement.0170.revocation-honored` | the suite via a per-lane revoke seam | seam-gated |
+| §B.4 assurance floor + downgrade audit | refusal + audit fact — `openwop.requirement.0170.assurance-downgrade-audited` | the suite via the workload seam | seam-gated |
+| §C.1 link record shape; no legacy/anon in a link | schema + seam — `openwop.requirement.0170.subject-link-record` | the suite via the SCIM/SAML seams | seam-gated |
+| §D.1 id grammar; tenant binding refused | responses; a crafted foreign id — `openwop.requirement.0170.id-grammar` | the suite, unaided | witnessable — unaided |
+| §D.3 key grammar and entropy floor | `idempotency_key_invalid` — `openwop.requirement.0170.idempotency-key-grammar` | the suite, unaided | witnessable — unaided |
+| §E.1 token scheme | refusal of an unprefixed or unknown-kid token — `openwop.requirement.0170.interrupt-token-scheme` | the suite, unaided | witnessable — unaided |
 | §E.2 invariants registered with tests at the cut | `check-security-invariants.sh` | the corpus gate | witnessable — unaided (corpus) |
 
 ## Adversarial review

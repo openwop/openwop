@@ -99,13 +99,13 @@ v2 scenarios (suite 2.0.0): `security-defaults-table` (corpus: every `core/` obl
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
 | §A.1 no discovery field gates an obligation | v2 capability schema has no gate fields | the corpus gate | witnessable — unaided (corpus) |
-| §A.2 relaxations recorded; relaxed profile not certifiable | bundle v3 verifier | the suite, unaided (fixture bundle) | witnessable — unaided |
-| §B replay suppression | no re-fire through a manifest seam | the suite, gated on `replay` | witnessable — gated |
-| §B webhook durability | retry + dead-letter | the suite, gated on `webhooks` | witnessable — gated |
-| §B approver enforcement | refusal | the suite, gated | witnessable — gated |
-| §B pack isolation | the eight sandbox legs | the suite, gated on `packs` | witnessable — gated |
-| §B compensation read projection | `GET …/compensation` | the suite, gated | witnessable — gated |
-| §B effect identity | provider key stable across retries | the suite's fixture provider, gated | witnessable — gated |
+| §A.2 relaxations recorded; relaxed profile not certifiable | bundle v3 verifier — `openwop.requirement.0173.relaxation-recorded` | the suite, unaided (fixture bundle) | witnessable — unaided |
+| §B replay suppression | no re-fire through a manifest seam — `openwop.requirement.0173.effect-seam-manifest` | the suite, gated on `replay` | witnessable — gated |
+| §B webhook durability | retry + dead-letter — `openwop.requirement.0173.webhook-durable-delivery` | the suite, gated on `webhooks` | witnessable — gated |
+| §B approver enforcement | refusal — `openwop.requirement.0173.approver-enforced` | the suite, gated | witnessable — gated |
+| §B pack isolation | the eight sandbox legs — `openwop.requirement.0173.pack-isolation` | the suite, gated on `packs` | witnessable — gated |
+| §B compensation read projection | `GET …/compensation` — `openwop.requirement.0173.compensation-read-projection` | the suite, gated | witnessable — gated |
+| §B effect identity | provider key stable across retries — `openwop.requirement.0173.effect-identity-business-key` | the suite's fixture provider, gated | witnessable — gated |
 | §C.1 manifest complete | a seam outside the manifest that re-fires | negative-existence: the suite cannot enumerate a host's seams; the manifest is a self-declaration whose false negatives are found by the RFC 0140 R5 class of audit | negative-existence |
 | §E.2 threat-model template | corpus gate | the corpus gate | witnessable — unaided (corpus) |
 
