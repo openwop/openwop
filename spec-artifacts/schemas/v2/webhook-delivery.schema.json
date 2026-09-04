@@ -1,27 +1,26 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/webhook-delivery.schema.json",
-  "title": "Webhook delivery envelope (webhooks.md §Delivery)",
-  "description": "The body of an outbound webhook delivery. Written 2026-09-04 because it did not exist: the envelope was specified by one sentence in webhooks.md §Delivery ('the body is `{ runId, workspaceId, event }` where `event` is the verbatim run event') and no artifact bound it, while the NESTED event.runId was bound all along through run-event.schema.json. Two production hosts arrived at that asymmetry independently — one asking what major an outbound payload speaks, the other answering from the $ref graph — and both concluded the gap was a missing artifact rather than a missing paragraph. An emitter that projects correctly could be asserted but not checked, which is the wrong way round.",
+  "title": "Webhook delivery envelope (webhooks.md \u00a7Delivery)",
+  "description": "The body of an outbound webhook delivery. Written 2026-09-04 because it did not exist: the envelope was specified by one sentence in webhooks.md \u00a7Delivery ('the body is `{ runId, workspaceId, event }` where `event` is the verbatim run event') and no artifact bound it, while the NESTED event.runId was bound all along through run-event.schema.json. Two production hosts arrived at that asymmetry independently \u2014 one asking what major an outbound payload speaks, the other answering from the $ref graph \u2014 and both concluded the gap was a missing artifact rather than a missing paragraph. An emitter that projects correctly could be asserted but not checked, which is the wrong way round.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "runId",
-    "workspaceId",
     "event"
   ],
   "properties": {
     "runId": {
       "$ref": "ids.schema.json#/$defs/runId",
-      "description": "The run this delivery is about, tenant-bound per identity.md §5. An outbound emission is not a response to a versioned request, so nothing about the request cycle supplies the form — the grammar does, and it is the same grammar everywhere a v2 runId is rendered. A host that projects on responses and not on emissions hands the subscriber an id the client never saw: the correlation filter matches nothing, with no error, no 4xx and no log line. A tier-1 host hit exactly that, and the silence is why this field is bound here rather than left to the prose."
+      "description": "The run this delivery is about, tenant-bound per identity.md \u00a75. An outbound emission is not a response to a versioned request, so nothing about the request cycle supplies the form \u2014 the grammar does, and it is the same grammar everywhere a v2 runId is rendered. A host that projects on responses and not on emissions hands the subscriber an id the client never saw: the correlation filter matches nothing, with no error, no 4xx and no log line. A tier-1 host hit exactly that, and the silence is why this field is bound here rather than left to the prose."
     },
     "workspaceId": {
       "$ref": "ids.schema.json#/$defs/workspaceId",
-      "description": "The workspace the run belongs to."
+      "description": "The workspace the run belongs to. OPTIONAL, and present exactly when RunSnapshot.owner.workspace is (identity.md \u00a71: owner is { tenant, workspace?, subject }). This field was REQUIRED for the first six hours of the schema's life, which made the envelope tighter than the identity model it renders: a run in a single-workspace tenant has no workspace, and the only way a host could satisfy the envelope was to put its tenant id in this field. A tier-1 host proposed exactly that \u2014 `owner.workspace ?? tenantId` \u2014 and asked for a veto. This is the veto. A tenant id in a workspace field is two facts wearing one name, and every consumer downstream would have to know which host lied."
     },
     "event": {
       "$ref": "run-event.schema.json",
-      "description": "The verbatim run event (events.md). 'Verbatim' is load-bearing: the envelope is one of the three renderings generated from a single payload definition (RFC 0171 §A.4), so this is the event as persisted, not a re-serialization. Its own runId is bound by run-event.schema.json to the same $def as the envelope's, which is what made the envelope's omission survivable for as long as it did — and invisible for just as long."
+      "description": "The verbatim run event (events.md). 'Verbatim' is load-bearing: the envelope is one of the three renderings generated from a single payload definition (RFC 0171 \u00a7A.4), so this is the event as persisted, not a re-serialization. Its own runId is bound by run-event.schema.json to the same $def as the envelope's, which is what made the envelope's omission survivable for as long as it did \u2014 and invisible for just as long."
     }
   }
 }
