@@ -1,0 +1,212 @@
+#!/usr/bin/env node
+/**
+ * check-cut-gates — the v2 charter §F predicates as one script (RFC 0167 §F).
+ *
+ * "The v2.0 tag is cut when every predicate below is machine-true on the
+ * release candidate. None is a header edit." This script is that sentence in
+ * executable form: ten gates, each a list of existing corpus gates (scripts
+ * this repo already runs) plus the two evidence reads that only a HOST bundle
+ * can satisfy (Witness, Coexistence, Front door). Every gate names its
+ * evidence so a reader can re-derive the verdict without trusting this file.
+ *
+ * Usage:
+ *   node scripts/check-cut-gates.mjs --host-bundle <bundle-v3.json> [--network]
+ *   node scripts/check-cut-gates.mjs --corpus-only        # the host gates report `blocked`
+ *
+ * Exit 1 when any gate fails, or when a host gate is `blocked` and
+ * --corpus-only was not given. `--network` adds the npm-identity check
+ * (`check-published-suite-identity.mjs --require-network`) to Identity.
+ *
+ * The host-tier predicates are read from a certification bundle v3
+ * (schemas/v2/certification-bundle.schema.json): Witness needs at least one
+ * ledger row per v2 requirement id; Coexistence needs the four named scenarios'
+ * ids at `executed-pass`; Front door needs `executedFail === 0` on a host whose
+ * `host.name` the INTEROP-MATRIX lists as implemented from `spec/v2/core/`.
+ */
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const argv = process.argv.slice(2);
+const flag = (name) => argv.includes(name);
+const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
+const corpusOnly = flag('--corpus-only');
+const network = flag('--network');
+const bundlePath = opt('--host-bundle');
+
+// The four §F Coexistence scenarios, by id PREFIX: each mints one id per leg
+// (`.cross-major-read`, `.prefix`, `.facet`, …), and the gate is that every leg
+// of each executed and passed — not that one representative did.
+const COEXISTENCE_PREFIXES = [
+  'openwop.requirement.0172.dual-stack-negotiation',
+  'openwop.requirement.0176.fork-a-v1-run',
+  'openwop.requirement.0176.v1-signed-webhook-accepted',
+  'openwop.requirement.0177.manifest-ceiling-refused',
+];
+
+function run(cmd, args, cwd = ROOT) {
+  const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', timeout: 900_000 });
+  const tail = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-3).join(' | ');
+  return { ok: r.status === 0, evidence: `${cmd} ${args.join(' ')}`, tail };
+}
+const node = (script, ...args) => run('node', [join('scripts', script), ...args]);
+const sh = (script, ...args) => run('bash', [join('scripts', script), ...args]);
+
+function readJson(rel) { return JSON.parse(readFileSync(join(ROOT, rel), 'utf8')); }
+
+/**
+ * The explicit requirement ids a HOST bundle can carry: those cited by a
+ * `src/scenarios` file that the manifest assigns to major 2. Ids cited only by
+ * `src/coherence` are corpus evidence and MUST NOT appear in a host bundle
+ * (RFC 0168 §D.1), so demanding a row for them would demand the very thing the
+ * disjointness rule forbids.
+ */
+function v2RequirementIds() {
+  const majors = readJson('conformance/scenario-majors.json').majors ?? {};
+  const dir = join(ROOT, 'conformance', 'src', 'scenarios');
+  const ids = new Set();
+  for (const [file, m] of Object.entries(majors)) {
+    if (!m.includes(2)) continue;
+    const path = join(dir, file);
+    if (!existsSync(path)) continue;
+    for (const [, id] of readFileSync(path, 'utf8').matchAll(/'(openwop\.requirement\.[a-z0-9.-]+)'/g)) ids.add(id);
+  }
+  return ids;
+}
+
+function loadBundle() {
+  if (!bundlePath) return null;
+  const p = resolve(bundlePath);
+  if (!existsSync(p)) throw new Error(`--host-bundle ${p} does not exist`);
+  const b = JSON.parse(readFileSync(p, 'utf8'));
+  // The schema's discriminant is the STRING "3" (schemas/v2/certification-bundle.schema.json).
+  if (String(b.bundleVersion) !== '3') throw new Error(`bundle at ${p} is bundleVersion ${JSON.stringify(b.bundleVersion)}, need "3"`);
+  return { path: p, bundle: b };
+}
+
+const gates = [];
+function gate(name, checks) { gates.push({ name, checks }); }
+const blocked = (evidence, why) => ({ ok: false, blocked: true, evidence, tail: why });
+
+// ── Identity ──────────────────────────────────────────────────────────────────
+gate('Identity', [
+  node('generate-protocol-status.mjs', '--check'),
+  node('generate-from-declaration.mjs', '--check'),
+  node('generate-deprecation-annotations.mjs', '--check'),
+  node('generate-spec-artifacts.mjs', '--check'),
+  ...(network
+    ? [node('check-published-suite-identity.mjs', '--require-network'),
+       node('check-published-suite-identity.mjs', '--require-network', '--package', 'spec-artifacts')]
+    : [{ ok: true, evidence: 'check-published-suite-identity.mjs (skipped: no --network)', tail: 'tarball digest not compared this run' }]),
+]);
+
+// ── Registers ─────────────────────────────────────────────────────────────────
+gate('Registers', [
+  node('check-registers.mjs'),
+  node('generate-gaps.mjs', '--check'),
+  sh('check-security-invariants.sh'),
+  node('check-witness-classes.mjs'),
+  node('check-audit-findings.mjs'),
+]);
+
+// ── Closure ───────────────────────────────────────────────────────────────────
+gate('Closure', [node('check-v2-schemas.mjs')]);
+
+// ── Deprecation ───────────────────────────────────────────────────────────────
+gate('Deprecation', [
+  node('check-deprecations.mjs'),
+  node('check-removal-dates.mjs'),
+  node('check-alias-coverage.mjs'),
+]);
+
+// ── Paths ─────────────────────────────────────────────────────────────────────
+gate('Paths', [node('check-path-parity.mjs')]);
+
+// ── Codemods ──────────────────────────────────────────────────────────────────
+gate('Codemods', [
+  node('check-codemods.mjs', '--at-active'),
+  existsSync(join(ROOT, 'spec-artifacts/spec/v2/event-codemap.json'))
+    ? { ok: true, evidence: 'spec-artifacts/spec/v2/event-codemap.json', tail: 'event codemap ships as data in the suite peer' }
+    : { ok: false, evidence: 'spec-artifacts/spec/v2/event-codemap.json', tail: 'missing from the spec-artifacts package' },
+]);
+
+// ── Waiver ────────────────────────────────────────────────────────────────────
+gate('Waiver', [node('check-waiver-ledger.mjs'), node('check-waiver-authority.mjs')]);
+
+// ── Witness / Coexistence / Front door (corpus half + host half) ──────────────
+const corpusWitness = [node('check-declaration.mjs'), node('check-core-budget.mjs')];
+let hb = null;
+try { hb = loadBundle(); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-bundle', tail: e.message }); }
+
+if (!hb) {
+  // A bundle that was GIVEN but could not be read is a failure, not a block —
+  // silently degrading to "no bundle" would let a malformed one pass the cut.
+  const loadError = corpusWitness[2];
+  const why = loadError ? loadError.tail : 'no host bundle given';
+  const row = loadError ? loadError : blocked('--host-bundle', `${why}: per-assertion ledger rows unread`);
+  gate('Witness', [corpusWitness[0], row]);
+  gate('Coexistence', [loadError ?? blocked('--host-bundle', `${why}: the four coexistence scenarios unread`)]);
+  gate('Front door', [corpusWitness[1], loadError ?? blocked('--host-bundle', `${why}: 2.0.0 floor unread`)]);
+} else {
+  const rows = hb.bundle.results?.requirements ?? [];
+  const byId = new Map();
+  for (const r of rows) { if (!byId.has(r.id)) byId.set(r.id, []); byId.get(r.id).push(r); }
+  const ids = v2RequirementIds();
+  const missing = [...ids].filter((id) => !byId.has(id));
+  const nonPass = rows.filter((r) => r.result !== 'executed-pass' && !r.detail && r.result !== 'inapplicable');
+  gate('Witness', [
+    corpusWitness[0],
+    {
+      ok: missing.length === 0,
+      evidence: `${hb.path} results.requirements`,
+      tail: missing.length === 0
+        ? `${ids.size} v2 requirement ids each carry ≥1 ledger row`
+        : `${missing.length}/${ids.size} v2 requirement ids have no ledger row: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ', …' : ''}`,
+    },
+    {
+      // RFC 0168 §A.2: a soft-skip never records a pass, and every non-pass
+      // states a reason. A row that is neither passing nor explained is the
+      // shape the whole evidence chain exists to prevent.
+      ok: nonPass.length === 0,
+      evidence: `${hb.path} results.requirements[].detail`,
+      tail: nonPass.length === 0 ? 'every non-pass row states a reason' : `${nonPass.length} non-pass row(s) state no reason: ${nonPass.slice(0, 3).map((r) => r.id).join(', ')}`,
+    },
+  ]);
+  gate('Coexistence', COEXISTENCE_PREFIXES.map((prefix) => {
+    const legs = rows.filter((r) => r.id === prefix || r.id.startsWith(`${prefix}.`));
+    const pass = legs.length > 0 && legs.every((x) => x.result === 'executed-pass');
+    const counts = legs.reduce((m, x) => ({ ...m, [x.result]: (m[x.result] ?? 0) + 1 }), {});
+    return {
+      ok: pass,
+      evidence: `${hb.path} ${prefix}.*`,
+      tail: legs.length ? `${legs.length} leg(s): ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join(' ')}` : 'no row — the scenario did not run',
+    };
+  }));
+  const totals = hb.bundle.results?.totals ?? {};
+  const matrix = readFileSync(join(ROOT, 'INTEROP-MATRIX.md'), 'utf8');
+  const hostName = hb.bundle.host?.name ?? '?';
+  gate('Front door', [
+    corpusWitness[1],
+    { ok: totals.executedFail === 0, evidence: `${hb.path} results.totals`, tail: `executedFail=${totals.executedFail} executedPass=${totals.executedPass} blocked=${totals.blocked}` },
+    { ok: matrix.includes(hostName), evidence: 'INTEROP-MATRIX.md', tail: matrix.includes(hostName) ? `row for ${hostName}` : `no row names host ${hostName}` },
+    { ok: typeof hb.bundle.signature?.sig === 'string', evidence: `${hb.path} signature`, tail: hb.bundle.signature ? `signed by ${hb.bundle.signature.keyId}` : 'unsigned' },
+  ]);
+}
+
+// ── Report ────────────────────────────────────────────────────────────────────
+let failed = 0, blockedCount = 0;
+console.log('=== check-cut-gates — RFC 0167 §F predicates ===');
+for (const g of gates) {
+  const bad = g.checks.filter((c) => !c.ok);
+  const isBlocked = bad.length > 0 && bad.every((c) => c.blocked);
+  const verdict = bad.length === 0 ? 'PASS' : isBlocked ? 'BLOCKED' : 'FAIL';
+  if (verdict === 'FAIL') failed++;
+  if (verdict === 'BLOCKED') blockedCount++;
+  console.log(`\n${verdict.padEnd(7)} ${g.name}`);
+  for (const c of g.checks) console.log(`   ${c.ok ? 'ok ' : c.blocked ? '·· ' : 'XX '} ${c.evidence}${c.tail ? `  — ${c.tail}` : ''}`);
+}
+const exit = failed > 0 || (blockedCount > 0 && !corpusOnly) ? 1 : 0;
+console.log(`\n=== ${failed} failed, ${blockedCount} blocked${corpusOnly ? ' (--corpus-only: blocked host gates tolerated)' : ''} → exit ${exit}`);
+process.exit(exit);

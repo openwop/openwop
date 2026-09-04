@@ -329,7 +329,7 @@ afterEach(({ task }) => {
     detail = 'vitest skipped the test (ctx.skip / it.skip) without a recorded gate reason';
   }
   try {
-    recordRequirement(itId, disposition, detail, { assertionCount: calls });
+    recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file });
   } catch {
     /* never fail a test for bookkeeping */
   }
@@ -376,7 +376,7 @@ afterAll(({}, suite) => {
   // of both now.
   if (!hasRequirement(fileRequirementId)) {
     try {
-      recordRequirement(fileRequirementId, disposition, detail, { assertionCount });
+      recordRequirement(fileRequirementId, disposition, detail, { assertionCount, scenarioFile: file });
     } catch {
       /* never fail a file for bookkeeping */
     }
