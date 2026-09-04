@@ -29,6 +29,7 @@
     "originalEventId": "eventId",
     "parentRunId": "runId",
     "parentSpanId": "spanId",
+    "pinnedNodeIds": "nodeId",
     "pluginId": "pluginId",
     "runId": "runId",
     "signingKeyId": "keyId",

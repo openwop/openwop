@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Added
 
+- **`eval-summary.pinnedNodeIds[]`** — the node ids whose outputs were pinned for an eval run, ids only. A tier-1 host proposed `pinned: true` on each `node.completed` and asked before building; replay-ness is a run property (`replay.md` §Determinism 5, `webhooks.md` §Replay), so the per-event flag was refused, and because the summary MUST be content-free of task output the seat carries scope, not values. The values stay on the eval run's own snapshot behind the run's auth.
+
+### Added
+
 - **`run.completed` MUST carry `outputs`, and `v2-run-completed-outputs` witnesses it.** Both majors' payload schemas named the property and required nothing; v1 also left the object open. A tier-1 host emitted the singular `output` for its whole life and validated every time — v2 closing the object caught the *extra* key, and nothing in either major has ever caught an *absent* one. Seventeen scenario files mention `run.completed`; none read its payload. `runCompleted.required` is now `['outputs']` (an empty object is a valid value), `events.md` §Payloads says so, and the witness asserts the effect on the terminal event of a run that actually completed.
 
 ### Fixed

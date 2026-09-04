@@ -135,6 +135,14 @@
         }
       }
     },
+    "pinnedNodeIds": {
+      "type": "array",
+      "items": {
+        "$ref": "ids.schema.json#/$defs/nodeId"
+      },
+      "uniqueItems": true,
+      "description": "MAY. The node ids whose outputs were PINNED (mocked) for this eval run rather than executed, so a reader knows the verdict's scope. Ids only, never the pinned values: this summary MUST be content-free of task output (runs.md), and a pin IS a task output. The values live on the eval run's own resume snapshot, behind the run's auth, where a reproducer with access can fetch them. Added 2026-09-04 after a tier-1 host proposed `pinned: true` on each node.completed event and asked first \u2014 replay-ness is a run property (replay.md \u00a7Determinism 5, webhooks.md \u00a7Replay), so the per-event flag was refused and the seat moved here: reproducibility of SCOPE on the wire, reproducibility of VALUES behind the boundary."
+    },
     "regression": {
       "type": "object",
       "additionalProperties": false,
