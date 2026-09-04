@@ -243,35 +243,50 @@ jobs:
           set -uo pipefail
           tag="${GITHUB_REF#refs/tags/}"
           VER="${tag##*/v}"
-          echo "verifying @openwop/openwop-conformance@$VER is installable by a consumer"
-          work="$(mktemp -d)"
-          cd "$work"
-          npm init -y >/dev/null
-          # A just-published version can 404 briefly while the registry
-          # propagates. Retry, because on a single attempt a propagation flake
-          # and a real unresolvable peer look identical — which is the failure
-          # shape this job exists to stop repeating.
-          for i in $(seq 1 12); do
-            if npm install "@openwop/openwop-conformance@$VER" --no-audit --no-fund; then
+          PKG=@openwop/openwop-conformance
+          echo "verifying $PKG@$VER is installable by a consumer"
+
+          # TWO QUESTIONS, ASKED SEPARATELY. The first version of this job asked
+          # only "does npm install succeed", retried for 3 minutes, and failed
+          # rc.31 — whose packument its own diagnostic then read successfully 15
+          # SECONDS LATER. npm's registry is read-through-cached, so a version
+          # published a moment ago resolves as ETARGET, which is byte-identical
+          # to the ETARGET of a version that was never published. That is the
+          # exact defect shape this job exists to catch, reproduced inside the
+          # catcher: a signal that reads the same whether it is true or false.
+          #
+          # So: wait on the PACKUMENT (authoritative — it is what publish writes)
+          # and only then attempt the install. The two failures are now distinct.
+          # Budget is 10 minutes because the measured delay is ~4 (rc.29 published
+          # 20:48:39, visible 20:52:48; rc.31 published ~21:24, visible ~21:28).
+          # The old 3-minute budget was set by guess against a delay already
+          # measured at four.
+          seen=""
+          for i in $(seq 1 40); do
+            if curl -sf "https://registry.npmjs.org/${PKG/\//%2F}" \
+                 | node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{try{process.exit(JSON.parse(b).versions[process.argv[1]]?0:1)}catch{process.exit(1)}})" "$VER"; then
+              seen=yes; echo "packument carries $VER after $((i*15))s"; break
+            fi
+            sleep 15
+          done
+          if [ -z "$seen" ]; then
+            echo "::error::$PKG@$VER never appeared on the registry after 10 minutes — the PUBLISH did not take effect."
+            exit 1
+          fi
+
+          work="$(mktemp -d)"; cd "$work"; npm init -y >/dev/null
+          for i in $(seq 1 8); do
+            if npm install "$PKG@$VER" --no-audit --no-fund; then
               echo "✓ installed cleanly; peer resolved to $(node -p "require('./node_modules/@openwop/spec-artifacts/package.json').version")"
               exit 0
             fi
-            echo "attempt $i failed; waiting for registry propagation"
             sleep 15
           done
-          echo "::error::@openwop/openwop-conformance@$VER is NOT installable by a consumer."
-          echo "The most likely cause is an exact peerDependency whose version was never published."
-          node -e "
-            const https=require('https');
-            https.get('https://registry.npmjs.org/@openwop%2Fopenwop-conformance',r=>{
-              let b='';r.on('data',d=>b+=d);r.on('end',()=>{
-                try{
-                  const m=JSON.parse(b).versions[process.env.VER];
-                  console.log('published peerDependencies:',JSON.stringify(m&&m.peerDependencies));
-                }catch(e){console.log('could not read the published manifest');}
-              });
-            });
-          " || true
+
+          # The version is demonstrably on the registry and the install still
+          # fails, so this is a real dependency defect and not propagation.
+          echo "::error::$PKG@$VER is ON the registry but NOT installable — a dependency cannot be resolved."
+          echo "The likeliest cause is an exact peerDependency whose version was never published."
+          curl -sf "https://registry.npmjs.org/${PKG/\//%2F}" \
+            | node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{const m=JSON.parse(b).versions[process.argv[1]];console.log('published peerDependencies:',JSON.stringify(m&&m.peerDependencies));})" "$VER" || true
           exit 1
-        env:
-          VER: ${{ github.ref_name }}
