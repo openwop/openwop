@@ -139,9 +139,17 @@ Without it your signature attests **integrity only**: it proves the bundle was n
 - **Store the private half durably before publishing the public half**, and verify the stored secret round-trips to exactly the published value rather than assuming the write was faithful. A published key whose private half evaporated strands every bundle signed under that `keyId`, silently.
 - **Verify the bytes import as a real Ed25519 key**, not merely that they are 43 base64url characters. A plausible string that is not a valid curve point passes every shape check and fails only at a verifier.
 
+**4.1b Check whether your seams EXIST before planning when to mount them.** Several scenarios need a canonical seam under `/conformance/seams/…` to establish a precondition. A host whose test hooks live in its own extension namespace has *different* seams, not unmounted ones — and advertising the seams profile would claim routes that answer `404`. **"Not mounted" is a deployment choice; "not built" is a build task.** Recording the second as the first turns an unwritten feature into a schedule.
+
 **4.2 Emit bundle v3.** An unsigned v3 bundle does not exist; `--certify` refuses to write anything without a build identity and a signing key. **Use an image digest or artifact hash as the build identity, not a commit** — a merge is a promise, only a deployment is a witness.
 
 **4.3 Read the dispositions, not the exit code.** See "Verify the artifact" below.
+
+**4.3b A clean lane is evidence about the requirements the lane RAN, and nothing else.** A bundle at `--target-major 1` reporting `executedFail: 0` is silent about every major-2 scenario — including ones that fail the host three ways. A host called such a run "the first fully clean lane of the day" and then corrected itself, because the scope of the zero is invisible in the zero.
+
+> **The danger of a green bundle is not that it lies. It is that its scope is invisible in the number.** `executedFail: 0` and `inapplicable: 206` are the same sentence, and only one of them gets quoted.
+
+Record the target major and the applicable set beside any total you intend anyone to read.
 
 **4.4 Report `certified: none` honestly** if your floors are unmet. A bundle that says it certifies nothing, accurately, is worth more than one tuned until it says otherwise.
 
