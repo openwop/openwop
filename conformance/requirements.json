@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 544,
-    "tests": 2118,
-    "withStableId": 2118,
+    "tests": 2119,
+    "withStableId": 2119,
     "interpolatedTitles": 0,
     "explicitIds": 2057
   },
@@ -34538,7 +34538,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-v2-discovery-root-publishes-signingkeys-the-surface-the-rfc-named",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 85,
+      "line": 94,
       "title": "the v2 discovery root publishes signingKeys[] — the surface the RFC named",
       "explicitId": null,
       "citations": [
@@ -34567,7 +34567,7 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-front-door-gate-verifies-the-attestation-instead-of-inspecting-the-string",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 116,
+      "line": 125,
       "title": "the Front-door gate verifies the attestation instead of inspecting the string",
       "explicitId": null,
       "citations": [
@@ -34586,13 +34586,27 @@
     {
       "id": "openwop.it.v2-bundle-signature-attributable.the-four-signature-outcomes-stay-distinct-collapsing-any-two-restores-the-defect",
       "file": "v2-bundle-signature-attributable.test.ts",
-      "line": 131,
+      "line": 140,
       "title": "the four signature outcomes stay distinct — collapsing any two restores the defect",
       "explicitId": null,
       "citations": [
         {
           "section": null,
           "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-bundle-signature-attributable.signingkeys-is-reachable-from-a-v1-root-too-a-bundle-is-v3-regardless-of-major",
+      "file": "v2-bundle-signature-attributable.test.ts",
+      "line": 161,
+      "title": "signingKeys[] is reachable from a v1 root too — a bundle is v3 regardless of major",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": null,
+          "requirement": "the v1 discovery root MUST also carry signingKeys[]: a certification bundle is v3 regardless of major, and a v1-only host has only this document to resolve signature.keyId against — putting the key on the v2 root alone leaves every v1 host bundle unattributable",
           "interpolated": true
         }
       ]
