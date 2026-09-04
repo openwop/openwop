@@ -123,6 +123,7 @@ v2 scenarios (suite 2.0.0): `dual-stack-negotiation` (gated on a host advertisin
 | §B.3 `engineVersion` integer everywhere | schema validation of snapshot and events — `openwop.requirement.0170.id-grammar`, `openwop.requirement.0171.event-type-closed` | the suite, unaided | witnessable — unaided |
 | §C.2 path parity; no seam in canonical OpenAPI | corpus gate | the corpus gate | witnessable — unaided (corpus) |
 | §D.1 generated versions; tarball digest | corpus gate; publish preflight | the corpus gate | witnessable — unaided (corpus) |
+| §A.3 `OpenWOP-Version` is honored or refused, never ignored | `openwop.requirement.0172.version-header-honored` — the header-less and `2.0` representations are fetched and compared byte-for-byte | any host, including one that does not implement major 2 | witnessable — unaided |
 
 RFC 0167 G1 (`openwop.gap.0167.1`, the header-less default has no v1 precedent) is classified here as `witnessable-gated` and carried to `openwop.gap.0172.1` with the dual-stack scenario as its witness.
 

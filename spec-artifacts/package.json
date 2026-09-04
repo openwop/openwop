@@ -1,6 +1,6 @@
 {
   "name": "@openwop/spec-artifacts",
-  "version": "2.0.0-rc.6",
+  "version": "2.0.0-rc.7",
   "description": "The OpenWOP machine-readable contract: api/ (OpenAPI, AsyncAPI, the seams profile), schemas/ (v1 and v2 JSON Schemas), the spec/v1 and spec/v2 registries (errors, event codemap, declaration, deprecations, migrations, gaps) and CORPUS-STAMP.json — published from the openwop/openwop corpus tag; the peer dependency @openwop/openwop-conformance digest-checks at start (RFC 0168 §D.2).",
   "license": "Apache-2.0",
   "repository": { "type": "git", "url": "git+https://github.com/openwop/openwop.git", "directory": "spec-artifacts" },
