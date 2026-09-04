@@ -41,14 +41,23 @@ import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
-const ID = 'openwop.requirement.0168.bundle-signature-attributable';
-/** One id per leg: the wire surface, the check that reads it, and the report's
- *  ability to tell its outcomes apart. Each fails for a different reason and a
- *  shared id would let one leg's pass stand in for another's. */
-const ID_SURFACE = `${ID}.surface`;
-const ID_VERIFIES = `${ID}.verifies`;
-const ID_OUTCOMES = `${ID}.outcomes`;
-const ID_V1ROOT = `${ID}.v1-root`;
+/**
+ * One id per leg: the wire surface, the check that reads it, the report's
+ * ability to tell its outcomes apart, and the v1 root. Each fails for a
+ * different reason, and a shared id would let one leg's pass stand in for
+ * another's.
+ *
+ * Written as FULL LITERALS, not assembled from a base with template
+ * concatenation. `v2-coherence-not-in-bundle` proves a coherence id is cited by
+ * searching the source for the literal string — so an id built at runtime is
+ * invisible to it, and to every other tool that greps. That is not a quirk of
+ * one check: an id you cannot grep is an id you cannot audit. The first version
+ * of this file used `${ID}.surface` and failed exactly that check.
+ */
+const ID_SURFACE = 'openwop.requirement.0168.bundle-signature-attributable.surface';
+const ID_VERIFIES = 'openwop.requirement.0168.bundle-signature-attributable.verifies';
+const ID_OUTCOMES = 'openwop.requirement.0168.bundle-signature-attributable.outcomes';
+const ID_V1ROOT = 'openwop.requirement.0168.bundle-signature-attributable.v1-root';
 const SECTION = 'RFC 0168 §E.2';
 const DOC = 'spec/v2/core/conformance.md';
 
