@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Added
+
+- **`run.completed` MUST carry `outputs`, and `v2-run-completed-outputs` witnesses it.** Both majors' payload schemas named the property and required nothing; v1 also left the object open. A tier-1 host emitted the singular `output` for its whole life and validated every time — v2 closing the object caught the *extra* key, and nothing in either major has ever caught an *absent* one. Seventeen scenario files mention `run.completed`; none read its payload. `runCompleted.required` is now `['outputs']` (an empty object is a valid value), `events.md` §Payloads says so, and the witness asserts the effect on the terminal event of a run that actually completed.
+
 ### Fixed
 
 - **`webhook-delivery.schema.json` required `workspaceId`; `identity.md` makes `owner.workspace` optional.** The envelope was tighter than the identity model it renders: a run in a single-workspace tenant has no workspace, so the only conforming emission was to put the tenant id in the workspace field — which is precisely what a tier-1 host proposed (`owner.workspace ?? tenantId`) and asked to have vetoed. Vetoed. `workspaceId` is now optional and present exactly when `owner.workspace` is; §Delivery says so and forbids the substitution. Six hours old, same defect class as the check-tighter-than-its-prose it was written beside.

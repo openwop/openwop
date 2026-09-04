@@ -42,7 +42,7 @@ A consumer MUST NOT throw on an event whose `type` it does not know; it folds wh
 
 The CloudEvents mapping and the webhook delivery envelope are GENERATED from the same definition (one source, three renderings): the event's `type`, `eventId`, `sequence` and `payload` are byte-identical across the run stream, a CloudEvents rendering and a webhook delivery.
 
-`run.started` carries `owner { tenant, workspace?, subject }`, the same closed block as `RunSnapshot.owner` with `subject` REQUIRED (runs.md, identity.md). `run.cancelled` carries `reason`, `cancelledBy`, `durationMs` and `parentRunId`.
+`run.started` carries `owner { tenant, workspace?, subject }`, the same closed block as `RunSnapshot.owner` with `subject` REQUIRED (runs.md, identity.md). `run.cancelled` carries `reason`, `cancelledBy`, `durationMs` and `parentRunId`. `run.completed` MUST carry `outputs` as an object — an empty object is a valid value; an absent key is not. A client cannot tell "no outputs" from "outputs not rendered" when the key is missing, and until 2026-09-04 no schema in either major required it: v1 named the property, required nothing and left the object open, so a host emitted the singular `output` for its whole life and validated every time. Closing the object in v2 caught the extra key; only this sentence and its witness (`v2-run-completed-outputs`) catch an absent one.
 
 ## AI envelopes: E1–E5
 

@@ -1036,7 +1036,7 @@
     },
     "runCompleted": {
       "type": "object",
-      "description": "Emitted once when the run reaches a successful terminal state. Closes the SSE stream.",
+      "description": "Emitted once when the run reaches a successful terminal state. Closes the SSE stream. `outputs` is REQUIRED (an empty object is a valid value): a completed run has outputs by definition, and a client cannot tell 'no outputs' from 'outputs not rendered' when the key is absent. Required as of 2026-09-04 because it had never been: v1 named the property, required nothing, and left the object open, so a tier-1 host emitted the singular `output` for its whole life and validated. v2 closing the object caught the EXTRA key; nothing in either major caught an ABSENT one, and seventeen scenarios mention run.completed without one asserting its payload. The witness is v2-run-completed-outputs.",
       "properties": {
         "outputs": {
           "$ref": "#/$defs/_outputsObject"
@@ -1046,7 +1046,10 @@
           "minimum": 0
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "outputs"
+      ]
     },
     "runFailed": {
       "type": "object",
