@@ -47,4 +47,25 @@ describe('v2-event-naming-rule (RFC 0171 §A.2)', () => {
       expect(members, req(ID, SECTION, `recorded §A.2 artifact exception \`${x}\` MUST be a member of the closed enum — an exception that names no event is a drift`)).toContain(x);
     }
   });
+
+  it('the closed enum and the vendor branch are disjoint: every registered type validates, and a typo of a registered domain does not', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const schema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'run-event.schema.json'), 'utf8')) as { properties: { type: { oneOf: Array<{ enum?: string[]; pattern?: string }> } } };
+    const members = schema.properties.type.oneOf[0]?.enum ?? [];
+    const vendor = schema.properties.type.oneOf[1]?.pattern ?? '';
+    const re = new RegExp(vendor);
+    // `oneOf` means EXACTLY one branch: a registered type that also matches the
+    // vendor pattern is invalid, and a typo that matches only the vendor branch
+    // is accepted. Both were live in v1 (RFC 0171 §A.1 names `run.startd`), so
+    // the vendor branch bans every first segment the enum registers.
+    const segments = [...new Set(members.map((t) => t.split('.')[0] as string))].sort();
+    for (const t of members) {
+      expect(re.test(t), req(ID, 'RFC 0171 §A.1', `registered type \`${t}\` MUST NOT also match the vendor branch — under \`oneOf\` a double match makes the registered type invalid`)).toBe(false);
+    }
+    for (const seg of segments) {
+      expect(re.test(`${seg}.startd`), req(ID, 'RFC 0171 §A.1', `a typo under the registered domain \`${seg}\` MUST NOT validate as a vendor type — that is the v1 defect this rule replaces`)).toBe(false);
+    }
+    expect(re.test('acme.thing'), req(ID, 'RFC 0171 §A.1', 'a genuine vendor type under an unregistered org MUST still validate')).toBe(true);
+    expect(re.test('openwop.anything'), req(ID, 'RFC 0171 §A.1', '`openwop.` is reserved and MUST NOT match the vendor branch')).toBe(false);
+  });
 });

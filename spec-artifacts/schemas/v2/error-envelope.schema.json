@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/error-envelope.schema.json",
   "title": "ErrorEnvelope (v2)",
-  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 92 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
+  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 94 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -40,6 +40,7 @@
             "event_type_unmapped",
             "forbidden",
             "force_engine_version_forbidden",
+            "fork_point_invalid",
             "id_tenant_mismatch",
             "idempotency_in_flight",
             "idempotency_key_invalid",
@@ -104,6 +105,7 @@
             "until_in_past",
             "validation_error",
             "version_conflict",
+            "webhook_url_rejected",
             "workspace_conflict",
             "workspace_membership_required",
             "workspace_too_large"
@@ -151,6 +153,7 @@
     "event_type_unmapped": 500,
     "forbidden": 403,
     "force_engine_version_forbidden": 403,
+    "fork_point_invalid": 422,
     "id_tenant_mismatch": 403,
     "idempotency_in_flight": 409,
     "idempotency_key_invalid": 400,
@@ -215,6 +218,7 @@
     "until_in_past": 400,
     "validation_error": 400,
     "version_conflict": 409,
+    "webhook_url_rejected": 400,
     "workspace_conflict": 409,
     "workspace_membership_required": 403,
     "workspace_too_large": 413

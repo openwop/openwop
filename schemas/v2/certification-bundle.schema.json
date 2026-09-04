@@ -254,7 +254,8 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^openwop\\.requirement\\."
+                "pattern": "^openwop\\.(requirement|it|scenario|floor|profile|family)\\.[a-z0-9]",
+                "description": "RFC 0168 §A.1 — `openwop.<area>.<slug>`. The suite mints six areas: `requirement` (an explicit `req()` id), `it` (a per-test id from the scenario file and title), `scenario` and `floor` (per-file rows), `profile` (a claimed-profile row) and `family` (a capability gate). A bundle carries whichever the run recorded."
               },
               "scenario": {
                 "type": "string"

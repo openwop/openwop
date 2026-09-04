@@ -67,4 +67,17 @@ describe('v2 preferred-version-default (RFC 0172 §A.1, §A.3)', () => {
       expect(Array.isArray(body?.['protocolVersions']) && typeof body?.['preferredVersion'] === 'string', req('openwop.requirement.0172.preferred-version-default.headerless', 'spec/v2/core/capabilities.md §1', 'the v1 representation MUST carry protocolVersions[] and preferredVersion additively so a single fetch names the other major')).toBe(true);
     }
   });
+  it('through the overlap preferredVersion names a 1.x member', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0');
+    const advertised = Array.isArray(doc['protocolVersions']) ? (doc['protocolVersions'] as unknown[]).map(String) : [];
+    if (!advertised.some((v) => v.startsWith('1.'))) return softSkip('inapplicable', `the host advertises no 1.x member (${advertised.join(', ') || 'none'}) — it is past the overlap, so preferredVersion is a 2.x and the header-less representation is the closed v2 root`);
+    // The header-less representation is the v1 document through the overlap
+    // (capabilities.md §1) and the header-less default is preferredVersion's
+    // major (§1.3); the two agree only when preferredVersion is the 1.x member.
+    expect(
+      String(doc['preferredVersion']).split('.')[0],
+      req('openwop.requirement.0172.preferred-version-default.overlap', 'spec/v2/core/versioning.md §1.1', `the host advertises a 1.x member (${advertised.join(', ')}), so preferredVersion MUST be that 1.x — otherwise versioning.md §1.3 and RFC 0176 §C.1 select different representations for the same header-less request (got ${String(doc['preferredVersion'])})`),
+    ).toBe('1');
+  });
 });

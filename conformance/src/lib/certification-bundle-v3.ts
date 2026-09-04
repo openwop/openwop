@@ -158,5 +158,8 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     else if (p.certified) certifiedProfiles.push(p.id);
   }
   if (expected.blocked > 0 && certifiedProfiles.length > 0) rejections.push({ kind: 'blocked-certified', detail: `${expected.blocked} blocked row(s): a bundle with blocked > 0 does not certify (RFC 0168 §E.1)` });
-  return { rejections, signatureVerified, verifierSignatureVerified, certifiedProfiles: rejections.some((r) => r.kind === 'blocked-certified') ? [] : certifiedProfiles };
+  // RFC 0168 §E.2: the verifier REFUSES, it does not warn. A bundle carrying any
+  // rejection substantiates nothing — a self-signed `independent` claim certified
+  // while its own rejection sat in the list, which is the failure mode R5 names.
+  return { rejections, signatureVerified, verifierSignatureVerified, certifiedProfiles: rejections.length > 0 ? [] : certifiedProfiles };
 }

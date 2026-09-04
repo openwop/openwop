@@ -57,6 +57,6 @@ A host MUST NOT deliver events a `replay` fork re-emits as fixed history; replay
 
 ## Egress
 
-At registration a host MUST reject non-`https://` URLs, RFC 1918 and loopback and link-local ranges, IPv6 ULA, cloud metadata hosts, and `localhost`. At delivery time a host MUST re-resolve the hostname, validate every resolved address against the same denied ranges plus its own denylist, connect to the validated address without re-resolving, and refuse to follow redirects (invariant `webhook-delivery-egress-revalidation`, reference-impl tier).
+At registration a host MUST reject (`400 webhook_url_rejected`) non-`https://` URLs, RFC 1918 and loopback and link-local ranges, IPv6 ULA, cloud metadata hosts, and `localhost`. At delivery time a host MUST re-resolve the hostname, validate every resolved address against the same denied ranges plus its own denylist, connect to the validated address without re-resolving, and refuse to follow redirects (invariant `webhook-delivery-egress-revalidation`, reference-impl tier).
 
 See also: events.md, replay.md, persistence.md, security-defaults.md.

@@ -1,5 +1,5 @@
 {
-  "$comment": "RFC 0173 §B — durable delivery binds with webhooks; no durable flag",
+  "$comment": "RFC 0173 §B — durable delivery binds with webhooks; no durable flag; retryPolicy is the v2 carrier of the delivery obligation (was triggerBridge.retryPolicy at v1)",
   "properties": {
     "signatureAlgorithms": {
       "type": "array",
@@ -10,6 +10,29 @@
           "v1"
         ]
       }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxAttempts",
+        "backoff"
+      ],
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "backoff": {
+          "type": "string",
+          "enum": [
+            "none",
+            "fixed",
+            "exponential"
+          ]
+        }
+      },
+      "description": "spec/v2/core/webhooks.md §Delivery — the policy a host retries a failed attempt under. The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."
     }
   },
   "required": [

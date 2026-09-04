@@ -98,13 +98,35 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     if (!(await gateFamily('idempotency'))) return softSkip('inapplicable', 'idempotency family not advertised — no Layer-2 obligation (gate recorded under openwop.family.idempotency)');
     if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised');
-    // The seam this leg needs: POST ${SEAMS_PREFIX}/sample/test/idempotency/effect-retry
-    // { providerUrl } → { runId, effectId } where the suite's fixture provider
-    // records the idempotency key of each attempt and rejects a changed key.
-    const probe = await driver.post(`${SEAMS_PREFIX}/sample/test/idempotency/effect-retry`, { providerUrl: 'http://127.0.0.1:1/' });
-    if (probe.status === 404 || probe.status === 403 || probe.status === 405) {
-      return softSkip('blocked', `no seam drives an effect through the suite fixture provider with a forced transport retry — ${SEAMS_PREFIX}/sample/test/idempotency/effect-retry answered ${probe.status} (the §25 concurrent-claim seam exercises Layer 1, not the provider key)`);
+    // The seam is catalogued (api/seams-v2.yaml `forceEffectTransportRetry`). An
+    // unreachable providerUrl forces the transport retry; the witness is the
+    // host's own Layer-2 ledger (RFC 0173 §C.2), where every attempt of one
+    // effect MUST carry the same business-identity key.
+    const fired = await driver.post(`${SEAMS_PREFIX}/sample/test/idempotency/effect-retry`, { providerUrl: 'http://127.0.0.1:1/' });
+    if (fired.status === 404 || fired.status === 403 || fired.status === 405) {
+      return softSkip('blocked', `the host advertises the seams profile but does not serve ${SEAMS_PREFIX}/sample/test/idempotency/effect-retry (answered ${fired.status}) — the cross-retry keying leg cannot be driven`);
     }
-    return softSkip('blocked', `${SEAMS_PREFIX}/sample/test/idempotency/effect-retry answered ${probe.status} but has no contract in api/seams-v2.yaml — not asserted against an uncatalogued seam`);
+    const body = fired.json as { runId?: unknown; effectId?: unknown } | null;
+    if (fired.status !== 201 || typeof body?.runId !== 'string' || typeof body?.effectId !== 'string') {
+      return softSkip('blocked', `${SEAMS_PREFIX}/sample/test/idempotency/effect-retry answered ${fired.status} without { runId, effectId } — the seam contract in api/seams-v2.yaml is 201 { runId, effectId }`);
+    }
+    const ledger = await driver.get(`/runs/${body.runId}/effects`);
+    if (ledger.status !== 200) return softSkip('blocked', `GET /runs/{runId}/effects answered ${ledger.status} — the ledger is the witness for cross-retry keying`);
+    const all = ((ledger.json as { effects?: unknown } | null)?.effects ?? []) as Array<Record<string, unknown>>;
+    const attempts = all.filter((e) => e['effectId'] === body.effectId);
+    if (attempts.length < 2) {
+      return softSkip('blocked', `the seam produced ${attempts.length} ledger row(s) for effect ${String(body.effectId)} — a cross-retry assertion needs at least two attempts`);
+    }
+    const keys = new Set(attempts.map((e) => String(e['providerKey'] ?? '')));
+    expect(
+      keys.size,
+      req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/replay.md §Effect identity', `every attempt of one effect MUST present the same provider key across a transport retry — ${attempts.length} attempt(s) presented ${keys.size} distinct key(s)`),
+    ).toBe(1);
+    for (const a of attempts) {
+      expect(
+        a['keying'],
+        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/replay.md §Effect identity', `a Layer-2 host keys a retried effect on business identity, not the activity recipe (attempt ${String(a['attempt'])})`),
+      ).toBe('business-identity');
+    }
   });
 });
