@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Changed (compatibility note, retroactive)
+
+- **`conformance/src/lib/saml-idp.ts` changed the bytes it signs in #1163 (`f36ca6d0`, 2026-09-01) and shipped without a note.** The RFC 0163 §B two-trust-root fixture moved `<saml:Issuer>` inside the signed element and changed the fixture's ad-hoc canonical string. `src/` ships in the package, hosts import `createSyntheticSamlIdp` from it, and a host that had mirrored the fixture's canonicalization instead of doing C14N began answering `bad-signature` for every minted assertion — valid, expired and not-yet-valid alike — with no failure anywhere but its own test suite. The change's own comment claimed *"a lone instance behaves exactly as before"*; that was true of `verify()` and false of any verifier that reconstructed the old form. A tier-2 host traced it on 2026-09-05. The remedy is the §B form (verify the `Issuer` inside the signed element as the trust root), not a pin; but a fixture whose signed bytes are a de facto contract for hosts is packed content, and its signed form MUST NOT change again without a line here.
+
 ### Added
 
 - **`v2-stream-sse-projection`** — every `data:` frame on the major-2 run stream MUST carry the run's tenant-bound `runId`, asserted per frame. Both production hosts shipped the same defect on the stream path (one had no per-frame projector; the other projected per frame and not in the `batch` flush) and the suite could not see it: of 56 `v2-*` files, none read a stream frame. Found by a live witness and a peer's report; a tier-1 host asked for the file by name. 502 scenario files (v1 445, v2 58).
