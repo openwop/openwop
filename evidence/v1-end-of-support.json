@@ -37,14 +37,14 @@
         ],
         "nonVacuous": true
       },
-      "anchoredAt": null,
-      "anchorCommit": null,
-      "reason": "no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one"
+      "anchoredAt": "2026-09-05T09:58:21-04:00",
+      "anchorCommit": "2c21c36ab32a313d6d170175d80a572ec14ba3d7",
+      "reason": null
     }
   ],
   "legA": {
     "notBefore": null,
-    "reason": "2 of 2 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one); myndhyve (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
+    "reason": "1 of 2 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
   },
   "legB": {
     "notBefore": null,
@@ -53,5 +53,5 @@
     "reason": "the v2.0.0 tag does not exist yet — (b) is undecidable before the cut"
   },
   "endOfSupportNotBefore": null,
-  "state": "not anchored — 2 of 2 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one); myndhyve (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
+  "state": "not anchored — 1 of 2 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
 }
