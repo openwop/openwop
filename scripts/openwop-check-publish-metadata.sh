@@ -18,9 +18,9 @@ EXPECTED_NPM_SCOPE="@openwop"
 # `@openwop/openwop-conformance` independently bumps minors as conformance
 # scenarios are added/removed, per `PUBLISHING.md` §"Versioning alignment".
 # Bump this when the next `openwop-conformance/v*` tag rolls.
-EXPECTED_CONFORMANCE_VERSION="2.0.0-rc.47"
+EXPECTED_CONFORMANCE_VERSION="2.0.0-rc.48"
 # Suite 2.0.0 (RFC 0168 §D.2): the contract package publishes beside the suite from the same tag.
-EXPECTED_SPEC_ARTIFACTS_VERSION="2.0.0-rc.47"
+EXPECTED_SPEC_ARTIFACTS_VERSION="2.0.0-rc.48"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
