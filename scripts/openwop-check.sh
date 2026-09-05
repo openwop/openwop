@@ -292,6 +292,7 @@ node "$(dirname "$0")/check-id-kinds-bound.mjs"
 node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
 node "$(dirname "$0")/generate-v1-eos-clock.mjs" --check
 node "$(dirname "$0")/check-removal-dates.mjs"
+node "$(dirname "$0")/check-retention-floors.mjs"
 node "$(dirname "$0")/check-accepted-predicate.mjs"
 node "$(dirname "$0")/check-threat-model-template.mjs"
 echo
