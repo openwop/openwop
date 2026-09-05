@@ -60,7 +60,12 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     if (before === null || before.status !== 200) {
       return softSkip('blocked', `GET /runs/${runId}/events/poll answered ${before?.status ?? 'no response'} on the seeded era-2 run — the log cannot be read back`);
     }
-    const seedCount = eventsOf(before).length;
+    // rc.58: `eventsOf` reads `.events` off a JSON body; `before` is the
+    // RESPONSE. Passing the response read `events` off an object that never
+    // has one, so this leg recorded "reads back empty (0 events)" on every host
+    // — including one whose poll returned both seeded rows — and the writer
+    // rule was unwitnessable. Every other caller passes `.json`.
+    const seedCount = eventsOf(before.json).length;
     // The seam returning ok is a WRAPPER claim; the readable log is the artifact.
     // A seam that reports success and seeds nothing leaves no era-2 log to append
     // to, so there is nothing here to witness the writer rule with — that is
@@ -93,7 +98,7 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
       return softSkip('blocked', `the era-2 read failed with ${after.status} after the host's own append — the assertion above already recorded the refusal`);
     }
 
-    const rows = eventsOf(after) as ReadEvent[];
+    const rows = eventsOf(after.json) as ReadEvent[];
     expect(
       rows.length,
       req(ID, DOC, `the append MUST be visible in the log (seeded ${seedCount}, read ${rows.length} after cancel)`),
