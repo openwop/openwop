@@ -93,7 +93,7 @@ async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | nul
   }
   if (!doc) return { kind: 'blocked', reason: 'discovery unreachable — /.well-known/openwop (OpenWOP-Version: 2.0) did not answer 200 JSON' };
   if (!(await gateFamily('workflowChainPacks'))) return { kind: 'inapplicable', reason: 'v2 discovery does not advertise the workflowChainPacks family (RFC 0169 §A.2)' };
-  if (!seamsProfileAdvertised(doc)) return { kind: 'blocked', reason: 'host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)' };
+  if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)' };
   if (!v2Validator('workflow-chain-pack-manifest')(chainPack('core.openwop.pin-probe', 'core.ai.callPrompt@1.0.0')).ok) return { kind: 'blocked', reason: SCHEMA_GAP };
   return null;
 }

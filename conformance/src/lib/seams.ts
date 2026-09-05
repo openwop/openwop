@@ -33,7 +33,37 @@ export function isSeamPath(path: string): boolean {
   return V1_SEAM_PREFIXES.some(([re]) => re.test(path)) || path.startsWith(`${SEAMS_PREFIX}/`);
 }
 
-/** Whether a (v2) discovery document advertises the seams profile. */
+/**
+ * Whether a (v2) discovery document advertises the seams profile.
+ *
+ * **The disposition rule, and it is load-bearing (rc.62).** A scenario that
+ * finds this FALSE records `inapplicable`, never `blocked`. The host has not
+ * claimed the instrument, so the obligation is out of scope for it — the same
+ * sense as `softSkip('inapplicable', 'host does not advertise X')` in
+ * `soft-skip.ts`. `blocked` is reserved for the DIFFERENT fact one line later
+ * in several of these files: the profile IS advertised and the seam answers
+ * 404 — an obligation the host took on and the suite could not measure.
+ *
+ * Why it matters that these are not the same. `blocked` is bundle-wide fatal
+ * (`verifyBundleV3` `blocked-certified`, RFC 0168 §E.1). Until rc.62 fifteen
+ * scenarios recorded `blocked` on an ABSENT advert while the seams profile's
+ * predicate was empty — and an empty predicate is vacuously satisfied, so
+ * `claimedProfilesForV2` claimed the profile for every v2 host. Together that
+ * denied certification of EVERY profile to any host that had simply not
+ * mounted the conformance seams: 19 of MyndHyve's 45 blocked rows and 9 of
+ * openwop-workflow-engine's 29, on hosts that never advertised the profile
+ * they were being held to. Mounting test-only surface is not a precondition of
+ * certifying `openwop-discovery-core`, and a barrier of that shape falls
+ * hardest on the independent implementers the v1 end-of-support clock needs.
+ *
+ * The predicate (`spec/v2/declaration.json`) now requires `conformance` at the
+ * discovery root, which is NECESSARY but not sufficient; this function is the
+ * sufficient test, applied per scenario. A host with a `conformance` block
+ * naming some other profile claims seams-v2, records every floor row
+ * `inapplicable`, witnesses nothing, and so certifies nothing — without a
+ * single blocked row. Claimed-and-unwitnessed and not-claimed are both honest;
+ * blocked-because-unclaimed was not.
+ */
 export function seamsProfileAdvertised(doc: Readonly<Record<string, unknown>> | null | undefined): boolean {
   const conf = doc?.['conformance'];
   return typeof conf === 'object' && conf !== null && (conf as Record<string, unknown>)['seamsProfile'] === SEAMS_PROFILE_ID;

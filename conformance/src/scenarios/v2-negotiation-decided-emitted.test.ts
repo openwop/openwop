@@ -88,7 +88,7 @@ async function leg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
   if (!doc) return softSkip('blocked', 'discovery unreachable');
   const facet = await familyAdvertised(protocol);
   if (!facet) return softSkip('inapplicable', `${protocol} facet not advertised — no negotiation to audit`);
-  if (!seamsProfileAdvertised(doc)) return softSkip('blocked', `the exchange is driven through the seams profile (RFC 0175 §D.3) — conformance.seamsProfile is not openwop-conformance-seams-v2`);
+  if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', `the exchange is driven through the seams profile (RFC 0175 §D.3) — conformance.seamsProfile is not openwop-conformance-seams-v2`);
   const peer = protocol === 'a2a' ? getA2AFakePeer() : getMcpFakeServer();
   if (peer === null) return softSkip('blocked', `the suite ${protocol === 'a2a' ? 'A2A fake peer (OPENWOP_A2A_FAKE_PEER=true)' : 'MCP fake server (OPENWOP_MCP_FAKE_SERVER=true)'} is not started in this run`);
   peer.reset();

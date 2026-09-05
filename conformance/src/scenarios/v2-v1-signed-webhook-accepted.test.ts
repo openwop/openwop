@@ -90,7 +90,7 @@ describe('RFC 0176 §D.2 — v1-signed-webhook-accepted (gated on webhooks + sea
     const doc = await discovery();
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', `seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through ${RECEIVE}`);
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', `seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through ${RECEIVE}`);
     const secret = `conformance-secret-${Date.now().toString(36)}`;
     const body = JSON.stringify({ runId: 'run-conformance-v1-signed', workspaceId: 'ws-conformance', event: { type: 'run.completed', sequence: 3, payload: { durationMs: 1 } } });
     const good = await deliver(secret, v1Delivery(secret, body));

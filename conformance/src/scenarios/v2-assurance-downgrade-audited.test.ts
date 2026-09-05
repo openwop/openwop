@@ -39,7 +39,7 @@ async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse
 async function gate(): Promise<{ floor: string } | { kind: 'blocked' | 'inapplicable'; reason: string }> {
   const doc = await discovery();
   if (!doc) return { kind: 'blocked', reason: 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0' };
-  if (!seamsProfileAdvertised(doc)) return { kind: 'blocked', reason: 'seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated' };
+  if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated' };
   const auth = await familyAdvertised('auth');
   const lanes = Array.isArray(auth?.['lanes']) ? (auth['lanes'] as Array<Record<string, unknown>>) : [];
   const workload = lanes.find((l) => l['lane'] === 'workload');

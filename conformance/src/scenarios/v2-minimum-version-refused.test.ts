@@ -88,7 +88,7 @@ describe('RFC 0175 §D.2 — minimum-version-refused (gated on a2a/mcp + seams)'
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     const facet = await familyAdvertised('a2a');
     if (!facet) return softSkip('inapplicable', 'a2a facet not advertised — no floor to enforce');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the below-floor exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the below-floor exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
     const floor = String(facet['minimumVersion']);
     if (!a2aBelow(A2A_LOWEST, floor)) {
       return softSkip('blocked', `the advertised a2a.minimumVersion (${floor}) is at or below the lowest version the suite peer can offer (${A2A_LOWEST}) — nothing below the floor can be offered; a peer speaking a lower A2A revision is needed`);

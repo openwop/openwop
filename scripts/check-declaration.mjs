@@ -148,6 +148,42 @@ for (const p of decl.profiles) {
     }
   }
 }
+// 11. An ABSENT seams advert is `inapplicable`, never `blocked` (rc.62).
+//     `blocked` is bundle-wide fatal (RFC 0168 §E.1) and means the suite could
+//     not measure an obligation the host TOOK ON. A host that does not
+//     advertise `conformance.seamsProfile` has not taken the instrument on, so
+//     the honest record is `inapplicable` — the same sense as every other
+//     "host does not advertise X" gate (`soft-skip.ts`). The DIFFERENT fact,
+//     advert present and the seam answering 404, stays `blocked` and is not
+//     matched here: this rule reads only the branch guarded by
+//     `!seamsProfileAdvertised(...)`.
+//     Until rc.62 fifteen scenarios blocked on the absent advert while the
+//     profile's predicate was empty (hence vacuously claimed by every host),
+//     which denied certification of EVERY profile to any host that had not
+//     mounted the seams — 19 of 45 blocked rows on one production host, 9 of
+//     29 on the other, for a profile neither had advertised.
+{
+  const dir = join(ROOT, 'conformance', 'src', 'scenarios');
+  let scanned = 0;
+  for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.test.ts')) : []) {
+    const text = readFileSync(join(dir, f), 'utf8');
+    if (!text.includes('!seamsProfileAdvertised')) continue;
+    scanned += 1;
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      if (!lines[i].includes('!seamsProfileAdvertised')) continue;
+      const window = lines.slice(i, i + 3).join('\n');
+      const m = /kind: '(\w+)'|softSkip\('(\w+)'/.exec(window);
+      const kind = m?.[1] ?? m?.[2];
+      if (kind === 'blocked') {
+        failures.push(`${f}: the branch guarded by \`!seamsProfileAdvertised(...)\` records \`blocked\`, but an absent advert means the host never claimed the seams instrument — record \`inapplicable\` with the reason. \`blocked\` is bundle-wide fatal (RFC 0168 §E.1) and belongs to the other fact: advert present, seam answering 404.`);
+      }
+      break;
+    }
+  }
+  console.log(`check-declaration rule 11: ${scanned} scenario(s) check the seams advert; each records \`inapplicable\` when it is absent.`);
+}
+
 console.log(`check-declaration rule 10: ${floorFilesRead} floor file(s) read for family gates and seam tokens; facet conditionals (refKinds, a signed-token mount) are not decided by this rule`);
 
 if (failures.length) { console.error('=== check-declaration FAILED ===\n  ' + failures.join('\n  ')); process.exit(1); }
