@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **`v2-advertised-path-space-served` accepted a hosting fallback's `200 text/html` as "mounted under major 2".** A tier-1 host's public origin rewrites `/.well-known/**` and `/v1/**` to its backend and lets every unversioned major-2 path fall through to the SPA shell — `200`, no `OpenWOP-Version` header — while the Cloud Run URL one hop behind answers every path correctly. The scenario was green on production for ten hours because a shell and a mount share a status code; a second-party witness against the public origin then failed 17 scenarios on that fallback. "Reached under major 2" now requires the `OpenWOP-Version` response header (`versioning.md` §1.4, on every response) and a non-HTML body. Proven both directions: fails against the public origin, passes against the direct service URL.
+
 ### Changed (compatibility note, retroactive)
 
 - **`conformance/src/lib/saml-idp.ts` changed the bytes it signs in #1163 (`f36ca6d0`, 2026-09-01) and shipped without a note.** The RFC 0163 §B two-trust-root fixture moved `<saml:Issuer>` inside the signed element and changed the fixture's ad-hoc canonical string. `src/` ships in the package, hosts import `createSyntheticSamlIdp` from it, and a host that had mirrored the fixture's canonicalization instead of doing C14N began answering `bad-signature` for every minted assertion — valid, expired and not-yet-valid alike — with no failure anywhere but its own test suite. The change's own comment claimed *"a lone instance behaves exactly as before"*; that was true of `verify()` and false of any verifier that reconstructed the old form. A tier-2 host traced it on 2026-09-05. The remedy is the §B form (verify the `Issuer` inside the signed element as the trust root), not a pin; but a fixture whose signed bytes are a de facto contract for hosts is packed content, and its signed form MUST NOT change again without a line here.
