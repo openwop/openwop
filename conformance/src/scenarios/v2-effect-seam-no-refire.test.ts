@@ -73,6 +73,22 @@ describe('RFC 0173 §C.2 — effect-seam-no-refire (gated on replay, seam-driven
       const b = r.json as { effects?: unknown } | null;
       return Array.isArray(b?.effects) ? (b.effects as unknown[]).length : 0;
     };
+    // The suppression witness is a COMPARISON, and a comparison against an
+    // empty source measures nothing. Until rc.64 this leg asserted only
+    // `fork <= parent`, so a host whose ledger recorded no attempt for the
+    // fired seam read 0 on both sides and PASSED — certifying suppression it
+    // had not observed. A tier-1 host found it the honest way: it was building
+    // an escapes-only ledger, worked out that both reads would be empty, and
+    // refused to ship the projection that would have gone green.
+    //
+    // `blocked`, not `inapplicable`: this host advertises the seams profile,
+    // mounts the seam, and the seam reported firing — the obligation is taken
+    // on and the declared witness (RFC 0173 §C.2) produced nothing, so the
+    // suite could not measure it. `inapplicable` is for an obligation the host
+    // never took on (lib/seams.ts).
+    if (countOf(parentEffects) === 0) {
+      return softSkip('blocked', `the fired run's effect ledger is empty at GET /runs/{runId}/effects, so a fork that also reads empty would compare 0 against 0 and witness nothing — suppression is observable only against a source attempt the host recorded (RFC 0173 §C.2). A host whose ledger records escapes only, or nothing for this seam, cannot witness this obligation.`);
+    }
     const forked = await driver.post(`/runs/${encodeURIComponent(parentId)}:fork`, { mode: 'replay' });
     const forkBody = forked.json as { runId?: unknown } | null;
     if (forked.status !== 201 || typeof forkBody?.runId !== 'string') {

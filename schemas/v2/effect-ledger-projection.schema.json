@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/effect-ledger-projection.schema.json",
-  "title": "Effect ledger projection (RFC 0173 §C.2)",
-  "description": "GET /runs/{runId}/effects — the Layer-2 effect records keyed on business identity (the activity recipe is the documented fallback). Content-free of provider payloads.",
+  "title": "Effect ledger projection (RFC 0173 \u00a7C.2)",
+  "description": "GET /runs/{runId}/effects \u2014 the Layer-2 effect records keyed on business identity (the activity recipe is the documented fallback). Content-free of provider payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -58,7 +58,8 @@
               "completed",
               "released",
               "escaped"
-            ]
+            ],
+            "description": "The attempt's lifecycle state. The enum is the VOCABULARY a host must label attempts with, not a set of states every host must produce: a host emits the states its own effect lifecycle actually reaches, and one that only claims and completes attempts emits only `claimed` and `completed`. Both floor scenarios that read this projection witness attempt EXISTENCE and identity \u2014 `v2-effect-seam-no-refire` compares row COUNTS across a replay fork and `v2-effect-identity-business-key` reads `effectId`/`providerKey` across attempts; neither reads `state`. So a two-state ledger is schema-valid and witness-sufficient, and `released`/`escaped` are projection surface for operators rather than witness surface for the suite. What a host MUST NOT do is record only exceptional attempts: a ledger that writes a row only when an effect ESCAPES leaves a correctly-suppressed effect invisible, and suppression is then unwitnessable \u2014 the no-re-fire scenario records `blocked` on an empty source ledger rather than passing on 0 == 0."
           },
           "at": {
             "type": "string",
