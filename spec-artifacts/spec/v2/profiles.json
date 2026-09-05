@@ -51,7 +51,10 @@
     {
       "id": "openwop-conformance-seams-v2",
       "predicate": {
-        "families": []
+        "families": [],
+        "metadata": [
+          "conformance"
+        ]
       },
       "floorScenarios": [
         "v2-fork-a-v1-run",
@@ -60,7 +63,7 @@
         "v2-effect-seam-no-refire"
       ],
       "requirementIds": [],
-      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios that are driven through a seam. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass — a seams host advertising none of those families witnesses nothing through the seam and certifies nothing. v2-pinned-run-disposition is absent because it needs a suite opt-in (the change ids a host implements) and records `skipped` without one — a floor row the suite is not allowed to witness cannot certify."
+      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios driven through a seam. rc.62 CLAIM FIX: the predicate now requires `conformance` at the discovery root. Until rc.62 the predicate was EMPTY, and `claimedProfilesForV2` treats an empty predicate as vacuously satisfied, so this profile was CLAIMED BY EVERY v2 HOST — including two production hosts that never advertised it and carried it at `certified: false`. A profile claimed by a host that never advertised it is a claim the host did not make. The predicate is deliberately NECESSARY, not sufficient: it tests that a `conformance` block exists, while the exact advert (`conformance.seamsProfile === openwop-conformance-seams-v2`) is tested per scenario by `seamsProfileAdvertised`. The two compose honestly — no conformance block means NOT CLAIMED; a block naming some other profile means claimed, every floor row `inapplicable`, witnessCount 0, and therefore not certified and not blocked. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass — a seams host advertising none of those families witnesses nothing through the seam and certifies nothing."
     }
   ]
 }

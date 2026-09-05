@@ -63,7 +63,7 @@ describe('RFC 0175 §E.1 — mrtr-rounds-ceiling (gated on mcp + mrtr)', () => {
     if (!facet) return softSkip('inapplicable', 'mcp facet not advertised — no MRTR ceiling');
     const maxRounds = maxRoundsOf(facet);
     if (!Number.isInteger(maxRounds)) return softSkip('inapplicable', 'mcp.mrtr.maxRounds not advertised — no ceiling to exceed');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the rounds are driven through the seams profile (§23 invoke seam) — conformance.seamsProfile is not openwop-conformance-seams-v2');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the rounds are driven through the seams profile (§23 invoke seam) — conformance.seamsProfile is not openwop-conformance-seams-v2');
     const server = getMcpFakeServer();
     if (server === null) return softSkip('blocked', 'the suite MCP fake server (OPENWOP_MCP_FAKE_SERVER=true) is not started in this run');
     server.reset();

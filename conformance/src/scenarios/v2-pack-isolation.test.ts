@@ -54,7 +54,7 @@ async function gated(): Promise<Record<string, unknown> | null> {
 /** Drive one misbehaving typeId through the sandbox seam; null (reason recorded) when the seam is absent. */
 async function invoke(typeId: string, extra: Record<string, unknown> = {}): Promise<InvokeResult | null> {
   const doc = await discovery();
-  if (!doc || !seamsProfileAdvertised(doc)) { softSkip('blocked', `the ${typeId} leg is seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised`); return null; }
+  if (!doc || !seamsProfileAdvertised(doc)) { softSkip('inapplicable', `the ${typeId} leg is seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised`); return null; }
   const res = await driver.post(INVOKE, { typeId, ...extra });
   if (res.status === 404 || res.status === 403 || res.status === 405) { seamAbsent(`host advertises packs + sandbox but ${INVOKE} answered ${res.status} — the ${typeId} leg is unobservable (host-sample-test-seams.md §8)`); return null; }
   expect(res.status, req('openwop.requirement.0173.pack-isolation.seam', 'host-sample-test-seams.md §8', `${INVOKE} MUST answer 200 { result } | 200 { error } for ${typeId}`)).toBe(200);

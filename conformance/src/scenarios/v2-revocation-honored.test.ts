@@ -38,7 +38,7 @@ describe('v2 revocation-honored (RFC 0170 §B.3 — seam-gated)', () => {
   it('a revoked next-request credential is refused on the next request with credential_revoked', async () => {
     const doc = await discovery();
     if (!doc) return softSkip('blocked', 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API');
     const auth = await familyAdvertised('auth');
     const lanes = Array.isArray(auth?.['lanes']) ? (auth['lanes'] as Array<Record<string, unknown>>) : [];
     const nextRequest = lanes.filter((l) => l['revocation'] === 'next-request').map((l) => String(l['lane']));

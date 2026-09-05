@@ -56,7 +56,7 @@ async function readLink(externalId: string): Promise<Record<string, unknown> | n
 async function form(): Promise<Formed> {
   const doc = await discovery();
   if (!doc) return { kind: 'blocked', reason: 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0' };
-  if (!seamsProfileAdvertised(doc)) return { kind: 'blocked', reason: 'seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated' };
+  if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated' };
   const auth = await familyAdvertised('auth');
   const lanes = new Set((Array.isArray(auth?.['lanes']) ? (auth['lanes'] as Array<Record<string, unknown>>) : []).map((l) => String(l['lane'])));
   if (!(lanes.has('saml') && lanes.has('scim'))) return { kind: 'inapplicable', reason: 'the host does not advertise both the saml and scim lanes — advertising both is what implies the linking contract (row C2.5)' };

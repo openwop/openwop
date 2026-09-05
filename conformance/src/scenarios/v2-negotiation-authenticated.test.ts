@@ -88,7 +88,7 @@ describe('RFC 0175 §D.1 — negotiation-authenticated (gated on a2a/mcp + seams
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     const facet = await familyAdvertised('a2a');
     if (!facet) return softSkip('inapplicable', 'a2a facet not advertised — no negotiation to authenticate');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the unauthenticated exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the unauthenticated exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
     const preferred = String(facet['preferredVersion']);
     if (preferred === A2A_LOWER) return softSkip('blocked', `a2a.preferredVersion is ${preferred}, the lowest version the suite peer can offer — no lower version can be offered`);
     const peer = new A2AFakePeer({ protocolVersions: ['0.3'] });

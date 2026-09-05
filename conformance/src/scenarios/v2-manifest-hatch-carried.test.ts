@@ -77,7 +77,7 @@ async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | nul
   }
   if (!doc) return { kind: 'blocked', reason: 'discovery unreachable — /.well-known/openwop (OpenWOP-Version: 2.0) did not answer 200 JSON' };
   if (!(await gateFamily('packs'))) return { kind: 'inapplicable', reason: 'v2 discovery does not advertise the packs family (RFC 0169 §A.2)' };
-  if (!seamsProfileAdvertised(doc)) return { kind: 'blocked', reason: 'host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)' };
+  if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)' };
   return null;
 }
 

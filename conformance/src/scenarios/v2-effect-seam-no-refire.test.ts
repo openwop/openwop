@@ -45,7 +45,7 @@ describe('RFC 0173 §C.2 — effect-seam-no-refire (gated on replay, seam-driven
     const replay = await gateFamily('replay');
     if (!replay) return softSkip('inapplicable', 'replay family not advertised (gate recorded under openwop.family.replay)');
     if (!seamsProfileAdvertised(doc)) {
-      return softSkip('blocked', `the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)`);
+      return softSkip('inapplicable', `the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)`);
     }
     // The seam is catalogued (api/seams-v2.yaml `fireEffectSeam`). The witness is
     // the host's own Layer-2 ledger, not an externally reachable receiver: fire a

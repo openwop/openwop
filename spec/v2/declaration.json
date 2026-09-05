@@ -1,6 +1,6 @@
 {
   "$schema": "https://openwop.dev/spec/v2/declaration.schema.json",
-  "$comment": "RFC 0169 §B — the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (§B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption is re-derived from INTEROP-MATRIX bundle evidence at each RC (generator --check).",
+  "$comment": "RFC 0169 \u00a7B \u2014 the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (\u00a7B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption is re-derived from INTEROP-MATRIX bundle evidence at each RC (generator --check).",
   "version": "2.0",
   "updated": "2026-09-03",
   "witnessClasses": [
@@ -62,7 +62,7 @@
       "key": "supportedTransports",
       "kind": "metadata",
       "schema": "metadata/supportedTransports",
-      "note": "deleted: RFC 0175 §B.1",
+      "note": "deleted: RFC 0175 \u00a7B.1",
       "disposition": "deleted"
     },
     {
@@ -125,7 +125,7 @@
       "key": "signingKeys",
       "kind": "metadata",
       "schema": "metadata/signingKeys",
-      "note": "host bundle-signing public keys (RFC 0168 §E.2); v2-only — the surface the RFC named when it disposed of \"a signature nobody can check\"",
+      "note": "host bundle-signing public keys (RFC 0168 \u00a7E.2); v2-only \u2014 the surface the RFC named when it disposed of \"a signature nobody can check\"",
       "disposition": "kept"
     },
     {
@@ -139,7 +139,7 @@
       "key": "preferredVersion",
       "kind": "metadata",
       "schema": "metadata/preferredVersion",
-      "note": "root preferredVersion (RFC 0172 §A.1; v1.x additive RFC 0179)",
+      "note": "root preferredVersion (RFC 0172 \u00a7A.1; v1.x additive RFC 0179)",
       "disposition": "kept"
     }
   ],
@@ -147,7 +147,7 @@
     {
       "key": "contractProvenance",
       "anchor": "deleted",
-      "reason": "RFC 0169 §A.5 (unfalsifiable self-declaration)"
+      "reason": "RFC 0169 \u00a7A.5 (unfalsifiable self-declaration)"
     },
     {
       "key": "supportedEnvelopes",
@@ -291,7 +291,7 @@
     {
       "key": "grpc",
       "anchor": "deleted",
-      "reason": "RFC 0175 §A.1 (spec/v2/ext/grpc-transport/, not advertisable)"
+      "reason": "RFC 0175 \u00a7A.1 (spec/v2/ext/grpc-transport/, not advertisable)"
     },
     {
       "key": "nodePackRuntimes",
@@ -591,7 +591,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0037",
-      "note": "RFC 0002–0008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
     },
     {
       "key": "modelCapabilities",
@@ -659,7 +659,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": null,
-      "note": "imageGeneration/videoGeneration are declared facets (RFC 0169 §B.3 with RFC 0177 §B.1: facet paths are not identifiers; peerDependenciesMeta.aiProviders.facets[])",
+      "note": "imageGeneration/videoGeneration are declared facets (RFC 0169 \u00a7B.3 with RFC 0177 \u00a7B.1: facet paths are not identifiers; peerDependenciesMeta.aiProviders.facets[])",
       "facetsFrom": "spec/v2/facets/aiProviders.schema.json"
     },
     {
@@ -697,7 +697,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0002",
-      "note": "RFC 0002–0008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
     },
     {
       "key": "memory",
@@ -724,7 +724,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0004",
-      "note": "RFC 0002–0008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
     },
     {
       "key": "conversationPrimitive",
@@ -1408,7 +1408,7 @@
       "requirementIds": [],
       "owningRfc": "0035",
       "disposition": "externally-gated",
-      "reason": "RFC 0169 §C.4 / RFC 0035 non-steward tripwire; status experimental with until = the review date, never stable",
+      "reason": "RFC 0169 \u00a7C.4 / RFC 0035 non-steward tripwire; status experimental with until = the review date, never stable",
       "facetsFrom": "spec/v2/facets/sandbox.schema.json"
     },
     {
@@ -1430,7 +1430,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0151",
-      "reason": "RFC 0173 §B core obligation with a declared witness; ext/ only by §D.1 at the cut"
+      "reason": "RFC 0173 \u00a7B core obligation with a declared witness; ext/ only by \u00a7D.1 at the cut"
     },
     {
       "key": "idempotency",
@@ -1606,7 +1606,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0115",
-      "reason": "RFC 0169 §C.5 (claims-check; ext/ unless a behavioral witness lands)"
+      "reason": "RFC 0169 \u00a7C.5 (claims-check; ext/ unless a behavioral witness lands)"
     },
     {
       "key": "a2uiSurface",
@@ -1625,7 +1625,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0114",
-      "reason": "RFC 0169 §C.5 (deltaTransport claims-check; ext/ unless a behavioral witness lands)"
+      "reason": "RFC 0169 \u00a7C.5 (deltaTransport claims-check; ext/ unless a behavioral witness lands)"
     },
     {
       "key": "brand",
@@ -1642,7 +1642,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "canvas",
@@ -1659,7 +1659,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "chat",
@@ -1676,7 +1676,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "coordination",
@@ -1693,7 +1693,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "dataIntegration",
@@ -1710,7 +1710,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "entities",
@@ -1727,7 +1727,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "kanban",
@@ -1744,7 +1744,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "knowledge",
@@ -1761,7 +1761,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "launchStudio",
@@ -1778,7 +1778,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "messaging",
@@ -1795,7 +1795,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     },
     {
       "key": "webResearch",
@@ -1812,7 +1812,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0144",
-      "reason": "RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
     }
   ],
   "profiles": [
@@ -1830,7 +1830,7 @@
         "v2-preferred-version-default",
         "v2-version-header-honored"
       ],
-      "note": "discovery only; the alias openwop-core is deleted (row C2.3). Floor minted rc.45: the closed root, the preferredVersion default, and the header honoured-or-refused — each unaided. v2-well-known-one-resource is deliberately absent: it is inapplicable by design for a host advertising one major, which every host becomes at v1 end-of-support, and a floor that expires is not a floor."
+      "note": "discovery only; the alias openwop-core is deleted (row C2.3). Floor minted rc.45: the closed root, the preferredVersion default, and the header honoured-or-refused \u2014 each unaided. v2-well-known-one-resource is deliberately absent: it is inapplicable by design for a host advertising one major, which every host becomes at v1 end-of-support, and a floor that expires is not a floor."
     },
     {
       "id": "openwop-core-standard",
@@ -1859,12 +1859,15 @@
         "v2-sse-last-event-id"
       ],
       "requirementIds": [],
-      "note": "rc.59: five unaided run-surface witnesses joined the floor — v2-run-cancel (runs.md §Cancel: 409 run_terminal on a terminal run), v2-run-bulk-cancel (§Cancel: per-entry envelopes, id_tenant_mismatch / not_found, details.maxRunIds), v2-run-pause-resume (§Pause and resume: 409 run_terminal / run_state_conflict, the literal drainPolicy echo, the immediate cut), v2-run-options-limits (capabilities.md limits metadata honoured on create), v2-sse-last-event-id (events.md §SSE frames: Last-Event-ID resumes at the next sequence, never re-emits the resumption point). cancelRun, bulkCancelRuns and pauseRun are core operations by the runs.md surface table (only ancestry, annotations and eval-summary are 404-when-unadvertised), so a host that omits one is blocked, not inapplicable, and the floor refuses it — the prose's outcome. Their optional legs (values mode, the conformance-delay / conformance-cancellable fixtures) record inapplicable with the reason and the file row stays a witnessed pass. Measured before the change: the reference host passes all five (rc.58, 179 / 0 / 0 / 42); neither production host satisfies this predicate, so no existing claim moves. seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest — its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
+      "note": "rc.59: five unaided run-surface witnesses joined the floor \u2014 v2-run-cancel (runs.md \u00a7Cancel: 409 run_terminal on a terminal run), v2-run-bulk-cancel (\u00a7Cancel: per-entry envelopes, id_tenant_mismatch / not_found, details.maxRunIds), v2-run-pause-resume (\u00a7Pause and resume: 409 run_terminal / run_state_conflict, the literal drainPolicy echo, the immediate cut), v2-run-options-limits (capabilities.md limits metadata honoured on create), v2-sse-last-event-id (events.md \u00a7SSE frames: Last-Event-ID resumes at the next sequence, never re-emits the resumption point). cancelRun, bulkCancelRuns and pauseRun are core operations by the runs.md surface table (only ancestry, annotations and eval-summary are 404-when-unadvertised), so a host that omits one is blocked, not inapplicable, and the floor refuses it \u2014 the prose's outcome. Their optional legs (values mode, the conformance-delay / conformance-cancellable fixtures) record inapplicable with the reason and the file row stays a witnessed pass. Measured before the change: the reference host passes all five (rc.58, 179 / 0 / 0 / 42); neither production host satisfies this predicate, so no existing claim moves. seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest \u2014 its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
     },
     {
       "id": "openwop-conformance-seams-v2",
       "predicate": {
-        "families": []
+        "families": [],
+        "metadata": [
+          "conformance"
+        ]
       },
       "floorScenarios": [
         "v2-fork-a-v1-run",
@@ -1872,13 +1875,13 @@
         "v2-v1-signed-webhook-accepted",
         "v2-effect-seam-no-refire"
       ],
-      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios that are driven through a seam. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass — a seams host advertising none of those families witnesses nothing through the seam and certifies nothing. v2-pinned-run-disposition is absent because it needs a suite opt-in (the change ids a host implements) and records `skipped` without one — a floor row the suite is not allowed to witness cannot certify."
+      "note": "RFC 0168 \u00a7C.1 \u2014 the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios driven through a seam. rc.62 CLAIM FIX: the predicate now requires `conformance` at the discovery root. Until rc.62 the predicate was EMPTY, and `claimedProfilesForV2` treats an empty predicate as vacuously satisfied, so this profile was CLAIMED BY EVERY v2 HOST \u2014 including two production hosts that never advertised it and carried it at `certified: false`. A profile claimed by a host that never advertised it is a claim the host did not make. The predicate is deliberately NECESSARY, not sufficient: it tests that a `conformance` block exists, while the exact advert (`conformance.seamsProfile === openwop-conformance-seams-v2`) is tested per scenario by `seamsProfileAdvertised`. The two compose honestly \u2014 no conformance block means NOT CLAIMED; a block naming some other profile means claimed, every floor row `inapplicable`, witnessCount 0, and therefore not certified and not blocked. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass \u2014 a seams host advertising none of those families witnesses nothing through the seam and certifies nothing."
     }
   ],
   "aliases": {
     "host.webSearch": {
       "family": "webResearch",
-      "note": "two spellings of one §host.* section in published manifests (1 use); the section is webResearch"
+      "note": "two spellings of one \u00a7host.* section in published manifests (1 use); the section is webResearch"
     },
     "host.campaignMessaging": {
       "family": "messaging",

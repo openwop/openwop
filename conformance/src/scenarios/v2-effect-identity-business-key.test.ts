@@ -97,7 +97,7 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     const doc = await discovery();
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     if (!(await gateFamily('idempotency'))) return softSkip('inapplicable', 'idempotency family not advertised — no Layer-2 obligation (gate recorded under openwop.family.idempotency)');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised');
     // The seam is catalogued (api/seams-v2.yaml `forceEffectTransportRetry`). An
     // unreachable providerUrl forces the transport retry; the witness is the
     // host's own Layer-2 ledger (RFC 0173 §C.2), where every attempt of one
