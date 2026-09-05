@@ -22,11 +22,29 @@
       "anchoredAt": null,
       "anchorCommit": null,
       "reason": "no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one"
+    },
+    {
+      "name": "myndhyve",
+      "matrixVersion": "847d2425e",
+      "bundle": "evidence/v2-host-bundles/myndhyve.json",
+      "present": true,
+      "latest": {
+        "suiteVersion": "2.0.0-rc.56",
+        "targetMajor": 2,
+        "witnessSha256": "95a444ef48ce485eac003cc3efd0c26518c07c272a0c2f86d69ae2f11069acf4",
+        "evidenceTiers": [
+          "self"
+        ],
+        "nonVacuous": true
+      },
+      "anchoredAt": null,
+      "anchorCommit": null,
+      "reason": "no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one"
     }
   ],
   "legA": {
     "notBefore": null,
-    "reason": "1 of 1 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
+    "reason": "2 of 2 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one); myndhyve (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
   },
   "legB": {
     "notBefore": null,
@@ -35,5 +53,5 @@
     "reason": "the v2.0.0 tag does not exist yet — (b) is undecidable before the cut"
   },
   "endOfSupportNotBefore": null,
-  "state": "not anchored — 1 of 1 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
+  "state": "not anchored — 2 of 2 v2-table host(s) not anchored: openwop-host-v2-reference (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one); myndhyve (no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one)"
 }

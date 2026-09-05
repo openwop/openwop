@@ -43,6 +43,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # scripts/generate-v1-eos-clock.mjs derives the v1 end-of-support
+          # anchor from the FIRST-PARENT HISTORY OF MAIN over
+          # evidence/v2-host-bundles/ (overview.md §v1 end-of-support). A
+          # shallow clone has no main history, and the synthetic PR merge
+          # commit's timestamp is not a date anyone committed — so the check
+          # was unsatisfiable on the first non-vacuous bundle (2026-09-05).
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
