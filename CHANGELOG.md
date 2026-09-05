@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Added
+
+- **`v2-malformed-body-envelope`** — `POST /runs` and `POST /webhooks` with body `{` under major 2 MUST be answered by the host: `400`, the JSON error envelope with `validation_error`, and the `OpenWOP-Version` header (§1.4, on every response). A tier-2 host found its Express JSON parser mounted before negotiation, so a malformed body escaped to a framework HTML 400 with no header under both majors — the one request no scenario sends by accident. The host suggested the probe; it creates nothing and also distinguishes a host from a hosting fallback in front of it. Measured before commit: it fails a tier-1 host's public origin (SPA fallback, `200 text/html`) AND its direct service URL (`500 internal_error`, no header — the same parser-before-negotiation gap, on the other host). 503 scenario files (v1 445, v2 59).
+
 ### Fixed
 
 - **`v2-advertised-path-space-served` accepted a hosting fallback's `200 text/html` as "mounted under major 2".** A tier-1 host's public origin rewrites `/.well-known/**` and `/v1/**` to its backend and lets every unversioned major-2 path fall through to the SPA shell — `200`, no `OpenWOP-Version` header — while the Cloud Run URL one hop behind answers every path correctly. The scenario was green on production for ten hours because a shell and a mount share a status code; a second-party witness against the public origin then failed 17 scenarios on that fallback. "Reached under major 2" now requires the `OpenWOP-Version` response header (`versioning.md` §1.4, on every response) and a non-HTML body. Proven both directions: fails against the public origin, passes against the direct service URL.
