@@ -23,7 +23,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
-import { v2Discovery } from '../lib/v2.js';
+import { v2Discovery, v2Validator } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
@@ -42,7 +42,7 @@ async function create(): Promise<{ runId: string } | { reason: string }> {
   if (res.status !== 201 || typeof runId !== 'string') return { reason: `POST /runs answered ${res.status} ${readErrorCode(res.json) ?? ''} — create refused`.trim() };
   return { runId };
 }
-interface Entry { runId?: unknown; ok?: unknown; status?: unknown; error?: { code?: unknown } | null }
+interface Entry { runId?: unknown; ok?: unknown; status?: unknown; error?: unknown }
 
 describe('v2 run-bulk-cancel (runs.md §Cancel)', () => {
   it('101 ids are refused 400 validation_error with details.maxRunIds', async () => {
@@ -53,7 +53,10 @@ describe('v2 run-bulk-cancel (runs.md §Cancel)', () => {
     if (res.status === 404) return softSkip('blocked', 'POST /runs:bulk-cancel answered 404 — bulkCancelRuns is a core operation (runs.md §Surface) and is not mounted');
     expect(res.status, req(ID, DOC, `over the cap (RECOMMENDED 100) the host MUST answer 400 — got ${res.status}`)).toBe(400);
     expect(readErrorCode(res.json), req(ID, DOC, 'the refusal MUST be validation_error')).toBe('validation_error');
-    const max = (res.json as { error?: { details?: { maxRunIds?: unknown } } } | null)?.error?.details?.maxRunIds;
+    // The v2 envelope is { error: <code>, message, details? } — `details` at the ROOT
+    // (schemas/v2/error-envelope.schema.json). rc.48/rc.49 read `error.details`
+    // and reported a host defect that was this reader's; retracted in rc.50.
+    const max = (res.json as { details?: { maxRunIds?: unknown } } | null)?.details?.maxRunIds;
     expect(typeof max === 'number' && max >= 1 && max <= 100, req(ID, DOC, `details.maxRunIds MUST state the cap (got ${String(max)})`)).toBe(true);
   });
 
@@ -72,11 +75,16 @@ describe('v2 run-bulk-cancel (runs.md §Cancel)', () => {
     expect(entries.map((e) => e.runId), req(ID, DOC, 'results[] MUST be in request order')).toEqual(runIds);
     const foreign = entries[1]!;
     expect(foreign.ok, req(ID, DOC, 'the foreign-tenant entry MUST be ok: false')).toBe(false);
-    const fcode = String(foreign.error?.code);
+    // An entry's `error` IS the error envelope (api/v2/openapi.yaml: `$ref error-envelope`):
+    // { error: <code>, message, details? } nested under the entry — so the code is
+    // `entry.error.error`, read the same way as a top-level envelope.
+    const env = v2Validator('error-envelope')(foreign.error);
+    expect(env.ok, req(ID, 'api/v2/openapi.yaml bulkCancelRuns results[].error', `an ok: false entry's error MUST be the error envelope { error: <code>, message, details? } (schemas/v2/error-envelope.schema.json; the OpenAPI $refs it for results[].error) — got ${JSON.stringify(foreign.error)}: ${env.errors}`)).toBe(true);
+    const fcode = String(readErrorCode(foreign.error));
     expect(['id_tenant_mismatch', 'not_found'].includes(fcode), req(ID, 'spec/v2/core/identity.md §5', `an id whose tenant segment is not the caller's MUST be refused inside the entry with id_tenant_mismatch (or not_found where existence is not leaked) — identity.md §5 applies inside a bulk entry exactly as on a path; run_forbidden is for a same-tenant run the caller may not cancel — got ${fcode}`)).toBe(true);
     for (const own of [entries[0]!, entries[2]!]) {
       const okShape = own.ok === true && ['cancelling', 'cancelled'].includes(String(own.status));
-      const terminalShape = own.ok === false && String(own.error?.code) === 'run_terminal';
+      const terminalShape = own.ok === false && readErrorCode(own.error) === 'run_terminal';
       expect(okShape || terminalShape, req(ID, DOC, `an own entry MUST be ok: true with cancelling|cancelled, or ok: false run_terminal when the noop already completed — got ${JSON.stringify(own)}`)).toBe(true);
     }
   });

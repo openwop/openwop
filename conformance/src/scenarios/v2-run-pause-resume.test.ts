@@ -92,7 +92,8 @@ describe('v2 run-pause-resume (runs.md §Pause and resume)', () => {
       const again = await http(() => driver.post(`/runs/${enc(c.runId)}:pause`, {}));
       expect(again?.status ?? null, req(ID, DOC, `a second pause on a paused run MUST answer 409 — got ${again?.status ?? 'no response'}`)).toBe(409);
       expect(readErrorCode(again?.json), req(ID, DOC, `a pause refused on a non-terminal run MUST carry run_state_conflict (got ${String(readErrorCode(again?.json))})`)).toBe('run_state_conflict');
-      const runStatus = (again?.json as { error?: { details?: { runStatus?: unknown } } } | null)?.error?.details?.runStatus;
+      // `details` sits at the envelope ROOT (schemas/v2/error-envelope.schema.json), not under `error`.
+      const runStatus = (again?.json as { details?: { runStatus?: unknown } } | null)?.details?.runStatus;
       expect(runStatus, req(ID, DOC, `run_state_conflict MUST carry details.runStatus naming the status that refused it (got ${String(runStatus)})`)).toBe('paused');
       const resume = await http(() => driver.post(`/runs/${enc(c.runId)}:resume`, { reason: 'conformance' }));
       expect(resume?.status ?? null, req(ID, DOC, `resumeRun on a paused run MUST answer 202 — got ${resume?.status ?? 'no response'} ${readErrorCode(resume?.json) ?? ''}`.trim())).toBe(202);

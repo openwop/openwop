@@ -28147,7 +28147,7 @@
     {
       "id": "openwop.it.v2-run-bulk-cancel.results-come-back-in-request-order-each-id-processed-independently-a-foreign-id",
       "file": "v2-run-bulk-cancel.test.ts",
-      "line": 60,
+      "line": 63,
       "title": "results[] come back in request order, each id processed independently, a foreign id refused in its entry and never as a top-level 403",
       "explicitId": null,
       "citations": [
@@ -28169,6 +28169,11 @@
         {
           "section": null,
           "requirement": "the foreign-tenant entry MUST be ok: false",
+          "interpolated": true
+        },
+        {
+          "section": "api/v2/openapi.yaml bulkCancelRuns results[].error",
+          "requirement": null,
           "interpolated": true
         },
         {
