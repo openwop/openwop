@@ -69,7 +69,18 @@ async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse
 export function era2Gate(doc: Record<string, unknown> | null): Seeded | null {
   if (!doc) return { ok: false, kind: 'blocked', reason: 'discovery unreachable' };
   if (!seamsProfileAdvertised(doc)) {
-    return { ok: false, kind: 'blocked', reason: `seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through ${SEED_PATH}` };
+    // rc.63: `inapplicable`, not `blocked` — the host never claimed the
+    // instrument, so the obligation is out of scope for it (`lib/seams.ts`).
+    // rc.62 fixed the fifteen scenarios that call `seamsProfileAdvertised`
+    // directly and MISSED this one, which mints the same disposition one call
+    // deeper for six scenarios that import only `era2Gate`: era-2-append-
+    // vocabulary, fork-a-v1-run, pinned-run-disposition, stream-sse-projection,
+    // unmapped-type-refused, v1-events-translated. On MyndHyve's bundle that
+    // left 16 rows blocked on advert-absence after rc.62 — the same defect
+    // wearing a different import. `blocked` above (discovery unreachable) and
+    // below (the seam does not answer) is untouched: those are real failed
+    // measurements.
+    return { ok: false, kind: 'inapplicable', reason: `seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through ${SEED_PATH}` };
   }
   return null;
 }

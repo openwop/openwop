@@ -162,26 +162,44 @@ for (const p of decl.profiles) {
 //     which denied certification of EVERY profile to any host that had not
 //     mounted the seams — 19 of 45 blocked rows on one production host, 9 of
 //     29 on the other, for a profile neither had advertised.
+//     rc.63 WIDENED THE SCOPE, because rc.62's version was scoped to scenario
+//     bodies and passed while the rot persisted: `lib/era2-seed.ts`'s
+//     `era2Gate` mints the same `blocked` one call deeper for six scenarios
+//     that never name `seamsProfileAdvertised` themselves, leaving 16 rows
+//     blocked on a peer's bundle after the "fix". A guard that reads only the
+//     files its author happened to enumerate reports on its own scope, not on
+//     the condition. This one reads every file that names the predicate —
+//     scenarios AND lib.
 {
-  const dir = join(ROOT, 'conformance', 'src', 'scenarios');
+  const dirs = [join(ROOT, 'conformance', 'src', 'scenarios'), join(ROOT, 'conformance', 'src', 'lib')];
+  const sources = dirs.flatMap((d) => (existsSync(d) ? readdirSync(d).filter((x) => x.endsWith('.ts')).map((x) => [d, x]) : []));
   let scanned = 0;
-  for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.test.ts')) : []) {
+  for (const [dir, f] of sources) {
     const text = readFileSync(join(dir, f), 'utf8');
     if (!text.includes('!seamsProfileAdvertised')) continue;
     scanned += 1;
     const lines = text.split('\n');
     for (let i = 0; i < lines.length; i += 1) {
       if (!lines[i].includes('!seamsProfileAdvertised')) continue;
-      const window = lines.slice(i, i + 3).join('\n');
-      const m = /kind: '(\w+)'|softSkip\('(\w+)'/.exec(window);
-      const kind = m?.[1] ?? m?.[2];
+      // Scan forward to the branch's FIRST disposition, skipping comment-only
+      // lines. A fixed narrow window is not safe: adding a comment between the
+      // guard and its `return` pushed the disposition out of a 3-line window
+      // and the rule silently passed — this guard reporting on its own scope
+      // instead of the condition, which is the very failure it exists to catch.
+      let kind;
+      for (let j = i; j < Math.min(i + 40, lines.length); j += 1) {
+        const t = lines[j].trim();
+        if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue;
+        const m = /kind: '(\w+)'|softSkip\('(\w+)'/.exec(lines[j]);
+        if (m) { kind = m[1] ?? m[2]; break; }
+      }
       if (kind === 'blocked') {
         failures.push(`${f}: the branch guarded by \`!seamsProfileAdvertised(...)\` records \`blocked\`, but an absent advert means the host never claimed the seams instrument — record \`inapplicable\` with the reason. \`blocked\` is bundle-wide fatal (RFC 0168 §E.1) and belongs to the other fact: advert present, seam answering 404.`);
       }
       break;
     }
   }
-  console.log(`check-declaration rule 11: ${scanned} scenario(s) check the seams advert; each records \`inapplicable\` when it is absent.`);
+  console.log(`check-declaration rule 11: ${scanned} source file(s) under conformance/src/{scenarios,lib} check the seams advert; each records \`inapplicable\` when it is absent.`);
 }
 
 console.log(`check-declaration rule 10: ${floorFilesRead} floor file(s) read for family gates and seam tokens; facet conditionals (refKinds, a signed-token mount) are not decided by this rule`);
