@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/runbooks/V2-HOST-MIGRATION.md` — sixth scoped-signal instance: a hosting layer is part of the wire.** A direct-service-URL witness cannot see a front door that decodes `%2F` or a backend that links to its own hostname over `http`; ids and absolute URLs must be witnessed through the origin a client is given (§4.2d). Credited to the host that found it in its own ADR correction.
+
 ### Added
 
 - **`v2-created-run-readable`** — a run created at a base MUST be readable and pollable at that base by the id the `201` returned, and `eventsUrl` / `statusUrl` MUST resolve under the request's origin without a scheme downgrade (`runs.md` §Create now says both; a relative path satisfies the link rule). Until now the read-back after a create was soft-skipped as `blocked` on any non-200 (`v2-id-grammar`) — the honest word when a host will not let the suite look, the wrong word when the host answers `404 No route matches` for the id it minted seconds earlier. Measured 2026-09-05 on a tier-1 host: its public origin decodes `%2F` to `/` before forwarding, so every tenant-bound id is unreachable through the front door while the direct service URL answers 200; the same create response links `eventsUrl` to `http://<direct service host>/…`. Proven before commit: the scenario fails the origin on the read-back (404) and fails the direct service URL on the link (scheme downgrade `https` → `http`) — both real, neither `blocked`. 504 scenario files (v1 445, v2 60). Suite `2.0.0-rc.44`.
