@@ -1,6 +1,6 @@
 {
   "$comment": "RFC 0172 \u00a7D.1 \u2014 the one release identity the v2 artifacts derive from. `version` is the next corpus tag `v<version>` (the publish workflow's coordinated-release tag pattern `v*`; RFC 0172's `openwop/v2.<minor>.<patch>` spelling is amended to this at its flip). api/v2/*.yaml info.version, the suite's 2.x version and @openwop/spec-artifacts read it. Bumped by the release PR that cuts the tag, never by hand elsewhere.",
-  "version": "2.0.0-rc.58",
+  "version": "2.0.0-rc.59",
   "corpusTag": null,
   "updated": "2026-09-03"
 }
