@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.0-rc.67] — 2026-09-05 — a core-standard floor file was flaky, and the flake blamed the host
+
+`v2-poll-cursor-v2` compared **two reads of the same event log** — a full read, then a cursor read — and asserted they agree. But `terminalRun()` waits for the run's *status* to be terminal, and a terminal status does not mean the log has stopped **appending**. A host emitting trailing or vendor rows can add an event between the two reads, and the leg then reports an array mismatch and blames the host for a cursor defect it does not have.
+
+Measured by a peer host: this leg failed **twice under a full-suite run** and passed **6/6 in isolation** on the same revision — the signature of a window widening under load, not of a wrong cursor.
+
+It now re-reads the whole log after the cursor read. If the log is unchanged the two reads straddled a quiet window and the comparison is decidable; if it grew, the suite records `blocked` naming the growth instead of failing, because it could not measure the rule. This matters more than a normal flake: the file is on the `openwop-core-standard` floor, so its flakiness made **certification non-deterministic**.
+
+
 ## [2.0.0-rc.66] — 2026-09-05 — the changelog you are reading had not mentioned this major
 
 **This file went un-updated from `1.156.0` (2026-09-02) through `2.0.0-rc.65`** — twenty-one published releases, and zero mentions of any `2.0.0-rc` in the changelog that ships inside the tarball. If you installed `2.0.0-rc.65` and read its CHANGELOG, you read a document that ended three days before the v2 release series began.

@@ -27834,7 +27834,7 @@
     {
       "id": "openwop.it.v2-poll-cursor-v2.a-cursor-past-the-end-of-the-log-returns-200-with-an-empty-events-array",
       "file": "v2-poll-cursor-v2.test.ts",
-      "line": 103,
+      "line": 121,
       "title": "a cursor past the end of the log returns 200 with an empty events array",
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.past-end",
       "citations": [
