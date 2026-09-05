@@ -81,6 +81,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # openwop:check runs scripts/generate-v1-eos-clock.mjs --check, which
+          # derives the v1 end-of-support anchor from the FIRST-PARENT HISTORY
+          # OF MAIN (overview.md §v1 end-of-support) and refuses to guess when
+          # neither origin/main nor main resolves. A shallow checkout of a tag
+          # has neither: the rc.57 publish (2026-09-05) failed preflight on
+          # exactly that, one commit after the corpus CI job learned the same
+          # lesson (openwop-spec.yml).
+          fetch-depth: 0
+      - name: Fetch main (the anchor's history; same as validate-tag)
+        run: git fetch --no-tags origin main
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
