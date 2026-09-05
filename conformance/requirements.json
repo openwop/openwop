@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 564,
-    "tests": 2148,
-    "withStableId": 2147,
+    "tests": 2149,
+    "withStableId": 2148,
     "interpolatedTitles": 1,
-    "explicitIds": 2057
+    "explicitIds": 2058
   },
   "records": [
     {
@@ -18727,80 +18727,131 @@
     {
       "id": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "file": "pause-resume.test.ts",
-      "line": 36,
+      "line": 62,
       "title": "pause transitions to paused; resume returns the run to running",
       "explicitId": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "citations": [
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
-          "requirement": ":pause MUST return 202 on a pausable run"
+          "section": null,
+          "requirement": ":pause MUST return 202 on a pausable run",
+          "interpolated": true
         },
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:resume",
-          "requirement": ":resume MUST return 202 on a paused run"
+          "section": null,
+          "requirement": ":resume MUST return 202 on a paused run",
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "file": "pause-resume.test.ts",
-      "line": 82,
+      "line": 104,
       "title": "resuming a running (not paused) run returns 409 with details.runStatus",
       "explicitId": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "citations": [
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:resume",
-          "requirement": ":resume on a non-paused run MUST return 409"
+          "section": null,
+          "requirement": ":resume on a non-paused run MUST return 409",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": "the 409 MUST carry details.runStatus with the actual state",
+          "interpolated": true
         }
       ]
     },
     {
-      "id": "openwop.it.pause-resume.pause-on-an-already-paused-run-is-a-no-op-200-202-idempotent",
+      "id": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "file": "pause-resume.test.ts",
-      "line": 115,
-      "title": ":pause on an already-paused run is a no-op (200/202) — idempotent",
-      "explicitId": "openwop.it.pause-resume.pause-on-an-already-paused-run-is-a-no-op-200-202-idempotent",
+      "line": 138,
+      "title": ":pause on an already-paused run returns 409 with details.runStatus paused, unless the request carries the original Idempotency-Key",
+      "explicitId": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "citations": [
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
-          "requirement": ":pause on an already-paused run MUST be idempotent (200/202), not 409"
+          "section": null,
+          "requirement": ":pause MUST return 202 on a pausable run",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": ":pause on an already-paused run without a matching Idempotency-Key MUST return 409",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": "the 409 MUST carry details.runStatus: paused",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": ":pause with an Idempotency-Key MUST return 202 on a pausable run",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": "a :pause carrying the original Idempotency-Key MUST return 202 with the cached response, not 409",
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "file": "pause-resume.test.ts",
-      "line": 153,
+      "line": 199,
       "title": ":pause on a completed/cancelled/failed run MUST return 409",
       "explicitId": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "citations": [
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
-          "requirement": ":pause on a terminal run MUST return 409"
+          "section": null,
+          "requirement": ":pause on a terminal run MUST return 409",
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
+      "file": "pause-resume.test.ts",
+      "line": 223,
+      "title": "under drain-current-node node.completed precedes run.paused in the log",
+      "explicitId": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
+      "citations": [
+        {
+          "section": null,
+          "requirement": ":pause with drainPolicy drain-current-node MUST return 202 (pause requested)",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "file": "pause-resume.test.ts",
-      "line": 177,
+      "line": 262,
       "title": ":pause MUST NOT silently override an active interrupt suspend",
       "explicitId": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "citations": [
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
-          "requirement": ":pause-during-suspend MUST surface the active waiting-* status in the conflict envelope"
+          "section": null,
+          "requirement": ":pause-during-suspend MUST surface the active waiting-* status in the conflict envelope",
+          "interpolated": true
         },
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
-          "requirement": ":pause-during-suspend MUST NOT silently discard the active interrupt"
+          "section": null,
+          "requirement": ":pause-during-suspend MUST NOT silently discard the active interrupt",
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "file": "pause-resume.test.ts",
-      "line": 238,
+      "line": 318,
       "title": "every drainPolicy advertised by the host is accepted on :pause",
       "explicitId": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "citations": [
