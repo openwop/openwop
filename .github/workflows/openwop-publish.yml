@@ -253,7 +253,15 @@ jobs:
         run: |
           set -uo pipefail
           tag="${GITHUB_REF#refs/tags/}"
-          VER="${tag##*/v}"
+          # `${tag##*/v}` strips through the LAST `/v`, which is right for
+          # `openwop-conformance/v2.0.0` and WRONG for a bare `v2.0.0`: with no
+          # `/` the pattern never matches and VER keeps its leading `v`. The
+          # job then waits 20 minutes for a version literally named `v2.0.0`
+          # and reports "the PUBLISH did not take effect" about a publish that
+          # took effect perfectly. Measured at the v2.0.0 cut — the first bare
+          # `v*` tag of the v2 series; every rc used the prefixed form, so the
+          # bug could not surface until the release it would break.
+          VER="${tag##*/}"; VER="${VER#v}"
           PKG=@openwop/openwop-conformance
           echo "verifying $PKG@$VER is installable by a consumer"
 
