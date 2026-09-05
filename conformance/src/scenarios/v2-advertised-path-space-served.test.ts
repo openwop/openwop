@@ -54,7 +54,7 @@ const DOC = 'spec/v2/core/versioning.md §1.2';
 /** The well-known resource is the one the HEADER selects; it has no /v1 twin to pair against. */
 const NOT_PAIRABLE = new Set(['/.well-known/openwop']);
 
-interface Probe { readonly status: number | null }
+interface Probe { readonly status: number | null; readonly version: string | null; readonly html: boolean }
 
 async function get(path: string, major2: boolean): Promise<Probe> {
   const { baseUrl, apiKey } = loadEnv();
@@ -63,10 +63,30 @@ async function get(path: string, major2: boolean): Promise<Probe> {
   if (apiKey) headers['authorization'] = `Bearer ${apiKey}`;
   try {
     const res = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, { headers });
-    return { status: res.status };
+    const ct = res.headers.get('content-type') ?? '';
+    return { status: res.status, version: res.headers.get('openwop-version'), html: /text\/html/i.test(ct) };
   } catch {
-    return { status: null };
+    return { status: null, version: null, html: false };
   }
+}
+
+/**
+ * "Reached under major 2" is NOT "any status but 404". A hosting layer in
+ * front of the host answers every unrouted path with `200 text/html` — the
+ * SPA shell — and no `OpenWOP-Version` header, and that satisfied the first
+ * version of this check. Measured 2026-09-05 on a tier-1 host's public origin:
+ * `/.well-known/openwop` and `/v1/**` were rewritten to the backend and every
+ * unversioned major-2 path fell through to `index.html` with a 200, while the
+ * Cloud Run URL one hop behind answered every one correctly. The scenario was
+ * green on production for ten hours because a shell and a mount produced the
+ * same status code. `versioning.md` §1.4 requires `OpenWOP-Version` on every
+ * response; a response without it did not come from the host.
+ */
+function reachedUnderMajor2(p: Probe): boolean {
+  if (p.status === null || p.status === 404) return false;
+  if (p.version === null) return false;
+  if (p.html) return false;
+  return true;
 }
 
 function parameterlessGets(): string[] {
@@ -117,10 +137,15 @@ describe('v2-advertised-path-space-served (RFC 0172 §A.1)', () => {
 
       const v2 = await get(path, true);
       if (v2.status === null) return softSkip('blocked', `the host became unreachable while probing ${path}`);
-      // Any status but 404 means the route is MOUNTED — 401/403/422 all answer
-      // "this path exists". Only 404 says major 2 cannot reach it.
-      if (v2.status === 404) overstated.push(`${path} (/v1 → ${v1.status}, major 2 → 404)`);
-      else served.push(path);
+      // 401/403/422 all answer "this path exists" and count as reached. A 404
+      // does not — and neither does a 200 that did not come from the host: no
+      // OpenWOP-Version header, or an HTML body, is a hosting fallback wearing
+      // a success code (see reachedUnderMajor2).
+      if (!reachedUnderMajor2(v2)) {
+        overstated.push(`${path} (/v1 → ${v1.status}, major 2 → ${v2.status}${v2.version === null ? ', no OpenWOP-Version header' : ''}${v2.html ? ', text/html body' : ''})`);
+      } else {
+        served.push(path);
+      }
     }
 
     if (pairable === 0) {
