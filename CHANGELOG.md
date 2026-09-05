@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/runbooks/V2-HOST-MIGRATION.md` — "Phase 5 — Anchor".** What a host does to anchor the v1 end-of-support clock: the row PR checks in the signed bundle under `evidence/v2-host-bundles/<host.name>.json`; non-vacuous means `witnessCount ≥ 1` (re-cut on rc.45 or later, because earlier emitters printed 0 regardless); the anchor is the squash-merge date, so it lands in a follow-up regeneration commit, with the short visible red on main between them explained; and the three clock sentences a reader should expect to see printed.
+
 ### Added
 
 - **Old-major retention floors have a normative home and a gate.** The charter's Phase 5 line ("npm, PyPI and Go old-major retention floors honored, 12 months from the 2.0.0 publish") appeared nowhere in the corpus. `overview.md` §v1 end-of-support now states it: `@openwop/openwop` 1.x, `@openwop/openwop-conformance` 1.x, `openwop-client` 1.x and the Go module v1.x MUST remain installable at their last 1.x version for 12 months from the `v2.0.0` tag, independent of v1 end-of-support. `spec/v2/retention-floors.json` pins the identities and last versions (hand-kept, measured live 2026-09-05: 1.9.0, 1.163.0, 1.7.0, v1.6.0); `scripts/check-retention-floors.mjs` reads the floor start from git (null until the cut), prints the state every run, and with `--network` probes each registry for the pinned version, failing a missing one while the floor is open. Coherence scenario `v2-retention-floors` drives it both ways with a canned probe and synthetic dates; its stem joins the bundle schema's coherence lookahead (packed content), so the suite is `2.0.0-rc.47`.
