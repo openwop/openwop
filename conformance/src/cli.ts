@@ -54,7 +54,7 @@ import {
   type DiscoveryPayload,
   PROFILE_FLOOR_SCENARIOS,
 } from './lib/profiles.js';
-import { setV2ProfileFloors } from './lib/requirement-registry.js';
+import { setV2ProfileFloors, v2ProfileFloorFiles } from './lib/requirement-registry.js';
 
 interface ParsedArgs {
   readonly baseUrl: string | undefined;
@@ -377,35 +377,10 @@ function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): s
  * fail a host for the corpus's own backlog.
  */
 function v2ProfileFloors(conformanceRoot: string): Record<string, readonly string[]> {
-  const registryPath = v2RegistryPath(conformanceRoot);
-  if (registryPath === null) return {};
-  let known: Set<string>;
-  try {
-    known = new Set(Object.keys((JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> }).majors));
-  } catch {
-    known = new Set();
-  }
-  let registry: { profiles?: Array<{ id?: unknown; floorScenarios?: unknown }> };
-  try {
-    registry = JSON.parse(readFileSync(registryPath, 'utf8'));
-  } catch {
-    return {};
-  }
-  const out: Record<string, readonly string[]> = {};
-  for (const p of registry.profiles ?? []) {
-    if (typeof p.id !== 'string') continue;
-    const raw = Array.isArray(p.floorScenarios) ? (p.floorScenarios as unknown[]).map(String) : [];
-    const files: string[] = [];
-    for (const entry of raw) {
-      const name = entry.startsWith('planned:') ? `v2-${entry.slice('planned:'.length)}.test.ts` : entry.endsWith('.test.ts') ? entry : `${entry}.test.ts`;
-      if (known.size === 0 || known.has(name)) files.push(name);
-    }
-    out[p.id] = files;
-  }
-  return out;
+  // One derivation, shared with the ledger's floor-file set (requirement-registry.ts).
+  return v2ProfileFloorFiles(conformanceRoot);
 }
 
-/** A single scenario test file's terminal state, derived from the vitest JSON report. */
 type ScenarioState = 'passed' | 'failed' | 'skipped';
 
 /** The subset of vitest's JSON reporter output we read. */

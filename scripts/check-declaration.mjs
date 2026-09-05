@@ -84,5 +84,19 @@ if (existsSync(evidencePath)) {
 const reqIds = existsSync(join(ROOT, 'conformance', 'requirements.json')) ? new Set((read('conformance/requirements.json').records ?? []).map((r) => r.id)) : new Set();
 for (const f of [...decl.families, ...decl.profiles]) for (const id of f.requirementIds ?? []) if (!id.startsWith('planned:') && !reqIds.has(id)) failures.push(`${f.key ?? f.id}: requirement id ${id} is neither planned: nor in conformance/requirements.json`);
 
+// 9. Every profile floor names a scenario file that EXISTS. A floor the CLI
+//    silently drops (v2ProfileFloorFiles keeps only files scenario-majors.json
+//    knows) is a floor that certifies nothing while the declaration still
+//    claims it — the shape that refused a tier-1 host's first production
+//    bundle on 2026-09-05. `planned:<stem>` names `v2-<stem>.test.ts`.
+for (const p of decl.profiles) {
+  for (const entry of p.floorScenarios ?? []) {
+    const stem = entry.startsWith('planned:') ? `v2-${entry.slice('planned:'.length)}` : entry.replace(/\.test\.ts$/, '');
+    if (!existsSync(join(ROOT, 'conformance', 'src', 'scenarios', `${stem}.test.ts`))) {
+      failures.push(`${p.id}: floorScenarios entry \`${entry}\` resolves to conformance/src/scenarios/${stem}.test.ts, which does not exist — a declared floor with no scenario certifies nothing`);
+    }
+  }
+}
+
 if (failures.length) { console.error('=== check-declaration FAILED ===\n  ' + failures.join('\n  ')); process.exit(1); }
 console.log(`=== check-declaration OK — ${decl.families.length} family rows (${decl.families.filter((f) => f.anchor === 'core').length} core / ${decl.families.filter((f) => f.anchor === 'ext').length} ext / ${decl.families.filter((f) => f.anchor === 'deleted').length} deleted), ${decl.metadata.length} metadata keys, ${decl.profiles.length} profiles; every v1 root key anchored ===`);

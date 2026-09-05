@@ -28,6 +28,9 @@
 
 import { scenarioFileOfItId } from './requirement-ids.js';
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
+import { targetMajor } from './seams.js';
+import { PKG_ROOT_PATH } from './paths.js';
+import { v2ProfileFloorFiles } from './requirement-registry.js';
 import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './spec-coherence.js';
@@ -39,6 +42,14 @@ export function floorScenarioFiles(): ReadonlySet<string> {
   for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) {
     for (const f of floor.required) out.add(f);
     for (const c of floor.conditional ?? []) for (const f of c.required) out.add(f);
+  }
+  // At target major 2 the floors come from the declaration, not the v1 hand
+  // table. The ledger and --certify MUST agree on this set, or a floor file is
+  // minted `openwop.scenario.*` and looked up as `openwop.floor.*` — which is
+  // exactly what refused a tier-1 host's first production bundle over 101
+  // executed-pass rows (see v2ProfileFloorFiles).
+  if (targetMajor() === 2) {
+    for (const files of Object.values(v2ProfileFloorFiles(PKG_ROOT_PATH))) for (const f of files) out.add(f);
   }
   return out;
 }

@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **A major-2 floor was minted `openwop.scenario.*` and looked up at certify time as `openwop.floor.*`.** The ledger decided "is this file a floor?" from `PROFILE_FLOOR_SCENARIOS` — the v1 hand table, which knows no v2 file — while `--certify` derived the v2 floors from `spec/v2/profiles.json` privately. On a tier-1 host's first production bundle: `openwop.scenario.v2-capabilities-root-closed` executed-pass with 5 assertions, both claimed profiles `witnessCount: 0` over 101 executed-pass rows, `REJECTING — openwop-discovery-core: unclassified`. One derivation now (`v2ProfileFloorFiles`, `requirement-registry.ts`), read by both the ledger at target major 2 and the CLI; proven with a fresh build — the file mints `openwop.floor.v2-capabilities-root-closed` at major 2 and `openwop.scenario.…` at major 1. `check-declaration` rule 9: a declared floor MUST name a scenario file that exists.
+
 ### Added
 
 - **`v2-malformed-body-envelope`** — `POST /runs` and `POST /webhooks` with body `{` under major 2 MUST be answered by the host: `400`, the JSON error envelope with `validation_error`, and the `OpenWOP-Version` header (§1.4, on every response). A tier-2 host found its Express JSON parser mounted before negotiation, so a malformed body escaped to a framework HTML 400 with no header under both majors — the one request no scenario sends by accident. The host suggested the probe; it creates nothing and also distinguishes a host from a hosting fallback in front of it. Measured before commit: it fails a tier-1 host's public origin (SPA fallback, `200 text/html`) AND its direct service URL (`500 internal_error`, no header — the same parser-before-negotiation gap, on the other host). 503 scenario files (v1 445, v2 59).
