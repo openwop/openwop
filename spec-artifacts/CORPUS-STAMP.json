@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.0.0-rc.63",
+  "version": "2.0.0-rc.64",
   "corpusTag": null,
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
@@ -9,9 +9,9 @@
     "api/grpc/openwop.proto": "c3e72bb17cba514ee98feb6434e6c9b6ea6795bfd086489ec69fd882dd1ad977",
     "api/openapi.yaml": "39081c59fb696159806b0f2f9a42e7e9ff830d622fcf2ad4159b21357580a955",
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
-    "api/seams-v2.yaml": "3346a3abd83920d38c37ba3a76e9853f5eecd9daac5d449c3a81ee89af291f2b",
-    "api/v2/asyncapi.yaml": "573603322c45df47b803e26fc6eedc12c1d4c71a69f650e64da15728c9f4865e",
-    "api/v2/openapi.yaml": "40a5c055d5e6f0395754c5fe550f3f1b9aa4ce0f6b272fe0cbef7da48499e93c",
+    "api/seams-v2.yaml": "620fa28e241d3936fd6b9aac6d6d85c440e9d20baa3c37544c4d6dbdfc403b60",
+    "api/v2/asyncapi.yaml": "51b177f3135d573af563a2985fa36efaa82ae7d64e19b1c80bd755b4229f0e0d",
+    "api/v2/openapi.yaml": "f3a3cf2c0ad275fa0b847df1ceedcb15caf5283e89a3dcd87b1e296f74d58ce6",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "0c0b737ffcf8f30e7d2809cec8a498232de710f41443212922ad8337cdde0b51",
     "schemas/a2a-task-state.schema.json": "c9365918f993f943b4b619d42551eb066a1ed33a08d895d51b395432a5b1f1bc",
@@ -131,7 +131,7 @@
     "schemas/v2/credential-reference.schema.json": "ea699ce30f58fb2c32d4279158b3f730f70be7b2dc8c3037693a76e66eb3e001",
     "schemas/v2/debug-bundle.schema.json": "0bfa4b1d91fefbc12c95670dba9d5eacb72b879bb9a5c074e821ca9ed0fee6fd",
     "schemas/v2/dispatch-config.schema.json": "4a7db312e6b4a14cf5b1ad2b71367878c77b6321cc456f5b3644dd6434e94cbd",
-    "schemas/v2/effect-ledger-projection.schema.json": "9e690f8e5dbf9aa7c82eef4bf7cf96c024f0f8626ad5bbaca3ff25ac63c7cab2",
+    "schemas/v2/effect-ledger-projection.schema.json": "928340b243c60aaf04c1b40adb09be8a90340d44f57be1dfff837be10f104822",
     "schemas/v2/effect-seam-manifest.schema.json": "197ef9944ab027a50d1b9352f317cbbc12c8ad955fdb14650fb90477052ffef0",
     "schemas/v2/envelopes/clarification.request.schema.json": "9e39d7b09f0b3ce7902d6aa19ca0eb52867b634efc78a881469c4d44fb3333e7",
     "schemas/v2/envelopes/error.schema.json": "6a11fa3b9d61736fcb5675e6ac9825919aa609dceba13ef5615993d54647802b",
@@ -199,7 +199,7 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "fee4594ef49953953ffcd0b3813300067d16b3e65ebff2aac722034ac9b3f545",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "061b0986b66396273bb08ee7177746b51a66227cc6a535e3f57fa60c932c003d",
+    "spec/v1/core-standard-manifest.json": "281d29c567eb67e38a229f083fa7c33cc5a3ec4307f745a7d8617a12bd4216e8",
     "spec/v1/deprecations.json": "1d5acb69a9b8ccb57275a95605f74aef1d920685f8407c9d382a46b59dc803bb",
     "spec/v1/deprecations.schema.json": "18c87e78bedc210431f795ae44c5b5d202f2f3317850d5cf86867d4f1fa1cdfb",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
@@ -230,8 +230,8 @@
     "spec/v2/path-manifest.json": "034152e09b1458c66810d4050e20a273b2b9b8fe2d92b66e8b819477de58a1be",
     "spec/v2/peer-dependency-aliases.json": "d10299280abee08258502925bc327293ee413e0108cd6e6ec75ff6110653308d",
     "spec/v2/profiles.json": "0636f19fceae625390003a347e70ef4797d84766b5c24ce8a02cea52aadebca4",
-    "spec/v2/release.json": "efa92244efb4782514548a5c467a968454ca43aacd6339452cba1cc5bd265436",
+    "spec/v2/release.json": "3fb60f16863dce06f3fe38e538e1d5214dfdd57532b865ca626ebc8d1504368d",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "443c27405e4bc132f8d436da5f08903291b824e0"
+  "corpusCommit": "bd32391b7d99df7545b832d365c05e0907ff5013"
 }
