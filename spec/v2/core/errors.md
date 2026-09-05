@@ -28,7 +28,7 @@ An interrupt has one code per state: a token or run-scoped resolve against an in
 
 ## Codes by HTTP status
 
-Generated from `spec/v2/errors.json` (96 codes; `retriable` and `statusSource` are in the registry).
+Generated from `spec/v2/errors.json` (97 codes; `retriable` and `statusSource` are in the registry).
 
 Code | Status
 --- | ---
@@ -97,6 +97,7 @@ Code | Status
 `replay_memory_snapshot_unavailable` | 409
 `run_already_active` | 409
 `run_terminal` | 409
+`run_state_conflict` | 409
 `version_conflict` | 409
 `workspace_conflict` | 409
 `interrupt_cancelled` | 410

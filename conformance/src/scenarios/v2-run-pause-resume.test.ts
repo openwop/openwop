@@ -66,11 +66,11 @@ describe('v2 run-pause-resume (runs.md §Pause and resume)', () => {
     if (pause === null) return softSkip('blocked', 'POST /runs/{runId}:pause unreachable (fetch failed)');
     if (pause.status === 404) return softSkip('blocked', 'POST /runs/{runId}:pause answered 404 — pauseRun is a core operation (runs.md §Surface) and is not mounted');
     expect(pause.status, req(ID, DOC, `pause on a terminal (${s}) run MUST answer 409 — got ${pause.status} ${readErrorCode(pause.json) ?? ''}`.trim())).toBe(409);
-    expect(typeof readErrorCode(pause.json) === 'string', req(ID, 'spec/v2/core/errors.md', `the 409 MUST carry an error envelope with a registered code (got ${String(readErrorCode(pause.json))}); runs.md names none for this case (filed)`)).toBe(true);
+    expect(readErrorCode(pause.json), req(ID, DOC, `a pause refused because the run is terminal MUST carry run_terminal (got ${String(readErrorCode(pause.json))})`)).toBe('run_terminal');
     const resume = await http(() => driver.post(`/runs/${enc(c.runId)}:resume`, {}));
     if (resume === null) return softSkip('blocked', 'POST /runs/{runId}:resume unreachable (fetch failed)');
     expect(resume.status, req(ID, DOC, `resume on a run that is not paused MUST answer 409 — got ${resume.status} ${readErrorCode(resume.json) ?? ''}`.trim())).toBe(409);
-    expect(typeof readErrorCode(resume.json) === 'string', req(ID, 'spec/v2/core/errors.md', 'the 409 MUST carry an error envelope with a registered code')).toBe(true);
+    expect(readErrorCode(resume.json), req(ID, DOC, `a resume refused because the run is terminal MUST carry run_terminal (got ${String(readErrorCode(resume.json))})`)).toBe('run_terminal');
     if (!isFixtureAdvertised(DELAY)) return softSkip('inapplicable', `${DELAY} fixture not advertised — the positive pause/resume leg cannot run, so the two 409s above are witnessed without their control (a host answering 409 to everything would pass them)`);
   });
 
@@ -91,6 +91,9 @@ describe('v2 run-pause-resume (runs.md §Pause and resume)', () => {
       expect(pb?.status, req(ID, DOC, `the 202 MUST carry status paused (got ${String(pb?.status)})`)).toBe('paused');
       const again = await http(() => driver.post(`/runs/${enc(c.runId)}:pause`, {}));
       expect(again?.status ?? null, req(ID, DOC, `a second pause on a paused run MUST answer 409 — got ${again?.status ?? 'no response'}`)).toBe(409);
+      expect(readErrorCode(again?.json), req(ID, DOC, `a pause refused on a non-terminal run MUST carry run_state_conflict (got ${String(readErrorCode(again?.json))})`)).toBe('run_state_conflict');
+      const runStatus = (again?.json as { error?: { details?: { runStatus?: unknown } } } | null)?.error?.details?.runStatus;
+      expect(runStatus, req(ID, DOC, `run_state_conflict MUST carry details.runStatus naming the status that refused it (got ${String(runStatus)})`)).toBe('paused');
       const resume = await http(() => driver.post(`/runs/${enc(c.runId)}:resume`, { reason: 'conformance' }));
       expect(resume?.status ?? null, req(ID, DOC, `resumeRun on a paused run MUST answer 202 — got ${resume?.status ?? 'no response'} ${readErrorCode(resume?.json) ?? ''}`.trim())).toBe(202);
       const rb = resume?.json as { runId?: unknown; status?: unknown } | null;

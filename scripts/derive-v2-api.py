@@ -184,6 +184,12 @@ def v2_openapi_and_seams():
             for p in params:
                 if isinstance(p, dict) and p.get('name') == 'lastSequence':
                     p.update({'name': 'afterSequence', 'schema': {'type': 'integer', 'minimum': 0}, 'description': 'RFC 0171 §E.2 — return events with `sequence > afterSequence`; omission means from the first event (sequence 0). `lastSequence` and `since` are gone.'})
+                if isinstance(p, dict) and p.get('name') == 'If-None-Match' and p.get('in') == 'header':
+                    # v1 scoped the note to the discovery document; runs.md §Snapshot applies the
+                    # same conditional GET to the run snapshot with a MUST (rc.49, finding 5).
+                    p['description'] = ('RFC 0165 §C.2; runs.md §Snapshot. Standard conditional request against any resource that carries an `ETag` — '
+                                        'the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot): a matching value MUST yield '
+                                        '`304 Not Modified` with no body, and the 304 carries `OpenWOP-Version` like every response (versioning.md §1.4).')
                 if isinstance(p, dict) and p.get('name') == 'token' and p.get('in') == 'path':
                     p['schema'] = {'type': 'string', 'pattern': '^(ow2\\.hs256\\.[A-Za-z0-9._~-]{1,128}\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+|[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+)$'}
                     p['description'] = 'RFC 0170 §E.1 — `ow2.<alg>.<kid>.<payload>.<mac>`; the v1 two-segment form is accepted under kid legacy until its expiresAt (RFC 0176 §B.2).'

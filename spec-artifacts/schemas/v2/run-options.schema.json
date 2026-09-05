@@ -17,7 +17,7 @@
       },
       "maxItems": 100,
       "uniqueItems": false,
-      "description": "Free-form caller tags for filtering/correlation. Server SHOULD enforce maxItems=100 and per-tag maxLength=256."
+      "description": "Free-form caller tags for filtering/correlation. A host MUST NOT reject a tag on format and MUST answer 400 validation_error over maxItems=100 or per-tag maxLength=256 (runs.md §Run options)."
     },
     "metadata": {
       "type": "object",

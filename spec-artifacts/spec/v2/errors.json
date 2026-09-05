@@ -591,6 +591,27 @@
       "source": "spec/v1/rest-endpoints.md (a mutation on a terminal run)"
     },
     {
+      "code": "run_state_conflict",
+      "httpStatus": 409,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": [
+          "runStatus"
+        ],
+        "properties": {
+          "runStatus": {
+            "type": "string",
+            "description": "The run status that refused the transition (runs.md \u00a7Pause and resume)."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.0",
+      "source": "spec/v2/core/runs.md \u00a7Pause and resume"
+    },
+    {
       "code": "version_conflict",
       "httpStatus": 409,
       "statusSource": "v1 prose",

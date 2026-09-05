@@ -62,7 +62,7 @@ async function eventTypes(runId: string): Promise<string[] | null> {
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
 describe('v2 run-cancel (runs.md §Cancel)', () => {
-  it('cancelling a terminal run answers 409 run_terminal or 200 idempotently — the prose is silent, the leg records which', async () => {
+  it('cancelling a terminal run is refused 409 run_terminal', async () => {
     if (!(await discovery())) return softSkip('blocked', 'v2 discovery unreachable');
     const c = await create({ workflowId: NOOP });
     if ('reason' in c) return softSkip('blocked', c.reason);
@@ -72,8 +72,8 @@ describe('v2 run-cancel (runs.md §Cancel)', () => {
     if (res === null) return softSkip('blocked', 'POST /runs/{runId}/cancel unreachable (fetch failed)');
     const code = readErrorCode(res.json);
     const status = (res.json as { status?: unknown } | null)?.status;
-    const ok = (res.status === 409 && code === 'run_terminal') || (res.status === 200 && status === 'cancelled');
-    expect(ok, req(ID, DOC, `cancel on a terminal (${s}) run MUST be 409 run_terminal or 200 { status: cancelled } — got ${res.status} ${code ?? String(status)}. §Cancel's 200 grammar is { runId, status: cancelling | cancelled }; a 200 echoing ${s} is outside it, so the only conforming refusal is 409 run_terminal (the prose does not say so in words — filed)`)).toBe(true);
+    expect(res.status, req(ID, DOC, `a cancel on a run that is already terminal (${s}) MUST be refused 409 run_terminal — got ${res.status} ${code ?? String(status)}; a 200 echoing the terminal state is outside §Cancel's 200 grammar { runId, status: cancelling | cancelled }`)).toBe(409);
+    expect(code, req(ID, DOC, 'the refusal MUST be run_terminal')).toBe('run_terminal');
   });
 
   it('cancelling a running run answers 200 with cancelling|cancelled, emits run.cancelled within 5 s, and the snapshot reads cancelled', async () => {
