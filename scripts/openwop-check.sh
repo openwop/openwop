@@ -279,6 +279,7 @@ echo
 # interop model and replay §6–§8.
 echo "[10/10] v2 tree (declaration, generators, budget, paths, deprecation dates, Accepted predicate, threat-model template)..."
 node "$(dirname "$0")/check-declaration.mjs"
+node "$(dirname "$0")/check-shipped-changelog.mjs"
 node "$(dirname "$0")/generate-error-envelope.mjs" --check
 node "$(dirname "$0")/check-v2-schemas.mjs"
 node "$(dirname "$0")/check-core-budget.mjs"

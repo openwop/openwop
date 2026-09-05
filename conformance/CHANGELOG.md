@@ -1,5 +1,27 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.0-rc.66] — 2026-09-05 — the changelog you are reading had not mentioned this major
+
+**This file went un-updated from `1.156.0` (2026-09-02) through `2.0.0-rc.65`** — twenty-one published releases, and zero mentions of any `2.0.0-rc` in the changelog that ships inside the tarball. If you installed `2.0.0-rc.65` and read its CHANGELOG, you read a document that ended three days before the v2 release series began.
+
+**Why it rotted, and why nobody noticed.** `conformance/package.json` `files` lists `CHANGELOG.md`, which resolves *inside the package* — so the shipped file is `conformance/CHANGELOG.md`. The corpus changelog at the repo root is a **different file with the same name**, it was current the whole time, and every release wrote to it. The file being edited and the file being shipped were not the same file, and nothing compared either to the version being published. `scripts/check-shipped-changelog.mjs` now fails the corpus gate whenever a packed CHANGELOG's newest heading does not equal its own package's `version`, so this cannot recur.
+
+**Where the 2.0.0 release notes actually are.** The full per-release record for `2.0.0-rc.1` … `2.0.0-rc.65` is the corpus changelog: <https://github.com/openwop/openwop/blob/main/CHANGELOG.md>. It is not reproduced here — it is ~180 KB and would be most of the tarball. What the v2 series changed, in one paragraph: the suite gained `--target-major`, a per-`it` requirement ledger with `req()` as the only assertion form, bundle v3 with signing and verification, the three v2 profiles and their floors, and the RFC 0148 §A disposition vocabulary (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) under which a bundle carrying any `blocked` row does not certify. `@openwop/spec-artifacts` became a required exact-pinned peer.
+
+**This entry exists because a release should say what it shipped.** The gate requires one on every future version, including versions that change nothing worth recording — which then record exactly that.
+
+
+## [2.0.0-rc.66] — 2026-09-05 — the changelog you are reading had not mentioned this major
+
+**This file went un-updated from `1.156.0` (2026-09-02) through `2.0.0-rc.65`** — twenty-one published releases, and zero mentions of any `2.0.0-rc` in the changelog that ships inside the tarball. If you installed `2.0.0-rc.65` and read its CHANGELOG, you read a document that ended three days before the v2 release series began.
+
+**Why it rotted, and why nobody noticed.** `conformance/package.json` `files` lists `CHANGELOG.md`, which resolves *inside the package* — so the shipped file is `conformance/CHANGELOG.md`. The corpus changelog at the repo root is a **different file with the same name**, it was current the whole time, and every release wrote to it. The file being edited and the file being shipped were not the same file, and nothing compared either to the version being published. `scripts/check-shipped-changelog.mjs` now fails the corpus gate whenever a packed CHANGELOG's newest heading does not equal its own package's `version`, so this cannot recur.
+
+**Where the 2.0.0 release notes actually are.** The full per-release record for `2.0.0-rc.1` … `2.0.0-rc.65` is the corpus changelog: <https://github.com/openwop/openwop/blob/main/CHANGELOG.md>. It is not reproduced here — it is ~180 KB and would be most of the tarball. What the v2 series changed, in one paragraph: the suite gained `--target-major`, a per-`it` requirement ledger with `req()` as the only assertion form, bundle v3 with signing and verification, the three v2 profiles and their floors, and the RFC 0148 §A disposition vocabulary (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) under which a bundle carrying any `blocked` row does not certify. `@openwop/spec-artifacts` became a required exact-pinned peer.
+
+**This entry exists because a release should say what it shipped.** The gate will require one on every future version, including versions that change nothing worth recording — which then record exactly that.
+
+
 ## [1.156.0] — 2026-09-02 — the event codemap as data (v2 charter Phase 1, tranche 5)
 
 One new corpus-coherence scenario file (471 → 472), not packed:
