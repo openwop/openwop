@@ -215,7 +215,44 @@ if (mode === 'write') {
       const pendingHosts = result.hosts.filter((h) => h.anchoredAt !== null && byName.get(h.name)?.anchoredAt === null).map((h) => h.name);
       if (onlyHeadAnchors && pendingHosts.length > 0 && (committed?.hosts ?? []).length === result.hosts.length) pending = pendingHosts;
     } catch { /* unparseable committed file: stale */ }
-    if (pending !== null) {
+
+    // The SECOND tolerated difference: legB AS A WHOLE at the tagged commit.
+    //
+    // Every field of leg (b) is a function of the RELEASE TAG — whether it
+    // applies, and the tagged commit's own date. The commit the tag points at
+    // therefore cannot know any of it: recording a value creates a new commit
+    // with a new date, and re-tagging onto that commit changes the value
+    // again. It is the anchor-PENDING argument above, one leg over, and it is
+    // not a fixed point any sequence of commits reaches.
+    //
+    // Measured at the v2.0.0 cut, twice: tag on 11cddecd (17:24:59) →
+    // regenerate → merge 1a776f67 (17:32:22) → re-tag → the file records the
+    // first date while the generator derives the second, and preflight refuses
+    // the release. The same loop runs for `applies`, which flips from
+    // undecidable to a verdict the instant the tag exists.
+    //
+    // So at the tagged commit a difference CONFINED TO legB is tolerated and
+    // the derived verdict is printed. Everything outside legB — leg (a), the
+    // host rows, the rule — must still match exactly, which is what keeps this
+    // from being a licence to drift.
+    let legBPending = false;
+    if (pending === null) {
+      try {
+        const committed = current === null ? null : JSON.parse(current);
+        const taggedHead = (git(['rev-list', '-n', '1', RELEASE_TAG]) ?? '').trim() === HEAD;
+        // MEASURED at this cut: the tag changes exactly three fields —
+        // `legB`, `endOfSupportNotBefore` and `state` — and leaves `legA` and
+        // every host row byte-identical. Mask precisely those three; anything
+        // wider would be a licence to drift, anything narrower misses two
+        // fields that are just as tag-derived as leg (b) itself.
+        const maskTagDerived = (o) => JSON.stringify({ ...o, legB: null, endOfSupportNotBefore: null, state: null });
+        const sameOutsideLegB = committed !== null && maskTagDerived(committed) === maskTagDerived(result);
+        if (taggedHead && sameOutsideLegB) legBPending = true;
+      } catch { /* fall through to stale */ }
+    }
+    if (legBPending) {
+      console.log(`=== generate-v1-eos-clock OK — legB PENDING: HEAD (${HEAD.slice(0, 8)}) IS the ${RELEASE_TAG} commit, and leg (b) is entirely a function of that tag, which the commit cannot record about itself. Derived: applies ${result.legB.applies} (${result.legB.reason}); leg (a) ${result.legA.notBefore} and every host row match. ===`);
+    } else if (pending !== null) {
       console.log(`=== generate-v1-eos-clock OK — anchor PENDING for ${pending.join(', ')}: HEAD (${HEAD.slice(0, 8)}) is the merge that first landed the non-vacuous bundle; run: node scripts/generate-v1-eos-clock.mjs --write in the follow-up commit (runbook §5.3) ===`);
     } else {
       console.error(`=== generate-v1-eos-clock --check FAILED — ${OUT.replace(ROOT + '/', '')} is ${current === null ? 'missing' : 'stale'}; run: node scripts/generate-v1-eos-clock.mjs --write ===`);
