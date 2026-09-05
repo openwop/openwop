@@ -62,7 +62,13 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
   it('pause transitions to paused; resume returns the run to running', async () => {
     const create = await driver.post('/v1/runs', {
       workflowId: FIXTURE!,
-      inputs: { delayMs: 30_000 },
+      // 3 s, not 30 s: the resumed node.started is a FRESH attempt (runs.md
+      // §Pause and resume; rc.52), so a 30 s node resumed at ~60 ms completes
+      // at ~30.2 s — past the suite's 30 s test timeout by construction on
+      // any conforming host. rc.53 shipped 30 s and a tier-1 host measured
+      // exactly that. The pause is `immediate`, issued within ~60 ms of
+      // `running`, so 3 s is ample for the pause to land first.
+      inputs: { delayMs: 3_000 },
     });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -70,7 +76,7 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
     await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
 
     // `immediate` snapshots between events, so `paused` is observable within
-    // seconds. Under drain-current-node this 30 s node would finish first
+    // milliseconds. Under drain-current-node the node would finish first
     // (rest-endpoints.md); that semantic is witnessed by the drain leg below.
     const pause = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {
       reason: 'conformance-test',
