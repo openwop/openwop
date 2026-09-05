@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Added
+
+- **`payload_too_large` (413) and `unsupported_media_type` (415) join the error registry** (`spec/v2/errors.json`, 96 codes; the envelope schema is regenerated). Both production hosts had to answer a body-parser refusal on the major-2 wire and the closed registry offered nothing: one emitted a host-prefixed `openwop-app.payload_too_large` (correct under the registry rule), the other a bare `payload_too_large` (a code claiming to be protocol). A size or media-type refusal on a core endpoint is as universal as `validation_error`; a client should not switch on N vendor spellings of one condition.
+
 ### Fixed
 
 - **An unreadable discovery document at suite init no longer reads as "the host advertises no fixtures".** `setup.ts` fetched `/.well-known/openwop` once, with a 5 s abort, without the lane's `OpenWOP-Version`, and on any failure set the fixture cache to *empty* — so all 311 fixture-gated sites recorded `inapplicable`, indistinguishable from a host that advertises nothing. Measured 2026-09-05: all four workers aborted at 5 s against a host answering in 200 ms (a Cloud Run cold start). Now 20 s, two attempts, the lane's major's representation, and on failure the cache stays *unknown*: every fixture gate records `blocked` with the init reason. Proven both directions (404 base → `blocked`; readable → unchanged).
