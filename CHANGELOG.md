@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Fixed
 
+- **An unreadable discovery document at suite init no longer reads as "the host advertises no fixtures".** `setup.ts` fetched `/.well-known/openwop` once, with a 5 s abort, without the lane's `OpenWOP-Version`, and on any failure set the fixture cache to *empty* — so all 311 fixture-gated sites recorded `inapplicable`, indistinguishable from a host that advertises nothing. Measured 2026-09-05: all four workers aborted at 5 s against a host answering in 200 ms (a Cloud Run cold start). Now 20 s, two attempts, the lane's major's representation, and on failure the cache stays *unknown*: every fixture gate records `blocked` with the init reason. Proven both directions (404 base → `blocked`; readable → unchanged).
+
+### Fixed
+
 - **A major-2 floor was minted `openwop.scenario.*` and looked up at certify time as `openwop.floor.*`.** The ledger decided "is this file a floor?" from `PROFILE_FLOOR_SCENARIOS` — the v1 hand table, which knows no v2 file — while `--certify` derived the v2 floors from `spec/v2/profiles.json` privately. On a tier-1 host's first production bundle: `openwop.scenario.v2-capabilities-root-closed` executed-pass with 5 assertions, both claimed profiles `witnessCount: 0` over 101 executed-pass rows, `REJECTING — openwop-discovery-core: unclassified`. One derivation now (`v2ProfileFloorFiles`, `requirement-registry.ts`), read by both the ledger at target major 2 and the CLI; proven with a fresh build — the file mints `openwop.floor.v2-capabilities-root-closed` at major 2 and `openwop.scenario.…` at major 1. `check-declaration` rule 9: a declared floor MUST name a scenario file that exists.
 
 ### Added

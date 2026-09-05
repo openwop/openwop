@@ -25,7 +25,7 @@
  * `it` here; vitest treats setupFiles differently from scenario files.
  */
 
-import { setAdvertisedFixtures } from './lib/fixtures.js';
+import { setAdvertisedFixtures, setDiscoveryUnreadable } from './lib/fixtures.js';
 import { setMultiAgentCapabilities } from './lib/multi-agent-capabilities.js';
 import { OtelCollector, setCollector } from './lib/otel-collector.js';
 import { McpFakeServer, setMcpFakeServer } from './lib/mcp-fake-server.js';
@@ -43,13 +43,15 @@ import type { DiscoveryPayload } from './lib/profiles.js';
 import { targetMajor } from './lib/seams.js';
 import { softSkip } from './lib/soft-skip.js';
 
-const SUITE_INIT_TIMEOUT_MS = 5_000;
+// 20 s, not 5: a Cloud Run cold start routinely exceeds 5 s, and a discovery
+// fetch that aborted at init used to turn every fixture-gated scenario into a
+// vacuous `inapplicable`. Measured 2026-09-05 on a host answering in 200 ms.
+const SUITE_INIT_TIMEOUT_MS = 20_000;
+const SUITE_INIT_ATTEMPTS = 2;
 
 async function loadHostFixtures(): Promise<void> {
   const baseUrl = process.env.OPENWOP_BASE_URL?.trim();
   if (!baseUrl) {
-    // Offline / fixture-stub-only run. No host to ask; treat as "host
-    // advertises no fixtures" so all fixture-dependent scenarios skip.
     setAdvertisedFixtures(null);
     setMultiAgentCapabilities(null);
     return;
@@ -57,39 +59,36 @@ async function loadHostFixtures(): Promise<void> {
 
   const normalizedBase = baseUrl.replace(/\/$/, '');
   const url = `${normalizedBase}/.well-known/openwop`;
+  // The representation the header selects is the one whose fixtures[] this
+  // lane is held to (versioning.md §5): read it under the lane's major.
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (targetMajor() === 2) headers['OpenWOP-Version'] = '2.0';
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SUITE_INIT_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `[openwop-conformance setup] discovery fetch returned ${res.status}; ` +
-          `treating host as advertising no fixtures. Fixture-dependent scenarios will skip.`,
-      );
-      setAdvertisedFixtures(null);
-    setMultiAgentCapabilities(null);
+  let lastFailure = 'unknown';
+  for (let attempt = 1; attempt <= SUITE_INIT_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SUITE_INIT_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { method: 'GET', headers, signal: controller.signal });
+      if (!res.ok) {
+        lastFailure = `HTTP ${res.status} on attempt ${attempt}`;
+        continue;
+      }
+      const body = (await res.json()) as DiscoveryPayload;
+      setAdvertisedFixtures(body);
+      setMultiAgentCapabilities(body);
       return;
+    } catch (err) {
+      lastFailure = `${(err as Error).message ?? 'unknown'} on attempt ${attempt}`;
+    } finally {
+      clearTimeout(timer);
     }
-    const body = (await res.json()) as DiscoveryPayload;
-    setAdvertisedFixtures(body);
-    setMultiAgentCapabilities(body);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[openwop-conformance setup] discovery fetch failed (${(err as Error).message ?? 'unknown'}); ` +
-        `treating host as advertising no fixtures. Fixture-dependent scenarios will skip.`,
-    );
-    setAdvertisedFixtures(null);
-    setMultiAgentCapabilities(null);
-  } finally {
-    clearTimeout(timer);
   }
+  // Not "the host advertises no fixtures". The document went UNREAD, and every
+  // fixture gate will say so as `blocked` rather than `inapplicable`.
+  console.warn(`[openwop-conformance setup] discovery unreadable after ${SUITE_INIT_ATTEMPTS} attempt(s) (${lastFailure}); fixture-gated scenarios will record blocked, not inapplicable.`);
+  setDiscoveryUnreadable(lastFailure);
+  setMultiAgentCapabilities(null);
 }
 
 /**
