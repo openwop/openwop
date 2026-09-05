@@ -208,7 +208,29 @@
       "httpStatus": 400,
       "statusSource": "v1 prose",
       "retriable": false,
-      "details": null,
+      "details": {
+        "type": "object",
+        "required": [
+          "supported"
+        ],
+        "properties": {
+          "supported": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "values",
+                "updates",
+                "messages",
+                "debug"
+              ]
+            },
+            "description": "Each individual mode the host serves; combinations are not listed (events.md \u00a7The events channel)."
+          }
+        },
+        "additionalProperties": true
+      },
       "since": "1.0",
       "source": "api/openapi.yaml UnsupportedStreamMode (RFC 0171 \u00a7B.1 folds the one-member enum)"
     },
