@@ -33,6 +33,13 @@ export interface SseSubscribeOptions {
   readonly lastEventId?: string;
   /** Optional fetch-level abort. Useful for cancellation in long tests. */
   readonly signal?: AbortSignal;
+  /**
+   * Extra request headers. A major-2 caller MUST pass `OpenWOP-Version: 2.0`:
+   * this helper sends none by itself, and a header-less request on an
+   * unversioned path is served the host's `preferredVersion` major
+   * (versioning.md §1.3) — 1.x through the overlap.
+   */
+  readonly extraHeaders?: Record<string, string>;
 }
 
 export interface SseSubscribeResult {
@@ -62,6 +69,7 @@ export async function subscribe(
   if (opts.lastEventId) {
     headers['Last-Event-ID'] = opts.lastEventId;
   }
+  for (const [k, v] of Object.entries(opts.extraHeaders ?? {})) headers[k] = v;
 
   const internalAbort = new AbortController();
   const timeoutHandle = setTimeout(() => internalAbort.abort(), timeoutMs);

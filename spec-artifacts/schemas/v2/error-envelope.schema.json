@@ -129,6 +129,30 @@
         {
           "type": "object",
           "required": [
+            "supported"
+          ],
+          "properties": {
+            "supported": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "values",
+                  "updates",
+                  "messages",
+                  "debug"
+                ]
+              },
+              "description": "Each individual mode the host serves; combinations are not listed (events.md §The events channel)."
+            }
+          },
+          "additionalProperties": true,
+          "x-openwop-error": "unsupported_stream_mode"
+        },
+        {
+          "type": "object",
+          "required": [
             "runStatus"
           ],
           "properties": {
