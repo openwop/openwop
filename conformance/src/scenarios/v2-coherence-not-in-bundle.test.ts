@@ -58,8 +58,17 @@ function bundleWith(rows: BundleV3Requirement[]): BundleV3 {
 
 describe('v2-coherence-not-in-bundle (RFC 0168 §D.1)', () => {
   it('every corpus-ledger id has a scenario in src/coherence and none in src/scenarios — the two id sets are disjoint by construction', () => {
-    if (!existsSync(LEDGER)) return softSkip('blocked', 'evidence/corpus-ledger.json is absent from this layout — the corpus id set cannot be read');
-    if (SCENARIOS_DIR === null || COHERENCE_DIR === null || !existsSync(COHERENCE_DIR)) return softSkip('blocked', 'src/scenarios or src/coherence is absent from this layout');
+    // rc.57: `inapplicable`, not `blocked`. The subject of this scenario is the
+    // CORPUS — it reads evidence/corpus-ledger.json and the two source
+    // directories and asserts nothing about a host. RFC 0148 §A defines
+    // `blocked` over ADVERTISED behaviour a missing dependency prevented
+    // exercising; there is none here, and `blocked` denied certification
+    // bundle-wide (RFC 0168 §E.1) to every host running the published tarball,
+    // which ships neither the ledger nor src/coherence. Same reasoning as
+    // lib/spec-coherence.ts for the v1 corpus scenarios; the reference host
+    // carried this row as one of its "16 blocked" since rc.16.
+    if (!existsSync(LEDGER)) return softSkip('inapplicable', 'inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host');
+    if (SCENARIOS_DIR === null || COHERENCE_DIR === null || !existsSync(COHERENCE_DIR)) return softSkip('inapplicable', 'inapplicable to any host: src/scenarios or src/coherence is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout and needs no host');
     const ledger = JSON.parse(readFileSync(LEDGER, 'utf8')) as { requirements: Record<string, unknown> };
     const ids = Object.keys(ledger.requirements);
     expect(ids.length, req('openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction', SECTION, 'the corpus ledger MUST carry at least one requirement id')).toBeGreaterThan(0);
