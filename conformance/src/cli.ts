@@ -641,14 +641,22 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     const doc3 = document as Record<string, unknown>;
     const protocolVersions = Array.isArray(doc3['protocolVersions']) ? (doc3['protocolVersions'] as string[]) : [String(doc3['protocolVersion'] ?? '')];
     const preferredVersion = typeof doc3['preferredVersion'] === 'string' ? (doc3['preferredVersion'] as string) : (protocolVersions[0] ?? '');
-    // witnessCount: executed-pass rows on the profile's floor (PROFILE_FLOOR_SCENARIOS required + requiredAnyPrefix).
+    // witnessCount: witnessed executed-pass rows on the profile's floor. At major
+    // 2 the verdict already counted them against the declaration's floor
+    // (`witnessedPasses`); the v1 hand table below knows no v2 file and printed
+    // 0 for every v2 profile until rc.45 — the third unjoined floor site.
+    const verdictFor = (profile: string) => derived.verdicts.find((v) => v.profile === profile);
     const witnessCountFor = (profile: string): number => {
+      if (target.major === 2) return verdictFor(profile)?.witnessedPasses ?? 0;
       const floor = PROFILE_FLOOR_SCENARIOS[profile];
       if (!floor) return 0;
       const onFloor = (scenario: string): boolean => floor.required.includes(scenario) || (floor.requiredAnyPrefix ?? []).some((pre) => scenario.startsWith(pre));
       return derived.requirements.filter((r) => r.disposition === 'executed-pass' && onFloor(r.scenarioId)).length;
     };
-    const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
+    // `certified` IS the verdict (RFC 0148 §A; RFC 0168 §E.1 adds the bundle-wide
+    // blocked rule). Until rc.45 it was `!notHeld && !rejected && blocked === 0`
+    // and never read `certifiable` — an empty v2 floor certified on no evidence.
+    const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: (verdictFor(p)?.certifiable ?? false) && !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
     let relaxations: BundleV3['host']['relaxations'];
     if (process.env['OPENWOP_HOST_RELAXATIONS']) { try { relaxations = JSON.parse(process.env['OPENWOP_HOST_RELAXATIONS']) as BundleV3['host']['relaxations']; } catch { process.stderr.write('openwop-conformance --certify: OPENWOP_HOST_RELAXATIONS is not JSON\n'); process.exit(2); } }
     const lockPath = resolvePath(conformanceRoot, 'dist', 'spec-artifacts.lock.json');

@@ -97,6 +97,17 @@ export function setV2ProfileFloors(floors: Readonly<Record<string, readonly stri
   v2Floors = floors;
 }
 
+/**
+ * True while a major-2 floor map is installed. The v1 hand table
+ * (`PROFILE_FLOOR_SCENARIOS`) MUST NOT be consulted for any per-profile fact
+ * (`discoveryOnly`, `runtimeDerived`, the floor itself, the witness count) while
+ * this is true — every one of those reads is a floor site, and rc.41 found two
+ * of four unjoined; rc.45 found the other two.
+ */
+export function v2FloorsActive(): boolean {
+  return v2Floors !== null;
+}
+
 export function requirementsFor(profile: string, document?: Readonly<Record<string, unknown>>): readonly string[] | null {
   if (v2Floors !== null) {
     const files = v2Floors[profile];

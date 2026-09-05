@@ -98,5 +98,57 @@ for (const p of decl.profiles) {
   }
 }
 
+// 10. A v2 profile with a non-empty predicate MUST declare a non-empty floor
+//     (an empty floor was certifiable on zero evidence until rc.45: the
+//     verdict said `certifiable: false`, the emitter's flag ignored the verdict,
+//     and `witnessCount` read the v1 hand table and printed 0). And a floor file
+//     MUST be witnessable by an honest holder of the predicate: every family
+//     gate it records (`openwop.family.<x>`) names a predicate family, and a
+//     file driven through a seam sits on the seams floor only. Facet
+//     conditionals (`refKinds`, a signed-token mount) leave no mechanical token
+//     and are NOT decided here — the check says so rather than print a green
+//     that covers them.
+// `lib/seams.js` is the seam surface; `lib/era2-seed.js` is the era-2 event-log
+// seed, reachable only through the seam (its gate is `seamsProfileAdvertised`).
+const SEAM_TOKEN = /seamsProfileAdvertised|SEAMS_PREFIX|lib\/seams\.js|lib\/era2-seed\.js/;
+// The seams profile is the INSTRUMENT (RFC 0168 §C.1: its own api/seams-v2.yaml,
+// forbidden from the capability namespace), not a capability predicate — a
+// host holds it by advertising `conformance.seamsProfile`, and its floor is the
+// set of witnesses driven through the seam, each ALSO gated on the family it
+// witnesses (a seam that forks a v1 run needs `replay`). So for it the family
+// clause inverts: every floor file MUST carry the seam token; the family gates
+// are the witnessed family's, not the profile's, and are not checked.
+const SEAMS_PROFILE = 'openwop-conformance-seams-v2';
+let floorFilesRead = 0;
+for (const p of decl.profiles) {
+  const families = p.predicate?.families ?? [];
+  const metadata = p.predicate?.metadata ?? [];
+  const floor = p.floorScenarios ?? [];
+  if ((families.length > 0 || metadata.length > 0 || p.id === SEAMS_PROFILE) && floor.length === 0) {
+    failures.push(`${p.id}: predicate names ${families.length} family(ies) and ${metadata.length} metadata key(s) but floorScenarios is empty — a profile with no floor certifies on no evidence`);
+    continue;
+  }
+  for (const entry of floor) {
+    const stem = entry.startsWith('planned:') ? `v2-${entry.slice('planned:'.length)}` : entry.replace(/\.test\.ts$/, '');
+    const file = join(ROOT, 'conformance', 'src', 'scenarios', `${stem}.test.ts`);
+    if (!existsSync(file)) continue; // rule 9 already failed it
+    const text = readFileSync(file, 'utf8');
+    floorFilesRead += 1;
+    const seamDriven = SEAM_TOKEN.test(text);
+    if (p.id === SEAMS_PROFILE) {
+      if (!seamDriven) failures.push(`${p.id}: floor file ${stem} carries no seam token (${SEAM_TOKEN.source}) — the seams floor is the set of seam-driven witnesses, and a file that needs no seam belongs on the floor of the family it witnesses`);
+      continue;
+    }
+    const gated = [...new Set([...text.matchAll(/openwop\.family\.([A-Za-z0-9_]+)/g)].map((m) => m[1]))];
+    for (const fam of gated) {
+      if (!families.includes(fam)) failures.push(`${p.id}: floor file ${stem} records a gate on family \`${fam}\` (openwop.family.${fam}), which is not in the profile's predicate {${families.join(', ') || '—'}} — an honest holder of the predicate may not advertise it, and a floor it cannot reach is not a floor`);
+    }
+    if (seamDriven) {
+      failures.push(`${p.id}: floor file ${stem} is driven through the conformance seam (${SEAM_TOKEN.source}) — a seam-driven witness belongs on the ${SEAMS_PROFILE} floor only`);
+    }
+  }
+}
+console.log(`check-declaration rule 10: ${floorFilesRead} floor file(s) read for family gates and seam tokens; facet conditionals (refKinds, a signed-token mount) are not decided by this rule`);
+
 if (failures.length) { console.error('=== check-declaration FAILED ===\n  ' + failures.join('\n  ')); process.exit(1); }
 console.log(`=== check-declaration OK — ${decl.families.length} family rows (${decl.families.filter((f) => f.anchor === 'core').length} core / ${decl.families.filter((f) => f.anchor === 'ext').length} ext / ${decl.families.filter((f) => f.anchor === 'deleted').length} deleted), ${decl.metadata.length} metadata keys, ${decl.profiles.length} profiles; every v1 root key anchored ===`);

@@ -12,11 +12,14 @@
  *   1. the manifest validates; every row is guarded; at least one row exists
  *      for every `kind` the host declares (the manifest is the host's own
  *      enumeration — RFC 0140 G7 answered by making the host list it);
- *   2. the facet constant equals the served address;
- *   3. driving one seam of each kind through the suite's receiver and
- *      observing no re-fire needs a seam that fires a named manifest row inside
- *      a run — none is catalogued (`host-sample-test-seams.md`,
- *      `api/seams-v2.yaml`), so that leg records `blocked` naming it.
+ *   2. the facet constant equals the served address.
+ *
+ * Both legs are unaided (a `GET` and a schema), which is what lets this file sit
+ * on the `openwop-core-standard` floor as the `replay` family's witness. The
+ * seam-driven no-re-fire leg lived here until rc.45 and moved to
+ * `v2-effect-seam-no-refire` (seams-v2 floor): a file's disposition is
+ * worst-first, so one seam-gated leg made the whole manifest witness read
+ * `blocked` on any host without the seams surface.
  *
  * Completeness of the manifest (a seam outside it) is negative-existence and is
  * not asserted here (RFC 0173 falsifiability table, §C.1 row).
@@ -26,9 +29,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver, type OpenWOPResponse } from '../lib/driver.js';
+import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily, v2Validator } from '../lib/v2.js';
-import { seamsProfileAdvertised, SEAMS_PREFIX } from '../lib/seams.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
@@ -114,50 +116,4 @@ describe('RFC 0173 §C.1 — effect-seam-manifest (gated on replay)', () => {
     ).toBe(MANIFEST_PATH);
   });
 
-  it('driving one seam of each kind observes no re-fire on replay', async () => {
-    const doc = await discovery();
-    if (!doc) return softSkip('blocked', 'discovery unreachable');
-    const replay = await gateFamily('replay');
-    if (!replay) return softSkip('inapplicable', 'replay family not advertised (gate recorded under openwop.family.replay)');
-    if (!seamsProfileAdvertised(doc)) {
-      return softSkip('blocked', `the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)`);
-    }
-    // The seam is catalogued (api/seams-v2.yaml `fireEffectSeam`). The witness is
-    // the host's own Layer-2 ledger, not an externally reachable receiver: fire a
-    // guarded row that states `branchReFires: false`, fork the run in `replay`
-    // mode, and read GET /runs/{runId}/effects on the fork. Suppression means the
-    // fork issues no further attempt for that seam, so its effect ledger cannot
-    // grow past the parent's.
-    const manifest = await driver.get(MANIFEST_PATH);
-    const seamRows: SeamRow[] = manifest.status === 200 && manifest.json && typeof manifest.json === 'object'
-      ? ((manifest.json as Manifest).seams ?? []) : [];
-    const target = seamRows.find((r) => r.guarded === true && r.branchReFires === false);
-    if (!target) return softSkip('inapplicable', `no manifest row is both guarded and branchReFires: false — nothing to witness suppression on (${seamRows.length} row(s) at ${MANIFEST_PATH})`);
-    const fired = await driver.post(`${SEAMS_PREFIX}/sample/effect-seams/fire`, { seam: String(target.seam) });
-    if (fired.status === 404 || fired.status === 403 || fired.status === 405) {
-      return softSkip('blocked', `the host advertises the seams profile but does not serve ${SEAMS_PREFIX}/sample/effect-seams/fire (answered ${fired.status}) — the no-re-fire leg cannot be driven`);
-    }
-    const firedBody = fired.json as { runId?: unknown } | null;
-    if (fired.status !== 201 || typeof firedBody?.runId !== 'string') {
-      return softSkip('blocked', `${SEAMS_PREFIX}/sample/effect-seams/fire answered ${fired.status} without { runId } — the seam contract in api/seams-v2.yaml is 201 { runId }`);
-    }
-    const parentId = firedBody.runId;
-    const parentEffects = await driver.get(`/runs/${parentId}/effects`);
-    if (parentEffects.status !== 200) return softSkip('blocked', `GET /runs/{runId}/effects answered ${parentEffects.status} on the fired run — the ledger is the witness for suppression (RFC 0173 §C.2)`);
-    const countOf = (r: OpenWOPResponse): number => {
-      const b = r.json as { effects?: unknown } | null;
-      return Array.isArray(b?.effects) ? (b.effects as unknown[]).length : 0;
-    };
-    const forked = await driver.post(`/runs/${parentId}:fork`, { mode: 'replay' });
-    const forkBody = forked.json as { runId?: unknown } | null;
-    if (forked.status !== 201 || typeof forkBody?.runId !== 'string') {
-      return softSkip('blocked', `POST /runs/{runId}:fork mode replay answered ${forked.status} on the fired run — suppression is witnessed on the fork`);
-    }
-    const forkEffects = await driver.get(`/runs/${String(forkBody.runId)}/effects`);
-    if (forkEffects.status !== 200) return softSkip('blocked', `GET /runs/{runId}/effects answered ${forkEffects.status} on the replay fork`);
-    expect(
-      countOf(forkEffects),
-      req('openwop.requirement.0173.effect-seam-manifest.no-re-fire', 'spec/v2/core/replay.md §The effect-seam manifest', `seam ${String(target.seam)} states branchReFires: false, so a replay fork MUST NOT issue a further attempt through it — the fork's effect ledger (${countOf(forkEffects)}) cannot exceed the parent's (${countOf(parentEffects)})`),
-    ).toBeLessThanOrEqual(countOf(parentEffects));
-  });
 });
