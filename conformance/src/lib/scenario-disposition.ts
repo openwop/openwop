@@ -48,7 +48,13 @@ export function floorScenarioFiles(): ReadonlySet<string> {
   // minted `openwop.scenario.*` and looked up as `openwop.floor.*` — which is
   // exactly what refused a tier-1 host's first production bundle over 101
   // executed-pass rows (see v2ProfileFloorFiles).
-  if (targetMajor() === 2) {
+  //
+  // rc.55: the runner installs the v2 floor map (`setV2ProfileFloors`) but
+  // reads `targetMajor()` from ITS OWN process.env, which `--target-major 2`
+  // never set — so the worker (env set) minted `openwop.floor.v2-…` and the
+  // runner (env unset) looked up `openwop.scenario.v2-…`. Either signal is
+  // the same fact; honour both so the two halves cannot disagree again.
+  if (targetMajor() === 2 || v2FloorsActive()) {
     for (const files of Object.values(v2ProfileFloorFiles(PKG_ROOT_PATH))) for (const f of files) out.add(f);
   }
   return out;
