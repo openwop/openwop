@@ -18746,7 +18746,7 @@
     {
       "id": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "file": "pause-resume.test.ts",
-      "line": 104,
+      "line": 110,
       "title": "resuming a running (not paused) run returns 409 with details.runStatus",
       "explicitId": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "citations": [
@@ -18765,7 +18765,7 @@
     {
       "id": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "file": "pause-resume.test.ts",
-      "line": 138,
+      "line": 144,
       "title": ":pause on an already-paused run returns 409 with details.runStatus paused, unless the request carries the original Idempotency-Key",
       "explicitId": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "citations": [
@@ -18799,7 +18799,7 @@
     {
       "id": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "file": "pause-resume.test.ts",
-      "line": 199,
+      "line": 205,
       "title": ":pause on a completed/cancelled/failed run MUST return 409",
       "explicitId": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "citations": [
@@ -18813,7 +18813,7 @@
     {
       "id": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "file": "pause-resume.test.ts",
-      "line": 223,
+      "line": 229,
       "title": "under drain-current-node node.completed precedes run.paused in the log",
       "explicitId": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "citations": [
@@ -18832,7 +18832,7 @@
     {
       "id": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "file": "pause-resume.test.ts",
-      "line": 262,
+      "line": 268,
       "title": ":pause MUST NOT silently override an active interrupt suspend",
       "explicitId": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "citations": [
@@ -18851,7 +18851,7 @@
     {
       "id": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "file": "pause-resume.test.ts",
-      "line": 318,
+      "line": 324,
       "title": "every drainPolicy advertised by the host is accepted on :pause",
       "explicitId": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "citations": [
