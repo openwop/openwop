@@ -13,6 +13,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.1] — 2026-09-05 — the webhook durability scenario read the wrong carrier and imposed its own deadline
+
+Two defects in `v2-webhook-durable-delivery`, both found by `myndhyve` running against 2.0.0 — the first host feedback on the released major, arriving within hours of the cut.
+
+- **It read the v1 carrier and called it the only v2 one.** `advertisedRetryPolicy()` read `triggerBridge.retryPolicy`, and its docstring asserted that was *"the only v2 carrier"*. `spec/v2/facets/webhooks.schema.json` states the opposite in as many words: *"retryPolicy is the v2 carrier of the delivery obligation (was `triggerBridge.retryPolicy` at v1)"*, with the field's own description adding *"The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."* So a host correctly advertising the **v2** carrier had its policy read as `null`, and one still on the v1 field was measured against **a different subsystem's** budget. The reporting host advertises `maxAttempts: 8` for its trigger-bridge state machine and enforces 5 on webhook delivery — honest about each, unable to be honest about both through one borrowed field. Now reads `webhooks.retryPolicy` first, falling back to `triggerBridge.retryPolicy` for the overlap the schema preserves. **The host asked whether the webhook surface needed its own carrier; it already had one, and the suite was not reading it.**
+- **It imposed a 20-second deadline and blamed the host for missing it.** A host whose first backoff is slower than 20 s was recorded `executed-fail` on a **core-standard floor row for being durable**: the retry lands at t+30 s, the window closed at t+20 s, and the assertion read *"a 500 from the subscriber MUST be retried"* against a host that retried. The wait now derives from the advertised policy — the 20 s floor is unchanged when nothing is advertised, widening to a 90 s cap for `fixed`/`exponential`. The cap is deliberate: an unbounded wait would let a host that never retries hold the suite open instead of failing. **This is rc.67's poll-cursor defect one file over and deterministic rather than flaky — the instrument's own window, attributed to the host.**
+
+**The rule both defects violate, now stated twice in the suite:** a scenario must not blame a host for a deadline the scenario chose, and it must read the carrier the spec names rather than the one that was convenient.
+
+**Not changed, and deliberately.** The `attempts.length <= maxAttempts` assertion rewards over-advertising, because a host claiming a larger budget than it honours passes while one claiming a smaller budget fails. The honest lower bound is unwitnessable from outside — the suite cannot make a host exhaust its budget without waiting the whole backoff chain — so the asymmetry is recorded here rather than papered over with an assertion that would only appear to close it.
+
 ## [2.0.0] — 2026-09-05 — openwop v2
 
 **The v2 major is cut.** `v2.0.0` is the corpus tag; `@openwop/openwop-conformance@2.0.0` and `@openwop/spec-artifacts@2.0.0` publish from it as one release under two names.

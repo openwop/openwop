@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-conformance",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Production-ready black-box conformance suite for OpenWOP v1.0 compliant servers.",
   "repository": {
     "type": "git",
@@ -52,10 +52,10 @@
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.0.1",
     "@openwop/spec-artifacts": "file:../spec-artifacts"
   },
   "peerDependencies": {
-    "@openwop/spec-artifacts": "2.0.0"
+    "@openwop/spec-artifacts": "2.0.1"
   }
 }
