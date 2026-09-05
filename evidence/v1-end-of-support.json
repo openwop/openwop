@@ -67,10 +67,10 @@
   },
   "legB": {
     "notBefore": null,
-    "applies": null,
-    "releaseDate": null,
-    "reason": "the v2.0.0 tag does not exist yet — (b) is undecidable before the cut"
+    "applies": false,
+    "releaseDate": "2026-09-05T17:55:33-04:00",
+    "reason": "no independent-tier host was anchored in the matrix at release; (b) does not apply"
   },
-  "endOfSupportNotBefore": null,
-  "state": "leg (a) anchored at 2026-12-04; leg (b) undecidable until v2.0.0 is cut"
+  "endOfSupportNotBefore": "2026-12-04",
+  "state": "anchored — leg (a) 2026-12-04; leg (b) does not apply"
 }
