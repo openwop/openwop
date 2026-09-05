@@ -1,5 +1,20 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.0] — 2026-09-05 — openwop v2
+
+The v2 major. `@openwop/openwop-conformance@2.0.0` and `@openwop/spec-artifacts@2.0.0` are one release under two names — conformance pins the contract package to an exact version, so install both.
+
+**What changed from 1.x, for someone upgrading.** The suite gained `--target-major`; `req('openwop.<id>', …)` is the only assertion form and every `it` records a ledger row; `--certify` emits a signed bundle v3 whose verdict is the certification. Dispositions are the RFC 0148 §A vocabulary — `executed-pass`, `executed-fail`, `skipped`, `inapplicable`, `blocked` — and **a bundle carrying any `blocked` row does not certify**, because `blocked` means the suite could not measure an obligation the host took on. Three profiles ship with machine-checked floors: `openwop-discovery-core`, `openwop-core-standard`, `openwop-conformance-seams-v2`.
+
+**The distinction to internalise before reading a bundle:** `inapplicable` is an obligation the host never took on, `blocked` is one it took on and the suite could not measure, and only the second denies certification. Most of the rc series was spent getting individual scenarios to tell those two apart honestly.
+
+**Cut against the RFC 0167 §F predicates**, all ten machine-true on a live host at the release candidate: Identity, Registers, Closure, Deprecation, Paths, Codemods, Waiver, Witness, Coexistence, Front door. The reference host `openwop-host-v2-reference` certifies all three profiles at 181 / 0 / 0 / 42 / 0.
+
+**Honest limits at the cut.** The only host certified on all three profiles is the steward's own reference example; both production hosts are mid-migration and their remaining distance is capability adverts rather than implementation. No independent-tier host is anchored, so leg (b) of the v1 end-of-support clock does not apply — leg (a) governs, and v1 support runs to at least **2026-12-04**. RFC 0167 §157 recorded in advance that a third-party host is not required at the cut under sole-steward operation.
+
+Full per-release history for `2.0.0-rc.1` … `2.0.0-rc.67`: <https://github.com/openwop/openwop/blob/main/CHANGELOG.md>.
+
+
 ## [2.0.0-rc.67] — 2026-09-05 — a core-standard floor file was flaky, and the flake blamed the host
 
 `v2-poll-cursor-v2` compared **two reads of the same event log** — a full read, then a cursor read — and asserted they agree. But `terminalRun()` waits for the run's *status* to be terminal, and a terminal status does not mean the log has stopped **appending**. A host emitting trailing or vendor rows can add an event between the two reads, and the leg then reports an array mismatch and blames the host for a cursor defect it does not have.
