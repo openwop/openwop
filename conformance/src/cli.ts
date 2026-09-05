@@ -451,6 +451,16 @@ async function resolveTargetMajor(args: ParsedArgs, baseUrl: string | undefined,
   // §1.1), so auto-detection on a dual-stack host resolves to major 1 by design.
   // Say so, or an operator reads a v1 run as the host's only option.
   if (major === 1 && dualStack) source += ' (the host also serves 2.x — pass --target-major 2 to measure it)';
+  // The RUNNER's own process must see the target major, not only the vitest
+  // child (rc.55). `requirementIdForFile()` decides "is this file a floor?"
+  // through `targetMajor()` = process.env; until rc.55 `--target-major 2` set
+  // the env on the child alone, so the worker recorded every v2 floor file
+  // under `openwop.floor.<stem>` while the runner looked it up as
+  // `openwop.scenario.<stem>`, found nothing, emitted a report-derived pass
+  // with no assertion count, and its own verifier rejected the bundle as a
+  // `vacuous-pass` emitter defect (exit 2, nothing written). The child env is
+  // spread from process.env after this, so one assignment covers both.
+  process.env['OPENWOP_TARGET_MAJOR'] = String(major);
   const manifest = JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> };
   const files = Object.entries(manifest.majors).filter(([, m]) => m.includes(major as number)).map(([f]) => `src/scenarios/${f}`);
   return { major, files, source };
