@@ -165,6 +165,18 @@ Record the target major and the applicable set beside any total you intend anyon
 
 ---
 
+## Phase 5 — Anchor
+
+The v1 end-of-support clock is computed from the matrix and the public history (`overview.md` §v1 end-of-support; `scripts/generate-v1-eos-clock.mjs`); a host's contribution to it is one file and two commits.
+
+**5.1 The row PR carries the bundle.** With your INTEROP-MATRIX v2-table row, check the signed bundle in as `evidence/v2-host-bundles/<host.name>.json` — `host.name` exactly as the bundle spells it, because the generator reads the row's name and looks for that file. The cut gate (`check-cut-gates.mjs --host-bundle`) must already pass on it; the matrix row must name the host before that gate does.
+
+**5.2 Non-vacuous means witnessed.** The bundle anchors only if some claimed profile carries `witnessCount ≥ 1` — an executed pass with assertions on that profile's floor. `certified` does not matter for the anchor (seams-gated `blocked` rows keep it false and that is the honest state); `witnessCount` does. A bundle cut on a suite before rc.45 reports `witnessCount: 0` on every v2 profile whatever it witnessed, because the emitter read the v1 floor table; re-cut on rc.45 or later.
+
+**5.3 The anchor is the merge, so it lands in a follow-up commit.** The generated `evidence/v1-end-of-support.json` records the committer date of the first commit at which your file was non-vacuous, read from `git log` on main. A PR branch cannot know its own squash-merge date, so the row PR is followed by one commit that runs `node scripts/generate-v1-eos-clock.mjs --write` and commits the result. Between the two, `--check` on main fails naming exactly this; that window is minutes and visible, which is the point — a check that stayed green through it would be a green that hides a stale date. Re-certifying later replaces the file and does not move the anchor; a row removed from the v2 table removes the host from the set and the date re-derives.
+
+**5.4 Read the state, every run.** `check-removal-dates` prints `clock: …` on every run; `check-retention-floors` prints the floor state and, with `--network`, whether each old-major artifact is still installable. "Not anchored", "far away" and "due" are three different sentences on purpose.
+
 ## Verify the artifact, not the wrapper
 
 The single most expensive habit to unlearn:
