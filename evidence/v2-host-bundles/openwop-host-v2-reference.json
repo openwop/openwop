@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-05T14:33:33.997Z",
+  "generatedAt": "2026-09-05T15:12:39.586Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.0-rc.57",
+    "version": "2.0.0-rc.58",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.0-rc.57",
-    "stampSha256": "cc3f5bc494e60e39d45ae5c1b09839c60b7ec5974b1fb6f59d7452cd68782a28"
+    "specArtifactsVersion": "2.0.0-rc.58",
+    "stampSha256": "513ff26b156e8810cd0a5176d93894ae2c2883fc1325738fc7c13a2e55601bb5"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "3f8bff3dd61dbe91efe27b6d968932574e737e22"
+      "id": "763e4e3f29b5518cdb8d8862bd23bcbfba3dba3f"
     },
     "signingKeyId": "v2-reference-2"
   },
   "discovery": {
-    "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "2634c23085aeed1d0f2fc5e7f3124306ea4625abb032e70116763001a53e72e7",
+    "url": "http://127.0.0.1:3839/.well-known/openwop",
+    "sha256": "e4f0ddc1e855465f3df27c5b5f56830449d71273b177facbf1bcdf3e12dc6b5f",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -32,28 +32,28 @@
       "id": "openwop-discovery-core",
       "evidenceTier": "self",
       "witnessCount": 3,
-      "certified": false
+      "certified": true
     },
     {
       "id": "openwop-core-standard",
       "evidenceTier": "self",
       "witnessCount": 8,
-      "certified": false
+      "certified": true
     },
     {
       "id": "openwop-conformance-seams-v2",
       "evidenceTier": "self",
       "witnessCount": 4,
-      "certified": false
+      "certified": true
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 169,
-      "executedFail": 10,
+      "executedPass": 179,
+      "executedFail": 0,
       "skipped": 0,
       "inapplicable": 42,
-      "blocked": 1
+      "blocked": 0
     },
     "requirements": [
       {
@@ -139,9 +139,8 @@
       {
         "id": "openwop.scenario.v2-dual-stack-negotiation",
         "scenario": "v2-dual-stack-negotiation.test.ts",
-        "result": "executed-fail",
-        "assertions": 14,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 15
       },
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
@@ -172,8 +171,7 @@
         "id": "openwop.scenario.v2-era-2-append-vocabulary",
         "scenario": "v2-era-2-append-vocabulary.test.ts",
         "result": "executed-pass",
-        "assertions": 1,
-        "detail": "partial-witness: blocked: seedEra2Log reported success but the log reads back empty (0 events) — the seam's return value is not evidence that a log exists, and without a seeded era-2 log the writer rule is unwitnessed here"
+        "assertions": 6
       },
       {
         "id": "openwop.floor.v2-era-key",
@@ -254,9 +252,8 @@
       {
         "id": "openwop.scenario.v2-malformed-body-envelope",
         "scenario": "v2-malformed-body-envelope.test.ts",
-        "result": "executed-fail",
-        "assertions": 4,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 10
       },
       {
         "id": "openwop.scenario.v2-manifest-ceiling-refused",
@@ -339,9 +336,8 @@
       {
         "id": "openwop.scenario.v2-pinned-run-disposition",
         "scenario": "v2-pinned-run-disposition.test.ts",
-        "result": "executed-fail",
-        "assertions": 7,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-poll-cursor-v2",
@@ -396,16 +392,14 @@
       {
         "id": "openwop.scenario.v2-run-bulk-cancel",
         "scenario": "v2-run-bulk-cancel.test.ts",
-        "result": "executed-fail",
-        "assertions": 10,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-run-cancel",
         "scenario": "v2-run-cancel.test.ts",
-        "result": "executed-fail",
-        "assertions": 6,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-run-completed-outputs",
@@ -435,9 +429,8 @@
       {
         "id": "openwop.scenario.v2-run-pause-resume",
         "scenario": "v2-run-pause-resume.test.ts",
-        "result": "executed-fail",
-        "assertions": 8,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 15
       },
       {
         "id": "openwop.scenario.v2-run-snapshot-etag",
@@ -596,13 +589,6 @@
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
         "assertions": 1
-      },
-      {
-        "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
-        "scenario": "v2-era-2-append-vocabulary.test.ts",
-        "result": "blocked",
-        "assertions": 0,
-        "detail": "seedEra2Log reported success but the log reads back empty (0 events) — the seam's return value is not evidence that a log exists, and without a seeded era-2 log the writer rule is unwitnessed here"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -871,9 +857,8 @@
       {
         "id": "openwop.requirement.0170.run-cancel",
         "scenario": "v2-run-cancel.test.ts",
-        "result": "executed-fail",
-        "assertions": 1,
-        "detail": "the test executed and failed: [unknown@unknown] spec/v2/core/runs.md §Cancel: a cancel on a run that is already terminal (completed) MUST be refused 409 run_terminal — got 200 completed; a 200 echoing the terminal state is outside §Cancel's 200 grammar { runId, status: cancelling | cancelled }: expected 200 to be 409 // Object.i"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0170.run-fork-refusals",
@@ -1055,9 +1040,8 @@
       {
         "id": "openwop.requirement.0172.dual-stack-negotiation.cross-major-read",
         "scenario": "v2-dual-stack-negotiation.test.ts",
-        "result": "executed-fail",
-        "assertions": 3,
-        "detail": "the test executed and failed: [unknown@unknown] spec/v2/core/versioning.md §5: a run minted under major 1 MUST be named by its tenant-bound projection <tenantId>/${the v1 id} when read under major 2 — the bare id is not merely unconventional, it carries no tenant segment for the mandatory 403 id_tenant_mismatch check to read (id"
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0172.dual-stack-negotiation.response-header",
@@ -1080,9 +1064,8 @@
       {
         "id": "openwop.requirement.0172.malformed-body-envelope",
         "scenario": "v2-malformed-body-envelope.test.ts",
-        "result": "executed-fail",
-        "assertions": 2,
-        "detail": "the test executed and failed: [unknown@unknown] spec/v2/core/errors.md: a malformed JSON body MUST be refused with 400 validation_error, not accepted and not passed to a default handler (got 500): expected 500 to be 400 // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0172.min-client-version",
@@ -1272,7 +1255,7 @@
         "id": "openwop.requirement.0176.era-2-append-vocabulary",
         "scenario": "v2-era-2-append-vocabulary.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0176.era-key",
@@ -1313,9 +1296,8 @@
       {
         "id": "openwop.requirement.0176.pinned-run-disposition.continued",
         "scenario": "v2-pinned-run-disposition.test.ts",
-        "result": "executed-fail",
-        "assertions": 1,
-        "detail": "the test executed and failed: [unknown@unknown] spec/v2/core/persistence.md §Runs pinned to v1: a run whose every pinned change id is still implemented MUST continue under the adapter — it was cancelled (status cancelled) for a pin the operator says the host implements (openwop.change.v1-interrupt-key-fold): expected 'cancelled'"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0176.unmapped-type-refused",
@@ -1451,8 +1433,8 @@
       }
     ]
   },
-  "witnessSha256": "5fedc4fe8ac26fcc290044393eba3b027d8fa27eb26e35cd0fb4b9ca780d92d9",
-  "assertionCount": 1511,
+  "witnessSha256": "933dc8ea048f964e97cc793c2af59c12ce0faedb70777c4968c0e9741d25a103",
+  "assertionCount": 1545,
   "detail": {
     "nonPass": [
       {
@@ -1461,19 +1443,9 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-dual-stack-negotiation",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
-      },
-      {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-malformed-body-envelope",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-minimum-version-refused",
@@ -1501,11 +1473,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-pinned-run-disposition",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
-      },
-      {
         "id": "openwop.scenario.v2-provider-conflict",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -1516,34 +1483,14 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-bulk-cancel",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
-      },
-      {
-        "id": "openwop.scenario.v2-run-cancel",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
-      },
-      {
         "id": "openwop.scenario.v2-run-diff-identical",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-pause-resume",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
-      },
-      {
         "id": "openwop.scenario.v2-subject-link-record",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
-        "result": "blocked",
-        "reason": "seedEra2Log reported success but the log reads back empty (0 events) — the seam's return value is not evidence that a log exists, and without a seeded era-2 log the writer rule is unwitnessed here"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -1606,11 +1553,6 @@
         "reason": "no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
       },
       {
-        "id": "openwop.requirement.0170.run-cancel",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [unknown@unknown] spec/v2/core/runs.md §Cancel: a cancel on a run that is already terminal (completed) MUST be refused 409 run_terminal — got 200 completed; a 200 echoing the terminal state is outside §Cancel's 200 grammar { runId, status: cancelling | cancelled }: expected 200 to be 409 // Object.i"
-      },
-      {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
         "result": "inapplicable",
         "reason": "the host does not advertise both the saml and scim lanes — advertising both is what implies the linking contract (row C2.5)"
@@ -1624,16 +1566,6 @@
         "id": "openwop.requirement.0171.error-registry.retry-after",
         "result": "inapplicable",
         "reason": "no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
-      },
-      {
-        "id": "openwop.requirement.0172.dual-stack-negotiation.cross-major-read",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [unknown@unknown] spec/v2/core/versioning.md §5: a run minted under major 1 MUST be named by its tenant-bound projection <tenantId>/${the v1 id} when read under major 2 — the bare id is not merely unconventional, it carries no tenant segment for the mandatory 403 id_tenant_mismatch check to read (id"
-      },
-      {
-        "id": "openwop.requirement.0172.malformed-body-envelope",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [unknown@unknown] spec/v2/core/errors.md: a malformed JSON body MUST be refused with 400 validation_error, not accepted and not passed to a default handler (got 500): expected 500 to be 400 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -1686,11 +1618,6 @@
         "reason": "host advertises neither a2a nor mcp — no refreshedAt to check"
       },
       {
-        "id": "openwop.requirement.0176.pinned-run-disposition.continued",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [unknown@unknown] spec/v2/core/persistence.md §Runs pinned to v1: a run whose every pinned change id is still implemented MUST continue under the adapter — it was cancelled (status cancelled) for a pin the operator says the host implements (openwop.change.v1-interrupt-key-fold): expected 'cancelled'"
-      },
-      {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
         "result": "inapplicable",
         "reason": "profile not advertised in the captured discovery set"
@@ -1725,7 +1652,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-2",
-    "sig": "NxWUS-FtVWTAdnrb70RBtkAUrzBtUbDlyhG5nqm-eyugkhrWsGIV9XNT_5xsgHfNhsJNjpsvBriDWVA4S8AeCA",
+    "sig": "WKCIL8bA4TOTC1zOeF4sZaq_gqvn3OgswTa8uF0JjOrr-eBnPiYgjAOiWF5fWh6-T-yiBH_AClr6ByNQ0mWIBA",
     "over": [
       "witnessSha256",
       "host.build",
