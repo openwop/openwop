@@ -41,6 +41,7 @@
  * @see RFCS/0003-fixture-gating.md
  */
 
+import { softSkip } from './soft-skip.js';
 import type { DiscoveryPayload } from './profiles.js';
 
 let _advertisedFixtures: ReadonlySet<string> | null = null;
@@ -76,7 +77,29 @@ function loadOptedOutPredicate(): (id: string) => boolean {
  * filtered out of the cache before storage so downstream lookups can
  * stay a single sync set-membership test.
  */
+let _discoveryUnreadable: string | null = null;
+
+/**
+ * Suite init could not READ the discovery document. This is not "the host
+ * advertises no fixtures" and MUST NOT be recorded as such: with 311
+ * fixture-gated sites, an empty cache turns an entire lane into `inapplicable`
+ * rows that read exactly like a host that advertises nothing. Measured
+ * 2026-09-05: all four workers hit the 5 s init abort against a host that
+ * answers `/.well-known/openwop` in 120–200 ms (a Cloud Run cold start), and
+ * every fixture-gated scenario skipped as "not advertised". The cache stays
+ * null; every gate that consults it records `blocked` with this reason.
+ */
+export function setDiscoveryUnreadable(reason: string): void {
+  _advertisedFixtures = null;
+  _discoveryUnreadable = reason;
+}
+
+export function discoveryUnreadableReason(): string | null {
+  return _discoveryUnreadable;
+}
+
 export function setAdvertisedFixtures(c: DiscoveryPayload | null | undefined): void {
+  _discoveryUnreadable = null;
   if (c == null || !Array.isArray(c.fixtures)) {
     _advertisedFixtures = new Set();
     return;
@@ -103,6 +126,13 @@ export function setAdvertisedFixtures(c: DiscoveryPayload | null | undefined): v
  *   );
  */
 export function isFixtureAdvertised(id: string): boolean {
+  if (_advertisedFixtures === null && _discoveryUnreadable !== null) {
+    // Evidence went unread, on the suite's side. `blocked` outranks the
+    // `inapplicable` the caller is about to record (soft-skip.ts RANK), so the
+    // file resolves to the honest word instead of the vacuous one.
+    softSkip('blocked', `suite init could not read /.well-known/openwop (${_discoveryUnreadable}) — fixture ${id} is UNKNOWN, not unadvertised`);
+    return false;
+  }
   return _advertisedFixtures?.has(id) ?? false;
 }
 
@@ -127,4 +157,5 @@ export function isFixtureCacheReady(): boolean {
 /** Test-only: reset the module-level cache. */
 export function __resetForTests(): void {
   _advertisedFixtures = null;
+  _discoveryUnreadable = null;
 }
