@@ -14,10 +14,11 @@
  * NOT a string search on the hand-kept matrix (a host's name has been in the
  * v1 table since v1). It is the committer date of the first commit at which
  * `evidence/v2-host-bundles/<host>.json` was NON-VACUOUS — some claimed profile
- * with `witnessCount ≥ 1` — read from `git log` over that one file. A third
- * party re-derives it from the public history; a re-certification replaces the
- * file and does not move it; squash-merges on this repository give author and
- * committer the same date.
+ * with `witnessCount ≥ 1` — read from `git log --first-parent` of MAIN over
+ * that one file (see `mainRef`). A third party re-derives it from the public
+ * history; a re-certification replaces the file and does not move it;
+ * squash-merges on this repository give author and committer the same date;
+ * a PR branch is not public history and reads as "not anchored" until merged.
  *
  * Usage:
  *   node scripts/generate-v1-eos-clock.mjs --write   # writes evidence/v1-end-of-support.json
@@ -64,9 +65,41 @@ function nonVacuous(bundle) {
   return Array.isArray(bundle?.claimedProfiles) && bundle.claimedProfiles.some((p) => typeof p?.witnessCount === 'number' && p.witnessCount >= 1);
 }
 
-/** The first commit at which the checked-in bundle was non-vacuous, from the public history of that one file. */
+/**
+ * The ref whose FIRST-PARENT history is "the public history": `origin/main`
+ * when the checkout knows it, else a local `main`. Nothing else counts.
+ *
+ * Measured 2026-09-05 on the first non-vacuous bundle ever checked in: the
+ * anchor was read from `git log -- <file>` on WHATEVER was checked out, so on
+ * the PR branch it resolved to the branch's own add-commit, and in CI (a
+ * shallow checkout of the synthetic `refs/pull/N/merge` commit) to that
+ * commit's timestamp — a date that can never equal anything committed, so
+ * `--check` on the PR was unsatisfiable, and on main it would have moved with
+ * every shallow clone. Every earlier bundle was vacuous, so the branch
+ * never fired. The rule is the one the prose states — the committer date of
+ * the first commit ON MAIN at which the file is non-vacuous — and a PR branch
+ * therefore reads as "not anchored" until it is merged, which is exactly the
+ * pre-merge state the row PR commits. CI checks out with full history for
+ * this reason (`fetch-depth: 0`); without a main ref the script refuses
+ * rather than guess.
+ */
+function mainRef() {
+  for (const ref of ['origin/main', 'main']) {
+    const r = spawnSync('git', ['rev-parse', '--verify', '-q', `${ref}^{commit}`], { cwd: ROOT, encoding: 'utf8' });
+    if (r.status === 0) return ref;
+  }
+  console.error('=== generate-v1-eos-clock FAILED — neither origin/main nor main resolves; the anchor is defined over the first-parent history of main and cannot be derived from this checkout (fetch main first) ===');
+  process.exit(1);
+}
+// OPENWOP_EOS_MAIN_REF exists for the simulation of a merge in a scratch
+// worktree (and for the coherence test that pins the pending-merge path);
+// production runs never set it.
+const MAIN = process.env.OPENWOP_EOS_MAIN_REF ?? mainRef();
+const HEAD = (git(['rev-parse', 'HEAD']) ?? '').trim();
+
+/** The first commit ON MAIN (first-parent) at which the checked-in bundle was non-vacuous, from the public history of that one file. */
 function anchorFor(rel) {
-  const log = git(['log', '--reverse', '--format=%H,%cI', '--', rel]);
+  const log = git(['log', '--first-parent', '--reverse', '--format=%H,%cI', MAIN, '--', rel]);
   if (log === null) return { anchoredAt: null, anchorCommit: null, reason: 'git log failed' };
   const commits = log.trim().split('\n').filter(Boolean).map((l) => { const [sha, date] = l.split(','); return { sha, date }; });
   // One reason string for "uncommitted" and "committed but vacuous": the
@@ -161,8 +194,34 @@ if (mode === 'write') {
 } else if (mode === 'check') {
   const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : null;
   if (current !== rendered) {
-    console.error(`=== generate-v1-eos-clock --check FAILED — ${OUT.replace(ROOT + '/', '')} is ${current === null ? 'missing' : 'stale'}; run: node scripts/generate-v1-eos-clock.mjs --write ===`);
-    process.exit(1);
+    // The one tolerated difference: a host whose committed record says "not
+    // anchored" while the history says it anchored at HEAD ITSELF — i.e. this
+    // checkout is the merge commit that just landed the first non-vacuous
+    // bundle. The row PR could not know its own merge date (runbook §5.3), so
+    // the anchor lands in the follow-up regeneration; until that commit the
+    // file is not stale, it is one commit behind by construction. Anything
+    // else — a different anchor, a moved date, a missing host — is stale.
+    let pending = null;
+    try {
+      const committed = current === null ? null : JSON.parse(current);
+      const byName = new Map((committed?.hosts ?? []).map((h) => [h.name, h]));
+      const onlyHeadAnchors = result.hosts.every((h) => {
+        const c = byName.get(h.name);
+        if (c === undefined) return false;
+        // Unchanged hosts must match exactly; a newly anchored host is tolerated only when its anchor IS this commit.
+        if (h.anchoredAt === null || c.anchoredAt !== null) return JSON.stringify(h) === JSON.stringify(c);
+        return h.anchorCommit === HEAD && c.anchorCommit === null;
+      });
+      const pendingHosts = result.hosts.filter((h) => h.anchoredAt !== null && byName.get(h.name)?.anchoredAt === null).map((h) => h.name);
+      if (onlyHeadAnchors && pendingHosts.length > 0 && (committed?.hosts ?? []).length === result.hosts.length) pending = pendingHosts;
+    } catch { /* unparseable committed file: stale */ }
+    if (pending !== null) {
+      console.log(`=== generate-v1-eos-clock OK — anchor PENDING for ${pending.join(', ')}: HEAD (${HEAD.slice(0, 8)}) is the merge that first landed the non-vacuous bundle; run: node scripts/generate-v1-eos-clock.mjs --write in the follow-up commit (runbook §5.3) ===`);
+    } else {
+      console.error(`=== generate-v1-eos-clock --check FAILED — ${OUT.replace(ROOT + '/', '')} is ${current === null ? 'missing' : 'stale'}; run: node scripts/generate-v1-eos-clock.mjs --write ===`);
+      process.exit(1);
+    }
+  } else {
+    console.log('=== generate-v1-eos-clock OK — evidence/v1-end-of-support.json is current ===');
   }
-  console.log('=== generate-v1-eos-clock OK — evidence/v1-end-of-support.json is current ===');
 }
