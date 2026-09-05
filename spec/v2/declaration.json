@@ -1826,9 +1826,11 @@
         ]
       },
       "floorScenarios": [
-        "planned:capabilities-root-closed"
+        "v2-capabilities-root-closed",
+        "v2-preferred-version-default",
+        "v2-version-header-honored"
       ],
-      "note": "discovery only; the alias openwop-core is deleted (row C2.3)"
+      "note": "discovery only; the alias openwop-core is deleted (row C2.3). Floor minted rc.45: the closed root, the preferredVersion default, and the header honoured-or-refused — each unaided. v2-well-known-one-resource is deliberately absent: it is inapplicable by design for a host advertising one major, which every host becomes at v1 end-of-support, and a floor that expires is not a floor."
     },
     {
       "id": "openwop-core-standard",
@@ -1841,17 +1843,31 @@
           "eventLog"
         ]
       },
-      "floorScenarios": [],
+      "floorScenarios": [
+        "v2-interrupt-token-scheme",
+        "v2-effect-seam-manifest",
+        "v2-webhook-durable-delivery",
+        "v2-idempotency-key-grammar",
+        "v2-era-key",
+        "v2-era-stamp-universal",
+        "v2-event-type-closed",
+        "v2-poll-cursor-v2"
+      ],
       "requirementIds": [],
-      "note": "seeded from spec/v1/core-standard-manifest.json at P3-B; the floor is minted with the 2.0.0 scenarios (planned)"
+      "note": "seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest — its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
     },
     {
       "id": "openwop-conformance-seams-v2",
       "predicate": {
         "families": []
       },
-      "floorScenarios": [],
-      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace"
+      "floorScenarios": [
+        "v2-fork-a-v1-run",
+        "v2-effect-identity-business-key",
+        "v2-v1-signed-webhook-accepted",
+        "v2-effect-seam-no-refire"
+      ],
+      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios that are driven through a seam. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass — a seams host advertising none of those families witnesses nothing through the seam and certifies nothing. v2-pinned-run-disposition is absent because it needs a suite opt-in (the change ids a host implements) and records `skipped` without one — a floor row the suite is not allowed to witness cannot certify."
     }
   ],
   "aliases": {

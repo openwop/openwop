@@ -31,7 +31,7 @@ import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
 import { targetMajor } from './seams.js';
 import { PKG_ROOT_PATH } from './paths.js';
 import { v2ProfileFloorFiles } from './requirement-registry.js';
-import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
+import { requirementIdForScenario, requirementIdForPrefix, requirementsFor, v2FloorsActive } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './spec-coherence.js';
 import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-ledger.js';
@@ -213,6 +213,13 @@ export interface DerivedProfileVerdict {
   readonly runtimeDerived: boolean;
   /** For runtime-derived profiles: every floor row is a witnessed executed-pass. */
   readonly held: boolean;
+  /**
+   * Floor rows that are `executed-pass` with `assertionCount > 0` — the number
+   * of things actually witnessed. At major 2 this IS `witnessCount` on the
+   * bundle, and a profile with zero of them is not certifiable however its
+   * other rows read (RFC 0148 §A: no certification without an execution witness).
+   */
+  readonly witnessedPasses: number;
 }
 
 export interface Derivation {
@@ -274,9 +281,15 @@ export function deriveRequirementDispositions(
     perFile.set(file, row);
   }
 
-  // Prefix requirements: derived from the matching files.
+  // Prefix requirements: derived from the matching files. These are the v1 hand
+  // table's `requiredAnyPrefix` groups (`interrupt-`); at major 2 the floors are
+  // the declaration's and have no prefix groups — and the v1 `interrupt-*` files
+  // never run at major 2, so until rc.45 every major-2 bundle carried one
+  // `openwop.floor.any.interrupt-` row recorded `blocked` ("no interrupt-*
+  // scenario ran"), which by RFC 0168 §E.1 denied certification to every
+  // profile on every major-2 bundle. The fifth unjoined floor site.
   const prefixIds = new Set<string>();
-  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
+  if (!v2FloorsActive()) for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
   for (const prefix of [...prefixIds].sort()) {
     const matching = [...perFile.entries()].filter(([f]) => f.startsWith(prefix)).map(([, r]) => r);
     const id = requirementIdForPrefix(prefix);
@@ -339,12 +352,18 @@ export function deriveRequirementDispositions(
     if (ids === null) {
       const floor = PROFILE_FLOOR_SCENARIOS[profile];
       const why = floor === undefined ? `(no floor defined for ${profile})` : `(discovery-conditional floor for ${profile} is unevaluable without the discovery document)`;
-      verdicts.push({ profile, unclassified: [], blocking: [why], certifiable: false, runtimeDerived: false, held: false });
+      verdicts.push({ profile, unclassified: [], blocking: [why], certifiable: false, runtimeDerived: false, held: false, witnessedPasses: 0 });
       continue;
     }
     const unclassified: string[] = [];
     const blocking: string[] = [];
     let witnessedPasses = 0;
+    // At major 2 the floor is the declaration's (`v2ProfileFloorFiles`), and
+    // the v1 hand table says nothing about these profiles: not their floor, not
+    // `discoveryOnly`, not `runtimeDerived`. Reading it here was the fourth
+    // unjoined floor site — `openwop-discovery-core` is `discoveryOnly` in v1
+    // terms, so at major 2 it certified whatever its v2 floor file said.
+    const atMajor2 = v2FloorsActive();
     for (const id of ids) {
       const r = rowById.get(id);
       const fromLedger = byId.has(id) || (r !== undefined && r.scenarioId.endsWith('*'));
@@ -365,24 +384,33 @@ export function deriveRequirementDispositions(
       const silent = !fromLedger && (ledgerPresent || r?.disposition === 'blocked');
       if (r === undefined || silent || vacuous) unclassified.push(id);
       // Unclassified always blocks: a requirement nobody recorded cannot certify.
-      if (r === undefined || silent || vacuous || !CERTIFIABLE.includes(r.disposition)) blocking.push(id);
+      // A `skipped` floor row at major 2 is an opt-in the host withheld — the
+      // suite was not allowed to look. That is not evidence the requirement
+      // holds; it blocks the floor (a v1 floor keeps the CERTIFIABLE reading).
+      if (r === undefined || silent || vacuous || !CERTIFIABLE.includes(r.disposition) || (atMajor2 && r.disposition === 'skipped')) blocking.push(id);
     }
     // discoveryOnly floors have ids.length === 0 and certify by design here (the
     // requirement-ledger's verifyProfileRequirements is stricter; the runner
-    // consults PROFILE_FLOOR_SCENARIOS.discoveryOnly separately).
-    const discoveryOnly = PROFILE_FLOOR_SCENARIOS[profile]?.discoveryOnly === true;
-    const runtimeDerived = PROFILE_FLOOR_SCENARIOS[profile]?.runtimeDerived === true;
+    // consults PROFILE_FLOOR_SCENARIOS.discoveryOnly separately). Neither flag
+    // exists at major 2.
+    const discoveryOnly = !atMajor2 && PROFILE_FLOOR_SCENARIOS[profile]?.discoveryOnly === true;
+    const runtimeDerived = !atMajor2 && PROFILE_FLOOR_SCENARIOS[profile]?.runtimeDerived === true;
     // A runtime-derived profile is HELD only when every floor row is a witnessed
     // pass ("derivable from which scenarios pass" — profiles.md). Anything else
     // means the host does not hold it: not a rejection, not a blocked claim.
     const held = ids.length > 0 && witnessedPasses === ids.length;
+    // Major 2: a floor certifies only on a witnessed pass. `inapplicable` rows
+    // are honest per file (capabilities.md §2 requires the omission) but a floor
+    // that is inapplicable end to end has witnessed nothing and certifies nothing.
+    const certifiableAt2 = ids.length > 0 && blocking.length === 0 && witnessedPasses >= 1;
     verdicts.push({
       profile,
       unclassified: runtimeDerived && !held ? [] : unclassified,
       blocking: runtimeDerived && !held ? ids.filter((id) => rowById.get(id)?.disposition !== 'executed-pass' || (rowById.get(id)?.assertionCount ?? 0) === 0) : blocking,
-      certifiable: runtimeDerived ? held : discoveryOnly || (ids.length > 0 && blocking.length === 0),
+      certifiable: atMajor2 ? certifiableAt2 : runtimeDerived ? held : discoveryOnly || (ids.length > 0 && blocking.length === 0),
       runtimeDerived,
       held,
+      witnessedPasses,
     });
   }
   return { requirements: rows, totals, verdicts, rejectUnclassified: verdicts.some((v) => v.unclassified.length > 0), ledgerPresent };
