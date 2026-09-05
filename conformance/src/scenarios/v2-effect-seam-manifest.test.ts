@@ -35,9 +35,9 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const MANIFEST_PATH = '/host/effect-seams';
-const KINDS = ['http', 'queue', 'storage', 'provider-sdk', 'webhook-fanout'] as const;
+const KINDS = ['http', 'smtp', 'queue', 'storage', 'provider-sdk', 'webhook-fanout', 'other'] as const;
 
-interface SeamRow { seam?: unknown; kind?: unknown; guarded?: unknown; guardedBy?: unknown; branchReFires?: unknown }
+interface SeamRow { seam?: unknown; kind?: unknown; guarded?: unknown; guardedBy?: unknown; branchReFires?: unknown; note?: unknown }
 interface Manifest { manifestVersion?: unknown; seams?: SeamRow[] }
 
 async function discovery(): Promise<Record<string, unknown> | null> {
@@ -84,6 +84,16 @@ describe('RFC 0173 §C.1 — effect-seam-manifest (gated on replay)', () => {
         (KINDS as readonly string[]).includes(String(row.kind)),
         req('openwop.requirement.0173.effect-seam-manifest', 'effect-seam-manifest.schema.json seams[].kind', `kind MUST be one of ${KINDS.join(' | ')} — seam ${String(row.seam)} declares ${String(row.kind)}`),
       ).toBe(true);
+      // `other` is the escape for a mechanism the enum does not name, and the
+      // note is what keeps it from being a place to hide a seam: a row that
+      // cannot say WHICH mechanism it is has not been enumerated, it has been
+      // labelled. Suite 2.0.0-rc.61, replay.md §The effect-seam manifest.
+      if (String(row.kind) === 'other') {
+        expect(
+          typeof row.note === 'string' && row.note.trim().length > 0,
+          req('openwop.requirement.0173.effect-seam-manifest', 'replay.md §The effect-seam manifest', `a kind: other row MUST carry a note naming the mechanism (raw TCP, gRPC, a filesystem write, a device SDK) — seam ${String(row.seam)} declares other with no note`),
+        ).toBe(true);
+      }
     }
     // One row per kind the host declares: the set of kinds the manifest names is
     // the host's declaration, and each named kind is backed by at least one row.
