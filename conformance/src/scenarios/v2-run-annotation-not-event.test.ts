@@ -51,7 +51,7 @@ describe('v2 run-annotation-not-event (runs.md §Annotations)', () => {
 
     const ann = await http(() => driver.post(`/runs/${enc(runId)}/annotations`, { signal: { kind: 'label', label: 'conformance' }, note: 'openwop conformance annotation' }));
     if (ann === null) return softSkip('blocked', 'POST /runs/{runId}/annotations unreachable (fetch failed)');
-    if (ann.status === 501 || ann.status === 404) return softSkip('inapplicable', `POST /runs/{runId}/annotations answered ${ann.status} with feedback advertised — runs.md §Surface says 501 when unadvertised and the registry names no 501 code (filed); treated as not mounted`);
+    if (ann.status === 501 || ann.status === 404) return softSkip('blocked', `POST /runs/{runId}/annotations answered ${ann.status} although feedback is advertised — the surface is not mounted (an unadvertised feedback answers 404 not_found; 501 is not a registered shape)`);
     expect(ann.status, req(ID, DOC, `createAnnotation MUST answer 201 — got ${ann.status} ${readErrorCode(ann.json) ?? ''}`.trim())).toBe(201);
     const check = v2Validator('annotation')(ann.json);
     expect(check.ok, req(ID, 'schemas/v2/annotation.schema.json', `the 201 body MUST validate: ${check.errors}`)).toBe(true);

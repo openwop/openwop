@@ -28172,7 +28172,7 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         },
@@ -28184,15 +28184,20 @@
       ]
     },
     {
-      "id": "openwop.it.v2-run-cancel.cancelling-a-terminal-run-answers-409-run-terminal-or-200-idempotently-the-prose",
+      "id": "openwop.it.v2-run-cancel.cancelling-a-terminal-run-is-refused-409-run-terminal",
       "file": "v2-run-cancel.test.ts",
       "line": 65,
-      "title": "cancelling a terminal run answers 409 run_terminal or 200 idempotently — the prose is silent, the leg records which",
+      "title": "cancelling a terminal run is refused 409 run_terminal",
       "explicitId": null,
       "citations": [
         {
           "section": null,
           "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": "the refusal MUST be run_terminal",
           "interpolated": true
         }
       ]
@@ -28387,7 +28392,7 @@
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/errors.md",
+          "section": null,
           "requirement": null,
           "interpolated": true
         },
@@ -28397,8 +28402,9 @@
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/errors.md",
-          "requirement": "the 409 MUST carry an error envelope with a registered code"
+          "section": null,
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
@@ -28417,6 +28423,16 @@
         {
           "section": null,
           "requirement": "the 202 MUST carry the runId",
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": null,
+          "requirement": null,
           "interpolated": true
         },
         {

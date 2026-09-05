@@ -73,7 +73,7 @@ describe('v2 run-bulk-cancel (runs.md §Cancel)', () => {
     const foreign = entries[1]!;
     expect(foreign.ok, req(ID, DOC, 'the foreign-tenant entry MUST be ok: false')).toBe(false);
     const fcode = String(foreign.error?.code);
-    expect(['run_forbidden', 'id_tenant_mismatch', 'not_found'].includes(fcode), req(ID, DOC, `the foreign entry MUST carry an error envelope with run_forbidden (runs.md) or id_tenant_mismatch / not_found (identity.md §5) — got ${fcode}; the two documents disagree (filed)`)).toBe(true);
+    expect(['id_tenant_mismatch', 'not_found'].includes(fcode), req(ID, 'spec/v2/core/identity.md §5', `an id whose tenant segment is not the caller's MUST be refused inside the entry with id_tenant_mismatch (or not_found where existence is not leaked) — identity.md §5 applies inside a bulk entry exactly as on a path; run_forbidden is for a same-tenant run the caller may not cancel — got ${fcode}`)).toBe(true);
     for (const own of [entries[0]!, entries[2]!]) {
       const okShape = own.ok === true && ['cancelling', 'cancelled'].includes(String(own.status));
       const terminalShape = own.ok === false && String(own.error?.code) === 'run_terminal';

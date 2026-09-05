@@ -12,7 +12,7 @@ RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header i
 | --- | --- | --- |
 | `Accept-Language` | 1 | BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT 400. |
 | `Idempotency-Key` | 14 | Per-mutation idempotency token (see `idempotency.md` Layer 1). |
-| `If-None-Match` | 2 | RFC 0165 §C.2. Standard conditional request against the discovery document's `ETag`; a matching value SHOULD yield `304 Not Modified`. |
+| `If-None-Match` | 2 | RFC 0165 §C.2; runs.md §Snapshot. Standard conditional request against any resource that carries an `ETag` — the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot): a matching value MUST yield `304 Not Modified` with no body, and the 304 carries `OpenWOP-Version` like every response (versioning.md §1.4). |
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
 | `OpenWOP-Dedup` | 1 | When set, server cross-host claim system rejects duplicate `(tenantId, scopeId)` pairs with `409 Conflict`. |
 | `OpenWOP-Force-Engine-Version` | 1 | **Test-keys-only.** When set, the server emits events for this run AS IF it |
