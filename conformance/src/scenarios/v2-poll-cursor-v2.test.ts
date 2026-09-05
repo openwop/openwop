@@ -96,6 +96,24 @@ describe('v2 poll-cursor-v2 (RFC 0171 §E.2)', () => {
     if (res === null) return softSkip('blocked', 'GET /runs/{runId}/events/poll?afterSequence= unreachable (fetch failed)');
     expect(res.status, req('openwop.requirement.0171.poll-cursor-v2.after-sequence', DOC, 'afterSequence is an integer ≥ 0 and MUST be accepted')).toBe(200);
     const after = sequences(res.json);
+    // QUIESCENCE (rc.67). The comparison below is between TWO READS of the
+    // same log, and a run whose STATUS is terminal has not necessarily
+    // finished APPENDING — a host emitting trailing or vendor rows can add an
+    // event between the full read above and the cursor read just made. The
+    // assertion then reports an array mismatch and blames the host for a
+    // cursor defect it does not have.
+    //
+    // Measured by a peer host: this leg failed TWICE under a full-suite run
+    // and passed 6/6 in isolation on the same revision — the signature of a
+    // widening window under load, not of a wrong cursor. Re-reading the whole
+    // log now settles which it was: if the log is unchanged, the two reads
+    // straddled a quiet window and the comparison is decidable; if it grew,
+    // the suite could not measure the rule and says so instead of failing.
+    const settled = await poll(r.runId, '');
+    const seqsAfter = settled !== null && settled.status === 200 ? sequences(settled.json) : null;
+    if (seqsAfter === null || seqsAfter.join(',') !== seqs.join(',')) {
+      return softSkip('blocked', `the event log grew while the cursor was being read (before: [${seqs.join(',')}], after: [${seqsAfter?.join(',') ?? 'unreadable'}]) — a run at terminal STATUS is still appending, so the two reads this rule compares do not describe the same log. Re-run against a quiescent log; this is not a cursor defect.`);
+    }
     expect(after.every((s) => s > n), req('openwop.requirement.0171.poll-cursor-v2.after-sequence', DOC, `every returned sequence MUST be > afterSequence (${n}); got [${after.join(', ')}]`)).toBe(true);
     expect(after, req('openwop.requirement.0171.poll-cursor-v2.after-sequence', DOC, 'the cursor is exclusive and the log is not renumbered: afterSequence=first yields exactly the rest of the log')).toEqual(seqs.filter((s) => s > n));
   });
