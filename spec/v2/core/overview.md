@@ -35,7 +35,7 @@ A registry-backed enum (event types, error codes, envelope kinds, reason vocabul
 
 ## v1 end-of-support (RFC 0174 §B.4)
 
-v1 support ends at the later of (a) every INTEROP-MATRIX host's non-vacuous v2 bundle plus 90 days and (b) 18 months from the v2 release, where (b) applies if and only if an independent host is in the matrix at release. Phase 5 computes the date from the matrix; nothing else MAY set it.
+v1 support ends at the later of (a) every INTEROP-MATRIX host's non-vacuous v2 bundle plus 90 days and (b) 18 months from the v2 release, where (b) applies if and only if an independent host is in the matrix at release. Phase 5 computes the date from the matrix; nothing else MAY set it. The hosts counted under (a) are those with a row in the INTEROP-MATRIX v2 table; a reference host that stays on the 1.x line through the overlap (the matrix says which) is not a v2 host and does not count. A host's bundle is "non-vacuous" when at least one claimed profile carries `witnessCount ≥ 1`. The anchor for a host is the date its signed bundle was committed to `evidence/v2-host-bundles/` in the spec repository, read from the public history (`git log --diff-filter=A`), never from `generatedAt` inside the bundle, which nothing signs; a later re-certification replaces the file and does not move the anchor. `evidence/v1-end-of-support.json` is the computed date and is GENERATED (`scripts/generate-v1-eos-clock.mjs`); `check-removal-dates.mjs` reads it and fails the v1-tree sources of every `v1-end-of-support` row on or after it.
 
 ## Profile claim vocabulary (RFC 0169 §C.3; RFC 0155 §A unchanged)
 

@@ -2,7 +2,7 @@
 
 > **This is not an additive upgrade.** v2 is a new major with its own path space, its own identifier grammars, and its own discovery representation. Unlike [v1.0 → v1.1](./v1.0-to-v1.1.md), which required no code changes, every host that serves v2 mounts new surface and changes the shape of ids it emits. Read [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §5 and [`spec/v2/core/versioning.md`](../../spec/v2/core/versioning.md) before starting.
 
-> **Status: incomplete by design.** The v2 charter's Phase 5 exit requires this guide to cite **both hosts' PR series**. Neither host has finished migrating, so those citations are not here yet. It is published now because its contents are what the migrations have *already* cost, and a host starting today should not have to rediscover them. The PR series land when the hosts do.
+> **Status: in flight.** The v2 charter's Phase 5 exit requires this guide to cite **both hosts' PR series**. The series are cited below as they stand on 2026-09-05 — merged items by number, open items marked open — and the guide is complete on this point only when both hosts' origin bundles are in the INTEROP-MATRIX v2 table. It is published now because its contents are what the migrations have *already* cost, and a host starting today should not have to rediscover them. The PR series land when the hosts do.
 
 ## Why this doc exists, and what it is written from
 
@@ -129,6 +129,32 @@ Verify from **outside your repo**, in an empty directory, before you trust a ver
 cd "$(mktemp -d)" && npm init -y >/dev/null
 npm install @openwop/openwop-conformance@<version>
 ```
+
+## The two migrations, as PR series
+
+What each host actually shipped, in order, with what each PR was for. Numbers are the hosts' own repositories; "open" means not merged as of 2026-09-05.
+
+**openwop-app** (tier-1, `github.com/openwop/openwop-app`; served through a hosting layer in front of the service):
+
+| PR | What it carried | Lesson it paid for |
+| --- | --- | --- |
+| #3639 | tenant-bound id projection on the major-2 read path | merged from a pre-rebase head, so main carried the projection without the webhook seam — the seam is a precondition, not decoration |
+| #3642 | the webhook delivery seam at `enqueueDelivery`, inbound §5 id grammar, suite re-pinned | the delivery envelope had no schema while the nested `runId` was bound all along |
+| #3647 (ADR 0631) | origin path space: 26 hosting sources generated from the manifest; the negotiator hands headerless HTML navigations to the shell; `verify-deploy.sh` probes a root at the origin | fourteen of fifteen major-2 roots fell through to the SPA shell while the direct service URL answered every path — the direct-URL witness could not see it |
+| #3648 (open) | the hosting layer decoded `%2F` to `/` before forwarding, so every tenant-bound id was unreachable at the origin; `eventsUrl`/`statusUrl` pointed at the service's own hostname over `http` | "a hosting layer is part of the wire" — every id encoding and every absolute URL must be witnessed through the origin a client is given |
+| ADR 0623 | RFC 0164 mandatory leaver contract | — |
+
+**MyndHyve** (tier-2, `workflow-runtime`, PR #249 on `wop/v2-wire`; no hosting layer, the service is the origin):
+
+| Change | What it carried | Lesson it paid for |
+| --- | --- | --- |
+| `e3771c77b` | payload key-map at the storage seam: drops only, `nodeType → typeId`, `owner.principal` deleted | seats for dropped keys are the next edit, not an afterthought |
+| `7ce20d341` | `projectRunCreateV2`: the create response carried a bare id and a `/v1/canvases/…` `eventsUrl` | the create response is part of the id projection |
+| `e49648bbd` | error-code projection (rename table plus `myndhyve.<code>`) | the pass-through branch was the defect |
+| `3bf431aa4` | the Express JSON parser was mounted before negotiation, so a malformed body escaped to a framework HTML 400 with no header under both majors | the one request no scenario sends by accident |
+| `c1f63ee5a` | suite re-pinned to `2.0.0-rc.44`; registry 94 → 96 (`payload_too_large`, `unsupported_media_type` bare on the wire) | a code claiming to be protocol must be in the registry |
+
+Both hosts' first major-2 bundles carried blocked rows from the unbuilt `/conformance/seams` surface and certified nothing; that is the true state of the evidence, not a defect in the emitter.
 
 ## See also
 
