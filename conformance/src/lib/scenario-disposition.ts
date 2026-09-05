@@ -79,6 +79,40 @@ export const PARTIAL_WITNESS_PREFIX = 'partial-witness: ';
 
 export type FileTestState = 'pass' | 'fail' | 'skip';
 
+/**
+ * The per-`it` record (RFC 0148 §A at test granularity), as `setup.ts`
+ * computes it in `afterEach`. Pure so a lib test can pin it:
+ *   - fail                         ⇒ executed-fail (detail = the first error message)
+ *   - pass with ≥ 1 assertion      ⇒ executed-pass
+ *   - a behaviorGate entry journaled during the test ⇒ that gate's disposition
+ *   - pass with 0 assertions       ⇒ the softSkip note written DURING THIS TEST
+ *                                    (`inapplicable` / `skipped` / `blocked`, worst-first),
+ *                                    else `blocked` + the unclassified-return marker
+ *   - vitest skip (ctx.skip / it.skip) ⇒ the note written before the skip, else `skipped`
+ *
+ * rc.56: the fourth line is new. Until then a zero-assertion pass consulted the
+ * journal only, so a leg that returned `softSkip('inapplicable', …)` was
+ * recorded `blocked / unclassified return` at `it` granularity while its file
+ * row (which does read the notes — `resolveFileRecord`) was `inapplicable`.
+ * A bundle with any `blocked` row does not certify (RFC 0168 §E.1), so the
+ * dishonest per-`it` rows denied certification to every profile on a host that
+ * simply did not advertise the gated surface.
+ */
+export function resolveItRecord(
+  state: FileTestState,
+  assertionCalls: number,
+  gate: { disposition: 'inapplicable' | 'skipped'; detail?: string } | undefined,
+  noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string } | null,
+  firstError?: string,
+): { disposition: Disposition; detail?: string } {
+  if (state === 'fail') return { disposition: 'executed-fail', detail: `the test executed and failed: ${(firstError ?? 'no message').slice(0, 300)}` };
+  if (state === 'pass' && assertionCalls > 0) return { disposition: 'executed-pass' };
+  if (gate !== undefined) return { disposition: gate.disposition, detail: gate.detail ?? `${gate.disposition} (gate recorded no reason)` };
+  if (noted !== null) return { disposition: noted.kind, detail: noted.reason };
+  if (state === 'pass') return { disposition: 'blocked', detail: 'unclassified return: the test passed with zero assertions and recorded no reason — RFC 0148 §A resolves it to blocked, never to a pass' };
+  return { disposition: 'skipped', detail: 'vitest skipped the test (ctx.skip / it.skip) without a recorded gate reason' };
+}
+
 /** Worker half: fold a file's per-test states (+ any gate-recorded reason) into
  *  the ONE disposition the file records. */
 export function fileDisposition(

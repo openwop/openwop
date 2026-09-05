@@ -22,6 +22,17 @@
  * resolves it to blocked" — and stays UNCLASSIFIED for certification (a floor
  * row with that disposition still rejects), so the honest bundle row and the
  * pressure to say why both survive.
+ *
+ * rc.56: every note also carries a sequence number, so the per-`it` row can
+ * read the notes written DURING ITS OWN TEST (`softSkipMark()` at test start,
+ * `softSkipDispositionSince(file, mark)` at test end). Until rc.56 the
+ * per-`it` row consulted only the journal's `behaviorGate` entries, never a
+ * softSkip note, so a leg that returned `softSkip('inapplicable', 'a2a facet
+ * not advertised')` was recorded `blocked / unclassified return` at `it`
+ * granularity while its file row was honestly `inapplicable` — and a bundle
+ * with any `blocked` row does not certify (RFC 0168 §E.1). Forty-five such
+ * rows on a host that simply does not advertise A2A/MCP denied certification
+ * to every profile it claimed.
  */
 
 import { expect } from 'vitest';
@@ -32,7 +43,10 @@ export type SoftSkipKind = 'inapplicable' | 'skipped' | 'blocked';
 /** Detail marker the runner writes for a zero-assertion file that noted nothing. */
 export const UNCLASSIFIED_RETURN_DETAIL = 'every test returned early with zero assertions and no recorded reason — unclassified return; RFC 0148 §A resolves it to blocked (add softSkip(kind, reason) at the early return)';
 
-const notes = new Map<string, Array<{ kind: SoftSkipKind; reason: string }>>();
+interface Note { readonly kind: SoftSkipKind; readonly reason: string; readonly seq: number }
+
+const notes = new Map<string, Note[]>();
+let seq = 0;
 
 function currentFile(): string | null {
   try {
@@ -48,7 +62,9 @@ export function softSkip(kind: SoftSkipKind, reason: string): undefined {
   const file = currentFile();
   if (file === null) return undefined;
   const arr = notes.get(file) ?? [];
-  if (!arr.some((n) => n.kind === kind && n.reason === reason)) arr.push({ kind, reason });
+  // Every call is recorded with its own sequence number so a per-test window
+  // sees it; the file-level join de-duplicates identical (kind, reason) pairs.
+  arr.push({ kind, reason, seq: ++seq });
   notes.set(file, arr);
   return undefined;
 }
@@ -69,6 +85,15 @@ export function seamAbsent(reason: string): undefined {
 
 const RANK: Record<SoftSkipKind, number> = { blocked: 0, skipped: 1, inapplicable: 2 };
 
+function fold(arr: readonly Note[]): { kind: SoftSkipKind; reason: string } | null {
+  if (arr.length === 0) return null;
+  const uniq: Note[] = [];
+  for (const n of arr) if (!uniq.some((u) => u.kind === n.kind && u.reason === n.reason)) uniq.push(n);
+  const kind = [...uniq].sort((a, b) => RANK[a.kind] - RANK[b.kind])[0]!.kind;
+  const reason = uniq.map((n) => (uniq.length > 1 ? `[${n.kind}] ${n.reason}` : n.reason)).join('; ');
+  return { kind, reason };
+}
+
 /**
  * The noted disposition for a file, worst-first when mixed (`blocked` beats
  * `skipped` beats `inapplicable` — a file that could not check one thing is
@@ -76,14 +101,24 @@ const RANK: Record<SoftSkipKind, number> = { blocked: 0, skipped: 1, inapplicabl
  * the reasons joined. `null` when nothing was noted.
  */
 export function softSkipDisposition(file: string): { kind: SoftSkipKind; reason: string } | null {
-  const arr = notes.get(file);
-  if (arr === undefined || arr.length === 0) return null;
-  const kind = [...arr].sort((a, b) => RANK[a.kind] - RANK[b.kind])[0]!.kind;
-  const reason = arr.map((n) => (arr.length > 1 ? `[${n.kind}] ${n.reason}` : n.reason)).join('; ');
-  return { kind, reason };
+  return fold(notes.get(file) ?? []);
+}
+
+/** A position in the note sequence; pass it to `softSkipDispositionSince`. */
+export function softSkipMark(): number {
+  return seq;
+}
+
+/**
+ * The noted disposition for a file counting only notes written AFTER `mark`
+ * — the notes of the test that is ending. Same fold as the file rule.
+ */
+export function softSkipDispositionSince(file: string, mark: number): { kind: SoftSkipKind; reason: string } | null {
+  return fold((notes.get(file) ?? []).filter((n) => n.seq > mark));
 }
 
 /** Test hook. */
 export function resetSoftSkips(): void {
   notes.clear();
+  seq = 0;
 }
