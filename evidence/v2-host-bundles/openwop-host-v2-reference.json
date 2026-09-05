@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-05T15:12:39.586Z",
+  "generatedAt": "2026-09-05T15:33:27.669Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.0-rc.58",
+    "version": "2.0.0-rc.59",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.0-rc.58",
-    "stampSha256": "513ff26b156e8810cd0a5176d93894ae2c2883fc1325738fc7c13a2e55601bb5"
+    "specArtifactsVersion": "2.0.0-rc.59",
+    "stampSha256": "4c5c8d7ef06d876ffd86f942a929aad2c6efda0d896d5fc64fb755a3660d09d5"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "763e4e3f29b5518cdb8d8862bd23bcbfba3dba3f"
+      "id": "31ec6a123d791e0313bbfbc0b17bc75c86e092b9"
     },
     "signingKeyId": "v2-reference-2"
   },
   "discovery": {
     "url": "http://127.0.0.1:3839/.well-known/openwop",
-    "sha256": "e4f0ddc1e855465f3df27c5b5f56830449d71273b177facbf1bcdf3e12dc6b5f",
+    "sha256": "68d1c5da6a3bf076ef6e062534ac425d350a086b201fd11d39f2c254f9db8f69",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -37,7 +37,7 @@
     {
       "id": "openwop-core-standard",
       "evidenceTier": "self",
-      "witnessCount": 8,
+      "witnessCount": 13,
       "certified": true
     },
     {
@@ -390,13 +390,13 @@
         "assertions": 6
       },
       {
-        "id": "openwop.scenario.v2-run-bulk-cancel",
+        "id": "openwop.floor.v2-run-bulk-cancel",
         "scenario": "v2-run-bulk-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 11
       },
       {
-        "id": "openwop.scenario.v2-run-cancel",
+        "id": "openwop.floor.v2-run-cancel",
         "scenario": "v2-run-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 7
@@ -421,13 +421,13 @@
         "assertions": 8
       },
       {
-        "id": "openwop.scenario.v2-run-options-limits",
+        "id": "openwop.floor.v2-run-options-limits",
         "scenario": "v2-run-options-limits.test.ts",
         "result": "executed-pass",
         "assertions": 9
       },
       {
-        "id": "openwop.scenario.v2-run-pause-resume",
+        "id": "openwop.floor.v2-run-pause-resume",
         "scenario": "v2-run-pause-resume.test.ts",
         "result": "executed-pass",
         "assertions": 15
@@ -439,7 +439,7 @@
         "assertions": 5
       },
       {
-        "id": "openwop.scenario.v2-sse-last-event-id",
+        "id": "openwop.floor.v2-sse-last-event-id",
         "scenario": "v2-sse-last-event-id.test.ts",
         "result": "executed-pass",
         "assertions": 13
@@ -1433,7 +1433,7 @@
       }
     ]
   },
-  "witnessSha256": "933dc8ea048f964e97cc793c2af59c12ce0faedb70777c4968c0e9741d25a103",
+  "witnessSha256": "42545931c2d2cec02b8264c117d407b9329da54f8e4cfb984db7a4776974bdfe",
   "assertionCount": 1545,
   "detail": {
     "nonPass": [
@@ -1652,7 +1652,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-2",
-    "sig": "WKCIL8bA4TOTC1zOeF4sZaq_gqvn3OgswTa8uF0JjOrr-eBnPiYgjAOiWF5fWh6-T-yiBH_AClr6ByNQ0mWIBA",
+    "sig": "zdp9bzaBhQaLDyDOfsz0ze1SB97DAmMYpn0mjlqRm93EMprNouh5fK7cFx-l3i9dyLO1Bvu03uyU4YvSW4nYCw",
     "over": [
       "witnessSha256",
       "host.build",
