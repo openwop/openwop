@@ -40,6 +40,8 @@ import { softSkipDisposition } from './lib/soft-skip.js';
 import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
+import { targetMajor } from './lib/seams.js';
+import { softSkip } from './lib/soft-skip.js';
 
 const SUITE_INIT_TIMEOUT_MS = 5_000;
 
@@ -277,6 +279,62 @@ function _fileOf(task: { file?: { filepath?: string; name?: string } } | undefin
   const f = task?.file?.filepath ?? task?.file?.name;
   return typeof f === 'string' && f.length > 0 ? basename(f) : null;
 }
+// ---------------------------------------------------------------------------
+// The applicability check and the assertion MUST run under the same contract.
+//
+// A scenario's registration in scenario-majors.json says which target majors it
+// is written for. The driver reads OPENWOP_TARGET_MAJOR to decide which header
+// and path space every probe uses. Nothing connected the two: a lane that ran
+// vitest directly over all 501 files at the default (major 1) executed every
+// major-2 scenario with major-1 requests. The scenarios' own gates call
+// v2Discovery(), which sets the header EXPLICITLY, so the gate passed and the
+// probe went out as v1 — a check that proved the host speaks v2 with one
+// request, then tested a v2 requirement with a request that did not.
+//
+// Measured on a tier-1 host 2026-09-04: three "host defects" reported from that
+// lane, all of which evaporated at major 2; the host was one edit from "fixing"
+// correct behaviour. And in the other direction: 4 of 56 v2 files fail on every
+// host forever under a major-1 driver, so a gate that runs them that way is red
+// by construction and gets reasoned past. Both are the same defect: a scoped
+// signal read as unscoped, with the scope nowhere in the output.
+//
+// So: a file whose registered majors do not include the driver's target major
+// is INAPPLICABLE to this lane, recorded as such with the reason, and never
+// probes. Files not in the registry (coherence checks, lib tests) are untouched.
+// ---------------------------------------------------------------------------
+const SCENARIO_MAJORS: Record<string, number[]> = (() => {
+  try {
+    const p = join(PKG_ROOT_PATH, 'scenario-majors.json');
+    if (!existsSync(p)) return {};
+    return (JSON.parse(readFileSync(p, 'utf8')) as { majors?: Record<string, number[]> }).majors ?? {};
+  } catch {
+    return {};
+  }
+})();
+
+beforeEach((ctx) => {
+  const p = (expect.getState() as { testPath?: string }).testPath;
+  if (!p) return;
+  const file = basename(p);
+  const majors = SCENARIO_MAJORS[file];
+  if (!majors) return;
+  const lane = targetMajor();
+  if (majors.includes(lane)) return;
+  const detail = `registered for target major ${majors.join('/')} and this lane runs at major ${lane} (OPENWOP_TARGET_MAJOR) — the probe would go out under a contract the scenario's gate does not use; select files with --target-major or set the variable`;
+  // Two records, one per resolver. The per-TEST disposition is read from the
+  // requirement journal (the same entry behaviorGate writes), so the row lands
+  // as `inapplicable` with this reason rather than `skipped`, which under RFC
+  // 0148 would claim the operator opted out. The per-FILE note covers the
+  // all-skipped fallback in resolveFileRecord.
+  try {
+    recordRequirement('openwop.family.lane-target-major', 'inapplicable', detail, { scenarioFile: file });
+  } catch {
+    /* never fail a test for bookkeeping */
+  }
+  softSkip('inapplicable', detail);
+  ctx.skip();
+});
+
 beforeAll(({}, suite) => {
   // Mark the ledger journal BEFORE the file's tests run, so a behaviorGate
   // decision made by the very first test is inside the file's window.

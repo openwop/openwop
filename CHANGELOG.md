@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **A scenario now refuses to probe under a contract its gate did not use.** `scenario-majors.json` says which target majors a file is written for; the driver reads `OPENWOP_TARGET_MAJOR` to pick every probe's header and path space; nothing connected the two. A lane that ran vitest over all 501 files at the default (major 1) executed every major-2 scenario with major-1 requests — the scenarios' gates call `v2Discovery()`, which sets the header explicitly, so the gate passed and the probe went out as v1. Measured on a tier-1 host: three phantom host defects from one such lane, and four v2 files red on every host forever under a major-1 driver. `src/setup.ts` now records `inapplicable` (with the reason, through the same journal entry `behaviorGate` writes) and skips any file whose registered majors do not include the lane's major. All 501 files, one place. Proven in four directions: v2 file at lane 1 → `inapplicable`; same file at lane 2 → runs; v1-only file at lane 2 → `inapplicable`; both-majors file → runs.
+
 ### Added
 
 - **`eval-summary.pinnedNodeIds[]`** — the node ids whose outputs were pinned for an eval run, ids only. A tier-1 host proposed `pinned: true` on each `node.completed` and asked before building; replay-ness is a run property (`replay.md` §Determinism 5, `webhooks.md` §Replay), so the per-event flag was refused, and because the summary MUST be content-free of task output the seat carries scope, not values. The values stay on the eval run's own snapshot behind the run's auth.
