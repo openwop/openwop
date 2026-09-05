@@ -32,6 +32,26 @@
  * re-executed. Length is therefore not the discriminator and this file does not
  * assert on it; the event at the boundary is.
  *
+ * Floor membership: RULED OUT (rc.65), and the reasoning generalises. Rule 10
+ * admits this file mechanically — it gates only on `replay`, which IS in the
+ * core-standard predicate, and carries no seam token. But rule 10's stated
+ * intent is that a floor file be "witnessable by an honest holder of the
+ * predicate", and this file is not: it is a SINGLE `it` gated entirely on
+ * `isFixtureAdvertised(conformance-multi-node)`, and no spec text makes that
+ * fixture mandatory. An honest `replay` holder without it records the whole
+ * file `inapplicable` and contributes zero witness. Contrast the eleven of
+ * thirteen current core-standard members with no fixture gate at all, and the
+ * two that have one (`v2-run-cancel`, `v2-run-pause-resume`) gating only SOME
+ * legs of a multi-`it` file, so the file still witnesses — the rc.59
+ * `partial-witness:` pattern.
+ *
+ * The test for any future floor candidate, then: CAN THE FILE STILL WITNESS
+ * FOR A PREDICATE HOLDER THAT ADVERTISES NO OPTIONAL FIXTURE? If the answer is
+ * no because it is single-leg and fixture-gated, it is a valid scenario and not
+ * a floor member. That is a statement about the floor's promise, not about this
+ * file's worth: the boundary it checks is real and a tier-1 host shipped the
+ * bug it catches.
+ *
  * What this file deliberately does NOT assert: the CONTENT of the re-executed
  * tail, determinism across two forks, timing, and effect re-fire suppression.
  * Those are `replay.md` §Replay determinism and the seams floor's, witnessed in
