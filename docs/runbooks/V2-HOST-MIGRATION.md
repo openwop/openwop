@@ -117,6 +117,8 @@ The era key (`eventLogSchemaVersion`) is a trichotomy: **absent ⇒ 2**, `2` = v
 
 ---
 
+**2.9 The projection seam is enumerated by socket write, not by helper.** Both production hosts built one projection seam and both found an emitter outside it — the first at the webhook worker (an outbound HTTP call, not a JSON sender), the second at the run-snapshot route, which writes via `res.end` because it owns `Content-Length` and `Content-Encoding` for the conditional GET, so a `res.json` wrapper never saw it. Sixteen mount tests were green over it because every one used a `res.json` handler; the production witness caught it on the first live read. A sibling turned up in the same sweep: the SSE `batch` flush wrote the raw array while the per-frame path projected each frame. **Audit every `res.write`, `res.end`, and streamed flush that can carry a run id — not every call to the helper you wrapped** — and if the snapshot carries an `ETag`, fold the major into it so a v1 validator cannot `304` a v2 body.
+
 ## Phase 3 — Identity
 
 **Do not re-mint ids.** If v2 gives you a tenant-bound id grammar, implement it as a **reversible wire projection at the major-2 boundary**, not as a migration. A separator in an id is a path separator in every route, a primary key in your tables, and the value your create endpoint has returned since 1.0. A read projection satisfies the grammar exactly; minting breaks the v1 representation to satisfy it.
