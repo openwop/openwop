@@ -3,7 +3,12 @@
 **openwop is an open, wire-level protocol for multi-agent workflow orchestration** — a single contract for runs in which LLM agents, deterministic tools, sub-workflows, and human reviewers collaborate, with durable suspend / resume, replay, version negotiation, and observability owned by the protocol itself. This package is the black-box conformance suite: point it at any OpenWOP-compliant server (your own or a third party's) and it issues real HTTP requests against the spec'd endpoints and asserts that responses match.
 
 ```bash
-npm install @openwop/openwop-conformance
+# Install BOTH packages at the SAME explicit version — the suite declares
+# @openwop/spec-artifacts as an exact-pinned peer, and `npm i --legacy-peer-deps`
+# on the suite alone does not pull it (a host measured "corpus stamp MISMATCH —
+# missing @openwop/spec-artifacts" on 2026-09-05). Pre-release 2.x is on the
+# `next` dist-tag; pin the version, never the tag (runbook §0.2b).
+npm install @openwop/openwop-conformance@2.0.0-rc.57 @openwop/spec-artifacts@2.0.0-rc.57
 # or run without install:
 npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk_test_...
 ```

@@ -26228,7 +26228,7 @@
     {
       "id": "openwop.it.v2-coherence-not-in-bundle.the-bundle-schema-rejects-a-v3-bundle-carrying-a-corpus-coherence-id-and-accepts",
       "file": "v2-coherence-not-in-bundle.test.ts",
-      "line": 89,
+      "line": 98,
       "title": "the bundle schema rejects a v3 bundle carrying a corpus-coherence id and accepts one under openwop.requirement.",
       "explicitId": "openwop.requirement.0168.coherence-not-in-bundle.schema-forbids-coherence-ids",
       "citations": [
