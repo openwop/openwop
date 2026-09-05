@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-05T15:33:27.669Z",
+  "generatedAt": "2026-09-05T16:58:43.542Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.0-rc.59",
+    "version": "2.0.0-rc.61",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.0-rc.59",
-    "stampSha256": "4c5c8d7ef06d876ffd86f942a929aad2c6efda0d896d5fc64fb755a3660d09d5"
+    "specArtifactsVersion": "2.0.0-rc.61",
+    "stampSha256": "67b73f2a8e8399ca1b2dfe35d4f56068272b23c3f9a983149eefff0896c623b5"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "31ec6a123d791e0313bbfbc0b17bc75c86e092b9"
+      "id": "d029f8fe320eaa68df702f3fa110f782d1f02415"
     },
     "signingKeyId": "v2-reference-2"
   },
   "discovery": {
     "url": "http://127.0.0.1:3839/.well-known/openwop",
-    "sha256": "68d1c5da6a3bf076ef6e062534ac425d350a086b201fd11d39f2c254f9db8f69",
+    "sha256": "9db9dfcaf0accf74315c4f125f017d9e0ccf458bb3390d5141de584582f271e5",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -49,7 +49,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 179,
+      "executedPass": 181,
       "executedFail": 0,
       "skipped": 0,
       "inapplicable": 42,
@@ -415,6 +415,12 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-run-fork-prefix",
+        "scenario": "v2-run-fork-prefix.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
         "id": "openwop.scenario.v2-run-fork-refusals",
         "scenario": "v2-run-fork-refusals.test.ts",
         "result": "executed-pass",
@@ -768,6 +774,12 @@
         "scenario": "v2-assurance-downgrade-audited.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0170.fork-prefix-boundary",
+        "scenario": "v2-run-fork-prefix.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0170.id-grammar.events",
@@ -1433,8 +1445,8 @@
       }
     ]
   },
-  "witnessSha256": "42545931c2d2cec02b8264c117d407b9329da54f8e4cfb984db7a4776974bdfe",
-  "assertionCount": 1545,
+  "witnessSha256": "180b49fd2f7f7d37de51d8f0d7099752aa5997f490ce54f91c95bd550f792bf5",
+  "assertionCount": 1551,
   "detail": {
     "nonPass": [
       {
@@ -1652,7 +1664,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-2",
-    "sig": "zdp9bzaBhQaLDyDOfsz0ze1SB97DAmMYpn0mjlqRm93EMprNouh5fK7cFx-l3i9dyLO1Bvu03uyU4YvSW4nYCw",
+    "sig": "Kz1StY1AvllRDD_mg0TakkqoP_IjRVIpb2v6YAxNskgkvm3N6AE_qAKvkyUraLxAmpLwu7xNMF-aM-T3VwRvAA",
     "over": [
       "witnessSha256",
       "host.build",

@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Added
+
+- **The reference host re-cut on suite `2.0.0-rc.61` — 181 / 0 / 0 / 42, all three profiles still certified.** `evidence/v2-host-bundles/openwop-host-v2-reference.json` at build `d029f8fe` (openwop/openwop-examples#35): 223 rows, 1551 assertions, `openwop-discovery-core` (3), `openwop-core-standard` (13) and `openwop-conformance-seams-v2` (4) all certified, `check-cut-gates.mjs --host-bundle --host-discovery --network` PASS on all ten §F predicates. The rc.59 bundle went stale the moment rc.60 landed and the Front door gate said so — *"1 of 72 scenario file(s) applicable at major 2 have no row in it, so its totals say nothing about them: `v2-run-fork-prefix.test.ts`"* — which is the gate working: a bundle that never measured a scenario cannot speak for it. The two added rows are that unaided fork-boundary witness (this host is exclusive, so it passes) and rc.61's `kind: other` note assertion (vacuous here, since this host declares no `other` seam row). Anchor unchanged — a re-certification replaces the file and does not move it.
+
 ### Fixed
 
 - **The effect-seam manifest said three different things, and one of them was unimplementable** (suite `2.0.0-rc.61`; found by a host, `openwop-app`, building `GET /host/effect-seams` against the corpus rather than against another host). `spec/v2/core/replay.md` §The effect-seam manifest described a row as `{ id, kind: http | provider | webhook | queue | storage | pack | other, suppression, witness?, note? }`; RFC 0173 §C.1 described `{ seam, kind: http | queue | storage | provider-sdk | webhook-fanout, guarded, guardedBy }`; `schemas/v2/effect-seam-manifest.schema.json` requires `seam`/`kind`/`guarded`/`guardedBy` and is `additionalProperties: false`. The normative prose therefore named three fields the schema forbids and omitted three it requires — **a host that implemented `replay.md` literally would fail schema validation on every row**. Prose is aligned to the schema, which is the artifact the suite validates and both production hosts read.
