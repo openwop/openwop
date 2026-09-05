@@ -51,7 +51,11 @@ describe('runner ↔ worker floor-id agreement (rc.55)', () => {
   });
 
   it('a non-floor file still maps to its scenario id', () => {
-    expect(requirementIdForFile('v2-run-cancel.test.ts')).toBe('openwop.scenario.v2-run-cancel');
+    // rc.59 put v2-run-cancel on the core-standard floor; the example must be
+    // a file on NO floor, and the assertion below says so rather than assume.
+    const NON_FLOOR = 'v2-run-diff-identical.test.ts';
+    expect(Object.values(floors).some((files) => files.includes(NON_FLOOR)), `${NON_FLOOR} is on a floor — pick another example`).toBe(false);
+    expect(requirementIdForFile(NON_FLOOR)).toBe('openwop.scenario.v2-run-diff-identical');
   });
 
   it("the runner finds the worker's floor row: the bundle row carries the assertion count, not a report-derived pass", () => {

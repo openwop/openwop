@@ -38,10 +38,15 @@
         "v2-era-key",
         "v2-era-stamp-universal",
         "v2-event-type-closed",
-        "v2-poll-cursor-v2"
+        "v2-poll-cursor-v2",
+        "v2-run-cancel",
+        "v2-run-bulk-cancel",
+        "v2-run-pause-resume",
+        "v2-run-options-limits",
+        "v2-sse-last-event-id"
       ],
       "requirementIds": [],
-      "note": "seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest — its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
+      "note": "rc.59: five unaided run-surface witnesses joined the floor — v2-run-cancel (runs.md §Cancel: 409 run_terminal on a terminal run), v2-run-bulk-cancel (§Cancel: per-entry envelopes, id_tenant_mismatch / not_found, details.maxRunIds), v2-run-pause-resume (§Pause and resume: 409 run_terminal / run_state_conflict, the literal drainPolicy echo, the immediate cut), v2-run-options-limits (capabilities.md limits metadata honoured on create), v2-sse-last-event-id (events.md §SSE frames: Last-Event-ID resumes at the next sequence, never re-emits the resumption point). cancelRun, bulkCancelRuns and pauseRun are core operations by the runs.md surface table (only ancestry, annotations and eval-summary are 404-when-unadvertised), so a host that omits one is blocked, not inapplicable, and the floor refuses it — the prose's outcome. Their optional legs (values mode, the conformance-delay / conformance-cancellable fixtures) record inapplicable with the reason and the file row stays a witnessed pass. Measured before the change: the reference host passes all five (rc.58, 179 / 0 / 0 / 42); neither production host satisfies this predicate, so no existing claim moves. seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest — its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
     },
     {
       "id": "openwop-conformance-seams-v2",
