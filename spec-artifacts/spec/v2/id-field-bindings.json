@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "//": "The explicit coverage map for spec/v2/core/identity.md \u00a75 ('every id field in every v2 schema and every api/v2/openapi.yaml parameter and response body MUST $ref its kind'). It exists because the obvious check \u2014 fire when a property NAME equals a $def name \u2014 enforces \u00a75 only where naming happens to align. 88 *Id properties live in schemas/v2/; only 20 share a name with a kind. childRunId sat as {type:string,minLength:1} in the same file where parentRunId was correctly $ref'd, so a child run's identifier carried no tenant segment for the mandatory 403 id_tenant_mismatch refusal to read. A name-matching check would have reported green over it. Every *Id property MUST appear here exactly once: under `bindings` (it IS that kind and MUST $ref it) or under `notAKind` (nothing in ids.schema.json governs it, with the reason). A property in neither fails the check, so a new id field cannot be added without someone deciding which it is. PLURAL ARRAYS: a `*Ids` property is covered through its `items` schema, which MUST $ref the kind. The first version of this map saw only `/Id$/`, and a tier-1 host found `POST /runs:bulk-cancel` taking runIds[] from the body untyped \u2014 every tenant-bound id a v2 client owned answered not_found, silently.",
+  "//": "The explicit coverage map for spec/v2/core/identity.md §5 ('every id field in every v2 schema and every api/v2/openapi.yaml parameter and response body MUST $ref its kind'). It exists because the obvious check — fire when a property NAME equals a $def name — enforces §5 only where naming happens to align. 88 *Id properties live in schemas/v2/; only 20 share a name with a kind. childRunId sat as {type:string,minLength:1} in the same file where parentRunId was correctly $ref'd, so a child run's identifier carried no tenant segment for the mandatory 403 id_tenant_mismatch refusal to read. A name-matching check would have reported green over it. Every *Id property MUST appear here exactly once: under `bindings` (it IS that kind and MUST $ref it) or under `notAKind` (nothing in ids.schema.json governs it, with the reason). A property in neither fails the check, so a new id field cannot be added without someone deciding which it is. PLURAL ARRAYS: a `*Ids` property is covered through its `items` schema, which MUST $ref the kind. The first version of this map saw only `/Id$/`, and a tier-1 host found `POST /runs:bulk-cancel` taking runIds[] from the body untyped — every tenant-bound id a v2 client owned answered not_found, silently.",
   "bindings": {
     "agentId": "agentId",
     "artifactTypeId": "typeId",
@@ -48,7 +48,8 @@
     "triggerSubscriptionId": "subscriptionId",
     "typeId": "typeId",
     "workflowId": "workflowId",
-    "workspaceId": "workspaceId"
+    "workspaceId": "workspaceId",
+    "interruptedNodeId": "nodeId"
   },
   "notAKind": {
     "annotationId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
@@ -79,7 +80,7 @@
     "memoryId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "mergedIds": "memory-entry ids (agentMemoryConsolidated); no openwop id kind governs memory entries",
     "messageId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
-    "nextWorkerIds": "a UNION \u2014 \"worker node-ids OR agent-ids\", so no single kind can bind it; binding to either would reject the other legitimate form",
+    "nextWorkerIds": "a UNION — \"worker node-ids OR agent-ids\", so no single kind can bind it; binding to either would reject the other legitimate form",
     "outputId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "pageId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "parentDepartmentId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
