@@ -95,12 +95,12 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '2.0.0', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '2.0.1', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
   conformanceFiles,
-  // Suite 2.0.0 (RFC 0168 §D.2): api/ and the schemas are the @openwop/spec-artifacts peer, not
+  // Suite 2.0.1 (RFC 0168 §D.2): api/ and the schemas are the @openwop/spec-artifacts peer, not
   // tarball contents; schemas/ carries ONLY the provenance stamp copy hosts read.
   new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'requirement-aliases.json', 'requirements.json', 'scenario-majors.json', 'schemas', 'src', 'vectors', 'vitest.config.ts']),
 );
@@ -129,7 +129,7 @@ assertIncludes(conformancePack.name, conformanceFiles, [
 // that let them back in would put rows about the spec into evidence about a host.
 const forbidden = conformanceFiles.filter((f) => /^src\/lib\/.*\.test\.ts$/.test(f));
 if (forbidden.length > 0) throw new Error(`conformance tarball carries suite self-tests: ${forbidden.join(', ')}`);
-// Suite 2.0.0 (RFC 0168 §D.1): the corpus-coherence scenarios live in src/coherence/ and are never packed — one directory, no list to keep in sync.
+// Suite 2.0.1 (RFC 0168 §D.1): the corpus-coherence scenarios live in src/coherence/ and are never packed — one directory, no list to keep in sync.
 const leaked = conformanceFiles.filter((f) => f.startsWith('src/coherence/') || f.startsWith('api/') || (f.startsWith('schemas/') && f !== 'schemas/CORPUS-STAMP.json'));
 if (leaked.length > 0) throw new Error(`conformance tarball carries corpus-coherence scenarios or vendored contract files (the contract is the @openwop/spec-artifacts peer): ${leaked.join(', ')} — src/coherence/ is excluded by package.json files`);
 console.log(`  ok: ${conformancePack.name}@${conformancePack.version} packs ${conformanceFiles.length} files with vendored contracts; 0 coherence scenarios and every src/lib self-test excluded.`);

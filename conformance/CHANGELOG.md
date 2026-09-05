@@ -1,5 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.1] — 2026-09-05 — the webhook durability scenario read the wrong carrier and imposed its own deadline
+
+Two defects in `v2-webhook-durable-delivery`, both reported by a host running against 2.0.0.
+
+**It read the v1 carrier.** `advertisedRetryPolicy()` read `triggerBridge.retryPolicy` and its docstring claimed that was "the only v2 carrier". `spec/v2/facets/webhooks.schema.json` says the opposite in as many words — *"retryPolicy is the v2 carrier of the delivery obligation (was triggerBridge.retryPolicy at v1)"* — so a host correctly advertising the **v2** carrier had its policy read as `null`, and a host on the v1 field was measured against a **different subsystem's** budget. The reporting host advertises 8 on its trigger bridge and enforces 5 on webhook delivery, and could not be honest about both under one borrowed field. Now reads `webhooks.retryPolicy` first and falls back to `triggerBridge.retryPolicy` for the v1 overlap the schema preserves.
+
+**It imposed a 20-second deadline and blamed the host for missing it.** A host whose first backoff is slower than 20 s was recorded `executed-fail` on a core-standard floor row *for being durable*: the retry lands at t+30 s, the window closed at t+20 s, and the assertion said "a 500 MUST be retried" about a host that retried. The wait now derives from the advertised policy — 20 s floor unchanged when nothing is advertised, widening to a 90 s cap for `fixed`/`exponential`. The cap is deliberate: unbounded waiting would let a host that never retries hold the suite open instead of failing.
+
+This is rc.67's poll-cursor defect one file over, and **deterministic rather than flaky** — the instrument's own window, attributed to the host. A scenario must not blame a host for a deadline the scenario chose.
+
+
 ## [2.0.0] — 2026-09-05 — openwop v2
 
 The v2 major. `@openwop/openwop-conformance@2.0.0` and `@openwop/spec-artifacts@2.0.0` are one release under two names — conformance pins the contract package to an exact version, so install both.

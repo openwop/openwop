@@ -117,11 +117,62 @@ async function waitFor(pred: () => boolean, timeoutMs: number): Promise<boolean>
   return pred();
 }
 
-/** The retry policy the host advertises, where it does (`triggerBridge.retryPolicy` is the only v2 carrier; absent ⇒ null). */
+/**
+ * The retry policy the host advertises for WEBHOOK delivery.
+ *
+ * 2.0.1: this read the WRONG FIELD. Its docstring claimed
+ * `triggerBridge.retryPolicy` was "the only v2 carrier", but
+ * `spec/v2/facets/webhooks.schema.json` says the opposite in as many words:
+ * "retryPolicy is the v2 carrier of the delivery obligation (was
+ * triggerBridge.retryPolicy at v1)", and the field's own description adds
+ * "The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the
+ * v1 carrier and stays through the overlap."
+ *
+ * So a host that correctly advertises the v2 carrier had its policy read as
+ * `null`, and a host still on the v1 carrier was measured against a policy
+ * belonging to a DIFFERENT SUBSYSTEM — the trigger-bridge state machine,
+ * whose delivery budget need not equal the webhook one. A tier-1 host
+ * reported exactly that: 8 on the trigger bridge, 5 on webhook delivery,
+ * and no way to be honest about both under a single borrowed field.
+ *
+ * `webhooks.retryPolicy` first, `triggerBridge.retryPolicy` second for the
+ * v1 overlap the schema explicitly preserves.
+ */
 function advertisedRetryPolicy(doc: Record<string, unknown>): { maxAttempts?: number; backoff?: string } | null {
-  const tb = doc['triggerBridge'];
-  const rp = tb && typeof tb === 'object' ? (tb as { retryPolicy?: unknown }).retryPolicy : undefined;
-  return rp && typeof rp === 'object' ? (rp as { maxAttempts?: number; backoff?: string }) : null;
+  const read = (holder: unknown): { maxAttempts?: number; backoff?: string } | null => {
+    const rp = holder && typeof holder === 'object' ? (holder as { retryPolicy?: unknown }).retryPolicy : undefined;
+    return rp && typeof rp === 'object' ? (rp as { maxAttempts?: number; backoff?: string }) : null;
+  };
+  return read(doc['webhooks']) ?? read(doc['triggerBridge']);
+}
+
+/**
+ * How long to wait for a retry, derived from what the host ADVERTISED.
+ *
+ * 2.0.1: this was a hard 20 s, and a host whose first backoff is deliberately
+ * slower than that was recorded `executed-fail` on a core-standard floor row
+ * for being durable. Measured on a tier-1 host: Cloud Tasks `minBackoff: 30s`,
+ * the retry lands at t+30 s, the window closed at t+20 s, and the assertion
+ * said "a 500 MUST be retried" about a host that retried. 30 s is not an
+ * unusual first backoff.
+ *
+ * That is rc.67's poll-cursor defect one file over and DETERMINISTIC rather
+ * than flaky: the instrument's own window, attributed to the host. A scenario
+ * must not blame a host for a deadline the scenario chose.
+ *
+ * The floor stays 20 s so a host that advertises nothing is measured exactly
+ * as before; an advertised `exponential`/`fixed` backoff widens it to 90 s,
+ * which covers a 30 s first attempt with room for the second. The cap is
+ * deliberate: unbounded waiting would let a host that never retries hold the
+ * suite open instead of failing.
+ */
+const RETRY_WAIT_FLOOR_MS = 20_000;
+const RETRY_WAIT_CAP_MS = 90_000;
+function retryWaitMs(doc: Record<string, unknown>): number {
+  const policy = advertisedRetryPolicy(doc);
+  if (policy === null) return RETRY_WAIT_FLOOR_MS;
+  const backoff = String(policy.backoff ?? '');
+  return backoff === 'exponential' || backoff === 'fixed' ? RETRY_WAIT_CAP_MS : RETRY_WAIT_FLOOR_MS;
 }
 
 /** Register the suite receiver; null (with a note) when the host's SSRF guard refuses a loopback URL. */
@@ -159,7 +210,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     await waitTerminal(runId, 10_000);
 
     const ours = () => receiver.attempts.filter((a) => a.runId === runId);
-    const retried = await waitFor(() => ours().some((a) => a.status === 204), 20_000);
+    const retried = await waitFor(() => ours().some((a) => a.status === 204), retryWaitMs(doc));
     const attempts = ours();
     expect(
       attempts.length,
@@ -212,7 +263,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const runId = (create.json as { runId: string }).runId;
     await waitTerminal(runId, 10_000);
     const ours = () => receiver.attempts.filter((a) => a.runId === runId);
-    await waitFor(() => ours().length > 1, 20_000);
+    await waitFor(() => ours().length > 1, retryWaitMs(doc));
     const attempts = ours();
     expect(
       attempts.length,
@@ -221,7 +272,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const policy = advertisedRetryPolicy(doc);
     if (policy?.maxAttempts !== undefined) {
       // Give the policy time to exhaust, then the host MUST stop.
-      await waitFor(() => ours().length >= policy.maxAttempts!, 20_000);
+      await waitFor(() => ours().length >= policy.maxAttempts!, retryWaitMs(doc));
       await new Promise((r) => setTimeout(r, 1_000));
       expect(
         ours().length,
