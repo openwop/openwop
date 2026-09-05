@@ -102,6 +102,14 @@ describe('v2 run-pause-resume (runs.md §Pause and resume)', () => {
       const types = await eventTypes(c.runId);
       const p = types?.indexOf('run.paused') ?? -1; const r = types?.indexOf('run.resumed') ?? -1;
       expect(p >= 0 && r > p, req(ID, 'spec/v2/core/events.md §run.paused', `the log MUST carry run.paused then run.resumed (types: ${(types ?? []).join(', ')})`)).toBe(true);
+      // An immediate pause cuts the executing attempt BETWEEN events: no terminal
+      // node event for it, ever — a node.failed here makes a replay fold a
+      // failure the source never had (runs.md §Pause and resume; replay.md).
+      const between = (types ?? []).slice(p + 1, r);
+      expect(between.some((t) => t === 'node.failed' || t === 'node.completed' || t === 'node.cancelled'), req(ID, DOC, `with drainPolicy immediate the interrupted attempt MUST NOT record a terminal node event (between run.paused and run.resumed: ${between.join(', ') || 'nothing'})`)).toBe(false);
+      const poll = await http(() => driver.get(`/runs/${enc(c.runId)}/events/poll?timeout=1`));
+      const paused = ((poll?.json as { events?: Array<{ type?: unknown; payload?: { drainPolicy?: unknown } }> } | null)?.events ?? []).find((e) => e.type === 'run.paused');
+      expect(paused?.payload?.drainPolicy, req(ID, DOC, `run.paused's payload MUST echo the request's drainPolicy word (got ${String(paused?.payload?.drainPolicy)})`)).toBe('immediate');
     } finally {
       await http(() => driver.post(`/runs/${enc(c.runId)}/cancel`, { reason: 'conformance cleanup' }));
     }

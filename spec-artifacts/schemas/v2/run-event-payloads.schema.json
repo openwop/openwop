@@ -1106,7 +1106,7 @@
     },
     "runPaused": {
       "type": "object",
-      "description": "Emitted when the run is paused (manual pause / cap.breached pause-and-checkpoint).",
+      "description": "Emitted when the run is paused (manual pause / cap.breached pause-and-checkpoint). runs.md \u00a7Pause and resume: with drainPolicy immediate the snapshot is taken between events \u2014 the interrupted attempt has no terminal node event and a host MUST NOT record node.failed for it; the resumed run's node.started is a fresh attempt. interruptedNodeId / interruptedAttempt name the attempt that was cut, for debug consumers.",
       "properties": {
         "reason": {
           "type": "string"
@@ -1114,10 +1114,19 @@
         "drainPolicy": {
           "type": "string",
           "enum": [
-            "drain",
-            "interrupt"
+            "immediate",
+            "drain-current-node"
           ],
-          "description": "v1 rest-endpoints.md MUST \u2014 the pause drain policy persisted on the event."
+          "description": "Echoes the pauseRun request's drainPolicy (runs.md \u00a7Pause and resume; api/v2/openapi.yaml). rc.52: the enum was seeded as drain | interrupt with a provenance note pointing at v1 text that never said it; v1's event carries no drainPolicy."
+        },
+        "interruptedNodeId": {
+          "$ref": "ids.schema.json#/$defs/nodeId",
+          "description": "With drainPolicy immediate: the node whose attempt was cut between events. Absent when nothing was executing."
+        },
+        "interruptedAttempt": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The attempt number that was cut; the resumed run's node.started begins a fresh attempt."
         }
       },
       "additionalProperties": false
