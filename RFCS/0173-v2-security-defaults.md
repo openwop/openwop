@@ -137,7 +137,7 @@ openwop-app: the effect-seam manifest is ADR 0533's guard inventory made data; c
 ## Acceptance criteria
 
 - [x] `Draft → Active`: RFC text; rows `C6.1`–`C6.9`; two register rows; `extensions.json` note corrected; RFC 0151 G4 reconciled; ledger row; adversarial review. (This PR.)
-- [ ] `Active → Accepted` (Phase 3): `spec/v2/core/security-defaults.md` + the obligation table; `effect-seam-manifest.json` schema and `GET /v1/host/effect-seams`; the gate fields removed from `schemas/v2/capabilities.schema.json`; bundle v3 `host.relaxations[]`; `threat-model-replay.md` §6–§8; `check-threat-model-template.mjs`; the nine scenarios in suite 2.0.0; openwop-app passes `effect-seam-manifest`, `webhook-durable-delivery`, `compensation-read-projection`.
+- [ ] `Active → Accepted` (Phase 3): `spec/v2/core/security-defaults.md` + the obligation table; `effect-seam-manifest.json` schema and `GET /host/effect-seams`; the gate fields removed from `schemas/v2/capabilities.schema.json`; bundle v3 `host.relaxations[]`; `threat-model-replay.md` §6–§8; `check-threat-model-template.mjs`; the nine scenarios in suite 2.0.0; openwop-app passes `effect-seam-manifest`, `webhook-durable-delivery`, `compensation-read-projection`.
 
 ## References
 
