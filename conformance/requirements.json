@@ -26586,6 +26586,11 @@
           "interpolated": true
         },
         {
+          "section": "replay.md §The effect-seam manifest",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
           "section": "RFC 0173 §C.1",
           "requirement": null,
           "interpolated": true
@@ -26600,7 +26605,7 @@
     {
       "id": "openwop.it.v2-effect-seam-manifest.the-replay-facet-names-the-manifest-address-as-the-constant-host-effect-seams",
       "file": "v2-effect-seam-manifest.test.ts",
-      "line": 108,
+      "line": 118,
       "title": "the replay facet names the manifest address as the constant /host/effect-seams",
       "explicitId": "openwop.requirement.0173.effect-seam-manifest.facet",
       "citations": [

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/effect-seam-manifest.schema.json",
-  "title": "Effect-seam manifest (RFC 0173 §C)",
-  "description": "Host-declared, machine-checkable list of every outbound effect path the node runtime can reach (RFC 0173 §C.1: `{ seam, kind, guarded: true, guardedBy }`; `branchReFires` states the RFC 0140 G6 asymmetry). Served at GET /host/effect-seams (canonical, not a test seam). A seam omitted is invisible to the suite (negative-existence); the RFC 0140 R5 audit is the control.",
+  "title": "Effect-seam manifest (RFC 0173 \u00a7C)",
+  "description": "Host-declared, machine-checkable list of every outbound effect path the node runtime can reach (RFC 0173 \u00a7C.1: `{ seam, kind, guarded: true, guardedBy }`; `branchReFires` states the RFC 0140 G6 asymmetry). Served at GET /host/effect-seams (canonical, not a test seam). A seam omitted is invisible to the suite (negative-existence); the RFC 0140 R5 audit is the control.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -69,15 +69,18 @@
             "type": "string",
             "enum": [
               "http",
+              "smtp",
               "queue",
               "storage",
               "provider-sdk",
-              "webhook-fanout"
-            ]
+              "webhook-fanout",
+              "other"
+            ],
+            "description": "The outbound WIRE MECHANISM this seam leaves the host by \u2014 not the suite's driving mechanism, and not the business purpose. `other` is the escape for a mechanism this list does not name (raw TCP, gRPC, a filesystem write, a device SDK); a row using it MUST carry `note` saying which, so an unnameable mechanism is still auditable and no seam can hide behind a vague label. Completeness outranks driveability: a path the suite cannot drive (SMTP, for one) is still MUST-list \u2014 the scenario records it `inapplicable` with that reason, and an omitted row is invisible to the suite entirely (replay.md)."
           },
           "guarded": {
             "const": true,
-            "description": "RFC 0173 §C.1 — every row MUST be guarded; the scenario asserts it and drives one seam of each kind through the suite's receiver."
+            "description": "RFC 0173 \u00a7C.1 \u2014 every row MUST be guarded; the scenario asserts it and drives one seam of each kind through the suite's receiver."
           },
           "guardedBy": {
             "type": "string",
@@ -86,11 +89,31 @@
           },
           "branchReFires": {
             "type": "boolean",
-            "description": "RFC 0140 G6 — a `branch` fork re-fires this seam by design; stated here and witnessed as a permission."
+            "description": "RFC 0140 G6 \u2014 a `branch` fork re-fires this seam by design; stated here and witnessed as a permission."
           },
           "note": {
-            "type": "string"
+            "type": "string",
+            "description": "Free text. REQUIRED when `kind` is `other`, where it MUST name the mechanism."
           }
+        },
+        "if": {
+          "properties": {
+            "kind": {
+              "const": "other"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        "then": {
+          "required": [
+            "seam",
+            "kind",
+            "guarded",
+            "guardedBy",
+            "note"
+          ]
         }
       }
     }
