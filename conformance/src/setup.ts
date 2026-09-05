@@ -35,8 +35,8 @@ import { basename, join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { PKG_ROOT_PATH } from './lib/paths.js';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
-import { requirementIdForFile, resolveFileRecord, type FileTestState } from './lib/scenario-disposition.js';
-import { softSkipDisposition } from './lib/soft-skip.js';
+import { requirementIdForFile, resolveFileRecord, resolveItRecord, type FileTestState } from './lib/scenario-disposition.js';
+import { softSkipDisposition, softSkipDispositionSince, softSkipMark } from './lib/soft-skip.js';
 import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
@@ -239,6 +239,7 @@ const _ledgerMarks = new Map<string, number>();
 const _itAllocators = new Map<string, ItIdAllocator>();
 const _itMarks = new Map<string, number>();
 const _itAssertionsBefore = new Map<string, number>();
+const _itSoftSkipMarks = new Map<string, number>();
 function _assertionCalls(): number {
   try {
     return (expect.getState() as { assertionCalls?: number }).assertionCalls ?? 0;
@@ -347,6 +348,7 @@ beforeEach(({ task }) => {
   // Window for this test's own gate decisions and its own assertion count.
   _itMarks.set(file, journalLength());
   _itAssertionsBefore.set(file, _assertionCalls());
+  _itSoftSkipMarks.set(file, softSkipMark()); // rc.56: this test's own softSkip window
   takeExplicitRequirementId(); // clear any override left by a test that threw before afterEach
 });
 afterEach(({ task }) => {
@@ -395,7 +397,8 @@ afterEach(({ task }) => {
   _itAllocators.set(file, alloc);
   const itId = explicit ?? alloc.allocate(file, task.name);
   const since = journalSince(_itMarks.get(file) ?? 0);
-  const gate = since.find((e) => e.disposition === 'inapplicable') ?? since.find((e) => e.disposition === 'skipped');
+  const gateEntry = since.find((e) => e.disposition === 'inapplicable') ?? since.find((e) => e.disposition === 'skipped');
+  const gate = gateEntry === undefined ? undefined : { disposition: gateEntry.disposition as 'inapplicable' | 'skipped', ...(gateEntry.detail === undefined ? {} : { detail: gateEntry.detail }) };
   let disposition: 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
   let detail: string | undefined;
   // Suite 2.0.0: under the corpus gate (scripts/check-spec-coherence.mjs sets OPENWOP_CORPUS_GATE) a coherence scenario IS the subject; its rows are real dispositions for evidence/corpus-ledger.json.
@@ -405,21 +408,15 @@ afterEach(({ task }) => {
     // rule `resolveFileRecord` applies to the file in the published layout.
     disposition = 'inapplicable';
     detail = SPEC_COHERENCE_DETAIL;
-  } else if (state === 'fail') {
-    disposition = 'executed-fail';
-    const err = (task.result?.errors ?? [])[0] as { message?: string } | undefined;
-    detail = `the test executed and failed: ${(err?.message ?? 'no message').slice(0, 300)}`;
-  } else if (state === 'pass' && calls > 0) {
-    disposition = 'executed-pass';
-  } else if (gate !== undefined) {
-    disposition = gate.disposition as 'skipped' | 'inapplicable';
-    detail = gate.detail ?? `${gate.disposition} (gate recorded no reason)`;
-  } else if (state === 'pass') {
-    disposition = 'blocked';
-    detail = 'unclassified return: the test passed with zero assertions and recorded no reason — RFC 0148 §A resolves it to blocked, never to a pass';
   } else {
-    disposition = 'skipped';
-    detail = 'vitest skipped the test (ctx.skip / it.skip) without a recorded gate reason';
+    // rc.56: the softSkip notes THIS test wrote are its reason (the file row
+    // already read them; the per-`it` row did not, and a leg that said
+    // `inapplicable` came out `blocked` — which denies certification bundle-wide).
+    const noted = softSkipDispositionSince(file, _itSoftSkipMarks.get(file) ?? 0);
+    const err = (task.result?.errors ?? [])[0] as { message?: string } | undefined;
+    const rec = resolveItRecord(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip', calls, gate, noted, err?.message);
+    disposition = rec.disposition;
+    detail = rec.detail;
   }
   try {
     recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file });
