@@ -33,8 +33,8 @@ The fork's `owner.tenant` and `owner.subject` MUST be copied verbatim from the s
 
 The replay contract is observable-output-sequence determinism, not bit-equivalent execution (RFC 0041 §C):
 
-1. The events at indices `[0, fromSeq]` MUST be byte-equivalent between source and replay, modulo per-region clock fields (RFC 0036 §E) and ULID time-component entropy when ULIDs are minted fresh.
-2. `variables`, `channels`, and `status` of the run snapshot at each index MUST be byte-equivalent.
+1. The events at indices `[0, fromSeq)` MUST be byte-equivalent between source and replay, modulo per-region clock fields (RFC 0036 §E) and ULID time-component entropy when ULIDs are minted fresh. The range is half-open, matching §The surface: `sequence < fromSeq` is fixed history, and the event AT `fromSeq` is re-executed — so it is governed by §Divergence, not by this clause.
+2. `variables`, `channels`, and `status` of the run snapshot at each index in that range MUST be byte-equivalent.
 3. The bytes on the wire of underlying tool and LLM calls MAY differ, provided the observable state at each index is byte-equivalent.
 
 A host MUST cache the observable result (return value, workflow-state effects, emitted events), not merely the tool-call boundary. The cache key for LLM-calling nodes is the RFC 0041 content-addressed key; for other tool-calling nodes it MUST be content-addressable, never a host-internal sequence number or timestamp.
