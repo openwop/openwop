@@ -56,8 +56,27 @@ describe('RFC 0173 §C.2 — effect-seam-no-refire (gated on replay, seam-driven
     const manifest = await driver.get(MANIFEST_PATH);
     const seamRows: SeamRow[] = manifest.status === 200 && manifest.json && typeof manifest.json === 'object'
       ? ((manifest.json as Manifest).seams ?? []) : [];
-    const target = seamRows.find((r) => r.guarded === true && r.branchReFires === false);
-    if (!target) return softSkip('inapplicable', `no manifest row is both guarded and branchReFires: false — nothing to witness suppression on (${seamRows.length} row(s) at ${MANIFEST_PATH})`);
+    // Select ANY guarded row (suite 2.0.3). Until 2.0.2 this read
+    // `r.guarded === true && r.branchReFires === false` — it selected on a
+    // BRANCH permission to witness a REPLAY obligation, which `replay.md:78`
+    // forbids in one sentence: "A host MAY suppress branch effects and MUST NOT
+    // report that as replay suppression." §Suppression rule 1 is unconditional
+    // ("a node that performs an external side effect … MUST NOT perform it")
+    // and does not vary with `branchReFires`, whose own schema description is
+    // "RFC 0140 G6 — a `branch` fork re-fires this seam by design".
+    //
+    // Two defects in one line. `branchReFires` is also OPTIONAL (`required:
+    // ["seam","kind","guarded","guardedBy"]`), so `=== false` additionally
+    // excluded every row that is merely silent on the permission.
+    //
+    // Found by the reference host, which had ten honest `branchReFires: true`
+    // rows — every seam it owns does re-fire on a branch, by design — and was
+    // about to build `fireEffectSeam` to satisfy a scenario that would have
+    // gone on recording `inapplicable` after the work landed. It asked instead
+    // of inventing a `false` row, which would have made this pass by lying
+    // about the seam.
+    const target = seamRows.find((r) => r.guarded === true);
+    if (!target) return softSkip('inapplicable', `no manifest row is guarded — nothing to witness suppression on (${seamRows.length} row(s) at ${MANIFEST_PATH})`);
     const fired = await driver.post(`${SEAMS_PREFIX}/sample/effect-seams/fire`, { seam: String(target.seam) });
     if (fired.status === 404 || fired.status === 403 || fired.status === 405) {
       return softSkip('blocked', `the host advertises the seams profile but does not serve ${SEAMS_PREFIX}/sample/effect-seams/fire (answered ${fired.status}) — the no-re-fire leg cannot be driven`);
@@ -98,7 +117,7 @@ describe('RFC 0173 §C.2 — effect-seam-no-refire (gated on replay, seam-driven
     if (forkEffects.status !== 200) return softSkip('blocked', `GET /runs/{runId}/effects answered ${forkEffects.status} on the replay fork`);
     expect(
       countOf(forkEffects),
-      req('openwop.requirement.0173.effect-seam-no-refire', 'spec/v2/core/replay.md §The effect-seam manifest', `seam ${String(target.seam)} states branchReFires: false, so a replay fork MUST NOT issue a further attempt through it — the fork's effect ledger (${countOf(forkEffects)}) cannot exceed the parent's (${countOf(parentEffects)})`),
+      req('openwop.requirement.0173.effect-seam-no-refire', 'spec/v2/core/replay.md §Suppression', `seam ${String(target.seam)} is guarded, so a replay fork MUST NOT issue a further attempt through it — suppression is unconditional for mode: replay (§Suppression rule 1) and does not depend on branchReFires, which states only what a BRANCH may re-fire (§Branch: a host "MUST NOT report that as replay suppression"). The fork's effect ledger (${countOf(forkEffects)}) cannot exceed the parent's (${countOf(parentEffects)})`),
     ).toBeLessThanOrEqual(countOf(parentEffects));
   });
 });
