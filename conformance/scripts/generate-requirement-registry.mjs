@@ -194,7 +194,14 @@ if (mode === 'write') {
   else {
     const committed = JSON.parse(readFileSync(OUT, 'utf8'));
     const aliases = existsSync(ALIASES) ? JSON.parse(readFileSync(ALIASES, 'utf8')).aliases ?? {} : {};
-    const freshIds = new Set(fresh.records.filter((r) => r.id !== null).map((r) => r.id));
+    // Every id the suite can put in a bundle: the derived record id AND the
+    // explicit `req()` id. Until 2.0.5 this set held only `id`, so an alias
+    // pointing at an explicit requirement id failed as "the target does not
+    // exist" — while that target is precisely what a bundle row is labelled
+    // with when the leg runs. The gate's notion of an existing id excluded the
+    // ids the runtime actually emits, which is the same shape as the defect
+    // the aliases below were added for.
+    const freshIds = new Set(fresh.records.flatMap((r) => [r.id, r.explicitId].filter((x) => x !== null && x !== undefined)));
     for (const r of committed.records ?? []) {
       if (r.id !== null && !freshIds.has(r.id) && !(r.id in aliases)) {
         failures.push(`id ${r.id} (${r.file}:${r.line}) no longer exists in the sources and has no alias row in requirement-aliases.json — a reworded title orphans bundles that cited it`);
