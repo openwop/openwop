@@ -13,6 +13,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.2] — 2026-09-06 — 2.0.1's own fix could not run: the derived wait exceeded the harness timeout that governs it
+
+**A regression in 2.0.1, measured by the host that reported the defect 2.0.1 fixed.** Re-cut on 2.0.1 (`00337-dgw`, 1444 assertions, corpus stamp verified), one row moved and it moved the wrong way: `0173.webhook-durable-delivery.dead-letter` went `executed-pass` → `executed-fail`.
+
+- **The wait was raised above the limit that enforces it.** 2.0.1 widened the retry wait to a 90 s cap (`RETRY_WAIT_CAP_MS`) and left both `it()` blocks on the harness default — `conformance/vitest.config.ts` `testTimeout: 30_000`, no per-test override. A wait longer than the timeout governing it can never elapse: the test dies at 30 s with *"Test timed out in 30000ms"*. Worst case is worse than one wait — the dead-letter leg runs `waitTerminal` plus **two** sequential `retryWaitMs` waits, so it needed up to 191 s of a 30 s budget.
+- **It took a passing row with it.** `dead-letter` passed on 2.0.0-rc.67 by observing `attempts.length > 1` inside the old 20 s window. 2.0.1 moved that leg onto `retryWaitMs` too, so it now times out before reaching the observation it used to make. The fix for one row broke a second.
+- **The fix derives the budget from the same constant rather than writing a second literal.** `RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS` and `DEAD_LETTER_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS * 2 + WAIT_SLACK_MS`, passed as each `it()`'s timeout. A later change to the wait now carries its own budget — the same construction as sourcing an advertised policy from the constant the delivery loop reads, so the two cannot drift.
+
+**The shape, because it is the defect 2.0.1 fixed displaced by one layer.** 2.0.1 stopped the scenario blaming a host for a deadline *the scenario* chose — and then let *the harness* choose a shorter one silently, on exactly the durable hosts the widening was written to help. A guard defeated by a second guard neither party was looking at. **A scenario must not blame a host for a deadline the scenario chose, and must not adopt a wait its own harness will not allow it to finish.**
+
 ## [2.0.1] — 2026-09-05 — the webhook durability scenario read the wrong carrier and imposed its own deadline
 
 Two defects in `v2-webhook-durable-delivery`, both found by `myndhyve` running against 2.0.0 — the first host feedback on the released major, arriving within hours of the cut.

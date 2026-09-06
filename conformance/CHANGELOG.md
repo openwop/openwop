@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.2] — 2026-09-06 — 2.0.1's own fix could not run: the derived wait exceeded the harness timeout that governs it
+
+A regression in 2.0.1, measured by the host that reported the defect 2.0.1 fixed. On a 2.0.1 re-cut one row moved, the wrong way: `0173.webhook-durable-delivery.dead-letter` went `executed-pass` → `executed-fail`.
+
+2.0.1 widened the retry wait to a 90 s cap and left both `it()` blocks on the harness default (`vitest.config.ts` `testTimeout: 30_000`, no per-test override). **A wait longer than the timeout that governs it can never elapse** — the test dies at 30 s with "Test timed out in 30000ms". The dead-letter leg is worse than one wait: `waitTerminal` plus **two** sequential `retryWaitMs` waits, up to 191 s inside a 30 s budget. And it took a passing row with it — `dead-letter` passed at rc.67 by observing `attempts.length > 1` inside the old 20 s window, and 2.0.1 moved that leg onto `retryWaitMs` too.
+
+Both `it()` blocks now take a timeout **derived from the wait constant** — `RETRY_WAIT_CAP_MS + WAIT_SLACK_MS`, and twice the cap for the two-wait leg — rather than a second literal, so a later change to the wait carries its own budget.
+
+The shape is the defect 2.0.1 fixed, displaced one layer: 2.0.1 stopped the scenario blaming a host for a deadline *the scenario* chose, then let *the harness* choose a shorter one silently, on exactly the durable hosts the widening was written to help.
+
 ## [2.0.1] — 2026-09-05 — the webhook durability scenario read the wrong carrier and imposed its own deadline
 
 Two defects in `v2-webhook-durable-delivery`, both reported by a host running against 2.0.0.

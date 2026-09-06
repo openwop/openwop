@@ -175,6 +175,31 @@ function retryWaitMs(doc: Record<string, unknown>): number {
   return backoff === 'exponential' || backoff === 'fixed' ? RETRY_WAIT_CAP_MS : RETRY_WAIT_FLOOR_MS;
 }
 
+/**
+ * The per-test budget, DERIVED from the wait above (suite 2.0.2).
+ *
+ * 2.0.1 raised the derived wait to 90 s and left the `it()` blocks on the
+ * harness default (`vitest.config.ts` `testTimeout: 30_000`). A wait longer
+ * than the timeout that governs it can never elapse: on exactly the durable
+ * hosts the widening was written to help, the test died at 30 s with "Test
+ * timed out in 30000ms" — and took `dead-letter` with it, which had passed at
+ * the old 20 s window. Measured by a host on 2.0.1 (`00337-dgw`): one row moved
+ * `executed-pass -> executed-fail` and it was this one.
+ *
+ * The shape is the defect 2.0.1 itself fixed, one layer out: 2.0.1 stopped the
+ * scenario blaming a host for a deadline the SCENARIO chose, and then let the
+ * HARNESS choose a shorter one silently. So the budget is computed from
+ * `RETRY_WAIT_CAP_MS` rather than written as a second literal — a later change
+ * to the wait carries its own timeout, the way the advert is sourced from the
+ * constant the delivery loop reads. `WAIT_SLACK_MS` covers `waitTerminal`,
+ * registration and the HTTP round trips around the waits.
+ */
+const WAIT_SLACK_MS = 30_000;
+/** One `retryWaitMs` wait (the retry leg). */
+const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
+/** Two sequential `retryWaitMs` waits (the dead-letter leg: observe a retry, then exhaust). */
+const DEAD_LETTER_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS * 2 + WAIT_SLACK_MS;
+
 /** Register the suite receiver; null (with a note) when the host's SSRF guard refuses a loopback URL. */
 async function register(url: string): Promise<{ webhookId: string } | null> {
   const registration = resolveRegistrationUrl(url);
@@ -245,7 +270,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
 
     const del = await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
     expect(del.status, req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Surfaces', 'DELETE /webhooks/{webhookId} MUST answer 204')).toBe(204);
-  });
+  }, RETRY_TEST_TIMEOUT_MS);
 
   it('an exhausted delivery is dead-lettered, never dropped', async () => {
     const doc = await discovery();
@@ -285,5 +310,5 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     // (no GET /webhooks/{webhookId}/dead-letters). Without a normative read the
     // routing to the sink is not observable from the suite.
     return softSkip('blocked', 'no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not');
-  });
+  }, DEAD_LETTER_TEST_TIMEOUT_MS);
 });
