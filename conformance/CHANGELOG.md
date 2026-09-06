@@ -1,5 +1,44 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.6] — 2026-09-06 — the release that made a rule uncheckable
+
+**If you pinned 2.0.5, `v2-unmapped-type-refused` did not run against your
+host.** It soft-skipped `inapplicable` and the lane went green. Pin 2.0.6 and
+re-measure before trusting any result that scenario gave you.
+
+2.0.5 shipped four fixes for rules whose instruments could not answer, and one
+of those fixes did the same thing to a fifth. Reported by a host operator who
+kept a local witness for a defect they knew was unfixed and re-measured before
+accepting a green they wanted. Two defects, one symptom:
+
+- **The corpus resolver was anchored on a repo-only directory.**
+  `registeredOrgs()` and `codemapV1toV2()` located `spec/v2/` via
+  `V1_DIR/../v2` — a **v1**-anchored path to a **v2** file. No published package
+  ships `spec/v1/`, so `V1_DIR` is `null` in every install and both lookups
+  returned nothing. The data was never missing; it is in the exact-pinned
+  `@openwop/spec-artifacts` peer. Both now resolve through `SPEC_V2_DIR`
+  (`lib/paths`), anchored on the contract root, which holds in a repo checkout
+  and an install alike. The codemap failed more quietly — 7 fallback rows
+  instead of 118, so era-2 readers asserted against names it never had.
+
+- **A precondition written for one leg gated the other.**
+  `v2-unmapped-type-refused` drives two opposite halves of the reader rule.
+  Both were gated on a single check that demanded a resolvable registry, which
+  only the *control* leg needs. With the registry unreachable, the *refusal*
+  leg skipped on exactly the hosts it exists to catch: one answering `200` and
+  one answering `500` were both green. Gates are now separate and pure
+  (`unmappedRefusalGate` / `vendorControlGate`), with the fail-closed reading
+  explicit — an unreadable registry registers nothing, so the refusal is still
+  required and the leg stays drivable.
+
+Added `src/lib/era2-unmapped-gates.test.ts` (the gates' truth table, including
+the rows a live-host scenario cannot check about itself; sabotage-verified) and
+a post-install corpus-resolution assertion in `verify-installable` — a clean
+`npm install` was never evidence the suite works.
+
+**A ratchet's STALE signal means the scenario stopped failing. It is not
+evidence the defect is fixed.**
+
 ## [2.0.5] — 2026-09-06 — four rules with no way to be checked
 
 Four instruments that could not, even in principle, return the answer they

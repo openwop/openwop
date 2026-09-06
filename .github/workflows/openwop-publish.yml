@@ -323,6 +323,32 @@ jobs:
           for i in $(seq 1 8); do
             if npm install "$PKG@$VER" --no-audit --no-fund; then
               echo "✓ installed cleanly; peer resolved to $(node -p "require('./node_modules/@openwop/spec-artifacts/package.json').version")"
+              # INSTALLS IS NOT WORKS. Until 2.0.6 this job stopped at the line
+              # above, and 2.0.5 passed it while `registeredOrgs()` returned
+              # undefined for every consumer: the resolver was anchored on
+              # `spec/v1/`, a directory no published package ships, so the vendor
+              # -org registry was unreachable the moment anyone installed the
+              # suite. `v2-unmapped-type-refused` then soft-skipped on the hosts
+              # it exists to catch and the lane went green. A clean `npm install`
+              # could not tell the difference; only reading the corpus through
+              # the installed resolver can. Reported by a consumer (openwop-app),
+              # which is the only vantage point where it was visible.
+              node --input-type=module -e '
+                import { readFileSync, existsSync } from "node:fs";
+                import { join } from "node:path";
+                const { SPEC_V2_DIR, LAYOUT } = await import("@openwop/openwop-conformance/dist/lib/paths.js");
+                console.log(`layout=${LAYOUT} specV2Dir=${SPEC_V2_DIR}`);
+                if (SPEC_V2_DIR === null) { console.error("::error::the installed suite cannot resolve spec/v2 — every corpus-backed precondition silently soft-skips"); process.exit(1); }
+                const decl = join(SPEC_V2_DIR, "declaration.json");
+                const cmap = join(SPEC_V2_DIR, "event-codemap.json");
+                for (const f of [decl, cmap]) if (!existsSync(f)) { console.error(`::error::${f} is not readable from the installed layout`); process.exit(1); }
+                const orgs = Object.keys(JSON.parse(readFileSync(decl, "utf8")).extensions ?? {});
+                const rows = (JSON.parse(readFileSync(cmap, "utf8")).rows ?? []).length;
+                console.log(`registeredOrgs=${orgs.join(",") || "(none)"} codemapRows=${rows}`);
+                if (orgs.length === 0) { console.error("::error::the vendor-org registry is empty in the installed layout — v2-unmapped-type-refused would skip the control leg"); process.exit(1); }
+                if (rows < 100) { console.error(`::error::only ${rows} codemap rows in the installed layout — the era-2 reader scenarios would assert against a truncated map`); process.exit(1); }
+              ' || exit 1
+              echo "✓ the installed suite resolves its corpus data"
               exit 0
             fi
             sleep 15
