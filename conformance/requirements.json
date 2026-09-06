@@ -28221,7 +28221,7 @@
     {
       "id": "openwop.it.v2-run-fork-prefix.a-replay-fork-inherits-exactly-0-fromseq-the-event-at-fromseq-is-re-executed-nev",
       "file": "v2-run-fork-prefix.test.ts",
-      "line": 106,
+      "line": 172,
       "title": "a replay fork inherits exactly [0, fromSeq): the event at fromSeq is re-executed, never carried over",
       "explicitId": "openwop.requirement.0170.fork-prefix-boundary",
       "citations": [
@@ -28237,6 +28237,11 @@
         },
         {
           "section": "spec/v2/core/replay.md §Endpoint",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/replay.md §Byte-equivalence of the prefix",
           "requirement": null,
           "interpolated": true
         }

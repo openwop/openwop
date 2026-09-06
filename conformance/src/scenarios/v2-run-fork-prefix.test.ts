@@ -52,13 +52,57 @@
  * file's worth: the boundary it checks is real and a tier-1 host shipped the
  * bug it catches.
  *
+ * The payload-equivalence leg below does NOT move that verdict. It strengthens
+ * the same single `it` behind the same fixture gate, so the file still cannot
+ * witness for a predicate holder that advertises no optional fixture. Promotion
+ * stays blocked on a prior condition anyway: the strengthened leg has not been
+ * MEASURED on the reference host, and a floor is not a place to find out.
+ *
  * What this file deliberately does NOT assert: the CONTENT of the re-executed
  * tail, determinism across two forks, timing, and effect re-fire suppression.
  * Those are `replay.md` §Replay determinism and the seams floor's, witnessed in
  * `replay-fork-arbitrary` (major 1) and `v2-effect-seam-no-refire` (seams).
  *
+ * PAYLOAD EQUIVALENCE, and the honest size of what it witnesses.
+ * `replay.md` §Byte-equivalence of the prefix opens: "The events at indices
+ * `[0, fromSeq)` MUST be byte-equivalent between source and replay, modulo
+ * per-region clock fields (RFC 0036 §E) and ULID time-component entropy when
+ * ULIDs are minted fresh." Until this revision the only witness of that MUST
+ * compared `${sequence}:${type}` — sequence-and-TYPE equality. A host could
+ * inherit a prefix whose event PAYLOADS differed from the source, in every
+ * field, and pass. "Byte-equivalent" was checked by comparing two of an event's
+ * ten fields, and the gap was invisible because the leg was green.
+ *
+ * The exclusion set is NOT invented here. `runs.md` §Diff and ancestry already
+ * states, normatively, what two logs are compared on: "`eventId`, `runId`,
+ * `timestamp` and other run-scoped fields MUST be excluded from comparison."
+ * That is the spec's own definition of the same event on two runs, and a fork
+ * IS a new run with its own `runId` and its own `eventId`s. So:
+ *
+ *   compared   `type`, `nodeId`, `payload` (deep)
+ *   excluded   `eventId`   run-scoped (runs.md §Diff) + ULID entropy (§36)
+ *              `runId`     the fork is a different run, by construction
+ *              `timestamp` a per-region clock field (RFC 0036 §E, named in §36)
+ *              `causationId` names an `eventId` of this run, so run-scoped
+ *
+ * NAMED RESIDUE, not silently dropped. `schemaVersion` and `engineVersion` are
+ * not asserted: §36's carve-out list does not excuse them, but neither does any
+ * clause say whether a host re-stamps them when copying fixed history into a
+ * replay running against CURRENT code, and a scenario should not settle a
+ * question the prose left open. `replay.md` line 37 — "`variables`, `channels`,
+ * and `status` of the run snapshot at each index in that range MUST be
+ * byte-equivalent" — has no witness at any major and gets none here: there is
+ * no wire surface that returns a run snapshot AS OF an index, only at head, so
+ * an unaided scenario cannot reach it. Both are gaps in the evidence, recorded
+ * as gaps. This leg witnesses a NAMED SUBSET of §36 and says which.
+ *
+ * The leg runs LAST, after the boundary assertion, so a host that fails this
+ * stricter new check still reports the boundary verdict the file was cut for.
+ *
  * @see spec/v2/core/replay.md §Endpoint
+ * @see spec/v2/core/replay.md §Byte-equivalence of the prefix
  * @see spec/v2/core/runs.md §Fork
+ * @see spec/v2/core/runs.md §Diff and ancestry
  */
 
 import { describe, it, expect } from 'vitest';
@@ -71,10 +115,32 @@ import { req } from '../lib/requirement-ids.js';
 
 const ID = 'openwop.requirement.0170.fork-prefix-boundary';
 const DOC = 'spec/v2/core/replay.md §Endpoint';
+const BYTES = 'spec/v2/core/replay.md §Byte-equivalence of the prefix';
 const MULTI = 'conformance-multi-node';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
-interface Ev { readonly sequence?: unknown; readonly type?: unknown }
+interface Ev { readonly sequence?: unknown; readonly type?: unknown; readonly nodeId?: unknown; readonly payload?: unknown }
+
+/**
+ * Stable JSON for deep comparison: object keys sorted at every depth, so two
+ * payloads differing only in serialization order compare equal. Array order is
+ * preserved — it is content.
+ */
+function canonical(v: unknown): string {
+  const norm = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(norm);
+    if (x !== null && typeof x === 'object') {
+      const o: Record<string, unknown> = {};
+      for (const k of Object.keys(x as Record<string, unknown>).sort()) o[k] = norm((x as Record<string, unknown>)[k]);
+      return o;
+    }
+    return x;
+  };
+  return JSON.stringify(norm(v)) ?? 'undefined';
+}
+
+/** The compared projection of an event: everything §36 binds that is not run-scoped. */
+const projection = (e: Ev): string => canonical({ type: e.type ?? null, nodeId: e.nodeId ?? null, payload: e.payload ?? null });
 
 async function discovery(): Promise<Record<string, unknown> | null> { try { return await v2Discovery(); } catch { return null; } }
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> { try { return await fn(); } catch { return null; } }
@@ -156,5 +222,23 @@ describe('v2 run-fork-prefix (replay.md §Endpoint — the boundary is exclusive
       String(at.type),
       req(ID, DOC, `the event at sequence ${fromSeq} is re-executed, not fixed history: the fork MUST NOT carry the source's ${String(point.type)} at that sequence — seeing it means the prefix was copied inclusively ([0, ${fromSeq}] instead of [0, ${fromSeq}))`),
     ).not.toBe(String(point.type));
+
+    // Byte-equivalence of the prefix, on the named subset (see the docblock).
+    // Last, so a host that fails this stricter check still reports the boundary
+    // verdict above. The exclusion set is runs.md §Diff and ancestry's, not
+    // this file's: eventId, runId, timestamp and causationId are run-scoped,
+    // and a fork is a different run.
+    const src = source.filter((e) => (e.sequence as number) < fromSeq);
+    const differing = inherited
+      .map((e, i) => ({ seq: e.sequence as number, fork: projection(e), from: src[i] === undefined ? '<missing>' : projection(src[i]) }))
+      .filter((r) => r.fork !== r.from);
+    expect(
+      differing.map((r) => r.seq),
+      req(
+        ID,
+        BYTES,
+        `every event in [0, ${fromSeq}) MUST be byte-equivalent to the source's, modulo per-region clock fields and freshly minted ULIDs — compared on {type, nodeId, payload}, excluding eventId/runId/timestamp/causationId as run-scoped (runs.md §Diff and ancestry). ${differing.length} row(s) differ${differing.length ? `: ${differing.slice(0, 3).map((r) => `seq ${r.seq} fork ${r.fork.slice(0, 160)} vs source ${r.from.slice(0, 160)}`).join(' | ')}` : ''}. Inherited history is copied, not recomputed: a differing payload means the fork re-derived a row the spec calls fixed`,
+      ),
+    ).toEqual([]);
   }, 60_000);
 });
