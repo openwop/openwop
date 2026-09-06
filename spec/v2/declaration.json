@@ -15,6 +15,14 @@
     "openwop",
     "vendor"
   ],
+  "extensions": {
+    "example": {
+      "name": "Reserved for documentation, examples and conformance",
+      "registered": "2026-09-06",
+      "reserved": true,
+      "note": "Never assignable to a real vendor (RFC 2606 precedent). A conformance scenario needs one registered org whose events no host owns, so the positive half of the vendor rule is drivable; without it the registry could only ever say no."
+    }
+  },
   "metadata": [
     {
       "key": "protocolVersion",

@@ -11,6 +11,11 @@
  *
  * Usage:
  *   node scripts/check-cut-gates.mjs --host-bundle <bundle-v3.json> [--host-discovery <doc.json>] [--network]
+ *
+ * --host-discovery is only needed for a bundle cut before suite 2.0.5; from
+ * 2.0.5 the bundle carries `discovery.document` under its own signature and
+ * that copy is preferred, because a document handed over beside a file is
+ * trusted for no reason but having been handed over.
  *   node scripts/check-cut-gates.mjs --corpus-only        # the host gates report `blocked`
  *
  * Exit 1 when any gate fails, or when a host gate is `blocked` and
@@ -25,7 +30,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { createPublicKey, verify as edVerify } from 'node:crypto';
+import { createHash, createPublicKey, verify as edVerify } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -111,11 +116,30 @@ const ed25519KeyFromRaw = (raw) => createPublicKey({
   format: 'der', type: 'spki',
 });
 
-function loadDiscovery() {
+/**
+ * The discovery document, preferring the one the BUNDLE carries.
+ *
+ * `--host-discovery` is a side channel: a file handed to this script beside the
+ * bundle, unsigned, and trusted because it was handed over. From suite 2.0.5 a
+ * v3 bundle carries `discovery.document` itself, and `discovery.sha256` — which
+ * the signature covers — is a digest of its canonical JSON, so the embedded
+ * copy is attested and the flag's is not. Prefer the attested one; fall back to
+ * the flag for bundles cut before 2.0.5; say which was used, because a reader
+ * of this report needs to know whether the signing key was resolved against a
+ * document the host signed or one someone put next to the file.
+ */
+function loadDiscovery(hostBundle) {
+  const embedded = hostBundle?.bundle?.discovery?.document;
+  if (embedded && typeof embedded === 'object') {
+    const digest = createHash('sha256').update(canonicalJSON(embedded)).digest('hex');
+    const claimed = hostBundle.bundle.discovery?.sha256;
+    if (digest !== claimed) throw new Error(`the bundle's discovery.document hashes to ${digest.slice(0, 12)} but its signed discovery.sha256 is ${String(claimed).slice(0, 12)} — a substituted document`);
+    return { path: `${hostBundle.path}#discovery.document`, doc: embedded, attested: true };
+  }
   if (!discoveryPath) return null;
   const p = resolve(discoveryPath);
   if (!existsSync(p)) throw new Error(`--host-discovery ${p} does not exist`);
-  return { path: p, doc: JSON.parse(readFileSync(p, 'utf8')) };
+  return { path: p, doc: JSON.parse(readFileSync(p, 'utf8')), attested: false };
 }
 
 /**
@@ -291,7 +315,7 @@ const corpusWitness = [node('check-declaration.mjs'), node('check-core-budget.mj
 let hb = null;
 try { hb = loadBundle(); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-bundle', tail: e.message }); }
 let hd = null;
-try { hd = loadDiscovery(); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-discovery', tail: e.message }); }
+try { hd = loadDiscovery(hb); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-discovery', tail: e.message }); }
 
 if (!hb) {
   // A bundle that was GIVEN but could not be read is a failure, not a block —

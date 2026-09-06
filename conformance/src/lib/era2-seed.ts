@@ -182,6 +182,33 @@ export function codemapV1toV2(): Map<string, string> {
   return m;
 }
 
+/**
+ * The registered vendor orgs, from `spec/v2/declaration.json` `extensions`
+ * (events.md §Rules; RFC 0171 §A.1). A vendor event type's first segment MUST
+ * be a key here, which is what separates "read under its own name unchanged"
+ * from "fail the read with `event_type_unmapped`" (persistence.md §The codemap
+ * is data / §The era key).
+ *
+ * `undefined` means the declaration is not on disk in this layout — a scenario
+ * that needs the registry MUST record that as a soft-skip rather than guess.
+ * There is no fallback list on purpose: a hard-coded org would make the suite
+ * the registry, and the whole defect this closes was a rule citing a registry
+ * that did not exist.
+ */
+let orgs: ReadonlySet<string> | null | undefined;
+export function registeredOrgs(): ReadonlySet<string> | undefined {
+  if (orgs !== undefined) return orgs ?? undefined;
+  const candidate = V1_DIR ? join(V1_DIR, '..', 'v2', 'declaration.json') : null;
+  orgs = null;
+  if (candidate && existsSync(candidate)) {
+    try {
+      const doc = JSON.parse(readFileSync(candidate, 'utf8')) as { extensions?: Record<string, unknown> };
+      if (doc.extensions && typeof doc.extensions === 'object') orgs = new Set(Object.keys(doc.extensions));
+    } catch { /* left null: unreadable is indistinguishable from absent, and both are soft-skips */ }
+  }
+  return orgs ?? undefined;
+}
+
 /** A minimal era-2 log in v1 vocabulary: two renamed rows between run.started and run.completed. */
 export function v1FixtureLog(workflowId = 'conformance-noop'): SeedEvent[] {
   const t0 = Date.parse('2026-01-15T10:00:00.000Z');

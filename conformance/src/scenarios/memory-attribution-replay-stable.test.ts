@@ -29,18 +29,42 @@
  * should have: nothing normative changed, the instrument just could not see
  * it before.
  *
- * Gated on `capabilities.memory.attribution.emitsWriteEvents`; soft-skips
- * when unadvertised, when the seeded run wrote no memory, or when the host
- * doesn't support `:fork` in `replay` mode.
+ * Gated on `memory.attribution.emitsWriteEvents`; soft-skips when unadvertised,
+ * when the seeded run wrote no memory, or when the host doesn't support `:fork`
+ * in `replay` mode.
+ *
+ * MAJORS [1, 2] (suite 2.0.5), and why this file is the first one moved.
+ * The rule it checks — a replay MUST re-emit recorded-fact events and MUST NOT
+ * regenerate their ids — is `replay.md` §Determinism caveat 5 in BOTH majors,
+ * word for word. It was nevertheless `majors: [1]`, so no v2 host had ever been
+ * measured on it, for two reasons that have nothing to do with the rule:
+ *
+ *   1. Its gate read the v1 capability shape directly and returned early with
+ *      NOTHING RECORDED. An unrecorded early return is indistinguishable, in a
+ *      bundle, from a host that does not advertise `memory`, from a suite
+ *      reader that does not understand the v2 shape, and from a file that was
+ *      never selected. It now goes through `gateFamily('memory')` at major 2,
+ *      which registers `openwop.family.memory` — the gate becomes evidence.
+ *   2. Its three paths were hard-coded `/v1/…`. That is a v1 address and not a
+ *      seam, so the driver's seam rewrite never touched it; on a v2 host the
+ *      helper would simply 404 and the file would report a host defect that was
+ *      really a suite defect. `runsPath()` resolves the major.
+ *
+ * Both are properties of the INSTRUMENT, not of the obligation. That is the
+ * shape to look for in the remaining v1 behavioural files: a rule that holds at
+ * major 2, held back by a v1-shaped gate and a v1-shaped path. Neither is a
+ * reason for a host to go unmeasured, and neither announces itself — the file
+ * was green at major 1 the whole time.
  *
  * @see RFCS/0057-memory-write-attribution-event.md §D
+ * @see spec/v2/core/replay.md §Determinism caveats
  */
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
-import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
+import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents, runsPath } from '../lib/memoryAttribution.js';
 import { req } from '../lib/requirement-ids.js';
 
 function memoryIdOf(payload: Record<string, unknown> | undefined): string | null {
@@ -51,7 +75,7 @@ function memoryIdOf(payload: Record<string, unknown> | undefined): string | null
 describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
   it('a replay-mode fork introduces no memory.written with a new memoryId', async () => {
     const cap = await readMemoryAttributionCap();
-    if (!emitsWriteEvents(cap)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!emitsWriteEvents(cap)` returned early');
+    if (!emitsWriteEvents(cap)) return softSkip('inapplicable', 'memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle');
     const runId = await seedRun('mem-attr-replay');
     if (!runId) return softSkip('blocked', 'precondition not met — `!runId` returned early (seam, prior step, or fixture unavailable)');
     try {
@@ -63,7 +87,7 @@ describe('memory-attribution-replay-stable (RFC 0057 §D)', () => {
     if (original.length === 0) return softSkip('blocked', 'run wrote no memory — nothing to test');
     const recordedIds = new Set(original.map((e) => memoryIdOf(e.payload)).filter((x): x is string => x !== null));
 
-    const fork = await driver.post(`/v1/runs/${runId}:fork`, { fromSeq: 0, mode: 'replay' });
+    const fork = await driver.post(`${runsPath()}/${encodeURIComponent(runId)}:fork`, { fromSeq: 0, mode: 'replay' });
     if (fork.status !== 200 && fork.status !== 201) return softSkip('inapplicable', 'replay fork unsupported — soft-skip (fork.status !== 200 && fork.status !== 201)');
     const forkId = (fork.json as { runId?: string } | undefined)?.runId;
     if (!forkId) return softSkip('blocked', 'precondition not met — `!forkId` returned early (seam, prior step, or fixture unavailable)');

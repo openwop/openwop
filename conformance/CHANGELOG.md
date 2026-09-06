@@ -1,5 +1,59 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.5] — 2026-09-06 — four rules with no way to be checked
+
+Four instruments that could not, even in principle, return the answer they
+appeared to give. Three of them were green.
+
+**The vendor rule's registry did not exist.** `events.md` §Rules and
+`persistence.md` §The codemap is data both require a vendor event type's first
+segment to be an org registered under `extensions` in
+`spec/v2/declaration.json`. There was no `extensions` key. Three near misses
+kept it plausible — `extensionsKeyPattern` is a key SHAPE, `reservedOrgs` lists
+FORBIDDEN orgs, and `metadata[]` carries a row keyed `extensions` that is the
+host's own extension map in the discovery payload. The registry now exists and
+holds `example`, reserved by the protocol and never assignable to a vendor.
+
+**`v2-unmapped-type-refused` drove only the refusal half**, so a host that
+refuses EVERY unmapped type — including a registered vendor type it MUST pass
+through — went green while violating the rule. New leg
+`openwop.requirement.0176.vendor-type-passthrough`: same log shape, one segment
+changed. Its preconditions were a note inside a seeded payload, prose in a place
+no runner reads; they are checked now, and the file blocks with the reason.
+
+**"Byte-equivalent" was witnessed by comparing two of ten fields.**
+`v2-run-fork-prefix` compared `${sequence}:${type}`, so a fork could inherit a
+prefix whose payloads differed in every field and pass. It now compares `type`,
+`nodeId` and `payload`, excluding `eventId`/`runId`/`timestamp`/`causationId` —
+using **`runs.md` §Diff and ancestry's** exclusion set rather than one invented
+for the leg. `schemaVersion`, `engineVersion` and the §37 snapshot claim are
+recorded as named residue, unasserted, with the reason. Floor membership
+unchanged: still RULED OUT.
+
+**A v3 bundle's `certified: true` was uncheckable by its recipient.** v2 bundles
+carried `discovery.document` and the verifier re-derived every claimed profile
+from it (RFC 0148 §B(1)); v3 dropped the field and the check with it. Optional
+`discovery.document` returns: the digest is re-derived first (the signature
+covers `sha256`, not the document, so a swap would otherwise verify), then every
+certified profile is re-derived, and absence is surfaced as
+`derivabilityChecked: false` rather than swallowed. Sabotage-proved.
+
+**A requirement's id depended on whether it passed.** The registry generator
+read `req()`'s first argument only as a string literal, so `const ID = …`
+recorded `explicitId: null` and the row fell back to a title-derived slug —
+`v2-run-fork-prefix` is in the evidence tree under two ids, the explicit one
+where the assertion ran and the slug where the leg was `inapplicable`. A
+verifier asking whether a bundle carries a requirement got a well-formed NO from
+a host that had merely not held the profile. 2058 explicit ids became 2106.
+
+**`memory-attribution-replay-stable` is `majors: [1, 2]`** (was `[1]`). Its rule
+is `replay.md` §Determinism caveat 5 in both majors, word for word. What held it
+back was a gate returning early **unrecorded** and three hard-coded `/v1/` paths
+that are not seams. Both are properties of the instrument. First row of the
+445-file backfill.
+
+**A rule you cannot check is not a weaker rule; it is a rule that is not there.**
+
 ## [2.0.4] — 2026-09-06 — a fixture that punished a host for obeying the rule the scenario checks
 
 `v2-provider-conflict` drove `connection-pack-github`. On a host shipping a built-in `github`, RFC 0177 §D.1 requires refusing the later registration — so the fixture never installed and the qualified-form leg recorded **`blocked`** permanently, on a host whose only fault was obeying the rule under test. A production host carried that row across a dozen cuts; any blocked row denies certification (RFC 0168 §E.1).

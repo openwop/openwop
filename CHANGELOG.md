@@ -13,6 +13,71 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.5] — 2026-09-06 — four rules with no way to be checked
+
+Every item here is the same defect wearing a different coat: a normative rule
+whose instrument could not, even in principle, return the answer it appeared to
+give. None of the four announced itself — three of them were green.
+
+- **The vendor-org registry three rules cite did not exist.** `events.md`
+  §Rules, RFC 0171 §A.1 and `persistence.md` §The codemap is data all require a
+  vendor event type's first segment to be an org "registered under `extensions`
+  in `spec/v2/declaration.json`". The file had no `extensions` key, and its
+  schema is `additionalProperties: false`, so it could not have arrived by
+  accident. Three near misses kept it plausible: `extensionsKeyPattern` is a key
+  SHAPE, `reservedOrgs` lists FORBIDDEN orgs, and `metadata[]` does carry a row
+  keyed `extensions` — the host's own extension map in the discovery payload, a
+  different thing under the same name. **New:** `extensions`, required in the
+  schema, holding `example` (`reserved: true`, never assignable to a vendor,
+  RFC 2606 precedent). A registry that can only ever refuse is not a registry.
+- **`persistence.md` cited RFC 0171 §A.2 for the reserved-prefix rule.** §A.2 is
+  the NAMING rule; the reserved-prefix rule is §A.1. The sentence a certifying
+  host builds its era-2 reader on pointed at the wrong section. Repointed, and
+  the definition of "vendor-prefixed" is now written out rather than left to the
+  citation.
+- **`v2-unmapped-type-refused` drove only the refusal half.** A host that
+  refuses EVERY type the codemap does not name — including a registered vendor
+  type it MUST pass through — went green while violating the rule.
+  `openwop.requirement.0176.vendor-type-passthrough` is the control: same log
+  shape, one segment changed. Its preconditions were a note inside a seeded
+  payload; they are now checked against the live declaration and codemap.
+- **"Byte-equivalent" was witnessed by comparing two of ten fields.**
+  `replay.md` §Byte-equivalence binds `[0, fromSeq)`; the only witness compared
+  `${sequence}:${type}`. `v2-run-fork-prefix` now compares `type`, `nodeId` and
+  `payload`, excluding `eventId`/`runId`/`timestamp`/`causationId` — the
+  exclusion set is **`runs.md` §Diff and ancestry's**, not one invented for the
+  leg. `schemaVersion`, `engineVersion` and line 37's snapshot claim are
+  recorded as named residue, unasserted, with the reason.
+- **A v3 bundle's `certified: true` was uncheckable by its recipient.** v2
+  bundles carried `discovery.document` and the verifier re-derived every claimed
+  profile from it (RFC 0148 §B(1)); v3 shipped `{url, sha256, protocolVersions,
+  preferredVersion}` and `verifyBundleV3` stopped reading discovery at all. A
+  digest of a document you do not have proves nothing. **New:** optional
+  `discovery.document` — the digest is re-derived first (the signature covers
+  `sha256`, not the document, so a swap would otherwise verify), then every
+  certified profile is re-derived; absence is surfaced as
+  `derivabilityChecked: false` rather than swallowed. `check-cut-gates.mjs`
+  prefers the bundle's attested copy over the unsigned `--host-discovery` file.
+- **A requirement's id depended on whether it passed.** The registry generator
+  read `req()`'s first argument only as a string literal, so the idiomatic
+  `const ID = …` recorded `explicitId: null` and the row fell back to a
+  title-derived slug. `v2-run-fork-prefix` is in the evidence tree under two
+  ids: the explicit one where the assertion ran, the slug where the leg was
+  `inapplicable`. A verifier asking whether a bundle carries a requirement got a
+  well-formed NO from a host that had merely not held the profile. Const
+  bindings now resolve: 2058 explicit ids became 2106.
+- **`@openwop/spec-artifacts` shipped 35 JSON files and no prose** while
+  `package.json` `files` advertised `spec`. The codemap `persistence.md` calls
+  "the only authority" shipped; the sentences saying how to read it did not. 38
+  markdown files under `spec/v2/` now ship. `spec/v1/` stays out: it is frozen.
+- **`memory-attribution-replay-stable` is `majors: [1, 2]`** (was `[1]`). Its
+  rule is `replay.md` §Determinism caveat 5 in both majors, word for word; what
+  held it back was a gate that returned early **unrecorded** (indistinguishable
+  in a bundle from an unadvertised family, an unreadable shape, or a file never
+  selected) and three hard-coded `/v1/` paths that are not seams, so the
+  driver's rewrite never touched them. Both are properties of the instrument.
+  The first row of the 445-file backfill; the value is the pattern.
+
 ## [2.0.4] — 2026-09-06 — a fixture that punished a host for obeying the rule the scenario checks
 
 `v2-provider-conflict` drove the `connection-pack-github` fixture, and on a host that ships a built-in `github` its qualified-form leg could never pass. RFC 0177 §D.1 says the later registration of a bare provider id MUST be refused — so the fixture did not install, and leg 2 recorded **`blocked`**, permanently, on a host whose only fault was **obeying the rule the scenario exists to check**. A production host carried that row across a dozen cuts, and a bundle with any blocked row does not certify (RFC 0168 §E.1).

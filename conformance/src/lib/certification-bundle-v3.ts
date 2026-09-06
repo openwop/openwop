@@ -18,6 +18,7 @@
  * in cli.ts) and pure: it never reads the environment.
  */
 import { createHash, createPrivateKey, createPublicKey, sign as edSign, verify as edVerify, type KeyObject } from 'node:crypto';
+import { profileDerivable, type DiscoveryPayload } from './profiles.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
 
@@ -41,7 +42,25 @@ export interface BundleV3 {
   generatedAt: string;
   suite: { name: '@openwop/openwop-conformance'; version: string; targetMajor: 1 | 2; specArtifactsVersion: string; stampSha256?: string };
   host: { name: string; version: string; vendor?: string; build: { kind: 'image-digest' | 'commit' | 'artifact-sha256'; id: string }; signingKeyId?: string; relaxations?: BundleV3Relaxation[] };
-  discovery: { url: string; sha256: string; protocolVersions: string[]; preferredVersion: string };
+  /**
+   * `document` is the captured `/.well-known/openwop` payload, OPTIONAL.
+   *
+   * v2 bundles carried it (`discovery: { url, sha256, document }`) and
+   * `verifyBundleV2` read it to decide whether each claimed profile was
+   * DERIVABLE from what the host actually advertised. v3 shipped
+   * `{ url, sha256, protocolVersions, preferredVersion }` and `verifyBundleV3`
+   * dropped the check to match — so a v3 bundle's `certified: true` became a
+   * claim only its emitter could evaluate. `sha256` does not help a reader: it
+   * is a digest of `canonicalJSON(document)`, and a digest of a document you do
+   * not have proves nothing about its contents. Re-fetching is not a
+   * substitute, because the host redeploys and the bundle is supposed to
+   * attest to the build it names.
+   *
+   * Optional, not required: every bundle cut before this revision lacks it and
+   * stays verifiable. Present-and-inconsistent is a rejection; absent is a
+   * stated gap (`V3Verdict.derivabilityChecked === false`).
+   */
+  discovery: { url: string; sha256: string; protocolVersions: string[]; preferredVersion: string; document?: Record<string, unknown> };
   claimedProfiles: BundleV3Profile[];
   results: { totals: Record<'executedPass' | 'executedFail' | 'skipped' | 'inapplicable' | 'blocked', number>; requirements: BundleV3Requirement[] };
   witnessSha256: string;
@@ -104,6 +123,13 @@ export interface V3Verdict {
   readonly signatureVerified: boolean;
   readonly verifierSignatureVerified: boolean;
   readonly certifiedProfiles: string[];
+  /**
+   * Whether every `certified` profile was re-derived from the bundle's own
+   * `discovery.document`. `false` means the bundle did not carry one, so the
+   * certified list is the emitter's word — not wrong, but not independently
+   * checked. Read it before quoting a verdict.
+   */
+  readonly derivabilityChecked: boolean;
 }
 
 export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3Verdict {
@@ -158,6 +184,32 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     else if (p.certified) certifiedProfiles.push(p.id);
   }
   if (expected.blocked > 0 && certifiedProfiles.length > 0) rejections.push({ kind: 'blocked-certified', detail: `${expected.blocked} blocked row(s): a bundle with blocked > 0 does not certify (RFC 0168 §E.1)` });
+
+  // Derivability, restored. RFC 0148 §B(1): a profile certifies only if it is
+  // DERIVABLE from what the host advertised. `verifyBundleV2` checked exactly
+  // that against `discovery.document`; v3 stopped carrying the document and the
+  // check went with it, leaving `certified: true` a claim only its emitter
+  // could evaluate. When the document is present the check runs again — and it
+  // runs on the SAME bytes the signature covers, because `discovery.sha256` is
+  // a digest of `canonicalJSON(document)` and is re-derived here first. A
+  // document that does not hash to the signed digest is a substituted
+  // document, and rejecting it is the whole point of checking.
+  const document = bundle.discovery?.document;
+  let derivabilityChecked = false;
+  if (document !== undefined) {
+    const digest = createHash('sha256').update(canonicalJSON(document)).digest('hex');
+    if (digest !== bundle.discovery?.sha256) {
+      rejections.push({ kind: 'discovery-digest', detail: `discovery.document hashes to ${digest.slice(0, 12)} but discovery.sha256 is ${String(bundle.discovery?.sha256).slice(0, 12)} — the captured document is not the one the signature attests to` });
+    } else {
+      derivabilityChecked = true;
+      for (const p of bundle.claimedProfiles ?? []) {
+        if (!p.certified) continue;
+        if (!profileDerivable(document as DiscoveryPayload, p.id)) {
+          rejections.push({ kind: 'profile-not-derivable', profile: p.id, detail: `${p.id} is marked certified, but the captured discovery document does not derive it (RFC 0148 §B(1)) — evidence cannot certify a profile the host does not advertise` });
+        }
+      }
+    }
+  }
   // RFC 0168 §E.2: the verifier REFUSES, it does not warn — but a refusal is
   // scoped to what it names. A rejection carrying a `profile` removes that
   // profile only (a relaxation on one obligation does not poison an unrelated
@@ -171,5 +223,6 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     signatureVerified,
     verifierSignatureVerified,
     certifiedProfiles: bundleWide.length > 0 ? [] : certifiedProfiles.filter((p) => !scoped.has(p)),
+    derivabilityChecked,
   };
 }

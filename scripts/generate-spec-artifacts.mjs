@@ -5,6 +5,18 @@
  *   schemas/ (all)     (v1 flat + envelopes/, v2/)
  *   spec/v1/*.json    (the registries + their schemas)
  *   spec/v2/ (all json) (declaration, profiles, errors, codemap, path manifest, facets, release)
+ *   spec/v2/**\/*.md    (the normative v2 prose)
+ *
+ * The prose ships because the JSON does not stand alone. `persistence.md` §The
+ * codemap is data calls `spec/v2/event-codemap.json` "the only authority" for
+ * the v1→v2 mapping — and the sentences that say how to READ that authority
+ * (the seat at the storage boundary, the vendor-prefix carve-out, the refusal
+ * code) lived only in the corpus. A host integrator installing this package got
+ * the map and not the rules, while `package.json` `files` advertised `spec`;
+ * the directory held 35 JSON files and no prose, so the manifest read as though
+ * the prose were there. Reported by a certifying host that could not check the
+ * sentence its own architecture turns on. v1 prose is NOT shipped: `spec/v1/`
+ * is frozen and its consumers have the corpus.
  *   CORPUS-STAMP.json (per-file SHA-256, corpus commit, corpus tag, package version)
  * The copy is committed (not built at prepack) so the digest check runs in the
  * repo layout too (Identity gate) and the tarball is a pure function of the tree.
@@ -23,7 +35,7 @@ const sources = [
   ...walk(join(ROOT, 'api')),
   ...walk(join(ROOT, 'schemas')).filter((p) => !p.endsWith('CORPUS-STAMP.json')),
   ...walk(join(ROOT, 'spec', 'v1')).filter((p) => p.endsWith('.json')),
-  ...walk(join(ROOT, 'spec', 'v2')).filter((p) => p.endsWith('.json')),
+  ...walk(join(ROOT, 'spec', 'v2')).filter((p) => p.endsWith('.json') || p.endsWith('.md')),
 ].map((p) => relative(ROOT, p)).sort();
 const files = Object.fromEntries(sources.map((rel) => [rel, createHash('sha256').update(readFileSync(join(ROOT, rel))).digest('hex')]));
 const version = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8')).version;
