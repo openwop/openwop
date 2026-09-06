@@ -161,6 +161,11 @@
         },
         "preferredVersion": {
           "type": "string"
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "The captured /.well-known/openwop payload. OPTIONAL: bundles cut before suite 2.0.5 do not carry it and remain valid. When present it MUST hash (canonical JSON, keys sorted at every level) to `sha256`, and a verifier re-derives every certified profile from it (RFC 0148 §B(1)). Without it, `claimedProfiles[].certified` is a claim only the emitter can evaluate: a digest of a document the reader does not have proves nothing about its contents, and re-fetching does not substitute because the host redeploys while the bundle attests to the build it names. The object is deliberately OPEN (`additionalProperties: true`): it is a verbatim capture of a third-party document, and closing it would reject a payload from any host richer than this schema anticipated."
         }
       }
     },

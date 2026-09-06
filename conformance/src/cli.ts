@@ -677,7 +677,11 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       generatedAt: new Date().toISOString(),
       suite: { name: '@openwop/openwop-conformance', version, targetMajor: target.major, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
       host: { name: host.name, version: host.version, ...(host.vendor ? { vendor: host.vendor } : {}), build, signingKeyId: keyId, ...(relaxations && relaxations.length ? { relaxations } : {}) },
-      discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion },
+      // `document` is what makes `claimedProfiles[].certified` checkable by
+      // someone other than this process (RFC 0148 §B(1)); v2 carried it and v3
+      // dropped it. `sha256` is a digest of `canonicalJSON(document)`, so the
+      // two are consistent by construction and the verifier re-derives it.
+      discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion, document },
       claimedProfiles: claimed3,
       results: { totals: totals3, requirements: rows3 },
       witnessSha256: witnessDigest(rows3),
