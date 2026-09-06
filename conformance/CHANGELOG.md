@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.4] — 2026-09-06 — a fixture that punished a host for obeying the rule the scenario checks
+
+`v2-provider-conflict` drove `connection-pack-github`. On a host shipping a built-in `github`, RFC 0177 §D.1 requires refusing the later registration — so the fixture never installed and the qualified-form leg recorded **`blocked`** permanently, on a host whose only fault was obeying the rule under test. A production host carried that row across a dozen cuts; any blocked row denies certification (RFC 0168 §E.1).
+
+New fixture **`connection-pack-acme-widgets`** — same shape, a deliberately fictional provider id so no host ships it built-in and both legs are reachable everywhere.
+
+The v1 scenario `connection-provider-resolution` keeps the `github` fixture, checked rather than assumed: v1 settles a collision by **version precedence** (`spec/v1/connection-packs.md:89`) instead of refusing the install, so it is not trapped by the same choice.
+
+**An instrument must not require a host to violate the spec in order to be measured.**
+
 ## [2.0.3] — 2026-09-06 — a selector that asked the wrong question, and a window that convicted a host for its own width
 
 **`v2-effect-seam-no-refire` selected on a branch permission to witness a replay obligation.** The filter was `guarded === true && branchReFires === false`. `replay.md:78`: *"A host MAY suppress branch effects and MUST NOT report that as replay suppression."* Replay suppression is unconditional (§Suppression rule 1) and does not vary with `branchReFires`, which states only what a **branch** re-fires by design. Every `guarded: true` row is a valid target; the filter now selects on `guarded` alone. `branchReFires` is also optional, so `=== false` additionally excluded rows merely silent on it. Found by the reference host, whose ten `branchReFires: true` rows are all honest and which was about to build `fireEffectSeam` for a scenario that would have kept recording `inapplicable` afterwards.

@@ -15,11 +15,26 @@
  * to `/conformance/seams/sample/…` under target major 2), gated on
  * `connections.packsSupported`.
  *
- *   1. install the `connection-pack-github` fixture (engines rewritten to admit
- *      major 2), then a second pack claiming bare `github` → the later one is
- *      refused with connection_provider_conflict. A host that ships a built-in
- *      `github` witnesses the same rule on the FIRST install.
- *   2. `resolve { provider: "<packName>#github" }` → resolved, source: pack.
+ *   1. install the `connection-pack-acme-widgets` fixture (engines rewritten to
+ *      admit major 2), then a second pack claiming bare `acme-widgets` → the
+ *      later one is refused with connection_provider_conflict. A host that
+ *      happens to ship a built-in of the same id witnesses the same rule on the
+ *      FIRST install.
+ *   2. `resolve { provider: "<packName>#acme-widgets" }` → resolved, source: pack.
+ *
+ * **Why a fictional provider id (suite 2.0.4).** Until 2.0.3 this drove
+ * `connection-pack-github`, and a host that ships a built-in `github` could
+ * never witness leg 2: §D.1 says the later registration of a bare id MUST be
+ * refused, so the fixture did not install, and the qualified-form leg recorded
+ * `blocked` — permanently, on a host whose ONLY fault was obeying the rule the
+ * scenario exists to check. Measured on a production host, which carried that
+ * blocked row across a dozen cuts; a bundle with any blocked row does not
+ * certify (RFC 0168 §E.1). `acme-widgets` is fictional precisely so no host
+ * ships it built-in and the fixture always installs. The v1 scenario
+ * `connection-provider-resolution` keeps the `github` fixture: v1 resolves a
+ * collision by VERSION PRECEDENCE (`spec/v1/connection-packs.md:89`) rather
+ * than refusing the install, so it is not trapped by the same choice — checked
+ * rather than assumed.
  *
  * @see RFCS/0177-v2-registry-packs-and-extension-tail.md §D.1
  * @see spec/v2/core/connection-packs.md
@@ -38,7 +53,7 @@ import { targetMajor } from '../lib/seams.js';
 import { v2Discovery, familyAdvertised } from '../lib/v2.js';
 
 const SECTION = 'connection-packs.md §"Provider identity" (RFC 0177 §D.1)';
-const FIXTURE = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
+const FIXTURE = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-acme-widgets.json');
 const INSTALL = '/v1/host/sample/connection-packs/install';
 const RESOLVE = '/v1/host/sample/connection-packs/resolve';
 
@@ -69,7 +84,7 @@ async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | nul
   if (!doc) return { kind: 'blocked', reason: 'discovery unreachable — /.well-known/openwop (OpenWOP-Version: 2.0) did not answer 200 JSON' };
   const connections = await familyAdvertised('connections');
   if (!behaviorGate('connections.packsSupported', connections?.['packsSupported'] === true)) return { kind: 'inapplicable', reason: 'v2 discovery does not advertise connections.packsSupported (RFC 0095 §C)' };
-  if (!existsSync(FIXTURE)) return { kind: 'blocked', reason: 'fixture connection-packs/connection-pack-github.json is absent from this layout' };
+  if (!existsSync(FIXTURE)) return { kind: 'blocked', reason: 'fixture connection-packs/connection-pack-acme-widgets.json is absent from this layout' };
   return null;
 }
 
@@ -86,30 +101,33 @@ describe('v2-provider-conflict (RFC 0177 §D.1)', () => {
     if (skip) return softSkip(skip.kind, skip.reason);
     const first = await installFixture();
     if (!first) return softSkip('blocked', 'RFC 0095 install seam not mounted (404/403) — connections.packsSupported advertised but /conformance/seams/sample/connection-packs/install is absent');
-    // A host that ships a built-in `github` makes the fixture the LATER
-    // registration, so the rule fires on the first install; otherwise the
-    // fixture installs and a second pack claiming bare `github` is the later one.
+    // The branch is kept for a host that somehow ships a built-in of this id:
+    // the fixture is then the LATER registration and the rule fires on the
+    // first install. `acme-widgets` is fictional so the normal path is the
+    // second one — the fixture installs, and a second pack claiming the same
+    // bare id is the later registration. Keeping the branch costs nothing and
+    // means the scenario does not depend on that assumption holding.
     const later = first.res?.installed === false && codes(first.res).includes('connection_provider_conflict')
       ? first.res
       : await (async () => {
-          expect(first.res?.installed, req('openwop.requirement.0177.provider-conflict.fail-closed', SECTION, `the well-formed fixture MUST install when no other definition of github exists (got ${first.status}: ${JSON.stringify(first.res)})`)).toBe(true);
+          expect(first.res?.installed, req('openwop.requirement.0177.provider-conflict.fail-closed', SECTION, `the well-formed fixture MUST install when no other definition of acme-widgets exists (got ${first.status}: ${JSON.stringify(first.res)})`)).toBe(true);
           return (await driver.post(INSTALL, { manifest: conflicting(fixture()) })).json as InstallResult | undefined;
         })();
     expect(later?.installed, req('openwop.requirement.0177.provider-conflict.fail-closed', SECTION, 'the later registration of a bare provider id MUST NOT install (no version precedence)')).toBe(false);
     expect(codes(later), req('openwop.requirement.0177.provider-conflict.fail-closed', SECTION, 'the later registration MUST be refused with connection_provider_conflict')).toContain('connection_provider_conflict');
   });
 
-  it('the qualified form <packName>#github resolves to the named pack\'s definition', async () => {
+  it('the qualified form <packName>#acme-widgets resolves to the named pack\'s definition', async () => {
     const skip = await preflight();
     if (skip) return softSkip(skip.kind, skip.reason);
     const first = await installFixture();
     if (!first) return softSkip('blocked', 'RFC 0095 install seam not mounted (404/403) — connections.packsSupported advertised but /conformance/seams/sample/connection-packs/install is absent');
-    if (first.res?.installed !== true) return softSkip('blocked', `the fixture did not install (${codes(first.res).join(',') || first.status}) — a host with a built-in github cannot exercise the qualified form through the pack`);
+    if (first.res?.installed !== true) return softSkip('blocked', `the fixture did not install (${codes(first.res).join(',') || first.status}) — a host with a built-in acme-widgets cannot exercise the qualified form through the pack`);
     const packName = fixture().name;
-    const hit = await driver.post(RESOLVE, { provider: `${packName}#github` });
+    const hit = await driver.post(RESOLVE, { provider: `${packName}#acme-widgets` });
     if (hit.status === 404) return softSkip('blocked', 'RFC 0095 resolve seam not mounted (404)');
     const resolved = hit.json as ResolveResult | undefined;
-    expect(resolved?.resolved, req('openwop.requirement.0177.provider-conflict.qualified-form', 'connection-packs.md §"The qualified form" (RFC 0177 §D.1)', `${packName}#github MUST resolve (got ${JSON.stringify(resolved)})`)).toBe(true);
+    expect(resolved?.resolved, req('openwop.requirement.0177.provider-conflict.qualified-form', 'connection-packs.md §"The qualified form" (RFC 0177 §D.1)', `${packName}#acme-widgets MUST resolve (got ${JSON.stringify(resolved)})`)).toBe(true);
     expect(resolved?.source, req('openwop.requirement.0177.provider-conflict.qualified-form', 'connection-packs.md §"The qualified form" (RFC 0177 §D.1)', 'a qualified reference resolves only to the named pack\'s definition (source: pack)')).toBe('pack');
   });
 });

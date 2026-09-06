@@ -27965,7 +27965,7 @@
     {
       "id": "openwop.it.v2-provider-conflict.two-definitions-of-one-bare-provider-id-fail-closed-the-later-registration-is-re",
       "file": "v2-provider-conflict.test.ts",
-      "line": 84,
+      "line": 99,
       "title": "two definitions of one bare provider id fail closed: the later registration is refused with connection_provider_conflict",
       "explicitId": "openwop.requirement.0177.provider-conflict.fail-closed",
       "citations": [
@@ -27987,10 +27987,10 @@
       ]
     },
     {
-      "id": "openwop.it.v2-provider-conflict.the-qualified-form-packname-github-resolves-to-the-named-pack-s-definition",
+      "id": "openwop.it.v2-provider-conflict.the-qualified-form-packname-acme-widgets-resolves-to-the-named-pack-s-definition",
       "file": "v2-provider-conflict.test.ts",
-      "line": 102,
-      "title": "the qualified form <packName>#github resolves to the named pack's definition",
+      "line": 120,
+      "title": "the qualified form <packName>#acme-widgets resolves to the named pack's definition",
       "explicitId": "openwop.requirement.0177.provider-conflict.qualified-form",
       "citations": [
         {
