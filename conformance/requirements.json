@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 565,
-    "tests": 2150,
-    "withStableId": 2149,
-    "interpolatedTitles": 1,
-    "explicitIds": 2058
+    "tests": 2151,
+    "withStableId": 2151,
+    "interpolatedTitles": 0,
+    "explicitIds": 2106
   },
   "records": [
     {
@@ -7388,19 +7388,16 @@
       "explicitId": "openwop.it.chain-produced-var-roundtrip.emits-declared-producedvariables-into-variables-name-type-no-value",
       "citations": [
         {
-          "section": null,
-          "requirement": "§2.3 — one run-scoped variable emitted",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.3 — one run-scoped variable emitted"
         },
         {
-          "section": null,
-          "requirement": "§2.3 — no author-time value (distinct from parameters)",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.3 — no author-time value (distinct from parameters)"
         },
         {
-          "section": null,
-          "requirement": "§2.3 — no default value (a produced var is written during the run)",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.3 — no default value (a produced var is written during the run)"
         }
       ]
     },
@@ -7412,9 +7409,8 @@
       "explicitId": "openwop.it.chain-produced-var-roundtrip.validates-a-variable-read-of-a-declared-producedvariables-name",
       "citations": [
         {
-          "section": null,
-          "requirement": "§2.2 — declared read is closed-world valid",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.2 — declared read is closed-world valid"
         }
       ]
     },
@@ -7426,19 +7422,16 @@
       "explicitId": "openwop.it.chain-produced-var-roundtrip.rejects-a-variable-read-of-an-undeclared-name-variable-undeclared",
       "citations": [
         {
-          "section": null,
-          "requirement": "§2.2 — undeclared read MUST reject",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.2 — undeclared read MUST reject"
         },
         {
-          "section": null,
-          "requirement": "wire code variable_undeclared",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "wire code variable_undeclared"
         },
         {
-          "section": null,
-          "requirement": "names the offending variable",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "names the offending variable"
         }
       ]
     },
@@ -7450,14 +7443,12 @@
       "explicitId": "openwop.it.chain-produced-var-roundtrip.rejects-a-producedvariables-whose-producedby-names-a-non-existent-node-produced",
       "citations": [
         {
-          "section": null,
-          "requirement": "§2.2 — producedBy MUST be a real fragment node",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.2 — producedBy MUST be a real fragment node"
         },
         {
-          "section": null,
-          "requirement": "distinct wire code",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "distinct wire code"
         }
       ]
     },
@@ -7469,9 +7460,8 @@
       "explicitId": "openwop.it.chain-produced-var-roundtrip.rejects-a-producedvariables-name-that-collides-with-a-parameter-channels-must-be",
       "citations": [
         {
-          "section": null,
-          "requirement": "§2.2 — a produced var colliding with a parameter name MUST reject",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.2 — a produced var colliding with a parameter name MUST reject"
         }
       ]
     },
@@ -7483,14 +7473,12 @@
       "explicitId": "openwop.it.chain-produced-var-roundtrip.validates-a-read-of-a-materialized-parameter-name-params-produced-vars-compose",
       "citations": [
         {
-          "section": null,
-          "requirement": "§2.2 — a materialized-parameter read validates",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.2 — a materialized-parameter read validates"
         },
         {
-          "section": null,
-          "requirement": "§2.2 — same read with no matching param still rejects",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Produced (run-scoped) variables (RFC 0133)\"",
+          "requirement": "§2.2 — same read with no matching param still rejects"
         }
       ]
     },
@@ -7502,19 +7490,16 @@
       "explicitId": "openwop.it.chain-subchain-cycle-rejected.rejects-a-chain-that-transitively-composes-itself-sub-chain-cycle",
       "citations": [
         {
-          "section": null,
-          "requirement": "self-composition MUST reject",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "self-composition MUST reject"
         },
         {
-          "section": null,
-          "requirement": "wire code sub_chain_cycle",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "wire code sub_chain_cycle"
         },
         {
-          "section": null,
-          "requirement": "HTTP 400",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "HTTP 400"
         }
       ]
     },
@@ -7526,19 +7511,16 @@
       "explicitId": "openwop.it.chain-subchain-cycle-rejected.rejects-nesting-past-maxsubchaindepth-with-a-distinct-sub-chain-max-depth-exceed",
       "citations": [
         {
-          "section": null,
-          "requirement": "depth breach MUST reject (bounded recursion)",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "depth breach MUST reject (bounded recursion)"
         },
         {
-          "section": null,
-          "requirement": "distinct wire code",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "distinct wire code"
         },
         {
-          "section": null,
-          "requirement": "a depth breach is NOT a cycle",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "a depth breach is NOT a cycle"
         }
       ]
     },
@@ -7550,9 +7532,8 @@
       "explicitId": "openwop.it.chain-subchain-cycle-rejected.expands-an-acyclic-tree-within-the-bound-cleanly-guard-rejects-bombs-not-benign",
       "citations": [
         {
-          "section": null,
-          "requirement": "benign acyclic tree within the bound expands",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "benign acyclic tree within the bound expands"
         }
       ]
     },
@@ -7564,9 +7545,8 @@
       "explicitId": "openwop.it.chain-subchain-cycle-rejected.rejects-a-subchainref-that-resolves-to-no-sibling-chain-sub-chain-unresolved",
       "citations": [
         {
-          "section": null,
-          "requirement": "§1.1 — unresolvable ref rejects distinctly",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.1 — unresolvable ref rejects distinctly"
         }
       ]
     },
@@ -7643,19 +7623,16 @@
       "explicitId": "openwop.it.chain-subchain-sibling.co-registers-the-referenced-sibling-as-its-own-workflow",
       "citations": [
         {
-          "section": null,
-          "requirement": "§1.3 step 2 — one distinct sibling ref ⇒ one co-registered child",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.3 step 2 — one distinct sibling ref ⇒ one co-registered child"
         },
         {
-          "section": null,
-          "requirement": "child carries the composed chainId",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "child carries the composed chainId"
         },
         {
-          "section": null,
-          "requirement": "child is a fully expanded fragment (its own registered workflow)",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "child is a fully expanded fragment (its own registered workflow)"
         }
       ]
     },
@@ -7667,14 +7644,12 @@
       "explicitId": "openwop.it.chain-subchain-sibling.mints-a-deterministic-tenant-scoped-version-pinned-child-id",
       "citations": [
         {
-          "section": null,
-          "requirement": "§1.3 step 2 — deterministic (tenantId, childChainId, version) id",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.3 step 2 — deterministic (tenantId, childChainId, version) id"
         },
         {
-          "section": null,
-          "requirement": "repeat instantiation in-tenant converges",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "repeat instantiation in-tenant converges"
         }
       ]
     },
@@ -7686,14 +7661,12 @@
       "explicitId": "openwop.it.chain-subchain-sibling.scopes-the-child-id-per-tenant-two-tenants-never-collide-on-the-global-registry",
       "citations": [
         {
-          "section": null,
-          "requirement": "tenant-a mints an id",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "tenant-a mints an id"
         },
         {
-          "section": null,
-          "requirement": "§1.3 SECURITY sub-chain-child-tenant-scoped — distinct tenants ⇒ distinct child ids, no cross-tenant collision",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.3 SECURITY sub-chain-child-tenant-scoped — distinct tenants ⇒ distinct child ids, no cross-tenant collision"
         }
       ]
     },
@@ -7705,14 +7678,12 @@
       "explicitId": "openwop.it.chain-subchain-sibling.registers-a-child-referenced-twice-exactly-once-dedup-by-deterministic-id",
       "citations": [
         {
-          "section": null,
-          "requirement": "§1.3 step 2 — a shared child registers once",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.3 step 2 — a shared child registers once"
         },
         {
-          "section": null,
-          "requirement": "both build-0 + build-1 collapse to one child",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "both build-0 + build-1 collapse to one child"
         }
       ]
     },
@@ -7724,19 +7695,16 @@
       "explicitId": "openwop.it.chain-subchain-sibling.rewrites-config-subchainref-the-minted-child-config-workflowid",
       "citations": [
         {
-          "section": null,
-          "requirement": "both dispatch nodes present",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "both dispatch nodes present"
         },
         {
-          "section": null,
-          "requirement": "§1.3 step 3 — subChainRef rewritten to minted child id",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.3 step 3 — subChainRef rewritten to minted child id"
         },
         {
-          "section": null,
-          "requirement": "§1.3 step 3 — transient subChainRef key dropped from the runtime config",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "§1.3 step 3 — transient subChainRef key dropped from the runtime config"
         }
       ]
     },
@@ -7748,9 +7716,8 @@
       "explicitId": "openwop.it.chain-subchain-sibling.preserves-the-child-reference-at-runtime-concrete-workflowid-unlike-inline-mode",
       "citations": [
         {
-          "section": null,
-          "requirement": "parent HOLDS the co-registered child at runtime",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Sub-chain composition (RFC 0133)\"",
+          "requirement": "parent HOLDS the co-registered child at runtime"
         }
       ]
     },
@@ -12267,15 +12234,14 @@
       "file": "era-key-stamped-v1.test.ts",
       "line": 75,
       "title": "a run the host just created carries eventLogSchemaVersion",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.version-negotiation.era-key-stamped",
       "citations": [
         {
-          "section": null,
-          "requirement": "every persisted run document MUST carry an eventLogSchemaVersion — the field is prose-only (run-snapshot.schema.json requires just runId, workflowId and status), so a snapshot without it validates cleanly and only this check can see its absence",
-          "interpolated": true
+          "section": "spec/v1/version-negotiation.md §Stamping",
+          "requirement": "every persisted run document MUST carry an eventLogSchemaVersion — the field is prose-only (run-snapshot.schema.json requires just runId, workflowId and status), so a snapshot without it validates cleanly and only this check can see its absence"
         },
         {
-          "section": null,
+          "section": "spec/v1/version-negotiation.md §Stamping",
           "requirement": null,
           "interpolated": true
         }
@@ -12286,7 +12252,7 @@
       "file": "era-key-stamped-v1.test.ts",
       "line": 98,
       "title": "a freshly created run is not classified legacy by the host's own rule",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.version-negotiation.era-key-not-legacy",
       "citations": [
         {
           "section": "spec/v1/version-negotiation.md §Legacy detection",
@@ -12300,15 +12266,14 @@
       "file": "era-key-stamped-v1.test.ts",
       "line": 124,
       "title": "a run the host just created carries engineVersion — the legacy escape cannot reach it",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.version-negotiation.engine-version-stamped",
       "citations": [
         {
-          "section": null,
-          "requirement": "every persisted run document MUST carry engineVersion; the \"MAY omit\" escape applies only to legacy runs that predate the contract, and this run was created moments ago",
-          "interpolated": true
+          "section": "spec/v1/version-negotiation.md §Stamping",
+          "requirement": "every persisted run document MUST carry engineVersion; the \"MAY omit\" escape applies only to legacy runs that predate the contract, and this run was created moments ago"
         },
         {
-          "section": null,
+          "section": "spec/v1/version-negotiation.md §Stamping",
           "requirement": null,
           "interpolated": true
         }
@@ -18732,14 +18697,12 @@
       "explicitId": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "citations": [
         {
-          "section": null,
-          "requirement": ":pause MUST return 202 on a pausable run",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause MUST return 202 on a pausable run"
         },
         {
-          "section": null,
-          "requirement": ":resume MUST return 202 on a paused run",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:resume",
+          "requirement": ":resume MUST return 202 on a paused run"
         }
       ]
     },
@@ -18751,14 +18714,12 @@
       "explicitId": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "citations": [
         {
-          "section": null,
-          "requirement": ":resume on a non-paused run MUST return 409",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:resume",
+          "requirement": ":resume on a non-paused run MUST return 409"
         },
         {
-          "section": null,
-          "requirement": "the 409 MUST carry details.runStatus with the actual state",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:resume",
+          "requirement": "the 409 MUST carry details.runStatus with the actual state"
         }
       ]
     },
@@ -18770,29 +18731,24 @@
       "explicitId": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "citations": [
         {
-          "section": null,
-          "requirement": ":pause MUST return 202 on a pausable run",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause MUST return 202 on a pausable run"
         },
         {
-          "section": null,
-          "requirement": ":pause on an already-paused run without a matching Idempotency-Key MUST return 409",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause on an already-paused run without a matching Idempotency-Key MUST return 409"
         },
         {
-          "section": null,
-          "requirement": "the 409 MUST carry details.runStatus: paused",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": "the 409 MUST carry details.runStatus: paused"
         },
         {
-          "section": null,
-          "requirement": ":pause with an Idempotency-Key MUST return 202 on a pausable run",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause with an Idempotency-Key MUST return 202 on a pausable run"
         },
         {
-          "section": null,
-          "requirement": "a :pause carrying the original Idempotency-Key MUST return 202 with the cached response, not 409",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": "a :pause carrying the original Idempotency-Key MUST return 202 with the cached response, not 409"
         }
       ]
     },
@@ -18804,9 +18760,8 @@
       "explicitId": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "citations": [
         {
-          "section": null,
-          "requirement": ":pause on a terminal run MUST return 409",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause on a terminal run MUST return 409"
         }
       ]
     },
@@ -18818,12 +18773,11 @@
       "explicitId": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "citations": [
         {
-          "section": null,
-          "requirement": ":pause with drainPolicy drain-current-node MUST return 202 (pause requested)",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause with drainPolicy drain-current-node MUST return 202 (pause requested)"
         },
         {
-          "section": null,
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
           "requirement": null,
           "interpolated": true
         }
@@ -18837,14 +18791,12 @@
       "explicitId": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "citations": [
         {
-          "section": null,
-          "requirement": ":pause-during-suspend MUST surface the active waiting-* status in the conflict envelope",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause-during-suspend MUST surface the active waiting-* status in the conflict envelope"
         },
         {
-          "section": null,
-          "requirement": ":pause-during-suspend MUST NOT silently discard the active interrupt",
-          "interpolated": true
+          "section": "rest-endpoints.md POST /v1/runs/{runId}:pause",
+          "requirement": ":pause-during-suspend MUST NOT silently discard the active interrupt"
         }
       ]
     },
@@ -23240,9 +23192,8 @@
       "explicitId": "openwop.it.safefetch-live-audit.a-blocked-real-run-safefetch-emits-the-durable-agent-toolcalled-agent-toolreturn",
       "citations": [
         {
-          "section": null,
-          "requirement": "the safe-fetch-run seam MUST return the runId of the real run it executed the safeFetch in",
-          "interpolated": true
+          "section": "host-capabilities.md §host.http",
+          "requirement": "the safe-fetch-run seam MUST return the runId of the real run it executed the safeFetch in"
         }
       ]
     },
@@ -23254,9 +23205,8 @@
       "explicitId": "openwop.it.safefetch-live-audit.a-fetched-real-run-safefetch-also-emits-the-durable-pair-success-path-coverage-s",
       "citations": [
         {
-          "section": null,
-          "requirement": "the safe-fetch-run seam MUST return the runId of the real run it executed the fetch in",
-          "interpolated": true
+          "section": "host-capabilities.md §host.http",
+          "requirement": "the safe-fetch-run seam MUST return the runId of the real run it executed the fetch in"
         }
       ]
     },
@@ -25849,10 +25799,10 @@
       "file": "v2-advertised-fixtures-exist.test.ts",
       "line": 62,
       "title": "a sampled advertised fixture is actually creatable, not just listed",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0168.advertised-fixtures-exist",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/conformance.md §Fixtures",
           "requirement": null,
           "interpolated": true
         }
@@ -25863,17 +25813,16 @@
       "file": "v2-advertised-path-space-served.test.ts",
       "line": 107,
       "title": "a host advertising major 2 reaches the surfaces it already serves under /v1",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0172.advertised-path-space-served",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/versioning.md §1.2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "at least one non-well-known surface MUST be reachable under major 2, or the advertisement rests entirely on the one resource the header selects",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.2",
+          "requirement": "at least one non-well-known surface MUST be reachable under major 2, or the advertisement rests entirely on the one resource the header selects"
         }
       ]
     },
@@ -25920,14 +25869,13 @@
       "explicitId": "openwop.requirement.0170.assurance-downgrade-audited.refused",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.3",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be sender_constraint_missing",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §2.3",
+          "requirement": "the refusal code MUST be sender_constraint_missing"
         }
       ]
     },
@@ -25939,12 +25887,12 @@
       "explicitId": "openwop.requirement.0170.assurance-downgrade-audited.audited",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.3",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.3",
           "requirement": null,
           "interpolated": true
         }
@@ -25958,14 +25906,13 @@
       "explicitId": "openwop.requirement.0168.bundle-v3-signed.schema-closed-root",
       "citations": [
         {
-          "section": null,
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the v3 root is closed — an unknown root key MUST be rejected (RFC 0168 §E.1)",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "the v3 root is closed — an unknown root key MUST be rejected (RFC 0168 §E.1)"
         }
       ]
     },
@@ -25977,24 +25924,21 @@
       "explicitId": "openwop.requirement.0168.bundle-v3-signed.witness-digest",
       "citations": [
         {
-          "section": null,
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the Ed25519 attestation MUST verify under the host key",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "the Ed25519 attestation MUST verify under the host key"
         },
         {
-          "section": null,
-          "requirement": "a witnessSha256 that is not the digest of the rows MUST be refused with witness-digest (RFC 0148 §C)",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "a witnessSha256 that is not the digest of the rows MUST be refused with witness-digest (RFC 0148 §C)"
         },
         {
-          "section": null,
-          "requirement": "the attestation covers witnessSha256, so a flipped digest MUST NOT verify under the host key",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "the attestation covers witnessSha256, so a flipped digest MUST NOT verify under the host key"
         }
       ]
     },
@@ -26006,24 +25950,21 @@
       "explicitId": "openwop.requirement.0168.bundle-v3-signed.independent-self-signed",
       "citations": [
         {
-          "section": null,
-          "requirement": "an independent claim whose verifier key id equals the host key id MUST be refused with independent-self-signed (RFC 0148 R5)",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "an independent claim whose verifier key id equals the host key id MUST be refused with independent-self-signed (RFC 0148 R5)"
         },
         {
-          "section": null,
-          "requirement": "a refused independent claim MUST NOT certify",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "a refused independent claim MUST NOT certify"
         },
         {
-          "section": null,
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the verifier attestation MUST verify under the verifier key",
-          "interpolated": true
+          "section": "conformance.md §\"Bundle v3\" (RFC 0168 §E)",
+          "requirement": "the verifier attestation MUST verify under the verifier key"
         }
       ]
     },
@@ -26035,7 +25976,7 @@
       "explicitId": "openwop.requirement.0169.capabilities-root-closed.valid",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §3",
           "requirement": null,
           "interpolated": true
         }
@@ -26049,9 +25990,8 @@
       "explicitId": "openwop.requirement.0169.capabilities-root-closed.unknown-root-key",
       "citations": [
         {
-          "section": null,
-          "requirement": "any root key that is not a metadata key, a declared family, or `extensions` MUST fail validation",
-          "interpolated": true
+          "section": "spec/v2/core/capabilities.md §3",
+          "requirement": "any root key that is not a metadata key, a declared family, or `extensions` MUST fail validation"
         }
       ]
     },
@@ -26063,9 +26003,8 @@
       "explicitId": "openwop.requirement.0169.capabilities-root-closed.dotted-key",
       "citations": [
         {
-          "section": null,
-          "requirement": "a dotted key (the v1 `host.<family>` mirror) MUST fail validation at the closed root",
-          "interpolated": true
+          "section": "spec/v2/core/capabilities.md §3",
+          "requirement": "a dotted key (the v1 `host.<family>` mirror) MUST fail validation at the closed root"
         }
       ]
     },
@@ -26077,9 +26016,8 @@
       "explicitId": "openwop.requirement.0169.capabilities-root-closed.wrapper",
       "citations": [
         {
-          "section": null,
-          "requirement": "the v1 `capabilities` wrapper MUST fail validation at the closed root (migration row C2.1)",
-          "interpolated": true
+          "section": "spec/v2/core/capabilities.md §3",
+          "requirement": "the v1 `capabilities` wrapper MUST fail validation at the closed root (migration row C2.1)"
         }
       ]
     },
@@ -26104,22 +26042,22 @@
       "explicitId": "openwop.requirement.0169.capability-record-shape.required-fields",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §2",
           "requirement": null,
           "interpolated": true
         }
@@ -26133,12 +26071,12 @@
       "explicitId": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §2",
           "requirement": null,
           "interpolated": true
         }
@@ -26166,14 +26104,13 @@
       "explicitId": "openwop.requirement.0177.chain-pin-exact.range-refused",
       "citations": [
         {
-          "section": null,
+          "section": "workflow-chain-packs.md §\"Exact pins\" (RFC 0177 §E.1)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST carry an error code in the canonical envelope",
-          "interpolated": true
+          "section": "workflow-chain-packs.md §\"Exact pins\" (RFC 0177 §E.1)",
+          "requirement": "the refusal MUST carry an error code in the canonical envelope"
         }
       ]
     },
@@ -26185,7 +26122,7 @@
       "explicitId": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
       "citations": [
         {
-          "section": null,
+          "section": "workflow-chain-packs.md §\"Exact pins\" (RFC 0177 §E.1)",
           "requirement": null,
           "interpolated": true
         }
@@ -26199,27 +26136,26 @@
       "explicitId": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
       "citations": [
         {
-          "section": null,
-          "requirement": "the corpus ledger MUST carry at least one requirement id",
-          "interpolated": true
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
+          "requirement": "the corpus ledger MUST carry at least one requirement id"
         },
         {
-          "section": null,
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
           "requirement": null,
           "interpolated": true
         }
@@ -26233,14 +26169,13 @@
       "explicitId": "openwop.requirement.0168.coherence-not-in-bundle.schema-forbids-coherence-ids",
       "citations": [
         {
-          "section": null,
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "a v3 bundle carrying an openwop.it.spec-corpus-validity. id MUST be rejected by the bundle schema",
-          "interpolated": true
+          "section": "conformance.md §\"Two products, two ledgers\" (RFC 0168 §D.1)",
+          "requirement": "a v3 bundle carrying an openwop.it.spec-corpus-validity. id MUST be rejected by the bundle schema"
         }
       ]
     },
@@ -26303,24 +26238,20 @@
       "explicitId": "openwop.requirement.0171.configurable-closed.schema",
       "citations": [
         {
-          "section": null,
-          "requirement": "{ version: 1 } is the smallest valid configurable (version REQUIRED, const 1)",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "{ version: 1 } is the smallest valid configurable (version REQUIRED, const 1)"
         },
         {
-          "section": null,
-          "requirement": "a dotted key (`ai.provider` as a string key) MUST fail the closed nested schema",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "a dotted key (`ai.provider` as a string key) MUST fail the closed nested schema"
         },
         {
-          "section": null,
-          "requirement": "an unknown root key MUST fail the closed schema (additionalProperties: false in the standalone artifact)",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "an unknown root key MUST fail the closed schema (additionalProperties: false in the standalone artifact)"
         },
         {
-          "section": null,
-          "requirement": "a configurable without `version` MUST fail",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "a configurable without `version` MUST fail"
         }
       ]
     },
@@ -26332,14 +26263,12 @@
       "explicitId": "openwop.requirement.0171.configurable-closed.dotted-key",
       "citations": [
         {
-          "section": null,
-          "requirement": "a dotted key inside a section MUST be rejected with 400",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "a dotted key inside a section MUST be rejected with 400"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be validation_error",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "the refusal code MUST be validation_error"
         }
       ]
     },
@@ -26351,14 +26280,12 @@
       "explicitId": "openwop.requirement.0171.configurable-closed.unknown-key",
       "citations": [
         {
-          "section": null,
-          "requirement": "an unknown root key MUST be rejected with 400",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "an unknown root key MUST be rejected with 400"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be validation_error",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §configurable",
+          "requirement": "the refusal code MUST be validation_error"
         }
       ]
     },
@@ -26367,7 +26294,7 @@
       "file": "v2-created-run-readable.test.ts",
       "line": 63,
       "title": "a run created at this base is readable and pollable at this base by the id it returned, and its links stay on this base",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0172.created-run-readable",
       "citations": [
         {
           "section": "spec/v2/core/identity.md §5",
@@ -26375,7 +26302,7 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Create",
           "requirement": null,
           "interpolated": true
         },
@@ -26385,12 +26312,12 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Create",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Create",
           "requirement": null,
           "interpolated": true
         }
@@ -26430,19 +26357,16 @@
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.unlisted-major",
       "citations": [
         {
-          "section": null,
-          "requirement": "a header naming a major not in protocolVersions[] MUST be answered 406",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "a header naming a major not in protocolVersions[] MUST be answered 406"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be protocol_version_unsupported",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "the refusal code MUST be protocol_version_unsupported"
         },
         {
-          "section": null,
-          "requirement": "details.protocolVersions[] MUST echo the advertised list",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "details.protocolVersions[] MUST echo the advertised list"
         }
       ]
     },
@@ -26454,14 +26378,12 @@
       "explicitId": "openwop.requirement.0172.dual-stack-negotiation.v1-path-mismatch",
       "citations": [
         {
-          "section": null,
-          "requirement": "a /v1/… path with OpenWOP-Version other than 1 MUST be answered 400",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "a /v1/… path with OpenWOP-Version other than 1 MUST be answered 400"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be protocol_version_mismatch",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "the refusal code MUST be protocol_version_mismatch"
         }
       ]
     },
@@ -26637,19 +26559,18 @@
       "explicitId": "openwop.requirement.0171.enum-growth-rule.unknown-member-accepted",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Types (Growth)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Types (Growth)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the vendor branch admits an optional third segment (<org>.<domain>.<name>)",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Types (Growth)",
+          "requirement": "the vendor branch admits an optional third segment (<org>.<domain>.<name>)"
         }
       ]
     },
@@ -26661,19 +26582,16 @@
       "explicitId": "openwop.requirement.0171.enum-growth-rule.reserved-rejected",
       "citations": [
         {
-          "section": null,
-          "requirement": "openwop. is the only reserved prefix; a type under it that is not in the enum MUST fail",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Types (Growth)",
+          "requirement": "openwop. is the only reserved prefix; a type under it that is not in the enum MUST fail"
         },
         {
-          "section": null,
-          "requirement": "a member outside the positive pattern (upper-case) MUST fail",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Types (Growth)",
+          "requirement": "a member outside the positive pattern (upper-case) MUST fail"
         },
         {
-          "section": null,
-          "requirement": "a single-segment member MUST fail — every type is <domain>.<name> or <org>.<name>",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Types (Growth)",
+          "requirement": "a single-segment member MUST fail — every type is <domain>.<name> or <org>.<name>"
         }
       ]
     },
@@ -26682,25 +26600,25 @@
       "file": "v2-era-2-append-vocabulary.test.ts",
       "line": 48,
       "title": "a host append to an open era-2 run keeps the log in v1 vocabulary, so the whole log still reads",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0176.era-2-append-vocabulary",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The writer rule",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The writer rule",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The writer rule",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The writer rule",
           "requirement": null,
           "interpolated": true
         }
@@ -26711,10 +26629,10 @@
       "file": "v2-era-2-append-vocabulary.test.ts",
       "line": 133,
       "title": "the run keeps the era it was created with; an append does not promote it to era 3",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0176.era-2-append-vocabulary",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The writer rule",
           "requirement": null,
           "interpolated": true
         }
@@ -26728,12 +26646,11 @@
       "explicitId": "openwop.requirement.0176.era-key",
       "citations": [
         {
-          "section": null,
-          "requirement": "eventLogSchemaVersion is REQUIRED on every run snapshot (run-snapshot.schema.json) — the era key is never absent on a run a v2 host created",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §The era key",
+          "requirement": "eventLogSchemaVersion is REQUIRED on every run snapshot (run-snapshot.schema.json) — the era key is never absent on a run a v2 host created"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The era key",
           "requirement": null,
           "interpolated": true
         }
@@ -26757,9 +26674,8 @@
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the value stamped on a run created now MUST equal the value discovery advertises",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §The era key",
+          "requirement": "the value stamped on a run created now MUST equal the value discovery advertises"
         }
       ]
     },
@@ -26768,20 +26684,20 @@
       "file": "v2-era-stamp-universal.test.ts",
       "line": 40,
       "title": "discovery advertises an era the host actually writes, and a new run carries it",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0176.era-stamp-universal",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The era key",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The era key",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The era key",
           "requirement": null,
           "interpolated": true
         }
@@ -26792,12 +26708,11 @@
       "file": "v2-era-stamp-universal.test.ts",
       "line": 80,
       "title": "a v2-era host stamps 3, so its new runs are never read as the v1 era",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0176.era-stamp-universal",
       "citations": [
         {
-          "section": null,
-          "requirement": "a host advertising era 3 MUST stamp 3 on every run it creates — an unstamped run made after the cut is indistinguishable from a pre-cut run and every reader translates it as era 2, which is a silent wrong read rather than an error",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §The era key",
+          "requirement": "a host advertising era 3 MUST stamp 3 on every run it creates — an unstamped run made after the cut is indistinguishable from a pre-cut run and every reader translates it as era 2, which is a silent wrong read rather than an error"
         }
       ]
     },
@@ -26809,12 +26724,12 @@
       "explicitId": "openwop.requirement.0171.error-registry.envelope",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/errors.md §The envelope",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/errors.md §The envelope",
           "requirement": null,
           "interpolated": true
         }
@@ -26858,7 +26773,7 @@
       "explicitId": "openwop.requirement.0171.event-type-closed.type",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Types",
           "requirement": null,
           "interpolated": true
         }
@@ -26890,17 +26805,17 @@
       "explicitId": "openwop.requirement.0176.fork-a-v1-run.prefix",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/replay.md §Forking a v1 run",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/replay.md §Forking a v1 run",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/replay.md §Forking a v1 run",
           "requirement": null,
           "interpolated": true
         },
@@ -26919,9 +26834,8 @@
       "explicitId": "openwop.requirement.0176.fork-a-v1-run.legacy-subject",
       "citations": [
         {
-          "section": null,
-          "requirement": "the fork's log MUST carry run.started at its head",
-          "interpolated": true
+          "section": "spec/v2/core/replay.md §Forking a v1 run",
+          "requirement": "the fork's log MUST carry run.started at its head"
         },
         {
           "section": "spec/v2/core/identity.md §1.2",
@@ -26947,19 +26861,17 @@
       "explicitId": "openwop.requirement.0177.form-when-reuses-edge-conditions",
       "citations": [
         {
-          "section": null,
+          "section": "form-content-packs.md §\"Conditional visibility\" (RFC 0177 §E.4)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "a `when` outside the edge-condition grammar (a second expression language) MUST be rejected",
-          "interpolated": true
+          "section": "form-content-packs.md §\"Conditional visibility\" (RFC 0177 §E.4)",
+          "requirement": "a `when` outside the edge-condition grammar (a second expression language) MUST be rejected"
         },
         {
-          "section": null,
-          "requirement": "an operator outside expression|equals|notEquals|contains|regex|truthy|falsy MUST be rejected",
-          "interpolated": true
+          "section": "form-content-packs.md §\"Conditional visibility\" (RFC 0177 §E.4)",
+          "requirement": "an operator outside expression|equals|notEquals|contains|regex|truthy|falsy MUST be rejected"
         }
       ]
     },
@@ -26971,7 +26883,7 @@
       "explicitId": "openwop.requirement.0171.header-scheme.no-legacy-headers",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/headers.md §Removed in v2",
           "requirement": null,
           "interpolated": true
         }
@@ -27004,12 +26916,12 @@
       "explicitId": "openwop.requirement.0170.id-grammar.snapshot",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         }
@@ -27023,14 +26935,13 @@
       "explicitId": "openwop.requirement.0170.id-grammar.events",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "every event MUST carry the run's own runId",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §5",
+          "requirement": "every event MUST carry the run's own runId"
         }
       ]
     },
@@ -27042,12 +26953,12 @@
       "explicitId": "openwop.requirement.0170.id-grammar.tenant-binding",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         },
@@ -27065,14 +26976,12 @@
       "explicitId": "openwop.requirement.0170.idempotency-key-grammar.valid-accepted",
       "citations": [
         {
-          "section": null,
-          "requirement": "the suite's key MUST itself be inside ^[A-Za-z0-9._~-]{22,128}$",
-          "interpolated": true
+          "section": "spec/v2/core/idempotency.md §Layer 1",
+          "requirement": "the suite's key MUST itself be inside ^[A-Za-z0-9._~-]{22,128}$"
         },
         {
-          "section": null,
-          "requirement": "a UUIDv4-strength key in base64url form satisfies the grammar and MUST NOT be refused as idempotency_key_invalid",
-          "interpolated": true
+          "section": "spec/v2/core/idempotency.md §Layer 1",
+          "requirement": "a UUIDv4-strength key in base64url form satisfies the grammar and MUST NOT be refused as idempotency_key_invalid"
         }
       ]
     },
@@ -27084,14 +26993,12 @@
       "explicitId": "openwop.requirement.0170.idempotency-key-grammar.invalid-refused",
       "citations": [
         {
-          "section": null,
-          "requirement": "a host MUST reject an Idempotency-Key outside ^[A-Za-z0-9._~-]{22,128}$ with 400",
-          "interpolated": true
+          "section": "spec/v2/core/idempotency.md §Layer 1",
+          "requirement": "a host MUST reject an Idempotency-Key outside ^[A-Za-z0-9._~-]{22,128}$ with 400"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be idempotency_key_invalid",
-          "interpolated": true
+          "section": "spec/v2/core/idempotency.md §Layer 1",
+          "requirement": "the refusal code MUST be idempotency_key_invalid"
         }
       ]
     },
@@ -27103,7 +27010,7 @@
       "explicitId": "openwop.requirement.0170.interrupt-token-scheme.unprefixed-refused",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §4",
           "requirement": null,
           "interpolated": true
         },
@@ -27122,14 +27029,12 @@
       "explicitId": "openwop.requirement.0170.interrupt-token-scheme.unheld-kid-refused",
       "citations": [
         {
-          "section": null,
-          "requirement": "a host MUST refuse a token whose kid it does not hold with 401",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §4",
+          "requirement": "a host MUST refuse a token whose kid it does not hold with 401"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be interrupt_token_invalid (one code per state — never not_found for a token the host cannot verify)",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §4",
+          "requirement": "the refusal code MUST be interrupt_token_invalid (one code per state — never not_found for a token the host cannot verify)"
         }
       ]
     },
@@ -27141,7 +27046,7 @@
       "explicitId": "openwop.requirement.0170.lane-issuer-advertised.members",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.1",
           "requirement": null,
           "interpolated": true
         },
@@ -27219,14 +27124,14 @@
       ]
     },
     {
-      "id": null,
+      "id": "openwop.requirement.0172.malformed-body-envelope",
       "file": "v2-malformed-body-envelope.test.ts",
       "line": 53,
       "title": null,
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0172.malformed-body-envelope",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/versioning.md §1.4",
           "requirement": null,
           "interpolated": true
         },
@@ -27259,14 +27164,12 @@
       "explicitId": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
       "citations": [
         {
-          "section": null,
-          "requirement": "an unbounded range does not admit protocol major 2 and MUST be refused with 400 pack_engine_unsupported",
-          "interpolated": true
+          "section": "packs.md §\"The engine range\" (RFC 0177 §A.1)",
+          "requirement": "an unbounded range does not admit protocol major 2 and MUST be refused with 400 pack_engine_unsupported"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be pack_engine_unsupported (not pack_runtime_requirement_unmet)",
-          "interpolated": true
+          "section": "packs.md §\"The engine range\" (RFC 0177 §A.1)",
+          "requirement": "the refusal code MUST be pack_engine_unsupported (not pack_runtime_requirement_unmet)"
         }
       ]
     },
@@ -27278,14 +27181,12 @@
       "explicitId": "openwop.requirement.0177.manifest-ceiling-refused.v1-ceiling",
       "citations": [
         {
-          "section": null,
-          "requirement": "a <2.0.0 ceiling does not admit protocol major 2 and MUST be refused with 400 pack_engine_unsupported",
-          "interpolated": true
+          "section": "packs.md §\"The engine range\" (RFC 0177 §A.1)",
+          "requirement": "a <2.0.0 ceiling does not admit protocol major 2 and MUST be refused with 400 pack_engine_unsupported"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be pack_engine_unsupported",
-          "interpolated": true
+          "section": "packs.md §\"The engine range\" (RFC 0177 §A.1)",
+          "requirement": "the refusal code MUST be pack_engine_unsupported"
         }
       ]
     },
@@ -27297,7 +27198,7 @@
       "explicitId": "openwop.requirement.0177.manifest-ceiling-refused.v2-installs",
       "citations": [
         {
-          "section": null,
+          "section": "packs.md §\"The engine range\" (RFC 0177 §A.1)",
           "requirement": null,
           "interpolated": true
         }
@@ -27311,7 +27212,7 @@
       "explicitId": "openwop.requirement.0177.manifest-hatch-carried.agents-x-field",
       "citations": [
         {
-          "section": null,
+          "section": "packs.md §\"The manifest schema family\" (RFC 0177 §C.2)",
           "requirement": null,
           "interpolated": true
         }
@@ -27325,7 +27226,7 @@
       "explicitId": "openwop.requirement.0177.manifest-hatch-carried.prompt-template-x-field",
       "citations": [
         {
-          "section": null,
+          "section": "packs.md §\"The manifest schema family\" (RFC 0177 §C.2)",
           "requirement": null,
           "interpolated": true
         }
@@ -27339,14 +27240,12 @@
       "explicitId": "openwop.requirement.0172.min-client-version",
       "citations": [
         {
-          "section": null,
-          "requirement": "minClientVersion MUST use the <major>.<minor> grammar (axis 15, as axis 1)",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.5",
+          "requirement": "minClientVersion MUST use the <major>.<minor> grammar (axis 15, as axis 1)"
         },
         {
-          "section": null,
-          "requirement": "a 426 refusal MUST carry client_version_unsupported",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.5",
+          "requirement": "a 426 refusal MUST carry client_version_unsupported"
         },
         {
           "section": "spec/v2/core/errors.md §The envelope",
@@ -27488,19 +27387,17 @@
       "explicitId": "openwop.requirement.0170.owner-subject-required.subject",
       "citations": [
         {
-          "section": null,
-          "requirement": "RunSnapshot.owner.subject is REQUIRED",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §1.1",
+          "requirement": "RunSnapshot.owner.subject is REQUIRED"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §1.1",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "RunSnapshot.owner.tenant is REQUIRED",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §1.1",
+          "requirement": "RunSnapshot.owner.tenant is REQUIRED"
         }
       ]
     },
@@ -27512,19 +27409,16 @@
       "explicitId": "openwop.requirement.0170.owner-subject-required.no-principal",
       "citations": [
         {
-          "section": null,
-          "requirement": "`principal` is removed from RunSnapshot.owner — subject.subjectId carries it",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §1.1",
+          "requirement": "`principal` is removed from RunSnapshot.owner — subject.subjectId carries it"
         },
         {
-          "section": null,
-          "requirement": "`principalKind` is removed from RunSnapshot.owner — subject.kind carries it",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §1.1",
+          "requirement": "`principalKind` is removed from RunSnapshot.owner — subject.kind carries it"
         },
         {
-          "section": null,
-          "requirement": "owner is the closed block { tenant, workspace?, subject }",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §1.1",
+          "requirement": "owner is the closed block { tenant, workspace?, subject }"
         }
       ]
     },
@@ -27637,12 +27531,12 @@
       "explicitId": "openwop.requirement.0171.payload-registry-closed",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Payloads",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Payloads",
           "requirement": null,
           "interpolated": true
         }
@@ -27656,14 +27550,12 @@
       "explicitId": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
       "citations": [
         {
-          "section": null,
-          "requirement": "a key absent from spec/v2/declaration.json MUST be refused with 400 pack_peer_dependency_undefined",
-          "interpolated": true
+          "section": "packs.md §\"Peer-dependency identifiers\" (RFC 0177 §B.1)",
+          "requirement": "a key absent from spec/v2/declaration.json MUST be refused with 400 pack_peer_dependency_undefined"
         },
         {
-          "section": null,
-          "requirement": "the refusal code MUST be pack_peer_dependency_undefined",
-          "interpolated": true
+          "section": "packs.md §\"Peer-dependency identifiers\" (RFC 0177 §B.1)",
+          "requirement": "the refusal code MUST be pack_peer_dependency_undefined"
         }
       ]
     },
@@ -27689,14 +27581,13 @@
       "explicitId": "openwop.requirement.0176.pinned-run-disposition.cancelled",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the cancellation MUST be an event on the run's own log (run.cancelled), not a silent status flip",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
+          "requirement": "the cancellation MUST be an event on the run's own log (run.cancelled), not a silent status flip"
         },
         {
           "section": "run-event-payloads.schema.json runCancelled.reason",
@@ -27709,14 +27600,12 @@
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the version.pinned row MUST survive the cancellation — the log is preserved (adversarial review 4)",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
+          "requirement": "the version.pinned row MUST survive the cancellation — the log is preserved (adversarial review 4)"
         },
         {
-          "section": null,
-          "requirement": "version.pinned is never rewritten: the pin still names the change id it was seeded with",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
+          "requirement": "version.pinned is never rewritten: the pin still names the change id it was seeded with"
         }
       ]
     },
@@ -27728,19 +27617,18 @@
       "explicitId": "openwop.requirement.0176.pinned-run-disposition.continued",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the pin is honoured verbatim — version.pinned reads back with the seeded changeId and version",
-          "interpolated": true
+          "section": "spec/v2/core/persistence.md §Runs pinned to v1",
+          "requirement": "the pin is honoured verbatim — version.pinned reads back with the seeded changeId and version"
         }
       ]
     },
@@ -27752,44 +27640,36 @@
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.shape",
       "citations": [
         {
-          "section": null,
-          "requirement": "pollRunEvents MUST answer 200",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "pollRunEvents MUST answer 200"
         },
         {
-          "section": null,
-          "requirement": "the poll response MUST be exactly { runId, events, lastSequence, status, isTerminal } (closed)",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "the poll response MUST be exactly { runId, events, lastSequence, status, isTerminal } (closed)"
         },
         {
-          "section": null,
-          "requirement": "runId MUST echo the polled run",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "runId MUST echo the polled run"
         },
         {
-          "section": null,
-          "requirement": "events MUST be an array",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "events MUST be an array"
         },
         {
-          "section": null,
-          "requirement": "lastSequence is the highest sequence in the log (−1 when empty)",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "lastSequence is the highest sequence in the log (−1 when empty)"
         },
         {
-          "section": null,
-          "requirement": "status is the snapshot status",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "status is the snapshot status"
         },
         {
-          "section": null,
-          "requirement": "isTerminal is a boolean",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "isTerminal is a boolean"
         },
         {
-          "section": null,
-          "requirement": "lastSequence MUST equal the highest sequence returned when the response carries the whole log",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "lastSequence MUST equal the highest sequence returned when the response carries the whole log"
         }
       ]
     },
@@ -27801,9 +27681,8 @@
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.from-first",
       "citations": [
         {
-          "section": null,
-          "requirement": "omission of afterSequence means \"from the first event\": the first returned sequence MUST be 0",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "omission of afterSequence means \"from the first event\": the first returned sequence MUST be 0"
         }
       ]
     },
@@ -27815,19 +27694,17 @@
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.after-sequence",
       "citations": [
         {
-          "section": null,
-          "requirement": "afterSequence is an integer ≥ 0 and MUST be accepted",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "afterSequence is an integer ≥ 0 and MUST be accepted"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Poll",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the cursor is exclusive and the log is not renumbered: afterSequence=first yields exactly the rest of the log",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "the cursor is exclusive and the log is not renumbered: afterSequence=first yields exactly the rest of the log"
         }
       ]
     },
@@ -27839,14 +27716,12 @@
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.past-end",
       "citations": [
         {
-          "section": null,
-          "requirement": "a cursor past the end of the log MUST return 200",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "a cursor past the end of the log MUST return 200"
         },
         {
-          "section": null,
-          "requirement": "a cursor past the end of the log MUST return an empty events array",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "a cursor past the end of the log MUST return an empty events array"
         }
       ]
     },
@@ -27858,19 +27733,17 @@
       "explicitId": "openwop.requirement.0172.preferred-version-default.member",
       "citations": [
         {
-          "section": null,
-          "requirement": "preferredVersion is REQUIRED root metadata with the <major>.<minor> grammar",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.1",
+          "requirement": "preferredVersion is REQUIRED root metadata with the <major>.<minor> grammar"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/versioning.md §1.1",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "on a host serving a single major, preferredVersion MUST equal protocolVersion (RFC 0179 §A.1)",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.1",
+          "requirement": "on a host serving a single major, preferredVersion MUST equal protocolVersion (RFC 0179 §A.1)"
         }
       ]
     },
@@ -27927,9 +27800,8 @@
       "explicitId": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
       "citations": [
         {
-          "section": null,
-          "requirement": "no `profiles[]` exists at the v2 root; a profile is a derived predicate, never a wire field (row C2.10)",
-          "interpolated": true
+          "section": "spec/v2/core/capabilities.md §7",
+          "requirement": "no `profiles[]` exists at the v2 root; a profile is a derived predicate, never a wire field (row C2.10)"
         }
       ]
     },
@@ -27941,24 +27813,22 @@
       "explicitId": "openwop.requirement.0169.profiles-derived-only.derivable",
       "citations": [
         {
-          "section": null,
-          "requirement": "spec/v2/profiles.json MUST list at least one profile",
-          "interpolated": true
+          "section": "spec/v2/core/capabilities.md §7",
+          "requirement": "spec/v2/profiles.json MUST list at least one profile"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §7",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/capabilities.md §7",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "openwop-discovery-core (metadata protocolVersions + preferredVersion, both REQUIRED at the root) MUST derive true from every valid v2 document",
-          "interpolated": true
+          "section": "spec/v2/core/capabilities.md §7",
+          "requirement": "openwop-discovery-core (metadata protocolVersions + preferredVersion, both REQUIRED at the root) MUST derive true from every valid v2 document"
         }
       ]
     },
@@ -27970,19 +27840,17 @@
       "explicitId": "openwop.requirement.0177.provider-conflict.fail-closed",
       "citations": [
         {
-          "section": null,
+          "section": "connection-packs.md §\"Provider identity\" (RFC 0177 §D.1)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the later registration of a bare provider id MUST NOT install (no version precedence)",
-          "interpolated": true
+          "section": "connection-packs.md §\"Provider identity\" (RFC 0177 §D.1)",
+          "requirement": "the later registration of a bare provider id MUST NOT install (no version precedence)"
         },
         {
-          "section": null,
-          "requirement": "the later registration MUST be refused with connection_provider_conflict",
-          "interpolated": true
+          "section": "connection-packs.md §\"Provider identity\" (RFC 0177 §D.1)",
+          "requirement": "the later registration MUST be refused with connection_provider_conflict"
         }
       ]
     },
@@ -28111,27 +27979,27 @@
       "explicitId": "openwop.requirement.0170.revocation-honored",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §2.2",
           "requirement": null,
           "interpolated": true
         }
@@ -28142,10 +28010,10 @@
       "file": "v2-run-annotation-not-event.test.ts",
       "line": 40,
       "title": "an annotation is created and listed, and never enters the run's event log",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-annotation-not-event",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Annotations, artifacts, eval summary",
           "requirement": null,
           "interpolated": true
         },
@@ -28155,22 +28023,20 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Annotations, artifacts, eval summary",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "listAnnotations MUST return the annotation just created (the control: a host that discards annotations must not pass the log assertion for free)",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Annotations, artifacts, eval summary",
+          "requirement": "listAnnotations MUST return the annotation just created (the control: a host that discards annotations must not pass the log assertion for free)"
         },
         {
-          "section": null,
-          "requirement": "run.annotated is a live notification and MUST NOT enter the event log",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Annotations, artifacts, eval summary",
+          "requirement": "run.annotated is a live notification and MUST NOT enter the event log"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Annotations, artifacts, eval summary",
           "requirement": null,
           "interpolated": true
         }
@@ -28181,20 +28047,19 @@
       "file": "v2-run-bulk-cancel.test.ts",
       "line": 48,
       "title": "101 ids are refused 400 validation_error with details.maxRunIds",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-bulk-cancel",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST be validation_error",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Cancel",
+          "requirement": "the refusal MUST be validation_error"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         }
@@ -28205,27 +28070,25 @@
       "file": "v2-run-bulk-cancel.test.ts",
       "line": 63,
       "title": "results[] come back in request order, each id processed independently, a foreign id refused in its entry and never as a top-level 403",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-bulk-cancel",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "results[] MUST be in request order",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Cancel",
+          "requirement": "results[] MUST be in request order"
         },
         {
-          "section": null,
-          "requirement": "the foreign-tenant entry MUST be ok: false",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Cancel",
+          "requirement": "the foreign-tenant entry MUST be ok: false"
         },
         {
           "section": "api/v2/openapi.yaml bulkCancelRuns results[].error",
@@ -28238,7 +28101,7 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         }
@@ -28249,17 +28112,16 @@
       "file": "v2-run-cancel.test.ts",
       "line": 65,
       "title": "cancelling a terminal run is refused 409 run_terminal",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-cancel",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST be run_terminal",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Cancel",
+          "requirement": "the refusal MUST be run_terminal"
         }
       ]
     },
@@ -28268,25 +28130,24 @@
       "file": "v2-run-cancel.test.ts",
       "line": 79,
       "title": "cancelling a running run answers 200 with cancelling|cancelled, emits run.cancelled within 5 s, and the snapshot reads cancelled",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-cancel",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the 200 body MUST carry the run's runId",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Cancel",
+          "requirement": "the 200 body MUST carry the run's runId"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         },
@@ -28302,20 +28163,19 @@
       "file": "v2-run-completed-outputs.test.ts",
       "line": 72,
       "title": "the run.completed event of a run that completed carries an outputs object",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.run-completed-outputs",
       "citations": [
         {
-          "section": null,
-          "requirement": "run.completed MUST carry a payload object",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §Payloads",
+          "requirement": "run.completed MUST carry a payload object"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Payloads",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §Payloads",
           "requirement": null,
           "interpolated": true
         }
@@ -28326,10 +28186,10 @@
       "file": "v2-run-diff-identical.test.ts",
       "line": 54,
       "title": "two identical logs diff to divergedAtSeq null and empty eventDiffs, in a response that validates and echoes both ids",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-diff-identical",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Diff and ancestry",
           "requirement": null,
           "interpolated": true
         },
@@ -28339,22 +28199,20 @@
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the response MUST name the two runs it compared",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Diff and ancestry",
+          "requirement": "the response MUST name the two runs it compared"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Diff and ancestry",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "identical logs MUST yield empty eventDiffs",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Diff and ancestry",
+          "requirement": "identical logs MUST yield empty eventDiffs"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Diff and ancestry",
           "requirement": null,
           "interpolated": true
         }
@@ -28365,7 +28223,7 @@
       "file": "v2-run-fork-prefix.test.ts",
       "line": 106,
       "title": "a replay fork inherits exactly [0, fromSeq): the event at fromSeq is re-executed, never carried over",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.fork-prefix-boundary",
       "citations": [
         {
           "section": "spec/v2/core/runs.md §Fork",
@@ -28373,12 +28231,12 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/replay.md §Endpoint",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/replay.md §Endpoint",
           "requirement": null,
           "interpolated": true
         }
@@ -28389,42 +28247,38 @@
       "file": "v2-run-fork-refusals.test.ts",
       "line": 38,
       "title": "replay+overlay → 400; a fromSeq outside the log → 422 fork_point_invalid; a valid replay fork → 201 with the parent's owner verbatim",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-fork-refusals",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Fork",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Fork",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST be fork_point_invalid",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Fork",
+          "requirement": "the refusal MUST be fork_point_invalid"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Fork",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the 201 MUST name the parent as sourceRunId",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Fork",
+          "requirement": "the 201 MUST name the parent as sourceRunId"
         },
         {
-          "section": null,
-          "requirement": "the 201 MUST echo the mode",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Fork",
+          "requirement": "the 201 MUST echo the mode"
         },
         {
-          "section": null,
-          "requirement": "the 201 MUST carry runId and eventsUrl",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Fork",
+          "requirement": "the 201 MUST carry runId and eventsUrl"
         },
         {
           "section": "RFCS/0170 §A.4",
@@ -28445,22 +28299,20 @@
       "file": "v2-run-options-limits.test.ts",
       "line": 56,
       "title": "odd-format tags and free-form metadata are accepted and surface unchanged on the snapshot",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.run-options-limits",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "tags MUST surface unchanged on RunSnapshot",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Run options",
+          "requirement": "tags MUST surface unchanged on RunSnapshot"
         },
         {
-          "section": null,
-          "requirement": "metadata MUST be persisted and surface unchanged on RunSnapshot",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Run options",
+          "requirement": "metadata MUST be persisted and surface unchanged on RunSnapshot"
         }
       ]
     },
@@ -28469,25 +28321,25 @@
       "file": "v2-run-pause-resume.test.ts",
       "line": 59,
       "title": "pause and resume on a terminal run answer 409 with an error envelope",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-pause-resume",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         }
@@ -28498,45 +28350,44 @@
       "file": "v2-run-pause-resume.test.ts",
       "line": 77,
       "title": "a running run pauses (202 paused), refuses a second pause (409), resumes (202 running), and the log carries run.paused then run.resumed",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-pause-resume",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the 202 MUST carry the runId",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Pause and resume",
+          "requirement": "the 202 MUST carry the runId"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
@@ -28546,12 +28397,12 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         }
@@ -28562,15 +28413,15 @@
       "file": "v2-run-snapshot-etag.test.ts",
       "line": 34,
       "title": "a matching If-None-Match receives 304 with no body and the version header; a non-matching one receives 200",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.run-snapshot-etag",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Snapshot",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Snapshot",
           "requirement": null,
           "interpolated": true
         },
@@ -28579,14 +28430,13 @@
           "requirement": "every response carries OpenWOP-Version, the 304 included"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/runs.md §Snapshot",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the 200 body is the snapshot",
-          "interpolated": true
+          "section": "spec/v2/core/runs.md §Snapshot",
+          "requirement": "the 200 body is the snapshot"
         }
       ]
     },
@@ -28595,70 +28445,67 @@
       "file": "v2-sse-last-event-id.test.ts",
       "line": 59,
       "title": "Last-Event-ID resumes at the next sequence, never re-emits the resumption point, loses nothing, and at the last id yields nothing",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.sse-last-event-id",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the completed log MUST stream as at least one frame",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §SSE frames",
+          "requirement": "the completed log MUST stream as at least one frame"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "frames MUST arrive in log order",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §SSE frames",
+          "requirement": "frames MUST arrive in log order"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the host MUST close the empty resume itself",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §SSE frames",
+          "requirement": "the host MUST close the empty resume itself"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         }
@@ -28669,52 +28516,48 @@
       "file": "v2-stream-mode-refusal.test.ts",
       "line": 64,
       "title": "a value outside the pattern, a forbidden combination, and an unimplemented mode are refused 400 unsupported_stream_mode with details.supported — before content negotiation",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.stream-mode-refusal",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §The events channel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST be unsupported_stream_mode",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §The events channel",
+          "requirement": "the refusal MUST be unsupported_stream_mode"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §The events channel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "a host MUST implement updates, so supported MUST list it",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §The events channel",
+          "requirement": "a host MUST implement updates, so supported MUST list it"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §The events channel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §The events channel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST be unsupported_stream_mode",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §The events channel",
+          "requirement": "the refusal MUST be unsupported_stream_mode"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §The events channel",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the refusal MUST be unsupported_stream_mode",
-          "interpolated": true
+          "section": "spec/v2/core/events.md §The events channel",
+          "requirement": "the refusal MUST be unsupported_stream_mode"
         }
       ]
     },
@@ -28723,10 +28566,10 @@
       "file": "v2-stream-mode-refusal.test.ts",
       "line": 95,
       "title": "updates streams 200 text/event-stream with frames; bufferMs yields at least one batch frame whose data is an array and loses nothing; without bufferMs no frame is batch",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.stream-mode-refusal",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §The events channel",
           "requirement": null,
           "interpolated": true
         },
@@ -28768,7 +28611,7 @@
       "file": "v2-stream-sse-projection.test.ts",
       "line": 52,
       "title": "every data: frame on the major-2 stream carries the tenant-bound runId of the run it belongs to",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.stream-sse-projection",
       "citations": [
         {
           "section": "spec/v2/core/identity.md §5",
@@ -28776,17 +28619,17 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/events.md §SSE frames",
           "requirement": null,
           "interpolated": true
         }
@@ -28800,19 +28643,17 @@
       "explicitId": "openwop.requirement.0170.subject-link-record.shape",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §3",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "a link MUST join exactly two distinct subjects",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §3",
+          "requirement": "a link MUST join exactly two distinct subjects"
         },
         {
-          "section": null,
-          "requirement": "a freshly formed link carries no deniedAt",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §3",
+          "requirement": "a freshly formed link carries no deniedAt"
         }
       ]
     },
@@ -28824,36 +28665,34 @@
       "explicitId": "openwop.requirement.0170.subject-link-record.denied-at",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/identity.md §3",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "deactivation MUST set deniedAt (date-time) on the link record",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §3",
+          "requirement": "deactivation MUST set deniedAt (date-time) on the link record"
         },
         {
-          "section": null,
-          "requirement": "after deniedAt is set the SAML decision path MUST deny the linked subject (the leaver contract)",
-          "interpolated": true
+          "section": "spec/v2/core/identity.md §3",
+          "requirement": "after deniedAt is set the SAML decision path MUST deny the linked subject (the leaver contract)"
         }
       ]
     },
     {
       "id": "openwop.it.v2-unmapped-type-refused.poll-over-a-log-with-an-unmapped-unprefixed-type-fails-with-500-event-type-unmap",
       "file": "v2-unmapped-type-refused.test.ts",
-      "line": 48,
+      "line": 95,
       "title": "poll over a log with an unmapped, unprefixed type fails with 500 event_type_unmapped",
       "explicitId": "openwop.requirement.0176.unmapped-type-refused",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The reader rule",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The reader rule",
           "requirement": null,
           "interpolated": true
         },
@@ -28865,9 +28704,28 @@
       ]
     },
     {
+      "id": "openwop.it.v2-unmapped-type-refused.a-registered-vendor-type-the-codemap-does-not-name-is-read-under-its-own-name-un",
+      "file": "v2-unmapped-type-refused.test.ts",
+      "line": 120,
+      "title": "a REGISTERED vendor type the codemap does not name is read under its own name, unchanged",
+      "explicitId": "openwop.requirement.0176.vendor-type-passthrough",
+      "citations": [
+        {
+          "section": "spec/v2/core/persistence.md §The codemap is data",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/persistence.md §The codemap is data",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-unmapped-type-refused.a-fork-of-the-same-log-is-refused-for-the-same-reason-the-rule-binds-every-reade",
       "file": "v2-unmapped-type-refused.test.ts",
-      "line": 71,
+      "line": 146,
       "title": "a fork of the same log is refused for the same reason — the rule binds every reader",
       "explicitId": "openwop.requirement.0176.unmapped-type-refused.fork",
       "citations": [
@@ -28877,7 +28735,7 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The reader rule",
           "requirement": null,
           "interpolated": true
         }
@@ -28891,7 +28749,7 @@
       "explicitId": "openwop.requirement.0176.v1-events-translated.poll",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The reader rule",
           "requirement": null,
           "interpolated": true
         }
@@ -28905,7 +28763,7 @@
       "explicitId": "openwop.requirement.0176.v1-events-translated.sse",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/persistence.md §The reader rule",
           "requirement": null,
           "interpolated": true
         }
@@ -28950,7 +28808,7 @@
       "explicitId": "openwop.requirement.0176.v1-signed-webhook-accepted",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/webhooks.md §Dual emission through the overlap",
           "requirement": null,
           "interpolated": true
         },
@@ -28965,17 +28823,15 @@
       "file": "v2-version-header-honored.test.ts",
       "line": 61,
       "title": "OpenWOP-Version is honored or refused — never ignored",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0172.version-header-honored",
       "citations": [
         {
-          "section": null,
-          "requirement": "a host that does not serve major 2 MUST refuse with 406 protocol_version_unsupported, which it did",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "a host that does not serve major 2 MUST refuse with 406 protocol_version_unsupported, which it did"
         },
         {
-          "section": null,
-          "requirement": "answering 200 to OpenWOP-Version: 2.0 with a body byte-identical to the header-less fetch means the header was IGNORED, not honored — the host served v1 and called it v2. Refusing with 406 is the correct answer for a host that does not implement major 2; silently returning v1 is the one answer that no presence-gated scenario can detect, because an absent v2 shape records `inapplicable` whether the host refused or ignored",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "answering 200 to OpenWOP-Version: 2.0 with a body byte-identical to the header-less fetch means the header was IGNORED, not honored — the host served v1 and called it v2. Refusing with 406 is the correct answer for a host that does not implement major 2; silently returning v1 is the one answer that no presence-gated scenario can detect, because an absent v2 shape records `inapplicable` whether the host refused or ignored"
         }
       ]
     },
@@ -28984,20 +28840,19 @@
       "file": "v2-version-header-honored.test.ts",
       "line": 92,
       "title": "a host advertising two majors serves two different representations",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0172.version-header-honored",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/versioning.md §1.3",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the v1 document and the closed v2 root differ by construction (capabilities.md §1), so a host advertising both majors returning identical bytes for both has advertised a major it does not actually serve",
-          "interpolated": true
+          "section": "spec/v2/core/versioning.md §1.3",
+          "requirement": "the v1 document and the closed v2 root differ by construction (capabilities.md §1), so a host advertising both majors returning identical bytes for both has advertised a major it does not actually serve"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/versioning.md §1.3",
           "requirement": null,
           "interpolated": true
         }
@@ -29064,39 +28919,35 @@
       "explicitId": "openwop.requirement.0176.well-known-one-resource",
       "citations": [
         {
-          "section": null,
+          "section": "RFC 0176 §C.1 (one well-known resource)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "RFC 0176 §C.1 (one well-known resource)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "both representations MUST be JSON objects",
-          "interpolated": true
+          "section": "RFC 0176 §C.1 (one well-known resource)",
+          "requirement": "both representations MUST be JSON objects"
         },
         {
-          "section": null,
-          "requirement": "the v1 representation MUST carry protocolVersions[] (RFC 0165 §A, additive) — a single fetch names the other major",
-          "interpolated": true
+          "section": "RFC 0176 §C.1 (one well-known resource)",
+          "requirement": "the v1 representation MUST carry protocolVersions[] (RFC 0165 §A, additive) — a single fetch names the other major"
         },
         {
-          "section": null,
-          "requirement": "the v2 representation MUST carry protocolVersions[]",
-          "interpolated": true
+          "section": "RFC 0176 §C.1 (one well-known resource)",
+          "requirement": "the v2 representation MUST carry protocolVersions[]"
         },
         {
-          "section": null,
+          "section": "RFC 0176 §C.1 (one well-known resource)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the header MUST select a representation — a host that serves one document for both majors is the charter's \"per-major sub-objects\" the RFC does not adopt (adversarial review 3)",
-          "interpolated": true
+          "section": "RFC 0176 §C.1 (one well-known resource)",
+          "requirement": "the header MUST select a representation — a host that serves one document for both majors is the charter's \"per-major sub-objects\" the RFC does not adopt (adversarial review 3)"
         }
       ]
     },
@@ -35372,7 +35223,7 @@
       "file": "v2-bundle-signature-attributable.test.ts",
       "line": 103,
       "title": "the v2 discovery root publishes signingKeys[] — the surface the RFC named",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0168.bundle-signature-attributable.surface",
       "citations": [
         {
           "section": null,
@@ -35401,7 +35252,7 @@
       "file": "v2-bundle-signature-attributable.test.ts",
       "line": 134,
       "title": "the Front-door gate verifies the attestation instead of inspecting the string",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0168.bundle-signature-attributable.verifies",
       "citations": [
         {
           "section": null,
@@ -35420,7 +35271,7 @@
       "file": "v2-bundle-signature-attributable.test.ts",
       "line": 149,
       "title": "the four signature outcomes stay distinct — collapsing any two restores the defect",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0168.bundle-signature-attributable.outcomes",
       "citations": [
         {
           "section": null,
@@ -35434,7 +35285,7 @@
       "file": "v2-bundle-signature-attributable.test.ts",
       "line": 170,
       "title": "signingKeys[] is reachable from a v1 root too — a bundle is v3 regardless of major",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0168.bundle-signature-attributable.v1-root",
       "citations": [
         {
           "section": null,
@@ -35448,10 +35299,10 @@
       "file": "v2-corpus-tag-pinned.test.ts",
       "line": 33,
       "title": "every vendoring consumer in the cross-repo inventory records a published corpus tag",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0176.corpus-tag-pinned",
       "citations": [
         {
-          "section": null,
+          "section": "RFC 0176 §E.1",
           "requirement": null,
           "interpolated": true
         }
@@ -35476,10 +35327,10 @@
       "file": "v2-eos-clock.test.ts",
       "line": 43,
       "title": "the clock file is current with the matrix and the public history",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0174.v1-eos-clock",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
           "requirement": null,
           "interpolated": true
         }
@@ -35490,17 +35341,16 @@
       "file": "v2-eos-clock.test.ts",
       "line": 49,
       "title": "check-removal-dates FAILS the v1-tree sources of v1-end-of-support rows once the clock has passed",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0174.v1-eos-clock",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the failure MUST name the row and the source it found",
-          "interpolated": true
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": "the failure MUST name the row and the source it found"
         }
       ]
     },
@@ -35509,17 +35359,16 @@
       "file": "v2-eos-clock.test.ts",
       "line": 59,
       "title": "check-removal-dates PASSES under the same clock when today is before the date, and prints the clock state",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0174.v1-eos-clock",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the script MUST print the clock state on a green run — \"not anchored\" and \"far away\" must not print the same nothing",
-          "interpolated": true
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": "the script MUST print the clock state on a green run — \"not anchored\" and \"far away\" must not print the same nothing"
         }
       ]
     },
@@ -35528,20 +35377,19 @@
       "file": "v2-error-registry-prose-parity.test.ts",
       "line": 26,
       "title": "errors.md states the registry count it was generated from and renders every code",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.error-registry-prose-parity",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/errors.md",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "errors.md states the registry size at least once, so the claim is checkable",
-          "interpolated": true
+          "section": "spec/v2/core/errors.md",
+          "requirement": "errors.md states the registry size at least once, so the claim is checkable"
         },
         {
-          "section": null,
+          "section": "spec/v2/core/errors.md",
           "requirement": null,
           "interpolated": true
         }
@@ -35552,20 +35400,19 @@
       "file": "v2-event-naming-rule.test.ts",
       "line": 36,
       "title": "every closed-enum v2 event type is two kebab segments, and every recorded artifact exception is an enum member",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.event-naming-rule",
       "citations": [
         {
-          "section": null,
-          "requirement": "run-event.schema.json properties.type.oneOf[0] MUST be the closed enum of v2 event types",
-          "interpolated": true
+          "section": "RFC 0171 §A.2",
+          "requirement": "run-event.schema.json properties.type.oneOf[0] MUST be the closed enum of v2 event types"
         },
         {
-          "section": null,
+          "section": "RFC 0171 §A.2",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "RFC 0171 §A.2",
           "requirement": null,
           "interpolated": true
         }
@@ -35576,7 +35423,7 @@
       "file": "v2-event-naming-rule.test.ts",
       "line": 51,
       "title": "the closed enum and the vendor branch are disjoint: every registered type validates, and a typo of a registered domain does not",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0171.event-naming-rule",
       "citations": [
         {
           "section": "RFC 0171 §A.1",
@@ -35631,7 +35478,7 @@
       "file": "v2-id-kinds-bound.test.ts",
       "line": 57,
       "title": "every v2 id field $refs its kind, and every *Id property is triaged",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0170.id-kinds-bound",
       "citations": [
         {
           "section": "spec/v2/core/identity.md §5",
@@ -35645,37 +35492,31 @@
       "file": "v2-one-signing-scheme.test.ts",
       "line": 37,
       "title": "registry-version-manifest signing has exactly one scheme, ed25519-canonical-json, and no method / publicKeyRef",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0177.one-signing-scheme",
       "citations": [
         {
-          "section": null,
-          "requirement": "registry-version-manifest.schema.json MUST define a `signing` object",
-          "interpolated": true
+          "section": "RFC 0177 §C.3",
+          "requirement": "registry-version-manifest.schema.json MUST define a `signing` object"
         },
         {
-          "section": null,
-          "requirement": "signing.scheme MUST be the single const `ed25519-canonical-json` — one scheme, not a menu",
-          "interpolated": true
+          "section": "RFC 0177 §C.3",
+          "requirement": "signing.scheme MUST be the single const `ed25519-canonical-json` — one scheme, not a menu"
         },
         {
-          "section": null,
-          "requirement": "signing MUST require `keyId` and `scheme`",
-          "interpolated": true
+          "section": "RFC 0177 §C.3",
+          "requirement": "signing MUST require `keyId` and `scheme`"
         },
         {
-          "section": null,
-          "requirement": "signing MUST be closed (additionalProperties: false) so a second scheme cannot be smuggled in",
-          "interpolated": true
+          "section": "RFC 0177 §C.3",
+          "requirement": "signing MUST be closed (additionalProperties: false) so a second scheme cannot be smuggled in"
         },
         {
-          "section": null,
-          "requirement": "signing.method is gone in v2 — it MUST NOT appear in the signing object",
-          "interpolated": true
+          "section": "RFC 0177 §C.3",
+          "requirement": "signing.method is gone in v2 — it MUST NOT appear in the signing object"
         },
         {
-          "section": null,
-          "requirement": "signing.publicKeyRef is gone in v2 — the key is addressed by keyId alone",
-          "interpolated": true
+          "section": "RFC 0177 §C.3",
+          "requirement": "signing.publicKeyRef is gone in v2 — the key is addressed by keyId alone"
         }
       ]
     },
@@ -35731,17 +35572,16 @@
       "file": "v2-retention-floors.test.ts",
       "line": 53,
       "title": "the registry validates and the script prints the floor state offline",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0174.retention-floors",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/overview.md §Old-major retention floors",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the floor state MUST be printed on every run — \"not started\" and \"every version present\" must not print the same nothing",
-          "interpolated": true
+          "section": "spec/v2/core/overview.md §Old-major retention floors",
+          "requirement": "the floor state MUST be printed on every run — \"not started\" and \"every version present\" must not print the same nothing"
         }
       ]
     },
@@ -35750,17 +35590,16 @@
       "file": "v2-retention-floors.test.ts",
       "line": 60,
       "title": "a pinned old-major version missing from its registry while the floor is open FAILS, naming the artifact",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0174.retention-floors",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/overview.md §Old-major retention floors",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the failure MUST name the artifact and the version",
-          "interpolated": true
+          "section": "spec/v2/core/overview.md §Old-major retention floors",
+          "requirement": "the failure MUST name the artifact and the version"
         }
       ]
     },
@@ -35769,17 +35608,16 @@
       "file": "v2-retention-floors.test.ts",
       "line": 67,
       "title": "the same probe with every pinned version present PASSES while the floor is open",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0174.retention-floors",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/core/overview.md §Old-major retention floors",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "the open floor MUST print its closing date",
-          "interpolated": true
+          "section": "spec/v2/core/overview.md §Old-major retention floors",
+          "requirement": "the open floor MUST print its closing date"
         }
       ]
     },
@@ -35802,30 +35640,27 @@
       "file": "v2-security-defaults-table.test.ts",
       "line": 33,
       "title": "the obligation table has a Witness column and no row is unwitnessable",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0173.security-defaults-table",
       "citations": [
         {
-          "section": null,
-          "requirement": "spec/v2/core/security-defaults.md MUST exist — it is the obligation table RFC 0173 §A.1 names",
-          "interpolated": true
+          "section": "RFC 0173 §A.1",
+          "requirement": "spec/v2/core/security-defaults.md MUST exist — it is the obligation table RFC 0173 §A.1 names"
         },
         {
-          "section": null,
-          "requirement": "the obligation table MUST have a `Witness` column (surface · obligation · witness · invariant)",
-          "interpolated": true
+          "section": "RFC 0173 §A.1",
+          "requirement": "the obligation table MUST have a `Witness` column (surface · obligation · witness · invariant)"
         },
         {
-          "section": null,
-          "requirement": "the obligation table MUST list at least one obligation row",
-          "interpolated": true
+          "section": "RFC 0173 §A.1",
+          "requirement": "the obligation table MUST list at least one obligation row"
         },
         {
-          "section": null,
+          "section": "RFC 0173 §A.1",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "RFC 0173 §A.1",
           "requirement": null,
           "interpolated": true
         }

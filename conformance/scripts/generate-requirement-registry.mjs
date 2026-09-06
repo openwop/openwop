@@ -65,7 +65,45 @@ function isItCall(node) {
   return false;
 }
 
-function collectCitations(body, src) {
+/**
+ * Module-level `const NAME = '<literal>'` bindings, so `req(ID, …)` resolves to
+ * the same id the runtime uses.
+ *
+ * Why this exists. `explicitId` is read by src/setup.ts to label a test that
+ * NEVER REACHES its `req()` call — a soft-skipped leg. Until this revision the
+ * generator only accepted a string literal in argument position, so a file
+ * writing the idiomatic `const ID = 'openwop.requirement.…'` recorded
+ * `explicitId: null`, and its rows were labelled with the title-derived
+ * `openwop.it.<file>.<slug>` instead. The consequence is not cosmetic: the row
+ * id then DEPENDED ON THE DISPOSITION. `v2-run-fork-prefix` is in the tree
+ * twice over — `openwop.requirement.0170.fork-prefix-boundary` in the reference
+ * host's bundle, where the assertion ran and the runtime id was captured, and
+ * `openwop.it.v2-run-fork-prefix.a-replay-fork-inherits-exactly-0-fromseq-…` in
+ * MyndHyve's, where the leg was `inapplicable`. Same file, same suite, two ids.
+ * A verifier asking "does this bundle carry requirement X" got a well-formed
+ * NO from a host that simply had not held the profile, which is the null-result
+ * failure this corpus keeps meeting. Titles also move; ids must not.
+ */
+function constStrings(src) {
+  const consts = new Map();
+  for (const st of src.statements) {
+    if (!ts.isVariableStatement(st)) continue;
+    for (const d of st.declarationList.declarations) {
+      if (ts.isIdentifier(d.name) && d.initializer !== undefined) {
+        const text = literalText(d.initializer);
+        if (text !== null) consts.set(d.name.text, text);
+      }
+    }
+  }
+  return consts;
+}
+
+function collectCitations(body, src, consts = new Map()) {
+  const literalOrConst = (node) => {
+    const direct = literalText(node);
+    if (direct !== null) return direct;
+    return node !== undefined && ts.isIdentifier(node) ? consts.get(node.text) ?? null : null;
+  };
   const citations = [];
   let explicitId = null;
   const visit = (node) => {
@@ -77,9 +115,9 @@ function collectCitations(body, src) {
         if (section !== null && requirement !== null) citations.push({ section, requirement });
         else citations.push({ section: section ?? null, requirement: requirement ?? null, interpolated: true });
       } else if (ts.isIdentifier(e) && e.text === 'req') {
-        const id = literalText(node.arguments[0]);
+        const id = literalOrConst(node.arguments[0]);
         if (id !== null && explicitId === null) explicitId = id;
-        const section = literalText(node.arguments[1]);
+        const section = literalOrConst(node.arguments[1]);
         const requirement = literalText(node.arguments[2]);
         citations.push({ section: section ?? null, requirement: requirement ?? null, ...(section === null || requirement === null ? { interpolated: true } : {}) });
       }
@@ -102,13 +140,14 @@ export function generate() {
     const full = join(dir, file);
     const src = ts.createSourceFile(full, readFileSync(full, 'utf8'), ts.ScriptTarget.Latest, true);
     const stem = file.replace(/\.test\.ts$/, '');
+    const consts = constStrings(src);
     const seen = new Map();
     const visit = (node) => {
       if (isItCall(node)) {
         const title = literalText(node.arguments[0]);
         const line = src.getLineAndCharacterOfPosition(node.getStart(src)).line + 1;
         const body = node.arguments[1];
-        const { citations, explicitId } = body !== undefined ? collectCitations(body, src) : { citations: [], explicitId: null };
+        const { citations, explicitId } = body !== undefined ? collectCitations(body, src, consts) : { citations: [], explicitId: null };
         if (title === null) {
           // Suite 2.0.0: an interpolated title with an explicit req() id IS stable — the id is the explicit one.
           if (explicitId === null) interpolatedTitles++;
