@@ -3,7 +3,7 @@
   "counts": {
     "files": 516,
     "v1": 445,
-    "v2": 72
+    "v2": 73
   },
   "majors": {
     "a2a-1-0-agent-card.test.ts": [
@@ -773,7 +773,8 @@
       1
     ],
     "memory-attribution-replay-stable.test.ts": [
-      1
+      1,
+      2
     ],
     "memory-attribution-shape.test.ts": [
       1
