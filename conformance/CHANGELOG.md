@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.3] — 2026-09-06 — a selector that asked the wrong question, and a window that convicted a host for its own width
+
+**`v2-effect-seam-no-refire` selected on a branch permission to witness a replay obligation.** The filter was `guarded === true && branchReFires === false`. `replay.md:78`: *"A host MAY suppress branch effects and MUST NOT report that as replay suppression."* Replay suppression is unconditional (§Suppression rule 1) and does not vary with `branchReFires`, which states only what a **branch** re-fires by design. Every `guarded: true` row is a valid target; the filter now selects on `guarded` alone. `branchReFires` is also optional, so `=== false` additionally excluded rows merely silent on it. Found by the reference host, whose ten `branchReFires: true` rows are all honest and which was about to build `fireEffectSeam` for a scenario that would have kept recording `inapplicable` afterwards.
+
+**`v2-webhook-durable-delivery`'s at-least-once leg convicted a host for the suite's window.** The 204 arrives on attempt `FAIL_FIRST + 1`, costing the **sum** of the first `FAIL_FIRST` backoff intervals — `30 + 60 = 90 s` on exponential-from-30s, against a cap of exactly `90_000`. The interval is not advertised (`retryPolicy` is `additionalProperties: false` over `{ maxAttempts, backoff }`), so the wait is underivable and any cap is a guess. The leg now records **`blocked`** with the arithmetic, not `executed-fail`.
+
+**The cost:** a host that retries forever and never succeeds also records `blocked` now. That is a missed detection traded for a false conviction, and it returns only by advertising the interval — an RFC and a 2.1.0.
+
+Both defects encoded a condition the obligation does not have: one a flag the requirement never mentions, one a deadline it never sets.
+
 ## [2.0.2] — 2026-09-06 — 2.0.1's own fix could not run: the derived wait exceeded the harness timeout that governs it
 
 A regression in 2.0.1, measured by the host that reported the defect 2.0.1 fixed. On a 2.0.1 re-cut one row moved, the wrong way: `0173.webhook-durable-delivery.dead-letter` went `executed-pass` → `executed-fail`.

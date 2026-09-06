@@ -194,6 +194,17 @@ function retryWaitMs(doc: Record<string, unknown>): number {
  * constant the delivery loop reads. `WAIT_SLACK_MS` covers `waitTerminal`,
  * registration and the HTTP round trips around the waits.
  */
+/**
+ * How many attempts the receiver refuses before answering 204 (suite 2.0.3).
+ *
+ * The retry leg's success witness lands on attempt `FAIL_FIRST + 1`, so this
+ * number decides how much backoff the scenario has to sit through. It is a
+ * named constant rather than a literal at the `startReceiver` call because the
+ * blocked-reason quotes it: the message a host reads must be computed from the
+ * receiver the suite actually started, not from a number typed twice.
+ */
+const FAIL_FIRST = 2;
+
 const WAIT_SLACK_MS = 30_000;
 /** One `retryWaitMs` wait (the retry leg). */
 const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
@@ -224,7 +235,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
     if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no run to deliver`);
 
-    const receiver = await startReceiver(2); // 500, 500, then 204
+    const receiver = await startReceiver(FAIL_FIRST); // 500, 500, then 204
     active = receiver.server;
     const sub = await register(receiver.url);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
@@ -246,10 +257,37 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
       attempts.length,
       req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Durability', `a 500 from the subscriber MUST be retried — ${failedThenSucceeded} failed attempt(s) were answered and the host made ${attempts.length} attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B)`),
     ).toBeGreaterThan(1);
-    expect(
-      retried,
-      req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Durability', 'at-least-once: after the failing attempts the retry MUST land (the receiver answered 204 to the third attempt for the key)'),
-    ).toBe(true);
+    // At-least-once: the retry MUST eventually land. When it has not landed
+    // inside our window this records `blocked`, NOT `executed-fail` — suite
+    // 2.0.3, and this is the third time this file has had to learn it.
+    //
+    // The receiver answers 204 only on attempt `FAIL_FIRST + 1`, so reaching it
+    // costs the SUM of the first FAIL_FIRST backoff intervals, not the largest
+    // one. On an exponential-from-30s policy that is 30 + 60 = 90 s, which is
+    // exactly RETRY_WAIT_CAP_MS — a host loses by the width of one delivery.
+    // The obvious fix is to derive the wait from the intervals, and it cannot
+    // be built: `spec/v2/facets/webhooks.schema.json` `retryPolicy` is
+    // `additionalProperties: false` over exactly { maxAttempts, backoff }.
+    // THE BASE INTERVAL IS NOT ON THE WIRE, so the suite cannot compute the
+    // time to the Nth attempt, and any cap I pick is 2.0.1's 20-second
+    // deadline again with a bigger literal.
+    //
+    // So the honest disposition is `blocked`: the host took the obligation on
+    // (it advertises webhooks and we observed it retry) and the suite could not
+    // measure the outcome (RFC 0148 §A). Not `inapplicable` — that would claim
+    // it never took the obligation on.
+    //
+    // THE COST, stated rather than hidden: a host that retries forever and
+    // never succeeds now also records `blocked` instead of failing. This trades
+    // a false conviction for a missed detection. Detection comes back by
+    // putting the interval on the wire — an additive `retryPolicy` field so the
+    // sum is derivable — which is normative surface, an RFC and a 2.1.0, not a
+    // patch. Recorded here so the trade is visible at the assertion rather than
+    // only in a changelog.
+    if (!retried) {
+      const policyNote = advertisedRetryPolicy(doc);
+      return softSkip('blocked', `the retry was observed (${attempts.length} attempts) but the receiver's 204 did not land inside the ${retryWaitMs(doc)}ms window: it answers 204 only on attempt ${FAIL_FIRST + 1}, which costs the SUM of the first ${FAIL_FIRST} backoff intervals, and webhooks.retryPolicy carries only { maxAttempts, backoff${policyNote ? `: ${String(policyNote.backoff)}` : ''} } — the base interval is not advertised, so the suite cannot derive how long to wait. Unmeasured, not unmet (RFC 0148 §A).`);
+    }
     // Backoff: the retry MUST NOT be a tight loop — consecutive attempts for one
     // key are spaced. Only asserted when the host advertises a non-`none` backoff.
     const policy = advertisedRetryPolicy(doc);

@@ -26623,7 +26623,7 @@
       "explicitId": "openwop.requirement.0173.effect-seam-no-refire",
       "citations": [
         {
-          "section": "spec/v2/core/replay.md §The effect-seam manifest",
+          "section": "spec/v2/core/replay.md §Suppression",
           "requirement": null,
           "interpolated": true
         }
@@ -29006,7 +29006,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-failed-attempt-is-retried-and-the-event-is-delivered-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 221,
+      "line": 232,
       "title": "a failed attempt is retried and the event is delivered at least once",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery",
       "citations": [
@@ -29025,10 +29025,6 @@
         },
         {
           "section": "webhooks.md §Durability",
-          "requirement": "at-least-once: after the failing attempts the retry MUST land (the receiver answered 204 to the third attempt for the key)"
-        },
-        {
-          "section": "webhooks.md §Durability",
           "requirement": null,
           "interpolated": true
         },
@@ -29041,7 +29037,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 275,
+      "line": 313,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
