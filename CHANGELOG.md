@@ -13,6 +13,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.4] — 2026-09-06 — a fixture that punished a host for obeying the rule the scenario checks
+
+`v2-provider-conflict` drove the `connection-pack-github` fixture, and on a host that ships a built-in `github` its qualified-form leg could never pass. RFC 0177 §D.1 says the later registration of a bare provider id MUST be refused — so the fixture did not install, and leg 2 recorded **`blocked`**, permanently, on a host whose only fault was **obeying the rule the scenario exists to check**. A production host carried that row across a dozen cuts, and a bundle with any blocked row does not certify (RFC 0168 §E.1).
+
+- **New fixture `connection-pack-acme-widgets`**, same shape over a **deliberately fictional** provider id. Fictional is the point: no host ships it built-in, so the fixture always installs and both legs are reachable everywhere. `v2-provider-conflict` now drives it.
+- **The v1 scenario keeps the `github` fixture, and that was checked rather than assumed.** `connection-provider-resolution` is `majors [1]`, and v1 settles a collision with a built-in by **version precedence** (`spec/v1/connection-packs.md:89`) rather than refusing the install — so a host shipping a built-in `github` still installs the pack there. The trap is specific to the v2 rule, and the fix is scoped to the v2 scenario.
+- The built-in branch in leg 1 is **kept**: a host that somehow ships this id still witnesses the rule on the first install. It costs nothing and means the scenario does not depend on the fictional id staying unclaimed.
+
+**The pattern, for the fourth time this cycle.** 2.0.2 blamed a host for the suite's timeout; 2.0.3 selected on a flag the obligation does not have and enforced a deadline it does not set; this one demanded that a host *not* implement §D.1 in order to demonstrate §D.1. **An instrument must not require a host to violate the spec in order to be measured.**
+
 ## [2.0.3] — 2026-09-06 — a selector that asked the wrong question, and a window that convicted a host for its own width
 
 Two scenario defects, both found by hosts reading the suite rather than running it.
