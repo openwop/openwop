@@ -324,8 +324,8 @@ Operators receiving `replay_diverged_at_refusal` SHOULD treat it as a safety-pol
 
 The replay contract is **observable-output-sequence determinism**, NOT bit-equivalent execution. Specifically:
 
-1. The sequence of `RunEventDoc` records appended to the event log at indices `[0, fromSeq]` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E and per-event ULID component-T entropy when ULIDs are minted fresh).
-2. `RunSnapshot.variables`, `RunSnapshot.channels`, and `RunSnapshot.status` at each event-log index MUST be byte-equivalent across original and replay.
+1. The sequence of `RunEventDoc` records appended to the event log at indices `[0, fromSeq)` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E and per-event ULID component-T entropy when ULIDs are minted fresh). The range is half-open, matching the four other statements of the boundary in this document: events `< fromSeq` are fixed history, and the event AT `fromSeq` is re-executed — so it is governed by §Divergence, not by this clause.
+2. `RunSnapshot.variables`, `RunSnapshot.channels`, and `RunSnapshot.status` at each event-log index in that range MUST be byte-equivalent across original and replay.
 3. The bytes-on-the-wire of underlying tool/LLM calls MAY differ — e.g., a tool call against a remote stateful API, an LLM call against a model whose weights shifted, a randomized fallback path — AS LONG AS the resulting **observable state** at each index is byte-equivalent.
 
 The load-bearing implication: hosts MUST NOT cache observable state ONLY at the tool-call boundary. They MUST cache the **observable result** (return value + side-effects on workflow state + emitted events) so a replay reproduces the observable sequence even when the underlying call would have produced different bytes. The cache key for LLM-calling nodes is the §"LLM cache-key recipe" §B SHA-256 hash; for other tool-calling nodes the cache key is at host discretion BUT MUST be content-addressable (no host-internal sequence numbers or timestamps).
