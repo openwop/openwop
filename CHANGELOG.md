@@ -31,6 +31,8 @@ Two scenario defects, both found by hosts reading the suite rather than running 
 
 So the loss is one row of that table, not "non-delivery". **It is still a real loss** — a host that exhausts honestly and never delivers now reads `blocked` — and it returns by putting the interval on the wire so the sum is derivable: additive `retryPolicy` surface, an RFC and a **2.1.0**, not a patch. The trade is recorded at the assertion as well as here, and the table is the version to trust.
 
+> **Where this correction lives, and why not everywhere.** `conformance/CHANGELOG.md` ships **inside** the published tarball, so editing 2.0.3's entry there after `@openwop/openwop-conformance@2.0.3` was published would leave the tree claiming a version whose bytes differ from npm's — `check-published-suite-identity` refused the commit that tried, correctly. The packaged entry therefore keeps its original wording and this file carries the correction; the shipped text is superseded here rather than rewritten in place. A published artifact is evidence, and evidence is not edited after the fact.
+
 **What both defects have in common,** and it is the night's pattern one turn further out: an instrument encoded a condition its obligation does not have. One selected on a flag the requirement never mentions; the other enforced a deadline the requirement never sets. Neither was visible from the operation description a host implements against — which is why `api/seams-v2.yaml`'s `fireEffectSeam` now says the scenario picks its target from the manifest.
 
 ## [2.0.2] — 2026-09-06 — 2.0.1's own fix could not run: the derived wait exceeded the harness timeout that governs it

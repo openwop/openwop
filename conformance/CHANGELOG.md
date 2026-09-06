@@ -6,7 +6,7 @@
 
 **`v2-webhook-durable-delivery`'s at-least-once leg convicted a host for the suite's window.** The 204 arrives on attempt `FAIL_FIRST + 1`, costing the **sum** of the first `FAIL_FIRST` backoff intervals — `30 + 60 = 90 s` on exponential-from-30s, against a cap of exactly `90_000`. The interval is not advertised (`retryPolicy` is `additionalProperties: false` over `{ maxAttempts, backoff }`), so the wait is underivable and any cap is a guess. The leg now records **`blocked`** with the arithmetic, not `executed-fail`.
 
-**The cost, corrected.** The first version of this entry said *"a host that retries forever and never succeeds also records `blocked` now"*, which overstates it — the affected host pointed that out. Still caught: **never retrying at all** (`attempts.length > 1`, both legs, unconditional) and **retrying past an advertised budget** (the dead-letter leg's `<= maxAttempts`). The detection actually lost is narrower and singular: **a host that retries within its budget and never lands a success.** Real, but one row rather than "non-delivery", and it returns by advertising the interval — an RFC and a 2.1.0.
+**The cost:** a host that retries forever and never succeeds also records `blocked` now. That is a missed detection traded for a false conviction, and it returns only by advertising the interval — an RFC and a 2.1.0.
 
 Both defects encoded a condition the obligation does not have: one a flag the requirement never mentions, one a deadline it never sets.
 
