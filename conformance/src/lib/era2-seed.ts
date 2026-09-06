@@ -35,7 +35,7 @@ import { driver, type OpenWOPResponse } from './driver.js';
 import { loadEnv } from './env.js';
 import { seamPath, seamsProfileAdvertised } from './seams.js';
 import { readErrorCode } from './error-envelope.js';
-import { V1_DIR } from './paths.js';
+import { SPEC_V2_DIR } from './paths.js';
 
 export const SEED_PATH_V1 = '/v1/host/sample/event-log/seed';
 export const SEED_PATH = seamPath(SEED_PATH_V1);
@@ -171,7 +171,12 @@ let codemap: Map<string, string> | undefined;
 export function codemapV1toV2(): Map<string, string> {
   if (codemap) return codemap;
   const m = new Map<string, string>(FALLBACK);
-  const candidate = V1_DIR ? join(V1_DIR, '..', 'v2', 'event-codemap.json') : null;
+  // Same wrong anchor as `registeredOrgs` carried, found while fixing that one:
+  // v1-anchored, so null on every published layout. It fails less loudly here
+  // because FALLBACK stands — but 7 rows are not 117, and a scenario asserting
+  // `got.type === map.get(s.type)` for a type outside the fallback was checking
+  // against a name the truncated map never had.
+  const candidate = SPEC_V2_DIR ? join(SPEC_V2_DIR, 'event-codemap.json') : null;
   if (candidate && existsSync(candidate)) {
     try {
       const doc = JSON.parse(readFileSync(candidate, 'utf8')) as { rows?: Array<{ v1?: unknown; v2?: unknown }> };
@@ -198,7 +203,12 @@ export function codemapV1toV2(): Map<string, string> {
 let orgs: ReadonlySet<string> | null | undefined;
 export function registeredOrgs(): ReadonlySet<string> | undefined {
   if (orgs !== undefined) return orgs ?? undefined;
-  const candidate = V1_DIR ? join(V1_DIR, '..', 'v2', 'declaration.json') : null;
+  // SPEC_V2_DIR, not `V1_DIR/../v2`. The v1-anchored form shipped in 2.0.5 and
+  // resolved to null for every consumer of the published package — `spec/v1/`
+  // exists only in a repo checkout, so a v2 lookup routed through a v1 probe
+  // lost the registry the moment anyone installed the suite. The declaration is
+  // reachable in both layouts; only the anchor was wrong.
+  const candidate = SPEC_V2_DIR ? join(SPEC_V2_DIR, 'declaration.json') : null;
   orgs = null;
   if (candidate && existsSync(candidate)) {
     try {
@@ -207,6 +217,50 @@ export function registeredOrgs(): ReadonlySet<string> | undefined {
     } catch { /* left null: unreadable is indistinguishable from absent, and both are soft-skips */ }
   }
   return orgs ?? undefined;
+}
+
+export type Gate = { ok: true } | { ok: false; kind: 'blocked' | 'inapplicable'; reason: string };
+
+const orgOf = (type: string): string => type.split('.')[0] ?? '';
+
+/**
+ * Preconditions for the REFUSAL half of the reader rule (`v2-unmapped-type-
+ * refused`): a type the codemap does not name, whose org is not registered,
+ * MUST fail the read.
+ *
+ * `registered === undefined` (no resolvable registry) is NOT a blocker here.
+ * An unreadable registry registers nothing, so the driven org is unregistered
+ * either way and the refusal is still the required outcome — the fail-CLOSED
+ * reading. Only a registry that resolves AND names the org invalidates the leg.
+ *
+ * Suite 2.0.5 got this wrong by sharing one precondition with the control leg,
+ * which does need the registry. On published layouts the registry did not
+ * resolve, so the refusal leg soft-skipped `inapplicable` on exactly the hosts
+ * it exists to catch: one still answering `200` to an unmapped type and one
+ * correctly answering `500` were both green. A precondition belongs to the leg
+ * that needs it, never to the file.
+ */
+export function unmappedRefusalGate(registered: ReadonlySet<string> | undefined, map: ReadonlyMap<string, string>, type: string): Gate {
+  if (registered?.has(orgOf(type)) === true) {
+    return { ok: false, kind: 'blocked', reason: `the refusal leg drives ${type}, whose org '${orgOf(type)}' is NOW REGISTERED in spec/v2/declaration.json extensions — it is a vendor type that must pass through, not an unmapped one that must be refused; pick an unregistered org for this leg` };
+  }
+  if (map.has(type)) return { ok: false, kind: 'blocked', reason: `${type} now has a codemap row (→ ${String(map.get(type))}) — the refusal leg requires a type the codemap does not name` };
+  return { ok: true };
+}
+
+/**
+ * Preconditions for the CONTROL half: a registered vendor org the codemap does
+ * not name MUST be read under its own name unchanged.
+ *
+ * This leg genuinely needs the registry to resolve — it asserts that an org IS
+ * registered, and an absent registry cannot establish that. `inapplicable` here
+ * is honest rather than over-gating.
+ */
+export function vendorControlGate(registered: ReadonlySet<string> | undefined, map: ReadonlyMap<string, string>, type: string): Gate {
+  if (registered === undefined) return { ok: false, kind: 'inapplicable', reason: 'spec/v2/declaration.json is not resolvable in this layout — the control leg asserts that a REGISTERED org passes through, and guessing which orgs are registered would make the suite the registry' };
+  if (!registered.has(orgOf(type))) return { ok: false, kind: 'blocked', reason: `the control leg needs org '${orgOf(type)}' registered in spec/v2/declaration.json extensions (registered: ${[...registered].join(', ') || 'none'}) — without a registered org the positive half of the vendor rule cannot be driven at all` };
+  if (map.has(type)) return { ok: false, kind: 'blocked', reason: `${type} now has a codemap row (→ ${String(map.get(type))}) — the control leg requires a type the codemap does not name` };
+  return { ok: true };
 }
 
 /** A minimal era-2 log in v1 vocabulary: two renamed rows between run.started and run.completed. */

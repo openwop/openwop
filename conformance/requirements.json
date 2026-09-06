@@ -28687,7 +28687,7 @@
     {
       "id": "openwop.it.v2-unmapped-type-refused.poll-over-a-log-with-an-unmapped-unprefixed-type-fails-with-500-event-type-unmap",
       "file": "v2-unmapped-type-refused.test.ts",
-      "line": 95,
+      "line": 92,
       "title": "poll over a log with an unmapped, unprefixed type fails with 500 event_type_unmapped",
       "explicitId": "openwop.requirement.0176.unmapped-type-refused",
       "citations": [
@@ -28711,7 +28711,7 @@
     {
       "id": "openwop.it.v2-unmapped-type-refused.a-registered-vendor-type-the-codemap-does-not-name-is-read-under-its-own-name-un",
       "file": "v2-unmapped-type-refused.test.ts",
-      "line": 120,
+      "line": 117,
       "title": "a REGISTERED vendor type the codemap does not name is read under its own name, unchanged",
       "explicitId": "openwop.requirement.0176.vendor-type-passthrough",
       "citations": [
@@ -28730,7 +28730,7 @@
     {
       "id": "openwop.it.v2-unmapped-type-refused.a-fork-of-the-same-log-is-refused-for-the-same-reason-the-rule-binds-every-reade",
       "file": "v2-unmapped-type-refused.test.ts",
-      "line": 146,
+      "line": 143,
       "title": "a fork of the same log is refused for the same reason — the rule binds every reader",
       "explicitId": "openwop.requirement.0176.unmapped-type-refused.fork",
       "citations": [

@@ -66,6 +66,21 @@ interface ResolvedLayout {
   readonly coverageDocPath: string | null;
   /** Directory containing v1 prose docs (`*.md`), if present in this layout. */
   readonly v1Dir: string | null;
+  /**
+   * Directory containing the v2 corpus data (`declaration.json`, the codemap,
+   * `spec/v2/core/*.md`), if present in this layout.
+   *
+   * Anchored on the CONTRACT root, not the layout root, because that is the
+   * only anchor that holds in both shapes: in a repo checkout the contract
+   * root is the repo and `spec/v2/` sits inside it; in a published install it
+   * is the `@openwop/spec-artifacts` peer, which ships `spec/` while the
+   * conformance package ships none. A resolver anchored on `v1Dir` instead
+   * (the shape before 2.0.6) returned null for every consumer of the published
+   * package, because `spec/v1/` is a repo-only directory — so a v2 lookup was
+   * routed through a v1 probe and every published layout silently lost the
+   * data. See `era2-seed.registeredOrgs`.
+   */
+  readonly specV2Dir: string | null;
   /** Path to repository README.md, if present in this layout. */
   readonly readmePath: string | null;
   /** Path to the TypeScript SDK run-helper source, if present in this layout. */
@@ -137,6 +152,8 @@ function resolveFromRoot(root: string, layout: ResolvedLayout['layout'], contrac
       : null;
   const v1Probe = join(root, 'spec', 'v1');
   const v1Dir = existsSync(v1Probe) ? v1Probe : null;
+  const specV2Probe = join(contractRoot, 'spec', 'v2');
+  const specV2Dir = existsSync(specV2Probe) ? specV2Probe : null;
   const readmeProbe = join(root, 'README.md');
   const readmePath = existsSync(readmeProbe) ? readmeProbe : null;
   const typescriptRunHelpersProbe = join(root, 'sdk', 'typescript', 'src', 'run-helpers.ts');
@@ -155,6 +172,7 @@ function resolveFromRoot(root: string, layout: ResolvedLayout['layout'], contrac
     fixturesDocPath,
     coverageDocPath,
     v1Dir,
+    specV2Dir,
     readmePath,
     typescriptRunHelpersPath,
     pythonTypesPath,
@@ -208,6 +226,7 @@ export const CONFORMANCE_README_PATH: string | null = _layout.conformanceReadmeP
 export const FIXTURES_DOC_PATH: string | null = _layout.fixturesDocPath;
 export const COVERAGE_DOC_PATH: string | null = _layout.coverageDocPath;
 export const V1_DIR: string | null = _layout.v1Dir;
+export const SPEC_V2_DIR: string | null = _layout.specV2Dir;
 export const README_PATH: string | null = _layout.readmePath;
 export const TYPESCRIPT_RUN_HELPERS_PATH: string | null = _layout.typescriptRunHelpersPath;
 export const PYTHON_TYPES_PATH: string | null = _layout.pythonTypesPath;
