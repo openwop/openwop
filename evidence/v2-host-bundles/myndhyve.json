@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-05T21:48:59.513Z",
+  "generatedAt": "2026-09-06T02:36:23.529Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.0-rc.67",
+    "version": "2.0.4",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.0-rc.67",
-    "stampSha256": "bb9ebaf7ca9a81d6cbcbf126a7ccf370a5ca8c3f74dfdf35ae46c3d6615630b9"
+    "specArtifactsVersion": "2.0.4",
+    "stampSha256": "8abb52df9340e47ac5d16d15fb0abe88cc3bd6857e2cb8be269079d6d7ca1530"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "31dbb40fb"
+      "id": "0dbdddf44"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "c7a0b4c56b00c962cb5d772598b29e0467b5ef1c62556ac0e942fc23bdb8480f",
+    "sha256": "bb48ab61886d83a6ad1bf5d1c635aceadd9fc88476817054b32d8da7d6d1c471",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -32,23 +32,23 @@
       "id": "openwop-discovery-core",
       "evidenceTier": "self",
       "witnessCount": 3,
-      "certified": false
+      "certified": true
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 133,
-      "executedFail": 2,
+      "executedPass": 136,
+      "executedFail": 0,
       "skipped": 0,
       "inapplicable": 88,
-      "blocked": 1
+      "blocked": 0
     },
     "requirements": [
       {
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 294
+        "assertions": 295
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -361,8 +361,7 @@
         "id": "openwop.scenario.v2-provider-conflict",
         "scenario": "v2-provider-conflict.test.ts",
         "result": "executed-pass",
-        "assertions": 2,
-        "detail": "partial-witness: blocked: the fixture did not install (connection_provider_conflict) — a host with a built-in github cannot exercise the qualified form through the pack"
+        "assertions": 5
       },
       {
         "id": "openwop.scenario.v2-refresh-sla",
@@ -502,9 +501,9 @@
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-fail",
+        "result": "executed-pass",
         "assertions": 10,
-        "detail": "one or more assertions in the file failed"
+        "detail": "partial-witness: blocked: [blocked] the retry was observed (2 attempts) but the receiver's 204 did not land inside the 90000ms window: it answers 204 only on attempt 3, which costs the SUM of the first 2 backoff intervals, and webhooks.retryPolicy carries only { maxAttempts, backoff: exponential } — the base interval is not advertised, so the suite cannot derive how long to wait. Unmeasured, not unmet (RFC 0148 §A).; [blocked] no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -1234,9 +1233,8 @@
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 5,
-        "detail": "the test executed and failed: [myndhyve@workflow-runtime-00333-thc] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
+        "result": "executed-pass",
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
@@ -1478,19 +1476,18 @@
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
         "scenario": "v2-provider-conflict.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "blocked",
-        "assertions": 0,
-        "detail": "the fixture did not install (connection_provider_conflict) — a host with a built-in github cannot exercise the qualified form through the pack"
+        "result": "executed-pass",
+        "assertions": 2
       }
     ]
   },
-  "witnessSha256": "e5f9a5c03f53254ecb20e70fb19b872f7e90c23a9a4acb33e978ade631706bdc",
-  "assertionCount": 1450,
+  "witnessSha256": "a84a0297c18e3e4a31e0b95f695798910e8ecaa2a8b9e92dd75d09de50b881a0",
+  "assertionCount": 1457,
   "detail": {
     "nonPass": [
       {
@@ -1627,11 +1624,6 @@
         "id": "openwop.scenario.v2-v1-events-translated",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.floor.v2-webhook-durable-delivery",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
@@ -1809,11 +1801,6 @@
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.requirement.0173.webhook-durable-delivery",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [myndhyve@workflow-runtime-00333-thc] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
-      },
-      {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
         "result": "inapplicable",
         "reason": "host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id"
@@ -1942,18 +1929,13 @@
         "id": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
         "result": "inapplicable",
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
-      },
-      {
-        "id": "openwop.requirement.0177.provider-conflict.qualified-form",
-        "result": "blocked",
-        "reason": "the fixture did not install (connection_provider_conflict) — a host with a built-in github cannot exercise the qualified form through the pack"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "9dKIcF-hX1M57OtEBWtb7WsRuGhWhPEdjZYddf6oM_8S0082tdl2YWXqoU65zQK6DwZOMZNOa_dNdo413SaSDQ",
+    "sig": "dwGWaj41ggFl8Uubz-AKEzsvdZx5PaxQAB9RJzP0yy63_Sima5PrXaB80UhoNgi1rkAbp_urb43SeOqYVZEuCg",
     "over": [
       "witnessSha256",
       "host.build",
