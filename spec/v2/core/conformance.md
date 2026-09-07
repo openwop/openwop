@@ -12,6 +12,16 @@ v1 could say a host passed and could not say what it witnessed: test ids were de
 
 The ledger records per `it`, and a bundle's `results.requirements[]` is the per-assertion list. A post-assertion soft-skip MUST record `skipped` for every id not reached and MUST NOT record `pass`.
 
+### Whose fact is the reason?
+
+A soft-skip carries a disposition and a reason string, and the two answer different questions. The disposition says whether the row counts; the reason says *why*, and it is the only part a reader can act on. A reason MUST name a fact about the **host under test**. Where the predicate is instead a fact about the **suite** — its layout, its corpus data, a fixture it cannot resolve — the row MUST record `blocked`, never `inapplicable`.
+
+`inapplicable` asserts that the requirement does not bind this host. A suite that could not read its own corpus has established no such thing; the requirement binds exactly as before and the suite simply did not measure it. Recording `inapplicable` there states something false about the host, and states it in the quietest way available: `blocked` is bundle-wide fatal (RFC 0168 §E.1), while `inapplicable` certifies. A suite that cannot read its own corpus MUST NOT issue a certification on the strength of it.
+
+Ordering follows from this. Where an `it` can soft-skip for several reasons, gates whose predicate is a host fact MUST be evaluated before gates whose predicate is a suite fact, so the row keeps describing the host for as long as it truthfully can. Ordering alone is not the guarantee, though — it only decides *which* true reason is reported. The guarantee is that a suite-side gate can never be silent, because it is never `inapplicable`.
+
+**Why this is written down.** The failure it prevents is invisible at the disposition layer. A row already `inapplicable` for a true host reason, re-gated onto a suite-side precondition, stays `inapplicable`: `skip → skip`, no count moves, no gate reddens, and the row silently stops describing the host it names. Nothing in a bundle diff shows it. The rule is what makes that class of drift loud.
+
 ## Witness class
 
 Every family in `spec/v2/declaration.json`, every requirement in `conformance/requirements.json`, and every row of `SECURITY/invariants.yaml` MUST carry `witness` from the closed set:

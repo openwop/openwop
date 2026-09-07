@@ -253,11 +253,24 @@ export function unmappedRefusalGate(registered: ReadonlySet<string> | undefined,
  * not name MUST be read under its own name unchanged.
  *
  * This leg genuinely needs the registry to resolve — it asserts that an org IS
- * registered, and an absent registry cannot establish that. `inapplicable` here
- * is honest rather than over-gating.
+ * registered, and an absent registry cannot establish that.
+ *
+ * AN UNRESOLVABLE REGISTRY IS `blocked`, NOT `inapplicable` (conformance.md
+ * §Whose fact is the reason?). Suite 2.0.6 said `inapplicable`, which asserts
+ * the requirement does not bind this host — a statement about the HOST made on
+ * the strength of a fact about the SUITE, and a false one: the rule binds
+ * exactly as before and the suite merely failed to read its own corpus.
+ * `inapplicable` also certifies, while `blocked` is bundle-wide fatal
+ * (RFC 0168 §E.1), so the wrong disposition is the silent one.
+ *
+ * As of 2.0.6 this branch is unreachable — the registry resolves in every
+ * layout and the publish workflow asserts it. That is the argument FOR making
+ * it fatal, not against: an unreachable branch answering `inapplicable` is a
+ * trapdoor back to the D1 resolution defect, which was invisible precisely
+ * because it degraded a live witness into a quiet skip.
  */
 export function vendorControlGate(registered: ReadonlySet<string> | undefined, map: ReadonlyMap<string, string>, type: string): Gate {
-  if (registered === undefined) return { ok: false, kind: 'inapplicable', reason: 'spec/v2/declaration.json is not resolvable in this layout — the control leg asserts that a REGISTERED org passes through, and guessing which orgs are registered would make the suite the registry' };
+  if (registered === undefined) return { ok: false, kind: 'blocked', reason: 'spec/v2/declaration.json is not resolvable in this layout — the control leg asserts that a REGISTERED org passes through, and guessing which orgs are registered would make the suite the registry. This is a fact about the SUITE, so it is blocked and not inapplicable (conformance.md §Whose fact is the reason?)' };
   if (!registered.has(orgOf(type))) return { ok: false, kind: 'blocked', reason: `the control leg needs org '${orgOf(type)}' registered in spec/v2/declaration.json extensions (registered: ${[...registered].join(', ') || 'none'}) — without a registered org the positive half of the vendor rule cannot be driven at all` };
   if (map.has(type)) return { ok: false, kind: 'blocked', reason: `${type} now has a codemap row (→ ${String(map.get(type))}) — the control leg requires a type the codemap does not name` };
   return { ok: true };

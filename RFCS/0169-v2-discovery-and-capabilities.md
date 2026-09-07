@@ -140,7 +140,7 @@ Recorded from the `/architect` pass run before filing (RFC 0167 §C (e)).
 
 ## Unresolved questions
 
-1. Whether `extensions.<org>.<name>` uses the reverse-DNS org form (`com.myndhyve`) or the short form (`myndhyve`). Recommended: short form, registered in the declaration file.
+1. ~~Whether `extensions.<org>.<name>` uses the reverse-DNS org form (`com.myndhyve`) or the short form (`myndhyve`). Recommended: short form, registered in the declaration file.~~ **Closed 2026-09-06 by RFC 0180 §Alternatives, in favour of the short form.** The deciding argument was not brevity: the dot is the type separator, so a reverse-DNS org makes the first segment ambiguous with the type path and a reader cannot split a type without already knowing the org list. The short form keeps `orgOf(type) = type.split('.')[0]` decidable *without* the registry, so an unregistered org stays identifiable and is merely not admitted. RFC 0180 also supplies the registration procedure this question presupposed and the corpus did not have.
 2. Whether `imageGeneration` / `videoGeneration` are declared facets or deleted (RFC 0105 G5). Decided with C.10.
 
 ## Implementation notes (non-normative)
