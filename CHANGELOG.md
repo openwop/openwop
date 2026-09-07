@@ -13,6 +13,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.8] — 2026-09-07 — the verifier asked a v1 question about v2 hosts
+
+Conformance-suite fix. No wire shape, field, error code, `MUST`, or prose
+change; no RFC. The corpus data is untouched — the defect was entirely in the
+suite's own verifier.
+
+### Fixed
+
+- **A major-2 certification bundle could not verify its own profile claims.**
+  `profileDerivable` had no notion of a target major and always answered from
+  the v1 catalog, where `isCore` requires a scalar `protocolVersion` of major
+  `1` plus `supportedEnvelopes` / `schemaVersions` / `limits`. A v2 declaration
+  (RFC 0169 §C.1) carries `protocolVersions` / `preferredVersion` and family
+  records instead, so the verifier refused every correct major-2 bundle with
+  `profile-not-derivable` — "the host does not advertise it", about a host
+  advertising exactly it. The emitter had used the right predicate all along;
+  the two are now one function (`conformance/src/lib/v2-profiles.ts`) called by
+  both. Reported by `myndhyve-1` and corroborated by `openwop-app-1`; neither
+  host had anything to fix. See `conformance/CHANGELOG.md` for the full account,
+  including why an honesty fix in 2.0.5 is what made a long-standing defect
+  reachable, and which population is actually exposed.
+
 ## [2.0.7] — 2026-09-06 — three claims of coverage that were not coverage
 
 Process and prose. No wire shape, field, error code, or `MUST` changes; the one

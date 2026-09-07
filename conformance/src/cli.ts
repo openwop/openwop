@@ -35,7 +35,6 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve as resolvePath, join } from 'node:path';
-import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -55,6 +54,7 @@ import {
   PROFILE_FLOOR_SCENARIOS,
 } from './lib/profiles.js';
 import { setV2ProfileFloors, v2ProfileFloorFiles } from './lib/requirement-registry.js';
+import { v2ProfileIds } from './lib/v2-profiles.js';
 
 interface ParsedArgs {
   readonly baseUrl: string | undefined;
@@ -318,55 +318,22 @@ function claimedProfilesFor(doc: DiscoveryPayload): string[] {
  * metadata key present. The v1 derivation cannot stand in — `isCore` wants a
  * root `protocolVersion` plus `supportedEnvelopes`/`schemaVersions`/`limits`,
  * shapes a closed v2 root does not have — so a major-2 run claimed NOTHING and
- * no v2 host could ever certify. Falls back to the empty set only when the
- * registry is genuinely absent from the layout, and says so.
+ * no v2 host could ever certify.
+ *
+ * The derivation itself now lives in `lib/v2-profiles.ts`, because the VERIFIER
+ * needs the same answer and had been computing a different one: it asked the v1
+ * predicates about v2 documents and refused every real major-2 bundle. Emitter
+ * and verifier share one function so they cannot drift apart again. All this
+ * wrapper adds is the operator-facing warning — a CLI concern, not a
+ * derivation one.
  */
-function v2RegistryPath(conformanceRoot: string): string | null {
-  const candidates: string[] = [];
-  try {
-    const req = createRequire(resolvePath(conformanceRoot, 'package.json'));
-    candidates.push(resolvePath(dirname(req.resolve('@openwop/spec-artifacts/package.json')), 'spec', 'v2', 'profiles.json'));
-  } catch { /* not installed as a package; the repo-layout candidates below */ }
-  candidates.push(
-    resolvePath(conformanceRoot, 'spec', 'v2', 'profiles.json'),
-    resolvePath(conformanceRoot, '..', 'spec', 'v2', 'profiles.json'),
-    resolvePath(conformanceRoot, '..', 'spec-artifacts', 'spec', 'v2', 'profiles.json'),
-  );
-  return candidates.find((c) => existsSync(c)) ?? null;
-}
-
-function claimedProfilesForV2(doc: DiscoveryPayload, conformanceRoot: string): string[] {
-  // Resolve the peer the way `lib/paths.ts` does — through Node's resolver from
-  // this package — instead of guessing directory shapes. Hand-rolled candidates
-  // found the registry in a repo checkout and missed it in every published
-  // install, where npm hoists the peer to a SIBLING package dir: the probe that
-  // walked one level up landed on the `@openwop/` scope directory, not a
-  // package, so a real host run silently claimed nothing.
-  const found = v2RegistryPath(conformanceRoot);
-  if (found === null) {
-    process.stderr.write('openwop-conformance --certify: spec/v2/profiles.json not found in this layout; claimedProfiles is empty (RFC 0169 §C.1).\n');
+function claimedProfilesForV2(doc: DiscoveryPayload): string[] {
+  const ids = v2ProfileIds(doc);
+  if (ids === null) {
+    process.stderr.write('openwop-conformance --certify: spec/v2/profiles.json not found or unreadable in this layout; claimedProfiles is empty (RFC 0169 §C.1).\n');
     return [];
   }
-  let registry: { profiles?: Array<{ id?: unknown; predicate?: { families?: unknown; metadata?: unknown } }> };
-  try {
-    registry = JSON.parse(readFileSync(found, 'utf8'));
-  } catch {
-    process.stderr.write(`openwop-conformance --certify: ${found} is unreadable; claimedProfiles is empty.\n`);
-    return [];
-  }
-  const root = doc as unknown as Record<string, unknown>;
-  const isRecord = (k: string): boolean => {
-    const v = root[k];
-    return typeof v === 'object' && v !== null && !Array.isArray(v);
-  };
-  const out: string[] = [];
-  for (const p of registry.profiles ?? []) {
-    if (typeof p.id !== 'string') continue;
-    const families = Array.isArray(p.predicate?.families) ? (p.predicate.families as unknown[]).map(String) : [];
-    const metadata = Array.isArray(p.predicate?.metadata) ? (p.predicate.metadata as unknown[]).map(String) : [];
-    if (families.every(isRecord) && metadata.every((k) => root[k] !== undefined)) out.push(p.id);
-  }
-  return out;
+  return [...ids];
 }
 
 /**
@@ -500,7 +467,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   const sha256 = createHash('sha256').update(canonicalJSON(document)).digest('hex');
 
   // (b) Derive claimedProfiles from the captured document.
-  const claimedProfiles = target.major === 2 ? claimedProfilesForV2(document, conformanceRoot) : claimedProfilesFor(document);
+  const claimedProfiles = target.major === 2 ? claimedProfilesForV2(document) : claimedProfilesFor(document);
   // Major-2 floors come from spec/v2/profiles.json. Without this the derivation
   // measures a v2 host against v1 scenario files a major-2 run never executes,
   // and refuses certification for not running them.

@@ -14,7 +14,14 @@
  *
  * **Derivation is deterministic and pure.** Same payload, same profile
  * set. No time-of-day, host-specific state, or hidden inputs.
+ *
+ * Major 2 derives from `spec/v2/profiles.json` instead; `profileDerivable`
+ * dispatches on the target major and `./v2-profiles.js` holds that half. The
+ * import is one-way at runtime — v2-profiles takes only the `DiscoveryPayload`
+ * TYPE from here, which erases at compile time.
  */
+
+import { v2ProfileDerivable } from './v2-profiles.js';
 
 /**
  * Closed v1.x catalog. Adding a profile requires an RFC per
@@ -664,8 +671,27 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
   },
 };
 
-/** Is `profile` derivable from a discovery document? Maps a profile name to its predicate (RFC 0089 §B(1)). */
-export function profileDerivable(c: DiscoveryPayload, profile: string): boolean {
+/**
+ * Is `profile` derivable from a discovery document? Maps a profile name to its
+ * predicate (RFC 0089 §B(1)).
+ *
+ * `targetMajor` selects WHICH catalog answers. The v1 catalog below is a set of
+ * predicates over a v1 discovery payload — `isCore` alone requires a scalar
+ * `protocolVersion` with major `1`, `supportedEnvelopes`, `schemaVersions` and
+ * three `limits` integers. A v2 declaration has none of them (RFC 0169 §C.1
+ * restructured the root), so asking these predicates about a v2 document does
+ * not return an unknown: it returns `false`, confidently, for a host that
+ * advertises the profile. Major 2 delegates to the registry-driven derivation
+ * the emitter already used.
+ *
+ * The default is `1` so every v1-era call site — `verifyBundleProfile` below,
+ * the bundle-format-v2 verifier — keeps the behaviour it was written against.
+ * A v2 caller opts in explicitly; the v3 verifier reads the major off
+ * `bundle.suite.targetMajor` rather than a flag of its own, so verification
+ * stays self-contained in the bundle.
+ */
+export function profileDerivable(c: DiscoveryPayload, profile: string, targetMajor: 1 | 2 = 1): boolean {
+  if (targetMajor === 2) return v2ProfileDerivable(c, profile);
   if (profile === 'openwop-core-standard') return isCoreStandard(c);
   if (profile === 'openwop-agent-platform') return agentPlatformStatus(c) !== 'none';
   if ((PROFILE_NAMES as readonly string[]).includes(profile)) {
