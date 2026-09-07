@@ -1,5 +1,64 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.7] — 2026-09-06 — three claims of coverage that were not coverage
+
+No host behaviour changes. One gate changes disposition, and the two prose
+corrections remove claims the corpus was making about its own evidence.
+
+**`vendorControlGate` answers `blocked`, not `inapplicable`, when
+`spec/v2/declaration.json` cannot be resolved.** 2.0.6 — the release that fixed
+this scenario — got the disposition wrong on the branch it had just repaired.
+`inapplicable` asserts *the requirement does not bind this host*, which is a
+statement about the host made on the strength of a fact about the suite, and a
+false one: the rule binds exactly as before and the suite merely failed to read
+its own corpus. It is also the quiet answer. `inapplicable` certifies;
+`blocked` is bundle-wide fatal (RFC 0168 §E.1). The disposition that was wrong
+was the one that made no sound.
+
+As of 2.0.6 that branch is unreachable — the registry resolves in every layout
+and the publish workflow asserts it. That is the argument *for* making it
+fatal. An unreachable branch answering `inapplicable` is a trapdoor back to the
+D1 resolution defect, which was invisible precisely because it degraded a live
+witness into a quiet skip.
+
+**The general rule is now written down** (`spec/v2/core/conformance.md`
+§"Whose fact is the reason?"): a soft-skip reason MUST name a fact about the
+host under test, and where the predicate is instead a fact about the suite —
+its layout, its corpus, a fixture it cannot resolve — the row MUST record
+`blocked`. Gate ordering follows (host facts before suite facts) but is not the
+guarantee; ordering only decides which *true* reason is reported. The guarantee
+is that a suite-side gate can never be silent, because it is never
+`inapplicable`.
+
+Credit where it is due: this came from a host operator who predicted a third
+failure mode I had not considered — a row already `inapplicable` for a true host
+reason, re-gated onto a suite-side precondition, stays `inapplicable`. `skip →
+skip`, no count moves, no gate reddens, and the row silently stops describing
+the host it names. Measured against the tree, their case does not bite this
+scenario (the seams gate returns first, at `:96`, above the precondition at
+`:97`), but the rule they proposed was right and the ordering only held by
+construction — nothing written down stopped the next scenario from getting it
+wrong.
+
+`era2-unmapped-gates.test.ts` gains a row asserting that **no** reachable
+verdict in either gate is `inapplicable`, so a future suite-side gate that
+soft-skips quietly reddens a test instead of a bundle. Sabotage-verified:
+restoring 2.0.6's disposition reddens exactly those two rows and no others.
+
+### Corpus prose
+
+- **`persistence.md` §"The seat"** claimed `v2-v1-events-translated` reading
+  through poll, SSE and a fork meant "a wrapper-only adapter is caught". It does
+  not. Three wrappers pass those three legs exactly as one correctly seated
+  adapter does, and the rule binds *every* reader, including ones the suite has
+  no name for. The seat is a **claims-check** discharged by ADR disclosure and
+  audit; the scenario catches a reader that was *missed*, not an adapter that
+  was *misplaced*. The clause also cited a scenario by the wrong name and
+  pointed at `conformance.md`, which said nothing about any of it. Both MUSTs
+  are unchanged — only the false coverage claim is gone.
+- **RFC 0180** supplies the vendor-org registration procedure the registry
+  never had, and `persistence.md` §"The codemap is data" now points at it.
+
 ## [2.0.6] — 2026-09-06 — the release that made a rule uncheckable
 
 **If you pinned 2.0.5, `v2-unmapped-type-refused` did not run against your

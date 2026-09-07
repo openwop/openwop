@@ -8,7 +8,7 @@ The v2 cut renames event types that are persisted, indexed, and unique-keyed in 
 
 ## The codemap is data
 
-`spec/v2/event-codemap.json`, shipped in `@openwop/spec-artifacts`, is the only authority for the v1→v2 event-type mapping; every row is `decided` (RFC 0171 §A). A host MUST NOT carry a private mapping. A vendor-prefixed v1 type the codemap does not name MUST be read under its own name unchanged, where "vendor-prefixed" means the first segment is an org registered in the `extensions` object of `spec/v2/declaration.json` (events.md §Rules; RFC 0171 §A.1 — `openwop.` is the only reserved prefix). An unregistered first segment is not a vendor prefix and falls to the refusal below.
+`spec/v2/event-codemap.json`, shipped in `@openwop/spec-artifacts`, is the only authority for the v1→v2 event-type mapping; every row is `decided` (RFC 0171 §A). A host MUST NOT carry a private mapping. A vendor-prefixed v1 type the codemap does not name MUST be read under its own name unchanged, where "vendor-prefixed" means the first segment is an org registered in the `extensions` object of `spec/v2/declaration.json` (events.md §Rules; RFC 0171 §A.1 — `openwop.` is the only reserved prefix). An unregistered first segment is not a vendor prefix and falls to the refusal below. An org is registered by pull request against the corpus and takes effect on the `@openwop/spec-artifacts` release that carries it; a shipped entry is append-only, because deregistering an org would convert every log already written under it from pass-through to refusal (RFC 0180).
 
 ## The era key
 
@@ -104,7 +104,9 @@ they are the same change with the honesty removed.
 
 ### The seat
 
-The adapter MUST sit at the storage boundary every reader passes through — the storage interface's event-list method, not a wrapper some call sites bypass. A host leg MUST name its seat in its ADR; the `v1-events-translated` scenario reads through poll, SSE, and a fork so a wrapper-only adapter is caught (conformance.md).
+The adapter MUST sit at the storage boundary every reader passes through — the storage interface's event-list method, not a wrapper some call sites bypass. A host leg MUST name its seat in its ADR.
+
+The seat is a **claims-check** (conformance.md §Witness class): it is discharged by that disclosure and by audit, never by the wire. `v2-v1-events-translated` drives poll, SSE and a fork, and what those three legs witness is that *those three readers* translate. They do not witness the seat. Three wrappers pass them exactly as one correctly seated adapter does, and the rule binds **every** reader — including the ones the suite has no name for. A universal is not discharged by three examples: the scenario catches a reader that was *missed*, not an adapter that was *misplaced*.
 
 ### Forking a v1 run
 

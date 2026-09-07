@@ -13,6 +13,65 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.7] — 2026-09-06 — three claims of coverage that were not coverage
+
+Process and prose. No wire shape, field, error code, or `MUST` changes; the one
+code change is a conformance-suite disposition.
+
+### Added
+
+- **RFC 0180 — vendor-org registration procedure.** `spec/v2/declaration.json`
+  `extensions` is the registry `persistence.md` §"The codemap is data" makes a
+  host's read behaviour turn on, and it shipped at 2.0.0 holding exactly one
+  reserved org with **no procedure anywhere in the corpus for adding a second**.
+  A live host carrying 31 types under its own org read the rule correctly and
+  concluded its own types must be refused — correctly, and permanently, because
+  the predicate was well defined and the procedure behind it was empty.
+
+  The RFC decides three things it could not inherit. **The corpus is the sole
+  registrar** — a host-declared registry would make the refusal predicate
+  host-controlled, which is the private mapping `persistence.md` already
+  forbids. **Registration takes effect on the `@openwop/spec-artifacts` release
+  that carries it,** not on merge, because the registry is shipped data. And
+  **a shipped entry is append-only:** deregistering an org does not merely stop
+  new types from passing, it flips every log already written under that org from
+  pass-through to refusal, retroactively, on the next read. A log that was
+  readable becomes unreadable without a byte of it changing. No deprecation
+  window fixes that, which is why there is no removal path rather than a slow
+  one. Additive per `COMPATIBILITY.md` §2.1; the entry shape and key grammar
+  were already normative in `declaration.schema.json` and are untouched.
+
+  Closes **RFC 0169 §Unresolved-1** in favour of the short org form. The
+  deciding argument is not brevity: the dot is the type separator, so a
+  reverse-DNS org makes the first segment ambiguous with the type path and a
+  reader cannot split a type without already knowing the org list. The short
+  form keeps `orgOf(type) = type.split('.')[0]` decidable *without* the
+  registry, so an unregistered org stays identifiable and is merely not
+  admitted.
+
+- **`spec/v2/core/conformance.md` §"Whose fact is the reason?"** — a soft-skip
+  reason MUST name a fact about the host under test; where the predicate is a
+  fact about the *suite*, the row MUST record `blocked`, never `inapplicable`.
+  `inapplicable` certifies and `blocked` is bundle-wide fatal, so the wrong
+  disposition was also the silent one. The failure this prevents is invisible at
+  the disposition layer: a row already `inapplicable` for a true host reason,
+  re-gated onto a suite-side precondition, stays `inapplicable` — no count
+  moves, no gate reddens, and the row silently stops describing the host it
+  names.
+
+### Fixed
+
+- **`spec/v2/core/persistence.md` §"The seat"** claimed the
+  `v2-v1-events-translated` scenario's three readers meant "a wrapper-only
+  adapter is caught". Three wrappers pass those three legs exactly as one
+  correctly seated adapter does, and the rule binds every reader. The seat is a
+  **claims-check** discharged by ADR disclosure and audit. The clause also named
+  the scenario wrongly and cited `conformance.md`, which contained nothing on
+  the subject. Both `MUST`s stand; only the false coverage claim is removed.
+- **Conformance suite 2.0.7** — `vendorControlGate` records `blocked` rather
+  than `inapplicable` for an unresolvable registry. See
+  `conformance/CHANGELOG.md`.
+
 ## [2.0.6] — 2026-09-06 — the release that made a rule uncheckable
 
 2.0.5 shipped four fixes for rules whose instruments could not answer. One of

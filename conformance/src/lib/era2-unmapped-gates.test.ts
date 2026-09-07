@@ -32,12 +32,37 @@ describe('era-2 unmapped/vendor gates — the two legs gate on different facts',
     expect(unmappedRefusalGate(undefined, NO_MAP, UNMAPPED).ok).toBe(true);
   });
 
-  it('the same unresolvable registry DOES stop the control leg, honestly', () => {
+  it('the same unresolvable registry stops the control leg — as BLOCKED, not inapplicable', () => {
     // Asymmetric on purpose: the control leg asserts an org IS registered, and
-    // an absent registry cannot establish that. `inapplicable` is the truth.
+    // an absent registry cannot establish that. But the reason is a fact about
+    // the SUITE, so it is `blocked` (conformance.md §Whose fact is the reason?).
+    // 2.0.6 said `inapplicable` here, which asserts the requirement does not
+    // bind this host — false, and silent: `inapplicable` certifies, `blocked`
+    // is bundle-wide fatal. The disposition that is WRONG must not be the one
+    // that is QUIET.
     const g = vendorControlGate(undefined, NO_MAP, VENDOR);
     expect(g.ok).toBe(false);
-    if (!g.ok) expect(g.kind).toBe('inapplicable');
+    if (!g.ok) expect(g.kind).toBe('blocked');
+  });
+
+  it('NO suite-side predicate anywhere in these gates answers inapplicable', () => {
+    // The general rule, measured over the whole gate surface rather than the
+    // one row above: every reachable not-ok verdict these gates can return is
+    // `blocked`, because every predicate they test is a fact about the suite's
+    // own corpus. A future gate that soft-skips `inapplicable` on a corpus fact
+    // reddens this row. Host facts (does the host advertise seams?) are gated
+    // upstream in the scenario and never reach here.
+    const verdicts = [
+      vendorControlGate(undefined, NO_MAP, VENDOR),
+      vendorControlGate(new Set<string>(), NO_MAP, VENDOR),
+      vendorControlGate(new Set(['example']), new Map([[VENDOR, 'x.y']]), VENDOR),
+      unmappedRefusalGate(new Set(['foo']), NO_MAP, UNMAPPED),
+      unmappedRefusalGate(undefined, new Map([[UNMAPPED, 'x.y']]), UNMAPPED),
+    ];
+    for (const v of verdicts) {
+      expect(v.ok).toBe(false);
+      if (!v.ok) expect(v.kind).toBe('blocked');
+    }
   });
 
   it('a registry that resolves and NAMES the driven org blocks the refusal leg', () => {
