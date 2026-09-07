@@ -19,6 +19,7 @@
  */
 import { createHash, createPrivateKey, createPublicKey, sign as edSign, verify as edVerify, type KeyObject } from 'node:crypto';
 import { profileDerivable, type DiscoveryPayload } from './profiles.js';
+import { v2RegistryAvailable } from './v2-profiles.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
 
@@ -201,11 +202,33 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     if (digest !== bundle.discovery?.sha256) {
       rejections.push({ kind: 'discovery-digest', detail: `discovery.document hashes to ${digest.slice(0, 12)} but discovery.sha256 is ${String(bundle.discovery?.sha256).slice(0, 12)} — the captured document is not the one the signature attests to` });
     } else {
-      derivabilityChecked = true;
-      for (const p of bundle.claimedProfiles ?? []) {
-        if (!p.certified) continue;
-        if (!profileDerivable(document as DiscoveryPayload, p.id)) {
-          rejections.push({ kind: 'profile-not-derivable', profile: p.id, detail: `${p.id} is marked certified, but the captured discovery document does not derive it (RFC 0148 §B(1)) — evidence cannot certify a profile the host does not advertise` });
+      // WHICH catalog decides derivability is the bundle's own `targetMajor`,
+      // not this verifier's assumption. Reading the old code: it always asked
+      // the v1 predicates, which require a scalar `protocolVersion` of major 1
+      // plus `supportedEnvelopes`/`schemaVersions`/`limits`. A v2 declaration
+      // (RFC 0169 §C.1) carries `protocolVersions`/`preferredVersion` and
+      // family records instead, so the answer for every real major-2 host was
+      // `false` and this loop rejected `openwop-discovery-core` as "not
+      // advertised" on a document that advertises it. Two hosts hit it the
+      // moment their bundles began carrying `discovery.document` in 2.0.5.
+      const targetMajor = bundle.suite?.targetMajor === 2 ? 2 : 1;
+      // A major-2 bundle needs the v2 registry to decide anything. Its absence
+      // is a fact about THIS INSTALL's layout, not about the host, so it is
+      // recorded as the gap v3 already has a flag for rather than spent as a
+      // rejection (`conformance.md` §"Whose fact is the reason?"). Refusing a
+      // host because our own corpus file is missing is the substitution that
+      // rule exists to forbid.
+      if (targetMajor === 2 && !v2RegistryAvailable()) {
+        derivabilityChecked = false;
+      } else {
+        derivabilityChecked = true;
+        for (const p of bundle.claimedProfiles ?? []) {
+          // §B(1) binds the CERTIFICATION, not the listing: a profile a bundle
+          // names without certifying makes no claim for derivability to falsify.
+          if (!p.certified) continue;
+          if (!profileDerivable(document as DiscoveryPayload, p.id, targetMajor)) {
+            rejections.push({ kind: 'profile-not-derivable', profile: p.id, detail: `${p.id} is marked certified, but the captured discovery document does not derive it at major ${targetMajor} (RFC 0148 §B(1)) — evidence cannot certify a profile the host does not advertise` });
+          }
         }
       }
     }

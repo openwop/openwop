@@ -36,12 +36,28 @@ describe('certification bundle v3 (RFC 0168 §E)', () => {
   // and `verifyBundleV2` re-derived every claimed profile from it; v3 shipped
   // {url, sha256, protocolVersions, preferredVersion} and the check went with
   // the field, so `certified: true` was a claim only its emitter could
-  // evaluate. These four pin the restored behaviour AND its absence case.
-  const DERIVES: Record<string, unknown> = {
+  // evaluate. These pin the restored behaviour AND its absence case.
+  //
+  // 2.0.8 — `DERIVES` used to be the v1 shape below (`protocolVersion: '1.11'`,
+  // `supportedEnvelopes`, `limits`) inside a `targetMajor: 2` bundle, and it
+  // passed. That is the whole defect in one fixture: the only test exercising
+  // derivability at major 2 did it with a document no v2 host would ever serve,
+  // so the v1-predicate verifier looked correct here and refused every real
+  // host. The major-2 fixture is now major-2 shaped.
+  const DERIVES_V1: Record<string, unknown> = {
     protocolVersion: '1.11',
     supportedEnvelopes: ['clarification.request'],
     schemaVersions: {},
     limits: { clarificationRounds: 2, schemaRounds: 2, envelopesPerTurn: 2 },
+  };
+  // RFC 0169 §C.1: a v2 declaration's root is `protocolVersions` /
+  // `preferredVersion` plus family records. `openwop-discovery-core`'s registry
+  // predicate is exactly {families: [], metadata: [protocolVersions, preferredVersion]}.
+  const DERIVES: Record<string, unknown> = {
+    protocolVersions: ['2.0'],
+    preferredVersion: '2.0',
+    interrupt: { supported: true },
+    eventLog: { eventLogSchemaVersion: 3 },
   };
   const withDoc = (doc: Record<string, unknown> | undefined, over: Record<string, unknown> = {}): BundleV3 => {
     const u = unsigned(good, {
@@ -67,9 +83,52 @@ describe('certification bundle v3 (RFC 0168 §E)', () => {
   it('refuses a profile the captured document does not derive', () => {
     // Same bundle, same signature, same `certified: true` — only the document
     // is honest about what the host advertised. Before 2.0.5 this verified.
+    // `{protocolVersion}` singular satisfies neither catalog: not v1 core (no
+    // envelopes/limits) and not the v2 registry (no `protocolVersions`).
     const v = verifyBundleV3(withDoc({ protocolVersion: '1.11' }), { hostPublicKeyPem: hostPub });
     expect(v.rejections.map((r) => r.kind)).toContain('profile-not-derivable');
     expect(v.certifiedProfiles).toEqual([]);
+  });
+
+  // The blocker itself. Two tier-1 hosts cut major-2 bundles from real
+  // declarations and were refused `openwop-discovery-core` as "not advertised"
+  // — on documents that advertise exactly it — because the verifier answered
+  // from the v1 catalog, where `isCore` demands a scalar `protocolVersion` of
+  // major 1. Nothing was wrong with either host or either bundle.
+  it('derives a major-2 profile from a v2-shaped declaration', () => {
+    const v = verifyBundleV3(withDoc(DERIVES), { hostPublicKeyPem: hostPub });
+    expect(v.rejections.map((r) => r.kind)).not.toContain('profile-not-derivable');
+    expect(v.certifiedProfiles).toEqual(['openwop-discovery-core']);
+  });
+
+  it('refuses a v1-shaped document in a major-2 bundle', () => {
+    // The converse, and the fixture this file used to certify on. A v1
+    // declaration does not derive a v2 profile: `protocolVersions` is absent,
+    // so the registry predicate for `openwop-discovery-core` fails. Without
+    // this row the catalog dispatch could regress to "try v1 too" and nothing
+    // would go red.
+    const v = verifyBundleV3(withDoc(DERIVES_V1), { hostPublicKeyPem: hostPub });
+    expect(v.derivabilityChecked).toBe(true);
+    expect(v.rejections.map((r) => r.kind)).toContain('profile-not-derivable');
+    expect(v.certifiedProfiles).toEqual([]);
+  });
+
+  it('a major-1 bundle still answers from the v1 catalog', () => {
+    // The default is major 1 and every v1-era call site depends on it. Same
+    // v1 document, `targetMajor: 1` — derives, where the major-2 bundle above
+    // refused it.
+    const u = unsigned(good, {
+      suite: { name: '@openwop/openwop-conformance', version: '2.0.0-rc.0', targetMajor: 1, specArtifactsVersion: '2.0.0-rc.0' },
+      discovery: {
+        url: 'http://h/.well-known/openwop',
+        sha256: createHash('sha256').update(canonicalJSON(DERIVES_V1)).digest('hex'),
+        protocolVersions: ['1.11'], preferredVersion: '1.11', document: DERIVES_V1,
+      } as BundleV3['discovery'],
+    });
+    const v = verifyBundleV3({ ...u, signature: signBundleV3(u, pem(host.privateKey), 'host-key-1') }, { hostPublicKeyPem: hostPub });
+    expect(v.derivabilityChecked).toBe(true);
+    expect(v.rejections, JSON.stringify(v.rejections)).toEqual([]);
+    expect(v.certifiedProfiles).toEqual(['openwop-discovery-core']);
   });
 
   it('refuses a document substituted after signing', () => {

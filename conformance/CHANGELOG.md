@@ -1,5 +1,76 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.8] — 2026-09-07 — the verifier asked a v1 question about v2 hosts
+
+No host behaviour changes and no wire changes. One defect in the suite's own
+verifier, which had been refusing correct bundles from correct hosts.
+
+**`profileDerivable` now takes the target major, and major 2 derives from
+`spec/v2/profiles.json`.** There were two implementations of "does this
+document derive this profile", and only one of them knew that major 2 exists.
+The EMITTER branched on the target major and, at 2, read the v2 registry: every
+listed family present as a record, every listed metadata key present
+(RFC 0169 §C.1). The VERIFIER called `profileDerivable`, which is the v1
+catalog — `isCore` wants a scalar `protocolVersion` whose major is `1`, plus
+`supportedEnvelopes`, `schemaVersions` and three `limits` integers. A v2
+declaration has none of those. So the verifier's answer for every real v2 host
+was `false`, and a bundle correctly claiming `openwop-discovery-core` was
+refused with `profile-not-derivable`: *"the host does not advertise it"*, about
+a host that advertised exactly it.
+
+Both derivations now live in `lib/v2-profiles.ts` and both callers use it, so
+they cannot drift apart again. That is the point of the module boundary, not
+tidiness.
+
+**Reported by `myndhyve-1`, corroborated by `openwop-app-1`.** Two independent
+hosts, three suite versions, and the diagnosis was settled across them before a
+line was written here. Neither host had anything to fix.
+
+**The trigger was ours, and it was an honesty fix.** This defect is older than
+the reports — it has been wrong since major 2 existed — but it was
+*unreachable* until 2.0.5 taught the bundle to carry `discovery.document`.
+Before that the verifier had nothing to derive from and skipped the check
+entirely. In `myndhyve-1`'s words, which are better than the ones this entry
+started with: **"the defect did not become reachable when a host got healthier;
+it became reachable when the bundle got more honest."** A reader who thinks
+this tracks host health will draw the wrong conclusion about who is exposed.
+The population is *every host cutting on 2.0.5 or later that claims a v2
+profile* — not hosts whose floors went green.
+
+**An unreadable registry is a gap, not a refusal.** `v2ProfileIds` returns
+`null`, not `[]`, when `spec/v2/profiles.json` cannot be read, and the v3
+verifier records `derivabilityChecked: false` instead of rejecting. `[]` would
+have made every profile underivable and refused the bundle — converting a fact
+about *this install's layout* into a verdict about the *host*, which
+`conformance.md` §"Whose fact is the reason?" (2.0.7) forbids by name.
+
+**The test that certified the bug.** `certification-bundle-v3.test.ts` had one
+row exercising derivability at major 2, and its fixture was a *v1-shaped*
+document (`protocolVersion: '1.11'`, `supportedEnvelopes`, `limits`) inside a
+`targetMajor: 2` bundle. It passed, and it made the v1-predicate verifier look
+correct while that verifier refused every real host. The fixture is now major-2
+shaped, and three added rows pin the dispatch in both directions: a v2
+declaration derives at major 2 and not at major 1, a v1 payload the reverse.
+Disabling the dispatch turns three of them red.
+
+**Not changed, and deliberately.** `isCore` stays exactly as it is and stays
+v1-only. `certification-bundle-verify.ts` and `verifyBundleProfile` are
+bundle-format-v2 readers over v1-era evidence with no target major to read;
+they take the default and are untouched. And the `if (!p.certified) continue;`
+guard stays: RFC 0148 §B(1) binds the *certification*, not the listing, so a
+profile a bundle names without certifying makes no claim for derivability to
+falsify. An earlier plan for this release said the guard would be made loud
+anyway; writing it showed the change has no consumer — it would have added a
+verdict field nobody reads, on a hypothesis no measured bundle isolates.
+Reasoning is not a measurement, and inventing surface to dress it as one is the
+opposite of what this thread has been about.
+
+**`v2RegistryPath` is collapsed onto `SPEC_V2_DIR`.** The old copy in `cli.ts`
+resolved the peer through Node's resolver *and then kept three guessed
+directory candidates underneath it*, beneath a docblock stating that it
+resolved "instead of guessing directory shapes". The guesses were the half of
+that fix that never landed.
+
 ## [2.0.7] — 2026-09-06 — three claims of coverage that were not coverage
 
 No host behaviour changes. One gate changes disposition, and the two prose
