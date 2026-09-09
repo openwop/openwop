@@ -41,12 +41,40 @@ apply unchanged and a host must still opt in (or front the receiver with
 `OPENWOP_WEBHOOK_RECEIVER_URL`, which waives nothing) to witness the row. All
 this changes is that the packet now has somewhere to go.
 
+### Second defect, same program: a fixed grace instead of a wait
+
+With the address correct, `webhook-signed-delivery` still failed — now in 549ms,
+with `expected 0 to be greater than 0`. It slept a fixed `setTimeout(500)`
+"for fire-and-forget delivery to land". That assumes delivery is synchronous-ish
+with run completion, which is true of a host that POSTs inline and false of one
+doing what `webhooks.md` §"Delivery" asks for: a durable queue with retries,
+drained by a worker on its own cadence. The reference host polls every 1000ms,
+so the sleep expired before the worker's first tick. **The more durable a host's
+delivery machinery, the more exposed it was here** — and this scenario is
+typically the only automated oracle a host has on delivery header NAMES, so the
+cost of the race was not a checkmark.
+
+Replaced with a bounded wait: poll every 250ms until a delivery for this run
+arrives or a 12s deadline passes. It still FAILS and never soft-skips; the
+failure now means "did not deliver within 12s" rather than "did not deliver
+within one arbitrary tick of an unrelated clock". The deadline is sized to sit
+inside the 30s per-test budget alongside the existing 10s terminal poll, so a
+genuinely slow host fails on the requirement message rather than on a bare
+vitest timeout.
+
+MEASURED end-to-end on the container lane, same image, three runs: **2 failed →
+(address fixed) 1 failed, `replay-fanout-suppression` green → (wait fixed) 0
+failed, both green.**
+
 **Self-tests pin the call sites, not just the helper** — a helper that is
 correct and unused is precisely the defect being fixed, and a unit test on
 `receiverBinding()` alone stays green through a full revert of all three
 scenarios. Sabotage-verified with disjoint red sets: reverting either the bind
 or the advertise of any one scenario reds exactly that scenario's case, and each
-helper branch reds only its own.
+helper branch reds only its own. The bounded wait is pinned the same way and for
+a sharper reason — two consecutive container runs disagreed about the 500ms
+sleep (0 deliveries at 549ms, then 1 at 318ms), so a behavioural test for it
+would itself be a coin flip and could not be trusted to go red on a revert.
 
 ## [2.0.9] — 2026-09-09 — the rule this suite measures now says what it measures
 

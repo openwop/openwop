@@ -214,3 +214,48 @@ describe('receiverBinding: every scenario receiver actually uses it', () => {
     });
   }
 });
+
+describe('webhook-signed-delivery waits for a delivery rather than sleeping a guess', () => {
+  /**
+   * Pinned at the source, not by timing. The defect this replaced was a race:
+   * a fixed `setTimeout(500)` against a host whose delivery worker polls every
+   * 1000ms lost or won depending on where run completion fell inside that tick.
+   * Two consecutive container runs measured 2026-09-09 disagreed — one reported
+   * zero deliveries after 549ms, the next observed one after 318ms — so a
+   * behavioural test for this would itself be a coin flip and could not be
+   * trusted to go red on a revert. Pinning the instrument can.
+   */
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, '..', 'scenarios', 'webhook-signed-delivery.test.ts'), 'utf8');
+
+  it('polls to a deadline instead of a single fixed grace period', () => {
+    expect(src).toContain('DELIVERY_DEADLINE_MS');
+    expect(src).toMatch(/while \(ours\(\)\.length === 0 && Date\.now\(\) < deadline\)/);
+  });
+
+  it('keeps the deadline inside the per-test budget alongside the terminal poll', () => {
+    const deadline = Number(/const DELIVERY_DEADLINE_MS = ([0-9_]+);/.exec(src)?.[1]?.replace(/_/g, ''));
+    const terminalPoll = Number(/pollUntilTerminal\(runId, \{ timeoutMs: ([0-9_]+) \}\)/.exec(src)?.[1]?.replace(/_/g, ''));
+    expect(Number.isFinite(deadline)).toBe(true);
+    expect(Number.isFinite(terminalPoll)).toBe(true);
+    // vitest.config.ts testTimeout. Exceeding it turns an informative
+    // requirement message into a bare timeout, which is the failure mode the
+    // deadline exists to avoid.
+    expect(deadline + terminalPoll).toBeLessThan(30_000);
+  });
+
+  it('still fails rather than skipping when nothing arrives', () => {
+    // The deadline must feed an assertion, never a soft-skip: a host that
+    // registers a subscription and then delivers nothing has a finding, not a
+    // missing precondition. Scoped to the span BETWEEN the wait and the
+    // assertion — the scenario legitimately soft-skips earlier on capability
+    // and fixture advertisement, and a file-wide `softSkip` search would flag
+    // those (it did, on the first draft of this case).
+    const start = src.indexOf('const ourDeliveries = ours();');
+    const end = src.indexOf('.toBeGreaterThan(0)', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(src.slice(start, end)).not.toContain('softSkip');
+    expect(src.slice(start, end)).toContain('expect(ourDeliveries.length,');
+  });
+});

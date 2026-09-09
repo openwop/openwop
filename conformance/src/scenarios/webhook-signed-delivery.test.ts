@@ -258,9 +258,6 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     const runId = (create.json as { runId: string }).runId;
     await pollUntilTerminal(runId, { timeoutMs: 10_000 });
 
-    // Allow a small grace period for fire-and-forget delivery to land.
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
     // Test-isolation note: when this scenario runs concurrently with
     // other webhook-bearing scenarios against a stateful host, the
     // host's webhook registry fans out EVERY run's events to EVERY
@@ -268,14 +265,43 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // deliveries from other tests' concurrent runs. Filter to events
     // carrying THIS test's runId so the assertion checks the
     // signature shape on a delivery the host emitted for THIS run.
-    const ourDeliveries = receiver.received.filter((d) => {
-      try {
-        const body = JSON.parse(d.body) as { runId?: unknown };
-        return body.runId === runId;
-      } catch {
-        return false;
-      }
-    });
+    const ours = (): DeliveredRequest[] =>
+      receiver.received.filter((d) => {
+        try {
+          const body = JSON.parse(d.body) as { runId?: unknown };
+          return body.runId === runId;
+        } catch {
+          return false;
+        }
+      });
+
+    // WAIT for a delivery, don't sleep a guessed interval for one.
+    //
+    // This was `setTimeout(500)` — a fixed grace "for fire-and-forget delivery
+    // to land". That assumes delivery is synchronous-ish with run completion,
+    // which is true of a host that POSTs inline from its event loop and false
+    // of one that does what `webhooks.md` §"Delivery" actually asks for: a
+    // durable queue with retries, drained by a worker on its own cadence.
+    //
+    // MEASURED 2026-09-09 against a reference host whose delivery worker polls
+    // every 1000ms: with the receiver address finally correct, this assertion
+    // still reported `expected 0 to be greater than 0` after a 549ms test — the
+    // sleep had expired before the worker's first tick. It reads as "the host
+    // does not deliver webhooks" when the host had not yet been asked to. The
+    // more durable a host's delivery machinery, the more exposed it is here.
+    //
+    // A deadline is the honest instrument: it still FAILS, never skips, and the
+    // failure now means "did not deliver within DELIVERY_DEADLINE_MS" rather
+    // than "did not deliver within one arbitrary tick of an unrelated clock".
+    // Sized to stay inside the 30s per-test budget alongside the 10s terminal
+    // poll above, so a slow host fails on THIS assertion's message rather than
+    // on an uninformative vitest timeout.
+    const DELIVERY_DEADLINE_MS = 12_000;
+    const deadline = Date.now() + DELIVERY_DEADLINE_MS;
+    while (ours().length === 0 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    const ourDeliveries = ours();
     // With a tunnel wired this is the assertion that keeps a mis-wired front
     // from reading as a pass. Registration succeeded, so the host believes it
     // has a subscriber; if nothing arrived HERE, the delivery went somewhere
@@ -288,7 +314,8 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
           'Registration was accepted, so zero deliveries observed on the local receiver means ' +
           'either the host did not deliver, or OPENWOP_WEBHOOK_RECEIVER_URL does not actually ' +
           'front this process. Both are failures; neither is a skip.'
-        : 'host MUST POST at least one event for THIS run to a registered subscriber after run.completed',
+        : 'host MUST POST at least one event for THIS run to a registered subscriber within '
+          + `${DELIVERY_DEADLINE_MS}ms of run.completed`,
     )).toBeGreaterThan(0);
 
     // Validate the FIRST delivery's signature contract. Other deliveries
