@@ -27,6 +27,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: { scheduling?: { supported?: boolean; cron?: boolean } };
@@ -40,25 +42,25 @@ async function readScheduling(): Promise<{ supported?: boolean; cron?: boolean }
 describe('scheduling-cron-fires-once: once-per-tick + missed-tick (RFC 0052 §B)', () => {
   it('a single cron tick produces exactly one run', async () => {
     const sched = await readScheduling();
-    if (!sched?.supported || sched.cron !== true) return; // capability-gated
+    if (!sched?.supported || sched.cron !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!sched?.supported || sched.cron !== true` returned early (capability-gated)'); // capability-gated
     const res = await driver.post('/v1/host/sample/scheduling/tick', { scenario: 'single-tick' });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const body = res.json as { runsFired?: number } | undefined;
     expect(
       body?.runsFired,
-      driver.describe('RFC 0052 §B.2', 'a single cron tick MUST fire exactly one run (no duplicate concurrent firing)'),
+      req('openwop.it.scheduling-cron-fires-once.a-single-cron-tick-produces-exactly-one-run', 'RFC 0052 §B.2', 'a single cron tick MUST fire exactly one run (no duplicate concurrent firing)'),
     ).toBe(1);
   });
 
   it('a missed-tick window does not produce a backlog flood', async () => {
     const sched = await readScheduling();
-    if (!sched?.supported || sched.cron !== true) return; // capability-gated
+    if (!sched?.supported || sched.cron !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!sched?.supported || sched.cron !== true` returned early (capability-gated)'); // capability-gated
     const res = await driver.post('/v1/host/sample/scheduling/tick', { scenario: 'missed-window', missedTicks: 5 });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const body = res.json as { runsFired?: number } | undefined;
     expect(
       typeof body?.runsFired === 'number' && body.runsFired <= 1,
-      driver.describe(
+      req('openwop.it.scheduling-cron-fires-once.a-missed-tick-window-does-not-produce-a-backlog-flood', 
         'RFC 0052 §B.4',
         `a missed-tick window MUST apply the advertised policy (fire-once-on-recovery or skip), never N backlogged runs; got runsFired=${body?.runsFired}`,
       ),

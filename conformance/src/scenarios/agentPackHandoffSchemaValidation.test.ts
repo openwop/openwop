@@ -51,6 +51,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported, hasHandoffValidation } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-pack-handoff-schema-validation';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -82,7 +83,7 @@ describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcem
     const runId = (create.json as { runId: string }).runId;
 
     const snap = await settle(runId);
-    expect(snap?.status, 'HV-1a: valid task payload should NOT be rejected by handoff-schema validation').toBe('completed');
+    expect(snap?.status, req('openwop.it.agentPackHandoffSchemaValidation.hv-1a-valid-task-payload-that-matches-taskschemaref-is-dispatched-and-completes', 'RFCS/0003-agent-packs.md §D', 'HV-1a: valid task payload should NOT be rejected by handoff-schema validation')).toBe('completed');
   });
 
   // HV-1b / HV-1c assert a REJECTION, which only a host performing handoff
@@ -101,7 +102,7 @@ describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcem
       const snap = await settle(runId, ['completed', 'failed']);
       expect(
         snap?.status,
-        'HV-1b: invalid task payload MUST cause the run to fail rather than silently dispatch off-contract',
+        req('openwop.it.agentPackHandoffSchemaValidation.hv-1b-invalid-task-payload-missing-required-field-fails-before-dispatch-with-a-s', 'RFCS/0003-agent-packs.md §D', 'HV-1b: invalid task payload MUST cause the run to fail rather than silently dispatch off-contract'),
       ).toBe('failed');
 
       const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
@@ -115,7 +116,7 @@ describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcem
       );
       expect(
         validationFailure,
-        'HV-1b: failure event payload MUST carry a recognizable handoff-validation error code',
+        req('openwop.it.agentPackHandoffSchemaValidation.hv-1b-invalid-task-payload-missing-required-field-fails-before-dispatch-with-a-s', 'RFCS/0003-agent-packs.md §D', 'HV-1b: failure event payload MUST carry a recognizable handoff-validation error code'),
       ).toBeDefined();
     });
 
@@ -148,7 +149,7 @@ describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcem
       );
       expect(
         returnViolation,
-        'HV-1c: off-schema return payload MUST surface a structured violation event before persistence',
+        req('openwop.it.agentPackHandoffSchemaValidation.hv-1c-agent-return-payload-that-fails-returnschemaref-surfaces-a-structured-viol', 'RFCS/0003-agent-packs.md §D', 'HV-1c: off-schema return payload MUST surface a structured violation event before persistence'),
       ).toBeDefined();
     });
   });

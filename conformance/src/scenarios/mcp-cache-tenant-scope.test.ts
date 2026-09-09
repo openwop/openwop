@@ -22,10 +22,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'mcp-2026-07-28';
 const META_V = 'io.modelcontextprotocol/protocolVersion';
@@ -49,19 +50,19 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-cache-tenan
     if (!behaviorGate(PROFILE, await claimsCurrent())) return;
     const mine = await listAs();
     if (mine.status === 404 || mine.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${mine.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
-    expect(['public', 'private'], driver.describe('mcp-integration.md §D', 'cacheScope MUST be present on tools/list')).toContain(mine.body.result?.cacheScope);
+    expect(['public', 'private'], req('openwop.it.mcp-cache-tenant-scope.a-per-caller-list-is-cachescope-private-a-public-list-is-byte-identical-across-c', 'mcp-integration.md §D', 'cacheScope MUST be present on tools/list')).toContain(mine.body.result?.cacheScope);
     const other = process.env.OPENWOP_TEST_SECONDARY_API_KEY;
     if (!other) {
       // Shape only; the cross-caller half is unobservable without a second credential.
       // eslint-disable-next-line no-console
       console.warn('[mcp-cache-tenant-scope] OPENWOP_TEST_SECONDARY_API_KEY not set — cross-caller half not exercised (blocked)');
-      return;
+      return softSkip('blocked', 'precondition not met — `!other` returned early ([mcp-cache-tenant-scope] OPENWOP_TEST_SECONDARY_API_KEY not set — cross-caller half not exercised (blocked)) (seam, prior step, or fixture unavailable)');
     }
     const theirs = await listAs(other);
-    if (theirs.status !== 200) return;
+    if (theirs.status !== 200) return softSkip('blocked', 'precondition not met — `theirs.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const same = JSON.stringify(mine.body.result?.tools) === JSON.stringify(theirs.body.result?.tools);
     if (!same) {
-      expect(mine.body.result?.cacheScope, driver.describe('mcp-integration.md §D', 'a list that differs per caller MUST be cacheScope private — a public list that differs is cross-context cache poisoning (mcp-cache-tenant-scoped)')).toBe('private');
+      expect(mine.body.result?.cacheScope, req('openwop.it.mcp-cache-tenant-scope.a-per-caller-list-is-cachescope-private-a-public-list-is-byte-identical-across-c', 'mcp-integration.md §D', 'a list that differs per caller MUST be cacheScope private — a public list that differs is cross-context cache poisoning (mcp-cache-tenant-scoped)')).toBe('private');
       expect(theirs.body.result?.cacheScope).toBe('private');
     }
   });

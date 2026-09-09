@@ -44,8 +44,8 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: seam emission (RFC 0032 �
         byteOffset: 42,
       },
     });
-    if (r.status === 404) return;
-    expect(r.status).toBe(200);
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.status, req('openwop.it.envelope-recovery-applied.accepts-a-well-formed-envelope-recovery-applied-payload-with-markdown-fence-path', 'RFC 0032 §B.6', 'accepts a well-formed `envelope.recovery.applied` payload with markdown-fence path')).toBe(200);
     expect(r.body.event?.type).toBe('envelope.recovery.applied');
     expect(r.body.event?.payload?.path).toBe('markdown-fence');
     expect(r.body.event?.payload?.byteOffset).toBe(42);
@@ -58,8 +58,8 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: seam emission (RFC 0032 �
         type: 'envelope.recovery.applied',
         payload: { nodeId: 'writer', path },
       });
-      if (r.status === 404) return;
-      expect(r.status, `path: ${path} MUST be accepted`).toBe(200);
+      if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      expect(r.status, req('openwop.it.envelope-recovery-applied.accepts-each-spec-reserved-path-enum-value', 'RFC 0032 §B.6', `path: ${path} MUST be accepted`)).toBe(200);
       expect(r.body.event?.payload?.path).toBe(path);
     }
   });
@@ -76,10 +76,10 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
         recoveredContent: 'this is the pre-recovery output that should NOT be in the event', // forbidden per §G
       },
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.status,
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.rejects-payloads-carrying-a-recoveredcontent-field-pre-recovery-output-must-not', 
         'SECURITY/invariants.yaml §envelope-recovery-no-content-leak',
         'envelope.recovery.applied payload MUST NOT carry pre-recovery output substrings; only the canonical {nodeId, path, byteOffset?} keys per RFC 0032 §B.6 + §G — the recovered content rides on downstream RunEventDoc, not on the recovery event',
       ),
@@ -97,10 +97,10 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
         sourceSnippet: 'arbitrary extra key', // forbidden by additionalProperties: false in the schema
       },
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.status,
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.rejects-payloads-carrying-any-extra-field-outside-nodeid-path-byteoffset', 
         'schemas/run-event-payloads.schema.json §envelopeRecoveryApplied',
         'envelope.recovery.applied has additionalProperties: false on the payload — any extra field MUST be rejected to prevent regression carriers for pre-recovery output (defense-in-depth on top of envelope-recovery-no-content-leak)',
       ),
@@ -122,6 +122,8 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
 
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const RECOVERY_FIXTURE = 'conformance-envelope-recovery-applied';
 const RECOVERY_NODE_ID = 'structured-call';
@@ -150,29 +152,29 @@ async function runAndReadEvents(): Promise<ProgrammedRunEvent[] | null> {
 
 describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: end-to-end through the envelope-validation pipeline', () => {
   it('when mock LLM emits envelope wrapped in markdown fence, exactly one `envelope.recovery.applied` event fires with `path: "markdown-fence"`', async () => {
-    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return;
+    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(RECOVERY_FIXTURE)` returned early');
     const seed = await programRecovery([
       // Markdown-fenced JSON — dispatchStructured's strict parse fails,
       // tryLenientParse() strips the fence + succeeds via the
       // 'markdown-fence' path.
       { content: '```json\n{"result":"ok"}\n```' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(seed.status).toBe(200);
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const recoveries = events.filter((e) => e.type === 'envelope.recovery.applied');
     expect(
       recoveries.length,
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.when-mock-llm-emits-envelope-wrapped-in-markdown-fence-exactly-one-envelope-reco', 
         'RFCS/0032-envelope-reliability-events.md §B.6',
         'exactly one envelope.recovery.applied event MUST fire when lenient parsing strips a markdown fence',
       ),
     ).toBe(1);
     expect(
       recoveries[0]?.payload?.path,
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.when-mock-llm-emits-envelope-wrapped-in-markdown-fence-exactly-one-envelope-reco', 
         'RFCS/0032-envelope-reliability-events.md §B.6',
         'path MUST identify the recovery strategy that engaged (markdown-fence here)',
       ),
@@ -180,18 +182,18 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: end-to-end through the en
   });
 
   it('recovery does NOT consume a retry attempt — `envelope.retry.attempted` does NOT fire as a consequence of recovery (RFC 0033 §D)', async () => {
-    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return;
+    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(RECOVERY_FIXTURE)` returned early');
     const seed = await programRecovery([
       { content: '```json\n{"result":"ok"}\n```' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const retries = events.filter((e) => e.type === 'envelope.retry.attempted');
     expect(
       retries.length,
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.recovery-does-not-consume-a-retry-attempt-envelope-retry-attempted-does-not-fire', 
         'RFCS/0033-envelope-completion-contract.md §D',
         'recovery (parse fix-up) MUST NOT count against the retry budget — no envelope.retry.attempted may fire',
       ),
@@ -199,18 +201,18 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: end-to-end through the en
   });
 
   it('recovered envelope is subsequently accepted normally; downstream RunEventDoc carries the recovered content', async () => {
-    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return;
+    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(RECOVERY_FIXTURE)` returned early');
     const seed = await programRecovery([
       { content: '```json\n{"result":"recovered-ok"}\n```' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const nodeCompleted = events.find((e) => e.type === 'node.completed' && e.nodeId === RECOVERY_NODE_ID);
     expect(
       nodeCompleted,
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.recovered-envelope-is-subsequently-accepted-normally-downstream-runeventdoc-carr', 
         'RFCS/0032-envelope-reliability-events.md §B.6',
         'recovered envelope MUST reach node.completed — recovery does not block downstream acceptance',
       ),
@@ -221,7 +223,7 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: end-to-end through the en
     const completedPayload = JSON.stringify(nodeCompleted?.payload ?? {});
     expect(
       completedPayload.includes('recovered-ok'),
-      driver.describe(
+      req('openwop.it.envelope-recovery-applied.recovered-envelope-is-subsequently-accepted-normally-downstream-runeventdoc-carr', 
         'RFCS/0032-envelope-reliability-events.md §B.6',
         'recovered structured data MUST flow to the downstream RunEventDoc unchanged',
       ),

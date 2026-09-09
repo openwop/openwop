@@ -23,6 +23,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'connection-pack-manifest.schema.json');
 const FIXTURE_PATH = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
@@ -60,7 +61,7 @@ describe('connection-pack-reach-exclusive (RFC 0095 §B.5)', () => {
     for (const reach of [MCP, OPENAPI, INTEGRATION]) {
       expect(
         validate(withReach(reach)),
-        `connection-packs.md §Manifest clause 5: a single reach mode (${Object.keys(reach)[0]}) MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+        req('openwop.it.connection-pack-reach-exclusive.positive-each-reach-mode-validates-alone', 'connection-packs.md', `connection-packs.md §Manifest clause 5: a single reach mode (${Object.keys(reach)[0]}) MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
       ).toBe(true);
     }
   });
@@ -69,7 +70,7 @@ describe('connection-pack-reach-exclusive (RFC 0095 §B.5)', () => {
     const errs = failsWith(withReach({ ...MCP, ...OPENAPI }), 'maxProperties');
     expect(
       errs.length,
-      'connection-packs.md §Manifest clause 5: reach MUST specify exactly one of mcp/openapi/integration',
+      req('openwop.it.connection-pack-reach-exclusive.negative-two-reach-modes-are-rejected-maxproperties-1', 'connection-packs.md', 'connection-packs.md §Manifest clause 5: reach MUST specify exactly one of mcp/openapi/integration'),
     ).toBeGreaterThan(0);
   });
 
@@ -77,7 +78,7 @@ describe('connection-pack-reach-exclusive (RFC 0095 §B.5)', () => {
     const errs = failsWith(withReach({}), 'minProperties');
     expect(
       errs.length,
-      'connection-packs.md §Manifest clause 5: reach MUST declare a mode — an empty object is invalid',
+      req('openwop.it.connection-pack-reach-exclusive.negative-an-empty-reach-is-rejected-minproperties-1', 'connection-packs.md', 'connection-packs.md §Manifest clause 5: reach MUST declare a mode — an empty object is invalid'),
     ).toBeGreaterThan(0);
   });
 
@@ -85,7 +86,7 @@ describe('connection-pack-reach-exclusive (RFC 0095 §B.5)', () => {
     const errs = failsWith(withReach({ grpc: { url: 'https://example.com' } }), 'additionalProperties');
     expect(
       errs.some((e) => (e.params as { additionalProperty?: string }).additionalProperty === 'grpc'),
-      'connection-packs.md §Manifest clause 5: the reach vocabulary is closed (mcp | openapi | integration)',
+      req('openwop.it.connection-pack-reach-exclusive.negative-an-unknown-reach-mode-is-rejected-additionalproperties-false', 'connection-packs.md', 'connection-packs.md §Manifest clause 5: the reach vocabulary is closed (mcp | openapi | integration)'),
     ).toBe(true);
   });
 });

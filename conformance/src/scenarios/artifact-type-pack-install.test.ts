@@ -26,7 +26,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 
 const PROFILE = 'openwop-artifact-type-packs';
@@ -37,6 +36,7 @@ import {
   produceArtifact,
   sampleArtifactTypePack,
 } from '../lib/artifactTypes.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('artifact-type-pack-install: registered artifacts are schema-validated (RFC 0071)', () => {
   it('a conforming payload yields artifact.created { registered: true }', async () => {
@@ -47,24 +47,24 @@ describe('artifact-type-pack-install: registered artifacts are schema-validated 
     if (!behaviorGatePresent(PROFILE, installed)) return; // seam absent: skip default, FAIL strict
     expect(
       installed.status >= 200 && installed.status < 300,
-      driver.describe('artifact-type-packs.md §"Pack kind"', 'a valid artifact-type pack MUST install cleanly'),
+      req('openwop.it.artifact-type-pack-install.a-conforming-payload-yields-artifact-created-registered-true', 'artifact-type-packs.md §"Pack kind"', 'a valid artifact-type pack MUST install cleanly'),
     ).toBe(true);
 
     const produced = await produceArtifact(artifactTypeId, { title: 'Hello', body: 'World' });
     if (!behaviorGatePresent(PROFILE, produced)) return; // seam absent: skip default, FAIL strict
     expect(
       produced.json['registered'],
-      driver.describe('artifact-type-packs.md §"Binding the existing artifact surfaces"', 'a payload matching a registered artifactTypeId MUST be marked registered'),
+      req('openwop.it.artifact-type-pack-install.a-conforming-payload-yields-artifact-created-registered-true', 'artifact-type-packs.md §"Binding the existing artifact surfaces"', 'a payload matching a registered artifactTypeId MUST be marked registered'),
     ).toBe(true);
     expect(
       produced.json['validated'],
-      driver.describe('artifact-type-packs.md', 'the host MUST validate the payload against the pack schema before emitting artifact.created'),
+      req('openwop.it.artifact-type-pack-install.a-conforming-payload-yields-artifact-created-registered-true', 'artifact-type-packs.md', 'the host MUST validate the payload against the pack schema before emitting artifact.created'),
     ).toBe(true);
     const evt = produced.json['artifactCreated'] as { registered?: unknown } | undefined;
     if (evt && 'registered' in evt) {
       expect(
         evt.registered,
-        driver.describe('run-event-payloads.schema.json §artifactCreated', 'artifact.created.registered MUST be true for a validated registered artifact'),
+        req('openwop.it.artifact-type-pack-install.a-conforming-payload-yields-artifact-created-registered-true', 'run-event-payloads.schema.json §artifactCreated', 'artifact.created.registered MUST be true for a validated registered artifact'),
       ).toBe(true);
     }
   });
@@ -83,7 +83,7 @@ describe('artifact-type-pack-install: registered artifacts are schema-validated 
       produced.json['stored'] === false;
     expect(
       rejected,
-      driver.describe('artifact-type-packs.md §"Binding the existing artifact surfaces"', 'a payload that fails the pack schema MUST NOT be emitted as a validated registered artifact'),
+      req('openwop.it.artifact-type-pack-install.a-schema-violating-payload-is-rejected-not-stored-as-a-validated-registered-arti', 'artifact-type-packs.md §"Binding the existing artifact surfaces"', 'a payload that fails the pack schema MUST NOT be emitted as a validated registered artifact'),
     ).toBe(true);
   });
 });

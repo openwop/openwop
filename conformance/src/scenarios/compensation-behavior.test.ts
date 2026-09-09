@@ -44,6 +44,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'openwop-compensation';
 
@@ -76,7 +77,7 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
     const caps = capabilityFamily<CompensationCaps>(disco.json, 'compensation');
     expect(
       caps?.orderingModels ?? [],
-      driver.describe(
+      req('openwop.it.compensation-behavior.a-host-advertising-compensation-implements-reverse-completion', 
         'RFCS/0151-compensation-and-partial-failure-profile.md §A',
         'an advertising host MUST implement `reverse-completion`; `dependency-graph` is optional',
       ),
@@ -93,23 +94,23 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
     if (seam.status === 404) {
       expect(
         seam.status,
-        driver.describe(
+        req('openwop.it.compensation-behavior.the-plan-is-persisted-before-the-first-inverse-action', 
           'RFCS/0151 §C',
           'a host advertising `compensation` MUST expose the unwind sample seam so plan-before-effect ' +
             'ordering can be witnessed; without it the requirement is unobservable and the profile ' +
             'cannot be certified (RFC 0148 §A: unobservable resolves to `blocked`, not to a pass)',
         ),
       ).not.toBe(404);
-      return;
+      return softSkip('blocked', 'precondition not met — `seam.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     const events = (seam.json as { events?: { type: string }[] }).events ?? [];
     const requestedAt = events.findIndex((e) => e.type === 'compensation.requested');
     const startedAt = events.findIndex((e) => e.type === 'compensation.started');
-    expect(requestedAt, driver.describe('RFCS/0151 §D', '`compensation.requested` MUST be emitted')).toBeGreaterThanOrEqual(0);
-    expect(startedAt, driver.describe('RFCS/0151 §D', '`compensation.started` MUST be emitted')).toBeGreaterThanOrEqual(0);
+    expect(requestedAt, req('openwop.it.compensation-behavior.the-plan-is-persisted-before-the-first-inverse-action', 'RFCS/0151 §D', '`compensation.requested` MUST be emitted')).toBeGreaterThanOrEqual(0);
+    expect(startedAt, req('openwop.it.compensation-behavior.the-plan-is-persisted-before-the-first-inverse-action', 'RFCS/0151 §D', '`compensation.started` MUST be emitted')).toBeGreaterThanOrEqual(0);
     expect(
       requestedAt,
-      driver.describe(
+      req('openwop.it.compensation-behavior.the-plan-is-persisted-before-the-first-inverse-action', 
         'RFCS/0151 §C',
         'the plan MUST be persisted BEFORE the first inverse action executes',
       ),
@@ -119,12 +120,12 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
   it('inverse actions run in descending forward-completion order', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const seam = await driver.post('/v1/host/sample/test/compensation/unwind', { nodes: 3 });
-    if (seam.status === 404) return; // covered by the seam assertion above
+    if (seam.status === 404) return softSkip('blocked', 'precondition not met — `seam.status === 404` returned early (covered by the seam assertion above) (seam, prior step, or fixture unavailable)'); // covered by the seam assertion above
     const order = (seam.json as { compensatedOrder?: number[] }).compensatedOrder ?? [];
     const descending = [...order].sort((a, b) => b - a);
     expect(
       order,
-      driver.describe(
+      req('openwop.it.compensation-behavior.inverse-actions-run-in-descending-forward-completion-order', 
         'RFCS/0151 §C',
         '`reverse-completion` orders compensations by DESCENDING durable forward-completion ' +
           'sequence. Compensating forward can release a resource a later inverse action still needs.',
@@ -135,10 +136,10 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
   it('replay does not re-fire inverse effects', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const seam = await driver.post('/v1/host/sample/test/compensation/replay', {});
-    if (seam.status === 404) return;
+    if (seam.status === 404) return softSkip('blocked', 'precondition not met — `seam.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       (seam.json as { refiredEffects?: number }).refiredEffects ?? 0,
-      driver.describe(
+      req('openwop.it.compensation-behavior.replay-does-not-re-fire-inverse-effects', 
         'RFCS/0151 §F',
         'replay defaults MUST use recorded compensation outcomes and MUST NOT re-fire inverse ' +
           'effects — a replay that re-executes them turns a recovery into a second outage',
@@ -149,22 +150,22 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
   it('the run snapshot carries the §D rollup, and it agrees with the events', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const seam = await driver.post('/v1/host/sample/test/compensation/unwind', {});
-    if (seam.status === 404) return; // covered by the seam assertion above
+    if (seam.status === 404) return softSkip('blocked', 'precondition not met — `seam.status === 404` returned early (covered by the seam assertion above) (seam, prior step, or fixture unavailable)'); // covered by the seam assertion above
     const body = seam.json as { runId?: string; events?: { type: string }[] };
     expect(
       typeof body.runId === 'string' && body.runId.length > 0,
-      driver.describe(
+      req('openwop.it.compensation-behavior.the-run-snapshot-carries-the-d-rollup-and-it-agrees-with-the-events', 
         'host-sample-test-seams.md §21',
         'the unwind seam MUST return the `runId` it created — without it the §D rollup has no ' +
           'black-box path to a witness and lands as another shape-only claim',
       ),
     ).toBe(true);
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(body.runId ?? '')}`);
-    expect(snap.status, driver.describe('rest-endpoints.md', 'GET /v1/runs/{runId} for the seam run')).toBe(200);
+    expect(snap.status, req('openwop.it.compensation-behavior.the-run-snapshot-carries-the-d-rollup-and-it-agrees-with-the-events', 'rest-endpoints.md', 'GET /v1/runs/{runId} for the seam run')).toBe(200);
     const status = (snap.json as { compensationStatus?: unknown }).compensationStatus;
     expect(
       status,
-      driver.describe(
+      req('openwop.it.compensation-behavior.the-run-snapshot-carries-the-d-rollup-and-it-agrees-with-the-events', 
         'compensation.md §"Run rollup: compensationStatus"',
         'a host that advertises `compensation` MUST include `compensationStatus` on every snapshot ' +
           '(`none` when idle) — presence is the wire witness of the advert',
@@ -187,17 +188,17 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
     if (expected === null) {
       expect(
         ['running', 'partial', 'failed'].includes(String(status)),
-        driver.describe(
+        req('openwop.it.compensation-behavior.the-run-snapshot-carries-the-d-rollup-and-it-agrees-with-the-events', 
           'compensation.md §"Run rollup: compensationStatus"',
           'an unwind that started and did not complete MUST report `running`, `partial`, or `failed` ' +
             `— got ${String(status)}`,
         ),
       ).toBe(true);
-      return;
+      return softSkip('blocked', 'precondition not met — `expected === null` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       status,
-      driver.describe(
+      req('openwop.it.compensation-behavior.the-run-snapshot-carries-the-d-rollup-and-it-agrees-with-the-events', 
         'compensation.md §"Run rollup: compensationStatus"',
         `the rollup MUST be the deterministic fold of the compensation.* events — events ${JSON.stringify(types)} fold to \`${expected}\``,
       ),
@@ -207,7 +208,7 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
   it('compensation events carry no provider bodies or credentials', async () => {
     if (!behaviorGate(PROFILE, await advertised())) return;
     const seam = await driver.post('/v1/host/sample/test/compensation/unwind', {});
-    if (seam.status === 404) return;
+    if (seam.status === 404) return softSkip('blocked', 'precondition not met — `seam.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const events = (seam.json as { events?: Record<string, unknown>[] }).events ?? [];
     for (const e of events) {
       if (!COMPENSATION_EVENTS.includes(e['type'] as (typeof COMPENSATION_EVENTS)[number])) continue;
@@ -215,7 +216,7 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
       for (const forbidden of ['-----BEGIN', 'Bearer ', 'sk-', 'authorization', 'providerResponse']) {
         expect(
           serialized.toLowerCase().includes(forbidden.toLowerCase()),
-          driver.describe(
+          req('openwop.it.compensation-behavior.compensation-events-carry-no-provider-bodies-or-credentials', 
             'RFCS/0151 §D + §G',
             'compensation event payloads carry opaque IDs and closed reason codes — never provider ' +
               'bodies or credentials. These land in the DURABLE log, which is the least revocable ' +
@@ -257,7 +258,7 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
     const body = seam.json as { runId?: string; events?: { type: string }[] };
     expect(
       typeof body.runId === 'string' && body.runId.length > 0,
-      driver.describe('host-sample-test-seams.md §21', '`fail: false` MUST still return the runId it created'),
+      req('openwop.it.compensation-behavior.a-healthy-run-that-declares-a-compensator-reports-compensationstatus-none-sp-11a', 'host-sample-test-seams.md §21', '`fail: false` MUST still return the runId it created'),
     ).toBe(true);
 
     // Positive control: the seam really did run a healthy compensator-declaring
@@ -274,12 +275,12 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
     }
 
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(body.runId ?? '')}`);
-    expect(snap.status, driver.describe('rest-endpoints.md', 'GET /v1/runs/{runId} for the healthy seam run')).toBe(200);
+    expect(snap.status, req('openwop.it.compensation-behavior.a-healthy-run-that-declares-a-compensator-reports-compensationstatus-none-sp-11a', 'rest-endpoints.md', 'GET /v1/runs/{runId} for the healthy seam run')).toBe(200);
     const snapshot = snap.json as { status?: unknown; compensationStatus?: unknown };
 
     expect(
       snapshot.compensationStatus,
-      driver.describe(
+      req('openwop.it.compensation-behavior.a-healthy-run-that-declares-a-compensator-reports-compensationstatus-none-sp-11a', 
         'compensation.md §"Run rollup: compensationStatus"',
         'a host advertising `compensation` MUST carry the field on EVERY snapshot — presence is the wire witness of the advert',
       ),
@@ -287,7 +288,7 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
 
     expect(
       snapshot.compensationStatus,
-      driver.describe(
+      req('openwop.it.compensation-behavior.a-healthy-run-that-declares-a-compensator-reports-compensationstatus-none-sp-11a', 
         'compensation.md §"Run rollup: compensationStatus"',
         'a run that completed while declaring compensable nodes has nothing to unwind: no `compensation.requested` ' +
           'was recorded, so the fold is `none`. `pending` here means the rollup was derived from obligation ROWS ' +

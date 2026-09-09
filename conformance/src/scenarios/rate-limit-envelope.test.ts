@@ -23,6 +23,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 const ALLOWED_SCOPES = new Set(['tenant', 'route', 'global', 'key']);
 const FORCE = process.env.OPENWOP_FORCE_RATE_LIMIT === 'true';
@@ -48,7 +49,7 @@ describe('rate-limit-envelope: 429 conforms to canonical shape', () => {
     }
 
     const retryAfter = last.headers.get('retry-after');
-    expect(retryAfter, driver.describe(
+    expect(retryAfter, req('openwop.it.rate-limit-envelope.when-a-429-is-observed-the-response-body-satisfies-the-v1-1-contract', 
       'rest-endpoints.md §"429 Too Many Requests envelope"',
       '429 response MUST set Retry-After header',
     )).not.toBeNull();
@@ -60,7 +61,7 @@ describe('rate-limit-envelope: 429 conforms to canonical shape', () => {
       [k: string]: unknown;
     };
 
-    expect(body.error, driver.describe(
+    expect(body.error, req('openwop.it.rate-limit-envelope.when-a-429-is-observed-the-response-body-satisfies-the-v1-1-contract', 
       'rest-endpoints.md §"429 Too Many Requests envelope"',
       "429 body MUST carry error === 'rate_limited'",
     )).toBe('rate_limited');
@@ -70,13 +71,13 @@ describe('rate-limit-envelope: 429 conforms to canonical shape', () => {
     const topKeys = Object.keys(body).filter(
       (k) => !['error', 'message', 'details'].includes(k),
     );
-    expect(topKeys, driver.describe(
+    expect(topKeys, req('openwop.it.rate-limit-envelope.when-a-429-is-observed-the-response-body-satisfies-the-v1-1-contract', 
       'error-envelope.schema.json additionalProperties: false',
       '429 envelope MUST NOT carry top-level keys outside {error, message, details}',
     )).toEqual([]);
 
     if (body.details?.scope !== undefined) {
-      expect(ALLOWED_SCOPES.has(body.details.scope), driver.describe(
+      expect(ALLOWED_SCOPES.has(body.details.scope), req('openwop.it.rate-limit-envelope.when-a-429-is-observed-the-response-body-satisfies-the-v1-1-contract', 
         'rest-endpoints.md §"429 Too Many Requests envelope"',
         "details.scope MUST be one of {'tenant','route','global','key'} when present",
       )).toBe(true);
@@ -89,7 +90,7 @@ describe('rate-limit-envelope: 429 conforms to canonical shape', () => {
       retryAfterSec > 0
     ) {
       const diff = Math.abs(body.details.retryAfterMs / 1000 - retryAfterSec);
-      expect(diff, driver.describe(
+      expect(diff, req('openwop.it.rate-limit-envelope.when-a-429-is-observed-the-response-body-satisfies-the-v1-1-contract', 
         'rest-endpoints.md §"429 Too Many Requests envelope"',
         'details.retryAfterMs MUST be consistent with Retry-After header (±1s)',
       )).toBeLessThanOrEqual(1.5);

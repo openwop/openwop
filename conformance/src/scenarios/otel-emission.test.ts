@@ -30,6 +30,7 @@ import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host exports OTLP/HTTP spans to the suite's collector.
@@ -80,7 +81,7 @@ describe('otel-emission: required run-level + node-level attributes', () => {
 
     const runSpans = await waitForRunSpans(runId, { timeoutMs: 5_000, minCount: 2 });
 
-    expect(runSpans.length, driver.describe(
+    expect(runSpans.length, req('openwop.it.otel-emission.host-emits-openwop-run-openwop-node-spans-with-required-attributes', 
       'observability.md §"Span attributes"',
       'host MUST emit at least one openwop.* span carrying openwop.run_id',
     )).toBeGreaterThan(0);
@@ -90,21 +91,21 @@ describe('otel-emission: required run-level + node-level attributes', () => {
     const anySpanHasWorkflowId = runSpans.some(
       (s) => s.attributes.get('openwop.workflow_id') === FIXTURE,
     );
-    expect(anySpanHasWorkflowId, driver.describe(
+    expect(anySpanHasWorkflowId, req('openwop.it.otel-emission.host-emits-openwop-run-openwop-node-spans-with-required-attributes', 
       'observability.md §"Run-level attributes"',
       'spans MUST carry openwop.workflow_id matching the run\'s workflow',
     )).toBe(true);
 
     // Find an openwop.run span (lifecycle span; named per §"Span naming").
     const runSpan = runSpans.find((s) => s.name === 'openwop.run' || s.name.startsWith('openwop.run.'));
-    expect(runSpan, driver.describe(
+    expect(runSpan, req('openwop.it.otel-emission.host-emits-openwop-run-openwop-node-spans-with-required-attributes', 
       'observability.md §"Span naming"',
       'host MUST emit a span named openwop.run (or openwop.run.<phase>) per run',
     )).toBeDefined();
 
     // Find an openwop.node.<typeId> span; conformance-noop has one node.
     const nodeSpan = runSpans.find((s) => s.name.startsWith('openwop.node.'));
-    expect(nodeSpan, driver.describe(
+    expect(nodeSpan, req('openwop.it.otel-emission.host-emits-openwop-run-openwop-node-spans-with-required-attributes', 
       'observability.md §"Span naming"',
       'host MUST emit a span named openwop.node.<typeId> per node execution',
     )).toBeDefined();
@@ -114,7 +115,7 @@ describe('otel-emission: required run-level + node-level attributes', () => {
       expect(typeof nodeSpan.attributes.get('openwop.node_id')).toBe('string');
       expect(typeof nodeSpan.attributes.get('openwop.node_type')).toBe('string');
       const attempt = nodeSpan.attributes.get('openwop.node_attempt');
-      expect(typeof attempt === 'number' && attempt >= 0, driver.describe(
+      expect(typeof attempt === 'number' && attempt >= 0, req('openwop.it.otel-emission.host-emits-openwop-run-openwop-node-spans-with-required-attributes', 
         'observability.md §"Node-level attributes"',
         'openwop.node_attempt MUST be a non-negative number',
       )).toBe(true);

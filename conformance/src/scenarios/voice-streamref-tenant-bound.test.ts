@@ -22,6 +22,8 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-transcriber';
 
@@ -44,8 +46,8 @@ describe('voice-streamref-tenant-bound (RFC 0106 §F INV-4)', () => {
     // conduit to bind cross-tenant — soft-skip (the invariant stays reference-impl
     // until a host with live streamRef transport proves it).
     const res = await driver.post(SEAM, { audio: { streamRef: 'stream:tenant-a/mic' } });
-    if (res.status === 404) return;
-    if (errCode(res.json) === 'transcription_unsupported') return; // §E — no live transport on this host
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    if (errCode(res.json) === 'transcription_unsupported') return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `errCode(res.json) === \'transcription_unsupported\'` returned early (§E — no live transport on this host)'); // §E — no live transport on this host
 
     // A host that DOES accept a live streamRef must bind it: a second tenant presenting
     // tenant-A's streamRef MUST be rejected (cross-handle read forbidden). Exercising the
@@ -54,7 +56,7 @@ describe('voice-streamref-tenant-bound (RFC 0106 §F INV-4)', () => {
     // another tenant's buffered audio for an unknown streamRef.
     expect(
       res.status !== 200 || (res.json as { finalText?: unknown })?.finalText !== undefined,
-      driver.describe('RFC 0106 §F INV-4', 'a host honoring a live streamRef MUST bind it to its tenant+session'),
+      req('openwop.it.voice-streamref-tenant-bound.a-live-streamref-is-tenant-session-bound-host-internal-transport-per-e-soft-skip', 'RFC 0106 §F INV-4', 'a host honoring a live streamRef MUST bind it to its tenant+session'),
     ).toBe(true);
   });
 });

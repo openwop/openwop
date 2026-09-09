@@ -30,9 +30,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -49,14 +47,14 @@ describe('aiproviders-realtimevoice-shape: capability advertisement (RFC 0106 §
       .realtimeVoice;
     expect(
       realtimeVoice,
-      why('host-capabilities.md §host.aiProviders', 'aiProviders.realtimeVoice MUST be declared'),
+      req('openwop.it.aiproviders-realtimevoice-shape.aiproviders-realtimevoice-is-an-object-with-the-four-sub-flags', 'host-capabilities.md §host.aiProviders', 'aiProviders.realtimeVoice MUST be declared'),
     ).toBeDefined();
-    expect(realtimeVoice?.type, why('RFC 0106 §A', 'realtimeVoice MUST be an object')).toBe('object');
+    expect(realtimeVoice?.type, req('openwop.it.aiproviders-realtimevoice-shape.aiproviders-realtimevoice-is-an-object-with-the-four-sub-flags', 'RFC 0106 §A', 'realtimeVoice MUST be an object')).toBe('object');
     const props = realtimeVoice?.properties ?? {};
     for (const flag of ['transcription', 'synthesis', 'turnDetection', 'bargeIn']) {
       expect(
         Object.prototype.hasOwnProperty.call(props, flag),
-        why('RFC 0106 §A', `realtimeVoice.${flag} MUST be declared`),
+        req('openwop.it.aiproviders-realtimevoice-shape.aiproviders-realtimevoice-is-an-object-with-the-four-sub-flags', 'RFC 0106 §A', `realtimeVoice.${flag} MUST be declared`),
       ).toBe(true);
     }
   });
@@ -66,7 +64,7 @@ describe('aiproviders-realtimevoice-shape: capability advertisement (RFC 0106 §
     const required = Array.isArray(aiProviders.required) ? (aiProviders.required as string[]) : [];
     expect(
       required.includes('realtimeVoice'),
-      why('RFC 0106 §A', 'aiProviders.realtimeVoice MUST be optional (a host without live voice is valid)'),
+      req('openwop.it.aiproviders-realtimevoice-shape.realtimevoice-is-not-in-aiproviders-required-absence-no-live-voice-is-a-valid-de', 'RFC 0106 §A', 'aiProviders.realtimeVoice MUST be optional (a host without live voice is valid)'),
     ).toBe(false);
   });
 
@@ -78,24 +76,24 @@ describe('aiproviders-realtimevoice-shape: capability advertisement (RFC 0106 §
 
     expect(
       validate({ transcription: 'streaming', turnDetection: 'semantic', bargeIn: 'supported' }),
-      why('RFC 0106 §A', 'a full transcription advertisement MUST validate'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-realtimevoice-subschema-accepts-the-floor-and-enforces-the-turndetection', 'RFC 0106 §A', 'a full transcription advertisement MUST validate'),
     ).toBe(true);
-    expect(validate({}), why('RFC 0106 §A', 'an empty realtimeVoice object MUST validate')).toBe(true);
+    expect(validate({}), req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-realtimevoice-subschema-accepts-the-floor-and-enforces-the-turndetection', 'RFC 0106 §A', 'an empty realtimeVoice object MUST validate')).toBe(true);
     expect(
       validate({ turnDetection: 'semantic' }),
-      why('RFC 0106 §A', 'turnDetection without transcription MUST be rejected (dependentRequired)'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-realtimevoice-subschema-accepts-the-floor-and-enforces-the-turndetection', 'RFC 0106 §A', 'turnDetection without transcription MUST be rejected (dependentRequired)'),
     ).toBe(false);
     expect(
       validate({ bargeIn: 'supported' }),
-      why('RFC 0106 §A', 'bargeIn without transcription MUST be rejected (dependentRequired)'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-realtimevoice-subschema-accepts-the-floor-and-enforces-the-turndetection', 'RFC 0106 §A', 'bargeIn without transcription MUST be rejected (dependentRequired)'),
     ).toBe(false);
     expect(
       validate({ transcription: 'streaming', turnDetection: 'aggressive' }),
-      why('RFC 0106 §A', 'an out-of-enum turnDetection MUST be rejected'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-realtimevoice-subschema-accepts-the-floor-and-enforces-the-turndetection', 'RFC 0106 §A', 'an out-of-enum turnDetection MUST be rejected'),
     ).toBe(false);
     expect(
       validate({ transcription: true }),
-      why('RFC 0106 §A', 'transcription MUST be the string const "streaming", not a boolean'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-realtimevoice-subschema-accepts-the-floor-and-enforces-the-turndetection', 'RFC 0106 §A', 'transcription MUST be the string const "streaming", not a boolean'),
     ).toBe(false);
   });
 
@@ -106,15 +104,15 @@ describe('aiproviders-realtimevoice-shape: capability advertisement (RFC 0106 §
 
     expect(
       validate({ realtimeVoice: { transcription: 'streaming', synthesis: 'streaming' } }),
-      why('RFC 0106 §A', 'streaming synthesis without speechSynthesis: "supported" MUST be rejected'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-aiproviders-subschema-enforces-realtimevoice-synthesis-speechsynthesis', 'RFC 0106 §A', 'streaming synthesis without speechSynthesis: "supported" MUST be rejected'),
     ).toBe(false);
     expect(
       validate({ speechSynthesis: 'supported', realtimeVoice: { transcription: 'streaming', synthesis: 'streaming' } }),
-      why('RFC 0106 §A', 'streaming synthesis WITH speechSynthesis: "supported" MUST validate'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-aiproviders-subschema-enforces-realtimevoice-synthesis-speechsynthesis', 'RFC 0106 §A', 'streaming synthesis WITH speechSynthesis: "supported" MUST validate'),
     ).toBe(true);
     expect(
       validate({ realtimeVoice: { transcription: 'streaming' } }),
-      why('RFC 0106 §A', 'transcription-only (no synthesis) MUST validate without speechSynthesis'),
+      req('openwop.it.aiproviders-realtimevoice-shape.ajv-the-aiproviders-subschema-enforces-realtimevoice-synthesis-speechsynthesis', 'RFC 0106 §A', 'transcription-only (no synthesis) MUST validate without speechSynthesis'),
     ).toBe(true);
   });
 });

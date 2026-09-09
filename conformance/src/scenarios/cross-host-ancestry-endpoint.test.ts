@@ -37,6 +37,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -71,7 +72,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 �
     if (chc?.ancestryEndpointSupported !== true) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chc?.ancestryEndpointSupported !== true` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chc?.ancestryEndpointSupported !== true` returned early');
     }
 
     // Create a fresh top-level run via the host's conformance-dispatch-loop
@@ -81,33 +82,33 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 �
     if (create.status !== 201) {
       softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
     }
     const runId = (create.json as { runId: string }).runId;
 
     const ancestryRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/ancestry`);
-    expect(ancestryRes.status, driver.describe(
+    expect(ancestryRes.status, req('openwop.it.cross-host-ancestry-endpoint.hosts-advertising-ancestryendpointsupported-must-serve-get-v1-runs-runid-ancestr', 
       'RFCS/0040-multi-agent-cross-host-causation.md §C',
       'host advertising ancestryEndpointSupported MUST serve the endpoint (200) — 404 is non-conformant',
     )).toBe(200);
 
     const body = ancestryRes.json as { runId?: string; hostId?: string; parent?: unknown };
-    expect(body.runId, 'runId in response MUST match the request path').toBe(runId);
+    expect(body.runId, req('openwop.it.cross-host-ancestry-endpoint.hosts-advertising-ancestryendpointsupported-must-serve-get-v1-runs-runid-ancestr', 'RFCS/0040-multi-agent-cross-host-causation.md §C', 'runId in response MUST match the request path')).toBe(runId);
     expect(
       typeof body.hostId === 'string' && (body.hostId as string).length >= 1,
-      'hostId MUST be present + non-empty',
+      req('openwop.it.cross-host-ancestry-endpoint.hosts-advertising-ancestryendpointsupported-must-serve-get-v1-runs-runid-ancestr', 'RFCS/0040-multi-agent-cross-host-causation.md §C', 'hostId MUST be present + non-empty'),
     ).toBe(true);
     if (chc.hostId !== undefined) {
       expect(
         body.hostId,
-        'hostId in response MUST equal the host\'s advertised crossHostCausation.hostId',
+        req('openwop.it.cross-host-ancestry-endpoint.hosts-advertising-ancestryendpointsupported-must-serve-get-v1-runs-runid-ancestr', 'RFCS/0040-multi-agent-cross-host-causation.md §C', 'hostId in response MUST equal the host\'s advertised crossHostCausation.hostId'),
       ).toBe(chc.hostId);
     }
 
     // Top-level run: parent is null.
     expect(
       body.parent,
-      driver.describe(
+      req('openwop.it.cross-host-ancestry-endpoint.hosts-advertising-ancestryendpointsupported-must-serve-get-v1-runs-runid-ancestr', 
         'RFCS/0040-multi-agent-cross-host-causation.md §C + schemas/run-ancestry-response.schema.json',
         'a top-level run (not dispatched from any other run) MUST return parent: null',
       ),
@@ -120,12 +121,12 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 �
     if (chc?.supported !== true) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chc?.supported !== true` returned early');
       ctx.skip();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chc?.supported !== true` returned early');
     }
     if (chc.ancestryEndpointSupported === true) {
       softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chc.ancestryEndpointSupported === true` returned early');
       ctx.skip(); // covered by the test above
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chc.ancestryEndpointSupported === true` returned early');
     }
 
     // Use any runId — even a synthetic non-existent one. The endpoint should
@@ -133,7 +134,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 �
     const ancestryRes = await driver.get('/v1/runs/synthetic-test-run-id/ancestry');
     expect(
       ancestryRes.status,
-      driver.describe(
+      req('openwop.it.cross-host-ancestry-endpoint.hosts-advertising-crosshostcausation-supported-but-not-ancestryendpointsupported', 
         'spec/v1/multi-agent-execution.md §"GET /v1/runs/{runId}/ancestry endpoint"',
         'hosts that advertise crossHostCausation.supported: true but NOT ancestryEndpointSupported MUST return 404 — the endpoint is opt-in even within Phase 3',
       ),

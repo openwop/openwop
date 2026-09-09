@@ -34,6 +34,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -50,23 +52,23 @@ interface GrpcCap {
 describe.skipIf(HTTP_SKIP)('grpc-transport: advertisement shape (grpc-transport.md §Field semantics)', () => {
   it('an advertised capabilities.grpc block satisfies every doc MUST', async () => {
     const res = await driver.get('/.well-known/openwop');
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const grpc = capabilityFamily<GrpcCap>(res.json, 'grpc');
     if (!behaviorGate('openwop-grpc-transport', grpc !== undefined)) return;
 
     expect(
       typeof grpc!.supported,
-      driver.describe('grpc-transport.md §Field semantics', 'capabilities.grpc.supported MUST be a boolean'),
+      req('openwop.it.grpc-transport.an-advertised-capabilities-grpc-block-satisfies-every-doc-must', 'grpc-transport.md §Field semantics', 'capabilities.grpc.supported MUST be a boolean'),
     ).toBe('boolean');
 
     expect(
       grpc!.service,
-      driver.describe('grpc-transport.md §Field semantics', 'v1 hosts MUST use the canonical service name openwop.v1.Engine'),
+      req('openwop.it.grpc-transport.an-advertised-capabilities-grpc-block-satisfies-every-doc-must', 'grpc-transport.md §Field semantics', 'v1 hosts MUST use the canonical service name openwop.v1.Engine'),
     ).toBe(V1_SERVICE);
 
     expect(
       TLS_VALUES,
-      driver.describe(
+      req('openwop.it.grpc-transport.an-advertised-capabilities-grpc-block-satisfies-every-doc-must', 
         'grpc-transport.md §Field semantics',
         `capabilities.grpc.tls MUST be one of ${TLS_VALUES.join(' / ')} (got ${String(grpc!.tls)})`,
       ),
@@ -75,7 +77,7 @@ describe.skipIf(HTTP_SKIP)('grpc-transport: advertisement shape (grpc-transport.
     if (grpc!.endpoint !== undefined) {
       expect(
         typeof grpc!.endpoint === 'string' && /^grpcs?:\/\/.+/.test(grpc!.endpoint),
-        driver.describe(
+        req('openwop.it.grpc-transport.an-advertised-capabilities-grpc-block-satisfies-every-doc-must', 
           'grpc-transport.md §Field semantics',
           `capabilities.grpc.endpoint MUST be a grpc:// (cleartext) or grpcs:// (TLS) URI (got ${String(grpc!.endpoint)})`,
         ),
@@ -86,7 +88,7 @@ describe.skipIf(HTTP_SKIP)('grpc-transport: advertisement shape (grpc-transport.
       const transports = capabilityFamily<unknown>(res.json, 'supportedTransports');
       expect(
         Array.isArray(transports) && transports.includes('grpc'),
-        driver.describe(
+        req('openwop.it.grpc-transport.an-advertised-capabilities-grpc-block-satisfies-every-doc-must', 
           'grpc-transport.md §Field semantics',
           'supportedTransports MUST include "grpc" when the gRPC surface is exposed',
         ),
@@ -98,7 +100,7 @@ describe.skipIf(HTTP_SKIP)('grpc-transport: advertisement shape (grpc-transport.
     if (production !== undefined && grpc!.supported === true) {
       expect(
         grpc!.tls,
-        driver.describe(
+        req('openwop.it.grpc-transport.an-advertised-capabilities-grpc-block-satisfies-every-doc-must', 
           'grpc-transport.md §Field semantics',
           'production hosts MUST set capabilities.grpc.tls: "required"',
         ),

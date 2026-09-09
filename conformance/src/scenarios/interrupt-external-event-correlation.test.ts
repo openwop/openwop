@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-interrupt-external-event';
 const SKIP = !isFixtureAdvertised(WORKFLOW_ID);
@@ -51,7 +52,7 @@ describe.skipIf(SKIP)('interrupt: external-event — matching correlation resume
     await pollUntilStatus(runId, 'waiting-external', { timeoutMs: 10_000 });
 
     const token = await fetchInterruptToken(runId);
-    expect(token, driver.describe(
+    expect(token, req('openwop.it.interrupt-external-event-correlation.signed-token-post-with-matching-correlation-drives-terminal-completed', 
       'interrupt.md §Signed-token callback',
       'suspended external-event interrupt MUST expose a signed token to the caller',
     )).not.toBeNull();
@@ -63,14 +64,14 @@ describe.skipIf(SKIP)('interrupt: external-event — matching correlation resume
         externalReference: 'conformance-test-123',
       },
     });
-    expect(resolve.status, driver.describe(
+    expect(resolve.status, req('openwop.it.interrupt-external-event-correlation.signed-token-post-with-matching-correlation-drives-terminal-completed', 
       'rest-endpoints.md POST /v1/interrupts/{token}',
       'token resolve with matching correlation MUST return 2xx',
     )).toBeGreaterThanOrEqual(200);
     expect(resolve.status).toBeLessThan(300);
 
     const terminal = await pollUntilTerminal(runId, { timeoutMs: 10_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.interrupt-external-event-correlation.signed-token-post-with-matching-correlation-drives-terminal-completed', 
       'fixtures.md conformance-interrupt-external-event',
       'matching external event MUST drive terminal completed',
     )).toBe('completed');
@@ -96,7 +97,7 @@ describe.skipIf(SKIP)('interrupt: external-event — mismatched correlation reje
     });
     expect(
       [422, 400].includes(resolve.status),
-      driver.describe(
+      req('openwop.it.interrupt-external-event-correlation.correlation-mismatch-returns-422-and-leaves-run-suspended', 
         'interrupt-profiles.md §openwop-interrupt-external-event',
         'correlation mismatch MUST return 422 (or 400) without resuming',
       ),
@@ -104,7 +105,7 @@ describe.skipIf(SKIP)('interrupt: external-event — mismatched correlation reje
 
     const still = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
     const status = (still.json as { status: string }).status;
-    expect(status, 'run MUST remain suspended after correlation rejection').toMatch(/^waiting-/);
+    expect(status, req('openwop.it.interrupt-external-event-correlation.correlation-mismatch-returns-422-and-leaves-run-suspended', 'interrupt-profiles.md §openwop-interrupt-external-event', 'run MUST remain suspended after correlation rejection')).toMatch(/^waiting-/);
 
     await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
       reason: 'conformance-cleanup',

@@ -42,6 +42,8 @@ import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -70,12 +72,12 @@ describe.skipIf(HTTP_SKIP)(
       const d = await readDiscovery();
       if (d === null) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       }
       const mutableLibrary = capabilityFamily(d, 'prompts')?.mutableLibrary;
       if (mutableLibrary !== true) {
         ctx.skip();
-        return;
+        return softSkip('blocked', 'precondition not met — `mutableLibrary !== true` returned early (seam, prior step, or fixture unavailable)');
       }
 
       const nonMemberWorkspaceId =
@@ -96,7 +98,7 @@ describe.skipIf(HTTP_SKIP)(
       // 0028 Tier-2 self-disclosed vulnerability demonstrated.
       expect(
         res.status,
-        driver.describe(
+        req('openwop.it.prompt-mutation-workspace-membership-enforced.post-v1-prompts-with-a-workspaceid-the-principal-is-not-a-member-of-must-not-suc', 
           'spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes',
           `mutating /v1/prompts MUST refuse a write to a non-member workspace; ` +
             `got ${res.status} ${res.text.slice(0, 200)}`,
@@ -116,7 +118,7 @@ describe.skipIf(HTTP_SKIP)(
         const body = res.json as { error?: unknown } | null;
         expect(
           body?.error,
-          driver.describe(
+          req('openwop.it.prompt-mutation-workspace-membership-enforced.post-v1-prompts-with-a-workspaceid-the-principal-is-not-a-member-of-must-not-suc', 
             'spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required',
             `403 refusal of a workspace-scoped mutation MUST carry error: "workspace_membership_required"; got error: ${JSON.stringify(body?.error)}`,
           ),

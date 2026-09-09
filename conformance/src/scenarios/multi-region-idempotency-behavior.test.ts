@@ -34,6 +34,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -81,18 +82,18 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     if (probe.status === 404) {
       await noteSimulatorAbsent();
       ctx.skip(); // host doesn't expose the simulator seam
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       probe.status,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.two-region-conflict-resolves-to-the-lex-min-runid-per-annex-convergence-rule', 
         'idempotency.md §"Multi-region idempotency annex"',
         'simulate-partition seam MUST return 200 when ≥2 conflicting claims are submitted',
       ),
     ).toBe(200);
     expect(
       probe.body.winner?.runId,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.two-region-conflict-resolves-to-the-lex-min-runid-per-annex-convergence-rule', 
         'idempotency.md §"Convergence rule"',
         'winner MUST be the lex-min runId (run-a-west < run-b-east)',
       ),
@@ -108,19 +109,19 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     if (probe.status === 404) {
       await noteSimulatorAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(probe.status).toBe(200);
     expect(
       probe.body.winner?.runId,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.three-region-partition-resolves-to-a-single-winner', 
         'idempotency.md §"Convergence rule"',
         'winner MUST be the lex-min runId across all conflicting claims',
       ),
     ).toBe('aaa-1');
     expect(
       probe.body.losers?.length,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.three-region-partition-resolves-to-a-single-winner', 
         'idempotency.md §"Convergence rule"',
         'losers array MUST contain N-1 entries when N claims conflict',
       ),
@@ -135,13 +136,13 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     if (probe.status === 404) {
       await noteSimulatorAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(probe.status).toBe(200);
     const redirects = probe.body.cacheRedirects ?? [];
     expect(
       redirects.length,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.every-region-gets-a-cache-redirect-entry-pointing-at-the-winner', 
         'idempotency.md §"Convergence rule"',
         'cacheRedirects MUST contain one entry per claim (including the winner)',
       ),
@@ -149,7 +150,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     for (const redirect of redirects) {
       expect(
         redirect.redirectToRunId,
-        driver.describe(
+        req('openwop.it.multi-region-idempotency-behavior.every-region-gets-a-cache-redirect-entry-pointing-at-the-winner', 
           'idempotency.md §"Convergence rule"',
           'every cache redirect MUST point at the winner runId',
         ),
@@ -165,12 +166,12 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     if (probe.status === 404) {
       await noteSimulatorAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(probe.status).toBe(200);
     expect(
       probe.body.loserCancelReason,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.loser-cancel-reason-must-be-the-canonical-cross-region-dedup-loss-string', 
         'idempotency.md §"Convergence rule"',
         'loserCancelReason MUST be the canonical `cross_region_dedup_loss` string',
       ),
@@ -187,7 +188,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     if (p1.status === 404) {
       await noteSimulatorAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `p1.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(p1.status).toBe(200);
     const p2 = await simulatePartition([claims[2]!, claims[0]!, claims[1]!]);
@@ -196,7 +197,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(p3.status).toBe(200);
     expect(
       p1.body.winner?.runId,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.resolver-is-order-invariant-shuffled-inputs-produce-the-same-winner', 
         'idempotency.md §"Convergence rule" — determinism',
         'resolver MUST be order-invariant; all permutations MUST produce the same lex-min winner',
       ),
@@ -213,11 +214,11 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     if (probe.status === 404) {
       await noteSimulatorAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(
       probe.status,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency-behavior.mismatched-tuple-rejects-with-400-validation-error', 
         'idempotency.md §"Convergence rule"',
         'claims with non-matching (tenantId, endpoint, key) MUST be rejected — it would be a programming error in the caller',
       ),

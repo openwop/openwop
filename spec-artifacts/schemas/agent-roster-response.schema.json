@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-roster-response.schema.json",
+  "title": "AgentRosterResponse",
+  "description": "RFC 0086 §B. Response body for `GET /v1/agents/roster` — the standing agent roster (named instances + their workflow portfolios) visible to the authenticated principal. Tenant-scoped per RFC 0074 on an `installScope: 'tenant'` host: only the caller's owner-triple entries are returned. Each entry is the canonical `agent-roster-entry.schema.json` shape; content-free of any system-prompt body or credential material (SR-1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["roster", "total"],
+  "properties": {
+    "roster": {
+      "type": "array",
+      "items": { "$ref": "./agent-roster-entry.schema.json" },
+      "description": "The standing roster entries, in a stable (rosterId-sorted) order."
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of entries returned (== roster.length)."
+    }
+  }
+}

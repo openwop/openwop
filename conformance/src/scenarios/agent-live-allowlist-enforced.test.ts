@@ -20,10 +20,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readLiveRuntimeCap, invokeLive } from '../lib/liveRuntime.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const DISALLOWED_TOOL = 'conformance-disallowed-tool';
 
@@ -32,12 +33,12 @@ describe('agent-live-allowlist-enforced (RFC 0077 §F-1)', () => {
     const cap = await readLiveRuntimeCap();
     if (!behaviorGate('openwop-live-allowlist-enforced', cap?.supported === true)) return;
 
-    if (!(await isEventLogSeamAvailable())) return; // soft-skip
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (soft-skip) (seam, prior step, or fixture unavailable)'); // soft-skip
     const res = await invokeLive({ source: 'run-api', attemptTool: DISALLOWED_TOOL });
-    if (res === null || !res.runId) return; // seam/hook absent — soft-skip
+    if (res === null || !res.runId) return softSkip('blocked', 'precondition not met — `res === null || !res.runId` returned early (seam/hook absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam/hook absent — soft-skip
 
     const q = await queryTestEvents(res.runId, { type: 'agent.toolCalled' });
-    if (!q.ok) return;
+    if (!q.ok) return softSkip('blocked', 'precondition not met — `!q.ok` returned early (seam, prior step, or fixture unavailable)');
 
     const calledDisallowed = q.events.some((e) => {
       const tool = e.payload.tool ?? e.payload.toolId ?? e.payload.name;
@@ -45,7 +46,7 @@ describe('agent-live-allowlist-enforced (RFC 0077 §F-1)', () => {
     });
     expect(
       calledDisallowed === false,
-      driver.describe('RFC 0077 §F-1 / RFC 0002 §A14', 'a live invocation MUST NOT call a tool outside the agent toolAllowlist'),
+      req('openwop.it.agent-live-allowlist-enforced.does-not-call-a-tool-outside-the-agent-toolallowlist', 'RFC 0077 §F-1 / RFC 0002 §A14', 'a live invocation MUST NOT call a tool outside the agent toolAllowlist'),
     ).toBe(true);
 
     await resetTestSeam();

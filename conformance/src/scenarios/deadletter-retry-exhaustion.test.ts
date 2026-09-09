@@ -25,6 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryDoc {
   capabilities?: { deadLetter?: { supported?: boolean } };
@@ -43,11 +44,11 @@ describe('deadletter-retry-exhaustion: retry exhaustion → dead-lettered + fork
     const body = res.json as { event?: { type?: string; payload?: { attempts?: number; runId?: string } } } | undefined;
     expect(
       body?.event?.type,
-      driver.describe('RFC 0053 §C.1', 'retry exhaustion MUST emit a run.dead_lettered event'),
+      req('openwop.it.deadletter-retry-exhaustion.a-retry-exhausted-run-emits-run-dead-lettered-with-attempts', 'RFC 0053 §C.1', 'retry exhaustion MUST emit a run.dead_lettered event'),
     ).toBe('run.dead_lettered');
     expect(
       typeof body?.event?.payload?.attempts === 'number' && body.event.payload.attempts >= 1,
-      driver.describe('RFC 0053 §C.1', 'run.dead_lettered MUST carry the total attempts (>= 1)'),
+      req('openwop.it.deadletter-retry-exhaustion.a-retry-exhausted-run-emits-run-dead-lettered-with-attempts', 'RFC 0053 §C.1', 'run.dead_lettered MUST carry the total attempts (>= 1)'),
     ).toBe(true);
   });
 
@@ -58,7 +59,7 @@ describe('deadletter-retry-exhaustion: retry exhaustion → dead-lettered + fork
     const body = res.json as { forkEligible?: boolean } | undefined;
     expect(
       body?.forkEligible,
-      driver.describe('RFC 0053 §C.2', 'a dead-lettered run MUST remain fork-eligible within the retention window'),
+      req('openwop.it.deadletter-retry-exhaustion.the-dead-lettered-run-is-fork-eligible-rfc-0011', 'RFC 0053 §C.2', 'a dead-lettered run MUST remain fork-eligible within the retention window'),
     ).toBe(true);
   });
 });

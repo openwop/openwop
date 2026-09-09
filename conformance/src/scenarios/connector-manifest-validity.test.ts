@@ -27,6 +27,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface SchemaDefs {
   $defs: Record<string, unknown>;
@@ -82,7 +83,7 @@ describe('category: connector-manifest validity — schema shape (RFC 0045 §A)'
       ],
       triggers: ['vendor.acme.salesforce.onRecordChange'],
     });
-    expect(ok, JSON.stringify(validate.errors)).toBe(true);
+    expect(ok, req('openwop.it.connector-manifest-validity.positive-a-well-formed-connector-block-oauth2-auth-validates', 'RFC 0045 §A/§B', JSON.stringify(validate.errors))).toBe(true);
   });
 
   it('positive: credential-auth variant validates', () => {
@@ -92,11 +93,11 @@ describe('category: connector-manifest validity — schema shape (RFC 0045 §A)'
       auth: { type: 'credential', key: 'stripe-secret-key', scope: 'workspace' },
       actions: [{ typeId: 'vendor.acme.stripe.charge', displayName: 'Charge' }],
     });
-    expect(ok, JSON.stringify(validate.errors)).toBe(true);
+    expect(ok, req('openwop.it.connector-manifest-validity.positive-credential-auth-variant-validates', 'RFC 0045 §A/§B', JSON.stringify(validate.errors))).toBe(true);
   });
 
   it('negative: connector missing displayName is rejected', () => {
-    expect(validate({ id: 'salesforce' })).toBe(false);
+    expect(validate({ id: 'salesforce' }), req('openwop.it.connector-manifest-validity.negative-connector-missing-displayname-is-rejected', 'RFC 0045 §A/§B', 'negative: connector missing displayName is rejected')).toBe(false);
   });
 
   it('negative: an action missing typeId is rejected', () => {
@@ -105,7 +106,7 @@ describe('category: connector-manifest validity — schema shape (RFC 0045 §A)'
       displayName: 'Salesforce',
       actions: [{ displayName: 'Upsert' }],
     });
-    expect(ok).toBe(false);
+    expect(ok, req('openwop.it.connector-manifest-validity.negative-an-action-missing-typeid-is-rejected', 'RFC 0045 §A/§B', 'negative: an action missing typeId is rejected')).toBe(false);
   });
 
   it('negative: an unknown ConnectorAuth type is rejected', () => {
@@ -114,7 +115,7 @@ describe('category: connector-manifest validity — schema shape (RFC 0045 §A)'
       displayName: 'Salesforce',
       auth: { type: 'basic', user: 'x' },
     });
-    expect(ok).toBe(false);
+    expect(ok, req('openwop.it.connector-manifest-validity.negative-an-unknown-connectorauth-type-is-rejected', 'RFC 0045 §A/§B', 'negative: an unknown ConnectorAuth type is rejected')).toBe(false);
   });
 });
 
@@ -130,13 +131,13 @@ describe('category: connector-manifest validity — action resolution (RFC 0045 
       actions: [{ typeId: 'vendor.acme.salesforce.upsert' }, { typeId: 'vendor.acme.salesforce.query' }],
       triggers: ['vendor.acme.salesforce.onRecordChange'],
     });
-    expect(unresolved, 'every connector.actions[].typeId + triggers[] MUST resolve to a nodes[].typeId').toEqual([]);
+    expect(unresolved, req('openwop.it.connector-manifest-validity.all-action-trigger-typeids-resolve-to-nodes-in-the-same-manifest', 'RFC 0045 §A/§B', 'every connector.actions[].typeId + triggers[] MUST resolve to a nodes[].typeId')).toEqual([]);
   });
 
   it('an action typeId not in nodes[] is flagged (connector_action_unresolved)', () => {
     const unresolved = unresolvedReferences(nodeTypeIds, {
       actions: [{ typeId: 'vendor.acme.salesforce.does-not-exist' }],
     });
-    expect(unresolved).toContain('vendor.acme.salesforce.does-not-exist');
+    expect(unresolved, req('openwop.it.connector-manifest-validity.an-action-typeid-not-in-nodes-is-flagged-connector-action-unresolved', 'RFC 0045 §A/§B', 'an action typeId not in nodes[] is flagged (connector_action_unresolved)')).toContain('vendor.acme.salesforce.does-not-exist');
   });
 });

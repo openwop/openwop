@@ -481,13 +481,7 @@ Hosts that do NOT advertise the `multiRegion` block retain the existing best-eff
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                           | Owner       |
-| --- | ----------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| I1  | ✅ Cross-region replication semantics — landed in v1.0 (this doc §"Multi-region idempotency", added 2026-05-10).              | closed      |
-| I2  | Garbage-collection guarantees / minimum TTL — currently RECOMMENDED 24h Layer 1 / 14d Layer 2; SHOULD be MUST after telemetry | future      |
-| I3  | Streaming response handling — Layer 2 currently doesn't cache; conformance suite should validate this is "safe" not "broken"  | P2-F4       |
-| I4  | Idempotency key entropy lower bound — currently no MUST; consider 128 bits                                                    | future v1.x |
-| I5  | **Known host divergence from rule 6 (recorded 2026-08-18, not a spec gap).** §"Record shape, digest, and lease" makes `completed` and `terminal-failure` the two **final** outcomes rule 6 caches. A tier-1 host models only `pending` / `completed`: it satisfies the `retryable-failure` MUST **behaviourally** — a `finally` releases the pending claim on every error path, so a failed attempt releases and a same-key retry re-executes — but because it releases on **all** failures, a **terminal** failure is re-executed rather than answered from the cached response. **Effect is benign** (re-running a refusal re-refuses, so no duplicate effect is reachable) but it is a real divergence, disclosed by the host rather than found in a conformance run. Recorded here so a reader of a passing bundle does not infer the state machine is modelled; the spec text is unchanged and correct. | host-side |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.idempotency.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

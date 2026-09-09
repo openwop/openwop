@@ -36,8 +36,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { deriveProfiles } from '../lib/profiles.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -53,26 +52,26 @@ describe('trigger-bridge-shape: TriggerSubscription (RFC 0083 §B, server-free)'
   it('a conforming subscription validates', () => {
     expect(
       validate({ subscriptionId: 'sub-1', source: 'webhook', state: 'active', dedupEnabled: true, retryPolicy: { maxAttempts: 8, backoff: 'exponential' }, webhookId: 'wh-1', secretFingerprint: 'fp-abc' }),
-      why('trigger-bridge.md §B', 'a conforming TriggerSubscription MUST validate'),
+      req('openwop.it.trigger-bridge-shape.a-conforming-subscription-validates', 'trigger-bridge.md §B', 'a conforming TriggerSubscription MUST validate'),
     ).toBe(true);
   });
 
   it('rejects a missing REQUIRED state, an out-of-enum source, and an unknown property', () => {
-    expect(validate({ subscriptionId: 's', source: 'webhook' }), why('trigger-bridge.md §B', 'state is REQUIRED')).toBe(false);
-    expect(validate({ subscriptionId: 's', source: 'carrier-pigeon', state: 'active' }), why('trigger-bridge.md §B', 'source is a closed enum')).toBe(false);
-    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', body: 'inbound' }), why('trigger-bridge.md §B', 'TriggerSubscription MUST be additionalProperties:false')).toBe(false);
+    expect(validate({ subscriptionId: 's', source: 'webhook' }), req('openwop.it.trigger-bridge-shape.rejects-a-missing-required-state-an-out-of-enum-source-and-an-unknown-property', 'trigger-bridge.md §B', 'state is REQUIRED')).toBe(false);
+    expect(validate({ subscriptionId: 's', source: 'carrier-pigeon', state: 'active' }), req('openwop.it.trigger-bridge-shape.rejects-a-missing-required-state-an-out-of-enum-source-and-an-unknown-property', 'trigger-bridge.md §B', 'source is a closed enum')).toBe(false);
+    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', body: 'inbound' }), req('openwop.it.trigger-bridge-shape.rejects-a-missing-required-state-an-out-of-enum-source-and-an-unknown-property', 'trigger-bridge.md §B', 'TriggerSubscription MUST be additionalProperties:false')).toBe(false);
   });
 
   it('secretFingerprint MUST be bounded — a full 64-hex (unsalted-hash-smelling) digest is rejected', () => {
     const truncated = 'a1b2c3d4e5f6a7b8';      // 16 hex — a truncated host-keyed fingerprint
     const fullDigest = 'a'.repeat(64);          // 64 hex — smells like an unsalted SHA256(secret)
-    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', secretFingerprint: truncated }), why('trigger-bridge.md §B', 'a truncated fingerprint MUST validate')).toBe(true);
-    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', secretFingerprint: fullDigest }), why('SR-1', 'a full 64-hex digest MUST be rejected (brute-force oracle)')).toBe(false);
+    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', secretFingerprint: truncated }), req('openwop.it.trigger-bridge-shape.secretfingerprint-must-be-bounded-a-full-64-hex-unsalted-hash-smelling-digest-is', 'trigger-bridge.md §B', 'a truncated fingerprint MUST validate')).toBe(true);
+    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', secretFingerprint: fullDigest }), req('openwop.it.trigger-bridge-shape.secretfingerprint-must-be-bounded-a-full-64-hex-unsalted-hash-smelling-digest-is', 'SR-1', 'a full 64-hex digest MUST be rejected (brute-force oracle)')).toBe(false);
   });
 
   it('the state enum is exactly the four §B states', () => {
     const stateEnum = ((sub.properties as Record<string, { enum?: string[] }>).state?.enum) ?? [];
-    expect([...stateEnum].sort(), why('trigger-bridge.md §B', 'the four-state vocabulary MUST be stable')).toEqual([...STATES].sort());
+    expect([...stateEnum].sort(), req('openwop.it.trigger-bridge-shape.the-state-enum-is-exactly-the-four-b-states', 'trigger-bridge.md §B', 'the four-state vocabulary MUST be stable')).toEqual([...STATES].sort());
   });
 });
 
@@ -87,23 +86,23 @@ describe('trigger-bridge-shape: trigger.* events (RFC 0083 §C, server-free)', (
 
   it('trigger.subscription.state.changed validates + reason is a CLOSED enum (no URL-bearing free text)', () => {
     const v = compile('triggerSubscriptionStateChanged');
-    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active', toState: 'dead-lettered', reason: 'retry-exhausted' }), why('trigger-bridge.md §C', 'state-changed MUST validate')).toBe(true);
-    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active' }), why('trigger-bridge.md §C', 'toState is REQUIRED')).toBe(false);
-    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active', toState: 'failed', reason: 'https://attacker.example/leak?token=sk' }), why('SR-1', 'a free-form / URL-bearing reason MUST be rejected')).toBe(false);
+    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active', toState: 'dead-lettered', reason: 'retry-exhausted' }), req('openwop.it.trigger-bridge-shape.trigger-subscription-state-changed-validates-reason-is-a-closed-enum-no-url-bear', 'trigger-bridge.md §C', 'state-changed MUST validate')).toBe(true);
+    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active' }), req('openwop.it.trigger-bridge-shape.trigger-subscription-state-changed-validates-reason-is-a-closed-enum-no-url-bear', 'trigger-bridge.md §C', 'toState is REQUIRED')).toBe(false);
+    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active', toState: 'failed', reason: 'https://attacker.example/leak?token=sk' }), req('openwop.it.trigger-bridge-shape.trigger-subscription-state-changed-validates-reason-is-a-closed-enum-no-url-bear', 'SR-1', 'a free-form / URL-bearing reason MUST be rejected')).toBe(false);
   });
 
   it('trigger.delivery.attempted validates + enforces the outcome enum', () => {
     const v = compile('triggerDeliveryAttempted');
-    expect(v({ subscriptionId: 's', dedupKey: 'evt-9f3', attempt: 1, outcome: 'delivered', runId: 'run_x' }), why('trigger-bridge.md §C', 'delivery-attempted MUST validate')).toBe(true);
-    expect(v({ subscriptionId: 's', dedupKey: 'evt-9f3', attempt: 1 }), why('trigger-bridge.md §C', 'outcome is REQUIRED')).toBe(false);
-    expect(v({ subscriptionId: 's', dedupKey: 'evt-9f3', attempt: 1, outcome: 'exploded' }), why('trigger-bridge.md §C', 'outcome is a closed enum')).toBe(false);
+    expect(v({ subscriptionId: 's', dedupKey: 'evt-9f3', attempt: 1, outcome: 'delivered', runId: 'run_x' }), req('openwop.it.trigger-bridge-shape.trigger-delivery-attempted-validates-enforces-the-outcome-enum', 'trigger-bridge.md §C', 'delivery-attempted MUST validate')).toBe(true);
+    expect(v({ subscriptionId: 's', dedupKey: 'evt-9f3', attempt: 1 }), req('openwop.it.trigger-bridge-shape.trigger-delivery-attempted-validates-enforces-the-outcome-enum', 'trigger-bridge.md §C', 'outcome is REQUIRED')).toBe(false);
+    expect(v({ subscriptionId: 's', dedupKey: 'evt-9f3', attempt: 1, outcome: 'exploded' }), req('openwop.it.trigger-bridge-shape.trigger-delivery-attempted-validates-enforces-the-outcome-enum', 'trigger-bridge.md §C', 'outcome is a closed enum')).toBe(false);
   });
 
   it('both trigger event names appear in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
     const enumVals = ((runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum) ?? [];
     for (const name of ['trigger.subscription.state.changed', 'trigger.delivery.attempted']) {
-      expect(enumVals.includes(name), why('run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
+      expect(enumVals.includes(name), req('openwop.it.trigger-bridge-shape.both-trigger-event-names-appear-in-the-runeventtype-enum', 'run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
     }
   });
 });
@@ -112,8 +111,8 @@ describe('trigger-bridge-shape: capability + profile derivation (RFC 0083 §A/§
   it('capabilities.triggerBridge + webhooks.durable are declared', () => {
     const caps = loadSchema('capabilities.schema.json');
     const props = caps.properties as Record<string, { properties?: Record<string, unknown> }>;
-    expect(props.triggerBridge?.properties?.supported, why('trigger-bridge.md §A', 'triggerBridge.supported MUST be declared')).toBeDefined();
-    expect(props.webhooks?.properties?.durable, why('trigger-bridge.md §A', 'webhooks.durable MUST be declared')).toBeDefined();
+    expect(props.triggerBridge?.properties?.supported, req('openwop.it.trigger-bridge-shape.capabilities-triggerbridge-webhooks-durable-are-declared', 'trigger-bridge.md §A', 'triggerBridge.supported MUST be declared')).toBeDefined();
+    expect(props.webhooks?.properties?.durable, req('openwop.it.trigger-bridge-shape.capabilities-triggerbridge-webhooks-durable-are-declared', 'trigger-bridge.md §A', 'webhooks.durable MUST be declared')).toBeDefined();
   });
 
   const coreBase = {
@@ -125,11 +124,11 @@ describe('trigger-bridge-shape: capability + profile derivation (RFC 0083 §A/§
 
   it('deriveProfiles surfaces openwop-trigger-bridge for bridge + deadLetter + a durable source', () => {
     const c = { ...coreBase, triggerBridge: { supported: true }, deadLetter: { supported: true }, queueBus: { supported: true } } as Record<string, unknown>;
-    expect(deriveProfiles(c).includes('openwop-trigger-bridge'), why('profiles.md §openwop-trigger-bridge', 'bridge + sink + durable source MUST derive the profile')).toBe(true);
+    expect(deriveProfiles(c).includes('openwop-trigger-bridge'), req('openwop.it.trigger-bridge-shape.deriveprofiles-surfaces-openwop-trigger-bridge-for-bridge-deadletter-a-durable-s', 'profiles.md §openwop-trigger-bridge', 'bridge + sink + durable source MUST derive the profile')).toBe(true);
   });
 
   it('deriveProfiles withholds openwop-trigger-bridge when the dead-letter sink is absent', () => {
     const c = { ...coreBase, triggerBridge: { supported: true }, webhooks: { durable: true } } as Record<string, unknown>;
-    expect(deriveProfiles(c).includes('openwop-trigger-bridge'), why('profiles.md §openwop-trigger-bridge', 'no deadLetter sink ⇒ MUST NOT derive the profile')).toBe(false);
+    expect(deriveProfiles(c).includes('openwop-trigger-bridge'), req('openwop.it.trigger-bridge-shape.deriveprofiles-withholds-openwop-trigger-bridge-when-the-dead-letter-sink-is-abs', 'profiles.md §openwop-trigger-bridge', 'no deadLetter sink ⇒ MUST NOT derive the profile')).toBe(false);
   });
 });

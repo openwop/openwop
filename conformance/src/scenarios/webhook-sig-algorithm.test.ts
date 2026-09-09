@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryWebhooks {
   webhooks?: {
@@ -33,7 +35,7 @@ describe('webhook-sig-algorithm: host advertises supported algorithm set', () =>
     if (!webhooks?.supported) {
       // eslint-disable-next-line no-console
       console.warn('[webhook-sig-algorithm] host does not advertise webhook support; skipping');
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!webhooks?.supported` returned early ([webhook-sig-algorithm] host does not advertise webhook support; skipping)');
     }
 
     const algos = webhooks.signatureAlgorithms;
@@ -45,10 +47,10 @@ describe('webhook-sig-algorithm: host advertises supported algorithm set', () =>
       console.warn(
         '[webhook-sig-algorithm] host does not advertise webhooks.signatureAlgorithms (pre-v1.1); skipping shape check',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!Array.isArray(algos)` returned early ([webhook-sig-algorithm] host does not advertise webhooks.signatureAlgorithms (pre-v1.1); skipping shape check)');
     }
 
-    expect(algos.includes('v1'), driver.describe(
+    expect(algos.includes('v1'), req('openwop.it.webhook-sig-algorithm.discovery-surfaces-a-webhooks-signaturealgorithms-array-including-v1', 
       'webhooks.md §"Signature algorithm versioning"',
       'webhooks.signatureAlgorithms MUST include "v1" when surfaced (canonical baseline)',
     )).toBe(true);

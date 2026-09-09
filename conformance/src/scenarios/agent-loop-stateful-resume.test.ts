@@ -11,8 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readExecutionModelCap, invokeAgentLoop } from '../lib/agentLoop.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('agent-loop-stateful-resume (RFC 0061 §D)', () => {
   it('a mid-loop suspend resumes at the same iteration, counter intact', async () => {
@@ -23,7 +23,7 @@ describe('agent-loop-stateful-resume (RFC 0061 §D)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.resumedIteration,
-      driver.describe('RFC 0061 §D', 'a stateful resume MUST continue at the suspend iteration — the counter does not reset or skip'),
+      req('openwop.it.agent-loop-stateful-resume.a-mid-loop-suspend-resumes-at-the-same-iteration-counter-intact', 'RFC 0061 §D', 'a stateful resume MUST continue at the suspend iteration — the counter does not reset or skip'),
     ).toBe(2);
   });
 });

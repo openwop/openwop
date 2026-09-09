@@ -29,7 +29,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { seamAbsent } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import {
   isTriggerBridgeProfileAdvertised,
@@ -38,6 +37,7 @@ import {
   SUBSCRIPTION_STATES,
 } from '../lib/triggerBridge.js';
 import { queryTestEvents, requireEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CONTENT_FREE_FORBIDDEN = ['body', 'headers', 'payload', 'secret', 'credentials', 'token', 'apiKey'];
 
@@ -45,7 +45,7 @@ function expectContentFree(payload: Record<string, unknown>, where: string): voi
   for (const f of CONTENT_FREE_FORBIDDEN) {
     expect(
       !(f in payload),
-      driver.describe('RFC 0083 §C (SR-1)', `${where} MUST be content-free (no ${f})`),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'RFC 0083 §C (SR-1)', `${where} MUST be content-free (no ${f})`),
     ).toBe(true);
   }
 }
@@ -72,12 +72,12 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     );
     expect(
       deliveredForKey.length === 1,
-      driver.describe('trigger-bridge.md §C-1', 'a repeated dedupKey MUST be effectively-once — EXACTLY one delivered attempt (not zero, not two)'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C-1', 'a repeated dedupKey MUST be effectively-once — EXACTLY one delivered attempt (not zero, not two)'),
     ).toBe(true);
     for (const e of dedupEvents) {
       expect(
         typeof e.payload.outcome === 'string' && DELIVERY_OUTCOMES.includes(e.payload.outcome as string),
-        driver.describe('run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered'),
+        req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered'),
       ).toBe(true);
       expectContentFree(e.payload, 'trigger.delivery.attempted');
     }
@@ -86,7 +86,7 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
     expect(
       exhaust !== null,
-      driver.describe('trigger-bridge.md §C-2', 'the exhaust scenario MUST be wired when the delivery seam is'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C-2', 'the exhaust scenario MUST be wired when the delivery seam is'),
     ).toBe(true);
     const exKey = exhaust!.runId ?? '__exhaust__';
     const exhaustEvents = requireEvents(
@@ -95,12 +95,12 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     );
     expect(
       exhaustEvents.length >= 1,
-      driver.describe('trigger-bridge.md §C-2', 'an exhausted delivery MUST emit ≥1 trigger.delivery.attempted'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C-2', 'an exhausted delivery MUST emit ≥1 trigger.delivery.attempted'),
     ).toBe(true);
     const terminal = exhaustEvents.sort((a, b) => a.sequence - b.sequence)[exhaustEvents.length - 1]!;
     expect(
       terminal.payload.outcome === 'dead-lettered',
-      driver.describe('trigger-bridge.md §C-2', 'an exhausted retry policy MUST terminate in a dead-lettered delivery'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C-2', 'an exhausted retry policy MUST terminate in a dead-lettered delivery'),
     ).toBe(true);
     const stateEvents = requireEvents(
       await queryTestEvents(exKey, { type: 'trigger.subscription.state.changed' }),
@@ -108,16 +108,16 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     );
     expect(
       stateEvents.length >= 1,
-      driver.describe('trigger-bridge.md §B', 'exhaustion MUST emit ≥1 trigger.subscription.state.changed'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §B', 'exhaustion MUST emit ≥1 trigger.subscription.state.changed'),
     ).toBe(true);
     expect(
       stateEvents.some((e) => e.payload.toState === 'dead-lettered'),
-      driver.describe('trigger-bridge.md §B', 'the subscription MUST transition to dead-lettered on exhaustion'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §B', 'the subscription MUST transition to dead-lettered on exhaustion'),
     ).toBe(true);
     for (const e of stateEvents) {
       expect(
         typeof e.payload.toState === 'string' && SUBSCRIPTION_STATES.includes(e.payload.toState as string),
-        driver.describe('trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary'),
+        req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary'),
       ).toBe(true);
       expectContentFree(e.payload, 'trigger.subscription.state.changed');
     }
@@ -130,7 +130,7 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const delivered = await driveDelivery({ scenario: 'deliver', source: 'schedule' });
     expect(
       delivered !== null && typeof delivered.runId === 'string' && (delivered.runId as string).length > 0,
-      driver.describe('trigger-bridge.md §C', 'a successful delivery MUST create a run'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C', 'a successful delivery MUST create a run'),
     ).toBe(true);
     const deliveredRunId = delivered!.runId as string;
     const attemptEvents = requireEvents(
@@ -140,7 +140,7 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const deliveredEvent = attemptEvents.find((e) => e.payload.outcome === 'delivered');
     expect(
       deliveredEvent !== undefined,
-      driver.describe('trigger-bridge.md §C-1', 'a successful delivery MUST emit a trigger.delivery.attempted{outcome:delivered}'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C-1', 'a successful delivery MUST emit a trigger.delivery.attempted{outcome:delivered}'),
     ).toBe(true);
     const runStartedEvents = requireEvents(
       await queryTestEvents(deliveredRunId, { type: 'run.started' }),
@@ -148,14 +148,14 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     );
     expect(
       runStartedEvents.length >= 1,
-      driver.describe('trigger-bridge.md §C', 'a delivered run MUST emit run.started'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C', 'a delivered run MUST emit run.started'),
     ).toBe(true);
     const runStarted = runStartedEvents.sort((a, b) => a.sequence - b.sequence)[0]!;
     expect(
       typeof runStarted.causationId === 'string' &&
         (runStarted.causationId as string).length > 0 &&
         runStarted.causationId === deliveredEvent!.eventId,
-      driver.describe('trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry'),
+      req('openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation', 'trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry'),
     ).toBe(true);
 
     await resetTestSeam();

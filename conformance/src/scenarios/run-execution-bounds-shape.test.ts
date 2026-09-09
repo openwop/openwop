@@ -32,6 +32,8 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryLimits {
   maxRunDurationMs?: number;
@@ -59,10 +61,10 @@ async function readLimits(): Promise<DiscoveryLimits | null> {
 describe('run-execution-bounds-shape: advertisement shape (RFC 0058)', () => {
   it('maxRunDurationMs is an integer >= 1000 when present', async () => {
     const limits = await readLimits();
-    if (limits?.maxRunDurationMs === undefined) return; // not advertised
+    if (limits?.maxRunDurationMs === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `limits?.maxRunDurationMs === undefined` returned early (not advertised)'); // not advertised
     expect(
       Number.isInteger(limits.maxRunDurationMs) && limits.maxRunDurationMs >= 1000,
-      driver.describe(
+      req('openwop.it.run-execution-bounds-shape.maxrundurationms-is-an-integer-1000-when-present', 
         'capabilities.schema.json §limits.maxRunDurationMs',
         `capabilities.limits.maxRunDurationMs MUST be an integer >= 1000, got: ${limits.maxRunDurationMs}`,
       ),
@@ -71,10 +73,10 @@ describe('run-execution-bounds-shape: advertisement shape (RFC 0058)', () => {
 
   it('maxLoopIterations is an integer >= 1 when present', async () => {
     const limits = await readLimits();
-    if (limits?.maxLoopIterations === undefined) return; // not advertised
+    if (limits?.maxLoopIterations === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `limits?.maxLoopIterations === undefined` returned early (not advertised)'); // not advertised
     expect(
       Number.isInteger(limits.maxLoopIterations) && limits.maxLoopIterations >= 1,
-      driver.describe(
+      req('openwop.it.run-execution-bounds-shape.maxloopiterations-is-an-integer-1-when-present', 
         'capabilities.schema.json §limits.maxLoopIterations',
         `capabilities.limits.maxLoopIterations MUST be an integer >= 1, got: ${limits.maxLoopIterations}`,
       ),
@@ -92,18 +94,18 @@ describe.skipIf(SKIP_TIMEOUT)('run-execution-bounds: run-duration breach (RFC 00
       workflowId: TIMEOUT_FIXTURE,
       configurable: { runTimeoutMs: 1000 },
     });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
       'rest-endpoints.md POST /v1/runs',
       'run creation MUST accept a runTimeoutMs override',
     )).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
       'run-options.md §runTimeoutMs',
       'a run exceeding its runTimeoutMs MUST reach terminal `failed`',
     )).toBe('failed');
-    expect(terminal.error?.code, driver.describe(
+    expect(terminal.error?.code, req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
       'rest-endpoints.md §run_timeout',
       'RunSnapshot.error.code MUST equal "run_timeout" on wall-clock timeout',
     )).toBe('run_timeout');
@@ -113,12 +115,12 @@ describe.skipIf(SKIP_TIMEOUT)('run-execution-bounds: run-duration breach (RFC 00
     );
     const events = (eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? [];
     const breach = events.find((e) => e.type === 'cap.breached');
-    expect(breach, driver.describe(
+    expect(breach, req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
       'capabilities.md §Engine-enforced limits',
       'a cap.breached event MUST be emitted on run-duration breach',
     )).toBeDefined();
     const payload = breach!.payload as { kind?: string; limit?: number; observed?: number } | undefined;
-    expect(payload?.kind, driver.describe(
+    expect(payload?.kind, req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
       'run-event-payloads.schema.json §capBreached.kind',
       'cap.breached payload MUST carry kind="run-duration"',
     )).toBe('run-duration');
@@ -132,14 +134,14 @@ describe.skipIf(SKIP_TIMEOUT)('run-execution-bounds: run-duration breach (RFC 00
     // not report the observed values.
     expect(
       typeof payload?.observed,
-      driver.describe(
+      req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
         'run-event-payloads.schema.json §capBreached.observed',
         `cap.breached MUST carry a numeric \`observed\`; got ${JSON.stringify(payload?.observed)}`,
       ),
     ).toBe('number');
     expect(
       typeof payload?.limit,
-      driver.describe(
+      req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
         'run-event-payloads.schema.json §capBreached.limit',
         `cap.breached MUST carry a numeric \`limit\`; got ${JSON.stringify(payload?.limit)}`,
       ),
@@ -159,7 +161,7 @@ describe.skipIf(SKIP_TIMEOUT)('run-execution-bounds: run-duration breach (RFC 00
     const { observed = NaN, limit = NaN } = payload ?? {};
     expect(
       observed > limit,
-      driver.describe(
+      req('openwop.it.run-execution-bounds-shape.a-run-with-runtimeoutms-below-its-real-duration-fails-with-run-timeout-cap-breac', 
         'run-event-payloads.schema.json §capBreached.observed',
         `observed (elapsedMs) MUST be strictly greater than limit (resolved timeout). ` +
           `Got observed=${observed}, limit=${limit}` +

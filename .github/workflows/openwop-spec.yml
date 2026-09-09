@@ -2,7 +2,7 @@ name: openwop Spec
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'release/**']
     paths-ignore:
       - 'CODE_OF_CONDUCT.md'
       - 'GOVERNANCE.md'
@@ -13,7 +13,7 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
   pull_request:
-    branches: [main]
+    branches: [main, 'release/**']
     paths-ignore:
       - 'CODE_OF_CONDUCT.md'
       - 'GOVERNANCE.md'
@@ -38,11 +38,19 @@ jobs:
   validate:
     name: Validate spec corpus (server-free)
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # scripts/generate-v1-eos-clock.mjs derives the v1 end-of-support
+          # anchor from the FIRST-PARENT HISTORY OF MAIN over
+          # evidence/v2-host-bundles/ (overview.md §v1 end-of-support). A
+          # shallow clone has no main history, and the synthetic PR merge
+          # commit's timestamp is not a date anyone committed — so the check
+          # was unsatisfiable on the first non-vacuous bundle (2026-09-05).
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -59,6 +67,11 @@ jobs:
         with:
           go-version: '1.22'
 
+      # v2 charter Phase 3: scripts/derive-v2-api.py (stage 10) reads the v1 API
+      # documents with PyYAML — the corpus has no Node YAML parser and the outputs
+      # are committed, so a runner without PyYAML must fail loudly, not skip.
+      - name: Install PyYAML (stage 10 derive-v2-api --check)
+        run: python3 -m pip install --quiet --user pyyaml
       - name: Full server-free release gate
         run: npm run openwop:check
 

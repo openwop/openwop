@@ -1,0 +1,11 @@
+{
+  "protocolVersion": "1.1",
+  "supportedEnvelopes": ["error"],
+  "schemaVersions": { "error": 1 },
+  "limits": { "maxNodesPerWorkflow": 200 },
+  "implementation": { "name": "sample", "version": "1.0.0", "vendor": "Acme" },
+  "auth": { "profiles": ["openwop-auth-saml"] },
+  "a2a": { "protocolVersions": ["1.0"], "preferredVersion": "1.0" },
+  "replay": { "modes": ["branch"] },
+  "forms": { "contentPacks": true }
+}

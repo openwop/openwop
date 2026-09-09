@@ -36,8 +36,8 @@ import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGatePresent } from '../lib/behavior-gate.js';
 import { readArtifactTypesCap } from '../lib/artifactTypes.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 const CAPS = join(SCHEMAS_DIR, 'capabilities.schema.json');
 const EVENT_PAYLOADS = join(SCHEMAS_DIR, 'run-event-payloads.schema.json');
 const readDoc = (name: string): string => (V1_DIR ? readFileSync(join(V1_DIR, name), 'utf8') : '');
@@ -59,14 +59,14 @@ describe('artifact-type-registration-source (RFC 0145, always-on)', () => {
     const entry = perTypeEntry();
     const props = entry.properties as Record<string, Record<string, unknown>>;
 
-    expect(props.registrationSource, why('§artifactTypes.types', 'facet is declared')).toBeDefined();
+    expect(props.registrationSource, req('openwop.it.artifact-type-registration-source.a1-the-per-type-entry-declares-registrationsource-as-an-optional-pack-host-enum', '§artifactTypes.types', 'facet is declared')).toBeDefined();
     expect(
       props.registrationSource.enum,
-      why('§artifactTypes.types', 'enum is exactly [pack, host]'),
+      req('openwop.it.artifact-type-registration-source.a1-the-per-type-entry-declares-registrationsource-as-an-optional-pack-host-enum', '§artifactTypes.types', 'enum is exactly [pack, host]'),
     ).toEqual(['pack', 'host']);
     expect(
       (entry.required as string[] | undefined)?.includes('registrationSource') ?? false,
-      why('§artifactTypes.types', 'facet is OPTIONAL — absent ⇒ unspecified provenance, not a default'),
+      req('openwop.it.artifact-type-registration-source.a1-the-per-type-entry-declares-registrationsource-as-an-optional-pack-host-enum', '§artifactTypes.types', 'facet is OPTIONAL — absent ⇒ unspecified provenance, not a default'),
     ).toBe(false);
   });
 
@@ -77,22 +77,22 @@ describe('artifact-type-registration-source (RFC 0145, always-on)', () => {
 
     expect(
       validate({ validated: true, registrationSource: 'host', schemaVersion: 1 }),
-      why('§artifactTypes.types', `"host" validates: ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.artifact-type-registration-source.a2-a-valid-provenance-validates-an-out-of-enum-value-does-not', '§artifactTypes.types', `"host" validates: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
     expect(
       validate({ validated: true, registrationSource: 'pack' }),
-      why('§artifactTypes.types', `"pack" validates: ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.artifact-type-registration-source.a2-a-valid-provenance-validates-an-out-of-enum-value-does-not', '§artifactTypes.types', `"pack" validates: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
     // Absent stays legal — requirement 2.
     expect(
       validate({ validated: true }),
-      why('§artifactTypes.types', `absent validates: ${JSON.stringify(validate.errors)}`),
+      req('openwop.it.artifact-type-registration-source.a2-a-valid-provenance-validates-an-out-of-enum-value-does-not', '§artifactTypes.types', `absent validates: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
     // A third provenance is a wire error, NOT a hint to ignore. This is where the facet
     // parts company with RFC 0136's `format`, and the reason is in the docblock.
     expect(
       validate({ validated: true, registrationSource: 'registry' }),
-      why('§artifactTypes.types', 'an undefined provenance is REJECTED'),
+      req('openwop.it.artifact-type-registration-source.a2-a-valid-provenance-validates-an-out-of-enum-value-does-not', '§artifactTypes.types', 'an undefined provenance is REJECTED'),
     ).toBe(false);
   });
 
@@ -107,7 +107,7 @@ describe('artifact-type-registration-source (RFC 0145, always-on)', () => {
     // advertise a provenance it could never emit.
     expect(
       entryProps.registrationSource.enum,
-      why('RFC 0145 req 3', 'discovery enum matches artifact.created enum'),
+      req('openwop.it.artifact-type-registration-source.a3-the-facet-mirrors-the-vocabulary-artifact-created-already-carries', 'RFC 0145 req 3', 'discovery enum matches artifact.created enum'),
     ).toEqual(eventProps.registrationSource.enum);
   });
 
@@ -118,10 +118,10 @@ describe('artifact-type-registration-source (RFC 0145, always-on)', () => {
       const facetList = readDoc(name).match(
         /validated, validation, schemaVersion, store, render, export[^}]*}/,
       );
-      expect(facetList, why(`${name} §"Per-type facets"`, 'per-type facet list present')).not.toBeNull();
+      expect(facetList, req('openwop.it.artifact-type-registration-source.a4-both-prose-sites-list-the-facet-so-schema-and-normative-surface-cannot-drift', `${name} §"Per-type facets"`, 'per-type facet list present')).not.toBeNull();
       expect(
         facetList?.[0].includes('registrationSource'),
-        why(`${name} §"Per-type facets"`, 'facet list names registrationSource'),
+        req('openwop.it.artifact-type-registration-source.a4-both-prose-sites-list-the-facet-so-schema-and-normative-surface-cannot-drift', `${name} §"Per-type facets"`, 'facet list names registrationSource'),
       ).toBe(true);
     }
   });
@@ -130,11 +130,11 @@ describe('artifact-type-registration-source (RFC 0145, always-on)', () => {
     const doc = readDoc('artifact-type-packs.md');
     expect(
       /Serving is a MUST for host-registered/.test(doc),
-      why('§Schema distribution', 'serving is a MUST for no-pack types'),
+      req('openwop.it.artifact-type-registration-source.a5-the-spec-states-the-must-should-asymmetry-the-facet-exists-to-disclose', '§Schema distribution', 'serving is a MUST for no-pack types'),
     ).toBe(true);
     expect(
       /serving stays a SHOULD for them/.test(doc),
-      why('§Schema distribution', 'serving stays a SHOULD for pack-backed types'),
+      req('openwop.it.artifact-type-registration-source.a5-the-spec-states-the-must-should-asymmetry-the-facet-exists-to-disclose', '§Schema distribution', 'serving stays a SHOULD for pack-backed types'),
     ).toBe(true);
   });
 });
@@ -179,7 +179,7 @@ describe('artifact-type-registration-source: the advert agrees with the event (R
     const target = comparableType(cap);
     // INAPPLICABLE, not gated. `registrationSource` is OPTIONAL (requirement 2) and strict mode
     // must not coerce a host into advertising it — the same call RFC 0142 makes for `store`.
-    if (target === null) return;
+    if (target === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `target === null` returned early (INAPPLICABLE, not gated. `registrationSource` is OPTIONAL (requirement 2) and strict mode must not coerce a host into advertis…');
 
     const started = await driver.post('/v1/host/sample/artifacttypes/runproduce', {
       artifactTypeId: target.id,
@@ -189,10 +189,10 @@ describe('artifact-type-registration-source: the advert agrees with the event (R
     // scenario that owns that enforcement. Gating again here would double-report one defect,
     // and gating on the seam for a 0145 advert would coerce hosts into wiring 0142's host-sample
     // surface in order to advertise a facet that has nothing to do with it.
-    if (started.status === 404 || started.status === 405) return; // seam absent — 0142 reports it
+    if (started.status === 404 || started.status === 405) return softSkip('blocked', 'precondition not met — `started.status === 404 || started.status === 405` returned early (seam absent — 0142 reports it) (seam, prior step, or fixture unavailable)'); // seam absent — 0142 reports it
     expect(
       started.status >= 200 && started.status < 300,
-      driver.describe('coverage.md §"Open seams"', 'runproduce starts a real run producing one artifact of the requested registered type'),
+      req('openwop.it.artifact-type-registration-source.the-emitted-registrationsource-equals-the-advertised-one-for-that-type', 'coverage.md §"Open seams"', 'runproduce starts a real run producing one artifact of the requested registered type'),
     ).toBe(true);
     const runId = (started.json as Record<string, unknown> | undefined)?.['runId'];
     if (!behaviorGatePresent(PROFILE, typeof runId === 'string' ? runId : null)) return;
@@ -200,18 +200,18 @@ describe('artifact-type-registration-source: the advert agrees with the event (R
     const events = await driver.get(`/v1/runs/${runId}/events/poll?timeout=5`);
     expect(
       events.status,
-      driver.describe('run-events surface', 'the run event log is readable over the standard poll endpoint'),
+      req('openwop.it.artifact-type-registration-source.the-emitted-registrationsource-equals-the-advertised-one-for-that-type', 'run-events surface', 'the run event log is readable over the standard poll endpoint'),
     ).toBe(200);
     const list = ((events.json as Record<string, unknown>)?.['events'] ?? []) as Array<Record<string, unknown>>;
     const created = list.filter((e) => e['type'] === 'artifact.created');
     // Emission itself is RFC 0142's MUST, reported by its own leg. Reaching here without an
     // event means that leg is already red; don't restate its finding as a 0145 failure.
-    if (created.length === 0) return;
+    if (created.length === 0) return softSkip('blocked', 'precondition not met — `created.length === 0` returned early (Emission itself is RFC 0142\'s MUST, reported by its own leg. Reaching here without an event means that leg is already red; don\'t restate its finding as a 0…');
 
     const payload = (created[0]?.['payload'] ?? created[0]?.['data'] ?? {}) as Record<string, unknown>;
     expect(
       payload['registrationSource'],
-      driver.describe(
+      req('openwop.it.artifact-type-registration-source.the-emitted-registrationsource-equals-the-advertised-one-for-that-type', 
         'RFC 0145 requirement 3',
         `the host advertises registrationSource: "${target.advertised}" for ${target.id}, so that is the value it MUST emit — an advert of one provenance against an event carrying another (or carrying none, which asserts UNSPECIFIED provenance and therefore disagrees) is a false advertisement, not a permitted divergence`,
       ),

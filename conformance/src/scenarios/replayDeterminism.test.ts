@@ -22,6 +22,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -73,13 +74,13 @@ describe('replay-determinism: openwop-replay-fork profile gate', () => {
     const replay = await fetchReplayCapability();
     if (replay === null || replay.supported !== true) return softSkip('inapplicable', 'host does not advertise `replay.supported: true` — the replay contract does not apply to it');
 
-    expect(Array.isArray(replay.modes), driver.describe(
+    expect(Array.isArray(replay.modes), req('openwop.it.replayDeterminism.host-advertising-replay-supported-must-also-advertise-replay-modes', 
       'spec/v1/replay.md',
       'host advertising replay.supported MUST advertise replay.modes as an array',
     )).toBe(true);
     if (Array.isArray(replay.modes)) {
       for (const m of replay.modes) {
-        expect(typeof m, driver.describe(
+        expect(typeof m, req('openwop.it.replayDeterminism.host-advertising-replay-supported-must-also-advertise-replay-modes', 
           'spec/v1/replay.md',
           'each replay.modes entry MUST be a string',
         )).toBe('string');
@@ -98,7 +99,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
 
       // Phase 1: complete an original run.
       const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
-      if (create.status !== 201) return;
+      if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
       const originalRunId = (create.json as { runId: string }).runId;
       await pollUntilTerminal(originalRunId, { timeoutMs: 10_000 });
 
@@ -107,8 +108,8 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
         mode: 'replay',
         fromSeq: 0,
       });
-      if (forkDeclined(fork1.status, 'determinism fork 1')) return;
-      expect(fork1.status, driver.describe(
+      if (forkDeclined(fork1.status, 'determinism fork 1')) return softSkip('blocked', 'precondition not met — `forkDeclined(fork1.status, \'determinism fork 1\')` returned early (seam, prior step, or fixture unavailable)');
+      expect(fork1.status, req('openwop.it.replayDeterminism.two-replay-forks-of-the-same-point-produce-structurally-identical-event-lists', 
         'spec/v1/replay.md',
         'POST /v1/runs/{runId}:fork with mode=replay MUST return 201',
       )).toBe(201);
@@ -120,7 +121,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
         mode: 'replay',
         fromSeq: 0,
       });
-      if (forkDeclined(fork2.status, 'determinism fork 2')) return;
+      if (forkDeclined(fork2.status, 'determinism fork 2')) return softSkip('blocked', 'precondition not met — `forkDeclined(fork2.status, \'determinism fork 2\')` returned early (seam, prior step, or fixture unavailable)');
       expect(fork2.status).toBe(201);
       const fork2Id = (fork2.json as { runId: string }).runId;
       await pollUntilTerminal(fork2Id, { timeoutMs: 10_000 });
@@ -128,21 +129,21 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
       // Phase 4: fetch both fork event streams.
       const fork1Events = await driver.get(`/v1/runs/${encodeURIComponent(fork1Id)}/events/poll`);
       const fork2Events = await driver.get(`/v1/runs/${encodeURIComponent(fork2Id)}/events/poll`);
-      if (fork1Events.status !== 200 || fork2Events.status !== 200) return;
+      if (fork1Events.status !== 200 || fork2Events.status !== 200) return softSkip('blocked', 'precondition not met — `fork1Events.status !== 200 || fork2Events.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
       const fork1Body = fork1Events.json as { events?: RawEvent[] };
       const fork2Body = fork2Events.json as { events?: RawEvent[] };
-      if (!fork1Body.events || !fork2Body.events) return;
+      if (!fork1Body.events || !fork2Body.events) return softSkip('blocked', 'precondition not met — `!fork1Body.events || !fork2Body.events` returned early (seam, prior step, or fixture unavailable)');
 
       // Phase 5: assert structural identity (modulo timestamps + IDs).
-      expect(fork1Body.events.length, driver.describe(
+      expect(fork1Body.events.length, req('openwop.it.replayDeterminism.two-replay-forks-of-the-same-point-produce-structurally-identical-event-lists', 
         'spec/v1/replay.md §"Replay determinism"',
         'two replay forks MUST produce the same number of events',
       )).toBe(fork2Body.events.length);
 
       const shape1 = structuralShape(fork1Body.events);
       const shape2 = structuralShape(fork2Body.events);
-      expect(shape1, driver.describe(
+      expect(shape1, req('openwop.it.replayDeterminism.two-replay-forks-of-the-same-point-produce-structurally-identical-event-lists', 
         'spec/v1/replay.md §"Replay determinism"',
         'event sequence (type/nodeId/data) MUST be identical across two replay forks of the same point',
       )).toEqual(shape2);
@@ -155,14 +156,14 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: branch-mode is permitted to d
   it('branch mode does NOT need to produce identical event sequences (negative-control)', async () => {
     const replay = await fetchReplayCapability();
     if (replay === null || replay.supported !== true) return softSkip('inapplicable', 'host does not advertise `replay.supported: true` — the replay contract does not apply to it');
-    if (!Array.isArray(replay.modes) || !replay.modes.includes('branch')) return;
+    if (!Array.isArray(replay.modes) || !replay.modes.includes('branch')) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!Array.isArray(replay.modes) || !replay.modes.includes(\'branch\')` returned early');
 
     // Self-test on the spec interpretation: branch and replay are
     // SEMANTICALLY DIFFERENT modes per spec/v1/replay.md. Branch may
     // diverge by design (variable overlay, runOptionsOverlay). This
     // assertion just pins the interpretation; no actual round-trip
     // needed.
-    expect((replay.modes as string[]).includes('branch'), driver.describe(
+    expect((replay.modes as string[]).includes('branch'), req('openwop.it.replayDeterminism.branch-mode-does-not-need-to-produce-identical-event-sequences-negative-control', 
       'spec/v1/replay.md',
       'branch mode is documented; this self-test ensures the suite does not assume branch determinism',
     )).toBe(true);

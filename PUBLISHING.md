@@ -205,3 +205,10 @@ These artifacts are hosted from the public repository and generated docs site; p
 - npm publishing docs: <https://docs.npmjs.com/cli/v10/commands/npm-publish>
 - PyPI publishing docs: <https://packaging.python.org/en/latest/tutorials/packaging-projects/>
 - Go modules: <https://go.dev/ref/mod>
+
+## Release lines from suite 2.0.0 (v2 charter Phase 3, RFC 0168 §D.3)
+
+- `main` publishes the 2.x conformance suite (`openwop-conformance/v2.*`) and `@openwop/spec-artifacts` (`openwop-spec-artifacts/v2.*`); a pre-release version (`2.0.0-rc.N`) publishes under the npm dist-tag `next`, never `latest`.
+- `release/1.x` (cut from `main` at `7c81ace8`, 2026-09-03, the last commit before the suite bumped to 2.0.0-rc.0) carries 1.x fixes; tags `openwop-conformance/v1.16x.y` are pushed from that branch. The spec and PR-check workflows run on `release/**`; `openwop-publish.yml` refuses a tag reachable from neither line.
+- One package with `--target-major` (RFC 0168 §D.3): the 2.x suite runs the 1.x scenarios for a v1 host; the 1.x line exists for hosts that cannot take the major.
+

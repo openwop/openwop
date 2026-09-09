@@ -1,0 +1,597 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "issuer",
+    "subjectId",
+    "tenant",
+    "lane",
+    "kind"
+  ],
+  "properties": {
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^\\S+$",
+      "description": "Trust root (RFC 0170 §B.2); urn:openwop:legacy for a run that predates subject emission (§A.3)."
+    },
+    "subjectId": {
+      "$ref": "ids.schema.json#/$defs/subjectId"
+    },
+    "tenant": {
+      "$ref": "ids.schema.json#/$defs/tenantId"
+    },
+    "lane": {
+      "type": "string",
+      "enum": [
+        "api-key",
+        "oauth2",
+        "oidc",
+        "mtls",
+        "saml",
+        "scim",
+        "ldap",
+        "workload",
+        "session",
+        "anonymous"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "user",
+        "agent",
+        "anonymous",
+        "workload"
+      ]
+    },
+    "keyClass": {
+      "type": "string",
+      "enum": [
+        "opaque-idp",
+        "configured-immutable"
+      ]
+    },
+    "actor": {
+      "$ref": "#/$defs/actor1",
+      "description": "Who acts on this subject's behalf; depth bounded at four by the $defs chain (RFC 0170 §A.2)."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "anonymous"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "lane": {
+            "const": "anonymous"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "lane": {
+            "const": "anonymous"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "kind": {
+            "const": "anonymous"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "lane": {
+            "enum": [
+              "saml",
+              "scim"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "keyClass"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "keyClass"
+          ]
+        }
+      }
+    }
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/subject.schema.json",
+  "title": "OpenWOP v2 Subject (RFC 0170)",
+  "description": "The owner of a run. Required on RunSnapshot.owner and the run.started echo. Legacy subjects (issuer urn:openwop:legacy) MUST NOT participate in a link, an actor chain, or a delegation decision (§A.3).",
+  "$defs": {
+    "actor1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer",
+        "subjectId",
+        "tenant",
+        "lane",
+        "kind"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^\\S+$",
+          "description": "Trust root (RFC 0170 §B.2); urn:openwop:legacy for a run that predates subject emission (§A.3)."
+        },
+        "subjectId": {
+          "$ref": "ids.schema.json#/$defs/subjectId"
+        },
+        "tenant": {
+          "$ref": "ids.schema.json#/$defs/tenantId"
+        },
+        "lane": {
+          "type": "string",
+          "enum": [
+            "api-key",
+            "oauth2",
+            "oidc",
+            "mtls",
+            "saml",
+            "scim",
+            "ldap",
+            "workload",
+            "session",
+            "anonymous"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "agent",
+            "anonymous",
+            "workload"
+          ]
+        },
+        "keyClass": {
+          "type": "string",
+          "enum": [
+            "opaque-idp",
+            "configured-immutable"
+          ]
+        },
+        "actor": {
+          "$ref": "#/$defs/actor2",
+          "description": "Who acts on this subject's behalf; depth bounded at four by the $defs chain (RFC 0170 §A.2)."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "enum": [
+                  "saml",
+                  "scim"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "keyClass"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "keyClass"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "actor2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer",
+        "subjectId",
+        "tenant",
+        "lane",
+        "kind"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^\\S+$",
+          "description": "Trust root (RFC 0170 §B.2); urn:openwop:legacy for a run that predates subject emission (§A.3)."
+        },
+        "subjectId": {
+          "$ref": "ids.schema.json#/$defs/subjectId"
+        },
+        "tenant": {
+          "$ref": "ids.schema.json#/$defs/tenantId"
+        },
+        "lane": {
+          "type": "string",
+          "enum": [
+            "api-key",
+            "oauth2",
+            "oidc",
+            "mtls",
+            "saml",
+            "scim",
+            "ldap",
+            "workload",
+            "session",
+            "anonymous"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "agent",
+            "anonymous",
+            "workload"
+          ]
+        },
+        "keyClass": {
+          "type": "string",
+          "enum": [
+            "opaque-idp",
+            "configured-immutable"
+          ]
+        },
+        "actor": {
+          "$ref": "#/$defs/actor3",
+          "description": "Who acts on this subject's behalf; depth bounded at four by the $defs chain (RFC 0170 §A.2)."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "enum": [
+                  "saml",
+                  "scim"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "keyClass"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "keyClass"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "actor3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer",
+        "subjectId",
+        "tenant",
+        "lane",
+        "kind"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^\\S+$",
+          "description": "Trust root (RFC 0170 §B.2); urn:openwop:legacy for a run that predates subject emission (§A.3)."
+        },
+        "subjectId": {
+          "$ref": "ids.schema.json#/$defs/subjectId"
+        },
+        "tenant": {
+          "$ref": "ids.schema.json#/$defs/tenantId"
+        },
+        "lane": {
+          "type": "string",
+          "enum": [
+            "api-key",
+            "oauth2",
+            "oidc",
+            "mtls",
+            "saml",
+            "scim",
+            "ldap",
+            "workload",
+            "session",
+            "anonymous"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "agent",
+            "anonymous",
+            "workload"
+          ]
+        },
+        "keyClass": {
+          "type": "string",
+          "enum": [
+            "opaque-idp",
+            "configured-immutable"
+          ]
+        },
+        "actor": {
+          "$ref": "#/$defs/actor4",
+          "description": "Who acts on this subject's behalf; depth bounded at four by the $defs chain (RFC 0170 §A.2)."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "enum": [
+                  "saml",
+                  "scim"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "keyClass"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "keyClass"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "actor4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer",
+        "subjectId",
+        "tenant",
+        "lane",
+        "kind"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^\\S+$",
+          "description": "Trust root (RFC 0170 §B.2); urn:openwop:legacy for a run that predates subject emission (§A.3)."
+        },
+        "subjectId": {
+          "$ref": "ids.schema.json#/$defs/subjectId"
+        },
+        "tenant": {
+          "$ref": "ids.schema.json#/$defs/tenantId"
+        },
+        "lane": {
+          "type": "string",
+          "enum": [
+            "api-key",
+            "oauth2",
+            "oidc",
+            "mtls",
+            "saml",
+            "scim",
+            "ldap",
+            "workload",
+            "session",
+            "anonymous"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "agent",
+            "anonymous",
+            "workload"
+          ]
+        },
+        "keyClass": {
+          "type": "string",
+          "enum": [
+            "opaque-idp",
+            "configured-immutable"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "const": "anonymous"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "anonymous"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "lane": {
+                "enum": [
+                  "saml",
+                  "scim"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "keyClass"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "keyClass"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

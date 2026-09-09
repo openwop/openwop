@@ -21,6 +21,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const UNIVERSAL_KINDS = ['clarification.request', 'schema.request', 'schema.response', 'error'];
@@ -29,7 +31,7 @@ describe('a2ui-untrusted-blocks-approval: trust machinery applies (RFC 0102 §A.
   it('ui.a2ui-surface is an advertised kind subject to meta.contentTrust gating (not universal/always-allowed)', () => {
     expect(
       UNIVERSAL_KINDS.includes('ui.a2ui-surface'),
-      'ai-envelope.md §"A2UI surfaces" / §"Trust boundary": a ui.a2ui-surface is trust-gated like any advertised envelope, so an untrusted surface is subject to untrusted_content_blocks_approval',
+      req('openwop.it.a2ui-untrusted-blocks-approval.ui-a2ui-surface-is-an-advertised-kind-subject-to-meta-contenttrust-gating-not-un', 'RFC 0102 §A.5', 'ai-envelope.md §"A2UI surfaces" / §"Trust boundary": a ui.a2ui-surface is trust-gated like any advertised envelope, so an untrusted surface is subject to untrusted_content_blocks_approval'),
     ).toBe(false);
   });
 });
@@ -55,11 +57,11 @@ describe.skipIf(HTTP_SKIP)('a2ui-untrusted-blocks-approval: untrusted surface ca
       hostSupportedEnvelopes: ['ui.a2ui-surface'],
       boundInterruptKind: 'approval',
     });
-    if (res.status === 404) return; // seam absent — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
     const body = res.json as { status?: string; reason?: string };
     expect(
       body.status === 'blocked' || (body.reason ?? '').includes('untrusted'),
-      driver.describe(
+      req('openwop.it.a2ui-untrusted-blocks-approval.an-untrusted-marked-ui-a2ui-surface-bound-to-an-approval-interrupt-is-refused', 
         'RFC 0102 §A.5',
         'an untrusted ui.a2ui-surface MUST NOT advance an approval interrupt (untrusted_content_blocks_approval)',
       ),

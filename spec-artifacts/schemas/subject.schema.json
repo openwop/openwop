@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/subject.schema.json",
+  "title": "OpenWOP Subject",
+  "description": "RFC 0165 §B. An issuer-scoped, lane-typed identity record carried as `owner.subject` on RunSnapshot and on the run.started owner echo. With `issuer` in the key, two trust roots issuing the same identifier are distinct by construction. Optional in v1.x; the v2 major requires it and removes the bare `owner.principal` string.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issuer", "subjectId", "tenant", "lane", "kind"],
+  "properties": {
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^\\S+$",
+      "description": "Trust root that asserted this subject: the SAML IdP entityID, the OIDC `iss`, the mTLS CA subject, the API-key realm, the SCIM connection id, or `urn:openwop:legacy` for a run that predates subject emission (RFC 0165 §B.3)."
+    },
+    "subjectId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^@\\s]+$",
+      "description": "Opaque, stable, issuer-scoped identifier. MUST NOT be an email address, a display name, or credential material (SECURITY invariant `subject-record-opaque`). Equals `owner.principal` when both are present (RFC 0165 §B.2)."
+    },
+    "tenant": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MUST equal the enclosing `owner.tenant` (RFC 0165 §B.2)."
+    },
+    "lane": {
+      "type": "string",
+      "enum": ["api-key", "oauth2", "oidc", "mtls", "saml", "scim", "ldap", "workload"],
+      "description": "The authentication lane that minted the subject (auth-profiles.md). `workload` corresponds to RFC 0154's workload identity; the RFC 0154 `scheme` is carried in `issuer`."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["user", "agent", "anonymous", "workload"],
+      "description": "Superset of `owner.principalKind` (RFC 0132) plus `workload` (RFC 0154). Equals `principalKind` when both are present."
+    },
+    "keyClass": {
+      "type": "string",
+      "enum": ["opaque-idp", "configured-immutable"],
+      "description": "How `subjectId` was derived when the lane is linkable (RFC 0163 §A). Present iff `lane` is `saml` or `scim`; MUST equal `capabilities.auth.subjectLinkKey` when both identity profiles are advertised (RFC 0164 §A.3)."
+    },
+    "actor": {
+      "$ref": "#",
+      "description": "Who acted on this subject's behalf (delegation; RFC 0154 §B inverted to the run's point of view). Provenance, not authorization. Chain depth MUST NOT exceed 4; a host refuses rather than truncates (RFC 0165 §B.5)."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "lane": { "enum": ["saml", "scim"] } } },
+      "then": { "required": ["keyClass"] },
+      "else": { "not": { "required": ["keyClass"] } }
+    }
+  ]
+}

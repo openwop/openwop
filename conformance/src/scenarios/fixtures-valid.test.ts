@@ -11,6 +11,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { FIXTURES_DIR, SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 // Layout-aware paths — `lib/paths.ts` resolves these for both repo
 // checkouts (schemas one level above the conformance package) and the
@@ -46,7 +47,7 @@ describe('fixtures: workflow-definition schema validity', () => {
     .sort();
 
   it('finds at least one fixture file', () => {
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.length, req('openwop.it.fixtures-valid.finds-at-least-one-fixture-file', 'fixtures-valid.test.ts (no spec citation in file)', 'finds at least one fixture file')).toBeGreaterThan(0);
   });
 
   for (const file of files) {
@@ -56,7 +57,7 @@ describe('fixtures: workflow-definition schema validity', () => {
       const errors = (validate.errors ?? [])
         .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
         .join('\n');
-      expect(ok, `Fixture ${file} fails workflow-definition schema:\n${errors}`).toBe(true);
+      expect(ok, req('openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture ${file} fails workflow-definition schema:\n${errors}`)).toBe(true);
     });
   }
 
@@ -66,7 +67,7 @@ describe('fixtures: workflow-definition schema validity', () => {
       const expected = file.replace(/\.json$/, '');
       expect(
         data.id,
-        `Fixture file ${file} declares id "${data.id}" — MUST match filename`,
+        req('openwop.it.fixtures-valid.every-fixture-id-matches-its-filename', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture file ${file} declares id "${data.id}" — MUST match filename`),
       ).toBe(expected);
     }
   });
@@ -80,7 +81,7 @@ describe('fixtures: workflow-definition schema validity', () => {
       const hasManual = data.triggers.some((t) => t.type === 'manual');
       expect(
         hasManual,
-        `Fixture ${data.id} MUST include a manual trigger per fixtures.md §Seeding contract`,
+        req('openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture ${data.id} MUST include a manual trigger per fixtures.md §Seeding contract`),
       ).toBe(true);
     }
   });
@@ -120,7 +121,7 @@ describe('fixtures: node-pack-manifest schema validity', () => {
     .sort();
 
   it('finds at least one pack-manifest fixture (private-scope coverage)', () => {
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.length, req('openwop.it.fixtures-valid.finds-at-least-one-pack-manifest-fixture-private-scope-coverage', 'fixtures-valid.test.ts (no spec citation in file)', 'finds at least one pack-manifest fixture (private-scope coverage)')).toBeGreaterThan(0);
   });
 
   for (const file of files) {
@@ -139,7 +140,7 @@ describe('fixtures: node-pack-manifest schema validity', () => {
         .join('\n');
       expect(
         ok,
-        `Fixture pack-manifests/${file} fails ${schemaName}:\n${errors}`,
+        req('openwop.it.fixtures-valid.pack-manifests-validates-against-its-kind-s-manifest-schema', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture pack-manifests/${file} fails ${schemaName}:\n${errors}`),
       ).toBe(true);
     });
   }
@@ -158,7 +159,7 @@ describe('fixtures: node-pack-manifest schema validity', () => {
     });
     expect(
       privateFixtures.length,
-      'Expected at least one pack-manifest fixture under the `private.<host>.*` scope to assert v1.0 private-scope pattern coverage',
+      req('openwop.it.fixtures-valid.the-private-scope-fixture-exercises-the-v1-0-private-pack-pattern', 'fixtures-valid.test.ts (no spec citation in file)', 'Expected at least one pack-manifest fixture under the `private.<host>.*` scope to assert v1.0 private-scope pattern coverage'),
     ).toBeGreaterThan(0);
   });
 });
@@ -179,7 +180,7 @@ describe('fixtures: connection-pack-manifest schema validity', () => {
     .sort();
 
   it('finds at least one connection-pack fixture (RFC 0095 coverage)', () => {
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.length, req('openwop.it.fixtures-valid.finds-at-least-one-connection-pack-fixture-rfc-0095-coverage', 'RFC 0095', 'finds at least one connection-pack fixture (RFC 0095 coverage)')).toBeGreaterThan(0);
   });
 
   for (const file of files) {
@@ -191,7 +192,7 @@ describe('fixtures: connection-pack-manifest schema validity', () => {
         .join('\n');
       expect(
         ok,
-        `Fixture connection-packs/${file} fails connection-pack-manifest schema:\n${errors}`,
+        req('openwop.it.fixtures-valid.connection-packs-validates-against-connection-pack-manifest-schema-json', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture connection-packs/${file} fails connection-pack-manifest schema:\n${errors}`),
       ).toBe(true);
     });
   }
@@ -219,7 +220,7 @@ describe('fixtures: trigger-event + registration schema validity', () => {
     .sort();
 
   it('finds at least one trigger-event fixture (RFC 0099 coverage)', () => {
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.length, req('openwop.it.fixtures-valid.finds-at-least-one-trigger-event-fixture-rfc-0099-coverage', 'RFC 0099', 'finds at least one trigger-event fixture (RFC 0099 coverage)')).toBeGreaterThan(0);
   });
 
   for (const file of files) {
@@ -230,7 +231,7 @@ describe('fixtures: trigger-event + registration schema validity', () => {
       const errors = (validate.errors ?? [])
         .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
         .join('\n');
-      expect(ok, `Fixture trigger-events/${file} fails its schema:\n${errors}`).toBe(true);
+      expect(ok, req('openwop.it.fixtures-valid.trigger-events-validates-against-its-schema', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture trigger-events/${file} fails its schema:\n${errors}`)).toBe(true);
     });
   }
 });
@@ -264,7 +265,7 @@ describe('fixtures: prompt-template schema validity', () => {
   it('finds at least one prompt-template fixture', () => {
     expect(
       files.length,
-      'Expected at least one PromptTemplate fixture under fixtures/prompt-templates/',
+      req('openwop.it.fixtures-valid.finds-at-least-one-prompt-template-fixture', 'fixtures-valid.test.ts (no spec citation in file)', 'Expected at least one PromptTemplate fixture under fixtures/prompt-templates/'),
     ).toBeGreaterThan(0);
   });
 
@@ -279,7 +280,7 @@ describe('fixtures: prompt-template schema validity', () => {
         .join('\n');
       expect(
         ok,
-        `Fixture prompt-templates/${file} fails prompt-template schema:\n${errors}`,
+        req('openwop.it.fixtures-valid.prompt-templates-validates-against-prompt-template-schema-json', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture prompt-templates/${file} fails prompt-template schema:\n${errors}`),
       ).toBe(true);
     });
   }
@@ -297,7 +298,7 @@ describe('fixtures: prompt-template schema validity', () => {
       ) as { templateId: string };
       expect(
         typeof data.templateId,
-        `Fixture prompt-templates/${file} MUST declare a templateId`,
+        req('openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture prompt-templates/${file} MUST declare a templateId`),
       ).toBe('string');
       expect(data.templateId.length).toBeGreaterThan(0);
     }
@@ -321,7 +322,7 @@ describe('fixtures: prompt-template schema validity', () => {
       if (hasSecretSource) {
         expect(
           (data.tags ?? []).includes('secret-redaction'),
-          `Fixture prompt-templates/${file} declares a secret-source variable but lacks the 'secret-redaction' tag`,
+          req('openwop.it.fixtures-valid.every-secret-source-variable-lives-in-a-fixture-tagged-for-the-secret-redaction', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture prompt-templates/${file} declares a secret-source variable but lacks the 'secret-redaction' tag`),
         ).toBe(true);
       }
     }

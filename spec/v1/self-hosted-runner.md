@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Self-hosted Runner
 
-> **Status: Draft · v1.x (2026-07-02) — RFC 0122 `Active`.** Normative surface for [RFC 0122 — Self-hosted runner (remote-driven local execution)](../../RFCS/0122-self-hosted-runner-remote-execution.md): a host routes a run's per-step model/tool dispatch to a user-controlled **runner** that dials OUT to the host and holds local credentials the host cannot reach. Companion to [`capabilities.md`](./capabilities.md) (`selfHostedRunner`), [`stream-modes.md`](./stream-modes.md) (the SSE framing + `Last-Event-ID` resume this reuses), [`replay.md`](./replay.md) (per-step persistence + fork), and the BYOK/credential surface of RFC 0046/0108/0121. **RFC 0122 is `Active`, not `Accepted`: no host may advertise `selfHostedRunner.supported: true` until it is `Accepted`** — reference hosts wire the channel behind the capability gate in the interim. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Stable · v1.x (2026-07-02) — RFC 0122 `Accepted` (2026-07-02; graduated 2026-09-03 under RFC 0174 §D.1).** Normative surface for [RFC 0122 — Self-hosted runner (remote-driven local execution)](../../RFCS/0122-self-hosted-runner-remote-execution.md): a host routes a run's per-step model/tool dispatch to a user-controlled **runner** that dials OUT to the host and holds local credentials the host cannot reach. Companion to [`capabilities.md`](./capabilities.md) (`selfHostedRunner`), [`stream-modes.md`](./stream-modes.md) (the SSE framing + `Last-Event-ID` resume this reuses), [`replay.md`](./replay.md) (per-step persistence + fork), and the BYOK/credential surface of RFC 0046/0108/0121. **RFC 0122 is `Accepted`: hosts MAY advertise `selfHostedRunner.supported: true` (`RFCS/README.md` records the graduation); an earlier revision of this banner forbade it after the RFC had already graduated.** Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ## Why this exists
 
@@ -114,7 +114,7 @@ it received.
    `selfHostedRunner.supported: true` unless it honors this channel (accepts
    registrations, routes matching dispatch, delivers results). A dishonest claim is
    non-conformant and MUST fail `OPENWOP_REQUIRE_BEHAVIOR=true`. Because RFC 0122 is
-   `Active` (not `Accepted`), no host may advertise the capability yet.
+   `Accepted` (2026-07-02): hosts MAY advertise the capability; this line said the opposite until the RFC 0174 §D.1 sweep (2026-09-03).
 
 ## Trust boundary + replay
 
@@ -172,12 +172,7 @@ to any runner `user_42` has registered — persisted steps replay from persisten
 
 ## Open spec gaps
 
-| # | Gap | Disposition |
-| - | --- | ----------- |
-| G1 | Runner-bearer minting/rotation endpoint shape | Host-internal for v1; the bearer is opaque to the wire. A normative mint/rotate endpoint MAY be added additively if cross-host runner portability is pursued. |
-| G2 | Multiple runners per subject: load-balancing / affinity policy | Implementation-defined. The spec pins only subject-first + capability match; a host MAY pick any matching free runner. |
-| G3 | Tool-dispatch conformance depth | The frame shape carries `kind:"tool"` from v1; the reference witness lands `model`-dispatch first (openwop-app ADR 0182 Phase 5). Tool-dispatch behavioral coverage graduates when a host routes it non-vacuously. |
-| G4 | A2A interaction (RFC 0100/0101) | Out of scope for v1; the runner channel is host↔runner, distinct from the client↔host A2A transport. |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.self-hosted-runner.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

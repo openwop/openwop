@@ -319,19 +319,7 @@ Upstream 2026-07-28 replaced server-initiated requests (`roots/list`, `sampling/
 
 ### Open spec gaps (RFC 0153)
 
-| # | Gap | Disposition |
-| - | --- | ----------- |
-| G1 | Legacy adopter inventory | **Open** — the window date is fixed above (2027-08-12); who is on 2025-06-18 is unknown. |
-| G2 | Complete MRTR mapping | **Closed** by §C (C.1 client, C.2 server): identity, `requestState`, retry, timeout, cancellation, replay, interrupt composition. |
-| G3 | Real current MCP peer for CI | **Externally gated**; the fake server is legacy-shaped. |
-| G4 | Authorization-aware cache validators | **Closed** by §D: scope change ⇒ stale regardless of `ttlMs`; `"private"` never crosses authorization contexts; key includes tenant/workspace/principal/origin/revision/discovery context. |
-| G5 | Initial mapped extension set | **Decided: none first-class.** OTel `_meta` keys and `logLevel` are the only named mappings; `io.modelcontextprotocol/tasks` is deliberately unmapped (RFC 0100 owns durable interop). |
-| G6 | 2026-07-28-shaped fake server + the six named scenarios | **Closed 2026-08-16 (suite 1.113.0):** dual-era `McpFakeServer` and all six legs landed, gated; what remains is a host that claims the profile. |
-| G7 | Dedicated content-free negotiation audit event | **Open** — `authorization.decided` recommended as carrier; shared with RFC 0152 G7. |
-| G8 | Interop threat-model document | **Open** — shared with RFC 0152 G8. |
-| G9 | Bound on MRTR rounds per invocation | **Open** — §C.1 requires a bound and leaves the number to host policy; a normative ceiling may follow evidence. |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.mcp-integration.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Future work
 

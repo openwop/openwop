@@ -22,6 +22,9 @@
  */
 
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
+import { createRequire } from 'node:module';
+import { dirname, resolve as resolvePath } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
 
 /** `runs-lifecycle.test.ts` → `openwop.floor.runs-lifecycle`. */
 export function requirementIdForScenario(scenarioFile: string): string {
@@ -78,7 +81,39 @@ export function floorFilesFor(profile: string, document?: Readonly<Record<string
  * discovery-conditional floor (RFC 0148 §C G7 — `openwop-replay-fork`): without
  * it such a floor is UNEVALUABLE and this returns `null`, never `[]`.
  */
+/**
+ * Major-2 floors come from `spec/v2/profiles.json`, not from the v1 table.
+ * `PROFILE_FLOOR_SCENARIOS` names v1 scenario FILES (`runs-lifecycle.test.ts`,
+ * `discovery.test.ts`, …) that `scenario-majors.json` assigns to major 1 and a
+ * major-2 run therefore never executes — so every one of them came back
+ * unclassified and a v2 host was refused certification for not running v1
+ * scenarios. Set by the runner before deriving; empty means the registry
+ * declares no floor for that profile, which is a real "witnesses nothing yet",
+ * not an unclassified return.
+ */
+let v2Floors: Readonly<Record<string, readonly string[]>> | null = null;
+
+export function setV2ProfileFloors(floors: Readonly<Record<string, readonly string[]>> | null): void {
+  v2Floors = floors;
+}
+
+/**
+ * True while a major-2 floor map is installed. The v1 hand table
+ * (`PROFILE_FLOOR_SCENARIOS`) MUST NOT be consulted for any per-profile fact
+ * (`discoveryOnly`, `runtimeDerived`, the floor itself, the witness count) while
+ * this is true — every one of those reads is a floor site, and rc.41 found two
+ * of four unjoined; rc.45 found the other two.
+ */
+export function v2FloorsActive(): boolean {
+  return v2Floors !== null;
+}
+
 export function requirementsFor(profile: string, document?: Readonly<Record<string, unknown>>): readonly string[] | null {
+  if (v2Floors !== null) {
+    const files = v2Floors[profile];
+    if (files === undefined) return null;
+    return files.map(requirementIdForScenario);
+  }
   const floor = PROFILE_FLOOR_SCENARIOS[profile];
   if (floor === undefined) return null;
   if (floor.discoveryOnly === true) return [];
@@ -102,4 +137,58 @@ export function allRequirements(): readonly string[] {
     void profile;
   }
   return [...ids].sort();
+}
+
+/**
+ * The MAJOR-2 floors, derived from `spec/v2/profiles.json` (itself generated
+ * from `spec/v2/declaration.json`), keyed by profile id and resolved to
+ * scenario file names. A `planned:<stem>` entry names `v2-<stem>.test.ts`; an
+ * entry is kept only if `scenario-majors.json` knows the file.
+ *
+ * This function exists in ONE place on purpose. Until 2026-09-05 the CLI
+ * derived these floors privately for `--certify` while the ledger decided
+ * "is this file a floor?" from PROFILE_FLOOR_SCENARIOS — the v1 hand table,
+ * which knows no v2 file. So a v2 floor file was MINTED as
+ * `openwop.scenario.v2-…` and LOOKED UP at certify time as
+ * `openwop.floor.v2-…`: 101 executed-pass rows, `witnessCount: 0` on both
+ * claimed profiles, and `REJECTING — openwop-discovery-core: unclassified` on
+ * a tier-1 host's first production bundle. Two sources of the same fact, one
+ * of them stale, and the join between them silent.
+ */
+export function v2ProfileFloorFiles(conformanceRoot: string): Record<string, readonly string[]> {
+  const candidates: string[] = [];
+  try {
+    const req = createRequire(resolvePath(conformanceRoot, 'package.json'));
+    candidates.push(resolvePath(dirname(req.resolve('@openwop/spec-artifacts/package.json')), 'spec', 'v2', 'profiles.json'));
+  } catch { /* not installed as a package; the repo-layout candidates below */ }
+  candidates.push(
+    resolvePath(conformanceRoot, 'spec', 'v2', 'profiles.json'),
+    resolvePath(conformanceRoot, '..', 'spec', 'v2', 'profiles.json'),
+  );
+  const registryPath = candidates.find((c) => existsSync(c));
+  if (registryPath === undefined) return {};
+  let known: Set<string>;
+  try {
+    known = new Set(Object.keys((JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> }).majors));
+  } catch {
+    known = new Set();
+  }
+  let registry: { profiles?: Array<{ id?: unknown; floorScenarios?: unknown }> };
+  try {
+    registry = JSON.parse(readFileSync(registryPath, 'utf8'));
+  } catch {
+    return {};
+  }
+  const out: Record<string, readonly string[]> = {};
+  for (const p of registry.profiles ?? []) {
+    if (typeof p.id !== 'string') continue;
+    const raw = Array.isArray(p.floorScenarios) ? (p.floorScenarios as unknown[]).map(String) : [];
+    const files: string[] = [];
+    for (const entry of raw) {
+      const name = entry.startsWith('planned:') ? `v2-${entry.slice('planned:'.length)}.test.ts` : entry.endsWith('.test.ts') ? entry : `${entry}.test.ts`;
+      if (known.size === 0 || known.has(name)) files.push(name);
+    }
+    out[p.id] = files;
+  }
+  return out;
 }

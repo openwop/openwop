@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/memory-list-options.schema.json",
+  "title": "MemoryListOptions",
+  "description": "Options accepted by `MemoryAdapter.list` (RFC 0004). All fields optional; default is \"all entries, newest first.\" Hosts MAY further bound results per their scale-profile.",
+  "type": "object",
+  "properties": {
+    "limit": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cap on entries returned. `0` means \"no limit\" (treated identically to omission); positive integers cap the result. Hosts MAY further bound the effective cap per their scale-profile. When omitted, the host applies its own default cap (typical: 100 entries)."
+    },
+    "tag": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Filter to entries whose `tags` array contains this string (set-membership check). Hosts MAY support more advanced filtering as a host extension under a `vendor.<host>.*` field."
+    },
+    "tokenBudget": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "RFC 0113. Max cumulative tokens across returned entries, denominated in the unit named by `capabilities.memory.injectionBudget.tokenCounter`. The adapter MUST return a prefix of the ranked entry list whose cumulative token count does not exceed this; a single entry exceeding the budget on its own MUST be omitted (not truncated mid-entry). MAY combine with `limit` — the adapter honors whichever yields fewer entries. Requires the host to advertise `memory.injectionBudget.supported`."
+    },
+    "rank": {
+      "type": "string",
+      "enum": [
+        "recency",
+        "relevance"
+      ],
+      "description": "RFC 0113. Selection order for the (optionally `tokenBudget`-bounded) read. `recency` (default when absent) orders most-recent-first — today's behavior. `relevance` DELEGATES to the existing `memory.search` semantic mode (RFC 0080): it requires `query` AND that the host advertise `capabilities.memory.search` with `semantic` mode, and is the budgeted projection OVER that existing search surface — NOT a new ranking capability. A host that does not advertise `memory.search` semantic mode MUST reject `rank:'relevance'` (or fall back to `'recency'` per its documented behavior)."
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "description": "RFC 0113. Free-text relevance anchor (the `memory.search` semantic query) — REQUIRED when `rank:'relevance'`, ignored otherwise."
+    }
+  },
+  "additionalProperties": false,
+  "x-openwop-seeded-from": "v1"
+}

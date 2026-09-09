@@ -45,6 +45,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 type Arm = 'root-plain' | 'root-dotted' | 'wrapper-plain' | 'wrapper-dotted';
 
@@ -84,11 +86,11 @@ describe('capability-arm-witness: which resolver arm the host lands on (RFC 0144
     const res = await driver.get('/.well-known/openwop');
     // No discovery document ⇒ inapplicable. Other scenarios own that failure; this leg is
     // about WHERE families sit, not whether the host has any.
-    if (res.status !== 200 || res.json === undefined || res.json === null) return;
+    if (res.status !== 200 || res.json === undefined || res.json === null) return softSkip('blocked', 'precondition not met — `res.status !== 200 || res.json === undefined || res.json === null` returned early (No discovery document ⇒ inapplicable. Other scenarios own that failure; this leg is about WHERE families sit, …');
 
     const doc = res.json as Record<string, unknown>;
     const placements = classify(doc, declaredFamilies());
-    if (placements.length === 0) return; // advertises no declared family — inapplicable
+    if (placements.length === 0) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `placements.length === 0` returned early (advertises no declared family — inapplicable)'); // advertises no declared family — inapplicable
 
     const canonical = placements.filter((p) => p.arms.includes('root-plain'));
     const rootDotted = placements.filter(
@@ -110,7 +112,7 @@ describe('capability-arm-witness: which resolver arm the host lands on (RFC 0144
     // ASSERT — the existing MUST, not a new one.
     expect(
       wrapperOnly.map((p) => p.family),
-      driver.describe(
+      req('openwop.it.capability-arm-witness.no-capability-family-is-reachable-only-under-the-deprecated-capabilities-wrapper', 
         'capabilities.md §"Document-root layout (normative — RFC 0073)"',
         'every family MUST appear at the document root; a host that serves families EXCLUSIVELY under the deprecated `capabilities` wrapper is non-conformant and is graded as such. The suite\'s helpers fall back to the wrapper, so without this leg such a host reads exactly like a migrated one — which is RFC 0144 G1',
       ),

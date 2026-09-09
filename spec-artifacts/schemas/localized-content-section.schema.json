@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/localized-content-section.schema.json",
+  "title": "LocalizedContentSection",
+  "description": "RFC 0103 (spec/v1/localized-content.md §B). One section record of an authored content page. A section is ONE record carrying a base `data` payload (authored in the host's `content.baseLocale`) plus a sparse `localizations` map of partial per-locale field overrides — never one record per locale. The negotiated locale's resolved body is computed by the normative per-section field merge (exact-locale → language-family → base `data`, shallow overlay; §C). Body field shapes inside `data`/`localizations` are open and host/section-type-defined; this schema closes the envelope, not the body.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sectionId", "sectionType", "data", "localizations", "status", "enabled", "order"],
+  "properties": {
+    "sectionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier of the section within its page."
+    },
+    "sectionType": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The section-type discriminator (e.g. `hero`, `features`). The host/section-type defines the body field shape; the protocol does not."
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The base/default-locale fields, authored in `content.baseLocale`. Open object — body shapes are the host/section-type's concern."
+    },
+    "localizations": {
+      "type": "object",
+      "description": "Sparse map of per-locale partial field overrides. MAY be empty (`{}`). Each key is a BCP-47 tag matching `^[a-z]{2}(-[A-Z]{2})?$` and MUST NOT equal `content.baseLocale` (the base locale is carried by `data`). Each value is a partial overlay of `data` fields; missing fields fall through to `data` (per-section merge §C).",
+      "propertyNames": {
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Partial field overrides for one locale; shallow-overlaid onto `data`."
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "published"],
+      "description": "Publication status. Atomic across all locales for v1 (no per-locale publish). The public delivery path serves `published` only."
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Whether the section participates in delivery when its page is rendered."
+    },
+    "order": {
+      "type": "integer",
+      "description": "Render order of the section within its page (lower first). `sectionOrder` on the page is authoritative; `order` is the per-section tiebreak/sort hint."
+    }
+  }
+}

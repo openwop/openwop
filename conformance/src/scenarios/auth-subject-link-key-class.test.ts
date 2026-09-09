@@ -42,6 +42,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SAML_PROFILE = 'openwop-auth-saml';
 const SCIM_PROFILE = 'openwop-auth-scim';
@@ -81,7 +82,7 @@ describe('auth-subject-link-key-class: advertisement shape (RFC 0163 §A)', () =
     // profiles) MUST advertise a subjectLinkKey.
     expect(
       typeof auth.subjectLinkKey === 'string' && auth.subjectLinkKey.length > 0,
-      driver.describe(
+      req('openwop.it.auth-subject-link-key-class.subjectlinking-true-requires-a-subjectlinkkey-drawn-from-the-closed-safe-class-e', 
         'auth-profiles.md §Subject linking',
         'RFC 0163 §A.1: a host advertising capabilities.auth.subjectLinking:true MUST also advertise capabilities.auth.subjectLinkKey',
       ),
@@ -93,7 +94,7 @@ describe('auth-subject-link-key-class: advertisement shape (RFC 0163 §A)', () =
     // host cannot name one.
     expect(
       (SUBJECT_LINK_KEY_CLASSES as readonly string[]).includes(auth.subjectLinkKey ?? ''),
-      driver.describe(
+      req('openwop.it.auth-subject-link-key-class.subjectlinking-true-requires-a-subjectlinkkey-drawn-from-the-closed-safe-class-e', 
         'auth-profiles.md §Subject linking',
         `RFC 0163 §A.3: subjectLinkKey MUST be one of ${SUBJECT_LINK_KEY_CLASSES.join(', ')} — a closed enum of allowed CLASSES (not attributes); a mutable/PII key is inexpressible`,
       ),
@@ -108,7 +109,7 @@ describe('auth-subject-link-key-class: advertisement shape (RFC 0163 §A)', () =
     const profiles = auth.profiles ?? [];
     expect(
       profiles.includes(SAML_PROFILE) && profiles.includes(SCIM_PROFILE),
-      driver.describe(
+      req('openwop.it.auth-subject-link-key-class.subjectlinkkey-is-only-claimed-alongside-both-saml-and-scim-profiles-rides-the-r', 
         'auth-profiles.md §Subject linking',
         'RFC 0163: subjectLinkKey is meaningful only when both openwop-auth-saml and openwop-auth-scim are advertised (it names the class the two lanes are joined on)',
       ),
@@ -146,13 +147,13 @@ describe('auth-subject-link-key-class: same-IdP trust root (RFC 0163 §B — beh
       userName: 'r.smith',
     });
     if (provSame.status === 404) return softSkip('blocked', 'SCIM provisioning seam unwired');
-    expect(provSame.status, driver.describe('auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
+    expect(provSame.status, req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 'auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
 
     const sameIdp = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl: idpAUrl, variant: 'valid', nameId: sameId });
     if (sameIdp.status === 404) return softSkip('blocked', 'SAML validate seam unwired');
     expect(
       (sameIdp.json as { authenticated?: boolean } | undefined)?.authenticated,
-      driver.describe('auth-profiles.md §Subject linking', 'RFC 0163 §B positive control: a SAML assertion from the SAME IdP trust root as the SCIM lane links and authenticates'),
+      req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 'auth-profiles.md §Subject linking', 'RFC 0163 §B positive control: a SAML assertion from the SAME IdP trust root as the SCIM lane links and authenticates'),
     ).toBe(true);
 
     // THE §B.1 MUST — cross-IdP identifier collision. Provision a SCIM user fed
@@ -168,13 +169,13 @@ describe('auth-subject-link-key-class: same-IdP trust root (RFC 0163 §B — beh
       externalId: collideId,
       userName: 'a.other',
     });
-    expect(provCross.status, driver.describe('auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
+    expect(provCross.status, req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 'auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
 
     const crossIdp = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl: idpBUrl, variant: 'valid', nameId: collideId });
     if (crossIdp.status === 404) return softSkip('blocked', 'SAML validate seam unwired');
     expect(
       (crossIdp.json as { authenticated?: boolean } | undefined)?.authenticated === true,
-      driver.describe(
+      req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 
         'auth-profiles.md §Subject linking',
         'RFC 0163 §B.1: a SAML assertion from IdP-B colliding on an identifier the SCIM lane provisioned from IdP-A MUST NOT form a cross-lane link (no cross-IdP identifier collision joins two principals)',
       ),

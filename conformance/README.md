@@ -3,7 +3,12 @@
 **openwop is an open, wire-level protocol for multi-agent workflow orchestration** — a single contract for runs in which LLM agents, deterministic tools, sub-workflows, and human reviewers collaborate, with durable suspend / resume, replay, version negotiation, and observability owned by the protocol itself. This package is the black-box conformance suite: point it at any OpenWOP-compliant server (your own or a third party's) and it issues real HTTP requests against the spec'd endpoints and asserts that responses match.
 
 ```bash
-npm install @openwop/openwop-conformance
+# Install BOTH packages at the SAME explicit version — the suite declares
+# @openwop/spec-artifacts as an exact-pinned peer, and `npm i --legacy-peer-deps`
+# on the suite alone does not pull it (a host measured "corpus stamp MISMATCH —
+# missing @openwop/spec-artifacts" on 2026-09-05). Pre-release 2.x is on the
+# `next` dist-tag; pin the version, never the tag (runbook §0.2b).
+npm install @openwop/openwop-conformance@2.0.0-rc.57 @openwop/spec-artifacts@2.0.0-rc.57
 # or run without install:
 npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk_test_...
 ```
@@ -15,6 +20,15 @@ The suite is intentionally self-contained — it does NOT depend on the referenc
 > **Status:** Tracks the FINAL v1 protocol contract. The suite version evolves independently as new scenarios ship (vendor-neutral redaction, cost attribution, post-v1 ecosystem triggers); see [`CHANGELOG.md`](./CHANGELOG.md) for the current release.
 
 ---
+
+
+## Suite 2.0.0 (v2 charter Phase 3; RFC 0168) — what changed for hosts
+
+- **The contract is a peer package.** `@openwop/openwop-conformance@2.x` no longer vendors `api/` and `schemas/`; it declares `@openwop/spec-artifacts` as an exact-pinned peer dependency (install both), resolves the installed peer through Node's resolver, and refuses to start when the peer's version or `CORPUS-STAMP.json` digest differs from `dist/spec-artifacts.lock.json` (RFC 0168 §D.2). `schemas/CORPUS-STAMP.json` in this package is a copy of the peer's stamp, kept at the path hosts already read for provenance.
+- **`--target-major 1|2`** (RFC 0168 §D.3): one package runs the scenarios for either protocol major; `scenario-majors.json` names each file's majors; the default comes from the host's root `preferredVersion` (RFC 0179), else `max(protocolVersions[])`, else 1.
+- **`req()` is the only assertion form** (RFC 0168 §A.1): every assertion carries a requirement id; `requirements.json` lists every id; `requirement-aliases.json` maps a reworded id to its successor. `scripts/check-req-only.mjs` is the gate.
+- **Corpus-coherence scenarios never run against a host.** They live in `src/coherence/`, run in the spec repo's CI (`scripts/check-spec-coherence.mjs`) and produce `evidence/corpus-ledger.json`; a host bundle never contains them. The `--offline` set is `fixtures-valid` only.
+- **1.x continues on `release/1.x`** (`openwop-conformance/v1.16x.y` tags); pre-release 2.x versions publish under the npm dist-tag `next`.
 
 ## Quickstart
 
@@ -92,9 +106,19 @@ Exit code is non-zero on any failed assertion. `--certify` distinguishes: `0` �
 
 ---
 
+
+### `--offline` — a declared set
+
+`openwop-conformance --offline` runs exactly **`src/scenarios/fixtures-valid.test.ts`**: the server-free scenario that ships in the tarball and runs in the published layout. That is the whole set, by declaration (suite 1.154.0), not by whatever happens to skip cleanly. `spec-corpus-validity.test.ts` and the other 27 corpus-coherence scenarios (`spec-coherence-scenarios.json`) read `spec/v1`, assert nothing about a host, and are not packed; run them from a spec checkout with `npm run openwop:check`.
+
+### The vendored contract is digest-checked
+
+`schemas/CORPUS-STAMP.json` carries `suiteVersion`, `corpusCommit`, and — from 1.154.0 — `files`: a SHA-256 for every vendored `api/` and `schemas/` file. At global setup in the published layout the suite verifies the map and **refuses to run on a mismatch**, naming each missing, altered, or extra file. A hand-patched vendored schema therefore cannot produce evidence. In a spec checkout nothing is vendored and the log line says `corpus stamp not checked`; an older tarball without `files` says so too. Three outcomes, never folded.
+
 ## What's Covered
 
-The current suite has 468 scenario files under `src/scenarios/`.
+The current suite has 516 scenario files under `src/scenarios/`.
+- 2026-09-03 (suite `1.157.0 -> 1.158.0`, gap G17): NEW `idempotency-concurrent-claim.test.ts` — drives the new `host-sample-test-seams.md` §25 concurrent duplicate-delivery seam for the RFC 0150 §B / `idempotency.md` §"Concurrent duplicates (Layer 2)" atomic-claim MUST, which is unconditional and had no witness of any kind. Asserts every executor mints the SAME `logicalInvocationId` **before** asserting `delivered === 1` — without the identity check a host passes by minting different ids and never colliding, one effect because nothing raced. Not profile-gated and so not opt-out-able (the obligation is unconditional); an unmounted seam records `blocked`, which is not certifiable. Graduates `layer2-invocation-claim-atomic` reference-impl -> protocol.
 - 2026-08-19 (suite `1.137.0 → 1.138.0`): NEW `durability-poison-exhaustion.test.ts` — RFC 0158 §C.8, the FIRST row of that RFC's conformance table to land. Asserts what `failure-path.test.ts` cannot: not just that deterministically failing work reaches terminal, but that attempts STOP — counted on the log, re-counted after a scaled quiet window, asserted unchanged. A host still redelivering records more. Seam-gated on the existing event-log seam (`blocked` = unobservable, not unmet) and outside every profile floor.
 - 2026-08-19 (suite `1.136.15 → 1.137.0`): NEW `replay-fanout-suppression.test.ts` — capability-gated on `webhooks.supported`, **outside every profile floor**; witnesses `replay.md` §"Host-initiated fan-out is an external effect", which was the largest normative MUST NOT on the replay surface with no scenario and no SECURITY invariant. Three legs in ONE `it` against ONE receiver and ONE subscription — a positive control, the MUST NOT, and a `branch` boundary leg — because "no delivery arrived" passes identically when delivery never worked, so absence is asserted only after presence is proven on that exact wiring. A host with an SSRF guard correctly refuses the loopback receiver and records `blocked`: **unobservable, not unmet.**
 - 2026-08-18 (suite `1.136.7 → 1.136.8`, SP-04): NEW `spec-section-citations.test.ts` — server-free; a `<doc>.md §"<Section>"` citation of a checked doc MUST resolve to a heading that exists. `storage-adapters.md §"Claim acquisition"` was cited by four artifacts, including a normative MUST in `production-profile.md` §Durability, and the section did not exist for the life of RFC 0009. Scoped to the docs whose section citations carry the durability contract; a corpus-wide sweep finds ~260 unresolved citations that need triage before they can gate.
@@ -438,7 +462,7 @@ Server-required (added in 1.7.0):
 | ------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 468 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 516 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 

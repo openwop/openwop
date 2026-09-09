@@ -35,6 +35,8 @@ import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -86,17 +88,17 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const res = await driver.get('/v1/prompts');
-    expect(res.status, driver.describe('spec/v1/prompts.md §Discovery & distribution', 'GET /v1/prompts MUST return 200 when endpointsSupported: true')).toBe(200);
+    expect(res.status, req('openwop.it.prompt-list-and-fetch.get-v1-prompts-returns-items-prompttemplate-nextcursor-when-endpointssupported-i', 'spec/v1/prompts.md §Discovery & distribution', 'GET /v1/prompts MUST return 200 when endpointsSupported: true')).toBe(200);
     const body = res.json as ListResponse;
     expect(
       Array.isArray(body.items),
-      driver.describe('spec/v1/prompts.md §Discovery & distribution', 'response MUST contain an `items` array'),
+      req('openwop.it.prompt-list-and-fetch.get-v1-prompts-returns-items-prompttemplate-nextcursor-when-endpointssupported-i', 'spec/v1/prompts.md §Discovery & distribution', 'response MUST contain an `items` array'),
     ).toBe(true);
     for (const item of body.items) {
       const ok = validate(item);
       expect(
         ok,
-        driver.describe(
+        req('openwop.it.prompt-list-and-fetch.get-v1-prompts-returns-items-prompttemplate-nextcursor-when-endpointssupported-i', 
           'spec/v1/prompts.md §PromptTemplate',
           `every list item MUST validate against prompt-template.schema.json; errors: ${JSON.stringify(validate.errors)}`,
         ),
@@ -113,7 +115,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     for (const item of body.items) {
       expect(
         item.meta?.source,
-        driver.describe(
+        req('openwop.it.prompt-list-and-fetch.get-v1-prompts-source-host-narrows-to-host-built-in-templates', 
           'spec/v1/prompts.md §Discovery & distribution',
           'source filter MUST narrow to templates whose meta.source matches',
         ),
@@ -125,7 +127,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     const d = await readDiscovery();
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const res = await driver.get('/v1/prompts?kind=system');
-    expect(res.status).toBe(200);
+    expect(res.status, req('openwop.it.prompt-list-and-fetch.get-v1-prompts-kind-system-narrows-to-system-kind-templates', 'RFC 0028 §A', 'GET /v1/prompts?kind=system narrows to system-kind templates')).toBe(200);
     const body = res.json as ListResponse;
     for (const item of body.items) {
       expect(item.kind).toBe('system');
@@ -138,9 +140,9 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
     // List first to discover a known templateId we can fetch.
     const list = await driver.get('/v1/prompts?source=host&limit=1');
-    if (list.status !== 200) return;
+    if (list.status !== 200) return softSkip('blocked', 'precondition not met — `list.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const body = list.json as ListResponse;
-    if (body.items.length === 0) return; // host advertises endpoints but ships no fixtures — tolerable
+    if (body.items.length === 0) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `body.items.length === 0` returned early (host advertises endpoints but ships no fixtures — tolerable)'); // host advertises endpoints but ships no fixtures — tolerable
     const known = body.items[0]!;
 
     const fetched = await driver.get(`/v1/prompts/${encodeURIComponent(known.templateId)}`);
@@ -153,7 +155,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     const etag = fetched.headers?.get('etag');
     expect(
       typeof etag === 'string' && etag.length > 0,
-      driver.describe(
+      req('openwop.it.prompt-list-and-fetch.get-v1-prompts-templateid-returns-the-template-etag-header-for-a-known-fixture', 
         'spec/v1/prompts.md §Discovery & distribution',
         'GET /v1/prompts/{templateId} SHOULD set an ETag header (RFC 0028 §A cache semantics)',
       ),
@@ -164,22 +166,22 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     const d = await readDiscovery();
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const list = await driver.get('/v1/prompts?source=host&limit=1');
-    if (list.status !== 200) return;
+    if (list.status !== 200) return softSkip('blocked', 'precondition not met — `list.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const body = list.json as ListResponse;
-    if (body.items.length === 0) return;
+    if (body.items.length === 0) return softSkip('blocked', 'precondition not met — `body.items.length === 0` returned early (seam, prior step, or fixture unavailable)');
     const known = body.items[0]!;
 
     const first = await driver.get(`/v1/prompts/${encodeURIComponent(known.templateId)}`);
-    if (first.status !== 200) return;
+    if (first.status !== 200) return softSkip('blocked', 'precondition not met — `first.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const etag = first.headers?.get('etag') ?? undefined;
-    if (!etag) return; // ETag is SHOULD, not MUST — soft-skip when absent
+    if (!etag) return softSkip('blocked', 'precondition not met — `!etag` returned early (ETag is SHOULD, not MUST — soft-skip when absent) (seam, prior step, or fixture unavailable)'); // ETag is SHOULD, not MUST — soft-skip when absent
 
     const second = await driver.get(`/v1/prompts/${encodeURIComponent(known.templateId)}`, {
       headers: { 'If-None-Match': etag },
     });
     expect(
       second.status,
-      driver.describe(
+      req('openwop.it.prompt-list-and-fetch.get-v1-prompts-templateid-with-if-none-match-returns-304-when-etag-matches', 
         'spec/v1/prompts.md §Discovery & distribution',
         'conditional revalidation MUST return 304 when ETag matches',
       ),
@@ -198,7 +200,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     const body = res.json as { error?: unknown; message?: unknown };
     expect(
       typeof body.error,
-      driver.describe(
+      req('openwop.it.prompt-list-and-fetch.get-v1-prompts-unknown-template-returns-404-with-errorenvelope', 
         'schemas/error-envelope.schema.json',
         '404 response MUST carry canonical ErrorEnvelope: `error` is a machine-readable code STRING (flat shape per the schema, not nested)',
       ),

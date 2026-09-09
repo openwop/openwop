@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/declaration.schema.json",
+  "title": "OpenWOP v2 capability declaration file (RFC 0169 \u00a7B)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "version",
+    "updated",
+    "witnessClasses",
+    "extensionsKeyPattern",
+    "reservedOrgs",
+    "extensions",
+    "metadata",
+    "families",
+    "profiles"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^2\\.[0-9]+$"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "witnessClasses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "witnessable-unaided",
+          "witnessable-gated",
+          "seam-gated",
+          "claims-check",
+          "negative-existence"
+        ]
+      }
+    },
+    "extensionsKeyPattern": {
+      "type": "string"
+    },
+    "reservedOrgs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "The vendor-org REGISTRY (events.md \u00a7Rules, RFC 0171 \u00a7A.1): a vendor event type's first segment MUST be a key here, and an unregistered org fails validation. Distinct from the `extensions` metadata key in the discovery payload (metadata[] row `extensions`, schemas/v2/capabilities.schema.json), which is a HOST's own extension map. An org in reservedOrgs is forbidden, never registered. An empty object is a well-formed registry that admits no vendor type \u2014 it is not a licence to skip the check.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "registered"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "registered": {
+            "type": "string",
+            "format": "date"
+          },
+          "reserved": {
+            "type": "boolean",
+            "description": "true when the org is held by the protocol and never assignable to a vendor."
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "kind",
+          "schema",
+          "disposition"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "const": "metadata"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "kept",
+              "deleted"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "anchor",
+              "reason"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "anchor": {
+                "const": "deleted"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "kind",
+              "anchor",
+              "section",
+              "peerDependencyId",
+              "witness",
+              "maturity",
+              "facets",
+              "floorScenarios",
+              "requirementIds"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]*$"
+              },
+              "kind": {
+                "const": "family"
+              },
+              "anchor": {
+                "enum": [
+                  "core",
+                  "ext"
+                ]
+              },
+              "section": {
+                "type": "string"
+              },
+              "peerDependencyId": {
+                "type": "string"
+              },
+              "witness": {
+                "enum": [
+                  "witnessable-unaided",
+                  "witnessable-gated",
+                  "seam-gated",
+                  "claims-check",
+                  "negative-existence"
+                ]
+              },
+              "maturity": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "technical",
+                  "adoption"
+                ],
+                "properties": {
+                  "technical": {
+                    "enum": [
+                      "experimental",
+                      "stable",
+                      "deprecated"
+                    ]
+                  },
+                  "adoption": {
+                    "enum": [
+                      "none",
+                      "single-witness",
+                      "multi-witness",
+                      "independent"
+                    ]
+                  },
+                  "until": {
+                    "type": "string"
+                  }
+                }
+              },
+              "facets": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "floorScenarios": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "requirementIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "owningRfc": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "disposition": {
+                "enum": [
+                  "externally-gated"
+                ]
+              },
+              "facetsFrom": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "predicate"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "predicate": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "families": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "floorScenarios": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requirementIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "aliases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "family"
+        ],
+        "properties": {
+          "family": {
+            "type": "string"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hand-decided alias rows for registry peer-dependency keys the mechanical rules (host.<family>, openwop.<family>.<facet>, <family>.<facet>) cannot explain (RFC 0177 \u00a7B.2)."
+    }
+  }
+}

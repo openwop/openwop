@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscriminatorViolation {
   path: string;
@@ -124,7 +125,7 @@ describe('envelope-variant-discriminator-static (RFC 0031 §A)', () => {
   it('local envelope-schema directory is discoverable', () => {
     expect(
       schemas.length,
-      'schemas/envelopes/*.schema.json MUST contain at least the four universal-kind schemas',
+      req('openwop.it.envelope-variant-discriminator-static.local-envelope-schema-directory-is-discoverable', 'RFC 0031 §A', 'schemas/envelopes/*.schema.json MUST contain at least the four universal-kind schemas'),
     ).toBeGreaterThanOrEqual(4);
   });
 
@@ -135,7 +136,7 @@ describe('envelope-variant-discriminator-static (RFC 0031 §A)', () => {
       walkForOneOf(schema, '#', violations);
       expect(
         violations,
-        `${kind}.schema.json contains \`oneOf\` — REFORMULATE as \`anyOf\` + single-string-enum discriminator per RFC 0031 §A. Violations: ${JSON.stringify(violations, null, 2)}`,
+        req('openwop.it.envelope-variant-discriminator-static.schema-json-must-not-contain-oneof-at-any-nesting-depth-gemini-silently-drops-it', 'RFC 0031 §A', `${kind}.schema.json contains \`oneOf\` — REFORMULATE as \`anyOf\` + single-string-enum discriminator per RFC 0031 §A. Violations: ${JSON.stringify(violations, null, 2)}`),
       ).toEqual([]);
     });
 
@@ -145,7 +146,7 @@ describe('envelope-variant-discriminator-static (RFC 0031 §A)', () => {
       walkForAnyOfDiscriminators(schema, '#', violations);
       expect(
         violations,
-        `${kind}.schema.json \`anyOf\` discriminator violations: ${JSON.stringify(violations, null, 2)}`,
+        req('openwop.it.envelope-variant-discriminator-static.schema-json-every-anyof-branch-declares-a-single-string-enum-discriminator-in-re', 'RFC 0031 §A', `${kind}.schema.json \`anyOf\` discriminator violations: ${JSON.stringify(violations, null, 2)}`),
       ).toEqual([]);
     });
   }

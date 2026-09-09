@@ -200,13 +200,7 @@ When a host advertises `capabilities.feedback.supported`, a run's debug bundle S
 
 ## Open spec gaps
 
-| ID             | Description                                                                                                                                                                   |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DEBUG-BUNDLE-1 | ✅ Closed in the v1.0 conformance baseline. `capabilities.debugBundle.supported: true` is represented in `schemas/capabilities.schema.json` as an additive optional property. |
-| DEBUG-BUNDLE-2 | OTel-span-id format conventions when the bundle is consumed cross-trace are non-normative here — assume W3C trace context per observability.md §"Trace context propagation."  |
-| DEBUG-BUNDLE-3 | The 8 MB default cap is conservative. A high-throughput host serving long-running runs may need a higher cap or a streaming variant; out of scope for v1.x.                   |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.debug-bundle.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -30,6 +30,8 @@ import { FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE_PATH = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
 
@@ -54,13 +56,13 @@ describe('connection-pack-write-reconsent (RFC 0095 §B.4)', () => {
       provider: 'github',
       requested: ['read', 'write'],
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const plan = res.json as ConsentPlan | undefined;
     const steps = plan?.steps ?? [];
     expect(
       steps.length >= 2,
-      driver.describe(
+      req('openwop.it.connection-pack-write-reconsent.write-scope-groups-are-a-separate-consent-step-never-bundled-into-the-initial-re', 
         'connection-packs.md §Manifest clause 4',
         'requesting read + write scope groups MUST plan write as a SEPARATE consent step (≥ 2 steps)',
       ),
@@ -70,7 +72,7 @@ describe('connection-pack-write-reconsent (RFC 0095 §B.4)', () => {
       first.includesWrite === true || (first.groups ?? []).some((g) => g.access === 'write');
     expect(
       firstHasWrite,
-      driver.describe(
+      req('openwop.it.connection-pack-write-reconsent.write-scope-groups-are-a-separate-consent-step-never-bundled-into-the-initial-re', 
         'connection-packs.md §Manifest clause 4',
         'the INITIAL authorization step MUST NOT bundle write scopes',
       ),
@@ -84,7 +86,7 @@ describe('connection-pack-write-reconsent (RFC 0095 §B.4)', () => {
       const roSteps = (readOnly.json as ConsentPlan | undefined)?.steps ?? [];
       expect(
         roSteps.length,
-        driver.describe('connection-packs.md §Manifest clause 4', 'a read-only request plans a single consent step'),
+        req('openwop.it.connection-pack-write-reconsent.write-scope-groups-are-a-separate-consent-step-never-bundled-into-the-initial-re', 'connection-packs.md §Manifest clause 4', 'a read-only request plans a single consent step'),
       ).toBe(1);
     }
   });

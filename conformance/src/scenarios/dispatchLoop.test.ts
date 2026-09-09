@@ -15,6 +15,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const DISPATCH_LOOP_WORKFLOW_ID = 'conformance-dispatch-loop';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(DISPATCH_LOOP_WORKFLOW_ID);
@@ -30,7 +31,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('dispatchLoop: core.dispatch consumes Orchestra
     // mock. The black-box contract here is terminal completion.
     
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.dispatchLoop.host-correctly-processes-orchestrator-decisions-and-terminates', 
       'RFCS/0007-dispatch-loop.md §H',
       'run MUST reach terminal `completed` after dispatch processes terminate decision',
     )).toBe('completed');
@@ -44,7 +45,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('dispatchLoop: core.dispatch consumes Orchestra
       .filter((e) => e.type === 'runOrchestrator.decided')
       .map((e) => e.payload?.decision?.kind);
 
-    expect(decisions, driver.describe(
+    expect(decisions, req('openwop.it.dispatchLoop.host-correctly-processes-orchestrator-decisions-and-terminates', 
       'RFCS/0007-dispatch-loop.md §D',
       'host MUST emit next-worker then terminate in a loop topology'
     )).toEqual(['next-worker', 'terminate']);

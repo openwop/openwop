@@ -18,6 +18,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -64,12 +66,12 @@ async function evaluateGate(input: Record<string, unknown>): Promise<{ status: n
 describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (RFC 0031 §E)', () => {
   it('capabilities.modelCapabilities (when present) conforms to RFC 0031 §E', async () => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const mc = capabilityFamily(d, 'modelCapabilities');
-    if (mc === undefined) return;
+    if (mc === undefined) return softSkip('blocked', 'precondition not met — `mc === undefined` returned early (seam, prior step, or fixture unavailable)');
     expect(
       typeof mc.supported,
-      driver.describe(
+      req('openwop.it.model-capability-substituted.capabilities-modelcapabilities-when-present-conforms-to-rfc-0031-e', 
         'schemas/capabilities.schema.json §modelCapabilities',
         'capabilities.modelCapabilities.supported MUST be boolean when the block is advertised',
       ),
@@ -77,7 +79,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
     if (mc.advertised !== undefined) {
       expect(
         Array.isArray(mc.advertised),
-        driver.describe('RFCS/0031-envelope-variants-and-model-capabilities.md §E', 'modelCapabilities.advertised MUST be an array of capability identifiers'),
+        req('openwop.it.model-capability-substituted.capabilities-modelcapabilities-when-present-conforms-to-rfc-0031-e', 'RFCS/0031-envelope-variants-and-model-capabilities.md §E', 'modelCapabilities.advertised MUST be an array of capability identifiers'),
       ).toBe(true);
       // RFC 0031 §C's five, PLUS the four modality identifiers RFC 0055 §A
       // promoted into the formal vocabulary (Accepted 2026-05-26; registered in
@@ -89,13 +91,13 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
         'vision-input', 'audio-input', 'audio-output', 'image-output',
       ];
       for (const id of mc.advertised as unknown[]) {
-        expect(typeof id, 'each advertised identifier MUST be a string').toBe('string');
+        expect(typeof id, req('openwop.it.model-capability-substituted.capabilities-modelcapabilities-when-present-conforms-to-rfc-0031-e', 'RFCS/0031-envelope-variants-and-model-capabilities.md §E', 'each advertised identifier MUST be a string')).toBe('string');
         const idStr = String(id);
         const isReserved = SPEC_RESERVED.includes(idStr);
         const isHostExt = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(idStr);
         expect(
           isReserved || isHostExt,
-          driver.describe(
+          req('openwop.it.model-capability-substituted.capabilities-modelcapabilities-when-present-conforms-to-rfc-0031-e', 
             'RFCS/0031-envelope-variants-and-model-capabilities.md §C',
             `advertised identifier "${idStr}" MUST be spec-reserved (RFC 0031: structured-output, discriminator-enum, long-context, reasoning, function-calling; RFC 0055: vision-input, audio-input, audio-output, image-output) or match the x-host-<host>-<key> extension pattern`,
           ),
@@ -103,7 +105,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
       }
     }
     if (mc.substitutionSupported !== undefined) {
-      expect(typeof mc.substitutionSupported, 'substitutionSupported MUST be boolean').toBe('boolean');
+      expect(typeof mc.substitutionSupported, req('openwop.it.model-capability-substituted.capabilities-modelcapabilities-when-present-conforms-to-rfc-0031-e', 'RFCS/0031-envelope-variants-and-model-capabilities.md §C', 'substitutionSupported MUST be boolean')).toBe('boolean');
     }
   });
 });
@@ -117,15 +119,15 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
       substitutionSupported: true,
       supportedProviders: ['anthropic', 'openai'],
     });
-    if (r.status === 404) return; // host doesn't expose the seam
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
     expect(
       r.body.outcome?.route,
-      driver.describe(
+      req('openwop.it.model-capability-substituted.all-required-capabilities-met-outcome-dispatch-no-event-emitted', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 2',
         'all required model capabilities met → route MUST be "dispatch" (gate is a no-op)',
       ),
     ).toBe('dispatch');
-    expect(r.body.event, 'no event emitted when gate is a no-op').toBeNull();
+    expect(r.body.event, req('openwop.it.model-capability-substituted.all-required-capabilities-met-outcome-dispatch-no-event-emitted', 'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 2', 'no event emitted when gate is a no-op')).toBeNull();
   });
 
   it('unmet + fallback declared + authenticatable → outcome: substitute + event with originalProvider/originalModel/fallbackProvider/fallbackModel/missingCapabilities', async () => {
@@ -148,23 +150,23 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
       supportedProviders: ['anthropic', 'openai', 'unknown-vendor'],
       nodeId: 'writer-node',
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.outcome?.route,
-      driver.describe(
+      req('openwop.it.model-capability-substituted.unmet-fallback-declared-authenticatable-outcome-substitute-event-with-originalpr', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 3',
         'unmet capability + declared fallback + fallback provider authenticatable → route MUST be "substitute"',
       ),
     ).toBe('substitute');
     expect(
       r.body.event?.type,
-      driver.describe(
+      req('openwop.it.model-capability-substituted.unmet-fallback-declared-authenticatable-outcome-substitute-event-with-originalpr', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §D',
         'substitute path MUST emit `model.capability.substituted`',
       ),
     ).toBe('model.capability.substituted');
     const payload = (r.body.event?.payload ?? {}) as Record<string, unknown>;
-    expect(payload.nodeId, 'payload.nodeId MUST mirror the request').toBe('writer-node');
+    expect(payload.nodeId, req('openwop.it.model-capability-substituted.unmet-fallback-declared-authenticatable-outcome-substitute-event-with-originalpr', 'RFCS/0031-envelope-variants-and-model-capabilities.md §D', 'payload.nodeId MUST mirror the request')).toBe('writer-node');
     expect(payload.originalProvider).toBe('unknown-vendor');
     expect(payload.originalModel).toBe('unknown-model');
     expect(payload.fallbackProvider).toBe('anthropic');
@@ -172,7 +174,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
     expect(
       Array.isArray(payload.missingCapabilities) &&
         (payload.missingCapabilities as string[]).includes('structured-output'),
-      driver.describe(
+      req('openwop.it.model-capability-substituted.unmet-fallback-declared-authenticatable-outcome-substitute-event-with-originalpr', 
         'schemas/run-event-payloads.schema.json §modelCapabilitySubstituted',
         'missingCapabilities[] MUST include the subset of required capabilities the active model did not satisfy',
       ),
@@ -192,10 +194,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
       substitutionSupported: false,
       supportedProviders: ['anthropic', 'unknown-vendor'],
     });
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.outcome?.route,
-      driver.describe(
+      req('openwop.it.model-capability-substituted.unmet-substitutionsupported-false-outcome-refuse-with-fallbackattempted-false-ho', 
         'RFCS/0031-envelope-variants-and-model-capabilities.md §E',
         'capabilities.modelCapabilities.substitutionSupported: false → host MUST refuse on any unmet capability even when NodeModule.fallbackModel is declared',
       ),
@@ -203,7 +205,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
     expect(r.body.event?.type).toBe('model.capability.insufficient');
     expect(
       (r.body.event?.payload as { fallbackAttempted?: boolean }).fallbackAttempted,
-      driver.describe(
+      req('openwop.it.model-capability-substituted.unmet-substitutionsupported-false-outcome-refuse-with-fallbackattempted-false-ho', 
         'schemas/run-event-payloads.schema.json §modelCapabilityInsufficient',
         'fallbackAttempted MUST be false when the refusal is driven by substitutionSupported: false (host posture, not fallback failure)',
       ),

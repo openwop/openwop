@@ -32,6 +32,7 @@ import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host exports OTLP/gRPC spans to the suite's collector.
@@ -90,13 +91,13 @@ describe('otel-emission-grpc: OTLP/gRPC export path', () => {
     // at least one openwop.run span correlated by runId.
     const runSpans = await waitForRunSpans(runId, { timeoutMs: 5_000, minCount: 1 });
 
-    expect(runSpans.length, driver.describe(
+    expect(runSpans.length, req('openwop.it.otel-emission-grpc.host-emits-openwop-run-spans-over-otlp-grpc-collector-captures-them-via-the-shar', 
       'observability.md §"Export protocols" + RFC 0008/0009 Track 11',
       'host advertising exportProtocols ∋ "grpc" MUST emit openwop.* spans over OTLP/gRPC',
     )).toBeGreaterThan(0);
 
     const runSpan = runSpans.find((s) => s.name === 'openwop.run');
-    expect(runSpan?.attributes.get('openwop.run_id'), driver.describe(
+    expect(runSpan?.attributes.get('openwop.run_id'), req('openwop.it.otel-emission-grpc.host-emits-openwop-run-spans-over-otlp-grpc-collector-captures-them-via-the-shar', 
       'observability.md §"Run-level attributes"',
       'openwop.run span MUST carry openwop.run_id attribute',
     )).toBe(runId);

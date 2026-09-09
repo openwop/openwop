@@ -23,6 +23,8 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-transcriber';
 
@@ -45,21 +47,21 @@ describe('voice-transcription-streaming (RFC 0106 §B)', () => {
     if (!behaviorGate('openwop-voice-transcription', advertised)) return;
 
     const res = await driver.post(SEAM, { audio: { streamRef: 'stream:conformance/mic' }, languageCode: 'en-US' });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     // §E: a stateless host with no live transport honestly rejects a live streamRef.
-    if (errCode(res.json) === 'transcription_unsupported') return; // soft-skip (no live transport / no test-seam arm)
+    if (errCode(res.json) === 'transcription_unsupported') return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `errCode(res.json) === \'transcription_unsupported\'` returned early (soft-skip (no live transport / no test-seam arm))'); // soft-skip (no live transport / no test-seam arm)
 
-    expect(res.status === 200, driver.describe('RFC 0106 §B', 'a produced turn MUST return 200')).toBe(true);
+    expect(res.status === 200, req('openwop.it.voice-transcription-streaming.resolves-a-settled-turn-at-voice-turn-commit-with-untrusted-transcript-events', 'RFC 0106 §B', 'a produced turn MUST return 200')).toBe(true);
 
     const finalText = (res.json as { finalText?: unknown })?.finalText;
-    expect(typeof finalText === 'string' && (finalText as string).length > 0, driver.describe('RFC 0106 §B', 'the turn MUST resolve a non-empty finalText at turn_commit')).toBe(true);
+    expect(typeof finalText === 'string' && (finalText as string).length > 0, req('openwop.it.voice-transcription-streaming.resolves-a-settled-turn-at-voice-turn-commit-with-untrusted-transcript-events', 'RFC 0106 §B', 'the turn MUST resolve a non-empty finalText at turn_commit')).toBe(true);
 
     const events = eventsOf(res.json);
     if (events.length > 0) {
       for (const ev of events.filter((e) => e.type === 'voice.transcript')) {
-        expect((ev.payload ?? {}).contentTrust === 'untrusted', driver.describe('RFC 0106 §F INV-2', 'every voice.transcript MUST carry contentTrust:"untrusted"')).toBe(true);
+        expect((ev.payload ?? {}).contentTrust === 'untrusted', req('openwop.it.voice-transcription-streaming.resolves-a-settled-turn-at-voice-turn-commit-with-untrusted-transcript-events', 'RFC 0106 §F INV-2', 'every voice.transcript MUST carry contentTrust:"untrusted"')).toBe(true);
       }
-      expect(events.some((e) => e.type === 'voice.turn_commit'), driver.describe('RFC 0106 §B', 'the turn MUST terminate with voice.turn_commit')).toBe(true);
+      expect(events.some((e) => e.type === 'voice.turn_commit'), req('openwop.it.voice-transcription-streaming.resolves-a-settled-turn-at-voice-turn-commit-with-untrusted-transcript-events', 'RFC 0106 §B', 'the turn MUST terminate with voice.turn_commit')).toBe(true);
     }
   });
 });

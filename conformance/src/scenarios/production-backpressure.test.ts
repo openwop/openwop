@@ -41,6 +41,8 @@ import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface BackpressureCaps {
   supported?: boolean;
@@ -72,12 +74,12 @@ describe('production-backpressure: capability shape', () => {
       return;
     }
 
-    expect(prod?.supported, driver.describe(
+    expect(prod?.supported, req('openwop.it.production-backpressure.host-that-claims-openwop-production-with-backpressure-advertises-required-fields', 
       'production-profile.md §Compatibility baseline',
       'capabilities.production.supported MUST be true when claiming the openwop-production profile',
     )).toBe(true);
 
-    expect(prod?.backpressure?.supported, driver.describe(
+    expect(prod?.backpressure?.supported, req('openwop.it.production-backpressure.host-that-claims-openwop-production-with-backpressure-advertises-required-fields', 
       'production-profile.md §Backpressure',
       'capabilities.production.backpressure.supported MUST be true for production-profile claimants',
     )).toBe(true);
@@ -86,7 +88,7 @@ describe('production-backpressure: capability shape', () => {
       expect(
         Number.isInteger(prod.backpressure.inflightCap) &&
           prod.backpressure.inflightCap >= 1,
-        driver.describe(
+        req('openwop.it.production-backpressure.host-that-claims-openwop-production-with-backpressure-advertises-required-fields', 
           'capabilities.schema.json production.backpressure.inflightCap',
           'inflightCap MUST be an integer ≥ 1 when advertised',
         ),
@@ -97,7 +99,7 @@ describe('production-backpressure: capability shape', () => {
       expect(
         Number.isInteger(prod.backpressure.retryAfterSeconds) &&
           prod.backpressure.retryAfterSeconds >= 0,
-        driver.describe(
+        req('openwop.it.production-backpressure.host-that-claims-openwop-production-with-backpressure-advertises-required-fields', 
           'capabilities.schema.json production.backpressure.retryAfterSeconds',
           'retryAfterSeconds MUST be a non-negative integer when advertised',
         ),
@@ -120,7 +122,7 @@ describe('production-backpressure: 503 envelope under saturation', () => {
       console.warn(
         '[production-backpressure] host does not advertise inflightCap; skipping saturation assertion',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === undefined` returned early ([production-backpressure] host does not advertise inflightCap; skipping saturation assertion)');
     }
 
     // Use the conformance-delay fixture to hold inflight slots via
@@ -132,7 +134,7 @@ describe('production-backpressure: 503 envelope under saturation', () => {
       console.warn(
         `[production-backpressure] ${FIXTURE} not advertised; skipping saturation (host doesn't seed the long-running fixture)`,
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early ([production-backpressure] … not advertised; skipping saturation (host doesn\'t seed the long-running fixture))');
     }
 
     // Create `cap` long-running runs and open SSE streams against each
@@ -210,7 +212,7 @@ describe('production-backpressure: 503 envelope under saturation', () => {
         }
       }
       await Promise.allSettled(slotPromises);
-      return;
+      return softSkip('blocked', 'precondition not met — `saturationEarlyExit` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // Let SSE connections register.
@@ -231,11 +233,11 @@ describe('production-backpressure: 503 envelope under saturation', () => {
         console.warn(
           `[production-backpressure] expected 503 at cap+1=${cap + 1}, got ${blocked.status}; saturation may need tuning`,
         );
-        return;
+        return softSkip('blocked', 'precondition not met — `blocked.status !== 503` returned early ([production-backpressure] expected 503 at cap+1=…, got …; saturation may need tuning) (seam, prior step, or fixture unavailable)');
       }
 
       const retryAfterHeader = blocked.headers.get('retry-after');
-      expect(retryAfterHeader, driver.describe(
+      expect(retryAfterHeader, req('openwop.it.production-backpressure.saturating-advertised-inflightcap-returns-503-retry-after-canonical-envelope', 
         'production-profile.md §Backpressure',
         '503 response MUST include a Retry-After header',
       )).toBeTruthy();
@@ -247,7 +249,7 @@ describe('production-backpressure: 503 envelope under saturation', () => {
         details?: { retryAfter?: number };
       };
 
-      expect(body.error, driver.describe(
+      expect(body.error, req('openwop.it.production-backpressure.saturating-advertised-inflightcap-returns-503-retry-after-canonical-envelope', 
         'production-profile.md §Backpressure',
         '503 envelope MUST have error: "service_unavailable"',
       )).toBe('service_unavailable');
@@ -255,14 +257,14 @@ describe('production-backpressure: 503 envelope under saturation', () => {
       expect(typeof body.message).toBe('string');
       expect((body.message ?? '').length).toBeGreaterThan(0);
 
-      expect(typeof body.details?.retryAfter, driver.describe(
+      expect(typeof body.details?.retryAfter, req('openwop.it.production-backpressure.saturating-advertised-inflightcap-returns-503-retry-after-canonical-envelope', 
         'production-profile.md §Backpressure',
         'details.retryAfter MUST be present and numeric',
       )).toBe('number');
 
       // details.retryAfter MUST equal the Retry-After header in seconds.
       const headerSeconds = Number.parseInt(retryAfterHeader ?? '', 10);
-      expect(body.details?.retryAfter, driver.describe(
+      expect(body.details?.retryAfter, req('openwop.it.production-backpressure.saturating-advertised-inflightcap-returns-503-retry-after-canonical-envelope', 
         'production-profile.md §Backpressure',
         'details.retryAfter MUST equal Retry-After header in seconds',
       )).toBe(headerSeconds);
@@ -270,7 +272,7 @@ describe('production-backpressure: 503 envelope under saturation', () => {
       // If retryAfterSeconds is advertised, both equal it.
       const advertised = prod?.backpressure?.retryAfterSeconds;
       if (advertised !== undefined) {
-        expect(headerSeconds, driver.describe(
+        expect(headerSeconds, req('openwop.it.production-backpressure.saturating-advertised-inflightcap-returns-503-retry-after-canonical-envelope', 
           'capabilities.schema.json production.backpressure.retryAfterSeconds',
           'Retry-After MUST equal advertised retryAfterSeconds when both are present',
         )).toBe(advertised);
@@ -319,11 +321,11 @@ describe('production-backpressure: discovery exempt from cap', () => {
       // Without advertised cap we can't saturate deterministically;
       // fall back to a single discovery probe.
       const probe = await driver.get('/.well-known/openwop');
-      expect(probe.status, driver.describe(
+      expect(probe.status, req('openwop.it.production-backpressure.get-well-known-openwop-returns-200-even-when-inflight-is-saturated', 
         'production-profile.md §Backpressure',
         'discovery MUST answer regardless of load',
       )).toBe(200);
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === undefined` returned early');
     }
 
     // Issue many concurrent discovery probes; all MUST succeed.
@@ -333,7 +335,7 @@ describe('production-backpressure: discovery exempt from cap', () => {
       ),
     );
     for (const probe of probes) {
-      expect(probe.status, driver.describe(
+      expect(probe.status, req('openwop.it.production-backpressure.get-well-known-openwop-returns-200-even-when-inflight-is-saturated', 
         'production-profile.md §Backpressure',
         'discovery MUST bypass the inflight cap (health probes always answer)',
       )).toBe(200);

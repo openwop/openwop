@@ -1,5 +1,347 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.8] — 2026-09-07 — the verifier asked a v1 question about v2 hosts
+
+No host behaviour changes and no wire changes. One defect in the suite's own
+verifier, which had been refusing correct bundles from correct hosts.
+
+**`profileDerivable` now takes the target major, and major 2 derives from
+`spec/v2/profiles.json`.** There were two implementations of "does this
+document derive this profile", and only one of them knew that major 2 exists.
+The EMITTER branched on the target major and, at 2, read the v2 registry: every
+listed family present as a record, every listed metadata key present
+(RFC 0169 §C.1). The VERIFIER called `profileDerivable`, which is the v1
+catalog — `isCore` wants a scalar `protocolVersion` whose major is `1`, plus
+`supportedEnvelopes`, `schemaVersions` and three `limits` integers. A v2
+declaration has none of those. So the verifier's answer for every real v2 host
+was `false`, and a bundle correctly claiming `openwop-discovery-core` was
+refused with `profile-not-derivable`: *"the host does not advertise it"*, about
+a host that advertised exactly it.
+
+Both derivations now live in `lib/v2-profiles.ts` and both callers use it, so
+they cannot drift apart again. That is the point of the module boundary, not
+tidiness.
+
+**Reported by `myndhyve-1`, corroborated by `openwop-app-1`.** Two independent
+hosts, three suite versions, and the diagnosis was settled across them before a
+line was written here. Neither host had anything to fix.
+
+**The trigger was ours, and it was an honesty fix.** This defect is older than
+the reports — it has been wrong since major 2 existed — but it was
+*unreachable* until 2.0.5 taught the bundle to carry `discovery.document`.
+Before that the verifier had nothing to derive from and skipped the check
+entirely. In `myndhyve-1`'s words, which are better than the ones this entry
+started with: **"the defect did not become reachable when a host got healthier;
+it became reachable when the bundle got more honest."** A reader who thinks
+this tracks host health will draw the wrong conclusion about who is exposed.
+The population is *every host cutting on 2.0.5 or later that claims a v2
+profile* — not hosts whose floors went green.
+
+**An unreadable registry is a gap, not a refusal.** `v2ProfileIds` returns
+`null`, not `[]`, when `spec/v2/profiles.json` cannot be read, and the v3
+verifier records `derivabilityChecked: false` instead of rejecting. `[]` would
+have made every profile underivable and refused the bundle — converting a fact
+about *this install's layout* into a verdict about the *host*, which
+`conformance.md` §"Whose fact is the reason?" (2.0.7) forbids by name.
+
+**The test that certified the bug.** `certification-bundle-v3.test.ts` had one
+row exercising derivability at major 2, and its fixture was a *v1-shaped*
+document (`protocolVersion: '1.11'`, `supportedEnvelopes`, `limits`) inside a
+`targetMajor: 2` bundle. It passed, and it made the v1-predicate verifier look
+correct while that verifier refused every real host. The fixture is now major-2
+shaped, and three added rows pin the dispatch in both directions: a v2
+declaration derives at major 2 and not at major 1, a v1 payload the reverse.
+Disabling the dispatch turns three of them red.
+
+**Not changed, and deliberately.** `isCore` stays exactly as it is and stays
+v1-only. `certification-bundle-verify.ts` and `verifyBundleProfile` are
+bundle-format-v2 readers over v1-era evidence with no target major to read;
+they take the default and are untouched. And the `if (!p.certified) continue;`
+guard stays: RFC 0148 §B(1) binds the *certification*, not the listing, so a
+profile a bundle names without certifying makes no claim for derivability to
+falsify. An earlier plan for this release said the guard would be made loud
+anyway; writing it showed the change has no consumer — it would have added a
+verdict field nobody reads, on a hypothesis no measured bundle isolates.
+Reasoning is not a measurement, and inventing surface to dress it as one is the
+opposite of what this thread has been about.
+
+**`v2RegistryPath` is collapsed onto `SPEC_V2_DIR`.** The old copy in `cli.ts`
+resolved the peer through Node's resolver *and then kept three guessed
+directory candidates underneath it*, beneath a docblock stating that it
+resolved "instead of guessing directory shapes". The guesses were the half of
+that fix that never landed.
+
+## [2.0.7] — 2026-09-06 — three claims of coverage that were not coverage
+
+No host behaviour changes. One gate changes disposition, and the two prose
+corrections remove claims the corpus was making about its own evidence.
+
+**`vendorControlGate` answers `blocked`, not `inapplicable`, when
+`spec/v2/declaration.json` cannot be resolved.** 2.0.6 — the release that fixed
+this scenario — got the disposition wrong on the branch it had just repaired.
+`inapplicable` asserts *the requirement does not bind this host*, which is a
+statement about the host made on the strength of a fact about the suite, and a
+false one: the rule binds exactly as before and the suite merely failed to read
+its own corpus. It is also the quiet answer. `inapplicable` certifies;
+`blocked` is bundle-wide fatal (RFC 0168 §E.1). The disposition that was wrong
+was the one that made no sound.
+
+As of 2.0.6 that branch is unreachable — the registry resolves in every layout
+and the publish workflow asserts it. That is the argument *for* making it
+fatal. An unreachable branch answering `inapplicable` is a trapdoor back to the
+D1 resolution defect, which was invisible precisely because it degraded a live
+witness into a quiet skip.
+
+**The general rule is now written down** (`spec/v2/core/conformance.md`
+§"Whose fact is the reason?"): a soft-skip reason MUST name a fact about the
+host under test, and where the predicate is instead a fact about the suite —
+its layout, its corpus, a fixture it cannot resolve — the row MUST record
+`blocked`. Gate ordering follows (host facts before suite facts) but is not the
+guarantee; ordering only decides which *true* reason is reported. The guarantee
+is that a suite-side gate can never be silent, because it is never
+`inapplicable`.
+
+Credit where it is due: this came from a host operator who predicted a third
+failure mode I had not considered — a row already `inapplicable` for a true host
+reason, re-gated onto a suite-side precondition, stays `inapplicable`. `skip →
+skip`, no count moves, no gate reddens, and the row silently stops describing
+the host it names. Measured against the tree, their case does not bite this
+scenario (the seams gate returns first, at `:96`, above the precondition at
+`:97`), but the rule they proposed was right and the ordering only held by
+construction — nothing written down stopped the next scenario from getting it
+wrong.
+
+`era2-unmapped-gates.test.ts` gains a row asserting that **no** reachable
+verdict in either gate is `inapplicable`, so a future suite-side gate that
+soft-skips quietly reddens a test instead of a bundle. Sabotage-verified:
+restoring 2.0.6's disposition reddens exactly those two rows and no others.
+
+### Corpus prose
+
+- **`persistence.md` §"The seat"** claimed `v2-v1-events-translated` reading
+  through poll, SSE and a fork meant "a wrapper-only adapter is caught". It does
+  not. Three wrappers pass those three legs exactly as one correctly seated
+  adapter does, and the rule binds *every* reader, including ones the suite has
+  no name for. The seat is a **claims-check** discharged by ADR disclosure and
+  audit; the scenario catches a reader that was *missed*, not an adapter that
+  was *misplaced*. The clause also cited a scenario by the wrong name and
+  pointed at `conformance.md`, which said nothing about any of it. Both MUSTs
+  are unchanged — only the false coverage claim is gone.
+- **RFC 0180** supplies the vendor-org registration procedure the registry
+  never had, and `persistence.md` §"The codemap is data" now points at it.
+
+## [2.0.6] — 2026-09-06 — the release that made a rule uncheckable
+
+**If you pinned 2.0.5, `v2-unmapped-type-refused` did not run against your
+host.** It soft-skipped `inapplicable` and the lane went green. Pin 2.0.6 and
+re-measure before trusting any result that scenario gave you.
+
+2.0.5 shipped four fixes for rules whose instruments could not answer, and one
+of those fixes did the same thing to a fifth. Reported by a host operator who
+kept a local witness for a defect they knew was unfixed and re-measured before
+accepting a green they wanted. Two defects, one symptom:
+
+- **The corpus resolver was anchored on a repo-only directory.**
+  `registeredOrgs()` and `codemapV1toV2()` located `spec/v2/` via
+  `V1_DIR/../v2` — a **v1**-anchored path to a **v2** file. No published package
+  ships `spec/v1/`, so `V1_DIR` is `null` in every install and both lookups
+  returned nothing. The data was never missing; it is in the exact-pinned
+  `@openwop/spec-artifacts` peer. Both now resolve through `SPEC_V2_DIR`
+  (`lib/paths`), anchored on the contract root, which holds in a repo checkout
+  and an install alike. The codemap failed more quietly — 7 fallback rows
+  instead of 118, so era-2 readers asserted against names it never had.
+
+- **A precondition written for one leg gated the other.**
+  `v2-unmapped-type-refused` drives two opposite halves of the reader rule.
+  Both were gated on a single check that demanded a resolvable registry, which
+  only the *control* leg needs. With the registry unreachable, the *refusal*
+  leg skipped on exactly the hosts it exists to catch: one answering `200` and
+  one answering `500` were both green. Gates are now separate and pure
+  (`unmappedRefusalGate` / `vendorControlGate`), with the fail-closed reading
+  explicit — an unreadable registry registers nothing, so the refusal is still
+  required and the leg stays drivable.
+
+Added `src/lib/era2-unmapped-gates.test.ts` (the gates' truth table, including
+the rows a live-host scenario cannot check about itself; sabotage-verified) and
+a post-install corpus-resolution assertion in `verify-installable` — a clean
+`npm install` was never evidence the suite works.
+
+**A ratchet's STALE signal means the scenario stopped failing. It is not
+evidence the defect is fixed.**
+
+## [2.0.5] — 2026-09-06 — four rules with no way to be checked
+
+Four instruments that could not, even in principle, return the answer they
+appeared to give. Three of them were green.
+
+**The vendor rule's registry did not exist.** `events.md` §Rules and
+`persistence.md` §The codemap is data both require a vendor event type's first
+segment to be an org registered under `extensions` in
+`spec/v2/declaration.json`. There was no `extensions` key. Three near misses
+kept it plausible — `extensionsKeyPattern` is a key SHAPE, `reservedOrgs` lists
+FORBIDDEN orgs, and `metadata[]` carries a row keyed `extensions` that is the
+host's own extension map in the discovery payload. The registry now exists and
+holds `example`, reserved by the protocol and never assignable to a vendor.
+
+**`v2-unmapped-type-refused` drove only the refusal half**, so a host that
+refuses EVERY unmapped type — including a registered vendor type it MUST pass
+through — went green while violating the rule. New leg
+`openwop.requirement.0176.vendor-type-passthrough`: same log shape, one segment
+changed. Its preconditions were a note inside a seeded payload, prose in a place
+no runner reads; they are checked now, and the file blocks with the reason.
+
+**"Byte-equivalent" was witnessed by comparing two of ten fields.**
+`v2-run-fork-prefix` compared `${sequence}:${type}`, so a fork could inherit a
+prefix whose payloads differed in every field and pass. It now compares `type`,
+`nodeId` and `payload`, excluding `eventId`/`runId`/`timestamp`/`causationId` —
+using **`runs.md` §Diff and ancestry's** exclusion set rather than one invented
+for the leg. `schemaVersion`, `engineVersion` and the §37 snapshot claim are
+recorded as named residue, unasserted, with the reason. Floor membership
+unchanged: still RULED OUT.
+
+**A v3 bundle's `certified: true` was uncheckable by its recipient.** v2 bundles
+carried `discovery.document` and the verifier re-derived every claimed profile
+from it (RFC 0148 §B(1)); v3 dropped the field and the check with it. Optional
+`discovery.document` returns: the digest is re-derived first (the signature
+covers `sha256`, not the document, so a swap would otherwise verify), then every
+certified profile is re-derived, and absence is surfaced as
+`derivabilityChecked: false` rather than swallowed. Sabotage-proved.
+
+**A requirement's id depended on whether it passed.** The registry generator
+read `req()`'s first argument only as a string literal, so `const ID = …`
+recorded `explicitId: null` and the row fell back to a title-derived slug —
+`v2-run-fork-prefix` is in the evidence tree under two ids, the explicit one
+where the assertion ran and the slug where the leg was `inapplicable`. A
+verifier asking whether a bundle carries a requirement got a well-formed NO from
+a host that had merely not held the profile. 2058 explicit ids became 2106.
+
+**`memory-attribution-replay-stable` is `majors: [1, 2]`** (was `[1]`). Its rule
+is `replay.md` §Determinism caveat 5 in both majors, word for word. What held it
+back was a gate returning early **unrecorded** and three hard-coded `/v1/` paths
+that are not seams. Both are properties of the instrument. First row of the
+445-file backfill.
+
+**A rule you cannot check is not a weaker rule; it is a rule that is not there.**
+
+## [2.0.4] — 2026-09-06 — a fixture that punished a host for obeying the rule the scenario checks
+
+`v2-provider-conflict` drove `connection-pack-github`. On a host shipping a built-in `github`, RFC 0177 §D.1 requires refusing the later registration — so the fixture never installed and the qualified-form leg recorded **`blocked`** permanently, on a host whose only fault was obeying the rule under test. A production host carried that row across a dozen cuts; any blocked row denies certification (RFC 0168 §E.1).
+
+New fixture **`connection-pack-acme-widgets`** — same shape, a deliberately fictional provider id so no host ships it built-in and both legs are reachable everywhere.
+
+The v1 scenario `connection-provider-resolution` keeps the `github` fixture, checked rather than assumed: v1 settles a collision by **version precedence** (`spec/v1/connection-packs.md:89`) instead of refusing the install, so it is not trapped by the same choice.
+
+**An instrument must not require a host to violate the spec in order to be measured.**
+
+## [2.0.3] — 2026-09-06 — a selector that asked the wrong question, and a window that convicted a host for its own width
+
+**`v2-effect-seam-no-refire` selected on a branch permission to witness a replay obligation.** The filter was `guarded === true && branchReFires === false`. `replay.md:78`: *"A host MAY suppress branch effects and MUST NOT report that as replay suppression."* Replay suppression is unconditional (§Suppression rule 1) and does not vary with `branchReFires`, which states only what a **branch** re-fires by design. Every `guarded: true` row is a valid target; the filter now selects on `guarded` alone. `branchReFires` is also optional, so `=== false` additionally excluded rows merely silent on it. Found by the reference host, whose ten `branchReFires: true` rows are all honest and which was about to build `fireEffectSeam` for a scenario that would have kept recording `inapplicable` afterwards.
+
+**`v2-webhook-durable-delivery`'s at-least-once leg convicted a host for the suite's window.** The 204 arrives on attempt `FAIL_FIRST + 1`, costing the **sum** of the first `FAIL_FIRST` backoff intervals — `30 + 60 = 90 s` on exponential-from-30s, against a cap of exactly `90_000`. The interval is not advertised (`retryPolicy` is `additionalProperties: false` over `{ maxAttempts, backoff }`), so the wait is underivable and any cap is a guess. The leg now records **`blocked`** with the arithmetic, not `executed-fail`.
+
+**The cost:** a host that retries forever and never succeeds also records `blocked` now. That is a missed detection traded for a false conviction, and it returns only by advertising the interval — an RFC and a 2.1.0.
+
+Both defects encoded a condition the obligation does not have: one a flag the requirement never mentions, one a deadline it never sets.
+
+## [2.0.2] — 2026-09-06 — 2.0.1's own fix could not run: the derived wait exceeded the harness timeout that governs it
+
+A regression in 2.0.1, measured by the host that reported the defect 2.0.1 fixed. On a 2.0.1 re-cut one row moved, the wrong way: `0173.webhook-durable-delivery.dead-letter` went `executed-pass` → `executed-fail`.
+
+2.0.1 widened the retry wait to a 90 s cap and left both `it()` blocks on the harness default (`vitest.config.ts` `testTimeout: 30_000`, no per-test override). **A wait longer than the timeout that governs it can never elapse** — the test dies at 30 s with "Test timed out in 30000ms". The dead-letter leg is worse than one wait: `waitTerminal` plus **two** sequential `retryWaitMs` waits, up to 191 s inside a 30 s budget. And it took a passing row with it — `dead-letter` passed at rc.67 by observing `attempts.length > 1` inside the old 20 s window, and 2.0.1 moved that leg onto `retryWaitMs` too.
+
+Both `it()` blocks now take a timeout **derived from the wait constant** — `RETRY_WAIT_CAP_MS + WAIT_SLACK_MS`, and twice the cap for the two-wait leg — rather than a second literal, so a later change to the wait carries its own budget.
+
+The shape is the defect 2.0.1 fixed, displaced one layer: 2.0.1 stopped the scenario blaming a host for a deadline *the scenario* chose, then let *the harness* choose a shorter one silently, on exactly the durable hosts the widening was written to help.
+
+## [2.0.1] — 2026-09-05 — the webhook durability scenario read the wrong carrier and imposed its own deadline
+
+Two defects in `v2-webhook-durable-delivery`, both reported by a host running against 2.0.0.
+
+**It read the v1 carrier.** `advertisedRetryPolicy()` read `triggerBridge.retryPolicy` and its docstring claimed that was "the only v2 carrier". `spec/v2/facets/webhooks.schema.json` says the opposite in as many words — *"retryPolicy is the v2 carrier of the delivery obligation (was triggerBridge.retryPolicy at v1)"* — so a host correctly advertising the **v2** carrier had its policy read as `null`, and a host on the v1 field was measured against a **different subsystem's** budget. The reporting host advertises 8 on its trigger bridge and enforces 5 on webhook delivery, and could not be honest about both under one borrowed field. Now reads `webhooks.retryPolicy` first and falls back to `triggerBridge.retryPolicy` for the v1 overlap the schema preserves.
+
+**It imposed a 20-second deadline and blamed the host for missing it.** A host whose first backoff is slower than 20 s was recorded `executed-fail` on a core-standard floor row *for being durable*: the retry lands at t+30 s, the window closed at t+20 s, and the assertion said "a 500 MUST be retried" about a host that retried. The wait now derives from the advertised policy — 20 s floor unchanged when nothing is advertised, widening to a 90 s cap for `fixed`/`exponential`. The cap is deliberate: unbounded waiting would let a host that never retries hold the suite open instead of failing.
+
+This is rc.67's poll-cursor defect one file over, and **deterministic rather than flaky** — the instrument's own window, attributed to the host. A scenario must not blame a host for a deadline the scenario chose.
+
+
+## [2.0.0] — 2026-09-05 — openwop v2
+
+The v2 major. `@openwop/openwop-conformance@2.0.0` and `@openwop/spec-artifacts@2.0.0` are one release under two names — conformance pins the contract package to an exact version, so install both.
+
+**What changed from 1.x, for someone upgrading.** The suite gained `--target-major`; `req('openwop.<id>', …)` is the only assertion form and every `it` records a ledger row; `--certify` emits a signed bundle v3 whose verdict is the certification. Dispositions are the RFC 0148 §A vocabulary — `executed-pass`, `executed-fail`, `skipped`, `inapplicable`, `blocked` — and **a bundle carrying any `blocked` row does not certify**, because `blocked` means the suite could not measure an obligation the host took on. Three profiles ship with machine-checked floors: `openwop-discovery-core`, `openwop-core-standard`, `openwop-conformance-seams-v2`.
+
+**The distinction to internalise before reading a bundle:** `inapplicable` is an obligation the host never took on, `blocked` is one it took on and the suite could not measure, and only the second denies certification. Most of the rc series was spent getting individual scenarios to tell those two apart honestly.
+
+**Cut against the RFC 0167 §F predicates**, all ten machine-true on a live host at the release candidate: Identity, Registers, Closure, Deprecation, Paths, Codemods, Waiver, Witness, Coexistence, Front door. The reference host `openwop-host-v2-reference` certifies all three profiles at 181 / 0 / 0 / 42 / 0.
+
+**Honest limits at the cut.** The only host certified on all three profiles is the steward's own reference example; both production hosts are mid-migration and their remaining distance is capability adverts rather than implementation. No independent-tier host is anchored, so leg (b) of the v1 end-of-support clock does not apply — leg (a) governs, and v1 support runs to at least **2026-12-04**. RFC 0167 §157 recorded in advance that a third-party host is not required at the cut under sole-steward operation.
+
+Full per-release history for `2.0.0-rc.1` … `2.0.0-rc.67`: <https://github.com/openwop/openwop/blob/main/CHANGELOG.md>.
+
+
+## [2.0.0-rc.67] — 2026-09-05 — a core-standard floor file was flaky, and the flake blamed the host
+
+`v2-poll-cursor-v2` compared **two reads of the same event log** — a full read, then a cursor read — and asserted they agree. But `terminalRun()` waits for the run's *status* to be terminal, and a terminal status does not mean the log has stopped **appending**. A host emitting trailing or vendor rows can add an event between the two reads, and the leg then reports an array mismatch and blames the host for a cursor defect it does not have.
+
+Measured by a peer host: this leg failed **twice under a full-suite run** and passed **6/6 in isolation** on the same revision — the signature of a window widening under load, not of a wrong cursor.
+
+It now re-reads the whole log after the cursor read. If the log is unchanged the two reads straddled a quiet window and the comparison is decidable; if it grew, the suite records `blocked` naming the growth instead of failing, because it could not measure the rule. This matters more than a normal flake: the file is on the `openwop-core-standard` floor, so its flakiness made **certification non-deterministic**.
+
+
+## [2.0.0-rc.66] — 2026-09-05 — the changelog you are reading had not mentioned this major
+
+**This file went un-updated from `1.156.0` (2026-09-02) through `2.0.0-rc.65`** — twenty-one published releases, and zero mentions of any `2.0.0-rc` in the changelog that ships inside the tarball. If you installed `2.0.0-rc.65` and read its CHANGELOG, you read a document that ended three days before the v2 release series began.
+
+**Why it rotted, and why nobody noticed.** `conformance/package.json` `files` lists `CHANGELOG.md`, which resolves *inside the package* — so the shipped file is `conformance/CHANGELOG.md`. The corpus changelog at the repo root is a **different file with the same name**, it was current the whole time, and every release wrote to it. The file being edited and the file being shipped were not the same file, and nothing compared either to the version being published. `scripts/check-shipped-changelog.mjs` now fails the corpus gate whenever a packed CHANGELOG's newest heading does not equal its own package's `version`, so this cannot recur.
+
+**Where the 2.0.0 release notes actually are.** The full per-release record for `2.0.0-rc.1` … `2.0.0-rc.65` is the corpus changelog: <https://github.com/openwop/openwop/blob/main/CHANGELOG.md>. It is not reproduced here — it is ~180 KB and would be most of the tarball. What the v2 series changed, in one paragraph: the suite gained `--target-major`, a per-`it` requirement ledger with `req()` as the only assertion form, bundle v3 with signing and verification, the three v2 profiles and their floors, and the RFC 0148 §A disposition vocabulary (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) under which a bundle carrying any `blocked` row does not certify. `@openwop/spec-artifacts` became a required exact-pinned peer.
+
+**This entry exists because a release should say what it shipped.** The gate requires one on every future version, including versions that change nothing worth recording — which then record exactly that.
+
+
+## [2.0.0-rc.66] — 2026-09-05 — the changelog you are reading had not mentioned this major
+
+**This file went un-updated from `1.156.0` (2026-09-02) through `2.0.0-rc.65`** — twenty-one published releases, and zero mentions of any `2.0.0-rc` in the changelog that ships inside the tarball. If you installed `2.0.0-rc.65` and read its CHANGELOG, you read a document that ended three days before the v2 release series began.
+
+**Why it rotted, and why nobody noticed.** `conformance/package.json` `files` lists `CHANGELOG.md`, which resolves *inside the package* — so the shipped file is `conformance/CHANGELOG.md`. The corpus changelog at the repo root is a **different file with the same name**, it was current the whole time, and every release wrote to it. The file being edited and the file being shipped were not the same file, and nothing compared either to the version being published. `scripts/check-shipped-changelog.mjs` now fails the corpus gate whenever a packed CHANGELOG's newest heading does not equal its own package's `version`, so this cannot recur.
+
+**Where the 2.0.0 release notes actually are.** The full per-release record for `2.0.0-rc.1` … `2.0.0-rc.65` is the corpus changelog: <https://github.com/openwop/openwop/blob/main/CHANGELOG.md>. It is not reproduced here — it is ~180 KB and would be most of the tarball. What the v2 series changed, in one paragraph: the suite gained `--target-major`, a per-`it` requirement ledger with `req()` as the only assertion form, bundle v3 with signing and verification, the three v2 profiles and their floors, and the RFC 0148 §A disposition vocabulary (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) under which a bundle carrying any `blocked` row does not certify. `@openwop/spec-artifacts` became a required exact-pinned peer.
+
+**This entry exists because a release should say what it shipped.** The gate will require one on every future version, including versions that change nothing worth recording — which then record exactly that.
+
+
+## [1.156.0] — 2026-09-02 — the event codemap as data (v2 charter Phase 1, tranche 5)
+
+One new corpus-coherence scenario file (471 → 472), not packed:
+
+- `event-codemap-complete.test.ts` — gates on `V1_DIR`; asserts `spec/v1/event-codemap.json` (generated by `scripts/generate-event-codemap.mjs`) has exactly one row per `RunEventType`, every row's payload `$def` exists, and every proposed v2 name is unique, matches the charter's `domain.verb-ed` grammar, and never uses the reserved `core.` prefix. 117 rows; 18 flagged for a C.4 decision (tense, folded segments, `core.` drop). Registered in `SPEC_COHERENCE_SCENARIOS`, `spec-coherence-scenarios.json`, and the `files` negations; the published tarball is unchanged in content.
+
+## [1.155.0] — 2026-09-02 — RFC 0165 `Draft → Active`: `protocolVersions[]`, the Subject record, header dual emission
+
+Three new scenario files (468 → 471) and four added legs, all additive:
+
+- `protocol-versions-array.test.ts` — server-free: the schema declares root `protocolVersions` with the scalar's strict grammar; presence-gated: items match, are unique, contain `protocolVersion`, and profile derivation is unchanged by the array.
+- `owner-subject-shape.test.ts` — server-free: `subject.schema.json` compiles; legacy and workload forms accepted; email/whitespace `subjectId` rejected (invariant `subject-record-opaque`); `keyClass` iff saml/scim; both `owner` sub-objects declare `subject` and the `run.started` echo declares `principalKind`.
+- `owner-subject-echo.test.ts` — gated on a snapshot carrying `owner.subject`: consistency with the owner triple, actor depth ≤ 4, `run.started` echo, fork copies tenant + subject verbatim.
+- Legs: `discovery.test.ts` (standard `ETag` + `If-None-Match` → 304, presence-gated); `webhook-signed-delivery.test.ts` (the `OpenWOP-*` family equals `X-openwop-*` and verifies, presence-gated); `auth-subject-link.test.ts` (legacy subjects never linked — seam-gated, records `blocked`); `identity-owner-shape.test.ts` registers `subject.schema.json`.
+
+## [1.154.0] — 2026-09-02 — the tarball carries the suite and nothing else; the vendored contract is digest-checked (v2 charter Phase 1)
+
+No new scenario file. Three packed changes:
+
+- **Corpus-coherence scenarios and suite self-tests leave the package.** The 28 `SPEC_COHERENCE_SCENARIOS` (they read `spec/v1`, assert nothing about a host, and reported `blocked`/`inapplicable` in every host bundle) and every `src/lib/*.test.ts` are excluded via `package.json` `files` negations; `scripts/check-npm-pack-contents.sh` fails if either returns. The list is published as `conformance/spec-coherence-scenarios.json`. The published layout now collects 1,430 tests across 324 files; the layout gate's floors are re-measured (1,350 / 300).
+- **`schemas/CORPUS-STAMP.json` carries per-file SHA-256 digests** of every vendored `api/` and `schemas/` file, written at `prepack`. `src/lib/corpus-stamp.ts` verifies them at global setup in the published layout and **refuses to run on a mismatch** (missing, altered, or extra vendored files are each named); repo layout and pre-1.154.0 stamps report `not checked`, never a silent pass. This removes the mechanism behind the 1.138.1 defect one layer down: a package can no longer identify its contract by a commit hash it cannot check.
+- **`--offline` is a declared property:** exactly `fixtures-valid.test.ts` (the only server-free scenario that ships and runs in the published layout). `spec-corpus-validity.test.ts` left the set with the coherence scenarios. Documented in README §"--offline".
+
+## [1.153.0] — 2026-09-02 — per-`it` requirement rows and the requirement registry (RFC 0148 §A / G3; v2 charter Phase 1)
+
+No new scenario file. Three packed changes, all additive to bundle v2:
+
+- **Every test records its own ledger row.** `setup.ts` now records one RFC 0148 §A disposition per `it()` under `openwop.it.<file-stem>.<title-slug>` (`src/lib/requirement-ids.ts`), next to the retained file-level row the floors key on. A test that passes with ≥1 assertion is `executed-pass`; a failure is `executed-fail` with the first error message; a pass with zero assertions takes the gate reason recorded during that test (`softSkip` / `seamAbsent` / `behaviorGate`) or resolves to `blocked`. This is the durable fix for certification gap G8: a file that asserted a positive control and then soft-skipped the requirement no longer certifies the requirement, because the requirement's own row says `skipped`/`inapplicable`/`blocked`.
+- **`--certify` emits the per-`it` rows** in `results.requirements[]`, attributed to their scenario file. Existing verifiers accept them (the row shape is unchanged; ids are new). Expect bundles to grow from ~470 rows to ~2,400.
+- **`conformance/requirements.json`** (packed) is the generated registry: one record per test with its id, file, line, title, and the `driver.describe` / `req()` citations found in its body. `scripts/generate-requirement-registry.mjs --check` runs in `openwop:check`; a reworded title needs a row in `requirement-aliases.json` or the check fails, so a bundle that cited the old id still resolves. Measured at generation: 1,950 tests in 468 files, 1,927 stable ids, 23 interpolated titles (those rows exist at run time keyed by the rendered title and map to the registry by file+line).
+- New `req(id, section, requirement)` helper: a scenario may attach a hand-authored registry id to the current test; it doubles as the assertion message.
+
 ## [1.152.0] — 2026-09-02 — v2 charter Phase 0: `--certify` defaults to bundle v2; the RFC 0050 reference suite leaves the scenario file
 
 No new scenario file. Two packed changes:

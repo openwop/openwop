@@ -13,25 +13,26 @@
 
 import { describe, it, expect } from 'vitest';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('RFC 0073 — discoveryFamilies is root-first with the deprecated wrapper as fallback', () => {
   it('a root-only document is read as-is (the RFC 0073 shape)', () => {
-    expect(discoveryFamilies({ protocolVersion: '1.0', kvStorage: { supported: true } })).toEqual({ protocolVersion: '1.0', kvStorage: { supported: true } });
+    expect(discoveryFamilies({ protocolVersion: '1.0', kvStorage: { supported: true } }), req('openwop.it.discovery-families-view.a-root-only-document-is-read-as-is-the-rfc-0073-shape', 'RFC 0073', 'a root-only document is read as-is (the RFC 0073 shape)')).toEqual({ protocolVersion: '1.0', kvStorage: { supported: true } });
   });
 
   it('a wrapper-only family is still visible, and the wrapper key itself is not a family', () => {
     const v = discoveryFamilies({ protocolVersion: '1.0', capabilities: { heartbeat: { supported: true } } });
-    expect(v['heartbeat']).toEqual({ supported: true });
+    expect(v['heartbeat'], req('openwop.it.discovery-families-view.a-wrapper-only-family-is-still-visible-and-the-wrapper-key-itself-is-not-a-famil', 'RFC 0073', 'a wrapper-only family is still visible, and the wrapper key itself is not a family')).toEqual({ supported: true });
     expect('capabilities' in v).toBe(false);
   });
 
   it('when both carry a family, the root wins', () => {
     const v = discoveryFamilies({ feedback: { supported: true, root: true }, capabilities: { feedback: { supported: false, root: false } } });
-    expect(v['feedback']).toEqual({ supported: true, root: true });
+    expect(v['feedback'], req('openwop.it.discovery-families-view.when-both-carry-a-family-the-root-wins', 'RFC 0073', 'when both carry a family, the root wins')).toEqual({ supported: true, root: true });
   });
 
   it('a non-object document reads as empty', () => {
-    expect(discoveryFamilies(null)).toEqual({});
+    expect(discoveryFamilies(null), req('openwop.it.discovery-families-view.a-non-object-document-reads-as-empty', 'RFC 0073', 'a non-object document reads as empty')).toEqual({});
     expect(discoveryFamilies('nope')).toEqual({});
     expect(discoveryFamilies({ capabilities: ['not', 'an', 'object'] })).toEqual({});
   });

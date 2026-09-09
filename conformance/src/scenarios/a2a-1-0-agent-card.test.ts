@@ -34,6 +34,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { A2AFakePeer } from '../lib/a2a-fake-peer.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'the suite drives both ends itself: it boots the dual-era A2AFakePeer in-process and reads its agent card directly; no host connection is originated';
 
@@ -57,24 +58,24 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     expect(res.status).toBe(200);
     const card = (await res.json()) as Record<string, unknown>;
     const ifaces = card['supportedInterfaces'] as Array<{ url: string; protocolBinding: string; protocolVersion: string }>;
-    expect(Array.isArray(ifaces) && ifaces.length > 0, '1.0 REQUIRES supportedInterfaces[]').toBe(true);
+    expect(Array.isArray(ifaces) && ifaces.length > 0, req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', '1.0 REQUIRES supportedInterfaces[]')).toBe(true);
     expect(ifaces.map((i) => i.protocolVersion)).toEqual(['1.0', '0.3']);
     for (const i of ifaces) {
       expect(i.protocolBinding).toBe('JSONRPC');
       expect(i.url.startsWith(peer.endpoint())).toBe(true);
     }
-    expect(card['url'], '1.0 removed top-level url').toBeUndefined();
-    expect(card['protocolVersion'], '1.0 removed top-level protocolVersion (it is per interface)').toBeUndefined();
+    expect(card['url'], req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', '1.0 removed top-level url')).toBeUndefined();
+    expect(card['protocolVersion'], req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', '1.0 removed top-level protocolVersion (it is per interface)')).toBeUndefined();
     const caps = card['capabilities'] as Record<string, unknown>;
     expect(caps['extendedAgentCard']).toBe(false);
-    expect(Array.isArray(card['skills']) && (card['skills'] as unknown[]).length > 0, 'skills[] REQUIRED').toBe(true);
-    for (const k of ['name', 'description', 'version', 'defaultInputModes', 'defaultOutputModes']) expect(card[k], `${k} REQUIRED`).toBeDefined();
+    expect(Array.isArray(card['skills']) && (card['skills'] as unknown[]).length > 0, req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', 'skills[] REQUIRED')).toBe(true);
+    for (const k of ['name', 'description', 'version', 'defaultInputModes', 'defaultOutputModes']) expect(card[k], req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', `${k} REQUIRED`)).toBeDefined();
   });
 
   it('the card shape follows the era asked for: A2A-Version: 0.3 on the GET returns the 0.3 card from the same peer', async () => {
     const res = await fetch(`${peer.endpoint()}/.well-known/agent-card.json`, { headers: { 'A2A-Version': '0.3' } });
     const card = (await res.json()) as Record<string, unknown>;
-    expect(card['protocolVersion']).toBe('0.3.0');
+    expect(card['protocolVersion'], req('openwop.it.a2a-1-0-agent-card.the-card-shape-follows-the-era-asked-for-a2a-version-0-3-on-the-get-returns-the', 'RFC 0152 §A/§B/§C/§D', 'the card shape follows the era asked for: A2A-Version: 0.3 on the GET returns the 0.3 card from the same peer')).toBe('0.3.0');
     expect(typeof card['url']).toBe('string');
     expect(card['supportedInterfaces']).toBeUndefined();
     // and the default-constructed peer (0.3-first) serves the 0.3 card to a header-less GET
@@ -95,7 +96,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     await legacy.start(0);
     try {
       const card = (await (await fetch(`${legacy.endpoint()}/.well-known/agent-card.json`)).json()) as Record<string, unknown>;
-      expect(card['protocolVersion']).toBe('0.3.0');
+      expect(card['protocolVersion'], req('openwop.it.a2a-1-0-agent-card.a-legacy-only-peer-serves-the-0-3-card-shape-follows-revision-not-calendar', 'RFC 0152 §A/§B/§C/§D', 'a legacy-only peer serves the 0.3 card — shape follows revision, not calendar')).toBe('0.3.0');
       expect(typeof card['url']).toBe('string');
       expect(card['supportedInterfaces']).toBeUndefined();
     } finally {
@@ -105,14 +106,14 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
 
   it('A2A-Version absent ⇒ 0.3 semantics; message/send returns a 0.3 task', async () => {
     const r = await rpc(peer.endpoint(), 'message/send', { message: { kind: 'message', messageId: 'm1', role: 'user', parts: [{ kind: 'text', text: 'hi' }] } });
-    expect(r.error).toBeUndefined();
+    expect(r.error, req('openwop.it.a2a-1-0-agent-card.a2a-version-absent-0-3-semantics-message-send-returns-a-0-3-task', 'RFC 0152 §A/§B/§C/§D', 'A2A-Version absent ⇒ 0.3 semantics; message/send returns a 0.3 task')).toBeUndefined();
     expect(r.result?.['kind']).toBe('task');
     expect((r.result?.['status'] as { state: string }).state).toBe('submitted');
   });
 
   it('an unsupported version fails -32009 VERSION_NOT_SUPPORTED with supportedVersions[] (HTTP 400)', async () => {
     const r = await rpc(peer.endpoint(), 'SendMessage', { message: { messageId: 'm2', role: 'ROLE_USER', parts: [{ text: 'hi' }] } }, '99.0');
-    expect(r.status).toBe(400);
+    expect(r.status, req('openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions', 'RFC 0152 §A/§B/§C/§D', 'an unsupported version fails -32009 VERSION_NOT_SUPPORTED with supportedVersions[] (HTTP 400)')).toBe(400);
     expect(r.error?.code).toBe(-32009);
     expect(r.error?.data?.['reason']).toBe('VERSION_NOT_SUPPORTED');
     expect(r.error?.data?.['supportedVersions']).toEqual(['1.0', '0.3']); // constructor order
@@ -123,7 +124,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     await only10.start(0);
     try {
       const r = await rpc(only10.endpoint(), 'message/send', { message: { parts: [] } });
-      expect(r.error?.code).toBe(-32009);
+      expect(r.error?.code, req('openwop.it.a2a-1-0-agent-card.a-1-0-only-peer-rejects-a-header-less-request-which-is-0-3-by-rule', 'RFC 0152 §A/§B/§C/§D', 'a 1.0-only peer rejects a header-less request (which is 0.3 by rule)')).toBe(-32009);
       expect(r.error?.data?.['requested']).toBe('0.3');
     } finally {
       await only10.stop();
@@ -135,8 +136,8 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     const r = await rpc(peer.endpoint(), 'SendMessage', { message: { messageId: 'm3', role: 'ROLE_USER', parts: [{ text: 'hello 1.0' }] } }, '1.0');
     expect(r.error).toBeUndefined();
     const task = r.result?.['task'] as Record<string, unknown>;
-    expect(task, 'SendMessageResponse is a oneof payload: { task } | { message }').toBeDefined();
-    expect(task['kind'], '1.0 removed the kind discriminator').toBeUndefined();
+    expect(task, req('openwop.it.a2a-1-0-agent-card.sendmessage-1-0-returns-task-with-task-state-role-part-oneof-no-kind-status-time', 'RFC 0152 §A/§B/§C/§D', 'SendMessageResponse is a oneof payload: { task } | { message }')).toBeDefined();
+    expect(task['kind'], req('openwop.it.a2a-1-0-agent-card.sendmessage-1-0-returns-task-with-task-state-role-part-oneof-no-kind-status-time', 'RFC 0152 §A/§B/§C/§D', '1.0 removed the kind discriminator')).toBeUndefined();
     const status = task['status'] as { state: string; timestamp?: string };
     expect(status.state).toBe('TASK_STATE_SUBMITTED');
     expect(typeof status.timestamp).toBe('string');
@@ -144,7 +145,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     expect(history[0]?.['role']).toBe('ROLE_USER');
     const part = (history[0]?.['parts'] as Array<Record<string, unknown>>)[0]!;
     expect(part['text']).toBe('hello 1.0');
-    expect(part['kind'], 'Part is a oneof — discriminate by member presence').toBeUndefined();
+    expect(part['kind'], req('openwop.it.a2a-1-0-agent-card.sendmessage-1-0-returns-task-with-task-state-role-part-oneof-no-kind-status-time', 'RFC 0152 §A/§B/§C/§D', 'Part is a oneof — discriminate by member presence')).toBeUndefined();
     expect(Array.isArray(task['artifacts'])).toBe(true);
   });
 
@@ -153,7 +154,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     const sent = await rpc(peer.endpoint(), 'SendMessage', { message: { messageId: 'm4', role: 'ROLE_USER', parts: [{ text: 'x' }] } }, '1.0');
     const id = (sent.result?.['task'] as { id: string }).id;
     const got = await rpc(peer.endpoint(), 'GetTask', { id }, '1.0');
-    expect((got.result as { status: { state: string } }).status.state).toBe('TASK_STATE_SUBMITTED');
+    expect((got.result as { status: { state: string } }).status.state, req('openwop.it.a2a-1-0-agent-card.gettask-canceltask-listtasks-per-d-1-incl-task-not-cancelable-on-a-terminal-task', 'RFC 0152 §A/§B/§C/§D', 'GetTask / CancelTask / ListTasks per §D.1, incl. TASK_NOT_CANCELABLE on a terminal task')).toBe('TASK_STATE_SUBMITTED');
     const listed = await rpc(peer.endpoint(), 'ListTasks', { status: 'TASK_STATE_SUBMITTED' }, '1.0');
     expect((listed.result as { totalSize: number }).totalSize).toBe(1);
     const cancelled = await rpc(peer.endpoint(), 'CancelTask', { id }, '1.0');
@@ -168,12 +169,12 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
 
   it('a 0.3 method name under a 1.0 header is method-not-found — loudly', async () => {
     const r = await rpc(peer.endpoint(), 'message/send', { message: { parts: [] } }, '1.0');
-    expect(r.status).toBe(404);
+    expect(r.status, req('openwop.it.a2a-1-0-agent-card.a-0-3-method-name-under-a-1-0-header-is-method-not-found-loudly', 'RFC 0152 §A/§B/§C/§D', 'a 0.3 method name under a 1.0 header is method-not-found — loudly')).toBe(404);
     expect(r.error?.code).toBe(-32601);
   });
 
   it('streaming is honestly unsupported: SubscribeToTask ⇒ UNSUPPORTED_OPERATION, matching capabilities.streaming=false', async () => {
     const r = await rpc(peer.endpoint(), 'SubscribeToTask', { id: 'task-1' }, '1.0');
-    expect(r.error?.code).toBe(-32004);
+    expect(r.error?.code, req('openwop.it.a2a-1-0-agent-card.streaming-is-honestly-unsupported-subscribetotask-unsupported-operation-matching', 'RFC 0152 §A/§B/§C/§D', 'streaming is honestly unsupported: SubscribeToTask ⇒ UNSUPPORTED_OPERATION, matching capabilities.streaming=false')).toBe(-32004);
   });
 });

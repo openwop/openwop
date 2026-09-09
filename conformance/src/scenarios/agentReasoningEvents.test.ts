@@ -22,6 +22,7 @@ import {
   isAgentSupported,
   getReasoningVerbosity,
 } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-reasoning';
 const SKIP =
@@ -103,7 +104,7 @@ describe.skipIf(SKIP)('agentReasoningEvents: agent.* event family emission', () 
       const matched = calls.find((c) => c.payload?.callId === callId);
       expect(
         matched,
-        `agent.toolReturned.callId=${callId} MUST pair with a prior agent.toolCalled`,
+        req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event-payloads.schema.json', `agent.toolReturned.callId=${callId} MUST pair with a prior agent.toolCalled`),
       ).toBeDefined();
 
       // Strict causationId chain — only assert when the host actually
@@ -115,7 +116,7 @@ describe.skipIf(SKIP)('agentReasoningEvents: agent.* event family emission', () 
       if (typeof matchedEventId === 'string' && matchedEventId.length > 0) {
         expect(
           ret.causationId,
-          `agent.toolReturned (callId=${callId}) MUST carry causationId === paired agent.toolCalled.eventId per RFC 0002 §B`,
+          req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event-payloads.schema.json', `agent.toolReturned (callId=${callId}) MUST carry causationId === paired agent.toolCalled.eventId per RFC 0002 §B`),
         ).toBe(matchedEventId);
       }
     }

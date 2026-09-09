@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/audit-verify-result.schema.json",
+  "title": "AuditVerifyResult",
+  "description": "Response payload from `GET /v1/audit/verify` per spec/v1/auth-profiles.md §`openwop-audit-log-integrity` §4 'Verification endpoint'. Hosts advertising the audit-log-integrity profile MUST return this shape on the verify endpoint when called with a valid `audit:read`-scoped credential. The shape carries the verifier's chain-validity verdict, the in-range signed checkpoints, and any anomaly records the verifier detected while re-walking the hash chain.",
+  "type": "object",
+  "required": ["fromSeq", "toSeq", "chainValid", "checkpoints", "anomalies"],
+  "properties": {
+    "fromSeq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Echo of the caller's `fromSeq` query parameter. The verifier MUST re-walk entries [fromSeq, toSeq] inclusive."
+    },
+    "toSeq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Echo of the caller's `toSeq` query parameter. MUST be >= fromSeq."
+    },
+    "chainValid": {
+      "type": "boolean",
+      "description": "True when every entry's `prevHash` matches the SHA-256 of the prior entry's RFC 8785 JCS canonicalization AND every signed checkpoint in `checkpoints[]` verifies against the host's advertised `auditLogIntegrity.checkpointPublicKey`. False when ANY break or invalid signature is detected; `anomalies[]` enumerates the breaks."
+    },
+    "checkpointsValid": {
+      "type": "boolean",
+      "description": "OPTIONAL companion bit: true when every checkpoint signature in `checkpoints[]` verifies. Distinguishes 'chain broken but checkpoints OK' from 'checkpoints forged but chain intact'. Hosts MAY omit when `chainValid` already conveys the verdict; clients that distinguish the two failure modes SHOULD prefer hosts that surface this bit explicitly."
+    },
+    "checkpoints": {
+      "type": "array",
+      "description": "Signed checkpoints emitted within [fromSeq, toSeq]. Order: ascending by `atSequence`. Empty array MUST appear when no checkpoint was emitted in the window (not omitted).",
+      "items": { "$ref": "#/$defs/Checkpoint" }
+    },
+    "anomalies": {
+      "type": "array",
+      "description": "One entry per detected hash-chain break in [fromSeq, toSeq]. Empty array MUST appear when chainValid is true (not omitted).",
+      "items": { "$ref": "#/$defs/Anomaly" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Checkpoint": {
+      "type": "object",
+      "required": ["checkpoint", "atSequence", "merkleRoot", "signature"],
+      "properties": {
+        "checkpoint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Host-issued checkpoint id. Globally unique within the host's audit log."
+        },
+        "atSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Audit-log sequence number at which the checkpoint was minted. Inclusive — the entry at this sequence is covered by the checkpoint's merkleRoot."
+        },
+        "merkleRoot": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Hex-encoded SHA-256 Merkle root over the canonicalized entries 0..atSequence inclusive. Verifiers re-compute and compare; mismatch implies chain mutation between two checkpoints."
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Base64-encoded Ed25519 signature over the checkpoint's canonical JSON (excluding the `signature` field itself), produced with the host's advertised `auditLogIntegrity.checkpointPublicKey`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Anomaly": {
+      "type": "object",
+      "required": ["atSeq", "expectedPrevHash", "actualPrevHash"],
+      "properties": {
+        "atSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number of the entry whose `prevHash` failed verification."
+        },
+        "expectedPrevHash": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Hex-encoded SHA-256 the verifier computed from the prior entry's RFC 8785 JCS canonicalization."
+        },
+        "actualPrevHash": {
+          "type": "string",
+          "description": "The `prevHash` value the audit-log entry actually carries. Empty string when the field is missing (a structural anomaly distinct from a hash mismatch)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

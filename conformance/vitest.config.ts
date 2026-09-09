@@ -6,7 +6,11 @@ export default defineConfig({
     // scenarios; `src/lib/**/*.test.ts` are server-free unit tests for
     // suite-internal helpers (e.g., the synthetic OIDC issuer harness)
     // that don't depend on OPENWOP_BASE_URL.
-    include: ['src/scenarios/**/*.test.ts', 'src/lib/**/*.test.ts'],
+    include: ['src/scenarios/**/*.test.ts'],
+    // Suite 2.0.0: the corpus-coherence scenarios (src/coherence/) and the suite
+    // self-tests (src/lib/*.test.ts) are NOT host scenarios; they run under
+    // vitest.coherence.config.ts (scripts/check-spec-coherence.mjs) and
+    // vitest.selftest.config.ts. A host run never executes them.
     testTimeout: 30_000,
     hookTimeout: 30_000,
     globals: true,

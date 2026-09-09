@@ -10,9 +10,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('memory-attribution-emits-on-write (RFC 0057 §A/§B)', () => {
   it('an advertised host emits memory.written carrying a stable memoryId', async () => {
@@ -23,7 +23,7 @@ describe('memory-attribution-emits-on-write (RFC 0057 §A/§B)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (seam, prior step, or fixture unavailable)');
     }
     const events = await memoryWrittenEvents(runId);
     if (events.length === 0) return softSkip('blocked', 'run wrote no memory — soft-skip (events.length === 0)');
@@ -31,7 +31,7 @@ describe('memory-attribution-emits-on-write (RFC 0057 §A/§B)', () => {
       const memoryId = (e.payload as { memoryId?: unknown } | undefined)?.memoryId;
       expect(
         typeof memoryId === 'string' && memoryId.length > 0,
-        driver.describe('RFC 0057 §B', 'memory.written.memoryId MUST be a stable, non-empty identifier'),
+        req('openwop.it.memory-attribution-emits-on-write.an-advertised-host-emits-memory-written-carrying-a-stable-memoryid', 'RFC 0057 §B', 'memory.written.memoryId MUST be a stable, non-empty identifier'),
       ).toBe(true);
     }
   });
@@ -44,12 +44,12 @@ describe('memory-attribution-emits-on-write (RFC 0057 §A/§B)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (seam, prior step, or fixture unavailable)');
     }
     const events = await memoryWrittenEvents(runId);
     expect(
       events.length,
-      driver.describe('RFC 0057 §A', 'a host not advertising memory.attribution MUST NOT emit memory.written'),
+      req('openwop.it.memory-attribution-emits-on-write.a-host-without-the-capability-emits-no-memory-written', 'RFC 0057 §A', 'a host not advertising memory.attribution MUST NOT emit memory.written'),
     ).toBe(0);
   });
 });

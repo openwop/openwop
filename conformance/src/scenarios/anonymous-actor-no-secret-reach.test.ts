@@ -19,8 +19,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
-import { driver } from '../lib/driver.js';
 import { isAnonymousActorAdvertised, anonDispatch } from '../lib/anonymousActor.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-anonymous-actor';
 
@@ -32,11 +33,11 @@ describe('anonymous-actor-no-secret-reach (RFC 0132 §C.2/§C.3)', () => {
   it('a read-tier anon tool call never surfaces a planted BYOK canary', async () => {
     if (!behaviorGate(PROFILE, await isAnonymousActorAdvertised())) return;
     const res = await anonDispatch({ tool: 'catalog.read', args: { probeSecrets: true } });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const serialized = JSON.stringify(res.json ?? {});
     expect(
       serialized.includes(BYOK_CANARY),
-      driver.describe('SECURITY anon-actor-no-secret-reach', 'an anon tool call MUST NOT surface secret/BYOK material'),
+      req('openwop.it.anonymous-actor-no-secret-reach.a-read-tier-anon-tool-call-never-surfaces-a-planted-byok-canary', 'SECURITY anon-actor-no-secret-reach', 'an anon tool call MUST NOT surface secret/BYOK material'),
     ).toBe(false);
   });
 
@@ -50,7 +51,7 @@ describe('anonymous-actor-no-secret-reach (RFC 0132 §C.2/§C.3)', () => {
     // one non-conformant behavior is resolving/returning the caller's tenant.
     const CROSS = 'other-tenant';
     const res = await anonDispatch({ tool: 'catalog.read', args: { tenant: CROSS } });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     const decided = res.json?.authorizationDecided?.payload;
     const deniedByDecision = decided?.allowed === false;
     const deniedByStatus = res.status === 403 || res.status === 404;
@@ -61,7 +62,7 @@ describe('anonymous-actor-no-secret-reach (RFC 0132 §C.2/§C.3)', () => {
       typeof resolvedTenant === 'string' && resolvedTenant.length > 0 && resolvedTenant !== CROSS;
     expect(
       deniedByDecision || deniedByStatus || neutralizedToSurface,
-      driver.describe(
+      req('openwop.it.anonymous-actor-no-secret-reach.a-cross-tenant-read-fails-closed-the-caller-supplied-tenant-is-never-resolved', 
         'SECURITY anon-actor-no-secret-reach (CTI-1 / RFC 0132 §A.2)',
         'a cross-tenant anon read MUST fail closed — denied, or the caller-supplied tenant ignored (never resolved to the caller’s tenant)',
       ),
@@ -71,7 +72,7 @@ describe('anonymous-actor-no-secret-reach (RFC 0132 §C.2/§C.3)', () => {
     if (deniedByDecision || deniedByStatus) {
       expect(
         res.json?.result,
-        driver.describe('SECURITY anon-actor-no-secret-reach (CTI-1)', 'a denied cross-tenant anon read MUST NOT return data'),
+        req('openwop.it.anonymous-actor-no-secret-reach.a-cross-tenant-read-fails-closed-the-caller-supplied-tenant-is-never-resolved', 'SECURITY anon-actor-no-secret-reach (CTI-1)', 'a denied cross-tenant anon read MUST NOT return data'),
       ).toBeUndefined();
     }
   });

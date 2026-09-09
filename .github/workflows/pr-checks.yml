@@ -14,7 +14,7 @@ name: PR Checks
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'release/**']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,7 +41,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.conformance == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -73,7 +73,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.conformance == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 20, not 5: `npm install` of the suite spends most of its wall clock inside
+    # npm's peer resolver, because vitest 4.1.x (a RUNTIME dependency of the
+    # suite — F-2026-05-06-C) declares optional peers on `@vitest/ui@5.0.0` and
+    # the other 5.0.0 tooling packages, each of which requires `vitest@5.0.0`.
+    # Resolving that contradiction takes npm 12 about seven minutes and makes
+    # npm 10.9 abort outright (`Cannot read properties of null (reading
+    # 'edgesOut')`). Measured 2026-09-03. This is the real consumer path, so the
+    # guardrail keeps running it unaltered rather than hiding it behind
+    # `--legacy-peer-deps`; the budget is raised until the suite moves to
+    # vitest 5.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -91,7 +101,13 @@ jobs:
           mkdir -p /tmp/install-verify
           cd /tmp/install-verify
           echo '{"name":"install-verify","private":true}' > package.json
-          npm install --no-save "$TARBALL"
+          # Suite 2.0.0: the contract is the @openwop/spec-artifacts peer (RFC 0168 §D.2).
+          # Before it is published, install it from the tree's own tarball beside the
+          # suite — the consumer's-eye view of the exact pin.
+          SA_TARBALL="$(cd "$GITHUB_WORKSPACE/spec-artifacts" && npm pack --silent --pack-destination /tmp/install-verify | tail -1)"
+          npm install --no-save "/tmp/install-verify/$SA_TARBALL" "$TARBALL"
+          node -e "require.resolve('@openwop/spec-artifacts/package.json')" \
+            || (echo "::error::@openwop/spec-artifacts peer not resolvable from the installed suite (RFC 0168 §D.2)." && exit 1)
           SUITE="$PWD/node_modules/@openwop/openwop-conformance"
           # vitest is invoked by the suite's bin (dist/cli.js) via `npx vitest`;
           # if not in deps, npx falls through to a registry download (slow + flaky)

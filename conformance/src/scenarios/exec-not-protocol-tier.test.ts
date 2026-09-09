@@ -26,9 +26,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper (mirrors driver.describe's "spec — requirement" shape without requiring OPENWOP_BASE_URL). */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Closed denylist of exec-class identifier *segments* (whole tokens). The
@@ -79,7 +77,7 @@ describe('exec-not-protocol-tier: no exec-class primitive in the protocol corpus
     }
     expect(
       offenders,
-      why(
+      req('openwop.it.exec-not-protocol-tier.no-protocol-owned-core-openwop-identifier-denotes-arbitrary-command-execution', 
         'host-extensions.md §exec-class tools',
         'the protocol corpus MUST NOT define a core.*/openwop.* exec-class identifier',
       ),
@@ -105,7 +103,7 @@ describe('exec-not-protocol-tier: no exec-class primitive in the protocol corpus
     walkProps(caps, 'capabilities');
     expect(
       offenders,
-      why('host-extensions.md §exec-class tools', 'capabilities.schema.json MUST NOT declare an exec-class capability flag'),
+      req('openwop.it.exec-not-protocol-tier.no-capabilities-schema-json-property-name-denotes-arbitrary-command-execution', 'host-extensions.md §exec-class tools', 'capabilities.schema.json MUST NOT declare an exec-class capability flag'),
     ).toEqual([]);
   });
 
@@ -120,12 +118,12 @@ describe('exec-not-protocol-tier: no exec-class primitive in the protocol corpus
     });
     expect(
       offenders,
-      why('host-extensions.md §exec-class tools', 'no RunEventType MUST denote arbitrary command execution'),
+      req('openwop.it.exec-not-protocol-tier.the-canonical-runeventtype-vocabulary-contains-no-exec-class-event', 'host-extensions.md §exec-class tools', 'no RunEventType MUST denote arbitrary command execution'),
     ).toEqual([]);
   });
 
   it('positive control: a vendor / x-host exec identifier is allowed (host-extension namespace)', () => {
-    expect(isExecClass('vendor.acme.exec')).toBe(false);
+    expect(isExecClass('vendor.acme.exec'), req('openwop.it.exec-not-protocol-tier.positive-control-a-vendor-x-host-exec-identifier-is-allowed-host-extension-names', 'RFC 0069', 'positive control: a vendor / x-host exec identifier is allowed (host-extension namespace)')).toBe(false);
     expect(isExecClass('x-host-acme-exec')).toBe(false);
     expect(isExecClass('private.host.shell')).toBe(false);
     // And the denylist actually fires on a protocol-owned id:

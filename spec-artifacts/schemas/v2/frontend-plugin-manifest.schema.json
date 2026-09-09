@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/frontend-plugin-manifest.schema.json",
+  "title": "FrontendPluginManifest",
+  "description": "RFC 0117. Manifest for a published OpenWOP front-end plugin pack — `pack.json` at the pack root with `kind: \"frontend-plugin\"`. Peer to and disjoint from `node-pack-manifest.schema.json` (RFC 0003), `connection-pack-manifest.schema.json` (RFC 0095), and the other pack kinds via the `kind` discriminator. A front-end plugin pack distributes a SIGNED, SANDBOXED user-interface extension (a canvas editor, a custom artifact viewer, a settings panel) that a host loads at runtime in an ORIGIN/EXECUTION-ISOLATED sandbox (a cross-origin iframe by default, or an equivalent WASM/process/container/VM sandbox per `capabilities.uiPlugins.isolation`, RFC 0119) and enables through its own admin surface. The wire owns only the manifest shape, the isolation model, and the `ui-plugin/1` host-RPC boundary — NOT a rendering runtime: the plugin `entry` bundle is opaque bytes the host runs in a sandbox. Carries NO secret and NO backend `runtime` (a `runtime` member is rejected — a plugin is sandboxed UI, not a node entry). Requires the host to advertise `capabilities.uiPlugins.supported: true`; degrades to nothing on hosts without it. See `spec/v1/frontend-plugin-packs.md`.",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "kind",
+    "engines",
+    "uiPlugins"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`). Mirror of `connection-pack-manifest.schema.json#/properties/name`.",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level SemVer 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "kind": {
+      "type": "string",
+      "const": "frontend-plugin",
+      "description": "Pack kind discriminator. MUST be the literal string `\"frontend-plugin\"` for this schema."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "author": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., `Apache-2.0`)."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "engines": {
+      "type": "object",
+      "description": "Compatibility floor. `openwop` is the spec range the pack targets; mirror of the other pack manifests.",
+      "required": [
+        "openwop"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "description": "SemVer range of the OpenWOP spec this pack targets (e.g., `>=1.2.0`)."
+        }
+      }
+    },
+    "runtime": {
+      "not": {},
+      "description": "FORBIDDEN. A front-end plugin is sandboxed UI, not a backend node `runtime`. A manifest that carries `runtime` under `kind: \"frontend-plugin\"` MUST be rejected at registration with `pack_kind_invalid` (RFC 0117 §Negative). Declared here as `not: {}` so any value fails validation."
+    },
+    "uiPlugins": {
+      "type": "array",
+      "description": "The plugin surfaces this pack supplies. A pack MUST declare at least one. A host installs the pack but renders only those whose `surface` is in `capabilities.uiPlugins.surfaces` and whose `hostApi` methods are a subset of `capabilities.uiPlugins.hostApi` — the rest are installable-but-inert (§Degradation), never an error.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/uiPlugin"
+      }
+    }
+  },
+  "patternProperties": {
+    "^(openwop-|x-|vendor\\.)": {
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+    }
+  },
+  "$defs": {
+    "uiPlugin": {
+      "type": "object",
+      "required": [
+        "pluginId",
+        "surface",
+        "entry",
+        "hostApi"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pluginId": {
+          "$ref": "ids.schema.json#/$defs/pluginId",
+          "description": "Stable identifier of this plugin within the pack. A host enables/disables plugins by `pluginId` in its admin surface."
+        },
+        "surface": {
+          "type": "string",
+          "description": "Which host surface this plugin renders into. `artifact-viewer` renders a typed artifact (RFC 0071) in a sandbox; `route` mounts a standalone admin/tool page; `settings-panel` contributes a configuration panel; `canvas-preview` renders the live document preview inside a host-owned canvas editor (RFC 0130). A host degrades a `surface` it does not advertise to nothing (§Degradation).",
+          "enum": [
+            "artifact-viewer",
+            "route",
+            "settings-panel",
+            "canvas-preview"
+          ]
+        },
+        "entry": {
+          "type": "string",
+          "description": "Pack-relative path to the plugin's entry bundle (the opaque bytes loaded in the cross-origin sandbox). Flat namespace; MUST NOT contain `..` or a leading `/` (the pattern forbids both). Required — a `uiPlugins[]` entry missing `entry` fails validation (RFC 0117 §Negative).",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        },
+        "hostApi": {
+          "type": "array",
+          "description": "The closed allowlist of `ui-plugin/1` host-RPC methods this plugin is permitted to call. The host MUST reject (with an `error` response, never silent execution) any method not in BOTH this declared list AND the host's `capabilities.uiPlugins.hostApi` set (`frontend-plugin-rpc-allowlist`). The plugin holds no credentials; every method is host-mediated and authz-checked.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "artifact.read",
+              "artifact.write",
+              "host.toast",
+              "host.navigate",
+              "host.announce"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "canvasTypes": {
+          "type": "array",
+          "description": "OPTIONAL; meaningful only for `surface: \"canvas-preview\"` (RFC 0130): the host canvas type id(s) this preview renders. A host mounts the plugin only for matching canvas documents and MUST ignore entries it does not recognize; absent/empty means never auto-mounted.",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "uniqueItems": true
+        },
+        "connectSrc": {
+          "type": "array",
+          "description": "OPTIONAL explicit `connect-src` CSP exceptions the plugin needs (e.g., a font CDN). Absent → the host serves the plugin under a DENY-EGRESS CSP (`frontend-plugin-egress`): no network egress beyond the host-RPC channel. Any entry here is part of the front-end-review checkpoint (`registry-operations.md`) a reviewer audits; a host MAY refuse a pack whose exceptions it will not grant.",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^(openwop-|x-|vendor\\.)": {
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+        }
+      }
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

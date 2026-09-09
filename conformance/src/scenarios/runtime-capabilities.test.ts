@@ -29,6 +29,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const CAPABILITY_MISSING_WORKFLOW_ID = 'conformance-capability-missing';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(CAPABILITY_MISSING_WORKFLOW_ID);
@@ -37,7 +39,7 @@ describe('runtime-capabilities: /.well-known/openwop forward-compat shape', () =
   it('IF runtimeCapabilities is present, it MUST be a string[] of unique non-empty entries', async () => {
     const res = await driver.get('/.well-known/openwop', { authenticated: false });
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.runtime-capabilities.if-runtimecapabilities-is-present-it-must-be-a-string-of-unique-non-empty-entrie', 
       'capabilities.md §2',
       'discovery endpoint MUST return 200',
     )).toBe(200);
@@ -50,28 +52,28 @@ describe('runtime-capabilities: /.well-known/openwop forward-compat shape', () =
       // of v1 hosts will omit it. Assertion passes trivially; don't
       // force a value on a host that doesn't advertise any.
       expect(caps).toBeUndefined();
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `caps === undefined` returned early');
     }
 
-    expect(Array.isArray(caps), driver.describe(
+    expect(Array.isArray(caps), req('openwop.it.runtime-capabilities.if-runtimecapabilities-is-present-it-must-be-a-string-of-unique-non-empty-entrie', 
       'capabilities.md §"Runtime capabilities"',
       'runtimeCapabilities MUST be an array when present',
     )).toBe(true);
 
     const arr = caps as unknown[];
     for (const entry of arr) {
-      expect(typeof entry, driver.describe(
+      expect(typeof entry, req('openwop.it.runtime-capabilities.if-runtimecapabilities-is-present-it-must-be-a-string-of-unique-non-empty-entrie', 
         'capabilities.md §"Runtime capabilities"',
         'every runtimeCapabilities entry MUST be a string',
       )).toBe('string');
-      expect((entry as string).length, driver.describe(
+      expect((entry as string).length, req('openwop.it.runtime-capabilities.if-runtimecapabilities-is-present-it-must-be-a-string-of-unique-non-empty-entrie', 
         'capabilities.md §"Runtime capabilities"',
         'every runtimeCapabilities entry MUST be non-empty',
       )).toBeGreaterThan(0);
     }
 
     const unique = new Set(arr as string[]);
-    expect(unique.size, driver.describe(
+    expect(unique.size, req('openwop.it.runtime-capabilities.if-runtimecapabilities-is-present-it-must-be-a-string-of-unique-non-empty-entrie', 
       'capabilities.md §"Runtime capabilities"',
       'runtimeCapabilities entries MUST be unique',
     )).toBe(arr.length);
@@ -91,7 +93,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('runtime-capabilities: dispatch refusal on unsa
     const create = await driver.post('/v1/runs', {
       workflowId: 'conformance-capability-missing',
     });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.runtime-capabilities.terminates-the-run-with-error-code-capability-not-provided', 
       'capabilities.md §"Runtime capabilities"',
       'POST /v1/runs MUST accept the run; refusal is engine-side at dispatch time, not request-validation',
     )).toBe(201);
@@ -99,18 +101,18 @@ describe.skipIf(SKIP_NO_FIXTURE)('runtime-capabilities: dispatch refusal on unsa
 
     const terminal = await pollUntilTerminal(runId);
 
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.runtime-capabilities.terminates-the-run-with-error-code-capability-not-provided', 
       'capabilities.md §"Runtime capabilities"',
       'a node with unsatisfied requires MUST cause the run to terminate as failed',
     )).toBe('failed');
 
     const error = (terminal as { error?: { code?: string; message?: string } }).error;
-    expect(error?.code, driver.describe(
+    expect(error?.code, req('openwop.it.runtime-capabilities.terminates-the-run-with-error-code-capability-not-provided', 
       'rest-endpoints.md §"Common error codes"',
       'terminal RunSnapshot.error.code MUST be "capability_not_provided"',
     )).toBe('capability_not_provided');
 
-    expect(error?.message, driver.describe(
+    expect(error?.message, req('openwop.it.runtime-capabilities.terminates-the-run-with-error-code-capability-not-provided', 
       'capabilities.md §"Runtime capabilities"',
       'error.message MUST name the missing capability id verbatim so operators can act without grepping logs',
     )).toContain('conformance.never-provided');

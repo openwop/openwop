@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('kv-ttl-expiry: advertisement shape (RFC 0015)', () => {
   it('capabilities.kvStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.kv-ttl-expiry.capabilities-kvstorage-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §kvStorage',
         'capabilities.kvStorage.supported MUST be a boolean when present',
       ),
@@ -50,7 +52,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('kv-ttl-expiry: behavioral (RFC 0015 §B point 3 — 1s TTL drift)', () => {
   it('set with ttlSeconds=2 → get before expiry returns value; get after expiry returns found:false', async () => {
     const probe = await call('get', { key: '__ttl-probe__' });
-    if (probe.status === 404) return; // host doesn't expose the seam
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
     const key = `ttl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const setRes = await call('set', { key, value: 'expires-soon', ttlSeconds: 2 });
     expect(setRes.status).toBe(200);
@@ -61,7 +63,7 @@ describe('kv-ttl-expiry: behavioral (RFC 0015 §B point 3 — 1s TTL drift)', ()
     const withinBody = within.json as { value?: unknown; found?: boolean };
     expect(
       withinBody.value,
-      driver.describe('RFC 0015 §B point 3', 'get within TTL window MUST return the stored value'),
+      req('openwop.it.kv-ttl-expiry.set-with-ttlseconds-2-get-before-expiry-returns-value-get-after-expiry-returns-f', 'RFC 0015 §B point 3', 'get within TTL window MUST return the stored value'),
     ).toBe('expires-soon');
     expect(withinBody.found).toBe(true);
 
@@ -73,7 +75,7 @@ describe('kv-ttl-expiry: behavioral (RFC 0015 §B point 3 — 1s TTL drift)', ()
     const afterBody = after.json as { value?: unknown; found?: boolean };
     expect(
       afterBody.found,
-      driver.describe('RFC 0015 §B point 3', 'get after TTL expiry MUST surface as found:false (≤1s drift)'),
+      req('openwop.it.kv-ttl-expiry.set-with-ttlseconds-2-get-before-expiry-returns-value-get-after-expiry-returns-f', 'RFC 0015 §B point 3', 'get after TTL expiry MUST surface as found:false (≤1s drift)'),
     ).toBe(false);
   });
 });

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json",
+  "title": "WorkspaceFile",
+  "description": "RFC 0059. A versioned, tenant·workspace-scoped ground-truth file in the `host.workspace` store. Returned by `GET /v1/host/workspace/files/{path}` and `PUT …/{path}`; the `list` endpoint returns the same shape minus `content` (metadata only). `path` is a flat namespace with `/`-in-names (NOT nested directories) — no `..`, no leading `/` (the pattern enforces this). Writes are atomic and optimistically concurrent via the `etag` token (`If-Match`). When `capabilities.workspace.versioned: true`, prior versions are retrievable via `?version=N`. Content is SR-1-redacted on write (RFC 0059 §E WSR-1) — never the BYOK plaintext.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "content", "version", "updatedAt"],
+  "properties": {
+    "path": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$",
+      "description": "Workspace-relative path. Flat namespace with `/`-in-names; MUST NOT contain `..` or a leading `/` (the pattern forbids both). Stable identity of the file within the `{tenant, workspace}` scope."
+    },
+    "content": {
+      "type": "string",
+      "description": "UTF-8 file body. SR-1-redacted on write per RFC 0059 §E WSR-1 — a value the run's BYOK vault resolved is persisted as `[REDACTED:<secretId>]`, never the plaintext."
+    },
+    "contentType": {
+      "type": "string",
+      "default": "text/markdown",
+      "description": "Advisory MIME type of `content`. Defaults to `text/markdown` (the ground-truth-file convention)."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic version. 1 on first create; each successful `PUT` bumps it by one. The latest version is always retrievable; historical versions are best-effort up to `capabilities.workspace.maxVersions`."
+    },
+    "etag": {
+      "type": "string",
+      "description": "Opaque version token for `If-Match` optimistic concurrency. A `PUT` carrying a stale `If-Match` MUST be refused with `409 workspace_conflict`."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the write that produced this version."
+    }
+  }
+}

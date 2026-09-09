@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-deployment.schema.json",
+  "title": "AgentDeployment",
+  "description": "RFC 0082 §C. A per-(agentId, version) deployment record: the host-runtime lifecycle state of one version of a manifest agent (RFC 0003/0070), distinct from the immutable AgentManifest (which is the pack-distribution descriptor) and from the registry's published semver tags (which version EXISTS, not which version SERVES). Holds the deployment `state`, the named `channels` that resolve to this version, the canary traffic share, the rollback pointer, and the provenance (`evalRunId`/`approvalGateId`) of the last transition. Content-free of any manifest body or credential material (SR-1). The record itself is host-internal; this schema is the canonical wire shape a host exposes via GET /v1/agents/{agentId}/deployments (the endpoint lands at Active → Accepted per RFC 0082 §Conformance).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agentId", "version", "state"],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 256,
+      "description": "The deployed agent's id (matches `AgentManifest.agentId` / `AgentRef.agentId`)."
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "The concrete agent-definition version this record governs (matches `AgentManifest.version`). A deployment record is per-(agentId, version); a `@channel` reference resolves to exactly one such version per the RFC 0082 §B pin."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["draft", "test", "staged", "active", "paused", "deprecated", "rolled-back"],
+      "description": "RFC 0082 §C lifecycle state. `draft`: authored, not yet evaluated. `test`: undergoing eval (RFC 0081). `staged`: eval-passed, awaiting production promotion. `active`: serving (optionally at `canaryPercent < 100`). `paused`: temporarily withdrawn, recoverable. `deprecated`: sunset — no new traffic, existing pins honored. `rolled-back`: superseded; `rollbackPointer` names the version that replaced it. Legal transitions: draft→test→staged→active (promotion); active↔paused (operational); active→deprecated (terminal); active→rolled-back (recovery, with `rollbackPointer`)."
+    },
+    "canaryPercent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "MAY. For an `active` version, the share (0–100) of channel traffic the §B pin draw assigns to THIS version; the remainder goes to the prior `active` version on the same channel. Absent ⇒ 100 (full traffic). A host advertising `agents.deployment.canary: false` MUST reject any value < 100. The per-run draw outcome is the recorded-fact `resolvedAgentVersion` (RFC 0082 §B) — never re-rolled on replay."
+    },
+    "rollbackPointer": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "MAY. For a `rolled-back` version, the version that was restored to `active` in its place (the recovery target). Absent for non-rolled-back records."
+    },
+    "channels": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "MAY. The named deployment channels (e.g. `stable`, `canary`) that resolve to this version. A version MAY be on more than one channel (RFC 0082 UQ#4 — a promoted-to-`stable` version is also resolvable by the reserved `latest` channel = highest active semver). Channel names are host-advertised in `capabilities.agents.deployment.channels`."
+    },
+    "evalRunId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MAY. The RFC 0081 eval run whose `EvalSummary.passed` gated the last promotion into this state (the §E evidence). Content-free reference, not the eval body."
+    },
+    "approvalGateId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MAY. The RFC 0051 `approvalGate` that authorized the last transition (the §E human gate). Content-free reference."
+    }
+  }
+}

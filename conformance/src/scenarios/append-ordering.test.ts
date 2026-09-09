@@ -18,6 +18,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const CANDIDATES = ['conformance-append-ordering', 'conformance-multi-node'] as const;
 const FIXTURE = CANDIDATES.find((id) => isFixtureAdvertised(id)) ?? null;
@@ -71,13 +73,13 @@ describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence',
       console.warn(
         '[append-ordering] fixture emitted no channel.written events; skipping ordering assertions',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `byChannel.size === 0` returned early ([append-ordering] fixture emitted no channel.written events; skipping ordering assertions) (seam, prior step, or fixture unavailable)');
     }
 
     // For each channel, sequence MUST be strictly increasing within the run.
     for (const [channel, writes] of byChannel) {
       for (let i = 1; i < writes.length; i++) {
-        expect(writes[i].sequence, driver.describe(
+        expect(writes[i].sequence, req('openwop.it.append-ordering.append-reducer-channels-project-entries-in-event-sequence-order', 
           'channels-and-reducers.md §"Append ordering"',
           `channel '${channel}': channel.written events MUST appear in sequence order in the event log`,
         )).toBeGreaterThan(writes[i - 1].sequence);
@@ -101,7 +103,7 @@ describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence',
       // Property: every cross-engine event carries BOTH sourceEngineId
       // AND sourceRunId (per channel-written-payload.schema.json).
       for (const e of crossEngineWrites) {
-        expect(typeof e.payload?.sourceRunId, driver.describe(
+        expect(typeof e.payload?.sourceRunId, req('openwop.it.append-ordering.append-reducer-channels-project-entries-in-event-sequence-order', 
           'channel-written-payload.schema.json',
           'cross-engine writes MUST carry sourceRunId alongside sourceEngineId',
         )).toBe('string');
@@ -110,7 +112,7 @@ describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence',
       const seen = new Set<string>();
       for (const e of allWrites) {
         const key = `${e.sequence}::${e.eventId ?? ''}`;
-        expect(seen.has(key), driver.describe(
+        expect(seen.has(key), req('openwop.it.append-ordering.append-reducer-channels-project-entries-in-event-sequence-order', 
           'channels-and-reducers.md §"Tie-breaking when sequences collide"',
           `(sequence, eventId) MUST be unique across the run — duplicate found: ${key}`,
         )).toBe(false);
@@ -125,7 +127,7 @@ describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence',
     for (const [channel, writes] of byChannel) {
       const projected = (channels as Record<string, unknown>)[channel];
       if (Array.isArray(projected)) {
-        expect(projected.length, driver.describe(
+        expect(projected.length, req('openwop.it.append-ordering.append-reducer-channels-project-entries-in-event-sequence-order', 
           'channels-and-reducers.md §"Append ordering"',
           `channel '${channel}': projected array length MUST equal #channel.written events`,
         )).toBe(writes.length);

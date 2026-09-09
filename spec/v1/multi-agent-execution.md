@@ -316,17 +316,7 @@ Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: t
 
 ## Open spec gaps
 
-| #     | Gap                                                                                                                                                                                                             | Land-in version (RFC)   | Owner      |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ---------- |
-| MAE-1 | **`version: 2`:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy.          | RFC 0039 (`version: 2`) | OpenWOP WG |
-| MAE-2 | **`version: 2`:** Agent memory lifecycle across sub-runs — `MemoryEntry.ttl` semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST. | RFC 0039 (`version: 2`) | OpenWOP WG |
-| MAE-3 | **`version: 2`:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state?                                | RFC 0039 (`version: 2`) | OpenWOP WG |
-| MAE-4 | **`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism guarantees").                                                                        | RFC 0040 (`version: 3`) | OpenWOP WG |
-| MAE-5 | **`version: 3`:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case.                                                | RFC 0040 (`version: 3`) | OpenWOP WG |
-| MAE-6 | **`version: 3`:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain?                                                                              | RFC 0040 (`version: 3`) | OpenWOP WG |
-| MAE-7 | **`version: 4`:** LLM cache-key recipe — `replay.md` §"LLM cache-key recipe" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`.                                     | RFC 0041 (`version: 4`) | OpenWOP WG |
-| MAE-8 | **`version: 4`:** Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal.                                                                                            | RFC 0041 (`version: 4`) | OpenWOP WG |
-| MAE-9 | **`version: 4`:** Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ.                                                                      | RFC 0041 (`version: 4`) | OpenWOP WG |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.multi-agent-execution.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -11,8 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readHeartbeatCap, heartbeatSupported, tickHeartbeat } from '../lib/heartbeat.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('heartbeat-fires-once-per-tick (RFC 0060 §B.1)', () => {
   it('one tick emits exactly one heartbeat.evaluated', async () => {
@@ -23,7 +23,7 @@ describe('heartbeat-fires-once-per-tick (RFC 0060 §B.1)', () => {
     if (!Array.isArray(evaluated)) return softSkip('blocked', 'host doesn\'t surface per-tick events on the seam');
     expect(
       evaluated.length,
-      driver.describe('RFC 0060 §B.1', 'a single tick MUST emit exactly one heartbeat.evaluated'),
+      req('openwop.it.heartbeat-fires-once-per-tick.one-tick-emits-exactly-one-heartbeat-evaluated', 'RFC 0060 §B.1', 'a single tick MUST emit exactly one heartbeat.evaluated'),
     ).toBe(1);
   });
 });

@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { API_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const OPENAPI_PATH = join(API_DIR, 'openapi.yaml');
 
@@ -86,8 +87,8 @@ describe('RFC 0149 §A — every server/path pair resolves to exactly one /v1 se
     // Guards the gate itself: an extraction that silently found nothing would
     // make every assertion below vacuously true — the exact failure mode
     // RFC 0148 exists to prevent.
-    expect(servers.length, `${OPENAPI_PATH} MUST declare servers[]`).toBeGreaterThan(0);
-    expect(paths.length, `${OPENAPI_PATH} MUST declare paths`).toBeGreaterThan(0);
+    expect(servers.length, req('openwop.it.openapi-resolved-paths.the-document-declares-at-least-one-server-and-one-path', 'RFC 0149 §A', `${OPENAPI_PATH} MUST declare servers[]`)).toBeGreaterThan(0);
+    expect(paths.length, req('openwop.it.openapi-resolved-paths.the-document-declares-at-least-one-server-and-one-path', 'RFC 0149 §A', `${OPENAPI_PATH} MUST declare paths`)).toBeGreaterThan(0);
   });
 
   it('no versioned operation resolves to a duplicated /v1 prefix', () => {
@@ -102,10 +103,10 @@ describe('RFC 0149 §A — every server/path pair resolves to exactly one /v1 se
     }
     expect(
       offenders,
-      'RFC 0149 §A: a versioned operation MUST resolve with exactly one `/v1` segment. ' +
+      req('openwop.it.openapi-resolved-paths.no-versioned-operation-resolves-to-a-duplicated-v1-prefix', 'RFC 0149 §A', 'RFC 0149 §A: a versioned operation MUST resolve with exactly one `/v1` segment. ' +
         'Offending server/path pairs:\n  ' +
         offenders.join('\n  ') +
-        '\nFix: drop `/v1` from `servers[].url` and keep it in the path keys.',
+        '\nFix: drop `/v1` from `servers[].url` and keep it in the path keys.'),
     ).toEqual([]);
   });
 
@@ -119,7 +120,7 @@ describe('RFC 0149 §A — every server/path pair resolves to exactly one /v1 se
         const resolved = resolvedPath(server, pathKey);
         expect(
           resolved,
-          `RFC 0149 §A: ${pathKey} MUST remain unversioned; resolved as ${resolved}`,
+          req('openwop.it.openapi-resolved-paths.the-unversioned-discovery-route-stays-unversioned-when-resolved', 'RFC 0149 §A', `RFC 0149 §A: ${pathKey} MUST remain unversioned; resolved as ${resolved}`),
         ).toBe(pathKey);
       }
     }

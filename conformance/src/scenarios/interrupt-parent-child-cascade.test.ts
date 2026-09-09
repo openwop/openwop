@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PARENT_WORKFLOW = 'conformance-interrupt-parent-child-cancel';
 const CHILD_WORKFLOW = 'conformance-interrupt-parent-child-cancel-child';
@@ -50,7 +51,7 @@ describe.skipIf(SKIP)('interrupt: parent/child — parent cancel cascades to chi
     await pollUntilStatus(parentRunId, 'waiting-approval', { timeoutMs: 15_000 });
 
     const childRunId = await findChildRunId(parentRunId);
-    expect(childRunId, driver.describe(
+    expect(childRunId, req('openwop.it.interrupt-parent-child-cascade.child-transitions-to-cancelled-when-parent-is-cancelled-mid-suspend', 
       'fixtures.md conformance-interrupt-parent-child-cancel',
       'parent snapshot MUST surface the spawned child runId',
     )).not.toBeNull();
@@ -65,7 +66,7 @@ describe.skipIf(SKIP)('interrupt: parent/child — parent cancel cascades to chi
     expect(parentTerminal.status).toBe('cancelled');
 
     const childTerminal = await pollUntilTerminal(childRunId!, { timeoutMs: 10_000 });
-    expect(childTerminal.status, driver.describe(
+    expect(childTerminal.status, req('openwop.it.interrupt-parent-child-cascade.child-transitions-to-cancelled-when-parent-is-cancelled-mid-suspend', 
       'interrupt-profiles.md §openwop-interrupt-parent-child',
       'parent cancellation MUST cascade — child run MUST reach terminal cancelled',
     )).toBe('cancelled');
@@ -93,7 +94,7 @@ describe.skipIf(SKIP)('interrupt: parent/child — post-cascade resolve of child
     );
     expect(
       [410, 409, 404].includes(lateResolve.status),
-      driver.describe(
+      req('openwop.it.interrupt-parent-child-cascade.attempting-to-resolve-the-cascaded-child-interrupt-is-rejected', 
         'interrupt-profiles.md §openwop-interrupt-parent-child',
         'resolving a cascaded child interrupt MUST be rejected (410 Gone preferred, 409/404 acceptable)',
       ),

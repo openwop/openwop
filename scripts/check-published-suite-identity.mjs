@@ -48,7 +48,10 @@ import { tmpdir } from 'node:os';
 
 const REQUIRE_NETWORK = process.argv.includes('--require-network');
 const ROOT = new URL('..', import.meta.url).pathname;
-const PKG_DIR = join(ROOT, 'conformance');
+// Suite 2.0.0: two published packages share this identity rule — pass
+// `--package spec-artifacts` for the contract package (default: conformance).
+const pkgArg = process.argv.indexOf('--package');
+const PKG_DIR = join(ROOT, pkgArg >= 0 ? process.argv[pkgArg + 1] : 'conformance');
 
 /** Files npm adds or rewrites at publish time — comparing them proves nothing. */
 const IGNORED = new Set(['package.json']);

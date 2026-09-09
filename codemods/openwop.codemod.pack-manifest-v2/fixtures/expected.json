@@ -1,0 +1,9 @@
+{
+  "name": "vendor.example.tools",
+  "version": "1.4.0",
+  "engines": { "openwop": ">=2.0.0 <3.0.0" },
+  "peerDependencies": { "fs": ">=1.0.0", "aiProviders": ">=1.0.0", "agents": ">=1.0.0" },
+  "peerDependenciesMeta": { "fs": { "optional": true }, "agents": { "facets": ["memoryBackends"] } },
+  "signing": { "keyId": "openwop-team-1", "scheme": "ed25519-canonical-json" },
+  "kind": "node"
+}

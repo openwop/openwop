@@ -47,6 +47,8 @@ import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -74,7 +76,7 @@ describe('trigger-ingestion: TriggerEvent schema (always-on, server-free)', () =
     const ev = JSON.parse(readFileSync(EVENT_FIXTURE, 'utf8'));
     expect(
       validate(ev),
-      `trigger-event.schema.json MUST accept a conforming email TriggerEvent. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.trigger-ingestion.the-canonical-email-triggerevent-fixture-validates', 'RFC 0099', `trigger-event.schema.json MUST accept a conforming email TriggerEvent. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -83,7 +85,7 @@ describe('trigger-ingestion: TriggerEvent schema (always-on, server-free)', () =
     ev.webhook = { method: 'POST', body: { x: 1 } };
     expect(
       validate(ev),
-      'trigger-bridge.md §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others',
+      req('openwop.it.trigger-ingestion.the-f-1-one-of-rule-holds-a-source-email-event-carrying-a-webhook-sub-object-fai', 'RFC 0099', 'trigger-bridge.md §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others'),
     ).toBe(false);
   });
 
@@ -92,7 +94,7 @@ describe('trigger-ingestion: TriggerEvent schema (always-on, server-free)', () =
     ev.contentTrust = 'trusted';
     expect(
       validate(ev),
-      'trigger-bridge.md §F.1 — `contentTrust` MUST be `"untrusted"`',
+      req('openwop.it.trigger-ingestion.contenttrust-must-be-the-const-untrusted', 'RFC 0099', 'trigger-bridge.md §F.1 — `contentTrust` MUST be `"untrusted"`'),
     ).toBe(false);
   });
 
@@ -102,7 +104,7 @@ describe('trigger-ingestion: TriggerEvent schema (always-on, server-free)', () =
     noRef.email.attachments = [{ filename: 'x.png' }];
     expect(
       validate(noRef),
-      'SECURITY invariant trigger-ingestion-ssrf — an AttachmentRef MUST carry a host-internal `ref`',
+      req('openwop.it.trigger-ingestion.attachmentref-requires-a-host-internal-ref-and-rejects-a-raw-external-url-trigge', 'RFC 0099', 'SECURITY invariant trigger-ingestion-ssrf — an AttachmentRef MUST carry a host-internal `ref`'),
     ).toBe(false);
 
     // A raw external `url` the run would fetch itself → invalid
@@ -111,7 +113,7 @@ describe('trigger-ingestion: TriggerEvent schema (always-on, server-free)', () =
     rawUrl.email.attachments = [{ ref: 'blob_a1', url: 'http://169.254.169.254/latest/meta-data/' }];
     expect(
       validate(rawUrl),
-      'SECURITY invariant trigger-ingestion-ssrf — the host MUST NOT hand the run an external URL to fetch itself; AttachmentRef is a host-internal handle only',
+      req('openwop.it.trigger-ingestion.attachmentref-requires-a-host-internal-ref-and-rejects-a-raw-external-url-trigge', 'RFC 0099', 'SECURITY invariant trigger-ingestion-ssrf — the host MUST NOT hand the run an external URL to fetch itself; AttachmentRef is a host-internal handle only'),
     ).toBe(false);
   });
 
@@ -127,7 +129,7 @@ describe('trigger-ingestion: TriggerEvent schema (always-on, server-free)', () =
     };
     expect(
       validate(ev),
-      `a conforming webhook TriggerEvent MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.trigger-ingestion.a-webhook-triggerevent-with-an-allowlisted-header-validates', 'RFC 0099', `a conforming webhook TriggerEvent MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 });
@@ -143,7 +145,7 @@ describe('trigger-ingestion: content-freeness of the durable trigger.delivery.at
   const deliveryDef = payloads.$defs?.triggerDeliveryAttempted;
 
   it('trigger.delivery.attempted declares only the content-free RFC 0083 §C fields', () => {
-    expect(deliveryDef, 'run-event-payloads.schema.json MUST define triggerDeliveryAttempted').toBeDefined();
+    expect(deliveryDef, req('openwop.it.trigger-ingestion.trigger-delivery-attempted-declares-only-the-content-free-rfc-0083-c-fields', 'RFC 0083 §C', 'run-event-payloads.schema.json MUST define triggerDeliveryAttempted')).toBeDefined();
     const props = Object.keys(deliveryDef.properties ?? {});
     // The complete content-free field set — no `body`, `headers`, `email`,
     // `form`, `fields`, or any inbound-content carrier.
@@ -151,7 +153,7 @@ describe('trigger-ingestion: content-freeness of the durable trigger.delivery.at
     for (const banned of ['body', 'headers', 'email', 'form', 'fields', 'html', 'text', 'subject']) {
       expect(
         props.includes(banned),
-        `trigger-ingestion-content-redaction — the durable trigger.delivery.attempted payload MUST NOT carry an inbound-content field ("${banned}")`,
+        req('openwop.it.trigger-ingestion.trigger-delivery-attempted-declares-only-the-content-free-rfc-0083-c-fields', 'RFC 0083 §C', `trigger-ingestion-content-redaction — the durable trigger.delivery.attempted payload MUST NOT carry an inbound-content field ("${banned}")`),
       ).toBe(false);
     }
   });
@@ -165,16 +167,16 @@ describe('trigger-ingestion: TriggerSubscriptionRegistration schema (always-on, 
     const reg = JSON.parse(readFileSync(REG_FIXTURE, 'utf8'));
     expect(
       validate(reg),
-      `trigger-subscription-registration.schema.json MUST accept a conforming registration. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.trigger-ingestion.the-canonical-registration-fixture-validates', 'RFC 0099', `trigger-subscription-registration.schema.json MUST accept a conforming registration. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
   it('requires source + workflowId and rejects an out-of-enum source', () => {
-    expect(validate({ workflowId: 'w' }), 'registration MUST require `source`').toBe(false);
-    expect(validate({ source: 'email' }), 'registration MUST require `workflowId`').toBe(false);
+    expect(validate({ workflowId: 'w' }), req('openwop.it.trigger-ingestion.requires-source-workflowid-and-rejects-an-out-of-enum-source', 'RFC 0099', 'registration MUST require `source`')).toBe(false);
+    expect(validate({ source: 'email' }), req('openwop.it.trigger-ingestion.requires-source-workflowid-and-rejects-an-out-of-enum-source', 'RFC 0099', 'registration MUST require `workflowId`')).toBe(false);
     expect(
       validate({ source: 'schedule', workflowId: 'w' }),
-      'registration `source` MUST be one of webhook/email/form (schedule is not externally registerable)',
+      req('openwop.it.trigger-ingestion.requires-source-workflowid-and-rejects-an-out-of-enum-source', 'RFC 0099', 'registration `source` MUST be one of webhook/email/form (schedule is not externally registerable)'),
     ).toBe(false);
   });
 });
@@ -192,13 +194,13 @@ describe.skipIf(HTTP_SKIP)('trigger-ingestion: behavioral ingestion + SSRF (capa
       verification: { mode: 'none' },
       attachmentUrl: 'http://169.254.169.254/latest/meta-data/',
     });
-    if (ssrf.status === 404 || ssrf.status === 403) return; // seam unwired — soft-skip
+    if (ssrf.status === 404 || ssrf.status === 403) return softSkip('blocked', 'precondition not met — `ssrf.status === 404 || ssrf.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const ssrfBody = ssrf.json as { triggerEvent?: { email?: { attachments?: unknown[] } }; ssrfRefused?: boolean } | undefined;
     expect(
       ssrfBody?.ssrfRefused === true ||
         (ssrfBody?.triggerEvent?.email?.attachments ?? []).length === 0,
-      driver.describe(
+      req('openwop.it.trigger-ingestion.an-ingestion-path-fetch-to-a-private-address-is-refused-a-delivered-event-is-con', 
         'trigger-bridge.md §F.4',
         'trigger-ingestion-ssrf — an ingestion-path fetch to a private address MUST be refused (attachment dropped), the run still starting on the rest of the event',
       ),
@@ -211,14 +213,14 @@ describe.skipIf(HTTP_SKIP)('trigger-ingestion: behavioral ingestion + SSRF (capa
       verification: { mode: 'none' },
       webhook: { method: 'POST', headers: { Authorization: 'Bearer canary' }, body: { x: 1 } },
     });
-    if (del.status === 404 || del.status === 403) return;
+    if (del.status === 404 || del.status === 403) return softSkip('blocked', 'precondition not met — `del.status === 404 || del.status === 403` returned early (seam, prior step, or fixture unavailable)');
     const delBody = del.json as
       | { deliveryEvent?: Record<string, unknown>; triggerEvent?: { webhook?: { headers?: Record<string, string> } } }
       | undefined;
     const evtJson = JSON.stringify(delBody?.deliveryEvent ?? {});
     expect(
       evtJson.includes('Bearer canary') === false && evtJson.includes('Authorization') === false,
-      driver.describe(
+      req('openwop.it.trigger-ingestion.an-ingestion-path-fetch-to-a-private-address-is-refused-a-delivered-event-is-con', 
         'trigger-bridge.md §F.4',
         'trigger-ingestion-content-redaction — the durable trigger.delivery.attempted MUST NOT carry inbound body/header content',
       ),
@@ -226,7 +228,7 @@ describe.skipIf(HTTP_SKIP)('trigger-ingestion: behavioral ingestion + SSRF (capa
     const passedHeaders = delBody?.triggerEvent?.webhook?.headers ?? {};
     expect(
       Object.keys(passedHeaders).every((k) => k.toLowerCase() !== 'authorization'),
-      driver.describe(
+      req('openwop.it.trigger-ingestion.an-ingestion-path-fetch-to-a-private-address-is-refused-a-delivered-event-is-con', 
         'trigger-bridge.md §F.1',
         'webhook.headers MUST be a host-curated allowlist — Authorization MUST NOT pass through',
       ),

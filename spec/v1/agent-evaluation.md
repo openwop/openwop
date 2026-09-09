@@ -78,12 +78,7 @@ A host that omits the block does not run evals; `mode: "eval"` 501s and the beha
 
 ## Open spec gaps
 
-| ID     | Description                                                                                                                                                                                                                                 |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| EVAL-1 | **Closed (2026-09-02 audit).** `GET /v1/runs/{runId}/eval-summary` is in `api/openapi.yaml`; this row had said "deferred" after the endpoint landed. `mode: "eval"` is documented here and carried by the run-options schema.                                                                              |
-| EVAL-2 | The behavioral `agent-eval-run.test.ts` (event ordering, per-task scoring, `EvalSummary` round-trip) is gated on `capabilities.agents.evalSuite.supported` and soft-skips until a reference host wires the eval projection.                 |
-| EVAL-3 | Suite signing/trust inherits the pack signature (RFC 0003); a standalone (non-pack) suite distribution format is deferred.                                                                                                                  |
-| EVAL-4 | Judge-model selection + scoring for `rubric`/`adversarial` modes is host-internal at v1.x; a portable judge contract is a candidate successor RFC.                                                                                          |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.agent-evaluation.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

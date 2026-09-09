@@ -23,6 +23,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-speech-synthesizer';
 
@@ -42,36 +44,36 @@ describe('voice-synthesis-streaming (RFC 0106 §C)', () => {
     if (!behaviorGate('openwop-voice-synthesis', advertised)) return;
 
     const res = await driver.post(SEAM, { text: 'Welcome to the weekly digest.', voiceId: 'host:narrator-test', stream: true });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     expect(
       res.status === 200,
-      driver.describe('RFC 0106 §C', 'an advertised host MUST resolve stream:true with 200'),
+      req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'an advertised host MUST resolve stream:true with 200'),
     ).toBe(true);
 
     const audio = (res.json as { audio?: Record<string, unknown> })?.audio;
-    expect(audio !== undefined, driver.describe('RFC 0106 §C', 'the response MUST carry the finalized `audio` asset')).toBe(true);
+    expect(audio !== undefined, req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'the response MUST carry the finalized `audio` asset')).toBe(true);
     if (audio) {
       const hasUrl = typeof audio.url === 'string' && (audio.url as string).length > 0;
       const hasB64 = typeof audio.base64 === 'string' && (audio.base64 as string).length > 0;
-      expect(hasUrl !== hasB64, driver.describe('RFC 0106 §C', 'audio MUST carry EXACTLY ONE of url/base64')).toBe(true);
+      expect(hasUrl !== hasB64, req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'audio MUST carry EXACTLY ONE of url/base64')).toBe(true);
     }
 
     const chunks = eventsOf(res.json).filter((e) => e.type === 'voice.synthesis_chunk');
-    expect(chunks.length >= 1, driver.describe('RFC 0106 §C', 'MUST emit ≥1 voice.synthesis_chunk run-event')).toBe(true);
+    expect(chunks.length >= 1, req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'MUST emit ≥1 voice.synthesis_chunk run-event')).toBe(true);
     for (const c of chunks) {
       const p = c.payload ?? {};
-      expect(typeof p.seq === 'number', driver.describe('RFC 0106 §C', 'each chunk carries a numeric seq')).toBe(true);
-      expect(typeof p.mimeType === 'string', driver.describe('RFC 0106 §C', 'each chunk carries a mimeType')).toBe(true);
+      expect(typeof p.seq === 'number', req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'each chunk carries a numeric seq')).toBe(true);
+      expect(typeof p.mimeType === 'string', req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'each chunk carries a mimeType')).toBe(true);
       // Metadata-only: bytes by reference. An inline base64 is permitted ONLY under the host cap;
       // a chunk over the RFC 0055 256 KiB inline cap MUST be a url/streamRef reference.
       if (typeof p.base64 === 'string') {
-        expect((p.base64 as string).length <= 262144, driver.describe('RFC 0106 §C (G8)', 'inline chunk base64 MUST stay under the 256 KiB cap; else url/streamRef')).toBe(true);
+        expect((p.base64 as string).length <= 262144, req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C (G8)', 'inline chunk base64 MUST stay under the 256 KiB cap; else url/streamRef')).toBe(true);
       }
     }
     expect(
       chunks.some((c) => (c.payload ?? {}).final === true),
-      driver.describe('RFC 0106 §C', 'a terminal chunk MUST carry final:true'),
+      req('openwop.it.voice-synthesis-streaming.stream-true-resolves-the-finalized-asset-and-emits-metadata-only-voice-synthesis', 'RFC 0106 §C', 'a terminal chunk MUST carry final:true'),
     ).toBe(true);
   });
 });

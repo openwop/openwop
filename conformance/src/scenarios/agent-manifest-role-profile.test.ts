@@ -34,9 +34,9 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const BASE = 'https://openwop.dev/spec/v1/';
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -61,56 +61,56 @@ describe('agent-manifest-role-profile: AgentManifest.role + Skill profile (RFC 0
   it('NO role + any memoryShape (conversation+longTerm) validates — explicit, never inferred', () => {
     expect(
       manifest({ ...base, memoryShape: { scratchpad: true, conversation: true, longTerm: true } }),
-      why('RFC 0131 §A', 'absent role ⇒ unconstrained; nothing reclassifies (today’s meaning, unchanged)'),
+      req('openwop.it.agent-manifest-role-profile.no-role-any-memoryshape-conversation-longterm-validates-explicit-never-inferred', 'RFC 0131 §A', 'absent role ⇒ unconstrained; nothing reclassifies (today’s meaning, unchanged)'),
     ).toBe(true);
   });
 
   it('NO role + handoff + rich memory validates — handoff presence does NOT imply skill', () => {
     expect(
       manifest({ ...base, handoff, memoryShape: { conversation: true, longTerm: true } }),
-      why('RFC 0131 §A / Motivation 2', 'handoff is an interop contract, orthogonal to role — no inference'),
+      req('openwop.it.agent-manifest-role-profile.no-role-handoff-rich-memory-validates-handoff-presence-does-not-imply-skill', 'RFC 0131 §A / Motivation 2', 'handoff is an interop contract, orthogonal to role — no inference'),
     ).toBe(true);
   });
 
   it('role:"skill" WITH handoff + scratchpad-only memory validates', () => {
     expect(
       manifest({ ...base, role: 'skill', handoff, memoryShape: { scratchpad: true, conversation: false, longTerm: false } }),
-      why('RFC 0131 §B', 'a well-formed skill (handoff + scratchpad-only) MUST validate'),
+      req('openwop.it.agent-manifest-role-profile.role-skill-with-handoff-scratchpad-only-memory-validates', 'RFC 0131 §B', 'a well-formed skill (handoff + scratchpad-only) MUST validate'),
     ).toBe(true);
   });
 
   it('role:"skill" with memoryShape.longTerm:true FAILS validation (malformed, not degraded)', () => {
     expect(
       manifest({ ...base, role: 'skill', handoff, memoryShape: { scratchpad: true, longTerm: true } }),
-      why('RFC 0131 §B', 'a skill declaring longTerm memory is malformed — reject at publish/install'),
+      req('openwop.it.agent-manifest-role-profile.role-skill-with-memoryshape-longterm-true-fails-validation-malformed-not-degrade', 'RFC 0131 §B', 'a skill declaring longTerm memory is malformed — reject at publish/install'),
     ).toBe(false);
   });
 
   it('role:"skill" with memoryShape.conversation:true FAILS validation', () => {
     expect(
       manifest({ ...base, role: 'skill', handoff, memoryShape: { conversation: true } }),
-      why('RFC 0131 §B', 'a skill declaring conversation memory is malformed — reject'),
+      req('openwop.it.agent-manifest-role-profile.role-skill-with-memoryshape-conversation-true-fails-validation', 'RFC 0131 §B', 'a skill declaring conversation memory is malformed — reject'),
     ).toBe(false);
   });
 
   it('role:"skill" MISSING handoff FAILS validation', () => {
     expect(
       manifest({ ...base, role: 'skill', memoryShape: { scratchpad: true } }),
-      why('RFC 0131 §B', 'a skill MUST declare handoff (task→return capability)'),
+      req('openwop.it.agent-manifest-role-profile.role-skill-missing-handoff-fails-validation', 'RFC 0131 §B', 'a skill MUST declare handoff (task→return capability)'),
     ).toBe(false);
   });
 
   it('role:"assistant" with conversation+longTerm (and handoff) validates — no profile binds it', () => {
     expect(
       manifest({ ...base, role: 'assistant', handoff, memoryShape: { scratchpad: true, conversation: true, longTerm: true } }),
-      why('RFC 0131 §A', 'an assistant’s conversation + long-term memory are legitimate; it MAY ship handoff'),
+      req('openwop.it.agent-manifest-role-profile.role-assistant-with-conversation-longterm-and-handoff-validates-no-profile-binds', 'RFC 0131 §A', 'an assistant’s conversation + long-term memory are legitimate; it MAY ship handoff'),
     ).toBe(true);
   });
 
   it('role outside the ["skill","assistant"] enum FAILS', () => {
     expect(
       manifest({ ...base, role: 'agent' }),
-      why('RFC 0131 §A', '"agent" is not an enum value (it is the overloaded word the RFC removes)'),
+      req('openwop.it.agent-manifest-role-profile.role-outside-the-skill-assistant-enum-fails', 'RFC 0131 §A', '"agent" is not an enum value (it is the overloaded word the RFC removes)'),
     ).toBe(false);
   });
 });

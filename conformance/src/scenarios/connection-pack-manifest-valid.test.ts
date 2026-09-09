@@ -42,6 +42,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'connection-pack-manifest.schema.json');
 const FIXTURE_PATH = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
@@ -69,7 +70,7 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
   it('positive: the connection-pack-github fixture validates cleanly', () => {
     expect(
       validate(fixture()),
-      `connection-packs.md §Manifest clause 1: a well-formed kind:"connection" manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-manifest-valid.positive-the-connection-pack-github-fixture-validates-cleanly', 'connection-packs.md', `connection-packs.md §Manifest clause 1: a well-formed kind:"connection" manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -78,10 +79,10 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
       properties?: Record<string, { properties?: Record<string, unknown>; required?: string[] }>;
     };
     const connections = caps.properties?.connections;
-    expect(connections, 'capabilities.md §connections — the connections block MUST be declared').toBeDefined();
+    expect(connections, req('openwop.it.connection-pack-manifest-valid.capabilities-schema-json-declares-connections-packssupported-rfc-0095-c', 'RFC 0095 §C', 'capabilities.md §connections — the connections block MUST be declared')).toBeDefined();
     expect(
       connections?.properties?.packsSupported,
-      'RFC 0095 §C — connections.packsSupported MUST be declared',
+      req('openwop.it.connection-pack-manifest-valid.capabilities-schema-json-declares-connections-packssupported-rfc-0095-c', 'RFC 0095 §C', 'RFC 0095 §C — connections.packsSupported MUST be declared'),
     ).toBeDefined();
   });
 
@@ -90,7 +91,7 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     const errs = failsWith(m, 'const');
     expect(
       errs.length,
-      'connection-packs.md §Manifest clause 1: kind MUST be the const "connection"',
+      req('openwop.it.connection-pack-manifest-valid.negative-the-kind-discriminator-routes-other-kinds-away-kind-node-rejected', 'connection-packs.md', 'connection-packs.md §Manifest clause 1: kind MUST be the const "connection"'),
     ).toBeGreaterThan(0);
   });
 
@@ -102,7 +103,7 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     const errs = failsWith(m, 'additionalProperties');
     expect(
       errs.some((e) => (e.params as { additionalProperty?: string }).additionalProperty === 'nodes'),
-      'node-packs.md §"Pack kinds": one kind per pack — a foreign `nodes[]` field MUST be rejected (additionalProperties:false)',
+      req('openwop.it.connection-pack-manifest-valid.negative-a-manifest-mixing-provider-and-nodes-is-rejected-pack-kind-invalid-at-t', 'connection-packs.md', 'node-packs.md §"Pack kinds": one kind per pack — a foreign `nodes[]` field MUST be rejected (additionalProperties:false)'),
     ).toBe(true);
   });
 
@@ -112,7 +113,7 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     const errs = failsWith(m, 'pattern');
     expect(
       errs.length,
-      'connection-packs.md §Manifest clause 3: auth endpoints MUST be absolute https:// URLs',
+      req('openwop.it.connection-pack-manifest-valid.negative-a-non-https-token-endpoint-is-rejected-clause-3', 'connection-packs.md', 'connection-packs.md §Manifest clause 3: auth endpoints MUST be absolute https:// URLs'),
     ).toBeGreaterThan(0);
   });
 
@@ -120,7 +121,7 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     const m = { ...fixture(), version: '1.0.0-alpha.1' };
     expect(
       validate(m),
-      `connection-packs.md §Manifest clause 6: prerelease ordering is resolution-time SemVer §11, not manifest shape. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-manifest-valid.positive-a-semver-prerelease-version-is-schema-valid-precedence-is-a-host-concer', 'connection-packs.md', `connection-packs.md §Manifest clause 6: prerelease ordering is resolution-time SemVer §11, not manifest shape. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -130,16 +131,16 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     m.provider.vendor = 'Google';
     expect(
       validate(m),
-      `connection-packs.md §Manifest clause 16 (RFC 0123): a string provider.vendor MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-manifest-valid.positive-a-provider-vendor-string-validates-rfc-0123', 'RFC 0123', `connection-packs.md §Manifest clause 16 (RFC 0123): a string provider.vendor MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
   it('positive: a manifest OMITTING provider.vendor still validates (back-compat, RFC 0123)', () => {
     const m = fixture();
-    expect('vendor' in m.provider, 'the base fixture omits vendor').toBe(false);
+    expect('vendor' in m.provider, req('openwop.it.connection-pack-manifest-valid.positive-a-manifest-omitting-provider-vendor-still-validates-back-compat-rfc-012', 'RFC 0123', 'the base fixture omits vendor')).toBe(false);
     expect(
       validate(m),
-      `connection-packs.md §Manifest clause 16 (RFC 0123): vendor is OPTIONAL — a manifest without it MUST remain valid. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-manifest-valid.positive-a-manifest-omitting-provider-vendor-still-validates-back-compat-rfc-012', 'RFC 0123', `connection-packs.md §Manifest clause 16 (RFC 0123): vendor is OPTIONAL — a manifest without it MUST remain valid. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -149,7 +150,7 @@ describe('category: connection-pack manifest validation (RFC 0095 §A)', () => {
     const errs = failsWith(m, 'type');
     expect(
       errs.some((e) => e.instancePath === '/provider/vendor'),
-      'connection-packs.md §Manifest clause 16 (RFC 0123): provider.vendor MUST be a string — an array MUST be rejected',
+      req('openwop.it.connection-pack-manifest-valid.negative-a-non-string-provider-vendor-is-rejected-rfc-0123', 'RFC 0123', 'connection-packs.md §Manifest clause 16 (RFC 0123): provider.vendor MUST be a string — an array MUST be rejected'),
     ).toBe(true);
   });
 });

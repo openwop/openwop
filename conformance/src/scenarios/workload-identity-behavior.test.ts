@@ -37,6 +37,8 @@ import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-workload-identity';
 /**
@@ -88,7 +90,7 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
     const r = await resolve({ identity: { ...IDENTITY, audience: 'openwop-host' } });
     expect(
       r,
-      driver.describe(
+      req('openwop.it.workload-identity-behavior.the-seam-is-wired-or-the-requirement-is-blocked-rather-than-skipped', 
         'spec/v1/host-sample-test-seams.md §20',
         'a host advertising `auth.workloadIdentity` MUST expose the resolution seam. §A\'s ' +
           'requirements — verify, bind, resolve-before-authorize, fail closed — are invisible from ' +
@@ -102,21 +104,21 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
   it('a verified identity resolves to a principal', async () => {
     if (!behaviorGate(PROFILE, (await caps())?.supported === true)) return;
     const r = await resolve({ identity: { ...IDENTITY, audience: 'openwop-host' } });
-    if (r === null) return;
-    expect(r.status, driver.describe('RFCS/0154 §A', 'a verified identity resolves')).toBe(200);
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
+    expect(r.status, req('openwop.it.workload-identity-behavior.a-verified-identity-resolves-to-a-principal', 'RFCS/0154 §A', 'a verified identity resolves')).toBe(200);
     const principalId = (r.json as { principalId?: string }).principalId;
-    expect(principalId, driver.describe('RFCS/0154 §A', 'resolution yields an OpenWOP principal')).toBeTruthy();
+    expect(principalId, req('openwop.it.workload-identity-behavior.a-verified-identity-resolves-to-a-principal', 'RFCS/0154 §A', 'resolution yields an OpenWOP principal')).toBeTruthy();
   });
 
   it('an identity for another audience is rejected', async () => {
     if (!behaviorGate(PROFILE, (await caps())?.supported === true)) return;
     const r = await resolve({ identity: { ...IDENTITY, audience: 'some-other-host' }, expectedAudience: 'openwop-host' });
-    if (r === null) return;
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
     // The load-bearing negative. A host that echoes its input passes every
     // positive assertion; only this distinguishes a verifier from a passthrough.
     expect(
       r.status >= 400,
-      driver.describe(
+      req('openwop.it.workload-identity-behavior.an-identity-for-another-audience-is-rejected', 
         'RFCS/0154 §A + RFC 0147 R12',
         'an identity minted for another host, accepted here, is how a credential valid elsewhere ' +
           'becomes a credential valid here — the confused-deputy path this profile prevents',
@@ -140,10 +142,10 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
         },
       },
     });
-    if (r === null) return;
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.status >= 400,
-      driver.describe(
+      req('openwop.it.workload-identity-behavior.an-expired-delegation-is-rejected', 
         'RFCS/0154 §B',
         'a delegation without a live expiry is a standing grant, which is not what delegation means',
       ),
@@ -154,13 +156,13 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
   it('a failure is non-retriable and carries a closed reason code', async () => {
     if (!behaviorGate(PROFILE, (await caps())?.supported === true)) return;
     const r = await resolve({ identity: { scheme: 'spiffe', subject: 'spiffe://example/unknown' } });
-    if (r === null || r.status < 400) return;
+    if (r === null || r.status < 400) return softSkip('blocked', 'precondition not met — `r === null || r.status < 400` returned early (seam, prior step, or fixture unavailable)');
     // canonical flat envelope: code = `error`, retriable = `details.retriable`
     // (the legacy nested `error.{code,retriable}` the §20 catalog prescribed until
     // 2026-08-16 is tolerated by the helpers for the deprecation window)
     expect(
       readRetriable(r.json),
-      driver.describe(
+      req('openwop.it.workload-identity-behavior.a-failure-is-non-retriable-and-carries-a-closed-reason-code', 
         'spec/v1/host-sample-test-seams.md §20',
         'an identity that does not resolve will not resolve on retry. Marking it retriable invites ' +
           'a caller to hammer a failing authorization path.',
@@ -168,19 +170,19 @@ describe('RFC 0154 §A — workload identity resolution (capability-gated behavi
     ).toBe(false);
     expect(
       ['identity_unverified', 'identity_unresolvable', 'audience_mismatch', 'delegation_expired', 'sender_constraint_missing', 'delegation_chain_too_long', 'delegation_chain_cyclic', 'delegation_scope_amplified'],
-      driver.describe('RFCS/0154 §A', 'failures use a closed reason vocabulary'),
+      req('openwop.it.workload-identity-behavior.a-failure-is-non-retriable-and-carries-a-closed-reason-code', 'RFCS/0154 §A', 'failures use a closed reason vocabulary'),
     ).toContain(readErrorCode(r.json));
   });
 
   it('a resolution response carries no credential material', async () => {
     if (!behaviorGate(PROFILE, (await caps())?.supported === true)) return;
     const r = await resolve({ identity: { ...IDENTITY, audience: 'openwop-host' } });
-    if (r === null) return;
+    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
     const serialized = JSON.stringify(r.json ?? {});
     for (const forbidden of ['-----BEGIN', 'Bearer ', 'eyJ']) {
       expect(
         serialized.includes(forbidden),
-        driver.describe(
+        req('openwop.it.workload-identity-behavior.a-resolution-response-carries-no-credential-material', 
           'RFCS/0154 §A',
           'a verified identity is a fact about a completed verification, not a container for the ' +
             `material that proved it. Found: ${forbidden}`,

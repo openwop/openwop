@@ -19,6 +19,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface AuditIntegrityCaps {
   hashChain?: boolean;
@@ -50,11 +52,11 @@ describe('audit-log-integrity: profile shape', () => {
       capabilityFamily<AuthCaps>(disco.json, 'auth')
         ?.auditLogIntegrity ?? {};
 
-    expect(integrity.hashChain, driver.describe(
+    expect(integrity.hashChain, req('openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields', 
       'auth-profiles.md §"Audit-log integrity"',
       "openwop-audit-log-integrity profile MUST advertise auditLogIntegrity.hashChain: true",
     )).toBe(true);
-    expect(integrity.checkpointSignatureAlgorithm, driver.describe(
+    expect(integrity.checkpointSignatureAlgorithm, req('openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields', 
       'auth-profiles.md §"Audit-log integrity" §"Key management"',
       'checkpointSignatureAlgorithm MUST be present (canonical: ed25519)',
     )).toBeDefined();
@@ -72,11 +74,11 @@ describe('audit-log-integrity: verify endpoint returns chainValid', () => {
     if (verify.status === 404) {
       // Host claims the profile but doesn't expose the endpoint — that's
       // a profile-claim violation. Fail explicitly.
-      expect(verify.status, driver.describe(
+      expect(verify.status, req('openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true', 
         'auth-profiles.md §"Audit-log integrity" §"Verification endpoint"',
         'claiming openwop-audit-log-integrity profile REQUIRES exposing GET /v1/audit/verify',
       )).not.toBe(404);
-      return;
+      return softSkip('blocked', 'precondition not met — `verify.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(verify.status).toBe(200);
 
@@ -88,7 +90,7 @@ describe('audit-log-integrity: verify endpoint returns chainValid', () => {
       anomalies?: unknown[];
     };
 
-    expect(body.chainValid, driver.describe(
+    expect(body.chainValid, req('openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true', 
       'auth-profiles.md §"Audit-log integrity"',
       'unmodified audit range MUST report chainValid: true',
     )).toBe(true);
@@ -97,7 +99,7 @@ describe('audit-log-integrity: verify endpoint returns chainValid', () => {
 
     if (Array.isArray(body.checkpoints) && body.checkpoints.length > 0) {
       const cp = body.checkpoints[0];
-      expect(typeof cp.signature, 'checkpoint signature MUST be a non-empty string').toBe('string');
+      expect(typeof cp.signature, req('openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true', 'auth-profiles.md §"Audit-log integrity"', 'checkpoint signature MUST be a non-empty string')).toBe('string');
       expect((cp.signature ?? '').length).toBeGreaterThan(0);
     }
   });

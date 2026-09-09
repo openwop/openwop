@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/media.file.schema.json",
+  "title": "MediaFilePayload",
+  "description": "Payload for the OPTIONAL `media.file` AI Envelope kind (RFC 0055 §C). A downloadable, non-inline-rendered asset (document, archive, dataset). Carries a host-served URL reference (preferred) or, below the host's `aiProviders.maxInlineMediaBytes` cap, inline base64. Pairs with the `meta.rendering.display: \"file\"` hint. Advertised, opt-in kind — not a MUST-recognize universal kind.",
+  "type": "object",
+  "required": ["bytes"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tenant-scoped, non-guessable host-served asset URL (RFC 0055 §C rule 1). SHOULD be used above `aiProviders.maxInlineMediaBytes`. Enforced by the `media-asset-url-tenant-scoped` SECURITY invariant."
+    },
+    "base64": {
+      "type": "string",
+      "description": "Inline base64-encoded file bytes, permitted only at or below `aiProviders.maxInlineMediaBytes` (RFC 0055 §C rule 2). Above the cap the host MUST use `url`."
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Byte size of the asset."
+    },
+    "mimeType": {
+      "type": "string",
+      "description": "IANA media type (e.g. `application/pdf`, `text/csv`, `application/zip`). SHOULD match `meta.rendering.mimeType`."
+    },
+    "name": {
+      "type": "string",
+      "description": "Optional suggested filename for download (e.g. `q3-report.pdf`)."
+    },
+    "alt": {
+      "type": "string",
+      "description": "Text alternative / label for accessibility (RFC 0055 §B); mirrors `meta.rendering.alt` when the producer also sets the rendering hint."
+    }
+  },
+  "additionalProperties": false
+}

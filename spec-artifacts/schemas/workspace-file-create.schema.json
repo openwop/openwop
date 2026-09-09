@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/workspace-file-create.schema.json",
+  "title": "WorkspaceFileCreate",
+  "description": "RFC 0059. Request body for `PUT /v1/host/workspace/files/{path}` (atomic create/replace). The `path` is taken from the URL and MUST NOT be supplied here; the host assigns `version`, `etag`, and `updatedAt`. The client supplies only `content` and an optional `contentType`. Optimistic concurrency is expressed via the `If-Match` request header (the file's current `etag`), NOT a body field — a stale `If-Match` returns `409 workspace_conflict`. A `content` exceeding `capabilities.workspace.maxFileBytes` returns `workspace_too_large`. The response is a full `workspace-file.schema.json`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "UTF-8 file body to persist. SR-1-redacted on write per RFC 0059 §E WSR-1."
+    },
+    "contentType": {
+      "type": "string",
+      "default": "text/markdown",
+      "description": "Advisory MIME type of `content`. Defaults to `text/markdown`."
+    }
+  }
+}

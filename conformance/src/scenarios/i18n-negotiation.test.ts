@@ -36,6 +36,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -65,36 +67,36 @@ function errCode(json: unknown): string | undefined {
 describe.skipIf(HTTP_SKIP)('i18n-negotiation: advertisement shape (i18n.md §Capability advertisement)', () => {
   it('the i18n block is either absent or well-formed', async () => {
     const cap = await readCapabilityFamily<I18nCap>('i18n');
-    if (cap === undefined) return; // absent ⇒ single-locale host — conformant
+    if (cap === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === undefined` returned early (absent ⇒ single-locale host — conformant)'); // absent ⇒ single-locale host — conformant
 
     expect(
       typeof cap.supported,
-      driver.describe('capabilities.schema.json §i18n', 'i18n.supported MUST be a boolean when the block is present'),
+      req('openwop.it.i18n-negotiation.the-i18n-block-is-either-absent-or-well-formed', 'capabilities.schema.json §i18n', 'i18n.supported MUST be a boolean when the block is present'),
     ).toBe('boolean');
 
     if (cap.defaultLocale !== undefined) {
       expect(
         typeof cap.defaultLocale === 'string' && BCP47.test(cap.defaultLocale),
-        driver.describe('i18n.md §Capability advertisement', `i18n.defaultLocale MUST be a BCP 47 tag (got ${String(cap.defaultLocale)})`),
+        req('openwop.it.i18n-negotiation.the-i18n-block-is-either-absent-or-well-formed', 'i18n.md §Capability advertisement', `i18n.defaultLocale MUST be a BCP 47 tag (got ${String(cap.defaultLocale)})`),
       ).toBe(true);
     }
 
     if (cap.supportedLocales !== undefined) {
       expect(
         Array.isArray(cap.supportedLocales),
-        driver.describe('i18n.md §Capability advertisement', 'i18n.supportedLocales MUST be an array when present'),
+        req('openwop.it.i18n-negotiation.the-i18n-block-is-either-absent-or-well-formed', 'i18n.md §Capability advertisement', 'i18n.supportedLocales MUST be an array when present'),
       ).toBe(true);
       const locales = (cap.supportedLocales as unknown[]) ?? [];
       for (const tag of locales) {
         expect(
           typeof tag === 'string' && BCP47.test(tag),
-          driver.describe('i18n.md §Capability advertisement', `every supportedLocales entry MUST be a BCP 47 tag (got ${String(tag)})`),
+          req('openwop.it.i18n-negotiation.the-i18n-block-is-either-absent-or-well-formed', 'i18n.md §Capability advertisement', `every supportedLocales entry MUST be a BCP 47 tag (got ${String(tag)})`),
         ).toBe(true);
       }
       if (typeof cap.defaultLocale === 'string') {
         expect(
           locales,
-          driver.describe('i18n.md §Capability advertisement', 'supportedLocales MUST contain defaultLocale'),
+          req('openwop.it.i18n-negotiation.the-i18n-block-is-either-absent-or-well-formed', 'i18n.md §Capability advertisement', 'supportedLocales MUST contain defaultLocale'),
         ).toContain(cap.defaultLocale);
       }
     }
@@ -116,7 +118,7 @@ describe.skipIf(HTTP_SKIP)('i18n-negotiation: behavioral (i18n.md §Accept-Langu
     });
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.i18n-negotiation.an-unsupported-accept-language-falls-back-never-400-and-content-language-reflect', 
         'i18n.md §Accept-Language ("Host MUST NOT") + §Fallback rules',
         'an unsupported Accept-Language MUST NOT fail the request — the route still answers 404 not_found, not 400/406',
       ),
@@ -126,12 +128,12 @@ describe.skipIf(HTTP_SKIP)('i18n-negotiation: behavioral (i18n.md §Accept-Langu
     if (contentLanguage !== null) {
       expect(
         BCP47.test(contentLanguage),
-        driver.describe('i18n.md §Accept-Language rule 4', `Content-Language MUST be a BCP 47 tag (got ${contentLanguage})`),
+        req('openwop.it.i18n-negotiation.an-unsupported-accept-language-falls-back-never-400-and-content-language-reflect', 'i18n.md §Accept-Language rule 4', `Content-Language MUST be a BCP 47 tag (got ${contentLanguage})`),
       ).toBe(true);
       const primary = (tag: string): string => (tag.split('-')[0] ?? tag).toLowerCase();
       expect(
         primary(contentLanguage),
-        driver.describe(
+        req('openwop.it.i18n-negotiation.an-unsupported-accept-language-falls-back-never-400-and-content-language-reflect', 
           'i18n.md §Fallback rules 3–4 + §Conformance',
           'for an unsupported Accept-Language, Content-Language MUST reflect the host default locale (never lie)',
         ),
@@ -148,7 +150,7 @@ describe.skipIf(HTTP_SKIP)('i18n-negotiation: behavioral (i18n.md §Accept-Langu
     });
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.i18n-negotiation.a-malformed-accept-language-must-not-cause-400', 
         'i18n.md §Accept-Language Host-MUST rule 1',
         'a malformed Accept-Language MUST NOT cause 400 — the host parses best-effort and proceeds (404 not_found here)',
       ),
@@ -190,7 +192,7 @@ describe.skipIf(HTTP_SKIP)('i18n-negotiation: behavioral (i18n.md §Accept-Langu
     // (a) the code is an English snake_case identifier (not localized prose)
     expect(
       typeof negotiatedCode === 'string' && /^[a-z][a-z0-9_]*$/.test(negotiatedCode),
-      driver.describe(
+      req('openwop.it.i18n-negotiation.the-error-code-stays-the-canonical-english-token-under-a-negotiated-locale', 
         'i18n.md §"`locale` field on `ErrorEnvelope.details`"',
         `the machine-readable error code MUST be an English lowercase snake_case identifier, not localized text (got ${String(negotiatedCode)} under ${negotiated})`,
       ),
@@ -199,7 +201,7 @@ describe.skipIf(HTTP_SKIP)('i18n-negotiation: behavioral (i18n.md §Accept-Langu
     // (b) it is byte-identical to the default-locale code — the actual invariance MUST
     expect(
       negotiatedCode,
-      driver.describe(
+      req('openwop.it.i18n-negotiation.the-error-code-stays-the-canonical-english-token-under-a-negotiated-locale', 
         'i18n.md §"`locale` field on `ErrorEnvelope.details`"',
         `the machine-readable error code MUST remain identical regardless of the negotiated locale (default ${defaultLocale} → ${String(baseCode)}; negotiated ${negotiated})`,
       ),

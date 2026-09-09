@@ -36,6 +36,8 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host exports OTLP metrics to the suite's collector.
@@ -91,14 +93,14 @@ describe.skipIf(SKIP_NO_NOOP)('cost-attribution: metrics.openwopCost forward-com
       // passes trivially; don't force a value on a workflow that produces
       // no cost.
       expect(openwopCost).toBeUndefined();
-      return;
+      return softSkip('blocked', 'precondition not met — `openwopCost === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // When present, validate the canonical shape per
     // run-snapshot.schema.json §metrics.openwopCost.
     if ('usd' in openwopCost) {
-      expect(typeof openwopCost.usd, 'metrics.openwopCost.usd MUST be a number').toBe('number');
-      expect(openwopCost.usd!, 'metrics.openwopCost.usd MUST be >= 0').toBeGreaterThanOrEqual(0);
+      expect(typeof openwopCost.usd, req('openwop.it.cost-attribution.on-any-run-if-metrics-openwopcost-is-present-its-shape-must-match-the-spec', 'spec/v1/observability.md §"AI cost', 'metrics.openwopCost.usd MUST be a number')).toBe('number');
+      expect(openwopCost.usd!, req('openwop.it.cost-attribution.on-any-run-if-metrics-openwopcost-is-present-its-shape-must-match-the-spec', 'spec/v1/observability.md §"AI cost', 'metrics.openwopCost.usd MUST be >= 0')).toBeGreaterThanOrEqual(0);
     }
     if ('tokens' in openwopCost && openwopCost.tokens) {
       if ('input' in openwopCost.tokens) {
@@ -115,10 +117,10 @@ describe.skipIf(SKIP_NO_NOOP)('cost-attribution: metrics.openwopCost forward-com
       expect(openwopCost.duration_ms!).toBeGreaterThanOrEqual(0);
     }
     if ('model' in openwopCost) {
-      expect(typeof openwopCost.model, 'metrics.openwopCost.model MUST be a string').toBe('string');
+      expect(typeof openwopCost.model, req('openwop.it.cost-attribution.on-any-run-if-metrics-openwopcost-is-present-its-shape-must-match-the-spec', 'spec/v1/observability.md §"AI cost', 'metrics.openwopCost.model MUST be a string')).toBe('string');
     }
     if ('provider' in openwopCost) {
-      expect(typeof openwopCost.provider, 'metrics.openwopCost.provider MUST be a string').toBe('string');
+      expect(typeof openwopCost.provider, req('openwop.it.cost-attribution.on-any-run-if-metrics-openwopcost-is-present-its-shape-must-match-the-spec', 'spec/v1/observability.md §"AI cost', 'metrics.openwopCost.provider MUST be a string')).toBe('string');
     }
   });
 });
@@ -140,23 +142,23 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
     // Fixture absent — host does not opt into OPENWOP_CONFORMANCE_FIXTURES.
     // That's spec-allowed; the scenario passes trivially.
     if (create.status === 404 || create.status === 422) {
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (Fixture absent — host does not opt into OPENWOP_CONFORMANCE_FIXTURES. That\'s spec-allowed; the scenario passes trivially.) (seam,…');
     }
 
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
       'rest-endpoints.md POST /v1/runs',
       'starting openwop-smoke-cost-emit MUST succeed when OPENWOP_CONFORMANCE_FIXTURES=1 is advertised',
     )).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
       'observability.md §AI cost',
       'cost-emit fixture run MUST reach terminal completed',
     )).toBe('completed');
 
     const openwopCost = terminal.metrics?.openwopCost;
-    expect(openwopCost, driver.describe(
+    expect(openwopCost, req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
       'run-snapshot.schema.json §metrics.openwopCost',
       'metrics.openwopCost MUST be populated after a node calls ctx.recordCost()',
     )).toBeDefined();
@@ -176,14 +178,14 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
     // Tokens — MUST be non-negative integers when present.
     if ('tokens' in openwopCost! && openwopCost!.tokens) {
       if ('input' in openwopCost!.tokens) {
-        expect(Number.isInteger(openwopCost!.tokens.input), driver.describe(
+        expect(Number.isInteger(openwopCost!.tokens.input), req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
           'observability.md §openwop.cost.tokens.input',
           'tokens.input MUST be a non-negative integer',
         )).toBe(true);
         expect(openwopCost!.tokens.input!).toBeGreaterThanOrEqual(0);
       }
       if ('output' in openwopCost!.tokens) {
-        expect(Number.isInteger(openwopCost!.tokens.output), driver.describe(
+        expect(Number.isInteger(openwopCost!.tokens.output), req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
           'observability.md §openwop.cost.tokens.output',
           'tokens.output MUST be a non-negative integer',
         )).toBe(true);
@@ -193,11 +195,11 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
 
     // USD — MUST be non-negative number (fractional allowed).
     if ('usd' in openwopCost!) {
-      expect(typeof openwopCost!.usd, driver.describe(
+      expect(typeof openwopCost!.usd, req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
         'observability.md §openwop.cost.usd',
         'usd MUST be a number',
       )).toBe('number');
-      expect(openwopCost!.usd!, driver.describe(
+      expect(openwopCost!.usd!, req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs', 
         'observability.md §openwop.cost.usd',
         'usd MUST be >= 0',
       )).toBeGreaterThanOrEqual(0);
@@ -209,7 +211,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
       workflowId: 'openwop-smoke-cost-emit',
     });
     if (create.status === 404 || create.status === 422) {
-      return;
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -224,7 +226,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
     const completed = events.filter(
       (e) => e.type === 'node.completed' && e.nodeId === 'emit-cost',
     );
-    expect(completed.length, driver.describe(
+    expect(completed.length, req('openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod', 
       'event-log.md §node.completed',
       'cost-emit fixture node MUST emit exactly one node.completed event',
     )).toBe(1);
@@ -247,7 +249,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
-      return;
+      return softSkip('blocked', 'precondition not met — `!getCollector()` returned early ([cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run) (seam, prior step, or fixture unavailable)');
     }
     const collector = getCollector()!;
     collector.reset();
@@ -258,7 +260,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
     await pollUntilTerminal(runId, { timeoutMs: 15_000 });
 
     const runSpans = await waitForRunSpans(runId, { timeoutMs: 5_000, minCount: 1 });
-    expect(runSpans.length, driver.describe(
+    expect(runSpans.length, req('openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a', 
       'observability.md §"Span attributes"',
       'host MUST emit at least one span for the cost-emit run',
     )).toBeGreaterThan(0);
@@ -276,7 +278,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
         }
       }
     }
-    expect(stray, driver.describe(
+    expect(stray, req('openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a', 
       'observability.md §"Cost attribution attributes" (allowlist enforcement)',
       'host MUST NOT emit any openwop.cost.* attribute outside OPENWOP_COST_ATTRIBUTE_NAMES; defense-in-depth against accidental leakage of upstream provider fields under unfamiliar key names',
     )).toEqual([]);
@@ -286,7 +288,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
-      return;
+      return softSkip('blocked', 'precondition not met — `!getCollector()` returned early ([cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run) (seam, prior step, or fixture unavailable)');
     }
     const collector = getCollector()!;
     collector.reset();
@@ -309,7 +311,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
 
     expect(
       corpus.includes('CANARY-openwop-CONFORMANCE-NEVER-SECRET'),
-      driver.describe(
+      req('openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r', 
         'SECURITY/invariants.yaml cost-attribution-allowlist-redaction',
         'no canary plaintext substring may survive the allowlist sanitizer on its way to OTel spans',
       ),
@@ -320,7 +322,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
     // through non-canary keys that the allowlist still happens to let
     // through (none today, but the regression test is cheap).
     const byokMatches = corpus.match(CREDENTIAL_SHAPE_RE) ?? [];
-    expect(byokMatches, driver.describe(
+    expect(byokMatches, req('openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r', 
       'SECURITY/invariants.yaml cost-attribution-allowlist-redaction',
       'no credential-shape substring may appear in cost-attribute span values',
     )).toEqual([]);

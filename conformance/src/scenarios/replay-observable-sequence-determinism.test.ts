@@ -44,6 +44,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-phase4-nondet-tool';
@@ -186,7 +187,7 @@ describe.skipIf(HTTP_SKIP)(
       const replayNorm = replayEvents.map(stripVolatile);
       expect(
         replayNorm,
-        driver.describe(
+        req('openwop.it.replay-observable-sequence-determinism.original-and-replay-event-log-prefixes-must-be-byte-equivalent-modulo-per-event', 
           'RFCS/0041-multi-agent-replay-under-nondeterminism.md §C',
           'a mode:replay fork MUST reproduce the original observable event-log sequence byte-for-byte modulo volatile per-event fields (eventId/ULID entropy, per-region observedAt clock)',
         ),
@@ -211,7 +212,7 @@ describe.skipIf(HTTP_SKIP)(
       const sourceNodeEvents = sourceEvents.filter((e) => e.nodeId === NONDET_NODE_ID).map(stripVolatile);
       expect(
         sourceNodeEvents.length,
-        driver.describe(
+        req('openwop.it.replay-observable-sequence-determinism.replay-of-a-nondeterministic-tool-node-reproduces-the-original-observable-result', 
           'RFCS/0041-multi-agent-replay-under-nondeterminism.md §C',
           `the fixture's nondeterministic node \`${NONDET_NODE_ID}\` MUST emit at least one observable event`,
         ),
@@ -229,7 +230,7 @@ describe.skipIf(HTTP_SKIP)(
 
       expect(
         replayNodeEvents,
-        driver.describe(
+        req('openwop.it.replay-observable-sequence-determinism.replay-of-a-nondeterministic-tool-node-reproduces-the-original-observable-result', 
           'RFCS/0041-multi-agent-replay-under-nondeterminism.md §C',
           'the nondeterministic tool node MUST replay its ORIGINAL observable result (cached event-log entry) rather than re-executing — bit-equivalent re-execution would require unbounded caching, rejected per RFC 0041 §"Alternatives considered" #2',
         ),

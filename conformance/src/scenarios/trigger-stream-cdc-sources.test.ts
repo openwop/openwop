@@ -48,6 +48,8 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { driveDelivery } from '../lib/triggerBridge.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -71,7 +73,7 @@ describe('trigger-stream-cdc: TriggerEvent schema for stream/change (always-on, 
     const ev = JSON.parse(readFileSync(STREAM_FIXTURE, 'utf8'));
     expect(
       validate(ev),
-      `trigger-event.schema.json MUST accept a conforming stream TriggerEvent (RFC 0127 §2). Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.trigger-stream-cdc-sources.the-canonical-stream-triggerevent-fixture-validates', 'RFC 0127', `trigger-event.schema.json MUST accept a conforming stream TriggerEvent (RFC 0127 §2). Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -79,7 +81,7 @@ describe('trigger-stream-cdc: TriggerEvent schema for stream/change (always-on, 
     const ev = JSON.parse(readFileSync(CHANGE_FIXTURE, 'utf8'));
     expect(
       validate(ev),
-      `trigger-event.schema.json MUST accept a conforming change TriggerEvent (RFC 0127 §2 / RFC 0128 §1). Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.trigger-stream-cdc-sources.the-canonical-change-triggerevent-fixture-validates-op-permittedpurposes-present', 'RFC 0127', `trigger-event.schema.json MUST accept a conforming change TriggerEvent (RFC 0127 §2 / RFC 0128 §1). Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -88,7 +90,7 @@ describe('trigger-stream-cdc: TriggerEvent schema for stream/change (always-on, 
     delete ev.change.op;
     expect(
       validate(ev),
-      'RFC 0127 §2 — `op` (insert|update|delete) is REQUIRED on a change event (schema-enforced in the ChangeEvent $def)',
+      req('openwop.it.trigger-stream-cdc-sources.a-change-event-without-op-fails-changeevent-requires-the-operation-discriminator', 'RFC 0127', 'RFC 0127 §2 — `op` (insert|update|delete) is REQUIRED on a change event (schema-enforced in the ChangeEvent $def)'),
     ).toBe(false);
   });
 
@@ -97,7 +99,7 @@ describe('trigger-stream-cdc: TriggerEvent schema for stream/change (always-on, 
     ev.change.op = 'upsert';
     expect(
       validate(ev),
-      'RFC 0127 §2 — `op` MUST be one of insert|update|delete',
+      req('openwop.it.trigger-stream-cdc-sources.an-out-of-enum-op-fails', 'RFC 0127', 'RFC 0127 §2 — `op` MUST be one of insert|update|delete'),
     ).toBe(false);
   });
 
@@ -106,7 +108,7 @@ describe('trigger-stream-cdc: TriggerEvent schema for stream/change (always-on, 
     ev.change = { op: 'insert', table: 't' };
     expect(
       validate(ev),
-      'trigger-bridge.md §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others (extends to stream/change per RFC 0127)',
+      req('openwop.it.trigger-stream-cdc-sources.the-f-1-exactly-one-rule-extends-a-source-stream-event-carrying-a-change-sub-obj', 'RFC 0127', 'trigger-bridge.md §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others (extends to stream/change per RFC 0127)'),
     ).toBe(false);
   });
 });
@@ -121,7 +123,7 @@ describe('trigger-stream-cdc: registration + capabilities vocabulary (always-on,
     for (const source of ['stream', 'change']) {
       expect(
         validateReg({ source, workflowId: 'wf_1' }),
-        `trigger-subscription-registration.schema.json MUST accept source:"${source}" (RFC 0127 §1). Errors: ${JSON.stringify(validateReg.errors)}`,
+        req('openwop.it.trigger-stream-cdc-sources.a-registration-accepts-source-stream-and-source-change', 'RFC 0127', `trigger-subscription-registration.schema.json MUST accept source:"${source}" (RFC 0127 §1). Errors: ${JSON.stringify(validateReg.errors)}`),
       ).toBe(true);
     }
   });
@@ -132,8 +134,8 @@ describe('trigger-stream-cdc: registration + capabilities vocabulary (always-on,
     const sources: string[] = tb.sources?.items?.enum ?? [];
     const external: string[] = tb.ingestion?.properties?.externalSources?.items?.enum ?? [];
     for (const v of ['stream', 'change']) {
-      expect(sources.includes(v), `RFC 0127 §1 — triggerBridge.sources[] enum MUST include "${v}"`).toBe(true);
-      expect(external.includes(v), `RFC 0127 §3 — ingestion.externalSources[] enum MUST include "${v}"`).toBe(true);
+      expect(sources.includes(v), req('openwop.it.trigger-stream-cdc-sources.the-capabilities-source-enums-include-stream-change-regression-pin', 'RFC 0127', `RFC 0127 §1 — triggerBridge.sources[] enum MUST include "${v}"`)).toBe(true);
+      expect(external.includes(v), req('openwop.it.trigger-stream-cdc-sources.the-capabilities-source-enums-include-stream-change-regression-pin', 'RFC 0127', `RFC 0127 §3 — ingestion.externalSources[] enum MUST include "${v}"`)).toBe(true);
     }
   });
 });
@@ -169,7 +171,7 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
       if ((res.status === 404 || res.status === 405 || res.status === 400 || res.status === 422) && !advertisesNew) continue; // pre-0127 host — soft-skip this source
       expect(
         res.status < 400,
-        driver.describe(
+        req('openwop.it.trigger-stream-cdc-sources.a-stream-and-a-change-event-each-ingest-to-a-run-with-a-schema-valid-envelope-an', 
           'trigger-bridge.md §F.5',
           `a host advertising ingestion of "${body.source as string}" MUST ingest it (advertise-only-what-you-honor, RFC 0127 §Negative example) — got HTTP ${res.status}`,
         ),
@@ -178,7 +180,7 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
       const out = res.json as { triggerEvent?: Record<string, unknown>; deliveryEvent?: Record<string, unknown> } | undefined;
       expect(
         validate(out?.triggerEvent),
-        driver.describe(
+        req('openwop.it.trigger-stream-cdc-sources.a-stream-and-a-change-event-each-ingest-to-a-run-with-a-schema-valid-envelope-an', 
           'trigger-bridge.md §F.5',
           `the delivered ${body.source as string} envelope MUST validate against trigger-event.schema.json. Errors: ${JSON.stringify(validate.errors)}`,
         ),
@@ -188,7 +190,7 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
       const durable = JSON.stringify(out?.deliveryEvent ?? {});
       expect(
         !durable.includes('CANARY-STREAM-BODY') && !durable.includes('CANARY-CHANGE-BODY'),
-        driver.describe(
+        req('openwop.it.trigger-stream-cdc-sources.a-stream-and-a-change-event-each-ingest-to-a-run-with-a-schema-valid-envelope-an', 
           'trigger-bridge.md §F.5 (SR-1)',
           'the durable trigger.delivery.attempted MUST be content-free — the broker message / CDC row body has no slot on the event log',
         ),
@@ -202,11 +204,11 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
     if (!behaviorGate('triggerBridge.ingestion', (external.length ?? 0) > 0)) return;
 
     const first = await driveDelivery({ scenario: 'dedup', dedupKey: 'events:3:99001', source: 'stream' });
-    if (first === null) return; // delivery seam unwired — soft-skip
-    if (first.outcome === undefined && !external.includes('stream')) return; // pre-0127 host — soft-skip
+    if (first === null) return softSkip('blocked', 'precondition not met — `first === null` returned early (delivery seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // delivery seam unwired — soft-skip
+    if (first.outcome === undefined && !external.includes('stream')) return softSkip('blocked', 'precondition not met — `first.outcome === undefined && !external.includes(\'stream\')` returned early (pre-0127 host — soft-skip) (seam, prior step, or fixture unavailable)'); // pre-0127 host — soft-skip
     expect(
       first.deliveredCount === 1 || first.outcome === 'delivered',
-      driver.describe(
+      req('openwop.it.trigger-stream-cdc-sources.stream-dedup-the-same-broker-coordinates-delivered-twice-are-effectively-once-c', 
         'trigger-bridge.md §F.5 / §C-1',
         'a stream event dedup-keyed on (topic,partition,offset) redelivered within the window MUST be effectively-once — reuses the RFC 0083 §C-1 ≥24h floor unchanged',
       ),

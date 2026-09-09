@@ -1,0 +1,22 @@
+# Scoped, documented exceptions to redocly's `no-ambiguous-paths` rule.
+# The rule stays ENABLED globally (it catches genuinely ambiguous new paths);
+# only the two known-safe occurrences below are exempted.
+#
+# Why these are safe (NOT merely tolerated):
+#   The rule flags the structural template/literal swap between
+#   `/v1/agents/{agentId}/deployments` and the sibling collection routes
+#   `/v1/agents/roster/{rosterId}` + `/v1/agents/org-chart/{departmentId}`
+#   (e.g. `/v1/agents/roster/deployments` could in principle parse two ways).
+#   It is resolved deterministically:
+#     1. `agentId` carries `pattern: '^(?!roster$|org-chart$).+$'` (see the two
+#        `/v1/agents/{agentId}*` paths), so `{agentId}` can NEVER be `roster` or
+#        `org-chart` — a pattern-aware validator/router cannot misroute.
+#     2. OpenAPI 3.x matching is concrete-before-templated, so `/v1/agents/roster/*`
+#        and `/v1/agents/org-chart/*` bind to the literal collection routes first.
+#   The paths are all normative (RFC 0072/0082/0086/0087), so they can't be
+#   renamed without a breaking change; the pattern is the non-breaking fix and
+#   redocly's purely-structural rule can't see it.
+openapi.yaml:
+  no-ambiguous-paths:
+    - '#/paths/~1v1~1agents~1roster~1{rosterId}'
+    - '#/paths/~1v1~1agents~1org-chart~1{departmentId}'

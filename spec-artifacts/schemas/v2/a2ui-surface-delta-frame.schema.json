@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/a2ui-surface-delta-frame.schema.json",
+  "title": "A2uiSurfaceDeltaFrame",
+  "description": "RFC 0114. A HOST-SIDE TRANSPORT frame carrying an RFC 6902 (JSON-Patch) delta over a recorded `ui.a2ui-surface` envelope (RFC 0102). Delivered ONLY over the run event stream (`GET /v1/runs/{runId}/events`) to a subscriber that negotiated `?a2uiDelta=1`; every other consumer (the event-log read, replay, `:fork`, any non-negotiating subscriber) receives the materialized FULL surface. This is NOT a recorded-envelope shape: the canonical `ui.a2ui-surface.schema.json` envelope is UNCHANGED and always full. The consumer applies the `patch` to the surface last delivered under `surfaceRef`, then re-validates the result against the closed `catalogVersion` catalog before render (the same fail-closed validation a full surface receives, RFC 0102 §1); on ANY apply/validation failure it falls back to store-without-render and the host re-materializes the full surface.",
+  "type": "object",
+  "required": [
+    "surfaceRef",
+    "catalogVersion",
+    "patch"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "surfaceRef": {
+      "type": "string",
+      "description": "REQUIRED — the recorded `ui.a2ui-surface` envelope id this delta patches. The consumer applies `patch` to the surface last delivered under this ref.",
+      "minLength": 1
+    },
+    "catalogVersion": {
+      "type": "string",
+      "description": "REQUIRED — the A2UI catalog version. MUST equal the referenced full surface's `catalogVersion`; a catalog-version change MUST start from a fresh full surface, never a delta.",
+      "minLength": 1
+    },
+    "patch": {
+      "type": "array",
+      "minItems": 1,
+      "description": "REQUIRED — a non-empty RFC 6902 (JSON-Patch) document applied over the surface last delivered under `surfaceRef`. The `test` op is EXCLUDED (a fire-and-forget transport frame cannot act on a failed conditional); `move`/`copy` are permitted but OPTIONAL to support.",
+      "items": {
+        "type": "object",
+        "required": [
+          "op",
+          "path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "enum": [
+              "add",
+              "remove",
+              "replace",
+              "move",
+              "copy"
+            ],
+            "description": "RFC 6902 operation. `test` is deliberately excluded."
+          },
+          "path": {
+            "type": "string",
+            "description": "RFC 6901 JSON-Pointer into the target surface."
+          },
+          "from": {
+            "type": "string",
+            "description": "RFC 6901 JSON-Pointer source for `move`/`copy`."
+          },
+          "value": {
+            "description": "The value for `add`/`replace`. Walked by the SR-1 redaction harness exactly like a full-surface value (RFC 0114)."
+          }
+        }
+      }
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

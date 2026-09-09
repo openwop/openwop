@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/schema.request.schema.json",
+  "title": "SchemaRequestPayload",
+  "description": "Payload for the universal `schema.request` AI Envelope kind. Emitted by an LLM when it wants the JSON Schema of a kind it doesn't have memorized (or wants to verify a kind's current shape before emitting). The engine's response is NOT a `RunEventDoc` — it is an out-of-band addition to the LLM's context for the next turn (returned via the same mechanism the host uses to inject system-prompt content). The response document SHOULD include the per-kind JSON Schema at `Capabilities.schemaVersions[envelopeType]`. Counts against `Capabilities.limits.schemaRounds`; on breach the engine emits `cap.breached { kind: 'schema' }` and fails the node per `capabilities.md` §\"Engine-enforced limits\".",
+  "type": "object",
+  "required": ["envelopeType"],
+  "properties": {
+    "reasoning": {
+      "type": "string",
+      "description": "OPTIONAL chain-of-thought field per RFC 0030 §A — useful when the model wants to explain why it's asking for the schema (e.g., uncertainty about a specific kind's shape). Informational only; hosts SHALL NOT route on contents. Hosts MUST NOT reject envelopes where `reasoning` is absent. Subject to SR-1 redaction per `ai-envelope.md` §\"Redaction\" and the `envelope-reasoning-secret-redaction` invariant."
+    },
+    "envelopeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Envelope kind the LLM is asking about. MUST be present in the host's `Capabilities.supportedEnvelopes` advertisement; engines MUST refuse `schema.request` for unknown kinds with `unknown_envelope_kind` (consistent with the production-flow ordering in `ai-envelope.md`)."
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 1024,
+      "description": "Optional diagnostic explaining why the LLM is requesting the schema (e.g., `\"I'm not sure my last emission matched\"`). Surfaces in OTel spans and debug bundles; never persisted into security-relevant payloads."
+    }
+  },
+  "additionalProperties": false
+}

@@ -20,6 +20,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isOrchestratorSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-orchestrator-terminate';
 const SKIP = !isOrchestratorSupported() || !isFixtureAdvertised(FIXTURE);
@@ -27,7 +28,7 @@ const SKIP = !isOrchestratorSupported() || !isFixtureAdvertised(FIXTURE);
 describe.skipIf(SKIP)('orchestratorTermination: terminate decision → run.completed (CO-3)', () => {
   it('terminate is the final orchestrator decision; run completes cleanly', async () => {
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
-    expect(create.status).toBe(201);
+    expect(create.status, req('openwop.it.orchestratorTermination.terminate-is-the-final-orchestrator-decision-run-completes-cleanly', 'RFCS/0006-orchestrator.md', 'terminate is the final orchestrator decision; run completes cleanly')).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);

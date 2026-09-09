@@ -1,0 +1,69 @@
+{
+  "$comment": "GENERATED from spec/v2/declaration.json (RFC 0169 §C.1). A profile is a predicate over the declaration: every listed family present as a record (and every listed metadata key present). No profiles[] exists at the v2 root.",
+  "generatedFrom": "spec/v2/declaration.json",
+  "profiles": [
+    {
+      "id": "openwop-discovery-core",
+      "predicate": {
+        "families": [],
+        "metadata": [
+          "protocolVersions",
+          "preferredVersion"
+        ]
+      },
+      "floorScenarios": [
+        "v2-capabilities-root-closed",
+        "v2-preferred-version-default",
+        "v2-version-header-honored"
+      ],
+      "requirementIds": [],
+      "note": "discovery only; the alias openwop-core is deleted (row C2.3). Floor minted rc.45: the closed root, the preferredVersion default, and the header honoured-or-refused — each unaided. v2-well-known-one-resource is deliberately absent: it is inapplicable by design for a host advertising one major, which every host becomes at v1 end-of-support, and a floor that expires is not a floor."
+    },
+    {
+      "id": "openwop-core-standard",
+      "predicate": {
+        "families": [
+          "interrupt",
+          "replay",
+          "webhooks",
+          "idempotency",
+          "eventLog"
+        ]
+      },
+      "floorScenarios": [
+        "v2-interrupt-token-scheme",
+        "v2-effect-seam-manifest",
+        "v2-webhook-durable-delivery",
+        "v2-idempotency-key-grammar",
+        "v2-era-key",
+        "v2-era-stamp-universal",
+        "v2-event-type-closed",
+        "v2-poll-cursor-v2",
+        "v2-run-cancel",
+        "v2-run-bulk-cancel",
+        "v2-run-pause-resume",
+        "v2-run-options-limits",
+        "v2-sse-last-event-id"
+      ],
+      "requirementIds": [],
+      "note": "rc.59: five unaided run-surface witnesses joined the floor — v2-run-cancel (runs.md §Cancel: 409 run_terminal on a terminal run), v2-run-bulk-cancel (§Cancel: per-entry envelopes, id_tenant_mismatch / not_found, details.maxRunIds), v2-run-pause-resume (§Pause and resume: 409 run_terminal / run_state_conflict, the literal drainPolicy echo, the immediate cut), v2-run-options-limits (capabilities.md limits metadata honoured on create), v2-sse-last-event-id (events.md §SSE frames: Last-Event-ID resumes at the next sequence, never re-emits the resumption point). cancelRun, bulkCancelRuns and pauseRun are core operations by the runs.md surface table (only ancestry, annotations and eval-summary are 404-when-unadvertised), so a host that omits one is blocked, not inapplicable, and the floor refuses it — the prose's outcome. Their optional legs (values mode, the conformance-delay / conformance-cancellable fixtures) record inapplicable with the reason and the file row stays a witnessed pass. Measured before the change: the reference host passes all five (rc.58, 179 / 0 / 0 / 42); neither production host satisfies this predicate, so no existing claim moves. seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest — its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
+    },
+    {
+      "id": "openwop-conformance-seams-v2",
+      "predicate": {
+        "families": [],
+        "metadata": [
+          "conformance"
+        ]
+      },
+      "floorScenarios": [
+        "v2-fork-a-v1-run",
+        "v2-effect-identity-business-key",
+        "v2-v1-signed-webhook-accepted",
+        "v2-effect-seam-no-refire"
+      ],
+      "requirementIds": [],
+      "note": "RFC 0168 §C.1 — the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios driven through a seam. rc.62 CLAIM FIX: the predicate now requires `conformance` at the discovery root. Until rc.62 the predicate was EMPTY, and `claimedProfilesForV2` treats an empty predicate as vacuously satisfied, so this profile was CLAIMED BY EVERY v2 HOST — including two production hosts that never advertised it and carried it at `certified: false`. A profile claimed by a host that never advertised it is a claim the host did not make. The predicate is deliberately NECESSARY, not sufficient: it tests that a `conformance` block exists, while the exact advert (`conformance.seamsProfile === openwop-conformance-seams-v2`) is tested per scenario by `seamsProfileAdvertised`. The two compose honestly — no conformance block means NOT CLAIMED; a block naming some other profile means claimed, every floor row `inapplicable`, witnessCount 0, and therefore not certified and not blocked. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass — a seams host advertising none of those families witnesses nothing through the seam and certifies nothing."
+    }
+  ]
+}

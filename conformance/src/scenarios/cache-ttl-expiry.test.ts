@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('cache-ttl-expiry: advertisement shape (RFC 0019)', () => {
   it('capabilities.cache is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.cache-ttl-expiry.capabilities-cache-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §cache',
         'capabilities.cache.supported MUST be a boolean when present',
       ),
@@ -50,7 +52,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('cache-ttl-expiry: behavioral (RFC 0019 §B point 2 — 1s TTL drift)', () => {
   it('put with ttlSeconds=2 → hit within window; miss after expiry', async () => {
     const probe = await call('get', { key: '__cache-probe__' });
-    if (probe.status === 404) return;
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const key = `c-ttl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const putRes = await call('put', { key, value: 'evicts-soon', ttlSeconds: 2 });
     expect(putRes.status).toBe(200);
@@ -59,7 +61,7 @@ describe('cache-ttl-expiry: behavioral (RFC 0019 §B point 2 — 1s TTL drift)',
     const withinBody = within.json as { value?: unknown; found?: boolean };
     expect(
       withinBody.value,
-      driver.describe('RFC 0019 §B point 2', 'cache get within TTL MUST return the stored value'),
+      req('openwop.it.cache-ttl-expiry.put-with-ttlseconds-2-hit-within-window-miss-after-expiry', 'RFC 0019 §B point 2', 'cache get within TTL MUST return the stored value'),
     ).toBe('evicts-soon');
 
     await new Promise((r) => setTimeout(r, 3000));
@@ -68,7 +70,7 @@ describe('cache-ttl-expiry: behavioral (RFC 0019 §B point 2 — 1s TTL drift)',
     const afterBody = after.json as { value?: unknown; found?: boolean };
     expect(
       afterBody.found,
-      driver.describe('RFC 0019 §B point 2', 'cache get after TTL expiry MUST surface as found:false (≤1s drift)'),
+      req('openwop.it.cache-ttl-expiry.put-with-ttlseconds-2-hit-within-window-miss-after-expiry', 'RFC 0019 §B point 2', 'cache get after TTL expiry MUST surface as found:false (≤1s drift)'),
     ).toBe(false);
   });
 });

@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readToolHooksCap } from '../lib/toolHooks.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('tool-hooks-shape: advertisement (RFC 0064 §A)', () => {
   it('capabilities.toolHooks is absent or a well-formed object', async () => {
@@ -21,13 +21,13 @@ describe('tool-hooks-shape: advertisement (RFC 0064 §A)', () => {
     if (cap === null) return softSkip('inapplicable', 'not advertised — valid');
     expect(
       typeof cap.supported,
-      driver.describe('capabilities.schema.json §toolHooks', 'toolHooks.supported MUST be a boolean when the block is present'),
+      req('openwop.it.tool-hooks-shape.capabilities-toolhooks-is-absent-or-a-well-formed-object', 'capabilities.schema.json §toolHooks', 'toolHooks.supported MUST be a boolean when the block is present'),
     ).toBe('boolean');
     for (const k of ['prePostEvents', 'perToolAuthorization', 'perToolRateLimit'] as const) {
       if (cap[k] !== undefined) {
         expect(
           typeof cap[k],
-          driver.describe('capabilities.schema.json §toolHooks', `toolHooks.${k} MUST be a boolean when present`),
+          req('openwop.it.tool-hooks-shape.capabilities-toolhooks-is-absent-or-a-well-formed-object', 'capabilities.schema.json §toolHooks', `toolHooks.${k} MUST be a boolean when present`),
         ).toBe('boolean');
       }
     }

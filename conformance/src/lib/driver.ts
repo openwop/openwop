@@ -10,6 +10,7 @@
  */
 
 import { loadEnv } from './env.js';
+import { seamPath, targetMajor } from './seams.js';
 
 export interface OpenWOPResponse {
   readonly status: number;
@@ -37,10 +38,17 @@ class OpenWOPDriver {
     const env = loadEnv();
     // An absolute URL is used as-is (a host may advertise its MCP server mount or
     // an A2A endpoint on another origin); a path is joined to the base URL.
-    const url = /^https?:\/\//i.test(path) ? path : `${env.baseUrl}${path}`;
+    // Suite 2.0.0: under target major 2 a v1 seam path is rewritten to its
+    // api/seams-v2.yaml address (RFC 0168 §C.2) and every request names the
+    // contract it speaks with `OpenWOP-Version` (RFC 0172 §A.3) unless the
+    // scenario set one itself (the negotiation scenarios do).
+    const major = targetMajor();
+    const effectivePath = major === 2 ? seamPath(path) : path;
+    const url = /^https?:\/\//i.test(effectivePath) ? effectivePath : `${env.baseUrl}${effectivePath}`;
 
     const headers: Record<string, string> = {
       Accept: 'application/json',
+      ...(major === 2 && !Object.keys(init.headers ?? {}).some((h) => h.toLowerCase() === 'openwop-version') ? { 'OpenWOP-Version': '2.0' } : {}),
       ...(init.headers ?? {}),
     };
     if (init.body !== undefined && headers['Content-Type'] === undefined) {

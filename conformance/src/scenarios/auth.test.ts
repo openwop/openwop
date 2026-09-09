@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 const KNOWN_AUTHED_PATH = '/v1/runs';
 
@@ -19,17 +20,17 @@ describe('auth: missing credential', () => {
       { authenticated: false },
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth.returns-401-with-canonical-error-envelope-per-auth-md-3', 
       'auth.md §3',
       'request without Authorization header MUST return 401',
     )).toBe(401);
 
     const body = res.json as { error?: unknown; message?: unknown } | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.auth.returns-401-with-canonical-error-envelope-per-auth-md-3', 
       'auth.md §3 + rest-endpoints.md error envelope',
       'response body MUST include `error` (machine code) string',
     )).toBe('string');
-    expect(typeof body?.message, driver.describe(
+    expect(typeof body?.message, req('openwop.it.auth.returns-401-with-canonical-error-envelope-per-auth-md-3', 
       'auth.md §3 + rest-endpoints.md error envelope',
       'response body MUST include `message` (human description) string',
     )).toBe('string');
@@ -47,7 +48,7 @@ describe('auth: invalid credential', () => {
       },
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth.returns-401-not-200-not-403-per-auth-md-3', 
       'auth.md §3',
       'request with invalid Authorization MUST return 401, not 403',
     )).toBe(401);

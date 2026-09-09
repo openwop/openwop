@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryOAuth {
   supported?: boolean;
@@ -53,7 +54,7 @@ describe('oauth-connector-redaction: advertisement shape (RFC 0047 §A)', () => 
     if (oauth === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `oauth === null` returned early');
     expect(
       typeof oauth.supported,
-      driver.describe(
+      req('openwop.it.oauth-connector-redaction.capabilities-oauth-supported-is-a-boolean-when-advertised', 
         'capabilities.schema.json §oauth',
         'capabilities.oauth.supported MUST be a boolean when oauth is advertised',
       ),
@@ -75,7 +76,7 @@ describe('oauth-connector-redaction: token material MUST NOT cross the wire (RFC
 
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.oauth-connector-redaction.canary-token-is-absent-from-every-observable-run-surface', 
         'RFC 0047 §C',
         'the oauth connector-echo seam MUST acquire the token and return the run observable surfaces',
       ),
@@ -84,7 +85,7 @@ describe('oauth-connector-redaction: token material MUST NOT cross the wire (RFC
     const serialized = JSON.stringify(res.json ?? {});
     expect(
       serialized.includes(TOKEN_CANARY),
-      driver.describe(
+      req('openwop.it.oauth-connector-redaction.canary-token-is-absent-from-every-observable-run-surface', 
         'SECURITY/invariants.yaml credential-payload-redaction',
         'acquired OAuth token material MUST NOT appear in inputs, variables, channels, events, snapshot, or debug bundle — only the credential reference may cross the wire',
       ),

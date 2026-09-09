@@ -55,7 +55,11 @@ const CONFORMANCE = join(ROOT, 'conformance');
  * extract or the config resolution broke, and passing on that would be the
  * vacuous green this gate exists to prevent.
  */
-const MIN_TESTS = 1500;
+// Re-measured 2026-09-02 (suite 1.154.0) after the tarball stopped carrying the
+// the corpus-coherence scenarios (src/coherence/, never packed) and every src/lib self-test: 1430 tests / 324
+// files collected in the published layout. Floors sit ~5% under the measurement
+// so a packaging regression that drops a whole file is caught, not absorbed.
+const MIN_TESTS = 1350;
 const MIN_FILES = 300;
 
 function run(cmd, args, cwd) {
@@ -116,12 +120,13 @@ try {
 
     // 5. The vendored contract material must be present, or every schema leg
     //    would skip while the run still reported success.
-    for (const dir of ['schemas', 'api', 'fixtures', 'vectors']) {
+    // Suite 2.0.0: api/ is not packed (the contract is the @openwop/spec-artifacts peer); schemas/ holds the stamp copy.
+for (const dir of ['schemas', 'fixtures', 'vectors']) {
       if (!existsSync(join(pkg, dir)) || readdirSync(join(pkg, dir)).length === 0) {
         throw new Error(`published tarball is missing ${dir}/ — add it to package.json "files"`);
       }
     }
-    console.log('  vendored schemas/ api/ fixtures/ vectors/ all present');
+    console.log('  schemas/ (stamp) fixtures/ vectors/ all present');
   } finally {
     rmSync(tarballPath, { force: true });
   }

@@ -33,7 +33,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import {
@@ -43,6 +42,8 @@ import {
   DEPLOYMENT_CONTENT_FORBIDDEN,
 } from '../lib/agentDeployment.js';
 import { queryTestEvents, requireEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -52,7 +53,7 @@ function expectContentFree(payload: Record<string, unknown>, where: string): voi
   for (const f of DEPLOYMENT_CONTENT_FORBIDDEN) {
     expect(
       !(f in payload),
-      driver.describe('RFC 0082 §D (deployment-event-no-content-leak)', `${where} MUST be content-free (no ${f})`),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'RFC 0082 §D (deployment-event-no-content-leak)', `${where} MUST be content-free (no ${f})`),
     ).toBe(true);
   }
 }
@@ -61,7 +62,7 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
   it('promotes via the eval+RBAC+approval gate, fails closed without scope/eval, and pins the channel version', async () => {
     const cap = await readDeploymentCap();
     if (!behaviorGate('openwop-deployment-lifecycle', cap?.supported === true)) return;
-    if (!(await isEventLogSeamAvailable())) return; // event-log seam absent — soft-skip
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (event-log seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // event-log seam absent — soft-skip
 
     const ajv = new Ajv2020({ strict: false, allErrors: true });
     addFormats(ajv);
@@ -69,22 +70,22 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
 
     // ---- Leg 1: eval+RBAC+approval-gated promotion (§E) ------------------
     const promote = await driveDeploymentTransition({ scenario: 'promote' });
-    if (promote === null) return; // deployment seam unwired — soft-skip the whole behavioral suite
+    if (promote === null) return softSkip('blocked', 'precondition not met — `promote === null` returned early (deployment seam unwired — soft-skip the whole behavioral suite) (seam, prior step, or fixture unavailable)'); // deployment seam unwired — soft-skip the whole behavioral suite
 
     // The host has ADVERTISED agents.deployment AND wired the seam — missing
     // evidence is a FAILURE, not a soft-skip. A successful promote MUST return
     // a runId + a schema-valid record + emit ≥1 content-free deployment.promoted.
     expect(
       typeof promote.runId === 'string' && (promote.runId as string).length > 0,
-      driver.describe('agent-deployment.md §E', 'a wired promote MUST return the runId'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E', 'a wired promote MUST return the runId'),
     ).toBe(true);
     expect(
       promote.record !== undefined && promote.record !== null,
-      driver.describe('agent-deployment.md §E', 'a successful promote MUST return the deployment record'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E', 'a successful promote MUST return the deployment record'),
     ).toBe(true);
     expect(
       validateRecord(promote.record),
-      driver.describe('agent-deployment.schema.json', `a promoted deployment record MUST validate (${ajv.errorsText(validateRecord.errors)})`),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.schema.json', `a promoted deployment record MUST validate (${ajv.errorsText(validateRecord.errors)})`),
     ).toBe(true);
 
     const promotedEvents = requireEvents(
@@ -93,17 +94,17 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
     );
     expect(
       promotedEvents.length >= 1,
-      driver.describe('agent-deployment.md §E', 'a successful promote MUST emit at least one deployment.promoted'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E', 'a successful promote MUST emit at least one deployment.promoted'),
     ).toBe(true);
     for (const e of promotedEvents) {
       expectContentFree(e.payload, 'deployment.promoted');
       expect(
         typeof e.payload.toState === 'string' && DEPLOYMENT_STATES.includes(e.payload.toState as string),
-        driver.describe('run-event-payloads.schema.json#/$defs/deploymentPromoted', 'toState MUST be in the seven-state vocabulary'),
+        req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'run-event-payloads.schema.json#/$defs/deploymentPromoted', 'toState MUST be in the seven-state vocabulary'),
       ).toBe(true);
       expect(
         typeof e.payload.toVersion === 'string' && (e.payload.toVersion as string).length > 0,
-        driver.describe('agent-deployment.md §D', 'deployment.promoted MUST carry the promoted toVersion'),
+        req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §D', 'deployment.promoted MUST carry the promoted toVersion'),
       ).toBe(true);
     }
 
@@ -111,11 +112,11 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
     const unauth = await driveDeploymentTransition({ scenario: 'unauthorized' });
     expect(
       unauth !== null && typeof unauth.runId === 'string' && (unauth.runId as string).length > 0,
-      driver.describe('agent-deployment.md §E-1', 'the unauthorized scenario MUST return a runId to evidence the fail-closed denial'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E-1', 'the unauthorized scenario MUST return a runId to evidence the fail-closed denial'),
     ).toBe(true);
     expect(
       unauth!.allowed !== true,
-      driver.describe('agent-deployment.md §E-1', 'a principal without deploy:promote MUST be denied (fail-closed)'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E-1', 'a principal without deploy:promote MUST be denied (fail-closed)'),
     ).toBe(true);
     const unauthPromoted = requireEvents(
       await queryTestEvents(unauth!.runId as string, { type: 'deployment.promoted' }),
@@ -123,18 +124,18 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
     );
     expect(
       unauthPromoted.length === 0,
-      driver.describe('SECURITY invariant deployment-promotion-fail-closed', 'a denied transition MUST emit NO deployment.promoted'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'SECURITY invariant deployment-promotion-fail-closed', 'a denied transition MUST emit NO deployment.promoted'),
     ).toBe(true);
 
     // ---- Leg 3: eval-gate-unmet denial (§E-3) ----------------------------
     const evalUnmet = await driveDeploymentTransition({ scenario: 'eval-gate-unmet' });
     expect(
       evalUnmet !== null && typeof evalUnmet.runId === 'string' && (evalUnmet.runId as string).length > 0,
-      driver.describe('agent-deployment.md §E-3', 'the eval-gate-unmet scenario MUST return a runId to evidence the denial'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E-3', 'the eval-gate-unmet scenario MUST return a runId to evidence the denial'),
     ).toBe(true);
     expect(
       evalUnmet!.error === 'eval_gate_unmet' || evalUnmet!.allowed !== true,
-      driver.describe('agent-deployment.md §E-3', 'a promote whose eval evidence has passed:false MUST be denied (eval_gate_unmet)'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E-3', 'a promote whose eval evidence has passed:false MUST be denied (eval_gate_unmet)'),
     ).toBe(true);
     const evalUnmetPromoted = requireEvents(
       await queryTestEvents(evalUnmet!.runId as string, { type: 'deployment.promoted' }),
@@ -142,14 +143,14 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
     );
     expect(
       evalUnmetPromoted.length === 0,
-      driver.describe('agent-deployment.md §E-3', 'an unmet eval gate MUST emit NO deployment.promoted'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §E-3', 'an unmet eval gate MUST emit NO deployment.promoted'),
     ).toBe(true);
 
     // ---- Leg 4: channel-resolution pin (§B) ------------------------------
     const pin = await driveDeploymentTransition({ scenario: 'channel-pin', channel: 'stable' });
     expect(
       pin !== null && typeof pin.runId === 'string' && (pin.runId as string).length > 0,
-      driver.describe('agent-deployment.md §B', 'the channel-pin scenario MUST return a runId'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §B', 'the channel-pin scenario MUST return a runId'),
     ).toBe(true);
     const invEvents = requireEvents(
       await queryTestEvents(pin!.runId as string, { type: 'agent.invocation.started' }),
@@ -157,12 +158,12 @@ describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
     );
     expect(
       invEvents.length >= 1,
-      driver.describe('agent-deployment.md §B', 'a @channel-bound run MUST emit agent.invocation.started'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §B', 'a @channel-bound run MUST emit agent.invocation.started'),
     ).toBe(true);
     const startedInv = invEvents.sort((a, b) => a.sequence - b.sequence)[0]!;
     expect(
       typeof startedInv.payload.resolvedAgentVersion === 'string' && (startedInv.payload.resolvedAgentVersion as string).length > 0,
-      driver.describe('agent-deployment.md §B', 'a @channel-bound run MUST record resolvedAgentVersion on agent.invocation.started (the recorded fact a replay re-reads)'),
+      req('openwop.it.agent-deployment-lifecycle.promotes-via-the-eval-rbac-approval-gate-fails-closed-without-scope-eval-and-pin', 'agent-deployment.md §B', 'a @channel-bound run MUST record resolvedAgentVersion on agent.invocation.started (the recorded fact a replay re-reads)'),
     ).toBe(true);
 
     await resetTestSeam();

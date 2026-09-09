@@ -32,9 +32,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -87,19 +85,19 @@ describe('aiproviders-selfhosted-shape: self-hosted provider-class advertisement
       | undefined;
     expect(
       selfHosted,
-      why('capabilities.md §aiProviders.selfHosted', 'aiProviders.selfHosted MUST be declared'),
+      req('openwop.it.aiproviders-selfhosted-shape.aiproviders-selfhosted-is-declared-as-a-string-with-uniqueitems', 'capabilities.md §aiProviders.selfHosted', 'aiProviders.selfHosted MUST be declared'),
     ).toBeDefined();
-    expect(selfHosted?.type, why('RFC 0108 §A', 'selfHosted MUST be an array')).toBe('array');
+    expect(selfHosted?.type, req('openwop.it.aiproviders-selfhosted-shape.aiproviders-selfhosted-is-declared-as-a-string-with-uniqueitems', 'RFC 0108 §A', 'selfHosted MUST be an array')).toBe('array');
     expect(
       selfHosted?.uniqueItems,
-      why('RFC 0108 §A', 'selfHosted entries MUST be unique'),
+      req('openwop.it.aiproviders-selfhosted-shape.aiproviders-selfhosted-is-declared-as-a-string-with-uniqueitems', 'RFC 0108 §A', 'selfHosted entries MUST be unique'),
     ).toBe(true);
-    expect(selfHosted?.items?.type, why('RFC 0108 §A', 'selfHosted entries MUST be strings')).toBe(
+    expect(selfHosted?.items?.type, req('openwop.it.aiproviders-selfhosted-shape.aiproviders-selfhosted-is-declared-as-a-string-with-uniqueitems', 'RFC 0108 §A', 'selfHosted entries MUST be strings')).toBe(
       'string',
     );
     expect(
       selfHosted?.items?.minLength,
-      why('RFC 0108 §A', 'a selfHosted id MUST be non-empty'),
+      req('openwop.it.aiproviders-selfhosted-shape.aiproviders-selfhosted-is-declared-as-a-string-with-uniqueitems', 'RFC 0108 §A', 'a selfHosted id MUST be non-empty'),
     ).toBe(1);
   });
 
@@ -109,7 +107,7 @@ describe('aiproviders-selfhosted-shape: self-hosted provider-class advertisement
     const required = Array.isArray(aiProviders?.required) ? (aiProviders!.required as string[]) : [];
     expect(
       required.includes('selfHosted'),
-      why('RFC 0108 §A.1', 'aiProviders.selfHosted MUST be optional'),
+      req('openwop.it.aiproviders-selfhosted-shape.selfhosted-is-not-in-aiproviders-required-absence-no-self-hosted-endpoint-is-a-v', 'RFC 0108 §A.1', 'aiProviders.selfHosted MUST be optional'),
     ).toBe(false);
   });
 
@@ -125,19 +123,19 @@ describe('aiproviders-selfhosted-shape: self-hosted provider-class advertisement
 
     expect(
       validate(['ollama', 'compat']),
-      why('RFC 0108 §A', 'a conforming selfHosted array MUST validate'),
+      req('openwop.it.aiproviders-selfhosted-shape.ajv-accepts-a-conforming-selfhosted-array-and-rejects-non-array-duplicate-empty', 'RFC 0108 §A', 'a conforming selfHosted array MUST validate'),
     ).toBe(true);
     expect(
       validate('ollama'),
-      why('RFC 0108 §A', 'a non-array selfHosted MUST be rejected'),
+      req('openwop.it.aiproviders-selfhosted-shape.ajv-accepts-a-conforming-selfhosted-array-and-rejects-non-array-duplicate-empty', 'RFC 0108 §A', 'a non-array selfHosted MUST be rejected'),
     ).toBe(false);
     expect(
       validate(['ollama', 'ollama']),
-      why('RFC 0108 §A', 'duplicate selfHosted entries MUST be rejected (uniqueItems)'),
+      req('openwop.it.aiproviders-selfhosted-shape.ajv-accepts-a-conforming-selfhosted-array-and-rejects-non-array-duplicate-empty', 'RFC 0108 §A', 'duplicate selfHosted entries MUST be rejected (uniqueItems)'),
     ).toBe(false);
     expect(
       validate(['']),
-      why('RFC 0108 §A', 'an empty-string selfHosted id MUST be rejected (minLength 1)'),
+      req('openwop.it.aiproviders-selfhosted-shape.ajv-accepts-a-conforming-selfhosted-array-and-rejects-non-array-duplicate-empty', 'RFC 0108 §A', 'an empty-string selfHosted id MUST be rejected (minLength 1)'),
     ).toBe(false);
   });
 
@@ -149,13 +147,13 @@ describe('aiproviders-selfhosted-shape: self-hosted provider-class advertisement
         byok: ['anthropic', 'openai', 'compat'],
         selfHosted: ['ollama', 'compat'],
       }),
-      why('RFC 0108 §A.1/§A.3', 'a conforming advertisement MUST have no violations'),
+      req('openwop.it.aiproviders-selfhosted-shape.a-1-subset-a-3-non-disclosure-a-conforming-doc-has-no-violations-an-out-of-subse', 'RFC 0108 §A.1/§A.3', 'a conforming advertisement MUST have no violations'),
     ).toEqual([]);
 
     // §A.1 violation: `vllm` not in supported.
     expect(
       validateSelfHosted({ supported: ['anthropic', 'ollama'], selfHosted: ['ollama', 'vllm'] }),
-      why('RFC 0108 §A.1', 'a selfHosted id absent from supported MUST be flagged'),
+      req('openwop.it.aiproviders-selfhosted-shape.a-1-subset-a-3-non-disclosure-a-conforming-doc-has-no-violations-an-out-of-subse', 'RFC 0108 §A.1', 'a selfHosted id absent from supported MUST be flagged'),
     ).not.toEqual([]);
 
     // §A.3 violations: URL-shaped ids leak the endpoint location.
@@ -166,14 +164,14 @@ describe('aiproviders-selfhosted-shape: self-hosted provider-class advertisement
     ]) {
       expect(
         isUrlShaped(leaky),
-        why('RFC 0108 §A.3', `the URL-shaped id "${leaky}" MUST be detected as non-conformant`),
+        req('openwop.it.aiproviders-selfhosted-shape.a-1-subset-a-3-non-disclosure-a-conforming-doc-has-no-violations-an-out-of-subse', 'RFC 0108 §A.3', `the URL-shaped id "${leaky}" MUST be detected as non-conformant`),
       ).toBe(true);
     }
 
     // A label with a non-numeric suffix (`compat:label`) is NOT URL-shaped — it is a permitted opaque id.
     expect(
       isUrlShaped('compat:local-ollama'),
-      why('RFC 0108 §A.3', 'an opaque `compat:<label>` id (no host:port) MUST be permitted'),
+      req('openwop.it.aiproviders-selfhosted-shape.a-1-subset-a-3-non-disclosure-a-conforming-doc-has-no-violations-an-out-of-subse', 'RFC 0108 §A.3', 'an opaque `compat:<label>` id (no host:port) MUST be permitted'),
     ).toBe(false);
   });
 });

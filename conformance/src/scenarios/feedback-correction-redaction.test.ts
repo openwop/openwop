@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readFeedbackCap, seedRun } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CANARY = 'sk-canary-rfc0056-do-not-leak-abc123';
 
@@ -30,7 +31,7 @@ describe('feedback-correction-redaction (RFC 0056 §E)', () => {
     const list = await driver.get(`/v1/runs/${runId}/annotations`);
     expect(
       JSON.stringify(list.json ?? {}).includes(CANARY),
-      driver.describe('RFC 0056 §E', 'secret-shaped material MUST be redacted before persistence/listing (SR-1)'),
+      req('openwop.it.feedback-correction-redaction.secret-shaped-material-in-correction-note-is-redacted-in-the-annotation-list', 'RFC 0056 §E', 'secret-shaped material MUST be redacted before persistence/listing (SR-1)'),
     ).toBe(false);
   });
 });

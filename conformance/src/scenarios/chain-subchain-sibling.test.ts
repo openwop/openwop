@@ -30,9 +30,7 @@ import {
   mintChildWorkflowId,
   type WorkflowChain,
 } from '../lib/workflow-chain-expansion.js';
-
-/** Server-free assertion-message helper (mirrors driver.describe without OPENWOP_BASE_URL). */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 const SPEC = 'workflow-chain-packs.md §"Sub-chain composition (RFC 0133)"';
 
 /** A leaf child chain — one plain node, no further composition. */
@@ -83,53 +81,53 @@ const ctx = (tenantId = 'tenant-a') => ({
 describe('chain-subchain-sibling: co-registration (RFC 0133 §1, server-free)', () => {
   it('co-registers the referenced sibling as its own workflow', () => {
     const { children } = expandChainTree(PARENT, ctx());
-    expect(children.length, why(SPEC, '§1.3 step 2 — one distinct sibling ref ⇒ one co-registered child')).toBe(1);
-    expect(children[0]?.chainId, why(SPEC, 'child carries the composed chainId')).toBe('lesson-batch');
+    expect(children.length, req('openwop.it.chain-subchain-sibling.co-registers-the-referenced-sibling-as-its-own-workflow', SPEC, '§1.3 step 2 — one distinct sibling ref ⇒ one co-registered child')).toBe(1);
+    expect(children[0]?.chainId, req('openwop.it.chain-subchain-sibling.co-registers-the-referenced-sibling-as-its-own-workflow', SPEC, 'child carries the composed chainId')).toBe('lesson-batch');
     expect(
       children[0]?.fragment.nodes.length,
-      why(SPEC, 'child is a fully expanded fragment (its own registered workflow)'),
+      req('openwop.it.chain-subchain-sibling.co-registers-the-referenced-sibling-as-its-own-workflow', SPEC, 'child is a fully expanded fragment (its own registered workflow)'),
     ).toBe(1);
   });
 
   it('mints a DETERMINISTIC, TENANT-SCOPED, version-pinned child id', () => {
     const { children } = expandChainTree(PARENT, ctx());
     const expected = mintChildWorkflowId('tenant-a', 'lesson-batch', '1.0.0');
-    expect(children[0]?.childWorkflowId, why(SPEC, '§1.3 step 2 — deterministic (tenantId, childChainId, version) id')).toBe(
+    expect(children[0]?.childWorkflowId, req('openwop.it.chain-subchain-sibling.mints-a-deterministic-tenant-scoped-version-pinned-child-id', SPEC, '§1.3 step 2 — deterministic (tenantId, childChainId, version) id')).toBe(
       expected,
     );
     // Re-instantiating in the same tenant converges on the same id.
     const again = expandChainTree(PARENT, ctx());
-    expect(again.children[0]?.childWorkflowId, why(SPEC, 'repeat instantiation in-tenant converges')).toBe(expected);
+    expect(again.children[0]?.childWorkflowId, req('openwop.it.chain-subchain-sibling.mints-a-deterministic-tenant-scoped-version-pinned-child-id', SPEC, 'repeat instantiation in-tenant converges')).toBe(expected);
   });
 
   it('scopes the child id per TENANT — two tenants NEVER collide on the global registry (isolation)', () => {
     const a = expandChainTree(PARENT, ctx('tenant-a')).children[0]?.childWorkflowId;
     const b = expandChainTree(PARENT, ctx('tenant-b')).children[0]?.childWorkflowId;
-    expect(a, why(SPEC, 'tenant-a mints an id')).toBeTruthy();
+    expect(a, req('openwop.it.chain-subchain-sibling.scopes-the-child-id-per-tenant-two-tenants-never-collide-on-the-global-registry', SPEC, 'tenant-a mints an id')).toBeTruthy();
     expect(
       a !== b,
-      why(SPEC, '§1.3 SECURITY sub-chain-child-tenant-scoped — distinct tenants ⇒ distinct child ids, no cross-tenant collision'),
+      req('openwop.it.chain-subchain-sibling.scopes-the-child-id-per-tenant-two-tenants-never-collide-on-the-global-registry', SPEC, '§1.3 SECURITY sub-chain-child-tenant-scoped — distinct tenants ⇒ distinct child ids, no cross-tenant collision'),
     ).toBe(true);
   });
 
   it('registers a child referenced twice exactly ONCE (dedup by deterministic id)', () => {
     const { children } = expandChainTree(PARENT, ctx());
     const ids = children.map((c) => c.childWorkflowId);
-    expect(new Set(ids).size, why(SPEC, '§1.3 step 2 — a shared child registers once')).toBe(ids.length);
-    expect(ids.length, why(SPEC, 'both build-0 + build-1 collapse to one child')).toBe(1);
+    expect(new Set(ids).size, req('openwop.it.chain-subchain-sibling.registers-a-child-referenced-twice-exactly-once-dedup-by-deterministic-id', SPEC, '§1.3 step 2 — a shared child registers once')).toBe(ids.length);
+    expect(ids.length, req('openwop.it.chain-subchain-sibling.registers-a-child-referenced-twice-exactly-once-dedup-by-deterministic-id', SPEC, 'both build-0 + build-1 collapse to one child')).toBe(1);
   });
 
   it('rewrites config.subChainRef → the minted child config.workflowId', () => {
     const { parent } = expandChainTree(PARENT, ctx());
     const expected = mintChildWorkflowId('tenant-a', 'lesson-batch', '1.0.0');
     const dispatchNodes = parent.nodes.filter((n) => n.typeId === 'core.subWorkflow');
-    expect(dispatchNodes.length, why(SPEC, 'both dispatch nodes present')).toBe(2);
+    expect(dispatchNodes.length, req('openwop.it.chain-subchain-sibling.rewrites-config-subchainref-the-minted-child-config-workflowid', SPEC, 'both dispatch nodes present')).toBe(2);
     for (const n of dispatchNodes) {
       const config = n.config as Record<string, unknown>;
-      expect(config['workflowId'], why(SPEC, '§1.3 step 3 — subChainRef rewritten to minted child id')).toBe(expected);
+      expect(config['workflowId'], req('openwop.it.chain-subchain-sibling.rewrites-config-subchainref-the-minted-child-config-workflowid', SPEC, '§1.3 step 3 — subChainRef rewritten to minted child id')).toBe(expected);
       expect(
         'subChainRef' in config,
-        why(SPEC, '§1.3 step 3 — transient subChainRef key dropped from the runtime config'),
+        req('openwop.it.chain-subchain-sibling.rewrites-config-subchainref-the-minted-child-config-workflowid', SPEC, '§1.3 step 3 — transient subChainRef key dropped from the runtime config'),
       ).toBe(false);
     }
   });
@@ -140,7 +138,7 @@ describe('chain-subchain-sibling: co-registration (RFC 0133 §1, server-free)', 
     const referenced = parent.nodes
       .filter((n) => n.typeId === 'core.subWorkflow')
       .map((n) => (n.config as Record<string, unknown>)['workflowId']);
-    expect(referenced.every((id) => id === childId), why(SPEC, 'parent HOLDS the co-registered child at runtime')).toBe(
+    expect(referenced.every((id) => id === childId), req('openwop.it.chain-subchain-sibling.preserves-the-child-reference-at-runtime-concrete-workflowid-unlike-inline-mode', SPEC, 'parent HOLDS the co-registered child at runtime')).toBe(
       true,
     );
   });

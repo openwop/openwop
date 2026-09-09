@@ -21,6 +21,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryRole {
   role?: string;
@@ -48,10 +50,10 @@ async function readAuthorization(): Promise<DiscoveryAuthorization | null> {
 describe('authorization-roles-shape: advertisement shape (RFC 0049 §A)', () => {
   it('capabilities.authorization is either absent or well-formed', async () => {
     const authz = await readAuthorization();
-    if (authz === null) return; // host doesn't advertise authorization at all
+    if (authz === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `authz === null` returned early (host doesn\'t advertise authorization at all)'); // host doesn't advertise authorization at all
     expect(
       typeof authz.supported,
-      driver.describe(
+      req('openwop.it.authorization-roles-shape.capabilities-authorization-is-either-absent-or-well-formed', 
         'capabilities.schema.json §authorization',
         'capabilities.authorization.supported MUST be a boolean when authorization is advertised',
       ),
@@ -60,24 +62,24 @@ describe('authorization-roles-shape: advertisement shape (RFC 0049 §A)', () => 
 
   it('failClosed, when present, is exactly true (RFC 0049 §C)', async () => {
     const authz = await readAuthorization();
-    if (!authz?.supported || authz.failClosed === undefined) return;
+    if (!authz?.supported || authz.failClosed === undefined) return softSkip('blocked', 'precondition not met — `!authz?.supported || authz.failClosed === undefined` returned early (seam, prior step, or fixture unavailable)');
     expect(
       authz.failClosed,
-      driver.describe('RFC 0049 §C', 'capabilities.authorization.failClosed MUST be `true` (fail-closed)'),
+      req('openwop.it.authorization-roles-shape.failclosed-when-present-is-exactly-true-rfc-0049-c', 'RFC 0049 §C', 'capabilities.authorization.failClosed MUST be `true` (fail-closed)'),
     ).toBe(true);
   });
 
   it('every advertised role has a non-empty role name + a scopes array', async () => {
     const authz = await readAuthorization();
-    if (!authz?.supported || authz.roles === undefined) return;
+    if (!authz?.supported || authz.roles === undefined) return softSkip('blocked', 'precondition not met — `!authz?.supported || authz.roles === undefined` returned early (seam, prior step, or fixture unavailable)');
     for (const entry of authz.roles) {
       expect(
         typeof entry.role === 'string' && entry.role.length > 0,
-        driver.describe('RFC 0049 §A', 'each capabilities.authorization.roles[] entry MUST declare a non-empty role'),
+        req('openwop.it.authorization-roles-shape.every-advertised-role-has-a-non-empty-role-name-a-scopes-array', 'RFC 0049 §A', 'each capabilities.authorization.roles[] entry MUST declare a non-empty role'),
       ).toBe(true);
       expect(
         Array.isArray(entry.scopes),
-        driver.describe('RFC 0049 §A', 'each role MUST declare a scopes array'),
+        req('openwop.it.authorization-roles-shape.every-advertised-role-has-a-non-empty-role-name-a-scopes-array', 'RFC 0049 §A', 'each role MUST declare a scopes array'),
       ).toBe(true);
     }
   });

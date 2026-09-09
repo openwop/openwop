@@ -33,6 +33,8 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const MEDIA_KINDS = ['media.image', 'media.audio', 'media.file'] as const;
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -51,7 +53,7 @@ describe('media-url-inline-cap: media payload schemas compile + round-trip (RFC 
     it(`envelopes/${kind}.schema.json compiles under Ajv2020`, () => {
       expect(
         compile(kind),
-        `ai-envelope.md §"Media reference payloads": ${kind} payload schema MUST compile`,
+        req('openwop.it.media-url-inline-cap.envelopes-schema-json-compiles-under-ajv2020', 'RFC 0055 §C', `ai-envelope.md §"Media reference payloads": ${kind} payload schema MUST compile`),
       ).toBeTypeOf('function');
     });
   }
@@ -62,22 +64,22 @@ describe('media-url-inline-cap: media payload schemas compile + round-trip (RFC 
       bytes: 184320,
       mimeType: 'image/png',
     });
-    expect(ok, 'URL-reference media payload MUST validate').toBe(true);
+    expect(ok, req('openwop.it.media-url-inline-cap.accepts-a-url-reference-image-payload', 'RFC 0055 §C', 'URL-reference media payload MUST validate')).toBe(true);
   });
 
   it('accepts an inline-base64 audio payload', () => {
     const ok = compile('media.audio')({ base64: 'AAAA', bytes: 3, mimeType: 'audio/ogg', durationSeconds: 1.2 });
-    expect(ok, 'inline-base64 media payload MUST validate').toBe(true);
+    expect(ok, req('openwop.it.media-url-inline-cap.accepts-an-inline-base64-audio-payload', 'RFC 0055 §C', 'inline-base64 media payload MUST validate')).toBe(true);
   });
 
   it('rejects a payload missing required bytes', () => {
     const ok = compile('media.file')({ url: 'https://host.example/v1/runs/run_1/assets/report.pdf' });
-    expect(ok, 'ai-envelope.md §"Media reference payloads": `bytes` is required').toBe(false);
+    expect(ok, req('openwop.it.media-url-inline-cap.rejects-a-payload-missing-required-bytes', 'RFC 0055 §C', 'ai-envelope.md §"Media reference payloads": `bytes` is required')).toBe(false);
   });
 
   it('rejects an unknown property (additionalProperties:false)', () => {
     const ok = compile('media.image')({ bytes: 1, wat: true });
-    expect(ok, 'media payload is additionalProperties:false').toBe(false);
+    expect(ok, req('openwop.it.media-url-inline-cap.rejects-an-unknown-property-additionalproperties-false', 'RFC 0055 §C', 'media payload is additionalProperties:false')).toBe(false);
   });
 });
 
@@ -88,12 +90,12 @@ interface DiscoveryDoc {
 describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 §C rule 2)', () => {
   it('aiProviders.maxInlineMediaBytes is a non-negative integer when advertised', async () => {
     const res = await driver.get('/.well-known/openwop');
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const cap = capabilityFamily((res.json as DiscoveryDoc), 'aiProviders')?.maxInlineMediaBytes;
-    if (cap === undefined) return; // optional — soft-skip when absent
+    if (cap === undefined) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === undefined` returned early (optional — soft-skip when absent)'); // optional — soft-skip when absent
     expect(
       Number.isInteger(cap) && (cap as number) >= 0,
-      driver.describe('capabilities.md §aiProviders.maxInlineMediaBytes', 'cap MUST be a non-negative integer'),
+      req('openwop.it.media-url-inline-cap.aiproviders-maxinlinemediabytes-is-a-non-negative-integer-when-advertised', 'capabilities.md §aiProviders.maxInlineMediaBytes', 'cap MUST be a non-negative integer'),
     ).toBe(true);
   });
 
@@ -106,24 +108,24 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
 
   it('a stored media asset is served by a tenant-scoped URL, not inlined', async () => {
     const stored = await driver.post('/v1/host/sample/media/put', { contentBase64: PNG_1x1, contentType: 'image/png' });
-    if (stored.status === 404) return; // store seam disabled — soft-skip
-    expect(stored.status, 'media store MUST return 201').toBe(201);
+    if (stored.status === 404) return softSkip('blocked', 'precondition not met — `stored.status === 404` returned early (store seam disabled — soft-skip) (seam, prior step, or fixture unavailable)'); // store seam disabled — soft-skip
+    expect(stored.status, req('openwop.it.media-url-inline-cap.a-stored-media-asset-is-served-by-a-tenant-scoped-url-not-inlined', 'ai-envelope.md §"Media reference payloads"', 'media store MUST return 201')).toBe(201);
     const body = stored.json as { url?: string; bytes?: number };
     expect(
       typeof body.url === 'string' && /\/v1\/host\/sample\/assets\//.test(body.url!),
-      driver.describe('ai-envelope.md §"Media reference payloads"', 'asset MUST be served by a URL reference, not inlined'),
+      req('openwop.it.media-url-inline-cap.a-stored-media-asset-is-served-by-a-tenant-scoped-url-not-inlined', 'ai-envelope.md §"Media reference payloads"', 'asset MUST be served by a URL reference, not inlined'),
     ).toBe(true);
     const served = await driver.get(body.url!);
-    expect(served.status, 'the asset URL MUST resolve').toBe(200);
+    expect(served.status, req('openwop.it.media-url-inline-cap.a-stored-media-asset-is-served-by-a-tenant-scoped-url-not-inlined', 'ai-envelope.md §"Media reference payloads"', 'the asset URL MUST resolve')).toBe(200);
   });
 
   it('an unminted/guessed asset token does not resolve (media-asset-url-tenant-scoped)', async () => {
     // Probe whether the serve route exists at all; soft-skip if not.
     const probe = await driver.get('/v1/host/sample/assets/probe-never-minted-token');
-    if (probe.status === 404 && !process.env.OPENWOP_BASE_URL) return;
+    if (probe.status === 404 && !process.env.OPENWOP_BASE_URL) return softSkip('blocked', 'precondition not met — `probe.status === 404 && !process.env.OPENWOP_BASE_URL` returned early (seam, prior step, or fixture unavailable)');
     expect(
       probe.status,
-      driver.describe('SECURITY/invariants.yaml#media-asset-url-tenant-scoped', 'a token not held by the caller (unguessable 256-bit) MUST NOT resolve'),
+      req('openwop.it.media-url-inline-cap.an-unminted-guessed-asset-token-does-not-resolve-media-asset-url-tenant-scoped', 'SECURITY/invariants.yaml#media-asset-url-tenant-scoped', 'a token not held by the caller (unguessable 256-bit) MUST NOT resolve'),
     ).toBe(404);
   });
 
@@ -135,14 +137,14 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
     // — and on the reference host, which exports debug bundles but has no node
     // that emits a media.* envelope into a run (so no media payload appears).
     const disc = await driver.get('/.well-known/openwop');
-    if (disc.status !== 200) return;
+    if (disc.status !== 200) return softSkip('blocked', 'precondition not met — `disc.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const caps = discoveryFamilies(disc.json) as { aiProviders?: { maxInlineMediaBytes?: unknown }; debugBundle?: { supported?: unknown } };
     if (caps.aiProviders?.maxInlineMediaBytes === undefined || caps.debugBundle?.supported !== true) {
-      return; // host doesn't serve media + export debug bundles — contract not exercisable
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `caps.aiProviders?.maxInlineMediaBytes === undefined || caps.debugBundle?.supported !== true` returned early (host doesn\'t serve media + export debug bundles — …'); // host doesn't serve media + export debug bundles — contract not exercisable
     }
     // Find a recent run and inspect its debug bundle for any media.* event.
     const runs = await driver.get('/v1/runs?limit=20');
-    if (runs.status !== 200) return;
+    if (runs.status !== 200) return softSkip('blocked', 'precondition not met — `runs.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const runIds = ((runs.json as { runs?: { runId?: string }[] }).runs ?? [])
       .map((r) => r.runId)
       .filter((id): id is string => typeof id === 'string');
@@ -155,9 +157,9 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
           // The §C rule-3 contract: served by URL, not inlined binary.
           expect(
             typeof ev.payload?.url === 'string' && ev.payload?.base64 === undefined,
-            driver.describe('ai-envelope.md §"Media reference payloads"', 'a media.* payload in a debug bundle MUST be a URL reference, never inlined binary'),
+            req('openwop.it.media-url-inline-cap.a-media-payload-in-a-run-debug-bundle-is-referenced-by-url-not-inlined-rfc-0055', 'ai-envelope.md §"Media reference payloads"', 'a media.* payload in a debug bundle MUST be a URL reference, never inlined binary'),
           ).toBe(true);
-          return; // asserted one — contract proven
+          return softSkip('blocked', 'precondition not met — `typeof ev.type === \'string\' && ev.type.startsWith(\'media.\')` returned early (asserted one — contract proven) (seam, prior step, or fixture unavailable)'); // asserted one — contract proven
         }
       }
     }

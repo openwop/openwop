@@ -1,0 +1,39 @@
+[
+  {
+    "runId": "r1",
+    "sequence": 0,
+    "type": "run.started",
+    "schemaVersion": 1,
+    "payload": {
+      "workflowId": "w"
+    }
+  },
+  {
+    "runId": "r1",
+    "sequence": 1,
+    "type": "dispatch.fanned-out",
+    "schemaVersion": 1,
+    "payload": {}
+  },
+  {
+    "runId": "r1",
+    "sequence": 2,
+    "type": "orchestrator.decided",
+    "schemaVersion": 1,
+    "payload": {}
+  },
+  {
+    "runId": "r1",
+    "sequence": 3,
+    "type": "acme.thing-happened",
+    "schemaVersion": 1,
+    "payload": {}
+  },
+  {
+    "runId": "r1",
+    "sequence": 4,
+    "type": "run.completed",
+    "schemaVersion": 1,
+    "payload": {}
+  }
+]

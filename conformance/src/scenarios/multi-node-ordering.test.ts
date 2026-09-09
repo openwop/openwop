@@ -14,6 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-multi-node';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -33,7 +34,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('multi-node: conformance-multi-node fixture emi
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.multi-node-ordering.a-b-c-node-completed-events-arrive-in-dag-order-by-sequence', 
       'fixtures.md conformance-multi-node §Terminal status',
       'fixture MUST reach terminal `completed`',
     )).toBe('completed');
@@ -41,7 +42,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('multi-node: conformance-multi-node fixture emi
     const eventsRes = await driver.get(
       `/v1/runs/${encodeURIComponent(runId)}/events/poll?lastSequence=0&timeout=1`,
     );
-    expect(eventsRes.status, driver.describe(
+    expect(eventsRes.status, req('openwop.it.multi-node-ordering.a-b-c-node-completed-events-arrive-in-dag-order-by-sequence', 
       'rest-endpoints.md GET /v1/runs/{runId}/events/poll',
       'event-poll MUST return 200 for known runs',
     )).toBe(200);
@@ -52,7 +53,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('multi-node: conformance-multi-node fixture emi
       .sort((x, y) => x.sequence - y.sequence)
       .map((e) => e.nodeId);
 
-    expect(nodeCompletions, driver.describe(
+    expect(nodeCompletions, req('openwop.it.multi-node-ordering.a-b-c-node-completed-events-arrive-in-dag-order-by-sequence', 
       'fixtures.md conformance-multi-node §Topology',
       'all three node.completed events (a, b, c) MUST be present',
     )).toEqual(['a', 'b', 'c']);

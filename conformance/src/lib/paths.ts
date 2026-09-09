@@ -36,6 +36,7 @@
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 
 // `dirname(fileURLToPath(import.meta.url))` for an ESM module compiled or
@@ -65,6 +66,21 @@ interface ResolvedLayout {
   readonly coverageDocPath: string | null;
   /** Directory containing v1 prose docs (`*.md`), if present in this layout. */
   readonly v1Dir: string | null;
+  /**
+   * Directory containing the v2 corpus data (`declaration.json`, the codemap,
+   * `spec/v2/core/*.md`), if present in this layout.
+   *
+   * Anchored on the CONTRACT root, not the layout root, because that is the
+   * only anchor that holds in both shapes: in a repo checkout the contract
+   * root is the repo and `spec/v2/` sits inside it; in a published install it
+   * is the `@openwop/spec-artifacts` peer, which ships `spec/` while the
+   * conformance package ships none. A resolver anchored on `v1Dir` instead
+   * (the shape before 2.0.6) returned null for every consumer of the published
+   * package, because `spec/v1/` is a repo-only directory — so a v2 lookup was
+   * routed through a v1 probe and every published layout silently lost the
+   * data. See `era2-seed.registeredOrgs`.
+   */
+  readonly specV2Dir: string | null;
   /** Path to repository README.md, if present in this layout. */
   readonly readmePath: string | null;
   /** Path to the TypeScript SDK run-helper source, if present in this layout. */
@@ -77,7 +93,22 @@ interface ResolvedLayout {
   readonly layout: 'env-override' | 'repo' | 'published';
 }
 
-function resolveFromRoot(root: string, layout: ResolvedLayout['layout']): ResolvedLayout {
+/**
+ * Suite 2.0.0 (RFC 0168 §D.2): in the published layout the CONTRACT (api/ and
+ * schemas/) is the `@openwop/spec-artifacts` peer package, not files vendored
+ * into this tarball. Resolve its root through Node's resolver from this package
+ * so the host's installed peer is what the suite validates against.
+ */
+function resolvePeerRoot(): string | null {
+  try {
+    const req = createRequire(join(PKG_ROOT, 'package.json'));
+    return dirname(req.resolve('@openwop/spec-artifacts/package.json'));
+  } catch {
+    return null;
+  }
+}
+
+function resolveFromRoot(root: string, layout: ResolvedLayout['layout'], contractRoot: string = root): ResolvedLayout {
   // Two on-disk shapes for the layout root:
   //   - Repo: <root>/schemas, <root>/api, <root>/conformance/fixtures,
   //           <root>/conformance/{fixtures.md,coverage.md}, <root>/spec/v1/*.md
@@ -86,8 +117,8 @@ function resolveFromRoot(root: string, layout: ResolvedLayout['layout']): Resolv
   //           <root>/fixtures.md (when bundled), no spec/v1.
   // Probe by checking whether `schemas/` lives at the conformance pkg root
   // (vendored) vs one level up (repo).
-  const schemasDir = join(root, 'schemas');
-  const apiDir = join(root, 'api');
+  const schemasDir = join(contractRoot, 'schemas');
+  const apiDir = join(contractRoot, 'api');
   const repoFixturesDir = join(root, 'conformance', 'fixtures');
   const vendoredFixturesDir = join(root, 'fixtures');
   const fixturesDir = existsSync(repoFixturesDir) ? repoFixturesDir : vendoredFixturesDir;
@@ -121,6 +152,8 @@ function resolveFromRoot(root: string, layout: ResolvedLayout['layout']): Resolv
       : null;
   const v1Probe = join(root, 'spec', 'v1');
   const v1Dir = existsSync(v1Probe) ? v1Probe : null;
+  const specV2Probe = join(contractRoot, 'spec', 'v2');
+  const specV2Dir = existsSync(specV2Probe) ? specV2Probe : null;
   const readmeProbe = join(root, 'README.md');
   const readmePath = existsSync(readmeProbe) ? readmeProbe : null;
   const typescriptRunHelpersProbe = join(root, 'sdk', 'typescript', 'src', 'run-helpers.ts');
@@ -139,6 +172,7 @@ function resolveFromRoot(root: string, layout: ResolvedLayout['layout']): Resolv
     fixturesDocPath,
     coverageDocPath,
     v1Dir,
+    specV2Dir,
     readmePath,
     typescriptRunHelpersPath,
     pythonTypesPath,
@@ -166,7 +200,13 @@ function resolveLayout(): ResolvedLayout {
   if (parentHasSchemas) {
     return resolveFromRoot(parent, 'repo');
   }
+  const peer = resolvePeerRoot();
+  if (peer) {
+    return resolveFromRoot(PKG_ROOT, 'published', peer);
+  }
   if (pkgHasSchemas) {
+    // A pre-2.0 tarball layout (schemas vendored in-package); kept so an old
+    // layout still resolves, but the 2.x stamp check refuses to run without the peer.
     return resolveFromRoot(PKG_ROOT, 'published');
   }
   // Neither — return the published-style resolution rooted at PKG_ROOT
@@ -186,6 +226,7 @@ export const CONFORMANCE_README_PATH: string | null = _layout.conformanceReadmeP
 export const FIXTURES_DOC_PATH: string | null = _layout.fixturesDocPath;
 export const COVERAGE_DOC_PATH: string | null = _layout.coverageDocPath;
 export const V1_DIR: string | null = _layout.v1Dir;
+export const SPEC_V2_DIR: string | null = _layout.specV2Dir;
 export const README_PATH: string | null = _layout.readmePath;
 export const TYPESCRIPT_RUN_HELPERS_PATH: string | null = _layout.typescriptRunHelpersPath;
 export const PYTHON_TYPES_PATH: string | null = _layout.pythonTypesPath;

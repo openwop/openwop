@@ -18,8 +18,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
-import { driver } from '../lib/driver.js';
 import { isAnonymousActorAdvertised, anonDispatch } from '../lib/anonymousActor.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-anonymous-actor';
 
@@ -33,19 +34,19 @@ describe('anonymous-actor-audit-opaque (RFC 0132 §D)', () => {
   it('the authorization.decided principal is opaque, non-PII, and the record carries no credential', async () => {
     if (!behaviorGate(PROFILE, await isAnonymousActorAdvertised())) return;
     const res = await anonDispatch({ tool: 'catalog.read' });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const decided = res.json?.authorizationDecided?.payload;
     expect(
       decided?.principal,
-      driver.describe('RFC 0132 §D', 'an anon tool call MUST emit authorization.decided with a principal'),
+      req('openwop.it.anonymous-actor-audit-opaque.the-authorization-decided-principal-is-opaque-non-pii-and-the-record-carries-no', 'RFC 0132 §D', 'an anon tool call MUST emit authorization.decided with a principal'),
     ).toBeTruthy();
 
     const principal = decided?.principal ?? '';
     for (const [pattern, label] of PII_PATTERNS) {
       expect(
         pattern.test(principal),
-        driver.describe('SECURITY anon-actor-audit-opaque', `the anon principal MUST NOT embed ${label}`),
+        req('openwop.it.anonymous-actor-audit-opaque.the-authorization-decided-principal-is-opaque-non-pii-and-the-record-carries-no', 'SECURITY anon-actor-audit-opaque', `the anon principal MUST NOT embed ${label}`),
       ).toBe(false);
     }
     // The record MUST NOT carry credential material (reason is redaction-safe).
@@ -53,7 +54,7 @@ describe('anonymous-actor-audit-opaque (RFC 0132 §D)', () => {
     for (const [pattern, label] of PII_PATTERNS) {
       expect(
         pattern.test(serialized),
-        driver.describe('SECURITY anon-actor-audit-opaque', `the audit record MUST NOT carry ${label}`),
+        req('openwop.it.anonymous-actor-audit-opaque.the-authorization-decided-principal-is-opaque-non-pii-and-the-record-carries-no', 'SECURITY anon-actor-audit-opaque', `the audit record MUST NOT carry ${label}`),
       ).toBe(false);
     }
   });
@@ -61,11 +62,11 @@ describe('anonymous-actor-audit-opaque (RFC 0132 §D)', () => {
   it('the run snapshot echoes owner.principalKind "anonymous"', async () => {
     if (!behaviorGate(PROFILE, await isAnonymousActorAdvertised())) return;
     const res = await anonDispatch({ tool: 'catalog.read' });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
-    if (!res.json?.owner) return; // seam does not echo an owner triple — nothing to assert
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
+    if (!res.json?.owner) return softSkip('blocked', 'precondition not met — `!res.json?.owner` returned early (seam does not echo an owner triple — nothing to assert) (seam, prior step, or fixture unavailable)'); // seam does not echo an owner triple — nothing to assert
     expect(
       res.json.owner.principalKind,
-      driver.describe('RFC 0132 §A', 'an anon-authorized run MUST set owner.principalKind "anonymous"'),
+      req('openwop.it.anonymous-actor-audit-opaque.the-run-snapshot-echoes-owner-principalkind-anonymous', 'RFC 0132 §A', 'an anon-authorized run MUST set owner.principalKind "anonymous"'),
     ).toBe('anonymous');
   });
 });

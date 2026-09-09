@@ -36,6 +36,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -83,7 +85,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const res = await driver.post('/v1/prompts', body);
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.post-v1-prompts-creates-a-user-source-template-201-location', 
         'spec/v1/prompts.md §Discovery & distribution',
         'POST /v1/prompts MUST return 201 on successful user-source create',
       ),
@@ -91,7 +93,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const location = res.headers?.get?.('location');
     expect(
       typeof location === 'string' && location.includes(TEMPLATE_ID),
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.post-v1-prompts-creates-a-user-source-template-201-location', 
         'spec/v1/prompts.md §Discovery & distribution',
         '201 response MUST set a Location header referencing the new templateId',
       ),
@@ -107,7 +109,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     expect(tpl.templateId).toBe(TEMPLATE_ID);
     expect(
       tpl.meta?.source,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.get-v1-prompts-templateid-returns-the-new-template-with-meta-source-user', 
         'spec/v1/prompts.md §PromptTemplate',
         'host MUST stamp meta.source: "user" on POST-created templates',
       ),
@@ -126,7 +128,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const res = await driver.post('/v1/prompts', body);
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.post-v1-prompts-with-same-templateid-version-returns-409', 
         'spec/v1/prompts.md §Discovery & distribution',
         'POST /v1/prompts MUST return 409 on (templateId, version) duplicate',
       ),
@@ -145,7 +147,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const res = await driver.put(`/v1/prompts/${encodeURIComponent(TEMPLATE_ID)}`, body);
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.put-v1-prompts-templateid-with-strictly-greater-semver-replaces-the-template', 
         'spec/v1/prompts.md §Discovery & distribution',
         'PUT /v1/prompts/{templateId} MUST return 200 on monotonic-SemVer update',
       ),
@@ -167,7 +169,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const res = await driver.put(`/v1/prompts/${encodeURIComponent(TEMPLATE_ID)}`, body);
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.put-v1-prompts-templateid-with-non-monotonic-semver-returns-409', 
         'spec/v1/prompts.md §Discovery & distribution',
         'PUT MUST return 409 when submitted version does not exceed stored',
       ),
@@ -180,7 +182,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const del = await driver.delete(`/v1/prompts/${encodeURIComponent(TEMPLATE_ID)}`);
     expect(
       del.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.delete-v1-prompts-templateid-returns-204-and-subsequent-get-returns-404', 
         'spec/v1/prompts.md §Discovery & distribution',
         'DELETE /v1/prompts/{templateId} MUST return 204 on successful delete',
       ),
@@ -188,7 +190,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     const after = await driver.get(`/v1/prompts/${encodeURIComponent(TEMPLATE_ID)}`);
     expect(
       after.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.delete-v1-prompts-templateid-returns-204-and-subsequent-get-returns-404', 
         'spec/v1/prompts.md §Discovery & distribution',
         'GET after DELETE MUST return 404',
       ),
@@ -201,14 +203,14 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
     // Find a host-built-in to probe; the conformance-fixture set
     // is the standard source for this test.
     const list = await driver.get('/v1/prompts?source=host&limit=1');
-    if (list.status !== 200) return;
+    if (list.status !== 200) return softSkip('blocked', 'precondition not met — `list.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const body = list.json as { items: PromptTemplate[] };
-    if (body.items.length === 0) return;
+    if (body.items.length === 0) return softSkip('blocked', 'precondition not met — `body.items.length === 0` returned early (seam, prior step, or fixture unavailable)');
     const hostTemplate = body.items[0]!;
     const res = await driver.delete(`/v1/prompts/${encodeURIComponent(hostTemplate.templateId)}`);
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.prompt-mutable-lifecycle.delete-on-a-host-built-in-template-returns-403', 
         'spec/v1/prompts.md §Discovery & distribution',
         'DELETE on a host-built-in template MUST return 403 (read-only)',
       ),

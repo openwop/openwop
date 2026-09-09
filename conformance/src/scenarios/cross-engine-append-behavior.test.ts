@@ -32,6 +32,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -92,7 +93,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     if (resetStatus === 404) {
       await noteHarnessAbsent();
       ctx.skip(); // host doesn't expose the cross-engine harness seam
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -115,7 +116,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
 
     expect(
       read.entries.length,
-      driver.describe(
+      req('openwop.it.cross-engine-append-behavior.interleaved-appends-from-two-engines-converge-to-a-single-globally-ordered-seque', 
         'channels-and-reducers.md §"Cross-engine ordering"',
         'all appends across all engines MUST appear in the linearized read',
       ),
@@ -126,14 +127,14 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     const engineBEntries = read.entries.filter((e) => e.engineId === 'engine-B').map((e) => e.value);
     expect(
       engineAEntries,
-      driver.describe(
+      req('openwop.it.cross-engine-append-behavior.interleaved-appends-from-two-engines-converge-to-a-single-globally-ordered-seque', 
         'channels-and-reducers.md §"Cross-engine ordering"',
         'engine-A submissions MUST appear in submission order within the linearization',
       ),
     ).toEqual(['a-1', 'a-2', 'a-3']);
     expect(
       engineBEntries,
-      driver.describe(
+      req('openwop.it.cross-engine-append-behavior.interleaved-appends-from-two-engines-converge-to-a-single-globally-ordered-seque', 
         'channels-and-reducers.md §"Cross-engine ordering"',
         'engine-B submissions MUST appear in submission order within the linearization',
       ),
@@ -145,7 +146,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     if (resetStatus === 404) {
       await noteHarnessAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -162,7 +163,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     // channel MUST have strictly-higher clock than the previous.
     expect(
       a2.entry!.lamport > b1.entry!.lamport && b1.entry!.lamport > a1.entry!.lamport,
-      driver.describe(
+      req('openwop.it.cross-engine-append-behavior.lamport-clocks-monotonically-advance-across-engines', 
         'channels-and-reducers.md §"Cross-engine ordering" — Lamport',
         'lamport clocks MUST be strictly monotonic on the shared channel',
       ),
@@ -174,7 +175,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     if (resetStatus === 404) {
       await noteHarnessAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -190,7 +191,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     expect(b1.status).toBe(200);
     expect(
       b1.entry!.lamport > seen,
-      driver.describe(
+      req('openwop.it.cross-engine-append-behavior.lamport-hint-from-engine-a-advances-engine-b-past-it', 
         'channels-and-reducers.md §"Cross-engine ordering" — Lamport receive rule',
         'when engine B sees engine A\'s clock at L, B\'s next append MUST have clock > L',
       ),
@@ -202,7 +203,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     if (resetStatus === 404) {
       await noteHarnessAbsent();
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `resetStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resetStatus).toBe(200);
 
@@ -217,7 +218,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-behavior: §B cross-engine order
     expect(r2.status).toBe(200);
     expect(
       r1.entries.map((e) => `${e.engineId}:${String(e.value)}`),
-      driver.describe(
+      req('openwop.it.cross-engine-append-behavior.linearization-is-deterministic-same-appends-same-total-order', 
         'channels-and-reducers.md §"Cross-engine ordering" — determinism',
         'two reads MUST produce the same linearization (deterministic merge)',
       ),

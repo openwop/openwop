@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-ref.schema.json",
+  "title": "AgentRef",
+  "description": "Slim wire-shape projection of an agent's identity. Carried on `RunSnapshot.agent` (the active worker for a run), `RunSnapshot.runOrchestrator` (the supervisor identity for the run's lifetime), `WorkflowNode.agent` (compile-time pinning), and the `agent.*` event family's payload `agentId` field. Distinct from `AgentManifest` (which is the pack-distribution descriptor for an agent definition — see `agent-manifest.schema.json`); `AgentRef` is the runtime projection, not the definition.",
+  "type": "object",
+  "required": ["agentId"],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 256,
+      "description": "Globally-unique agent identifier. Naming convention mirrors `node-packs.md` §Naming — `<tier>.<org>.<pack>.<agent>` for vendor/community packs (`vendor.acme.support.tier1`); `core.<name>` for spec-canonical agents (`core.chat`, `core.research`); `host:<id>` slim-runtime form for host-internal AgentRefs that don't ship as packs. Host-internal `host:<id>` agents are valid AgentRefs at the wire level but MUST NOT be published as manifests (the `host:` namespace is reserved for runtime synthesis). External-identity-system compatibility (STD-4): hosts MAY map an `agentId` to a W3C DID, an A2A AgentCard URL, an AGNTCY gateway identifier, or other external identity primitive via host-internal mapping tables. The external identifier MUST NOT be embedded as the wire-level `agentId` (doing so would force resolver dependencies on every consumer); carry it under vendor metadata or as the `host:<scheme>:<id>` form. See `spec/v1/agent-ref-positioning.md` §\"Composition rules\" for the recommended mapping conventions."
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Optional human-readable display name. Surfaces in audit / debug-bundle UIs alongside `agentId`. Hosts MAY populate from the agent's `AgentManifest.name` field at projection time; consumers MUST treat absence as 'name unknown' rather than synthesize."
+    },
+    "modelClass": {
+      "type": "string",
+      "enum": [
+        "reasoning",
+        "tool-using",
+        "chat",
+        "code",
+        "vision",
+        "multimodal",
+        "embedding",
+        "classification",
+        "retrieval"
+      ],
+      "description": "Closed enum describing the agent's model-class envelope. Hosts that advertise `capabilities.agents.modelClasses` use this enum to filter agents at install / dispatch time. Vendor extensions ship under `<vendor>.<class>` per `host-extensions.md` (e.g., `openwop.creative-writing`) — vendor-extension values are NOT in the closed enum and MUST surface as unknown to strict consumers."
+    },
+    "memoryRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Optional host-defined opaque reference to this agent's long-term memory. Resolved by the host's `MemoryAdapter` (see `agent-memory.md`); the wire-level shape is host-defined per the L2 disposition (mirrors `host-extensions.md` namespace conventions). Hosts that don't implement long-term memory MUST NOT emit this field; hosts that do MUST honor cross-tenant isolation (CTI-1)."
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "Optional EXACT version pin for the agent definition (matches `AgentManifest.version`). Lets audit consumers trace which version of an agent definition was active for a given run. Pinning is encouraged for replay determinism; absent values mean 'host's current resolution of the agent'. Mutually exclusive with `channel` (RFC 0082 §A) — set at most one."
+    },
+    "channel": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "RFC 0082 §A. Optional NAMED deployment-channel binding (e.g. `stable`, `canary`, or the reserved `latest` = highest active semver), as an alternative to the exact `version` pin. A host advertising `capabilities.agents.deployment.supported: true` resolves the channel to a concrete version and pins it per-(run, agentId, channel) at first resolution (RFC 0082 §B) — the resolved version is a recorded fact carried on `agent.invocation.started.resolvedAgentVersion`, re-read on replay and NEVER re-resolved against a moved channel. Mutually exclusive with `version` (the `not` clause below). A channel that resolves to no `active` version fails the run with `no_active_deployment`. Hosts that omit `agents.deployment` MUST reject a `channel`-bearing ref with `validation_error` (the channel has nowhere to resolve)."
+    },
+    "sourceManifestId": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Optional provenance pointer back to the `AgentManifest.agentId` this AgentRef was projected from. Lets pack-aware hosts trace runtime AgentRefs back to their distribution origin. Absent for host-internal `host:<id>` agents (which have no manifest)."
+    }
+  },
+  "additionalProperties": false,
+  "not": {
+    "required": ["version", "channel"],
+    "$comment": "RFC 0082 §A. `version` (exact pin) and `channel` (named deployment channel) are mutually exclusive — a ref MAY set at most one. Setting both is a validation_error. Setting neither is valid (host-default resolution). Additive-safe: no pre-RFC-0082 ref can carry `channel`, so this clause never invalidates an existing AgentRef."
+  }
+}

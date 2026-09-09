@@ -38,9 +38,8 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /** Read the canonical error code from a response body (tolerant of
  *  `{error}` / `{code}` / `{error:{code}}` shapes). */
@@ -73,7 +72,7 @@ describe('aiproviders-subscription-scope: schema shape (RFC 0121, server-free)',
       | undefined;
     expect(
       authModes?.additionalProperties?.items?.enum,
-      why('capabilities.md §aiProviders.authModes', 'the authModes enum MUST include "subscription" (RFC 0121)'),
+      req('openwop.it.aiproviders-subscription-scope.the-aiproviders-authmodes-enum-includes-subscription', 'capabilities.md §aiProviders.authModes', 'the authModes enum MUST include "subscription" (RFC 0121)'),
     ).toContain('subscription');
   });
 });
@@ -94,7 +93,7 @@ describe('aiproviders-subscription-scope: §B.7 in-byok (advertisement-gated)', 
     for (const provider of subProviders) {
       expect(
         byok.has(provider),
-        driver.describe('RFC 0121 §B.7', `subscription provider '${provider}' MUST appear in aiProviders.byok`),
+        req('openwop.it.aiproviders-subscription-scope.every-advertised-subscription-provider-appears-in-aiproviders-byok', 'RFC 0121 §B.7', `subscription provider '${provider}' MUST appear in aiProviders.byok`),
       ).toBe(true);
     }
   });
@@ -110,18 +109,18 @@ describe('aiproviders-subscription-scope: §B.8 user-scope-only (bind-seam-gated
     // multi-instance deploy with no durable per-user login) can still prove the
     // safety rail here. Soft-skips on 404 when the seam is unwired.
     const res = await driver.post(SEAM, { provider: 'anthropic', mode: 'subscription', scope: 'tenant' });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     expect(
       res.status >= 400,
-      driver.describe(
+      req('openwop.it.aiproviders-subscription-scope.a-tenant-scope-subscription-binding-is-rejected-with-credential-scope-forbidden', 
         'RFC 0121 §B.8',
         `binding a subscription credential at tenant scope MUST be rejected (got HTTP ${res.status})`,
       ),
     ).toBe(true);
     expect(
       errCode(res.json),
-      driver.describe(
+      req('openwop.it.aiproviders-subscription-scope.a-tenant-scope-subscription-binding-is-rejected-with-credential-scope-forbidden', 
         'RFC 0121 §B.8',
         'a rejected tenant-scope subscription binding MUST carry the canonical `credential_scope_forbidden` error code',
       ),

@@ -30,6 +30,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const MEMORY_REF = 'mem_tenant:default_agent:conformance-rfc0012-sr1_longTerm';
 
@@ -77,13 +78,13 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
         { id: `sr1-src-${Date.now()}-3`, content: 'Customer asked about pricing tiers.' },
       ],
     });
-    expect(seed.status, 'seed endpoint MUST return 201 when reachable').toBe(201);
+    expect(seed.status, req('openwop.it.memory-compaction-sr1-carry-forward.compacted-memoryentry-content-must-not-carry-source-side-form-leak-signatures', 'RFC 0012 §D', 'seed endpoint MUST return 201 when reachable')).toBe(201);
 
     // 2. Drive compaction synchronously.
     const compactRes = await driver.post('/v1/test/memory/compact', {
       memoryRef: MEMORY_REF,
     });
-    expect(compactRes.status, 'compact MUST return 200 with ≥2 source entries').toBe(200);
+    expect(compactRes.status, req('openwop.it.memory-compaction-sr1-carry-forward.compacted-memoryentry-content-must-not-carry-source-side-form-leak-signatures', 'RFC 0012 §D', 'compact MUST return 200 with ≥2 source entries')).toBe(200);
 
     const event = compactRes.json as {
       type?: string;
@@ -95,7 +96,7 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
       // trivially without it.
       outputContent?: string;
     };
-    expect(event.type, 'event payload MUST be type=memory.compacted').toBe('memory.compacted');
+    expect(event.type, req('openwop.it.memory-compaction-sr1-carry-forward.compacted-memoryentry-content-must-not-carry-source-side-form-leak-signatures', 'RFC 0012 §D', 'event payload MUST be type=memory.compacted')).toBe('memory.compacted');
 
     if (typeof event.outputContent !== 'string') {
       // eslint-disable-next-line no-console
@@ -107,11 +108,11 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
     // future MemoryAdapter.get / list consumers would see) MUST NOT
     // carry source-side form-leak signatures. A host that skips its
     // BYOK redaction pass on derived content fails here.
-    expect(event.outputContent.includes('[BYOK:hk_live_canary_42]'), driver.describe(
+    expect(event.outputContent.includes('[BYOK:hk_live_canary_42]'), req('openwop.it.memory-compaction-sr1-carry-forward.compacted-memoryentry-content-must-not-carry-source-side-form-leak-signatures', 
       'RFC 0012 §D',
       'derived MemoryEntry.content MUST NOT carry source-side [BYOK:...] form-leak signatures (SR-1 carry-forward)',
     )).toBe(false);
-    expect(event.outputContent.includes('<REDACTED:db-prod-creds>'), driver.describe(
+    expect(event.outputContent.includes('<REDACTED:db-prod-creds>'), req('openwop.it.memory-compaction-sr1-carry-forward.compacted-memoryentry-content-must-not-carry-source-side-form-leak-signatures', 
       'RFC 0012 §D',
       'derived MemoryEntry.content MUST NOT echo non-canonical <REDACTED:...> markers from sources',
     )).toBe(false);
@@ -121,7 +122,7 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
     // leak. Pinning this prevents a host from "passing" by simply
     // stripping source content rather than redacting it (which would
     // also lose audit signal).
-    expect(event.outputContent, driver.describe(
+    expect(event.outputContent, req('openwop.it.memory-compaction-sr1-carry-forward.compacted-memoryentry-content-must-not-carry-source-side-form-leak-signatures', 
       'RFC 0012 §D',
       'derived MemoryEntry.content MUST carry canonical [REDACTED:...] placeholders where source-side leaks were re-substituted',
     )).toMatch(/\[REDACTED:[^\]]+\]/);

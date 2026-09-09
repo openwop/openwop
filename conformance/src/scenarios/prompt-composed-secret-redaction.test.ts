@@ -34,6 +34,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -97,8 +99,8 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
       },
       observability: 'full',
     });
-    if (res.status === 404) return; // host doesn't expose the seam
-    expect(res.status, 'compose seam MUST return 200').toBe(200);
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
+    expect(res.status, req('openwop.it.prompt-composed-secret-redaction.emits-prompt-composed-with-redacted-id-in-place-of-secret-sourced-variable-value', 'spec/v1/prompts.md §Composition + observability', 'compose seam MUST return 200')).toBe(200);
 
     const payload = res.json as PromptComposedPayload;
 
@@ -108,14 +110,14 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     const userBody = payload.userPrompt ?? '';
     expect(
       systemBody.includes(CANARY_FRAGMENT),
-      driver.describe(
+      req('openwop.it.prompt-composed-secret-redaction.emits-prompt-composed-with-redacted-id-in-place-of-secret-sourced-variable-value', 
         'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.systemPrompt MUST NOT contain plaintext secret value',
       ),
     ).toBe(false);
     expect(
       userBody.includes(CANARY_FRAGMENT),
-      driver.describe(
+      req('openwop.it.prompt-composed-secret-redaction.emits-prompt-composed-with-redacted-id-in-place-of-secret-sourced-variable-value', 
         'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.userPrompt MUST NOT contain plaintext secret value',
       ),
@@ -127,7 +129,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     const combined = systemBody + userBody;
     expect(
       /\[REDACTED:[a-zA-Z0-9._-]+\]/.test(combined),
-      driver.describe(
+      req('openwop.it.prompt-composed-secret-redaction.emits-prompt-composed-with-redacted-id-in-place-of-secret-sourced-variable-value', 
         'spec/v1/prompts.md §Composition + observability',
         'composed body MUST carry [REDACTED:<secretId>] marker where secret-sourced variables appear',
       ),
@@ -140,7 +142,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
         if (typeof value === 'string') {
           expect(
             value.includes(CANARY_FRAGMENT),
-            driver.describe(
+            req('openwop.it.prompt-composed-secret-redaction.emits-prompt-composed-with-redacted-id-in-place-of-secret-sourced-variable-value', 
               'spec/v1/prompts.md §Composition + observability',
               `variableBindings[${name}] MUST NOT contain plaintext secret value`,
             ),
@@ -158,19 +160,19 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
       bindings: { apiKey: 'openwop-conformance-canary-secret' },
       observability: 'full',
     });
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(res.status).toBe(200);
     const payload = res.json as PromptComposedPayload;
     expect(
       payload.hash && /^sha256:[0-9a-f]{64}$/.test(payload.hash),
-      driver.describe(
+      req('openwop.it.prompt-composed-secret-redaction.emits-variablehashes-for-the-secret-sourced-binding-regardless-of-observability', 
         'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.hash MUST be present and match sha256:<hex64>',
       ),
     ).toBe(true);
     expect(
       payload.variableHashes !== undefined,
-      driver.describe(
+      req('openwop.it.prompt-composed-secret-redaction.emits-variablehashes-for-the-secret-sourced-binding-regardless-of-observability', 
         'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.variableHashes MUST be present under all non-off observability modes',
       ),

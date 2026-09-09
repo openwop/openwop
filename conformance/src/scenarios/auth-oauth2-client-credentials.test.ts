@@ -34,6 +34,8 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { createSyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host fetches the token endpoint on the suite's synthetic OIDC issuer.
@@ -79,12 +81,12 @@ describe('auth-oauth2-client-credentials: capability shape', () => {
       return;
     }
 
-    expect(auth?.profiles?.includes(PROFILE), driver.describe(
+    expect(auth?.profiles?.includes(PROFILE), req('openwop.it.auth-oauth2-client-credentials.host-claiming-oauth2-cc-profile-advertises-required-fields', 
       'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
       'capabilities.auth.profiles MUST include openwop-auth-oauth2-client-credentials when the profile is claimed',
     )).toBe(true);
 
-    expect(auth?.oauth2?.supported, driver.describe(
+    expect(auth?.oauth2?.supported, req('openwop.it.auth-oauth2-client-credentials.host-claiming-oauth2-cc-profile-advertises-required-fields', 
       'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
       'capabilities.auth.oauth2.supported MUST be true when the profile is claimed',
     )).toBe(true);
@@ -92,7 +94,7 @@ describe('auth-oauth2-client-credentials: capability shape', () => {
     if (auth?.oauth2?.issuer !== undefined) {
       expect(
         typeof auth.oauth2.issuer === 'string' && auth.oauth2.issuer.length > 0,
-        driver.describe(
+        req('openwop.it.auth-oauth2-client-credentials.host-claiming-oauth2-cc-profile-advertises-required-fields', 
           'capabilities.schema.json auth.oauth2.issuer',
           'issuer MUST be a non-empty string when advertised',
         ),
@@ -102,7 +104,7 @@ describe('auth-oauth2-client-credentials: capability shape', () => {
     if (auth?.oauth2?.audience !== undefined) {
       expect(
         typeof auth.oauth2.audience === 'string' && auth.oauth2.audience.length > 0,
-        driver.describe(
+        req('openwop.it.auth-oauth2-client-credentials.host-claiming-oauth2-cc-profile-advertises-required-fields', 
           'capabilities.schema.json auth.oauth2.audience',
           'audience MUST be a non-empty string when advertised',
         ),
@@ -113,7 +115,7 @@ describe('auth-oauth2-client-credentials: capability shape', () => {
       expect(
         Array.isArray(auth.oauth2.supportedAlgorithms) &&
           auth.oauth2.supportedAlgorithms.length > 0,
-        driver.describe(
+        req('openwop.it.auth-oauth2-client-credentials.host-claiming-oauth2-cc-profile-advertises-required-fields', 
           'capabilities.schema.json auth.oauth2.supportedAlgorithms',
           'supportedAlgorithms MUST be a non-empty array when advertised',
         ),
@@ -139,13 +141,13 @@ describe('auth-oauth2-client-credentials: malformed JWT rejected', () => {
       },
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oauth2-client-credentials.returns-401-on-bearer-that-is-not-a-valid-jwt-shape', 
       'auth.md §3',
       'malformed JWT bearer MUST return 401 (canonical invalid_token envelope)',
     )).toBe(401);
 
     const body = res.json as { error?: unknown; message?: unknown } | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.auth-oauth2-client-credentials.returns-401-on-bearer-that-is-not-a-valid-jwt-shape', 
       'auth.md §3 + rest-endpoints.md error envelope',
       'response body MUST include `error` (machine code) string',
     )).toBe('string');
@@ -165,7 +167,7 @@ describe('auth-oauth2-client-credentials: harness-minted negative cases', () => 
       console.warn(
         '[auth-oauth2-client-credentials] OPENWOP_TEST_OAUTH_ISSUER_TRUSTED not set; skipping harness-minted negative cases (operator must pre-configure the host to trust the conformance harness)',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `process.env.OPENWOP_TEST_OAUTH_ISSUER_TRUSTED !== \'true\'` returned early ([auth-oauth2-client-credentials] OPENWOP_TEST_OAUTH_ISSUER_TRUSTED not set; skipping harness-minted negative cases (ope…');
     }
 
     const issuerUrl =
@@ -187,7 +189,7 @@ describe('auth-oauth2-client-credentials: harness-minted negative cases', () => 
         headers: { Authorization: `Bearer ${wrongAud.token}` },
       },
     );
-    expect(wrongAudRes.status, driver.describe(
+    expect(wrongAudRes.status, req('openwop.it.auth-oauth2-client-credentials.wrong-audience-token-returns-401-when-host-trusts-the-harness', 
       'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
       'token with wrong aud claim MUST return 401',
     )).toBe(401);
@@ -205,7 +207,7 @@ describe('auth-oauth2-client-credentials: harness-minted negative cases', () => 
         headers: { Authorization: `Bearer ${expired.token}` },
       },
     );
-    expect(expiredRes.status, driver.describe(
+    expect(expiredRes.status, req('openwop.it.auth-oauth2-client-credentials.wrong-audience-token-returns-401-when-host-trusts-the-harness', 
       'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
       'expired token (exp < now) MUST return 401',
     )).toBe(401);
@@ -223,7 +225,7 @@ describe('auth-oauth2-client-credentials: harness-minted negative cases', () => 
         headers: { Authorization: `Bearer ${algSpoofed.token}` },
       },
     );
-    expect(algSpoofedRes.status, driver.describe(
+    expect(algSpoofedRes.status, req('openwop.it.auth-oauth2-client-credentials.wrong-audience-token-returns-401-when-host-trusts-the-harness', 
       'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
       'token with alg outside supportedAlgorithms MUST return 401',
     )).toBe(401);
@@ -244,11 +246,11 @@ describe('auth-oauth2-client-credentials: positive token', () => {
       console.warn(
         '[auth-oauth2-client-credentials] OPENWOP_TEST_OAUTH_TOKEN not supplied; skipping positive-path assertion',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!token` returned early ([auth-oauth2-client-credentials] OPENWOP_TEST_OAUTH_TOKEN not supplied; skipping positive-path assertion) (seam, prior step, or fixture unavailable)');
     }
 
     if (!isFixtureAdvertised(FIXTURE)) {
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     }
 
     const res = await driver.post(
@@ -260,7 +262,7 @@ describe('auth-oauth2-client-credentials: positive token', () => {
       },
     );
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-oauth2-client-credentials.operator-supplied-valid-token-authenticates-post-v1-runs', 
       'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
       'valid OAuth2-CC token MUST authenticate POST /v1/runs (201)',
     )).toBe(201);

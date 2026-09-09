@@ -1,0 +1,31 @@
+{
+  "name": "core.openwop.connections.acme-widgets",
+  "version": "1.0.0",
+  "kind": "connection",
+  "engines": { "openwop": ">=1.0.0" },
+  "provider": {
+    "id": "acme-widgets",
+    "displayName": "Acme Widgets",
+    "category": "dev",
+    "auth": {
+      "kind": "oauth2",
+      "authFlow": "pkce",
+      "scopeModel": "groups",
+      "endpoints": {
+        "authorize": "https://auth.acme-widgets.example.com/oauth/authorize",
+        "token": "https://auth.acme-widgets.example.com/oauth/token"
+      },
+      "scopes": {
+        "read": [
+          { "key": "widget.read", "label": "Read widgets", "scopes": ["widget:read"] }
+        ],
+        "write": [
+          { "key": "widget.write", "label": "Write widgets", "scopes": ["widget:write"] }
+        ]
+      }
+    },
+    "reach": { "mcp": { "server": { "url": "https://mcp.acme-widgets.example.com/mcp/", "transport": "http" } } },
+    "consumerNodes": ["core.openwop.mcp.invoke-tool", "core.openwop.mcp.read-resource"],
+    "docsUrl": "https://docs.acme-widgets.example.com/oauth"
+  }
+}

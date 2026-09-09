@@ -31,9 +31,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -49,11 +47,11 @@ describe('aiproviders-speechsynth-shape: capability advertisement (RFC 0105 §B,
       | undefined;
     expect(
       speechSynthesis,
-      why('host-capabilities.md §host.aiProviders', 'aiProviders.speechSynthesis MUST be declared'),
+      req('openwop.it.aiproviders-speechsynth-shape.aiproviders-speechsynthesis-is-declared-as-the-string-const-supported', 'host-capabilities.md §host.aiProviders', 'aiProviders.speechSynthesis MUST be declared'),
     ).toBeDefined();
     expect(
       speechSynthesis?.const,
-      why('RFC 0105 §B', 'aiProviders.speechSynthesis MUST be the string const "supported" (not an object)'),
+      req('openwop.it.aiproviders-speechsynth-shape.aiproviders-speechsynthesis-is-declared-as-the-string-const-supported', 'RFC 0105 §B', 'aiProviders.speechSynthesis MUST be the string const "supported" (not an object)'),
     ).toBe('supported');
   });
 
@@ -63,7 +61,7 @@ describe('aiproviders-speechsynth-shape: capability advertisement (RFC 0105 §B,
     const required = Array.isArray(aiProviders?.required) ? (aiProviders!.required as string[]) : [];
     expect(
       required.includes('speechSynthesis'),
-      why('RFC 0105 §B', 'aiProviders.speechSynthesis MUST be optional (a host without TTS is valid)'),
+      req('openwop.it.aiproviders-speechsynth-shape.speechsynthesis-is-not-in-aiproviders-required-absence-no-tts-is-a-valid-default', 'RFC 0105 §B', 'aiProviders.speechSynthesis MUST be optional (a host without TTS is valid)'),
     ).toBe(false);
   });
 
@@ -81,12 +79,12 @@ describe('aiproviders-speechsynth-shape: capability advertisement (RFC 0105 §B,
 
     expect(
       validate('supported'),
-      why('RFC 0105 §B', 'aiProviders.speechSynthesis === "supported" MUST validate'),
+      req('openwop.it.aiproviders-speechsynth-shape.ajv-accepts-the-string-const-form-and-rejects-the-object-form', 'RFC 0105 §B', 'aiProviders.speechSynthesis === "supported" MUST validate'),
     ).toBe(true);
 
     expect(
       validate({ supported: true }),
-      why('RFC 0105 §B', 'the object form { supported: true } MUST be rejected by the const'),
+      req('openwop.it.aiproviders-speechsynth-shape.ajv-accepts-the-string-const-form-and-rejects-the-object-form', 'RFC 0105 §B', 'the object form { supported: true } MUST be rejected by the const'),
     ).toBe(false);
   });
 });

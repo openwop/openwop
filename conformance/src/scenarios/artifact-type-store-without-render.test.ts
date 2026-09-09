@@ -25,7 +25,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 
 const PROFILE = 'openwop-artifact-type-packs';
@@ -36,6 +35,7 @@ import {
   produceArtifact,
   sampleArtifactTypePack,
 } from '../lib/artifactTypes.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('artifact-type-store-without-render: store-only hosts must not fail the run (RFC 0071)', () => {
   it('a stored-but-unrendered artifact completes the run', async () => {
@@ -54,15 +54,15 @@ describe('artifact-type-store-without-render: store-only hosts must not fail the
 
     expect(
       produced.json['stored'],
-      driver.describe('artifact-type-packs.md §host.artifactTypes', 'a host advertising store:true MUST persist the artifact'),
+      req('openwop.it.artifact-type-store-without-render.a-stored-but-unrendered-artifact-completes-the-run', 'artifact-type-packs.md §host.artifactTypes', 'a host advertising store:true MUST persist the artifact'),
     ).toBe(true);
     expect(
       produced.json['rendered'],
-      driver.describe('artifact-type-packs.md §host.artifactTypes', 'render:false host MUST NOT render'),
+      req('openwop.it.artifact-type-store-without-render.a-stored-but-unrendered-artifact-completes-the-run', 'artifact-type-packs.md §host.artifactTypes', 'render:false host MUST NOT render'),
     ).toBe(false);
     expect(
       produced.json['runStatus'],
-      driver.describe('artifact-type-packs.md §host.artifactTypes', 'a host MUST NOT fail the run solely because it lacks a renderer for a stored artifact type'),
+      req('openwop.it.artifact-type-store-without-render.a-stored-but-unrendered-artifact-completes-the-run', 'artifact-type-packs.md §host.artifactTypes', 'a host MUST NOT fail the run solely because it lacks a renderer for a stored artifact type'),
     ).toBe('completed');
   });
 });

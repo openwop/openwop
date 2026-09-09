@@ -39,6 +39,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call';
 
@@ -91,7 +93,7 @@ describe('aiproviders-selfhosted-honesty (RFC 0108 §A.2/§D)', () => {
       provider: providerId,
       messages: [{ role: 'user', content: 'ping' }],
     });
-    if (res.status === 404) return; // seam unwired — soft-skip the behavioral suite
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip the behavioral suite) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip the behavioral suite
 
     // §A.2 — the advertisement must be backed by a real endpoint. A success or a
     // transport-class failure both prove a real endpoint was reached; a
@@ -100,7 +102,7 @@ describe('aiproviders-selfhosted-honesty (RFC 0108 §A.2/§D)', () => {
     const code = errCode(res.json);
     expect(
       code === undefined || !NO_ENDPOINT_CODES.has(code),
-      driver.describe(
+      req('openwop.it.aiproviders-selfhosted-honesty.a-selfhosted-dispatch-reaches-a-real-endpoint-a-2-and-never-discloses-the-endpoi', 
         'RFC 0108 §A.2',
         `an advertised selfHosted id (${providerId}) MUST be backed by a configured, reachable endpoint ` +
           `(dispatch succeeds or fails with a transport error) — MUST NOT refuse "${code}" (no endpoint configured)`,
@@ -116,14 +118,14 @@ describe('aiproviders-selfhosted-honesty (RFC 0108 §A.2/§D)', () => {
         '[openwop-selfhosted-providers] §D disclosure check skipped — set OPENWOP_TEST_COMPAT_ENDPOINT ' +
           "to the host's configured compat endpoint to assert non-disclosure on the wire.",
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!endpoint` returned early (seam, prior step, or fixture unavailable)');
     }
 
     const serialized = JSON.stringify(res.json ?? {});
     for (const needle of endpointNeedles(endpoint)) {
       expect(
         !serialized.includes(needle),
-        driver.describe(
+        req('openwop.it.aiproviders-selfhosted-honesty.a-selfhosted-dispatch-reaches-a-real-endpoint-a-2-and-never-discloses-the-endpoi', 
           'RFC 0108 §D (self-hosted-endpoint-no-disclosure)',
           `the endpoint location ("${needle}") MUST NOT appear in any selfHosted dispatch response or error payload`,
         ),

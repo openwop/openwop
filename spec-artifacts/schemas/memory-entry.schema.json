@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/memory-entry.schema.json",
+  "title": "MemoryEntry",
+  "description": "A single memory entry returned by `MemoryAdapter.list` or `MemoryAdapter.get` (RFC 0004). Hosts that ship cross-run memory expose entries in this shape regardless of their internal storage format. Mid-run mutations to the underlying store are NOT visible to the same run — `list` returns entries that existed at run start (preserves replay determinism per RFC 0004 §A).",
+  "type": "object",
+  "required": ["id", "content", "tags", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Memory entry id. Stable for the lifetime of the entry. Hosts MAY tenant-prefix (`mem_<wsId>_<id>`) for defense in depth, but the protocol is silent on the id shape — see RFC 0004 §Unresolved questions #1. Length cap matches Firestore document-id limit (1500 octets) so adapters that pass-through native Firestore IDs validate cleanly.",
+      "minLength": 1,
+      "maxLength": 1500
+    },
+    "content": {
+      "type": "string",
+      "description": "Memory body. UTF-8 plaintext. Hosts MUST honor the redaction invariant SR-1 (RFC 0004 §D) at write time — content reaching this projection MUST NOT contain plaintext secret values that flowed through the run's BYOK harness."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 256 },
+      "description": "Free-form tags for filtering. Hosts MAY enforce caps. Empty strings are tolerated by the schema (matches reference-impl behavior) but hosts SHOULD filter them at write time. The `MemoryListOptions.tag` filter is a set-membership check against this array. Hosts that want to surface their internal `MemorySource` (or similar host-defined classification) MAY do so via tags (e.g., `tags: ['source:session']`) per RFC 0004 §G."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of entry creation. Never mutated post-create; subsequent edits to the entry are out-of-spec at the read-path layer."
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional TTL. When the host's clock passes this value, the entry MUST NOT be returned by `list` / `get`. Hosts MAY also delete expired entries from storage as a side effect."
+    }
+  },
+  "additionalProperties": false
+}

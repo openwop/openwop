@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/certification-bundle.schema.json",
+  "title": "Certification bundle v3 (RFC 0168 §E)",
+  "description": "Closed root. witnessSha256 covers the reporter record (RFC 0148 §C); signature is an Ed25519 attestation over the canonical JSON of {witnessSha256, host.build, suite.version, discovery.sha256}; evidenceTier independent requires a verifier keyId distinct from the host's. A bundle with blocked > 0 does not certify; a relaxed obligation cannot certify its profile (RFC 0173 §A.2).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundleVersion",
+    "generatedAt",
+    "suite",
+    "host",
+    "discovery",
+    "claimedProfiles",
+    "results",
+    "witnessSha256",
+    "assertionCount",
+    "signature"
+  ],
+  "properties": {
+    "bundleVersion": {
+      "const": "3"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "targetMajor",
+        "specArtifactsVersion"
+      ],
+      "properties": {
+        "name": {
+          "const": "@openwop/openwop-conformance"
+        },
+        "version": {
+          "type": "string"
+        },
+        "targetMajor": {
+          "type": "integer",
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "specArtifactsVersion": {
+          "type": "string"
+        },
+        "stampSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "build"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "build": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "id"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "image-digest",
+                "commit",
+                "artifact-sha256"
+              ]
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "signingKeyId": {
+          "$ref": "ids.schema.json#/$defs/keyId",
+          "description": "The host key the signature was made with (the same keyId as signature.keyId)."
+        },
+        "relaxations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "obligation",
+              "durability",
+              "reason"
+            ],
+            "properties": {
+              "obligation": {
+                "type": "string"
+              },
+              "durability": {
+                "type": "string",
+                "enum": [
+                  "session",
+                  "deployment",
+                  "persisted"
+                ],
+                "description": "RFC 0173 §A.2 — session (lost on restart), deployment (set at deploy time), persisted (survives restarts and is auditable)."
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "RFC 0173 §A.2 — operator relaxations; a relaxed obligation's profile cannot certify."
+        }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "protocolVersions",
+        "preferredVersion"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "protocolVersions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferredVersion": {
+          "type": "string"
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "The captured /.well-known/openwop payload. OPTIONAL: bundles cut before suite 2.0.5 do not carry it and remain valid. When present it MUST hash (canonical JSON, keys sorted at every level) to `sha256`, and a verifier re-derives every certified profile from it (RFC 0148 §B(1)). Without it, `claimedProfiles[].certified` is a claim only the emitter can evaluate: a digest of a document the reader does not have proves nothing about its contents, and re-fetching does not substitute because the host redeploys while the bundle attests to the build it names. The object is deliberately OPEN (`additionalProperties: true`): it is a verbatim capture of a third-party document, and closing it would reject a payload from any host richer than this schema anticipated."
+        }
+      }
+    },
+    "claimedProfiles": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "evidenceTier",
+          "witnessCount",
+          "certified"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^openwop-[a-z0-9-]+$"
+          },
+          "evidenceTier": {
+            "type": "string",
+            "enum": [
+              "self",
+              "steward",
+              "independent"
+            ]
+          },
+          "witnessCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "certified": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totals",
+        "requirements"
+      ],
+      "properties": {
+        "totals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "executedPass",
+            "executedFail",
+            "skipped",
+            "inapplicable",
+            "blocked"
+          ],
+          "properties": {
+            "executedPass": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "executedFail": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "inapplicable": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "blocked": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "scenario",
+              "result"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^openwop\\.(?!it\\.(?:artifact-schema-compile-bounded|artifact-type-legacy-ids|capability-example-root-layout|certification-floor-enforcement|chain-subchain-unsupported-refused|compensation-profile|core-manifest-and-extension-registry|discovery-canonical-family-no-shadow|edge-condition-truthy-falsy|effect-identity-composition|effect-identity-cross-scope|error-envelope-canonical-shape|event-codemap-complete|form-content-packs|multi-region-effect-vocabulary|normative-example-extraction|openapi-asyncapi-sdk-parity|pack-manifest-extensions|protocol-version-grammar|registry-declarative-kinds|rfc-0147-self-audit|rfc-lifecycle-coherence|semantic-digest-v2|spec-corpus-validity|spec-section-citations|tool-result-trust-monotone|v2-alias-covers-reword|v2-corpus-tag-pinned|v2-declaration-parity|v2-eos-clock|v2-error-registry-prose-parity|v2-event-naming-rule|v2-events-channel-parity|v2-externally-gated-never-stable|v2-id-kinds-bound|v2-bundle-signature-attributable|v2-one-signing-scheme|v2-path-parity|v2-release-identity|v2-req-only-assertions|v2-retention-floors|v2-seams-not-in-canonical|v2-security-defaults-table|v2-spec-artifacts-digest|v2-threat-model-template|v2-witness-required|versioned-composition-profiles|workflow-chain-internal-flag|workload-identity-profile)\\.)(requirement|it|scenario|floor|profile|family)\\.[a-z0-9]",
+                "description": "RFC 0168 §A.1 — `openwop.<area>.<slug>`. The suite mints six areas: `requirement` (an explicit `req()` id), `it` (a per-test id from the scenario file and title), `scenario` and `floor` (per-file rows), `profile` (a claimed-profile row) and `family` (a capability gate). The lookahead refuses every id minted from a corpus-coherence file: those run in the spec repo’s CI and MUST NOT appear in a host bundle (conformance.md §\"Two products, two ledgers\"; RFC 0168 §D.1). `scripts/check-req-only.mjs` fails when the list drifts from `conformance/src/coherence/`."
+              },
+              "scenario": {
+                "type": "string"
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "executed-pass",
+                  "executed-fail",
+                  "skipped",
+                  "inapplicable",
+                  "blocked"
+                ]
+              },
+              "assertions": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "witnessSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "assertionCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "detail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nonPass"
+      ],
+      "properties": {
+        "nonPass": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "result",
+              "reason"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "result": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "description": "Required when any result is not executed-pass (allOf below)."
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alg",
+        "keyId",
+        "sig",
+        "over"
+      ],
+      "properties": {
+        "alg": {
+          "const": "ed25519"
+        },
+        "keyId": {
+          "$ref": "ids.schema.json#/$defs/keyId"
+        },
+        "sig": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        },
+        "over": {
+          "type": "array",
+          "const": [
+            "witnessSha256",
+            "host.build",
+            "suite.version",
+            "discovery.sha256"
+          ]
+        }
+      }
+    },
+    "verifierSignature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alg",
+        "keyId",
+        "sig"
+      ],
+      "properties": {
+        "alg": {
+          "const": "ed25519"
+        },
+        "keyId": {
+          "$ref": "ids.schema.json#/$defs/keyId"
+        },
+        "sig": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      },
+      "description": "RFC 0168 §E.2 — required when any claimed profile is evidenceTier independent; the key MUST differ from the host's."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "results": {
+            "properties": {
+              "totals": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "executedFail": {
+                        "minimum": 1
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "skipped": {
+                        "minimum": 1
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "blocked": {
+                        "minimum": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "detail"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "claimedProfiles": {
+            "contains": {
+              "properties": {
+                "evidenceTier": {
+                  "const": "independent"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "verifierSignature"
+        ]
+      }
+    }
+  ]
+}

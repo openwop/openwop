@@ -28,6 +28,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-retry-exhausted';
@@ -69,7 +71,7 @@ async function startRunAndRead(): Promise<{ events: RunEvent[]; terminal: unknow
 
 describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032 §B.2 MUST)', () => {
   it('host exhausts retries with all-invalid program → exactly one envelope.retry.exhausted event', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     // Seed maxRetryAttempts entries of invalid JSON so dispatchStructured
     // hits every retry and then exhausts. The mock returns empty-stop
     // after program exhaustion, but dispatchStructured short-circuits
@@ -80,16 +82,16 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032
       { content: 'not json c' },
       { content: 'not json d' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(seed.status).toBe(200);
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const { events } = result;
     const exhausted = events.filter((e) => e.type === 'envelope.retry.exhausted');
     expect(
       exhausted.length,
-      driver.describe(
+      req('openwop.it.envelope-retry-exhausted.host-exhausts-retries-with-all-invalid-program-exactly-one-envelope-retry-exhaus', 
         'RFCS/0032-envelope-reliability-events.md §B.2',
         'exactly one envelope.retry.exhausted event MUST fire on retry-budget exhaustion',
       ),
@@ -97,32 +99,32 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032
   });
 
   it('totalAttempts in payload matches the host advertised maxRetryAttempts', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'x' }, { content: 'y' }, { content: 'z' }, { content: 'w' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const exhausted = result.events.find((e) => e.type === 'envelope.retry.exhausted');
-    expect(exhausted).toBeDefined();
+    expect(exhausted, req('openwop.it.envelope-retry-exhausted.totalattempts-in-payload-matches-the-host-advertised-maxretryattempts', 'RFC 0032 §B.2', 'totalAttempts in payload matches the host advertised maxRetryAttempts')).toBeDefined();
     const total = exhausted!.payload?.totalAttempts;
     expect(typeof total === 'number' && (total as number) >= 1).toBe(true);
   });
 
   it('finalReason is in the spec-reserved enum OR matches x-host-<host>-<key>', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'x' }, { content: 'y' }, { content: 'z' }, { content: 'w' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const exhausted = result.events.find((e) => e.type === 'envelope.retry.exhausted');
     expect(exhausted).toBeDefined();
     const reason = exhausted!.payload?.finalReason;
     expect(typeof reason).toBe('string');
     expect(
       RFC_0032_REASONS.has(reason as string) || HOST_REASON_EXT_RE.test(reason as string),
-      driver.describe(
+      req('openwop.it.envelope-retry-exhausted.finalreason-is-in-the-spec-reserved-enum-or-matches-x-host-host-key', 
         'RFCS/0032-envelope-reliability-events.md §B.2',
         'finalReason MUST be in the spec-reserved set OR match x-host-<host>-<key>',
       ),
@@ -130,16 +132,16 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032
   });
 
   it('RunSnapshot.error.code is envelope_invalid for schema-violation exhaustion (RFC 0033 §C)', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'x' }, { content: 'y' }, { content: 'z' }, { content: 'w' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const code = (result.terminal as { error?: { code?: string } }).error?.code;
     expect(
       code,
-      driver.describe(
+      req('openwop.it.envelope-retry-exhausted.runsnapshot-error-code-is-envelope-invalid-for-schema-violation-exhaustion-rfc-0', 
         'RFCS/0033-envelope-completion-contract.md §C',
         'schema-violation-exhaustion MUST surface as RunSnapshot.error.code = envelope_invalid',
       ),
@@ -147,19 +149,19 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032
   });
 
   it('envelope.retry.exhausted is emitted BEFORE node.failed (cause precedes effect)', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([{ content: 'x' }, { content: 'y' }, { content: 'z' }, { content: 'w' }]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const exhaustedIdx = result.events.findIndex((e) => e.type === 'envelope.retry.exhausted');
     const failedIdx = result.events.findIndex((e) => e.type === 'node.failed');
     expect(exhaustedIdx).toBeGreaterThanOrEqual(0);
     expect(failedIdx).toBeGreaterThanOrEqual(0);
     expect(
       exhaustedIdx < failedIdx,
-      driver.describe(
+      req('openwop.it.envelope-retry-exhausted.envelope-retry-exhausted-is-emitted-before-node-failed-cause-precedes-effect', 
         'RFCS/0032-envelope-reliability-events.md §B.2',
         'envelope.retry.exhausted MUST be emitted BEFORE node.failed (the event signals the host is about to surface the terminal failure)',
       ),

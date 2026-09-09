@@ -21,6 +21,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const schema = JSON.parse(
@@ -45,7 +47,7 @@ describe('a2ui-surface-replay: self-contained surface (RFC 0102 §A.6)', () => {
     const external = refs.filter((r) => !r.startsWith('#'));
     expect(
       external,
-      'RFC 0102 §A.6: a stored surface MUST be self-contained for deterministic :fork/replay (no live external-catalog ref)',
+      req('openwop.it.a2ui-surface-replay.all-refs-are-internal-surface-renders-from-the-payload-alone-on-replay', 'RFC 0102 §A.6', 'RFC 0102 §A.6: a stored surface MUST be self-contained for deterministic :fork/replay (no live external-catalog ref)'),
     ).toEqual([]);
   });
 });
@@ -63,7 +65,7 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-replay: correlationId conflict on type 
       envelope: { ...base, type: 'ui.a2ui-surface', envelopeId: 'env-a2ui-rep-1' },
       hostSupportedEnvelopes: ['ui.a2ui-surface', 'clarification.request'],
     });
-    if (first.status === 404) return; // seam absent — soft-skip
+    if (first.status === 404) return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
 
     const conflict = await driver.post('/v1/host/sample/envelope/accept', {
       envelope: {
@@ -74,11 +76,11 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-replay: correlationId conflict on type 
       },
       hostSupportedEnvelopes: ['ui.a2ui-surface', 'clarification.request'],
     });
-    if (conflict.status === 404) return;
+    if (conflict.status === 404) return softSkip('blocked', 'precondition not met — `conflict.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const body = conflict.json as { status?: string; reason?: string };
     expect(
       body.reason ?? '',
-      driver.describe('ai-envelope.md §"Replay determinism"', 'same correlationId + divergent type MUST conflict'),
+      req('openwop.it.a2ui-surface-replay.re-emission-with-same-correlationid-different-type-envelope-correlation-conflict', 'ai-envelope.md §"Replay determinism"', 'same correlationId + divergent type MUST conflict'),
     ).toContain('envelope_correlation_conflict');
   });
 });

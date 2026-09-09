@@ -148,7 +148,10 @@ The example's `maxNodeExecutions: 1000` is a deliberately non-default value (the
 
 | Field                                  | Type                      | Status          | Notes                                                                                                                                                                                                                                                                                 |
 | -------------------------------------- | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `protocolVersion`                      | `string`                  | **required v1** | Protocol version the server speaks, e.g. `"1.0"`.                                                                                                                                                                                                                                     |
+| `protocolVersion`                      | `string`                  | **required v1** | Protocol version the server speaks, e.g. `"1.0"` (`version-negotiation.md` §"Protocol version grammar").
+| `protocolVersions`                     | `string[]`                | optional (RFC 0165) | Every `<major>.<minor>` the host serves; MUST contain `protocolVersion`. Reserved for v2 major negotiation; profile derivation ignores it.                                                                                                                                                                                                                                     |
+| `preferredVersion`                     | `string`                  | optional (RFC 0179) | The `<major>.<minor>` served to a header-less request; MUST be a member of `protocolVersions[]` and, on a single-major host, equal `protocolVersion` (RFC 0172 §A.1's v1.x half). |
+| `signingKeys`                          | `array`                   | optional (RFC 0168 §E.2) | The public keys this host signs certification bundles with, each `{keyId, alg: "ed25519", publicKey}` where `publicKey` is the raw 32-byte key base64url-unpadded (not PEM). A bundle signature names a `keyId`; a verifier resolves it here and MUST verify the attestation under the published key. Present on the **v1** root because a certification bundle is v3 regardless of major, so a v1-only host has only this document to hand a verifier. A signature that resolves to no published key attests integrity only and attributes to nobody; a retired key MUST stay listed, or every bundle it signed silently becomes unverifiable. |
 | `supportedEnvelopes`                   | `string[]`                | **required v1** | Envelope `type` strings the engine recognizes.                                                                                                                                                                                                                                        |
 | `schemaVersions`                       | `Record<string, number>`  | **required v1** | Active schema version per envelope type. **Per-envelope-type integer**, not per-spec-type semver.                                                                                                                                                                                     |
 | `limits.clarificationRounds`           | `number`                  | **required v1** | Default `3`.                                                                                                                                                                                                                                                                          |
@@ -432,7 +435,7 @@ Multi-Agent Shift capability block (v1+). Hosts that implement any multi-agent s
 ```json
 "agents": {
   "supported": true,
-  "profile": "wop-agents-full",
+  "profile": "openwop-agents-full",
   "modelClasses": ["reasoning", "tool-using", "chat"],
   "orchestratorPattern": "delegate.smart",
   "memoryBackends": ["long-term"],
@@ -910,7 +913,7 @@ interpret them without consulting the host's capability document. Where the host
 cannot honour a construct, the client learns that by a **refusal**, not by a
 different outcome.
 
-Every optional capability in v1 falls into exactly one of three classes. When
+Every optional capability in v1 falls into exactly one of three classes. When (RFC 0166 §C generalises this into the closed `witness` enum — `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence | unwitnessable` — carried on every `SECURITY/invariants.yaml` entry, `spec/v1/extensions.json` record, and `spec/v1/gaps.json` gap.)
 adding one, say in the RFC which class it is.
 
 | Class | The advertisement means | Absence means | Worked example |
@@ -1088,11 +1091,7 @@ The required/optional split protects implementers from over-pinning: a host can 
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                         | Owner      |
-| --- | --------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| C2  | ✅ Closed by `capabilities-change-detection.md`: `Capabilities-Etag` semantics for mid-session capability change detection. | v1.x annex |
-| C3  | ✅ Closed by `capabilities-change-detection.md`: non-HTTP discovery handoff guidance for MCP/A2A composition.               | v1.x annex |
-| C5  | ✅ Closed by `capabilities-change-detection.md`: scoped capability view rules without leaking private tenant features.      | v1.x annex |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.capabilities.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

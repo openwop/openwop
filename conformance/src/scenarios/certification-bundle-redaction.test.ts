@@ -42,6 +42,7 @@ import {
   type BundleV2Like,
   type BundleV2Requirement,
 } from '../lib/certification-bundle-verify.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'server-free: scrubs and verifies bundle documents built in-process; no host is contacted';
 
@@ -89,7 +90,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
     rs[0] = { ...(rs[0] as BundleV2Requirement), disposition: 'executed-fail', assertionCount: 3, detail: `401 body: {"error":"bad key ${API_KEY}"} (canary ${CONFORMANCE_SECRET_CANARY} echoed)` };
     const b = bundle(rs);
     const { value, redactedAt } = scrubEvidence(b, [API_KEY, CONFORMANCE_SECRET_CANARY]);
-    expect(findLiteral(value, API_KEY)).toEqual([]);
+    expect(findLiteral(value, API_KEY), req('openwop.it.certification-bundle-redaction.scrubevidence-replaces-every-occurrence-of-every-secret-in-nested-values-and-rep', 'RFC 0148 §C', 'scrubEvidence replaces every occurrence of every secret in nested values and reports where')).toEqual([]);
     expect(findLiteral(value, CONFORMANCE_SECRET_CANARY)).toEqual([]);
     expect(redactedAt).toEqual(['$.results.requirements[0].detail']);
     const detail = value.results.requirements[0]?.detail ?? '';
@@ -103,7 +104,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
   it('scrubs the captured discovery document and host self-description too — evidence is the WHOLE document', () => {
     const b = bundle(rows(), { name: 'h', version: '1', vendor: `acme (token ${API_KEY})` }, { ...DISCOVERY, ['x-host-debug']: { echo: CONFORMANCE_SECRET_CANARY } });
     const { value, redactedAt } = scrubEvidence(b, [API_KEY, CONFORMANCE_SECRET_CANARY]);
-    expect(findLiteral(value, API_KEY)).toEqual([]);
+    expect(findLiteral(value, API_KEY), req('openwop.it.certification-bundle-redaction.scrubs-the-captured-discovery-document-and-host-self-description-too-evidence-is', 'RFC 0148 §C', 'scrubs the captured discovery document and host self-description too — evidence is the WHOLE document')).toEqual([]);
     expect(findLiteral(value, CONFORMANCE_SECRET_CANARY)).toEqual([]);
     expect([...redactedAt].sort()).toEqual(['$.discovery.document.x-host-debug.echo', '$.host.vendor']);
   });
@@ -111,7 +112,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
   it('scrubs object KEYS as well as values — a secret used as a map key is still a secret', () => {
     const doc = { ...DISCOVERY, ['x-host-keys']: { [API_KEY]: 'tenant-a' } };
     const { value } = scrubEvidence(bundle(rows(), { name: 'h', version: '1' }, doc), [API_KEY]);
-    expect(findLiteral(value, API_KEY)).toEqual([]);
+    expect(findLiteral(value, API_KEY), req('openwop.it.certification-bundle-redaction.scrubs-object-keys-as-well-as-values-a-secret-used-as-a-map-key-is-still-a-secre', 'RFC 0148 §C', 'scrubs object KEYS as well as values — a secret used as a map key is still a secret')).toEqual([]);
     const keys = Object.keys((value.discovery.document as Record<string, Record<string, unknown>>)['x-host-keys'] ?? {});
     expect(keys).toEqual([redactionMarker(API_KEY)]);
   });
@@ -119,7 +120,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
   it('empty and whitespace-only secrets are ignored (scrubbing "" would blank every string)', () => {
     const b = bundle(rows());
     const { value, redactedAt } = scrubEvidence(b, ['', '   ']);
-    expect(value).toEqual(b);
+    expect(value, req('openwop.it.certification-bundle-redaction.empty-and-whitespace-only-secrets-are-ignored-scrubbing-would-blank-every-string', 'RFC 0148 §C', 'empty and whitespace-only secrets are ignored (scrubbing "" would blank every string)')).toEqual(b);
     expect(redactedAt).toEqual([]);
   });
 
@@ -127,12 +128,12 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
     const short = 'abc123';
     const long = 'abc123-longer-secret';
     const { value } = scrubEvidence({ detail: `x ${long} y ${short} z` }, [short, long]);
-    expect(value.detail).toBe(`x ${redactionMarker(long)} y ${redactionMarker(short)} z`);
+    expect(value.detail, req('openwop.it.certification-bundle-redaction.when-one-secret-is-a-prefix-of-another-the-longer-one-is-scrubbed-whole-no-parti', 'RFC 0148 §C', 'when one secret is a prefix of another the longer one is scrubbed whole (no partial marker inside a marker)')).toBe(`x ${redactionMarker(long)} y ${redactionMarker(short)} z`);
   });
 
   it('the redaction marker is stable, non-reversible, and does not contain the secret', () => {
     const m = redactionMarker(API_KEY);
-    expect(m).toBe(redactionMarker(API_KEY));
+    expect(m, req('openwop.it.certification-bundle-redaction.the-redaction-marker-is-stable-non-reversible-and-does-not-contain-the-secret', 'RFC 0148 §C', 'the redaction marker is stable, non-reversible, and does not contain the secret')).toBe(redactionMarker(API_KEY));
     expect(m).not.toContain(API_KEY);
     expect(m).toMatch(/^«redacted:[0-9a-f]{12}»$/);
     expect(redactionMarker('other')).not.toBe(m);
@@ -150,7 +151,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
       SOME_OTHER_TOKEN: 'not-ours',
     } as NodeJS.ProcessEnv;
     const secrets = evidenceSecretsFromEnv(env, [API_KEY, undefined, '']);
-    expect(secrets.sort()).toEqual([API_KEY, 'k1', 'p1', 's1', 't1', CONFORMANCE_SECRET_CANARY].sort());
+    expect(secrets.sort(), req('openwop.it.certification-bundle-redaction.evidencesecretsfromenv-selects-openwop-key-token-secret-password-variables-the-h', 'RFC 0148 §C', 'evidenceSecretsFromEnv selects OPENWOP_* key/token/secret/password variables, the handed credential, and ALWAYS the canary')).toEqual([API_KEY, 'k1', 'p1', 's1', 't1', CONFORMANCE_SECRET_CANARY].sort());
   });
 
   it('verifyBundleV2 REJECTS a bundle carrying the conformance canary anywhere, and accepts the scrubbed twin', () => {
@@ -158,7 +159,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
     rs[1] = { ...(rs[1] as BundleV2Requirement), detail: `resolved ${CONFORMANCE_SECRET_CANARY} in plain text` };
     const leaked = bundle(rs);
     const v = verifyBundleV2(leaked);
-    expect(v.evidenceValid).toBe(false);
+    expect(v.evidenceValid, req('openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc', 'RFC 0148 §C', 'verifyBundleV2 REJECTS a bundle carrying the conformance canary anywhere, and accepts the scrubbed twin')).toBe(false);
     expect(v.rejections.map((r) => r.kind)).toEqual(['secret-canary']);
     expect(v.rejections[0]?.detail).toContain('$.results.requirements[1].detail');
 
@@ -171,12 +172,12 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
   it('the canary in a discovery-document KEY is still a rejection (keys are evidence)', () => {
     const doc = { ...DISCOVERY, [`x-host-${CONFORMANCE_SECRET_CANARY}`]: true };
     const v = verifyBundleV2(bundle(rows(), { name: 'h', version: '1' }, doc));
-    expect(v.rejections.some((r) => r.kind === 'secret-canary')).toBe(true);
+    expect(v.rejections.some((r) => r.kind === 'secret-canary'), req('openwop.it.certification-bundle-redaction.the-canary-in-a-discovery-document-key-is-still-a-rejection-keys-are-evidence', 'RFC 0148 §C', 'the canary in a discovery-document KEY is still a rejection (keys are evidence)')).toBe(true);
   });
 
   it('the target-configuration digest is a digest: the API key is not a substring of any string in the document', () => {
     const b = bundle(rows());
-    expect((b as unknown as { targetConfigurationSha256: string }).targetConfigurationSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect((b as unknown as { targetConfigurationSha256: string }).targetConfigurationSha256, req('openwop.it.certification-bundle-redaction.the-target-configuration-digest-is-a-digest-the-api-key-is-not-a-substring-of-an', 'RFC 0148 §C', 'the target-configuration digest is a digest: the API key is not a substring of any string in the document')).toMatch(/^[0-9a-f]{64}$/);
     expect(findLiteral(b, API_KEY)).toEqual([]);
   });
 });

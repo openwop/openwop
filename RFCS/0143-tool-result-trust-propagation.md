@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts), with the openwop-app reference host                                                                                                                    |
 | **Created**       | 2026-08-09                                                                                                                                                                             |
 | **Updated**       | 2026-08-09                                                                                                                                                                             |
-| **Affects**       | `SECURITY/threat-model-prompt-injection.md`, `spec/v1/ai-envelope.md` §"Trust boundary", `SECURITY/invariants.yaml`, `conformance/src/scenarios/tool-result-trust-monotone.test.ts`     |
+| **Affects**       | `SECURITY/threat-model-prompt-injection.md`, `spec/v1/ai-envelope.md` §"Trust boundary", `SECURITY/invariants.yaml`, `conformance/src/coherence/tool-result-trust-monotone.test.ts`     |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — states the general rule the corpus's ~ten point-invariants already instance; relaxes no MUST                                                    |
 | **Supersedes**    | —                                                                                                                                                                                      |
 | **Superseded by** | —                                                                                                                                                                                      |

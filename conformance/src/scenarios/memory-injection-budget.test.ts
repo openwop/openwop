@@ -34,6 +34,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-memory-injection-budget';
 const PROFILE = 'openwop-memory-injection-budget';
@@ -114,14 +115,14 @@ describe('memory-injection-budget (RFC 0113)', () => {
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `host does not advertise the ${FIXTURE} conformance fixture`);
 
     const v = await driveFixtureVariables();
-    expect(v, 'fixture MUST surface run variables').toBeDefined();
-    if (v === undefined) return;
+    expect(v, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'fixture MUST surface run variables')).toBeDefined();
+    if (v === undefined) return softSkip('blocked', 'precondition not met — `v === undefined` returned early (seam, prior step, or fixture unavailable)');
 
     // ── tokenBudget bound (the new lever) ──────────────────────────────
     const tokenBudget = numberOf(v['tokenBudget']);
     const total = numberOf(v['budgetedTokenTotal']);
-    expect(tokenBudget, 'fixture MUST echo the requested tokenBudget').toBeDefined();
-    expect(total, 'fixture MUST surface the budgeted cumulative token total').toBeDefined();
+    expect(tokenBudget, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'fixture MUST echo the requested tokenBudget')).toBeDefined();
+    expect(total, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'fixture MUST surface the budgeted cumulative token total')).toBeDefined();
     // Cumulative tokens across the returned prefix MUST NOT exceed the budget.
     if (tokenBudget !== undefined && total !== undefined) {
       expect(total).toBeLessThanOrEqual(tokenBudget);
@@ -130,21 +131,21 @@ describe('memory-injection-budget (RFC 0113)', () => {
     // ── over-budget single entry omitted (not truncated) ───────────────
     expect(
       booleanOf(v['overBudgetEntryOmitted']),
-      'an entry larger than the whole budget MUST be omitted, not truncated mid-entry',
+      req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'an entry larger than the whole budget MUST be omitted, not truncated mid-entry'),
     ).toBe(true);
     const entries = recordArrayOf(v['budgetedEntries']);
-    expect(entries, 'fixture MUST surface the budgeted entry slice').toBeDefined();
+    expect(entries, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'fixture MUST surface the budgeted entry slice')).toBeDefined();
     const overId = stringOf(v['overBudgetEntryId']);
     if (entries !== undefined && overId !== undefined) {
       const ids = entries.map((e) => stringOf(e['id']));
-      expect(ids, 'the over-budget entry MUST NOT appear in the returned slice').not.toContain(overId);
+      expect(ids, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'the over-budget entry MUST NOT appear in the returned slice')).not.toContain(overId);
     }
 
     // ── SR-1 re-assertion on the budgeted path ─────────────────────────
     // A budgeted/ranked read ranks over already-redacted content; the read
     // surface MUST carry the redaction marker, never the plaintext.
     const redacted = stringOf(v['redactedContentSample']);
-    expect(redacted, 'budgeted read MUST surface a redacted-content sample').toBeDefined();
+    expect(redacted, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'budgeted read MUST surface a redacted-content sample')).toBeDefined();
     if (redacted !== undefined) {
       expect(redacted).toMatch(/\[REDACTED:[^\]]+\]/);
     }
@@ -154,9 +155,9 @@ describe('memory-injection-budget (RFC 0113)', () => {
     // the cross-tenant probe under the budgeted path MUST return empty.
     const probe = v['crossTenantBudgetedProbe'];
     if (Array.isArray(probe)) {
-      expect(probe.length, 'cross-tenant probe on the budgeted path MUST return []').toBe(0);
+      expect(probe.length, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'cross-tenant probe on the budgeted path MUST return []')).toBe(0);
     } else {
-      expect(probe, 'cross-tenant probe on the budgeted path MUST return [] / null').toBeFalsy();
+      expect(probe, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'cross-tenant probe on the budgeted path MUST return [] / null')).toBeFalsy();
     }
   });
 
@@ -175,13 +176,13 @@ describe('memory-injection-budget (RFC 0113)', () => {
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `host does not advertise the ${FIXTURE} conformance fixture`);
 
     const v = await driveFixtureVariables();
-    expect(v, 'fixture MUST surface run variables').toBeDefined();
-    if (v === undefined) return;
+    expect(v, req('openwop.it.memory-injection-budget.rank-relevance-reorders-vs-recency-only-when-memory-search-semantic-is-also-adve', 'RFC 0113', 'fixture MUST surface run variables')).toBeDefined();
+    if (v === undefined) return softSkip('blocked', 'precondition not met — `v === undefined` returned early (seam, prior step, or fixture unavailable)');
 
     const recencyOrder = stringArrayOf(v['recencyOrder']);
     const relevanceOrder = stringArrayOf(v['relevanceOrder']);
-    expect(recencyOrder, 'fixture MUST surface the recency ordering').toBeDefined();
-    expect(relevanceOrder, 'fixture MUST surface the relevance ordering').toBeDefined();
+    expect(recencyOrder, req('openwop.it.memory-injection-budget.rank-relevance-reorders-vs-recency-only-when-memory-search-semantic-is-also-adve', 'RFC 0113', 'fixture MUST surface the recency ordering')).toBeDefined();
+    expect(relevanceOrder, req('openwop.it.memory-injection-budget.rank-relevance-reorders-vs-recency-only-when-memory-search-semantic-is-also-adve', 'RFC 0113', 'fixture MUST surface the relevance ordering')).toBeDefined();
     // The crafted fixture pins a query whose semantic top-k differs from the
     // most-recent-first order — relevance MUST reorder (not echo recency).
     expect(relevanceOrder).not.toEqual(recencyOrder);

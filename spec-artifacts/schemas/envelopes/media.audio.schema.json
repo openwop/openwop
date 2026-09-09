@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/media.audio.schema.json",
+  "title": "MediaAudioPayload",
+  "description": "Payload for the OPTIONAL `media.audio` AI Envelope kind (RFC 0055 §C). Carries a host-served URL reference (preferred) or, below the host's `aiProviders.maxInlineMediaBytes` cap, inline base64 audio data. Pairs with the `meta.rendering.display: \"audio\"` hint. Advertised, opt-in kind — not a MUST-recognize universal kind.",
+  "type": "object",
+  "required": ["bytes"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tenant-scoped, non-guessable host-served asset URL (RFC 0055 §C rule 1). SHOULD be used above `aiProviders.maxInlineMediaBytes`. Enforced by the `media-asset-url-tenant-scoped` SECURITY invariant."
+    },
+    "base64": {
+      "type": "string",
+      "description": "Inline base64-encoded audio, permitted only at or below `aiProviders.maxInlineMediaBytes` (RFC 0055 §C rule 2). Above the cap the host MUST use `url`."
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Byte size of the asset."
+    },
+    "mimeType": {
+      "type": "string",
+      "description": "IANA media type (e.g. `audio/mpeg`, `audio/wav`, `audio/ogg`). SHOULD match `meta.rendering.mimeType`."
+    },
+    "durationSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Optional clip duration in seconds, for a consumer's player UI."
+    },
+    "alt": {
+      "type": "string",
+      "description": "Text alternative / label for accessibility (RFC 0055 §B); mirrors `meta.rendering.alt` when the producer also sets the rendering hint."
+    }
+  },
+  "additionalProperties": false
+}

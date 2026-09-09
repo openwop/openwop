@@ -11,8 +11,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readHeartbeatCap, heartbeatSupported, tickHeartbeat } from '../lib/heartbeat.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('heartbeat-runtime-bound (RFC 0060 §B.2)', () => {
   it('an over-budget predicate is reported as timeout', async () => {
@@ -25,7 +25,7 @@ describe('heartbeat-runtime-bound (RFC 0060 §B.2)', () => {
     if (!Array.isArray(evaluated) || evaluated.length === 0) return softSkip('blocked', 'host doesn\'t surface per-tick events (!Array.isArray(evaluated) || evaluated.length === 0)');
     expect(
       evaluated.every((e) => e.status === 'timeout'),
-      driver.describe('RFC 0060 §B.2', 'an over-budget predicate MUST be terminated and reported status:"timeout"'),
+      req('openwop.it.heartbeat-runtime-bound.an-over-budget-predicate-is-reported-as-timeout', 'RFC 0060 §B.2', 'an over-budget predicate MUST be terminated and reported status:"timeout"'),
     ).toBe(true);
   });
 });

@@ -136,6 +136,19 @@ function verify(rawBody: Buffer, headers: Record<string,string>, secret: string)
 }
 ```
 
+### Dual emission — the `OpenWOP-*` header family (RFC 0165 §C.1)
+
+The v2 major renames every non-standard header to the `OpenWOP-*` form (v2 charter C.4). A
+signature header is the one place where sender and verifier upgrade independently and no
+discovery flag coordinates them, so the migration has to be a period in which both forms are on
+the wire. From RFC 0165 a host **SHOULD** send, on every delivery, `OpenWOP-Webhook-Id`,
+`OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, and
+`OpenWOP-Signature-Algorithm` with values **identical** to their `X-openwop-*` counterparts.
+Subscribers **SHOULD** accept either family and **MUST** verify the same bytes
+(`{timestamp}.{rawBody}`) whichever they read. This adds no signature scheme. The
+`X-openwop-*` family is deprecated toward v2 (`spec/v1/deprecations.json`,
+`openwop.deprecation.webhook-x-header-family`); it MUST continue to be sent through v1.x.
+
 ### Signature algorithm versioning
 
 The signature scheme described above is canonically labeled `v1` (HMAC-SHA256 over `{timestamp}.{rawBody}`). To enable future migration to stronger schemes (e.g., Ed25519 detached signatures, dual-sign during rotation) without breaking existing subscribers:

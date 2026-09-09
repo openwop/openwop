@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('vector-knn-roundtrip: advertisement shape (RFC 0018)', () => {
   it('capabilities.vectorStore is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.vector-knn-roundtrip.capabilities-vectorstore-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §vectorStore',
         'capabilities.vectorStore.supported MUST be a boolean when present',
       ),
@@ -50,7 +52,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('vector-knn-roundtrip: behavioral (RFC 0018 §A.vectorStore)', () => {
   it('upsert 10 vectors → query with one of them returns it as the top match', async () => {
     const probe = await call('query', { namespace: '__probe__', vector: [1, 0], topK: 1 });
-    if (probe.status === 404) return; // seam not exposed
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     const namespace = `knn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const items = Array.from({ length: 10 }, (_, i) => ({
       id: `vec-${i}`,
@@ -62,17 +64,17 @@ describe('vector-knn-roundtrip: behavioral (RFC 0018 §A.vectorStore)', () => {
     const queryRes = await call('query', { namespace, vector: items[3]!.vector, topK: 1 });
     expect(queryRes.status).toBe(200);
     const body = queryRes.json as { matches?: Array<{ id?: string; score?: number }> };
-    expect(Array.isArray(body.matches), 'matches MUST be an array').toBe(true);
+    expect(Array.isArray(body.matches), req('openwop.it.vector-knn-roundtrip.upsert-10-vectors-query-with-one-of-them-returns-it-as-the-top-match', 'RFC 0018 §A.vectorStore', 'matches MUST be an array')).toBe(true);
     expect(body.matches!.length).toBeGreaterThan(0);
     expect(
       body.matches![0]!.id,
-      driver.describe('RFC 0018 §A.vectorStore', 'query with an indexed vector MUST return it as the top match'),
+      req('openwop.it.vector-knn-roundtrip.upsert-10-vectors-query-with-one-of-them-returns-it-as-the-top-match', 'RFC 0018 §A.vectorStore', 'query with an indexed vector MUST return it as the top match'),
     ).toBe('vec-3');
   });
 
   it('topK respects the configured limit', async () => {
     const probe = await call('query', { namespace: '__probe__', vector: [1, 0], topK: 1 });
-    if (probe.status === 404) return;
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const namespace = `topk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const items = Array.from({ length: 8 }, (_, i) => ({
       id: `t-${i}`,
@@ -83,7 +85,7 @@ describe('vector-knn-roundtrip: behavioral (RFC 0018 §A.vectorStore)', () => {
     const body = r3.json as { matches?: unknown[] };
     expect(
       Array.isArray(body.matches) && body.matches.length <= 3,
-      driver.describe('RFC 0018 §A.vectorStore', 'query MUST return at most topK matches'),
+      req('openwop.it.vector-knn-roundtrip.topk-respects-the-configured-limit', 'RFC 0018 §A.vectorStore', 'query MUST return at most topK matches'),
     ).toBe(true);
   });
 });

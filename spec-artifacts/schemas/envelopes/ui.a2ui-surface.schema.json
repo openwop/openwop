@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/ui.a2ui-surface.schema.json",
+  "title": "UiA2uiSurfacePayload",
+  "description": "Payload for the OPTIONAL, advertised `ui.a2ui-surface` AI Envelope kind (RFC 0102). Carries a declarative A2UI interface surface — a closed component tree the consumer renders with native widgets, routing user actions back to the producing agent WITHOUT executing any agent-supplied code. `ui.*` is a core, un-namespaced content-primitive family beside `media.*` (ai-envelope.md §\"A2UI surfaces\" / §\"Vendor-namespaced kinds\"). Not one of the four MUST-recognize universal kinds; an unrecognizing consumer falls back to store-without-render.",
+  "type": "object",
+  "required": ["catalogVersion", "surface"],
+  "additionalProperties": false,
+  "properties": {
+    "reasoning": {
+      "type": "string",
+      "description": "OPTIONAL per RFC 0030 §A — the model's reasoning, conventionally the first property of a kind whose payload benefits from multi-step composition."
+    },
+    "catalogVersion": {
+      "type": "string",
+      "enum": ["0.9.1"],
+      "description": "REQUIRED — the A2UI catalog version the surface targets. This enum IS the host's supported-version set (ai-envelope.md §\"A2UI surfaces\"); it is never a free string the producer invents. A consumer MUST refuse an unknown/higher version with `unknown_schema_version`. Pinning the version in the payload keeps `:fork`/replay deterministic after the external A2UI standard ships a breaking version."
+    },
+    "surface": {
+      "$ref": "#/$defs/surface",
+      "description": "REQUIRED — the A2UI surface document: a closed component tree (ai-envelope.md §\"A2UI surfaces\"). Self-contained: renderable from the payload alone, never a live reference into an external catalog."
+    }
+  },
+  "$defs": {
+    "surface": {
+      "type": "object",
+      "required": ["components"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "OPTIONAL display title for the surface."
+        },
+        "components": {
+          "type": "array",
+          "description": "The flat, ordered component list. Each element is one of the host's day-1 catalog components, discriminated by the single-string-enum `component` field. `anyOf` (not `oneOf`) per ai-envelope.md §\"Schema discipline\".",
+          "items": { "$ref": "#/$defs/component" }
+        }
+      }
+    },
+    "component": {
+      "description": "A single A2UI component. Closed set (day-1 catalog 0.9.1); the `component` discriminator is a single-string-enum per branch.",
+      "anyOf": [
+        { "$ref": "#/$defs/heading" },
+        { "$ref": "#/$defs/text" },
+        { "$ref": "#/$defs/fieldText" },
+        { "$ref": "#/$defs/fieldDate" },
+        { "$ref": "#/$defs/fieldSelect" },
+        { "$ref": "#/$defs/fieldCheckbox" },
+        { "$ref": "#/$defs/actionButton" }
+      ]
+    },
+    "heading": {
+      "type": "object",
+      "required": ["component", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["heading"] },
+        "text": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 6 }
+      }
+    },
+    "text": {
+      "type": "object",
+      "required": ["component", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["text"] },
+        "text": { "type": "string" }
+      }
+    },
+    "fieldText": {
+      "type": "object",
+      "required": ["component", "id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["field.text"] },
+        "id": { "type": "string", "description": "Binding key; the collected value is keyed by `id` in the resume value." },
+        "label": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "fieldDate": {
+      "type": "object",
+      "required": ["component", "id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["field.date"] },
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "fieldSelect": {
+      "type": "object",
+      "required": ["component", "id", "label", "options"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["field.select"] },
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "required": { "type": "boolean" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "value": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "fieldCheckbox": {
+      "type": "object",
+      "required": ["component", "id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["field.checkbox"] },
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "default": { "type": "boolean" }
+      }
+    },
+    "actionButton": {
+      "type": "object",
+      "required": ["component", "id", "label", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "type": "string", "enum": ["action.button"] },
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "action": {
+          "type": "object",
+          "required": ["target"],
+          "additionalProperties": false,
+          "description": "Confined action (ai-envelope.md §\"A2UI surfaces\" rule 2). `target` resolves to exactly one host-allowlisted destination — a run interrupt resume or a conversation exchange — never an arbitrary URL, endpoint, or network egress. Enforced by the `a2ui-action-confinement` + `a2ui-surface-no-network-egress` SECURITY invariants.",
+          "properties": {
+            "target": {
+              "type": "string",
+              "enum": ["resume", "exchange"],
+              "description": "`resume` → the collected field values become the interrupt `resumeValue` (interrupt.md). `exchange` → the values become a conversation exchange message (RFC 0005)."
+            }
+          }
+        }
+      }
+    }
+  }
+}

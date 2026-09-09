@@ -104,5 +104,5 @@ Pausing a webhook stops delivery. Pausing a _schedule_ **skips** ticks (no catch
 
 ## Open spec gaps
 
-- The behavioral delivery scenario (dedup → retry → dead-letter → causation), the `GET /v1/trigger-subscriptions` read surface + per-source management in OpenAPI, and the reference-host durable-delivery state machine land at `Active → Accepted`; the always-on `trigger-bridge-shape.test.ts` + the profile predicate + the subscription schema + the two events ship now.
-- A net-new unified `Trigger` primitive was rejected (it would duplicate RFC 0052/0053/0017) — this is a _profile_ that composes them.
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.trigger-bridge.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

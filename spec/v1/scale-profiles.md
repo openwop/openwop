@@ -132,13 +132,7 @@ Hosts whose workloads don't fit these tiers MAY define their own profile in a fo
 
 ## Open spec gaps
 
-| ID      | Description                                                                                                                                                                                                    |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SCALE-1 | ✅ Closed in the v1.0 conformance baseline. `--scale-profile=<name>` filters scenarios by their profile tag.                                                                                                   |
-| SCALE-2 | Latency-percentile measurement methodology (warm-up time, sample size, environment) is not specified here. Each scenario file documents its own. The `highConcurrency.test.ts` scenario seeds the methodology. |
-| SCALE-3 | Cross-region replication semantics (a single run originating in one region with replay served from another) is out of scope for v1.x.                                                                          |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.scale-profiles.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

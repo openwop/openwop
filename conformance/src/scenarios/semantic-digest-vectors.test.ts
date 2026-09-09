@@ -35,6 +35,7 @@ import {
   canonicalize,
   SEMANTIC_REQUEST_RECIPE_V2,
 } from '../lib/llm-cache-key-recipe.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface Vector {
   readonly id: string;
@@ -87,10 +88,10 @@ describe('RFC 0150 §C — semantic request digest golden vectors', () => {
     // Guard: an empty or truncated file would make every leg below vacuous, and
     // this gate's whole value is that it fails when an implementation drifts.
     expect(doc.recipe).toBe(SEMANTIC_REQUEST_RECIPE_V2);
-    expect(doc.vectors.length, 'the golden set MUST cover the recipe').toBeGreaterThanOrEqual(10);
+    expect(doc.vectors.length, req('openwop.it.semantic-digest-vectors.the-vector-set-is-present-and-non-trivial', 'RFC 0150 §C', 'the golden set MUST cover the recipe')).toBeGreaterThanOrEqual(10);
     expect(new Set(doc.vectors.map((v) => v.id)).size).toBe(doc.vectors.length);
     for (const v of doc.vectors) {
-      expect(v.why.length, `vector '${v.id}' MUST say what it pins`).toBeGreaterThan(20);
+      expect(v.why.length, req('openwop.it.semantic-digest-vectors.the-vector-set-is-present-and-non-trivial', 'RFC 0150 §C', `vector '${v.id}' MUST say what it pins`)).toBeGreaterThan(20);
     }
   });
 
@@ -100,19 +101,19 @@ describe('RFC 0150 §C — semantic request digest golden vectors', () => {
       // The preimage is asserted as well as the hash: a mismatch on `canonical`
       // tells an implementer WHICH field they got wrong, where a hash mismatch
       // tells them only that something is.
-      expect(canonicalize(projectSemanticRequestV2(v.input)), v.why).toBe(v.canonical);
+      expect(canonicalize(projectSemanticRequestV2(v.input)), req('openwop.it.semantic-digest-vectors.the-implementation-reproduces-s', 'RFC 0150 §C', v.why)).toBe(v.canonical);
       expect(semanticRequestDigestV2(v.input), v.why).toBe(v.digest);
     },
   );
 
   it('tool order is not semantic — sorted and reversed agree', () => {
-    expect(digest('tools-sorted-by-name')).toBe(digest('tools-reversed-same-digest'));
+    expect(digest('tools-sorted-by-name'), req('openwop.it.semantic-digest-vectors.tool-order-is-not-semantic-sorted-and-reversed-agree', 'RFC 0150 §C', 'tool order is not semantic — sorted and reversed agree')).toBe(digest('tools-reversed-same-digest'));
   });
 
   it('message order IS semantic — reversing changes the digest', () => {
     expect(
       digest('message-order-is-semantic'),
-      'messages carry conversational sequence; sorting them would make two different conversations collide',
+      req('openwop.it.semantic-digest-vectors.message-order-is-semantic-reversing-changes-the-digest', 'RFC 0150 §C', 'messages carry conversational sequence; sorting them would make two different conversations collide'),
     ).not.toBe(digest('message-order-reversed'));
   });
 
@@ -120,7 +121,7 @@ describe('RFC 0150 §C — semantic request digest golden vectors', () => {
     // The pair that catches a well-meaning "add NFC to be safe" change — and it
     // catches it only because `digest()` RECOMPUTES from the input. Comparing
     // stored values here would be two constants from one file.
-    expect(storedDigest('non-ascii-not-normalized')).not.toBe(storedDigest('non-ascii-composed'));
+    expect(storedDigest('non-ascii-not-normalized'), req('openwop.it.semantic-digest-vectors.the-two-unicode-forms-do-not-collide-because-jcs-does-not-apply-nfc', 'RFC 0150 §C', 'the two Unicode forms do not collide, because JCS does not apply NFC')).not.toBe(storedDigest('non-ascii-composed'));
     expect(
       digest('non-ascii-not-normalized'),
       'RFC 0150 §C: "Implementations MUST NOT add Unicode normalization outside JCS." An ' +
@@ -134,7 +135,7 @@ describe('RFC 0150 §C — semantic request digest golden vectors', () => {
     // these were equal to `minimal`, so requests producing different completions
     // shared a cache key — a wrong hit, not a miss.
     for (const id of ['stop-changes-digest', 'seed-changes-digest', 'max-output-changes-digest']) {
-      expect(digest(id), `${id} MUST NOT equal the minimal request`).not.toBe(digest('minimal'));
+      expect(digest(id), req('openwop.it.semantic-digest-vectors.each-field-v1-excluded-now-changes-the-digest', 'RFC 0150 §C', `${id} MUST NOT equal the minimal request`)).not.toBe(digest('minimal'));
     }
   });
 });

@@ -8,11 +8,11 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 60 | `spec/v1/*.md` |
-| JSON Schemas | 80 | `schemas/*.schema.json` |
+| JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 468 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 161 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 516 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 177 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,43 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.152.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.0.8 | `conformance/package.json` | minor on scenario add/remove |
+| OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
+| AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
+| TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
+| Python SDK `openwop-client` | 1.7.0 | openwop-sdks `sdk/python/pyproject.toml` | as above |
+| Go SDK `github.com/openwop/openwop-sdks/go` | 1.5.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file) | as above |
+| openwop-sdks corpus pin | openwop-conformance/v1.162.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
+| CLI `@openwop/cli` | 0.2.2 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
+| Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
+| openwop-registry corpus pin | openwop-conformance/v1.162.0 | openwop-registry `CORPUS_TAG` | as the SDK pin |
+| openwop-app corpus pin / suite pin | openwop-conformance/v1.159.0 / ^1.159.0 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
+
+## Version Axes
+
+> RFC 0167 §E.1 enumerated eighteen version axes; RFC 0172 §B dispositions each for v2. This table is read from RFC 0172 so it cannot drift from the RFC (v2 charter §F "Identity": PROTOCOL-STATUS lists every axis). Live values for the corpus-carried axes are in the Artifact Versions table above; per-host axes (#1–#7, #11–#13, #16) are read from a host's discovery document and bundle, not from this tree.
+
+| # | Axis | v2 disposition | Grammar in v2 | Owner |
+|---|---|---|---|---|
+| 1 | `protocolVersion` | first-class (scalar kept as `preferredVersion`'s twin for v1 readers through the overlap; removed after Phase 5) | `^(0\ | [1-9][0-9]*)\.(0\ |
+| 2 | `protocolVersions[]` + `preferredVersion` | first-class, negotiation input | as #1 | this RFC |
+| 3 | `engineVersion` | **unify**: integer everywhere; per-event carriers become `integer, minimum 0`; codemod `openwop.codemod.engine-version-unify` | integer | this RFC (C.9 reads) |
+| 4 | `eventLogSchemaVersion` | first-class | integer; the v2 value and the reader rule are C.9's decision - this RFC only keeps the axis | C.9 |
+| 5 | per-event `schemaVersion` | first-class | integer; closed-enum growth rule (C.4 section0) | C.4 |
+| 6 | `schemaVersions` map | first-class, key grammar = the C.4 envelope-kind grammar | `additionalProperties: false` over declared kinds | C.4 |
+| 7 | `version.pinned` | first-class | integer min/max; the v1-pinned-run disposition | C.9 |
+| 8 | `contractProvenance` | delete | - | C.2 |
+| 9 | `minimumSuiteVersion` | retire into the declaration file | semver | C.2 |
+| 10 | `bundleVersion` | unify to one `const` family; certification v3 `"3"`, export `"2"`, debug `"2"` | string const | C.1 |
+| 11 | A2A `protocolVersions[]`/`preferredVersion` | first-class facet | `^[0-9]+\.[0-9]+$` | C.8 |
+| 12 | MCP `protocolVersions[]`/`preferredVersion` | first-class facet | date | C.8 |
+| 13 | `multiAgent.executionModel.version` | first-class | integer with a schema `maximum` read by the suite | C.4 |
+| 14 | OpenAPI/AsyncAPI `info.version` | **generated** from the corpus tag; PROTOCOL-STATUS rows | semver | this RFC |
+| 15 | `minClientVersion` | first-class MUST (sectionA.5) | as #1 | this RFC |
+| 16 | channel `schemaVersion`/`compatibleWith` | first-class | integer / range | C.4 |
+| 17 | webhook signature scheme | retire into `deprecations.json` | - | C.4 |
+| 18 | pack `engines.openwop` + `registryVersion` | first-class with the absent-ceiling rule | semver range / semver | C.10 |
 
 ## OpenAPI Operations
 
@@ -31,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 156 |
-| Active | 4 |
+| Accepted | 161 |
+| Active | 15 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -198,6 +234,22 @@
 | RFC 0159 | A subject-linking obligation for hosts advertising **both** `openwop-auth-saml` and `openwop-auth-scim`: a SCIM deactivation MUST fail-close the linked SAML identity, keyed on an opaque IdP-stable subject id - so a provisioned leaver cannot still SSO in | Accepted |
 | RFC 0163 | Subject-linking hardening - a **declarable, witnessable** link-key class (`capabilities.auth.subjectLinkKey`, a closed enum of allowed classes only) plus a **same-IdP trust-root MUST** before a SAML⟷SCIM link may form. The additive follow-on to RFC 0159 that converts its sectionA.2/sectionA.4 negative-existence claims-check into a positive advertisement and closes its cross-IdP collision gap. | Accepted |
 | RFC 0164 | The SCIM ⟷ SAML leaver contract (RFC 0159 sectionA, hardened by RFC 0163) becomes **mandatory** for any host that advertises **both** `openwop-auth-saml` and `openwop-auth-scim`. `capabilities.auth.subjectLinking` stops being an opt-in gate and becomes a **derived** advertisement that MUST be `true` whenever both profiles are advertised; it is deprecated toward v2. | Accepted |
+| RFC 0165 | Three additive v1.x shapes that turn three v2 cuts into removals: a root `protocolVersions[]` array beside the scalar `protocolVersion`; an optional `owner.subject` record (issuer-scoped, lane-typed, with an actor chain) on `RunSnapshot` and the `run.started` echo, with the legacy-subject and fork-copy rules; and dual emission of `OpenWOP-*` webhook headers and a standard `ETag` on the discovery document beside their v1 forms. | Accepted |
+| RFC 0166 | Three process shapes the v2 charter's C.7 and C.11 need in place before the v2 umbrella: a closed disposition vocabulary for every gap and risk register row, machine-checked; a global `spec/v1/gaps.json` with one id namespace; a `witness` class on every `SECURITY/invariants.yaml` entry and `spec/v1/extensions.json` record; `Rejected` as a reachable RFC status; and the RFC 0147 high-risk cohort published as a retrospective queue. | Accepted |
+| RFC 0167 | OpenWOP v2 - the umbrella ("program") RFC for the second major: six axioms, an eleven-child breaking-change program (C.1-C.11), every version axis and alias in the corpus enumerated with a disposition, a migration register as data, codemods with negative controls, the per-consumer migration plan, and the cut gates | Active |
+| RFC 0168 | v2 evidence and conformance: `expect(x, req('openwop.<id>', …))` is the assertion form and the ledger records per `it` with a reword-without-alias CI failure (the Phase 1 helper exists with `explicitIds: 0` and an empty alias file - v2 makes it the only form); the witness verdict is a required field on every capability record, requirement and invariant from the closed six-class set, with `unwitnessable` requiring a rationale and failing the gate on a protocol-tier invariant; the six things v1 admits it cannot certify are the migration set, each mapped to one class; a seam-gated MUST mints a normative observation path or is demoted; `host-sample-test-seams.md` becomes the profile `openwop-conformance-seams-v2` with its own `api/seams-v2.yaml`, validated against the canonical schemas with no tolerance path, forbidden from the capability namespace, and its nine operations evicted from the canonical OpenAPI and the SDK path manifest; the 29 corpus-coherence scenarios leave host bundles for the spec repo's CI; the published suite is `dist`, `fixtures`, `vectors` only with the corpus as a digest-checked peer dependency `@openwop/spec-artifacts`; suite 2.0.0 is one package with `--target-major` and a shared scenario-id namespace; bundle v3 has a closed root, `bundleVersion: "3"`, `witnessSha256`, `assertionCount`, `detail`, `host.build`, per-profile `evidenceTier`/`witnessCount` required, and an Ed25519 attestation over `{witnessSha256, host.build, suite.version, discovery.sha256}` with `independent` requiring a verifier key distinct from the host's | Active |
+| RFC 0169 | v2 discovery and capabilities: every family is one record type `{status, since, until?, witness, …facets}`; the discovery root is closed; the four unschema'd registries collapse into one declaration file that generates the schema, the pack peer-dependency identifiers, and the spec anchors; profiles are derived predicates in one generated registry with a two-axis maturity and an `externally-gated` disposition; the wrapper, the dotted mirror, `contractProvenance`, `Capabilities-Etag`, `auth.subjectLinking`, the bare `supported: true` in A2A/MCP, `replay.fork`, and the `openwop-core` alias are removed | Accepted |
+| RFC 0170 | v2 identity: the RFC 0165 Subject is the required owner record and the bare `owner.principal` string is removed; the legacy subject rule is normative on every read of a pre-v2 run; the lane vocabulary gains `session` and `anonymous`; every lane binds a named trust root through RFC 0154's verify -> bind -> audience -> resolve -> fail-closed pipeline with the closed reason vocabulary and a per-lane minimum-assurance policy, and a revocation rule exists for every lane; `SubjectLink` is a schema and a registered invariant; one id grammar per id kind (tenant-bound where the invariant needs it), one handle grammar with a declared resolvability scope for the four opaque handles; the idempotency entropy floor and retention minimums become MUSTs; interrupt resume tokens carry a versioned scheme prefix; RFC 0154's six named-but-unregistered invariants are registered or demoted | Active |
+| RFC 0171 | v2 wire envelope: `oneOf` on a closed event `type` under one naming rule generated from `spec/v1/event-codemap.json` (the 18 review rows decided; four `core.*` types fold into their domains); every payload definition closed; vendor events under `<org>.*` with a positive pattern; one ordering field; the CloudEvents and webhook envelopes generated from the same definition; the closed-enum growth rule stated once; `errors.json` as the one error registry with typed `details` per code and `Retry-After` as the only retry timing; `OpenWOP-*` for every non-standard header; a closed, nested, versioned `configurable`; the four AsyncAPI channels that share one address become one channel with a typed parameter; the poll cursor becomes `afterSequence` with omission meaning "from the first event" and the poll response shape reconciled between prose and OpenAPI | Active |
+| RFC 0172 | v2 versioning and release: protocol-major negotiation by `protocolVersions[]` + root `preferredVersion` + the `OpenWOP-Version` request header on a bare origin with unversioned v2 path keys (no `/v2/` path space); every one of the 18 version axes in RFC 0167 sectionE.1 retired, unified, or made first-class with a schema-enforced grammar; `schemas/v2/` with `$id` under `/spec/v2/`; one release identity where the corpus tag is the only release event and every human-surface version is generated | Active |
+| RFC 0173 | v2 security defaults: every security-load-bearing behavior that v1 binds only when a host sets a flag becomes an obligation of the surface that needs it - the fourteen auth-family flags, replay side-effect suppression, webhook delivery durability, approver enforcement, the leaver contract, sandbox isolation, and compensation authority; a relaxation is an operator setting with a declared durability class recorded in the evidence bundle, never a discovery field; replay suppression is witnessed by a host-declared, machine-checkable effect-seam manifest; compensation and Layer-2 effect identity each take one of three dispositions (core obligation with a declared witness, extension, or removal) - never an unimplemented MUST; the interop threat model is written (C.8) and the replay threat model gets the sections its siblings carry | Active |
+| RFC 0174 | v2 governance: the six RFC states are reachable and used (supersession flips the superseded RFC in the same PR; rejections are filed; a number is never reserved without a file); `Active -> Accepted` is a machine predicate over the bundle and the registers; waiver authority is checked at merge against the RFC's declared class and a rule takes effect on the RFC that introduces it; register rows are typed data everywhere (the 27 stray register pairs move under `registers/`; a self-referential `carried:` is refused); document `Status:` banners are derived from the owning RFC; the RFC 0158 durability ladder is the maturity template; the front door is the core (`spec/v2/core/` under 25,000 words, the tail in `ext/` with a witness class); "Open spec gaps" tables retire into `gaps.json`; the host-inventory deprecation rule is restated normatively | Accepted |
+| RFC 0175 | v2 transports and embedded protocols: `grpc-transport.md` leaves `core/` for `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none` unless the proto is generated from the C.2 declaration file and the suite gains a client (decided: demoted); `supportedTransports` is deleted - A2A and MCP are compositions with first-class blocks, not transports; the `a2a-0.3-legacy` and `mcp-2025-06-18-legacy` profiles are absent from the v2 tree at the cut with the adopter inventories recorded as measured (one dual-era host each); version negotiation on both embedded protocols is authenticated, carries an advertised minimum-version policy and a refresh SLA (RFC 0147 R10), and emits a content-free `negotiation.decided` event (RFC 0152/0153 G7); MRTR rounds get a normative ceiling (RFC 0153 G9); the `auth-required` projection under durable tasks is decided (RFC 0100 UQ4); `SECURITY/threat-model-interop.md` is written (RFC 0152/0153 G8) | Active |
+| RFC 0176 | v2 persisted data and coexistence: the C.4 event rename is applied to persisted logs by a normative v1->v2 codemap shipped as data in the suite and a reader rule that keys on `eventLogSchemaVersion` (absent ⇒ `2`; v2 writes `3`) with sequence space preserved and unmapped types refused, never tolerated; a v1-pinned run a v2 host inherits continues under the adapter when its pin is still implemented and is otherwise cancelled with a named reason; `/.well-known/openwop` is one resource whose representation the RFC 0172 header selects, with the wrapper, the dotted mirror, `Capabilities-Etag` and MyndHyve's `/.well-known/wop` alias given removal triggers in `deprecations.json`; every table openwop-app persists and every collection MyndHyve persists gets a disposition here rather than during the migration; every consumer that vendors the corpus pins a tag | Active |
+| RFC 0177 | v2 registry, packs, and the extension tail: a v2 host reads an absent `engines.openwop` ceiling as `<2.0.0` and refuses with `pack_engine_unsupported` at install, on every publication path including a mirror; `registry/v2/` is a parallel published tree of re-signed manifests (a signed overlay is rejected: signatures authorize by namespace and the mirror path re-derives the signer at ingest); the peer-dependency identifier is the C.2 declaration-file key and `pack_peer_dependency_undefined` reads against that file, with a generated alias table for the four grammars in the wild and a scheduled removal; the 13 manifest schemas re-`$id` under `/spec/v2/` with the RFC 0138 hatch on every pack-authored document (RFC 0138 G4 decided); `signing.method`'s two conventions that sign different bytes become one `signing.scheme`; `publicKeyRef` and `kind`-absent are gone; the registry is versioned by tree and its `endpoints` map is the negotiation; provider-id precedence (RFC 0095 UQ4) is decided as fail-closed conflict with a qualified form; form-content packs reuse the edge-condition operator set and `i18n.md`'s localized string; chains pin exact versions (WCP2), children are reference-counted (WCP5), and the portable parameter deferral (WCP4) is a named v2.x follow-up | Active |
+| RFC 0178 | v2 assurance registers and deprecation machinery: `spec/v1/deprecations.json` becomes normative - every row generates `deprecated: true` and `x-openwop-remove-in` onto its schema and API nodes, and a removal date that has passed with the surface present fails the merge gate; `gaps.json` rows carry a real witness class and a requirement id, the per-RFC `G<n>` becomes an alias row with a scheduled removal, and the RFC falsifiability tables become the same data with a parser gate; cross-repo evidence stays resolved; schema and API hygiene (README maturity column, "kept in sync" mirrors, redocly suppressions, a stale artifact-type gap row) is fixed rather than carried into `schemas/v2/` | Accepted |
+| RFC 0179 | Root `preferredVersion` (optional in v1.x): the `<major>.<minor>` a host serves to a header-less request, which MUST be a member of `protocolVersions[]` and equal `protocolVersion` while the host serves one major - the field RFC 0172 sectionA.1 requires at v2 and said would be "filed separately" so hosts can advertise it before the cut; the 2.0.0 suite's `--target-major` default reads it | Active |
+| RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Active |
 
 ## SDK Helper Coverage
 
@@ -220,7 +272,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

@@ -14,8 +14,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readSubRunAttestationCap, invokeSubRunAttest } from '../lib/subRunAttestation.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('subrun-approval-fail-closed (RFC 0063 §C)', () => {
   it('no accept/edit-accept (terminated or expired) MUST NOT merge', async () => {
@@ -28,7 +28,7 @@ describe('subrun-approval-fail-closed (RFC 0063 §C)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.merged,
-      driver.describe('RFC 0063 §C', 'an unresolved approval MUST fail closed — outputs MUST NOT be merged'),
+      req('openwop.it.subrun-approval-fail-closed.no-accept-edit-accept-terminated-or-expired-must-not-merge', 'RFC 0063 §C', 'an unresolved approval MUST fail closed — outputs MUST NOT be merged'),
     ).toBe(false);
   });
 });

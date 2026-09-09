@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/heartbeat-evaluated.schema.json",
+  "title": "HeartbeatEvaluated",
+  "description": "RFC 0060. Emitted every tick by a host advertising `capabilities.heartbeat.supported: true` — the observability record of a heartbeat predicate evaluation. Heartbeat-scoped (NOT a replayable run-event-log entry). Carries no external state or secret material; `changed` gates whether a `heartbeat.stateChanged` + enqueued run follow.",
+  "type": "object",
+  "required": ["heartbeatId", "status", "changed"],
+  "properties": {
+    "heartbeatId": { "type": "string", "minLength": 1, "description": "Host-assigned identifier for the heartbeat whose tick this records." },
+    "status": { "type": "string", "enum": ["ok", "timeout", "error"], "description": "`ok` — predicate evaluated within `maxRuntimeMs`. `timeout` — terminated at the budget (RFC 0060 §B.2). `error` — the predicate threw." },
+    "changed": { "type": "boolean", "description": "Whether the predicate's state transitioned vs. the prior tick. `true` is the only path that may emit `heartbeat.stateChanged` and enqueue a run." }
+  },
+  "additionalProperties": false
+}

@@ -30,8 +30,8 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -43,12 +43,12 @@ describe('export-bundle-portability: capability advertisement (RFC 0098 §A, ser
   const portability = (caps.properties as Record<string, { properties?: Record<string, unknown>; if?: unknown; then?: unknown }>).portability;
 
   it('capabilities schema declares portability with its sub-flags + the import⇒dryRun if/then', () => {
-    expect(portability, why('capabilities.md §portability', 'portability MUST be declared')).toBeDefined();
+    expect(portability, req('openwop.it.export-bundle-portability.capabilities-schema-declares-portability-with-its-sub-flags-the-import-dryrun-if', 'capabilities.md §portability', 'portability MUST be declared')).toBeDefined();
     for (const flag of ['export', 'import', 'kinds', 'dryRun']) {
-      expect(portability?.properties?.[flag], why('RFC 0098 §A', `portability.${flag} MUST be declared`)).toBeDefined();
+      expect(portability?.properties?.[flag], req('openwop.it.export-bundle-portability.capabilities-schema-declares-portability-with-its-sub-flags-the-import-dryrun-if', 'RFC 0098 §A', `portability.${flag} MUST be declared`)).toBeDefined();
     }
-    expect(portability?.if, why('RFC 0098 §A', 'a JSON-Schema if/then MUST enforce dryRun:true when import:true')).toBeDefined();
-    expect(portability?.then, why('RFC 0098 §A', 'the then-branch MUST require dryRun')).toBeDefined();
+    expect(portability?.if, req('openwop.it.export-bundle-portability.capabilities-schema-declares-portability-with-its-sub-flags-the-import-dryrun-if', 'RFC 0098 §A', 'a JSON-Schema if/then MUST enforce dryRun:true when import:true')).toBeDefined();
+    expect(portability?.then, req('openwop.it.export-bundle-portability.capabilities-schema-declares-portability-with-its-sub-flags-the-import-dryrun-if', 'RFC 0098 §A', 'the then-branch MUST require dryRun')).toBeDefined();
   });
 });
 
@@ -67,19 +67,19 @@ describe('export-bundle-portability: ExportBundle shape (RFC 0098 §B, server-fr
   };
 
   it('validates a conforming bundle with refs only', () => {
-    expect(validate(good), why('RFC 0098 §B', `a conforming bundle MUST validate. Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
+    expect(validate(good), req('openwop.it.export-bundle-portability.validates-a-conforming-bundle-with-refs-only', 'RFC 0098 §B', `a conforming bundle MUST validate. Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
   });
 
   it('rejects a wrong bundleVersion, an unknown kind, and a missing item ref', () => {
-    expect(validate({ ...good, bundleVersion: '2' }), why('RFC 0098 §B', 'an unsupported bundleVersion MUST be rejected')).toBe(false);
-    expect(validate({ ...good, items: [{ kind: 'mystery', ref: 'x', payload: {} }] }), why('RFC 0098 §B', 'an unknown item kind MUST be rejected')).toBe(false);
-    expect(validate({ ...good, items: [{ kind: 'agent', payload: {} }] }), why('RFC 0098 §B', 'an item without a ref MUST be rejected')).toBe(false);
+    expect(validate({ ...good, bundleVersion: '2' }), req('openwop.it.export-bundle-portability.rejects-a-wrong-bundleversion-an-unknown-kind-and-a-missing-item-ref', 'RFC 0098 §B', 'an unsupported bundleVersion MUST be rejected')).toBe(false);
+    expect(validate({ ...good, items: [{ kind: 'mystery', ref: 'x', payload: {} }] }), req('openwop.it.export-bundle-portability.rejects-a-wrong-bundleversion-an-unknown-kind-and-a-missing-item-ref', 'RFC 0098 §B', 'an unknown item kind MUST be rejected')).toBe(false);
+    expect(validate({ ...good, items: [{ kind: 'agent', payload: {} }] }), req('openwop.it.export-bundle-portability.rejects-a-wrong-bundleversion-an-unknown-kind-and-a-missing-item-ref', 'RFC 0098 §B', 'an item without a ref MUST be rejected')).toBe(false);
   });
 
   it('the bundle envelope admits no credential-named field at the root or source level (additionalProperties:false)', () => {
     for (const name of CRED_NAMES) {
-      expect(validate({ ...good, [name]: 'xxx' }), why('SECURITY invariant export-bundle-no-credential-material', `a "${name}" field at the bundle root MUST NOT validate`)).toBe(false);
-      expect(validate({ ...good, source: { ...good.source, [name]: 'xxx' } }), why('SECURITY invariant export-bundle-no-credential-material', `a "${name}" field under source MUST NOT validate`)).toBe(false);
+      expect(validate({ ...good, [name]: 'xxx' }), req('openwop.it.export-bundle-portability.the-bundle-envelope-admits-no-credential-named-field-at-the-root-or-source-level', 'SECURITY invariant export-bundle-no-credential-material', `a "${name}" field at the bundle root MUST NOT validate`)).toBe(false);
+      expect(validate({ ...good, source: { ...good.source, [name]: 'xxx' } }), req('openwop.it.export-bundle-portability.the-bundle-envelope-admits-no-credential-named-field-at-the-root-or-source-level', 'SECURITY invariant export-bundle-no-credential-material', `a "${name}" field under source MUST NOT validate`)).toBe(false);
     }
   });
 });
@@ -93,10 +93,10 @@ describe('export-bundle-portability: content-free event (RFC 0098 §D, server-fr
 
   it('import.applied is in the RunEventType enum and is content-free (counts + refs only)', () => {
     const en = (runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum ?? [];
-    expect(en).toContain('import.applied');
+    expect(en, req('openwop.it.export-bundle-portability.import-applied-is-in-the-runeventtype-enum-and-is-content-free-counts-refs-only', 'export-bundle-portability.test.ts (no spec citation in file)', 'import.applied is in the RunEventType enum and is content-free (counts + refs only)')).toContain('import.applied');
     const applied = ajv.getSchema('payloads#/$defs/importApplied')!;
-    expect(applied({ bundleOrigin: 'https://host-a.example', counts: { created: 2, skipped: 1 }, secretsToRebind: ['anthropic'] }), why('RFC 0098 §D', 'a content-free import.applied MUST validate')).toBe(true);
-    expect(applied({ bundleOrigin: 'h', counts: { created: 1 }, items: [{ payload: {} }] }), why('SECURITY invariant export-bundle-no-credential-material', 'import.applied MUST NOT carry item payloads')).toBe(false);
+    expect(applied({ bundleOrigin: 'https://host-a.example', counts: { created: 2, skipped: 1 }, secretsToRebind: ['anthropic'] }), req('openwop.it.export-bundle-portability.import-applied-is-in-the-runeventtype-enum-and-is-content-free-counts-refs-only', 'RFC 0098 §D', 'a content-free import.applied MUST validate')).toBe(true);
+    expect(applied({ bundleOrigin: 'h', counts: { created: 1 }, items: [{ payload: {} }] }), req('openwop.it.export-bundle-portability.import-applied-is-in-the-runeventtype-enum-and-is-content-free-counts-refs-only', 'SECURITY invariant export-bundle-no-credential-material', 'import.applied MUST NOT carry item payloads')).toBe(false);
   });
 });
 
@@ -111,10 +111,10 @@ describe('export-bundle-portability: behavioral (RFC 0098 §E, capability-gated)
       items: [{ kind: 'connection-ref', ref: 'c1', payload: { provider: 'anthropic', apiKey: 'sk-conformance-canary' } }],
     };
     const res = await driver.post('/v1/host/sample/import?dryRun=true', { bundle: leaky });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
     expect(
       res.status,
-      driver.describe('portability.md §Invariants clause 1', 'a bundle carrying a literal credential value MUST be rejected (422)'),
+      req('openwop.it.export-bundle-portability.importing-a-bundle-with-a-literal-credential-value-is-rejected-422', 'portability.md §Invariants clause 1', 'a bundle carrying a literal credential value MUST be rejected (422)'),
     ).toBe(422);
   });
 });

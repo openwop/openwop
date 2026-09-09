@@ -175,15 +175,7 @@ Because that denormalization is a SHOULD, a registry that validates a form-conte
 
 ## Open spec gaps
 
-| Gap | Tracked as |
-| --- | --- |
-| No conditional field visibility / cross-field dependency vocabulary ("show `dietaryNotes` iff `meal == vegetarian`"). Deferred: it is a small expression language, and the corpus already has an edge-condition operator set that should be evaluated for reuse before a second one is minted. | RFC 0137 §Unresolved 1 / G1 |
-| No per-field validation beyond `required` + `format` (no `minLength`, `min`/`max`, `pattern`). | RFC 0137 §Unresolved 2 / G2 |
-| No i18n: `label` / `title` / `description` are single-language strings. RFC 0103 defines a localized content surface that may be the right host for this. | RFC 0137 §Unresolved 3 / G3 |
-| No reference-host implementation yet; the `host.forms.contentPacks` behavioral conformance legs are capability-gated and `host-pending`. | RFC 0137 §Acceptance criteria / R1 |
-| The `format` reserved core set is small (5 values) and was chosen from the JSON Schema formats a form realistically needs; it may need widening on adopter evidence. | RFC 0137 §Unresolved 4 / G4 |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.form-content-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

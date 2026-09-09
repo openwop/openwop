@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const MEMORY_REF = 'mem_tenant:default_agent:conformance-rfc0012-tag_longTerm';
 const COMPACTED_FROM_RE = /^compacted-from:[^\s:][^\s]*$/;
@@ -91,7 +92,7 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
       console.warn('[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
       return softSkip('blocked', '[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
     }
-    expect(listRes.status, 'memory:list MUST return 200 when reachable').toBe(200);
+    expect(listRes.status, req('openwop.it.memory-compaction-provenance-tag.compacted-entry-carries-a-well-formed-compacted-from-tag-or-omits-it-cleanly-no', 'RFC 0012 §C', 'memory:list MUST return 200 when reachable')).toBe(200);
 
     const body = (listRes.json as MemoryListResponse) ?? {};
     const entries = body.entries ?? [];
@@ -110,7 +111,7 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
       console.warn('[rfc0012-tag] output entry has no compacted-from:<id> tag — RFC 0012 §C is SHOULD, not MUST; pass with warning');
       return softSkip('inapplicable', '[rfc0012-tag] output entry has no compacted-from:<id> tag — RFC 0012 §C is SHOULD, not MUST; pass with warning');
     }
-    expect(provenance, driver.describe(
+    expect(provenance, req('openwop.it.memory-compaction-provenance-tag.compacted-entry-carries-a-well-formed-compacted-from-tag-or-omits-it-cleanly-no', 
       'RFC 0012 §C',
       'compacted-from tag MUST match `compacted-from:<id>` shape (non-empty id, no whitespace) when present',
     )).toMatch(COMPACTED_FROM_RE);

@@ -416,18 +416,7 @@ A node MAY carry both surfaces independently. The `agent.promptResolved` event e
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                  | Owner / RFC                                                                                            |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| P1  | Reference-host implementation of the four-layer resolution chain + `agent.promptResolved` emission in `core.ai.callPrompt`           | Acceptance-gate item per RFC 0029 (wire shape landed in this document §"Resolution chain (normative)") |
-| P2  | Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample                                 | Acceptance-gate item per RFC 0027                                                                      |
-| P3  | First non-steward host advertises `capabilities.prompts.supported: true`                                                             | Acceptance-gate item per RFC 0027                                                                      |
-| P4  | Reference-host implementation of `/v1/prompts*` REST endpoints + prompt-pack install flow                                            | Acceptance-gate item per RFC 0028                                                                      |
-| P5  | Nested template includes (`{{include:prompt:other@1.0.0}}`) — deferred to a future RFC if demand emerges                             | (open)                                                                                                 |
-| P6  | Canonical enumeration of `context` source variable names — currently non-normative recommendations                                   | (open)                                                                                                 |
-| P7  | Cross-validation of `modelHints.envelopeType` against `capabilities.supportedEnvelopes` and the Tier-1 portability subset (RFC 0030) | RFC 0030 (Draft, parallel track)                                                                       |
-| P8  | Cross-pack `dependencies` semantics — `extends:` template inheritance, transitive closure resolution                                 | RFC follow-up to 0028 (deferred)                                                                       |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 8 row(s) this table carried are now `openwop.gap.spec.prompts.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Cross-reference
 

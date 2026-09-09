@@ -24,6 +24,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call-speech-synthesizer';
 
@@ -50,16 +52,16 @@ describe('speech-synthesis-unadvertised (RFC 0105 §C)', () => {
       text: 'Welcome to the weekly digest.',
       voiceId: 'host:narrator-test',
     });
-    if (res.status === 404) return; // seam unwired — soft-skip
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     // MUST reject — never a 200 success, never a silent no-op.
     expect(
       res.status !== 200,
-      driver.describe('RFC 0105 §C', 'an unadvertising host MUST NOT return a 200 success (never a no-op)'),
+      req('openwop.it.speech-synthesis-unadvertised.a-host-not-advertising-speechsynthesis-must-reject-the-call-with-speech-synthesi', 'RFC 0105 §C', 'an unadvertising host MUST NOT return a 200 success (never a no-op)'),
     ).toBe(true);
     expect(
       errCode(res.json) === 'speech_synthesis_unsupported',
-      driver.describe('RFC 0105 §C', 'the call MUST be rejected with `speech_synthesis_unsupported`'),
+      req('openwop.it.speech-synthesis-unadvertised.a-host-not-advertising-speechsynthesis-must-reject-the-call-with-speech-synthesi', 'RFC 0105 §C', 'the call MUST be rejected with `speech_synthesis_unsupported`'),
     ).toBe(true);
   });
 });

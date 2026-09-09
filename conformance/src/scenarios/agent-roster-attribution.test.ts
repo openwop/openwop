@@ -34,7 +34,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readRosterCap, listRoster, getRosterEntry, fireRosterPortfolio } from '../lib/agentRoster.js';
 import {
@@ -43,6 +42,8 @@ import {
   resetTestSeam,
   type TestEvent,
 } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const ROSTER_ID_RE = /^host:[a-z0-9][a-z0-9._-]*$/;
 
@@ -62,42 +63,42 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
     const installScope = typeof cap?.installScope === 'string' ? cap.installScope : 'host';
     expect(
       installScope === 'host' || installScope === 'tenant',
-      driver.describe('RFC 0086 §F / RFC 0074 §B', "agents.roster.installScope (when present) MUST be 'host' or 'tenant'"),
+      req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'RFC 0086 §F / RFC 0074 §B', "agents.roster.installScope (when present) MUST be 'host' or 'tenant'"),
     ).toBe(true);
 
     // ---- Leg 1: normative read (black-box on any roster host) -------------
     const body = await listRoster();
-    if (body === null) return; // host advertises roster but doesn't serve the read yet — soft-skip
+    if (body === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `body === null` returned early (host advertises roster but doesn\'t serve the read yet — soft-skip)'); // host advertises roster but doesn't serve the read yet — soft-skip
     const roster = body.roster ?? [];
     expect(
       Array.isArray(roster),
-      driver.describe('agent-roster.md §B', 'GET /v1/agents/roster MUST return a roster[] array'),
+      req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B', 'GET /v1/agents/roster MUST return a roster[] array'),
     ).toBe(true);
     expect(
       body.total === roster.length,
-      driver.describe('agent-roster-response.schema.json', 'total MUST equal roster.length'),
+      req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster-response.schema.json', 'total MUST equal roster.length'),
     ).toBe(true);
     for (const entry of roster) {
       expect(
         typeof entry.rosterId === 'string' && ROSTER_ID_RE.test(entry.rosterId),
-        driver.describe('agent-roster-entry.schema.json', 'each entry MUST carry a host:<id> rosterId'),
+        req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster-entry.schema.json', 'each entry MUST carry a host:<id> rosterId'),
       ).toBe(true);
       expect(
         typeof entry.persona === 'string' && entry.persona.length > 0,
-        driver.describe('agent-roster.md §A', 'each entry MUST carry a non-empty persona'),
+        req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §A', 'each entry MUST carry a non-empty persona'),
       ).toBe(true);
       expect(
         typeof entry.agentRef?.agentId === 'string',
-        driver.describe('agent-roster.md §A', 'each entry MUST reference an agentRef.agentId'),
+        req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §A', 'each entry MUST reference an agentRef.agentId'),
       ).toBe(true);
       expect(
         typeof entry.owner?.tenantId === 'string',
-        driver.describe('agent-roster.md §B / RFC 0074', 'each entry MUST carry an owner.tenantId scope'),
+        req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B / RFC 0074', 'each entry MUST carry an owner.tenantId scope'),
       ).toBe(true);
       // RFC 0082 §A XOR: an agentRef MUST NOT pin both version and channel.
       expect(
         !(entry.agentRef?.version !== undefined && entry.agentRef?.channel !== undefined),
-        driver.describe('RFC 0082 §A', 'agentRef MUST NOT carry both version and channel'),
+        req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'RFC 0082 §A', 'agentRef MUST NOT carry both version and channel'),
       ).toBe(true);
     }
 
@@ -111,7 +112,7 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
           const init = firstOf(q.events, ['roster.run.initiated']);
           expect(
             init !== undefined,
-            driver.describe('agent-roster.md §C', 'a portfolio fire MUST emit roster.run.initiated'),
+            req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §C', 'a portfolio fire MUST emit roster.run.initiated'),
           ).toBe(true);
 
           if (init) {
@@ -124,7 +125,7 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
             if (firstAgent) {
               expect(
                 init.sequence < firstAgent.sequence,
-                driver.describe('agent-roster.md §C', 'roster.run.initiated MUST precede any agent.* event in the run'),
+                req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §C', 'roster.run.initiated MUST precede any agent.* event in the run'),
               ).toBe(true);
             }
 
@@ -133,18 +134,18 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
             for (const key of ['rosterId', 'persona', 'agentId', 'workflowId', 'triggerSource']) {
               expect(
                 typeof p[key] === 'string' && (p[key] as string).length > 0,
-                driver.describe('run-event-payloads.schema.json#rosterRunInitiated', `roster.run.initiated MUST carry ${key}`),
+                req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'run-event-payloads.schema.json#rosterRunInitiated', `roster.run.initiated MUST carry ${key}`),
               ).toBe(true);
             }
             for (const forbidden of ['body', 'prompt', 'input', 'payload', 'apiKey', 'secret', 'credentials', 'token']) {
               expect(
                 !(forbidden in p),
-                driver.describe('SECURITY roster-attribution-no-content', `roster.run.initiated MUST be content-free (no ${forbidden})`),
+                req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'SECURITY roster-attribution-no-content', `roster.run.initiated MUST be content-free (no ${forbidden})`),
               ).toBe(true);
             }
             expect(
               typeof p.rosterId === 'string' && ROSTER_ID_RE.test(p.rosterId),
-              driver.describe('agent-roster.md §C', 'roster.run.initiated.rosterId MUST be a host:<id> AgentRef id'),
+              req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §C', 'roster.run.initiated.rosterId MUST be a host:<id> AgentRef id'),
             ).toBe(true);
           }
         }
@@ -158,7 +159,7 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
           const p = q.events[0].payload;
           expect(
             typeof p.triggerSubscriptionId === 'string' && (p.triggerSubscriptionId as string).length > 0,
-            driver.describe('agent-roster.md §D / RFC 0083', 'a durable work-item fire MUST carry triggerSubscriptionId for trigger→run→roster ancestry'),
+            req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §D / RFC 0083', 'a durable work-item fire MUST carry triggerSubscriptionId for trigger→run→roster ancestry'),
           ).toBe(true);
         }
       }
@@ -172,7 +173,7 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
       const probe = await getRosterEntry(crossTenantId);
       expect(
         probe.status === 404,
-        driver.describe('agent-roster.md §B / RFC 0074', "GET /v1/agents/roster/{id} for a cross-tenant id MUST 404 (no cross-tenant disclosure)"),
+        req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B / RFC 0074', "GET /v1/agents/roster/{id} for a cross-tenant id MUST 404 (no cross-tenant disclosure)"),
       ).toBe(true);
     }
   });

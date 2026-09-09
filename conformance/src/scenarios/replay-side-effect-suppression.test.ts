@@ -54,6 +54,8 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { V1_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-replay-side-effect';
 const EFFECT_NODE = 'effect';
@@ -98,10 +100,10 @@ function errorCode(e: RawEvent): string | undefined {
 describe('replay-side-effect-suppression: capability shape (RFC 0140 §A)', () => {
   it('sideEffectSuppression, when present, is one of the two defined values', async () => {
     const replay = await fetchReplay();
-    if (replay?.sideEffectSuppression === undefined) return; // absent ⇒ "none"; nothing to check
+    if (replay?.sideEffectSuppression === undefined) return softSkip('blocked', 'precondition not met — `replay?.sideEffectSuppression === undefined` returned early (absent ⇒ "none"; nothing to check) (seam, prior step, or fixture unavailable)'); // absent ⇒ "none"; nothing to check
     expect(
       replay.sideEffectSuppression,
-      driver.describe(
+      req('openwop.it.replay-side-effect-suppression.sideeffectsuppression-when-present-is-one-of-the-two-defined-values', 
         'capabilities.schema.json §replay.sideEffectSuppression',
         'sideEffectSuppression MUST be "recorded-outcome" or "none" when advertised',
       ),
@@ -132,11 +134,11 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
         /* already recorded */
       }
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `replay?.sideEffectSuppression !== \'recorded-outcome\'` returned early (seam, prior step, or fixture unavailable)');
     }
     if (!replay.modes?.includes('replay')) {
       ctx.skip(); // suppression is scoped to replay mode
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!replay.modes?.includes(\'replay\')` returned early');
     }
 
     // 1. Start the run with a delay long enough to cancel mid-flight, so the
@@ -151,13 +153,13 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
       workflowId: WORKFLOW_ID,
       inputs: { delayMs: 5_000 },
     });
-    expect(create.status, `Failed to start ${WORKFLOW_ID}`).toBe(201);
+    expect(create.status, req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 'replay.md §"Side-effect suppression in replay" requirement 1', `Failed to start ${WORKFLOW_ID}`)).toBe(201);
     const sourceRunId = (create.json as { runId: string }).runId;
 
     const cancel = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}/cancel`, {});
     expect(
       [200, 202, 204].includes(cancel.status),
-      `cancel returned ${cancel.status}`,
+      req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 'replay.md §"Side-effect suppression in replay" requirement 1', `cancel returned ${cancel.status}`),
     ).toBe(true);
     await pollUntilTerminal(sourceRunId, { timeoutMs: 15_000 });
 
@@ -167,7 +169,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     const sourceEvents = await readEvents(sourceRunId);
     expect(
       sourceEvents.some((e) => e.type === 'node.completed' && e.nodeId === EFFECT_NODE),
-      'precondition: the cancelled source run must NOT have completed the effect node',
+      req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 'replay.md §"Side-effect suppression in replay" requirement 1', 'precondition: the cancelled source run must NOT have completed the effect node'),
     ).toBe(false);
 
     // 2. Fork it in replay mode.
@@ -176,9 +178,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     });
     if (forkDeclined(fork.status, 'side-effect-suppression replay fork')) {
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `forkDeclined(fork.status, \'side-effect-suppression replay fork\')` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(fork.status, 'fork should be accepted').toBe(201);
+    expect(fork.status, req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 'replay.md §"Side-effect suppression in replay" requirement 1', 'fork should be accepted')).toBe(201);
     const forkRunId = (fork.json as { runId: string }).runId;
     await pollUntilTerminal(forkRunId, { timeoutMs: 45_000 }); // re-runs the 5s delay before reaching `effect`
 
@@ -190,7 +192,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
 
     expect(
       effectEvents.some((e) => e.type === 'node.completed'),
-      driver.describe(
+      req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 
         'replay.md §"Side-effect suppression in replay" requirement 1',
         'the side-effecting node MUST NOT complete during a replay — completing it means the effect was performed',
       ),
@@ -198,7 +200,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
 
     expect(
       effectEvents.some((e) => e.type === 'node.failed' && errorCode(e) === 'replay_source_missing'),
-      driver.describe(
+      req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 
         'replay.md §"Side-effect suppression in replay" requirement 3',
         'a side-effecting node with no recorded source outcome MUST fail closed with replay_source_missing',
       ),
@@ -240,9 +242,9 @@ describe.skipIf(V1_DIR === null)('replay.md req 4 — the manifest role is a cla
     // binds a value nothing can declare — a rule with no reachable trigger.
     expect(
       manifest().includes('side-effect'),
-      'node-pack-manifest.schema.json §role MUST still describe the `side-effect` value that ' +
+      req('openwop.it.replay-side-effect-suppression.the-manifest-still-offers-the-role-value-the-requirement-binds', 'RFC 0140', 'node-pack-manifest.schema.json §role MUST still describe the `side-effect` value that ' +
         'replay.md requirement 4 makes binding. A requirement whose trigger no longer exists is ' +
-        'not enforcement, it is decoration.',
+        'not enforcement, it is decoration.'),
     ).toBe(true);
   });
 
@@ -250,9 +252,9 @@ describe.skipIf(V1_DIR === null)('replay.md req 4 — the manifest role is a cla
     const doc = replay();
     expect(
       /MUST\*{0,2} be treated as side-effecting/.test(doc) && doc.includes('node-pack-manifest.schema.json'),
-      'replay.md §"Requirements when a host declares `sideEffectSuppression: \\"recorded-outcome\\"`" ' +
+      req('openwop.it.replay-side-effect-suppression.replay-md-binds-that-declaration-naming-the-schema-it-comes-from', 'replay.md', 'replay.md §"Requirements when a host declares `sideEffectSuppression: \\"recorded-outcome\\"`" ' +
         'MUST bind a manifest-declared `role: "side-effect"` to the suppression obligation, and MUST ' +
-        'name the schema the declaration comes from so a reader can find it.',
+        'name the schema the declaration comes from so a reader can find it.'),
     ).toBe(true);
   });
 
@@ -267,10 +269,10 @@ describe.skipIf(V1_DIR === null)('replay.md req 4 — the manifest role is a cla
     const doc = replay();
     expect(
       doc.includes('backstop, not a discharge'),
-      'replay.md requirement 4 MUST state that a guarded-seam throw is a backstop rather than a ' +
+      req('openwop.it.replay-side-effect-suppression.a-throw-is-named-a-backstop-not-a-discharge', 'RFC 0140', 'replay.md requirement 4 MUST state that a guarded-seam throw is a backstop rather than a ' +
         'discharge. It satisfies requirement 1 (no effect) and not requirement 2 (resolve the ' +
         'recorded outcome), and a host reading the floor as "make it throw" ships a replay that ' +
-        'fails where this section says it must succeed.',
+        'fails where this section says it must succeed.'),
     ).toBe(true);
     expect(
       /safe and\s+non-conformant/.test(doc),
@@ -285,9 +287,9 @@ describe.skipIf(V1_DIR === null)('replay.md req 4 — the manifest role is a cla
     // manifest is wrong." The requirement is one-directional and says so.
     expect(
       replay().includes('MUST NOT classify fewer'),
-      'replay.md requirement 4 MUST state the direction: a host classifier may treat MORE nodes as ' +
+      req('openwop.it.replay-side-effect-suppression.the-floor-direction-is-stated-not-left-to-inference', 'RFC 0140', 'replay.md requirement 4 MUST state the direction: a host classifier may treat MORE nodes as ' +
         'side-effecting and never fewer. Without the direction, a host that trusts its own list over ' +
-        'the manifest can read the clause as permission to disagree.',
+        'the manifest can read the clause as permission to disagree.'),
     ).toBe(true);
   });
 });

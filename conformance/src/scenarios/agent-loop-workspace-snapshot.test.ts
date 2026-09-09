@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readExecutionModelCap, isVersion5, hasWorkspace, invokeAgentLoop } from '../lib/agentLoop.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('agent-loop-workspace-snapshot (RFC 0061 §C)', () => {
   it('a turn-i workspace write is invisible to turn i, visible to turn i+1', async () => {
@@ -24,11 +24,11 @@ describe('agent-loop-workspace-snapshot (RFC 0061 §C)', () => {
     const vis = res.workspaceVisible ?? {};
     expect(
       vis.atWriteTurn,
-      driver.describe('RFC 0061 §C', 'a workspace write during turn i MUST be invisible to turn i\'s snapshot'),
+      req('openwop.it.agent-loop-workspace-snapshot.a-turn-i-workspace-write-is-invisible-to-turn-i-visible-to-turn-i-1', 'RFC 0061 §C', 'a workspace write during turn i MUST be invisible to turn i\'s snapshot'),
     ).toBe(false);
     expect(
       vis.atNextTurn,
-      driver.describe('RFC 0061 §C', 'a workspace write during turn i MUST be visible to turn i+1'),
+      req('openwop.it.agent-loop-workspace-snapshot.a-turn-i-workspace-write-is-invisible-to-turn-i-visible-to-turn-i-1', 'RFC 0061 §C', 'a workspace write during turn i MUST be visible to turn i+1'),
     ).toBe(true);
   });
 });

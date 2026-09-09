@@ -6,10 +6,18 @@
 # CLI publishes from openwop/openwop-cli. The pack registry deploys from
 # openwop/openwop-registry.
 #
-#   Tag pattern                Triggers              Use case
-#   -----------------          ----------------      -----------------------
-#   v*                         publish-conformance   Corpus-aligned release
-#   openwop-conformance/v*     publish-conformance   Scenario addition / suite fix
+#   Tag pattern                Triggers                        Use case
+#   -----------------          ---------------------------     ----------------------
+#   v*                         both packages, then verify      Corpus-aligned release
+#   openwop-conformance/v*     both packages, then verify      Scenario addition / suite fix
+#   openwop-spec-artifacts/v*  spec-artifacts only             Contract-package fix
+#
+# A conformance tag publishes BOTH because conformance pins
+# `peerDependencies['@openwop/spec-artifacts']` to an EXACT version: they are one
+# release under two names. While the tag scheme said otherwise, conformance
+# shipped rc.20 through rc.28 against a peer that stopped at rc.19 — nine
+# published versions no consumer could install. `verify-installable` runs last,
+# outside any checkout, because that is the only place the difference shows.
 #
 # A coordinated spec release (v*) must also push the matching SDK release tags in
 # openwop/openwop-sdks — see PUBLISHING.md §"Versioning alignment".
@@ -23,6 +31,7 @@ on:
     tags:
       - 'v*'
       - 'openwop-conformance/v*'
+      - 'openwop-spec-artifacts/v*'
 
 jobs:
   validate-tag:
@@ -38,23 +47,59 @@ jobs:
             openwop-conformance/v[0-9]*.[0-9]*.[0-9]*-*)
               echo "tag '$tag' matches expected SemVer pattern"
               ;;
+            openwop-spec-artifacts/v[0-9]*.[0-9]*.[0-9]*|\
+            openwop-spec-artifacts/v[0-9]*.[0-9]*.[0-9]*-*)
+              echo "tag '$tag' matches expected SemVer pattern (spec-artifacts)"
+              ;;
             *)
               echo "::error::tag '$tag' does not match any expected SemVer pattern"
               echo "Expected one of:"
               echo "  vX.Y.Z[-prerelease]                       (corpus-aligned release)"
               echo "  openwop-conformance/vX.Y.Z[-prerelease]       (conformance only)"
+              echo "  openwop-spec-artifacts/vX.Y.Z[-prerelease]    (spec-artifacts only)"
               exit 1
               ;;
           esac
+      # v2 charter Phase 3 (P3-E): releases come from `main` (2.x) or `release/1.x`
+      # (1.x fixes, RFC 0168 §D.3). A tag reachable from neither is refused —
+      # the identity check compares the tag's tree to npm, but nothing else
+      # proves the tag is on a release line.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Validate tag ancestry (main or release/1.x)
+        run: |
+          git fetch --no-tags origin main release/1.x 2>/dev/null || git fetch --no-tags origin main
+          ok=0
+          for line in origin/main origin/release/1.x; do
+            if git rev-parse --verify -q "$line" >/dev/null && git merge-base --is-ancestor "$GITHUB_SHA" "$line"; then ok=1; echo "tag is on $line"; fi
+          done
+          [ "$ok" = 1 ] || { echo "::error::tag commit $GITHUB_SHA is on neither main nor release/1.x"; exit 1; }
 
   preflight:
     needs: validate-tag
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # openwop:check runs scripts/generate-v1-eos-clock.mjs --check, which
+          # derives the v1 end-of-support anchor from the FIRST-PARENT HISTORY
+          # OF MAIN (overview.md §v1 end-of-support) and refuses to guess when
+          # neither origin/main nor main resolves. A shallow checkout of a tag
+          # has neither: the rc.57 publish (2026-09-05) failed preflight on
+          # exactly that, one commit after the corpus CI job learned the same
+          # lesson (openwop-spec.yml).
+          fetch-depth: 0
+      - name: Fetch main (the anchor's history; same as validate-tag)
+        run: git fetch --no-tags origin main
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+      # v2 charter Phase 3: scripts/derive-v2-api.py (stage 10) reads the v1 API
+      # documents with PyYAML — the corpus has no Node YAML parser and the outputs
+      # are committed, so a runner without PyYAML must fail loudly, not skip.
+      - name: Install PyYAML (stage 10 derive-v2-api --check)
+        run: python3 -m pip install --quiet --user pyyaml
       - name: Spec corpus consistency check
         run: npm run openwop:check
 
@@ -87,7 +132,10 @@ jobs:
             || echo "issue creation failed (non-blocking)"
 
   publish-conformance:
-    needs: preflight
+    # Ordered AFTER spec-artifacts, not merely alongside it: the peer must exist
+    # on the registry before the package that exactly pins it does, or there is a
+    # window in which the published suite is uninstallable.
+    needs: [preflight, publish-spec-artifacts]
     if: |
       startsWith(github.ref, 'refs/tags/v') ||
       startsWith(github.ref, 'refs/tags/openwop-conformance/v')
@@ -137,5 +185,179 @@ jobs:
             # published == this tree. Genuinely nothing to do.
             echo "✓ $PKG@$VER is on npm and byte-identical to this tree — nothing to publish."
           else
-            npm publish --access public --provenance
+            npm publish --access public --provenance $(case "$VER" in *-*) echo "--tag next";; esac)
           fi
+
+  # Suite 2.0.0 (RFC 0168 §D.2): the contract package. Published from the same
+  # corpus tag as the suite (a `v*` tag publishes both; `openwop-spec-artifacts/v*`
+  # publishes only this). Pre-release versions go to the `next` dist-tag.
+  # An `openwop-conformance/v*` tag ALSO publishes this package, and that is not
+  # a convenience. `conformance/package.json` pins
+  # `peerDependencies['@openwop/spec-artifacts']` to an EXACT version, so the two
+  # packages are one release wearing two names. The tag scheme said otherwise,
+  # and the gap ran for nine versions: conformance published rc.20 through rc.28
+  # while spec-artifacts stopped at rc.19, so every one of those pins a peer that
+  # DOES NOT EXIST on npm and fails for any consumer.
+  #
+  # Nothing caught it because every gate above runs inside a checkout of this
+  # repo, where the peer resolves from the monorepo and its absence from the
+  # registry is invisible by construction. A tier-1 host found it the only way it
+  # can be found: by trying to install the thing we said was ready.
+  #
+  #   The workspace witnesses what the code does. npm witnesses what a consumer
+  #   can obtain. A publish is a claim about the second, and a green run in the
+  #   first cannot make it.
+  publish-spec-artifacts:
+    needs: preflight
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/openwop-spec-artifacts/v') || startsWith(github.ref, 'refs/tags/openwop-conformance/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - run: node scripts/generate-spec-artifacts.mjs --check
+      - run: node scripts/check-published-suite-identity.mjs --require-network --package spec-artifacts
+      - name: Publish @openwop/spec-artifacts
+        run: |
+          cd spec-artifacts
+          PKG=$(node -p "require('./package.json').name"); VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then echo "$PKG@$VER already published and byte-identical (identity step passed)"; exit 0; fi
+          npm publish --access public --provenance $(case "$VER" in *-*) echo "--tag next";; esac)
+
+  # The consumer test. Everything above runs inside a checkout of this repo,
+  # where `@openwop/spec-artifacts` resolves from the monorepo whether or not it
+  # exists on npm. This job installs the PUBLISHED suite into an empty directory
+  # with no checkout at all — the only environment that can witness what an
+  # outside consumer actually gets.
+  #
+  # It is the registry-side twin of the lockfile installability gate a tier-1
+  # host built (openwop-app#3637) before it had a live case. It has one now, and
+  # the case was ours.
+  verify-installable:
+    needs: [publish-conformance, publish-spec-artifacts]
+    if: always() && needs.publish-conformance.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - name: Install the published suite as an outside consumer
+        run: |
+          set -uo pipefail
+          tag="${GITHUB_REF#refs/tags/}"
+          # `${tag##*/v}` strips through the LAST `/v`, which is right for
+          # `openwop-conformance/v2.0.0` and WRONG for a bare `v2.0.0`: with no
+          # `/` the pattern never matches and VER keeps its leading `v`. The
+          # job then waits 20 minutes for a version literally named `v2.0.0`
+          # and reports "the PUBLISH did not take effect" about a publish that
+          # took effect perfectly. Measured at the v2.0.0 cut — the first bare
+          # `v*` tag of the v2 series; every rc used the prefixed form, so the
+          # bug could not surface until the release it would break.
+          VER="${tag##*/}"; VER="${VER#v}"
+          PKG=@openwop/openwop-conformance
+          echo "verifying $PKG@$VER is installable by a consumer"
+
+          # TWO QUESTIONS, ASKED SEPARATELY. The first version of this job asked
+          # only "does npm install succeed", retried for 3 minutes, and failed
+          # rc.31 — whose packument its own diagnostic then read successfully 15
+          # SECONDS LATER. npm's registry is read-through-cached, so a version
+          # published a moment ago resolves as ETARGET, which is byte-identical
+          # to the ETARGET of a version that was never published. That is the
+          # exact defect shape this job exists to catch, reproduced inside the
+          # catcher: a signal that reads the same whether it is true or false.
+          #
+          # So: wait on the PACKUMENT (authoritative — it is what publish writes)
+          # and only then attempt the install. The two failures are now distinct.
+          # Budget is 20 minutes. Measured suite-packument delays in one evening:
+          # rc.29 ~4 min, rc.31 ~4, rc.34 210 s, rc.35 180 s, rc.36 480 s — the
+          # last one 2 minutes inside the 10-minute budget that had itself been
+          # set from a 210 s measurement. Every earlier budget on this job was
+          # set below a value already observed; this one is set at 2.5x the
+          # worst observed, and on the happy path it exits the moment the
+          # packument appears, so the width costs nothing.
+          # ONE PACKUMENT IS NOT ENOUGH. rc.33 failed here with the suite's
+          # packument visible and its exact-pinned peer's not yet — the two
+          # publish jobs finish minutes apart and the registry propagates each
+          # on its own clock (rc.33: conformance visible 22:24:46, spec-artifacts
+          # 22:27:19). Probing only the pinning package answered "published" and
+          # the install then died on the peer, which is the rc.20-rc.28 failure
+          # shape with a 150-second cause instead of a nine-version one — and the
+          # gate written to tell those apart could not. So: probe the suite's
+          # packument, READ the peer version it pins, probe THAT packument, and
+          # only then install. A peer that is genuinely unpublished still fails
+          # here, at step 2, with its own message.
+          pkjson() { curl -sf "https://registry.npmjs.org/${1/\//%2F}"; }
+          hasver() { node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{try{process.exit(JSON.parse(b).versions[process.argv[1]]?0:1)}catch{process.exit(1)}})" "$2"; }
+          seen=""
+          for i in $(seq 1 80); do
+            if pkjson "$PKG" | hasver "$PKG" "$VER"; then seen=yes; echo "packument carries $PKG@$VER after $((i*15))s"; break; fi
+            sleep 15
+          done
+          if [ -z "$seen" ]; then
+            echo "::error::$PKG@$VER never appeared on the registry after 20 minutes — the PUBLISH did not take effect."
+            exit 1
+          fi
+          PEER=@openwop/spec-artifacts
+          PEERVER=$(pkjson "$PKG" | node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{const m=JSON.parse(b).versions[process.argv[1]];console.log((m&&m.peerDependencies&&m.peerDependencies['$PEER'])||'')})" "$VER")
+          if [ -z "$PEERVER" ]; then echo "::error::$PKG@$VER declares no $PEER peer — the manifest is not the one this repo builds."; exit 1; fi
+          echo "$PKG@$VER pins $PEER@$PEERVER"
+          seen=""
+          for i in $(seq 1 80); do
+            if pkjson "$PEER" | hasver "$PEER" "$PEERVER"; then seen=yes; echo "packument carries $PEER@$PEERVER after $((i*15))s"; break; fi
+            sleep 15
+          done
+          if [ -z "$seen" ]; then
+            echo "::error::$PEER@$PEERVER — the exact peer $PKG@$VER pins — never appeared on the registry after 20 minutes. This is the rc.20-rc.28 defect: the suite is published and cannot be installed."
+            exit 1
+          fi
+
+          work="$(mktemp -d)"; cd "$work"; npm init -y >/dev/null
+          for i in $(seq 1 8); do
+            if npm install "$PKG@$VER" --no-audit --no-fund; then
+              echo "✓ installed cleanly; peer resolved to $(node -p "require('./node_modules/@openwop/spec-artifacts/package.json').version")"
+              # INSTALLS IS NOT WORKS. Until 2.0.6 this job stopped at the line
+              # above, and 2.0.5 passed it while `registeredOrgs()` returned
+              # undefined for every consumer: the resolver was anchored on
+              # `spec/v1/`, a directory no published package ships, so the vendor
+              # -org registry was unreachable the moment anyone installed the
+              # suite. `v2-unmapped-type-refused` then soft-skipped on the hosts
+              # it exists to catch and the lane went green. A clean `npm install`
+              # could not tell the difference; only reading the corpus through
+              # the installed resolver can. Reported by a consumer (openwop-app),
+              # which is the only vantage point where it was visible.
+              node --input-type=module -e '
+                import { readFileSync, existsSync } from "node:fs";
+                import { join } from "node:path";
+                const { SPEC_V2_DIR, LAYOUT } = await import("@openwop/openwop-conformance/dist/lib/paths.js");
+                console.log(`layout=${LAYOUT} specV2Dir=${SPEC_V2_DIR}`);
+                if (SPEC_V2_DIR === null) { console.error("::error::the installed suite cannot resolve spec/v2 — every corpus-backed precondition silently soft-skips"); process.exit(1); }
+                const decl = join(SPEC_V2_DIR, "declaration.json");
+                const cmap = join(SPEC_V2_DIR, "event-codemap.json");
+                for (const f of [decl, cmap]) if (!existsSync(f)) { console.error(`::error::${f} is not readable from the installed layout`); process.exit(1); }
+                const orgs = Object.keys(JSON.parse(readFileSync(decl, "utf8")).extensions ?? {});
+                const rows = (JSON.parse(readFileSync(cmap, "utf8")).rows ?? []).length;
+                console.log(`registeredOrgs=${orgs.join(",") || "(none)"} codemapRows=${rows}`);
+                if (orgs.length === 0) { console.error("::error::the vendor-org registry is empty in the installed layout — v2-unmapped-type-refused would skip the control leg"); process.exit(1); }
+                if (rows < 100) { console.error(`::error::only ${rows} codemap rows in the installed layout — the era-2 reader scenarios would assert against a truncated map`); process.exit(1); }
+              ' || exit 1
+              echo "✓ the installed suite resolves its corpus data"
+              exit 0
+            fi
+            sleep 15
+          done
+
+          # The version is demonstrably on the registry and the install still
+          # fails, so this is a real dependency defect and not propagation.
+          echo "::error::$PKG@$VER is ON the registry but NOT installable — a dependency cannot be resolved."
+          echo "The likeliest cause is an exact peerDependency whose version was never published."
+          curl -sf "https://registry.npmjs.org/${PKG/\//%2F}" \
+            | node -e "let b='';process.stdin.on('data',d=>b+=d).on('end',()=>{const m=JSON.parse(b).versions[process.argv[1]];console.log('published peerDependencies:',JSON.stringify(m&&m.peerDependencies));})" "$VER" || true
+          exit 1

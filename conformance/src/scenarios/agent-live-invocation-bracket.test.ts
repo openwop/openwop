@@ -21,10 +21,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readLiveRuntimeCap, invokeLive } from '../lib/liveRuntime.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SOURCES = ['workflow-node', 'run-api', 'chat-mention'];
 const OUTCOMES = ['completed', 'handed-off', 'escalated', 'refused', 'failed'];
@@ -35,21 +36,21 @@ describe('agent-live-invocation-bracket (RFC 0077 §E)', () => {
     const cap = await readLiveRuntimeCap();
     if (!behaviorGate('openwop-live-invocation-bracket', cap?.supported === true)) return;
 
-    if (!(await isEventLogSeamAvailable())) return; // event-log seam absent — soft-skip
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (event-log seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // event-log seam absent — soft-skip
     const res = await invokeLive({ source: 'run-api' });
-    if (res === null || !res.runId) return; // live-invoke seam absent — soft-skip
+    if (res === null || !res.runId) return softSkip('blocked', 'precondition not met — `res === null || !res.runId` returned early (live-invoke seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // live-invoke seam absent — soft-skip
 
     const q = await queryTestEvents(res.runId);
-    if (!q.ok) return;
+    if (!q.ok) return softSkip('blocked', 'precondition not met — `!q.ok` returned early (seam, prior step, or fixture unavailable)');
     const events = q.events.slice().sort((a, b) => a.sequence - b.sequence);
 
     const started = events.filter((e) => e.type === 'agent.invocation.started');
     const completed = events.filter((e) => e.type === 'agent.invocation.completed');
     expect(
       started.length >= 1 && completed.length >= 1,
-      driver.describe('multi-agent-execution.md §"Live manifest dispatch"', 'a live invocation MUST emit agent.invocation.started + agent.invocation.completed'),
+      req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'multi-agent-execution.md §"Live manifest dispatch"', 'a live invocation MUST emit agent.invocation.started + agent.invocation.completed'),
     ).toBe(true);
-    if (started.length === 0 || completed.length === 0) return;
+    if (started.length === 0 || completed.length === 0) return softSkip('blocked', 'precondition not met — `started.length === 0 || completed.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
     const start = started[0]!;
     const end = completed[completed.length - 1]!;
@@ -58,11 +59,11 @@ describe('agent-live-invocation-bracket (RFC 0077 §E)', () => {
     const agentScoped = events.filter((e) => AGENT_SCOPED(e.type));
     expect(
       agentScoped[0]?.type === 'agent.invocation.started',
-      driver.describe('RFC 0077 §E', 'agent.invocation.started MUST be the first agent-scoped event of the invocation'),
+      req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'RFC 0077 §E', 'agent.invocation.started MUST be the first agent-scoped event of the invocation'),
     ).toBe(true);
     expect(
       agentScoped[agentScoped.length - 1]?.type === 'agent.invocation.completed',
-      driver.describe('RFC 0077 §E', 'agent.invocation.completed MUST be the last agent-scoped event of the invocation'),
+      req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'RFC 0077 §E', 'agent.invocation.completed MUST be the last agent-scoped event of the invocation'),
     ).toBe(true);
 
     // Matching invocationId across the bracket.
@@ -70,17 +71,17 @@ describe('agent-live-invocation-bracket (RFC 0077 §E)', () => {
     const endId = end.payload.invocationId;
     expect(
       typeof startId === 'string' && startId === endId,
-      driver.describe('run-event-payloads.schema.json#agentInvocation*', 'the bracket MUST share one invocationId'),
+      req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'run-event-payloads.schema.json#agentInvocation*', 'the bracket MUST share one invocationId'),
     ).toBe(true);
 
     // Enum discipline.
     expect(
       typeof start.payload.source === 'string' && SOURCES.includes(start.payload.source as string),
-      driver.describe('run-event-payloads.schema.json#agentInvocationStarted', 'source MUST be workflow-node|run-api|chat-mention'),
+      req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'run-event-payloads.schema.json#agentInvocationStarted', 'source MUST be workflow-node|run-api|chat-mention'),
     ).toBe(true);
     expect(
       typeof end.payload.outcome === 'string' && OUTCOMES.includes(end.payload.outcome as string),
-      driver.describe('run-event-payloads.schema.json#agentInvocationCompleted', 'outcome MUST be in the closed enum'),
+      req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'run-event-payloads.schema.json#agentInvocationCompleted', 'outcome MUST be in the closed enum'),
     ).toBe(true);
 
     // Content-free: identifiers + metadata only, never prompt/result body.
@@ -88,7 +89,7 @@ describe('agent-live-invocation-bracket (RFC 0077 §E)', () => {
       for (const forbidden of ['prompt', 'result', 'body', 'input', 'output', 'apiKey', 'secret', 'credentials', 'token']) {
         expect(
           !(forbidden in evt.payload),
-          driver.describe('RFC 0077', `agent.invocation.* MUST be content-free (no ${forbidden})`),
+          req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'RFC 0077', `agent.invocation.* MUST be content-free (no ${forbidden})`),
         ).toBe(true);
       }
     }

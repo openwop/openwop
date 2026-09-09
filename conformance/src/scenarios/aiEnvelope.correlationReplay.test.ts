@@ -38,13 +38,13 @@ async function isEnvelopeContractsAdvertised(): Promise<boolean> {
 
 describe('aiEnvelope.correlationReplay: advertisement shape (FINAL v1.1)', () => {
   it('host that advertises envelopeContracts.advertised:true claims the replay-determinism contract', async () => {
-    if (!(await isEnvelopeContractsAdvertised())) return; // not opted in — skip
+    if (!(await isEnvelopeContractsAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isEnvelopeContractsAdvertised())` returned early (not opted in — skip)'); // not opted in — skip
     // The contract has no separate capability flag — advertising
     // envelopeContracts is the claim. The behavioral assertions below
     // exercise the contract; this advertisement-shape test exists so
     // a "no envelope contracts at all" host doesn't appear in failure
     // reports for this scenario.
-    expect(true).toBe(true);
+    expect(true, req('openwop.it.aiEnvelope.correlationReplay.host-that-advertises-envelopecontracts-advertised-true-claims-the-replay-determi', 'spec/v1/ai-envelope.md', 'host that advertises envelopeContracts.advertised:true claims the replay-determinism contract')).toBe(true);
   });
 });
 
@@ -75,7 +75,7 @@ describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)
       meta: baseMeta,
     };
     const first = await accept(envelope);
-    if (first.status === 404) return;
+    if (first.status === 404) return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(first.body.status).toBe('accepted');
     const cachedOutcome = first.body;
 
@@ -90,7 +90,7 @@ describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)
     });
     expect(
       second.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.correlationReplay.same-correlationid-re-emission-returns-the-cached-outcome-unchanged', 
         'ai-envelope.md §"Replay determinism"',
         'second emission with same correlationId MUST return the cached outcome (handler runs at most once per correlationId)',
       ),
@@ -118,10 +118,10 @@ describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)
         ],
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.correlationReplay.same-correlationid-different-envelope-type-invalid-envelope-correlation-conflict', 
         'ai-envelope.md §"Replay determinism"',
         'same correlationId with different type MUST refuse envelope_correlation_conflict',
       ),
@@ -157,10 +157,10 @@ describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)
         ],
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.correlationReplay.cached-outcome-of-any-status-invalid-gated-breached-replays-identically', 
         'ai-envelope.md §"Replay determinism"',
         'cached non-accepted outcome MUST replay identically (handler at most once per correlationId)',
       ),
@@ -170,10 +170,12 @@ describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)
 
 // E.1 engine-projection via the test-only event-log seam.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.correlationReplay: causationId projection via event-log seam', () => {
   it('resulting RunEventDoc.causationId MUST equal the envelope.correlationId (causal chain preserved)', async () => {
-    if (!(await isEventLogSeamAvailable())) return;
+    if (!(await isEventLogSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isEventLogSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-cr-cause-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const correlationId = `${runId}:n:0:causationId-link`;
     await accept(
@@ -188,11 +190,11 @@ describe('aiEnvelope.correlationReplay: causationId projection via event-log sea
       { projectTo: { runId, nodeId: 'n' } },
     );
     const events = await queryTestEvents(runId);
-    if (!events.ok || events.events.length === 0) return;
+    if (!events.ok || events.events.length === 0) return softSkip('blocked', 'precondition not met — `!events.ok || events.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
     for (const e of events.events) {
       expect(
         e.causationId,
-        driver.describe('ai-envelope.md §"Replay determinism"', 'every event projected from an envelope MUST carry causationId === envelope.correlationId'),
+        req('openwop.it.aiEnvelope.correlationReplay.resulting-runeventdoc-causationid-must-equal-the-envelope-correlationid-causal-c', 'ai-envelope.md §"Replay determinism"', 'every event projected from an envelope MUST carry causationId === envelope.correlationId'),
       ).toBe(correlationId);
     }
     await resetTestSeam();
@@ -238,7 +240,7 @@ describe('aiEnvelope.correlationReplay: cross-process replay via persisted dedup
     };
     // First accept persists the outcome under (runId, correlationId).
     const first = await accept(env1, { persistedDedup: { runId } });
-    if (first.status === 404) return; // seam not exposed — soft-skip
+    if (first.status === 404) return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam not exposed — soft-skip) (seam, prior step, or fixture unavailable)'); // seam not exposed — soft-skip
     expect(first.body.status).toBe('accepted');
     expect(first.body.envelopeId).toBe('env-cr-persist-1');
 
@@ -250,7 +252,7 @@ describe('aiEnvelope.correlationReplay: cross-process replay via persisted dedup
     const second = await accept(env2, { persistedDedup: { runId } });
     expect(
       second.body.envelopeId,
-      driver.describe(
+      req('openwop.it.aiEnvelope.correlationReplay.persisted-outcome-replays-for-the-same-correlationid-even-with-no-in-memory-prio', 
         'ai-envelope.md §"Replay determinism"',
         'persisted outcome MUST replay across calls without an in-memory priorCorrelations map (cross-process recovery: cached envelopeId surfaces even when the inbound envelope carries a different envelopeId)',
       ),
@@ -273,7 +275,7 @@ describe('aiEnvelope.correlationReplay: cross-process replay via persisted dedup
       },
       { persistedDedup: { runId } },
     );
-    if (first.status === 404) return;
+    if (first.status === 404) return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(first.body.status).toBe('accepted');
 
     // Second accept: same correlationId, different envelope type, NO
@@ -292,7 +294,7 @@ describe('aiEnvelope.correlationReplay: cross-process replay via persisted dedup
     );
     expect(
       second.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.correlationReplay.persisted-store-enforces-envelope-correlation-conflict-across-calls', 
         'ai-envelope.md §"Replay determinism"',
         'persisted store MUST surface envelope_correlation_conflict on type mismatch without an in-memory priorCorrelations map',
       ),

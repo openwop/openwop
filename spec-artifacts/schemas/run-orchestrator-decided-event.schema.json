@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/run-orchestrator-decided-event.schema.json",
+  "title": "RunOrchestratorDecidedPayload",
+  "description": "Payload for the `runOrchestrator.decided` RunEvent. Emitted exactly once per orchestrator decision by a `core.orchestrator.supervisor` node (or a host-extension equivalent that advertises orchestration). Carries the deciding agent's identity and the typed decision (orchestrator-decision.schema.json). The event envelope's top-level `nodeId` field carries the supervisor node-id; the payload does NOT duplicate it. See RFC 0006 §E for ordering invariants CO-1/CO-2/CO-3.",
+  "type": "object",
+  "required": ["agentId", "decision"],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 256,
+      "description": "AgentRef.agentId of the orchestrator that emitted this decision. MUST equal `RunSnapshot.runOrchestrator.agentId` for the run's lifetime — the orchestrator identity is set at the first decision and does not change."
+    },
+    "decision": {
+      "$ref": "https://openwop.dev/spec/v1/orchestrator-decision.schema.json"
+    }
+  },
+  "additionalProperties": false
+}

@@ -253,12 +253,7 @@ An OpenWOP-compliant CLI (e.g., a host's workflow-run command with `--watch`) SH
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                                                                                                                                  | Owner |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| S1  | `state.snapshot` payload schema — done (2026-04-27: reuses `schemas/run-snapshot.schema.json` verbatim — same shape as `GET /v1/runs/{runId}` projection).                                                                                                                                                           | ✅    |
-| S2  | `ai.message.chunk` payload — done (2026-04-27: tiered shape — Tier 1 typed slots `finishReason / logprobs / toolCalls / model / usage`, Tier 2 `providerExtensions` escape hatch. Bare `{chunk, isLast}` remains the minimum compliant payload). Schema lives at `run-event-payloads.schema.json#$defs.outputChunk`. | ✅    |
-| S3  | Subscriber-side aggregation hints — done (2026-04-27: `?bufferMs=N` query param accepts 0..5000; batched SSE events use `event: batch` with array `data:`. Forced-flush on terminal events + suspensions. See "Aggregation hint" §).                                                                                 | ✅    |
-| S4  | Mixing modes — done (2026-04-27: comma-separated `?streamMode=A,B` accepted; union-of-filters semantics; per-event `event:` field labels which mode admitted it; `values` exclusive. See "Mixed mode" §).                                                                                                            | ✅    |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.stream-modes.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

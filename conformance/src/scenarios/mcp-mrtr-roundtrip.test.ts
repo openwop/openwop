@@ -37,6 +37,7 @@ import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const REQUIRES_HOST_CALLBACK = "the host issues MCP JSON-RPC calls (including the MRTR input_required round trip) to the suite's fake server via /v1/host/sample/mcp/invoke (serverUrl)";
 
@@ -69,23 +70,23 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
       return seamAbsent(`host advertises mcp-2026-07-28 but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status}`);
     }
     const calls = server.invocations().filter((i) => i.method === 'tools/call');
-    expect(calls.length, driver.describe('RFCS/0153 §C', 'the host MUST have called the tool at least once for this leg to mean anything')).toBeGreaterThan(0);
+    expect(calls.length, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'RFCS/0153 §C', 'the host MUST have called the tool at least once for this leg to mean anything')).toBeGreaterThan(0);
     const mrtr = (drive.json as { mrtr?: { inputRequiredSeen?: boolean; retried?: boolean; requestStateEchoed?: boolean; result?: unknown } }).mrtr;
     if (mrtr === undefined) {
-      expect(mrtr, driver.describe('host-sample-test-seams.md §23', 'the invoke seam SHOULD report `mrtr: { inputRequiredSeen, retried, requestStateEchoed, result }` for tool "needs_input"; until it does this requirement is unobservable and resolves to `blocked`')).toBeDefined();
-      return;
+      expect(mrtr, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'host-sample-test-seams.md §23', 'the invoke seam SHOULD report `mrtr: { inputRequiredSeen, retried, requestStateEchoed, result }` for tool "needs_input"; until it does this requirement is unobservable and resolves to `blocked`')).toBeDefined();
+      return softSkip('blocked', 'precondition not met — `mrtr === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(mrtr.inputRequiredSeen, driver.describe('mcp-integration.md §C.1', 'the host MUST recognise resultType input_required')).toBe(true);
-    expect(mrtr.retried, driver.describe('mcp-integration.md §C.1', 'the host MUST retry the ORIGINAL request with inputResponses (a live callback is not the current profile)')).toBe(true);
+    expect(mrtr.inputRequiredSeen, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the host MUST recognise resultType input_required')).toBe(true);
+    expect(mrtr.retried, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the host MUST retry the ORIGINAL request with inputResponses (a live callback is not the current profile)')).toBe(true);
     // Cross-check from the wire: two tools/call, second carries requestState identical to what the server issued.
-    expect(calls.length, driver.describe('mcp-integration.md §C.1', 'initial + retry = two independent JSON-RPC requests on the wire')).toBeGreaterThanOrEqual(2);
+    expect(calls.length, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'initial + retry = two independent JSON-RPC requests on the wire')).toBeGreaterThanOrEqual(2);
     const retry = calls[calls.length - 1]!.params as { requestState?: string; inputResponses?: Record<string, unknown> };
-    expect(typeof retry.requestState, driver.describe('mcp-integration.md §C.1', 'requestState MUST be echoed exactly on the retry')).toBe('string');
-    expect(retry.requestState?.startsWith('mrtr:needs_input:'), 'the echoed requestState is the value the server issued, byte-exact').toBe(true);
-    expect(retry.inputResponses?.['who'], driver.describe('mcp-integration.md §C.1', 'inputResponses MUST answer every requested key')).toBeDefined();
+    expect(typeof retry.requestState, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'requestState MUST be echoed exactly on the retry')).toBe('string');
+    expect(retry.requestState?.startsWith('mrtr:needs_input:'), req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the echoed requestState is the value the server issued, byte-exact')).toBe(true);
+    expect(retry.inputResponses?.['who'], req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'inputResponses MUST answer every requested key')).toBeDefined();
     expect(mrtr.requestStateEchoed).toBe(true);
     for (const c of calls) {
-      expect(c.revision, driver.describe('mcp-integration.md §B', 'both calls MUST carry the current revision')).toBe('2026-07-28');
+      expect(c.revision, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §B', 'both calls MUST carry the current revision')).toBe('2026-07-28');
     }
   });
 });
@@ -119,23 +120,23 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     if (reg.status === 404 || reg.status === 403) return seamAbsent(`host advertises mcp-2026-07-28 with a server mount but the sample-workflow seam /v1/host/sample/workflows answered ${reg.status}`);
     // A 4xx here is a SUITE defect (the fixture this leg posts is malformed),
     // not seam absence and not a host finding — fail loudly at the source.
-    expect(reg.status, driver.describe('host-sample-test-seams.md §"sample workflows"', `the registration fixture MUST be accepted; a 4xx means the fixture this leg posts is malformed (suite defect): ${JSON.stringify(reg.json).slice(0, 200)}`)).toBeLessThan(400);
+    expect(reg.status, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'host-sample-test-seams.md §"sample workflows"', `the registration fixture MUST be accepted; a 4xx means the fixture this leg posts is malformed (suite defect): ${JSON.stringify(reg.json).slice(0, 200)}`)).toBeLessThan(400);
     const hdr = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': TOOL };
     const first = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: TOOL, arguments: {}, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     if (first.status === 404) return seamAbsent('host advertises an MCP server mount but /v1/host/sample/mcp answered 404');
     const r1 = first.json as { result?: { resultType?: string; inputRequests?: Record<string, { method?: string }>; requestState?: string }; error?: { code: number } };
-    expect(r1.error, driver.describe('mcp-integration.md §C.2', `tools/call MUST NOT error: ${JSON.stringify(r1.error)}`)).toBeUndefined();
-    expect(r1.result?.resultType, driver.describe('mcp-integration.md §C.2', 'a run reaching waiting-input MUST answer the in-flight tools/call with resultType input_required (not a live callback)')).toBe('input_required');
+    expect(r1.error, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', `tools/call MUST NOT error: ${JSON.stringify(r1.error)}`)).toBeUndefined();
+    expect(r1.result?.resultType, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', 'a run reaching waiting-input MUST answer the in-flight tools/call with resultType input_required (not a live callback)')).toBe('input_required');
     const key = Object.keys(r1.result?.inputRequests ?? {})[0];
-    expect(key, driver.describe('mcp-integration.md §C.2', 'inputRequests MUST carry the elicitation')).toBeDefined();
+    expect(key, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', 'inputRequests MUST carry the elicitation')).toBeDefined();
     expect(r1.result?.inputRequests?.[key!]?.method).toBe('elicitation/create');
-    expect(typeof r1.result?.requestState, driver.describe('mcp-integration.md §C.2', 'requestState MUST be present (opaque, integrity-protected, bound to principal/TTL/request/runId/interrupt token)')).toBe('string');
+    expect(typeof r1.result?.requestState, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', 'requestState MUST be present (opaque, integrity-protected, bound to principal/TTL/request/runId/interrupt token)')).toBe('string');
     const retry = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: TOOL, arguments: {}, requestState: r1.result!.requestState, inputResponses: { [key!]: { action: 'accept', content: { name: 'Ada' } } }, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     const r2 = retry.json as { result?: { resultType?: string }; error?: { code: number } };
     expect(r2.error).toBeUndefined();
-    expect(['complete', 'input_required'], driver.describe('mcp-integration.md §C.2', 'the retry MUST resolve the interrupt (complete) or ask for the next pending input')).toContain(r2.result?.resultType);
+    expect(['complete', 'input_required'], req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', 'the retry MUST resolve the interrupt (complete) or ask for the next pending input')).toContain(r2.result?.resultType);
     const forged = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: TOOL, arguments: {}, requestState: 'forged', inputResponses: { [key!]: { action: 'accept', content: { name: 'Eve' } } }, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
     const r3 = forged.json as { result?: { resultType?: string }; error?: { code: number } };
-    expect(r3.error !== undefined || forged.status >= 400, driver.describe('mcp-integration.md §C.2', 'a requestState that fails integrity verification MUST be refused (upstream: attacker-controlled input)')).toBe(true);
+    expect(r3.error !== undefined || forged.status >= 400, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', 'a requestState that fails integrity verification MUST be refused (upstream: attacker-controlled input)')).toBe(true);
   });
 });

@@ -30,8 +30,7 @@ import {
   ProducedVarProducerUnknownError,
   type WorkflowChain,
 } from '../lib/workflow-chain-expansion.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 const SPEC = 'workflow-chain-packs.md §"Produced (run-scoped) variables (RFC 0133)"';
 
 /** `generate` writes `plan`; `decompose` reads it via a variable binding. */
@@ -56,19 +55,19 @@ const PLAN_GEN: WorkflowChain = {
 describe('chain-produced-var-roundtrip: run-scoped variables (RFC 0133 §2, server-free)', () => {
   it('emits declared producedVariables into variables[] (name + type, NO value)', () => {
     const vars = emitProducedVariables(PLAN_GEN);
-    expect(vars, why(SPEC, '§2.3 — one run-scoped variable emitted')).toEqual([{ name: 'plan', type: 'object' }]);
+    expect(vars, req('openwop.it.chain-produced-var-roundtrip.emits-declared-producedvariables-into-variables-name-type-no-value', SPEC, '§2.3 — one run-scoped variable emitted')).toEqual([{ name: 'plan', type: 'object' }]);
     // Run-scoped: NO author-time value rides the emitted entry.
-    expect('value' in (vars[0] as object), why(SPEC, '§2.3 — no author-time value (distinct from parameters)')).toBe(
+    expect('value' in (vars[0] as object), req('openwop.it.chain-produced-var-roundtrip.emits-declared-producedvariables-into-variables-name-type-no-value', SPEC, '§2.3 — no author-time value (distinct from parameters)')).toBe(
       false,
     );
     expect(
       'defaultValue' in (vars[0] as object),
-      why(SPEC, '§2.3 — no default value (a produced var is written during the run)'),
+      req('openwop.it.chain-produced-var-roundtrip.emits-declared-producedvariables-into-variables-name-type-no-value', SPEC, '§2.3 — no default value (a produced var is written during the run)'),
     ).toBe(false);
   });
 
   it('validates a variable read of a DECLARED producedVariables name', () => {
-    expect(() => validateVariableReads(PLAN_GEN), why(SPEC, '§2.2 — declared read is closed-world valid')).not.toThrow();
+    expect(() => validateVariableReads(PLAN_GEN), req('openwop.it.chain-produced-var-roundtrip.validates-a-variable-read-of-a-declared-producedvariables-name', SPEC, '§2.2 — declared read is closed-world valid')).not.toThrow();
   });
 
   it('rejects a variable read of an UNDECLARED name (variable_undeclared)', () => {
@@ -86,14 +85,14 @@ describe('chain-produced-var-roundtrip: run-scoped variables (RFC 0133 §2, serv
         ],
       },
     };
-    expect(() => validateVariableReads(undeclared), why(SPEC, '§2.2 — undeclared read MUST reject')).toThrow(
+    expect(() => validateVariableReads(undeclared), req('openwop.it.chain-produced-var-roundtrip.rejects-a-variable-read-of-an-undeclared-name-variable-undeclared', SPEC, '§2.2 — undeclared read MUST reject')).toThrow(
       VariableUndeclaredError,
     );
     try {
       validateVariableReads(undeclared);
     } catch (e) {
-      expect((e as VariableUndeclaredError).code, why(SPEC, 'wire code variable_undeclared')).toBe('variable_undeclared');
-      expect((e as VariableUndeclaredError).variableName, why(SPEC, 'names the offending variable')).toBe('plan');
+      expect((e as VariableUndeclaredError).code, req('openwop.it.chain-produced-var-roundtrip.rejects-a-variable-read-of-an-undeclared-name-variable-undeclared', SPEC, 'wire code variable_undeclared')).toBe('variable_undeclared');
+      expect((e as VariableUndeclaredError).variableName, req('openwop.it.chain-produced-var-roundtrip.rejects-a-variable-read-of-an-undeclared-name-variable-undeclared', SPEC, 'names the offending variable')).toBe('plan');
     }
   });
 
@@ -104,12 +103,12 @@ describe('chain-produced-var-roundtrip: run-scoped variables (RFC 0133 §2, serv
     };
     expect(
       () => validateVariableReads(badProducer),
-      why(SPEC, '§2.2 — producedBy MUST be a real fragment node'),
+      req('openwop.it.chain-produced-var-roundtrip.rejects-a-producedvariables-whose-producedby-names-a-non-existent-node-produced', SPEC, '§2.2 — producedBy MUST be a real fragment node'),
     ).toThrow(ProducedVarProducerUnknownError);
     try {
       validateVariableReads(badProducer);
     } catch (e) {
-      expect((e as ProducedVarProducerUnknownError).code, why(SPEC, 'distinct wire code')).toBe(
+      expect((e as ProducedVarProducerUnknownError).code, req('openwop.it.chain-produced-var-roundtrip.rejects-a-producedvariables-whose-producedby-names-a-non-existent-node-produced', SPEC, 'distinct wire code')).toBe(
         'produced_var_producer_unknown',
       );
     }
@@ -123,7 +122,7 @@ describe('chain-produced-var-roundtrip: run-scoped variables (RFC 0133 §2, serv
     };
     expect(
       () => validateVariableReads(collide),
-      why(SPEC, '§2.2 — a produced var colliding with a parameter name MUST reject'),
+      req('openwop.it.chain-produced-var-roundtrip.rejects-a-producedvariables-name-that-collides-with-a-parameter-channels-must-be', SPEC, '§2.2 — a produced var colliding with a parameter name MUST reject'),
     ).toThrow(VariableUndeclaredError);
   });
 
@@ -141,12 +140,12 @@ describe('chain-produced-var-roundtrip: run-scoped variables (RFC 0133 §2, serv
     };
     expect(
       () => validateVariableReads(paramRead, new Set(['seed'])),
-      why(SPEC, '§2.2 — a materialized-parameter read validates'),
+      req('openwop.it.chain-produced-var-roundtrip.validates-a-read-of-a-materialized-parameter-name-params-produced-vars-compose', SPEC, '§2.2 — a materialized-parameter read validates'),
     ).not.toThrow();
     // …but still rejects when the name is neither a produced var nor a param.
     expect(
       () => validateVariableReads(paramRead, new Set()),
-      why(SPEC, '§2.2 — same read with no matching param still rejects'),
+      req('openwop.it.chain-produced-var-roundtrip.validates-a-read-of-a-materialized-parameter-name-params-produced-vars-compose', SPEC, '§2.2 — same read with no matching param still rejects'),
     ).toThrow(VariableUndeclaredError);
   });
 });

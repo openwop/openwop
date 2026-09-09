@@ -30,6 +30,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-interrupt-external-event';
 const SKIP = !isFixtureAdvertised(FIXTURE);
@@ -45,7 +47,7 @@ describe.skipIf(SKIP)('interrupt-token-matrix: GET /v1/interrupts/{token} negati
     const malformed = '!!!not-a-valid-token!!!';
     const res = await driver.get(`/v1/interrupts/${encodeURIComponent(malformed)}`);
     expect([400, 404]).toContain(res.status);
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.interrupt-token-matrix.malformed-token-returns-400-or-404-never-200', 
       'rest-endpoints.md GET /v1/interrupts/{token}',
       'malformed interrupt token MUST NOT return 200',
     )).not.toBe(200);
@@ -55,7 +57,7 @@ describe.skipIf(SKIP)('interrupt-token-matrix: GET /v1/interrupts/{token} negati
     // Plausibly-shaped opaque token that the host has no record of.
     const unknown = `tok_${randomBytesB64(32)}`;
     const res = await driver.get(`/v1/interrupts/${encodeURIComponent(unknown)}`);
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.interrupt-token-matrix.well-formed-but-unknown-token-returns-404', 
       'rest-endpoints.md GET /v1/interrupts/{token}',
       'unknown interrupt token MUST return 404',
     )).toBe(404);
@@ -83,7 +85,7 @@ describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negat
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return;
+      return softSkip('blocked', 'precondition not met — `typeof token !== \'string\'` returned early ([interrupt-token-matrix] host did not surface an interrupt token; skipping replay subtest) (seam, prior step, or fixture unavailable)');
     }
 
     const resolve1 = await driver.post(`/v1/interrupts/${encodeURIComponent(token)}`, {
@@ -97,13 +99,13 @@ describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negat
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return;
+      return softSkip('blocked', 'precondition not met — `resolve1.status !== 200 && resolve1.status !== 202` returned early ([interrupt-token-matrix] first resolve returned …; can\'t exercise replay path. Skipping.) (seam, prior step, or fixture unava…');
     }
 
     const resolve2 = await driver.post(`/v1/interrupts/${encodeURIComponent(token)}`, {
       correlation: { orderId: 'order-token-matrix', status: 'accepted' },
     });
-    expect([404, 409, 410], driver.describe(
+    expect([404, 409, 410], req('openwop.it.interrupt-token-matrix.replay-after-successful-resolve-returns-409-or-404', 
       'rest-endpoints.md POST /v1/interrupts/{token}',
       'replay of an already-resolved interrupt token MUST NOT return 2xx (host MAY 404/409/410)',
     )).toContain(resolve2.status);
@@ -118,7 +120,7 @@ describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negat
     const res = await driver.post(`/v1/interrupts/${encodeURIComponent(unknown)}`, {
       correlation: { orderId: 'noop', status: 'whatever' },
     });
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.interrupt-token-matrix.unknown-token-returns-404-on-post', 
       'rest-endpoints.md POST /v1/interrupts/{token}',
       'POST on an unknown interrupt token MUST return 404',
     )).toBe(404);

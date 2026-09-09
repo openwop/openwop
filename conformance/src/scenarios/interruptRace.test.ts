@@ -23,6 +23,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntil } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const APPROVAL_WORKFLOW_ID = 'conformance-approval';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
@@ -45,13 +47,13 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
   it(
     'concurrent cancel + interrupt-resolve resolves to one of: cancelled or completed',
     async () => {
-      if (!(await hostClaimsInterrupts())) return; // skip-equivalent
+      if (!(await hostClaimsInterrupts())) return softSkip('blocked', 'precondition not met — `!(await hostClaimsInterrupts())` returned early (skip-equivalent) (seam, prior step, or fixture unavailable)'); // skip-equivalent
 
       // Phase 1: start a workflow that suspends at an approval gate.
       const create = await driver.post('/v1/runs', { workflowId: APPROVAL_WORKFLOW_ID });
       if (create.status !== 201) {
         // Host may not seed conformance-approval fixture; skip.
-        return;
+        return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (Host may not seed conformance-approval fixture; skip.) (seam, prior step, or fixture unavailable)');
       }
       const runId = (create.json as { runId: string }).runId;
 
@@ -72,7 +74,7 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
       if (typeof nodeId !== 'string') {
         // Host doesn't expose currentNodeId on suspended snapshots —
         // can't drive the race deterministically; skip-equivalent.
-        return;
+        return softSkip('blocked', 'precondition not met — `typeof nodeId !== \'string\'` returned early (Host doesn\'t expose currentNodeId on suspended snapshots — can\'t drive the race deterministically; skip-equivalent.) (seam, prior step, or fixture un…');
       }
 
       // Phase 3: fire cancel + resolve concurrently. Promise.all so
@@ -92,14 +94,14 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
       // (operation lost the race). Anything else is non-deterministic.
       expect(
         [200, 202, 409].includes(cancelRes.status),
-        driver.describe(
+        req('openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed', 
           'spec/v1/interrupt.md',
           `cancel response under race MUST be 200/202/409; got ${cancelRes.status}`,
         ),
       ).toBe(true);
       expect(
         [200, 202, 400, 404, 409].includes(resolveRes.status),
-        driver.describe(
+        req('openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed', 
           'spec/v1/interrupt.md',
           `resolve response under race MUST be 200/202/400/404/409; got ${resolveRes.status}`,
         ),
@@ -110,7 +112,7 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
       const resolveSucceeded = resolveRes.status === 200 || resolveRes.status === 202;
       expect(
         cancelSucceeded || resolveSucceeded,
-        driver.describe(
+        req('openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed', 
           'spec/v1/interrupt.md',
           'under cancel/resolve race, at least one operation MUST succeed',
         ),
@@ -131,7 +133,7 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
 
       expect(
         ['completed', 'cancelled', 'failed'].includes(terminal.status),
-        driver.describe(
+        req('openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed', 
           'spec/v1/interrupt.md',
           'race outcome MUST converge on a terminal status, not stay in waiting-approval forever',
         ),
@@ -143,7 +145,7 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
       // (assuming the workflow has nothing else to fail on after the
       // approval gate).
       if (cancelSucceeded && !resolveSucceeded) {
-        expect(terminal.status, driver.describe(
+        expect(terminal.status, req('openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed', 
           'spec/v1/interrupt.md',
           'when cancel wins the race, run MUST terminate as cancelled',
         )).toBe('cancelled');
@@ -158,7 +160,7 @@ describe.skipIf(SKIP_NO_NOOP)('interrupt-race: cancel against a non-suspended ru
     // Self-test that doesn't require a race. Runs against any host
     // that supports cancel (every conforming host does).
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });
-    if (create.status !== 201) return;
+    if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
     const runId = (create.json as { runId: string }).runId;
 
     await pollUntil(
@@ -168,7 +170,7 @@ describe.skipIf(SKIP_NO_NOOP)('interrupt-race: cancel against a non-suspended ru
     );
 
     const cancel = await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {});
-    expect(cancel.status, driver.describe(
+    expect(cancel.status, req('openwop.it.interruptRace.cancel-of-a-completed-run-returns-200-with-the-existing-terminal-status-idempote', 
       'spec/v1/rest-endpoints.md POST /v1/runs/{runId}/cancel',
       'cancel of an already-terminal run MUST return 200 (idempotent)',
     )).toBe(200);

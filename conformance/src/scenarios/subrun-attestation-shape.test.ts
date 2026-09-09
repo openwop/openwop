@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readSubRunAttestationCap } from '../lib/subRunAttestation.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('subrun-attestation-shape: advertisement (RFC 0063 §A)', () => {
   it('capabilities.agents.subRunAttestation is absent or a boolean', async () => {
@@ -22,7 +22,7 @@ describe('subrun-attestation-shape: advertisement (RFC 0063 §A)', () => {
     if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early');
     expect(
       typeof cap,
-      driver.describe(
+      req('openwop.it.subrun-attestation-shape.capabilities-agents-subrunattestation-is-absent-or-a-boolean', 
         'capabilities.schema.json §agents.subRunAttestation',
         'agents.subRunAttestation MUST be a boolean when present',
       ),

@@ -1,0 +1,264 @@
+#!/usr/bin/env node
+/**
+ * generate-v1-eos-clock — the v1 end-of-support date, computed from the matrix
+ * and the public history (spec/v2/core/overview.md §v1 end-of-support; RFC 0174
+ * §B.4; charter Phase 5). "Phase 5 computes the date from the matrix; nothing
+ * else MAY set it."
+ *
+ *   v1 support ends at the LATER of
+ *     (a) every v2-table host's non-vacuous v2 bundle, plus 90 days;
+ *     (b) 18 months from the 2.0.0 release — applies iff an independent host
+ *         is in the matrix at release.
+ *
+ * The anchor for (a) is NOT `generatedAt` inside a bundle (nothing signs it) and
+ * NOT a string search on the hand-kept matrix (a host's name has been in the
+ * v1 table since v1). It is the committer date of the first commit at which
+ * `evidence/v2-host-bundles/<host>.json` was NON-VACUOUS — some claimed profile
+ * with `witnessCount ≥ 1` — read from `git log --first-parent` of MAIN over
+ * that one file (see `mainRef`). A third party re-derives it from the public
+ * history; a re-certification replaces the file and does not move it;
+ * squash-merges on this repository give author and committer the same date;
+ * a PR branch is not public history and reads as "not anchored" until merged.
+ *
+ * Usage:
+ *   node scripts/generate-v1-eos-clock.mjs --write   # writes evidence/v1-end-of-support.json
+ *   node scripts/generate-v1-eos-clock.mjs --check   # exit 1 when the file is stale
+ *
+ * The output is deterministic (no timestamp of its own) so `--check` is a
+ * byte comparison. The clock STATE is always printed — "not anchored" and
+ * "far away" must not print the same nothing.
+ */
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const OUT = join(ROOT, 'evidence', 'v1-end-of-support.json');
+const BUNDLES = 'evidence/v2-host-bundles';
+const MATRIX = join(ROOT, 'INTEROP-MATRIX.md');
+const RELEASE_TAG = 'v2.0.0';
+const DAYS_A = 90;
+const MONTHS_B = 18;
+
+const mode = process.argv.includes('--write') ? 'write' : process.argv.includes('--check') ? 'check' : 'print';
+
+function git(args) {
+  const r = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+  return r.status === 0 ? r.stdout : null;
+}
+
+/** Host names from the INTEROP-MATRIX v2 table: rows `| **\`<name>@<version>\`** …` between the v2 heading and the next `## `. */
+function v2TableHosts() {
+  const md = readFileSync(MATRIX, 'utf8');
+  const start = md.indexOf('## v2 release candidate');
+  if (start < 0) return [];
+  const rest = md.slice(start + 1);
+  const end = rest.search(/\n## /);
+  const section = end < 0 ? rest : rest.slice(0, end);
+  const hosts = [];
+  for (const m of section.matchAll(/^\| \*\*`([^`@]+)@([^`]+)`\*\*/gm)) hosts.push({ name: m[1], version: m[2] });
+  return hosts;
+}
+
+function nonVacuous(bundle) {
+  return Array.isArray(bundle?.claimedProfiles) && bundle.claimedProfiles.some((p) => typeof p?.witnessCount === 'number' && p.witnessCount >= 1);
+}
+
+/**
+ * The ref whose FIRST-PARENT history is "the public history": `origin/main`
+ * when the checkout knows it, else a local `main`. Nothing else counts.
+ *
+ * Measured 2026-09-05 on the first non-vacuous bundle ever checked in: the
+ * anchor was read from `git log -- <file>` on WHATEVER was checked out, so on
+ * the PR branch it resolved to the branch's own add-commit, and in CI (a
+ * shallow checkout of the synthetic `refs/pull/N/merge` commit) to that
+ * commit's timestamp — a date that can never equal anything committed, so
+ * `--check` on the PR was unsatisfiable, and on main it would have moved with
+ * every shallow clone. Every earlier bundle was vacuous, so the branch
+ * never fired. The rule is the one the prose states — the committer date of
+ * the first commit ON MAIN at which the file is non-vacuous — and a PR branch
+ * therefore reads as "not anchored" until it is merged, which is exactly the
+ * pre-merge state the row PR commits. CI checks out with full history for
+ * this reason (`fetch-depth: 0`); without a main ref the script refuses
+ * rather than guess.
+ */
+function mainRef() {
+  for (const ref of ['origin/main', 'main']) {
+    const r = spawnSync('git', ['rev-parse', '--verify', '-q', `${ref}^{commit}`], { cwd: ROOT, encoding: 'utf8' });
+    if (r.status === 0) return ref;
+  }
+  console.error('=== generate-v1-eos-clock FAILED — neither origin/main nor main resolves; the anchor is defined over the first-parent history of main and cannot be derived from this checkout (fetch main first) ===');
+  process.exit(1);
+}
+// OPENWOP_EOS_MAIN_REF exists for the simulation of a merge in a scratch
+// worktree (and for the coherence test that pins the pending-merge path);
+// production runs never set it.
+const MAIN = process.env.OPENWOP_EOS_MAIN_REF ?? mainRef();
+const HEAD = (git(['rev-parse', 'HEAD']) ?? '').trim();
+
+/** The first commit ON MAIN (first-parent) at which the checked-in bundle was non-vacuous, from the public history of that one file. */
+function anchorFor(rel) {
+  const log = git(['log', '--first-parent', '--reverse', '--format=%H,%cI', MAIN, '--', rel]);
+  if (log === null) return { anchoredAt: null, anchorCommit: null, reason: 'git log failed' };
+  const commits = log.trim().split('\n').filter(Boolean).map((l) => { const [sha, date] = l.split(','); return { sha, date }; });
+  // One reason string for "uncommitted" and "committed but vacuous": the
+  // generated file must not change when a vacuous bundle's commit count does
+  // (a PR branch has one add commit; the squash-merge on main is a different
+  // one). An ANCHORING transition does change the file — the anchor is the
+  // merge commit's date, which the re-certification PR cannot know — so the
+  // anchor lands in a follow-up commit that regenerates this file; `--check`
+  // names that when it fails.
+  const UNANCHORED = 'no committed version of the bundle is non-vacuous (a claimed profile with witnessCount ≥ 1); the anchor is the merge commit that first lands one';
+  if (commits.length === 0) return { anchoredAt: null, anchorCommit: null, reason: UNANCHORED };
+  for (const c of commits) {
+    const text = git(['show', `${c.sha}:${rel}`]);
+    if (text === null) continue;
+    let b; try { b = JSON.parse(text); } catch { continue; }
+    if (nonVacuous(b)) return { anchoredAt: c.date, anchorCommit: c.sha, reason: null };
+  }
+  return { anchoredAt: null, anchorCommit: null, reason: UNANCHORED };
+}
+
+function addDays(iso, days) { const d = new Date(iso); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); }
+function addMonths(iso, months) { const d = new Date(iso); d.setUTCMonth(d.getUTCMonth() + months); return d.toISOString().slice(0, 10); }
+
+function compute() {
+  const hosts = v2TableHosts().map(({ name, version }) => {
+    const rel = `${BUNDLES}/${name}.json`;
+    const abs = join(ROOT, rel);
+    if (!existsSync(abs)) return { name, matrixVersion: version, bundle: rel, present: false, anchoredAt: null, anchorCommit: null, reason: 'no bundle checked in under evidence/v2-host-bundles/' };
+    let latest = null; try { latest = JSON.parse(readFileSync(abs, 'utf8')); } catch { /* reported below */ }
+    const a = anchorFor(rel);
+    return {
+      name,
+      matrixVersion: version,
+      bundle: rel,
+      present: true,
+      latest: latest ? {
+        suiteVersion: latest.suite?.version ?? null,
+        targetMajor: latest.suite?.targetMajor ?? null,
+        witnessSha256: latest.witnessSha256 ?? null,
+        evidenceTiers: [...new Set((latest.claimedProfiles ?? []).map((p) => p?.evidenceTier).filter(Boolean))],
+        nonVacuous: nonVacuous(latest),
+      } : { parseError: true },
+      anchoredAt: a.anchoredAt,
+      anchorCommit: a.anchorCommit,
+      reason: a.reason,
+    };
+  });
+  const unanchored = hosts.filter((h) => h.anchoredAt === null);
+  const anchors = hosts.filter((h) => h.anchoredAt !== null).map((h) => h.anchoredAt).sort();
+  const legA = hosts.length === 0
+    ? { notBefore: null, reason: 'the INTEROP-MATRIX v2 table has no host row' }
+    : unanchored.length > 0
+      ? { notBefore: null, reason: `${unanchored.length} of ${hosts.length} v2-table host(s) not anchored: ${unanchored.map((h) => `${h.name} (${h.reason})`).join('; ')}` }
+      : { notBefore: addDays(anchors[anchors.length - 1], DAYS_A), lastAnchor: anchors[anchors.length - 1], reason: null };
+
+  const tagDate = git(['log', '-1', '--format=%cI', RELEASE_TAG]);
+  const releaseDate = tagDate ? tagDate.trim() : null;
+  let legB;
+  if (!releaseDate) {
+    legB = { notBefore: null, applies: null, releaseDate: null, reason: `the ${RELEASE_TAG} tag does not exist yet — (b) is undecidable before the cut` };
+  } else {
+    const independentAtRelease = hosts.some((h) => h.anchoredAt !== null && h.anchoredAt <= releaseDate && (h.latest?.evidenceTiers ?? []).includes('independent'));
+    legB = independentAtRelease
+      ? { notBefore: addMonths(releaseDate, MONTHS_B), applies: true, releaseDate, reason: null }
+      : { notBefore: null, applies: false, releaseDate, reason: 'no independent-tier host was anchored in the matrix at release; (b) does not apply' };
+  }
+
+  let endOfSupportNotBefore = null; let state;
+  if (legA.notBefore === null) state = `not anchored — ${legA.reason}`;
+  else if (legB.applies === null) state = `leg (a) anchored at ${legA.notBefore}; leg (b) undecidable until ${RELEASE_TAG} is cut`;
+  else if (legB.applies === false) { endOfSupportNotBefore = legA.notBefore; state = `anchored — leg (a) ${legA.notBefore}; leg (b) does not apply`; }
+  else { endOfSupportNotBefore = legA.notBefore > legB.notBefore ? legA.notBefore : legB.notBefore; state = `anchored — later of (a) ${legA.notBefore} and (b) ${legB.notBefore}`; }
+
+  return {
+    $comment: 'GENERATED by scripts/generate-v1-eos-clock.mjs from INTEROP-MATRIX.md (v2 table) and the git history of evidence/v2-host-bundles/ — spec/v2/core/overview.md §v1 end-of-support. Do not edit by hand; nothing else MAY set the date.',
+    rule: { legA: `every v2-table host's first non-vacuous bundle commit + ${DAYS_A} days`, legB: `${MONTHS_B} months from ${RELEASE_TAG}, iff an independent host was anchored at release` },
+    hosts,
+    legA,
+    legB,
+    endOfSupportNotBefore,
+    state,
+  };
+}
+
+const result = compute();
+const rendered = JSON.stringify(result, null, 2) + '\n';
+console.log(`v1 end-of-support clock: ${result.state}`);
+for (const h of result.hosts) console.log(`  ${h.name}: ${h.anchoredAt ? `anchored ${h.anchoredAt} (${h.anchorCommit.slice(0, 8)})` : `not anchored — ${h.reason}`}`);
+if (mode === 'write') {
+  writeFileSync(OUT, rendered);
+  console.log(`wrote ${OUT.replace(ROOT + '/', '')}`);
+} else if (mode === 'check') {
+  const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : null;
+  if (current !== rendered) {
+    // The one tolerated difference: a host whose committed record says "not
+    // anchored" while the history says it anchored at HEAD ITSELF — i.e. this
+    // checkout is the merge commit that just landed the first non-vacuous
+    // bundle. The row PR could not know its own merge date (runbook §5.3), so
+    // the anchor lands in the follow-up regeneration; until that commit the
+    // file is not stale, it is one commit behind by construction. Anything
+    // else — a different anchor, a moved date, a missing host — is stale.
+    let pending = null;
+    try {
+      const committed = current === null ? null : JSON.parse(current);
+      const byName = new Map((committed?.hosts ?? []).map((h) => [h.name, h]));
+      const onlyHeadAnchors = result.hosts.every((h) => {
+        const c = byName.get(h.name);
+        if (c === undefined) return false;
+        // Unchanged hosts must match exactly; a newly anchored host is tolerated only when its anchor IS this commit.
+        if (h.anchoredAt === null || c.anchoredAt !== null) return JSON.stringify(h) === JSON.stringify(c);
+        return h.anchorCommit === HEAD && c.anchorCommit === null;
+      });
+      const pendingHosts = result.hosts.filter((h) => h.anchoredAt !== null && byName.get(h.name)?.anchoredAt === null).map((h) => h.name);
+      if (onlyHeadAnchors && pendingHosts.length > 0 && (committed?.hosts ?? []).length === result.hosts.length) pending = pendingHosts;
+    } catch { /* unparseable committed file: stale */ }
+
+    // The SECOND tolerated difference: legB AS A WHOLE at the tagged commit.
+    //
+    // Every field of leg (b) is a function of the RELEASE TAG — whether it
+    // applies, and the tagged commit's own date. The commit the tag points at
+    // therefore cannot know any of it: recording a value creates a new commit
+    // with a new date, and re-tagging onto that commit changes the value
+    // again. It is the anchor-PENDING argument above, one leg over, and it is
+    // not a fixed point any sequence of commits reaches.
+    //
+    // Measured at the v2.0.0 cut, twice: tag on 11cddecd (17:24:59) →
+    // regenerate → merge 1a776f67 (17:32:22) → re-tag → the file records the
+    // first date while the generator derives the second, and preflight refuses
+    // the release. The same loop runs for `applies`, which flips from
+    // undecidable to a verdict the instant the tag exists.
+    //
+    // So at the tagged commit a difference CONFINED TO legB is tolerated and
+    // the derived verdict is printed. Everything outside legB — leg (a), the
+    // host rows, the rule — must still match exactly, which is what keeps this
+    // from being a licence to drift.
+    let legBPending = false;
+    if (pending === null) {
+      try {
+        const committed = current === null ? null : JSON.parse(current);
+        const taggedHead = (git(['rev-list', '-n', '1', RELEASE_TAG]) ?? '').trim() === HEAD;
+        // MEASURED at this cut: the tag changes exactly three fields —
+        // `legB`, `endOfSupportNotBefore` and `state` — and leaves `legA` and
+        // every host row byte-identical. Mask precisely those three; anything
+        // wider would be a licence to drift, anything narrower misses two
+        // fields that are just as tag-derived as leg (b) itself.
+        const maskTagDerived = (o) => JSON.stringify({ ...o, legB: null, endOfSupportNotBefore: null, state: null });
+        const sameOutsideLegB = committed !== null && maskTagDerived(committed) === maskTagDerived(result);
+        if (taggedHead && sameOutsideLegB) legBPending = true;
+      } catch { /* fall through to stale */ }
+    }
+    if (legBPending) {
+      console.log(`=== generate-v1-eos-clock OK — legB PENDING: HEAD (${HEAD.slice(0, 8)}) IS the ${RELEASE_TAG} commit, and leg (b) is entirely a function of that tag, which the commit cannot record about itself. Derived: applies ${result.legB.applies} (${result.legB.reason}); leg (a) ${result.legA.notBefore} and every host row match. ===`);
+    } else if (pending !== null) {
+      console.log(`=== generate-v1-eos-clock OK — anchor PENDING for ${pending.join(', ')}: HEAD (${HEAD.slice(0, 8)}) is the merge that first landed the non-vacuous bundle; run: node scripts/generate-v1-eos-clock.mjs --write in the follow-up commit (runbook §5.3) ===`);
+    } else {
+      console.error(`=== generate-v1-eos-clock --check FAILED — ${OUT.replace(ROOT + '/', '')} is ${current === null ? 'missing' : 'stale'}; run: node scripts/generate-v1-eos-clock.mjs --write ===`);
+      process.exit(1);
+    }
+  } else {
+    console.log('=== generate-v1-eos-clock OK — evidence/v1-end-of-support.json is current ===');
+  }
+}

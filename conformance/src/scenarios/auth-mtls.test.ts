@@ -46,6 +46,8 @@ import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface MtlsCaps {
   supported?: boolean;
@@ -114,7 +116,7 @@ function mtlsPost(
   return new Promise((resolve) => {
     const url = new URL(baseUrl + path);
     const payload = JSON.stringify(body);
-    const req = httpsRequest(
+    const reqBody = httpsRequest(
       {
         hostname: url.hostname,
         port: url.port ? Number.parseInt(url.port, 10) : 443,
@@ -138,9 +140,9 @@ function mtlsPost(
         });
       },
     );
-    req.on('error', (error) => resolve({ error }));
-    req.write(payload);
-    req.end();
+    reqBody.on('error', (error) => resolve({ error }));
+    reqBody.write(payload);
+    reqBody.end();
   });
 }
 
@@ -152,12 +154,12 @@ describe('auth-mtls: capability shape', () => {
       return;
     }
 
-    expect(auth?.profiles?.includes(PROFILE), driver.describe(
+    expect(auth?.profiles?.includes(PROFILE), req('openwop.it.auth-mtls.host-claiming-mtls-profile-advertises-required-fields', 
       'auth-profiles.md §`openwop-auth-mtls`',
       'capabilities.auth.profiles MUST include openwop-auth-mtls when the profile is claimed',
     )).toBe(true);
 
-    expect(auth?.mtls?.supported, driver.describe(
+    expect(auth?.mtls?.supported, req('openwop.it.auth-mtls.host-claiming-mtls-profile-advertises-required-fields', 
       'auth-profiles.md §`openwop-auth-mtls`',
       'capabilities.auth.mtls.supported MUST be true when the profile is claimed',
     )).toBe(true);
@@ -165,14 +167,14 @@ describe('auth-mtls: capability shape', () => {
     if (auth?.mtls?.required !== undefined) {
       expect(
         typeof auth.mtls.required,
-        'mtls.required MUST be boolean when advertised',
+        req('openwop.it.auth-mtls.host-claiming-mtls-profile-advertises-required-fields', 'auth-profiles.md §`openwop-auth-mtls`', 'mtls.required MUST be boolean when advertised'),
       ).toBe('boolean');
     }
 
     if (auth?.mtls?.subjectMapping !== undefined) {
       expect(
         ['cn', 'san-dns', 'san-uri'].includes(auth.mtls.subjectMapping),
-        driver.describe(
+        req('openwop.it.auth-mtls.host-claiming-mtls-profile-advertises-required-fields', 
           'capabilities.schema.json auth.mtls.subjectMapping',
           'subjectMapping MUST be one of cn / san-dns / san-uri',
         ),
@@ -184,7 +186,7 @@ describe('auth-mtls: capability shape', () => {
 describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
   it('valid client cert + valid bearer → 201', async () => {
     const auth = await readAuthCaps();
-    if (!isProfileAdvertised(auth)) return;
+    if (!isProfileAdvertised(auth)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isProfileAdvertised(auth)` returned early');
 
     const certs = loadClientCerts();
     if (!certs) {
@@ -192,10 +194,10 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
       console.warn(
         '[auth-mtls] OPENWOP_TEST_MTLS=1 but cert paths missing; skipping behavior',
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!certs` returned early ([auth-mtls] OPENWOP_TEST_MTLS=1 but cert paths missing; skipping behavior) (seam, prior step, or fixture unavailable)');
     }
 
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
 
     const env = loadEnv();
     if (!env.baseUrl.startsWith('https://')) {
@@ -203,7 +205,7 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
       console.warn(
         `[auth-mtls] OPENWOP_BASE_URL is not HTTPS (got ${env.baseUrl}); mTLS requires HTTPS — skipping`,
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!env.baseUrl.startsWith(\'https://\')` returned early ([auth-mtls] OPENWOP_BASE_URL is not HTTPS (got …); mTLS requires HTTPS — skipping) (seam, prior step, or fixture unavailable)');
     }
 
     const res = await mtlsPost(
@@ -220,7 +222,7 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
       );
     }
 
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.auth-mtls.valid-client-cert-valid-bearer-201', 
       'auth-profiles.md §`openwop-auth-mtls`',
       'valid client cert + valid bearer MUST authenticate POST /v1/runs (201)',
     )).toBe(201);
@@ -228,16 +230,16 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
 
   it('no client cert against mtls.required: true → non-2xx or TLS failure', async () => {
     const auth = await readAuthCaps();
-    if (!isProfileAdvertised(auth)) return;
+    if (!isProfileAdvertised(auth)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isProfileAdvertised(auth)` returned early');
     if (auth?.mtls?.required !== true) {
       // eslint-disable-next-line no-console
       console.warn(
         '[auth-mtls] host advertises mtls.required: false; skipping no-cert rejection (host may accept bearer-only)',
       );
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `auth?.mtls?.required !== true` returned early ([auth-mtls] host advertises mtls.required: false; skipping no-cert rejection (host may accept bearer-only))');
     }
 
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
 
     const env = loadEnv();
     if (!env.baseUrl.startsWith('https://')) {
@@ -245,7 +247,7 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
       console.warn(
         `[auth-mtls] OPENWOP_BASE_URL is not HTTPS (got ${env.baseUrl}); skipping no-cert rejection`,
       );
-      return;
+      return softSkip('blocked', 'precondition not met — `!env.baseUrl.startsWith(\'https://\')` returned early ([auth-mtls] OPENWOP_BASE_URL is not HTTPS (got …); skipping no-cert rejection) (seam, prior step, or fixture unavailable)');
     }
 
     // No certs supplied → either 4xx or transport-layer TLS handshake failure.
@@ -260,14 +262,14 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
     if ('error' in res) {
       // Transport-layer TLS failure is conformant per auth-profiles.md.
       // The handshake rejected the client because no cert was offered.
-      expect(true, driver.describe(
+      expect(true, req('openwop.it.auth-mtls.no-client-cert-against-mtls-required-true-non-2xx-or-tls-failure', 
         'auth-profiles.md §`openwop-auth-mtls`',
         'mtls.required: true MUST reject no-cert requests (TLS handshake failure is conformant)',
       )).toBe(true);
-      return;
+      return softSkip('blocked', 'precondition not met — `\'error\' in res` returned early (seam, prior step, or fixture unavailable)');
     }
 
-    expect(res.status >= 400, driver.describe(
+    expect(res.status >= 400, req('openwop.it.auth-mtls.no-client-cert-against-mtls-required-true-non-2xx-or-tls-failure', 
       'auth-profiles.md §`openwop-auth-mtls`',
       'mtls.required: true MUST reject no-cert requests at the auth layer (4xx) when not rejected at the TLS layer',
     )).toBe(true);

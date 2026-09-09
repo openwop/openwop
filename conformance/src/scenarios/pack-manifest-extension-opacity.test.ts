@@ -60,7 +60,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { behaviorGate, behaviorGatePresent } from '../lib/behavior-gate.js';
 import {
   readArtifactTypesCap,
@@ -71,6 +70,7 @@ import {
   withExtensions,
   canonicalJson,
 } from '../lib/artifactTypes.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'openwop-artifact-type-packs';
 
@@ -102,7 +102,7 @@ describe('pack-manifest-extension-opacity: a host MUST accept an extended manife
     if (!behaviorGatePresent(PROFILE, res)) return; // seam absent: skip default, FAIL strict
     expect(
       ok(res.status),
-      driver.describe('node-packs.md §"Vendor extensions on pack manifests"', 'a consumer MUST ignore an unrecognized extension and MUST NOT reject the pack for its presence'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-1-an-extension-bearing-manifest-installs', 'node-packs.md §"Vendor extensions on pack manifests"', 'a consumer MUST ignore an unrecognized extension and MUST NOT reject the pack for its presence'),
     ).toBe(true);
   });
 
@@ -113,7 +113,7 @@ describe('pack-manifest-extension-opacity: a host MUST accept an extended manife
     if (!behaviorGatePresent(PROFILE, res)) return;
     expect(
       ok(res.status),
-      driver.describe('RFC 0139 §Conformance', 'baseline — guards against a differential that passes because EVERYTHING fails'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-2-the-same-manifest-without-the-extension-installs-baseline', 'RFC 0139 §Conformance', 'baseline — guards against a differential that passes because EVERYTHING fails'),
     ).toBe(true);
   });
 });
@@ -130,12 +130,12 @@ describe('pack-manifest-extension-opacity: the differential — behavior MUST NO
 
     expect(
       ok(plain.status) === ok(extended.status),
-      driver.describe('RFC 0139 §"The differential-install contract"', 'acceptance MUST NOT be a function of an unrecognized extension — a host MUST accept both or reject both for the same reason'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-3-projections-for-m-and-m-are-equal-modulo-the-extensions-load-bearing', 'RFC 0139 §"The differential-install contract"', 'acceptance MUST NOT be a function of an unrecognized extension — a host MUST accept both or reject both for the same reason'),
     ).toBe(true);
 
     expect(
       canonicalJson(stripExtensions(extended.json)),
-      driver.describe('RFC 0139 §"The differential-install contract"', 'the registration projection MUST be identical modulo the extension properties — a difference means the host acted on an extension it does not recognize (rendering catalog, derived facet, or code-path switch)'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-3-projections-for-m-and-m-are-equal-modulo-the-extensions-load-bearing', 'RFC 0139 §"The differential-install contract"', 'the registration projection MUST be identical modulo the extension properties — a difference means the host acted on an extension it does not recognize (rendering catalog, derived facet, or code-path switch)'),
     ).toBe(canonicalJson(stripExtensions(plain.json)));
   });
 
@@ -150,12 +150,12 @@ describe('pack-manifest-extension-opacity: the differential — behavior MUST NO
 
     expect(
       ok(hostile.status),
-      driver.describe('node-packs.md §"Vendor extensions on pack manifests"', 'an extension value is PACK-AUTHORED and therefore untrusted, but untrusted is not a rejection reason — the host MUST install and ignore'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-4-an-extension-carrying-markup-a-templating-directive-is-not-interpreted-at', 'node-packs.md §"Vendor extensions on pack manifests"', 'an extension value is PACK-AUTHORED and therefore untrusted, but untrusted is not a rejection reason — the host MUST install and ignore'),
     ).toBe(true);
 
     expect(
       canonicalJson(stripExtensions(hostile.json)),
-      driver.describe('node-packs.md §"Vendor extensions on pack manifests"', 'MUST NOT render it, execute it, or interpret it as markup or a templating directive — a projection that differs from baseline means the value reached an interpreter'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-4-an-extension-carrying-markup-a-templating-directive-is-not-interpreted-at', 'node-packs.md §"Vendor extensions on pack manifests"', 'MUST NOT render it, execute it, or interpret it as markup or a templating directive — a projection that differs from baseline means the value reached an interpreter'),
     ).toBe(canonicalJson(stripExtensions(plain.json)));
   });
 });
@@ -173,7 +173,7 @@ describe('pack-manifest-extension-opacity: the HOST reader stays narrow (RFC 013
     if (!behaviorGatePresent(PROFILE, res)) return;
     expect(
       ok(res.status),
-      driver.describe('node-packs.md §"Vendor extensions on pack manifests"', 'the hatch admits DECLARED extensions, not arbitrary keys — a host that widened its own reader to additionalProperties:true to "support extensions" accepts everything, which is not the same as accepting extensions'),
+      req('openwop.it.pack-manifest-extension-opacity.leg-5-a-misspelled-canonical-field-is-still-rejected-by-the-host-not-merely-by-t', 'node-packs.md §"Vendor extensions on pack manifests"', 'the hatch admits DECLARED extensions, not arbitrary keys — a host that widened its own reader to additionalProperties:true to "support extensions" accepts everything, which is not the same as accepting extensions'),
     ).toBe(false);
   });
 });

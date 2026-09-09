@@ -20,6 +20,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const CANCELLABLE = 'conformance-cancellable';
 const NOOP = 'conformance-noop';
@@ -48,22 +49,22 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
       runIds: [inflightRunId, 'run-does-not-exist-xxxxxxxx'],
       reason: 'conformance bulk-cancel test',
     });
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order', 
       'rest-endpoints.md §"POST /v1/runs:bulk-cancel"',
       'top-level operation MUST return 200 when the request reached the host (per-id outcomes carry partial failure)',
     )).toBe(200);
 
     const body = res.json as { results: BulkResult[] };
     expect(Array.isArray(body.results)).toBe(true);
-    expect(body.results.length, 'results MUST have one entry per request runId').toBe(2);
+    expect(body.results.length, req('openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order', 'rest-endpoints.md §"POST /v1/runs:bulk-cancel"', 'results MUST have one entry per request runId')).toBe(2);
 
-    expect(body.results[0]!.runId, 'results order MUST mirror the request order').toBe(inflightRunId);
+    expect(body.results[0]!.runId, req('openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order', 'rest-endpoints.md §"POST /v1/runs:bulk-cancel"', 'results order MUST mirror the request order')).toBe(inflightRunId);
     expect(body.results[0]!.ok).toBe(true);
     expect(['cancelling', 'cancelled']).toContain(body.results[0]!.status);
 
     expect(body.results[1]!.runId).toBe('run-does-not-exist-xxxxxxxx');
-    expect(body.results[1]!.ok, 'unknown runId entry MUST have ok=false').toBe(false);
-    expect(body.results[1]!.error?.code, driver.describe(
+    expect(body.results[1]!.ok, req('openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order', 'rest-endpoints.md §"POST /v1/runs:bulk-cancel"', 'unknown runId entry MUST have ok=false')).toBe(false);
+    expect(body.results[1]!.error?.code, req('openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order', 
       'rest-endpoints.md §"POST /v1/runs:bulk-cancel"',
       'unknown runId outcomes carry `error.code === "not_found"`',
     )).toBe('not_found');
@@ -71,7 +72,7 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
 
   it('empty runIds array returns 400 validation_error', async () => {
     const res = await driver.post('/v1/runs:bulk-cancel', { runIds: [] });
-    expect(res.status).toBe(400);
+    expect(res.status, req('openwop.it.bulk-cancel.empty-runids-array-returns-400-validation-error', 'rest-endpoints.md §Open', 'empty runIds array returns 400 validation_error')).toBe(400);
     const body = res.json as { error?: string };
     expect(body.error).toBe('validation_error');
   });
@@ -83,7 +84,7 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
     expect(res.status).toBe(400);
     const body = res.json as { error?: string; details?: { maxRunIds?: number } };
     expect(body.error).toBe('validation_error');
-    expect(typeof body.details?.maxRunIds, driver.describe(
+    expect(typeof body.details?.maxRunIds, req('openwop.it.bulk-cancel.oversized-runids-array-returns-400-with-details-maxrunids', 
       'rest-endpoints.md §"POST /v1/runs:bulk-cancel"',
       'over-cap request MUST carry details.maxRunIds disclosing the configured ceiling',
     )).toBe('number');
@@ -103,7 +104,7 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
     const second = await driver.post('/v1/runs:bulk-cancel', { runIds: [runId] });
     expect(second.status).toBe(200);
     const body = second.json as { results: BulkResult[] };
-    expect(body.results[0]!.ok, driver.describe(
+    expect(body.results[0]!.ok, req('openwop.it.bulk-cancel.re-bulk-cancel-after-first-cancel-is-idempotent', 
       'rest-endpoints.md §"POST /v1/runs:bulk-cancel" §Idempotency',
       're-cancelling an already-cancelling/cancelled run MUST be ok: true (idempotent)',
     )).toBe(true);

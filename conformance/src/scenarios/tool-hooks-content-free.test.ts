@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readToolHooksCap, invokeToolHook } from '../lib/toolHooks.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('tool-hooks-content-free (RFC 0064 §B)', () => {
   it('toolCalled carries argsHash; toolReturned carries status + durationMs', async () => {
@@ -25,16 +25,16 @@ describe('tool-hooks-content-free (RFC 0064 §B)', () => {
     const returned = res.toolReturned ?? {};
     expect(
       typeof called.argsHash === 'string' && (called.argsHash as string).length > 0,
-      driver.describe('RFC 0064 §B', 'agent.toolCalled MUST carry a non-empty argsHash when prePostEvents'),
+      req('openwop.it.tool-hooks-content-free.toolcalled-carries-argshash-toolreturned-carries-status-durationms', 'RFC 0064 §B', 'agent.toolCalled MUST carry a non-empty argsHash when prePostEvents'),
     ).toBe(true);
     expect(
       ['ok', 'error', 'forbidden', 'rate_limited'].includes(returned.status as string),
-      driver.describe('RFC 0064 §B', 'agent.toolReturned MUST carry a tool-hooks status'),
+      req('openwop.it.tool-hooks-content-free.toolcalled-carries-argshash-toolreturned-carries-status-durationms', 'RFC 0064 §B', 'agent.toolReturned MUST carry a tool-hooks status'),
     ).toBe(true);
     if (returned.status === 'ok') {
       expect(
         typeof returned.durationMs === 'number' && (returned.durationMs as number) >= 0,
-        driver.describe('RFC 0064 §B', 'a completed tool call MUST record a non-negative durationMs'),
+        req('openwop.it.tool-hooks-content-free.toolcalled-carries-argshash-toolreturned-carries-status-durationms', 'RFC 0064 §B', 'a completed tool call MUST record a non-negative durationMs'),
       ).toBe(true);
     }
   });

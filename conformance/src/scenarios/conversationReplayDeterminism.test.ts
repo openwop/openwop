@@ -19,6 +19,8 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-conversation-replay';
 const SKIP = !isConversationPrimitiveSupported() || !isFixtureAdvertised(FIXTURE);
@@ -26,7 +28,7 @@ const SKIP = !isConversationPrimitiveSupported() || !isFixtureAdvertised(FIXTURE
 describe.skipIf(SKIP)('conversationReplayDeterminism: replay-fork preserves conversation log', () => {
   it('forked run yields byte-equal conversation channel projection', async () => {
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
-    expect(create.status).toBe(201);
+    expect(create.status, req('openwop.it.conversationReplayDeterminism.forked-run-yields-byte-equal-conversation-channel-projection', 'RFCS/0005-conversation.md', 'forked run yields byte-equal conversation channel projection')).toBe(201);
     const sourceRunId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(sourceRunId);
@@ -38,7 +40,7 @@ describe.skipIf(SKIP)('conversationReplayDeterminism: replay-fork preserves conv
     const fork = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:fork`, {
       mode: 'replay',
     });
-    if (fork.status === 404 || fork.status === 501) return; // host doesn't support replay-fork
+    if (fork.status === 404 || fork.status === 501) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `fork.status === 404 || fork.status === 501` returned early (host doesn\'t support replay-fork)'); // host doesn't support replay-fork
     expect([200, 201]).toContain(fork.status);
 
     const forkedRunId = (fork.json as { runId: string }).runId;

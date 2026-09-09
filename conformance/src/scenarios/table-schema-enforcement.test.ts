@@ -17,6 +17,8 @@ import { describe, it, expect } from 'vitest';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -33,10 +35,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('table-schema-enforcement: advertisement shape (RFC 0016)', () => {
   it('capabilities.tableStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.table-schema-enforcement.capabilities-tablestorage-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §tableStorage',
         'capabilities.tableStorage.supported MUST be a boolean when present',
       ),
@@ -51,7 +53,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('table-schema-enforcement: behavioral (RFC 0016 §B point 2)', () => {
   it('first insert declares schema; subsequent insert with wrong column type is rejected', async () => {
     const probe = await call('insert', { table: '__probe__', row: { id: 'probe-0' } });
-    if (probe.status === 404) return; // seam not exposed
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     const table = `sch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     // First insert — declares the schema from this row's columns.
     const first = await call('insert', {
@@ -74,12 +76,12 @@ describe('table-schema-enforcement: behavioral (RFC 0016 §B point 2)', () => {
     });
     expect(
       bad.status >= 400 && bad.status < 500,
-      driver.describe('RFC 0016 §B point 2', 'type-divergent insert MUST be rejected with 4xx'),
+      req('openwop.it.table-schema-enforcement.first-insert-declares-schema-subsequent-insert-with-wrong-column-type-is-rejecte', 'RFC 0016 §B point 2', 'type-divergent insert MUST be rejected with 4xx'),
     ).toBe(true);
     const code = readErrorCode(bad.json);
     expect(
       code,
-      driver.describe('RFC 0016 §B point 2', 'rejection MUST carry the table_schema_violation error code'),
+      req('openwop.it.table-schema-enforcement.first-insert-declares-schema-subsequent-insert-with-wrong-column-type-is-rejecte', 'RFC 0016 §B point 2', 'rejection MUST carry the table_schema_violation error code'),
     ).toBe('table_schema_violation');
   });
 });

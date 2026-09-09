@@ -20,6 +20,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-conversation-vs-clarification';
 const SKIP = !isConversationPrimitiveSupported() || !isFixtureAdvertised(FIXTURE);
@@ -41,7 +42,7 @@ describe.skipIf(SKIP)('conversationVsLegacySuspend: distinct event surfaces', ()
     expect(conversationEvents.length).toBeGreaterThan(0);
     expect(
       clarificationEvents.length,
-      'conversation.exchange MUST NOT emit clarification.* events',
+      req('openwop.it.conversationVsLegacySuspend.conversation-suspend-emits-conversation-events-not-clarification', 'RFCS/0005-conversation.md', 'conversation.exchange MUST NOT emit clarification.* events'),
     ).toBe(0);
   });
 });

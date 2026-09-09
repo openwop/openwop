@@ -30,6 +30,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'chat-card-pack-manifest.schema.json');
 
@@ -68,7 +69,7 @@ describe('category: chat-card-pack manifest validation', () => {
   it('positive: a valid chat card pack manifest validates cleanly', () => {
     expect(
       validate(validManifest()),
-      `chat-card-packs.md §"Manifest format": a well-formed kind:"card" manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.chat-card-pack-manifest-validation.positive-a-valid-chat-card-pack-manifest-validates-cleanly', 'chat-card-packs.md', `chat-card-packs.md §"Manifest format": a well-formed kind:"card" manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -77,24 +78,24 @@ describe('category: chat-card-pack manifest validation', () => {
     const errs = failsWith(manifest, 'additionalProperties');
     expect(
       errs.some((e) => (e.params as { additionalProperty?: string }).additionalProperty === 'artifactTypes'),
-      'chat-card-packs.md §"Pack kind": one kind per pack (additionalProperties:false)',
+      req('openwop.it.chat-card-pack-manifest-validation.negative-a-manifest-mixing-cards-and-artifacttypes-is-rejected', 'chat-card-packs.md', 'chat-card-packs.md §"Pack kind": one kind per pack (additionalProperties:false)'),
     ).toBe(true);
   });
 
   it('negative: an empty cards[] is rejected', () => {
-    expect(failsWith({ ...validManifest(), cards: [] }, 'minItems').length).toBeGreaterThan(0);
+    expect(failsWith({ ...validManifest(), cards: [] }, 'minItems').length, req('openwop.it.chat-card-pack-manifest-validation.negative-an-empty-cards-is-rejected', 'chat-card-packs.md', 'negative: an empty cards[] is rejected')).toBeGreaterThan(0);
   });
 
   it('negative: an uppercase-scope cardTypeId is rejected', () => {
     const m = validManifest();
     m.cards[0]!.cardTypeId = 'Vendor.Acme.Card';
-    expect(failsWith(m, 'pattern').length).toBeGreaterThan(0);
+    expect(failsWith(m, 'pattern').length, req('openwop.it.chat-card-pack-manifest-validation.negative-an-uppercase-scope-cardtypeid-is-rejected', 'chat-card-packs.md', 'negative: an uppercase-scope cardTypeId is rejected')).toBeGreaterThan(0);
   });
 
   it('negative: a card missing prompt is rejected', () => {
     const m = validManifest();
     delete (m.cards[0] as { prompt?: unknown }).prompt;
-    expect(failsWith(m, 'required').length).toBeGreaterThan(0);
+    expect(failsWith(m, 'required').length, req('openwop.it.chat-card-pack-manifest-validation.negative-a-card-missing-prompt-is-rejected', 'chat-card-packs.md', 'negative: a card missing prompt is rejected')).toBeGreaterThan(0);
   });
 
   it('negative: a non-portable inputs[].type (canvas-reference) is rejected', () => {
@@ -102,7 +103,7 @@ describe('category: chat-card-pack manifest validation', () => {
     m.cards[0]!.inputs[0]!.type = 'canvas-reference';
     expect(
       failsWith(m, 'pattern').length,
-      'chat-card-packs.md §"Input fields": type is the closed portable enum OR a vendor.*/x- extension',
+      req('openwop.it.chat-card-pack-manifest-validation.negative-a-non-portable-inputs-type-canvas-reference-is-rejected', 'chat-card-packs.md', 'chat-card-packs.md §"Input fields": type is the closed portable enum OR a vendor.*/x- extension'),
     ).toBeGreaterThan(0);
   });
 
@@ -111,7 +112,7 @@ describe('category: chat-card-pack manifest validation', () => {
     m.cards[0]!.inputs[0]!.type = 'vendor.myndhyve.canvas-ref';
     expect(
       validate(m),
-      'chat-card-packs.md §"Input fields": a vendor.<org>.<kind> input type extension MUST validate (other hosts ignore it)',
+      req('openwop.it.chat-card-pack-manifest-validation.positive-a-vendor-prefixed-inputs-type-extension-is-tolerated', 'chat-card-packs.md', 'chat-card-packs.md §"Input fields": a vendor.<org>.<kind> input type extension MUST validate (other hosts ignore it)'),
     ).toBe(true);
   });
 
@@ -121,7 +122,7 @@ describe('category: chat-card-pack manifest validation', () => {
       m.cards[0]!.inputs[0]!.type = t;
       expect(
         validate(m),
-        `chat-card-packs.md §"Input fields": portable inputs[].type "${t}" MUST validate (G9 resolved 2026-05-27)`,
+        req('openwop.it.chat-card-pack-manifest-validation.positive-the-full-portable-inputs-type-subset-validates-g9-incl-multiselect-file', 'chat-card-packs.md', `chat-card-packs.md §"Input fields": portable inputs[].type "${t}" MUST validate (G9 resolved 2026-05-27)`),
       ).toBe(true);
     }
   });

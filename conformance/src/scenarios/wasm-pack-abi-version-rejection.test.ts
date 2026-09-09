@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const MISBEHAVING_PACK_NAME = 'vendor.openwop.misbehaving-abi';
 const WELL_BEHAVED_PACK_NAME = 'vendor.openwop.rust-hello';
@@ -40,7 +41,7 @@ describe('wasm-pack-abi-version-rejection: host advertises supported ABI version
 
     if (!wasm?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!wasm?.supported` returned early');
 
-    expect(Array.isArray(wasm.abiVersions), driver.describe(
+    expect(Array.isArray(wasm.abiVersions), req('openwop.it.wasm-pack-abi-version-rejection.abiversions-contains-positive-integers-loader-rejects-unsupported-versions', 
       'RFCS/0008-wasm-abi.md §H',
       'capabilities.nodePackRuntimes.wasm.abiVersions MUST be an array',
     )).toBe(true);
@@ -90,7 +91,7 @@ describe('wasm-pack-abi-version-rejection: positive path via misbehaving pack', 
 
     // Core assertion: ABI 999 pack MUST NOT be in loadedPacks[]
     // regardless of filesystem state. The host's loader rejected it.
-    expect(wasm.loadedPacks.includes(MISBEHAVING_PACK_NAME), driver.describe(
+    expect(wasm.loadedPacks.includes(MISBEHAVING_PACK_NAME), req('openwop.it.wasm-pack-abi-version-rejection.misbehaving-abi-pack-declares-abi-999-must-not-appear-in-loadedpacks', 
       'RFCS/0008-wasm-abi.md §H',
       `host MUST reject packs whose declared ABI is not in abiVersions[]; ${MISBEHAVING_PACK_NAME} declares 999 and MUST NOT appear in loadedPacks[]`,
     )).toBe(false);

@@ -39,7 +39,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { seamAbsent } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isMultiPartyConversationSupported } from '../lib/multi-agent-capabilities.js';
 import {
@@ -50,6 +49,7 @@ import {
   type SeamAgentRef,
   type SeamTurn,
 } from '../lib/multiPartyConversation.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'openwop-multi-party-conversation';
 
@@ -84,7 +84,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
     if (opened.unwired) return seamAbsent('host advertises multiPartyConversation but the open-conversation seam is not wired');
     expect(
       opened.status === 200,
-      driver.describe('RFC 0101 §Spec', 'a conforming 3-agent council MUST open (≤ maxParticipants)'),
+      req('openwop.it.multi-party-conversation-behavioral.opens-a-council-accepts-an-attributed-turn-and-rejects-missing-non-participant-o', 'RFC 0101 §Spec', 'a conforming 3-agent council MUST open (≤ maxParticipants)'),
     ).toBe(true);
 
     // ---- MUST 1: POSITIVE — a roster-valid attributed turn is accepted ----
@@ -92,7 +92,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
     if (ok.unwired) return seamAbsent('host advertises multiPartyConversation but the conversation seam is not wired');
     expect(
       ok.status === 200,
-      driver.describe('RFC 0101 §Spec', "a role:'agent' turn with an in-roster speakerId MUST be accepted"),
+      req('openwop.it.multi-party-conversation-behavioral.opens-a-council-accepts-an-attributed-turn-and-rejects-missing-non-participant-o', 'RFC 0101 §Spec', "a role:'agent' turn with an in-roster speakerId MUST be accepted"),
     ).toBe(true);
 
     // ---- MUST 2: ATTRIBUTION — agent turn missing speakerId is rejected ---
@@ -102,7 +102,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
     if (!missingRes.unwired) {
       expect(
         isValidationErrorRejection(missingRes),
-        driver.describe('RFC 0101 §Spec (attribution MUST)', "a role:'agent' turn missing speakerId MUST be rejected with validation_error"),
+        req('openwop.it.multi-party-conversation-behavioral.opens-a-council-accepts-an-attributed-turn-and-rejects-missing-non-participant-o', 'RFC 0101 §Spec (attribution MUST)', "a role:'agent' turn missing speakerId MUST be rejected with validation_error"),
       ).toBe(true);
     }
 
@@ -112,7 +112,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
     if (!intruderRes.unwired) {
       expect(
         isValidationErrorRejection(intruderRes),
-        driver.describe('RFC 0101 §Spec (membership MUST) / RFC 0005 §E', 'a turn whose speakerId is not in the roster MUST be rejected with validation_error'),
+        req('openwop.it.multi-party-conversation-behavioral.opens-a-council-accepts-an-attributed-turn-and-rejects-missing-non-participant-o', 'RFC 0101 §Spec (membership MUST) / RFC 0005 §E', 'a turn whose speakerId is not in the roster MUST be rejected with validation_error'),
       ).toBe(true);
     }
 
@@ -130,7 +130,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
       if (!overRes.unwired) {
         expect(
           isValidationErrorRejection(overRes),
-          driver.describe('RFC 0101 §Spec (maxParticipants MUST)', 'an open whose roster exceeds the advertised maxParticipants MUST be rejected with validation_error'),
+          req('openwop.it.multi-party-conversation-behavioral.opens-a-council-accepts-an-attributed-turn-and-rejects-missing-non-participant-o', 'RFC 0101 §Spec (maxParticipants MUST)', 'an open whose roster exceeds the advertised maxParticipants MUST be rejected with validation_error'),
         ).toBe(true);
       }
     }

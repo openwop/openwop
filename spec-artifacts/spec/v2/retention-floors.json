@@ -1,0 +1,35 @@
+{
+  "$comment": "spec/v2/core/overview.md §v1 end-of-support, Old-major retention floors (charter Phase 5). Each row is a published old-major artifact and the last 1.x version a consumer may be pinned to; every row MUST stay installable for `windowMonths` from the 2.0.0 publish (the v2.0.0 tag's commit date — read from git by check-retention-floors.mjs, never written here). Hand-kept: a new 1.x release of an old-major line bumps `lastOldMajor`; nothing else changes. `probe` is the registry document the check reads with --network and the JSON path it expects the version at.",
+  "windowMonths": 12,
+  "releaseTag": "v2.0.0",
+  "artifacts": [
+    {
+      "ecosystem": "npm",
+      "name": "@openwop/openwop",
+      "oldMajor": 1,
+      "lastOldMajor": "1.9.0",
+      "probe": { "url": "https://registry.npmjs.org/@openwop%2Fopenwop", "versionsAt": "versions" }
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@openwop/openwop-conformance",
+      "oldMajor": 1,
+      "lastOldMajor": "1.163.0",
+      "probe": { "url": "https://registry.npmjs.org/@openwop%2Fopenwop-conformance", "versionsAt": "versions" }
+    },
+    {
+      "ecosystem": "pypi",
+      "name": "openwop-client",
+      "oldMajor": 1,
+      "lastOldMajor": "1.7.0",
+      "probe": { "url": "https://pypi.org/pypi/openwop-client/json", "versionsAt": "releases" }
+    },
+    {
+      "ecosystem": "go",
+      "name": "github.com/openwop/openwop-sdks/go",
+      "oldMajor": 1,
+      "lastOldMajor": "v1.6.0",
+      "probe": { "url": "https://proxy.golang.org/github.com/openwop/openwop-sdks/go/@v/list", "versionsAt": "lines" }
+    }
+  ]
+}

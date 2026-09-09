@@ -1,0 +1,7 @@
+{
+  "protocolVersion": "1.1",
+  "supportedEnvelopes": ["error"],
+  "schemaVersions": { "error": 1 },
+  "limits": { "maxNodesPerWorkflow": 200 },
+  "mcp": { "supported": true }
+}

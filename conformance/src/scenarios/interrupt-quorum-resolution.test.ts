@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 // Profile gating: a host claims `openwop-interrupt-quorum` support by
 // advertising the fixture. Hosts that don't support quorum semantics
@@ -42,7 +43,7 @@ describe.skipIf(SKIP)('interrupt: quorum — three accepts resume to completed',
         `/v1/runs/${encodeURIComponent(runId)}/interrupts/${encodeURIComponent(NODE_ID)}`,
         { resumeValue: { action: 'accept', voter: `approver-${i}` } },
       );
-      expect(partial.status, driver.describe(
+      expect(partial.status, req('openwop.it.interrupt-quorum-resolution.first-two-accepts-persist-without-resuming-third-accept-drives-terminal-complete', 
         'interrupt-profiles.md §openwop-interrupt-quorum',
         `partial vote ${i}/3 MUST be accepted (2xx) without terminating the run`,
       )).toBeGreaterThanOrEqual(200);
@@ -50,7 +51,7 @@ describe.skipIf(SKIP)('interrupt: quorum — three accepts resume to completed',
 
       const stillWaiting = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
       const status = (stillWaiting.json as { status: string }).status;
-      expect(status, driver.describe(
+      expect(status, req('openwop.it.interrupt-quorum-resolution.first-two-accepts-persist-without-resuming-third-accept-drives-terminal-complete', 
         'interrupt-profiles.md §openwop-interrupt-quorum',
         `run MUST still be in waiting-approval after ${i}/3 votes (quorum not met)`,
       )).toBe('waiting-approval');
@@ -64,7 +65,7 @@ describe.skipIf(SKIP)('interrupt: quorum — three accepts resume to completed',
     expect(final.status).toBeLessThan(300);
 
     const terminal = await pollUntilTerminal(runId, { timeoutMs: 10_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.interrupt-quorum-resolution.first-two-accepts-persist-without-resuming-third-accept-drives-terminal-complete', 
       'fixtures.md conformance-interrupt-quorum §Terminal status',
       'three accepts (quorum met) MUST drive terminal completed',
     )).toBe('completed');
@@ -89,7 +90,7 @@ describe.skipIf(SKIP)('interrupt: quorum — majority reject fails the gate', ()
     );
 
     const terminal = await pollUntilTerminal(runId, { timeoutMs: 10_000 });
-    expect(['failed', 'rejected'], driver.describe(
+    expect(['failed', 'rejected'], req('openwop.it.interrupt-quorum-resolution.two-rejects-out-of-three-votes-trigger-the-majority-reject-termination', 
       'interrupt-profiles.md §openwop-interrupt-quorum (rejectionPolicy: majority)',
       'majority rejection MUST drive a non-completed terminal state',
     )).toContain(terminal.status);

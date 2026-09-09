@@ -40,10 +40,10 @@ describe('aiEnvelope.schemaDrift: advertisement shape (FINAL v1.1)', () => {
     const body = res.json as DiscoveryDoc | undefined;
     const top = discoveryFamilies(body);
     const val = top && typeof top === 'object' ? top['envelopeStrictness'] : undefined;
-    if (val === undefined) return; // absent → treated as 'warn'; skip
+    if (val === undefined) return softSkip('blocked', 'precondition not met — `val === undefined` returned early (absent → treated as \'warn\'; skip) (seam, prior step, or fixture unavailable)'); // absent → treated as 'warn'; skip
     expect(
       val === 'warn' || val === 'strict',
-      driver.describe(
+      req('openwop.it.aiEnvelope.schemaDrift.capabilities-envelopestrictness-is-either-absent-treated-as-warn-or-warn-strict', 
         'ai-envelope.md §"Capability handshake integration"',
         'envelopeStrictness MUST be the literal string "warn" or "strict" when present',
       ),
@@ -51,13 +51,13 @@ describe('aiEnvelope.schemaDrift: advertisement shape (FINAL v1.1)', () => {
   });
 
   it('schemaVersions is non-empty when envelopeContracts.advertised: true', async () => {
-    if (!(await isEnvelopeContractsAdvertised())) return; // not opted in — skip
+    if (!(await isEnvelopeContractsAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isEnvelopeContractsAdvertised())` returned early (not opted in — skip)'); // not opted in — skip
     const res = await driver.get('/.well-known/openwop');
     const body = res.json as { schemaVersions?: Record<string, number>; capabilities?: { schemaVersions?: Record<string, number> } } | undefined;
     const versions = body?.schemaVersions ?? capabilityFamily(body, 'schemaVersions') ?? {};
     expect(
       Object.keys(versions).length > 0,
-      driver.describe(
+      req('openwop.it.aiEnvelope.schemaDrift.schemaversions-is-non-empty-when-envelopecontracts-advertised-true', 
         'ai-envelope.md §"Schema version advertisement"',
         'schemaVersions MUST be non-empty when envelopeContracts.advertised is true',
       ),
@@ -93,10 +93,10 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
         envelopeStrictness: 'warn',
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.schemaDrift.schemaversion-below-advertised-floor-under-strictness-warn-accepted-warn-and-con', 
         'ai-envelope.md §"Schema discipline"',
         'below-floor schemaVersion under strictness:warn MUST be accepted (drift projected at engine level)',
       ),
@@ -118,10 +118,10 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
         envelopeStrictness: 'strict',
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       r.body.status,
-      driver.describe(
+      req('openwop.it.aiEnvelope.schemaDrift.schemaversion-below-advertised-floor-under-strictness-strict-invalid-unknown-sch', 
         'ai-envelope.md §"Schema discipline"',
         'below-floor schemaVersion under strictness:strict MUST refuse with unknown_schema_version',
       ),
@@ -145,10 +145,10 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
           envelopeStrictness: strictness,
         },
       );
-      if (r.status === 404) return;
+      if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
       expect(
         r.body.status,
-        driver.describe(
+        req('openwop.it.aiEnvelope.schemaDrift.schemaversion-above-advertised-floor-invalid-regardless-of-strictness-host-doesn', 
           'ai-envelope.md §"Schema discipline"',
           `above-floor schemaVersion MUST refuse regardless of strictness (got ${strictness})`,
         ),
@@ -172,13 +172,13 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
         envelopeStrictness: 'warn', // above-floor → invalid regardless
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('invalid');
     expect(Array.isArray(r.body.details)).toBe(true);
     const paths = (r.body.details ?? []).map((d: unknown) => (d as { instancePath?: string }).instancePath);
     expect(
       paths.includes('/schemaVersion'),
-      driver.describe(
+      req('openwop.it.aiEnvelope.schemaDrift.refused-above-floor-envelope-carries-instancepath-schemaversion-in-details', 
         'ai-envelope.md §"Schema discipline"',
         'schema-drift refusal MUST cite /schemaVersion as the violating field',
       ),
@@ -190,10 +190,12 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
 import { queryTestSpans, isOtelSeamAvailable } from '../lib/otel-scrape.js';
 import { resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => {
   it('below-floor + strictness:warn → OTel span MUST carry envelope_schema_version_drift attribute', async () => {
-    if (!(await isOtelSeamAvailable())) return;
+    if (!(await isOtelSeamAvailable())) return softSkip('blocked', 'precondition not met — `!(await isOtelSeamAvailable())` returned early (seam, prior step, or fixture unavailable)');
     const runId = `r-drift-otel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const r = await accept(
       {
@@ -210,14 +212,14 @@ describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => 
         projectTo: { runId, nodeId: 'n' },
       },
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
 
     const spans = await queryTestSpans({ runId });
-    if (!spans.ok) return;
+    if (!spans.ok) return softSkip('blocked', 'precondition not met — `!spans.ok` returned early (seam, prior step, or fixture unavailable)');
     expect(
       spans.data.some((s) => s.attributes.envelope_schema_version_drift === true),
-      driver.describe(
+      req('openwop.it.aiEnvelope.schemaDrift.below-floor-strictness-warn-otel-span-must-carry-envelope-schema-version-drift-a', 
         'ai-envelope.md §"Schema discipline"',
         'below-floor accept under strictness:warn MUST project envelope_schema_version_drift attribute on the OTel span',
       ),

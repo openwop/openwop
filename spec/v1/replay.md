@@ -103,6 +103,16 @@ Status codes:
 
 ---
 
+### Fork ownership (RFC 0165 §B.4)
+
+The child run's `owner.tenant` and, when the source carries one, `owner.subject` **MUST** be
+copied verbatim from the source run; the child's `owner.principal` SHOULD be copied. A subject
+key stamped on a run is never rewritten by a fork — the invariant the SAML ⟷ SCIM leaver
+contract depends on (`auth-profiles.md` §"Subject linking"). Why a MUST only for `subject`:
+no text bound fork ownership before this section, and a host that re-owns forks to the forking
+principal was conforming; tightening `principal` would be a `COMPATIBILITY.md` §2.2 change,
+while `subject` is a field no host emitted before RFC 0165.
+
 ## The determinism model
 
 *(Added 2026-08-19. Non-normative framing of requirements that already exist; the
@@ -314,8 +324,8 @@ Operators receiving `replay_diverged_at_refusal` SHOULD treat it as a safety-pol
 
 The replay contract is **observable-output-sequence determinism**, NOT bit-equivalent execution. Specifically:
 
-1. The sequence of `RunEventDoc` records appended to the event log at indices `[0, fromSeq]` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E and per-event ULID component-T entropy when ULIDs are minted fresh).
-2. `RunSnapshot.variables`, `RunSnapshot.channels`, and `RunSnapshot.status` at each event-log index MUST be byte-equivalent across original and replay.
+1. The sequence of `RunEventDoc` records appended to the event log at indices `[0, fromSeq)` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E and per-event ULID component-T entropy when ULIDs are minted fresh). The range is half-open, matching the four other statements of the boundary in this document: events `< fromSeq` are fixed history, and the event AT `fromSeq` is re-executed — so it is governed by §Divergence, not by this clause.
+2. `RunSnapshot.variables`, `RunSnapshot.channels`, and `RunSnapshot.status` at each event-log index in that range MUST be byte-equivalent across original and replay.
 3. The bytes-on-the-wire of underlying tool/LLM calls MAY differ — e.g., a tool call against a remote stateful API, an LLM call against a model whose weights shifted, a randomized fallback path — AS LONG AS the resulting **observable state** at each index is byte-equivalent.
 
 The load-bearing implication: hosts MUST NOT cache observable state ONLY at the tool-call boundary. They MUST cache the **observable result** (return value + side-effects on workflow state + emitted events) so a replay reproduces the observable sequence even when the underlying call would have produced different bytes. The cache key for LLM-calling nodes is the §"LLM cache-key recipe" §B SHA-256 hash; for other tool-calling nodes the cache key is at host discretion BUT MUST be content-addressable (no host-internal sequence numbers or timestamps).
@@ -690,13 +700,7 @@ RFC 0056 annotations are a per-run side-resource, **not** event-log entries — 
 
 ## Open spec gaps
 
-| #   | Gap                                                                                         | Owner       |
-| --- | ------------------------------------------------------------------------------------------- | ----------- |
-| RP1 | Bulk fork API — fork many runs at once for batch validation                                 | future      |
-| RP2 | Branch-with-edited-event API — modify a specific event in-place rather than overlay options | future v1.x |
-| RP3 | ✅ Closed by §"Determinism scoring" for advisory replay reports.                            | v1.x annex  |
-| RP4 | ✅ Closed by §"Retention and garbage collection".                                           | v1.x annex  |
-| RP5 | ✅ Closed by §"Privacy and replay".                                                         | v1.x annex  |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.replay.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

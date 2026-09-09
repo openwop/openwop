@@ -36,7 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve as resolvePath, join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
@@ -44,25 +44,38 @@ import { SCHEMAS_DIR } from './lib/paths.js';
 import { readLedgerFile } from './lib/requirement-ledger.js';
 import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
 import { scrubEvidence, evidenceSecretsFromEnv, verifyBundleV2 } from './lib/certification-bundle-verify.js';
+import { publicKeyFromPrivate, signBundleV3, verifierSign, verifyBundleV3, witnessDigest, type BundleV3, type BundleV3Requirement } from './lib/certification-bundle-v3.js';
 import {
   deriveProfiles,
   isCoreStandard,
   agentPlatformStatus,
   DEPRECATED_PROFILE_ALIASES,
   type DiscoveryPayload,
+  PROFILE_FLOOR_SCENARIOS,
 } from './lib/profiles.js';
+import { setV2ProfileFloors, v2ProfileFloorFiles } from './lib/requirement-registry.js';
+import { v2ProfileIds } from './lib/v2-profiles.js';
 
 interface ParsedArgs {
   readonly baseUrl: string | undefined;
   readonly apiKey: string | undefined;
   readonly offline: boolean;
   readonly filter: string | undefined;
+  /** Suite 2.0.0 (RFC 0168 §D.3): which protocol major's scenarios run. Default: the host's preferredVersion, else max(protocolVersions[]), else 1. */
+  readonly targetMajor: 1 | 2 | undefined;
   readonly help: boolean;
   readonly impl: string | undefined;
   readonly implVersion: string | undefined;
   /** RFC 0089 — emit a conformance certification bundle to this path. */
   readonly certify: string | undefined;
-  readonly bundleVersion: '1' | '2';
+  readonly bundleVersion: '2' | '3';
+  /** Suite 2.0.0 (RFC 0168 §E): v3 needs the build identity, the signing key, and the tier. */
+  readonly hostBuild: { kind: 'image-digest' | 'commit' | 'artifact-sha256'; id: string } | undefined;
+  readonly evidenceTier: 'self' | 'steward' | 'independent';
+  readonly signingKeyPath: string | undefined;
+  readonly signingKeyId: string | undefined;
+  readonly verifierKeyPath: string | undefined;
+  readonly verifierKeyId: string | undefined;
   /**
    * S43 (2026-08-18) — cap on concurrently running scenario FILES, forwarded to
    * vitest `--maxWorkers`. Unset = vitest's default (one worker per CPU), which
@@ -84,7 +97,11 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   // Suite 1.152.0: bundle v2 (RFC 0148) is the default. v1 stays reachable via
   // `--bundle-version 1` through the RFC 0148 migration window (ends
   // 2026-11-10) and is removed at v2.0 (spec/v1/deprecations.json).
-  let bundleVersion: '1' | '2' = '2';
+  let bundleVersion: '2' | '3' = '3';
+  let hostBuild: ParsedArgs['hostBuild'];
+  let evidenceTier: ParsedArgs['evidenceTier'] = 'self';
+  let signingKeyPath: string | undefined, signingKeyId: string | undefined, verifierKeyPath: string | undefined, verifierKeyId: string | undefined;
+  let targetMajor: 1 | 2 | undefined;
   let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
 
   for (let i = 0; i < argv.length; i++) {
@@ -117,6 +134,12 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--api-key':
         apiKey = nextValue();
         break;
+      case '--target-major': {
+        const v = argv[++i];
+        if (v !== '1' && v !== '2') { process.stderr.write(`openwop-conformance: --target-major must be 1 or 2 (got ${String(v)})\n`); process.exit(2); }
+        targetMajor = v === '2' ? 2 : 1;
+        break;
+      }
       case '--filter':
         filter = nextValue();
         break;
@@ -129,19 +152,29 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
         implVersion = nextValue();
         break;
       case '--bundle-version': {
-        const v = nextValue();
-        if (v !== '1' && v !== '2') {
-          process.stderr.write(`--bundle-version must be 1 or 2 (got '${v}')\n`);
-          process.exit(2);
-        }
+        const v = argv[++i];
+        if (v !== '2' && v !== '3') { process.stderr.write(`openwop-conformance: --bundle-version must be 2 or 3 (got ${String(v)}); v1 is gone in suite 2.0.0 (RFC 0168 §E.3)\n`); process.exit(2); }
+        if (v === '2') process.stderr.write('openwop-conformance: --bundle-version 2 is DEPRECATED — v2 bundles stop substantiating a certification at v1 end-of-support (RFC 0168 §E.3); the default is 3.\n');
         bundleVersion = v;
-        if (v === '1') {
-          process.stderr.write(
-            'openwop-conformance: --bundle-version 1 is DEPRECATED (RFC 0148). A v1 bundle ceases to substantiate a new certification after 2026-11-10 and the format is removed at v2.0; omit the flag to emit bundle v2.\n',
-          );
-        }
         break;
       }
+      case '--host-build': {
+        const v = argv[++i] ?? '';
+        const mm = /^(image-digest|commit|artifact-sha256):(.+)$/.exec(v);
+        if (!mm) { process.stderr.write(`openwop-conformance: --host-build must be <image-digest|commit|artifact-sha256>:<id> (got ${JSON.stringify(v)})\n`); process.exit(2); }
+        hostBuild = { kind: mm[1] as 'image-digest' | 'commit' | 'artifact-sha256', id: mm[2] };
+        break;
+      }
+      case '--evidence-tier': {
+        const v = argv[++i];
+        if (v !== 'self' && v !== 'steward' && v !== 'independent') { process.stderr.write('openwop-conformance: --evidence-tier must be self, steward or independent\n'); process.exit(2); }
+        evidenceTier = v;
+        break;
+      }
+      case '--signing-key': signingKeyPath = argv[++i]; break;
+      case '--signing-key-id': signingKeyId = argv[++i]; break;
+      case '--verifier-key': verifierKeyPath = argv[++i]; break;
+      case '--verifier-key-id': verifierKeyId = argv[++i]; break;
       case '--certify':
         certify = nextValue();
         break;
@@ -165,6 +198,13 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     implVersion,
     certify,
     bundleVersion,
+    targetMajor,
+    hostBuild,
+    evidenceTier,
+    signingKeyPath,
+    signingKeyId,
+    verifierKeyPath,
+    verifierKeyId,
     maxWorkers,
   };
 }
@@ -195,7 +235,7 @@ Required (unless --offline):
   --api-key <key>       Bearer-style API key (or set OPENWOP_API_KEY env var)
 
 Filtering:
-  --offline             Run only the server-free subset (fixtures + spec corpus)
+  --offline             Run only the declared server-free subset (fixtures-valid; see README §"--offline")
   --filter <pattern>    Pass through to vitest --testNamePattern
 
 Implementation labels (cosmetic — surface in failure messages):
@@ -203,7 +243,14 @@ Implementation labels (cosmetic — surface in failure messages):
   --impl-version <version>  Implementation version     (env: OPENWOP_IMPLEMENTATION_VERSION)
 
 Certification (RFC 0089):
-  --bundle-version <1|2>  Certification bundle format. Default 1. Version 2 (RFC 0148
+  --target-major <1|2>    Suite 2.0.0 (RFC 0168 §D.3): run the scenarios for this protocol
+                          major. Default: the host's preferredVersion (RFC 0179), else
+                          max(protocolVersions[]), else 1. Selection is scenario-majors.json.
+  --host-build <k>:<id>   v3: the build identity (image-digest|commit|artifact-sha256), or OPENWOP_HOST_BUILD.
+  --signing-key <pem>     v3: Ed25519 private key (PKCS8 PEM) that signs the bundle, or OPENWOP_BUNDLE_SIGNING_KEY.
+  --signing-key-id <id>   v3: the keyId the host publishes for that key, or OPENWOP_BUNDLE_SIGNING_KEY_ID.
+  --evidence-tier <t>     v3: self | steward | independent (independent needs --verifier-key/--verifier-key-id).
+  --bundle-version <2|3>  Certification bundle format. Default 2 (corrected 2026-09-03, RFC 0168 §E.4; the text said 1 while the code set 2). Version 2 (RFC 0148
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
                         from "checked and it holds". See the note it prints.
@@ -265,7 +312,42 @@ function claimedProfilesFor(doc: DiscoveryPayload): string[] {
   return profiles;
 }
 
-/** A single scenario test file's terminal state, derived from the vitest JSON report. */
+/**
+ * The v2 profile registry is a set of predicates over the DECLARATION
+ * (RFC 0169 §C.1): every listed family present as a record, every listed
+ * metadata key present. The v1 derivation cannot stand in — `isCore` wants a
+ * root `protocolVersion` plus `supportedEnvelopes`/`schemaVersions`/`limits`,
+ * shapes a closed v2 root does not have — so a major-2 run claimed NOTHING and
+ * no v2 host could ever certify.
+ *
+ * The derivation itself now lives in `lib/v2-profiles.ts`, because the VERIFIER
+ * needs the same answer and had been computing a different one: it asked the v1
+ * predicates about v2 documents and refused every real major-2 bundle. Emitter
+ * and verifier share one function so they cannot drift apart again. All this
+ * wrapper adds is the operator-facing warning — a CLI concern, not a
+ * derivation one.
+ */
+function claimedProfilesForV2(doc: DiscoveryPayload): string[] {
+  const ids = v2ProfileIds(doc);
+  if (ids === null) {
+    process.stderr.write('openwop-conformance --certify: spec/v2/profiles.json not found or unreadable in this layout; claimedProfiles is empty (RFC 0169 §C.1).\n');
+    return [];
+  }
+  return [...ids];
+}
+
+/**
+ * `spec/v2/profiles.json` `floorScenarios` → scenario file names. A
+ * `planned:<name>` entry names a scenario the registry expects but that may not
+ * exist yet; it resolves to `v2-<name>.test.ts` when that file is in the
+ * manifest and is dropped otherwise, so a planned-but-unwritten floor cannot
+ * fail a host for the corpus's own backlog.
+ */
+function v2ProfileFloors(conformanceRoot: string): Record<string, readonly string[]> {
+  // One derivation, shared with the ledger's floor-file set (requirement-registry.ts).
+  return v2ProfileFloorFiles(conformanceRoot);
+}
+
 type ScenarioState = 'passed' | 'failed' | 'skipped';
 
 /** The subset of vitest's JSON reporter output we read. */
@@ -313,15 +395,62 @@ function scenarioStatesFromReport(report: VitestJsonReport): Map<string, Scenari
 }
 
 /** Generate + validate + write an RFC 0089 conformance certification bundle. */
+/**
+ * Suite 2.0.0 — resolve the target major (RFC 0168 §D.3 / RFC 0179): the flag,
+ * else the host's root `preferredVersion`, else max(protocolVersions[]), else 1.
+ * Returns the major and the scenario files that target it (scenario-majors.json).
+ */
+async function resolveTargetMajor(args: ParsedArgs, baseUrl: string | undefined, apiKey: string | undefined, conformanceRoot: string): Promise<{ major: 1 | 2; files: string[]; source: string }> {
+  let major: 1 | 2 | undefined = args.targetMajor;
+  let source = 'flag';
+  let dualStack = false;
+  if (major === undefined && baseUrl) {
+    try {
+      const res = await fetch(`${baseUrl.replace(/\/$/, '')}/.well-known/openwop`, { headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {} });
+      const doc = (await res.json()) as { preferredVersion?: string; protocolVersions?: string[] };
+      const pv = doc.preferredVersion ?? (doc.protocolVersions ?? []).map((v) => v).sort((a, b) => Number(b.split('.')[0]) - Number(a.split('.')[0]))[0];
+      if ((doc.protocolVersions ?? []).some((v) => v.startsWith('2.'))) dualStack = true;
+      if (pv) { major = Number(pv.split('.')[0]) >= 2 ? 2 : 1; source = doc.preferredVersion ? 'preferredVersion' : 'max(protocolVersions[])'; }
+    } catch { /* unreachable host: the default below; the run itself will report the failure */ }
+  }
+  if (major === undefined) { major = 1; source = 'default'; }
+  // Through the overlap `preferredVersion` names the 1.x member (versioning.md
+  // §1.1), so auto-detection on a dual-stack host resolves to major 1 by design.
+  // Say so, or an operator reads a v1 run as the host's only option.
+  if (major === 1 && dualStack) source += ' (the host also serves 2.x — pass --target-major 2 to measure it)';
+  // The RUNNER's own process must see the target major, not only the vitest
+  // child (rc.55). `requirementIdForFile()` decides "is this file a floor?"
+  // through `targetMajor()` = process.env; until rc.55 `--target-major 2` set
+  // the env on the child alone, so the worker recorded every v2 floor file
+  // under `openwop.floor.<stem>` while the runner looked it up as
+  // `openwop.scenario.<stem>`, found nothing, emitted a report-derived pass
+  // with no assertion count, and its own verifier rejected the bundle as a
+  // `vacuous-pass` emitter defect (exit 2, nothing written). The child env is
+  // spread from process.env after this, so one assignment covers both.
+  process.env['OPENWOP_TARGET_MAJOR'] = String(major);
+  const manifest = JSON.parse(readFileSync(resolvePath(conformanceRoot, 'scenario-majors.json'), 'utf8')) as { majors: Record<string, number[]> };
+  const files = Object.entries(manifest.majors).filter(([, m]) => m.includes(major as number)).map(([f]) => `src/scenarios/${f}`);
+  return { major, files, source };
+}
+
 async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Promise<never> {
   const outPath = args.certify;
   if (outPath === undefined) process.exit(2);
 
   // (a) Fetch /.well-known/openwop verbatim + its canonical-JSON SHA-256.
+  // The target is resolved FIRST: `/.well-known/openwop` is one resource whose
+  // representation the `OpenWOP-Version` header selects, and through the overlap
+  // the header-less representation is the v1 document (spec/v2/core/versioning.md
+  // §1.1). Fetching it header-less on a major-2 run captured the v1 rendering, so
+  // `claimedProfiles` came out as the v1 set and the bundle described a contract
+  // the run never measured.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const conformanceRoot = resolvePath(here, '..');
+  const target = await resolveTargetMajor(args, baseUrl, apiKey, conformanceRoot);
   const discoveryUrl = `${baseUrl.replace(/\/$/, '')}/.well-known/openwop`;
   let document: DiscoveryPayload;
   try {
-    const resp = await fetch(discoveryUrl, { headers: { Accept: 'application/json' } });
+    const resp = await fetch(discoveryUrl, { headers: { Accept: 'application/json', ...(target.major === 2 ? { 'OpenWOP-Version': '2.0' } : {}) } });
     if (!resp.ok) {
       process.stderr.write(
         `openwop-conformance --certify: GET ${discoveryUrl} returned HTTP ${resp.status}.\n`,
@@ -338,12 +467,14 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   const sha256 = createHash('sha256').update(canonicalJSON(document)).digest('hex');
 
   // (b) Derive claimedProfiles from the captured document.
-  const claimedProfiles = claimedProfilesFor(document);
+  const claimedProfiles = target.major === 2 ? claimedProfilesForV2(document) : claimedProfilesFor(document);
+  // Major-2 floors come from spec/v2/profiles.json. Without this the derivation
+  // measures a v2 host against v1 scenario files a major-2 run never executes,
+  // and refuses certification for not running them.
+  setV2ProfileFloors(target.major === 2 ? v2ProfileFloors(conformanceRoot) : null);
 
   // (c) Run the suite, capturing per-scenario terminal state via the vitest
   // JSON reporter. server-targeted scenarios live under src/scenarios/.
-  const here = dirname(fileURLToPath(import.meta.url));
-  const conformanceRoot = resolvePath(here, '..');
   const reportDir = mkdtempSync(join(tmpdir(), 'owp-certify-'));
   const reportFile = join(reportDir, 'vitest-report.json');
   // RFC 0148 §A ledger sink (S6): every scenario file records its disposition
@@ -357,6 +488,8 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   if (args.impl) env.OPENWOP_IMPLEMENTATION_NAME = args.impl;
   if (args.implVersion) env.OPENWOP_IMPLEMENTATION_VERSION = args.implVersion;
 
+  env.OPENWOP_TARGET_MAJOR = String(target.major);
+  process.stderr.write(`openwop-conformance --certify: target major ${target.major} (${target.source}); ${target.files.length} scenario file(s)\n`);
   const vitestArgs: string[] = [
     'vitest',
     'run',
@@ -365,6 +498,8 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     '--reporter=json',
     `--outputFile=${reportFile}`,
     ...maxWorkersArgs(args.maxWorkers),
+    ...(args.filter ? ['--testNamePattern', args.filter] : []),
+    ...target.files,
   ];
   const runResult = spawnSync('npx', vitestArgs, { cwd: conformanceRoot, env, stdio: 'inherit' });
   if (runResult.error) {
@@ -466,6 +601,91 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     );
   }
 
+  if (args.bundleVersion === '3') {
+    // ── Bundle v3 (RFC 0168 §E) ─────────────────────────────────────────────
+    const build = args.hostBuild ?? (() => {
+      const mm = /^(image-digest|commit|artifact-sha256):(.+)$/.exec(process.env['OPENWOP_HOST_BUILD'] ?? '');
+      return mm ? { kind: mm[1] as BundleV3['host']['build']['kind'], id: mm[2] } : undefined;
+    })();
+    const signingKeyPem = args.signingKeyPath ? readFileSync(args.signingKeyPath, 'utf8') : process.env['OPENWOP_BUNDLE_SIGNING_KEY'];
+    const keyId = args.signingKeyId ?? process.env['OPENWOP_BUNDLE_SIGNING_KEY_ID'];
+    if (!build || !signingKeyPem || !keyId) {
+      process.stderr.write('openwop-conformance --certify: a v3 bundle needs --host-build <kind>:<id> (or OPENWOP_HOST_BUILD), --signing-key <pem> (or OPENWOP_BUNDLE_SIGNING_KEY) and --signing-key-id (or OPENWOP_BUNDLE_SIGNING_KEY_ID) — an unsigned bundle does not exist in v3 (RFC 0168 §E.2).\n');
+      process.exit(2);
+    }
+    const rows3: BundleV3Requirement[] = derived.requirements.map((r) => ({ id: r.requirementId, scenario: r.scenarioId, result: r.disposition as BundleV3Requirement['result'], ...(r.assertionCount === undefined ? {} : { assertions: r.assertionCount }), ...(r.detail === undefined ? {} : { detail: r.detail }) }));
+    const totals3 = derived.totals;
+    const doc3 = document as Record<string, unknown>;
+    const protocolVersions = Array.isArray(doc3['protocolVersions']) ? (doc3['protocolVersions'] as string[]) : [String(doc3['protocolVersion'] ?? '')];
+    const preferredVersion = typeof doc3['preferredVersion'] === 'string' ? (doc3['preferredVersion'] as string) : (protocolVersions[0] ?? '');
+    // witnessCount: witnessed executed-pass rows on the profile's floor. At major
+    // 2 the verdict already counted them against the declaration's floor
+    // (`witnessedPasses`); the v1 hand table below knows no v2 file and printed
+    // 0 for every v2 profile until rc.45 — the third unjoined floor site.
+    const verdictFor = (profile: string) => derived.verdicts.find((v) => v.profile === profile);
+    const witnessCountFor = (profile: string): number => {
+      if (target.major === 2) return verdictFor(profile)?.witnessedPasses ?? 0;
+      const floor = PROFILE_FLOOR_SCENARIOS[profile];
+      if (!floor) return 0;
+      const onFloor = (scenario: string): boolean => floor.required.includes(scenario) || (floor.requiredAnyPrefix ?? []).some((pre) => scenario.startsWith(pre));
+      return derived.requirements.filter((r) => r.disposition === 'executed-pass' && onFloor(r.scenarioId)).length;
+    };
+    // `certified` IS the verdict (RFC 0148 §A; RFC 0168 §E.1 adds the bundle-wide
+    // blocked rule). Until rc.45 it was `!notHeld && !rejected && blocked === 0`
+    // and never read `certifiable` — an empty v2 floor certified on no evidence.
+    const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: (verdictFor(p)?.certifiable ?? false) && !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
+    let relaxations: BundleV3['host']['relaxations'];
+    if (process.env['OPENWOP_HOST_RELAXATIONS']) { try { relaxations = JSON.parse(process.env['OPENWOP_HOST_RELAXATIONS']) as BundleV3['host']['relaxations']; } catch { process.stderr.write('openwop-conformance --certify: OPENWOP_HOST_RELAXATIONS is not JSON\n'); process.exit(2); } }
+    const lockPath = resolvePath(conformanceRoot, 'dist', 'spec-artifacts.lock.json');
+    const lock = existsSync(lockPath) ? (JSON.parse(readFileSync(lockPath, 'utf8')) as { version: string; stampSha256: string }) : undefined;
+    const nonPass = rows3.filter((r) => r.result !== 'executed-pass');
+    const unsigned: Omit<BundleV3, 'signature'> = {
+      bundleVersion: '3',
+      generatedAt: new Date().toISOString(),
+      suite: { name: '@openwop/openwop-conformance', version, targetMajor: target.major, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
+      host: { name: host.name, version: host.version, ...(host.vendor ? { vendor: host.vendor } : {}), build, signingKeyId: keyId, ...(relaxations && relaxations.length ? { relaxations } : {}) },
+      // `document` is what makes `claimedProfiles[].certified` checkable by
+      // someone other than this process (RFC 0148 §B(1)); v2 carried it and v3
+      // dropped it. `sha256` is a digest of `canonicalJSON(document)`, so the
+      // two are consistent by construction and the verifier re-derives it.
+      discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion, document },
+      claimedProfiles: claimed3,
+      results: { totals: totals3, requirements: rows3 },
+      witnessSha256: witnessDigest(rows3),
+      assertionCount: rows3.reduce((n, r) => n + (r.assertions ?? 0), 0),
+      ...(nonPass.length ? { detail: { nonPass: nonPass.map((r) => ({ id: r.id, result: r.result, reason: r.detail ?? '' })) } } : {}),
+    };
+    const signature = signBundleV3(unsigned, signingKeyPem, keyId);
+    const v3: BundleV3 = { ...unsigned, signature };
+    if (args.evidenceTier === 'independent') {
+      const vk = args.verifierKeyPath ? readFileSync(args.verifierKeyPath, 'utf8') : process.env['OPENWOP_BUNDLE_VERIFIER_KEY'];
+      const vkId = args.verifierKeyId ?? process.env['OPENWOP_BUNDLE_VERIFIER_KEY_ID'];
+      if (!vk || !vkId) { process.stderr.write('openwop-conformance --certify: --evidence-tier independent needs --verifier-key and --verifier-key-id (RFC 0168 §E.2)\n'); process.exit(2); }
+      v3.verifierSignature = verifierSign(unsigned, vk, vkId);
+    }
+    const secrets3 = evidenceSecretsFromEnv(process.env, [apiKey, signingKeyPem]);
+    const scrubbed3 = scrubEvidence(v3, secrets3);
+    const v3Out = scrubbed3.value as BundleV3;
+    const audit3 = verifyBundleV3(v3Out, { hostPublicKeyPem: publicKeyFromPrivate(signingKeyPem) });
+    const emitterDefects = audit3.rejections.filter((r) => !['blocked-certified', 'relaxed-profile-certified', 'independent-unverifiable'].includes(r.kind));
+    if (emitterDefects.length > 0) {
+      process.stderr.write('openwop-conformance --certify: assembled v3 bundle FAILED self-verification (emitter defect):\n' + emitterDefects.map((r) => `  - [${r.kind}] ${r.detail}`).join('\n') + '\n');
+      process.exit(2);
+    }
+    const v3Schema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'certification-bundle.schema.json'), 'utf8')) as Record<string, unknown>;
+    const v3Ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(v3Ajv);
+    v3Ajv.addSchema(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'ids.schema.json'), 'utf8')) as Record<string, unknown>);
+    const v3Validate = v3Ajv.compile(v3Schema);
+    if (!v3Validate(v3Out)) {
+      process.stderr.write('openwop-conformance --certify: assembled v3 bundle FAILED schema validation:\n' + `${JSON.stringify(v3Validate.errors, null, 2)}\n`);
+      process.exit(2);
+    }
+    writeFileSync(outPath, `${JSON.stringify(v3Out, null, 2)}\n`);
+    process.stdout.write(`openwop-conformance --certify: wrote bundle v3 → ${outPath} (${rows3.length} requirement rows, ${v3Out.assertionCount} assertions, witness ${v3Out.witnessSha256.slice(0, 12)}, signed by ${keyId}; certified: ${audit3.certifiedProfiles.join(', ') || 'none'})\n`);
+    process.exit(rejectedProfiles.length > 0 ? 3 : failed.length > 0 ? 1 : 0);
+  }
+
   if (args.bundleVersion === '2') {
     const scenarioIds = [...passed, ...failed, ...skipped].sort();
     const manifestSha = createHash('sha256').update(scenarioIds.join('\n'), 'utf8').digest('hex');
@@ -473,7 +693,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     // the discovery it saw. Two runs against differently-configured hosts are
     // different evidence, and this is what says so.
     const configSha = createHash('sha256')
-      .update(`${args.baseUrl}\n${sha256}\n${process.env['OPENWOP_REQUIRE_BEHAVIOR'] ?? ''}`, 'utf8')
+      .update(`${baseUrl}\n${sha256}\n${process.env['OPENWOP_REQUIRE_BEHAVIOR'] ?? ''}`, 'utf8')
       .digest('hex');
 
     // Rows come from the ledger (S6). A file that recorded nothing is
@@ -655,11 +875,19 @@ async function main(): Promise<never> {
   // ancestor config (e.g., a parent monorepo's vite.config.ts) when
   // the conformance package is used as a workspace member.
   const vitestArgs: string[] = ['run', '--config', resolvePath(conformanceRoot, 'vitest.config.ts')];
+  const target = await resolveTargetMajor(args, env.OPENWOP_BASE_URL, env.OPENWOP_API_KEY, conformanceRoot);
+  env.OPENWOP_TARGET_MAJOR = String(target.major);
+  if (!args.offline) {
+    process.stderr.write(`openwop-conformance: target major ${target.major} (${target.source}); ${target.files.length} scenario file(s)\n`);
+    vitestArgs.push(...target.files);
+  }
   if (args.offline) {
-    vitestArgs.push(
-      'src/scenarios/fixtures-valid.test.ts',
-      'src/scenarios/spec-corpus-validity.test.ts',
-    );
+    // Suite 1.154.0: the offline set is a DECLARED property of the package —
+    // exactly the server-free scenarios that ship in the tarball and run in
+    // the published layout. `spec-corpus-validity.test.ts` left the set: it is
+    // a corpus-coherence scenario (reads spec/v1, asserts nothing about a host)
+    // and is no longer packed. See conformance/README.md §"--offline".
+    vitestArgs.push('src/scenarios/fixtures-valid.test.ts');
   }
   if (args.filter) {
     vitestArgs.push('--testNamePattern', args.filter);

@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 interface DiscoveryDoc {
   capabilities?: { workspace?: { supported?: boolean } };
@@ -46,25 +47,25 @@ describe('workspace-cross-tenant-isolation: a workspace file MUST NOT leak acros
     // Owner A writes a file.
     const put = await seam({ tenant: 'wct1-tenant-a', workspace: 'ws-a', op: 'put', path: SEAM_PATH, content: 'A-only secret body' });
     if (put.status === 404) return softSkip('blocked', 'seam unwired — soft-skip the behavioral probe');
-    expect(put.status, driver.describe('agent-workspace.md §C PUT', 'seam put MUST succeed for the owning workspace')).toBe(200);
+    expect(put.status, req('openwop.it.workspace-cross-tenant-isolation.a-file-written-under-tenant-a-workspace-a-is-not-readable-under-a-different-owne', 'agent-workspace.md §C PUT', 'seam put MUST succeed for the owning workspace')).toBe(200);
 
     // A DIFFERENT workspace (same tenant) MUST NOT read it.
     const crossWs = await seam({ tenant: 'wct1-tenant-a', workspace: 'ws-b', op: 'get', path: SEAM_PATH });
     expect(
       crossWs.status === 404 || crossWs.status === 403,
-      driver.describe('agent-workspace.md §E WCT-1', `a cross-workspace get MUST fail closed (404/403, no existence leak), got ${crossWs.status}`),
+      req('openwop.it.workspace-cross-tenant-isolation.a-file-written-under-tenant-a-workspace-a-is-not-readable-under-a-different-owne', 'agent-workspace.md §E WCT-1', `a cross-workspace get MUST fail closed (404/403, no existence leak), got ${crossWs.status}`),
     ).toBe(true);
     const crossWsBody = JSON.stringify(crossWs.json ?? '');
     expect(
       !crossWsBody.includes('A-only secret body'),
-      driver.describe('agent-workspace.md §E WCT-1', 'a cross-workspace read MUST NOT surface the other owner\'s content'),
+      req('openwop.it.workspace-cross-tenant-isolation.a-file-written-under-tenant-a-workspace-a-is-not-readable-under-a-different-owne', 'agent-workspace.md §E WCT-1', 'a cross-workspace read MUST NOT surface the other owner\'s content'),
     ).toBe(true);
 
     // A DIFFERENT tenant MUST NOT read it either.
     const crossTenant = await seam({ tenant: 'wct1-tenant-b', workspace: 'ws-a', op: 'get', path: SEAM_PATH });
     expect(
       crossTenant.status === 404 || crossTenant.status === 403,
-      driver.describe('agent-workspace.md §E WCT-1', `a cross-tenant get MUST fail closed, got ${crossTenant.status}`),
+      req('openwop.it.workspace-cross-tenant-isolation.a-file-written-under-tenant-a-workspace-a-is-not-readable-under-a-different-owne', 'agent-workspace.md §E WCT-1', `a cross-tenant get MUST fail closed, got ${crossTenant.status}`),
     ).toBe(true);
 
     // And list MUST NOT enumerate the other owner's path.
@@ -72,14 +73,14 @@ describe('workspace-cross-tenant-isolation: a workspace file MUST NOT leak acros
     const listed = JSON.stringify((crossList.json as { files?: unknown })?.files ?? []);
     expect(
       !listed.includes(SEAM_PATH),
-      driver.describe('agent-workspace.md §E WCT-1', 'a cross-workspace list MUST NOT enumerate another owner\'s file'),
+      req('openwop.it.workspace-cross-tenant-isolation.a-file-written-under-tenant-a-workspace-a-is-not-readable-under-a-different-owne', 'agent-workspace.md §E WCT-1', 'a cross-workspace list MUST NOT enumerate another owner\'s file'),
     ).toBe(true);
 
     // Sanity: the owner itself still reads its file (isolation, not loss).
     const ownerRead = await seam({ tenant: 'wct1-tenant-a', workspace: 'ws-a', op: 'get', path: SEAM_PATH });
     expect(
       (ownerRead.json as { content?: string } | undefined)?.content,
-      driver.describe('agent-workspace.md §C GET', 'the owning workspace MUST still read its own file'),
+      req('openwop.it.workspace-cross-tenant-isolation.a-file-written-under-tenant-a-workspace-a-is-not-readable-under-a-different-owne', 'agent-workspace.md §C GET', 'the owning workspace MUST still read its own file'),
     ).toBe('A-only secret body');
   });
 });

@@ -81,16 +81,21 @@ echo "[1/9] Conformance suite (typecheck + server-free scenarios)..."
   npx tsc --noEmit
   npx vitest run \
     src/scenarios/fixtures-valid.test.ts \
-    src/scenarios/spec-corpus-validity.test.ts \
     src/scenarios/ai-envelope-shape.test.ts \
     src/scenarios/aiproviders-speechsynth-shape.test.ts \
     src/scenarios/artifact-type-pack-manifest-validation.test.ts \
-    src/scenarios/artifact-schema-compile-bounded.test.ts \
     src/scenarios/chat-card-pack-manifest-validation.test.ts \
-    src/scenarios/form-content-packs.test.ts \
     src/scenarios/x-openwop-form-pack-manifest.test.ts \
     src/scenarios/anonymous-actor-shape.test.ts
+  # Suite 2.0.0 (RFC 0168 §D.1): the corpus-coherence scenarios live in
+  # src/coherence/ (spec-corpus-validity, artifact-schema-compile-bounded,
+  # form-content-packs, … 29 files) and run here through their own config,
+  # emitting evidence/corpus-ledger.json — the "corpus gate" evidence tier.
+  # The suite's self-tests run under vitest.selftest.config.ts.
+  npx vitest run --config vitest.selftest.config.ts
 )
+node "$SPEC_ROOT/scripts/check-spec-coherence.mjs" --check
+node "$SPEC_ROOT/scripts/check-req-only.mjs"
 echo
 
 # 2. OpenAPI lint via redocly. Uses a PINNED version (not @latest) — the
@@ -136,6 +141,30 @@ node "$SPEC_ROOT/scripts/check-capability-declaration-classes.mjs"
 # COMPATIBILITY.md §7 — the deprecation register is an index of deprecations the RFC
 # process already made; this keeps every cited source carrying its annotation.
 node "$SPEC_ROOT/scripts/check-deprecations.mjs"
+# RFC 0148 §A / G3 — per-`it` requirement ids: the registry must match the scenario
+# sources, and a retired id must carry an alias row so bundles that cited it resolve.
+( cd "$SPEC_ROOT/conformance" && node scripts/generate-requirement-registry.mjs --check )
+# RFC 0166 §A/§B/§C — register dispositions, the one gap namespace, witness classes.
+node "$SPEC_ROOT/scripts/generate-gaps.mjs" --check
+node "$SPEC_ROOT/scripts/check-registers.mjs"
+node "$SPEC_ROOT/scripts/check-witness-classes.mjs"
+# v2 charter Phase 1 items 9 + 12 — the v1→v2 event codemap as data, and the cross-repo
+# evidence manifest behind every <repo>:<path> pointer.
+node "$SPEC_ROOT/scripts/generate-event-codemap.mjs" --check
+node "$SPEC_ROOT/scripts/generate-cross-repo-evidence.mjs" --check
+# RFC 0167 §D/§E — the v1→v2 migration register agrees with every child RFC's table,
+# every alias in the corpus has a deprecation row, and every codemod passes its
+# positive, negative, idempotence and self-sabotage legs.
+node "$SPEC_ROOT/scripts/check-migrations.mjs"
+node "$SPEC_ROOT/scripts/check-alias-coverage.mjs"
+node "$SPEC_ROOT/scripts/check-codemods.mjs"
+# RFC 0174 §A/§C/§D + RFC 0178 §B/§C/§E — status coherence (supersession, register location,
+# self-carry ratchet, banners, stale deferrals, schemas/README), waiver authority,
+# falsifiability tables as data, contradicting gaps.
+node "$SPEC_ROOT/scripts/check-rfc-status-coherence.mjs"
+node "$SPEC_ROOT/scripts/check-waiver-authority.mjs"
+node "$SPEC_ROOT/scripts/check-falsifiability.mjs"
+node "$SPEC_ROOT/scripts/check-gap-contradictions.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).
@@ -195,6 +224,11 @@ node "$(dirname "$0")/check-doc-tallies.mjs"
 # RFC 0147 and all three Workstream 1-3 children, i.e. the whole program spine
 # was missing from the surface that exists to make waivers auditable.
 node "$(dirname "$0")/check-waiver-ledger.mjs"
+# RFC 0156 §B outcomes need somewhere to live and a count that can tell them
+# apart. The previous count matched free text over the gap registers, so a
+# review whose outcome was `withdrawn` or `corrective-rfc-required` counted
+# exactly like a `ratified` one. Only `ratified` discharges.
+node "$(dirname "$0")/check-waiver-retrospective.mjs"
 # RFC 0156 §F — the assurance manifest is current AND no public surface carries
 # a claim token the manifest does not permit (RFC 0147 §A claim table).
 node "$(dirname "$0")/generate-assurance-status.mjs" --check
@@ -233,6 +267,35 @@ echo
 
 echo "[9/9] Published-version identity..."
 node "$(dirname "$0")/check-published-suite-identity.mjs"
+node "$(dirname "$0")/check-published-suite-identity.mjs" --package spec-artifacts
+node "$(dirname "$0")/generate-spec-artifacts.mjs" --check
+echo
+
+# ── Stage 10: the v2 tree (v2 charter Phase 3) ──────────────────────────────
+# spec/v2/, schemas/v2/, api/v2/ are in construction and never packed into the
+# 1.x suite. These gates are the RFC 0169/0172/0174/0178 machinery over that
+# tree; each is green-with-a-report while its input does not exist yet, never
+# green-by-silence. check-threat-model-template is strict since P3-D landed the
+# interop model and replay §6–§8.
+echo "[10/10] v2 tree (declaration, generators, budget, paths, deprecation dates, Accepted predicate, threat-model template)..."
+node "$(dirname "$0")/check-declaration.mjs"
+node "$(dirname "$0")/check-shipped-changelog.mjs"
+node "$(dirname "$0")/generate-error-envelope.mjs" --check
+node "$(dirname "$0")/check-v2-schemas.mjs"
+node "$(dirname "$0")/check-core-budget.mjs"
+python3 "$(dirname "$0")/derive-v2-api.py" --check
+# Same pinned + cached invocations as steps 2/3: a bare `npx -y @pkg` here re-resolved and reinstalled both CLIs (7 minutes on CI, which timed the job out).
+( cd "$SPEC_ROOT/api/v2" && npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml --format=summary 2>&1 | tail -2 )
+npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint "$SPEC_ROOT/api/seams-v2.yaml" --config "$SPEC_ROOT/api/v2/redocly.yaml" --format=summary 2>&1 | tail -2
+npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/v2/asyncapi.yaml" 2>&1 | /usr/bin/grep -E "is valid|error" | head -3
+node "$(dirname "$0")/check-path-parity.mjs"
+node "$(dirname "$0")/check-id-kinds-bound.mjs"
+node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
+node "$(dirname "$0")/generate-v1-eos-clock.mjs" --check
+node "$(dirname "$0")/check-removal-dates.mjs"
+node "$(dirname "$0")/check-retention-floors.mjs"
+node "$(dirname "$0")/check-accepted-predicate.mjs"
+node "$(dirname "$0")/check-threat-model-template.mjs"
 echo
 
 # Advisory tail — the gate above validated the WORKING TREE. Nothing so far

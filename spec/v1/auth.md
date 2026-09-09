@@ -121,6 +121,43 @@ An **anonymous actor** (`principalKind: "anonymous"`) represents a caller who au
 
 A host that advertises `capabilities.anonymousActor` (see `capabilities.md` §`anonymousActor`) and dispatches through a public surface MUST set `owner.principalKind: "anonymous"` on the resulting run so the authorization is observable and auditable. The `user`/`agent` values are, for now, a passive marker (RFC 0132 §Unresolved-Q1); only `anonymous` binds behavior.
 
+### The Subject record (RFC 0165 §B)
+
+`owner.principal` is an opaque string that each authentication lane mints by its own rule,
+which is why two lanes can produce two subjects for one human (RFC 0159). `owner.subject`
+(`schemas/subject.schema.json`) is the OPTIONAL, issuer-scoped form of the same identity:
+
+<!-- normative-example: subject.schema.json -->
+```json
+{ "issuer": "https://idp.example.com/entity", "subjectId": "idp-op-8f3a", "tenant": "acme",
+  "lane": "saml", "kind": "user", "keyClass": "opaque-idp" }
+```
+
+With `issuer` in the key, two trust roots issuing the same identifier are distinct by
+construction. A host that emits it:
+
+- **MUST** set `subject.tenant` equal to `owner.tenant`, `subject.subjectId` equal to
+  `owner.principal` when both are present, and `subject.kind` equal to `owner.principalKind`
+  when both are present (`workload` corresponds to `principalKind` absent).
+- **MUST** set `keyClass` when `lane` is `saml` or `scim`, equal to the advertised
+  `capabilities.auth.subjectLinkKey` when both identity profiles are advertised (RFC 0163 §A,
+  RFC 0164 §A.3).
+- **MUST NOT** put an email address, a display name, a token, or a certificate in `subjectId`
+  (SECURITY invariant `subject-record-opaque`; the schema forbids `@` and whitespace).
+- **MUST** echo the record verbatim on `run.started` (RFC 0048 §C) and copy it verbatim onto a
+  fork (`replay.md` §"Fork ownership").
+- **MUST** answer reads of runs created before it emitted subjects with a synthesized
+  **legacy subject** — `issuer: "urn:openwop:legacy"`, `subjectId: <owner.principal>`,
+  `lane: <the lane the host can attest, else "api-key">`, `kind: <principalKind ?? "user">` —
+  and **MUST NOT** treat a legacy subject as linkable (`auth-profiles.md` §"Subject linking";
+  invariant `subject-legacy-not-linkable`). A run with no `owner.principal` yields no subject.
+- MAY carry `subject.actor`: the delegating subject (RFC 0154 §B inverted to the run's point
+  of view). Depth **MUST NOT** exceed 4; a deeper chain is refused with `run_forbidden`, never
+  truncated. `actor` is provenance, not authorization; a caller **MUST NOT** self-assert it.
+
+The record is optional in v1.x so both hosts populate it before the v2 major requires it and
+removes the bare `principal`.
+
 ## Role-based authorization (RFC 0049)
 
 A host MAY advertise `capabilities.authorization` to bind an RFC 0048 `principal`'s **role** to **scopes** and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key **scope grammar** (the §Authorization scope vocabulary above) — roles resolve _to_ scopes; no new grammar is introduced.
@@ -210,14 +247,7 @@ An OpenWOP-compliant server SHOULD log every authenticated request with at minim
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                                                                                                                                                                                   | Owner             |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| A1  | ✅ Closed as optional profile in `auth-profiles.md`: OAuth2 client-credentials flow.                                                                                                                                                                                                                                                                                  | conformance minor |
-| A2  | ✅ Closed as optional profile in `auth-profiles.md`: mTLS deployment profile.                                                                                                                                                                                                                                                                                         | conformance minor |
-| A3  | ✅ Closed as optional profile in `auth-profiles.md`: API-key rotation/grace-period semantics.                                                                                                                                                                                                                                                                         | conformance minor |
-| A4  | Webhook HMAC is now specified in `webhooks.md`; remaining work is shared auth-profile conformance across REST and webhook verification examples                                                                                                                                                                                                                       | conformance minor |
-| A5  | ✅ Closed as optional capability `host.oauth` (RFC 0047): OAuth 2.0 **authorization-code + refresh** for a node/connector acquiring a third-party token on a user's behalf. Distinct from A1 (client-credentials = host auth); 0047 is third-party delegation — acquired tokens stored as `host.credentials` (RFC 0046) entries, resolved into the node sandbox only. | conformance minor |
-| A6  | Workload identity + delegated actor chain (RFC 0154 §A–§D): prose landed 2026-08-16 in §"Workload identity and delegated actor chain"; shape + seam + witness landed 2026-08-13. **Open:** no host advertises the profile (legs resolve to `blocked`); mandatory delegation proof format (0154 G1); DPoP SDK availability (G2); provenance attestations §E (cross-repo). | conformance minor |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.auth.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

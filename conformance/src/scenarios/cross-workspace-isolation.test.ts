@@ -23,6 +23,7 @@
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
 
 const ISOLATION_CODES: ReadonlySet<string> = new Set(['run_forbidden', 'not_found']);
 
@@ -41,7 +42,7 @@ describe('cross-workspace-isolation: run-ownership echo shape (RFC 0048 §C)', (
     if (owner === undefined) return softSkip('blocked', 'single-tenant host — owner omitted (owner === undefined)');
     expect(
       typeof owner.tenant === 'string' && owner.tenant.length > 0,
-      driver.describe('RFC 0048 §C', 'RunSnapshot.owner MUST carry a non-empty tenant when present'),
+      req('openwop.it.cross-workspace-isolation.owner-when-present-on-a-run-snapshot-carries-a-non-empty-tenant', 'RFC 0048 §C', 'RunSnapshot.owner MUST carry a non-empty tenant when present'),
     ).toBe(true);
   });
 });
@@ -55,7 +56,7 @@ describe('cross-workspace-isolation: a principal MUST NOT read another workspace
 
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.cross-workspace-isolation.cross-workspace-read-fails-closed-with-run-forbidden', 
         'spec/v1/auth.md §Identity claims',
         'a cross-workspace read MUST fail closed (4xx), never return the other workspace\'s run',
       ),
@@ -64,7 +65,7 @@ describe('cross-workspace-isolation: a principal MUST NOT read another workspace
     const code = (res.json as { error?: string } | undefined)?.error;
     expect(
       code !== undefined && ISOLATION_CODES.has(code),
-      driver.describe(
+      req('openwop.it.cross-workspace-isolation.cross-workspace-read-fails-closed-with-run-forbidden', 
         'spec/v1/rest-endpoints.md run_forbidden',
         `error MUST be one of {${[...ISOLATION_CODES].join(', ')}} (fail-closed, no existence leak), got: ${code ?? '(absent)'}`,
       ),

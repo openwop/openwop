@@ -28,6 +28,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-nl-to-format-engaged';
@@ -69,17 +71,17 @@ const NL_THEN_COERCED_PROGRAM = [
 
 describe.skipIf(HTTP_SKIP)('envelope-nl-to-format-engaged: runtime behavior (RFC 0032 §B.5 MAY)', () => {
   it('when retry exhaustion triggers the NL-to-Format fallback, exactly one `envelope.nlToFormat.engaged` event fires', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(NL_THEN_COERCED_PROGRAM);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(seed.status).toBe(200);
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const engagements = events.filter((e) => e.type === 'envelope.nlToFormat.engaged');
     expect(
       engagements.length,
-      driver.describe(
+      req('openwop.it.envelope-nl-to-format-engaged.when-retry-exhaustion-triggers-the-nl-to-format-fallback-exactly-one-envelope-nl', 
         'RFCS/0032-envelope-reliability-events.md §B.5',
         'exactly one envelope.nlToFormat.engaged event MUST fire when the host detects NL-shape responses after retry exhaustion',
       ),
@@ -87,17 +89,17 @@ describe.skipIf(HTTP_SKIP)('envelope-nl-to-format-engaged: runtime behavior (RFC
   });
 
   it('`originalEnvelopeType` carries the envelope kind the original attempt targeted', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(NL_THEN_COERCED_PROGRAM);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const engagement = events.find((e) => e.type === 'envelope.nlToFormat.engaged');
     expect(engagement).toBeDefined();
     expect(
       typeof engagement!.payload?.originalEnvelopeType,
-      driver.describe(
+      req('openwop.it.envelope-nl-to-format-engaged.originalenvelopetype-carries-the-envelope-kind-the-original-attempt-targeted', 
         'RFCS/0032-envelope-reliability-events.md §B.5',
         'originalEnvelopeType MUST be present and string-typed — derived from the response-schema or wrapping metadata',
       ),
@@ -106,19 +108,19 @@ describe.skipIf(HTTP_SKIP)('envelope-nl-to-format-engaged: runtime behavior (RFC
   });
 
   it('`fallbackCalls >= 1` reports the number of secondary LLM calls used to reformat free-form output into the envelope schema', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(NL_THEN_COERCED_PROGRAM);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const engagement = events.find((e) => e.type === 'envelope.nlToFormat.engaged');
     expect(engagement).toBeDefined();
     const fallbackCalls = engagement!.payload?.fallbackCalls;
     expect(typeof fallbackCalls).toBe('number');
     expect(
       fallbackCalls as number,
-      driver.describe(
+      req('openwop.it.envelope-nl-to-format-engaged.fallbackcalls-1-reports-the-number-of-secondary-llm-calls-used-to-reformat-free', 
         'RFCS/0032-envelope-reliability-events.md §B.5',
         'fallbackCalls MUST be >= 1 — the fallback fired at least one secondary call to reformat the free-form output',
       ),
@@ -126,16 +128,16 @@ describe.skipIf(HTTP_SKIP)('envelope-nl-to-format-engaged: runtime behavior (RFC
   });
 
   it('the eventual envelope acceptance (when fallback succeeds) records normally via downstream RunEventDoc', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock(NL_THEN_COERCED_PROGRAM);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const events = await runAndReadEvents();
-    if (events === null) return;
+    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
     const nodeCompleted = events.find((e) => e.type === 'node.completed' && e.nodeId === NODE_ID);
     expect(
       nodeCompleted,
-      driver.describe(
+      req('openwop.it.envelope-nl-to-format-engaged.the-eventual-envelope-acceptance-when-fallback-succeeds-records-normally-via-dow', 
         'RFCS/0032-envelope-reliability-events.md §B.5',
         'NL-to-Format fallback success MUST reach node.completed — the coerced envelope flows downstream like any other accepted envelope',
       ),
@@ -143,7 +145,7 @@ describe.skipIf(HTTP_SKIP)('envelope-nl-to-format-engaged: runtime behavior (RFC
     const completedPayload = JSON.stringify(nodeCompleted?.payload ?? {});
     expect(
       completedPayload.includes('coerced-ok'),
-      driver.describe(
+      req('openwop.it.envelope-nl-to-format-engaged.the-eventual-envelope-acceptance-when-fallback-succeeds-records-normally-via-dow', 
         'RFCS/0032-envelope-reliability-events.md §B.5',
         'the coerced structured data from the secondary call MUST flow to the downstream RunEventDoc',
       ),

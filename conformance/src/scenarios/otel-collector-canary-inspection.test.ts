@@ -37,6 +37,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { OtelCollector } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * NOT callback-shaped, despite importing the collector.
@@ -119,7 +120,7 @@ function metricsPayload(metricName: string, attrs: Record<string, string>): unkn
 }
 
 // NOTE: assertions here intentionally use bare `expect(...)` rather than
-// `expect(..., driver.describe('spec.md §section', 'requirement'))`. This is a
+// `expect(..., req('openwop.it.<file>.<slug>', 'spec.md §section', 'requirement'))`. This is a
 // HARNESS self-test — it verifies the conformance collector's own
 // `findCanaryLeakage()` inspector, not a host's compliance with a spec
 // requirement, so there is no spec section to cite (consistent with other
@@ -196,7 +197,7 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
     );
 
     const leaks = collector.findCanaryLeakage(CANARY);
-    expect(leaks.length).toBeGreaterThan(0);
+    expect(leaks.length, req('openwop.it.otel-collector-canary-inspection.catches-a-canary-embedded-in-a-span-attribute-value', 'KNOWN-LIMITS.md', 'catches a canary embedded in a span attribute value')).toBeGreaterThan(0);
     const attrLeak = leaks.find((l) => l.surface === 'span.attribute');
     expect(attrLeak).toBeDefined();
     expect(attrLeak!.key).toBe('http.request.header.authorization');
@@ -216,7 +217,7 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
 
     const leaks = collector.findCanaryLeakage(CANARY);
     const surfaces = new Set(leaks.map((l) => l.surface));
-    expect(surfaces.has('span.name')).toBe(true);
+    expect(surfaces.has('span.name'), req('openwop.it.otel-collector-canary-inspection.catches-a-canary-in-a-resource-attribute-and-in-a-span-name', 'KNOWN-LIMITS.md', 'catches a canary in a resource attribute and in a span name')).toBe(true);
     expect(surfaces.has('span.resourceAttribute')).toBe(true);
   });
 
@@ -227,7 +228,7 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
 
     const leaks = collector.findCanaryLeakage(CANARY);
     const metricLeak = leaks.find((l) => l.surface === 'metric.attribute');
-    expect(metricLeak).toBeDefined();
+    expect(metricLeak, req('openwop.it.otel-collector-canary-inspection.catches-a-canary-in-a-metric-data-point-attribute', 'KNOWN-LIMITS.md', 'catches a canary in a metric data-point attribute')).toBeDefined();
     expect(metricLeak!.emitterName).toBe('openwop.node.duration');
   });
 
@@ -240,7 +241,7 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
 
     const leaks = collector.findCanaryLeakage(CANARY);
     const resourceLeaks = leaks.filter((l) => l.surface === 'span.resourceAttribute' && l.key === 'deployment.token');
-    expect(resourceLeaks.length).toBe(1);
+    expect(resourceLeaks.length, req('openwop.it.otel-collector-canary-inspection.dedups-a-resource-attribute-leak-to-one-hit-even-when-shared-across-many-spans', 'KNOWN-LIMITS.md', 'dedups a resource-attribute leak to ONE hit even when shared across many spans')).toBe(1);
   });
 
   it('reports ZERO hits when the host redacts the canary before export (positive control)', async () => {
@@ -255,7 +256,7 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
     );
     await postMetrics(metricsPayload('openwop.node.duration', { 'secret.echo': REDACTED }));
 
-    expect(collector.findCanaryLeakage(CANARY)).toEqual([]);
+    expect(collector.findCanaryLeakage(CANARY), req('openwop.it.otel-collector-canary-inspection.reports-zero-hits-when-the-host-redacts-the-canary-before-export-positive-contro', 'KNOWN-LIMITS.md', 'reports ZERO hits when the host redacts the canary before export (positive control)')).toEqual([]);
   });
 
   it('an empty or whitespace canary never produces a (vacuous) hit', async () => {
@@ -269,7 +270,7 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
       }),
     );
 
-    expect(collector.findCanaryLeakage('')).toEqual([]);
+    expect(collector.findCanaryLeakage(''), req('openwop.it.otel-collector-canary-inspection.an-empty-or-whitespace-canary-never-produces-a-vacuous-hit', 'KNOWN-LIMITS.md', 'an empty or whitespace canary never produces a (vacuous) hit')).toEqual([]);
     expect(collector.findCanaryLeakage('   ')).toEqual([]);
   });
 });

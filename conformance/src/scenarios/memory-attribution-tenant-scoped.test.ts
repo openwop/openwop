@@ -14,9 +14,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readMemoryAttributionCap, emitsWriteEvents, seedRun, memoryWrittenEvents } from '../lib/memoryAttribution.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('memory-attribution-tenant-scoped (RFC 0057 §C)', () => {
   it("a run's memory.written events appear only on that run's stream", async () => {
@@ -27,7 +27,7 @@ describe('memory-attribution-tenant-scoped (RFC 0057 §C)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (seam, prior step, or fixture unavailable)');
     }
     const events = await memoryWrittenEvents(runId);
     if (events.length === 0) return softSkip('blocked', 'precondition not met — `events.length === 0` returned early (seam, prior step, or fixture unavailable)');
@@ -37,7 +37,7 @@ describe('memory-attribution-tenant-scoped (RFC 0057 §C)', () => {
       if (typeof e.runId === 'string') {
         expect(
           e.runId,
-          driver.describe('RFC 0057 §C', "a memory.written event MUST belong to its own run's stream (CTI-1)"),
+          req('openwop.it.memory-attribution-tenant-scoped.a-run-s-memory-written-events-appear-only-on-that-run-s-stream', 'RFC 0057 §C', "a memory.written event MUST belong to its own run's stream (CTI-1)"),
         ).toBe(runId);
       }
     }

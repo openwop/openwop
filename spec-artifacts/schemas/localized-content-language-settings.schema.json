@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/localized-content-language-settings.schema.json",
+  "title": "LocalizedContentLanguageSettings",
+  "description": "RFC 0103 (spec/v1/localized-content.md §B). Per-tenant authoring configuration for the content surface. Invariant: `baseLocale` MUST NOT appear in `supportedLocales` (the base locale is carried by section `data`, supported locales by `localizations`). This object is the source of truth for the host's advertised `content` capability block; the advertisement MUST reflect it (`baseLocale` equal, advertised `supportedLocales` equal or a subset).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["baseLocale", "supportedLocales", "autoTranslateOnPublish"],
+  "properties": {
+    "baseLocale": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "description": "The locale section `data` is authored in. MUST equal `capabilities.i18n.defaultLocale`."
+    },
+    "supportedLocales": {
+      "type": "array",
+      "description": "BCP-47 tags the tenant authors content translations for. MUST NOT contain `baseLocale`.",
+      "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+      "uniqueItems": true
+    },
+    "autoTranslateOnPublish": {
+      "type": "boolean",
+      "description": "Whether the host auto-translates missing locale fields on publish (host-extension behavior; informational at the protocol layer)."
+    }
+  }
+}

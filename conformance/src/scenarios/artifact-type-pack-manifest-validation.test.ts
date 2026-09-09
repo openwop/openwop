@@ -47,6 +47,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'artifact-type-pack-manifest.schema.json');
 
@@ -87,7 +88,7 @@ describe('category: artifact-type-pack manifest validation', () => {
     const ok = validate(validManifest());
     expect(
       ok,
-      `artifact-type-packs.md §"Manifest format": a well-formed kind:"artifact-type" manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.artifact-type-pack-manifest-validation.positive-a-valid-artifact-type-pack-manifest-validates-cleanly', 'artifact-type-packs.md', `artifact-type-packs.md §"Manifest format": a well-formed kind:"artifact-type" manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -96,45 +97,45 @@ describe('category: artifact-type-pack manifest validation', () => {
     const errs = failsWith(manifest, 'additionalProperties');
     expect(
       errs.some((e) => (e.params as { additionalProperty?: string }).additionalProperty === 'nodes'),
-      'artifact-type-packs.md §"Pack kind": one kind per pack — a foreign `nodes[]` field MUST be rejected (additionalProperties:false)',
+      req('openwop.it.artifact-type-pack-manifest-validation.negative-a-manifest-mixing-artifacttypes-and-nodes-is-rejected-pack-kind-invalid', 'artifact-type-packs.md', 'artifact-type-packs.md §"Pack kind": one kind per pack — a foreign `nodes[]` field MUST be rejected (additionalProperties:false)'),
     ).toBe(true);
   });
 
   it('negative: an empty artifactTypes[] is rejected (a pack MUST declare ≥1 type)', () => {
     const manifest = { ...validManifest(), artifactTypes: [] };
     const errs = failsWith(manifest, 'minItems');
-    expect(errs.length, 'artifact-type-pack-manifest.schema.json: artifactTypes minItems:1').toBeGreaterThan(0);
+    expect(errs.length, req('openwop.it.artifact-type-pack-manifest-validation.negative-an-empty-artifacttypes-is-rejected-a-pack-must-declare-1-type', 'artifact-type-packs.md', 'artifact-type-pack-manifest.schema.json: artifactTypes minItems:1')).toBeGreaterThan(0);
   });
 
   it('negative: an artifactTypeId that is not reverse-DNS scoped is rejected', () => {
     const manifest = validManifest();
     manifest.artifactTypes[0]!.artifactTypeId = 'Vendor.Acme.Model'; // uppercase scope
     const errs = failsWith(manifest, 'pattern');
-    expect(errs.length, 'artifact-type-packs.md: artifactTypeId MUST match the reverse-DNS pattern').toBeGreaterThan(0);
+    expect(errs.length, req('openwop.it.artifact-type-pack-manifest-validation.negative-an-artifacttypeid-that-is-not-reverse-dns-scoped-is-rejected', 'artifact-type-packs.md', 'artifact-type-packs.md: artifactTypeId MUST match the reverse-DNS pattern')).toBeGreaterThan(0);
   });
 
   it('negative: an unknown rendering.display value is rejected (closed RFC 0055 enum, card excluded)', () => {
     const manifest = validManifest();
     (manifest.artifactTypes[0]!.rendering as { display: string }).display = '3d-viewport';
     const errs = failsWith(manifest, 'enum');
-    expect(errs.length, 'artifact-type-packs.md: rendering.display reuses the closed ai-envelope §"Rendering hints" enum').toBeGreaterThan(0);
+    expect(errs.length, req('openwop.it.artifact-type-pack-manifest-validation.negative-an-unknown-rendering-display-value-is-rejected-closed-rfc-0055-enum-car', 'RFC 0055', 'artifact-type-packs.md: rendering.display reuses the closed ai-envelope §"Rendering hints" enum')).toBeGreaterThan(0);
   });
 
   it('negative: a non-conforming exportFormats identifier is rejected (reserved-core + vendor.*/x- only)', () => {
     const manifest = validManifest();
     manifest.artifactTypes[0]!.exportFormats = ['PPTX']; // uppercase, unprefixed
     const errs = failsWith(manifest, 'pattern');
-    expect(errs.length, 'artifact-type-packs.md: exportFormats identifiers are lowercase core ids OR vendor.*/x- extensions').toBeGreaterThan(0);
+    expect(errs.length, req('openwop.it.artifact-type-pack-manifest-validation.negative-a-non-conforming-exportformats-identifier-is-rejected-reserved-core-ven', 'artifact-type-packs.md', 'artifact-type-packs.md: exportFormats identifiers are lowercase core ids OR vendor.*/x- extensions')).toBeGreaterThan(0);
   });
 
   it('positive: the validation field accepts "open"/"closed" and rejects other values (RFC 0075)', () => {
     for (const v of ['open', 'closed']) {
       const m = validManifest();
       (m.artifactTypes[0] as Record<string, unknown>).validation = v;
-      expect(validate(m), `artifact-type-packs.md §validation: "${v}" MUST validate (RFC 0075)`).toBe(true);
+      expect(validate(m), req('openwop.it.artifact-type-pack-manifest-validation.positive-the-validation-field-accepts-open-closed-and-rejects-other-values-rfc-0', 'RFC 0075', `artifact-type-packs.md §validation: "${v}" MUST validate (RFC 0075)`)).toBe(true);
     }
     const bad = validManifest();
     (bad.artifactTypes[0] as Record<string, unknown>).validation = 'lenient';
-    expect(failsWith(bad, 'enum').length, 'validation MUST be open|closed').toBeGreaterThan(0);
+    expect(failsWith(bad, 'enum').length, req('openwop.it.artifact-type-pack-manifest-validation.positive-the-validation-field-accepts-open-closed-and-rejects-other-values-rfc-0', 'RFC 0075', 'validation MUST be open|closed')).toBeGreaterThan(0);
   });
 });

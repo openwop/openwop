@@ -21,9 +21,9 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 const BASE = 'https://openwop.dev/spec/v1/';
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -47,18 +47,18 @@ describe('agent-requires-capabilities-shape: AgentManifest.requiresCapabilities 
   it('a manifest WITH requiresCapabilities validates', () => {
     expect(
       manifest({ ...base, requiresCapabilities: ['host.workspace', 'aiProviders.toolCalling'] }),
-      why('RFC 0092 §A', 'a manifest declaring requiresCapabilities MUST validate'),
+      req('openwop.it.agent-requires-capabilities-shape.a-manifest-with-requirescapabilities-validates', 'RFC 0092 §A', 'a manifest declaring requiresCapabilities MUST validate'),
     ).toBe(true);
   });
 
   it('a manifest WITHOUT it still validates (absent ⇒ no requirements)', () => {
-    expect(manifest(base), why('RFC 0092 §A', 'requiresCapabilities is optional')).toBe(true);
+    expect(manifest(base), req('openwop.it.agent-requires-capabilities-shape.a-manifest-without-it-still-validates-absent-no-requirements', 'RFC 0092 §A', 'requiresCapabilities is optional')).toBe(true);
   });
 
   it('rejects a non-string-array value', () => {
     expect(
       manifest({ ...base, requiresCapabilities: [123] }),
-      why('RFC 0092 §A', 'requiresCapabilities items MUST be non-empty strings'),
+      req('openwop.it.agent-requires-capabilities-shape.rejects-a-non-string-array-value', 'RFC 0092 §A', 'requiresCapabilities items MUST be non-empty strings'),
     ).toBe(false);
   });
 });

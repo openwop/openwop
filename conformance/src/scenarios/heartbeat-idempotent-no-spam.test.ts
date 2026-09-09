@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { readHeartbeatCap, heartbeatSupported, tickHeartbeat } from '../lib/heartbeat.js';
+import { req } from '../lib/requirement-ids.js';
 
 function changedCount(json: unknown): number | null {
   const sc = (json as { stateChanged?: unknown[] } | undefined)?.stateChanged;
@@ -32,13 +32,13 @@ describe('heartbeat-idempotent-no-spam (RFC 0060 §B.5)', () => {
     if (unchanged === null) return softSkip('blocked', 'host doesn\'t surface stateChanged on the seam');
     expect(
       unchanged,
-      driver.describe('RFC 0060 §B.5', 'an unchanged tick MUST NOT emit heartbeat.stateChanged'),
+      req('openwop.it.heartbeat-idempotent-no-spam.an-unchanged-tick-enqueues-nothing-only-a-transition-does', 'RFC 0060 §B.5', 'an unchanged tick MUST NOT emit heartbeat.stateChanged'),
     ).toBe(0);
     const transition = await tickHeartbeat({ heartbeatId: hb, observedState: { unread: 3 } });
     if (transition === null) return softSkip('blocked', 'precondition not met — `transition === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       changedCount(transition.json),
-      driver.describe('RFC 0060 §B.5', 'a transitioning tick MUST emit exactly one heartbeat.stateChanged'),
+      req('openwop.it.heartbeat-idempotent-no-spam.an-unchanged-tick-enqueues-nothing-only-a-transition-does', 'RFC 0060 §B.5', 'a transitioning tick MUST emit exactly one heartbeat.stateChanged'),
     ).toBe(1);
   });
 });

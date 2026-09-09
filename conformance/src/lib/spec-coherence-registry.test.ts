@@ -18,13 +18,16 @@ import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL, SPEC_COHERENCE_EXCLUDE
 import { resolveFileRecord } from './scenario-disposition.js';
 
 const SCENARIOS = new URL('../scenarios/', import.meta.url).pathname;
+const COHERENCE = new URL('../coherence/', import.meta.url).pathname;
 
 function derive(): { pure: string[]; hostTouching: string[] } {
   const pure: string[] = [];
   const hostTouching: string[] = [];
-  for (const f of readdirSync(SCENARIOS)) {
+  // Suite 2.0.0: coherence scenarios live in src/coherence/; the derivation
+  // still scans src/scenarios/ so a coherence-shaped file left there is caught.
+  for (const dir of [SCENARIOS, COHERENCE]) for (const f of readdirSync(dir)) {
     if (!f.endsWith('.test.ts')) continue;
-    const src = readFileSync(join(SCENARIOS, f), 'utf8');
+    const src = readFileSync(join(dir, f), 'utf8');
     if (!/V1_DIR\s*===?\s*null/.test(src)) continue;
     (/\bdriver\.(get|post|delete)\b/.test(src) ? hostTouching : pure).push(f);
   }

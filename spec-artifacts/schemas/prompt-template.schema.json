@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/prompt-template.schema.json",
+  "title": "PromptTemplate",
+  "description": "Canonical wire shape for a named, versioned, variable-bound prompt body referenced by workflow nodes and agent manifests. See spec/v1/prompts.md §\"PromptTemplate\" for the canonical contract, RFC 0027 for the rationale, and prompt-ref.schema.json for the reference type that points at instances of this shape. Variable interpolation MUST use Mustache-compatible `{{varName}}` placeholders; unresolved required variables MUST cause the node to fail with `prompt_variable_unresolved`; unresolved optional variables render as the empty string per RFC 0027 §A.\n\nThe `text` field MAY contain `<UNTRUSTED>...</UNTRUSTED>` markers verbatim — hosts MUST preserve them through composition per SECURITY/threat-model-prompt-injection.md. Variables sourced from `secret` MUST be replaced with `[REDACTED:<secretId>]` markers in any observability output (e.g., `prompt.composed` events) per SECURITY/threat-model-secret-leakage.md §SR-1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["templateId", "version", "kind", "text"],
+  "properties": {
+    "templateId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+      "description": "Stable identifier. Convention: vendor-prefixed for portable templates (`vendor.acme.writer.v2`) or unprefixed for host-resident templates (`writer`). Same naming discipline as node-pack typeIds (host-extensions.md §\"Canonical-prefix table\")."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+      "description": "Semantic Versioning 2.0.0. Bumping major implies a breaking variable-schema or text change; consumers MUST pin to a specific version via PromptRef.version if they care about exact bodies."
+    },
+    "kind": {
+      "$ref": "./prompt-kind.schema.json",
+      "description": "Role this template plays when composed into an LLM call. A node MAY reference one template of each kind. Relative $ref resolves to the shared enum file for redocly's local-file walker; Ajv resolves it equivalently via the schema registry."
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 65536,
+      "description": "Template body. Mustache-compatible `{{varName}}` placeholders are substituted at compose time using bindings from PromptVariable.source + variableOverrides. Hosts MAY cap below 65536 via capabilities.prompts.maxTemplateBytes, but MUST NOT exceed it."
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Human-readable display name surfaced in authoring UIs and template pickers."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "One-paragraph description of what the template is for. Surfaced in authoring UI hover-text and library-list cards."
+    },
+    "variables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PromptVariable" },
+      "description": "Typed interpolation slots. Hosts MUST validate runtime bindings against this array before composing. A `{{varName}}` placeholder that has no matching entry in `variables[]` MAY appear (treated as an optional variable with source `input` and no default) — hosts SHOULD warn at install time."
+    },
+    "modelHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Non-normative authoring hints. Hosts MAY surface these in editor UI (default temperature, suggested model class). They do NOT override per-node config or per-run RunOptions.configurable values.",
+      "properties": {
+        "modelClass": {
+          "type": "string",
+          "description": "Per AgentRef.modelClass enum + vendor extensions (e.g., `reasoning`, `writing`, `vendor.openwop.creative-writing`)."
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Suggested sampling temperature."
+        },
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Suggested max-tokens ceiling."
+        },
+        "envelopeType": {
+          "type": "string",
+          "description": "Suggested AI Envelope kind to use with this template, per RFC 0021. Opaque string in v1.x; future RFC MAY cross-validate against capabilities.supportedEnvelopes."
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+      "maxItems": 32,
+      "description": "Free-form classification labels. Used by authoring UIs to group templates; not normative."
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Provenance + lifecycle metadata. Optional; hosts SHOULD populate it for any persistent storage. When `source: \"pack\"`, the host MUST populate `packName` + `packVersion` so clients can disambiguate templates that share a `templateId` across multiple installed packs (per RFC 0028 §B \"Conflict resolution\").",
+      "properties": {
+        "author": { "type": "string", "description": "Free-form author identifier (handle, email, etc.)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of initial creation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of most recent update." },
+        "source": {
+          "type": "string",
+          "enum": ["host", "pack", "user"],
+          "description": "Provenance discriminator. `host`: ships with the host's built-in library; immutable. `pack`: installed via RFC 0028 prompt pack; immutable; MUST carry `packName` + `packVersion`. `user`: created at run time via mutating endpoints; mutable iff `capabilities.prompts.mutableLibrary: true`."
+        },
+        "packName": {
+          "type": "string",
+          "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+          "description": "RFC 0028 §C. When `source: \"pack\"`, the installed pack's `name` (matches `PromptPackManifest.name`). Required when `source: \"pack\"`; absent otherwise. Lets clients pass a structured `PromptRef` with `libraryId` set to this value to disambiguate templates that share a `templateId` across packs."
+        },
+        "packVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+          "description": "RFC 0028 §C. When `source: \"pack\"`, the installed pack's `version`. Required when `source: \"pack\"`; absent otherwise."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "source": { "const": "pack" } }, "required": ["source"] },
+          "then": { "required": ["source", "packName", "packVersion"] }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "PromptVariable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required"],
+      "description": "Typed interpolation slot. Bindings are validated against this declaration before composition; unresolved required slots MUST fail the node with `prompt_variable_unresolved`. Variables sourced from `secret` MUST be redacted to `[REDACTED:<secretId>]` markers in observability output per SECURITY/threat-model-secret-leakage.md §SR-1.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,63}$",
+          "description": "Variable identifier. MUST match the `{{name}}` placeholder pattern in `text`. Pattern aligns with common templating engines (Mustache, Handlebars, Liquid) — no dashes, no dotted paths."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "array", "object"],
+          "description": "JSON-Schema-style type hint. Hosts SHOULD validate the bound value's type against this declaration; type-mismatch MAY warn or fail per host policy (no normative MUST yet — see RFC 0027 §A)."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "When true, an absent binding fails the node with `prompt_variable_unresolved`. When false, the variable renders as `defaultValue` (if present) or the empty string."
+        },
+        "source": {
+          "type": "string",
+          "enum": ["input", "variable", "secret", "context"],
+          "description": "Where the binding comes from. `input`: node input port. `variable`: run-scoped variable (`ctx.variables.get`). `secret`: BYOK secret reference — MUST be redacted in observability events per RFC 0027 §E. `context`: host-provided implicit context (current user id, run id, etc.). Default when omitted: `input`."
+        },
+        "extractPath": {
+          "type": "string",
+          "description": "JSONPath into the source. When omitted, the entire source value binds to `name`. Hosts that don't support JSONPath MAY treat this as opaque dotted-path and surface an `unsupported_extract_path` warning."
+        },
+        "defaultValue": {
+          "description": "Used when `required: false` and the source resolves to undefined. Any JSON-serializable value."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Human-readable explanation. Surfaced in authoring UIs."
+        }
+      }
+    }
+  }
+}

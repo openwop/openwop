@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/workload-identity.schema.json",
+  "title": "OpenWOP workload identity and delegated actor chain (RFC 0154)",
+  "description": "RFC 0154 §A/§B. An authenticated workload identity, and the delegation context a request may carry.\n\nThe governing rule is negative and it is why every object here is closed: raw certificates, tokens, proofs, and credentials MUST NOT enter these objects. `subject` is an OPAQUE identifier and `proofRef` is a REFERENCE. A verified identity is a fact about a completed verification, not a container for the material that proved it — and these objects are projected into events, spans, and audit records, which is exactly where credential material must never reach (`SECURITY/threat-model-secret-leakage.md`).\n\nThe second rule is that identity is not authorization (RFC 0147 R12). Knowing which workload called says nothing about what it may do; tenant, audience, and policy are re-evaluated at every boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scheme",
+    "subject"
+  ],
+  "properties": {
+    "scheme": {
+      "enum": [
+        "spiffe",
+        "mtls-san",
+        "cloud-subject",
+        "oauth-client"
+      ],
+      "description": "How the identity was presented and verified. Closed: an unrecognized scheme is a verification path nobody implemented."
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque verified identifier, e.g. a SPIFFE ID. MUST NOT be a credential, token, or certificate."
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audience": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC 0154 §A — the audience the presented identity was minted for. A host MUST reject an identity whose audience is not its own: accepting one is how a credential valid elsewhere becomes a credential valid here."
+    },
+    "keyBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Proof-of-possession binding. Carries the METHOD and a thumbprint reference, never the key.",
+      "required": [
+        "method"
+      ],
+      "properties": {
+        "method": {
+          "enum": [
+            "mtls",
+            "dpop"
+          ]
+        },
+        "thumbprintRef": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Digest reference to the bound key. Pattern-constrained so a raw key cannot be pasted here and still validate."
+        }
+      }
+    },
+    "delegation": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0154 §B — the verified delegation chain, if any.",
+      "required": [
+        "chain",
+        "audience"
+      ],
+      "properties": {
+        "chain": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Ordered delegation hops. Non-empty: a delegation context with no chain claims a delegation nobody can inspect.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "subject"
+            ],
+            "properties": {
+              "subject": {
+                "type": "string",
+                "minLength": 1
+              },
+              "issuer": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scopes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "RFC 0154 §B — the effective scopes VERIFIED for this hop from its proof (RFC 0049 scope grammar). OPTIONAL and provenance, not authorization: the host still evaluates the resolved principal's own scopes. When present on consecutive hops, a later hop's scopes MUST NOT exceed the previous hop's (`auth.md` §\"Bounds\" — scope amplification is refused: `delegation_scope_amplified`)."
+              }
+            }
+          }
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 0154 §B — a delegation without an expiry is a standing grant, which is not what delegation means."
+        },
+        "proofRef": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Digest REFERENCE to the verified proof. Never the proof itself."
+        }
+      }
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

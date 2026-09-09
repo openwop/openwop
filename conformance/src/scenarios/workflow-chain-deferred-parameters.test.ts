@@ -50,6 +50,8 @@ import {
   type WorkflowChain,
   type DeferredExpansionContext,
 } from '../lib/workflow-chain-expansion.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const CAPS = join(SCHEMAS_DIR, 'capabilities.schema.json');
 const MANIFEST = join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json');
@@ -58,10 +60,6 @@ const MANIFEST = join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json');
 // MyndHyve's bundle for a reason that had nothing to do with the host. Prose legs are
 // repo-layout only: `null` in the published layout and skipped, never thrown.
 const CHAIN_DOC: string | null = V1_DIR === null ? null : join(V1_DIR, 'workflow-chain-packs.md');
-
-/** Spec-cited assertion message. Unlike `driver.describe`, this does NOT load
- *  env, so it is safe in always-on server-free legs (no OPENWOP_BASE_URL). */
-const cite = (section: string, requirement: string): string => `${section} — ${requirement}`;
 
 const resolvable = () => true;
 const HOST_FULL = { promptVariableSource: true, secretsSupported: true };
@@ -112,13 +110,13 @@ describe('workflow-chain-deferred: non-sensitive deferral (server-free, RFC 0124
 
     expect(
       hasResidualToken({ nodes: out.nodes, edges: out.edges }),
-      cite('workflow-chain-packs.md §Deferred-parameter expansion', 'the persisted fragment MUST contain zero {{params.*}} tokens (R3 portability)'),
+      req('openwop.it.workflow-chain-deferred-parameters.materializes-variables-with-defaultvalue-type-and-leaves-zero-params-tokens-r3', 'workflow-chain-packs.md §Deferred-parameter expansion', 'the persisted fragment MUST contain zero {{params.*}} tokens (R3 portability)'),
     ).toBe(false);
 
     const topicVar = out.variables.find((v) => v.name === 'topic');
-    expect(topicVar, 'topic MUST be materialized as a top-level variable').toBeDefined();
-    expect(topicVar!.defaultValue, 'author input becomes defaultValue').toBe('sales');
-    expect(topicVar!.type, 'type copied from the parameter schema').toBe('string');
+    expect(topicVar, req('openwop.it.workflow-chain-deferred-parameters.materializes-variables-with-defaultvalue-type-and-leaves-zero-params-tokens-r3', 'workflow-chain-packs.md', 'topic MUST be materialized as a top-level variable')).toBeDefined();
+    expect(topicVar!.defaultValue, req('openwop.it.workflow-chain-deferred-parameters.materializes-variables-with-defaultvalue-type-and-leaves-zero-params-tokens-r3', 'workflow-chain-packs.md', 'author input becomes defaultValue')).toBe('sales');
+    expect(topicVar!.type, req('openwop.it.workflow-chain-deferred-parameters.materializes-variables-with-defaultvalue-type-and-leaves-zero-params-tokens-r3', 'workflow-chain-packs.md', 'type copied from the parameter schema')).toBe('string');
 
     // prompt token → {{varName}} + source:"variable"
     expect((out.nodes[0].config as { systemPrompt: string }).systemPrompt).toBe('Hello {{topic}}');
@@ -133,7 +131,7 @@ describe('workflow-chain-deferred: non-sensitive deferral (server-free, RFC 0124
     const out = expandChainDeferred(c, deferCtx({ count: 5 }, c.parameters as never));
     expect(
       out.nodes[0].inputs!.limit,
-      cite('workflow-chain-packs.md §Deferred-parameter expansion', 'a whole-value {{params.x}} input rewrites to a variable-sourced PortValue, not a stringified token'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-whole-value-input-token-becomes-a-variable-sourced-portvalue-wcp2-raw-typed', 'workflow-chain-packs.md §Deferred-parameter expansion', 'a whole-value {{params.x}} input rewrites to a variable-sourced PortValue, not a stringified token'),
     ).toEqual({ source: 'variable', variable: 'count' });
   });
 
@@ -145,7 +143,7 @@ describe('workflow-chain-deferred: non-sensitive deferral (server-free, RFC 0124
     const out = expandChainDeferred(c, deferCtx({ topic: 't' }, c.parameters as never));
     expect(
       out.configurableSchema.properties.topic,
-      cite('workflow-chain-packs.md §Override key + variable naming', 'the bare parameter name is the normative override key'),
+      req('openwop.it.workflow-chain-deferred-parameters.the-bare-param-name-is-the-override-key-in-the-auto-generated-configurableschema', 'workflow-chain-packs.md §Override key + variable naming', 'the bare parameter name is the normative override key'),
     ).toEqual({ type: 'string' });
   });
 });
@@ -162,14 +160,14 @@ describe('workflow-chain-deferred: §Security sensitive-parameter MUSTs (server-
 
     expect(
       out.promptVariables.find((p) => p.name === 'apiKey')?.source,
-      cite('workflow-chain-packs.md §Security', 'a sensitive prompt-body param MUST bind source:"secret" (not source:"variable")'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-param-in-a-prompt-body-materializes-as-source-secret-no-plaintext-de', 'workflow-chain-packs.md §Security', 'a sensitive prompt-body param MUST bind source:"secret" (not source:"variable")'),
     ).toBe('secret');
     // The plaintext secret MUST appear NOWHERE — not as a variable defaultValue, not in the fragment.
     expect(
       JSON.stringify(out).includes('sk-PLAINTEXT-SECRET'),
-      cite('workflow-chain-packs.md §Security', 'the sensitive value MUST NOT be materialized into variables[] or the persisted fragment (never bagged, SR-1)'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-param-in-a-prompt-body-materializes-as-source-secret-no-plaintext-de', 'workflow-chain-packs.md §Security', 'the sensitive value MUST NOT be materialized into variables[] or the persisted fragment (never bagged, SR-1)'),
     ).toBe(false);
-    expect(out.variables.find((v) => v.name === 'apiKey'), 'sensitive param is NOT a plaintext top-level variable').toBeUndefined();
+    expect(out.variables.find((v) => v.name === 'apiKey'), req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-param-in-a-prompt-body-materializes-as-source-secret-no-plaintext-de', 'workflow-chain-packs.md', 'sensitive param is NOT a plaintext top-level variable')).toBeUndefined();
   });
 
   it('a sensitive param in a whole-value node.input FAILS CLOSED (sensitive_param_not_deferrable, 422)', () => {
@@ -183,10 +181,10 @@ describe('workflow-chain-deferred: §Security sensitive-parameter MUSTs (server-
     } catch (e) {
       err = e;
     }
-    expect(err, 'a sensitive whole-value input MUST throw, not defer').toBeInstanceOf(SensitiveParamNotDeferrableError);
+    expect(err, req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-param-in-a-whole-value-node-input-fails-closed-sensitive-param-not-d', 'workflow-chain-packs.md', 'a sensitive whole-value input MUST throw, not defer')).toBeInstanceOf(SensitiveParamNotDeferrableError);
     expect(
       (err as SensitiveParamNotDeferrableError).code,
-      cite('workflow-chain-packs.md §Security', 'a sensitive param outside a prompt body MUST fail closed with sensitive_param_not_deferrable'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-param-in-a-whole-value-node-input-fails-closed-sensitive-param-not-d', 'workflow-chain-packs.md §Security', 'a sensitive param outside a prompt body MUST fail closed with sensitive_param_not_deferrable'),
     ).toBe('sensitive_param_not_deferrable');
     expect((err as SensitiveParamNotDeferrableError).httpStatus).toBe(422);
   });
@@ -204,7 +202,7 @@ describe('workflow-chain-deferred: §Security sensitive-parameter MUSTs (server-
     }
     expect(
       err,
-      cite('workflow-chain-packs.md §Security', 'a host lacking capabilities.secrets MUST NOT plaintext-defer a sensitive param — fail closed'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-prompt-body-param-on-a-host-without-secrets-support-fails-closed-422', 'workflow-chain-packs.md §Security', 'a host lacking capabilities.secrets MUST NOT plaintext-defer a sensitive param — fail closed'),
     ).toBeInstanceOf(SensitiveParamNotDeferrableError);
   });
 
@@ -219,7 +217,7 @@ describe('workflow-chain-deferred: §Security sensitive-parameter MUSTs (server-
     );
     // Fallback resolves the token at expansion time — no {{topic}} slot, value inlined, still zero {{params.*}}.
     expect((out.nodes[0].config as { systemPrompt: string }).systemPrompt).toBe('Hi sales');
-    expect(hasResidualToken({ nodes: out.nodes }), 'no residual {{params.*}} even on the fallback path').toBe(false);
+    expect(hasResidualToken({ nodes: out.nodes }), req('openwop.it.workflow-chain-deferred-parameters.negative-capability-no-prompts-variable-source-prompt-token-falls-back-to-expans', 'workflow-chain-packs.md', 'no residual {{params.*}} even on the fallback path')).toBe(false);
   });
 });
 
@@ -227,29 +225,29 @@ describe('workflow-chain-deferred: schema + spec surface (always-on, server-free
   it('capabilities.schema.json §workflowChainPacks.deferredParameters requires supported:boolean', () => {
     const raw = readFileSync(CAPS, 'utf8');
     // The deferredParameters block MUST parse as part of the capabilities schema.
-    expect(() => JSON.parse(raw), 'capabilities.schema.json MUST be valid JSON').not.toThrow();
-    expect(raw.includes('"deferredParameters"'), 'the deferredParameters capability block MUST exist').toBe(true);
+    expect(() => JSON.parse(raw), req('openwop.it.workflow-chain-deferred-parameters.capabilities-schema-json-workflowchainpacks-deferredparameters-requires-supporte', 'workflow-chain-packs.md', 'capabilities.schema.json MUST be valid JSON')).not.toThrow();
+    expect(raw.includes('"deferredParameters"'), req('openwop.it.workflow-chain-deferred-parameters.capabilities-schema-json-workflowchainpacks-deferredparameters-requires-supporte', 'workflow-chain-packs.md', 'the deferredParameters capability block MUST exist')).toBe(true);
     expect(
       raw.includes('sensitive_param_not_deferrable'),
-      cite('capabilities.schema.json §deferredParameters', 'the capability description MUST reference the fail-closed sensitive rule'),
+      req('openwop.it.workflow-chain-deferred-parameters.capabilities-schema-json-workflowchainpacks-deferredparameters-requires-supporte', 'capabilities.schema.json §deferredParameters', 'the capability description MUST reference the fail-closed sensitive rule'),
     ).toBe(true);
   });
 
   it('workflow-chain-pack-manifest.schema.json documents x-openwop-sensitive with the source:"secret" MUST', () => {
     const raw = readFileSync(MANIFEST, 'utf8');
-    expect(raw.includes('x-openwop-sensitive'), 'the manifest schema MUST recognize x-openwop-sensitive').toBe(true);
+    expect(raw.includes('x-openwop-sensitive'), req('openwop.it.workflow-chain-deferred-parameters.workflow-chain-pack-manifest-schema-json-documents-x-openwop-sensitive-with-the', 'workflow-chain-packs.md', 'the manifest schema MUST recognize x-openwop-sensitive')).toBe(true);
     expect(
       raw.includes('source:"secret"') || raw.includes('source:\\"secret\\"'),
-      cite('workflow-chain-pack-manifest.schema.json', 'the x-openwop-sensitive description MUST reflect the amended source:"secret" MUST, not the stale plaintext-variable wording'),
+      req('openwop.it.workflow-chain-deferred-parameters.workflow-chain-pack-manifest-schema-json-documents-x-openwop-sensitive-with-the', 'workflow-chain-pack-manifest.schema.json', 'the x-openwop-sensitive description MUST reflect the amended source:"secret" MUST, not the stale plaintext-variable wording'),
     ).toBe(true);
   });
 
   it.skipIf(CHAIN_DOC === null)('the spec pins the error code + the per-run credentialRef (not plaintext) supply shape', () => {
     const spec = readFileSync(CHAIN_DOC as string, 'utf8');
-    expect(spec.includes('sensitive_param_not_deferrable'), 'error code MUST be documented').toBe(true);
+    expect(spec.includes('sensitive_param_not_deferrable'), req('openwop.it.workflow-chain-deferred-parameters.the-spec-pins-the-error-code-the-per-run-credentialref-not-plaintext-supply-shap', 'workflow-chain-packs.md', 'error code MUST be documented')).toBe(true);
     expect(
       spec.includes('credentialRef'),
-      cite('workflow-chain-packs.md §Security', 'per-run supply of a sensitive param MUST be a credentialRef, not plaintext'),
+      req('openwop.it.workflow-chain-deferred-parameters.the-spec-pins-the-error-code-the-per-run-credentialref-not-plaintext-supply-shap', 'workflow-chain-packs.md §Security', 'per-run supply of a sensitive param MUST be a credentialRef, not plaintext'),
     ).toBe(true);
   });
 });
@@ -265,20 +263,20 @@ describe('workflow-chain-deferred: host behavior (capability-gated, RFC 0124)', 
       override: { topic: 'run-topic' },
       fork: true,
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { resolved?: string; forkResolved?: string; contentTrust?: string } | undefined;
     expect(
       body?.resolved,
-      cite('workflow-chain-packs.md §Deferred-parameter expansion', 'a bare-param configurable override rebinds the resolved value'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-deferred-round-trip-bare-param-configurable-override-changes-the-value-fork-re', 'workflow-chain-packs.md §Deferred-parameter expansion', 'a bare-param configurable override rebinds the resolved value'),
     ).toBe('run-topic');
     expect(
       body?.forkResolved,
-      cite('replay.md §Determinism', ':fork replays the same bound value (RunSnapshot.variables byte-equivalence, R4)'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-deferred-round-trip-bare-param-configurable-override-changes-the-value-fork-re', 'replay.md §Determinism', ':fork replays the same bound value (RunSnapshot.variables byte-equivalence, R4)'),
     ).toBe('run-topic');
     expect(
       body?.contentTrust,
-      cite('workflow-chain-packs.md §Deferred-parameter expansion step 4', 'a deferred-variable prompt binding composes contentTrust:"untrusted" (R1)'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-deferred-round-trip-bare-param-configurable-override-changes-the-value-fork-re', 'workflow-chain-packs.md §Deferred-parameter expansion step 4', 'a deferred-variable prompt binding composes contentTrust:"untrusted" (R1)'),
     ).toBe('untrusted');
   });
 
@@ -291,12 +289,12 @@ describe('workflow-chain-deferred: host behavior (capability-gated, RFC 0124)', 
       sensitiveParam: 'apiKey',
       credentialRef: 'cred-123',
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { composed?: string } | undefined;
     expect(
       body?.composed?.includes('[REDACTED'),
-      cite('workflow-chain-packs.md §Security', 'a source:"secret" sensitive var MUST redact to [REDACTED:<credentialRef>] in prompt.composed'),
+      req('openwop.it.workflow-chain-deferred-parameters.a-sensitive-param-composes-as-redacted-credentialref-and-the-plaintext-appears-n', 'workflow-chain-packs.md §Security', 'a source:"secret" sensitive var MUST redact to [REDACTED:<credentialRef>] in prompt.composed'),
     ).toBe(true);
   });
 });

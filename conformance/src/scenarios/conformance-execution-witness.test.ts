@@ -27,6 +27,7 @@ import { UNCLASSIFIED_RETURN_DETAIL } from '../lib/soft-skip.js';
 import { PROFILE_FLOOR_SCENARIOS } from '../lib/profiles.js';
 import { requirementIdForScenario, requirementsFor } from '../lib/requirement-registry.js';
 import { verifyBundleV2, type BundleV2Requirement } from '../lib/certification-bundle-verify.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'server-free: pins the runner/emitter/verifier rule that an early return is never a pass';
 
@@ -34,19 +35,19 @@ const HEX = 'c'.repeat(64);
 
 describe('RFC 0148 §A — conformance-execution-witness: the runner record', () => {
   it('a witnessed pass is executed-pass; a failed test is executed-fail regardless of count', () => {
-    expect(resolveFileRecord(['pass', 'pass'], undefined, 7, null).disposition).toBe('executed-pass');
+    expect(resolveFileRecord(['pass', 'pass'], undefined, 7, null).disposition, req('openwop.it.conformance-execution-witness.a-witnessed-pass-is-executed-pass-a-failed-test-is-executed-fail-regardless-of-c', 'RFC 0148 §A', 'a witnessed pass is executed-pass; a failed test is executed-fail regardless of count')).toBe('executed-pass');
     expect(resolveFileRecord(['pass', 'fail'], undefined, 7, null).disposition).toBe('executed-fail');
     expect(resolveFileRecord(['fail'], undefined, 0, null).disposition).toBe('executed-fail');
   });
 
   it('a zero-assertion pass with NO reason is BLOCKED with the marker — never a pass', () => {
     const r = resolveFileRecord(['pass', 'pass'], undefined, 0, null);
-    expect(r.disposition).toBe('blocked');
+    expect(r.disposition, req('openwop.it.conformance-execution-witness.a-zero-assertion-pass-with-no-reason-is-blocked-with-the-marker-never-a-pass', 'RFC 0148 §A', 'a zero-assertion pass with NO reason is BLOCKED with the marker — never a pass')).toBe('blocked');
     expect(r.detail).toBe(UNCLASSIFIED_RETURN_DETAIL);
   });
 
   it('a zero-assertion pass takes the noted reason (softSkip / seamAbsent) — inapplicable, skipped, or blocked with the text', () => {
-    expect(resolveFileRecord(['pass'], undefined, 0, { kind: 'inapplicable', reason: 'host does not advertise X' })).toEqual({ disposition: 'inapplicable', detail: 'host does not advertise X' });
+    expect(resolveFileRecord(['pass'], undefined, 0, { kind: 'inapplicable', reason: 'host does not advertise X' }), req('openwop.it.conformance-execution-witness.a-zero-assertion-pass-takes-the-noted-reason-softskip-seamabsent-inapplicable-sk', 'RFC 0148 §A', 'a zero-assertion pass takes the noted reason (softSkip / seamAbsent) — inapplicable, skipped, or blocked with the text')).toEqual({ disposition: 'inapplicable', detail: 'host does not advertise X' });
     expect(resolveFileRecord(['pass'], undefined, 0, { kind: 'blocked', reason: 'seam answered 404' })).toEqual({ disposition: 'blocked', detail: 'seam answered 404' });
     expect(resolveFileRecord(['pass'], undefined, 0, { kind: 'skipped', reason: 'operator opt-out' })).toEqual({ disposition: 'skipped', detail: 'operator opt-out' });
   });
@@ -59,7 +60,7 @@ describe('RFC 0148 §A — conformance-execution-witness: the runner record', ()
     // from a positive control or a setup precondition. Measured on this exact
     // function by a tier-1 host writing a scenario whose first leg is a control.
     const one = resolveFileRecord(['pass'], undefined, 1, { kind: 'blocked', reason: 'fork returned 501' });
-    expect(one.disposition).toBe('executed-pass');
+    expect(one.disposition, req('openwop.it.conformance-execution-witness.gap-g8-a-file-that-asserted-then-soft-skipped-keeps-the-note-as-a-partial-witnes', 'RFC 0148 §A', 'gap G8 — a file that asserted then soft-skipped keeps the note as a partial-witness detail, and its disposition does NOT move')).toBe('executed-pass');
     expect(one.detail).toBe('partial-witness: blocked: fork returned 501');
 
     const many = resolveFileRecord(['pass', 'pass'], undefined, 4, { kind: 'inapplicable', reason: 'fork unsupported' });
@@ -83,7 +84,7 @@ describe('RFC 0148 §A — conformance-execution-witness: the runner record', ()
   it('every test ctx.skip()ped takes the noted reason when one was written before the skip, else stays the blocked marker', () => {
     // `ctx.skip()` throws — a `softSkip(...)` AFTER it is dead code. Seven files
     // carried exactly that dead note and reported as unclassified for a suite minor.
-    expect(resolveFileRecord(['skip', 'skip'], undefined, 0, { kind: 'inapplicable', reason: 'sandbox not advertised' })).toEqual({ disposition: 'inapplicable', detail: 'sandbox not advertised' });
+    expect(resolveFileRecord(['skip', 'skip'], undefined, 0, { kind: 'inapplicable', reason: 'sandbox not advertised' }), req('openwop.it.conformance-execution-witness.every-test-ctx-skip-ped-takes-the-noted-reason-when-one-was-written-before-the-s', 'RFC 0148 §A', 'every test ctx.skip()ped takes the noted reason when one was written before the skip, else stays the blocked marker')).toEqual({ disposition: 'inapplicable', detail: 'sandbox not advertised' });
     expect(resolveFileRecord(['skip'], undefined, 0, { kind: 'blocked', reason: 'simulator seam 404' })).toEqual({ disposition: 'blocked', detail: 'simulator seam 404' });
     const bare = resolveFileRecord(['skip', 'skip'], undefined, 0, null);
     expect(bare.disposition).toBe('blocked');
@@ -93,7 +94,7 @@ describe('RFC 0148 §A — conformance-execution-witness: the runner record', ()
   });
 
   it('a behaviorGate reason resolves a zero-assertion pass to inapplicable/skipped; a note outranks nothing but never a witnessed pass', () => {
-    expect(resolveFileRecord(['pass'], 'inapplicable', 0, null).disposition).toBe('inapplicable');
+    expect(resolveFileRecord(['pass'], 'inapplicable', 0, null).disposition, req('openwop.it.conformance-execution-witness.a-behaviorgate-reason-resolves-a-zero-assertion-pass-to-inapplicable-skipped-a-n', 'RFC 0148 §A', 'a behaviorGate reason resolves a zero-assertion pass to inapplicable/skipped; a note outranks nothing but never a witnessed pass')).toBe('inapplicable');
     expect(resolveFileRecord(['pass'], 'skipped', 0, null).disposition).toBe('skipped');
     // real assertions ran: the note is irrelevant, the file passed
     expect(resolveFileRecord(['pass'], undefined, 3, { kind: 'blocked', reason: 'irrelevant' }).disposition).toBe('executed-pass');
@@ -115,7 +116,7 @@ describe('RFC 0148 §A — conformance-execution-witness: emitter and verifier r
     rep.set('interrupt-alpha.test.ts', 'passed');
     const d = deriveRequirementDispositions(rep, ledger, [profile], {});
     const v = d.verdicts.find((x) => x.profile === profile)!;
-    expect(v.unclassified).toEqual([requirementIdForScenario(files[0]!)]);
+    expect(v.unclassified, req('openwop.it.conformance-execution-witness.the-emitter-derivation-marks-a-marker-blocked-floor-row-unclassified-and-rejects', 'RFC 0148 §A', 'the emitter derivation marks a marker-blocked floor row unclassified and rejects the claim')).toEqual([requirementIdForScenario(files[0]!)]);
     expect(d.rejectUnclassified).toBe(true);
     // and the same file with a witnessed pass certifies
     ledger[0] = { requirementId: requirementIdForScenario(files[0]!), disposition: 'executed-pass' as const, assertionCount: 3 };
@@ -134,7 +135,7 @@ describe('RFC 0148 §A — conformance-execution-witness: emitter and verifier r
       results: { totals: { executedPass: rs.filter((r) => r.disposition === 'executed-pass').length, executedFail: 0, skipped: 0, inapplicable: 0, blocked: rs.filter((r) => r.disposition === 'blocked').length }, requirements: rs },
       scenarioManifestSha256: HEX, targetConfigurationSha256: HEX,
     });
-    expect(verifyBundleV2(bundle(rows)).certified).toBe(true);
+    expect(verifyBundleV2(bundle(rows)).certified, req('openwop.it.conformance-execution-witness.the-consumer-verifier-rejects-a-bundle-whose-required-row-is-a-vacuous-pass-or-t', 'RFC 0148 §A', 'the consumer verifier rejects a bundle whose required row is a vacuous pass or the runner marker, and accepts the witnessed twin')).toBe(true);
     const vacuous = rows.map((r, i) => (i === 0 ? { ...r, assertionCount: 0 } : r));
     expect(verifyBundleV2(bundle(vacuous)).evidenceValid).toBe(false);
     const marker = rows.map((r, i) => (i === 0 ? { requirementId: r.requirementId, scenarioId: r.scenarioId, disposition: 'blocked', detail: UNCLASSIFIED_RETURN_DETAIL, assertionCount: 0 } : r));

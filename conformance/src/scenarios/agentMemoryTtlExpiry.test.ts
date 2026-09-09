@@ -18,6 +18,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-memory-ttl';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
@@ -52,15 +53,15 @@ describe.skipIf(SKIP)('agentMemoryTtlExpiry: expired entries are excluded from l
     const expiredId = body.variables?.expiredId;
     expect(
       typeof freshId === 'string' && freshId.length > 0 && typeof expiredId === 'string' && expiredId.length > 0,
-      driver.describe('fixtures.md conformance-agent-memory-ttl', 'the host MUST land freshId and expiredId (the ids of the two entries it wrote) so the list can be checked on both sides'),
+      req('openwop.it.agentMemoryTtlExpiry.list-excludes-entries-whose-expiresat-is-in-the-past', 'fixtures.md conformance-agent-memory-ttl', 'the host MUST land freshId and expiredId (the ids of the two entries it wrote) so the list can be checked on both sides'),
     ).toBe(true);
     expect(
       listResult!.some((e) => e.id === freshId),
-      driver.describe('agent-memory.md §TTL', `list() MUST include the fresh entry (freshId=${String(freshId)})`),
+      req('openwop.it.agentMemoryTtlExpiry.list-excludes-entries-whose-expiresat-is-in-the-past', 'agent-memory.md §TTL', `list() MUST include the fresh entry (freshId=${String(freshId)})`),
     ).toBe(true);
     expect(
       listResult!.some((e) => e.id === expiredId),
-      driver.describe('agent-memory.md §TTL', `list() MUST NOT include the expired entry (expiredId=${String(expiredId)})`),
+      req('openwop.it.agentMemoryTtlExpiry.list-excludes-entries-whose-expiresat-is-in-the-past', 'agent-memory.md §TTL', `list() MUST NOT include the expired entry (expiredId=${String(expiredId)})`),
     ).toBe(false);
   });
 });

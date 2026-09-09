@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/error-envelope.schema.json",
+  "title": "ErrorEnvelope",
+  "description": "Canonical error response shape returned by every OpenWOP-compliant server on a non-2xx response. See rest-endpoints.md §error-envelope and auth.md §3.",
+  "type": "object",
+  "required": ["error", "message"],
+  "properties": {
+    "error": {
+      "type": "string",
+      "description": "Machine-readable error code (e.g., `unauthenticated`, `validation_error`, `not_found`, `run_already_active`, `unsupported_stream_mode`). Servers SHOULD use snake_case; spec-canonical codes are listed in `rest-endpoints.md`.",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error description. Localizable per `Accept-Language` request header (servers MAY ignore).",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "description": "Error-specific contextual data. Schema varies by `error` code — readers MUST tolerate missing/unknown fields (forward-compat). Examples: `{retryAfter: 30}` for rate-limit errors, `{activeRunId, activeHost}` for run_already_active conflicts."
+    }
+  },
+  "additionalProperties": false
+}

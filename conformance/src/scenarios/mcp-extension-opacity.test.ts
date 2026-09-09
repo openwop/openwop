@@ -27,6 +27,7 @@ import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
+import { req } from '../lib/requirement-ids.js';
 
 export const REQUIRES_HOST_CALLBACK = "the host issues MCP JSON-RPC calls to the suite's fake server via /v1/host/sample/mcp/invoke (serverUrl), which the server records";
 
@@ -53,14 +54,14 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
       // an advertised-missing seam (RFC 0148 §B). A 403 is NOT a pass.
       return seamAbsent(`host advertises mcp-2026-07-28 but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status}`);
     }
-    expect(server.invocations().some((i) => i.method === 'tools/call'), 'the host MUST have called the tool').toBe(true);
+    expect(server.invocations().some((i) => i.method === 'tools/call'), req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'host-sample-test-seams.md §23', 'the host MUST have called the tool')).toBe(true);
     const rep = (drive.json as { extensionAuthority?: { scopesWidened?: boolean; approvalAdvanced?: boolean } }).extensionAuthority;
     if (rep === undefined) {
-      expect(rep, driver.describe('host-sample-test-seams.md §23', 'the seam SHOULD report `extensionAuthority: { scopesWidened, approvalAdvanced }` for scenario "extension-asserts-authority"; until it does the requirement is `blocked`, not passed')).toBeDefined();
-      return;
+      expect(rep, req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'host-sample-test-seams.md §23', 'the seam SHOULD report `extensionAuthority: { scopesWidened, approvalAdvanced }` for scenario "extension-asserts-authority"; until it does the requirement is `blocked`, not passed')).toBeDefined();
+      return softSkip('blocked', 'precondition not met — `rep === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(rep.scopesWidened, driver.describe('mcp-integration.md §D', 'an extension MUST NOT gain tool authority or scope by appearing in _meta (mcp-extension-no-authority)')).toBe(false);
-    expect(rep.approvalAdvanced, driver.describe('mcp-integration.md §D/§E', 'MCP content MUST NOT advance approval gates')).toBe(false);
+    expect(rep.scopesWidened, req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'mcp-integration.md §D', 'an extension MUST NOT gain tool authority or scope by appearing in _meta (mcp-extension-no-authority)')).toBe(false);
+    expect(rep.approvalAdvanced, req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'mcp-integration.md §D/§E', 'MCP content MUST NOT advance approval gates')).toBe(false);
   });
 
   it('server half: unknown _meta extension keys on a request are ignored, not refused and not honoured', async () => {
@@ -73,7 +74,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
     }, { headers: { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' } });
     if (res.status === 404 || res.status === 403) return seamAbsent(`host advertises mcp-2026-07-28 but the MCP server mount /v1/host/sample/mcp answered ${res.status}`);
     const body = res.json as { result?: { resultType?: string }; error?: { code: number } };
-    expect(res.status, driver.describe('mcp-integration.md §D', 'an unknown extension is opaque: the request MUST be processed normally, neither refused nor granted anything')).toBe(200);
+    expect(res.status, req('openwop.it.mcp-extension-opacity.server-half-unknown-meta-extension-keys-on-a-request-are-ignored-not-refused-and', 'mcp-integration.md §D', 'an unknown extension is opaque: the request MUST be processed normally, neither refused nor granted anything')).toBe(200);
     expect(body.error).toBeUndefined();
     expect(body.result?.resultType).toBe('complete');
   });

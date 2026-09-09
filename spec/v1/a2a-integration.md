@@ -497,19 +497,7 @@ Error `message` text in either direction **MUST NOT** carry stack traces, provid
 
 ### Open spec gaps (RFC 0152)
 
-| # | Gap | Disposition |
-| - | --- | ----------- |
-| G1 | A2A 0.3 adopter inventory | **Open** — the legacy window date is fixed above (2027-03-12); who is on 0.3 is not known and is not something this document can find out. |
-| G2 | Field-by-field translation table | **Closed** by §D (D.1–D.7). |
-| G3 | Official real-peer SDK for CI | **Externally gated** — no upstream 1.0 peer is wired; the fake peer is 0.3-shaped. |
-| G4 | Mandatory interface floor | **Closed** by §C: JSON-RPC at 1.0 is the floor; HTTP+JSON and gRPC optional. |
-| G5 | Delegated identity composes with RFC 0154 | Addressed in §E; RFC 0154 §B is shape-only, so the composition is stated, not witnessed. |
-| G6 | 1.0-shaped fake peer + the seven named scenarios | **Mostly closed 2026-08-16 (suite 1.112.0):** dual-era peer landed; `a2a-1.0-agent-card`, `a2a-card-runtime-consistency`, `a2a-1.0-task-roundtrip` (host half gated), `a2a-peer-authority` landed. Open: `a2a-1.0-stream-push` (no streaming peer). |
-| G7 | Dedicated content-free negotiation audit event | **Open** — §B recommends `authorization.decided` as the carrier; a dedicated `RunEventType` member is not minted here. |
-| G8 | Interop threat-model document (downgrade, card/runtime drift, cross-tenant lookup, artifact leakage) | **Open** — threats stated in §E; no `SECURITY/threat-model-interop.md` exists. |
-| G9 | Native `auth-required` interrupt kind (drift #3) | **Open** — unchanged from §"Future work". |
-
----
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.a2a-integration.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Future work
 

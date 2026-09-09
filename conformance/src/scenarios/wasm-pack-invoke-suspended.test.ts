@@ -22,6 +22,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-wasm-pack-roundtrip';
 
@@ -60,11 +61,11 @@ describe('wasm-pack-invoke-suspended: suspend → resume round-trip', () => {
       const ok =
         haystack.includes('wasm_suspend_not_implemented') ||
         haystack.includes('suspend_not_supported');
-      expect(ok, driver.describe(
+      expect(ok, req('openwop.it.wasm-pack-invoke-suspended.host-either-suspends-the-run-or-explicitly-reports-wasm-suspend-not-implemented', 
         'RFCS/0008-wasm-abi.md §D',
         "if a host doesn't implement WASM-driven suspends it MUST surface a recognizable code",
       )).toBe(true);
-      return;
+      return softSkip('blocked', 'precondition not met — `terminal.status === \'failed\'` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // Completed path: the reference pack never suspends. Asserting

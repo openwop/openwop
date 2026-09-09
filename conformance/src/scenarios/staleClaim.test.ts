@@ -35,6 +35,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnHost, type SpawnedHost } from '../lib/multiProcess.js';
+import { req } from '../lib/requirement-ids.js';
 
 // Default off: scenario must be opted in via env. The opt-in lists
 // the host package dir relative to repo root that exposes the
@@ -193,7 +194,7 @@ describe.skipIf(!RUN_THIS_SCENARIO)(
           15_000,
         );
 
-        expect(terminal.status, 'orphaned run MUST resume to a terminal status under host B').toBe(
+        expect(terminal.status, req('openwop.it.staleClaim.process-b-picks-up-the-orphaned-run-after-process-a-dies-claim-expires', 'spec/v1/scale-profiles.md', 'orphaned run MUST resume to a terminal status under host B')).toBe(
           'completed',
         );
 
@@ -203,12 +204,12 @@ describe.skipIf(!RUN_THIS_SCENARIO)(
         // SOMETHING that distinguishes resume from fresh start MUST
         // exist in the event log).
         const events = await fetchEvents(hostB.baseUrl, APIKEY_B, runId);
-        expect(Array.isArray(events.events), 'events poll MUST return an events array').toBe(true);
+        expect(Array.isArray(events.events), req('openwop.it.staleClaim.process-b-picks-up-the-orphaned-run-after-process-a-dies-claim-expires', 'spec/v1/scale-profiles.md', 'events poll MUST return an events array')).toBe(true);
         if (events.events && events.events.length > 0) {
           const types = events.events.map((e) => e.type);
           expect(
             types.includes('run.resumed') || types.includes('run.started'),
-            'event log MUST contain at least run.started; resume hosts SHOULD also emit run.resumed',
+            req('openwop.it.staleClaim.process-b-picks-up-the-orphaned-run-after-process-a-dies-claim-expires', 'spec/v1/scale-profiles.md', 'event log MUST contain at least run.started; resume hosts SHOULD also emit run.resumed'),
           ).toBe(true);
         }
       },
@@ -221,6 +222,6 @@ describe.skipIf(!RUN_THIS_SCENARIO)(
 // when the scenario is gated off.
 describe('staleClaim lib: spawnHost surface contract', () => {
   it('spawnHost is exported and has the expected shape', async () => {
-    expect(typeof spawnHost).toBe('function');
+    expect(typeof spawnHost, req('openwop.it.staleClaim.spawnhost-is-exported-and-has-the-expected-shape', 'spec/v1/scale-profiles.md', 'spawnHost is exported and has the expected shape')).toBe('function');
   });
 });

@@ -35,6 +35,8 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -179,11 +181,11 @@ function walkSchema(
 describe.skipIf(HTTP_SKIP)('envelope-tier-one-subset-static (RFC 0030 §B)', () => {
   it('hosts advertising tierOneSubsetCompliance: "strict" have payload schemas that satisfy the Tier-1 intersection', async () => {
     const d = await readDiscovery();
-    if (d === null) return; // host unreachable; soft-skip
+    if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (host unreachable; soft-skip) (seam, prior step, or fixture unavailable)'); // host unreachable; soft-skip
     const compliance = capabilityFamily(d, 'envelopes')?.tierOneSubsetCompliance;
-    if (compliance !== 'strict') return; // gated on "strict" only
+    if (compliance !== 'strict') return softSkip('blocked', 'precondition not met — `compliance !== \'strict\'` returned early (gated on "strict" only) (seam, prior step, or fixture unavailable)'); // gated on "strict" only
     const advertised = (capabilityFamily(d, 'supportedEnvelopes') ?? []) as string[];
-    if (advertised.length === 0) return;
+    if (advertised.length === 0) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `advertised.length === 0` returned early');
 
     const violationsByKind: Record<string, Violation[]> = {};
     for (const kind of advertised) {
@@ -202,7 +204,7 @@ describe.skipIf(HTTP_SKIP)('envelope-tier-one-subset-static (RFC 0030 §B)', () 
 
     expect(
       violationsByKind,
-      `RFC 0030 §B: schemas violating the Tier-1 subset under strict-mode advertisement: ${JSON.stringify(violationsByKind, null, 2)}`,
+      req('openwop.it.envelope-tier-one-subset-static.hosts-advertising-tieronesubsetcompliance-strict-have-payload-schemas-that-satis', 'RFC 0030 §B', `RFC 0030 §B: schemas violating the Tier-1 subset under strict-mode advertisement: ${JSON.stringify(violationsByKind, null, 2)}`),
     ).toEqual({});
   });
 });
@@ -216,14 +218,14 @@ describe('envelope-tier-one-subset-static: universal-kind schemas satisfy load-b
   for (const kind of UNIVERSAL_KINDS) {
     it(`${kind}.schema.json satisfies load-bearing Tier-1 rules (no oneOf/allOf/not/prefixItems/propertyNames anywhere)`, () => {
       const schema = loadLocalSchema(kind);
-      expect(schema, `schemas/envelopes/${kind}.schema.json MUST exist`).not.toBeNull();
-      if (schema === null) return;
+      expect(schema, req('openwop.it.envelope-tier-one-subset-static.schema-json-satisfies-load-bearing-tier-1-rules-no-oneof-allof-not-prefixitems-p', 'RFC 0030 §B', `schemas/envelopes/${kind}.schema.json MUST exist`)).not.toBeNull();
+      if (schema === null) return softSkip('blocked', 'precondition not met — `schema === null` returned early (seam, prior step, or fixture unavailable)');
       const violations: Violation[] = [];
       const propCount = { n: 0 };
       walkSchema(schema, `#`, 0, propCount, violations, 'load-bearing');
       expect(
         violations,
-        `${kind}.schema.json load-bearing Tier-1 violations (these fail across multiple vendors): ${JSON.stringify(violations, null, 2)}`,
+        req('openwop.it.envelope-tier-one-subset-static.schema-json-satisfies-load-bearing-tier-1-rules-no-oneof-allof-not-prefixitems-p', 'RFC 0030 §B', `${kind}.schema.json load-bearing Tier-1 violations (these fail across multiple vendors): ${JSON.stringify(violations, null, 2)}`),
       ).toEqual([]);
     });
   }

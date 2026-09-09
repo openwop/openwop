@@ -66,6 +66,7 @@ import { driver } from '../lib/driver.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal } from '../lib/polling.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host issues MCP JSON-RPC calls to the suite's fake server.
@@ -210,7 +211,7 @@ describe('mcp-tool-roundtrip: server wire shape', () => {
       },
       1,
     );
-    expect(init.status).toBe(200);
+    expect(init.status, req('openwop.it.mcp-tool-roundtrip.initialize-tools-list-tools-call-round-trip-per-mcp-json-rpc-contract', 'spec/v1/mcp-integration.md', 'initialize + tools/list + tools/call round-trip per MCP JSON-RPC contract')).toBe(200);
     const initResult = (init.json.result ?? {}) as { protocolVersion?: string };
     expect(typeof initResult.protocolVersion).toBe('string');
     // Capture session id from initialize so real SDK-based servers can
@@ -310,7 +311,7 @@ describe('mcp-tool-roundtrip: host-mediated tool invocation', () => {
 
     const invocations = server.invocations();
     const toolCalls = invocations.filter((i) => i.method === 'tools/call');
-    expect(toolCalls.length, driver.describe(
+    expect(toolCalls.length, req('openwop.it.mcp-tool-roundtrip.host-invokes-the-configured-mcp-server-and-surfaces-the-tool-response-in-the-eve', 
       'mcp-integration.md §"Tool invocation"',
       'host MUST invoke `tools/call` on the configured MCP server during the fixture run',
     )).toBeGreaterThan(0);
@@ -325,7 +326,7 @@ describe('mcp-tool-roundtrip: host-mediated tool invocation', () => {
     const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     const list = (events.json as { events?: Array<{ type: string; payload?: unknown }> }).events ?? [];
     const haystack = JSON.stringify(list).toLowerCase();
-    expect(haystack.includes('echo'), driver.describe(
+    expect(haystack.includes('echo'), req('openwop.it.mcp-tool-roundtrip.host-invokes-the-configured-mcp-server-and-surfaces-the-tool-response-in-the-eve', 
       'mcp-integration.md + threat-model-prompt-injection.md §"UNTRUSTED marker"',
       'host event log MUST surface the MCP tool invocation so observers can audit the trust boundary',
     )).toBe(true);

@@ -1,0 +1,6 @@
+{
+  "$comment": "RFC 0173 \u00a7C.2 / RFC 0150 G3 \u2014 the provider registry: which providers expose a natural business-identity key for Layer-2 effect identity, and the activity-recipe fallback for those that do not. Seeded empty at P3-D; rows are added by the Phase 4 host legs from measured provider behavior, never asserted. A provider absent here keys by activity recipe.",
+  "version": "2.0",
+  "updated": "2026-09-03",
+  "providers": []
+}

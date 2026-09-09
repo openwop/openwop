@@ -348,12 +348,7 @@ A server MAY allow caller modification of `tags` and `metadata` after creation v
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                | Owner             |
-| --- | -------------------------------------------------------------------------------------------------- | ----------------- |
-| RO1 | Positive/negative conformance coverage for advertised `Capabilities.configurable` bounds           | conformance minor |
-| RO2 | `PATCH /v1/runs/{runId}` for tag/metadata updates post-creation                                    | future v1.x       |
-| RO3 | Default `tags` / `metadata` injection from API key (e.g., key carries `tenant:acme` automatically) | future v1.x       |
-| RO4 | Tag indexing + query syntax (`?tag=tenant:acme`)                                                   | future            |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.run-options.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

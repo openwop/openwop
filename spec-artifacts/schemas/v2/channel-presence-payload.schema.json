@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/channel-presence-payload.schema.json",
+  "title": "ChannelPresencePayload",
+  "description": "Payload of the OPTIONAL `channel.presence` RunEvent (RFC 0110). EPHEMERAL live presence for a `type:'channel'` conversation — who is currently present + (optionally) who is typing. A host MUST NOT persist this event to the replayable event log / transcript, and it MUST NOT affect replay or `:fork` determinism (presence is live state, the load-bearing distinction from the persisted `conversation.exchanged` turn — see replay.md). Membership-gated: every ref MUST be a current channel participant and the event MUST NOT be delivered to a non-member (the same DEFAULT-DENY visibility as the channel's messages; cross-tenant delivery is forbidden, CTI-1). NON-PII: subject refs are the opaque RFC 0041 vocabulary only — no IP/location/device. A host MAY emit; if it advertises `channelPresence.supported` it MUST. Gated on `channelPresence.supported` (capabilities.schema.json). See RFC 0110.",
+  "type": "object",
+  "required": [
+    "conversationId",
+    "present"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "conversationId": {
+      "type": "string",
+      "description": "The `type:'channel'` conversation this presence is for.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "present": {
+      "type": "array",
+      "description": "Subject refs (RFC 0041 vocabulary `user:<id>` / `agent:<id>` — opaque, non-PII) of members CURRENTLY present in the channel. MUST be a subset of the channel's current participants; a non-member MUST NOT appear.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "typing": {
+      "type": "array",
+      "description": "OPTIONAL subset of `present` that is currently typing. Boolean-by-presence: a ref appears iff that member is typing. No payload beyond the subject refs (no free text, no PII).",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    }
+  },
+  "examples": [
+    {
+      "$comment": "RFC 0110 POSITIVE — two members present in a channel, one typing.",
+      "conversationId": "chan-eng",
+      "present": [
+        "user:alice",
+        "agent:iris"
+      ],
+      "typing": [
+        "user:alice"
+      ]
+    },
+    {
+      "$comment": "RFC 0110 POSITIVE — typing is OPTIONAL; a presence snapshot with no one typing.",
+      "conversationId": "chan-eng",
+      "present": [
+        "user:alice"
+      ]
+    }
+  ],
+  "$comment": "RFC 0110 NEGATIVE (not validatable as an examples[] entry, which must be VALID): a payload carrying any field beyond conversationId/present/typing (e.g. `ip`, `location`) MUST FAIL validation via `additionalProperties: false` — the no-PII guard; see conformance/src/scenarios/channel-presence-shape.test.ts.",
+  "x-openwop-seeded-from": "v1"
+}

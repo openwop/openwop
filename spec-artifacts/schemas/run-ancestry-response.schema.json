@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/run-ancestry-response.schema.json",
+  "title": "RunAncestryResponse",
+  "description": "RFC 0040 §C — response shape for `GET /v1/runs/{runId}/ancestry`. Returns the cross-host parent chain for a run. When the parent is on the same host, `parent.wellKnownUrl` is absent (existing single-host case). When the parent is on a different host, `parent.wellKnownUrl` MUST be set so a client can resolve the chain by walking the URLs. `parent: null` means the current run is a top-level run (not dispatched from another host). Hosts advertising `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true` MUST serve this shape on a 200 response.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "hostId", "parent"],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The runId from the request path."
+    },
+    "hostId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The host's own `crossHostCausation.hostId` advertisement. Identifies which host this run belongs to."
+    },
+    "parent": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["runId", "hostId", "cause"],
+          "properties": {
+            "runId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The parent run's runId."
+            },
+            "hostId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The parent run's hostId. MAY equal the current host's hostId (same-host parent) or differ (cross-host parent)."
+            },
+            "wellKnownUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "When the parent is on a different host, the parent's `/.well-known/openwop` URL so a client can walk the chain. ABSENT when the parent is on the same host as this run (existing single-host case)."
+            },
+            "cause": {
+              "type": "string",
+              "enum": ["mcp-tool-call", "a2a-message", "core.subWorkflow", "core.dispatch"],
+              "description": "What composition mechanism the parent used to dispatch this run. `core.dispatch` + `core.subWorkflow` are same-host (existing primitives); `mcp-tool-call` + `a2a-message` are cross-host (RFC 0040)."
+            }
+          }
+        }
+      ],
+      "description": "The run's immediate parent — `null` for top-level runs (not dispatched from any other run); otherwise the parent's identifiers + composition mechanism."
+    }
+  }
+}

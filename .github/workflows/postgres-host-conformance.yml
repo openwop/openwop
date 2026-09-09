@@ -46,7 +46,13 @@ jobs:
   in-host-smoke:
     name: Postgres host — in-host smoke suite
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 25, not 10: the sibling-reconstruction step installs the conformance
+    # suite, and vitest 4.1.x (a RUNTIME dependency) declares optional peers on
+    # the 5.0.0 tooling packages, each of which requires vitest 5.0.0. npm 12
+    # spends ~7 minutes resolving that contradiction. Same cause as the
+    # pr-checks.yml budgets; measured 2026-09-04 when this job was cancelled
+    # mid-reconstruction, not by a failing test.
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v6
@@ -100,7 +106,7 @@ jobs:
   external-suite:
     name: Postgres host — full conformance suite (pass-rate ≥85%)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6

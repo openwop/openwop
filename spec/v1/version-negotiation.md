@@ -43,6 +43,24 @@ Hosts **MUST** advertise the highest protocol minor they implement. Consumers **
 reject a different unsupported major, and **MUST** tolerate a higher minor under v1 additive
 rules while capability-gating any optional behavior it might carry.
 
+### `protocolVersions[]` — every major.minor the host speaks (RFC 0165 §A)
+
+A host MAY additionally advertise `protocolVersions: string[]` at the discovery root: every
+`<major>.<minor>` it serves, newest first by convention, each item under the grammar above
+(not the looser A2A/MCP item pattern). When present it **MUST** contain the value of
+`protocolVersion` and **MUST NOT** name a major the host does not serve; a v1.x host advertises
+`["1.<minor>"]` until it serves v2. Consumers **MUST** treat an absent array as
+`[protocolVersion]`. Profile derivation (`profiles.md`) reads the scalar only in v1.x. The
+array exists so a host can advertise both majors during the v2 transition
+(`COMPATIBILITY.md` §5); v2 defines the negotiation that acts on it.
+
+**The `engineVersion` axis is split, and this is recorded rather than fixed.** The discovery
+root declares `engineVersion` as an integer; `run-event.schema.json`, `run-snapshot.schema.json`
+and three event payloads carry it as a string. Changing either type is a `COMPATIBILITY.md`
+§2.2 break, so in v1.x the per-event value is the decimal string rendering of the root integer,
+and unification is scheduled for v2 (`spec/v1/deprecations.json`,
+`openwop.deprecation.engine-version-type-split`).
+
 > **Why a pattern and not just prose (RFC 0149 §C).** The field was specified three
 > incompatible ways at once: `capabilities.schema.json` constrained it to `minLength: 1`,
 > the suite's core predicate tested `startsWith('1.')`, and prose called it semver while
@@ -471,13 +489,7 @@ Nothing on the wire changes for SAML-only or SCIM-only hosts.
 
 ## Open spec gaps
 
-| #   | Gap                                                                                                                                                                                                                                                 | Owner       |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| V1  | Schema codemod registry (`WorkflowSchemaMigrator`) — auto-upgrade older runs on read                                                                                                                                                                | future      |
-| V2  | ✅ Concrete `protocolVersion` grammar and comparison semantics — closed by RFC 0149 §C (this doc §"Protocol version grammar", 2026-08-12). Not semver: `<major>.<minor>`, patch belongs to the suite/SDK axes.                                          | closed      |
-| V3  | `minClientVersion` enforcement — currently advisory in spec; may become MUST                                                                                                                                                                        | future v1.x |
-| V4  | Multi-region replication and split-brain version skew (region A on N, region B on N-1)                                                                                                                                                              | future      |
-| V5  | Pinned-version migration tooling — currently the only path is "drain runs holding the deprecated pin". A registered codemod surface (e.g., "rewrite the `version.pinned` event in place when reading") would let `min` bumps proceed without drains | future v1.x |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.version-negotiation.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

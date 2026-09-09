@@ -27,10 +27,11 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host issues MCP calls to the suite's fake server, which records the revision header.
@@ -67,7 +68,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     for (const v of caps?.protocolVersions ?? []) {
       expect(
         DATE_FORM.test(v),
-        driver.describe(
+        req('openwop.it.mcp-version-negotiation.advertised-revisions-use-mcp-date-form-and-include-the-preferred-one', 
           'RFCS/0153-mcp-2026-07-28-versioned-composition.md §A',
           `'${v}' is not MCP's date form. MCP revisions ARE dates, and 'latest' or an unpadded ` +
             'month lets two hosts disagree about which revision they share while both look valid.',
@@ -76,39 +77,39 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     }
     expect(
       caps?.protocolVersions ?? [],
-      driver.describe('RFCS/0153 §A', '`preferredVersion` MUST be one the host actually lists'),
+      req('openwop.it.mcp-version-negotiation.advertised-revisions-use-mcp-date-form-and-include-the-preferred-one', 'RFCS/0153 §A', '`preferredVersion` MUST be one the host actually lists'),
     ).toContain(caps?.preferredVersion);
   });
 
   it('outbound calls carry MCP-Protocol-Version in date form', async () => {
     if (!behaviorGate(PROFILE, await negotiationAdvertised())) return;
     const server = getMcpFakeServer();
-    if (server === null) return;
+    if (server === null) return softSkip('blocked', 'precondition not met — `server === null` returned early (seam, prior step, or fixture unavailable)');
     server.reset();
     const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint() });
     if (drive.status === 404 || drive.status === 403) {
       expect(
         drive.status,
-        driver.describe(
+        req('openwop.it.mcp-version-negotiation.outbound-calls-carry-mcp-protocol-version-in-date-form', 
           'RFCS/0153 §B',
           'a host advertising MCP revisions MUST expose an invoke seam so the negotiated revision ' +
             'is observable. Without it the requirement resolves to `blocked` per RFC 0148 §A — not ' +
             'to a pass.',
         ),
       ).not.toBe(404);
-      return;
+      return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (seam, prior step, or fixture unavailable)');
     }
     const calls = server.invocations();
-    expect(calls.length, 'the host MUST have called the server').toBeGreaterThan(0);
+    expect(calls.length, req('openwop.it.mcp-version-negotiation.outbound-calls-carry-mcp-protocol-version-in-date-form', 'RFCS/0153 §B', 'the host MUST have called the server')).toBeGreaterThan(0);
     for (const c of calls) {
       const v = c.headers['mcp-protocol-version'];
       expect(
         v,
-        driver.describe('RFCS/0153 §A', 'every MCP call MUST declare its revision'),
+        req('openwop.it.mcp-version-negotiation.outbound-calls-carry-mcp-protocol-version-in-date-form', 'RFCS/0153 §A', 'every MCP call MUST declare its revision'),
       ).toBeTruthy();
       expect(
         DATE_FORM.test(v ?? ''),
-        driver.describe(
+        req('openwop.it.mcp-version-negotiation.outbound-calls-carry-mcp-protocol-version-in-date-form', 
           'RFCS/0153 §A',
           `the revision on the wire MUST be MCP's date form; got '${v}'. A malformed revision is ` +
             'unmatchable against a pinned peer, and the failure then surfaces at the peer rather ' +
@@ -121,7 +122,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
   it('the negotiated revision is one the host advertises', async () => {
     if (!behaviorGate(PROFILE, await negotiationAdvertised())) return;
     const server = getMcpFakeServer();
-    if (server === null) return;
+    if (server === null) return softSkip('blocked', 'precondition not met — `server === null` returned early (seam, prior step, or fixture unavailable)');
     const caps = await mcp();
     server.reset();
     const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint() });
@@ -132,7 +133,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     for (const c of server.invocations()) {
       expect(
         caps?.protocolVersions ?? [],
-        driver.describe(
+        req('openwop.it.mcp-version-negotiation.the-negotiated-revision-is-one-the-host-advertises', 
           'RFCS/0153 §A/§B',
           'the revision sent on the wire MUST appear in `protocolVersions`. Negotiating an ' +
             'unadvertised revision makes the discovery document unreliable for every consumer ' +
@@ -145,7 +146,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
   it('an unsupported revision fails through the canonical interop envelope', async () => {
     if (!behaviorGate(PROFILE, await negotiationAdvertised())) return;
     const server = getMcpFakeServer();
-    if (server === null) return;
+    if (server === null) return softSkip('blocked', 'precondition not met — `server === null` returned early (seam, prior step, or fixture unavailable)');
     const drive = await driver.post('/v1/host/sample/mcp/invoke', {
       serverUrl: server.endpoint(),
       requestVersion: '1999-01-01',
@@ -153,13 +154,13 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     if (drive.status === 404 || drive.status === 403) return seamAbsent(`host advertises mcp version negotiation but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status} — the host-as-client legs are unobservable (host-sample-test-seams.md)`);
     expect(
       drive.status >= 400,
-      driver.describe('RFCS/0153 §B', 'an unsupported revision MUST fail rather than silently proceed'),
+      req('openwop.it.mcp-version-negotiation.an-unsupported-revision-fails-through-the-canonical-interop-envelope', 'RFCS/0153 §B', 'an unsupported revision MUST fail rather than silently proceed'),
     ).toBe(true);
     // S28: canonical envelope is FLAT (`error: "<code>"`, error-envelope.schema.json);
     // the nested `error.code` is tolerated by the lib only through the deprecation window.
     expect(
       readErrorCode(drive.json),
-      driver.describe(
+      req('openwop.it.mcp-version-negotiation.an-unsupported-revision-fails-through-the-canonical-interop-envelope', 
         'RFCS/0153 §B',
         'the upstream error MUST be projected through the canonical OpenWOP interop envelope — a ' +
           'raw JSON-RPC error body leaves the caller parsing a foreign protocol to learn its own ' +

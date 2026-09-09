@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/prompt-kind.schema.json",
+  "title": "PromptKind",
+  "description": "Role a PromptTemplate plays when composed into an LLM call. Shared $def referenced by every schema that names a prompt kind. Adding a kind here is the single edit needed to introduce one across the corpus. See spec/v1/prompts.md §\"PromptKind\" for the canonical semantics of each value, and RFC 0027 for the rationale behind the four-value choice (vs. an open-ended string).\n\nKind semantics:\n- system: behavior + output discipline; composed as the LLM's system message.\n- user: per-call task prompt; composed as the LLM's user message; the surface variable substitution targets.\n- few-shot: example bodies prepended to the user message OR injected as alternating user/assistant turns per host policy.\n- schema-hint: structured-output schema description injected into the system or user message at compose time.",
+  "type": "string",
+  "enum": ["system", "user", "few-shot", "schema-hint"]
+}

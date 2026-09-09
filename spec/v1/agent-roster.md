@@ -53,10 +53,5 @@ This surface does **not** standardize Kanban boards, columns, cards, swimlanes, 
 
 ## Open spec gaps
 
-| Gap                                                            | Disposition                                                                                                                                                                                        |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /v1/agents/roster[/{id}]` + roster-management endpoints   | **Closed (2026-09-02 audit).** `GET /v1/agents/roster` and `GET /v1/agents/roster/{rosterId}` are in `api/openapi.yaml`; this row had said "deferred" after the endpoints landed. Management stays host-private at v1.x.                          |
-| Behavioral attribution + scoping conformance                   | Deferred to `Active → Accepted` (gated on `agents.roster.supported`); the always-on `agent-roster-shape.test.ts` asserts the wire contract now.                                                    |
-| Reference-host roster store                                    | Demonstrated as a host-extension at `/v1/host/sample/roster` (the reference app, `openwop/openwop-app` repo); the normative `GET /v1/agents/roster` reference wiring lands at `Active → Accepted`. |
-| Dispatch-as-agent (resolving `agentRef` → the executing agent) | The reference impl attributes by `agentRef`; executing the portfolio workflow _as_ that agent is deferred.                                                                                         |
-| `kanban.card.moved` as a normative event                       | Deferred to a future `host.kanban` RFC iff cross-host demand appears (§E).                                                                                                                         |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.agent-roster.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

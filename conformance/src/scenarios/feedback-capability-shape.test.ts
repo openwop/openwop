@@ -10,16 +10,17 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { readFeedbackCap } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 describe('feedback-capability-shape: advertisement (RFC 0056 §A)', () => {
   it('capabilities.feedback is absent or a well-formed object', async () => {
     const cap = await readFeedbackCap();
-    if (cap === null) return; // not advertised — valid
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (not advertised — valid)'); // not advertised — valid
     expect(
       typeof cap.supported,
-      driver.describe('capabilities.schema.json §feedback', 'capabilities.feedback.supported MUST be a boolean when present'),
+      req('openwop.it.feedback-capability-shape.capabilities-feedback-is-absent-or-a-well-formed-object', 'capabilities.schema.json §feedback', 'capabilities.feedback.supported MUST be a boolean when present'),
     ).toBe('boolean');
     if (Array.isArray(cap.targets)) {
       for (const t of cap.targets) {

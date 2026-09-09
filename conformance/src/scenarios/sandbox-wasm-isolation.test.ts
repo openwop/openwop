@@ -31,8 +31,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FIXTURES_DIR } from '../lib/paths.js';
 import { probeSandboxed } from '../lib/wasm-sandbox-probe.js';
-
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 const dir = join(FIXTURES_DIR, 'wasm-sandbox');
 const fix = (name: string): Uint8Array => new Uint8Array(readFileSync(join(dir, `${name}.wasm`)));
 const BASE = { allowedHostCalls: [] as string[], memoryLimitBytes: 2 * 1024 * 1024 };
@@ -40,14 +39,14 @@ const BASE = { allowedHostCalls: [] as string[], memoryLimitBytes: 2 * 1024 * 10
 describe('sandbox-wasm-isolation: positive controls (RFC 0035 §B, server-free)', () => {
   it('a well-behaved pure module runs and returns its input', () => {
     const r = probeSandboxed(fix('well-behaved-echo'), BASE, 'invoke', 42);
-    expect(r.ok, why('RFC 0035 §B', 'a pure-compute module runs')).toBe(true);
-    expect(r.result).toBe(42);
+    expect(r.ok, req('openwop.it.sandbox-wasm-isolation.a-well-behaved-pure-module-runs-and-returns-its-input', 'RFC 0035 §B', 'a pure-compute module runs')).toBe(true);
+    expect(r.result, req('openwop.it.sandbox-wasm-isolation.a-well-behaved-pure-module-runs-and-returns-its-input', 'RFC 0035 §B', 'a well-behaved pure module runs and returns its input')).toBe(42);
   });
 
   it('a granted host capability is callable when in allowedHostCalls', () => {
     const r = probeSandboxed(fix('well-behaved-host-fetch'), { ...BASE, allowedHostCalls: ['fetch'] }, 'invoke', 7);
-    expect(r.ok, why('RFC 0035 §B invariant 7', 'a granted openwop.* capability is callable')).toBe(true);
-    expect(r.result).toBe(7);
+    expect(r.ok, req('openwop.it.sandbox-wasm-isolation.a-granted-host-capability-is-callable-when-in-allowedhostcalls', 'RFC 0035 §B invariant 7', 'a granted openwop.* capability is callable')).toBe(true);
+    expect(r.result, req('openwop.it.sandbox-wasm-isolation.a-granted-host-capability-is-callable-when-in-allowedhostcalls', 'RFC 0035 §B', 'a granted host capability is callable when in allowedHostCalls')).toBe(7);
   });
 });
 
@@ -61,8 +60,8 @@ describe('sandbox-wasm-isolation: escape attempts fail closed (RFC 0035 §B 1–
   for (const [fixture, escapeKind, invariant] of cases) {
     it(`${invariant}: ${fixture} → sandbox_escape_attempt (${escapeKind})`, () => {
       const r = probeSandboxed(fix(fixture), BASE);
-      expect(r.code, why('RFC 0035 §B', `${invariant} fails closed before instantiation`)).toBe('sandbox_escape_attempt');
-      expect(r.escapeKind).toBe(escapeKind);
+      expect(r.code, req('openwop.it.sandbox-wasm-isolation.sandbox-escape-attempt', 'RFC 0035 §B', `${invariant} fails closed before instantiation`)).toBe('sandbox_escape_attempt');
+      expect(r.escapeKind, req('openwop.it.sandbox-wasm-isolation.sandbox-escape-attempt', 'RFC 0035 §B', ': → sandbox_escape_attempt ( )')).toBe(escapeKind);
     });
   }
 });
@@ -70,13 +69,13 @@ describe('sandbox-wasm-isolation: escape attempts fail closed (RFC 0035 §B 1–
 describe('sandbox-wasm-isolation: capability gate (RFC 0035 §B 7, server-free)', () => {
   it('an un-granted openwop capability is denied with its name', () => {
     const r = probeSandboxed(fix('misbehaving-capability-gate'), BASE);
-    expect(r.code, why('RFC 0035 §B invariant 7', 'undeclared host capability fails closed')).toBe('sandbox_capability_denied');
-    expect(r.requestedCapability).toBe('privileged');
+    expect(r.code, req('openwop.it.sandbox-wasm-isolation.an-un-granted-openwop-capability-is-denied-with-its-name', 'RFC 0035 §B invariant 7', 'undeclared host capability fails closed')).toBe('sandbox_capability_denied');
+    expect(r.requestedCapability, req('openwop.it.sandbox-wasm-isolation.an-un-granted-openwop-capability-is-denied-with-its-name', 'RFC 0035 §B', 'an un-granted openwop capability is denied with its name')).toBe('privileged');
   });
 
   it('host-fetch WITHOUT the grant is denied (the gate works both directions)', () => {
     const r = probeSandboxed(fix('well-behaved-host-fetch'), BASE);
-    expect(r.code).toBe('sandbox_capability_denied');
+    expect(r.code, req('openwop.it.sandbox-wasm-isolation.host-fetch-without-the-grant-is-denied-the-gate-works-both-directions', 'RFC 0035 §B', 'host-fetch WITHOUT the grant is denied (the gate works both directions)')).toBe('sandbox_capability_denied');
     expect(r.requestedCapability).toBe('fetch');
   });
 });
@@ -84,15 +83,15 @@ describe('sandbox-wasm-isolation: capability gate (RFC 0035 §B 7, server-free)'
 describe('sandbox-wasm-isolation: memory cap (RFC 0035 §B 5, server-free)', () => {
   it('node-pack-sandbox-memory-cap: access beyond the host memory bound is sandbox_memory_exceeded', () => {
     const r = probeSandboxed(fix('misbehaving-memory'), BASE);
-    expect(r.ok, why('RFC 0035 §B invariant 5', 'memory bound is engine-enforced')).toBe(false);
-    expect(r.code).toBe('sandbox_memory_exceeded');
+    expect(r.ok, req('openwop.it.sandbox-wasm-isolation.node-pack-sandbox-memory-cap-access-beyond-the-host-memory-bound-is-sandbox-memo', 'RFC 0035 §B invariant 5', 'memory bound is engine-enforced')).toBe(false);
+    expect(r.code, req('openwop.it.sandbox-wasm-isolation.node-pack-sandbox-memory-cap-access-beyond-the-host-memory-bound-is-sandbox-memo', 'RFC 0035 §B', 'node-pack-sandbox-memory-cap: access beyond the host memory bound is sandbox_memory_exceeded')).toBe('sandbox_memory_exceeded');
   });
 });
 
 describe('sandbox-wasm-isolation: isolated context (RFC 0035 §B 8, server-free)', () => {
   it('node-pack-sandbox-isolated-context: each invocation gets a fresh instance (no cross-pack state)', () => {
     const iso = fix('isolation-global');
-    expect(probeSandboxed(iso, BASE, 'bump').result, why('RFC 0035 §B invariant 8', 'a fresh instance starts at 0')).toBe(1);
-    expect(probeSandboxed(iso, BASE, 'read').result, why('RFC 0035 §B invariant 8', 'no state leaks across invocations')).toBe(0);
+    expect(probeSandboxed(iso, BASE, 'bump').result, req('openwop.it.sandbox-wasm-isolation.node-pack-sandbox-isolated-context-each-invocation-gets-a-fresh-instance-no-cros', 'RFC 0035 §B invariant 8', 'a fresh instance starts at 0')).toBe(1);
+    expect(probeSandboxed(iso, BASE, 'read').result, req('openwop.it.sandbox-wasm-isolation.node-pack-sandbox-isolated-context-each-invocation-gets-a-fresh-instance-no-cros', 'RFC 0035 §B invariant 8', 'no state leaks across invocations')).toBe(0);
   });
 });

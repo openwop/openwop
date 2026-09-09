@@ -25,6 +25,7 @@ import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host exports OTLP metrics to the suite's collector.
@@ -96,19 +97,19 @@ describe('metric-emission: canonical openwop.* metrics arrive at the collector',
 
     // Wait for the host's metric-emit tick to land at the collector.
     const sawBacklog = await waitForMetric('openwop.run.backlog', 5_000);
-    expect(sawBacklog, driver.describe(
+    expect(sawBacklog, req('openwop.it.metric-emission.host-emits-openwop-run-backlog-openwop-queue-depth-and-openwop-run-duration', 
       'observability.md §"Metrics"',
       'host claiming metrics MUST emit openwop.run.backlog',
     )).toBe(true);
 
     const sawQueueDepth = await waitForMetric('openwop.queue.depth', 5_000);
-    expect(sawQueueDepth, driver.describe(
+    expect(sawQueueDepth, req('openwop.it.metric-emission.host-emits-openwop-run-backlog-openwop-queue-depth-and-openwop-run-duration', 
       'observability.md §"Metrics"',
       'host claiming metrics MUST emit openwop.queue.depth',
     )).toBe(true);
 
     const sawDuration = await waitForMetric('openwop.run.duration', 5_000);
-    expect(sawDuration, driver.describe(
+    expect(sawDuration, req('openwop.it.metric-emission.host-emits-openwop-run-backlog-openwop-queue-depth-and-openwop-run-duration', 
       'observability.md §"Metrics"',
       'host claiming metrics MUST emit openwop.run.duration after a completed run',
     )).toBe(true);

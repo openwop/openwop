@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
 
 const WORKFLOW_ID = 'conformance-cancellable';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -21,7 +22,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('cancellation: in-flight :cancel reaches termin
       workflowId: WORKFLOW_ID,
       inputs: { delayMs: 10_000 },
     });
-    expect(create.status, driver.describe(
+    expect(create.status, req('openwop.it.cancellation.post-v1-runs-runid-cancel-returns-200-and-run-terminates-as-cancelled', 
       'rest-endpoints.md',
       'POST /v1/runs MUST return 201 on accepted run',
     )).toBe(201);
@@ -35,7 +36,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('cancellation: in-flight :cancel reaches termin
       `/v1/runs/${encodeURIComponent(runId)}/cancel`,
       { reason: 'conformance-cancellation-test' },
     );
-    expect(cancel.status, driver.describe(
+    expect(cancel.status, req('openwop.it.cancellation.post-v1-runs-runid-cancel-returns-200-and-run-terminates-as-cancelled', 
       'rest-endpoints.md POST /v1/runs/{runId}/cancel',
       'cancel MUST return 200 on accepted cancellation',
     )).toBe(200);
@@ -43,14 +44,14 @@ describe.skipIf(SKIP_NO_FIXTURE)('cancellation: in-flight :cancel reaches termin
     const cancelBody = cancel.json as { status?: string };
     expect(
       ['cancelled', 'cancelling'].includes(cancelBody.status ?? ''),
-      driver.describe(
+      req('openwop.it.cancellation.post-v1-runs-runid-cancel-returns-200-and-run-terminates-as-cancelled', 
         'rest-endpoints.md POST /v1/runs/{runId}/cancel',
         'cancel response status MUST be one of `cancelled` or `cancelling`',
       ),
     ).toBe(true);
 
     const terminal = await pollUntilStatus(runId, 'cancelled', { timeoutMs: 5_000 });
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.cancellation.post-v1-runs-runid-cancel-returns-200-and-run-terminates-as-cancelled', 
       'fixtures.md conformance-cancellable §Terminal status',
       'fixture MUST reach terminal `cancelled` within 5s of cancel',
     )).toBe('cancelled');
@@ -62,7 +63,7 @@ describe('cancellation: cancelling an unknown run returns 404', () => {
     const res = await driver.post('/v1/runs/openwop-conformance-no-such-run/cancel', {});
     expect(
       [403, 404].includes(res.status),
-      driver.describe('rest-endpoints.md', 'cancel on unknown run MUST return 404 or 403'),
+      req('openwop.it.cancellation.post-v1-runs-nonexistentid-cancel-returns-404', 'rest-endpoints.md', 'cancel on unknown run MUST return 404 or 403'),
     ).toBe(true);
   });
 });

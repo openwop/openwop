@@ -26,8 +26,12 @@
  * host or a vitest subprocess.
  */
 
+import { scenarioFileOfItId } from './requirement-ids.js';
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
-import { requirementIdForScenario, requirementIdForPrefix, requirementsFor } from './requirement-registry.js';
+import { targetMajor } from './seams.js';
+import { PKG_ROOT_PATH } from './paths.js';
+import { v2ProfileFloorFiles } from './requirement-registry.js';
+import { requirementIdForScenario, requirementIdForPrefix, requirementsFor, v2FloorsActive } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './spec-coherence.js';
 import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-ledger.js';
@@ -38,6 +42,20 @@ export function floorScenarioFiles(): ReadonlySet<string> {
   for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) {
     for (const f of floor.required) out.add(f);
     for (const c of floor.conditional ?? []) for (const f of c.required) out.add(f);
+  }
+  // At target major 2 the floors come from the declaration, not the v1 hand
+  // table. The ledger and --certify MUST agree on this set, or a floor file is
+  // minted `openwop.scenario.*` and looked up as `openwop.floor.*` — which is
+  // exactly what refused a tier-1 host's first production bundle over 101
+  // executed-pass rows (see v2ProfileFloorFiles).
+  //
+  // rc.55: the runner installs the v2 floor map (`setV2ProfileFloors`) but
+  // reads `targetMajor()` from ITS OWN process.env, which `--target-major 2`
+  // never set — so the worker (env set) minted `openwop.floor.v2-…` and the
+  // runner (env unset) looked up `openwop.scenario.v2-…`. Either signal is
+  // the same fact; honour both so the two halves cannot disagree again.
+  if (targetMajor() === 2 || v2FloorsActive()) {
+    for (const files of Object.values(v2ProfileFloorFiles(PKG_ROOT_PATH))) for (const f of files) out.add(f);
   }
   return out;
 }
@@ -60,6 +78,40 @@ export function requirementIdForFile(basename: string): string {
 export const PARTIAL_WITNESS_PREFIX = 'partial-witness: ';
 
 export type FileTestState = 'pass' | 'fail' | 'skip';
+
+/**
+ * The per-`it` record (RFC 0148 §A at test granularity), as `setup.ts`
+ * computes it in `afterEach`. Pure so a lib test can pin it:
+ *   - fail                         ⇒ executed-fail (detail = the first error message)
+ *   - pass with ≥ 1 assertion      ⇒ executed-pass
+ *   - a behaviorGate entry journaled during the test ⇒ that gate's disposition
+ *   - pass with 0 assertions       ⇒ the softSkip note written DURING THIS TEST
+ *                                    (`inapplicable` / `skipped` / `blocked`, worst-first),
+ *                                    else `blocked` + the unclassified-return marker
+ *   - vitest skip (ctx.skip / it.skip) ⇒ the note written before the skip, else `skipped`
+ *
+ * rc.56: the fourth line is new. Until then a zero-assertion pass consulted the
+ * journal only, so a leg that returned `softSkip('inapplicable', …)` was
+ * recorded `blocked / unclassified return` at `it` granularity while its file
+ * row (which does read the notes — `resolveFileRecord`) was `inapplicable`.
+ * A bundle with any `blocked` row does not certify (RFC 0168 §E.1), so the
+ * dishonest per-`it` rows denied certification to every profile on a host that
+ * simply did not advertise the gated surface.
+ */
+export function resolveItRecord(
+  state: FileTestState,
+  assertionCalls: number,
+  gate: { disposition: 'inapplicable' | 'skipped'; detail?: string } | undefined,
+  noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string } | null,
+  firstError?: string,
+): { disposition: Disposition; detail?: string } {
+  if (state === 'fail') return { disposition: 'executed-fail', detail: `the test executed and failed: ${(firstError ?? 'no message').slice(0, 300)}` };
+  if (state === 'pass' && assertionCalls > 0) return { disposition: 'executed-pass' };
+  if (gate !== undefined) return { disposition: gate.disposition, detail: gate.detail ?? `${gate.disposition} (gate recorded no reason)` };
+  if (noted !== null) return { disposition: noted.kind, detail: noted.reason };
+  if (state === 'pass') return { disposition: 'blocked', detail: 'unclassified return: the test passed with zero assertions and recorded no reason — RFC 0148 §A resolves it to blocked, never to a pass' };
+  return { disposition: 'skipped', detail: 'vitest skipped the test (ctx.skip / it.skip) without a recorded gate reason' };
+}
 
 /** Worker half: fold a file's per-test states (+ any gate-recorded reason) into
  *  the ONE disposition the file records. */
@@ -123,6 +175,7 @@ export function resolveFileRecord(
   // them. See lib/spec-coherence.ts for why not a new disposition value.
   if (
     specCoherenceFile !== undefined
+    && process.env.OPENWOP_CORPUS_GATE !== '1' // suite 2.0.0: under the corpus gate the coherence scenario IS the subject
     && SPEC_COHERENCE_SCENARIOS.has(specCoherenceFile)
     && !states.includes('fail')
     && assertionCount === 0
@@ -200,6 +253,13 @@ export interface DerivedProfileVerdict {
   readonly runtimeDerived: boolean;
   /** For runtime-derived profiles: every floor row is a witnessed executed-pass. */
   readonly held: boolean;
+  /**
+   * Floor rows that are `executed-pass` with `assertionCount > 0` — the number
+   * of things actually witnessed. At major 2 this IS `witnessCount` on the
+   * bundle, and a profile with zero of them is not certifiable however its
+   * other rows read (RFC 0148 §A: no certification without an execution witness).
+   */
+  readonly witnessedPasses: number;
 }
 
 export interface Derivation {
@@ -261,9 +321,15 @@ export function deriveRequirementDispositions(
     perFile.set(file, row);
   }
 
-  // Prefix requirements: derived from the matching files.
+  // Prefix requirements: derived from the matching files. These are the v1 hand
+  // table's `requiredAnyPrefix` groups (`interrupt-`); at major 2 the floors are
+  // the declaration's and have no prefix groups — and the v1 `interrupt-*` files
+  // never run at major 2, so until rc.45 every major-2 bundle carried one
+  // `openwop.floor.any.interrupt-` row recorded `blocked` ("no interrupt-*
+  // scenario ran"), which by RFC 0168 §E.1 denied certification to every
+  // profile on every major-2 bundle. The fifth unjoined floor site.
   const prefixIds = new Set<string>();
-  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
+  if (!v2FloorsActive()) for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
   for (const prefix of [...prefixIds].sort()) {
     const matching = [...perFile.entries()].filter(([f]) => f.startsWith(prefix)).map(([, r]) => r);
     const id = requirementIdForPrefix(prefix);
@@ -285,6 +351,31 @@ export function deriveRequirementDispositions(
     rows.push(row);
   }
 
+  // Per-`it` rows (suite 1.153.0): every ledger entry keyed `openwop.it.<file>.<slug>`
+  // becomes its own bundle row, attributed to its scenario file. Additive — the
+  // file-level and prefix rows above are unchanged, and the floors still key on
+  // them. This is the granularity RFC 0148 §A describes and the G8 fix.
+  const emitted = new Set(rows.map((r) => r.requirementId));
+  for (const e of [...ledger].sort((a, b) => a.requirementId.localeCompare(b.requirementId))) {
+    // Prefer the file the entry recorded: an explicit `req()` id
+    // (`openwop.requirement.…`) is authored, not file-derived, so deriving a
+    // file from the id alone returned null and the row was dropped — every
+    // explicit requirement id was missing from bundle v3 for that reason.
+    const file = e.scenarioFile ?? scenarioFileOfItId(e.requirementId);
+    // Attribute only to files this run reported on: a worker's ledger can carry
+    // rows from files outside the certified set (the suite's own lib tests, or
+    // a filtered run), and those are not evidence about the host.
+    if (file === null || emitted.has(e.requirementId) || !reportStates.has(file)) continue;
+    emitted.add(e.requirementId);
+    rows.push({
+      requirementId: e.requirementId,
+      scenarioId: file,
+      disposition: e.disposition,
+      ...(e.detail === undefined ? {} : { detail: e.detail }),
+      ...(e.assertionCount === undefined ? {} : { assertionCount: e.assertionCount }),
+    });
+  }
+
   const totals = { executedPass: 0, executedFail: 0, skipped: 0, inapplicable: 0, blocked: 0 };
   for (const r of rows) {
     if (r.disposition === 'executed-pass') totals.executedPass++;
@@ -301,12 +392,18 @@ export function deriveRequirementDispositions(
     if (ids === null) {
       const floor = PROFILE_FLOOR_SCENARIOS[profile];
       const why = floor === undefined ? `(no floor defined for ${profile})` : `(discovery-conditional floor for ${profile} is unevaluable without the discovery document)`;
-      verdicts.push({ profile, unclassified: [], blocking: [why], certifiable: false, runtimeDerived: false, held: false });
+      verdicts.push({ profile, unclassified: [], blocking: [why], certifiable: false, runtimeDerived: false, held: false, witnessedPasses: 0 });
       continue;
     }
     const unclassified: string[] = [];
     const blocking: string[] = [];
     let witnessedPasses = 0;
+    // At major 2 the floor is the declaration's (`v2ProfileFloorFiles`), and
+    // the v1 hand table says nothing about these profiles: not their floor, not
+    // `discoveryOnly`, not `runtimeDerived`. Reading it here was the fourth
+    // unjoined floor site — `openwop-discovery-core` is `discoveryOnly` in v1
+    // terms, so at major 2 it certified whatever its v2 floor file said.
+    const atMajor2 = v2FloorsActive();
     for (const id of ids) {
       const r = rowById.get(id);
       const fromLedger = byId.has(id) || (r !== undefined && r.scenarioId.endsWith('*'));
@@ -327,24 +424,33 @@ export function deriveRequirementDispositions(
       const silent = !fromLedger && (ledgerPresent || r?.disposition === 'blocked');
       if (r === undefined || silent || vacuous) unclassified.push(id);
       // Unclassified always blocks: a requirement nobody recorded cannot certify.
-      if (r === undefined || silent || vacuous || !CERTIFIABLE.includes(r.disposition)) blocking.push(id);
+      // A `skipped` floor row at major 2 is an opt-in the host withheld — the
+      // suite was not allowed to look. That is not evidence the requirement
+      // holds; it blocks the floor (a v1 floor keeps the CERTIFIABLE reading).
+      if (r === undefined || silent || vacuous || !CERTIFIABLE.includes(r.disposition) || (atMajor2 && r.disposition === 'skipped')) blocking.push(id);
     }
     // discoveryOnly floors have ids.length === 0 and certify by design here (the
     // requirement-ledger's verifyProfileRequirements is stricter; the runner
-    // consults PROFILE_FLOOR_SCENARIOS.discoveryOnly separately).
-    const discoveryOnly = PROFILE_FLOOR_SCENARIOS[profile]?.discoveryOnly === true;
-    const runtimeDerived = PROFILE_FLOOR_SCENARIOS[profile]?.runtimeDerived === true;
+    // consults PROFILE_FLOOR_SCENARIOS.discoveryOnly separately). Neither flag
+    // exists at major 2.
+    const discoveryOnly = !atMajor2 && PROFILE_FLOOR_SCENARIOS[profile]?.discoveryOnly === true;
+    const runtimeDerived = !atMajor2 && PROFILE_FLOOR_SCENARIOS[profile]?.runtimeDerived === true;
     // A runtime-derived profile is HELD only when every floor row is a witnessed
     // pass ("derivable from which scenarios pass" — profiles.md). Anything else
     // means the host does not hold it: not a rejection, not a blocked claim.
     const held = ids.length > 0 && witnessedPasses === ids.length;
+    // Major 2: a floor certifies only on a witnessed pass. `inapplicable` rows
+    // are honest per file (capabilities.md §2 requires the omission) but a floor
+    // that is inapplicable end to end has witnessed nothing and certifies nothing.
+    const certifiableAt2 = ids.length > 0 && blocking.length === 0 && witnessedPasses >= 1;
     verdicts.push({
       profile,
       unclassified: runtimeDerived && !held ? [] : unclassified,
       blocking: runtimeDerived && !held ? ids.filter((id) => rowById.get(id)?.disposition !== 'executed-pass' || (rowById.get(id)?.assertionCount ?? 0) === 0) : blocking,
-      certifiable: runtimeDerived ? held : discoveryOnly || (ids.length > 0 && blocking.length === 0),
+      certifiable: atMajor2 ? certifiableAt2 : runtimeDerived ? held : discoveryOnly || (ids.length > 0 && blocking.length === 0),
       runtimeDerived,
       held,
+      witnessedPasses,
     });
   }
   return { requirements: rows, totals, verdicts, rejectUnclassified: verdicts.some((v) => v.unclassified.length > 0), ledgerPresent };

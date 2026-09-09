@@ -1,0 +1,6 @@
+{
+  "name": "core.openwop.http",
+  "version": "1.0.0",
+  "engines": { "openwop": ">=1.0.0" },
+  "signing": { "method": "manual", "publicKeyRef": "openwop-team-1" }
+}

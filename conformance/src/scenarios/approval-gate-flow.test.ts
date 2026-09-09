@@ -24,6 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 async function authorizationSupported(): Promise<boolean> {
   // Root-first per RFC 0073 (`capabilities.authorization` is the deprecated wrapper shape).
@@ -42,7 +43,7 @@ describe('approval-gate-flow: role-gated, audited approval (RFC 0051 §A)', () =
     const body = res.json as { released?: boolean } | undefined;
     expect(
       body?.released,
-      driver.describe('RFC 0051 §A', 'an unauthorized principal MUST NOT release the gate (fail-closed)'),
+      req('openwop.it.approval-gate-flow.an-unauthorized-principal-does-not-release-the-gate-fail-closed', 'RFC 0051 §A', 'an unauthorized principal MUST NOT release the gate (fail-closed)'),
     ).toBe(false);
   });
 
@@ -57,11 +58,11 @@ describe('approval-gate-flow: role-gated, audited approval (RFC 0051 §A)', () =
     const body = res.json as { event?: { type?: string; payload?: { reason?: string } } } | undefined;
     expect(
       body?.event?.type,
-      driver.describe('RFC 0051 §B', 'taking the override path MUST emit approval.overridden'),
+      req('openwop.it.approval-gate-flow.the-override-path-emits-an-audited-approval-overridden-with-a-reason', 'RFC 0051 §B', 'taking the override path MUST emit approval.overridden'),
     ).toBe('approval.overridden');
     expect(
       typeof body?.event?.payload?.reason === 'string' && body.event.payload.reason.length > 0,
-      driver.describe('RFC 0051 §B', 'approval.overridden MUST carry a non-empty reason (the audit breadcrumb)'),
+      req('openwop.it.approval-gate-flow.the-override-path-emits-an-audited-approval-overridden-with-a-reason', 'RFC 0051 §B', 'approval.overridden MUST carry a non-empty reason (the audit breadcrumb)'),
     ).toBe(true);
   });
 });

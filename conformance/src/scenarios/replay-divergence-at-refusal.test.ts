@@ -48,6 +48,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -80,18 +81,18 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
     if (d === null) {
       softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     }
     const rd = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.replayDeterminism;
     if (rd === undefined) {
       softSkip('inapplicable', 'optional advertisement — `multiAgent.executionModel.replayDeterminism` not advertised by this host (RFC 0041 §D)');
       ctx.skip(); // optional advertisement — host hasn't opted in
-      return;
+      return softSkip('blocked', 'precondition not met — `rd === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
     expect(
       typeof rd.supported,
-      driver.describe(
+      req('openwop.it.replay-divergence-at-refusal.replaydeterminism-when-present-conforms-to-rfc-0041-d', 
         'RFCS/0041-multi-agent-replay-under-nondeterminism.md §D',
         'replayDeterminism.supported MUST be boolean when present',
       ),
@@ -101,7 +102,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
       const version = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version as number | undefined;
       expect(
         typeof version === 'number' && version >= 4,
-        driver.describe(
+        req('openwop.it.replay-divergence-at-refusal.replaydeterminism-when-present-conforms-to-rfc-0041-d', 
           'RFCS/0041-multi-agent-replay-under-nondeterminism.md §D',
           'when replayDeterminism.supported: true, multiAgent.executionModel.version MUST be >= 4',
         ),
@@ -114,7 +115,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
       // assertion closes the conformance-enforcement gap.
       expect(
         rd.refusalDivergenceEmission,
-        driver.describe(
+        req('openwop.it.replay-divergence-at-refusal.replaydeterminism-when-present-conforms-to-rfc-0041-d', 
           'schemas/capabilities.schema.json §replayDeterminism.refusalDivergenceEmission',
           'hosts advertising version: 4 MUST set replayDeterminism.refusalDivergenceEmission to true',
         ),
@@ -196,7 +197,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
     if (programStatus === 404) {
       softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip(); // mock-AI program seam not exposed — soft-skip
-      return;
+      return softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(programStatus).toBe(200);
 
@@ -206,7 +207,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
     if (createRes.status === 404 || createRes.status === 422) {
       softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip(); // fixture not advertised
-      return;
+      return softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;
@@ -228,14 +229,14 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
 
     expect(
       replayTerminal.status,
-      driver.describe(
+      req('openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref', 
         'RFCS/0041-multi-agent-replay-under-nondeterminism.md §B + spec/v1/rest-endpoints.md §"Common error codes"',
         'replay MUST terminate `failed` when refusal-divergence is detected (silent substitution is non-conformant)',
       ),
     ).toBe('failed');
     expect(
       replayTerminal.error?.code,
-      driver.describe(
+      req('openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref', 
         'spec/v1/rest-endpoints.md §"Common error codes" — replay_diverged_at_refusal',
         'error.code MUST be `replay_diverged_at_refusal` per the canonical catalog',
       ),
@@ -245,7 +246,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
     const divergenceEvent = replayEvents.find((e) => e.type === 'replay.divergedAtRefusal');
     expect(
       divergenceEvent,
-      driver.describe(
+      req('openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref', 
         'schemas/run-event-payloads.schema.json §replayDivergedAtRefusal',
         'replay event log MUST contain exactly one `replay.divergedAtRefusal` event identifying the divergence',
       ),
@@ -254,14 +255,14 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
     expect(divergenceEvent?.payload?.nodeId).toBe(NODE_ID);
     expect(
       divergenceEvent?.payload?.originalEnvelopeKind,
-      driver.describe(
+      req('openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref', 
         'schemas/run-event-payloads.schema.json §replayDivergedAtRefusal.originalEnvelopeKind',
         'originalEnvelopeKind MUST be `valid` (source run completed normally)',
       ),
     ).toBe('valid');
     expect(
       divergenceEvent?.payload?.replayEnvelopeKind,
-      driver.describe(
+      req('openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref', 
         'schemas/run-event-payloads.schema.json §replayDivergedAtRefusal.replayEnvelopeKind',
         'replayEnvelopeKind MUST be `refusal` (replay hit the refusal entry of the mock program)',
       ),
@@ -279,9 +280,9 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
     if (programStatus === 404) {
       softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `programStatus === 404` returned early (seam, prior step, or fixture unavailable)');
     }
-    expect(programStatus).toBe(200);
+    expect(programStatus, req('openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref~2', 'RFC 0041 §B', 'Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)')).toBe(200);
 
     const createRes = await driver.post('/v1/runs', {
       workflowId: 'conformance-phase4-replay-divergence',
@@ -289,7 +290,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
     if (createRes.status === 404 || createRes.status === 422) {
       softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
       ctx.skip();
-      return;
+      return softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;

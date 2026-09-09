@@ -1,0 +1,1 @@
+{ "id": "wf-1", "nodes": [ { "id": "n1", "type": "core.ai.callPrompt", "config": { "prompt": "p" }, "artifactType": "document" } ], "edges": [] }

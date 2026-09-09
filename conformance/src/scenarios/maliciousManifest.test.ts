@@ -35,6 +35,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface RegistryProbe {
   available: boolean;
@@ -57,7 +59,7 @@ async function probeRegistry(): Promise<RegistryProbe> {
 describe('malicious-manifest: pack-name validation per spec/v1/node-packs.md §Naming', () => {
   it('GET /v1/packs/{bad-name}/-/{version}.json returns 400 invalid_pack_name', async () => {
     const probe = await probeRegistry();
-    if (!probe.available) return; // host doesn't claim openwop-node-packs
+    if (!probe.available) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!probe.available` returned early (host doesn\'t claim openwop-node-packs)'); // host doesn't claim openwop-node-packs
 
     // Bad name shapes the registry SHOULD reject:
     //   - Reserved scope without authorization (`core.foo`)
@@ -71,7 +73,7 @@ describe('malicious-manifest: pack-name validation per spec/v1/node-packs.md §N
       );
       expect(
         [400, 404].includes(res.status),
-        driver.describe(
+        req('openwop.it.maliciousManifest.get-v1-packs-bad-name-version-json-returns-400-invalid-pack-name', 
           'spec/v1/node-packs.md §Registry HTTP API',
           `bad pack name "${badName}" MUST yield 400 (invalid_pack_name) or 404 (treated as unknown)`,
         ),
@@ -83,7 +85,7 @@ describe('malicious-manifest: pack-name validation per spec/v1/node-packs.md §N
 describe('malicious-manifest: version validation', () => {
   it('GET /v1/packs/{name}/-/{bad-version}.json returns 400 invalid_version', async () => {
     const probe = await probeRegistry();
-    if (!probe.available) return;
+    if (!probe.available) return softSkip('blocked', 'precondition not met — `!probe.available` returned early (seam, prior step, or fixture unavailable)');
 
     const badVersions = ['not-semver', '1', '1.0.0', 'v1.0'];
 
@@ -93,7 +95,7 @@ describe('malicious-manifest: version validation', () => {
       );
       expect(
         [400, 404].includes(res.status),
-        driver.describe(
+        req('openwop.it.maliciousManifest.get-v1-packs-name-bad-version-json-returns-400-invalid-version', 
           'spec/v1/node-packs.md §Registry HTTP API',
           `bad version "${bad}" MUST yield 400 (invalid_version) or 404`,
         ),
@@ -105,10 +107,10 @@ describe('malicious-manifest: version validation', () => {
 describe('malicious-manifest: signature endpoint contract per openwop/openwop@434c8f2', () => {
   it('GET /v1/packs/{name}/-/{version}.sig of a non-existent pack returns 404 signature_not_available', async () => {
     const probe = await probeRegistry();
-    if (!probe.available) return;
+    if (!probe.available) return softSkip('blocked', 'precondition not met — `!probe.available` returned early (seam, prior step, or fixture unavailable)');
 
     const res = await driver.get('/v1/packs/community.no-such-pack/-/1.0.sig');
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.maliciousManifest.get-v1-packs-name-version-sig-of-a-non-existent-pack-returns-404-signature-not-a', 
       'spec/v1/node-packs.md §`GET .sig`',
       'missing/yanked/unsigned signature MUST return 404',
     )).toBe(404);
@@ -120,7 +122,7 @@ describe('malicious-manifest: signature endpoint contract per openwop/openwop@43
       // shape; the assertion is permissive on the error code itself
       // but strict on the status.
       if (typeof body.error === 'string') {
-        expect(body.error.length, driver.describe(
+        expect(body.error.length, req('openwop.it.maliciousManifest.get-v1-packs-name-version-sig-of-a-non-existent-pack-returns-404-signature-not-a', 
           'spec/v1/node-packs.md',
           '404 response MUST carry a structured error envelope with a non-empty error code',
         )).toBeGreaterThan(0);
@@ -146,7 +148,7 @@ describe('malicious-manifest: documented error catalog (per openwop/openwop@434c
       'tarball_path_traversal',
       'tarball_tar_parse_failed',
     ] as const;
-    expect(TARBALL_ERRORS.length, driver.describe(
+    expect(TARBALL_ERRORS.length, req('openwop.it.maliciousManifest.lists-are-non-empty-sanity-check-on-doc-drift', 
       'spec/v1/node-packs.md',
       'documented tarball-error catalog is non-empty',
     )).toBe(9);

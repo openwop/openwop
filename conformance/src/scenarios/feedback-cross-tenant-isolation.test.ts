@@ -16,6 +16,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { readFeedbackCap, seedRun } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('feedback-cross-tenant-isolation (RFC 0056 §E)', () => {
   it('a run\'s annotation list contains only that run\'s annotations', async () => {
@@ -31,7 +32,7 @@ describe('feedback-cross-tenant-isolation (RFC 0056 §E)', () => {
     for (const a of ann) {
       expect(
         a.target?.runId,
-        driver.describe('RFC 0056 §E', 'an annotation list MUST contain only this run\'s annotations (CTI-1)'),
+        req('openwop.it.feedback-cross-tenant-isolation.a-run-s-annotation-list-contains-only-that-run-s-annotations', 'RFC 0056 §E', 'an annotation list MUST contain only this run\'s annotations (CTI-1)'),
       ).toBe(runId);
     }
   });

@@ -44,6 +44,8 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const DECISION = join(SCHEMAS_DIR, 'orchestrator-decision.schema.json');
 
@@ -60,39 +62,39 @@ describe('dispatch-per-item: NextWorkerDecision.nextWorkerInputs schema (always-
     };
     expect(
       validate(decision),
-      `orchestrator-decision.schema.json §NextWorkerDecision — a well-formed nextWorkerInputs MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.dispatch-per-item-input.accepts-a-next-worker-decision-carrying-a-well-formed-index-aligned-nextworkerin', 'node-packs.md', `orchestrator-decision.schema.json §NextWorkerDecision — a well-formed nextWorkerInputs MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
   it('still accepts a next-worker decision that omits nextWorkerInputs (additive / back-compat)', () => {
     expect(
       validate({ kind: 'next-worker', nextWorkerIds: ['pack.child'] }),
-      'a pre-RFC-0126 next-worker decision MUST stay valid — the field is OPTIONAL',
+      req('openwop.it.dispatch-per-item-input.still-accepts-a-next-worker-decision-that-omits-nextworkerinputs-additive-back-c', 'node-packs.md', 'a pre-RFC-0126 next-worker decision MUST stay valid — the field is OPTIONAL'),
     ).toBe(true);
   });
 
   it('rejects a non-object nextWorkerInputs item', () => {
     expect(
       validate({ kind: 'next-worker', nextWorkerIds: ['a'], nextWorkerInputs: ['not-an-object'] }),
-      'each nextWorkerInputs entry MUST be a per-child input object',
+      req('openwop.it.dispatch-per-item-input.rejects-a-non-object-nextworkerinputs-item', 'node-packs.md', 'each nextWorkerInputs entry MUST be a per-child input object'),
     ).toBe(false);
     expect(
       validate({ kind: 'next-worker', nextWorkerIds: ['a'], nextWorkerInputs: 'nope' }),
-      'nextWorkerInputs MUST be an array',
+      req('openwop.it.dispatch-per-item-input.rejects-a-non-object-nextworkerinputs-item', 'node-packs.md', 'nextWorkerInputs MUST be an array'),
     ).toBe(false);
   });
 
   it('still rejects an unknown property (additionalProperties:false) — the fail-closed gate', () => {
     expect(
       validate({ kind: 'next-worker', nextWorkerIds: ['a'], perItemInputs: [{ x: 1 }] }),
-      'NextWorkerDecision is additionalProperties:false — a mis-named field MUST be rejected, so old strict validators fail closed on unknown per-item shapes',
+      req('openwop.it.dispatch-per-item-input.still-rejects-an-unknown-property-additionalproperties-false-the-fail-closed-gat', 'node-packs.md', 'NextWorkerDecision is additionalProperties:false — a mis-named field MUST be rejected, so old strict validators fail closed on unknown per-item shapes'),
     ).toBe(false);
   });
 
   it('ADMITS a length-mismatch — array-length equality is a runtime MUST, not schema-expressible', () => {
     expect(
       validate({ kind: 'next-worker', nextWorkerIds: ['a', 'b'], nextWorkerInputs: [{ x: 1 }] }),
-      'the wire schema cannot express nextWorkerInputs.length == nextWorkerIds.length; the host enforces it at decision time (layer B)',
+      req('openwop.it.dispatch-per-item-input.admits-a-length-mismatch-array-length-equality-is-a-runtime-must-not-schema-expr', 'node-packs.md', 'the wire schema cannot express nextWorkerInputs.length == nextWorkerIds.length; the host enforces it at decision time (layer B)'),
     ).toBe(true);
   });
 });
@@ -106,16 +108,16 @@ describe('dispatch-per-item: per-item input behavior (capability-gated, RFC 0126
       nextWorkerIds: ['conformance.child', 'conformance.child'],
       nextWorkerInputs: [{ contactId: 'c-1' }, { contactId: 'c-2' }],
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { children?: Array<{ inputs?: Record<string, unknown> }> } | undefined;
     expect(
       body?.children?.length,
-      driver.describe('node-packs.md §core.dispatch per-item input', 'one child dispatched per nextWorkerIds entry'),
+      req('openwop.it.dispatch-per-item-input.a-host-advertising-periteminput-projects-nextworkerinputs-i-into-child-i', 'node-packs.md §core.dispatch per-item input', 'one child dispatched per nextWorkerIds entry'),
     ).toBe(2);
     expect(
       body?.children?.map((c) => c.inputs?.contactId),
-      driver.describe('node-packs.md §core.dispatch per-item input', 'each child receives its own nextWorkerInputs[i] (per-item value wins over inputMapping)'),
+      req('openwop.it.dispatch-per-item-input.a-host-advertising-periteminput-projects-nextworkerinputs-i-into-child-i', 'node-packs.md §core.dispatch per-item input', 'each child receives its own nextWorkerInputs[i] (per-item value wins over inputMapping)'),
     ).toEqual(['c-1', 'c-2']);
   });
 
@@ -127,11 +129,11 @@ describe('dispatch-per-item: per-item input behavior (capability-gated, RFC 0126
       nextWorkerIds: ['conformance.child', 'conformance.child'],
       nextWorkerInputs: [{ contactId: 'c-1' }],
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     expect(
       res.status >= 400 && res.status < 500,
-      driver.describe('node-packs.md §core.dispatch per-item input', 'nextWorkerInputs.length != nextWorkerIds.length MUST fail the dispatch node (4xx validation_error), dispatching no child'),
+      req('openwop.it.dispatch-per-item-input.a-length-mismatched-nextworkerinputs-fails-with-a-validation-error-and-dispatche', 'node-packs.md §core.dispatch per-item input', 'nextWorkerInputs.length != nextWorkerIds.length MUST fail the dispatch node (4xx validation_error), dispatching no child'),
     ).toBe(true);
   });
 
@@ -146,16 +148,16 @@ describe('dispatch-per-item: per-item input behavior (capability-gated, RFC 0126
       inputMapping: { contactId: 'from-mapping', region: 'us' },
       nextWorkerInputs: [{ contactId: 'c-1' }, { contactId: 'c-2' }],
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { children?: Array<{ inputs?: Record<string, unknown> }> } | undefined;
     expect(
       body?.children?.map((c) => c.inputs?.contactId),
-      driver.describe('node-packs.md §core.dispatch per-item input', 'on key collision the per-item value wins over inputMapping (G1)'),
+      req('openwop.it.dispatch-per-item-input.nextworkerinputs-i-overrides-the-inputmapping-projection-on-key-collision-g1-pre', 'node-packs.md §core.dispatch per-item input', 'on key collision the per-item value wins over inputMapping (G1)'),
     ).toEqual(['c-1', 'c-2']);
     expect(
       body?.children?.every((c) => c.inputs?.region === 'us'),
-      driver.describe('node-packs.md §core.dispatch per-item input', 'non-colliding inputMapping keys still project (per-item merges OVER, does not replace)'),
+      req('openwop.it.dispatch-per-item-input.nextworkerinputs-i-overrides-the-inputmapping-projection-on-key-collision-g1-pre', 'node-packs.md §core.dispatch per-item input', 'non-colliding inputMapping keys still project (per-item merges OVER, does not replace)'),
     ).toBe(true);
   });
 
@@ -170,29 +172,29 @@ describe('dispatch-per-item: per-item input behavior (capability-gated, RFC 0126
       nextWorkerInputs: [{ contactId: 'c-1' }, { contactId: 'c-2' }],
       replay: true,
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { children?: Array<{ inputs?: Record<string, unknown> }>; replayed?: boolean } | undefined;
     expect(
       body?.children?.map((c) => c.inputs?.contactId),
-      driver.describe('node-packs.md §core.dispatch per-item input', 'replay/:fork reproduces the recorded per-item children verbatim (frozen at decision time)'),
+      req('openwop.it.dispatch-per-item-input.replay-re-reads-the-recorded-nextworkerinputs-verbatim-no-recomputation-r5-repla', 'node-packs.md §core.dispatch per-item input', 'replay/:fork reproduces the recorded per-item children verbatim (frozen at decision time)'),
     ).toEqual(['c-1', 'c-2']);
   });
 
   it('a host NOT advertising perItemInput MUST fail closed on a non-empty nextWorkerInputs', async () => {
     const dispatch = await readCapabilityFamily<{ supported?: boolean; perItemInput?: boolean }>('dispatch');
-    if (!dispatch?.supported) return; // no dispatch surface → out of scope
-    if (dispatch.perItemInput === true) return; // this leg targets non-supporting hosts
+    if (!dispatch?.supported) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!dispatch?.supported` returned early (no dispatch surface → out of scope)'); // no dispatch surface → out of scope
+    if (dispatch.perItemInput === true) return softSkip('blocked', 'precondition not met — `dispatch.perItemInput === true` returned early (this leg targets non-supporting hosts) (seam, prior step, or fixture unavailable)'); // this leg targets non-supporting hosts
 
     const res = await driver.post('/v1/host/sample/dispatch/per-item', {
       nextWorkerIds: ['conformance.child', 'conformance.child'],
       nextWorkerInputs: [{ contactId: 'c-1' }, { contactId: 'c-2' }],
     });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     expect(
       res.status >= 400 && res.status < 500,
-      driver.describe('node-packs.md §core.dispatch per-item input', 'a host not advertising perItemInput MUST fail closed (4xx) on a non-empty nextWorkerInputs — never silently drop it and dispatch N identical children'),
+      req('openwop.it.dispatch-per-item-input.a-host-not-advertising-periteminput-must-fail-closed-on-a-non-empty-nextworkerin', 'node-packs.md §core.dispatch per-item input', 'a host not advertising perItemInput MUST fail closed (4xx) on a non-empty nextWorkerInputs — never silently drop it and dispatch N identical children'),
     ).toBe(true);
   });
 });

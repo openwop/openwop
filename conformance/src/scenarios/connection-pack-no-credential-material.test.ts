@@ -40,6 +40,8 @@ import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'connection-pack-manifest.schema.json');
 const FIXTURE_PATH = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
@@ -80,7 +82,7 @@ describe('connection-pack-no-credential-material: schema layer (always-on, serve
       for (const [where, m] of [['root', atRoot], ['provider', atProvider], ['provider.auth', atAuth]] as const) {
         expect(
           validate(m),
-          `SECURITY invariant connection-pack-no-credential-material — a property named "${name}" at ${where} MUST NOT validate (additionalProperties:false)`,
+          req('openwop.it.connection-pack-no-credential-material.every-blocklisted-property-name-is-schema-rejected-at-the-root-provider-and-auth', 'connection-packs.md', `SECURITY invariant connection-pack-no-credential-material — a property named "${name}" at ${where} MUST NOT validate (additionalProperties:false)`),
         ).toBe(false);
       }
     }
@@ -90,11 +92,11 @@ describe('connection-pack-no-credential-material: schema layer (always-on, serve
     const m = fixture();
     expect(
       typeof (m.provider.auth.endpoints as Record<string, string>).token,
-      'fixture sanity — the github fixture declares the token endpoint',
+      req('openwop.it.connection-pack-no-credential-material.the-exemption-provider-auth-endpoints-token-the-token-endpoint-url-is-valid', 'connection-packs.md', 'fixture sanity — the github fixture declares the token endpoint'),
     ).toBe('string');
     expect(
       validate(m),
-      `connection-packs.md §Manifest clause 2 — the property named "token" at exactly provider.auth.endpoints.token is the OAuth token-endpoint URL and MUST validate. Errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.connection-pack-no-credential-material.the-exemption-provider-auth-endpoints-token-the-token-endpoint-url-is-valid', 'connection-packs.md', `connection-packs.md §Manifest clause 2 — the property named "token" at exactly provider.auth.endpoints.token is the OAuth token-endpoint URL and MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 });
@@ -107,16 +109,16 @@ describe('connection-pack-no-credential-material: specific rejection code (capab
     const leaky = fixture();
     (leaky.provider.auth as Record<string, unknown>).clientSecret = 'ghs_conformance_canary';
     const res = await driver.post('/v1/host/sample/connection-packs/install', { manifest: leaky });
-    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const body = res.json as { installed?: boolean; errors?: Array<{ code?: string }> } | undefined;
     expect(
       body?.installed,
-      driver.describe('connection-packs.md §Manifest clause 2', 'a manifest carrying credential material MUST NOT install'),
+      req('openwop.it.connection-pack-no-credential-material.installing-a-manifest-carrying-clientsecret-is-rejected-with-connection-pack-cre', 'connection-packs.md §Manifest clause 2', 'a manifest carrying credential material MUST NOT install'),
     ).toBe(false);
     expect(
       (body?.errors ?? []).some((e) => e.code === 'connection_pack_credential_material'),
-      driver.describe(
+      req('openwop.it.connection-pack-no-credential-material.installing-a-manifest-carrying-clientsecret-is-rejected-with-connection-pack-cre', 
         'connection-packs.md §Manifest clause 2',
         'the credential-material scan runs BEFORE generic schema validation — the SPECIFIC code connection_pack_credential_material MUST surface, not a generic shape error',
       ),

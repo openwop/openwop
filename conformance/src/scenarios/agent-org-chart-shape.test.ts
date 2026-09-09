@@ -32,9 +32,7 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-
-/** Server-free assertion-message helper. */
-const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
+import { req } from '../lib/requirement-ids.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -64,9 +62,9 @@ describe('agent-org-chart-shape: capability advertisement (RFC 0087, server-free
     const caps = loadSchema('capabilities.schema.json');
     const agents = (caps.properties as Record<string, { properties?: Record<string, { properties?: Record<string, unknown> }> }>).agents;
     const orgChart = agents?.properties?.orgChart;
-    expect(orgChart, why('capabilities.md §agents', 'agents.orgChart MUST be declared')).toBeDefined();
+    expect(orgChart, req('openwop.it.agent-org-chart-shape.the-capabilities-schema-declares-agents-orgchart-with-its-sub-flags', 'capabilities.md §agents', 'agents.orgChart MUST be declared')).toBeDefined();
     for (const flag of ['supported', 'installScope', 'departmentNesting', 'responsibilityView']) {
-      expect(orgChart?.properties?.[flag], why('agent-org-chart.md §E', `agents.orgChart.${flag} MUST be declared`)).toBeDefined();
+      expect(orgChart?.properties?.[flag], req('openwop.it.agent-org-chart-shape.the-capabilities-schema-declares-agents-orgchart-with-its-sub-flags', 'agent-org-chart.md §E', `agents.orgChart.${flag} MUST be declared`)).toBeDefined();
     }
   });
 });
@@ -77,13 +75,13 @@ describe('agent-org-chart-shape: chart record (RFC 0087 §A, server-free)', () =
   const chart = ajv.compile(loadSchema('agent-org-chart.schema.json'));
 
   it('AgentOrgChart validates a conforming chart', () => {
-    expect(chart(CHART), why('RFC 0087 §A', 'a conforming org-chart MUST validate')).toBe(true);
+    expect(chart(CHART), req('openwop.it.agent-org-chart-shape.agentorgchart-validates-a-conforming-chart', 'RFC 0087 §A', 'a conforming org-chart MUST validate')).toBe(true);
   });
 
   it('rejects a non-host: member rosterId and a chart missing required arrays', () => {
     const badMember = { ...CHART, members: [{ rosterId: 'core.openwop.agents.sally', departmentId: 'dept-marketing', roleId: 'role-bw', reportsTo: null }] };
-    expect(chart(badMember), why('RFC 0087 §A', 'a non-`host:` member rosterId MUST be rejected')).toBe(false);
-    expect(chart({ owner: { tenantId: 'acme' }, departments: [] }), why('RFC 0087 §A', 'a chart without `members` MUST be rejected')).toBe(false);
+    expect(chart(badMember), req('openwop.it.agent-org-chart-shape.rejects-a-non-host-member-rosterid-and-a-chart-missing-required-arrays', 'RFC 0087 §A', 'a non-`host:` member rosterId MUST be rejected')).toBe(false);
+    expect(chart({ owner: { tenantId: 'acme' }, departments: [] }), req('openwop.it.agent-org-chart-shape.rejects-a-non-host-member-rosterid-and-a-chart-missing-required-arrays', 'RFC 0087 §A', 'a chart without `members` MUST be rejected')).toBe(false);
   });
 });
 
@@ -100,14 +98,14 @@ describe('agent-org-chart-shape: §B non-authority guarantee (RFC 0087, server-f
       };
       expect(
         chart(withAuthority),
-        why('SECURITY invariant org-position-no-authority-escalation', `a member carrying \`${authorityField}\` MUST be rejected (additionalProperties:false — position confers no authority)`),
+        req('openwop.it.agent-org-chart-shape.the-schema-rejects-an-authority-bearing-field-on-a-member-org-position-no-author', 'SECURITY invariant org-position-no-authority-escalation', `a member carrying \`${authorityField}\` MUST be rejected (additionalProperties:false — position confers no authority)`),
       ).toBe(false);
     }
   });
 
   it('a conforming member object carries exactly the descriptive key set — nothing authority-bearing', () => {
     const memberKeys = Object.keys(CHART.members[1]!).sort();
-    expect(memberKeys, why('RFC 0087 §B', 'a member is descriptive only: {departmentId, reportsTo, roleId, rosterId}')).toEqual(['departmentId', 'reportsTo', 'roleId', 'rosterId']);
+    expect(memberKeys, req('openwop.it.agent-org-chart-shape.a-conforming-member-object-carries-exactly-the-descriptive-key-set-nothing-autho', 'RFC 0087 §B', 'a member is descriptive only: {departmentId, reportsTo, roleId, rosterId}')).toEqual(['departmentId', 'reportsTo', 'roleId', 'rosterId']);
   });
 
   it('the GET /v1/agents/org-chart/{departmentId} responsibility-view response validates (RFC 0087 §D)', () => {
@@ -120,8 +118,8 @@ describe('agent-org-chart-shape: §B non-authority guarantee (RFC 0087, server-f
       members: CHART.members,
       responsibilities: ['marketing-email-campaign', 'social-post-scheduler'],
     };
-    expect(view(good), why('RFC 0087 §D', 'a conforming responsibility-view response MUST validate')).toBe(true);
-    expect(view({ ...good, unexpected: true }), why('RFC 0087 §D', 'an extra top-level property MUST be rejected')).toBe(false);
-    expect(view({ department: CHART.departments[0], members: CHART.members }), why('RFC 0087 §D', '`responsibilities` is required')).toBe(false);
+    expect(view(good), req('openwop.it.agent-org-chart-shape.the-get-v1-agents-org-chart-departmentid-responsibility-view-response-validates', 'RFC 0087 §D', 'a conforming responsibility-view response MUST validate')).toBe(true);
+    expect(view({ ...good, unexpected: true }), req('openwop.it.agent-org-chart-shape.the-get-v1-agents-org-chart-departmentid-responsibility-view-response-validates', 'RFC 0087 §D', 'an extra top-level property MUST be rejected')).toBe(false);
+    expect(view({ department: CHART.departments[0], members: CHART.members }), req('openwop.it.agent-org-chart-shape.the-get-v1-agents-org-chart-departmentid-responsibility-view-response-validates', 'RFC 0087 §D', '`responsibilities` is required')).toBe(false);
   });
 });

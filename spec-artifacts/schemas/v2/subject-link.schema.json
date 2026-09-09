@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/subject-link.schema.json",
+  "title": "SubjectLink (RFC 0170 §C.1)",
+  "description": "A tenant-scoped join of exactly two subjects whose issuers are bound to one IdP entityID (RFC 0163 §B.1). Never a legacy or anonymous subject. deniedAt deactivates; the SAML decision path consults it (RFC 0159/0164). A reference, not a merge.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "a",
+    "b",
+    "keyClass",
+    "issuer",
+    "tenant",
+    "formedAt"
+  ],
+  "properties": {
+    "a": {
+      "$ref": "#/$defs/subjectRef"
+    },
+    "b": {
+      "$ref": "#/$defs/subjectRef"
+    },
+    "keyClass": {
+      "type": "string",
+      "enum": [
+        "opaque-idp",
+        "configured-immutable"
+      ]
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The IdP entityID both issuers are bound to."
+    },
+    "tenant": {
+      "$ref": "ids.schema.json#/$defs/tenantId"
+    },
+    "formedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deniedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "subjectRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer",
+        "subjectId"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "const": "urn:openwop:legacy"
+          }
+        },
+        "subjectId": {
+          "$ref": "ids.schema.json#/$defs/subjectId"
+        }
+      }
+    }
+  }
+}

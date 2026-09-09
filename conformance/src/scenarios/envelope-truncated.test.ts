@@ -20,6 +20,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-truncated';
@@ -56,20 +58,20 @@ async function lastBudget(): Promise<number | null> {
 
 describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4 + RFC 0033 §B)', () => {
   it('when mock returns stopReason: max_tokens on attempt 1, exactly one envelope.truncated event fires with stopReason: max_tokens', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([
       { stopReason: 'max_tokens', content: '{"valid":' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(seed.status).toBe(200);
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const truncated = result.events.filter((e) => e.type === 'envelope.truncated');
     expect(
       truncated.length,
-      driver.describe(
+      req('openwop.it.envelope-truncated.when-mock-returns-stopreason-max-tokens-on-attempt-1-exactly-one-envelope-trunca', 
         'RFCS/0032-envelope-reliability-events.md §B.4',
         'exactly one envelope.truncated event MUST fire when the provider returns finishReason corresponding to truncation',
       ),
@@ -78,17 +80,17 @@ describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4
   });
 
   it('payload includes nodeId + provider + model + partialPayloadAvailable boolean', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     const truncated = result.events.find((e) => e.type === 'envelope.truncated');
-    expect(truncated).toBeDefined();
+    expect(truncated, req('openwop.it.envelope-truncated.payload-includes-nodeid-provider-model-partialpayloadavailable-boolean', 'RFC 0032 §B.4', 'payload includes nodeId + provider + model + partialPayloadAvailable boolean')).toBeDefined();
     const payload = truncated!.payload ?? {};
     expect(payload.nodeId).toBe(NODE_ID);
     expect(payload.provider).toBe('mock');
@@ -97,24 +99,24 @@ describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4
   });
 
   it('retry attempt receives a maxTokens value strictly greater than the previous attempt (RFC 0033 §B truncationBudgetMultiplier)', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
     // After the run, the mock's most-recent budget is the SECOND (retry)
     // attempt's maxTokens. Per RFC 0033 §B, this MUST exceed the fixture's
     // initial maxTokens (50). The host's default multiplier is 2 — so the
     // retry should see 100.
     const budget = await lastBudget();
-    if (budget === null) return; // host doesn't expose the seam
+    if (budget === null) return softSkip('blocked', 'precondition not met — `budget === null` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
     expect(
       budget,
-      driver.describe(
+      req('openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte', 
         'RFCS/0033-envelope-completion-contract.md §B',
         'truncation retry MUST issue with a strictly-increased maxTokens budget (host multiplies by capabilities.envelopes.reliability.completion.truncationBudgetMultiplier)',
       ),
@@ -122,15 +124,15 @@ describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4
   });
 
   it('run terminates `completed` after the second attempt succeeds', async () => {
-    if (!isFixtureAdvertised(FIXTURE)) return;
+    if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(FIXTURE)` returned early');
     const seed = await programMock([
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
     ]);
-    if (seed.status === 404) return;
+    if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const result = await startRunAndRead();
-    if (result === null) return;
-    expect((result.terminal as { status?: string }).status).toBe('completed');
+    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
+    expect((result.terminal as { status?: string }).status, req('openwop.it.envelope-truncated.run-terminates-completed-after-the-second-attempt-succeeds', 'RFC 0032 §B.4', 'run terminates `completed` after the second attempt succeeds')).toBe('completed');
   });
 });

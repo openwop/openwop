@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/prompt-ref.schema.json",
+  "title": "PromptRef",
+  "description": "Reference to a PromptTemplate. Two equivalent forms are accepted: a compact stringy URI (`prompt:templateId[@version]`) and a structured object form. The stringy form is canonical for inline use in WorkflowNode.config and AgentManifest.promptOverrides; the object form is canonical when libraryId disambiguation, variable overrides, or pinned versions need to be expressed explicitly. See spec/v1/prompts.md §\"PromptRef\" for the canonical contract and RFC 0027 §B for the rationale.\n\nResolution semantics (host responsibility): the host looks up the referenced template in its library (host built-ins + installed packs + user templates, gated by capabilities.prompts.*). When no `version` is given, the latest version wins. When two installed packs ship the same templateId, the stringy form is rejected with `prompt_ref_ambiguous` and consumers MUST use the object form with `libraryId` to disambiguate (RFC 0028 §B \"Conflict resolution\").",
+  "oneOf": [
+    {
+      "type": "string",
+      "pattern": "^prompt:[a-z0-9][a-z0-9._-]{0,127}(@\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)?$",
+      "description": "Compact stringy form: `prompt:<templateId>[@<version>]`. Examples: `prompt:writer`, `prompt:writer@1.2.0`, `prompt:vendor.acme.writer.v2@2.0.0`."
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["templateId"],
+      "description": "Structured object form. Use when `libraryId` disambiguation, per-reference variable overrides, or version pinning is needed.",
+      "properties": {
+        "libraryId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+          "description": "Library scope. Per RFC 0028, the host's default library is identified by `capabilities.prompts.library.id`; pack-sourced templates resolve via the installed pack's `name`."
+        },
+        "templateId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+          "description": "Same pattern as PromptTemplate.templateId."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+          "description": "Pinned SemVer. When omitted, the host resolves the latest version available in the named library."
+        },
+        "variableOverrides": {
+          "type": "object",
+          "description": "Per-reference variable bindings, applied at composition time. Take precedence over node-input bindings (matching the four-layer resolution chain in RFC 0029 §A). Bindings are validated against PromptTemplate.variables before composition."
+        }
+      }
+    }
+  ]
+}

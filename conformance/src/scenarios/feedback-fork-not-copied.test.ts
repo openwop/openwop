@@ -12,6 +12,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readFeedbackCap, seedRun } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('feedback-fork-not-copied (RFC 0056 §D)', () => {
   it('a fork of an annotated run starts with zero annotations', async () => {
@@ -25,7 +26,7 @@ describe('feedback-fork-not-copied (RFC 0056 §D)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return;
+      return softSkip('blocked', 'precondition not met — an earlier step threw (seam, prior step, or fixture unavailable)');
     }
     const fork = await driver.post(`/v1/runs/${runId}:fork`, { fromSeq: 0, mode: 'branch' });
     if (fork.status !== 200 && fork.status !== 201) return softSkip('inapplicable', 'fork unsupported — soft-skip (fork.status !== 200 && fork.status !== 201)');
@@ -35,7 +36,7 @@ describe('feedback-fork-not-copied (RFC 0056 §D)', () => {
     const ann = (list.json as { annotations?: unknown[] } | undefined)?.annotations ?? [];
     expect(
       ann.length,
-      driver.describe('RFC 0056 §D', 'annotations are a side-store and MUST NOT be copied into a fork'),
+      req('openwop.it.feedback-fork-not-copied.a-fork-of-an-annotated-run-starts-with-zero-annotations', 'RFC 0056 §D', 'annotations are a side-store and MUST NOT be copied into a fork'),
     ).toBe(0);
   });
 });

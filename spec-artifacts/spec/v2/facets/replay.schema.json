@@ -1,0 +1,34 @@
+{
+  "$comment": "RFC 0173 §A.1/§C — sideEffectSuppression is not a flag; suppression binds with replay and is witnessed by the effect-seam manifest at GET /host/effect-seams",
+  "properties": {
+    "modes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "replay",
+          "branch"
+        ]
+      },
+      "description": "Fork modes (POST /runs/{runId}:fork `mode`): replay = deterministic re-execution with suppression; branch = divergent execution (branchReFires seams re-fire, RFC 0140 G6)."
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "days": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "effectSeamsManifest": {
+      "const": "/host/effect-seams"
+    }
+  },
+  "required": [
+    "modes",
+    "effectSeamsManifest"
+  ]
+}

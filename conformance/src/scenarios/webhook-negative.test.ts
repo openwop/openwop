@@ -24,6 +24,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 async function isWebhookSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
@@ -36,7 +38,7 @@ describe('webhook-negative: SSRF guard rejects private destinations', () => {
     if (!(await isWebhookSupported())) {
       // eslint-disable-next-line no-console
       console.warn('[webhook-negative] host does not advertise webhook support; skipping');
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isWebhookSupported())` returned early ([webhook-negative] host does not advertise webhook support; skipping)');
     }
     // Spec-complete except for the private URL, so validation passes and the
     // request reaches the SSRF guard. `{ url }` alone 400s `validation_error`
@@ -59,9 +61,9 @@ describe('webhook-negative: SSRF guard rejects private destinations', () => {
       if (body.subscriptionId) {
         await driver.delete(`/v1/webhooks/${encodeURIComponent(body.subscriptionId)}`);
       }
-      return;
+      return softSkip('blocked', 'precondition not met — `reg.status === 201` returned early ([webhook-negative] host accepts loopback destinations; SSRF guard not enforced) (seam, prior step, or fixture unavailable)');
     }
-    expect(reg.status, driver.describe(
+    expect(reg.status, req('openwop.it.webhook-negative.host-with-ssrf-guard-returns-400-webhook-url-rejected-for-loopback', 
       'webhooks.md + review §"Webhook SSRF guard"',
       'host with SSRF guard MUST return 400 for loopback / RFC1918 / link-local destinations',
     )).toBe(400);
@@ -72,17 +74,17 @@ describe('webhook-negative: SSRF guard rejects private destinations', () => {
 
 describe('webhook-negative: validation errors', () => {
   it('malformed url returns 400 validation_error', async () => {
-    if (!(await isWebhookSupported())) return;
+    if (!(await isWebhookSupported())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isWebhookSupported())` returned early');
     const reg = await driver.post('/v1/webhooks', { url: 'not a url' });
-    expect([400, 422]).toContain(reg.status);
+    expect([400, 422], req('openwop.it.webhook-negative.malformed-url-returns-400-validation-error', 'webhooks.md', 'malformed url returns 400 validation_error')).toContain(reg.status);
     const body = reg.json as { error?: string };
     expect(['validation_error', 'webhook_url_rejected']).toContain(body.error);
   });
 
   it('missing url returns 400 validation_error', async () => {
-    if (!(await isWebhookSupported())) return;
+    if (!(await isWebhookSupported())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isWebhookSupported())` returned early');
     const reg = await driver.post('/v1/webhooks', { eventTypes: ['run.completed'] });
-    expect(reg.status).toBe(400);
+    expect(reg.status, req('openwop.it.webhook-negative.missing-url-returns-400-validation-error', 'webhooks.md', 'missing url returns 400 validation_error')).toBe(400);
     const body = reg.json as { error?: string };
     expect(body.error).toBe('validation_error');
   });
@@ -90,9 +92,9 @@ describe('webhook-negative: validation errors', () => {
 
 describe('webhook-negative: unregister of unknown subscription', () => {
   it('DELETE /v1/webhooks/{unknown} returns 404 subscription_not_found', async () => {
-    if (!(await isWebhookSupported())) return;
+    if (!(await isWebhookSupported())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isWebhookSupported())` returned early');
     const del = await driver.delete('/v1/webhooks/wh-does-not-exist');
-    expect(del.status).toBe(404);
+    expect(del.status, req('openwop.it.webhook-negative.delete-v1-webhooks-unknown-returns-404-subscription-not-found', 'webhooks.md', 'DELETE /v1/webhooks/{unknown} returns 404 subscription_not_found')).toBe(404);
     const body = del.json as { error?: string };
     expect(body.error).toBe('subscription_not_found');
   });

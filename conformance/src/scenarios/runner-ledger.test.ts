@@ -37,6 +37,7 @@ import { fileDisposition, deriveRequirementDispositions, requirementIdForFile, f
 import { softSkip, softSkipDisposition, resetSoftSkips, UNCLASSIFIED_RETURN_DETAIL } from '../lib/soft-skip.js';
 import { PROFILE_FLOOR_SCENARIOS } from '../lib/profiles.js';
 import { requirementsFor, requirementIdForScenario, requirementIdForPrefix } from '../lib/requirement-registry.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('RFC 0148 §A (S6) — ledger file sink and reader', () => {
   it('recordRequirement appends JSONL when OPENWOP_LEDGER_PATH is set; the reader merges and ranks conflicts least-certifiable-first', () => {
@@ -57,7 +58,7 @@ describe('RFC 0148 §A (S6) — ledger file sink and reader', () => {
       expect(lines.length).toBe(4);
       const merged = readLedgerFile(path);
       expect(merged.map((e) => e.requirementId)).toEqual(['t.a', 't.b']);
-      expect(merged.find((e) => e.requirementId === 't.a')?.disposition, 'conflict resolves to the least certifiable (blocked over executed-pass)').toBe('blocked');
+      expect(merged.find((e) => e.requirementId === 't.a')?.disposition, req('openwop.it.runner-ledger.recordrequirement-appends-jsonl-when-openwop-ledger-path-is-set-the-reader-merge', 'RFC 0148 §A', 'conflict resolves to the least certifiable (blocked over executed-pass)')).toBe('blocked');
       expect(merged.find((e) => e.requirementId === 't.b')?.disposition).toBe('inapplicable');
       expect(readLedgerFile(join(dir, 'missing.jsonl'))).toEqual([]);
     } finally {
@@ -71,7 +72,7 @@ describe('RFC 0148 §A (S6) — ledger file sink and reader', () => {
 
 describe('RFC 0148 §A (S6) — fileDisposition folds a file honestly', () => {
   it('fail beats pass; pass beats a gate reason; a gate reason beats blocked; nothing is blocked (unclassified)', () => {
-    expect(fileDisposition(['pass', 'fail', 'skip'], undefined).disposition).toBe('executed-fail');
+    expect(fileDisposition(['pass', 'fail', 'skip'], undefined).disposition, req('openwop.it.runner-ledger.fail-beats-pass-pass-beats-a-gate-reason-a-gate-reason-beats-blocked-nothing-is', 'RFC 0148 §A', 'fail beats pass; pass beats a gate reason; a gate reason beats blocked; nothing is blocked (unclassified)')).toBe('executed-fail');
     expect(fileDisposition(['pass', 'skip'], 'inapplicable').disposition).toBe('executed-pass');
     // real assertions + a gate reason → still an executed pass
     expect(fileDisposition(['pass', 'skip'], 'inapplicable', 4).disposition).toBe('executed-pass');
@@ -90,7 +91,7 @@ describe('RFC 0148 §A (S6) — fileDisposition folds a file honestly', () => {
 
   it('a floor file records under its §A floor id; any other file under openwop.scenario.*', () => {
     const floor = [...floorScenarioFiles()];
-    expect(floor.length).toBeGreaterThan(0);
+    expect(floor.length, req('openwop.it.runner-ledger.a-floor-file-records-under-its-a-floor-id-any-other-file-under-openwop-scenario', 'RFC 0148 §A', 'a floor file records under its §A floor id; any other file under openwop.scenario.*')).toBeGreaterThan(0);
     expect(requirementIdForFile(floor[0]!)).toBe(requirementIdForScenario(floor[0]!));
     expect(requirementIdForFile('some-other.test.ts')).toBe('openwop.scenario.some-other');
   });
@@ -119,7 +120,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
 
   it('ledger rows win, prefix requirements derive from matching files, and a fully recorded floor certifies', () => {
     const d = deriveRequirementDispositions(reportAllPassed(), ledgerAllPassed(), [profile]);
-    expect(d.ledgerPresent).toBe(true);
+    expect(d.ledgerPresent, req('openwop.it.runner-ledger.ledger-rows-win-prefix-requirements-derive-from-matching-files-and-a-fully-recor', 'RFC 0148 §A', 'ledger rows win, prefix requirements derive from matching files, and a fully recorded floor certifies')).toBe(true);
     expect(d.rejectUnclassified).toBe(false);
     const v = d.verdicts.find((x) => x.profile === profile)!;
     expect(v.certifiable, JSON.stringify(v)).toBe(true);
@@ -144,7 +145,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     const row = d.requirements.find((r) => r.requirementId === requirementIdForScenario(files[0]!))!;
     expect(row.disposition).toBe('executed-pass'); // vitest did say passed — the row is honest about the source
     expect(row.detail).toMatch(/report-derived/);
-    expect(v.unclassified, 'no ledger entry ⇒ unclassified for a claimed floor').toContain(requirementIdForScenario(files[0]!));
+    expect(v.unclassified, req('openwop.it.runner-ledger.a-floor-file-that-vitest-passed-but-that-recorded-nothing-is-unclassified-when-a', 'RFC 0148 §A', 'no ledger entry ⇒ unclassified for a claimed floor')).toContain(requirementIdForScenario(files[0]!));
     expect(v.certifiable).toBe(false);
     expect(d.rejectUnclassified).toBe(true);
   });
@@ -153,7 +154,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     const l = ledgerAllPassed(5).map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { ...e, assertionCount: 0 } : e));
     const d = deriveRequirementDispositions(reportAllPassed(), l, [profile]);
     const v = d.verdicts.find((x) => x.profile === profile)!;
-    expect(v.unclassified).toContain(requirementIdForScenario(files[0]!));
+    expect(v.unclassified, req('openwop.it.runner-ledger.a-vacuous-pass-executed-pass-with-assertioncount-0-on-a-claimed-floor-is-unclass', 'RFC 0148 §A', 'a VACUOUS pass (executed-pass with assertionCount 0) on a claimed floor is unclassified and REJECTS certification')).toContain(requirementIdForScenario(files[0]!));
     expect(v.certifiable).toBe(false);
     expect(d.rejectUnclassified).toBe(true);
   });
@@ -163,7 +164,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     const l = ledgerAllPassed().filter((e) => e.requirementId !== requirementIdForScenario(files[0]!));
     const d = deriveRequirementDispositions(rep, l, [profile]);
     const row = d.requirements.find((r) => r.requirementId === requirementIdForScenario(files[0]!))!;
-    expect(row.disposition).toBe('blocked');
+    expect(row.disposition, req('openwop.it.runner-ledger.a-skipped-file-with-no-ledger-entry-is-blocked-unclassified-and-it-never-reads-a', 'RFC 0148 §A', 'a skipped file with no ledger entry is blocked (unclassified) — and it never reads as skipped/inapplicable')).toBe('blocked');
     expect(row.detail).toMatch(/unclassified/);
     expect(d.verdicts[0]!.unclassified).toContain(requirementIdForScenario(files[0]!));
     expect(d.rejectUnclassified).toBe(true);
@@ -173,7 +174,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
   it('a recorded inapplicable/skipped is certifiable and NOT unclassified; a recorded executed-fail blocks but is classified', () => {
     const l = ledgerAllPassed().map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { requirementId: e.requirementId, disposition: 'inapplicable' as const, detail: 'not advertised' } : e));
     const d = deriveRequirementDispositions(reportAllPassed({ [files[0]!]: 'skipped' }), l, [profile]);
-    expect(d.verdicts[0]!.unclassified).toEqual([]);
+    expect(d.verdicts[0]!.unclassified, req('openwop.it.runner-ledger.a-recorded-inapplicable-skipped-is-certifiable-and-not-unclassified-a-recorded-e', 'RFC 0148 §A', 'a recorded inapplicable/skipped is certifiable and NOT unclassified; a recorded executed-fail blocks but is classified')).toEqual([]);
     expect(d.verdicts[0]!.certifiable).toBe(true);
     const l2 = ledgerAllPassed().map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { requirementId: e.requirementId, disposition: 'executed-fail' as const, detail: 'assertion failed', assertionCount: 2 } : e));
     const d2 = deriveRequirementDispositions(reportAllPassed({ [files[0]!]: 'failed' }), l2, [profile]);
@@ -185,7 +186,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
 
   it('a discoveryOnly profile certifies with an empty floor; an unknown profile does not', () => {
     const d = deriveRequirementDispositions(new Map(), [], ['openwop-discovery-core', 'openwop-nope']);
-    expect(d.verdicts.find((v) => v.profile === 'openwop-discovery-core')?.certifiable).toBe(true);
+    expect(d.verdicts.find((v) => v.profile === 'openwop-discovery-core')?.certifiable, req('openwop.it.runner-ledger.a-discoveryonly-profile-certifies-with-an-empty-floor-an-unknown-profile-does-no', 'RFC 0148 §A', 'a discoveryOnly profile certifies with an empty floor; an unknown profile does not')).toBe(true);
     expect(d.verdicts.find((v) => v.profile === 'openwop-nope')?.certifiable).toBe(false);
     expect(requirementsFor('openwop-discovery-core')).toEqual([]);
   });
@@ -193,7 +194,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
   it('a RUNTIME-DERIVED profile (openwop-node-packs) is HELD only when every floor row is a witnessed pass; otherwise it is not held — not rejected, not blocked', () => {
     const np = 'openwop-node-packs';
     const f = PROFILE_FLOOR_SCENARIOS[np]!;
-    expect(f.runtimeDerived, 'profiles.md: node-packs is "derivable from which scenarios pass"').toBe(true);
+    expect(f.runtimeDerived, req('openwop.it.runner-ledger.a-runtime-derived-profile-openwop-node-packs-is-held-only-when-every-floor-row-i', 'RFC 0148 §A', 'profiles.md: node-packs is "derivable from which scenarios pass"')).toBe(true);
     const ids = f.required.map((x) => requirementIdForScenario(x));
     const rep = new Map<string, 'passed' | 'failed' | 'skipped'>(f.required.map((x) => [x, 'passed' as const]));
     // (a) held: every row a witnessed pass
@@ -207,7 +208,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     const vn = notHeld.verdicts.find((v) => v.profile === np)!;
     expect(vn.held).toBe(false);
     expect(vn.certifiable).toBe(false);
-    expect(vn.unclassified, 'a profile the host does not hold is not a rejected claim').toEqual([]);
+    expect(vn.unclassified, req('openwop.it.runner-ledger.a-runtime-derived-profile-openwop-node-packs-is-held-only-when-every-floor-row-i', 'RFC 0148 §A', 'a profile the host does not hold is not a rejected claim')).toEqual([]);
     expect([...vn.blocking].sort()).toEqual([...ids].sort());
     expect(notHeld.rejectUnclassified).toBe(false);
     // (c) a vacuous pass on a runtime-derived floor is still not a rejection — the emitter drops the claim
@@ -229,7 +230,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
     const l = ledgerAllPassed().map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { requirementId: e.requirementId, disposition: 'blocked' as const, detail: UNCLASSIFIED_RETURN_DETAIL, assertionCount: 0 } : e));
     const d = deriveRequirementDispositions(reportAllPassed(), l, [profile]);
     const v = d.verdicts.find((x) => x.profile === profile)!;
-    expect(v.unclassified).toContain(requirementIdForScenario(files[0]!));
+    expect(v.unclassified, req('openwop.it.runner-ledger.the-runner-s-a-resolution-of-a-silent-zero-assertion-file-blocked-marker-is-stil', 'RFC 0148 §A', 'the runner\'s §A resolution of a silent zero-assertion file (blocked + marker) is STILL unclassified for a claimed floor')).toContain(requirementIdForScenario(files[0]!));
     expect(d.rejectUnclassified).toBe(true);
     // whereas a blocked row WITH a scenario-authored reason is classified (blocking, not unclassified)
     const l2 = ledgerAllPassed().map((e) => (e.requirementId === requirementIdForScenario(files[0]!) ? { requirementId: e.requirementId, disposition: 'blocked' as const, detail: 'seam /v1/host/sample/x not mounted', assertionCount: 0 } : e));
@@ -240,7 +241,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
 
   it('with no ledger at all, every skipped file is blocked and the runner says so (the pre-S6 honest reading)', () => {
     const d = deriveRequirementDispositions(reportAllPassed({ [files[0]!]: 'skipped' }), [], [profile]);
-    expect(d.ledgerPresent).toBe(false);
+    expect(d.ledgerPresent, req('openwop.it.runner-ledger.with-no-ledger-at-all-every-skipped-file-is-blocked-and-the-runner-says-so-the-p', 'RFC 0148 §A', 'with no ledger at all, every skipped file is blocked and the runner says so (the pre-S6 honest reading)')).toBe(false);
     const row = d.requirements.find((r) => r.requirementId === requirementIdForScenario(files[0]!))!;
     expect(row.disposition).toBe('blocked');
     expect(row.detail).toMatch(/without a ledger/);
@@ -250,7 +251,7 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
 describe('RFC 0148 §A — softSkip notes the reason for an early return, per file', () => {
   it('notes are keyed to the current test file, worst-first when mixed, and read back with joined reasons', () => {
     resetSoftSkips();
-    expect(softSkip('inapplicable', 'host does not advertise X')).toBeUndefined();
+    expect(softSkip('inapplicable', 'host does not advertise X'), req('openwop.it.runner-ledger.notes-are-keyed-to-the-current-test-file-worst-first-when-mixed-and-read-back-wi', 'RFC 0148 §A', 'notes are keyed to the current test file, worst-first when mixed, and read back with joined reasons')).toBeUndefined();
     softSkip('inapplicable', 'host does not advertise X'); // de-duplicated
     let d = softSkipDisposition('runner-ledger.test.ts');
     expect(d).toEqual({ kind: 'inapplicable', reason: 'host does not advertise X' });
@@ -268,12 +269,12 @@ describe('RFC 0148 §A — softSkip notes the reason for an early return, per fi
 describe('RFC 0148 §A (S6) — the live sink, when this run was given one', () => {
   it('files that finished before this one appear in the ledger file with an assertion count', () => {
     const path = process.env['OPENWOP_LEDGER_PATH'];
-    if (!path || !existsSync(path)) return; // not a --certify run; nothing to inspect
+    if (!path || !existsSync(path)) return softSkip('blocked', 'precondition not met — `!path || !existsSync(path)` returned early (not a --certify run; nothing to inspect) (seam, prior step, or fixture unavailable)'); // not a --certify run; nothing to inspect
     const entries = readLedgerFile(path);
     // At least the in-memory ledger of THIS worker has file-level entries for
     // earlier files (setup.ts afterAll), and each carries assertionCount.
     const fileEntries = snapshot().filter((e) => e.requirementId.startsWith('openwop.scenario.') || e.requirementId.startsWith('openwop.floor.'));
-    for (const e of fileEntries) expect(typeof e.assertionCount).toBe('number');
+    for (const e of fileEntries) expect(typeof e.assertionCount, req('openwop.it.runner-ledger.files-that-finished-before-this-one-appear-in-the-ledger-file-with-an-assertion', 'RFC 0148 §A', 'files that finished before this one appear in the ledger file with an assertion count')).toBe('number');
     expect(entries.length).toBeGreaterThanOrEqual(0);
   });
 });

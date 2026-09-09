@@ -47,6 +47,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForScenario } from '../lib/requirement-registry.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 /** RFC 0148 §A requirement id this file's floor row is recorded under. */
 const REQUIREMENT_ID = requirementIdForScenario('pack-registry.test.ts');
@@ -112,7 +114,7 @@ async function probeRegistry(): Promise<RegistryProbeResult> {
 describe('pack-registry: read-endpoint shape contracts', () => {
   it('GET /v1/packs/-/search returns an OpenWOP-shaped response (or registry is absent)', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return; // Host doesn't ship a registry.
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (Host doesn\'t ship a registry.) (seam, prior step, or fixture unavailable)'); // Host doesn't ship a registry.
 
     const res = await driver.get('/v1/packs/-/search?q=', { authenticated: false });
     // Spec doesn't pin empty-q behavior — both 400 (validation) and 200
@@ -120,18 +122,18 @@ describe('pack-registry: read-endpoint shape contracts', () => {
     // JSON-shaped.
     expect([200, 400]).toContain(res.status);
     const body = res.json as Record<string, unknown> | undefined;
-    expect(body, driver.describe(
+    expect(body, req('openwop.it.pack-registry.get-v1-packs-search-returns-an-openwop-shaped-response-or-registry-is-absent', 
       'node-packs.md §"GET /v1/packs/-/search"',
       'response MUST be JSON',
     )).toBeDefined();
 
     if (res.status === 200) {
-      expect(Array.isArray(body?.results), driver.describe(
+      expect(Array.isArray(body?.results), req('openwop.it.pack-registry.get-v1-packs-search-returns-an-openwop-shaped-response-or-registry-is-absent', 
         'node-packs.md §"GET /v1/packs/-/search"',
         'search response MUST carry a `results` array',
       )).toBe(true);
     } else {
-      expect(typeof body?.error, driver.describe(
+      expect(typeof body?.error, req('openwop.it.pack-registry.get-v1-packs-search-returns-an-openwop-shaped-response-or-registry-is-absent', 
         'rest-endpoints.md §"Error envelope"',
         '400 response MUST carry a string `error` field',
       )).toBe('string');
@@ -140,24 +142,24 @@ describe('pack-registry: read-endpoint shape contracts', () => {
 
   it('GET /v1/packs/{nonexistent} returns 404 pack_not_found with openwop error envelope', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     const res = await driver.get(`/v1/packs/${encodeURIComponent(NONEXISTENT_PACK)}`, {
       authenticated: false,
     });
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.pack-registry.get-v1-packs-nonexistent-returns-404-pack-not-found-with-openwop-error-envelope', 
       'node-packs.md §"GET /v1/packs/{name}"',
       'unknown pack name MUST return 404',
     )).toBe(404);
 
     const body = res.json as { error?: unknown } | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.pack-registry.get-v1-packs-nonexistent-returns-404-pack-not-found-with-openwop-error-envelope', 
       'rest-endpoints.md §"Error envelope"',
       '404 response MUST carry a string `error` field',
     )).toBe('string');
     // Reference impl emits `pack_not_found`; spec doesn't pin the exact
     // string — but the prefix `pack_` is the documented family.
-    expect((body?.error as string).length, driver.describe(
+    expect((body?.error as string).length, req('openwop.it.pack-registry.get-v1-packs-nonexistent-returns-404-pack-not-found-with-openwop-error-envelope', 
       'rest-endpoints.md §"Error envelope"',
       '`error` field MUST be non-empty',
     )).toBeGreaterThan(0);
@@ -165,19 +167,19 @@ describe('pack-registry: read-endpoint shape contracts', () => {
 
   it('GET /v1/packs/{name}/-/{version}.json returns 404 for nonexistent version', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     const res = await driver.get(
       `/v1/packs/${encodeURIComponent(NONEXISTENT_PACK)}/-/${NONEXISTENT_VERSION}.json`,
       { authenticated: false },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.pack-registry.get-v1-packs-name-version-json-returns-404-for-nonexistent-version', 
       'node-packs.md §"GET /v1/packs/{name}/-/{version}.json"',
       'unknown (name, version) MUST return 404',
     )).toBe(404);
 
     const body = res.json as { error?: unknown } | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.pack-registry.get-v1-packs-name-version-json-returns-404-for-nonexistent-version', 
       'rest-endpoints.md §"Error envelope"',
       '404 response MUST carry a string `error` field',
     )).toBe('string');
@@ -185,7 +187,7 @@ describe('pack-registry: read-endpoint shape contracts', () => {
 
   it('GET /v1/packs/{name}/-/{version}.sig returns 404 signature_not_available for nonexistent version', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     const res = await driver.get(
       `/v1/packs/${encodeURIComponent(NONEXISTENT_PACK)}/-/${NONEXISTENT_VERSION}.sig`,
@@ -196,13 +198,13 @@ describe('pack-registry: read-endpoint shape contracts', () => {
     // intentionally indistinguishable. A 302 redirect to a storage-
     // backed signed URL is also spec-allowed for VALID signatures —
     // for a NONEXISTENT pack, only 404 is correct.
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.pack-registry.get-v1-packs-name-version-sig-returns-404-signature-not-available-for-nonexisten', 
       'node-packs.md §"GET /v1/packs/{name}/-/{version}.sig"',
       'nonexistent (name, version) MUST return 404 signature_not_available',
     )).toBe(404);
 
     const body = res.json as { error?: unknown } | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.pack-registry.get-v1-packs-name-version-sig-returns-404-signature-not-available-for-nonexisten', 
       'node-packs.md §"GET /v1/packs/{name}/-/{version}.sig"',
       '404 response MUST carry a string `error` field — `signature_not_available` is the canonical code',
     )).toBe('string');
@@ -211,19 +213,19 @@ describe('pack-registry: read-endpoint shape contracts', () => {
 
   it('GET /v1/packs/{bad-name}/-/{version}.json returns 400 invalid_pack_name', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     // Single-segment name violates the reverse-DNS pattern.
     const res = await driver.get('/v1/packs/not-reverse-dns/-/1.0.json', {
       authenticated: false,
     });
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.pack-registry.get-v1-packs-bad-name-version-json-returns-400-invalid-pack-name', 
       'node-packs.md §"GET /v1/packs/{name}/-/{version}.json"',
       'malformed pack name MUST return 400 invalid_pack_name',
     )).toBe(400);
 
     const body = res.json as { error?: unknown } | undefined;
-    expect(typeof body?.error, driver.describe(
+    expect(typeof body?.error, req('openwop.it.pack-registry.get-v1-packs-bad-name-version-json-returns-400-invalid-pack-name', 
       'rest-endpoints.md §"Error envelope"',
       '400 response MUST carry a string `error` field',
     )).toBe('string');
@@ -231,14 +233,14 @@ describe('pack-registry: read-endpoint shape contracts', () => {
 
   it('GET /v1/packs/{name}/-/{bad-version}.json returns 400 invalid_version', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     // `not-a-version` violates semver.
     const res = await driver.get(
       `/v1/packs/${encodeURIComponent(NONEXISTENT_PACK)}/-/not-a-version.json`,
       { authenticated: false },
     );
-    expect(res.status, driver.describe(
+    expect(res.status, req('openwop.it.pack-registry.get-v1-packs-name-bad-version-json-returns-400-invalid-version', 
       'node-packs.md §"GET /v1/packs/{name}/-/{version}.json"',
       'non-semver version MUST return 400 invalid_version',
     )).toBe(400);
@@ -251,20 +253,20 @@ describe('pack-registry: read-endpoint shape contracts', () => {
 describe('pack-registry: catalog response shape (when populated)', () => {
   it('GET /v1/packs/{name} catalog records validate against the documented shape', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     // Probe search for a real entry. If the catalog is empty, skip.
     const search = await driver.get('/v1/packs/-/search?q=', { authenticated: false });
-    if (search.status !== 200) return;
+    if (search.status !== 200) return softSkip('blocked', 'precondition not met — `search.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const results = (search.json as { results?: Array<{ name?: unknown }> } | undefined)?.results;
-    if (!Array.isArray(results) || results.length === 0) return;
+    if (!Array.isArray(results) || results.length === 0) return softSkip('blocked', 'precondition not met — `!Array.isArray(results) || results.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
     // Walk up to 3 results and assert their catalog records are well-shaped.
     const sample = results.slice(0, 3);
     for (const entry of sample) {
       const name = entry.name;
       if (typeof name !== 'string') continue;
-      expect(name, driver.describe(
+      expect(name, req('openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape', 
         'node-packs.md §"Naming"',
         `search result name "${name}" MUST match reverse-DNS pattern`,
       )).toMatch(PACK_NAME_RE);
@@ -272,7 +274,7 @@ describe('pack-registry: catalog response shape (when populated)', () => {
       const cat = await driver.get(`/v1/packs/${encodeURIComponent(name)}`, {
         authenticated: false,
       });
-      expect(cat.status, driver.describe(
+      expect(cat.status, req('openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape', 
         'node-packs.md §"GET /v1/packs/{name}"',
         `catalog read for known pack "${name}" MUST return 200`,
       )).toBe(200);
@@ -282,11 +284,11 @@ describe('pack-registry: catalog response shape (when populated)', () => {
         versions?: Record<string, unknown>;
         'dist-tags'?: { latest?: unknown };
       } | undefined;
-      expect(body?.name, driver.describe(
+      expect(body?.name, req('openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape', 
         'node-packs.md §"GET /v1/packs/{name}"',
         'catalog response MUST echo the requested pack name',
       )).toBe(name);
-      expect(typeof body?.versions, driver.describe(
+      expect(typeof body?.versions, req('openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape', 
         'node-packs.md §"GET /v1/packs/{name}"',
         'catalog response MUST carry a `versions` map',
       )).toBe('object');
@@ -294,7 +296,7 @@ describe('pack-registry: catalog response shape (when populated)', () => {
       // Every version key MUST be valid semver per the spec.
       const versionKeys = Object.keys(body?.versions ?? {});
       for (const v of versionKeys) {
-        expect(v, driver.describe(
+        expect(v, req('openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape', 
           'node-packs.md §"Versioning"',
           `version key "${v}" MUST match SemVer 2.0.0`,
         )).toMatch(SEMVER_RE);
@@ -306,16 +308,16 @@ describe('pack-registry: catalog response shape (when populated)', () => {
 describe('pack-registry: keychain shape (when present)', () => {
   it('GET /v1/packs/{name}/-/keychain returns well-formed key entries when present', async () => {
     const probe = await probeRegistry();
-    if (!probe.registryPresent) return;
+    if (!probe.registryPresent) return softSkip('blocked', 'precondition not met — `!probe.registryPresent` returned early (seam, prior step, or fixture unavailable)');
 
     // Probe for any real pack to fetch its keychain. Skip if no packs.
     const search = await driver.get('/v1/packs/-/search?q=', { authenticated: false });
-    if (search.status !== 200) return;
+    if (search.status !== 200) return softSkip('blocked', 'precondition not met — `search.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const results = (search.json as { results?: Array<{ name?: unknown }> } | undefined)?.results;
-    if (!Array.isArray(results) || results.length === 0) return;
+    if (!Array.isArray(results) || results.length === 0) return softSkip('blocked', 'precondition not met — `!Array.isArray(results) || results.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
     const first = results[0]?.name;
-    if (typeof first !== 'string') return;
+    if (typeof first !== 'string') return softSkip('blocked', 'precondition not met — `typeof first !== \'string\'` returned early (seam, prior step, or fixture unavailable)');
 
     const res = await driver.get(`/v1/packs/${encodeURIComponent(first)}/-/keychain`, {
       authenticated: false,
@@ -323,25 +325,25 @@ describe('pack-registry: keychain shape (when present)', () => {
     // 200 with `{keys: []}` and 404 are both spec-allowed (keychain is
     // optional; not every namespace publishes one).
     expect([200, 404]).toContain(res.status);
-    if (res.status === 404) return;
+    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { keys?: unknown; namespace?: unknown } | undefined;
-    expect(Array.isArray(body?.keys), driver.describe(
+    expect(Array.isArray(body?.keys), req('openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present', 
       'registry-operations.md §"Signing keychain"',
       'keychain response MUST carry a `keys` array',
     )).toBe(true);
 
     const keys = body?.keys as Array<Record<string, unknown>>;
     for (const key of keys) {
-      expect(typeof key.kid, driver.describe(
+      expect(typeof key.kid, req('openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present', 
         'registry-operations.md §"Signing keychain"',
         'each key MUST have a string `kid`',
       )).toBe('string');
-      expect(typeof key.algorithm, driver.describe(
+      expect(typeof key.algorithm, req('openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present', 
         'registry-operations.md §"Signing keychain"',
         'each key MUST have a string `algorithm`',
       )).toBe('string');
-      expect(typeof key.publicKey, driver.describe(
+      expect(typeof key.publicKey, req('openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present', 
         'registry-operations.md §"Signing keychain"',
         'each key MUST have a string `publicKey`',
       )).toBe('string');

@@ -11,6 +11,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { readFeedbackCap, seedRun } from '../lib/feedback.js';
+import { req } from '../lib/requirement-ids.js';
 
 describe('feedback-on-terminal-run (RFC 0056 §C)', () => {
   it('annotating a terminal run is accepted', async () => {
@@ -21,13 +22,13 @@ describe('feedback-on-terminal-run (RFC 0056 §C)', () => {
     try {
       await pollUntilTerminal(runId, { timeoutMs: 10_000 });
     } catch {
-      return; // run didn't reach terminal in time — soft-skip
+      return softSkip('blocked', 'precondition not met — an earlier step threw (run didn\'t reach terminal in time — soft-skip) (seam, prior step, or fixture unavailable)'); // run didn't reach terminal in time — soft-skip
     }
     const post = await driver.post(`/v1/runs/${runId}/annotations`, { signal: { kind: 'flag' }, note: 'post-hoc review' });
     if (post.status === 501 || post.status === 404) return softSkip('blocked', 'precondition not met — `post.status === 501 || post.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(
       post.status,
-      driver.describe('RFC 0056 §C', 'a host MUST accept an annotation on a terminal run'),
+      req('openwop.it.feedback-on-terminal-run.annotating-a-terminal-run-is-accepted', 'RFC 0056 §C', 'a host MUST accept an annotation on a terminal run'),
     ).toBe(201);
   });
 });

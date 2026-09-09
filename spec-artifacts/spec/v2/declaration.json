@@ -1,0 +1,1902 @@
+{
+  "$schema": "https://openwop.dev/spec/v2/declaration.schema.json",
+  "$comment": "RFC 0169 \u00a7B \u2014 the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (\u00a7B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption is re-derived from INTEROP-MATRIX bundle evidence at each RC (generator --check). Vendor-org registration procedure: RFC 0180 \u00a7A \u2014 the corpus is the sole registrar, an entry takes effect on the @openwop/spec-artifacts release that carries it, and a shipped entry is append-only because deregistering an org retroactively converts every log already written under it from pass-through to refusal.",
+  "version": "2.0",
+  "updated": "2026-09-03",
+  "witnessClasses": [
+    "witnessable-unaided",
+    "witnessable-gated",
+    "seam-gated",
+    "claims-check",
+    "negative-existence"
+  ],
+  "extensionsKeyPattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+  "reservedOrgs": [
+    "openwop",
+    "vendor"
+  ],
+  "extensions": {
+    "example": {
+      "name": "Reserved for documentation, examples and conformance",
+      "registered": "2026-09-06",
+      "reserved": true,
+      "note": "Never assignable to a real vendor (RFC 2606 precedent). A conformance scenario needs one registered org whose events no host owns, so the positive half of the vendor rule is drivable; without it the registry could only ever say no."
+    }
+  },
+  "metadata": [
+    {
+      "key": "protocolVersion",
+      "kind": "metadata",
+      "schema": "metadata/protocolVersion",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "protocolVersions",
+      "kind": "metadata",
+      "schema": "metadata/protocolVersions",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "extensions",
+      "kind": "metadata",
+      "schema": "metadata/extensions",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "implementation",
+      "kind": "metadata",
+      "schema": "metadata/implementation",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "engineVersion",
+      "kind": "metadata",
+      "schema": "metadata/engineVersion",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "eventLogSchemaVersion",
+      "kind": "metadata",
+      "schema": "metadata/eventLogSchemaVersion",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "supportedTransports",
+      "kind": "metadata",
+      "schema": "metadata/supportedTransports",
+      "note": "deleted: RFC 0175 \u00a7B.1",
+      "disposition": "deleted"
+    },
+    {
+      "key": "configurable",
+      "kind": "metadata",
+      "schema": "metadata/configurable",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "observability",
+      "kind": "metadata",
+      "schema": "metadata/observability",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "minClientVersion",
+      "kind": "metadata",
+      "schema": "metadata/minClientVersion",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "runtimeCapabilities",
+      "kind": "metadata",
+      "schema": "metadata/runtimeCapabilities",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "testing",
+      "kind": "metadata",
+      "schema": "metadata/testing",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "conformance",
+      "kind": "metadata",
+      "schema": "metadata/conformance",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "fixtures",
+      "kind": "metadata",
+      "schema": "metadata/fixtures",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "compliance",
+      "kind": "metadata",
+      "schema": "metadata/compliance",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "signingKeys",
+      "kind": "metadata",
+      "schema": "metadata/signingKeys",
+      "note": "host bundle-signing public keys (RFC 0168 \u00a7E.2); v2-only \u2014 the surface the RFC named when it disposed of \"a signature nobody can check\"",
+      "disposition": "kept"
+    },
+    {
+      "key": "discovery",
+      "kind": "metadata",
+      "schema": "metadata/discovery",
+      "note": null,
+      "disposition": "kept"
+    },
+    {
+      "key": "preferredVersion",
+      "kind": "metadata",
+      "schema": "metadata/preferredVersion",
+      "note": "root preferredVersion (RFC 0172 \u00a7A.1; v1.x additive RFC 0179)",
+      "disposition": "kept"
+    }
+  ],
+  "families": [
+    {
+      "key": "contractProvenance",
+      "anchor": "deleted",
+      "reason": "RFC 0169 \u00a7A.5 (unfalsifiable self-declaration)"
+    },
+    {
+      "key": "supportedEnvelopes",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#supportedEnvelopes",
+      "peerDependencyId": "supportedEnvelopes",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "stable",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null
+    },
+    {
+      "key": "schemaVersions",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#schemaVersions",
+      "peerDependencyId": "schemaVersions",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "stable",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null
+    },
+    {
+      "key": "limits",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#limits",
+      "peerDependencyId": "limits",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "stable",
+        "adoption": "none"
+      },
+      "facets": [
+        "clarificationRounds",
+        "schemaRounds",
+        "envelopesPerTurn",
+        "maxNodeExecutions",
+        "maxRunDurationMs",
+        "maxLoopIterations",
+        "maxBudgetTokens",
+        "maxBudgetCostUsd",
+        "maxRequestBodyBytes"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null
+    },
+    {
+      "key": "envelopeStrictness",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#envelopeStrictness",
+      "peerDependencyId": "envelopeStrictness",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null
+    },
+    {
+      "key": "envelopeContracts",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#envelopeContracts",
+      "peerDependencyId": "envelopeContracts",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "advertised"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null
+    },
+    {
+      "key": "envelopes",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#envelopes",
+      "peerDependencyId": "envelopes",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "reasoning",
+        "tierOneSubsetCompliance",
+        "reliability"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0030"
+    },
+    {
+      "key": "prompts",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#prompts",
+      "peerDependencyId": "prompts",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "endpointsSupported",
+        "templateKinds",
+        "variableSources",
+        "maxTemplateBytes",
+        "observability",
+        "packsSupported",
+        "mutableLibrary",
+        "library",
+        "defaults",
+        "agentBindings"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0027"
+    },
+    {
+      "key": "grpc",
+      "anchor": "deleted",
+      "reason": "RFC 0175 \u00a7A.1 (spec/v2/ext/grpc-transport/, not advertisable)"
+    },
+    {
+      "key": "nodePackRuntimes",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#nodePackRuntimes",
+      "peerDependencyId": "nodePackRuntimes",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "wasm",
+        "wasmComponent"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0008"
+    },
+    {
+      "key": "secrets",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#secrets",
+      "peerDependencyId": "secrets",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "scopes",
+        "resolution",
+        "resolveInPack"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null,
+      "note": "resolveInPack (RFC 0112-era pack peer dependency) is a declared facet"
+    },
+    {
+      "key": "connections",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#connections",
+      "peerDependencyId": "connections",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "packsSupported"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0095"
+    },
+    {
+      "key": "selfHostedRunner",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#selfHostedRunner",
+      "peerDependencyId": "selfHostedRunner",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "dispatchKinds"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0122"
+    },
+    {
+      "key": "purposePropagation",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#purposePropagation",
+      "peerDependencyId": "purposePropagation",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "propagatesOnward"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0128"
+    },
+    {
+      "key": "dataResidency",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#dataResidency",
+      "peerDependencyId": "dataResidency",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "regions"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0129"
+    },
+    {
+      "key": "anonymousActor",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#anonymousActor",
+      "peerDependencyId": "anonymousActor",
+      "witness": "seam-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "tiers",
+        "writeEgressControls",
+        "failClosed"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0132"
+    },
+    {
+      "key": "credentials",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#credentials",
+      "peerDependencyId": "credentials",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "scopes",
+        "encryptionAtRest",
+        "rotation",
+        "sharing"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0046"
+    },
+    {
+      "key": "feedback",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#feedback",
+      "peerDependencyId": "feedback",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "targets",
+        "signals"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0056"
+    },
+    {
+      "key": "replay",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#replay",
+      "peerDependencyId": "replay",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "modes",
+        "retention",
+        "effectSeamsManifest"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0140",
+      "facetsFrom": "spec/v2/facets/replay.schema.json"
+    },
+    {
+      "key": "oauth",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#oauth",
+      "peerDependencyId": "oauth",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "grants",
+        "providers"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0047"
+    },
+    {
+      "key": "authorization",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#authorization",
+      "peerDependencyId": "authorization",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "failClosed",
+        "roles"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0049"
+    },
+    {
+      "key": "multiPartyConversation",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#multiPartyConversation",
+      "peerDependencyId": "multiPartyConversation",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxParticipants"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0101"
+    },
+    {
+      "key": "conversationTurnModelProvenance",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#conversationTurnModelProvenance",
+      "peerDependencyId": "conversationTurnModelProvenance",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0109"
+    },
+    {
+      "key": "channelPresence",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#channelPresence",
+      "peerDependencyId": "channelPresence",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0110"
+    },
+    {
+      "key": "multiAgent",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#multiAgent",
+      "peerDependencyId": "multiAgent",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "executionModel"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0037",
+      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+    },
+    {
+      "key": "modelCapabilities",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#modelCapabilities",
+      "peerDependencyId": "modelCapabilities",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "advertised",
+        "substitutionSupported"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0031"
+    },
+    {
+      "key": "providerUsage",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#providerUsage",
+      "peerDependencyId": "providerUsage",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "costEstimates",
+        "currency"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0026"
+    },
+    {
+      "key": "aiProviders",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#aiProviders",
+      "peerDependencyId": "aiProviders",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "providers",
+        "byok",
+        "selfHosted",
+        "speechSynthesis",
+        "imageGeneration",
+        "videoGeneration",
+        "realtimeVoice",
+        "promptPrefixCache",
+        "maxInlineMediaBytes",
+        "authModes",
+        "policies",
+        "input"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null,
+      "note": "imageGeneration/videoGeneration are declared facets (RFC 0169 \u00a7B.3 with RFC 0177 \u00a7B.1: facet paths are not identifiers; peerDependenciesMeta.aiProviders.facets[])",
+      "facetsFrom": "spec/v2/facets/aiProviders.schema.json"
+    },
+    {
+      "key": "agents",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#agents",
+      "peerDependencyId": "agents",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "profile",
+        "modelClasses",
+        "orchestratorPattern",
+        "memoryBackends",
+        "memoryConsolidation",
+        "commitments",
+        "orchestrator",
+        "dispatch",
+        "manifestRuntime",
+        "liveRuntime",
+        "evalSuite",
+        "deployment",
+        "roster",
+        "orgChart",
+        "dispatchMapping",
+        "reasoning",
+        "subRunAttestation",
+        "proposals",
+        "goals"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0002",
+      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+    },
+    {
+      "key": "memory",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#memory",
+      "peerDependencyId": "memory",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxEntrySizeBytes",
+        "ttlSupported",
+        "compaction",
+        "distillation",
+        "attribution",
+        "writable",
+        "search",
+        "retention",
+        "injectionBudget"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0004",
+      "note": "RFC 0002\u20130008 surface; core anchor, facets carry the RFC 0092 requirement vocabulary"
+    },
+    {
+      "key": "conversationPrimitive",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#conversationPrimitive",
+      "peerDependencyId": "conversationPrimitive",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0005"
+    },
+    {
+      "key": "subWorkflow",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#subWorkflow",
+      "peerDependencyId": "subWorkflow",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "inputMapping"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0007"
+    },
+    {
+      "key": "fs",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#fs",
+      "peerDependencyId": "fs",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "sandboxRoot",
+        "maxFileSizeBytes",
+        "image",
+        "pdf",
+        "transport"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0014"
+    },
+    {
+      "key": "kvStorage",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#kvStorage",
+      "peerDependencyId": "kvStorage",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxKeyBytes",
+        "maxValueBytes",
+        "maxTtlSeconds",
+        "atomicIncrement",
+        "compareAndSwap"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0015"
+    },
+    {
+      "key": "tableStorage",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#tableStorage",
+      "peerDependencyId": "tableStorage",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxRowsPerTable",
+        "maxColumnsPerRow",
+        "indexable",
+        "fullTextSearch"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0016"
+    },
+    {
+      "key": "queueBus",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#queueBus",
+      "peerDependencyId": "queueBus",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "backends",
+        "deadLetterSupported",
+        "stream"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0017"
+    },
+    {
+      "key": "scheduling",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#scheduling",
+      "peerDependencyId": "scheduling",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "cron",
+        "delayed",
+        "calendar",
+        "maxFutureHorizon"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0052"
+    },
+    {
+      "key": "heartbeat",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#heartbeat",
+      "peerDependencyId": "heartbeat",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "minIntervalSec",
+        "maxRuntimeMs",
+        "deliveryChannel"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0060",
+      "facetsFrom": "spec/v2/facets/heartbeat.schema.json"
+    },
+    {
+      "key": "toolHooks",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#toolHooks",
+      "peerDependencyId": "toolHooks",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "prePostEvents",
+        "perToolAuthorization",
+        "perToolRateLimit"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0064"
+    },
+    {
+      "key": "toolCatalog",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#toolCatalog",
+      "peerDependencyId": "toolCatalog",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "sources",
+        "sessionLifecycle",
+        "compactView"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0078"
+    },
+    {
+      "key": "httpClient",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#httpClient",
+      "peerDependencyId": "httpClient",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "ssrfGuard",
+        "maxResponseBodyBytes",
+        "requestTimeoutMs",
+        "methods",
+        "safeFetch",
+        "egressPolicy"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0076"
+    },
+    {
+      "key": "artifactTypes",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#artifactTypes",
+      "peerDependencyId": "artifactTypes",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "store",
+        "render",
+        "export",
+        "types"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0071"
+    },
+    {
+      "key": "forms",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#forms",
+      "peerDependencyId": "forms",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "contentPacks"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0137"
+    },
+    {
+      "key": "aiEnvelope",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#aiEnvelope",
+      "peerDependencyId": "aiEnvelope",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "await"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144"
+    },
+    {
+      "key": "promptLibrary",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#promptLibrary",
+      "peerDependencyId": "promptLibrary",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144"
+    },
+    {
+      "key": "agentRuntime",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#agentRuntime",
+      "peerDependencyId": "agentRuntime",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144"
+    },
+    {
+      "key": "deadLetter",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#deadLetter",
+      "peerDependencyId": "deadLetter",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "retentionDays"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0053"
+    },
+    {
+      "key": "webhooks",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#webhooks",
+      "peerDependencyId": "webhooks",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "retryPolicy",
+        "signatureAlgorithms"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null,
+      "facetsFrom": "spec/v2/facets/webhooks.schema.json"
+    },
+    {
+      "key": "triggerBridge",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#triggerBridge",
+      "peerDependencyId": "triggerBridge",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "subscriptionStates",
+        "dedup",
+        "retryPolicy",
+        "sources",
+        "ingestion"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0083"
+    },
+    {
+      "key": "a2a",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#a2a",
+      "peerDependencyId": "a2a",
+      "witness": "seam-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "versions",
+        "preferredVersion",
+        "minimumVersion",
+        "refreshedAt",
+        "profiles",
+        "agentCardUrl",
+        "streaming",
+        "pushNotifications",
+        "durableTasks"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0152",
+      "facetsFrom": "spec/v2/facets/a2a.schema.json"
+    },
+    {
+      "key": "budget",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#budget",
+      "peerDependencyId": "budget",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "dimensions",
+        "enforce",
+        "scopes"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0084"
+    },
+    {
+      "key": "nondeterminismPolicy",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#nondeterminismPolicy",
+      "peerDependencyId": "nondeterminismPolicy",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "declared"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0085"
+    },
+    {
+      "key": "workspace",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#workspace",
+      "peerDependencyId": "workspace",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "versioned",
+        "maxFileBytes",
+        "maxFiles",
+        "maxVersions"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0059"
+    },
+    {
+      "key": "uiPlugins",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#uiPlugins",
+      "peerDependencyId": "uiPlugins",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "isolation",
+        "surfaces",
+        "hostApi",
+        "maxEntryBytes"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0117"
+    },
+    {
+      "key": "sql",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#sql",
+      "peerDependencyId": "sql",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "datasources",
+        "transactions",
+        "drivers"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0018"
+    },
+    {
+      "key": "nosql",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#nosql",
+      "peerDependencyId": "nosql",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "datasources",
+        "drivers"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0018"
+    },
+    {
+      "key": "vectorStore",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#vectorStore",
+      "peerDependencyId": "vectorStore",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "collections",
+        "backends"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0018"
+    },
+    {
+      "key": "searchIndex",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#searchIndex",
+      "peerDependencyId": "searchIndex",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "indexes",
+        "backends"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0018"
+    },
+    {
+      "key": "blobStorage",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#blobStorage",
+      "peerDependencyId": "blobStorage",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "buckets",
+        "presignSupported",
+        "maxObjectBytes"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0019"
+    },
+    {
+      "key": "cache",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#cache",
+      "peerDependencyId": "cache",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxValueBytes",
+        "maxTtlSeconds"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0019"
+    },
+    {
+      "key": "workflowChainPacks",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#workflowChainPacks",
+      "peerDependencyId": "workflowChainPacks",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "deferredParameters",
+        "hostExpansionSeam",
+        "subChains"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0013"
+    },
+    {
+      "key": "packs",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#packs",
+      "peerDependencyId": "packs",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "testMode"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0025"
+    },
+    {
+      "key": "mcp",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#mcp",
+      "peerDependencyId": "mcp",
+      "witness": "seam-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "revisions",
+        "preferredVersion",
+        "minimumRevision",
+        "refreshedAt",
+        "profiles",
+        "features",
+        "serverUrls",
+        "serverMount",
+        "mrtr"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0153",
+      "facetsFrom": "spec/v2/facets/mcp.schema.json"
+    },
+    {
+      "key": "sandbox",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#sandbox",
+      "peerDependencyId": "sandbox",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "isolationModel",
+        "allowedHostCalls",
+        "memoryLimitBytes",
+        "wallClockLimitMs"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0035",
+      "disposition": "externally-gated",
+      "reason": "RFC 0169 \u00a7C.4 / RFC 0035 non-steward tripwire; status experimental with until = the review date, never stable",
+      "facetsFrom": "spec/v2/facets/sandbox.schema.json"
+    },
+    {
+      "key": "compensation",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#compensation",
+      "peerDependencyId": "compensation",
+      "witness": "seam-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "profileVersion",
+        "orderingModels",
+        "manualIntervention"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0151",
+      "reason": "RFC 0173 \u00a7B core obligation with a declared witness; ext/ only by \u00a7D.1 at the cut"
+    },
+    {
+      "key": "idempotency",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#idempotency",
+      "peerDependencyId": "idempotency",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "multiRegion",
+        "crossRegion"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0150"
+    },
+    {
+      "key": "eventLog",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#eventLog",
+      "peerDependencyId": "eventLog",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "crossEngineOrdering"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0036"
+    },
+    {
+      "key": "production",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#production",
+      "peerDependencyId": "production",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "backpressure",
+        "retention",
+        "debugBundle"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0009"
+    },
+    {
+      "key": "auth",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#auth",
+      "peerDependencyId": "auth",
+      "witness": "seam-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "lanes",
+        "subjectLinkKey"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0154",
+      "facetsFrom": "spec/v2/facets/auth.schema.json"
+    },
+    {
+      "key": "i18n",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#i18n",
+      "peerDependencyId": "i18n",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "defaultLocale",
+        "supportedLocales"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": null
+    },
+    {
+      "key": "content",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#content",
+      "peerDependencyId": "content",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "baseLocale",
+        "supportedLocales"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0103"
+    },
+    {
+      "key": "portability",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#portability",
+      "peerDependencyId": "portability",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "export",
+        "import",
+        "kinds",
+        "dryRun"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0098"
+    },
+    {
+      "key": "interrupt",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#interrupt",
+      "peerDependencyId": "interrupt",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "refKinds",
+        "tokenAlgs"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0104",
+      "facetsFrom": "spec/v2/facets/interrupt.schema.json"
+    },
+    {
+      "key": "restTransport",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/restTransport/",
+      "peerDependencyId": "restTransport",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "conditionalRunGet",
+        "contentEncodings"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0115",
+      "reason": "RFC 0169 \u00a7C.5 (claims-check; ext/ unless a behavioral witness lands)"
+    },
+    {
+      "key": "a2uiSurface",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/a2uiSurface/",
+      "peerDependencyId": "a2uiSurface",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "deltaTransport"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0114",
+      "reason": "RFC 0169 \u00a7C.5 (deltaTransport claims-check; ext/ unless a behavioral witness lands)"
+    },
+    {
+      "key": "brand",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/brand/",
+      "peerDependencyId": "brand",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "canvas",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/canvas/",
+      "peerDependencyId": "canvas",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "chat",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/chat/",
+      "peerDependencyId": "chat",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "coordination",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/coordination/",
+      "peerDependencyId": "coordination",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "dataIntegration",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/dataIntegration/",
+      "peerDependencyId": "dataIntegration",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "entities",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/entities/",
+      "peerDependencyId": "entities",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "kanban",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/kanban/",
+      "peerDependencyId": "kanban",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "knowledge",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/knowledge/",
+      "peerDependencyId": "knowledge",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "launchStudio",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/launchStudio/",
+      "peerDependencyId": "launchStudio",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "messaging",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/messaging/",
+      "peerDependencyId": "messaging",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    },
+    {
+      "key": "webResearch",
+      "kind": "family",
+      "anchor": "ext",
+      "section": "ext/webResearch/",
+      "peerDependencyId": "webResearch",
+      "witness": "claims-check",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "single-witness"
+      },
+      "facets": [],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0144",
+      "reason": "RFC 0169 \u00a7B.3 (RFC 0144 extension class; prose-only \u00a7host.* section in v1; served under extensions.openwop-app.* by the one host that has it)"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "openwop-discovery-core",
+      "predicate": {
+        "families": [],
+        "metadata": [
+          "protocolVersions",
+          "preferredVersion"
+        ]
+      },
+      "floorScenarios": [
+        "v2-capabilities-root-closed",
+        "v2-preferred-version-default",
+        "v2-version-header-honored"
+      ],
+      "note": "discovery only; the alias openwop-core is deleted (row C2.3). Floor minted rc.45: the closed root, the preferredVersion default, and the header honoured-or-refused \u2014 each unaided. v2-well-known-one-resource is deliberately absent: it is inapplicable by design for a host advertising one major, which every host becomes at v1 end-of-support, and a floor that expires is not a floor."
+    },
+    {
+      "id": "openwop-core-standard",
+      "predicate": {
+        "families": [
+          "interrupt",
+          "replay",
+          "webhooks",
+          "idempotency",
+          "eventLog"
+        ]
+      },
+      "floorScenarios": [
+        "v2-interrupt-token-scheme",
+        "v2-effect-seam-manifest",
+        "v2-webhook-durable-delivery",
+        "v2-idempotency-key-grammar",
+        "v2-era-key",
+        "v2-era-stamp-universal",
+        "v2-event-type-closed",
+        "v2-poll-cursor-v2",
+        "v2-run-cancel",
+        "v2-run-bulk-cancel",
+        "v2-run-pause-resume",
+        "v2-run-options-limits",
+        "v2-sse-last-event-id"
+      ],
+      "requirementIds": [],
+      "note": "rc.59: five unaided run-surface witnesses joined the floor \u2014 v2-run-cancel (runs.md \u00a7Cancel: 409 run_terminal on a terminal run), v2-run-bulk-cancel (\u00a7Cancel: per-entry envelopes, id_tenant_mismatch / not_found, details.maxRunIds), v2-run-pause-resume (\u00a7Pause and resume: 409 run_terminal / run_state_conflict, the literal drainPolicy echo, the immediate cut), v2-run-options-limits (capabilities.md limits metadata honoured on create), v2-sse-last-event-id (events.md \u00a7SSE frames: Last-Event-ID resumes at the next sequence, never re-emits the resumption point). cancelRun, bulkCancelRuns and pauseRun are core operations by the runs.md surface table (only ancestry, annotations and eval-summary are 404-when-unadvertised), so a host that omits one is blocked, not inapplicable, and the floor refuses it \u2014 the prose's outcome. Their optional legs (values mode, the conformance-delay / conformance-cancellable fixtures) record inapplicable with the reason and the file row stays a witnessed pass. Measured before the change: the reference host passes all five (rc.58, 179 / 0 / 0 / 42); neither production host satisfies this predicate, so no existing claim moves. seeded from spec/v1/core-standard-manifest.json at P3-B; floor minted rc.45, one or more unaided witnesses per predicate family: interrupt (token scheme), replay (the effect-seam manifest \u2014 its seam-driven no-re-fire leg lives in v2-effect-seam-no-refire on the seams floor), webhooks (durable delivery), idempotency (Layer-1 key grammar), eventLog (era key, era stamp, closed event type, poll cursor). Deliberately absent: v2-pinned-run-disposition (seam-gated and opt-in), v2-v1-signed-webhook-accepted (a coexistence scenario, driven through the seam; the cut gate is its home), v2-effect-identity-business-key (retry leg seam-driven), v2-approver-enforced (conditional on the refKinds facet)."
+    },
+    {
+      "id": "openwop-conformance-seams-v2",
+      "predicate": {
+        "families": [],
+        "metadata": [
+          "conformance"
+        ]
+      },
+      "floorScenarios": [
+        "v2-fork-a-v1-run",
+        "v2-effect-identity-business-key",
+        "v2-v1-signed-webhook-accepted",
+        "v2-effect-seam-no-refire"
+      ],
+      "note": "RFC 0168 \u00a7C.1 \u2014 the seams profile; its own api/seams-v2.yaml; forbidden from the capability namespace. Floor minted rc.45: the four scenarios driven through a seam. rc.62 CLAIM FIX: the predicate now requires `conformance` at the discovery root. Until rc.62 the predicate was EMPTY, and `claimedProfilesForV2` treats an empty predicate as vacuously satisfied, so this profile was CLAIMED BY EVERY v2 HOST \u2014 including two production hosts that never advertised it and carried it at `certified: false`. A profile claimed by a host that never advertised it is a claim the host did not make. The predicate is deliberately NECESSARY, not sufficient: it tests that a `conformance` block exists, while the exact advert (`conformance.seamsProfile === openwop-conformance-seams-v2`) is tested per scenario by `seamsProfileAdvertised`. The two compose honestly \u2014 no conformance block means NOT CLAIMED; a block naming some other profile means claimed, every floor row `inapplicable`, witnessCount 0, and therefore not certified and not blocked. This profile is the instrument, not a capability predicate: each floor file is ALSO gated on the family it witnesses (fork-a-v1-run and effect-seam-no-refire on replay, effect-identity-business-key on idempotency, v1-signed-webhook-accepted on webhooks), records `inapplicable` when that family is absent, and the profile certifies only on a witnessed pass \u2014 a seams host advertising none of those families witnesses nothing through the seam and certifies nothing."
+    }
+  ],
+  "aliases": {
+    "host.webSearch": {
+      "family": "webResearch",
+      "note": "two spellings of one \u00a7host.* section in published manifests (1 use); the section is webResearch"
+    },
+    "host.campaignMessaging": {
+      "family": "messaging",
+      "facets": [
+        "campaign"
+      ],
+      "note": "campaign messaging is a facet of the messaging extension (2 uses)"
+    }
+  }
+}

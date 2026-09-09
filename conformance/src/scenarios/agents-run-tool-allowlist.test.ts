@@ -36,6 +36,8 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACK_PATH = resolve(__dirname, '../../../packs/core.openwop.agents/index.mjs');
@@ -83,14 +85,14 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
   it('skips cleanly when pack source is not bundled', () => {
     if (!packAvailable) {
       console.warn('[agents-run-tool-allowlist] pack source not present; skipping');
-      expect(packAvailable).toBe(false);
-      return;
+      expect(packAvailable, req('openwop.it.agents-run-tool-allowlist.skips-cleanly-when-pack-source-is-not-bundled', 'threat-model-prompt-injection.md', 'skips cleanly when pack source is not bundled')).toBe(false);
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early ([agents-run-tool-allowlist] pack source not present; skipping)');
     }
     expect(packAvailable).toBe(true);
   });
 
   it('rejects function-typed tool.handler (the defect path)', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     // The 1.0.0 defect: a workflow author could supply executable JS via
     // tools[].handler and the pack would await it directly with ctx. Closed
     // in 1.0.1 — the validator throws INVALID_TOOL_DECLARATION at the run
@@ -109,7 +111,7 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
   });
 
   it('rejects tool declaration missing a name', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     await expectRejection(
       () => agentRun({ config: {}, inputs: { userPrompt: 'x', tools: [{ kind: 'workflow' }] } }),
       'INVALID_TOOL_DECLARATION',
@@ -118,7 +120,7 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
   });
 
   it('rejects tool declaration missing a kind discriminator', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     await expectRejection(
       () => agentRun({ config: {}, inputs: { userPrompt: 'x', tools: [{ name: 't1' }] } }),
       'INVALID_TOOL_DECLARATION',
@@ -127,7 +129,7 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
   });
 
   it('rejects tool-driven runs when host does not provide agentRuntime', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     // Tool dispatch MUST go through a host-resolved runtime — the 1.0.0
     // inline-handler fallback is gone.
     await expectRejection(
@@ -141,7 +143,7 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
   });
 
   it('tool-less run succeeds via callAIWithTools (safe fallback preserved)', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     let toolsSeen: unknown = 'never-called';
     const ctx: AgentRunCtx = {
       config: {},
@@ -154,11 +156,11 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
     const result = await agentRun(ctx);
     expect(result.outputs.result).toBe('hello back');
     expect(result.outputs.finishReason).toBe('complete');
-    expect(toolsSeen, 'tool-less fallback MUST pass an empty tools array — no LLM-driven dispatch').toEqual([]);
+    expect(toolsSeen, req('openwop.it.agents-run-tool-allowlist.tool-less-run-succeeds-via-callaiwithtools-safe-fallback-preserved', 'threat-model-prompt-injection.md', 'tool-less fallback MUST pass an empty tools array — no LLM-driven dispatch')).toEqual([]);
   });
 
   it('agentRuntime.run path threads through unchanged when host provides it', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     let receivedTools: unknown;
     const ctx: AgentRunCtx = {
       config: {},
@@ -167,15 +169,15 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
         tools: [{ name: 't1', kind: 'workflow', ref: 'vendor.acme.demo' }],
       },
       agentRuntime: {
-        run: async (req: unknown) => {
-          receivedTools = (req as { tools?: unknown[] }).tools;
+        run: async (reqBody: unknown) => {
+          receivedTools = (reqBody as { tools?: unknown[] }).tools;
           return { result: 'from-runtime', toolCalls: [{ name: 't1' }] };
         },
       },
     };
     const result = await agentRun(ctx);
     expect(result.outputs.result).toBe('from-runtime');
-    expect(receivedTools, 'host MUST receive the validated tools array').toEqual([
+    expect(receivedTools, req('openwop.it.agents-run-tool-allowlist.agentruntime-run-path-threads-through-unchanged-when-host-provides-it', 'threat-model-prompt-injection.md', 'host MUST receive the validated tools array')).toEqual([
       { name: 't1', kind: 'workflow', ref: 'vendor.acme.demo' },
     ]);
   });

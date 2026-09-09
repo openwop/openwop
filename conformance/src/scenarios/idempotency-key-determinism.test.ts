@@ -44,6 +44,8 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACK_PATH = resolve(__dirname, '../../../packs/core.openwop.http/index.mjs');
@@ -114,14 +116,14 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     // — the scenario soft-skips rather than failing.
     if (!packAvailable) {
       console.warn(`[idempotency-key-determinism] packs/core.openwop.http/index.mjs not present; skipping`);
-      expect(packAvailable).toBe(false);
-      return;
+      expect(packAvailable, req('openwop.it.idempotency-key-determinism.skips-cleanly-when-packs-is-not-bundled', 'idempotency.md §"Idempotency-Key', 'skips cleanly when packs/ is not bundled')).toBe(false);
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early ([idempotency-key-determinism] packs/core.openwop.http/index.mjs not present; skipping)');
     }
     expect(packAvailable).toBe(true);
   });
 
   it('default mode (composite) — identical (runId, nodeId, payload) produces identical keys', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     const ctx: IdempotencyKeyCtx = {
       runId: 'run-1',
       nodeId: 'node-1',
@@ -129,45 +131,45 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     };
     const a = await idempotencyKey(ctx);
     const b = await idempotencyKey(ctx);
-    expect(a.outputs.key, 'idempotency.md §Idempotency-Key: same logical request MUST produce same key').toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.default-mode-composite-identical-runid-nodeid-payload-produces-identical-keys', 'idempotency.md §"Idempotency-Key', 'idempotency.md §Idempotency-Key: same logical request MUST produce same key')).toBe(b.outputs.key);
     expect(a.outputs.key).toMatch(KEY_PATTERN);
   });
 
   it('payload sensitivity — different payload produces different key', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     const baseCtx = { runId: 'run-1', nodeId: 'node-1' };
     const a = await idempotencyKey({ ...baseCtx, inputs: { payload: { hello: 'world' } } });
     const b = await idempotencyKey({ ...baseCtx, inputs: { payload: { hello: 'CHANGED' } } });
-    expect(a.outputs.key).not.toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.payload-sensitivity-different-payload-produces-different-key', 'idempotency.md §"Idempotency-Key', 'payload sensitivity — different payload produces different key')).not.toBe(b.outputs.key);
   });
 
   it('run isolation — different runId produces different key', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     const payload = { hello: 'world' };
     const a = await idempotencyKey({ runId: 'run-1', nodeId: 'node-1', inputs: { payload } });
     const b = await idempotencyKey({ runId: 'run-2', nodeId: 'node-1', inputs: { payload } });
-    expect(a.outputs.key).not.toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.run-isolation-different-runid-produces-different-key', 'idempotency.md §"Idempotency-Key', 'run isolation — different runId produces different key')).not.toBe(b.outputs.key);
   });
 
   it('node isolation — different nodeId produces different key', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     const payload = { hello: 'world' };
     const a = await idempotencyKey({ runId: 'run-1', nodeId: 'node-A', inputs: { payload } });
     const b = await idempotencyKey({ runId: 'run-1', nodeId: 'node-B', inputs: { payload } });
-    expect(a.outputs.key).not.toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.node-isolation-different-nodeid-produces-different-key', 'idempotency.md §"Idempotency-Key', 'node isolation — different nodeId produces different key')).not.toBe(b.outputs.key);
   });
 
   it('hash mode is deterministic in the payload alone (run/node ignored)', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     const payload = { request: 'payload-here', id: 42 };
     const a = await idempotencyKey({ config: { mode: 'hash' }, runId: 'run-1', nodeId: 'node-1', inputs: { payload } });
     const b = await idempotencyKey({ config: { mode: 'hash' }, runId: 'run-2', nodeId: 'node-2', inputs: { payload } });
-    expect(a.outputs.key, 'hash mode MUST ignore run/node — useful for global remote-dedup caches').toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.hash-mode-is-deterministic-in-the-payload-alone-run-node-ignored', 'idempotency.md §"Idempotency-Key', 'hash mode MUST ignore run/node — useful for global remote-dedup caches')).toBe(b.outputs.key);
     expect(a.outputs.key).toMatch(KEY_PATTERN);
   });
 
   it('output shape — every emitted key matches openwop-<sha256-prefix-16>', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     const samples: IdempotencyKeyCtx[] = [
       { runId: 'r', nodeId: 'n', inputs: { payload: null } },
       { runId: 'r', nodeId: 'n', inputs: { payload: 'string-payload' } },
@@ -177,12 +179,12 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     ];
     for (const ctx of samples) {
       const result = await idempotencyKey(ctx);
-      expect(result.outputs.key, `key shape for ctx=${JSON.stringify(ctx)}`).toMatch(KEY_PATTERN);
+      expect(result.outputs.key, req('openwop.it.idempotency-key-determinism.output-shape-every-emitted-key-matches-openwop-sha256-prefix-16', 'idempotency.md §"Idempotency-Key', `key shape for ctx=${JSON.stringify(ctx)}`)).toMatch(KEY_PATTERN);
     }
   });
 
   it('uuid mode rejects with CONFIG_INVALID (safety-fix per 1.1.2)', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     // The removed mode names the safety-fix in its error message so
     // pinned-version callers diagnosing a regression find the fix.
     let caught: unknown;
@@ -191,13 +193,13 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     } catch (err) {
       caught = err;
     }
-    expect(caught, 'mode: uuid MUST be rejected — the 1.1.0/1.1.1 non-deterministic default was removed').toBeInstanceOf(Error);
+    expect(caught, req('openwop.it.idempotency-key-determinism.uuid-mode-rejects-with-config-invalid-safety-fix-per-1-1-2', 'idempotency.md §"Idempotency-Key', 'mode: uuid MUST be rejected — the 1.1.0/1.1.1 non-deterministic default was removed')).toBeInstanceOf(Error);
     expect((caught as Error & { code?: string }).code).toBe('CONFIG_INVALID');
     expect((caught as Error).message).toMatch(/uuid.*removed|safety-fix/i);
   });
 
   it('cross-impl invariant — pack output equals canonical SHA-256 formula', async () => {
-    if (!packAvailable) return;
+    if (!packAvailable) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early');
     // Five fixed vectors. A third-party core.openwop.http reimplementation
     // can run the same scenario against its runtime — agreement on these
     // vectors proves wire-level interop on the Idempotency-Key shape.
@@ -217,7 +219,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
       const expected = canonicalCompositeKey(v.runId, v.nodeId, v.payload);
       expect(
         packed.outputs.key,
-        `vector ${JSON.stringify(v)} — pack output MUST match canonical sha256(runId\\0nodeId\\0JSON(payload))`,
+        req('openwop.it.idempotency-key-determinism.cross-impl-invariant-pack-output-equals-canonical-sha-256-formula', 'idempotency.md §"Idempotency-Key', `vector ${JSON.stringify(v)} — pack output MUST match canonical sha256(runId\\0nodeId\\0JSON(payload))`),
       ).toBe(expected);
     }
 

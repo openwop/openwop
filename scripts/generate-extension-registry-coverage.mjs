@@ -64,6 +64,7 @@ const METADATA_FIELDS = {
   conformance: 'conformance-only typeIds the host registered (RFC 0023) — evidence apparatus, not a feature',
   compliance: 'which masking mode is in effect (closes O5) — describes an operator setting so clients can read `[REDACTED]` correctly',
   discovery: 'discovery-change-detection advertisement (capabilities-change-detection.md) — describes the discovery document itself',
+  protocolVersions: 'RFC 0165 §A — every protocol major.minor the host serves; a version advertisement beside `protocolVersion`, not a capability family.',
 };
 
 export function derive() {

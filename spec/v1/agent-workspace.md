@@ -84,14 +84,7 @@ Per the RFC 0059 Phase-0 ruling, the RFC 0062 distillation memory-index manifest
 
 ## Open spec gaps
 
-| Gap                                                 | Status                                                                                                                                                                                                          |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Cross-host `path` / `etag` portability**          | v1.x silent. A workspace minted on host A is NOT guaranteed re-resolvable on host B; `etag` is opaque and host-defined. A portable encoding MAY be normated later if implementer demand surfaces.               |
-| **`WorkspaceAdapter` host-interface contract**      | Deferred to `storage-adapters.md` at implementation (RFC 0059 §G5) — adapter authors are notified there once the reference wiring lands.                                                                        |
-| **Version retention beyond `maxVersions`**          | Latest is the MUST; history is best-effort. Hosts MAY purge versions beyond `maxVersions` at any time; a `?version=N` for a purged version returns `404 not_found`.                                             |
-| **Per-file authorization within a workspace**       | Silence intentional. WCT-1 is the only normative isolation surface; finer-grained RBAC within a `{tenant, workspace}` is host-internal (composes with RFC 0049 when present).                                   |
-| **Directory / move / rename semantics**             | Out of scope for v1 — the namespace is flat. A "rename" is a `PUT` of the new path plus a `DELETE` of the old.                                                                                                  |
-| **SECURITY invariant + conformance behavior tests** | `workspace-cross-tenant-isolation` (WCT-1) + WSR-1 + CRUD/ETag/snapshot conformance land at the behavior milestone, not at this DRAFT. Shape-only conformance (`workspace-capability-shape.test.ts`) ships now. |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.agent-workspace.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

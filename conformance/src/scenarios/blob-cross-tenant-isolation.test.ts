@@ -10,6 +10,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -30,10 +32,10 @@ async function call(tenantId: string, op: string, args: Record<string, unknown>)
 describe('blob-cross-tenant-isolation: advertisement shape (RFC 0019)', () => {
   it('capabilities.blobStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return;
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early');
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.blob-cross-tenant-isolation.capabilities-blobstorage-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §blobStorage',
         'capabilities.blobStorage.supported MUST be a boolean when present',
       ),
@@ -44,7 +46,7 @@ describe('blob-cross-tenant-isolation: advertisement shape (RFC 0019)', () => {
 describe('blob-cross-tenant-isolation: behavioral (RFC 0019 §B point 1)', () => {
   it('put under tenant A → get under tenant B with same key returns found:false', async () => {
     const cap = await readCap();
-    if (!cap || cap.supported !== true) return;
+    if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
     const key = `xtenant-blob-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
     const putRes = await call('tenant-a', 'put', {
@@ -53,15 +55,15 @@ describe('blob-cross-tenant-isolation: behavioral (RFC 0019 §B point 1)', () =>
       contentBase64: Buffer.from('from-A').toString('base64'),
       contentType: 'text/plain',
     });
-    if (putRes.status === 404) return;
-    expect(putRes.status, 'put MUST succeed').toBe(200);
+    if (putRes.status === 404) return softSkip('blocked', 'precondition not met — `putRes.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    expect(putRes.status, req('openwop.it.blob-cross-tenant-isolation.put-under-tenant-a-get-under-tenant-b-with-same-key-returns-found-false', 'RFC 0019 §B point 1', 'put MUST succeed')).toBe(200);
 
     const getRes = await call('tenant-b', 'get', { bucket: 'default', key });
     expect(getRes.status).toBe(200);
     const body = getRes.json as { found?: boolean };
     expect(
       body.found,
-      driver.describe('RFC 0019 §B point 1', 'tenant B MUST NOT retrieve tenant A blob at same key'),
+      req('openwop.it.blob-cross-tenant-isolation.put-under-tenant-a-get-under-tenant-b-with-same-key-returns-found-false', 'RFC 0019 §B point 1', 'tenant B MUST NOT retrieve tenant A blob at same key'),
     ).toBe(false);
   });
 });

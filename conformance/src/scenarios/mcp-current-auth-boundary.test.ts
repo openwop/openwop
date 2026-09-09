@@ -18,10 +18,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'mcp-2026-07-28';
 const META_V = 'io.modelcontextprotocol/protocolVersion';
@@ -50,16 +51,16 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
     if (!behaviorGate(PROFILE, claims)) return;
     const authed = await driver.post(await mcpServerMount(), REQ, { headers: HDR });
     if (authed.status === 404 || authed.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${authed.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
-    expect(authed.status, driver.describe('mcp-integration.md §E', 'the authenticated call MUST succeed at the same path, so a refusal below is not a wrong path')).toBe(200);
+    expect(authed.status, req('openwop.it.mcp-current-auth-boundary.an-unauthenticated-current-profile-request-is-refused-unless-anonymousactor-is-a', 'mcp-integration.md §E', 'the authenticated call MUST succeed at the same path, so a refusal below is not a wrong path')).toBe(200);
     const anonymous = await driver.post(await mcpServerMount(), REQ, { headers: HDR, authenticated: false });
     if (anon?.supported === true) {
       // Anonymous is permitted only through the RFC 0132 surface; a 200 here is that surface answering.
       expect([200, 401, 403]).toContain(anonymous.status);
-      return;
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `anon?.supported === true` returned early');
     }
     expect(
       [401, 403],
-      driver.describe('mcp-integration.md §E', 'an anonymous MCP principal MUST NOT be the production default for an advertised current profile — refuse (401/403) or advertise anonymousActor'),
+      req('openwop.it.mcp-current-auth-boundary.an-unauthenticated-current-profile-request-is-refused-unless-anonymousactor-is-a', 'mcp-integration.md §E', 'an anonymous MCP principal MUST NOT be the production default for an advertised current profile — refuse (401/403) or advertise anonymousActor'),
     ).toContain(anonymous.status);
 
     // S30 (2026-08-17, openwop-app H43): a cookie-posture host may MINT an anonymous
@@ -72,12 +73,12 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
       ...setCookies(anonymous.headers),
       ...setCookies((await driver.get('/.well-known/openwop', { authenticated: false })).headers),
     ];
-    if (minted.length === 0) return; // host mints no anonymous session; the bare probe was the whole observation
+    if (minted.length === 0) return softSkip('blocked', 'precondition not met — `minted.length === 0` returned early (host mints no anonymous session; the bare probe was the whole observation) (seam, prior step, or fixture unavailable)'); // host mints no anonymous session; the bare probe was the whole observation
     const cookie = minted.map((c) => c.split(';')[0]).join('; ');
     const withSession = await driver.post(await mcpServerMount(), REQ, { headers: { ...HDR, Cookie: cookie }, authenticated: false });
     expect(
       [401, 403],
-      driver.describe('mcp-integration.md §E', 'a caller holding only a host-minted anonymous session cookie is still an anonymous principal — refuse (401/403) unless anonymousActor is advertised (S30)'),
+      req('openwop.it.mcp-current-auth-boundary.an-unauthenticated-current-profile-request-is-refused-unless-anonymousactor-is-a', 'mcp-integration.md §E', 'a caller holding only a host-minted anonymous session cookie is still an anonymous principal — refuse (401/403) unless anonymousActor is advertised (S30)'),
     ).toContain(withSession.status);
   });
 });

@@ -29,6 +29,7 @@ import {
   isReasoningStreamingSupported,
   getReasoningVerbosity,
 } from '../lib/multi-agent-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-reasoning-streaming';
 /** Expected concatenation of the fixture's `streamChunks` — kept in sync
@@ -64,14 +65,14 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
 
     expect(
       deltas.length,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.emits-n-agent-reasoning-delta-events-followed-by-exactly-one-closing-agent-reaso', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         'streaming host MUST emit one agent.reasoning.delta per streamChunks entry',
       ),
     ).toBe(EXPECTED_CHUNKS.length);
     expect(
       finals.length,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.emits-n-agent-reasoning-delta-events-followed-by-exactly-one-closing-agent-reaso', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         'streaming host MUST emit exactly one closing agent.reasoned event after the deltas',
       ),
@@ -95,7 +96,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
 
     expect(
       sequences,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.agent-reasoning-delta-sequence-starts-at-0-and-increments-by-1-within-the-block', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         '`sequence` MUST start at 0 and increment by 1 per delta within a block',
       ),
@@ -113,15 +114,15 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
     const list = (events.json as { events: Array<{ type: string; payload?: Record<string, unknown> }> }).events;
 
     const finalEvent = list.find((e) => e.type === 'agent.reasoned');
-    expect(finalEvent, 'closing agent.reasoned must be present').toBeDefined();
+    expect(finalEvent, req('openwop.it.agentReasoningStreaming.closing-agent-reasoned-reasoning-is-the-concatenation-of-the-deltas-authoritativ', 'RFCS/0024-agent-reasoning-streaming.md §Proposal', 'closing agent.reasoned must be present')).toBeDefined();
     const reasoning = finalEvent?.payload?.reasoning;
-    expect(typeof reasoning, 'closing event MUST carry a reasoning string').toBe('string');
+    expect(typeof reasoning, req('openwop.it.agentReasoningStreaming.closing-agent-reasoned-reasoning-is-the-concatenation-of-the-deltas-authoritativ', 'RFCS/0024-agent-reasoning-streaming.md §Proposal', 'closing event MUST carry a reasoning string')).toBe('string');
     // The mock-agent's contract: closing reasoning equals concat(streamChunks).
     // Real hosts MAY transform at finalize (summary truncation, redaction);
     // for the mock-agent fixture, no transform applies — exact equality.
     expect(
       reasoning,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.closing-agent-reasoned-reasoning-is-the-concatenation-of-the-deltas-authoritativ', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         'closing agent.reasoned.reasoning is authoritative; for the mock-agent fixture, equals delta concatenation',
       ),
@@ -149,7 +150,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
 
     expect(
       agentIds.size,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.agentid-is-consistent-across-all-streaming-closing-events-in-a-block', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         'agentId MUST be consistent across all `agent.reasoning.delta` events AND the closing `agent.reasoned` for a given block',
       ),
@@ -168,7 +169,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
     const arr = Array.isArray(list) ? list : list.events;
 
     const closingIdx = arr.findIndex((e) => e.type === 'agent.reasoned');
-    expect(closingIdx, 'closing event present').toBeGreaterThan(-1);
+    expect(closingIdx, req('openwop.it.agentReasoningStreaming.all-agent-reasoning-delta-events-arrive-before-the-closing-agent-reasoned', 'RFCS/0024-agent-reasoning-streaming.md §Proposal', 'closing event present')).toBeGreaterThan(-1);
     const lastDeltaIdx = arr.map((e) => e.type).lastIndexOf('agent.reasoning.delta');
 
     // Guard against vacuous pass: a host advertising streaming but
@@ -177,14 +178,14 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
     // one delta MUST appear in the event log.
     expect(
       lastDeltaIdx,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.all-agent-reasoning-delta-events-arrive-before-the-closing-agent-reasoned', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         'streaming host MUST emit at least one `agent.reasoning.delta` for a fixture with non-empty `streamChunks`',
       ),
     ).toBeGreaterThan(-1);
     expect(
       lastDeltaIdx,
-      driver.describe(
+      req('openwop.it.agentReasoningStreaming.all-agent-reasoning-delta-events-arrive-before-the-closing-agent-reasoned', 
         'RFCS/0024-agent-reasoning-streaming.md §Proposal',
         'every `agent.reasoning.delta` MUST precede the closing `agent.reasoned` for the same block',
       ),

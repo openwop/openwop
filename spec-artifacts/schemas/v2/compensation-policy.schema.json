@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/compensation-policy.schema.json",
+  "title": "CompensationPolicy",
+  "description": "RFC 0151 §B — the workflow-level compensation policy, carried as the reserved `settings.compensation` key on `WorkflowDefinition` (`workflow-definition.schema.json` §WorkflowSettings). Node-level `compensation` declarations say WHAT the inverse action is; this policy says WHEN the host starts an unwind and HOW it runs one — which failures qualify (`triggers`), the ordering model, retry/timeout defaults for inverse actions, what happens when an inverse action exhausts its retries, whether approval is escalated, and what a parent cancel does to an active unwind. Closed and additive. A host that advertises `capabilities.compensation` MUST validate the policy at workflow registration and refuse one that names an `orderingModel` or `profileVersion` it does not advertise (`validation_error`). A host that does NOT advertise the family MUST refuse a workflow that carries this key with `capability_required` (`details.requiredCapability: \"compensation\"`, per `capabilities.md` §\"Unsupported capability — refusal contract\") rather than accept it silently: accepting a policy the host will never honour tells the author an unwind will happen when it will not, which is RFC 0148 §B's advertise-and-opt-out failure with the sign flipped. Nothing here can WEAKEN a node's own declaration — a node's `compensation.requiresApproval: true` and `retry` bounds always win over the policy's defaults. Policy is authored, not per-run: there is deliberately no run-options overlay, because a per-run caller who could lower approval scope or drop a trigger would be authorizing their own unwind (RFC 0147 R9).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "triggers"
+  ],
+  "properties": {
+    "profileVersion": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "description": "The RFC 0151 profile version this policy was authored against. OPTIONAL; when present it MUST equal the host's advertised `capabilities.compensation.profileVersion` or registration fails, because `profileVersion` is part of the inverse-action identity (§C) and a workflow authored under one ordering rule MUST NOT mint identities under another."
+    },
+    "orderingModel": {
+      "type": "string",
+      "enum": [
+        "reverse-completion",
+        "dependency-graph"
+      ],
+      "default": "reverse-completion",
+      "description": "RFC 0151 §A/§C. `reverse-completion` (default) orders inverse actions by descending durable forward-completion sequence; `dependency-graph` MUST be a DAG and preserve reverse dependency order. The value MUST be one of the host's advertised `capabilities.compensation.orderingModels[]`; a host MUST refuse the workflow at registration otherwise, so an unwind never discovers at failure time that its ordering rule is unimplemented."
+    },
+    "triggers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "node-failure",
+          "run-cancel",
+          "cap-breach",
+          "operator-request"
+        ]
+      },
+      "description": "Which events start an unwind. REQUIRED and closed — a policy that names no trigger is not a policy, and an open string here would let a host and an author disagree about a word. `node-failure`: a node reaches terminal failure after its own RFC 0009 retry policy and the run cannot continue. `run-cancel`: an RFC 0094 cancel is accepted while committed effects exist. `cap-breach`: an RFC 0058 / RFC 0084 `cap.breached` hard stop. `operator-request`: an authorized operator explicitly requests an unwind (§E) — MUST be authorized per RFC 0049, binding tenant, principal, action, and plan version. A trigger not listed here does NOT start an unwind; the run ends with its committed effects in place and `compensationStatus: none`, which is the honest shape — no generic rollback is inferred from an undeclared trigger (RFC 0151 §Compatibility)."
+    },
+    "retry": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Defaults for inverse actions whose node-level `compensation.retry` is absent. A node's own bounds always win. Retries reuse the inverse action's stable identity (§C) — never a fresh one, or a transient refund failure mints a second refund.",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "backoffMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Wall-clock ceiling per inverse-action attempt, in milliseconds. A timed-out attempt counts against `retry.maxAttempts`; it is not a distinct outcome."
+    },
+    "exhaustedDisposition": {
+      "type": "string",
+      "enum": [
+        "record-outcome",
+        "manual-intervention"
+      ],
+      "default": "record-outcome",
+      "description": "RFC 0151 §E — what the host does when an inverse action exhausts its retries. Either way the run MUST route to RFC 0053 dead-letter handling and the run's `compensationStatus` follows the §D fold (`partial` or `failed`). `record-outcome` (default): record the failure and continue unwinding the remaining actions. `manual-intervention`: additionally emit `compensation.manual_intervention_required` and stop issuing further inverse actions until an authorized operator retries, skips with recorded justification, substitutes a registered action, or terminates as uncompensated — the rollup reads `manual` while that is unresolved. Requires `capabilities.compensation.manualIntervention: true`; a host that does not advertise it MUST refuse a policy that selects it."
+    },
+    "approvalScope": {
+      "type": "string",
+      "enum": [
+        "declared",
+        "all"
+      ],
+      "default": "declared",
+      "description": "RFC 0151 §E. `declared` (default): only inverse actions whose node sets `compensation.requiresApproval: true` create an RFC 0051 approval interrupt. `all`: every inverse action does, regardless of the node's declaration. This value can only ESCALATE — there is no `none`, because a policy MUST NOT strip an approval a node declared for itself (RFC 0147 R9: an inverse action can itself be harmful)."
+    },
+    "onParentCancel": {
+      "type": "string",
+      "enum": [
+        "continue",
+        "pause",
+        "manual"
+      ],
+      "default": "continue",
+      "description": "RFC 0151 §C — cancellation of the parent run MUST NOT silently abandon an active compensation. `continue`: the unwind runs to its terminal rollup. `pause`: emit `compensation.paused` and hold for authorized intervention (the run's own `status` carries the wait). `manual`: emit `compensation.manual_intervention_required` and stop; rollup reads `manual`. `pause`/`manual` require `capabilities.compensation.manualIntervention: true`."
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

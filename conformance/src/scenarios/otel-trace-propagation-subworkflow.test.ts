@@ -41,6 +41,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isScenarioOptedOut } from '../lib/env.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Callback-shaped: the host exports OTLP spans to the suite's collector.
@@ -133,13 +134,13 @@ describe('otel-trace-propagation-subworkflow: traceparent threads parent → chi
     const subwfCompleted = events.find(
       (e) => e.type === 'node.completed' && e.nodeId === 'subwf-call',
     );
-    expect(subwfCompleted, driver.describe(
+    expect(subwfCompleted, req('openwop.it.otel-trace-propagation-subworkflow.child-run-spans-inherit-the-parent-run-s-inbound-traceid', 
       'node-packs.md §core.subWorkflow',
       'parent event log MUST include node.completed for the subwf-call node',
     )).toBeDefined();
 
     const childRunId = subwfCompleted?.payload?.outputs?.childRunId;
-    expect(typeof childRunId, driver.describe(
+    expect(typeof childRunId, req('openwop.it.otel-trace-propagation-subworkflow.child-run-spans-inherit-the-parent-run-s-inbound-traceid', 
       'node-packs.md §core.subWorkflow outputSchema',
       'subwf-call node.completed payload MUST carry outputs.childRunId',
     )).toBe('string');
@@ -148,19 +149,19 @@ describe('otel-trace-propagation-subworkflow: traceparent threads parent → chi
     const parentSpans = await waitForRunSpans(parentRunId, { timeoutMs: 10_000, minCount: 1 });
     const childSpans = await waitForRunSpans(childRunId!, { timeoutMs: 10_000, minCount: 1 });
 
-    expect(parentSpans.length, 'collector MUST receive ≥1 span for the parent run').toBeGreaterThan(0);
-    expect(childSpans.length, 'collector MUST receive ≥1 span for the child run').toBeGreaterThan(0);
+    expect(parentSpans.length, req('openwop.it.otel-trace-propagation-subworkflow.child-run-spans-inherit-the-parent-run-s-inbound-traceid', 'node-packs.md §core.subWorkflow outputSchema', 'collector MUST receive ≥1 span for the parent run')).toBeGreaterThan(0);
+    expect(childSpans.length, req('openwop.it.otel-trace-propagation-subworkflow.child-run-spans-inherit-the-parent-run-s-inbound-traceid', 'node-packs.md §core.subWorkflow outputSchema', 'collector MUST receive ≥1 span for the child run')).toBeGreaterThan(0);
 
     const wantTrace = traceId.toLowerCase();
 
     const parentMatching = parentSpans.filter((s) => s.traceId.toLowerCase() === wantTrace);
-    expect(parentMatching.length, driver.describe(
+    expect(parentMatching.length, req('openwop.it.otel-trace-propagation-subworkflow.child-run-spans-inherit-the-parent-run-s-inbound-traceid', 
       'observability.md §"Trace context propagation"',
       'parent-run spans MUST share the inbound traceparent traceId',
     )).toBeGreaterThan(0);
 
     const childMatching = childSpans.filter((s) => s.traceId.toLowerCase() === wantTrace);
-    expect(childMatching.length, driver.describe(
+    expect(childMatching.length, req('openwop.it.otel-trace-propagation-subworkflow.child-run-spans-inherit-the-parent-run-s-inbound-traceid', 
       'observability.md §"Trace context propagation" + node-packs.md §core.subWorkflow',
       'child-run spans dispatched via core.subWorkflow MUST inherit the parent run\'s traceId so distributed traces stitch across the dispatch boundary',
     )).toBeGreaterThan(0);

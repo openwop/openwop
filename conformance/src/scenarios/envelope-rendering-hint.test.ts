@@ -24,6 +24,7 @@ import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { req } from '../lib/requirement-ids.js';
 
 function compileEnvelope(): ReturnType<Ajv2020['compile']> {
   const ajv = new Ajv2020({ strict: false, allErrors: true });
@@ -57,7 +58,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(env);
     expect(
       ok,
-      'ai-envelope.md §"Rendering hints": ' + `meta.rendering MUST validate; errors: ${JSON.stringify(validate.errors)}`,
+      req('openwop.it.envelope-rendering-hint.accepts-an-envelope-carrying-a-well-formed-meta-rendering-hint', 'RFC 0055 §B', 'ai-envelope.md §"Rendering hints": ' + `meta.rendering MUST validate; errors: ${JSON.stringify(validate.errors)}`),
     ).toBe(true);
   });
 
@@ -65,7 +66,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(baseEnvelope);
     expect(
       ok,
-      'ai-envelope.md §"Rendering hints": ' + 'meta.rendering MUST be optional — envelopes omitting it still validate',
+      req('openwop.it.envelope-rendering-hint.accepts-an-envelope-with-no-meta-rendering-proves-the-property-is-optional', 'RFC 0055 §B', 'ai-envelope.md §"Rendering hints": ' + 'meta.rendering MUST be optional — envelopes omitting it still validate'),
     ).toBe(true);
   });
 
@@ -77,7 +78,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(env);
     expect(
       ok,
-      'ai-envelope.md §"Rendering hints": ' + 'display is a closed enum — unknown families MUST be rejected',
+      req('openwop.it.envelope-rendering-hint.rejects-an-unknown-display-value-closed-enum', 'RFC 0055 §B', 'ai-envelope.md §"Rendering hints": ' + 'display is a closed enum — unknown families MUST be rejected'),
     ).toBe(false);
   });
 
@@ -89,7 +90,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(env);
     expect(
       ok,
-      'ai-envelope.md §"Rendering hints": ' + 'rendering is additionalProperties:false',
+      req('openwop.it.envelope-rendering-hint.rejects-an-unknown-property-under-rendering-additionalproperties-false', 'RFC 0055 §B', 'ai-envelope.md §"Rendering hints": ' + 'rendering is additionalProperties:false'),
     ).toBe(false);
   });
 });

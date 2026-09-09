@@ -35,6 +35,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const CANONICAL_MODES = ['disabled', 'optional', 'required', 'restricted'] as const;
 
@@ -60,21 +62,21 @@ async function fetchAiProviders(): Promise<AiProvidersShape | undefined> {
 describe('policies: /.well-known/openwop aiProviders.policies shape contract', () => {
   it('aiProviders.policies is well-formed when present (or absent — both spec-allowed)', async () => {
     const ap = await fetchAiProviders();
-    if (ap === undefined) return; // Optional v1 field — hosts MAY omit aiProviders entirely.
+    if (ap === undefined) return softSkip('blocked', 'precondition not met — `ap === undefined` returned early (Optional v1 field — hosts MAY omit aiProviders entirely.) (seam, prior step, or fixture unavailable)'); // Optional v1 field — hosts MAY omit aiProviders entirely.
 
     const policies = ap.policies;
     if (policies === undefined) {
       // Spec-allowed: omitting `policies` means the host implements no
       // enforcement. Clients see only `optional` semantics. Nothing
       // further to assert.
-      return;
+      return softSkip('blocked', 'precondition not met — `policies === undefined` returned early (Spec-allowed: omitting `policies` means the host implements no enforcement. Clients see only `optional` semantics. Nothing further to assert.) (seam, pri…');
     }
 
-    expect(typeof policies, driver.describe(
+    expect(typeof policies, req('openwop.it.policies.aiproviders-policies-is-well-formed-when-present-or-absent-both-spec-allowed', 
       'capabilities.md §"`aiProviders.policies`"',
       'aiProviders.policies MUST be an object when present',
     )).toBe('object');
-    expect(policies, driver.describe(
+    expect(policies, req('openwop.it.policies.aiproviders-policies-is-well-formed-when-present-or-absent-both-spec-allowed', 
       'capabilities.md §"`aiProviders.policies`"',
       'aiProviders.policies MUST NOT be null when present',
     )).not.toBeNull();
@@ -83,20 +85,20 @@ describe('policies: /.well-known/openwop aiProviders.policies shape contract', (
   it('policies.modes — every advertised mode is one of the four canonical values', async () => {
     const ap = await fetchAiProviders();
     const modes = ap?.policies?.modes;
-    if (modes === undefined) return;
+    if (modes === undefined) return softSkip('blocked', 'precondition not met — `modes === undefined` returned early (seam, prior step, or fixture unavailable)');
 
-    expect(Array.isArray(modes), driver.describe(
+    expect(Array.isArray(modes), req('openwop.it.policies.policies-modes-every-advertised-mode-is-one-of-the-four-canonical-values', 
       'capabilities.md §"`aiProviders.policies`"',
       'policies.modes MUST be a string[] when present',
     )).toBe(true);
 
     const arr = modes as unknown[];
     for (const mode of arr) {
-      expect(typeof mode, driver.describe(
+      expect(typeof mode, req('openwop.it.policies.policies-modes-every-advertised-mode-is-one-of-the-four-canonical-values', 
         'capabilities.md §"`aiProviders.policies`"',
         'policies.modes entries MUST be strings',
       )).toBe('string');
-      expect(CANONICAL_MODES, driver.describe(
+      expect(CANONICAL_MODES, req('openwop.it.policies.policies-modes-every-advertised-mode-is-one-of-the-four-canonical-values', 
         'capabilities.md §"`aiProviders.policies`"',
         `mode "${mode}" MUST be one of ${CANONICAL_MODES.join(', ')}`,
       )).toContain(mode);
@@ -106,11 +108,11 @@ describe('policies: /.well-known/openwop aiProviders.policies shape contract', (
   it('policies.modes — no duplicate entries (uniqueItems contract)', async () => {
     const ap = await fetchAiProviders();
     const modes = ap?.policies?.modes;
-    if (!Array.isArray(modes)) return;
+    if (!Array.isArray(modes)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!Array.isArray(modes)` returned early');
 
     const arr = modes as string[];
     const set = new Set(arr);
-    expect(set.size, driver.describe(
+    expect(set.size, req('openwop.it.policies.policies-modes-no-duplicate-entries-uniqueitems-contract', 
       'capabilities.schema.json — policies.modes uniqueItems: true',
       'policies.modes MUST NOT contain duplicate entries',
     )).toBe(arr.length);
@@ -119,27 +121,27 @@ describe('policies: /.well-known/openwop aiProviders.policies shape contract', (
   it('policies.scopes — string[] of non-empty entries when present', async () => {
     const ap = await fetchAiProviders();
     const scopes = ap?.policies?.scopes;
-    if (scopes === undefined) return;
+    if (scopes === undefined) return softSkip('blocked', 'precondition not met — `scopes === undefined` returned early (seam, prior step, or fixture unavailable)');
 
-    expect(Array.isArray(scopes), driver.describe(
+    expect(Array.isArray(scopes), req('openwop.it.policies.policies-scopes-string-of-non-empty-entries-when-present', 
       'capabilities.md §"`aiProviders.policies`"',
       'policies.scopes MUST be a string[] when present',
     )).toBe(true);
 
     const arr = scopes as unknown[];
     for (const scope of arr) {
-      expect(typeof scope, driver.describe(
+      expect(typeof scope, req('openwop.it.policies.policies-scopes-string-of-non-empty-entries-when-present', 
         'capabilities.md §"`aiProviders.policies`"',
         'policies.scopes entries MUST be strings',
       )).toBe('string');
-      expect((scope as string).length, driver.describe(
+      expect((scope as string).length, req('openwop.it.policies.policies-scopes-string-of-non-empty-entries-when-present', 
         'capabilities.md §"`aiProviders.policies`"',
         'policies.scopes entries MUST be non-empty',
       )).toBeGreaterThan(0);
     }
 
     const set = new Set(arr as string[]);
-    expect(set.size, driver.describe(
+    expect(set.size, req('openwop.it.policies.policies-scopes-string-of-non-empty-entries-when-present', 
       'capabilities.schema.json — policies.scopes uniqueItems: true',
       'policies.scopes MUST NOT contain duplicate entries',
     )).toBe(arr.length);
@@ -148,13 +150,13 @@ describe('policies: /.well-known/openwop aiProviders.policies shape contract', (
   it('policies.errorCode — non-empty string when present (defaults to provider_policy_denied)', async () => {
     const ap = await fetchAiProviders();
     const errorCode = ap?.policies?.errorCode;
-    if (errorCode === undefined) return;
+    if (errorCode === undefined) return softSkip('blocked', 'precondition not met — `errorCode === undefined` returned early (seam, prior step, or fixture unavailable)');
 
-    expect(typeof errorCode, driver.describe(
+    expect(typeof errorCode, req('openwop.it.policies.policies-errorcode-non-empty-string-when-present-defaults-to-provider-policy-den', 
       'capabilities.md §"`aiProviders.policies`"',
       'policies.errorCode MUST be a string when present',
     )).toBe('string');
-    expect((errorCode as string).length, driver.describe(
+    expect((errorCode as string).length, req('openwop.it.policies.policies-errorcode-non-empty-string-when-present-defaults-to-provider-policy-den', 
       'capabilities.md §"`aiProviders.policies`"',
       'policies.errorCode MUST be non-empty when present',
     )).toBeGreaterThan(0);

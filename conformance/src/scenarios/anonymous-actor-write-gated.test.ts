@@ -22,8 +22,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
-import { driver } from '../lib/driver.js';
 import { readAnonymousActorCap, anonDispatch } from '../lib/anonymousActor.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-anonymous-actor';
 
@@ -34,7 +35,7 @@ describe('anonymous-actor-write-gated (RFC 0132 §C.3)', () => {
     if (!behaviorGate(PROFILE, cap?.supported === true && supportsWrite)) return;
 
     const res = await anonDispatch({ tool: 'lead.capture', args: { email: 'visitor@example.com' } });
-    if (res.status === 404 || res.status === 405) return; // seam unwired — soft-skip
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired — soft-skip
 
     const controls = cap?.writeEgressControls ?? [];
     const decided = res.json?.authorizationDecided?.payload;
@@ -44,11 +45,11 @@ describe('anonymous-actor-write-gated (RFC 0132 §C.3)', () => {
       // With a HITL control the write MUST suspend on an approval interrupt before durable write.
       expect(
         suspended,
-        driver.describe('RFC 0132 §C.3 (hitl)', 'an anon bounded-write MUST suspend on an approval interrupt before the write'),
+        req('openwop.it.anonymous-actor-write-gated.an-anon-bounded-write-tool-is-gated-denied-when-ungated-or-suspends-on-an-approv', 'RFC 0132 §C.3 (hitl)', 'an anon bounded-write MUST suspend on an approval interrupt before the write'),
       ).toBe(true);
       expect(
         res.json?.result,
-        driver.describe('RFC 0132 §C.3 (hitl)', 'no durable write result before the approval resolves'),
+        req('openwop.it.anonymous-actor-write-gated.an-anon-bounded-write-tool-is-gated-denied-when-ungated-or-suspends-on-an-approv', 'RFC 0132 §C.3 (hitl)', 'no durable write result before the approval resolves'),
       ).toBeUndefined();
     } else {
       // With only a rate-limit/session-cap control, the seam surfaces a gate; an
@@ -56,7 +57,7 @@ describe('anonymous-actor-write-gated (RFC 0132 §C.3)', () => {
       const gatedOrDenied = suspended || decided?.allowed === false || res.status === 429;
       expect(
         gatedOrDenied,
-        driver.describe('SECURITY anon-actor-write-egress-gated', 'an anon bounded-write MUST be gated — an ungated write MUST be denied'),
+        req('openwop.it.anonymous-actor-write-gated.an-anon-bounded-write-tool-is-gated-denied-when-ungated-or-suspends-on-an-approv', 'SECURITY anon-actor-write-egress-gated', 'an anon bounded-write MUST be gated — an ungated write MUST be denied'),
       ).toBe(true);
     }
   });
@@ -67,16 +68,16 @@ describe('anonymous-actor-write-gated (RFC 0132 §C.3)', () => {
     if (!behaviorGate(PROFILE, cap?.supported === true && supportsWrite)) return;
     // Probe a surface deliberately configured with a write grant but no control.
     const res = await anonDispatch({ tool: 'lead.capture', surface: 'sample-uncontrolled-surface' });
-    if (res.status === 404 || res.status === 405) return; // seam unwired / surface absent — soft-skip
+    if (res.status === 404 || res.status === 405) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 405` returned early (seam unwired / surface absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam unwired / surface absent — soft-skip
     const decided = res.json?.authorizationDecided?.payload;
     expect(
       decided?.allowed === false || res.status === 403 || res.status === 429,
-      driver.describe('SECURITY anon-actor-write-egress-gated', 'an anon write with no resolvable control MUST be denied'),
+      req('openwop.it.anonymous-actor-write-gated.an-anon-write-with-no-resolvable-control-is-denied-with-a-machine-reason', 'SECURITY anon-actor-write-egress-gated', 'an anon write with no resolvable control MUST be denied'),
     ).toBe(true);
     if (decided && decided.allowed === false) {
       expect(
         decided.reason,
-        driver.describe('RFC 0132 §C.3', 'an ungated anon write denial carries a machine reason'),
+        req('openwop.it.anonymous-actor-write-gated.an-anon-write-with-no-resolvable-control-is-denied-with-a-machine-reason', 'RFC 0132 §C.3', 'an ungated anon write denial carries a machine reason'),
       ).toBe('anon-write-ungated');
     }
   });

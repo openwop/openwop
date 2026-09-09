@@ -16,6 +16,8 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -32,10 +34,10 @@ async function readCap(): Promise<Record<string, unknown> | null> {
 describe('search-bm25-roundtrip: advertisement shape (RFC 0018)', () => {
   it('capabilities.searchIndex is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === null` returned early (host doesn\'t advertise — skip)'); // host doesn't advertise — skip
     expect(
       typeof cap.supported,
-      driver.describe(
+      req('openwop.it.search-bm25-roundtrip.capabilities-searchindex-is-either-absent-or-a-well-formed-object', 
         'capabilities.schema.json §searchIndex',
         'capabilities.searchIndex.supported MUST be a boolean when present',
       ),
@@ -50,7 +52,7 @@ async function call(op: string, args: Record<string, unknown>) {
 describe('search-bm25-roundtrip: behavioral (RFC 0018 §A.searchIndex)', () => {
   it('index 3 docs → query for a distinguishing keyword returns the matching doc as top hit', async () => {
     const probe = await call('query', { index: '__probe__', q: 'hello' });
-    if (probe.status === 404) return; // seam not exposed
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam not exposed) (seam, prior step, or fixture unavailable)'); // seam not exposed
     const index = `idx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const idx = await call('index', {
       index,
@@ -69,7 +71,7 @@ describe('search-bm25-roundtrip: behavioral (RFC 0018 §A.searchIndex)', () => {
     expect(Array.isArray(body.hits) && body.hits.length > 0).toBe(true);
     expect(
       body.hits![0]!.id,
-      driver.describe('RFC 0018 §A.searchIndex', 'query for the doc\'s distinguishing tokens MUST return that doc as top-1'),
+      req('openwop.it.search-bm25-roundtrip.index-3-docs-query-for-a-distinguishing-keyword-returns-the-matching-doc-as-top', 'RFC 0018 §A.searchIndex', 'query for the doc\'s distinguishing tokens MUST return that doc as top-1'),
     ).toBe('doc-2');
     // Top hit's score MUST be strictly greater than any tied below-rank.
     if (body.hits!.length > 1) {
@@ -79,7 +81,7 @@ describe('search-bm25-roundtrip: behavioral (RFC 0018 §A.searchIndex)', () => {
 
   it('k limit caps the result set', async () => {
     const probe = await call('query', { index: '__probe__', q: 'hello' });
-    if (probe.status === 404) return;
+    if (probe.status === 404) return softSkip('blocked', 'precondition not met — `probe.status === 404` returned early (seam, prior step, or fixture unavailable)');
     const index = `idx-k-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const docs = Array.from({ length: 5 }, (_, i) => ({ id: `d-${i}`, fields: { body: 'apple orange banana' } }));
     await call('index', { index, docs });
@@ -87,7 +89,7 @@ describe('search-bm25-roundtrip: behavioral (RFC 0018 §A.searchIndex)', () => {
     const body = q.json as { hits?: unknown[] };
     expect(
       Array.isArray(body.hits) && body.hits.length <= 2,
-      driver.describe('RFC 0018 §A.searchIndex', 'query MUST return at most k hits'),
+      req('openwop.it.search-bm25-roundtrip.k-limit-caps-the-result-set', 'RFC 0018 §A.searchIndex', 'query MUST return at most k hits'),
     ).toBe(true);
   });
 });

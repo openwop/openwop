@@ -49,6 +49,7 @@ import { expandChain, expandChainWithCompensation, type WorkflowChain, type Work
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { readErrorCode } from '../lib/error-envelope.js';
+import { req } from '../lib/requirement-ids.js';
 
 const PROFILE = 'workflowChainPacks.hostExpansionSeam';
 const EXPAND_PATH = '/v1/host/sample/workflow-chain:expand';
@@ -106,7 +107,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     const caps = (discoveryFamilies(disco.json) as { workflowChainPacks?: ChainCaps }).workflowChainPacks;
     expect(
       caps,
-      driver.describe(
+      req('openwop.it.workflow-chain-host-expansion.host-discovery-advertises-workflowchainpacks-hostexpansionseam-when-the-expand-s', 
         'capabilities.md §workflowChainPacks',
         'a host serving the RFC 0013 host-expansion test seam MUST set `hostExpansionSeam: true` (and, being a chain-pack consumer, `supported: true`) in the discovery block',
       ),
@@ -133,7 +134,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     const probe = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, chainId: CHAIN_1_NODE, parameters: {} });
     expect(
       probe.status,
-      driver.describe(
+      req('openwop.it.workflow-chain-host-expansion.host-discovery-advertises-workflowchainpacks-hostexpansionseam-when-the-expand-s', 
         'capabilities.md §workflowChainPacks',
         `a host advertising \`hostExpansionSeam: true\` MUST serve ${EXPAND_PATH}. Got ${probe.status} — ` +
           'the discovery document promises a seam the host does not route. Advertising a capability ' +
@@ -167,7 +168,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       const [hm, hn] = body.packVersion.split('.').map(Number);
       const [fm, fn] = PACK.version.split('.').map(Number);
       const older = hm! < fm! || (hm === fm && hn! < fn!);
-      expect(older, driver.describe('workflow-chain-host-expansion', `host bundles workflow-chain-sample ${body.packVersion}; this suite's fixture is ${PACK.version} — a host pack NEWER than the suite is unaccounted for`)).toBe(true);
+      expect(older, req('openwop.it.workflow-chain-host-expansion.positive-1-node-chain-expansion-matches-the-reference-library-for-the-bundled-pa', 'workflow-chain-host-expansion', `host bundles workflow-chain-sample ${body.packVersion}; this suite's fixture is ${PACK.version} — a host pack NEWER than the suite is unaccounted for`)).toBe(true);
       softSkip('blocked', `host bundles workflow-chain-sample ${body.packVersion} (suite fixture ${PACK.version}) — the RFC 0157 chains are absent there until its conformance pin catches up`);
     }
     expect(typeof body.expansionId).toBe('string');
@@ -188,16 +189,16 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     const ref = expected.nodes[0]!;
     expect(
       node.id,
-      driver.describe('workflow-chain-packs.md §Expansion semantics', 'host rewrites the node id exactly as the reference library (chainId dots → underscores + expansionId prefix)'),
+      req('openwop.it.workflow-chain-host-expansion.positive-1-node-chain-expansion-matches-the-reference-library-for-the-bundled-pa', 'workflow-chain-packs.md §Expansion semantics', 'host rewrites the node id exactly as the reference library (chainId dots → underscores + expansionId prefix)'),
     ).toBe(ref.id);
     expect(node.typeId).toBe(ref.typeId);
     expect(
       node.config?.systemPrompt,
-      driver.describe('workflow-chain-packs.md §Expansion semantics', 'host performs the same literal {{params.*}} substitution as the reference library'),
+      req('openwop.it.workflow-chain-host-expansion.positive-1-node-chain-expansion-matches-the-reference-library-for-the-bundled-pa', 'workflow-chain-packs.md §Expansion semantics', 'host performs the same literal {{params.*}} substitution as the reference library'),
     ).toBe((ref.config as { systemPrompt?: string } | undefined)?.systemPrompt);
     expect(
       node.capabilities,
-      driver.describe('workflow-chain-packs.md §Capability propagation', 'chain capabilities propagate to the expanded node'),
+      req('openwop.it.workflow-chain-host-expansion.positive-1-node-chain-expansion-matches-the-reference-library-for-the-bundled-pa', 'workflow-chain-packs.md §Capability propagation', 'chain capabilities propagate to the expanded node'),
     ).toEqual(ref.capabilities);
   });
 
@@ -222,14 +223,14 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     const refEdge = expected.edges[0]!;
     expect(
       { from: edge.from, to: edge.to },
-      driver.describe('workflow-chain-packs.md §Expansion semantics', 'host rewrites fragment-internal edge endpoints (port suffix preserved) exactly as the reference library'),
+      req('openwop.it.workflow-chain-host-expansion.positive-2-node-chain-matches-the-reference-library-edge-rewrite-capability-prop', 'workflow-chain-packs.md §Expansion semantics', 'host rewrites fragment-internal edge endpoints (port suffix preserved) exactly as the reference library'),
     ).toEqual({ from: refEdge.from, to: refEdge.to });
 
     // side-effectful capability propagated to BOTH expanded nodes (per the ref).
     const refCaps = expected.nodes.map((n) => n.capabilities);
     expect(
       body.nodes.map((n) => n.capabilities),
-      driver.describe('workflow-chain-packs.md §Capability propagation', 'chain capability propagates uniformly to every expanded node'),
+      req('openwop.it.workflow-chain-host-expansion.positive-2-node-chain-matches-the-reference-library-edge-rewrite-capability-prop', 'workflow-chain-packs.md §Capability propagation', 'chain capability propagates uniformly to every expanded node'),
     ).toEqual(refCaps);
   });
 
@@ -241,7 +242,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       chainId: 'whatever',
       parameters: {},
     });
-    expect(res.status).toBe(404);
+    expect(res.status, req('openwop.it.workflow-chain-host-expansion.negative-unknown-pack-returns-404-pack-not-found', 'RFC 0013', 'negative — unknown pack returns 404 pack_not_found')).toBe(404);
     expect((res.json as { error: string }).error).toBe('pack_not_found');
   });
 
@@ -253,7 +254,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       chainId: 'vendor.openwop.workflow-chain-sample.does-not-exist',
       parameters: {},
     });
-    expect(res.status).toBe(404);
+    expect(res.status, req('openwop.it.workflow-chain-host-expansion.negative-known-pack-but-unknown-chainid-returns-404-chain-not-found', 'RFC 0013', 'negative — known pack but unknown chainId returns 404 chain_not_found')).toBe(404);
     expect((res.json as { error: string }).error).toBe('chain_not_found');
   });
 
@@ -262,7 +263,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
 
     // Missing chainId.
     const res = await driver.post(EXPAND_PATH, { packName: SAMPLE_PACK, parameters: {} });
-    expect(res.status).toBe(422);
+    expect(res.status, req('openwop.it.workflow-chain-host-expansion.negative-malformed-request-body-returns-422-invalid-request', 'RFC 0013', 'negative — malformed request body returns 422 invalid_request')).toBe(422);
     expect((res.json as { error: string }).error).toBe('invalid_request');
   });
   it('RFC 0157 — a compensating chain expands through the live path with `compensation` and `irreversibleEffect` carried verbatim onto the expanded nodes', async () => {
@@ -275,7 +276,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       // the chain does not exist there yet — unobservable, not a failure.
       return softSkip('blocked', `host's bundled workflow-chain-sample pack predates 1.1.0 (chain ${CHAIN_COMP} answered chain_not_found) — the RFC 0157 carry is unobservable until the host's conformance pin reaches 1.133.0`);
     }
-    expect(res.status, driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)"', 'a chain whose nodes declare an inverse action / irreversibleEffect (no policy) is acceptable on ANY host — the declaration describes, only the policy requests an unwind')).toBe(200);
+    expect(res.status, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-compensating-chain-expands-through-the-live-path-with-compensation-an', 'workflow-chain-packs.md §"Compensation (RFC 0157)"', 'a chain whose nodes declare an inverse action / irreversibleEffect (no policy) is acceptable on ANY host — the declaration describes, only the policy requests an unwind')).toBe(200);
     const body = res.json as unknown as {
       expansionId: string;
       nodes: Array<{ id: string; compensation?: unknown; irreversibleEffect?: boolean }>;
@@ -288,15 +289,15 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     expect(body.nodes).toHaveLength(expected.nodes.length);
     for (const ref of expected.nodes) {
       const node = body.nodes.find((n) => n.id === ref.id);
-      expect(node, driver.describe('workflow-chain-packs.md §Expansion semantics', `expanded node ${ref.id} present`)).toBeDefined();
+      expect(node, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-compensating-chain-expands-through-the-live-path-with-compensation-an', 'workflow-chain-packs.md §Expansion semantics', `expanded node ${ref.id} present`)).toBeDefined();
       const refC = (ref as unknown as { compensation?: unknown }).compensation;
       expect(
         node?.compensation,
-        driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)" rules 5b/6b', `node ${ref.id}: the inverse-action declaration MUST survive expansion verbatim (params substituted, node-id refs re-prefixed) — a node-rebuilding allowlist that drops it silently loses the unwind`),
+        req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-compensating-chain-expands-through-the-live-path-with-compensation-an', 'workflow-chain-packs.md §"Compensation (RFC 0157)" rules 5b/6b', `node ${ref.id}: the inverse-action declaration MUST survive expansion verbatim (params substituted, node-id refs re-prefixed) — a node-rebuilding allowlist that drops it silently loses the unwind`),
       ).toEqual(refC);
       expect(
         node?.irreversibleEffect,
-        driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)" rule 6c', `node ${ref.id}: irreversibleEffect MUST be copied unchanged`),
+        req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-compensating-chain-expands-through-the-live-path-with-compensation-an', 'workflow-chain-packs.md §"Compensation (RFC 0157)" rule 6c', `node ${ref.id}: irreversibleEffect MUST be copied unchanged`),
       ).toEqual((ref as unknown as { irreversibleEffect?: boolean }).irreversibleEffect);
     }
     // Non-vacuity: the fixture DOES declare both, so at least one node of each kind was compared.
@@ -318,11 +319,11 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       // MUST refuse a chain carrying a policy rather than accept a promise it will
       // never honour. Accepting silently is the advertise-and-opt-out failure with
       // the sign flipped.
-      expect(res.status >= 400, driver.describe('compensation.md §"Workflow policy"', 'a non-advertising host MUST refuse a chain carrying `compensation` (policy) — 4xx, not 200')).toBe(true);
-      expect(readErrorCode(res.json), driver.describe('capabilities.md §"Unsupported capability — refusal contract"', '`capability_required`')).toBe('capability_required');
-      return;
+      expect(res.status >= 400, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'compensation.md §"Workflow policy"', 'a non-advertising host MUST refuse a chain carrying `compensation` (policy) — 4xx, not 200')).toBe(true);
+      expect(readErrorCode(res.json), req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'capabilities.md §"Unsupported capability — refusal contract"', '`capability_required`')).toBe('capability_required');
+      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!advertises` returned early');
     }
-    expect(res.status, driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)"', 'an advertising host expands the policy-carrying chain')).toBe(200);
+    expect(res.status, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'workflow-chain-packs.md §"Compensation (RFC 0157)"', 'an advertising host expands the policy-carrying chain')).toBe(200);
     const body = res.json as unknown as { expansionId: string; nodes: unknown[]; settings?: { compensation?: unknown } };
     const expected = expandChainWithCompensation(chainById(CHAIN_COMP_POLICY) as unknown as WorkflowChainWithCompensation, {
       expansionId: body.expansionId,
@@ -335,7 +336,7 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     // `settings` is host-optional, so the policy carry is asserted when visible
     // and noted when not — never assumed.
     if (body.settings?.compensation !== undefined) {
-      expect(body.settings.compensation, driver.describe('workflow-chain-packs.md §"Compensation (RFC 0157)" rule 9b', 'the chain policy becomes settings.compensation, copied verbatim')).toEqual(expected.settingsCompensation);
+      expect(body.settings.compensation, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'workflow-chain-packs.md §"Compensation (RFC 0157)" rule 9b', 'the chain policy becomes settings.compensation, copied verbatim')).toEqual(expected.settingsCompensation);
     } else {
       softSkip('blocked', 'the expand seam does not echo `settings`, so the policy → settings.compensation carry (rule 9b) is unobservable through it; the node carry above was witnessed');
     }

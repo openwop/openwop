@@ -37,6 +37,7 @@ import { executionModelVersionMax } from '../lib/execution-model-version.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -69,14 +70,14 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
     if (executionModel === undefined) return softSkip('inapplicable', 'host doesn\'t advertise — soft-skip');
     expect(
       typeof executionModel.supported,
-      driver.describe(
+      req('openwop.it.multi-agent-handoff-state-machine.capabilities-multiagent-executionmodel-when-present-conforms-to-rfc-0037-c', 
         'RFCS/0037-multi-agent-execution-model.md §C',
         'capabilities.multiAgent.executionModel.supported MUST be boolean when present',
       ),
     ).toBe('boolean');
     expect(
       typeof executionModel.version,
-      driver.describe(
+      req('openwop.it.multi-agent-handoff-state-machine.capabilities-multiagent-executionmodel-when-present-conforms-to-rfc-0037-c', 
         'RFCS/0037-multi-agent-execution-model.md §C',
         'capabilities.multiAgent.executionModel.version MUST be integer when present',
       ),
@@ -87,7 +88,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
     const max = executionModelVersionMax();
     expect(
       Number.isInteger(v) && v >= 1 && v <= max,
-      driver.describe(
+      req('openwop.it.multi-agent-handoff-state-machine.capabilities-multiagent-executionmodel-when-present-conforms-to-rfc-0037-c', 
         'RFCS/0037-multi-agent-execution-model.md §C',
         `version MUST be an integer in [1, ${max}] (1 = Phase 1 only; later phases lift the ceiling additively — 5 = RFC 0061 stateful agent-loop lifecycle, 6 = RFC 0090 verifier; the ceiling is \`capabilities.schema.json\` §multiAgent.executionModel.version maximum)`,
       ),
@@ -118,7 +119,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 
     const runId = (create.json as { runId: string }).runId;
 
     const terminal = await pollUntilTerminal(runId);
-    expect(terminal.status, driver.describe(
+    expect(terminal.status, req('openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi', 
       'spec/v1/multi-agent-execution.md §"Execution loop"',
       'parent run with supervisor → next-worker → terminate MUST reach terminal `completed`',
     )).toBe('completed');
@@ -128,13 +129,13 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 
     const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
     const chainEvents = events.filter((e) => e.type === 'core.workflowChain.event');
 
-    expect(chainEvents.length, driver.describe(
+    expect(chainEvents.length, req('openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi', 
       'RFCS/0037-multi-agent-execution-model.md §"Conformance"',
       'happy-path fixture MUST produce 4 core.workflowChain.event records (dispatch.began, dispatch.succeeded, child.completed, output.harvested)',
     )).toBe(4);
 
     const phases = chainEvents.map((e) => (e.payload as { phase?: string } | undefined)?.phase);
-    expect(phases, driver.describe(
+    expect(phases, req('openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi', 
       'spec/v1/multi-agent-execution.md §"Transition events"',
       'phase order MUST be dispatch.began → dispatch.succeeded → child.completed → output.harvested',
     )).toEqual(['dispatch.began', 'dispatch.succeeded', 'child.completed', 'output.harvested']);
@@ -144,7 +145,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 
     for (let i = 1; i < chainEvents.length; i++) {
       const prior = chainEvents[i - 1];
       const cur = chainEvents[i];
-      expect(cur?.causationId, driver.describe(
+      expect(cur?.causationId, req('openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi', 
         'spec/v1/multi-agent-execution.md §"Transition events"',
         `core.workflowChain.event #${i} (${phases[i]}) MUST have causationId === prior event's eventId`,
       )).toBe(prior?.eventId);
@@ -154,14 +155,14 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 
     const dispatchBegan = chainEvents[0];
     expect(dispatchBegan?.causationId).toBeDefined();
     const decidedEvent = events.find((e) => e.eventId === dispatchBegan?.causationId);
-    expect(decidedEvent?.type, driver.describe(
+    expect(decidedEvent?.type, req('openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi', 
       'spec/v1/multi-agent-execution.md §"Transition events"',
       'dispatch.began causationId MUST point at the runOrchestrator.decided event that named this worker',
     )).toBe('runOrchestrator.decided');
 
     // output.harvested.harvestedKeys MUST list the outputMapping keys harvested.
     const harvested = chainEvents[3]?.payload as { harvestedKeys?: string[] } | undefined;
-    expect(harvested?.harvestedKeys, driver.describe(
+    expect(harvested?.harvestedKeys, req('openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi', 
       'spec/v1/multi-agent-execution.md §"Transition events"',
       'output.harvested payload MUST list harvested parent-variable keys (the fixture\'s outputMapping is { parentResult: \'childOutcome\' })',
     )).toEqual(['parentResult']);

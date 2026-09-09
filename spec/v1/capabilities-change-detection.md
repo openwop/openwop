@@ -40,11 +40,11 @@ The header SHOULD NOT change for implementation metadata that does not affect cl
 
 ## Cache validators
 
-Hosts MAY also expose standard HTTP `ETag` and `Last-Modified` headers. If both `ETag` and `Capabilities-Etag` are present, `ETag` describes byte-for-byte response caching while `Capabilities-Etag` describes protocol negotiation safety.
+Hosts SHOULD expose a standard HTTP `ETag` (RFC 0165 §C.2; MAY before it) and MAY expose `Last-Modified`. If both `ETag` and `Capabilities-Etag` are present, `ETag` describes byte-for-byte response caching while `Capabilities-Etag` describes protocol negotiation safety.
 
 Clients SHOULD prefer `Capabilities-Etag` when deciding whether to re-run capability negotiation.
 
-Clients MAY send `If-None-Match` for normal HTTP caching. Hosts that support conditional requests SHOULD return `304 Not Modified` when the byte payload is unchanged.
+Clients MAY send `If-None-Match` for normal HTTP caching. Hosts SHOULD return `304 Not Modified` to a matching `If-None-Match` (RFC 0165 §C.2). `Capabilities-Etag` keeps its semantics through v1.x and is deprecated toward v2 (`spec/v1/deprecations.json`, `openwop.deprecation.capabilities-etag-header`), where the standard validator pair is the only one.
 
 ---
 

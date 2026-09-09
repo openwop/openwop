@@ -32,6 +32,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
 
 const ALLOWED = new Set(['single-region', 'reconciled-records', 'fenced-effects']);
 const REQUIRED_METRICS_WHEN_MULTI_REGION = [
@@ -62,7 +63,7 @@ describe('multi-region-idempotency: capability shape', () => {
       return softSkip('blocked', 'precondition not met — `!idem || idem.crossRegion === undefined` returned early (seam, prior step, or fixture unavailable)');
     }
 
-    expect(ALLOWED.has(idem.crossRegion), driver.describe(
+    expect(ALLOWED.has(idem.crossRegion), req('openwop.it.multi-region-idempotency.idempotency-crossregion-when-advertised-must-be-one-of-the-closed-enum', 
       'idempotency.md §"Multi-region idempotency" §"Capability advertisement"',
       'crossRegion MUST be one of {"single-region","reconciled-records","fenced-effects"}',
     )).toBe(true);
@@ -88,7 +89,7 @@ describe('multi-region-idempotency: capability shape', () => {
 
     const advertised = new Set(observability?.metrics?.names ?? []);
     for (const name of REQUIRED_METRICS_WHEN_MULTI_REGION) {
-      expect(advertised.has(name), driver.describe(
+      expect(advertised.has(name), req('openwop.it.multi-region-idempotency.multi-region-hosts-should-expose-the-cross-region-conflict-counter-per-operator', 
         'idempotency.md §"Operator surface"',
         `multi-region hosts SHOULD advertise metric "${name}" so operators can monitor conflict frequency`,
       )).toBe(true);
@@ -122,7 +123,7 @@ describe('multi-region-idempotency: granular multiRegion advertisement shape (RF
 
     expect(
       typeof mr.supported,
-      driver.describe(
+      req('openwop.it.multi-region-idempotency.capabilities-idempotency-multiregion-when-present-conforms-to-rfc-0036-a', 
         'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
         'capabilities.idempotency.multiRegion.supported MUST be boolean when present',
       ),
@@ -133,7 +134,7 @@ describe('multi-region-idempotency: granular multiRegion advertisement shape (RF
         const n = mr.replicationLagBoundMs as number;
         expect(
           Number.isInteger(n) && n >= 0 && n <= 60000,
-          driver.describe(
+          req('openwop.it.multi-region-idempotency.capabilities-idempotency-multiregion-when-present-conforms-to-rfc-0036-a', 
             'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
             'replicationLagBoundMs MUST be integer in [0, 60000] when supported is true',
           ),
@@ -145,7 +146,7 @@ describe('multi-region-idempotency: granular multiRegion advertisement shape (RF
         const isExtension = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(s);
         expect(
           isCategorical || isExtension,
-          driver.describe(
+          req('openwop.it.multi-region-idempotency.capabilities-idempotency-multiregion-when-present-conforms-to-rfc-0036-a', 
             'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
             'partitionRecoveryStrategy MUST be `lexicographic-min-run-id` OR match ^x-host-<host>-<key>$ (RFC 0150 §D removed the time-ordered rules: with no shared clock under a partition, each region believes it wrote last, so neither can produce the reproducible survivor the annex requires)',
           ),

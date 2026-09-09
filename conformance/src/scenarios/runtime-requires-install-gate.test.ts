@@ -29,8 +29,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
-import { driver } from '../lib/driver.js';
 import { installGate } from '../lib/runtimeRequires.js';
+import { req } from '../lib/requirement-ids.js';
 
 function manifest(requires: string[]) {
   return {
@@ -48,11 +48,11 @@ describe('runtime-requires install gate (RFC 0076 §A)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.status,
-      driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'a pack whose runtime.requires are all grantable MUST install (no refusal)'),
+      req('openwop.it.runtime-requires-install-gate.install-grant-requires-grant-set-install-succeeds', 'registry-operations.md §"Runtime-requirement install gate"', 'a pack whose runtime.requires are all grantable MUST install (no refusal)'),
     ).toBe(200);
     expect(
       res.body.outcome,
-      driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'a granted install reports outcome:"installed"'),
+      req('openwop.it.runtime-requires-install-gate.install-grant-requires-grant-set-install-succeeds', 'registry-operations.md §"Runtime-requirement install gate"', 'a granted install reports outcome:"installed"'),
     ).toBe('installed');
   });
 
@@ -61,19 +61,19 @@ describe('runtime-requires install gate (RFC 0076 §A)', () => {
     if (res === null) return softSkip('blocked', 'seam absent — soft-skip');
     expect(
       res.status,
-      driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'a pack requiring an ungranted primitive MUST be refused at install (not at first invocation)'),
+      req('openwop.it.runtime-requires-install-gate.install-refuse-an-ungrantable-primitive-pack-runtime-requirement-unmet', 'registry-operations.md §"Runtime-requirement install gate"', 'a pack requiring an ungranted primitive MUST be refused at install (not at first invocation)'),
     ).toBe(400);
     expect(
       res.body.error,
-      driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'the refusal MUST carry error code pack_runtime_requirement_unmet'),
+      req('openwop.it.runtime-requires-install-gate.install-refuse-an-ungrantable-primitive-pack-runtime-requirement-unmet', 'registry-operations.md §"Runtime-requirement install gate"', 'the refusal MUST carry error code pack_runtime_requirement_unmet'),
     ).toBe('pack_runtime_requirement_unmet');
     expect(
       Array.isArray(res.body.unmet) && (res.body.unmet as unknown[]).includes('net.dns'),
-      driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'unmet[] MUST list the ungranted primitive(s) (capability_not_provided envelope)'),
+      req('openwop.it.runtime-requires-install-gate.install-refuse-an-ungrantable-primitive-pack-runtime-requirement-unmet', 'registry-operations.md §"Runtime-requirement install gate"', 'unmet[] MUST list the ungranted primitive(s) (capability_not_provided envelope)'),
     ).toBe(true);
     expect(
       typeof res.body.manifest === 'string' && (res.body.manifest as string).includes('vendor.example.http'),
-      driver.describe('registry-operations.md §"Runtime-requirement install gate"', 'the refusal MUST name the offending manifest (name@version)'),
+      req('openwop.it.runtime-requires-install-gate.install-refuse-an-ungrantable-primitive-pack-runtime-requirement-unmet', 'registry-operations.md §"Runtime-requirement install gate"', 'the refusal MUST name the offending manifest (name@version)'),
     ).toBe(true);
   });
 
@@ -87,7 +87,7 @@ describe('runtime-requires install gate (RFC 0076 §A)', () => {
     const projected = res.body.requiresProjected as unknown;
     expect(
       Array.isArray(projected) && ['net.dns', 'net.outbound'].every((t) => (projected as unknown[]).includes(t)),
-      driver.describe('node-packs.md §"Runtime platform requirements"', 'a non-gating host that projects SHOULD surface the declared runtime.requires[] on the inventory entry verbatim'),
+      req('openwop.it.runtime-requires-install-gate.non-sandbox-projection-a-non-gating-host-installs-and-projects-requires-a-should', 'node-packs.md §"Runtime platform requirements"', 'a non-gating host that projects SHOULD surface the declared runtime.requires[] on the inventory entry verbatim'),
     ).toBe(true);
   });
 });

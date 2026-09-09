@@ -21,6 +21,8 @@ import { driver } from '../lib/driver.js';
 import { subscribe, type SseEvent } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-cancellable';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -57,7 +59,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
         workflowId: WORKFLOW_ID,
         inputs: { delayMs: 2000 },
       });
-      if (create.status !== 201) return; // host doesn't seed cancellable fixture; skip-equivalent
+      if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (host doesn\'t seed cancellable fixture; skip-equivalent) (seam, prior step, or fixture unavailable)'); // host doesn't seed cancellable fixture; skip-equivalent
 
       const runId = (create.json as { runId: string }).runId;
 
@@ -65,7 +67,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
       const firstHalf = await subscribe(`/v1/runs/${encodeURIComponent(runId)}/events`, {
         timeoutMs: 1000, // disconnect after ~1s
       });
-      expect(firstHalf.status, driver.describe(
+      expect(firstHalf.status, req('openwop.it.streamReconnect.reconnect-with-last-event-id-resumes-without-loss-or-duplication', 
         'spec/v1/stream-modes.md',
         'SSE endpoint MUST return 200',
       )).toBe(200);
@@ -82,7 +84,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
         // because the run already completed and the server closed before we
         // got events. Skip the rest of this scenario; the host is fast enough
         // that the reconnect path doesn't apply.
-        return;
+        return softSkip('blocked', 'precondition not met — `lastSeen < 0` returned early (First connection emitted no events with a parseable sequence — e.g. because the run already completed and the server closed before we got events. Skip the rest of …');
       }
 
       // Phase 3: reconnect with Last-Event-ID set to the last seq we saw.
@@ -91,7 +93,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
         timeoutMs: 5000,
         lastEventId: String(lastSeen),
       });
-      expect(resume.status, driver.describe(
+      expect(resume.status, req('openwop.it.streamReconnect.reconnect-with-last-event-id-resumes-without-loss-or-duplication', 
         'spec/v1/stream-modes.md §"Reconnection"',
         'reconnection with Last-Event-ID MUST return 200',
       )).toBe(200);
@@ -102,7 +104,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
         // Hosts MAY replay the boundary event (some impls do; spec is
         // permissive). The strict assertion is "no event with seq <
         // lastSeen-1" — i.e., no events from before the resume point.
-        expect(s, driver.describe(
+        expect(s, req('openwop.it.streamReconnect.reconnect-with-last-event-id-resumes-without-loss-or-duplication', 
           'spec/v1/stream-modes.md §"Reconnection"',
           `resume MUST NOT yield events with seq < lastSeen-1; got ${s} after lastSeen=${lastSeen}`,
         )).toBeGreaterThanOrEqual(lastSeen - 1);
@@ -120,21 +122,21 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
       // Quick run, observe terminal seq, then attempt a reconnect after
       // terminal — server SHOULD close immediately with no events.
       const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });
-      if (create.status !== 201) return;
+      if (create.status !== 201) return softSkip('blocked', 'precondition not met — `create.status !== 201` returned early (seam, prior step, or fixture unavailable)');
       const runId = (create.json as { runId: string }).runId;
 
       const initial = await subscribe(`/v1/runs/${encodeURIComponent(runId)}/events`, {
         timeoutMs: 5000,
       });
-      if (initial.status !== 200 || initial.events.length === 0) return;
+      if (initial.status !== 200 || initial.events.length === 0) return softSkip('blocked', 'precondition not met — `initial.status !== 200 || initial.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
       const terminalEvent = initial.events.find(
         (e) => TERMINAL_TYPES.has(e.event) && e.id !== null && Number.isFinite(Number(e.id)),
       );
-      if (!terminalEvent || terminalEvent.id === null) return;
+      if (!terminalEvent || terminalEvent.id === null) return softSkip('blocked', 'precondition not met — `!terminalEvent || terminalEvent.id === null` returned early (seam, prior step, or fixture unavailable)');
 
       const lastSeq = Number(terminalEvent.id);
-      if (!Number.isFinite(lastSeq)) return;
+      if (!Number.isFinite(lastSeq)) return softSkip('blocked', 'precondition not met — `!Number.isFinite(lastSeq)` returned early (seam, prior step, or fixture unavailable)');
 
       const reconnect = await subscribe(`/v1/runs/${encodeURIComponent(runId)}/events`, {
         timeoutMs: 5000,
@@ -144,7 +146,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
       // Reconnect MUST succeed (200) and SHOULD close quickly with no
       // additional events beyond the terminal boundary. Permissive: the
       // host MAY replay the terminal event itself.
-      expect(reconnect.status, driver.describe(
+      expect(reconnect.status, req('openwop.it.streamReconnect.reconnect-with-last-event-id-equal-to-terminal-seq-closes-immediately', 
         'spec/v1/stream-modes.md §"Reconnection"',
         'reconnect after terminal MUST return 200',
       )).toBe(200);
@@ -152,7 +154,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
       const newSeqs = reconnect.events
         .map(getSeq)
         .filter((s): s is number => s !== null && s > lastSeq);
-      expect(newSeqs.length, driver.describe(
+      expect(newSeqs.length, req('openwop.it.streamReconnect.reconnect-with-last-event-id-equal-to-terminal-seq-closes-immediately', 
         'spec/v1/stream-modes.md §"Reconnection"',
         'reconnect after terminal MUST NOT yield events with seq > lastSeq',
       )).toBe(0);

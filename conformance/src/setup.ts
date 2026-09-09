@@ -25,25 +25,33 @@
  * `it` here; vitest treats setupFiles differently from scenario files.
  */
 
-import { setAdvertisedFixtures } from './lib/fixtures.js';
+import { setAdvertisedFixtures, setDiscoveryUnreadable } from './lib/fixtures.js';
 import { setMultiAgentCapabilities } from './lib/multi-agent-capabilities.js';
 import { OtelCollector, setCollector } from './lib/otel-collector.js';
 import { McpFakeServer, setMcpFakeServer } from './lib/mcp-fake-server.js';
 import { A2AFakePeer, setA2AFakePeer } from './lib/a2a-fake-peer.js';
-import { afterAll, afterEach, beforeAll, expect } from 'vitest';
-import { basename } from 'node:path';
+import { afterAll, afterEach, beforeAll, beforeEach, expect } from 'vitest';
+import { basename, join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { PKG_ROOT_PATH } from './lib/paths.js';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
-import { requirementIdForFile, resolveFileRecord, type FileTestState } from './lib/scenario-disposition.js';
-import { softSkipDisposition } from './lib/soft-skip.js';
+import { requirementIdForFile, resolveFileRecord, resolveItRecord, type FileTestState } from './lib/scenario-disposition.js';
+import { softSkipDisposition, softSkipDispositionSince, softSkipMark } from './lib/soft-skip.js';
+import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
+import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
+import { targetMajor } from './lib/seams.js';
+import { softSkip } from './lib/soft-skip.js';
 
-const SUITE_INIT_TIMEOUT_MS = 5_000;
+// 20 s, not 5: a Cloud Run cold start routinely exceeds 5 s, and a discovery
+// fetch that aborted at init used to turn every fixture-gated scenario into a
+// vacuous `inapplicable`. Measured 2026-09-05 on a host answering in 200 ms.
+const SUITE_INIT_TIMEOUT_MS = 20_000;
+const SUITE_INIT_ATTEMPTS = 2;
 
 async function loadHostFixtures(): Promise<void> {
   const baseUrl = process.env.OPENWOP_BASE_URL?.trim();
   if (!baseUrl) {
-    // Offline / fixture-stub-only run. No host to ask; treat as "host
-    // advertises no fixtures" so all fixture-dependent scenarios skip.
     setAdvertisedFixtures(null);
     setMultiAgentCapabilities(null);
     return;
@@ -51,39 +59,36 @@ async function loadHostFixtures(): Promise<void> {
 
   const normalizedBase = baseUrl.replace(/\/$/, '');
   const url = `${normalizedBase}/.well-known/openwop`;
+  // The representation the header selects is the one whose fixtures[] this
+  // lane is held to (versioning.md §5): read it under the lane's major.
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (targetMajor() === 2) headers['OpenWOP-Version'] = '2.0';
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SUITE_INIT_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `[openwop-conformance setup] discovery fetch returned ${res.status}; ` +
-          `treating host as advertising no fixtures. Fixture-dependent scenarios will skip.`,
-      );
-      setAdvertisedFixtures(null);
-    setMultiAgentCapabilities(null);
+  let lastFailure = 'unknown';
+  for (let attempt = 1; attempt <= SUITE_INIT_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SUITE_INIT_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { method: 'GET', headers, signal: controller.signal });
+      if (!res.ok) {
+        lastFailure = `HTTP ${res.status} on attempt ${attempt}`;
+        continue;
+      }
+      const body = (await res.json()) as DiscoveryPayload;
+      setAdvertisedFixtures(body);
+      setMultiAgentCapabilities(body);
       return;
+    } catch (err) {
+      lastFailure = `${(err as Error).message ?? 'unknown'} on attempt ${attempt}`;
+    } finally {
+      clearTimeout(timer);
     }
-    const body = (await res.json()) as DiscoveryPayload;
-    setAdvertisedFixtures(body);
-    setMultiAgentCapabilities(body);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[openwop-conformance setup] discovery fetch failed (${(err as Error).message ?? 'unknown'}); ` +
-        `treating host as advertising no fixtures. Fixture-dependent scenarios will skip.`,
-    );
-    setAdvertisedFixtures(null);
-    setMultiAgentCapabilities(null);
-  } finally {
-    clearTimeout(timer);
   }
+  // Not "the host advertises no fixtures". The document went UNREAD, and every
+  // fixture gate will say so as `blocked` rather than `inapplicable`.
+  console.warn(`[openwop-conformance setup] discovery unreadable after ${SUITE_INIT_ATTEMPTS} attempt(s) (${lastFailure}); fixture-gated scenarios will record blocked, not inapplicable.`);
+  setDiscoveryUnreadable(lastFailure);
+  setMultiAgentCapabilities(null);
 }
 
 /**
@@ -225,16 +230,126 @@ await maybeStartA2AFakePeer();
 const _fileStates = new Map<string, FileTestState[]>();
 const _fileAssertions = new Map<string, number>();
 const _ledgerMarks = new Map<string, number>();
+// Per-`it` recording (v2 charter Phase 1, suite 1.153.0 — the durable G8 fix
+// named in scenario-disposition.ts). Each test gets its own ledger row under
+// `openwop.it.<file>.<title-slug>` so a file that asserted a positive control
+// and soft-skipped the requirement no longer certifies the requirement. The
+// file-level row is RETAINED (floors key on it); the per-`it` rows are
+// additive bundle rows (RFC 0148 §C `requirements[]` accepts any id).
+const _itAllocators = new Map<string, ItIdAllocator>();
+const _itMarks = new Map<string, number>();
+const _itAssertionsBefore = new Map<string, number>();
+const _itSoftSkipMarks = new Map<string, number>();
+function _assertionCalls(): number {
+  try {
+    return (expect.getState() as { assertionCalls?: number }).assertionCalls ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * (file, title) → the explicit `req()` id the scenario cites, read from the
+ * generated `requirements.json` that ships with the package. Only ids under
+ * `openwop.requirement.` are returned: a per-`it` id is what the allocator
+ * would mint anyway.
+ */
+let _registry: Map<string, string> | undefined;
+function registeredExplicitId(file: string, title: string): string | null {
+  if (_registry === undefined) {
+    _registry = new Map();
+    for (const root of [PKG_ROOT_PATH, join(PKG_ROOT_PATH, '..')]) {
+      const path = join(root, 'requirements.json');
+      if (!existsSync(path)) continue;
+      try {
+        const doc = JSON.parse(readFileSync(path, 'utf8')) as { records?: Array<{ file?: unknown; title?: unknown; explicitId?: unknown }> };
+        for (const r of doc.records ?? []) {
+          if (typeof r.file === 'string' && typeof r.title === 'string' && typeof r.explicitId === 'string' && r.explicitId.startsWith('openwop.requirement.')) {
+            _registry.set(`${r.file}\u0000${r.title}`, r.explicitId);
+          }
+        }
+      } catch { /* an unreadable registry simply yields no fallback */ }
+      break;
+    }
+  }
+  return _registry.get(`${file}\u0000${title}`) ?? null;
+}
+
 function _fileOf(task: { file?: { filepath?: string; name?: string } } | undefined): string | null {
   const f = task?.file?.filepath ?? task?.file?.name;
   return typeof f === 'string' && f.length > 0 ? basename(f) : null;
 }
+// ---------------------------------------------------------------------------
+// The applicability check and the assertion MUST run under the same contract.
+//
+// A scenario's registration in scenario-majors.json says which target majors it
+// is written for. The driver reads OPENWOP_TARGET_MAJOR to decide which header
+// and path space every probe uses. Nothing connected the two: a lane that ran
+// vitest directly over all 501 files at the default (major 1) executed every
+// major-2 scenario with major-1 requests. The scenarios' own gates call
+// v2Discovery(), which sets the header EXPLICITLY, so the gate passed and the
+// probe went out as v1 — a check that proved the host speaks v2 with one
+// request, then tested a v2 requirement with a request that did not.
+//
+// Measured on a tier-1 host 2026-09-04: three "host defects" reported from that
+// lane, all of which evaporated at major 2; the host was one edit from "fixing"
+// correct behaviour. And in the other direction: 4 of 56 v2 files fail on every
+// host forever under a major-1 driver, so a gate that runs them that way is red
+// by construction and gets reasoned past. Both are the same defect: a scoped
+// signal read as unscoped, with the scope nowhere in the output.
+//
+// So: a file whose registered majors do not include the driver's target major
+// is INAPPLICABLE to this lane, recorded as such with the reason, and never
+// probes. Files not in the registry (coherence checks, lib tests) are untouched.
+// ---------------------------------------------------------------------------
+const SCENARIO_MAJORS: Record<string, number[]> = (() => {
+  try {
+    const p = join(PKG_ROOT_PATH, 'scenario-majors.json');
+    if (!existsSync(p)) return {};
+    return (JSON.parse(readFileSync(p, 'utf8')) as { majors?: Record<string, number[]> }).majors ?? {};
+  } catch {
+    return {};
+  }
+})();
+
+beforeEach((ctx) => {
+  const p = (expect.getState() as { testPath?: string }).testPath;
+  if (!p) return;
+  const file = basename(p);
+  const majors = SCENARIO_MAJORS[file];
+  if (!majors) return;
+  const lane = targetMajor();
+  if (majors.includes(lane)) return;
+  const detail = `registered for target major ${majors.join('/')} and this lane runs at major ${lane} (OPENWOP_TARGET_MAJOR) — the probe would go out under a contract the scenario's gate does not use; select files with --target-major or set the variable`;
+  // Two records, one per resolver. The per-TEST disposition is read from the
+  // requirement journal (the same entry behaviorGate writes), so the row lands
+  // as `inapplicable` with this reason rather than `skipped`, which under RFC
+  // 0148 would claim the operator opted out. The per-FILE note covers the
+  // all-skipped fallback in resolveFileRecord.
+  try {
+    recordRequirement('openwop.family.lane-target-major', 'inapplicable', detail, { scenarioFile: file });
+  } catch {
+    /* never fail a test for bookkeeping */
+  }
+  softSkip('inapplicable', detail);
+  ctx.skip();
+});
+
 beforeAll(({}, suite) => {
   // Mark the ledger journal BEFORE the file's tests run, so a behaviorGate
   // decision made by the very first test is inside the file's window.
   const s = suite as unknown as { filepath?: string; name?: string; file?: { filepath?: string; name?: string } };
   const file = _fileOf({ file: s.file ?? s });
   if (file !== null && !_ledgerMarks.has(file)) _ledgerMarks.set(file, journalLength());
+});
+beforeEach(({ task }) => {
+  const file = _fileOf(task as { file?: { filepath?: string; name?: string } });
+  if (file === null) return;
+  // Window for this test's own gate decisions and its own assertion count.
+  _itMarks.set(file, journalLength());
+  _itAssertionsBefore.set(file, _assertionCalls());
+  _itSoftSkipMarks.set(file, softSkipMark()); // rc.56: this test's own softSkip window
+  takeExplicitRequirementId(); // clear any override left by a test that threw before afterEach
 });
 afterEach(({ task }) => {
   const file = _fileOf(task as { file?: { filepath?: string; name?: string } });
@@ -248,13 +363,66 @@ afterEach(({ task }) => {
   // A leg that early-returns from a gate makes zero, and a file of such legs is
   // an `executed-pass` with assertionCount 0 — visible, and unclassified for a
   // claimed floor.
-  let calls = 0;
-  try {
-    calls = (expect.getState() as { assertionCalls?: number }).assertionCalls ?? 0;
-  } catch {
-    /* no state — count 0 */
-  }
+  //
+  // `expect.getState().assertionCalls` is per-test in vitest (reset at each
+  // test start), so it is this test's count; the file total is the sum.
+  const calls = _assertionCalls();
   _fileAssertions.set(file, (_fileAssertions.get(file) ?? 0) + calls);
+
+  // Per-`it` row. Disposition follows RFC 0148 §A at test granularity:
+  //   fail                       → executed-fail (detail = the first error message)
+  //   skip (ctx.skip / it.skip)  → the gate's recorded reason since this test began, else `skipped`
+  //   pass with ≥1 assertion     → executed-pass
+  //   pass with 0 assertions     → the gate's recorded reason (softSkip / seamAbsent / behaviorGate)
+  //                                since this test began, else `blocked` (unclassified return)
+  if (!file.endsWith('.test.ts')) return;
+  // Only SCENARIO files get per-`it` rows. The setup hooks run for every file in
+  // the worker, including `src/lib/*.test.ts` — the suite's own self-tests,
+  // which prove fixtures and helpers, not a host, and must never become bundle
+  // evidence (that is why RFC 0163 G5 / RFC 0050 G1 moved them out of scenarios).
+  const filepath = (task as { file?: { filepath?: string } }).file?.filepath ?? '';
+  // Suite 2.0.0: src/coherence/ rows feed the corpus ledger (scripts/check-spec-coherence.mjs), not a host bundle.
+  if (!/[\\/]src[\\/](scenarios|coherence)[\\/]/.test(filepath)) {
+    takeExplicitRequirementId();
+    return;
+  }
+  // A leg that soft-skips before its first assertion never calls `req()`, so the
+  // runtime override is empty and the row lands under the per-`it` id instead of
+  // the requirement the leg is about — leaving that requirement with no row in
+  // any bundle, which is the §F Witness gate's subject. The generated registry
+  // already knows (file, title) → explicit id statically, so fall back to it and
+  // the disposition is attributed either way.
+  const explicit = takeExplicitRequirementId() ?? registeredExplicitId(file, task.name);
+  const alloc = _itAllocators.get(file) ?? new ItIdAllocator();
+  _itAllocators.set(file, alloc);
+  const itId = explicit ?? alloc.allocate(file, task.name);
+  const since = journalSince(_itMarks.get(file) ?? 0);
+  const gateEntry = since.find((e) => e.disposition === 'inapplicable') ?? since.find((e) => e.disposition === 'skipped');
+  const gate = gateEntry === undefined ? undefined : { disposition: gateEntry.disposition as 'inapplicable' | 'skipped', ...(gateEntry.detail === undefined ? {} : { detail: gateEntry.detail }) };
+  let disposition: 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
+  let detail: string | undefined;
+  // Suite 2.0.0: under the corpus gate (scripts/check-spec-coherence.mjs sets OPENWOP_CORPUS_GATE) a coherence scenario IS the subject; its rows are real dispositions for evidence/corpus-ledger.json.
+  if (process.env.OPENWOP_CORPUS_GATE !== '1' && (SPEC_COHERENCE_SCENARIOS.has(file) || SPEC_COHERENCE_SCENARIOS.has(file.replace(/\.test\.ts$/, '')))) {
+    // Corpus-coherence scenario: it reads spec/v1 and asserts nothing about a
+    // host, in any layout. Its rows are `inapplicable` to every host — the same
+    // rule `resolveFileRecord` applies to the file in the published layout.
+    disposition = 'inapplicable';
+    detail = SPEC_COHERENCE_DETAIL;
+  } else {
+    // rc.56: the softSkip notes THIS test wrote are its reason (the file row
+    // already read them; the per-`it` row did not, and a leg that said
+    // `inapplicable` came out `blocked` — which denies certification bundle-wide).
+    const noted = softSkipDispositionSince(file, _itSoftSkipMarks.get(file) ?? 0);
+    const err = (task.result?.errors ?? [])[0] as { message?: string } | undefined;
+    const rec = resolveItRecord(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip', calls, gate, noted, err?.message);
+    disposition = rec.disposition;
+    detail = rec.detail;
+  }
+  try {
+    recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file });
+  } catch {
+    /* never fail a test for bookkeeping */
+  }
 });
 afterAll(({}, suite) => {
   // vitest 4: the suite/file task is the SECOND argument. For a file-level
@@ -298,7 +466,7 @@ afterAll(({}, suite) => {
   // of both now.
   if (!hasRequirement(fileRequirementId)) {
     try {
-      recordRequirement(fileRequirementId, disposition, detail, { assertionCount });
+      recordRequirement(fileRequirementId, disposition, detail, { assertionCount, scenarioFile: file });
     } catch {
       /* never fail a file for bookkeeping */
     }
@@ -306,5 +474,8 @@ afterAll(({}, suite) => {
   _fileStates.delete(file);
   _fileAssertions.delete(file);
   _ledgerMarks.delete(file);
+  _itAllocators.delete(file);
+  _itMarks.delete(file);
+  _itAssertionsBefore.delete(file);
 });
 

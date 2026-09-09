@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-conformance",
-  "version": "1.152.0",
+  "version": "2.0.8",
   "description": "Production-ready black-box conformance suite for OpenWOP v1.0 compliant servers.",
   "repository": {
     "type": "git",
@@ -18,13 +18,17 @@
     "fixtures",
     "fixtures.md",
     "coverage.md",
-    "api",
+    "requirements.json",
+    "requirement-aliases.json",
+    "scenario-majors.json",
     "schemas",
     "vectors",
     "vitest.config.ts",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "!src/lib/*.test.ts",
+    "!src/coherence"
   ],
   "scripts": {
     "test": "vitest run",
@@ -34,7 +38,9 @@
     "build:cli": "tsc -p tsconfig.build.json && chmod +x dist/cli.js",
     "cli": "tsx src/cli.ts",
     "prepack": "bash scripts/pack-vendor.sh",
-    "postpack": "rm -rf api schemas"
+    "postpack": "rm -rf schemas",
+    "test:coherence": "vitest run --config vitest.coherence.config.ts",
+    "test:self": "vitest run --config vitest.selftest.config.ts"
   },
   "engines": {
     "node": ">=20"
@@ -46,6 +52,10 @@
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.1",
+    "@openwop/spec-artifacts": "file:../spec-artifacts"
+  },
+  "peerDependencies": {
+    "@openwop/spec-artifacts": "2.0.8"
   }
 }

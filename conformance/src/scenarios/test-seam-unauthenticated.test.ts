@@ -49,8 +49,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
+import { req } from '../lib/requirement-ids.js';
 
 /**
  * Canonical seam paths from `host-sample-test-seams.md`. A host that exposes
@@ -160,7 +160,7 @@ describe('test-seam-unauthenticated: an enabled seam still authenticates', () =>
 
     expect(
       answered,
-      driver.describe('host-sample-test-seams.md §"Production safety (normative)"', `${diagnosis}\n  ${answered.join('\n  ')}`),
+      req('openwop.it.test-seam-unauthenticated.no-v1-host-sample-seam-answers-an-unauthenticated-request-with-200', 'host-sample-test-seams.md §"Production safety (normative)"', `${diagnosis}\n  ${answered.join('\n  ')}`),
     ).toEqual([]);
   });
 });

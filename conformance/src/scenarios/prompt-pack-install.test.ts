@@ -47,6 +47,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -94,7 +96,7 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
     const res = await driver.get('/v1/prompts?source=pack');
     expect(
       res.status,
-      driver.describe(
+      req('openwop.it.prompt-pack-install.get-v1-prompts-source-pack-returns-200-an-array-of-prompttemplate-objects-when-e', 
         'spec/v1/prompts.md §"Discovery & distribution"',
         'GET /v1/prompts MUST return 200 when prompts.endpointsSupported is advertised',
       ),
@@ -103,7 +105,7 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
     const body = res.json as ListResponse;
     expect(
       Array.isArray(body.items),
-      driver.describe(
+      req('openwop.it.prompt-pack-install.get-v1-prompts-source-pack-returns-200-an-array-of-prompttemplate-objects-when-e', 
         'RFCS/0028-prompt-library-endpoints.md §A',
         '`items` MUST be an array of PromptTemplate objects',
       ),
@@ -117,7 +119,7 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
       const packItems = body.items.filter((t) => t.meta?.source === 'pack');
       expect(
         packItems.length,
-        driver.describe(
+        req('openwop.it.prompt-pack-install.get-v1-prompts-source-pack-returns-200-an-array-of-prompttemplate-objects-when-e', 
           'RFCS/0028-prompt-library-endpoints.md §B',
           'OPENWOP_TEST_PROMPT_PACK_INSTALLED=true asserts the boot-time loader installed at least one pack',
         ),
@@ -130,29 +132,29 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const res = await driver.get('/v1/prompts?source=pack');
-    if (res.status !== 200) return;
+    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const body = res.json as ListResponse;
     const packItems = body.items.filter((t) => t.meta?.source === 'pack');
-    if (packItems.length === 0) return; // gated above
+    if (packItems.length === 0) return softSkip('blocked', 'precondition not met — `packItems.length === 0` returned early (gated above) (seam, prior step, or fixture unavailable)'); // gated above
 
     for (const t of packItems) {
       expect(
         t.meta?.source,
-        driver.describe(
+        req('openwop.it.prompt-pack-install.each-pack-source-template-carries-meta-source-packname-packversion-stamps-per-rf', 
           'schemas/prompt-template.schema.json §meta.source',
           'pack-installed templates MUST stamp `meta.source: "pack"`',
         ),
       ).toBe('pack');
       expect(
         typeof t.meta?.packName === 'string' && (t.meta?.packName?.length ?? 0) > 0,
-        driver.describe(
+        req('openwop.it.prompt-pack-install.each-pack-source-template-carries-meta-source-packname-packversion-stamps-per-rf', 
           'RFCS/0028-prompt-library-endpoints.md §B',
           'pack-installed templates MUST stamp `meta.packName`',
         ),
       ).toBe(true);
       expect(
         typeof t.meta?.packVersion === 'string' && /^\d+\.\d+\.\d+/.test(t.meta?.packVersion ?? ''),
-        driver.describe(
+        req('openwop.it.prompt-pack-install.each-pack-source-template-carries-meta-source-packname-packversion-stamps-per-rf', 
           'RFCS/0028-prompt-library-endpoints.md §B',
           'pack-installed templates MUST stamp a semver `meta.packVersion`',
         ),
@@ -165,15 +167,15 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const list = await driver.get('/v1/prompts?source=pack');
-    if (list.status !== 200) return;
+    if (list.status !== 200) return softSkip('blocked', 'precondition not met — `list.status !== 200` returned early (seam, prior step, or fixture unavailable)');
     const body = list.json as ListResponse;
     const writer = body.items.find((t) => t.templateId === 'writer-system' && t.meta?.source === 'pack');
-    if (!writer) return; // host may have installed a different reference pack; skip silently
+    if (!writer) return softSkip('blocked', 'precondition not met — `!writer` returned early (host may have installed a different reference pack; skip silently) (seam, prior step, or fixture unavailable)'); // host may have installed a different reference pack; skip silently
 
     const fetched = await driver.get(`/v1/prompts/${encodeURIComponent('writer-system')}`);
     expect(
       fetched.status,
-      driver.describe(
+      req('openwop.it.prompt-pack-install.get-v1-prompts-templateid-returns-a-pack-source-template-by-id-reference-pack-wr', 
         'RFCS/0028-prompt-library-endpoints.md §A',
         'GET /v1/prompts/{templateId} MUST return 200 for a known pack-source template id',
       ),
@@ -182,7 +184,7 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
     expect(t.templateId).toBe('writer-system');
     expect(
       t.meta?.source,
-      'fetched template MUST preserve `meta.source: "pack"` provenance',
+      req('openwop.it.prompt-pack-install.get-v1-prompts-templateid-returns-a-pack-source-template-by-id-reference-pack-wr', 'RFCS/0028-prompt-library-endpoints.md §A', 'fetched template MUST preserve `meta.source: "pack"` provenance'),
     ).toBe('pack');
   });
 });

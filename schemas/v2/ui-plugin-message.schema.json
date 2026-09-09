@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/ui-plugin-message.schema.json",
+  "title": "UiPluginMessage",
+  "description": "RFC 0117 (amended by RFC 0119). The `ui-plugin/1` host-RPC envelope exchanged between a sandboxed front-end plugin and its host across the isolation boundary (transport per `capabilities.uiPlugins.isolation` — browser `postMessage` for `cross-origin-iframe`, host-call for `wasm`, IPC for `process`/`container`/`vm`; the envelope shape is identical across all). Every message carries `openwop: \"ui-plugin/1\"` (the protocol version tag — a host MUST ignore messages whose tag it does not recognize) and is one of: a plugin→host `request` (a `method` from the closed allowlist + a monotonic `id` for response correlation), a host→plugin `response` (`ok` + `result` on success, or `ok:false` + `error` on failure), or a host→plugin `event` (a one-way notification, e.g. `host.themeChanged`). The host exposes ONLY the methods the plugin declared in its manifest `hostApi` AND that the host recognizes; any other method MUST be rejected with an `error` response, never silently executed (`frontend-plugin-rpc-allowlist`). `artifact.write` carries the optimistic-concurrency `version` token (RFC 0117 §Concurrency, modeled on the RFC 0059 `host.workspace` `If-Match`/ETag pattern). See `spec/v1/frontend-plugin-packs.md`.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/response"
+    },
+    {
+      "$ref": "#/$defs/event"
+    }
+  ],
+  "$defs": {
+    "request": {
+      "type": "object",
+      "title": "UiPluginRequest",
+      "description": "Plugin→host RPC call. The host MUST reject any `method` not in BOTH the plugin's declared `hostApi` allowlist AND the host's advertised `capabilities.uiPlugins.hostApi` set, returning a `response` with `ok:false` and `error.code: \"method_not_allowed\"`.",
+      "required": [
+        "openwop",
+        "type",
+        "id",
+        "method"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "openwop": {
+          "const": "ui-plugin/1"
+        },
+        "type": {
+          "const": "request"
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonic, plugin-minted correlation id. The host's `response` echoes it verbatim."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "artifact.read",
+            "artifact.write",
+            "host.toast",
+            "host.navigate"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "description": "Method arguments. For `artifact.write`, `params.version` is REQUIRED and carries the opaque token last returned by `artifact.read`/a prior `artifact.write` (optimistic concurrency, §Concurrency). The host MUST reject a `version` it did not mint with `error.code: \"artifact_conflict\"`.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "title": "UiPluginResponse",
+      "description": "Host→plugin reply to a `request`, correlated by `id`. Exactly one of `result` (when `ok:true`) or `error` (when `ok:false`).",
+      "required": [
+        "openwop",
+        "type",
+        "id",
+        "ok"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "openwop": {
+          "const": "ui-plugin/1"
+        },
+        "type": {
+          "const": "response"
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "result": {
+          "description": "Present iff `ok:true`. For `artifact.read` the result object carries the typed artifact payload (RFC 0071) plus an opaque `version` token. For a successful `artifact.write` the result carries the NEW opaque `version` (so the editor continues without a re-read).",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "error": {
+          "description": "Present iff `ok:false`.",
+          "$ref": "#/$defs/error"
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "title": "UiPluginEvent",
+      "description": "Host→plugin one-way notification (no `id`, no response). E.g. `host.themeChanged`. A plugin MUST tolerate unknown event names.",
+      "required": [
+        "openwop",
+        "type",
+        "event"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "openwop": {
+          "const": "ui-plugin/1"
+        },
+        "type": {
+          "const": "event"
+        },
+        "event": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "code"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Stable error code. `method_not_allowed`: the requested `method` is not in the plugin+host allowlist (`frontend-plugin-rpc-allowlist`). `artifact_conflict`: an `artifact.write` carried a stale/unknown `version` — the host MUST NOT persist and MUST return the current `version` in `currentVersion` (optimistic concurrency, parallel to RFC 0059 `workspace_conflict`). `artifact_not_found` / `unauthorized` / `internal`: standard host-mediated failures.",
+          "enum": [
+            "method_not_allowed",
+            "artifact_conflict",
+            "artifact_not_found",
+            "unauthorized",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable detail. MUST NOT carry secret material."
+        },
+        "currentVersion": {
+          "type": "string",
+          "description": "Present iff `code: \"artifact_conflict\"`. The host's current opaque `version` for the artifact, so the plugin can re-read/merge and retry. Opaque: the plugin MUST round-trip it verbatim and MUST NOT parse or mint it."
+        }
+      }
+    }
+  },
+  "x-openwop-seeded-from": "v1"
+}

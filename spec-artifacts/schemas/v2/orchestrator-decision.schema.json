@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/orchestrator-decision.schema.json",
+  "title": "OrchestratorDecision",
+  "description": "Routing decision emitted by an orchestrator-supervisor node. Carried in the `runOrchestrator.decided` event payload's `decision` field (run-orchestrator-decided-event.schema.json). Three canonical kinds form a closed canonical enum at the protocol layer: `'next-worker'` (continue dispatch), `'ask-user'` (route a question to the human party), `'terminate'` (clean run completion). Vendor-extension decision kinds MAY ship under `vendor.<host>.<kind>` per host-extensions.md but conformance MUST validate against the closed canonical set. See RFC 0006 §C.",
+  "type": "object",
+  "required": [
+    "kind"
+  ],
+  "oneOf": [
+    {
+      "title": "NextWorkerDecision",
+      "description": "Dispatch one or more next workers. Phase-5 hosts MAY treat the `nextWorkerIds` array as length-1 only and ignore the tail; Phase-6 hosts (RFC 0007 / `core.dispatch`) SHOULD honor full fan-out semantics. The interpretation of array entries (node-id vs agent-id) is left to host capability advertisement; see RFC 0006 §C unresolved-question 1.",
+      "type": "object",
+      "required": [
+        "kind",
+        "nextWorkerIds"
+      ],
+      "properties": {
+        "kind": {
+          "const": "next-worker"
+        },
+        "nextWorkerIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "description": "Ordered list of worker node-ids OR agent-ids to dispatch. Hosts that interpret entries as node-ids dispatch in DAG order; hosts that interpret as agent-ids resolve to nodes via the run's static DAG."
+        },
+        "nextWorkerInputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": "RFC 0126 (data-parallel fan-out). OPTIONAL, index-aligned with `nextWorkerIds`: `nextWorkerInputs[i]` is a per-child input object (child input variable names → values) projected into the child dispatched for `nextWorkerIds[i]`, over the RFC 0022 `inputMapping`/`perWorkerInputMappings` projection (per-item value WINS on key collision). Enables fanning ONE `childWorkflowId` over N runtime items with distinct inputs (the map-over-collection pattern). When present, `nextWorkerInputs.length` MUST equal `nextWorkerIds.length` (a host MUST fail the dispatch node with `validation_error` and dispatch NO child otherwise — length is not JSON-Schema-enforceable, so this is a runtime MUST). Gated on `capabilities.dispatch.perItemInput`: a host NOT advertising it, upon receiving a non-empty `nextWorkerInputs`, MUST fail closed with `validation_error` and MUST NOT silently drop-and-dispatch N identical children (the correctness/spend hazard this closes). Replay-safe: rides the recorded `runOrchestrator.decided` event, re-read verbatim on `:fork`, never recomputed (frozen at decision time). A `sensitive`/secret per-item value MUST NOT appear here in plaintext (use the secret channel). See `node-packs.md` §core.dispatch."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "RFC 0039 §A — supervisor's stated confidence in this decision, in [0, 1]. Optional; absent means 'no opinion stated' (NOT low confidence). Hosts advertising `capabilities.multiAgent.executionModel.version >= 2` MUST honor a confidence floor (spec floor 0.5; operator-stricter via `confidenceEscalationFloor`): a decision with `confidence` below the floor MUST escalate via clarify-or-escalate interrupt instead of executing. Pre-Phase-2 hosts ignore the field per forward-compat."
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "AskUserDecision",
+      "description": "Route a human-targeted question. Hosts that adopted RFC 0005 (Phase 4) SHOULD route through `conversation.exchange`; pre-RFC-0005 hosts MAY surface as a `'clarification'` interrupt. The transport is host-policy; the protocol-layer decision shape is the same.",
+      "type": "object",
+      "required": [
+        "kind",
+        "prompt"
+      ],
+      "properties": {
+        "kind": {
+          "const": "ask-user"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-targeted question. Free-form text; the protocol does NOT structure the prompt further."
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "TerminateDecision",
+      "description": "Clean run termination driven by orchestrator judgement. Distinct from `run.failed` (uncaught executor error) and `run.cancelled` (operator cancellation) — see RFC 0006 §H. The terminate `reason?` is informational; the protocol does NOT close the value enum.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "const": "terminate"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Optional free-form rationale captured for audit/debug. Common values: `'goal-reached'`, `'max-iterations'`, `'unrecoverable-error'`. Spec does NOT close this enum.",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "RFC 0039 §A — supervisor's stated confidence in this termination decision, in [0, 1]. Optional; absent means 'no opinion stated' (NOT low confidence). Hosts advertising `capabilities.multiAgent.executionModel.version >= 2` MUST honor a confidence floor as documented on NextWorkerDecision.confidence above; the same MUST applies to TerminateDecision because a confidently-wrong terminate is the same class of failure as a confidently-wrong dispatch."
+        },
+        "successCriteria": {
+          "type": "array",
+          "description": "RFC 0090 (`multiAgent.executionModel.version >= 6`). Optional structured convergence record — the conditions the supervisor judged when terminating. Content-free: criterion keys + booleans only, never result content. When present, a terminate with any `met: false` entry signals a give-up (NOT goal-satisfied); consumers MUST NOT treat such a run as a success. Absent ⇒ today's free-text `reason` semantics, unchanged.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "met"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Criterion identifier (e.g. `goal-answered`)."
+              },
+              "met": {
+                "type": "boolean",
+                "description": "Whether the supervisor judged this criterion satisfied."
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "additionalProperties": false
+}

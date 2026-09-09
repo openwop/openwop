@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Front-End Plugin Packs (Sandboxed UI Extensions)
 
-> **Status: Draft · v1.x — RFC 0117 `Active`.** Normative surface for [RFC 0117 — Front-End Plugin Packs](../../RFCS/0117-frontend-plugin-packs.md) — a registry-distributable, **signed, sandboxed** user-interface extension a host loads at runtime in a cross-origin isolated iframe and talks to over the closed `ui-plugin/1` host-RPC boundary. Companion to [`node-packs.md`](./node-packs.md) §Pack kinds (the `kind` discriminator), [`artifact-type-packs.md`](./artifact-type-packs.md) (RFC 0071, the host-private rendering this opens a portable carve-out from), and [`capabilities.md`](./capabilities.md) (`capabilities.uiPlugins`). `Active → Accepted` waits on a host advertising `capabilities.uiPlugins.supported` + passing the gated isolation/egress/RPC/concurrency scenarios non-vacuously (the openwop-app reference host's ADR 0153 canvas-editor program is the first intended consumer). Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x — RFC 0117 `Accepted`; the document stays Draft until a host advertises `capabilities.uiPlugins.supported` (a different predicate than the RFC's status).** Normative surface for [RFC 0117 — Front-End Plugin Packs](../../RFCS/0117-frontend-plugin-packs.md) — a registry-distributable, **signed, sandboxed** user-interface extension a host loads at runtime in a cross-origin isolated iframe and talks to over the closed `ui-plugin/1` host-RPC boundary. Companion to [`node-packs.md`](./node-packs.md) §Pack kinds (the `kind` discriminator), [`artifact-type-packs.md`](./artifact-type-packs.md) (RFC 0071, the host-private rendering this opens a portable carve-out from), and [`capabilities.md`](./capabilities.md) (`capabilities.uiPlugins`). `Active → Accepted` waits on a host advertising `capabilities.uiPlugins.supported` + passing the gated isolation/egress/RPC/concurrency scenarios non-vacuously (the openwop-app reference host's ADR 0153 canvas-editor program is the first intended consumer). Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ## Why this exists
 
@@ -185,10 +185,5 @@ Four protocol-tier invariants gate this surface (`SECURITY/invariants.yaml`,
 
 ## Open spec gaps
 
-| Gap | Disposition |
-| --- | --- |
-| Persistent plugin-local state beyond `artifact.write` (a scoped `host.kv` method) | Out of scope for v1 (RFC 0117 §Resolved Q1); a future additive `hostApi` method under a bumped `ui-plugin/*` vocabulary. |
-| Inter-plugin composition (a `route` embedding an `artifact-viewer`) | Forbidden in v1 — one sandbox per surface (RFC 0117 §Resolved Q2). |
-| Streaming `artifact.read` for large artifacts | Whole-response in v1 (RFC 0117 §Resolved Q4); a future additive method. |
-| Cross-host `version`-token portability | v1.x-silent — opaque, host-defined (§Concurrency), mirroring `agent-workspace.md` `etag`. |
-| `Active → Accepted` | Pending a host advertising `capabilities.uiPlugins.supported` + passing the gated scenarios non-vacuously (dual-witness per the graduation rule). |
+> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.frontend-plugin-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
+

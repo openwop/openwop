@@ -1,0 +1,834 @@
+asyncapi: 3.1.0
+
+info:
+  title: Workflow Orchestration Protocol (openwop) SSE Event Stream
+  version: "1.1.0"
+  externalDocs:
+    description: openwop spec v1 corpus
+    url: https://openwop.dev/spec/v1/
+  description: |
+    Canonical AsyncAPI 3.1.0 specification for the openwop server's
+    Server-Sent Events surface. Formalizes `stream-modes.md`
+    and references the run-event JSON Schema via `$ref` so external SDK
+    authors can codegen typed consumers without re-reading the prose.
+
+    Four canonical stream modes are exposed via the `streamMode` query
+    parameter on a single endpoint (`GET /v1/runs/{runId}/events`):
+
+    - `updates` — minimal state-change deltas (default; lowest bandwidth)
+    - `values`  — full `state.snapshot` after every transition
+    - `messages` — LLM token chunks for chat-style UIs
+    - `debug`   — full event firehose including internal events
+
+    Each mode is modeled as a separate AsyncAPI channel because the
+    payload union differs per mode. The underlying transport (HTTPS SSE)
+    is shared; only the filter + synthesis layer differs.
+
+    See `stream-modes.md` for the complete event-to-mode mapping table.
+  contact:
+    name: openwop spec working group
+    url: https://openwop.dev/spec/v1/
+  license:
+    name: Apache-2.0
+
+defaultContentType: text/event-stream
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SERVERS
+# ─────────────────────────────────────────────────────────────────────────────
+servers:
+  production:
+    host: '{host}'
+    pathname: /v1
+    protocol: https
+    description: openwop-compliant server
+    variables:
+      host:
+        default: api.example.com
+        description: Replace with your server's hostname.
+    security:
+      - $ref: '#/components/securitySchemes/ApiKeyAuth'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CHANNELS — one per streamMode (filter contract differs)
+# ─────────────────────────────────────────────────────────────────────────────
+channels:
+
+  heartbeatEvents:
+    # Logical channel — `address: null` per AsyncAPI 3.x ("address not
+    # applicable / host-defined"). RFC 0094 §I: host-capabilities.md
+    # §host.heartbeat defines the two heartbeat events but documents NO
+    # HTTP delivery path for them (they are heartbeat-scoped, NOT
+    # run-event-log entries, so they do not ride /runs/{runId}/events
+    # either). The previous `/heartbeats/{heartbeatId}/events` address
+    # implied an undocumented REST surface; the delivery transport is a
+    # host concern until an RFC specifies one.
+    address: null
+    title: Heartbeat evaluation events (RFC 0060)
+    summary: Per-tick heartbeat evaluation + state-change notifications (logical channel).
+    description: |
+      RFC 0060 `host.heartbeat`. Heartbeat-scoped (NOT a run-event
+      stream): a host advertising `capabilities.heartbeat.supported: true`
+      emits `heartbeat.evaluated` every tick and `heartbeat.stateChanged`
+      only on a predicate-state transition. Both are observability-only;
+      consumers MAY ignore them.
+
+      LOGICAL channel: `host-capabilities.md` §host.heartbeat documents
+      the event shapes but no HTTP address; how a host delivers them
+      (webhook, host-internal bus, vendor stream) is host-defined.
+    messages:
+      heartbeatEvaluated:    { $ref: '#/components/messages/HeartbeatEvaluated' }
+      heartbeatStateChanged: { $ref: '#/components/messages/HeartbeatStateChanged' }
+
+  runEventsUpdates:
+    address: /runs/{runId}/events
+    title: SSE — updates mode (default)
+    summary: Minimal state-change deltas for UI/CLI consumers.
+    description: |
+      Default consumption mode. Emits an SSE event for each terminal
+      node transition, suspension transition, run transition, and
+      artifact production. Payloads are deltas (the change since the
+      last event), NOT full snapshots.
+
+      Termination: server closes the connection on a terminal run
+      event (`run.completed`, `run.failed`, `run.cancelled`).
+
+      Selected via `?streamMode=updates` (or by omitting the query
+      parameter — `updates` is the default per `stream-modes.md`).
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      runStarted:        { $ref: '#/components/messages/RunStarted' }
+      runCompleted:      { $ref: '#/components/messages/RunCompleted' }
+      runFailed:         { $ref: '#/components/messages/RunFailed' }
+      runCancelled:      { $ref: '#/components/messages/RunCancelled' }
+      runPaused:         { $ref: '#/components/messages/RunPaused' }
+      runResumed:        { $ref: '#/components/messages/RunResumed' }
+      runAnnotated:      { $ref: '#/components/messages/RunAnnotated' }
+      workspaceUpdated:  { $ref: '#/components/messages/WorkspaceUpdated' }
+      nodeCompleted:     { $ref: '#/components/messages/NodeCompleted' }
+      nodeFailed:        { $ref: '#/components/messages/NodeFailed' }
+      nodeSkipped:       { $ref: '#/components/messages/NodeSkipped' }
+      nodeSuspended:     { $ref: '#/components/messages/NodeSuspended' }
+      nodeDispatched:    { $ref: '#/components/messages/NodeDispatched' }
+      dispatchFanOut:    { $ref: '#/components/messages/DispatchFanOut' }
+      dispatchJoin:      { $ref: '#/components/messages/DispatchJoin' }
+      approvalRequested: { $ref: '#/components/messages/ApprovalRequested' }
+      approvalReceived:  { $ref: '#/components/messages/ApprovalReceived' }
+      clarificationRequested: { $ref: '#/components/messages/ClarificationRequested' }
+      clarificationResolved:  { $ref: '#/components/messages/ClarificationResolved' }
+      interruptRequested: { $ref: '#/components/messages/InterruptRequested' }
+      interruptResolved:  { $ref: '#/components/messages/InterruptResolved' }
+      artifactCreated:   { $ref: '#/components/messages/ArtifactCreated' }
+      evalStarted:       { $ref: '#/components/messages/EvalStarted' }
+      evalScored:        { $ref: '#/components/messages/EvalScored' }
+      evalCompleted:     { $ref: '#/components/messages/EvalCompleted' }
+      deploymentPromoted:       { $ref: '#/components/messages/DeploymentPromoted' }
+      deploymentRolledBack:     { $ref: '#/components/messages/DeploymentRolledBack' }
+      deploymentCanaryAdjusted: { $ref: '#/components/messages/DeploymentCanaryAdjusted' }
+      deploymentStateChanged:   { $ref: '#/components/messages/DeploymentStateChanged' }
+      proposalCreated:          { $ref: '#/components/messages/ProposalCreated' }
+      proposalActivated:        { $ref: '#/components/messages/ProposalActivated' }
+      goalEvaluated:            { $ref: '#/components/messages/GoalEvaluated' }
+      goalClosed:               { $ref: '#/components/messages/GoalClosed' }
+      importApplied:            { $ref: '#/components/messages/ImportApplied' }
+
+  runEventsValues:
+    address: /runs/{runId}/events
+    title: SSE — values mode
+    summary: Full state snapshots after every transition.
+    description: |
+      Higher-bandwidth mode for consumers that don't maintain their
+      own state machine. Emits a synthesized `state.snapshot` event
+      after each `updates`-tier transition. Payload is the complete
+      `ProjectedRunState` (status, nodeStates, variables,
+      currentNodeId, channels).
+
+      On resumption (`Last-Event-ID` header), the server MUST emit a
+      fresh `state.snapshot` first so the resuming client gets a
+      baseline before continuing with subsequent snapshots.
+
+      Selected via `?streamMode=values`.
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      stateSnapshot: { $ref: '#/components/messages/StateSnapshot' }
+
+  runEventsMessages:
+    address: /runs/{runId}/events
+    title: SSE — messages mode
+    summary: LLM token chunks for chat-style UIs.
+    description: |
+      Per-token chunks from any AI node currently streaming
+      (`core.ai.callPrompt`, `core.ai.generateFromPrompt`, etc).
+      Other event types are filtered out — consumers wanting state
+      transitions should pair this with a separate `updates` stream.
+
+      If no AI nodes execute during the run, the stream is empty
+      until termination.
+
+      Selected via `?streamMode=messages`.
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      aiMessageChunk: { $ref: '#/components/messages/AiMessageChunk' }
+
+  runEventsDebug:
+    address: /runs/{runId}/events
+    title: SSE — debug mode
+    summary: Full event firehose including internal events.
+    description: |
+      Every `RunEventDoc` from the durable event log, including
+      events filtered out of `updates`: `log.appended`,
+      `variable.changed`, `version.pinned`, `lease.*`,
+      `node.retried`, internal projection writes, and any
+      vendor-extension events.
+
+      Highest bandwidth. Used by replay tools, debuggers, and
+      conformance tests.
+
+      Selected via `?streamMode=debug`.
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      anyRunEvent:  { $ref: '#/components/messages/AnyRunEvent' }
+      runAnnotated: { $ref: '#/components/messages/RunAnnotated' }
+      workspaceUpdated: { $ref: '#/components/messages/WorkspaceUpdated' }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPERATIONS — consumer-side (receive)
+# ─────────────────────────────────────────────────────────────────────────────
+operations:
+
+  subscribeUpdates:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsUpdates'
+    title: Subscribe to updates stream
+    summary: Receive minimal state-change events for a run.
+    description: |
+      Long-lived SSE subscription. Connection auto-closes on
+      terminal run event. Honor the `Last-Event-ID` request header
+      for resumption — server begins streaming from the sequence
+      AFTER the supplied ID and MUST NOT re-emit the resumption
+      point itself.
+
+      Mixed mode (RFC 0094 §I note): the binding's single-value
+      `streamMode` enum below describes THIS mode's pure subscription;
+      `streamMode` additionally accepts comma-separated combinations
+      (e.g. `updates,messages`) per `stream-modes.md` §"Mixed mode" —
+      union-of-filters semantics, per-event `event:` labels.
+      `values` MUST NOT combine with other modes.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          properties:
+            streamMode:
+              type: string
+              enum: [updates]
+              default: updates
+
+  subscribeValues:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsValues'
+    title: Subscribe to values stream
+    summary: Receive full state snapshots after every transition.
+    description: |
+      Mixed mode (RFC 0094 §I note): `values` is EXCLUSIVE — it MUST NOT
+      be combined in a comma-separated `streamMode` list
+      (`stream-modes.md` §"Mixed mode": state.snapshot semantics need
+      exclusive ownership). The binding's single-value enum is exact here.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          required: [streamMode]
+          properties:
+            streamMode:
+              type: string
+              enum: [values]
+
+  subscribeMessages:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsMessages'
+    title: Subscribe to messages stream
+    summary: Receive per-token AI chunks.
+    description: |
+      Mixed mode (RFC 0094 §I note): the binding's single-value
+      `streamMode` enum below describes the pure `messages` subscription;
+      `streamMode` additionally accepts comma-separated combinations
+      (e.g. `updates,messages`) per `stream-modes.md` §"Mixed mode".
+      `values` MUST NOT combine with other modes.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          required: [streamMode]
+          properties:
+            streamMode:
+              type: string
+              enum: [messages]
+
+  subscribeDebug:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsDebug'
+    title: Subscribe to debug stream
+    summary: Receive every engine event including internal/log/lease.
+    description: |
+      Mixed mode (RFC 0094 §I note): the binding's single-value
+      `streamMode` enum below describes the pure `debug` subscription;
+      `streamMode` additionally accepts comma-separated combinations
+      (e.g. `updates,debug`) per `stream-modes.md` §"Mixed mode".
+      `values` MUST NOT combine with other modes.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          required: [streamMode]
+          properties:
+            streamMode:
+              type: string
+              enum: [debug]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: httpApiKey
+      in: header
+      name: Authorization
+      description: |
+        Bearer-style API key. Format implementation-defined; reference
+        impl uses `hk_`/`hk_test_` prefixes. Required scopes:
+        `runs:read` to subscribe. See `auth.md`.
+
+  parameters:
+    RunId:
+      description: The run to subscribe to. Format opaque; clients MUST treat as a string.
+
+  # ── Messages ─────────────────────────────────────────────────────────────
+  # All `updates`/`debug`-mode messages share the canonical RunEventDoc shape
+  # (run-event.schema.json). Each named message below pins the `type` field
+  # to a specific RunEventType discriminator so codegens can emit narrowed
+  # consumer handlers.
+
+  messages:
+
+    # ── Agent evaluation (RFC 0081) — content-free recorded-fact events ───
+    EvalStarted:
+      name: eval.started
+      title: Eval run started (RFC 0081)
+      summary: An eval run began. Content-free — suite provenance + counts only. Gated on capabilities.agents.evalSuite.supported.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EvalStartedPayload'
+    EvalScored:
+      name: eval.scored
+      title: Eval task scored (RFC 0081)
+      summary: One eval task was scored (emitted per task, after its terminal agent.decided). Content-free — taskId + score + scalars only, never task output (eval-summary-no-content-leak).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EvalScoredPayload'
+    EvalCompleted:
+      name: eval.completed
+      title: Eval run completed (RFC 0081)
+      summary: An eval run finished. Content-free aggregate scalars; the full scorecard is the run output, read via GET /v1/runs/{runId}/eval-summary.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EvalCompletedPayload'
+
+    # ── Agent deployment lifecycle (RFC 0082) — content-free audit events ─
+    DeploymentPromoted:
+      name: deployment.promoted
+      title: Deployment promoted (RFC 0082)
+      summary: A version was promoted into a new lifecycle state (gated by RFC 0049 deploy:* + RFC 0051 approvalGate + RFC 0081 requiredEval). Content-free (deployment-event-no-content-leak). Principal-stamped + audit-logged.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeploymentPromotedPayload'
+    DeploymentRolledBack:
+      name: deployment.rolled-back
+      title: Deployment rolled back (RFC 0082)
+      summary: An active version was rolled back and a prior version restored. Content-free; recorded-fact; audit-logged.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeploymentRolledBackPayload'
+    DeploymentCanaryAdjusted:
+      name: deployment.canary.adjusted
+      title: Deployment canary adjusted (RFC 0082)
+      summary: An active version's canary traffic share changed. Content-free; recorded-fact; audit-logged.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeploymentCanaryAdjustedPayload'
+    DeploymentStateChanged:
+      name: deployment.state.changed
+      title: Deployment state changed (RFC 0082)
+      summary: A non-promotion lifecycle transition (pause / resume / deprecate). Content-free; recorded-fact; audit-logged.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeploymentStateChangedPayload'
+
+    # ── Reviewable learning (RFC 0096) — content-free proposal lifecycle ──
+    ProposalCreated:
+      name: proposal.created
+      title: Proposal created (RFC 0096)
+      summary: The host synthesized a reviewable-learning draft. Content-free — ids/kind/refs only, never the artifact body or rationale (proposal-inert-until-applied). Emitted only when capabilities.agents.proposals is advertised.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProposalCreatedPayload'
+    ProposalActivated:
+      name: proposal.activated
+      title: Proposal activated (RFC 0096)
+      summary: A proposal was applied (RFC 0051/0049-gated). Content-free; the installed artifact byte-matches the last-persisted draft (proposal-no-resynthesis).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProposalActivatedPayload'
+
+    # ── Standing goals (RFC 0097) — content-free judge/continuation events ─
+    GoalEvaluated:
+      name: goal.evaluated
+      title: Goal evaluated (RFC 0097)
+      summary: A judge check ran against a standing goal. Content-free — no objective text; the verdict is recorded (not recomputed on replay).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GoalEvaluatedPayload'
+    GoalClosed:
+      name: goal.closed
+      title: Goal closed (RFC 0097)
+      summary: A standing goal stopped continuation (satisfied / escalated / abandoned / bound-exceeded). Content-free.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GoalClosedPayload'
+
+    # ── Portability (RFC 0098) — content-free import event ───────────────
+    ImportApplied:
+      name: import.applied
+      title: Import applied (RFC 0098)
+      summary: An estate import was applied. Content-free — counts + refs only, never item payloads or secret values (export-bundle-no-credential-material).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ImportAppliedPayload'
+
+    # ── Run-lifecycle ────────────────────────────────────────────────────
+    RunStarted:
+      name: run.started
+      title: Run started
+      summary: A new run was registered and execution began.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunCompleted:
+      name: run.completed
+      title: Run completed (terminal)
+      summary: Run reached terminal success state. SSE connection closes after this event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunFailed:
+      name: run.failed
+      title: Run failed (terminal)
+      summary: Run reached terminal failure state. SSE connection closes after this event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunCancelled:
+      name: run.cancelled
+      title: Run cancelled (terminal)
+      summary: Run was cancelled by user or admin. SSE connection closes after this event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationRequested:
+      name: compensation.requested
+      title: Compensation plan persisted (RFC 0151 §C/§D)
+      summary: >-
+        The unwind plan is durable. §C requires this BEFORE the first inverse
+        action executes — a host that starts unwinding first cannot resume after
+        a crash, and the crash is when resumption matters.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationStarted:
+      name: compensation.started
+      title: First inverse action started (RFC 0151 §D)
+      summary: Compensation began executing. MUST follow compensation.requested.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationCompleted:
+      name: compensation.completed
+      title: Compensation completed (RFC 0151 §D)
+      summary: Every inverse action in the plan succeeded.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationFailed:
+      name: compensation.failed
+      title: Compensation failed (RFC 0151 §D)
+      summary: >-
+        An inverse action exhausted its retries. Compensation is a second effect,
+        not an undo — it can fail, and the run's compensationStatus records that
+        rather than the run silently reporting success.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationPaused:
+      name: compensation.paused
+      title: Compensation paused for authorized intervention (RFC 0151 §C)
+      summary: >-
+        Cancelling the parent MUST NOT silently abandon an active compensation.
+        It continues, pauses here, or records manual intervention required.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    CompensationManualInterventionRequired:
+      name: compensation.manual_intervention_required
+      title: Compensation needs an operator (RFC 0151 §C/§E)
+      summary: >-
+        The host cannot proceed unaided. Recorded explicitly because an unwind
+        that stops without saying so is indistinguishable from one that finished.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunPaused:
+      name: run.paused
+      title: Run paused
+      summary: Run paused (e.g., capability limit reached, manual pause).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunResumed:
+      name: run.resumed
+      title: Run resumed
+      summary: Run resumed from pause/suspend.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunAnnotated:
+      name: run.annotated
+      title: Run annotated (RFC 0056)
+      summary: A non-blocking quality annotation was recorded for the run. Live notification ONLY — NOT a replayable run-event-log entry; its payload is an Annotation (not a RunEventDoc), so it is excluded from fork/replay (RFC 0056 §B/§D).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Annotation'
+
+    WorkspaceUpdated:
+      name: workspace.updated
+      title: Workspace file updated (RFC 0059)
+      summary: A workspace file was created, replaced, or deleted via the host.workspace store. Content-free — carries the file path + resulting version only (the body is served by the read-side, SR-1-redacted). A replayable run-event-log entry (re-read from the log on replay, never regenerated); gated on capabilities.workspace.supported.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WorkspaceUpdatedPayload'
+
+    # RFC 0060. Heartbeat-scoped observability events — NOT RunEventDocs,
+    # NOT replayable run-event-log entries. Emitted on the heartbeat channel.
+    HeartbeatEvaluated:
+      name: heartbeat.evaluated
+      title: Heartbeat evaluated (RFC 0060)
+      summary: A heartbeat predicate was evaluated this tick (status + changed flag). Heartbeat-scoped observability.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartbeatEvaluated'
+
+    HeartbeatStateChanged:
+      name: heartbeat.stateChanged
+      title: Heartbeat state changed (RFC 0060)
+      summary: A heartbeat predicate's state transitioned; emitted ONLY on change (never on an unchanged tick). Heartbeat-scoped.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartbeatStateChanged'
+
+    # ── Node-lifecycle ───────────────────────────────────────────────────
+    NodeCompleted:
+      name: node.completed
+      title: Node completed successfully
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeFailed:
+      name: node.failed
+      title: Node failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeSkipped:
+      name: node.skipped
+      title: Node skipped due to edge condition
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeSuspended:
+      name: node.suspended
+      title: Node suspended (HITL or external-event wait)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeDispatched:
+      name: node.dispatched
+      title: core.dispatch spawned a child workflow (RFC 0007 §D + RFC 0022 §A)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+    DispatchFanOut:
+      name: core.dispatch.fanOut
+      title: core.dispatch began a parallel fan-out wave (RFC 0118)
+      summary: Emitted when a fanOutPolicy=parallel wave begins; payload $defs.dispatchFanOut carries childCount/maxConcurrency/joinMode. Parallel path only.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+    DispatchJoin:
+      name: core.dispatch.join
+      title: core.dispatch parallel join satisfied (RFC 0118)
+      summary: Emitted when a fanOutPolicy=parallel join is satisfied/failed; payload $defs.dispatchJoin carries joinOutcome + the replay-deterministic mergeOrder.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── HITL ─────────────────────────────────────────────────────────────
+    ApprovalRequested:
+      name: approval.requested
+      title: Approval requested
+      summary: Engine emitted an approval interrupt awaiting user resolution.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    ApprovalReceived:
+      name: approval.received
+      title: Approval received
+      summary: User resolved an approval interrupt (accept/reject/refine/edit).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    ClarificationRequested:
+      name: clarification.requested
+      title: Clarification requested
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    ClarificationResolved:
+      name: clarification.resolved
+      title: Clarification resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    InterruptRequested:
+      name: interrupt.requested
+      title: Interrupt requested (canonical HITL primitive)
+      summary: |
+        The discriminated-union form of the full `interrupt.md` kind union
+        (RFC 0094 §E): approval / clarification / external-event / custom /
+        conversation.start / conversation.exchange / conversation.close /
+        low-confidence.
+        Servers emitting `interrupt.requested` SHOULD also emit the legacy
+        kind-specific event (`approval.requested` etc) for backward compat
+        until consumers migrate.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    InterruptResolved:
+      name: interrupt.resolved
+      title: Interrupt resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── Artifacts ────────────────────────────────────────────────────────
+    ArtifactCreated:
+      name: artifact.created
+      title: Artifact produced by a node
+      summary: A typed artifact (PRD, plan, theme, etc) was created and registered.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── Synthesized for `values` mode ────────────────────────────────────
+    StateSnapshot:
+      name: state.snapshot
+      title: Full projected run state
+      summary: |
+        Synthesized event emitted by the server in `values` mode after
+        each `updates`-tier transition. NOT a member of the canonical
+        `RunEventType` enum — this is a per-mode synthetic.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StateSnapshotPayload'
+
+    # ── Synthesized for `messages` mode ──────────────────────────────────
+    AiMessageChunk:
+      name: ai.message.chunk
+      title: AI token chunk
+      summary: Per-token streaming chunk from a `core.ai.*` node.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiMessageChunkPayload'
+
+    # ── Catch-all for `debug` mode ───────────────────────────────────────
+    AnyRunEvent:
+      name: any
+      title: Any RunEventDoc
+      summary: |
+        Type-erased handler for `debug` mode — discriminate on the
+        `type` field per the `RunEventType` enum in the run-event
+        JSON Schema (the authoritative, exhaustive event list; the
+        named messages above are a curated `updates`-tier subset).
+        Includes events filtered out of `updates`: `log.appended`,
+        `variable.changed`, `version.pinned`, `lease.*`, `node.retried`,
+        `replay.diverged`, `connector.authorized`,
+        `connector.auth_expired` (RFC 0047), `authorization.decided`
+        (RFC 0049), `approval.granted` / `approval.rejected` /
+        `approval.overridden` (RFC 0051), etc.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── Voice (RFC 0106) ─────────────────────────────────────────────────
+    # The voice.* turn-taking / barge-in taxonomy — the single canonical record of a
+    # live voice turn (ctx.callTranscriber resolves its Promise at turn_commit; these
+    # events ARE the streaming representation on the durable log). All RunEventDocs.
+    VoiceSpeechStart:
+      name: voice.speech_start
+      title: Inbound user speech onset detected
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceTranscript:
+      name: voice.transcript
+      title: Interim/final transcript part (untrusted ingress; carries contentTrust)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceEndpointCandidate:
+      name: voice.endpoint_candidate
+      title: Likely end-of-turn boundary (semantic turn detection)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceTurnCommit:
+      name: voice.turn_commit
+      title: User yielded the floor (callTranscriber Promise resolves here)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceSynthesisChunk:
+      name: voice.synthesis_chunk
+      title: Clause-boundary streaming-synthesis chunk (metadata only)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceBargeIn:
+      name: voice.barge_in
+      title: User speech overlapped active assistant playback
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceCancelled:
+      name: voice.cancelled
+      title: Downstream LLM/TTS work cancelled (barge-in or explicit)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+  # ── Schemas ────────────────────────────────────────────────────────────
+  schemas:
+
+    # The canonical persisted-event shape. Defined externally so the same
+    # contract is shared with REST event-poll responses (rest-endpoints.md
+    # `GET /v1/runs/{runId}/events/poll`) and offline replay tools.
+    RunEventDoc:
+      $ref: '../schemas/run-event.schema.json'
+
+    # RFC 0081 — eval event payloads.
+    EvalStartedPayload:   { $ref: '../schemas/run-event-payloads.schema.json#/$defs/evalStarted' }
+    EvalScoredPayload:    { $ref: '../schemas/run-event-payloads.schema.json#/$defs/evalScored' }
+    EvalCompletedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/evalCompleted' }
+    # RFC 0082 — deployment event payloads.
+    DeploymentPromotedPayload:       { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentPromoted' }
+    DeploymentRolledBackPayload:     { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentRolledBack' }
+    DeploymentCanaryAdjustedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentCanaryAdjusted' }
+    DeploymentStateChangedPayload:   { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentStateChanged' }
+    # RFC 0096 — reviewable-learning proposal event payloads.
+    ProposalCreatedPayload:   { $ref: '../schemas/run-event-payloads.schema.json#/$defs/proposalCreated' }
+    ProposalActivatedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/proposalActivated' }
+    # RFC 0097 — standing-goal event payloads.
+    GoalEvaluatedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/goalEvaluated' }
+    GoalClosedPayload:    { $ref: '../schemas/run-event-payloads.schema.json#/$defs/goalClosed' }
+    # RFC 0098 — portability import event payload.
+    ImportAppliedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/importApplied' }
+
+    # RFC 0056. The run.annotated notification carries an Annotation —
+    # NOT a RunEventDoc — because annotations are a side-resource, not
+    # replayable run-event-log entries (RFC 0056 §B/§D).
+    Annotation:
+      $ref: '../schemas/annotation.schema.json'
+
+    # RFC 0059. The workspace.updated event payload — content-free
+    # {path, version}. Definition lives at
+    # run-event-payloads.schema.json#$defs.workspaceUpdated so the SSE
+    # consumer + run-event log share one shape contract.
+    WorkspaceUpdatedPayload:
+      $ref: '../schemas/run-event-payloads.schema.json#/$defs/workspaceUpdated'
+    # RFC 0060 heartbeat events (heartbeat-scoped; see host-capabilities.md §host.heartbeat).
+    HeartbeatEvaluated:
+      $ref: '../schemas/heartbeat-evaluated.schema.json'
+    HeartbeatStateChanged:
+      $ref: '../schemas/heartbeat-state-changed.schema.json'
+
+    StateSnapshotPayload:
+      # S1 closure (2026-04-27): reuse the canonical RunSnapshot
+      # projection shape verbatim. Same type returned by
+      # `GET /v1/runs/{runId}` — consumers can swap polling for
+      # values-mode SSE without re-modeling state.
+      $ref: '../schemas/run-snapshot.schema.json'
+
+    AiMessageChunkPayload:
+      # S2 closure (2026-04-27) + RFC 0094 §D single-sourcing: the payload
+      # is the canonical `outputChunk` definition in
+      # run-event-payloads.schema.json — referenced (not hand-copied, the
+      # prior inline copy was one of the three drifting definitions) so the
+      # SSE consumer + run-event log share exactly one shape contract.
+      # Minimum compliant payload: {nodeId, runId, chunk, isLast} per
+      # stream-modes.md §messages; `meta` adds Tier 1 typed slots
+      # (finishReason / logprobs / toolCalls / model / usage) and a Tier 2
+      # provider-pass-through escape hatch (see #$defs/_chunkMeta).
+      $ref: '../schemas/run-event-payloads.schema.json#/$defs/outputChunk'
