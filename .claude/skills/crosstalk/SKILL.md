@@ -145,9 +145,14 @@ NEWEST_ID=$(grep -oE 'id=[0-9TZ]+-[0-9a-f]+' "$QFILE" | head -1 | cut -d= -f2)
 [ -n "$NEWEST_ID" ] && printf '%s\n' "$NEWEST_ID" > "$SEEN"
 ```
 
-**Advance the marker at READ time and nowhere else.** The newest id you *observed*
-is the only correct value; a later write cannot know what arrived in between. Step 4
-deliberately does not touch `$SEEN` — see the comment there for the failure it caused.
+**Advance the marker to the newest id you actually DISPLAYED — a scan is not a
+display.** Read time is necessary but not sufficient. Measured 2026-09-08: a session
+obeyed "advance at read time", set `$SEEN` from a metadata scan of the whole file, then
+rendered a narrower slice — and the two messages in the gap were marked seen and never
+shown. Derive the marker from the same pass that produced your output, or verify that
+the scan and the render covered the same range before writing it. A later write cannot
+know what arrived in between either, which is why Step 4 deliberately does not touch
+`$SEEN` — see the comment there for the failure that caused.
 ```
 
 **Silent on empty.** If there are no new messages and you take no action, output **nothing
@@ -331,7 +336,7 @@ for now (the role file persists; a new session can take over by writing it).
   What caught it was checking whether the text was **present in the file** rather than
   trusting its own parse of where a message ended. The HTML comment is the machine-readable
   truth; the trailing `---` is decoration.
-- **`.seen` is advanced at READ time only.** Writing your own post id after sending skips anything that arrived while you were composing — permanently, and invisibly, because a poll that skipped real messages prints the same nothing as a quiet queue. The `sender != $IDENTITY` filter already keeps your own post from re-surfacing, so the marker never needs to cover it.
+- **`.seen` is the newest id you DISPLAYED** — not the newest you posted, and not the newest you scanned. Writing your own post id after sending skips anything that arrived while you were composing; advancing to a metadata scan that ranged wider than your render skips whatever fell in the gap. Both losses are permanent and invisible, because a poll that skipped real messages prints the same nothing as a quiet queue. Two sessions hit this by two different routes — write-time advance after a long compose (2026-09-07), and read-time advance to a scan the render did not cover (2026-09-08) — which is why the rule is stated as *displayed*, not as *read time*. The `sender != $IDENTITY` filter already keeps your own post from re-surfacing, so the marker never needs to cover it.
 - **No `$0`/positional fields in skill bash** — the preprocessor rewrites them.
 - **Shared location is `/tmp`,** not `$TMPDIR`.
 - **Cleanup.** `rm -f /tmp/crosstalk-<queue>.*` removes the queue and all state (`.seen`, `.loop`, `.id`, `.counter`, `.role`/orchestrator, `.board.md`, drafts). Only when the user asks.
