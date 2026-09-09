@@ -13,6 +13,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **`versioning.md` §1.2 bound more path space than any instrument measures, and
+  more than `conformance.md` permits.** The advertised-path-space MUST quantified
+  over "every operation it serves", unqualified. That is not jointly satisfiable
+  with `conformance.md` §"Test seams": the seams profile mounts the real path
+  space `/conformance/seams/…` while that same document requires
+  `spec/v2/path-manifest.json` and `api/v2/openapi.yaml` to contain no seam
+  operation — so a host serving seams under one major owed them under the other,
+  measured against a manifest forbidden to name them. The MUST is now scoped to
+  operations **named in the manifest**, which is what
+  `v2-advertised-path-space-served` has always probed and what the seams carve-out
+  requires. The narrowing keeps the case the rule exists for: the motivating
+  defect was `POST /webhooks` answering `404` under major 2 while `POST
+  /v1/webhooks` answered `201`, and `webhooks` is a manifest operation. Raised by
+  a tier-2 host asking whether its four proprietary `/v1` roots were bound; they
+  are not, and §5 now says so rather than leaving it to be inferred.
+
+- **§1.2 described a path manifest that does not exist.** It claimed the generated
+  artifact carries a `resolvedPath` with "exactly one version segment for v1 rows
+  and none for v2 rows". `spec/v2/path-manifest.json` has no `resolvedPath` field
+  (rows are `method` / `path` / `operationId`) and **no `/v1` rows at all** — 0 of
+  51, as the generator's own `$comment` says: "every path unversioned". The `/v1`
+  twin is derived by prefixing, which is what the conformance pairing does.
+
+### Added
+
+- **`versioning.md` §5 records two things the overlap left implicit.** That v1
+  retirement is *atomic* — §1.1 forbids a `2.x` `preferredVersion` while any `1.x`
+  is advertised, so flipping `preferredVersion` ahead of the drop is the same step,
+  not a smaller first one. And that **host-proprietary paths have no defined
+  successor under major 2**: the corpus reserves a vendor namespace for capability
+  records, error codes, event types and pack-document properties, each keyed to an
+  org registered in `spec/v2/declaration.json`, and has no equivalent for paths.
+  Recorded as an open gap — undecided, not permissive — rather than answered by
+  invention.
+
 ## [2.0.8] — 2026-09-07 — the verifier asked a v1 question about v2 hosts
 
 Conformance-suite fix. No wire shape, field, error code, `MUST`, or prose

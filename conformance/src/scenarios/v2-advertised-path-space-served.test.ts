@@ -36,6 +36,21 @@
  * need no fixture, mutate nothing, and a route that is not mounted answers 404
  * regardless of auth, so the check is unaided and safe against a live host.
  *
+ * The manifest scoping is the RULE's scope, not just this instrument's budget.
+ * `versioning.md` §1.2 binds "every operation named in
+ * `spec/v2/path-manifest.json` that it serves under the other" — surfaces the
+ * manifest does not name are outside the paragraph. That qualifier was added
+ * after a tier-2 host asked whether its four proprietary `/v1` roots were
+ * bound: the older unqualified wording said "every operation it serves", which
+ * this scenario has never measured and which `conformance.md` §"Test seams"
+ * contradicts by requiring the manifest to omit seam operations. Stating the
+ * scope in both places is deliberate — a rule whose prose quantifies wider than
+ * its only instrument reports a general claim from a sampled one.
+ *
+ * What remains UNMEASURED even so: non-GET and parameterised manifest
+ * operations. The prose binds them; nothing here probes them. The motivating
+ * defect was `POST /webhooks`, found by hand, not by this file.
+ *
  * @see spec/v2/core/versioning.md §1.2
  * @see RFCS/0172-v2-versioning-and-release.md §A.1
  */
