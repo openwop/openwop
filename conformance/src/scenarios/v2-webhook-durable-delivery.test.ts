@@ -31,7 +31,7 @@ import { afterEach, describe, it, expect } from 'vitest';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
-import { resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
@@ -74,10 +74,11 @@ async function startReceiver(failFirst: number): Promise<{ server: Server; url: 
   });
   const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
   const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  await new Promise<void>((resolve) => server.listen(bindPort, '127.0.0.1', () => resolve()));
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
   const addr = server.address();
   if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  return { server, url: `http://127.0.0.1:${addr.port}/`, attempts };
+  return { server, url: `http://${binding.advertise}:${addr.port}/`, attempts };
 }
 
 let active: Server | null = null;

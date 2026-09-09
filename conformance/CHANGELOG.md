@@ -1,5 +1,53 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.10] — 2026-09-09 — three webhook scenarios could not be witnessed off-process
+
+`webhook-signed-delivery`, `replay-fanout-suppression` and
+`v2-webhook-durable-delivery` each stand up their own HTTP receiver and hand the
+host under test a URL to POST to. All three hard-coded `127.0.0.1` in the two
+places that matter, so a host running anywhere but *this process* was told to
+deliver to its own loopback.
+
+MEASURED 2026-09-09 on a container lane whose harness doubles (compat provider,
+OIDC issuer) were reachable via `--add-host host.docker.internal:host-gateway`,
+from inside the container:
+
+```
+"msg":"webhook delivery failed","url":"http://127.0.0.1:55469/",
+"detail":"fetch failed (connect ECONNREFUSED 127.0.0.1:55469)"
+```
+
+Two independent blockers, both this suite's, neither the operator's: the
+receiver **advertised** `127.0.0.1`, and it **bound loopback-only**, so no
+external name could have reached it either. The lane was configured correctly.
+The host signs webhooks correctly. The scenarios recorded a plain `fail` while
+being unwitnessable — which is a false accusation, and the mirror of a gate that
+cannot fail: a scenario whose pass condition cannot be satisfied in the posture
+it is run in.
+
+**Fix.** New `receiverBinding()` in `lib/webhook-receiver.ts`, used by all three.
+It is a no-op by default: with `OPENWOP_CONFORMANCE_HARNESS_HOST` unset it
+returns `{ bind: '127.0.0.1', advertise: '127.0.0.1' }`, byte-for-byte today's
+behaviour, and **no receiver's bind widens for an in-process run**. Only when an
+operator sets that variable — declaring that the host under test is somewhere
+`127.0.0.1` does not name this process, and naming how it reaches this machine —
+does the receiver bind `0.0.0.0` and advertise that name. The variable already
+carried exactly this meaning for host-side harness doubles; the suite's own
+receivers simply never consulted it.
+
+**No SSRF gate is relaxed.** `host.docker.internal` is still a private address
+over plain `http`, so the three gates in `webhook-signed-delivery`'s docblock
+apply unchanged and a host must still opt in (or front the receiver with
+`OPENWOP_WEBHOOK_RECEIVER_URL`, which waives nothing) to witness the row. All
+this changes is that the packet now has somewhere to go.
+
+**Self-tests pin the call sites, not just the helper** — a helper that is
+correct and unused is precisely the defect being fixed, and a unit test on
+`receiverBinding()` alone stays green through a full revert of all three
+scenarios. Sabotage-verified with disjoint red sets: reverting either the bind
+or the advertise of any one scenario reds exactly that scenario's case, and each
+helper branch reds only its own.
+
 ## [2.0.9] — 2026-09-09 — the rule this suite measures now says what it measures
 
 No scenario logic changes, no assertion changes, and no host disposition

@@ -14,8 +14,12 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { createHmac } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   SIGNATURE_PREFIX,
+  receiverBinding,
   createReceiverState,
   verifyWebhookDelivery,
   signPayload,
@@ -141,4 +145,72 @@ describe('resolveRegistrationUrl — OPENWOP_WEBHOOK_RECEIVER_URL', () => {
     set('https://172.32.0.1/hook');
     expect(resolveRegistrationUrl(LOCAL).tunnelled).toBe(true);
   });
+});
+
+/**
+ * `receiverBinding()` — where a scenario's own webhook receiver listens and
+ * what it advertises.
+ *
+ * Two levels of assertion here, deliberately. The first group pins the helper's
+ * two branches. The second pins the three CALL SITES, because a helper that is
+ * correct and unused is the exact defect this change fixes: before it existed,
+ * `webhook-signed-delivery` and `replay-fanout-suppression` failed in a
+ * container lane whose doubles were reachable, because they hard-coded
+ * `127.0.0.1` in the two places that matter and never consulted the harness's
+ * own advertise convention. A unit test on the helper alone would stay green
+ * through a full revert of all three scenarios.
+ */
+describe('receiverBinding: loopback by default, operator-declared otherwise', () => {
+  const KEY = 'OPENWOP_CONFORMANCE_HARNESS_HOST';
+  const saved = process.env[KEY];
+  afterEach(() => {
+    if (saved === undefined) delete process.env[KEY];
+    else process.env[KEY] = saved;
+  });
+
+  it('binds and advertises loopback when the variable is unset', () => {
+    delete process.env[KEY];
+    expect(receiverBinding()).toEqual({ bind: '127.0.0.1', advertise: '127.0.0.1' });
+  });
+
+  it('treats a blank or whitespace value as unset rather than binding 0.0.0.0 to an empty name', () => {
+    process.env[KEY] = '   ';
+    expect(receiverBinding()).toEqual({ bind: '127.0.0.1', advertise: '127.0.0.1' });
+  });
+
+  it('binds all interfaces and advertises the declared name when the variable is set', () => {
+    process.env[KEY] = 'host.docker.internal';
+    expect(receiverBinding()).toEqual({ bind: '0.0.0.0', advertise: 'host.docker.internal' });
+  });
+});
+
+describe('receiverBinding: every scenario receiver actually uses it', () => {
+  /**
+   * The three scenarios that stand up their own HTTP receiver and hand the host
+   * a URL. Any future one belongs here too — a receiver that hard-codes
+   * loopback is unwitnessable off-process, and records a `fail` rather than a
+   * missing precondition while being so.
+   */
+  const RECEIVER_SCENARIOS = [
+    'webhook-signed-delivery.test.ts',
+    'replay-fanout-suppression.test.ts',
+    'v2-webhook-durable-delivery.test.ts',
+  ] as const;
+
+  const here = dirname(fileURLToPath(import.meta.url));
+
+  for (const name of RECEIVER_SCENARIOS) {
+    it(`${name} binds and advertises via receiverBinding(), not a literal`, () => {
+      const src = readFileSync(join(here, '..', 'scenarios', name), 'utf8');
+      expect(src).toContain('receiverBinding');
+      expect(src).toMatch(/server\.listen\([^)]*binding\.bind/);
+      expect(src).toContain('http://${binding.advertise}:');
+      // The literal must be gone from BOTH places, not just the one that is
+      // easier to notice. A receiver that advertises the right name while
+      // bound to loopback is still unreachable, and the failure looks
+      // identical to the host refusing the delivery.
+      expect(src).not.toMatch(/server\.listen\([^)]*'127\.0\.0\.1'/);
+      expect(src).not.toContain('url: `http://127.0.0.1:');
+    });
+  }
 });

@@ -18,8 +18,11 @@
  *
  * Operator contract — THREE gates, not one (clarified 2026-08-25).
  *
- * The test receiver is `http://127.0.0.1:{port}/`, and `webhooks.md`
- * forbids it three separate times. A host honoring
+ * The test receiver is `http://127.0.0.1:{port}/` — or, where the operator has
+ * declared `OPENWOP_CONFORMANCE_HARNESS_HOST` because the host under test is
+ * off-process, `http://{that name}:{port}/` (see `receiverBinding`). Either
+ * way it is a private address over plain `http`, and `webhooks.md` forbids it
+ * three separate times. A host honoring
  * `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` (or an equivalent opt-in) MUST
  * relax ALL THREE for this scenario to be witnessable:
  *
@@ -107,7 +110,7 @@ import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { discoverOwnedTenant, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { discoverOwnedTenant, receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 import { req } from '../lib/requirement-ids.js';
 
 interface DeliveredRequest {
@@ -141,10 +144,11 @@ async function startReceiver(): Promise<{ server: Server; url: string; received:
   // pins it so `ngrok http <port>` (or a proxy) has a stable target.
   const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
   const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  await new Promise<void>((resolve) => server.listen(bindPort, '127.0.0.1', () => resolve()));
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
   const addr = server.address();
   if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  return { server, url: `http://127.0.0.1:${addr.port}/`, received };
+  return { server, url: `http://${binding.advertise}:${addr.port}/`, received };
 }
 
 let activeServer: Server | null = null;
