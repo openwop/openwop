@@ -1,5 +1,35 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.9] — 2026-09-09 — the rule this suite measures now says what it measures
+
+No scenario logic changes, no assertion changes, and no host disposition
+changes. `v2-advertised-path-space-served` behaves exactly as it did in 2.0.8.
+What changed is the corpus prose the scenario cites, and this suite ships that
+corpus as its pinned `@openwop/spec-artifacts` peer — so the version moves with
+it.
+
+**`versioning.md` §1.2 quantified wider than this suite has ever measured.** The
+MUST read *"every operation it serves under the other"*, unqualified. This
+scenario has always built its probe set from `spec/v2/path-manifest.json`
+(`parameterlessGets()`), so it measured manifest operations and reported a
+claim about everything a host serves. §1.2 is now scoped to operations **named
+in the manifest** — which is what the instrument does, and what
+`conformance.md` §"Test seams" requires, since that document forbids the
+manifest to name seam operations while the seams profile mounts them.
+
+The narrowing keeps the case the rule exists for: the motivating defect was
+`POST /webhooks` answering `404` under major 2 while `POST /v1/webhooks`
+answered `201`, and `webhooks` is a manifest operation.
+
+**The docblock now states what stays unmeasured.** Non-GET and parameterised
+manifest operations are bound by the prose and probed by nothing here. The
+`POST /webhooks` defect was found by hand, not by this file.
+
+Raised by a tier-2 host asking whether four proprietary `/v1` roots
+(`packs`, `canvas-types`, `_internal`, `packs-test`) were bound. They were not
+— but only because of what the instrument samples, not because the prose said
+so.
+
 ## [2.0.8] — 2026-09-07 — the verifier asked a v1 question about v2 hosts
 
 No host behaviour changes and no wire changes. One defect in the suite's own

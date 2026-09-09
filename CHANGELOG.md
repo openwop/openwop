@@ -13,6 +13,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.9] — 2026-09-09 — a MUST that bound more path space than any instrument measures
+
+Spec errata. No wire shape, field, error code, or schema change; no RFC. One
+normative clause is **narrowed** to the scope its only instrument has always
+measured, and two things the overlap left implicit are written down. No host's
+disposition changes.
+
 ### Fixed
 
 - **`versioning.md` §1.2 bound more path space than any instrument measures, and
