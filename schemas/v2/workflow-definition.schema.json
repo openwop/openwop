@@ -105,7 +105,7 @@
       }
     },
     "configurableSchema": {
-      "description": "Optional JSON Schema 2020-12 declaring which RunOptions.configurable keys this workflow accepts. When present, hosts MUST validate POST /v1/runs `configurable` payloads against this schema and reject mismatches with `validation_error`. Hosts MUST surface this schema on GET /v1/workflows/{workflowId} so clients can pre-flight-validate. See run-options.md \u00a7'Per-workflow configurableSchema'. Additive in v1.1.",
+      "description": "Optional JSON Schema 2020-12 declaring which RunOptions.configurable keys this workflow accepts. When present, hosts MUST validate POST /runs `configurable` payloads against this schema and reject mismatches with `validation_error`. Hosts MUST surface this schema on GET /workflows/{workflowId} so clients can pre-flight-validate. See run-options.md \u00a7'Per-workflow configurableSchema'. Additive in v1.1.",
       "type": "object",
       "additionalProperties": true
     },

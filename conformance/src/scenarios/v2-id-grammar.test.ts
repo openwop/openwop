@@ -9,6 +9,16 @@
  * by hand so a failure names the field). A crafted id whose tenant segment is
  * not the caller's MUST be refused — `403 id_tenant_mismatch`, or `404
  * not_found` where the host chooses not to leak existence.
+ *
+ * Suite 2.0.10 adds the bare-id leg (`identity.md` §5, stated 2026-09-10):
+ * a major-2 request whose tenant-bound path parameter carries only the opaque
+ * segment — the v1 spelling of the run this caller just created — is the
+ * overlap's affordance. While the host advertises a `1.x` member it MUST
+ * resolve the bare id under the caller's tenant and answer 200 with the BOUND
+ * id in the body (the same rule `v2-dual-stack-negotiation` measures for a
+ * `/v1/`-created run); once no `1.x` member is advertised it MUST refuse the
+ * bare form `400 validation_error`. The leg decides which branch applies from
+ * live discovery, so it is the expiry's witness as well as the affordance's.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -73,5 +83,25 @@ describe('v2 id-grammar (RFC 0170 §D.1)', () => {
     const code = readErrorCode(res.json);
     expect(code === 'id_tenant_mismatch' || code === 'not_found', req('openwop.requirement.0170.id-grammar.tenant-binding', DOC, `the refusal MUST carry id_tenant_mismatch or not_found (got ${String(code)})`)).toBe(true);
     expect(res.status === 403 ? code === 'id_tenant_mismatch' : code === 'not_found', req('openwop.requirement.0170.id-grammar.tenant-binding', 'spec/v2/core/errors.md', 'the code MUST be answered with its registered HTTP status (id_tenant_mismatch → 403, not_found → 404)')).toBe(true);
+  });
+
+  it('a bare (unbound) run id in a major-2 path: admitted under the caller\'s tenant through the overlap, refused 400 validation_error after it', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0');
+    const versions = Array.isArray(doc['protocolVersions']) ? (doc['protocolVersions'] as unknown[]).filter((v): v is string => typeof v === 'string') : [];
+    const overlap = versions.some((v) => v.startsWith('1.'));
+    const c = await createRun();
+    if ('reason' in c) return softSkip('blocked', c.reason);
+    if (!RUN_ID.test(c.runId)) return softSkip('blocked', `the created runId is not tenant-bound (${c.runId}) — the snapshot leg reports that; nothing to strip here`);
+    const bare = c.runId.slice(c.runId.indexOf('/') + 1);
+    const res = await http(() => driver.get(`/runs/${encodeURIComponent(bare)}`));
+    if (res === null) return softSkip('blocked', 'GET /runs/{bare runId} unreachable (fetch failed)');
+    if (overlap) {
+      expect(res.status, req('openwop.requirement.0170.id-grammar.bare-id', DOC, `through the overlap (protocolVersions ${versions.join(', ')} carries a 1.x member) a bare run id on a major-2 path MUST resolve under the caller's tenant — 200 for the run this caller just created; got ${res.status} ${readErrorCode(res.json) ?? ''}`)).toBe(200);
+      expect((res.json as { runId?: unknown } | undefined)?.runId, req('openwop.requirement.0170.id-grammar.bare-id', DOC, 'a resource reached by its bare id MUST still be named by its bound projection in the major-2 response body (versioning.md §5) — the affordance is on the path parameter, never in a document')).toBe(c.runId);
+    } else {
+      expect(res.status, req('openwop.requirement.0170.id-grammar.bare-id', DOC, `after the overlap (protocolVersions ${versions.join(', ')} carries no 1.x member) the bare form MUST be refused 400 validation_error — the v1 spelling has nothing left to bridge; got ${res.status} ${readErrorCode(res.json) ?? ''}`)).toBe(400);
+      expect(readErrorCode(res.json), req('openwop.requirement.0170.id-grammar.bare-id', 'spec/v2/core/errors.md', 'the refusal MUST carry validation_error — not id_tenant_mismatch (no segment to mismatch) and not not_found (a form the host no longer admits is not looked up)')).toBe('validation_error');
+    }
   });
 });

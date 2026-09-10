@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/localized-content-page-response.schema.json",
   "title": "LocalizedContentPageResponse",
-  "description": "RFC 0103 (spec/v1/localized-content.md §D). The resolved delivery response for `GET /v1/content/pages/{slug}`. `locale` is the negotiated locale (equals the `Content-Language` response header). `sections[]` carry the ALREADY-MERGED section bodies — resolution (the per-section field merge §C) happened server-side, so no `localizations` map appears in the response. Only `published`, `enabled` sections are present, in render order.",
+  "description": "RFC 0103 (spec/v1/localized-content.md §D). The resolved delivery response for `GET /content/pages/{slug}`. `locale` is the negotiated locale (equals the `Content-Language` response header). `sections[]` carry the ALREADY-MERGED section bodies — resolution (the per-section field merge §C) happened server-side, so no `localizations` map appears in the response. Only `published`, `enabled` sections are present, in render order.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-diff-response.schema.json",
   "title": "RunDiffResponse",
-  "description": "RFC 0054 — deterministic, replay-aware structured diff of two runs' event sequences and terminal states, returned by GET /v1/runs/{runId}:diff?against={otherRunId}. The diff is a pure function of the two event logs (see spec/v1/replay.md determinism contract).",
+  "description": "RFC 0054 — deterministic, replay-aware structured diff of two runs' event sequences and terminal states, returned by GET /runs/{runId}:diff?against={otherRunId}. The diff is a pure function of the two event logs (see spec/v1/replay.md determinism contract).",
   "type": "object",
   "required": [
     "a",
