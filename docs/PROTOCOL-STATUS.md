@@ -27,10 +27,10 @@
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
 | Python SDK `openwop-client` | 1.7.0 | openwop-sdks `sdk/python/pyproject.toml` | as above |
 | Go SDK `github.com/openwop/openwop-sdks/go` | 1.5.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file) | as above |
-| openwop-sdks corpus pin | openwop-conformance/v1.162.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
-| CLI `@openwop/cli` | 0.2.2 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
+| openwop-sdks corpus pin | v2.0.8 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
+| CLI `@openwop/cli` | 0.18.2 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
-| openwop-registry corpus pin | openwop-conformance/v1.162.0 | openwop-registry `CORPUS_TAG` | as the SDK pin |
+| openwop-registry corpus pin | v2.0.0-rc.1 | openwop-registry `CORPUS_TAG` | as the SDK pin |
 | openwop-app corpus pin / suite pin | openwop-conformance/v1.159.0 / ^1.159.0 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
