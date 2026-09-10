@@ -1,6 +1,6 @@
 # Versioning and Release
 
-> **Status: Stable · v2.0.9 (2026-09-10) · RFC 0172, 0179, 0176.**
+> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0172, 0179, 0176.**
 
 ## Why this exists
 
@@ -39,7 +39,19 @@ A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value 
 
 ### 1.4 The response header
 
-A response on any path MUST carry `OpenWOP-Version: <major>.<minor>` naming the contract that produced it. Reporting a version other than the one used is a silent downgrade and non-conformant; the `dual-stack-negotiation` scenario falsifies it. Emitting the header on `/v1/` responses is additive in v1.x and REQUIRED in v2.
+Every protocol response MUST carry `OpenWOP-Version: <major>.<minor>` naming the contract that produced it. Reporting a version other than the one used is a silent downgrade and non-conformant; the `dual-stack-negotiation` scenario falsifies it. Emitting the header on `/v1/` responses is additive in v1.x and REQUIRED in v2.
+
+A *protocol response* is one produced by an operation named in `spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap); a shell, a hosting fallback or a proprietary route on the same origin has no version to name. Errata 2026-09-10: this read "any path" — §1.2's quantifier defect again.
+
+**A non-protocol response MUST NOT carry `OpenWOP-Version` and MUST NOT be `application/json`**; a reader, a cache or the suite MUST NOT count a response without the header, or with a `text/html` body, as reaching the operation (`reachedUnderMajor2`).
+
+**Content negotiation on a shared name is permitted, with conditions.** A host MAY serve a protocol operation and a page under one unversioned name, selecting on `Accept`, iff:
+
+1. A request identifying as a protocol client — `OpenWOP-Version` present, **or** an `Accept` admitting `application/json` without preferring `text/html` (absent and `*/*` included) — MUST get the protocol response for the applicable major (§1.3) with `OpenWOP-Version`; only an explicit `text/html` preference selects the page.
+2. The page obeys the paragraph above.
+3. The response carries `Vary: Accept, OpenWOP-Version`.
+
+Otherwise the page MUST move off the shared name.
 
 ### 1.5 Client precedence and `minClientVersion`
 
@@ -96,13 +108,15 @@ A consumer that vendors any file from `schemas/`, `api/`, or `spec/` MUST pin to
 
 Through the overlap a host MUST advertise both majors (§1.1), MUST emit `OpenWOP-Version` on every response (§1.4), and MUST serve `/.well-known/openwop` as one resource whose representation the request header selects (`capabilities.md`). The dual-stack scenario creates one run through `/v1/runs` with no header and reads it through `/runs` with `OpenWOP-Version: 2`; the response headers name the contract used.
 
-**A run minted under major 1 and read under major 2 MUST be named by its tenant-bound projection** `<tenantId>/<the v1 id>` (`identity.md` §5). A host MUST NOT return the bare v1 id in a major-2 response body. This paragraph is normative because its absence was a real defect: until 2026-09-04 §5 described the overlap's shape and said nothing about the identifier, so a conformance check asserted byte-equality with the v1 id, a host implemented `identity.md` §5 instead, and the two could not both hold. Neither reading was wrong about §5 — §5 had no reading.
+**A run minted under major 1 and read under major 2 MUST be named by its tenant-bound projection** `<tenantId>/<the v1 id>` (`identity.md` §5). A host MUST NOT return the bare v1 id in a major-2 response body. Normative since 2026-09-04, when a conformance check asserting byte-equality with the v1 id and a host implementing `identity.md` §5 could not both hold — §5 had no reading.
 
 The projection is mandatory rather than optional for a reason that is not stylistic. A tenant-bound id carries the tenant segment that §5's `403 id_tenant_mismatch` check reads. **A bare, unprefixed id has no tenant segment, so the mandatory cross-tenant refusal cannot run on it at all.** Admitting a legacy unprefixed form under major 2 would therefore create a class of identifiers — exactly the long-lived ones, carried over from v1 — on which major 2's tenant-isolation check is structurally inapplicable. The grammar in `ids.schema.json` has no legacy branch, and it MUST NOT acquire one.
 
 The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]` drops the `1.<n>` member and every alias carrying the `v1-end-of-support` trigger is removed.
 
 **Retirement is atomic, and that is a consequence of §1.1 rather than a separate rule.** Through the overlap `preferredVersion` MUST name a `1.x` member; a host that drops v1 from `protocolVersions[]` advertises a `2.x` `preferredVersion`. There is no legal intermediate state in which both majors are advertised and `2.x` is preferred, so flipping `preferredVersion` ahead of the drop is not a smaller first step — it is the same step. Dropping v1 therefore retires the whole `/v1` path space at once, not incrementally.
+
+**Retirement flips every header-less request's contract.** Through the overlap a header-less request on an unversioned name is served major 1 (§1.3); where the v1 surface lives under `/v1/` that name is not a v1 key and falls through to whatever else is served there — typically a page. At end-of-support the same request is served major 2 and the page starts answering the operation. A `/v1/`-counting inventory cannot see this. Test: `manifest top-level segments ∩ anything else served unversioned` (`{agents, prompts, runs}` on the host that found it). A non-empty intersection MUST be resolved before end-of-support: move the page, or serve it under §1.4's conditions.
 
 **Open gap — host-proprietary paths have no defined successor.** A host may serve `/v1` roots the manifest does not name. §1.2 does not bind them, and at end-of-support the `/v1` prefix that addressed them is gone, so the protocol says nothing about where they go. This is **undecided, not permissive**: the corpus reserves a vendor namespace for capability records (`capabilities.md` §"extensions"), error codes (`errors.md`), event types (`events.md`), and pack-document properties (`packs.md`), each keyed to an org registered in `spec/v2/declaration.json` — and has no equivalent for paths. RFC 0172 rejected a `/v2/` path space and did not reach this question. The one worked example of a legitimate path space outside the manifest is the seams profile (`conformance.md` §"Test seams"), which stays honest by advertising `openwop-conformance-seams-v2` in `profiles[]` rather than by any path-level rule. A host in this position SHOULD record the affected roots before end-of-support so the set is known when the question is decided.
 

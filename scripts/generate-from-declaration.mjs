@@ -39,6 +39,24 @@ const VERSION_RE = '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$';
 const decl = JSON.parse(readFileSync(DECL, 'utf8'));
 const v1 = JSON.parse(readFileSync(V1, 'utf8'));
 
+// Seeded descriptions are v1 prose and spell operations as `/v1/<op>`. Under
+// major 2 a manifest-named operation is addressed by its unversioned key
+// (versioning.md §1.2), so those spellings are rewritten at seed time — ONLY
+// where `<op>` matches an operation or channel template in
+// spec/v2/path-manifest.json. A `/v1/` spelling the manifest does not name
+// (host-sample seams, packs-test, workspace files, `spec/v1/*.md` citations)
+// is left exactly as written: rewriting it would invent a path no v2 host
+// serves. Errata 2026-09-10: `prompts.renderEndpoint` shipped in the v2 schema
+// saying "Defaults to `/v1/prompts:render`", and a host advertised exactly that.
+const MANIFEST = JSON.parse(readFileSync(join(ROOT, 'spec', 'v2', 'path-manifest.json'), 'utf8'));
+const MANIFEST_TEMPLATES = [...new Set([...MANIFEST.operations.map((o) => o.path), ...MANIFEST.channels.map((c) => c.address)])]
+  .filter((p) => p !== '/.well-known/openwop' && p !== '/openapi.json')
+  .sort((a, b) => b.length - a.length)
+  .map((t) => new RegExp('^' + t.split('/').slice(1).map((s) => (s.startsWith('{') ? '(?:\\{[A-Za-z]+\\}|[A-Za-z0-9._~-]+)' : s.replace(/[.:]/g, '\\$&'))).join('/') + '(?=$|[^A-Za-z0-9._~{}/-])'));
+function unversionManifestSpellings(text) {
+  return text.replace(/\/v1\/([^\s"'`)\]>,\\]*)/g, (whole, rest) => (MANIFEST_TEMPLATES.some((re) => re.test(rest)) ? `/${rest}` : whole));
+}
+
 function metadataSchema(key) {
   // The v2 shapes of the metadata keys RFC 0169 §A.1a keeps. Anything not
   // decided by a child yet copies the v1 property (seeded).
@@ -89,6 +107,7 @@ function metadataSchema(key) {
 function stripSupported(schema) {
   if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return schema;
   const out = { ...schema };
+  if (typeof out.description === 'string') out.description = unversionManifestSpellings(out.description);
   if (out.properties) {
     out.properties = Object.fromEntries(Object.entries(out.properties).filter(([k]) => !['supported', 'tier', 'experimentalUntil'].includes(k)).map(([k, v]) => [k, stripSupported(v)]));
   }

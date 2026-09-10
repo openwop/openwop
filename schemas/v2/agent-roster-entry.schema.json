@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/agent-roster-entry.schema.json",
   "title": "AgentRosterEntry",
-  "description": "RFC 0086 §A. A standing agent INSTANCE — a named, tenant-scoped, mutable agent (the 'digital-twin employee', e.g. \"Sally\") that REFERENCES a manifest/deployment (RFC 0070/0082) and OWNS a workflow portfolio (the workflows it is responsible for by role). Distinct from the immutable AgentManifest (the pack-distribution class) and from the RFC 0082 deployment record (the per-version channel). `rosterId` IS a dispatchable `host:<id>` AgentRef agentId — the runtime-synthesis namespace RFC 0002 reserves for host-internal agents that don't ship as packs (NOT a parallel id space): dispatching it resolves the bound `agentRef` and projects `persona`. Content-free of any system-prompt body or credential material (SR-1). The record is host-internal + mutable; this schema is the canonical wire shape a host exposes via GET /v1/agents/roster (the endpoint lands at Active → Accepted per RFC 0086 §Conformance).",
+  "description": "RFC 0086 §A. A standing agent INSTANCE — a named, tenant-scoped, mutable agent (the 'digital-twin employee', e.g. \"Sally\") that REFERENCES a manifest/deployment (RFC 0070/0082) and OWNS a workflow portfolio (the workflows it is responsible for by role). Distinct from the immutable AgentManifest (the pack-distribution class) and from the RFC 0082 deployment record (the per-version channel). `rosterId` IS a dispatchable `host:<id>` AgentRef agentId — the runtime-synthesis namespace RFC 0002 reserves for host-internal agents that don't ship as packs (NOT a parallel id space): dispatching it resolves the bound `agentRef` and projects `persona`. Content-free of any system-prompt body or credential material (SR-1). The record is host-internal + mutable; this schema is the canonical wire shape a host exposes via GET /agents/roster (the endpoint lands at Active → Accepted per RFC 0086 §Conformance).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -72,7 +72,7 @@
       "required": [
         "tenantId"
       ],
-      "description": "RFC 0048 owner triple the entry is scoped by. On a `'tenant'`-install host (RFC 0074), GET /v1/agents/roster returns only entries within the caller's owner triple; a cross-tenant entry 404s.",
+      "description": "RFC 0048 owner triple the entry is scoped by. On a `'tenant'`-install host (RFC 0074), GET /agents/roster returns only entries within the caller's owner triple; a cross-tenant entry 404s.",
       "properties": {
         "tenantId": {
           "$ref": "ids.schema.json#/$defs/tenantId",

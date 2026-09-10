@@ -62,7 +62,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /v1/agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
+      "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
     },
     "role": {
       "type": "string",

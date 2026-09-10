@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/prompt-pack-manifest.schema.json",
   "title": "PromptPackManifest",
-  "description": "Manifest for a published OpenWOP prompt pack — `pack.json` at the pack root with `kind: \"prompt\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003) and `workflow-chain-pack-manifest.schema.json` (RFC 0013); disjoint from both via the `kind` discriminator. See `spec/v1/prompts.md` §\"Discovery & distribution\" for the canonical contract and RFC 0028 §B for the rationale.\n\nPrompt packs distribute curated PromptTemplate collections via the same signed-tarball + Ed25519 + SRI pipeline that already serves node and workflow-chain packs. When a host installs a prompt pack and advertises `capabilities.prompts.packsSupported: true`, the templates appear in `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`.",
+  "description": "Manifest for a published OpenWOP prompt pack — `pack.json` at the pack root with `kind: \"prompt\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003) and `workflow-chain-pack-manifest.schema.json` (RFC 0013); disjoint from both via the `kind` discriminator. See `spec/v1/prompts.md` §\"Discovery & distribution\" for the canonical contract and RFC 0028 §B for the rationale.\n\nPrompt packs distribute curated PromptTemplate collections via the same signed-tarball + Ed25519 + SRI pipeline that already serves node and workflow-chain packs. When a host installs a prompt pack and advertises `capabilities.prompts.packsSupported: true`, the templates appear in `GET /prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`.",
   "type": "object",
   "required": [
     "name",
@@ -84,7 +84,7 @@
       "items": {
         "$ref": "./prompt-template.schema.json"
       },
-      "description": "PromptTemplate entries per RFC 0027 §A. Each MUST have a unique `(templateId, version)` pair within the pack. Hosts installing this pack expose the templates at `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName: <this pack's name>` + `meta.packVersion: <this pack's version>` populated automatically (RFC 0028 §C)."
+      "description": "PromptTemplate entries per RFC 0027 §A. Each MUST have a unique `(templateId, version)` pair within the pack. Hosts installing this pack expose the templates at `GET /prompts` with `meta.source: \"pack\"` + `meta.packName: <this pack's name>` + `meta.packVersion: <this pack's version>` populated automatically (RFC 0028 §C)."
     },
     "signing": {
       "type": "object",

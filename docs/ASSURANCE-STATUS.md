@@ -40,7 +40,7 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.0.9**; corpus release **2.0.9** (2026-09-10).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.0.11**; corpus release **2.0.11** (2026-09-10).
 
 ## Open Critical / High program risks
 

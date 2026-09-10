@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/annotation-create.schema.json",
   "title": "AnnotationCreate",
-  "description": "RFC 0056. Request body for `POST /v1/runs/{runId}/annotations`. The host assigns `annotationId` + `createdAt`, derives `actor.principalRef` from the authenticated principal, and binds `target.runId` to the path `runId` — so the client supplies only the target anchor (event/node), the signal, and an optional note. The response is a full `annotation.schema.json`.",
+  "description": "RFC 0056. Request body for `POST /runs/{runId}/annotations`. The host assigns `annotationId` + `createdAt`, derives `actor.principalRef` from the authenticated principal, and binds `target.runId` to the path `runId` — so the client supplies only the target anchor (event/node), the signal, and an optional note. The response is a full `annotation.schema.json`.",
   "type": "object",
   "required": [
     "signal"
