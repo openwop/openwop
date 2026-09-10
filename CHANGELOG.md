@@ -22,6 +22,20 @@ written down, and every surface that still described v2 as unreleased is
 corrected. No host's disposition changes, and **nothing about the overlap
 changes**: `preferredVersion` stays on `1.x` by MUST until v1 end-of-support.
 
+Second erratum, same day, same defect shape: `versioning.md` §1.4 read "a
+response on **any path** MUST carry `OpenWOP-Version`" — a quantifier over the
+origin where the rationale (a silent downgrade) and the only instrument
+(`v2-advertised-path-space-served`'s `reachedUnderMajor2`) both quantify over
+protocol operations. Narrowed to *every protocol response*; a non-protocol
+response on a shared name MUST NOT carry the header and MUST NOT be
+`application/json`; content negotiation on `Accept` is permitted under three
+conditions (protocol-client default gets the wire; the page is
+distinguishable; `Vary: Accept, OpenWOP-Version`). §5 names the retirement
+hazard a tier-1 host surfaced — the header-less default is what separates a
+page from the wire on a shared name, and end-of-support flips it — with the
+test `manifest top-level segments ∩ anything else served unversioned`. README
+"Published artifacts" now names the 2.0.0 SDKs the registries serve.
+
 ### Changed
 
 - **The corpus now says what major it is on.** `v2.0.0` was tagged 2026-09-05,
