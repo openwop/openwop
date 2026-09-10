@@ -1,6 +1,6 @@
 # Errors
 
-> **Status: Draft · v2.0.0-rc (2026-09-03) · RFC 0171 §B.**
+> **Status: Stable · v2.0.9 (2026-09-10) · RFC 0171 §B.**
 
 ## Why this exists
 

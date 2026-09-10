@@ -16,6 +16,23 @@ Every section below that begins *"what this actually cost"* is an instance. If y
 
 ---
 
+## If you are a client, not a host
+
+Most of this guide is written for a host. A client's migration is three changes and one thing that does **not** change, and an earlier reader got two of the four backwards — so they are stated here with the rule each one comes from.
+
+| Change | Rule |
+| --- | --- |
+| **Paths are unversioned.** `/v1/runs` → `/runs`, `/v1/runs/{runId}` → `/runs/{runId}`. There is no `/v2/` prefix and there never will be. | [`versioning.md`](../../spec/v2/core/versioning.md) §1.2 |
+| **`OpenWOP-Version` on a request is optional; on a response it is not.** A request on an unversioned path **MAY** carry `OpenWOP-Version: 2`; absent, the host serves `preferredVersion`'s major — which through the overlap is **v1**, so a client that wants v2 and omits the header gets v1. Send it. Every response **MUST** carry `OpenWOP-Version: <major>.<minor>`; a response without it did not come from the host. | §1.3, §1.4 |
+| **`principal` and `principalKind` are gone from run snapshots.** `RunSnapshot.owner` is `{ tenant, workspace?, subject }`; read `owner.subject.subjectId` and `owner.subject.kind`. Ids are tenant-bound (`<tenantId>/<opaque>`) and a v1-minted run read under v2 comes back projected, never bare. | [`identity.md`](../../spec/v2/core/identity.md) §5; `versioning.md` §5 |
+| **What does not change: v1 keeps working.** A client on `/v1/…` with no header is a v1 client and is served v1, unchanged, for the whole overlap. A host **MUST** keep `preferredVersion` on `1.x` while it advertises any `1.x` (§1.1), so nothing you did not change breaks. | §1.1, §5 |
+
+**When v1 stops.** End-of-support is the later of two clocks in [`overview.md`](../../spec/v2/core/overview.md): (a) every INTEROP-MATRIX host's non-vacuous v2 bundle plus 90 days, and (b) 18 months from the v2 release — **(b) applies only if the matrix lists a host operated by someone other than the steward at the time v2 was released**. A reading that says "18 months, guaranteed" has dropped the condition. Earliest date for (a): 2026-12-04. The number to watch is `evidence/v1-end-of-support.json`, generated, not the prose.
+
+**Which SDK.** The 2.x client SDKs (`@openwop/openwop@2`, `openwop-client@2`, `github.com/openwop/openwop-sdks/go/v2`) are on `openwop-sdks` `main` and not yet published; until they are, a 1.x SDK against `/v1/…` is the correct pin and is not a downgrade. The suite that measures either major is `@openwop/openwop-conformance@2.x` with `--target-major`.
+
+---
+
 ## The overlap: what a dual-stack host owes
 
 Through the overlap a host advertises both majors, emits `OpenWOP-Version` on every response, and serves `/.well-known/openwop` as one resource whose representation the request header selects.

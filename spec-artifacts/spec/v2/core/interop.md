@@ -1,6 +1,6 @@
 # Interop
 
-> **Status: Draft · v2.0.0-rc (2026-09-03) · RFC 0175.**
+> **Status: Stable · v2.0.9 (2026-09-10) · RFC 0175.**
 
 ## Why this exists
 
