@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/trigger-subscription-registration.schema.json",
   "title": "TriggerSubscriptionRegistration",
-  "description": "RFC 0099 §F.2. The portable create request for an external-event trigger subscription, served by `POST /v1/trigger-subscriptions`. Binds an external source (`webhook`/`email`/`form`) to a Workflow to start, with a dedup config and a source-authenticity verification policy. This is the unified create surface RFC 0083 UQ1 left per-source. The response returns the created `TriggerSubscription` (RFC 0083 §B) plus a source-specific `binding`; the binding secret/URL is returned ONCE at creation and is not re-fetchable in cleartext (SR-1).",
+  "description": "RFC 0099 §F.2. The portable create request for an external-event trigger subscription, served by `POST /trigger-subscriptions`. Binds an external source (`webhook`/`email`/`form`) to a Workflow to start, with a dedup config and a source-authenticity verification policy. This is the unified create surface RFC 0083 UQ1 left per-source. The response returns the created `TriggerSubscription` (RFC 0083 §B) plus a source-specific `binding`; the binding secret/URL is returned ONCE at creation and is not re-fetchable in cleartext (SR-1).",
   "type": "object",
   "additionalProperties": false,
   "required": [

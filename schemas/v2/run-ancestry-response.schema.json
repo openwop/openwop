@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-ancestry-response.schema.json",
   "title": "RunAncestryResponse",
-  "description": "RFC 0040 §C — response shape for `GET /v1/runs/{runId}/ancestry`. Returns the cross-host parent chain for a run. When the parent is on the same host, `parent.wellKnownUrl` is absent (existing single-host case). When the parent is on a different host, `parent.wellKnownUrl` MUST be set so a client can resolve the chain by walking the URLs. `parent: null` means the current run is a top-level run (not dispatched from another host). Hosts advertising `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true` MUST serve this shape on a 200 response.",
+  "description": "RFC 0040 §C — response shape for `GET /runs/{runId}/ancestry`. Returns the cross-host parent chain for a run. When the parent is on the same host, `parent.wellKnownUrl` is absent (existing single-host case). When the parent is on a different host, `parent.wellKnownUrl` MUST be set so a client can resolve the chain by walking the URLs. `parent: null` means the current run is a top-level run (not dispatched from another host). Hosts advertising `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true` MUST serve this shape on a 200 response.",
   "type": "object",
   "additionalProperties": false,
   "required": [

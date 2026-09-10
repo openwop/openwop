@@ -966,7 +966,7 @@
     },
     "_inputsObject": {
       "type": "object",
-      "description": "Caller-supplied workflow inputs (from POST /v1/runs body).",
+      "description": "Caller-supplied workflow inputs (from POST /runs body).",
       "additionalProperties": true
     },
     "_outputsObject": {
@@ -1422,7 +1422,7 @@
     },
     "contextSummarized": {
       "type": "object",
-      "description": "RFC 0111. Emitted when the host replaces older in-window orchestrator transcript turns with a host-produced summary to honor `multiAgent.executionModel.contextBudget.transcriptTokenBudget`. CONTENT-FREE: the summary text is NEVER inlined \u2014 `summaryRef` is an artifactId resolved via `GET /v1/runs/{runId}/artifacts/{artifactId}`. The summary is a NONDETERMINISTIC host output governed like an RFC 0041 envelope: on `:fork mode:replay` the host MUST reuse this recorded `summaryRef` and MUST NOT re-summarize (see multi-agent-execution.md \u00a7\"Context economy (RFC 0111)\"). `replacedTurns` lists the event ids the summary stands in for, so a replay engine reconstructs the exact transcript.",
+      "description": "RFC 0111. Emitted when the host replaces older in-window orchestrator transcript turns with a host-produced summary to honor `multiAgent.executionModel.contextBudget.transcriptTokenBudget`. CONTENT-FREE: the summary text is NEVER inlined \u2014 `summaryRef` is an artifactId resolved via `GET /runs/{runId}/artifacts/{artifactId}`. The summary is a NONDETERMINISTIC host output governed like an RFC 0041 envelope: on `:fork mode:replay` the host MUST reuse this recorded `summaryRef` and MUST NOT re-summarize (see multi-agent-execution.md \u00a7\"Context economy (RFC 0111)\"). `replacedTurns` lists the event ids the summary stands in for, so a replay engine reconstructs the exact transcript.",
       "required": [
         "iteration",
         "replacedTurns",
@@ -1448,7 +1448,7 @@
         "summaryRef": {
           "type": "string",
           "minLength": 1,
-          "description": "ArtifactId of the persisted summary (read via `GET /v1/runs/{runId}/artifacts/{artifactId}`). The summary text is NOT on the wire. MUST be persisted/readable as-of the iteration's event-log index; a host that cannot serve it at the requested `fromSeq` MUST refuse the fork (mirrors `replay_memory_snapshot_unavailable`)."
+          "description": "ArtifactId of the persisted summary (read via `GET /runs/{runId}/artifacts/{artifactId}`). The summary text is NOT on the wire. MUST be persisted/readable as-of the iteration's event-log index; a host that cannot serve it at the requested `fromSeq` MUST refuse the fork (mirrors `replay_memory_snapshot_unavailable`)."
         },
         "tokenCounter": {
           "type": "string",
@@ -3360,7 +3360,7 @@
     },
     "evalCompleted": {
       "type": "object",
-      "description": "RFC 0081 \u00a7C. Emitted ONCE, after all tasks and before `run.completed`. Content-free: aggregate scalars only. A recorded-fact event. The full scorecard is the run's output (`eval-summary.schema.json`), served by `GET /v1/runs/{runId}/eval-summary`.",
+      "description": "RFC 0081 \u00a7C. Emitted ONCE, after all tasks and before `run.completed`. Content-free: aggregate scalars only. A recorded-fact event. The full scorecard is the run's output (`eval-summary.schema.json`), served by `GET /runs/{runId}/eval-summary`.",
       "required": [
         "aggregateScore",
         "passed",

@@ -188,7 +188,7 @@
       }
     },
     "openwop-sdks": {
-      "commit": "04b5b6a0bd1855d8a9a25008bfda6719325de64c",
+      "commit": "ac7912cf221942afa21abe62f6292d0e3648256b",
       "files": {}
     }
   },
@@ -230,7 +230,7 @@
       "corpusTag": "v2.0.8"
     },
     "openwop-cli": {
-      "version": "0.18.2",
+      "version": "1.0.1",
       "dependsOnSdk": false
     },
     "openwop-registry": {

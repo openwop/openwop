@@ -1,6 +1,6 @@
 # Webhooks
 
-> **Status: Stable · v2.0.9 (2026-09-10) · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4.**
+> **Status: Stable · v2.0.10 (2026-09-10) · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4.**
 
 ## Why this exists
 

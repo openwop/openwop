@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/agent-inventory-response.schema.json",
   "title": "AgentInventoryResponse",
-  "description": "Response body for `GET /v1/agents` (RFC 0072 §A). A read-only projection of the manifest agents a host has installed into its AgentRegistry (RFC 0003 / RFC 0070). Served only when the host advertises `capabilities.agents.manifestRuntime.supported: true`. Each entry MUST NOT carry the agent's system-prompt body, resolved handoff schemas, or any credential material (SR-1).",
+  "description": "Response body for `GET /agents` (RFC 0072 §A). A read-only projection of the manifest agents a host has installed into its AgentRegistry (RFC 0003 / RFC 0070). Served only when the host advertises `capabilities.agents.manifestRuntime.supported: true`. Each entry MUST NOT carry the agent's system-prompt body, resolved handoff schemas, or any credential material (SR-1).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -27,7 +27,7 @@
     "AgentInventoryEntry": {
       "type": "object",
       "title": "AgentInventoryEntry",
-      "description": "Read projection of an installed `AgentManifest` (agent-manifest.schema.json). Also the body of `GET /v1/agents/{agentId}`.",
+      "description": "Read projection of an installed `AgentManifest` (agent-manifest.schema.json). Also the body of `GET /agents/{agentId}`.",
       "additionalProperties": false,
       "required": [
         "agentId",
@@ -133,7 +133,7 @@
         "roster": {
           "type": "array",
           "uniqueItems": true,
-          "description": "RFC 0086 §B. OPTIONAL/additive. The standing roster INSTANCES of this manifest agent visible to the caller (tenant-scoped per RFC 0074), each with its persona + owned workflow portfolio — so a single GET /v1/agents call surfaces responsibilities without a second round-trip. Present only when the host advertises `capabilities.agents.roster.supported: true`; absent ⇒ no roster surface (today's default).",
+          "description": "RFC 0086 §B. OPTIONAL/additive. The standing roster INSTANCES of this manifest agent visible to the caller (tenant-scoped per RFC 0074), each with its persona + owned workflow portfolio — so a single GET /agents call surfaces responsibilities without a second round-trip. Present only when the host advertises `capabilities.agents.roster.supported: true`; absent ⇒ no roster surface (today's default).",
           "items": {
             "type": "object",
             "additionalProperties": false,

@@ -13,6 +13,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.10] — 2026-09-10 — three things hosts found on the day 2.0.9 shipped
+
+Errata found by two tier-1 hosts within hours of the `v2.0.9` tag, all three
+the same family as 2.0.9's: a v1 spelling or an unstated assumption carried
+into the v2 tree where no instrument read it. No wire shape, field, or error
+code changes; one MUST is stated that the schemas already implied; the suite
+gains one leg. `preferredVersion` stays on `1.x` through the overlap.
+
+### Fixed
+- `schemas/v2/capabilities.schema.json` — `prompts.renderEndpoint` said *"Defaults to `/v1/prompts:render`"* inside the **v2** schema. The default under major 2 is the manifest key `/prompts:render` (`versioning.md` §1.2); a host that advertised `/v1/prompts:render` in its major-2 document was quoting the schema. Found by MyndHyve.
+
+### Changed
+- `identity.md` §5 — states two things the instruments had measured without prose: a tenant-bound id is one percent-encoded path segment (`tenant%2Fopaque`, the bound form MUST be accepted); and **through the overlap the bare form (opaque only, the v1 spelling) is admitted on a major-2 path parameter**, resolved under the caller's tenant only and named bound in the response — the affordance `v2-dual-stack-negotiation` has required since rc.44. It expires with the overlap: a host advertising no `1.x` member MUST refuse the bare form `400 validation_error`. The grammar for ids in documents is unchanged. A same-day steward ruling that said "refuse now" was withdrawn against those witnesses before release; a client that binds at its request seam (as openwop-app now does) is correct either way.
+- `capabilities.md` § a2a / § mcp — a facet MAY name a URL on another origin; that is a claim about the facet, not that the origin speaks v2; certification is per origin. Open gap recorded for the withdrawal question. Found by MyndHyve (facets pointing at a service never in v2 scope).
+
+### Added
+- Conformance `v2-id-grammar` — a fourth leg sends the run this caller just created with its tenant segment stripped: through the overlap it requires 200 with the **bound** id in the body; after it (no `1.x` advertised) it requires `400 validation_error`. The branch is decided from live discovery, so the leg witnesses both the affordance and its expiry.
+
 ## [2.0.9] — 2026-09-10 — the corpus says v2, and a MUST that bound more path space than any instrument measures
 
 Spec errata plus a status correction. No wire shape, field, error code, or

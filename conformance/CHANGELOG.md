@@ -1,5 +1,26 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.10] — 2026-09-10 — the bare-id leg
+
+One new leg in `v2-id-grammar` (`openwop.requirement.0170.id-grammar.bare-id`):
+the run this caller just created is requested again with its tenant segment
+stripped — the v1 spelling of the same resource. While the host advertises a
+`1.x` member the leg requires 200 with the **bound** id in the body (the
+overlap affordance `v2-dual-stack-negotiation` has required since rc.44, now
+stated in `identity.md` §5); once no `1.x` member is advertised it requires
+`400 validation_error`. The branch is read from live discovery.
+
+For the record: the first draft of this leg required 400 unconditionally, on a
+steward ruling given on the bus the same day. Running it against the reference
+host turned `v2-dual-stack-negotiation` and `v2-compensation-read-projection`
+red — the suite already encoded the admission in six places and the prose had
+never said so. The instrument was right; the ruling was withdrawn and the
+prose now matches the instrument.
+
+No other scenario changes. The pinned `@openwop/spec-artifacts` peer moves to
+`2.0.10` with the corpus (`renderEndpoint` default, off-origin facets, the §5
+paragraph).
+
 ## [2.0.9] — 2026-09-09 — the rule this suite measures now says what it measures
 
 No scenario logic changes, no assertion changes, and no host disposition
