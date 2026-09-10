@@ -125,7 +125,7 @@
         },
         "backend/typescript/src/host/webhookDeliveryWorker.ts": {
           "exists": true,
-          "sha256": "da1fdaf17bd4a7337ba551833682a68600bc21a1d6069647a1f418d7e22a5d0d",
+          "sha256": "d21b9790689e2551e940745acda693d2e6c6ce953e5f84e2cb83266cb890fde3",
           "citedBy": [
             "SECURITY/invariants.yaml"
           ]
@@ -239,8 +239,8 @@
       "corpusTag": "v2.0.0-rc.1"
     },
     "openwop-app": {
-      "corpusTag": "openwop-conformance/v1.159.0",
-      "conformancePin": "^1.159.0"
+      "corpusTag": "v2.0.3",
+      "conformancePin": "^2.0.3"
     },
     "openwop-examples": {
       "inMemoryHost": "1.1.7",

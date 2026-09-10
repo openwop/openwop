@@ -13,6 +13,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.11] — 2026-09-10 — the emitter scrubbed the key id it was required to publish
+
+Conformance-only. No spec, schema, or scenario-logic change; the pinned
+`@openwop/spec-artifacts` peer moves with the suite version.
+
+### Fixed
+- `--certify` (v3 bundles, suites 2.0.8–2.0.10): `evidenceSecretsFromEnv` classified `OPENWOP_BUNDLE_SIGNING_KEY_ID` as a secret because its *name* matches `KEY`, and redacted the published `keyId` out of the embedded `discovery.document` after `discovery.sha256` was taken — so every host that passed the key id by environment failed its own bundle's self-verification. Found by MyndHyve across three cuts; the same host passed the day before with the id on the flag. Names ending in `_ID` are now excluded, the emitter names the keyId it publishes as `except`, and a redaction leg pins both.
+- On a self-verification failure the emitter now writes the rejected bundle to `<out>.rejected.json` (marked not-a-certification-artifact) instead of discarding the only diagnostic.
+
 ## [2.0.10] — 2026-09-10 — three things hosts found on the day 2.0.9 shipped
 
 Errata found by two tier-1 hosts within hours of the `v2.0.9` tag, all three

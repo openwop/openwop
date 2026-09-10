@@ -1,6 +1,6 @@
 # Idempotency
 
-> **Status: Stable · v2.0.10 (2026-09-10) · RFC 0170 §D.3, RFC 0171 §B.2, RFC 0173 §B.**
+> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0170 §D.3, RFC 0171 §B.2, RFC 0173 §B.**
 
 ## Why this exists
 

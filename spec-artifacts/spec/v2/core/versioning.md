@@ -1,6 +1,6 @@
 # Versioning and Release
 
-> **Status: Stable · v2.0.10 (2026-09-10) · RFC 0172, 0179, 0176.**
+> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0172, 0179, 0176.**
 
 ## Why this exists
 

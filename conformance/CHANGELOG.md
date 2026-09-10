@@ -1,5 +1,29 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.11] — 2026-09-10 — the emitter scrubbed the key id it was required to publish
+
+`--certify` fix. `evidenceSecretsFromEnv` selected every `OPENWOP_*` variable
+whose name matched `/(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/` and replaced its
+value throughout the bundle after `discovery.sha256` was taken.
+`OPENWOP_BUNDLE_SIGNING_KEY_ID` — the variable `--help` offers — matches on
+`KEY`, and its value is the identifier RFC 0168 §E.2 requires
+`discovery.document.signingKeys[].keyId` to publish. The embedded document lost
+its keyId, the digest kept it, and the emitter rejected its own output
+(`discovery.document ≠ discovery.sha256`). Three MyndHyve cuts on 2.0.8 and
+2.0.9 failed on this alone; the same host passed the day before with the id
+on `--signing-key-id`.
+
+- `*_ID` variable names are excluded from the classifier — an identifier of a
+  key is not the key.
+- The emitter passes the keyId it is about to publish as `except`, so it
+  survives whichever variable carried it.
+- On a self-verification failure the rejected bundle is written to
+  `<out>.rejected.json` and named on stderr, instead of being discarded — the
+  diagnostic a host had to patch a scratch copy of this CLI to obtain.
+- New redaction leg `openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed`.
+
+No scenario logic changes.
+
 ## [2.0.10] — 2026-09-10 — the bare-id leg
 
 One new leg in `v2-id-grammar` (`openwop.requirement.0170.id-grammar.bare-id`):
