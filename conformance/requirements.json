@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 565,
-    "tests": 2152,
-    "withStableId": 2152,
+    "tests": 2153,
+    "withStableId": 2153,
     "interpolatedTitles": 0,
-    "explicitIds": 2107
+    "explicitIds": 2108
   },
   "records": [
     {
@@ -7082,9 +7082,26 @@
       ]
     },
     {
-      "id": "openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc",
+      "id": "openwop.it.certification-bundle-redaction.evidencesecretsfromenv-never-scrubs-a-key-identifier-id-variables-are-excluded-a",
       "file": "certification-bundle-redaction.test.ts",
       "line": 157,
+      "title": "evidenceSecretsFromEnv never scrubs a key IDENTIFIER: *_ID variables are excluded and `except` values stay visible whichever variable carried them",
+      "explicitId": "openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed",
+      "citations": [
+        {
+          "section": "RFC 0168 §E.2",
+          "requirement": "the keyId a host publishes in discovery.document.signingKeys[] MUST survive evidence scrubbing — a *_ID variable is an identifier, not a secret"
+        },
+        {
+          "section": "RFC 0168 §E.2",
+          "requirement": "a value the emitter names as `except` (the keyId it is about to publish) is never scrubbed, whichever variable carried it"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc",
+      "file": "certification-bundle-redaction.test.ts",
+      "line": 177,
       "title": "verifyBundleV2 REJECTS a bundle carrying the conformance canary anywhere, and accepts the scrubbed twin",
       "explicitId": "openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc",
       "citations": [
@@ -7097,7 +7114,7 @@
     {
       "id": "openwop.it.certification-bundle-redaction.the-canary-in-a-discovery-document-key-is-still-a-rejection-keys-are-evidence",
       "file": "certification-bundle-redaction.test.ts",
-      "line": 172,
+      "line": 192,
       "title": "the canary in a discovery-document KEY is still a rejection (keys are evidence)",
       "explicitId": "openwop.it.certification-bundle-redaction.the-canary-in-a-discovery-document-key-is-still-a-rejection-keys-are-evidence",
       "citations": [
@@ -7110,7 +7127,7 @@
     {
       "id": "openwop.it.certification-bundle-redaction.the-target-configuration-digest-is-a-digest-the-api-key-is-not-a-substring-of-an",
       "file": "certification-bundle-redaction.test.ts",
-      "line": 178,
+      "line": 198,
       "title": "the target-configuration digest is a digest: the API key is not a substring of any string in the document",
       "explicitId": "openwop.it.certification-bundle-redaction.the-target-configuration-digest-is-a-digest-the-api-key-is-not-a-substring-of-an",
       "citations": [
