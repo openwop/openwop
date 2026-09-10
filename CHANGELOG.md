@@ -1,6 +1,6 @@
-# OpenWOP Spec v1 — Changelog
+# OpenWOP Spec — Changelog
 
-All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs.
+All notable changes to the OpenWOP spec corpus — v2 (the current major, `spec/v2/`) and v1 (the maintained parallel track through the overlap, `spec/v1/`) — its schemas, OpenAPI/AsyncAPI, conformance suite, and contract artifacts.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Versions are spec-corpus-wide (one date, multiple artifact updates per row); per-artifact versions live in their respective `package.json` / schema `$id` fields.
 
@@ -13,12 +13,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
-## [2.0.9] — 2026-09-09 — a MUST that bound more path space than any instrument measures
+## [2.0.9] — 2026-09-10 — the corpus says v2, and a MUST that bound more path space than any instrument measures
 
-Spec errata. No wire shape, field, error code, or schema change; no RFC. One
-normative clause is **narrowed** to the scope its only instrument has always
-measured, and two things the overlap left implicit are written down. No host's
-disposition changes.
+Spec errata plus a status correction. No wire shape, field, error code, or
+schema change; no RFC. One normative clause is **narrowed** to the scope its
+only instrument has always measured, two things the overlap left implicit are
+written down, and every surface that still described v2 as unreleased is
+corrected. No host's disposition changes, and **nothing about the overlap
+changes**: `preferredVersion` stays on `1.x` by MUST until v1 end-of-support.
+
+### Changed
+
+- **The corpus now says what major it is on.** `v2.0.0` was tagged 2026-09-05,
+  yet `spec/v2/README.md` still opened with *"in construction … until the
+  `v2.0.0-rc.1` corpus tag"*, all twenty `spec/v2/core/*.md` carried
+  `Status: Draft · v2.0.0-rc`, the root `README.md` led with "v1.x published
+  artifacts" and described the v2 tree as gated on a tag that had landed a
+  week earlier, `CHANGELOG.md` was titled "Spec v1", and `INTEROP-MATRIX.md`
+  headed its v2 table "release candidate". A reader who trusted those lines
+  concluded v2 did not exist — one did, and said so. Each now states the
+  released major, the corpus version, and the file that carries the truth
+  (`spec/v2/release.json`); the twenty core documents are
+  `Status: Stable · v2.0.9`. The v1 tree is described everywhere as what it
+  is: the maintained parallel track through the overlap.
+
+- **`docs/migration/v1-to-v2.md` gains a client section.** The guide was
+  written for hosts. A client's migration is three changes and one
+  non-change, and the same reader got two backwards: `OpenWOP-Version` is
+  **MAY** on a request and **MUST** on a response (not the reverse), and the
+  18-month end-of-support clock is **conditional** on a non-steward host in
+  the matrix at release, not guaranteed. Both are now stated with the rule
+  each comes from, alongside unversioned paths and
+  `principal`/`principalKind` → `owner.subject`.
 
 ### Fixed
 

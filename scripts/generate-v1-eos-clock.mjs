@@ -51,7 +51,12 @@ function git(args) {
 /** Host names from the INTEROP-MATRIX v2 table: rows `| **\`<name>@<version>\`** …` between the v2 heading and the next `## `. */
 function v2TableHosts() {
   const md = readFileSync(MATRIX, 'utf8');
-  const start = md.indexOf('## v2 release candidate');
+  // The v2 table is the first `## v2 …` heading, whatever follows the word.
+  // Until 2026-09-10 this was a literal match on "## v2 release candidate",
+  // so retitling the section after v2.0.0 shipped silently emptied the host
+  // list and the clock reported "not anchored" — a hand-kept heading was
+  // load-bearing for a generated evidence file, and nothing said so.
+  const start = md.search(/^## v2\b/m);
   if (start < 0) return [];
   const rest = md.slice(start + 1);
   const end = rest.search(/\n## /);

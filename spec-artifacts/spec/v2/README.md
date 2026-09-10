@@ -1,6 +1,10 @@
-# `spec/v2/` — the OpenWOP v2 tree (in construction; Phase 3 of the v2 charter)
+# `spec/v2/` — the OpenWOP v2 tree (the current protocol major)
 
-> **Status: in construction.** Nothing under `spec/v2/`, `schemas/v2/` or `api/v2/` is served, published, or vendored by a 1.x consumer until the `v2.0.0-rc.1` corpus tag (RFC 0172 §D.1). The 1.x conformance tarball excludes this tree (`conformance/scripts/pack-vendor.sh`); `openwop-check.sh` stage 10 gates it.
+> **Status: released.** v2 is the current protocol major — `v2.0.0` was tagged 2026-09-05 and this tree is at corpus `v2.0.9` (`release.json`). Everything under `spec/v2/`, `schemas/v2/` and `api/v2/` is normative, is vendored into `@openwop/spec-artifacts`, and is what `@openwop/openwop-conformance` 2.x measures. A new integration targets v2.
+>
+> **v1 is not retired.** Through the overlap a host advertises both majors and `preferredVersion` MUST remain a `1.x` member (`core/versioning.md` §1.1); v1 clients keep working unchanged on `/v1/…`. v1 end-of-support is the later of two clocks in `core/overview.md`, earliest 2026-12-04, and until then `spec/v1/` stays the maintained parallel track. A `1.x` conformance tarball still excludes this tree (`conformance/scripts/pack-vendor.sh`).
+>
+> The banner that stood here until 2026-09-10 said *"in construction … until the `v2.0.0-rc.1` corpus tag"*. That tag landed 2026-09-03 and the line was never updated; a reader who trusted it concluded v2 did not exist. Status lines that are hand-kept drift; this one now names the tag and the file that carry the truth.
 
 Layout (RFC 0167 §C; RFC 0174 §E.2 budget):
 
