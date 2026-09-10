@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-08T15:33:50.601Z",
+  "generatedAt": "2026-09-10T21:34:15.482Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.8",
+    "version": "2.0.11",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.8",
-    "stampSha256": "3c52e6a451f700ac99aac8aea616d1cf5d26124902b07c9bf00dff039fff2eb0"
+    "specArtifactsVersion": "2.0.11",
+    "stampSha256": "73ec5b7c6f2dceeefad0afb5d47446c3566a33ed6123db4bafcb26af38767fa6"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "ca217f1e5"
+      "id": "8bd19f29b"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "bb48ab61886d83a6ad1bf5d1c635aceadd9fc88476817054b32d8da7d6d1c471",
+    "sha256": "3232d8623b1fa5f050499f0a2098d747100f4b15a962afb14ae2660254349e6e",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -165,6 +165,18 @@
           }
         }
       },
+      "interrupt": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "refKinds": [
+          "role",
+          "group"
+        ],
+        "tokenAlgs": [
+          "hs256"
+        ]
+      },
       "secrets": {
         "status": "stable",
         "since": "1.0",
@@ -235,7 +247,7 @@
         "mutableLibrary": true,
         "library": {
           "id": "myndhyve-system",
-          "renderEndpoint": "/v1/prompts:render",
+          "renderEndpoint": "/prompts:render",
           "maxRenderRequestBytes": 65536
         },
         "agentBindings": true
@@ -558,6 +570,16 @@
         "witness": "witnessable-gated",
         "retentionDays": 7
       },
+      "replay": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "modes": [
+          "branch",
+          "replay"
+        ],
+        "effectSeamsManifest": "/host/effect-seams"
+      },
       "agents": {
         "status": "stable",
         "since": "1.0",
@@ -782,6 +804,17 @@
           }
         }
       },
+      "idempotency": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "crossRegion": "single-region"
+      },
+      "eventLog": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "claims-check"
+      },
       "extensions": {
         "myndhyve.implementation": {
           "name": "workflow-runtime",
@@ -929,14 +962,20 @@
       "evidenceTier": "self",
       "witnessCount": 3,
       "certified": true
+    },
+    {
+      "id": "openwop-core-standard",
+      "evidenceTier": "self",
+      "witnessCount": 12,
+      "certified": false
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 136,
-      "executedFail": 0,
+      "executedPass": 142,
+      "executedFail": 7,
       "skipped": 0,
-      "inapplicable": 90,
+      "inapplicable": 78,
       "blocked": 0
     },
     "requirements": [
@@ -968,9 +1007,9 @@
       {
         "id": "openwop.scenario.v2-approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2,
+        "detail": "partial-witness: blocked: no interrupt-raising fixture with an approversList the suite's bearer is not on — advertise `conformance-approval-approvers` (a core.approvalGate whose approversList is [\"urn:conformance:listed-approver\"]) so a non-listed resolve can be driven"
       },
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
@@ -995,7 +1034,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 180,
+        "assertions": 200,
         "detail": "partial-witness: inapplicable: no advertised family record carries an `until` (every record is stable, or none is advertised)"
       },
       {
@@ -1040,16 +1079,15 @@
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 2,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.floor.v2-effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 30
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -1120,7 +1158,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 11
       },
       {
         "id": "openwop.floor.v2-idempotency-key-grammar",
@@ -1132,8 +1170,7 @@
         "id": "openwop.floor.v2-interrupt-token-scheme",
         "scenario": "v2-interrupt-token-scheme.test.ts",
         "result": "executed-pass",
-        "assertions": 2,
-        "detail": "partial-witness: inapplicable: the signed-token surface GET /interrupts/{token} is not mounted (404 to every token probe) — a SHOULD in interrupt.md; the kid rule cannot be observed"
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-lane-issuer-advertised",
@@ -1258,7 +1295,7 @@
         "id": "openwop.scenario.v2-profiles-derived-only",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
@@ -1320,16 +1357,15 @@
       {
         "id": "openwop.scenario.v2-run-fork-prefix",
         "scenario": "v2-run-fork-prefix.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 3,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-run-fork-refusals",
         "scenario": "v2-run-fork-refusals.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1404,9 +1440,9 @@
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-pass",
-        "assertions": 10,
-        "detail": "partial-witness: blocked: [blocked] the retry was observed (2 attempts) but the receiver's 204 did not land inside the 90000ms window: it answers 204 only on attempt 3, which costs the SUM of the first 2 backoff intervals, and webhooks.retryPolicy carries only { maxAttempts, backoff: exponential } — the base interval is not advertised, so the suite cannot derive how long to wait. Unmeasured, not unmet (RFC 0148 §A).; [blocked] no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
+        "result": "executed-fail",
+        "assertions": 9,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -1645,13 +1681,13 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 144
+        "assertions": 160
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 36
+        "assertions": 40
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
@@ -1664,7 +1700,7 @@
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 10
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
@@ -1689,15 +1725,21 @@
       {
         "id": "openwop.requirement.0170.fork-prefix-boundary",
         "scenario": "v2-run-fork-prefix.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 3,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] spec/v2/core/replay.md §Endpoint: the event at sequence 2 is re-executed, not fixed history: the fork MUST NOT carry the source's node.completed at that sequence — seeing it means the prefix was copied inclusively ([0, 2] instead of [0, 2)): expected 'node.compl"
+      },
+      {
+        "id": "openwop.requirement.0170.id-grammar.bare-id",
+        "scenario": "v2-id-grammar.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0170.id-grammar.events",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -1726,9 +1768,8 @@
       {
         "id": "openwop.requirement.0170.interrupt-token-scheme.unheld-kid-refused",
         "scenario": "v2-interrupt-token-scheme.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the signed-token surface GET /interrupts/{token} is not mounted (404 to every token probe) — a SHOULD in interrupt.md; the kid rule cannot be observed"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0170.interrupt-token-scheme.unprefixed-refused",
@@ -1795,9 +1836,8 @@
       {
         "id": "openwop.requirement.0170.run-fork-refusals",
         "scenario": "v2-run-fork-refusals.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0170.run-pause-resume",
@@ -2033,9 +2073,8 @@
       {
         "id": "openwop.requirement.0173.approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
@@ -2054,37 +2093,35 @@
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 2,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 29
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest.facet",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0173.effect-seam-no-refire",
         "scenario": "v2-effect-seam-no-refire.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -2129,14 +2166,16 @@
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "executed-fail",
+        "assertions": 5,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "executed-fail",
+        "assertions": 4,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a delivery that keeps failing MUST be retried before it can be exhausted (one attempt is a drop): expected 0 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -2396,17 +2435,12 @@
       }
     ]
   },
-  "witnessSha256": "d574abab9501487e75a597d1f9060f92286637c7ddfb19c37734070735025fad",
-  "assertionCount": 1457,
+  "witnessSha256": "2ba8dac016677b8120d92a3075b2db8413d0f82980492ef8c164c915c0e83d12",
+  "assertionCount": 1605,
   "detail": {
     "nonPass": [
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-approver-enforced",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -2427,13 +2461,8 @@
       },
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.floor.v2-effect-seam-manifest",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -2517,13 +2546,8 @@
       },
       {
         "id": "openwop.scenario.v2-run-fork-prefix",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-run-fork-refusals",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-subject-link-record",
@@ -2539,6 +2563,11 @@
         "id": "openwop.scenario.v2-v1-events-translated",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.floor.v2-webhook-durable-delivery",
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
@@ -2612,13 +2641,8 @@
       },
       {
         "id": "openwop.requirement.0170.fork-prefix-boundary",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0170.interrupt-token-scheme.unheld-kid-refused",
-        "result": "inapplicable",
-        "reason": "the signed-token surface GET /interrupts/{token} is not mounted (404 to every token probe) — a SHOULD in interrupt.md; the kid rule cannot be observed"
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] spec/v2/core/replay.md §Endpoint: the event at sequence 2 is re-executed, not fixed history: the fork MUST NOT carry the source's node.completed at that sequence — seeing it means the prefix was copied inclusively ([0, 2] instead of [0, 2)): expected 'node.compl"
       },
       {
         "id": "openwop.requirement.0170.revocation-honored",
@@ -2629,11 +2653,6 @@
         "id": "openwop.requirement.0170.run-diff-identical",
         "result": "inapplicable",
         "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
-      },
-      {
-        "id": "openwop.requirement.0170.run-fork-refusals",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
@@ -2651,11 +2670,6 @@
         "reason": "no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
       },
       {
-        "id": "openwop.requirement.0173.approver-enforced",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.requirement.0173.compensation-read-projection",
         "result": "inapplicable",
         "reason": "profile not advertised in the captured discovery set"
@@ -2667,28 +2681,18 @@
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.effect-seam-manifest",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.effect-seam-manifest.facet",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.requirement.0173.effect-seam-no-refire",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -2709,6 +2713,16 @@
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "result": "inapplicable",
         "reason": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0173.webhook-durable-delivery",
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
+      },
+      {
+        "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a delivery that keeps failing MUST be retried before it can be exhausted (one attempt is a drop): expected 0 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -2855,7 +2869,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "NcpZ3eTMUCiUH6PqUEXUGxUAn4dogevUwDfm7mZVzPN6Y-expTDiDTGP7pZ38nk5iDiF2tqw5OA3gSe0dOdpDw",
+    "sig": "C5NWokgBEbOAbcH-4gLLcj75_scwnULB37po_qHmXmxnKmlj_S0LILDCwSVg16caYxx8ZB0-2ABG0lK9klbUDg",
     "over": [
       "witnessSha256",
       "host.build",
