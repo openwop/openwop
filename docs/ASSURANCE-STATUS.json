@@ -112,8 +112,8 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "2.1.2",
-    "corpusRelease": "2.1.2",
+    "conformanceSuite": "2.1.3",
+    "corpusRelease": "2.1.3",
     "corpusReleaseDate": "2026-09-11"
   },
   "risks": {

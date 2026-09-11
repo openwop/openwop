@@ -15,6 +15,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
 
+## [2.1.3] — 2026-09-11 — what `since` names in a capability record
+
+Two hosts read the capability record's `since` differently on the same day
+and the corpus could not settle it: `core/capabilities.md` §2 gives the field
+a `<major>.<minor>` grammar and never says whose version it is. It is the
+host's — the minor of **this host's** contract at which it began serving the
+family, a point on its own `protocolVersions[]` timeline, not the corpus
+minor that introduced the family.
+
+The reasoning, recorded because the field is small and the ambiguity was not:
+`spec/v2/declaration.json` carries `witness` and `maturity` per family and no
+`since`, so there is no corpus value to copy — `witness` is the record's one
+corpus-derived field. `status`/`until` absorb v1 `tier`/`experimentalUntil`
+(`spec/v1/capabilities.md` §"Capability stability tier"), which is explicitly
+the host's own stability claim with a sunset rule binding the host. A `since`
+on the corpus timeline beside an `until` on the host's, in adjacent fields
+sharing the axis-1 grammar, is incoherent; a `since` naming a minor absent
+from `protocolVersions[]` is the symptom.
+
+### Changed
+
+- `scripts/generate-from-declaration.mjs` gives the generated `since` property
+  a `description` stating this, so it reaches every implementer who opens
+  `schemas/v2/capabilities.schema.json` (72 family records). Recorded in the
+  generated schema rather than in prose: `spec/v2/core/` stands at 24,998 of
+  its 25,000-word budget, and a machine-readable annotation is in front of
+  the reader who needs it.
+
 ## [2.1.2] — 2026-09-11 — a conformant retired host failed a suite leg for being conformant
 
 Conformance-only; no normative prose changed. `v2-version-header-honored`
