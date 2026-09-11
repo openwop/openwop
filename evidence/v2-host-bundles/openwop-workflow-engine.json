@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-05T14:14:19.256Z",
+  "generatedAt": "2026-09-10T21:40:49.131Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.0-rc.56",
+    "version": "2.0.11",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.0-rc.56",
-    "stampSha256": "d78af0be319b1a6f573bd342ed68df7d9daa61db218ef6c48db2d5036fcdf36c"
+    "specArtifactsVersion": "2.0.11",
+    "stampSha256": "73ec5b7c6f2dceeefad0afb5d47446c3566a33ed6123db4bafcb26af38767fa6"
   },
   "host": {
     "name": "openwop-workflow-engine",
@@ -14,18 +14,179 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "f8e24beb7c8aa031fad35504e5310ddd4d054307"
+      "id": "f7c631b9b3d32acfd6607a03e5d217a3af6b7b32"
     },
     "signingKeyId": "openwop-app-self-2026-09-04"
   },
   "discovery": {
     "url": "https://app.openwop.dev/.well-known/openwop",
-    "sha256": "438c9beb5ff2114168c54e13cd461f47129a88f413da80bd31f9022dde8b7962",
+    "sha256": "8825f2c7baba50d0574f0f354d9544ecd6896298f3d80d196cd07316f51e1a01",
     "protocolVersions": [
       "1.1",
       "2.0"
     ],
-    "preferredVersion": "1.1"
+    "preferredVersion": "1.1",
+    "document": {
+      "protocolVersion": "1.1",
+      "protocolVersions": [
+        "1.1",
+        "2.0"
+      ],
+      "preferredVersion": "1.1",
+      "minClientVersion": "1.0",
+      "eventLogSchemaVersion": 3,
+      "signingKeys": [
+        {
+          "keyId": "openwop-app-self-2026-09-04",
+          "alg": "ed25519",
+          "publicKey": "SFBjFSjHaQSUbIb-FQudyk-DwOagmGyshJBwC-0zvZ4",
+          "use": "certification-bundle"
+        }
+      ],
+      "implementation": {
+        "name": "openwop-workflow-engine",
+        "version": "0.1.0",
+        "vendor": "openwop-app"
+      },
+      "fixtures": [
+        "conformance-agent-channel-dispatch",
+        "conformance-agent-identity",
+        "conformance-agent-pack-export",
+        "conformance-agent-pack-handoff-schema-validation",
+        "conformance-agent-pack-install",
+        "conformance-agent-pack-provenance",
+        "conformance-approval",
+        "conformance-cancellable",
+        "conformance-cap-breach",
+        "conformance-channel-ttl",
+        "conformance-clarification",
+        "conformance-configurable-schema",
+        "conformance-context-budget-multiturn",
+        "conformance-conversation-capability-negotiation",
+        "conformance-conversation-lifecycle",
+        "conformance-conversation-replay",
+        "conformance-conversation-vs-clarification",
+        "conformance-delay",
+        "conformance-dispatch-cancellable-child",
+        "conformance-dispatch-cross-worker-handoff",
+        "conformance-dispatch-cross-worker-handoff-child-a",
+        "conformance-dispatch-cross-worker-handoff-child-b",
+        "conformance-dispatch-deterministic-fail-child",
+        "conformance-dispatch-input-mapping",
+        "conformance-dispatch-input-mapping-child",
+        "conformance-dispatch-input-mapping-no-default",
+        "conformance-dispatch-loop",
+        "conformance-dispatch-output-mapping",
+        "conformance-dispatch-output-mapping-child",
+        "conformance-dispatch-per-worker-override",
+        "conformance-envelope-nl-to-format-engaged",
+        "conformance-envelope-recovery-applied",
+        "conformance-envelope-refusal",
+        "conformance-envelope-retry-attempted",
+        "conformance-envelope-retry-exhausted",
+        "conformance-envelope-truncated",
+        "conformance-envelope-truncation-cap-exhaustion",
+        "conformance-failure",
+        "conformance-idempotent",
+        "conformance-identity",
+        "conformance-interrupt-auth-required",
+        "conformance-interrupt-external-event",
+        "conformance-interrupt-parent-child-cancel",
+        "conformance-interrupt-parent-child-cancel-child",
+        "conformance-interrupt-quorum",
+        "conformance-message-reducer",
+        "conformance-multi-agent-confidence-escalation",
+        "conformance-multi-agent-handoff",
+        "conformance-multi-agent-handoff-child",
+        "conformance-multi-node",
+        "conformance-noop",
+        "conformance-orchestrator-dispatch",
+        "conformance-orchestrator-low-confidence",
+        "conformance-orchestrator-terminate",
+        "conformance-phase4-nondet-tool",
+        "conformance-phase4-replay-divergence",
+        "conformance-prompt-all-four-kinds",
+        "conformance-prompt-end-to-end",
+        "conformance-run-duration-breach",
+        "conformance-stream-text",
+        "conformance-subworkflow-child",
+        "conformance-subworkflow-input-mapping",
+        "conformance-subworkflow-input-mapping-child",
+        "conformance-subworkflow-input-mapping-no-default",
+        "conformance-subworkflow-mid-run-mutation",
+        "conformance-subworkflow-mid-run-mutation-child",
+        "conformance-subworkflow-parent",
+        "conformance-version-fold",
+        "conformance-wasm-pack-memory-cap-breach",
+        "conformance-wasm-pack-roundtrip",
+        "conformance-workflow-variable-format-advisory"
+      ],
+      "extensions": {
+        "openwop-app.host": {
+          "notes": "OpenWOP reference application. Serving the v2 wire through the overlap; not production-hardened.",
+          "demoMode": true
+        }
+      },
+      "limits": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "clarificationRounds": 5,
+        "schemaRounds": 3,
+        "envelopesPerTurn": 32,
+        "maxNodeExecutions": 1000,
+        "maxRunDurationMs": 600000,
+        "maxRequestBodyBytes": 1048576
+      },
+      "webhooks": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "signatureAlgorithms": [
+          "v1"
+        ]
+      },
+      "idempotency": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-unaided",
+        "crossRegion": "single-region"
+      },
+      "replay": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-unaided",
+        "modes": [
+          "replay",
+          "branch"
+        ],
+        "effectSeamsManifest": "/host/effect-seams"
+      },
+      "interrupt": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-unaided",
+        "tokenAlgs": [
+          "hs256"
+        ]
+      },
+      "eventLog": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-unaided"
+      },
+      "packs": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated"
+      }
+    }
   },
   "claimedProfiles": [
     {
@@ -35,26 +196,33 @@
       "certified": false
     },
     {
-      "id": "openwop-conformance-seams-v2",
+      "id": "openwop-core-standard",
       "evidenceTier": "self",
-      "witnessCount": 1,
+      "witnessCount": 12,
       "certified": false
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 125,
-      "executedFail": 2,
+      "executedPass": 137,
+      "executedFail": 0,
       "skipped": 0,
-      "inapplicable": 66,
-      "blocked": 29
+      "inapplicable": 87,
+      "blocked": 3
     },
     "requirements": [
       {
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 294
+        "assertions": 295
+      },
+      {
+        "id": "openwop.scenario.memory-attribution-replay-stable",
+        "scenario": "memory-attribution-replay-stable.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -78,9 +246,9 @@
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
         "scenario": "v2-assurance-downgrade-audited.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-bundle-v3-signed",
@@ -98,7 +266,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 12
+        "assertions": 47
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -112,7 +280,7 @@
         "scenario": "v2-coherence-not-in-bundle.test.ts",
         "result": "executed-pass",
         "assertions": 2,
-        "detail": "partial-witness: blocked: evidence/corpus-ledger.json is absent from this layout — the corpus id set cannot be read"
+        "detail": "partial-witness: inapplicable: inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host"
       },
       {
         "id": "openwop.scenario.v2-compensation-read-projection",
@@ -142,16 +310,15 @@
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 4,
+        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture issued no external effect — the per-row keying leg had no rows (an effect-issuing fixture would exercise it); [inapplicable] the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.floor.v2-effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 50
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -169,9 +336,9 @@
       {
         "id": "openwop.scenario.v2-era-2-append-vocabulary",
         "scenario": "v2-era-2-append-vocabulary.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-era-key",
@@ -201,9 +368,9 @@
       {
         "id": "openwop.floor.v2-fork-a-v1-run",
         "scenario": "v2-fork-a-v1-run.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
@@ -222,7 +389,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-idempotency-key-grammar",
@@ -339,16 +506,15 @@
       {
         "id": "openwop.scenario.v2-pinned-run-disposition",
         "scenario": "v2-pinned-run-disposition.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-poll-cursor-v2",
         "scenario": "v2-poll-cursor-v2.test.ts",
-        "result": "executed-fail",
-        "assertions": 14,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 14
       },
       {
         "id": "openwop.floor.v2-preferred-version-default",
@@ -360,7 +526,7 @@
         "id": "openwop.scenario.v2-profiles-derived-only",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
@@ -385,9 +551,9 @@
       {
         "id": "openwop.scenario.v2-revocation-honored",
         "scenario": "v2-revocation-honored.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-run-annotation-not-event",
@@ -397,13 +563,13 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-bulk-cancel",
+        "id": "openwop.floor.v2-run-bulk-cancel",
         "scenario": "v2-run-bulk-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 11
       },
       {
-        "id": "openwop.scenario.v2-run-cancel",
+        "id": "openwop.floor.v2-run-cancel",
         "scenario": "v2-run-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 7
@@ -422,20 +588,25 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-fork-refusals",
-        "scenario": "v2-run-fork-refusals.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "id": "openwop.scenario.v2-run-fork-prefix",
+        "scenario": "v2-run-fork-prefix.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
-        "id": "openwop.scenario.v2-run-options-limits",
+        "id": "openwop.scenario.v2-run-fork-refusals",
+        "scenario": "v2-run-fork-refusals.test.ts",
+        "result": "executed-pass",
+        "assertions": 8
+      },
+      {
+        "id": "openwop.floor.v2-run-options-limits",
         "scenario": "v2-run-options-limits.test.ts",
         "result": "executed-pass",
         "assertions": 9
       },
       {
-        "id": "openwop.scenario.v2-run-pause-resume",
+        "id": "openwop.floor.v2-run-pause-resume",
         "scenario": "v2-run-pause-resume.test.ts",
         "result": "executed-pass",
         "assertions": 15
@@ -447,7 +618,7 @@
         "assertions": 5
       },
       {
-        "id": "openwop.scenario.v2-sse-last-event-id",
+        "id": "openwop.floor.v2-sse-last-event-id",
         "scenario": "v2-sse-last-event-id.test.ts",
         "result": "executed-pass",
         "assertions": 13
@@ -467,30 +638,30 @@
       {
         "id": "openwop.scenario.v2-subject-link-record",
         "scenario": "v2-subject-link-record.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-unmapped-type-refused",
         "scenario": "v2-unmapped-type-refused.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-v1-events-translated",
         "scenario": "v2-v1-events-translated.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-v1-signed-webhook-accepted",
         "scenario": "v2-v1-signed-webhook-accepted.test.ts",
         "result": "executed-pass",
         "assertions": 2,
-        "detail": "partial-witness: blocked: seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through /conformance/seams/sample/webhooks/receive"
+        "detail": "partial-witness: inapplicable: seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through /conformance/seams/sample/webhooks/receive"
       },
       {
         "id": "openwop.floor.v2-version-header-honored",
@@ -602,18 +773,11 @@
         "assertions": 1
       },
       {
-        "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
-        "scenario": "v2-era-2-append-vocabulary.test.ts",
-        "result": "blocked",
+        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
+        "scenario": "memory-attribution-replay-stable.test.ts",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
-      },
-      {
-        "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
-        "scenario": "v2-era-2-append-vocabulary.test.ts",
-        "result": "blocked",
-        "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -679,27 +843,6 @@
         "detail": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-run-annotation-not-event.an-annotation-is-created-and-listed-and-never-enters-the-run-s-event-log",
-        "scenario": "v2-run-annotation-not-event.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
-        "scenario": "v2-run-diff-identical.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
-      },
-      {
-        "id": "openwop.it.v2-run-fork-refusals.replay-overlay-400-a-fromseq-outside-the-log-422-fork-point-invalid-a-valid-repl",
-        "scenario": "v2-run-fork-refusals.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.requirement.0168.advertised-fixtures-exist",
         "scenario": "v2-advertised-fixtures-exist.test.ts",
         "result": "executed-pass",
@@ -726,9 +869,9 @@
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
         "scenario": "v2-coherence-not-in-bundle.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "evidence/corpus-ledger.json is absent from this layout — the corpus id set cannot be read"
+        "detail": "inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.schema-forbids-coherence-ids",
@@ -770,25 +913,25 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 28
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 13
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 10
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
@@ -799,16 +942,28 @@
       {
         "id": "openwop.requirement.0170.assurance-downgrade-audited.audited",
         "scenario": "v2-assurance-downgrade-audited.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
         "id": "openwop.requirement.0170.assurance-downgrade-audited.refused",
         "scenario": "v2-assurance-downgrade-audited.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
+      },
+      {
+        "id": "openwop.requirement.0170.fork-prefix-boundary",
+        "scenario": "v2-run-fork-prefix.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0170.id-grammar.bare-id",
+        "scenario": "v2-id-grammar.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0170.id-grammar.events",
@@ -881,9 +1036,16 @@
       {
         "id": "openwop.requirement.0170.revocation-honored",
         "scenario": "v2-revocation-honored.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
+      },
+      {
+        "id": "openwop.requirement.0170.run-annotation-not-event",
+        "scenario": "v2-run-annotation-not-event.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0170.run-bulk-cancel",
@@ -896,6 +1058,19 @@
         "scenario": "v2-run-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0170.run-diff-identical",
+        "scenario": "v2-run-diff-identical.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
+      },
+      {
+        "id": "openwop.requirement.0170.run-fork-refusals",
+        "scenario": "v2-run-fork-refusals.test.ts",
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0170.run-pause-resume",
@@ -912,14 +1087,14 @@
       {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
         "scenario": "v2-subject-link-record.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated"
       },
       {
         "id": "openwop.requirement.0170.subject-link-record.shape",
         "scenario": "v2-subject-link-record.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated"
       },
@@ -1011,9 +1186,8 @@
       {
         "id": "openwop.requirement.0171.poll-cursor-v2.from-first",
         "scenario": "v2-poll-cursor-v2.test.ts",
-        "result": "executed-fail",
-        "assertions": 1,
-        "detail": "the test executed and failed: [unknown@unknown] spec/v2/core/events.md §Poll: omission of afterSequence means \"from the first event\": the first returned sequence MUST be 0: expected 1 to be +0 // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0171.poll-cursor-v2.past-end",
@@ -1134,7 +1308,7 @@
         "scenario": "v2-approver-enforced.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "interrupt.refKinds facet absent — the host advertises no approver ref kinds (interrupt.md §Approver enforcement binds approversList everywhere, but the facet is the gate this scenario keys on)"
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
@@ -1153,37 +1327,34 @@
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 49
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest.facet",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0173.effect-seam-no-refire",
         "scenario": "v2-effect-seam-no-refire.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -1294,6 +1465,13 @@
         "detail": "host advertises neither a2a nor mcp — no refreshedAt to check"
       },
       {
+        "id": "openwop.requirement.0176.era-2-append-vocabulary",
+        "scenario": "v2-era-2-append-vocabulary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+      },
+      {
         "id": "openwop.requirement.0176.era-key",
         "scenario": "v2-era-key.test.ts",
         "result": "executed-pass",
@@ -1314,70 +1492,70 @@
       {
         "id": "openwop.requirement.0176.fork-a-v1-run.legacy-subject",
         "scenario": "v2-fork-a-v1-run.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.fork-a-v1-run.prefix",
         "scenario": "v2-fork-a-v1-run.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.pinned-run-disposition.cancelled",
         "scenario": "v2-pinned-run-disposition.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.pinned-run-disposition.continued",
         "scenario": "v2-pinned-run-disposition.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.unmapped-type-refused",
         "scenario": "v2-unmapped-type-refused.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.unmapped-type-refused.fork",
         "scenario": "v2-unmapped-type-refused.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-events-translated.fork",
         "scenario": "v2-v1-events-translated.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-events-translated.poll",
         "scenario": "v2-v1-events-translated.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-events-translated.sse",
         "scenario": "v2-v1-events-translated.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-signed-webhook-accepted",
         "scenario": "v2-v1-signed-webhook-accepted.test.ts",
-        "result": "blocked",
+        "result": "inapplicable",
         "assertions": 0,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through /conformance/seams/sample/webhooks/receive"
       },
@@ -1386,6 +1564,13 @@
         "scenario": "v2-v1-signed-webhook-accepted.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0176.vendor-type-passthrough",
+        "scenario": "v2-unmapped-type-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.well-known-one-resource",
@@ -1425,49 +1610,49 @@
         "scenario": "v2-manifest-ceiling-refused.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.v1-ceiling",
         "scenario": "v2-manifest-ceiling-refused.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.v2-installs",
         "scenario": "v2-manifest-ceiling-refused.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-hatch-carried.agents-x-field",
         "scenario": "v2-manifest-hatch-carried.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-hatch-carried.prompt-template-x-field",
         "scenario": "v2-manifest-hatch-carried.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.peer-dependency-declared.alias-overlap",
         "scenario": "v2-peer-dependency-declared.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
         "scenario": "v2-peer-dependency-declared.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
@@ -1485,10 +1670,15 @@
       }
     ]
   },
-  "witnessSha256": "580292b03ac08fd189d5079577f9b1db031c7e70976c040189a2fd264a12205a",
-  "assertionCount": 1058,
+  "witnessSha256": "c4499983b93019c5196b011f9734c0572ef8d40ccc5ea252bd7cfa4d64e6c903",
+  "assertionCount": 1273,
   "detail": {
     "nonPass": [
+      {
+        "id": "openwop.scenario.memory-attribution-replay-stable",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
       {
         "id": "openwop.scenario.v2-approver-enforced",
         "result": "inapplicable",
@@ -1496,8 +1686,8 @@
       },
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -1510,29 +1700,19 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.floor.v2-effect-identity-business-key",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.floor.v2-effect-seam-manifest",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.floor.v2-effect-seam-no-refire",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-era-2-append-vocabulary",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-fork-a-v1-run",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
@@ -1586,13 +1766,8 @@
       },
       {
         "id": "openwop.scenario.v2-pinned-run-disposition",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
-      },
-      {
-        "id": "openwop.floor.v2-poll-cursor-v2",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
@@ -1606,8 +1781,8 @@
       },
       {
         "id": "openwop.scenario.v2-revocation-honored",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-run-annotation-not-event",
@@ -1620,24 +1795,19 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-fork-refusals",
+        "id": "openwop.scenario.v2-subject-link-record",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-subject-link-record",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated"
-      },
-      {
         "id": "openwop.scenario.v2-unmapped-type-refused",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-v1-events-translated",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1645,14 +1815,9 @@
         "reason": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
       },
       {
-        "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
-      },
-      {
-        "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
-        "result": "blocked",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -1700,33 +1865,18 @@
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-run-annotation-not-event.an-annotation-is-created-and-listed-and-never-enters-the-run-s-event-log",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
-        "result": "inapplicable",
-        "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
-      },
-      {
-        "id": "openwop.it.v2-run-fork-refusals.replay-overlay-400-a-fromseq-outside-the-log-422-fork-point-invalid-a-valid-repl",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
-        "result": "blocked",
-        "reason": "evidence/corpus-ledger.json is absent from this layout — the corpus id set cannot be read"
+        "result": "inapplicable",
+        "reason": "inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host"
       },
       {
         "id": "openwop.requirement.0170.assurance-downgrade-audited.audited",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
         "id": "openwop.requirement.0170.assurance-downgrade-audited.refused",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
@@ -1741,17 +1891,27 @@
       },
       {
         "id": "openwop.requirement.0170.revocation-honored",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
       },
       {
+        "id": "openwop.requirement.0170.run-annotation-not-event",
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0170.run-diff-identical",
+        "result": "inapplicable",
+        "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
+      },
+      {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated"
       },
       {
         "id": "openwop.requirement.0170.subject-link-record.shape",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the link record is seam-gated"
       },
       {
@@ -1760,14 +1920,9 @@
         "reason": "no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
       },
       {
-        "id": "openwop.requirement.0171.poll-cursor-v2.from-first",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [unknown@unknown] spec/v2/core/events.md §Poll: omission of afterSequence means \"from the first event\": the first returned sequence MUST be 0: expected 1 to be +0 // Object.is equality"
-      },
-      {
         "id": "openwop.requirement.0173.approver-enforced",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "interrupt.refKinds facet absent — the host advertises no approver ref kinds (interrupt.md §Approver enforcement binds approversList everywhere, but the facet is the gate this scenario keys on)"
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
@@ -1780,29 +1935,14 @@
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.requirement.0173.effect-identity-business-key",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.effect-seam-manifest",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.effect-seam-manifest.facet",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.requirement.0173.effect-seam-no-refire",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -1865,54 +2005,64 @@
         "reason": "host advertises neither a2a nor mcp — no refreshedAt to check"
       },
       {
+        "id": "openwop.requirement.0176.era-2-append-vocabulary",
+        "result": "inapplicable",
+        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+      },
+      {
         "id": "openwop.requirement.0176.fork-a-v1-run.legacy-subject",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.fork-a-v1-run.prefix",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.pinned-run-disposition.cancelled",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.pinned-run-disposition.continued",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.unmapped-type-refused",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.unmapped-type-refused.fork",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-events-translated.fork",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-events-translated.poll",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-events-translated.sse",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.v1-signed-webhook-accepted",
-        "result": "blocked",
+        "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through /conformance/seams/sample/webhooks/receive"
+      },
+      {
+        "id": "openwop.requirement.0176.vendor-type-passthrough",
+        "result": "inapplicable",
+        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
@@ -1932,37 +2082,37 @@
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.v1-ceiling",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.v2-installs",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-hatch-carried.agents-x-field",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.manifest-hatch-carried.prompt-template-x-field",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.peer-dependency-declared.alias-overlap",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
@@ -1979,7 +2129,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-self-2026-09-04",
-    "sig": "aM4jKyITl8_jkVQn6Smv0TsVGiocq4k4ETDlVn9ksc0SA0ITT7JiS_-Jpw_LZfptCjFapmbs-aYFTOtpblRsBA",
+    "sig": "BvM2n3fgyy4lTGU9alusGR6dKBgiywprZkXEDh169aMi7ks4b75Dhs2QsvUyEyCsvTP6nMYI5GKJEEKRG0J0Ag",
     "over": [
       "witnessSha256",
       "host.build",
