@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 162 |
-| Active | 16 |
+| Accepted | 163 |
+| Active | 15 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -251,7 +251,7 @@
 | RFC 0179 | Root `preferredVersion` (optional in v1.x): the `<major>.<minor>` a host serves to a header-less request, which MUST be a member of `protocolVersions[]` and equal `protocolVersion` while the host serves one major - the field RFC 0172 sectionA.1 requires at v2 and said would be "filed separately" so hosts can advertise it before the cut; the 2.0.0 suite's `--target-major` default reads it | Active |
 | RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Active |
 | RFC 0181 | Vendor path namespace: host-proprietary operations live at `/host/<org>/…`, keyed to the org registry, version-agnostic, outside the protocol contract | Accepted |
-| RFC 0182 | `GET /runs`: a portable run list - tenant-scoped, bound ids, cursor pagination, filters - advertised by the `runList` family | Active |
+| RFC 0182 | `GET /runs`: a portable run list - tenant-scoped, bound ids, cursor pagination, filters - advertised by the `runList` family | Accepted |
 
 ## SDK Helper Coverage
 
@@ -274,7 +274,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 16 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0182) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
