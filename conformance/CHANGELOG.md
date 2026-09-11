@@ -1,5 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.2] — 2026-09-11 — `v2-version-header-honored` failed conformant single-major hosts
+
+Leg 1 compared a header-less fetch with an `OpenWOP-Version: 2.0` fetch on
+every host. Where `protocolVersions[]` carries no `1.x` member both name the
+same contract (§1.3 row 3 + §1.1), so byte identity is correct and the
+comparison measures nothing. The leg now branches: overlap unchanged;
+single-major asserts the refusal of an unadvertised major (`406
+protocol_version_unsupported` + root `details.protocolVersions[]`), which is
+the only measurement of §1.3 row 2 left once `v2-dual-stack-negotiation` gates
+itself off. No other scenario changed.
+
 ## [2.1.1] — 2026-09-11 — `v2-run-list` is now actually selected
 
 `scenario-majors.json` regenerated (517 files, v2 74): 2.1.0 packaged the

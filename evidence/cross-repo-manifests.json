@@ -3,7 +3,7 @@
   "generated": "2026-09-11",
   "repos": {
     "openwop-examples": {
-      "commit": "e47a97c26a302b5c50701b0f660481a801d3247d",
+      "commit": "cc2d181ecc66314902f437283af9ccacad1e979f",
       "files": {
         "examples/hosts/postgres/src/audit-export.ts": {
           "exists": true,

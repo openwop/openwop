@@ -15,6 +15,45 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
 
+## [2.1.2] — 2026-09-11 — a conformant retired host failed a suite leg for being conformant
+
+Conformance-only; no normative prose changed. `v2-version-header-honored`
+applied its two-major byte-comparison to every host. On a host with no `1.x`
+member the header-less request is served major 2 itself (`versioning.md` §1.3
+row 3 with §1.1 — `preferredVersion` MUST equal the single major served, RFC
+0179 §A.1), so asking for `2.0` names the same contract as asking for nothing
+and identical bytes are the only conformant answer. The leg called that "the
+header was IGNORED … the host served v1 and called it v2" on a host holding no
+v1 at all. Every host retires into that state; it survived because none had
+ever been measured there. Reported by the tier-2 host from a throwaway
+v1-retired lane and reproduced here against a stub implementing §1.3's table.
+
+### Fixed
+
+- `v2-version-header-honored` leg 1 branches on the advertisement. Overlap:
+  unchanged. No `1.x` member: probe the rule that still discriminates — a
+  major not in `protocolVersions[]` MUST be `406 protocol_version_unsupported`
+  with root-level `details.protocolVersions[]` echoing the list (§1.3 row 2),
+  using `1` when it is the unserved major, else `9`. `inapplicable` was the
+  wrong repair: on a retired host `v2-dual-stack-negotiation` gates itself off
+  for want of a second major and takes its unlisted-major probe with it, so
+  row 2 would have been measured by nothing. Sabotage-proved in four states —
+  conformant single-major (pass), single-major ignoring the header (fail),
+  real dual-stack reference host (pass, unchanged), dual-stack ignoring the
+  header (fail, the original 2026-09-04 defect).
+- The scenario's docblock always stated both rules; only the two-major one was
+  ever implemented.
+
+### Added
+
+- `docs/runbooks/V2-HOST-MIGRATION.md` "Phase 6 — Retirement, rehearsed": the
+  atomic flag, the self-addressed-URL inventory (a host's own task-queue
+  callbacks under `/v1` retire with it — 22 blocked "run did not settle" that
+  3,158 unit tests could not see), the drain window for queued work, §5's
+  unversioned-collision test, and the 2.1.2 pin floor for a retired cut.
+  `versioning.md` §5 already answers where those callbacks belong
+  (`/host/<org>/…`, RFC 0181), so no normative sentence was spent.
+
 ## [2.1.1] — 2026-09-11 — the run-list scenario was never selected
 
 Conformance-only. Suite 2.1.0 shipped `v2-run-list.test.ts` in the package but

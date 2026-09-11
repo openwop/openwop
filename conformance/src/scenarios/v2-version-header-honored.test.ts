@@ -25,6 +25,26 @@
  * construction (`capabilities.md` §1). A host advertising one major MUST
  * refuse rather than ignore.
  *
+ * Suite 2.1.2 — the second sentence had never been implemented, and the first
+ * was applied to every host. On a host with no `1.x` member the header-less
+ * request is served major 2 itself (§1.3 row 3 with §1.1: `preferredVersion`
+ * MUST equal the single major served, RFC 0179 §A.1), so asking for `2.0`
+ * names THE SAME CONTRACT as asking for nothing and byte identity is the only
+ * conformant answer. This leg called that "the header was IGNORED… the host
+ * served v1 and called it v2" on a host holding no v1 at all. Every host
+ * retires into that state; the only reason it survived is that no host had
+ * ever been measured there. Reported by the MyndHyve session from a
+ * throwaway v1-retired lane, reproduced here against a stub implementing
+ * §1.3's table exactly, 2026-09-11.
+ *
+ * `inapplicable` would have been the wrong repair. On a retired host
+ * `v2-dual-stack-negotiation` gates itself off for want of a second major and
+ * takes its unlisted-major probe with it — so §1.3 row 2, *"a major not in
+ * `protocolVersions[]` MUST be answered `406 protocol_version_unsupported`
+ * with `details.protocolVersions[]`"*, would be measured by nothing at all.
+ * The property is falsifiable from that side too, so that is the side this
+ * leg probes when the byte comparison has nothing to compare.
+ *
  * @see spec/v2/core/versioning.md §1.3
  * @see RFCS/0172-v2-versioning-and-release.md §A.3
  */
@@ -33,6 +53,7 @@ import { describe, it, expect } from 'vitest';
 import { loadEnv } from '../lib/env.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { readErrorCode } from '../lib/error-envelope.js';
 
 const ID = 'openwop.requirement.0172.version-header-honored';
 const DOC = 'spec/v2/core/versioning.md §1.3';
@@ -57,6 +78,19 @@ async function fetchRepresentation(header: string | null): Promise<Fetched | nul
   }
 }
 
+/** `protocolVersions[]` from a discovery body; `null` when it is not a JSON object. */
+function readVersions(body: string): string[] | null {
+  let doc: unknown;
+  try {
+    doc = JSON.parse(body);
+  } catch {
+    return null;
+  }
+  if (doc === null || typeof doc !== 'object') return null;
+  const v = (doc as { protocolVersions?: unknown }).protocolVersions;
+  return Array.isArray(v) ? v.map(String) : [];
+}
+
 describe('v2-version-header-honored (RFC 0172 §A.3)', () => {
   it('OpenWOP-Version is honored or refused — never ignored', async () => {
     const bare = await fetchRepresentation(null);
@@ -66,6 +100,46 @@ describe('v2-version-header-honored (RFC 0172 §A.3)', () => {
     }
     if (bare.status !== 200) {
       return softSkip('blocked', `the header-less GET ${PATH} answered ${bare.status}; there is no baseline representation to compare against`);
+    }
+
+    const advertised = readVersions(bare.body);
+    if (advertised === null) {
+      return softSkip('blocked', `${PATH} did not return a JSON object, so protocolVersions[] cannot be read`);
+    }
+    const majors = new Set(advertised.map((v) => v.split('.')[0]));
+
+    // No `1.x` member: the header-less request is already served major 2, so
+    // the two probes name one contract and their bytes agree by construction.
+    // Probe the rule that still discriminates — §1.3 row 2 — using the major
+    // this host does not serve. On a retired host that is `1`, which is what
+    // its clients will actually send.
+    if (!majors.has('1')) {
+      const unserved = ['1', '9'].find((m) => !majors.has(m)) ?? '9';
+      const refused = await fetchRepresentation(unserved);
+      if (refused === null) {
+        return softSkip('blocked', `${PATH} unreachable under OpenWOP-Version: ${unserved}`);
+      }
+      let envelope: unknown;
+      try {
+        envelope = JSON.parse(refused.body);
+      } catch {
+        envelope = undefined;
+      }
+      // `details` sits at the ROOT of the envelope beside `error` and
+      // `message` (`schemas/v2/error-envelope.schema.json`), not under `error`.
+      const echoed = (envelope as { details?: { protocolVersions?: unknown } } | undefined)?.details?.protocolVersions;
+      return expect(
+        {
+          status: refused.status,
+          code: readErrorCode(envelope),
+          echoed: Array.isArray(echoed) ? [...echoed].map(String).sort() : echoed,
+        },
+        req(
+          ID,
+          DOC,
+          `this host advertises [${advertised.join(', ')}] — one major, so a header naming it selects the same contract as no header and their bytes MUST agree. What discriminates honored from ignored here is the refusal: OpenWOP-Version: ${unserved} names a major not in protocolVersions[], which §1.3 MUST answer 406 protocol_version_unsupported with details.protocolVersions[] echoing the list. Answering 200 means the header was ignored — the same defect this scenario exists to catch, probed from the side a retired host still has`,
+        ),
+      ).toEqual({ status: 406, code: 'protocol_version_unsupported', echoed: [...advertised].sort() });
     }
 
     // A refusal is a correct answer and ends the check: the host has told the
