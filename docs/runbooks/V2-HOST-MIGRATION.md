@@ -177,6 +177,22 @@ The v1 end-of-support clock is computed from the matrix and the public history (
 
 **5.4 Read the state, every run.** `check-removal-dates` prints `clock: …` on every run; `check-retention-floors` prints the floor state and, with `--network`, whether each old-major artifact is still installable. "Not anchored", "far away" and "due" are three different sentences on purpose.
 
+## Phase 6 — Retirement, rehearsed
+
+Retirement is one step, not a sequence: `versioning.md` §5 makes it atomic, because through the overlap `preferredVersion` MUST name a `1.x` member, so dropping v1 from `protocolVersions[]` and flipping the preference are the same act. Build it as **one flag**, and rehearse the flag before you hold the date.
+
+**6.1 A test suite is not a rehearsal.** The tier-2 host built retirement as a single switch, covered it with unit tests that pinned the whole atomic set — `protocolVersions ["2.0"]`, external `/v1` a major-2 `404`, header `1` → `406`, bare ids `400 validation_error`, the §A.5 twin gone — and had 3,158 of them green. Then it deployed a throwaway service from the production image with the flag on and cut the suite at it: **106 / 11 / 87 / 22 blocked**, every block *"run did not settle."* Nothing in the unit suite could have seen it, because the thing that broke was not a request anyone in the test made.
+
+**6.2 Inventory every URL your host sends to itself.** The host's own Cloud Tasks callbacks — dispatch, webhook delivery — were addressed under `/v1`. A retired host refuses its own traffic, and the symptom is not a `404` in a log you are watching; it is runs that never settle. Task queues, schedulers, retry payloads, anything that stores a URL and replays it later. §5 already says where these belong: `/host/<org>/…` is *"no major in the path, served regardless of `OpenWOP-Version`, never a protocol operation, never measured"* (RFC 0181), and it is outside the retirement set — while *"a `/v1/host/<org>/…` twin MAY ride the overlap and retires atomically with `/v1`."* The unversioned form survives the flip; the `/v1` twin does not.
+
+**6.3 Queued work outlives the flag.** Tasks minted before the flip carry the old address in their payload. Keep the old route answering for the drain window and retire it after the queue is empty, not with the flag.
+
+**6.4 Run §5's other hazard test at the same time.** `manifest top-level segments ∩ anything else served unversioned` — on the host that found it, `{agents, prompts, runs}`. Retirement flips every header-less request from major 1 to major 2, so a page sitting on a manifest name starts answering the operation. Resolve it before end-of-support: move the page, or serve it under §1.4's conditions.
+
+**6.5 Cut the suite against the rehearsal, not against the tests.** The tier-2 host's second cut, with the callbacks moved, was **134 / 4 / 89 / 0** and certified `openwop-core-standard` with v1 retired. Two cautions from the same lane: a `1.0` scalar `protocolVersion` beside `["2.0"]` is a v1-twin leftover that two independent hosts shipped, and **never run two hosts against one webhook receiver** — a dead-letter row failed `6 ≤ 5` because a second lane shared the tunnel and the queue in the same minutes, which reads exactly like a host defect.
+
+**6.6 What the suite could not tell you until 2.1.2.** `v2-version-header-honored` applied its two-major byte-comparison to every host, so a *correct* single-major host failed it — asking for `2.0` selects the same contract as asking for nothing, and identical bytes are the only conformant answer there. Suite 2.1.2 branches on the advertisement and, on a host with no `1.x` member, probes the rule that still discriminates: an unadvertised major MUST be `406 protocol_version_unsupported` with `details.protocolVersions[]`. Pin **2.1.2 or later** for any retired cut; on 2.1.1 and earlier that row is a false red, and `v2-dual-stack-negotiation` correctly gates itself off, so nothing measures §1.3 row 2 at all.
+
 ## Verify the artifact, not the wrapper
 
 The single most expensive habit to unlearn:
