@@ -76,7 +76,7 @@ import { forkDeclined } from '../lib/fork-availability.js';
 import { discoveryFamilies, readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
+import { discoverOwnedTenant, receiverBinding } from '../lib/webhook-receiver.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForFile } from '../lib/scenario-disposition.js';
 import { req } from '../lib/requirement-ids.js';
@@ -118,10 +118,11 @@ async function startReceiver(): Promise<{ server: Server; url: string; received:
       res.end();
     });
   });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(0, binding.bind, () => resolve()));
   const addr = server.address();
   if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  return { server, url: `http://127.0.0.1:${addr.port}/`, received };
+  return { server, url: `http://${binding.advertise}:${addr.port}/`, received };
 }
 
 let activeServer: Server | null = null;

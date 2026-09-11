@@ -280,3 +280,47 @@ export function resolveRegistrationUrl(localUrl: string): { url: string; tunnell
 
   return { url: raw, tunnelled: true };
 }
+
+/**
+ * Where a scenario's own webhook receiver should LISTEN, and what address the
+ * host under test should be told to POST to.
+ *
+ * Default (variable unset) is `127.0.0.1` for both, which is what every receiver
+ * in this suite hard-coded before this helper existed. That default is
+ * deliberate and must stay: in the ordinary in-process posture the host is in
+ * this very process, loopback is the correct and narrowest binding, and nothing
+ * outside the process has any business reaching a test receiver. This helper
+ * never widens that.
+ *
+ * `OPENWOP_CONFORMANCE_HARNESS_HOST` is the operator declaring the opposite —
+ * that the host under test runs somewhere `127.0.0.1` does not name this
+ * process (a container, a VM, another box) and that the given name is how it
+ * reaches this machine. Only then does the receiver bind `0.0.0.0` and
+ * advertise that name.
+ *
+ * MEASURED 2026-09-09, which is why this exists. A container lane ran the host
+ * as a real image with `--add-host host.docker.internal:host-gateway` and its
+ * compat/OIDC doubles reachable, and `webhook-signed-delivery` plus
+ * `replay-fanout-suppression` still failed. From inside the container:
+ *
+ *     "msg":"webhook delivery failed","url":"http://127.0.0.1:55469/",
+ *     "detail":"fetch failed (connect ECONNREFUSED 127.0.0.1:55469)"
+ *
+ * The address named the CONTAINER's loopback. Two independent blockers, both
+ * this suite's: the receiver advertised `127.0.0.1`, and it bound loopback-only
+ * so no external name could have reached it either. The lane was configured
+ * correctly and the host signs webhooks correctly; the scenarios simply could
+ * not be witnessed, and recorded a plain `fail` while doing it — a false
+ * accusation, and the mirror of a gate that cannot fail.
+ *
+ * This does NOT relax any SSRF gate. `host.docker.internal` is still a private
+ * address over plain `http`, so the three gates in `webhook-signed-delivery`'s
+ * docblock apply unchanged and a host must still opt in (or use
+ * `OPENWOP_WEBHOOK_RECEIVER_URL`, which waives nothing) to witness the row.
+ * All this fixes is that the packet had nowhere to go.
+ */
+export function receiverBinding(): { bind: string; advertise: string } {
+  const advertise = process.env['OPENWOP_CONFORMANCE_HARNESS_HOST']?.trim();
+  if (!advertise) return { bind: '127.0.0.1', advertise: '127.0.0.1' };
+  return { bind: '0.0.0.0', advertise };
+}
