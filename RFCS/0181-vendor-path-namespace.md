@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0181                                                            |
 | **Title**         | Vendor path namespace: host-proprietary operations live at `/host/<org>/…`, keyed to the org registry, version-agnostic, outside the protocol contract |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-10                                                      |
-| **Updated**       | 2026-09-10 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation"; logged here and in `CHANGELOG.md` 2.0.12.) |
+| **Updated**       | 2026-09-10 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation"; logged here and in `CHANGELOG.md` 2.0.12.) · 2026-09-11 (`Active → Accepted`). **Evidence tier: tier-2 — steward-affiliated sibling host** (`GOVERNANCE.md` §"Acceptance evidence tiers"): MyndHyve serves `/host/myndhyve/…` in production (revision `00346-cqw`, myndhyve#292, pinned to corpus 2.0.12) and advertises the mount as `extensions["myndhyve.vendor-namespace"] = { root, twin, roots[], rfc }` on both majors. Verified by the steward on the wire 2026-09-11: a `/host/myndhyve/…` request answers identically with no header, `2.0` and a malformed value, carries no `OpenWOP-Version` (§A.4); the `/v1/host/myndhyve/…` twin stamps `1.0` (§A.5). Tier-2 evidence is not independent evidence; tier-3 re-verification remains the `ROADMAP.md` gate. openwop-app's leg (#3728, ADR 0652) is in its gate and will be recorded when live. |
 | **Affects**       | `spec/v2/core/versioning.md` §1.4, §5; `spec/v2/declaration.json` (`reservedOrgs`, two org registrations); `spec/v2/core/capabilities.md` §3.2 (cross-reference only) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): v2 prose only; no field, MUST, error code or v1 surface changes |
 | **Supersedes**    | —                                                               |
@@ -65,8 +65,8 @@ No new scenario. §A.1/§A.4 are unwitnessable by construction — the suite nev
 
 ## Unresolved questions
 
-1. `GET /runs` (list) and `DELETE /runs/{runId}` are v1 *protocol* operations with no v2 twin; they are not vendor paths and MUST NOT move under `/host/<org>/`. Whether they join the manifest before end-of-support is a separate RFC.
-2. Whether the §A.6 advertisement should have a standard facet (e.g. `root`, `openapiUrl`) rather than an org-shaped record. Deferred until a second host advertises one.
+1. ~~`GET /runs` (list) and `DELETE /runs/{runId}` are v1 *protocol* operations with no v2 twin~~ — **corrected 2026-09-11:** neither exists in v1 (`api/openapi.yaml` has only `createRun` and `getRun` on those paths; no `listRuns`/`deleteRun` in prose or the 1.x SDKs). They are host extensions at protocol-shaped paths, so §A.1 applies to them: they move under `/host/<org>/` or are accepted as gone. `GET /runs` (list) is additionally an unnamed method on a manifest-named path, which §1.4 (2.0.12) forbids serving as `application/json`. A portable run *list* is a real interop gap and is worth its own additive RFC (tenant-scoped, bound ids, cursor pagination, advertised family, one unaided scenario); a protocol *delete* contradicts the append-only log (`events.md`, `persistence.md`) and identity §5's never-reassigned ids, so it would be an erasure-tombstone RFC with retention and cross-tenant invariants, not a manifest row. Neither blocks end-of-support.
+2. Whether the §A.6 advertisement should have a standard facet rather than an org-shaped record. Two data points now (2026-09-11): MyndHyve advertises `myndhyve.vendor-namespace` = `{ root, twin, roots[], rfc }`; openwop-app advertises `openwop-app.host` = `{ root, twin, rfc }`. `root`, `twin` and `rfc` are common to both; a standard facet, if one is ever wanted, is those three.
 
 ## Implementation notes (non-normative)
 
@@ -75,7 +75,7 @@ openwop-app's ADR 0646 façade already serves `/host/openwop-app/…` unversione
 ## Acceptance criteria
 
 - [x] `Draft → Active`: §5 decision + §1.4 scoping in `versioning.md`; `reservedOrgs` and two org rows in the declaration; CHANGELOG 2.0.12. (This PR.)
-- [ ] `Active → Accepted`: a tier-1 host serves `/host/<org>/…` for its registered org and advertises the mount under `extensions.<org>` (openwop-app has committed to this on the steward bus, 2026-09-10).
+- [x] `Active → Accepted`: a production host serves `/host/<org>/…` for its registered org and advertises the mount under `extensions.<org>` — MyndHyve, 2026-09-11, tier-2 evidence verified on the wire (see `Updated`). openwop-app's leg (#3728) follows and will be added to the record; it is not required for this box.
 
 ## References
 
