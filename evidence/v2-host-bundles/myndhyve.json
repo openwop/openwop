@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-06T02:36:23.529Z",
+  "generatedAt": "2026-09-10T21:34:15.482Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.4",
+    "version": "2.0.11",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.4",
-    "stampSha256": "8abb52df9340e47ac5d16d15fb0abe88cc3bd6857e2cb8be269079d6d7ca1530"
+    "specArtifactsVersion": "2.0.11",
+    "stampSha256": "73ec5b7c6f2dceeefad0afb5d47446c3566a33ed6123db4bafcb26af38767fa6"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,18 +14,947 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "0dbdddf44"
+      "id": "8bd19f29b"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "bb48ab61886d83a6ad1bf5d1c635aceadd9fc88476817054b32d8da7d6d1c471",
+    "sha256": "3232d8623b1fa5f050499f0a2098d747100f4b15a962afb14ae2660254349e6e",
     "protocolVersions": [
       "1.0",
       "2.0"
     ],
-    "preferredVersion": "1.0"
+    "preferredVersion": "1.0",
+    "document": {
+      "protocolVersion": "1.0",
+      "protocolVersions": [
+        "1.0",
+        "2.0"
+      ],
+      "preferredVersion": "1.0",
+      "implementation": {
+        "name": "workflow-runtime",
+        "version": "1.0.0",
+        "vendor": "myndhyve"
+      },
+      "engineVersion": 1,
+      "eventLogSchemaVersion": 3,
+      "observability": {
+        "testSeams": {
+          "otelScrape": true
+        }
+      },
+      "minClientVersion": "0.1",
+      "runtimeCapabilities": [],
+      "fixtures": [
+        "conformance-noop",
+        "conformance-multi-node",
+        "conformance-idempotent",
+        "conformance-cancellable",
+        "conformance-delay",
+        "conformance-cap-breach",
+        "conformance-version-fold",
+        "conformance-subworkflow-child",
+        "conformance-failure",
+        "conformance-identity",
+        "conformance-channel-ttl",
+        "conformance-subworkflow-parent",
+        "conformance-approval",
+        "conformance-clarification",
+        "conformance-agent-identity",
+        "conformance-orchestrator-low-confidence",
+        "conformance-multi-agent-confidence-escalation",
+        "conformance-conversation-lifecycle",
+        "conformance-orchestrator-dispatch",
+        "conformance-orchestrator-terminate",
+        "conformance-dispatch-loop",
+        "conformance-agent-low-confidence",
+        "conformance-agent-reasoning",
+        "conformance-message-reducer",
+        "conformance-agent-memory-roundtrip",
+        "conformance-agent-memory-ttl",
+        "conformance-agent-memory-cross-tenant",
+        "conformance-conversation-vs-clarification",
+        "conformance-agent-memory-redaction",
+        "conformance-agent-pack-provenance",
+        "conformance-conversation-replay",
+        "conformance-agent-pack-install",
+        "conformance-agent-pack-export",
+        "openwop-smoke-byok-roundtrip",
+        "conformance-configurable-schema",
+        "conformance-dispatch-input-mapping",
+        "conformance-dispatch-input-mapping-child",
+        "conformance-dispatch-output-mapping",
+        "conformance-dispatch-output-mapping-child",
+        "conformance-dispatch-cross-worker-handoff",
+        "conformance-dispatch-cross-worker-handoff-child-a",
+        "conformance-dispatch-cross-worker-handoff-child-b",
+        "conformance-subworkflow-input-mapping",
+        "conformance-subworkflow-input-mapping-child",
+        "conformance-agent-channel-dispatch",
+        "conformance-phase4-nondet-tool",
+        "conformance-replay-side-effect"
+      ],
+      "signingKeys": [
+        {
+          "keyId": "myndhyve-bundle-2026-09",
+          "alg": "ed25519",
+          "publicKey": "Ok4Qp6ujF9AYz1-z6ffk7BNtgkFqD-2wwPb3vHVVYG4",
+          "use": "certification-bundle"
+        }
+      ],
+      "supportedEnvelopes": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated"
+      },
+      "schemaVersions": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated"
+      },
+      "limits": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "clarificationRounds": 3,
+        "schemaRounds": 2,
+        "envelopesPerTurn": 5,
+        "maxNodeExecutions": 100,
+        "maxRunDurationMs": 600000,
+        "maxLoopIterations": 100,
+        "maxBudgetTokens": 5000000,
+        "maxBudgetCostUsd": 100,
+        "maxRequestBodyBytes": 1048576
+      },
+      "packs": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "claims-check",
+        "testMode": {
+          "isolated": true,
+          "catalogResetEndpoint": "/v1/packs-test/reset",
+          "scopes": [
+            "core",
+            "vendor",
+            "community"
+          ]
+        }
+      },
+      "multiAgent": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "claims-check",
+        "executionModel": {
+          "version": 6,
+          "statefulResume": true,
+          "verifier": {
+            "gating": true
+          },
+          "confidenceEscalationFloor": 0.5,
+          "confidenceEscalationInterruptKind": "x-host-myndhyve-low-confidence",
+          "crossChildMemoryConcurrency": "strict",
+          "crossHostCausation": {
+            "hostId": "myndhyve",
+            "ancestryEndpointSupported": true
+          },
+          "replayDeterminism": {
+            "llmCacheKeyRecipe": "spec-rfc-0041",
+            "refusalDivergenceEmission": true
+          }
+        }
+      },
+      "interrupt": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "refKinds": [
+          "role",
+          "group"
+        ],
+        "tokenAlgs": [
+          "hs256"
+        ]
+      },
+      "secrets": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "scopes": [
+          "user",
+          "tenant",
+          "run",
+          "workspace"
+        ],
+        "resolution": "host-managed"
+      },
+      "aiProviders": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "providers": [
+          "anthropic",
+          "openai",
+          "gemini",
+          "minimax"
+        ],
+        "byok": [
+          "anthropic",
+          "openai",
+          "gemini",
+          "minimax"
+        ],
+        "selfHosted": false,
+        "speechSynthesis": false,
+        "realtimeVoice": false,
+        "maxInlineMediaBytes": 10485760,
+        "authModes": [
+          "apiKey"
+        ],
+        "policies": {
+          "modes": [
+            "disabled",
+            "optional",
+            "required",
+            "restricted"
+          ],
+          "scopes": [
+            "workspace",
+            "project"
+          ],
+          "errorCode": "provider_policy_denied"
+        },
+        "input": {
+          "modalities": [
+            "text",
+            "image"
+          ]
+        }
+      },
+      "prompts": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "templateKinds": [
+          "system",
+          "user",
+          "few-shot",
+          "schema-hint"
+        ],
+        "observability": "full",
+        "packsSupported": true,
+        "mutableLibrary": true,
+        "library": {
+          "id": "myndhyve-system",
+          "renderEndpoint": "/prompts:render",
+          "maxRenderRequestBytes": 65536
+        },
+        "agentBindings": true
+      },
+      "feedback": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "targets": [
+          "run"
+        ],
+        "signals": [
+          "rating",
+          "correction",
+          "label",
+          "flag"
+        ]
+      },
+      "authorization": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "failClosed": true,
+        "roles": [
+          {
+            "role": "owner",
+            "scopes": [
+              "admin:*"
+            ]
+          },
+          {
+            "role": "admin",
+            "scopes": [
+              "admin:*"
+            ]
+          },
+          {
+            "role": "editor",
+            "scopes": [
+              "manifest:read",
+              "runs:create",
+              "runs:read",
+              "runs:cancel"
+            ]
+          },
+          {
+            "role": "viewer",
+            "scopes": [
+              "manifest:read",
+              "runs:read"
+            ]
+          }
+        ]
+      },
+      "production": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "backpressure": {
+          "retryAfterSeconds": 5
+        },
+        "retention": {
+          "minWindowSeconds": 604800
+        }
+      },
+      "scheduling": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "cron": true,
+        "delayed": true,
+        "calendar": false
+      },
+      "oauth": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "grants": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "providers": [
+          {
+            "id": "github"
+          },
+          {
+            "id": "notion"
+          },
+          {
+            "id": "linear"
+          },
+          {
+            "id": "atlassian"
+          },
+          {
+            "id": "stripe"
+          },
+          {
+            "id": "meta"
+          },
+          {
+            "id": "google_ads"
+          },
+          {
+            "id": "tiktok"
+          },
+          {
+            "id": "linkedin"
+          }
+        ]
+      },
+      "credentials": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "scopes": [
+          "user",
+          "workspace"
+        ],
+        "encryptionAtRest": true,
+        "sharing": true
+      },
+      "modelCapabilities": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "advertised": [
+          "structured-output",
+          "discriminator-enum",
+          "vision-input",
+          "image-output"
+        ]
+      },
+      "aiEnvelope": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated"
+      },
+      "artifactTypes": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "store": true,
+        "render": true,
+        "export": [
+          "pdf",
+          "pptx",
+          "docx",
+          "md",
+          "png",
+          "svg"
+        ],
+        "types": {
+          "vendor.myndhyve.prd": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          },
+          "vendor.myndhyve.theme": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          },
+          "vendor.myndhyve.screen": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          },
+          "vendor.myndhyve.personas": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          },
+          "vendor.myndhyve.brandResearch": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          },
+          "vendor.myndhyve.moodboard": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          },
+          "vendor.myndhyve.componentLibrary": {
+            "validated": true,
+            "validation": "open",
+            "schemaVersion": 1,
+            "registrationSource": "host"
+          }
+        }
+      },
+      "conversationPrimitive": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "claims-check"
+      },
+      "connections": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "packsSupported": true
+      },
+      "providerUsage": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "costEstimates": true,
+        "currency": "USD"
+      },
+      "auth": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "seam-gated",
+        "lanes": [
+          {
+            "lane": "oidc",
+            "issuers": [
+              "https://securetoken.google.com/myndhyve-prod",
+              "https://accounts.google.com"
+            ],
+            "revocation": "short-lived",
+            "revocationWindowSeconds": 3600,
+            "minimumAssurance": "bearer"
+          },
+          {
+            "lane": "api-key",
+            "issuers": [
+              "urn:myndhyve:api-key"
+            ],
+            "revocation": "next-request",
+            "minimumAssurance": "bearer"
+          }
+        ]
+      },
+      "selfHostedRunner": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "dispatchKinds": [
+          "model",
+          "tool"
+        ]
+      },
+      "i18n": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "defaultLocale": "en",
+        "supportedLocales": [
+          "en",
+          "es",
+          "pt-BR",
+          "fr"
+        ]
+      },
+      "content": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "baseLocale": "en",
+        "supportedLocales": [
+          "es",
+          "pt-BR",
+          "fr"
+        ]
+      },
+      "webhooks": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "retryPolicy": {
+          "maxAttempts": 5,
+          "backoff": "exponential"
+        },
+        "signatureAlgorithms": [
+          "v1"
+        ]
+      },
+      "triggerBridge": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "subscriptionStates": [
+          "active",
+          "paused",
+          "failed",
+          "dead-lettered"
+        ],
+        "dedup": true,
+        "retryPolicy": {
+          "maxAttempts": 8,
+          "backoff": "exponential"
+        },
+        "sources": [
+          "webhook",
+          "schedule",
+          "queue",
+          "email",
+          "form"
+        ],
+        "ingestion": {
+          "externalSources": [
+            "webhook",
+            "email",
+            "form"
+          ],
+          "maxBodyBytes": 10485760,
+          "registrationEndpoint": true
+        }
+      },
+      "deadLetter": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "retentionDays": 7
+      },
+      "replay": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "modes": [
+          "branch",
+          "replay"
+        ],
+        "effectSeamsManifest": "/host/effect-seams"
+      },
+      "agents": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "profile": "wop-agents-phase-1-skeleton",
+        "memoryBackends": [
+          "long-term"
+        ],
+        "memoryConsolidation": {
+          "schedule": "on-demand"
+        },
+        "commitments": {
+          "fireConditions": [
+            "time",
+            "predicate"
+          ]
+        },
+        "orchestrator": true,
+        "dispatch": true,
+        "manifestRuntime": {
+          "handoffValidation": true,
+          "installScope": "tenant"
+        },
+        "liveRuntime": {
+          "structuredOutput": true,
+          "confidenceEscalation": true,
+          "sources": [
+            "workflow-node",
+            "run-api",
+            "chat-mention"
+          ]
+        },
+        "evalSuite": {
+          "modes": [
+            "golden",
+            "regression"
+          ],
+          "maxTasksPerSuite": 200,
+          "maxCostUsdPerSuite": 5
+        },
+        "deployment": {
+          "channels": [
+            "stable",
+            "canary",
+            "latest"
+          ],
+          "canary": true,
+          "rollback": true,
+          "states": [
+            "draft",
+            "test",
+            "staged",
+            "active",
+            "paused",
+            "deprecated",
+            "rolled-back"
+          ]
+        },
+        "roster": {
+          "installScope": "tenant"
+        },
+        "orgChart": {
+          "installScope": "tenant",
+          "departmentNesting": true,
+          "responsibilityView": true
+        },
+        "dispatchMapping": true,
+        "reasoning": {
+          "verbosity": "summary",
+          "tokenLimit": 512
+        },
+        "proposals": {
+          "artifactKinds": [
+            "agent-pack",
+            "workflow-chain-pack",
+            "prompt-template",
+            "automation"
+          ],
+          "activation": "direct-rbac",
+          "duplicationDetection": false
+        },
+        "goals": {
+          "judge": "verifier",
+          "continuation": [
+            "schedule",
+            "commitment",
+            "manual"
+          ],
+          "requiresBounds": true
+        }
+      },
+      "toolHooks": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "prePostEvents": true,
+        "perToolRateLimit": true
+      },
+      "httpClient": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "ssrfGuard": true,
+        "maxResponseBodyBytes": 10485760,
+        "requestTimeoutMs": 30000,
+        "methods": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE",
+          "HEAD",
+          "OPTIONS"
+        ],
+        "safeFetch": {},
+        "egressPolicy": {
+          "decisions": [
+            "allowed",
+            "denied",
+            "downgraded",
+            "approval-required"
+          ]
+        }
+      },
+      "toolCatalog": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "sources": [
+          "node-pack",
+          "mcp",
+          "host-extension"
+        ],
+        "sessionLifecycle": true,
+        "compactView": true
+      },
+      "budget": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "dimensions": [
+          "tokens",
+          "cost",
+          "toolCalls",
+          "retries",
+          "model"
+        ],
+        "enforce": "hard",
+        "scopes": [
+          "run",
+          "workflow",
+          "agent",
+          "project"
+        ]
+      },
+      "memory": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "ttlSupported": true,
+        "attribution": {
+          "emitsWriteEvents": true
+        },
+        "writable": true,
+        "search": {
+          "modes": [
+            "filter"
+          ]
+        },
+        "retention": {
+          "ttl": true,
+          "forget": true
+        },
+        "injectionBudget": {
+          "tokenCounter": "chars"
+        }
+      },
+      "portability": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "witnessable-gated",
+        "export": true,
+        "import": false,
+        "kinds": [
+          "agent",
+          "pack",
+          "prompt-template",
+          "connection-ref",
+          "schedule",
+          "roster",
+          "org-chart"
+        ],
+        "dryRun": true
+      },
+      "subWorkflow": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "claims-check",
+        "inputMapping": true
+      },
+      "envelopes": {
+        "status": "stable",
+        "since": "1.0",
+        "witness": "claims-check",
+        "reasoning": {
+          "promptDirective": "advisory"
+        },
+        "tierOneSubsetCompliance": "warn",
+        "reliability": {
+          "events": [
+            "envelope.retry.attempted",
+            "envelope.retry.exhausted",
+            "envelope.refusal",
+            "envelope.truncated",
+            "envelope.nlToFormat.engaged",
+            "envelope.recovery.applied"
+          ],
+          "maxRetryAttempts": 2,
+          "completion": {
+            "distinguishesTruncation": true,
+            "truncationBudgetMultiplier": 2
+          }
+        }
+      },
+      "idempotency": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "crossRegion": "single-region"
+      },
+      "eventLog": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "claims-check"
+      },
+      "extensions": {
+        "myndhyve.implementation": {
+          "name": "workflow-runtime",
+          "version": "1.0.0",
+          "vendor": "myndhyve"
+        },
+        "myndhyve.testing": {
+          "mockProviders": [
+            "stream-text"
+          ],
+          "testKeyPrefix": "hk_test_"
+        },
+        "myndhyve.rest-transport": {
+          "conditionalRunGet": true,
+          "contentEncodings": [
+            "gzip",
+            "br"
+          ]
+        },
+        "myndhyve.profiles": {
+          "value": [
+            "openwop-discovery-core",
+            "openwop-core",
+            "openwop-interrupts",
+            "openwop-stream-sse",
+            "openwop-stream-poll",
+            "openwop-secrets",
+            "openwop-provider-policy",
+            "openwop-node-packs",
+            "openwop-replay-fork",
+            "openwop-production",
+            "openwop-trigger-bridge",
+            "openwop-agent-platform",
+            "openwop-core-standard",
+            "openwop-verifier-gating"
+          ]
+        },
+        "myndhyve.dispatch": {
+          "supported": true,
+          "models": [
+            "child-run"
+          ],
+          "fanOutSupported": true,
+          "fanOutPolicies": [
+            "sequential",
+            "reject",
+            "parallel"
+          ],
+          "joinModes": [
+            "wait-all",
+            "quorum",
+            "first",
+            "race"
+          ],
+          "onChildFailureModes": [
+            "collect",
+            "fail-fast",
+            "absorb"
+          ],
+          "maxFanOut": 16,
+          "perItemInput": true
+        },
+        "myndhyve.host": {
+          "host.aiProviders": {
+            "supported": true
+          },
+          "host.http": {
+            "supported": true
+          },
+          "host.byok": {
+            "supported": true
+          },
+          "host.memory": {
+            "supported": true
+          },
+          "host.mcp": {
+            "supported": true
+          }
+        },
+        "myndhyve.debug-bundle": {
+          "supported": true
+        },
+        "myndhyve.chat": {
+          "supported": true,
+          "cards": {
+            "supported": true
+          },
+          "cardPacks": {
+            "supported": true
+          }
+        },
+        "myndhyve.runs": {
+          "bulkCancel": {
+            "supported": true,
+            "maxRunIds": 100
+          },
+          "pauseResume": {
+            "supported": false
+          }
+        },
+        "myndhyve.stream-modes": {
+          "supported": [
+            "values",
+            "updates",
+            "messages",
+            "debug"
+          ],
+          "chunked": {
+            "ai.message.chunk": true
+          }
+        },
+        "myndhyve.myndhyve": {
+          "a2a": {
+            "peerEndpoint": "https://us-central1-myndhyve-prod.cloudfunctions.net/canvasApi/.well-known/agent.json",
+            "protocol": "a2a-v1"
+          },
+          "mcp": {
+            "supported": true,
+            "profile": "wop-mcp-tools-basic",
+            "level": "basic",
+            "trustBoundary": "untrusted",
+            "serverUrls": [
+              "/v1/mcp"
+            ]
+          },
+          "policies": {
+            "canonicalCodes": [
+              "credential_required",
+              "credential_forbidden",
+              "credential_unavailable"
+            ]
+          },
+          "envelopes": {
+            "reasoning": {
+              "trustMarkerPropagation": true
+            }
+          }
+        }
+      }
+    }
   },
   "claimedProfiles": [
     {
@@ -33,14 +962,20 @@
       "evidenceTier": "self",
       "witnessCount": 3,
       "certified": true
+    },
+    {
+      "id": "openwop-core-standard",
+      "evidenceTier": "self",
+      "witnessCount": 12,
+      "certified": false
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 136,
-      "executedFail": 0,
+      "executedPass": 142,
+      "executedFail": 7,
       "skipped": 0,
-      "inapplicable": 88,
+      "inapplicable": 78,
       "blocked": 0
     },
     "requirements": [
@@ -49,6 +984,13 @@
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
         "assertions": 295
+      },
+      {
+        "id": "openwop.scenario.memory-attribution-replay-stable",
+        "scenario": "memory-attribution-replay-stable.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -65,9 +1007,9 @@
       {
         "id": "openwop.scenario.v2-approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2,
+        "detail": "partial-witness: blocked: no interrupt-raising fixture with an approversList the suite's bearer is not on — advertise `conformance-approval-approvers` (a core.approvalGate whose approversList is [\"urn:conformance:listed-approver\"]) so a non-listed resolve can be driven"
       },
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
@@ -92,7 +1034,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 180,
+        "assertions": 200,
         "detail": "partial-witness: inapplicable: no advertised family record carries an `until` (every record is stable, or none is advertised)"
       },
       {
@@ -137,16 +1079,15 @@
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 2,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.floor.v2-effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 30
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -217,7 +1158,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 11
       },
       {
         "id": "openwop.floor.v2-idempotency-key-grammar",
@@ -229,8 +1170,7 @@
         "id": "openwop.floor.v2-interrupt-token-scheme",
         "scenario": "v2-interrupt-token-scheme.test.ts",
         "result": "executed-pass",
-        "assertions": 2,
-        "detail": "partial-witness: inapplicable: the signed-token surface GET /interrupts/{token} is not mounted (404 to every token probe) — a SHOULD in interrupt.md; the kid rule cannot be observed"
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-lane-issuer-advertised",
@@ -355,7 +1295,7 @@
         "id": "openwop.scenario.v2-profiles-derived-only",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
@@ -417,16 +1357,15 @@
       {
         "id": "openwop.scenario.v2-run-fork-prefix",
         "scenario": "v2-run-fork-prefix.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 3,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-run-fork-refusals",
         "scenario": "v2-run-fork-refusals.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -501,9 +1440,9 @@
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-pass",
-        "assertions": 10,
-        "detail": "partial-witness: blocked: [blocked] the retry was observed (2 attempts) but the receiver's 204 did not land inside the 90000ms window: it answers 204 only on attempt 3, which costs the SUM of the first 2 backoff intervals, and webhooks.retryPolicy carries only { maxAttempts, backoff: exponential } — the base interval is not advertised, so the suite cannot derive how long to wait. Unmeasured, not unmet (RFC 0148 §A).; [blocked] no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
+        "result": "executed-fail",
+        "assertions": 9,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -602,18 +1541,11 @@
         "assertions": 1
       },
       {
-        "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
-        "scenario": "v2-era-2-append-vocabulary.test.ts",
+        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
+        "scenario": "memory-attribution-replay-stable.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
-      },
-      {
-        "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
-        "scenario": "v2-era-2-append-vocabulary.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "detail": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -674,27 +1606,6 @@
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
-        "scenario": "v2-run-diff-identical.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
-      },
-      {
-        "id": "openwop.it.v2-run-fork-prefix.a-replay-fork-inherits-exactly-0-fromseq-the-event-at-fromseq-is-re-executed-nev",
-        "scenario": "v2-run-fork-prefix.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-run-fork-refusals.replay-overlay-400-a-fromseq-outside-the-log-422-fork-point-invalid-a-valid-repl",
-        "scenario": "v2-run-fork-refusals.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "profile not advertised in the captured discovery set"
@@ -770,13 +1681,13 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 144
+        "assertions": 160
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 36
+        "assertions": 40
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
@@ -789,7 +1700,7 @@
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 10
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
@@ -812,10 +1723,23 @@
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
-        "id": "openwop.requirement.0170.id-grammar.events",
+        "id": "openwop.requirement.0170.fork-prefix-boundary",
+        "scenario": "v2-run-fork-prefix.test.ts",
+        "result": "executed-fail",
+        "assertions": 3,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] spec/v2/core/replay.md §Endpoint: the event at sequence 2 is re-executed, not fixed history: the fork MUST NOT carry the source's node.completed at that sequence — seeing it means the prefix was copied inclusively ([0, 2] instead of [0, 2)): expected 'node.compl"
+      },
+      {
+        "id": "openwop.requirement.0170.id-grammar.bare-id",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0170.id-grammar.events",
+        "scenario": "v2-id-grammar.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -844,9 +1768,8 @@
       {
         "id": "openwop.requirement.0170.interrupt-token-scheme.unheld-kid-refused",
         "scenario": "v2-interrupt-token-scheme.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the signed-token surface GET /interrupts/{token} is not mounted (404 to every token probe) — a SHOULD in interrupt.md; the kid rule cannot be observed"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0170.interrupt-token-scheme.unprefixed-refused",
@@ -902,6 +1825,19 @@
         "scenario": "v2-run-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0170.run-diff-identical",
+        "scenario": "v2-run-diff-identical.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
+      },
+      {
+        "id": "openwop.requirement.0170.run-fork-refusals",
+        "scenario": "v2-run-fork-refusals.test.ts",
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0170.run-pause-resume",
@@ -1137,9 +2073,8 @@
       {
         "id": "openwop.requirement.0173.approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
@@ -1158,37 +2093,35 @@
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "assertions": 2,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 29
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest.facet",
         "scenario": "v2-effect-seam-manifest.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0173.effect-seam-no-refire",
         "scenario": "v2-effect-seam-no-refire.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -1233,14 +2166,16 @@
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "executed-fail",
+        "assertions": 5,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "executed-fail",
+        "assertions": 4,
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a delivery that keeps failing MUST be retried before it can be exhausted (one attempt is a drop): expected 0 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1295,6 +2230,13 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "host advertises neither a2a nor mcp — no refreshedAt to check"
+      },
+      {
+        "id": "openwop.requirement.0176.era-2-append-vocabulary",
+        "scenario": "v2-era-2-append-vocabulary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.era-key",
@@ -1389,6 +2331,13 @@
         "scenario": "v2-v1-signed-webhook-accepted.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0176.vendor-type-passthrough",
+        "scenario": "v2-unmapped-type-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.well-known-one-resource",
@@ -1486,12 +2435,12 @@
       }
     ]
   },
-  "witnessSha256": "a84a0297c18e3e4a31e0b95f695798910e8ecaa2a8b9e92dd75d09de50b881a0",
-  "assertionCount": 1457,
+  "witnessSha256": "2ba8dac016677b8120d92a3075b2db8413d0f82980492ef8c164c915c0e83d12",
+  "assertionCount": 1605,
   "detail": {
     "nonPass": [
       {
-        "id": "openwop.scenario.v2-approver-enforced",
+        "id": "openwop.scenario.memory-attribution-replay-stable",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -1512,13 +2461,8 @@
       },
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.floor.v2-effect-seam-manifest",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -1602,13 +2546,8 @@
       },
       {
         "id": "openwop.scenario.v2-run-fork-prefix",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-run-fork-refusals",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-subject-link-record",
@@ -1626,14 +2565,14 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
-        "result": "inapplicable",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "id": "openwop.floor.v2-webhook-durable-delivery",
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
-        "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
+        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "inapplicable",
-        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "reason": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -1681,21 +2620,6 @@
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
-        "result": "inapplicable",
-        "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
-      },
-      {
-        "id": "openwop.it.v2-run-fork-prefix.a-replay-fork-inherits-exactly-0-fromseq-the-event-at-fromseq-is-re-executed-nev",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-run-fork-refusals.replay-overlay-400-a-fromseq-outside-the-log-422-fork-point-invalid-a-valid-repl",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
         "result": "inapplicable",
         "reason": "inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host"
@@ -1716,14 +2640,19 @@
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
-        "id": "openwop.requirement.0170.interrupt-token-scheme.unheld-kid-refused",
-        "result": "inapplicable",
-        "reason": "the signed-token surface GET /interrupts/{token} is not mounted (404 to every token probe) — a SHOULD in interrupt.md; the kid rule cannot be observed"
+        "id": "openwop.requirement.0170.fork-prefix-boundary",
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] spec/v2/core/replay.md §Endpoint: the event at sequence 2 is re-executed, not fixed history: the fork MUST NOT carry the source's node.completed at that sequence — seeing it means the prefix was copied inclusively ([0, 2] instead of [0, 2)): expected 'node.compl"
       },
       {
         "id": "openwop.requirement.0170.revocation-honored",
         "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
+      },
+      {
+        "id": "openwop.requirement.0170.run-diff-identical",
+        "result": "inapplicable",
+        "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
       },
       {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
@@ -1741,11 +2670,6 @@
         "reason": "no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
       },
       {
-        "id": "openwop.requirement.0173.approver-enforced",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.requirement.0173.compensation-read-projection",
         "result": "inapplicable",
         "reason": "profile not advertised in the captured discovery set"
@@ -1757,28 +2681,18 @@
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.effect-seam-manifest",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.effect-seam-manifest.facet",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.requirement.0173.effect-seam-no-refire",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "the no-re-fire leg is seam-gated (RFC 0173 falsifiability §B replay row is witnessable-gated only through a seam that fires a named manifest row inside a run) — seams profile not advertised (conformance.seamsProfile)"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
@@ -1799,6 +2713,16 @@
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "result": "inapplicable",
         "reason": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0173.webhook-durable-delivery",
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
+      },
+      {
+        "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00342-s2l] webhooks.md §Durability: a delivery that keeps failing MUST be retried before it can be exhausted (one attempt is a drop): expected 0 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1829,6 +2753,11 @@
         "id": "openwop.requirement.0175.refresh-sla",
         "result": "inapplicable",
         "reason": "host advertises neither a2a nor mcp — no refreshedAt to check"
+      },
+      {
+        "id": "openwop.requirement.0176.era-2-append-vocabulary",
+        "result": "inapplicable",
+        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0176.fork-a-v1-run.legacy-subject",
@@ -1879,6 +2808,11 @@
         "id": "openwop.requirement.0176.v1-signed-webhook-accepted",
         "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the host's inbound receiver is reachable only through /conformance/seams/sample/webhooks/receive"
+      },
+      {
+        "id": "openwop.requirement.0176.vendor-type-passthrough",
+        "result": "inapplicable",
+        "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
@@ -1935,7 +2869,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "dwGWaj41ggFl8Uubz-AKEzsvdZx5PaxQAB9RJzP0yy63_Sima5PrXaB80UhoNgi1rkAbp_urb43SeOqYVZEuCg",
+    "sig": "C5NWokgBEbOAbcH-4gLLcj75_scwnULB37po_qHmXmxnKmlj_S0LILDCwSVg16caYxx8ZB0-2ABG0lK9klbUDg",
     "over": [
       "witnessSha256",
       "host.build",

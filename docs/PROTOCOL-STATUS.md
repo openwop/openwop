@@ -31,7 +31,7 @@
 | CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.0.0-rc.1 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.0.3 / ^2.0.3 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.0.8 / ^2.0.8 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
