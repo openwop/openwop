@@ -271,5 +271,5 @@
     "spec/v2/release.json": "a9e8f39bdccd099e6b57d0f114997f79177f7dce21b7d764b42e9a25d1aa1101",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "16dd719da936957f3521e4bc3e545b07c52400a4"
+  "corpusCommit": "489c36a5fb4832588dcfbc6d6e736a531a772b6d"
 }
