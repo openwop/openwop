@@ -144,6 +144,7 @@ node "$SPEC_ROOT/scripts/check-deprecations.mjs"
 # RFC 0148 §A / G3 — per-`it` requirement ids: the registry must match the scenario
 # sources, and a retired id must carry an alias row so bundles that cited it resolve.
 ( cd "$SPEC_ROOT/conformance" && node scripts/generate-requirement-registry.mjs --check )
+( cd "$SPEC_ROOT/conformance" && node scripts/generate-scenario-majors.mjs --check )
 # RFC 0166 §A/§B/§C — register dispositions, the one gap namespace, witness classes.
 node "$SPEC_ROOT/scripts/generate-gaps.mjs" --check
 node "$SPEC_ROOT/scripts/check-registers.mjs"
