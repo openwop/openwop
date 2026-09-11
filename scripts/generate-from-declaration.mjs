@@ -128,7 +128,12 @@ function familyRecord(f) {
   const facets = override ?? stripSupported(v1p);
   const props = {
     status: { enum: ['stable', 'experimental', 'deprecated'] },
-    since: { type: 'string', pattern: VERSION_RE },
+    since: {
+      type: 'string',
+      pattern: VERSION_RE,
+      description:
+        "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11.",
+    },
     until: { type: 'string', pattern: '^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$' },
     witness: { enum: decl.witnessClasses },
     ...(facets.properties ?? {}),

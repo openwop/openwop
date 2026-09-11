@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.3] — 2026-09-11 — `since` is the host's minor, said in the schema
+
+No scenario changed. The contract peer's generated
+`schemas/v2/capabilities.schema.json` now annotates the capability record's
+`since`: it names the minor of **this host's** contract at which it began
+serving the family, not the corpus minor that introduced it. Two hosts read
+it the other way on the same day and `core/capabilities.md` §2 never said.
+
 ## [2.1.2] — 2026-09-11 — `v2-version-header-honored` failed conformant single-major hosts
 
 Leg 1 compared a header-less fetch with an `OpenWOP-Version: 2.0` fetch on
