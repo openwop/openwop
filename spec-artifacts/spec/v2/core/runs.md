@@ -87,7 +87,7 @@ The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequen
 
 ## List
 
-`GET /runs` (RFC 0182; gated on `runList`) returns `{ runs: RunSnapshot[], nextCursor? }` — the caller's runs, newest first. The list MUST contain only runs whose tenant segment is the caller's, every `runId` MUST be bound (identity.md §5), and a run the caller created MUST appear. `limit` is honoured up to `runList.maxPageSize` and a page MUST NOT exceed it; `cursor` is opaque and one the host did not mint MUST be refused `400 validation_error`; `workflowId` and `status` are exact-match filters when `runList.filters` names them, and an unadvertised filter is ignored.
+`GET /runs` (RFC 0182; gated on `runList`) returns `{ runs: RunSnapshot[], nextCursor? }`, the caller's runs newest first: only runs whose tenant segment is the caller's, every `runId` bound (identity.md §5), and a run the caller created MUST appear. A page MUST NOT exceed `runList.maxPageSize`; `cursor` is opaque and one the host did not mint MUST be refused `400 validation_error`; `workflowId` and `status` are exact-match filters when `runList.filters` names them (an unadvertised filter is ignored).
 
 ## Cancel
 

@@ -28340,7 +28340,7 @@
       "file": "v2-run-list.test.ts",
       "line": 62,
       "title": "two runs the caller just created appear, every id is bound to the caller's tenant, and no page exceeds maxPageSize",
-      "explicitId": "openwop.requirement.0182.run-list.facets",
+      "explicitId": "openwop.requirement.0182.run-list.tenant-scoped",
       "citations": [
         {
           "section": "spec/v2/core/capabilities.md § runList",

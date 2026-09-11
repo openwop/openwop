@@ -64,7 +64,7 @@ describe('RFC 0182 — run-list (gated on runList)', () => {
     const fam = await gateFamily('runList');
     if (!fam) return softSkip('inapplicable', 'runList family not advertised — no obligation (gate recorded under openwop.family.runList)');
     const maxPageSize = typeof fam['maxPageSize'] === 'number' ? fam['maxPageSize'] : NaN;
-    expect(Number.isInteger(maxPageSize) && maxPageSize >= 1, req('openwop.requirement.0182.run-list.facets', 'spec/v2/core/capabilities.md § runList', `runList.maxPageSize MUST be an integer ≥ 1 (got ${String(fam['maxPageSize'])})`)).toBe(true);
+    expect(Number.isInteger(maxPageSize) && maxPageSize >= 1, req('openwop.requirement.0182.run-list.tenant-scoped', 'spec/v2/core/capabilities.md § runList', `runList.maxPageSize MUST be an integer ≥ 1 (got ${String(fam['maxPageSize'])})`)).toBe(true);
     const a = await createRun(); if ('reason' in a) return softSkip('blocked', a.reason);
     const b = await createRun(); if ('reason' in b) return softSkip('blocked', b.reason);
     const tenant = tenantOf(a.runId);
@@ -73,10 +73,10 @@ describe('RFC 0182 — run-list (gated on runList)', () => {
     const validate = v2Validator('run-list-response');
     for (const page of walked.pages) {
       const v = validate(page);
-      expect(v.ok, req('openwop.requirement.0182.run-list.shape', DOC, `every page MUST validate against run-list-response.schema.json — runs[] of RunSnapshot (bound runId) plus optional nextCursor (${v.errors})`)).toBe(true);
-      expect((page.runs as unknown[]).length <= maxPageSize, req('openwop.requirement.0182.run-list.page-ceiling', DOC, `a page MUST NOT exceed the advertised runList.maxPageSize (${maxPageSize}); got ${(page.runs as unknown[]).length}`)).toBe(true);
+      expect(v.ok, req('openwop.requirement.0182.run-list.tenant-scoped', DOC, `every page MUST validate against run-list-response.schema.json — runs[] of RunSnapshot (bound runId) plus optional nextCursor (${v.errors})`)).toBe(true);
+      expect((page.runs as unknown[]).length <= maxPageSize, req('openwop.requirement.0182.run-list.tenant-scoped', DOC, `a page MUST NOT exceed the advertised runList.maxPageSize (${maxPageSize}); got ${(page.runs as unknown[]).length}`)).toBe(true);
     }
-    expect(walked.ids.includes(a.runId) && walked.ids.includes(b.runId), req('openwop.requirement.0182.run-list.contains-created', DOC, `a run the caller just created MUST appear in its unfiltered list — created ${a.runId} and ${b.runId}; walked ${walked.ids.length} id(s) over ${walked.pages.length} page(s)${walked.reason ? ` (${walked.reason})` : ''}`)).toBe(true);
+    expect(walked.ids.includes(a.runId) && walked.ids.includes(b.runId), req('openwop.requirement.0182.run-list.tenant-scoped', DOC, `a run the caller just created MUST appear in its unfiltered list — created ${a.runId} and ${b.runId}; walked ${walked.ids.length} id(s) over ${walked.pages.length} page(s)${walked.reason ? ` (${walked.reason})` : ''}`)).toBe(true);
     const foreign = walked.ids.filter((id) => tenantOf(id) !== tenant);
     expect(foreign, req('openwop.requirement.0182.run-list.tenant-scoped', 'spec/v2/core/identity.md §5', `every runId in the list MUST carry the caller's tenant segment (${tenant}) — the list is tenant-scoped by construction; found ${foreign.length} other(s): ${foreign.slice(0, 3).join(', ')}`)).toEqual([]);
   });

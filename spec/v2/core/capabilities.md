@@ -363,7 +363,7 @@ Witness `witnessable-gated`; owner RFC 0104; facets `refKinds`, `tokenAlgs`.
 
 ### § runList
 
-Witness `witnessable-gated`; owner RFC 0182; facets `maxPageSize`, `filters`. Gates `GET /runs` (runs.md §List).
+Witness `witnessable-gated`; owner RFC 0182; facets `maxPageSize`, `filters` (runs.md §List).
 
 ## 6. Extension families (13)
 
