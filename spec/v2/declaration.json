@@ -1589,6 +1589,26 @@
       "owningRfc": "0098"
     },
     {
+      "key": "runList",
+      "kind": "family",
+      "anchor": "core",
+      "section": "core/capabilities.md#runList",
+      "peerDependencyId": "runList",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxPageSize",
+        "filters"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0182",
+      "facetsFrom": "spec/v2/facets/runList.schema.json"
+    },
+    {
       "key": "interrupt",
       "kind": "family",
       "anchor": "core",

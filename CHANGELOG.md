@@ -13,6 +13,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-11 — a portable run list (RFC 0182)
+
+First 2.x minor: one new optional operation. Normative-additive; v1 untouched;
+comment window waived by the sole steward and logged in the RFC. Suite 2.0.13
+(the off-process webhook-receiver fix, #1312) was cut in `conformance/` only and
+never tagged; 2.1.0 carries it.
+
+### Added
+- **RFC 0182 — `listRuns`** (`Active`). `GET /runs` returns `{ runs: RunSnapshot[], nextCursor? }` — the caller's runs, newest first, tenant-scoped by construction with every `runId` bound (identity.md §5); `limit` honoured up to the advertised `runList.maxPageSize`; opaque `cursor`, a cursor the host did not mint is `400 validation_error`; `workflowId` and `status` exact-match filters when `runList.filters` names them. Gated on the new core family **`runList`** (facets `maxPageSize`, `filters`; `404 not_found` when unadvertised). New `schemas/v2/run-list-response.schema.json`; `runs.md` §Surface row + §List; `capabilities.md` § runList; `derive-v2-api.py` emits the operation; path manifest gains its 52nd operation.
+- Conformance `v2-run-list` (gated on `runList`, three legs): the two runs the caller just created appear and every id carries the caller's tenant segment; no page exceeds `maxPageSize`; a foreign cursor is refused; a `workflowId` filter is exact when advertised.
+
+### Why now
+The question arrived as "should `GET /runs` join the manifest before December" and turned out to be misfiled: it was never a v1 protocol operation (RFC 0181 §Unresolved-1, corrected). What remained was the interop gap — every UI grows its own list — and the corpus already had every primitive the portable one needs.
+
 ## [2.0.12] — 2026-09-10 — host-proprietary paths have a home: `/host/<org>/…` (RFC 0181)
 
 The gap `versioning.md` §5 recorded on 09-09 as undecided-not-permissive is

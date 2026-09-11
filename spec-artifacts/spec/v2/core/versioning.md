@@ -1,6 +1,6 @@
 # Versioning and Release
 
-> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0172, 0179, 0176.**
+> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0172, 0179, 0176.**
 
 ## Why this exists
 
@@ -43,7 +43,7 @@ Every protocol response MUST carry `OpenWOP-Version: <major>.<minor>` naming the
 
 A *protocol response* is one produced by an operation named in `spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap); a shell, a hosting fallback or a proprietary route on the same origin has no version to name. Errata 2026-09-10: this read "any path" — §1.2's quantifier defect again.
 
-**On a manifest-named path, a non-protocol response MUST NOT carry `OpenWOP-Version` and MUST NOT be `application/json`**; a reader, a cache or the suite MUST NOT count a response without the header, or with a `text/html` body, as reaching the operation (`reachedUnderMajor2`). A vendor path (§5, RFC 0181) is not a shared name; nothing about its representation is constrained.
+**On a manifest-named path, a non-protocol response MUST NOT carry `OpenWOP-Version` and MUST NOT be `application/json`**; a reader, a cache or the suite MUST NOT count a response without the header, or with a `text/html` body, as reaching the operation (`reachedUnderMajor2`). A vendor path (§5) is not a shared name and is unconstrained.
 
 **Content negotiation on a shared name is permitted, with conditions.** A host MAY serve a protocol operation and a page under one unversioned name, selecting on `Accept`, iff:
 
@@ -110,7 +110,7 @@ Through the overlap a host MUST advertise both majors (§1.1), MUST emit `OpenWO
 
 **A run minted under major 1 and read under major 2 MUST be named by its tenant-bound projection** `<tenantId>/<the v1 id>` (`identity.md` §5). A host MUST NOT return the bare v1 id in a major-2 response body. Normative since 2026-09-04, when a conformance check asserting byte-equality with the v1 id and a host implementing `identity.md` §5 could not both hold — §5 had no reading.
 
-The projection is mandatory rather than optional for a reason that is not stylistic. A tenant-bound id carries the tenant segment that §5's `403 id_tenant_mismatch` check reads. **A bare, unprefixed id has no tenant segment, so the mandatory cross-tenant refusal cannot run on it at all.** Admitting a legacy unprefixed form under major 2 would therefore create a class of identifiers — exactly the long-lived ones, carried over from v1 — on which major 2's tenant-isolation check is structurally inapplicable. The grammar in `ids.schema.json` has no legacy branch, and it MUST NOT acquire one.
+The projection is mandatory for a reason that is not stylistic: a tenant-bound id carries the segment `identity.md` §5's `403 id_tenant_mismatch` check reads, and **a bare id has none, so the cross-tenant refusal cannot run on it at all.** A legacy unprefixed form in documents would be a class of long-lived identifiers on which major 2's tenant isolation is structurally inapplicable; the grammar in `ids.schema.json` has no legacy branch and MUST NOT acquire one.
 
 The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]` drops the `1.<n>` member and every alias carrying the `v1-end-of-support` trigger is removed.
 
@@ -118,7 +118,7 @@ The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]`
 
 **Retirement flips every header-less request's contract.** Through the overlap a header-less request on an unversioned name is served major 1 (§1.3); where the v1 surface lives under `/v1/` that name is not a v1 key and falls through to whatever else is served there — typically a page. At end-of-support the same request is served major 2 and the page starts answering the operation. A `/v1/`-counting inventory cannot see this. Test: `manifest top-level segments ∩ anything else served unversioned` (`{agents, prompts, runs}` on the host that found it). A non-empty intersection MUST be resolved before end-of-support: move the page, or serve it under §1.4's conditions.
 
-**Host-proprietary paths live at `/host/<org>/…` (RFC 0181).** The corpus keys every vendor namespace — capability records (`capabilities.md` §3.2), error codes, event types, pack properties — to an org registered in `spec/v2/declaration.json`; paths join that pattern. A host MAY serve operations the manifest does not name under `/host/<org>/…` for its registered org, with no major in the path (RFC 0172 rejected a `/v2/` space) and regardless of `OpenWOP-Version` — nothing there is a protocol operation, the suite never measures it, and §1.4's shared-name constraints do not apply. An org MUST NOT be named after a manifest segment under `/host/` (`reservedOrgs`), and a host SHOULD advertise the mount under `extensions.<org>.<name>`. A `/v1/host/<org>/…` twin MAY be served through the overlap; it retires atomically with `/v1`. Decided 2026-09-10 after two production hosts measured the gap (1,062 and 11 roots).
+**Host-proprietary paths live at `/host/<org>/…` (RFC 0181).** Every vendor namespace — capability records (`capabilities.md` §3.2), error codes, event types, pack properties — is keyed to an org registered in `spec/v2/declaration.json`; paths join that pattern. A host MAY serve operations the manifest does not name under `/host/<org>/…` for its registered org: no major in the path (RFC 0172 rejected a `/v2/` space), served regardless of `OpenWOP-Version`, never a protocol operation, never measured, outside §1.4's shared-name constraints. An org MUST NOT be named after a manifest segment under `/host/` (`reservedOrgs`); a host SHOULD advertise the mount under `extensions.<org>.<name>`. A `/v1/host/<org>/…` twin MAY ride the overlap and retires atomically with `/v1`.
 
 ## 6. Migration rows (RFC 0172)
 

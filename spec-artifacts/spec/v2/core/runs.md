@@ -1,6 +1,6 @@
 # Runs
 
-> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
+> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
 
 ## Why this exists
 
@@ -32,6 +32,7 @@ Every operation accepts `OpenWOP-Version` (overview.md); every mutating operatio
 | `getEvalSummary` | `GET /runs/{runId}/eval-summary` | `runs:read` | `agents.evalSuite`; `404` when unadvertised |
 | `getRunCompensation` | `GET /runs/{runId}/compensation` | `runs:read` | `compensation` (security-defaults.md) |
 | `getRunEffects` | `GET /runs/{runId}/effects` | `runs:read` | `idempotency` (idempotency.md) |
+| `listRuns` | `GET /runs` | `runs:read` | `runList` (RFC 0182); `404` when unadvertised |
 
 ## Create
 
@@ -83,6 +84,10 @@ An unknown root key, an unknown key inside a section, or a dotted key (`ai.provi
 | `metrics.openwopCost` | `{ usd, tokens { input, output }, model, provider, duration_ms }`; absence is not zero. |
 
 The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequence`; when present it MUST change on every observable transition and be stable otherwise. A request whose `If-None-Match` matches MUST receive `304` with no body. A host MAY compress (`gzip` baseline; `br`, `zstd` only where advertised under `restTransport.contentEncodings`) and MUST then set `Content-Encoding` and `Vary: Accept-Encoding`; the decoded body is byte-identical.
+
+## List
+
+`GET /runs` (RFC 0182; gated on `runList`) returns `{ runs: RunSnapshot[], nextCursor? }` — the caller's runs, newest first. The list MUST contain only runs whose tenant segment is the caller's, every `runId` MUST be bound (identity.md §5), and a run the caller created MUST appear. `limit` is honoured up to `runList.maxPageSize` and a page MUST NOT exceed it; `cursor` is opaque and one the host did not mint MUST be refused `400 validation_error`; `workflowId` and `status` are exact-match filters when `runList.filters` names them, and an unadvertised filter is ignored.
 
 ## Cancel
 
