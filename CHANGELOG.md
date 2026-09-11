@@ -13,6 +13,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.1.1] — 2026-09-11 — the run-list scenario was never selected
+
+Conformance-only. Suite 2.1.0 shipped `v2-run-list.test.ts` in the package but
+not in `conformance/scenario-majors.json`, the registry `--target-major` selects
+from; every 2.1.0 run reported 73 major-2 files and the scenario never
+executed — the reference host's 260/260 green (openwop-examples #39) was a
+green step that never asked the thing it reported on. RFC 0182's acceptance
+criterion is therefore still unwitnessed and the RFC stays `Active`.
+
+### Fixed
+
+- `conformance/scenario-majors.json` regenerated: 517 files, 74 targeting
+  major 2 (`v2-run-list` included). First real run against the reference
+  host: 3/3 legs pass.
+- `scripts/openwop-check.sh` now runs `generate-scenario-majors.mjs --check`
+  (the generator's docblock promised the registry "cannot drift from the
+  tree", but nothing in the gate invoked it). A scenario added without a
+  registry row now fails the corpus gate.
+
 ## [2.1.0] — 2026-09-11 — a portable run list (RFC 0182)
 
 First 2.x minor: one new optional operation. Normative-additive; v1 untouched;

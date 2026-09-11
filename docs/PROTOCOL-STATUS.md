@@ -21,13 +21,13 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.1.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.1.1 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
 | Python SDK `openwop-client` | 1.7.0 | openwop-sdks `sdk/python/pyproject.toml` | as above |
 | Go SDK `github.com/openwop/openwop-sdks/go` | 1.5.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file) | as above |
-| openwop-sdks corpus pin | v2.0.8 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
+| openwop-sdks corpus pin | v2.1.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
 | CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.0.0-rc.1 | openwop-registry `CORPUS_TAG` | as the SDK pin |

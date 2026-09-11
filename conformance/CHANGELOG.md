@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.1] — 2026-09-11 — `v2-run-list` is now actually selected
+
+`scenario-majors.json` regenerated (517 files, v2 74): 2.1.0 packaged the
+scenario but its registry row was missing, so `--target-major 2` never
+selected it and every 2.1.0 run reported 73 files. The corpus gate now runs
+`generate-scenario-majors.mjs --check`. No scenario prose changed.
+
 ## [2.1.0] — 2026-09-11 — the run-list scenario (RFC 0182)
 
 New scenario `v2-run-list` (target major 2, gated on the `runList` family —
