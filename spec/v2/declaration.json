@@ -13,7 +13,9 @@
   "extensionsKeyPattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$",
   "reservedOrgs": [
     "openwop",
-    "vendor"
+    "vendor",
+    "effect-seams",
+    "events"
   ],
   "extensions": {
     "example": {
@@ -21,6 +23,16 @@
       "registered": "2026-09-06",
       "reserved": true,
       "note": "Never assignable to a real vendor (RFC 2606 precedent). A conformance scenario needs one registered org whose events no host owns, so the positive half of the vendor rule is drivable; without it the registry could only ever say no."
+    },
+    "openwop-app": {
+      "name": "openwop-app — the reference application host (app.openwop.dev), steward-affiliated; github.com/openwop/openwop-app",
+      "registered": "2026-09-11",
+      "note": "Ships vendor event types (e.g. openwop-app.conversation.recall_used), vendor error codes, and the /host/openwop-app/ path namespace (RFC 0181). Registered by the steward on the host's application over the steward bus, 2026-09-10."
+    },
+    "myndhyve": {
+      "name": "MyndHyve — workflow-runtime host (api.myndhyve.ai), steward-affiliated sibling",
+      "registered": "2026-09-11",
+      "note": "Ships vendor event types and error codes under myndhyve.* and the /host/myndhyve/ path namespace (RFC 0181). Registered by the steward on the host's application over the steward bus, 2026-09-10."
     }
   },
   "metadata": [

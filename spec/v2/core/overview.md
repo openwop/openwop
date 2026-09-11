@@ -1,6 +1,6 @@
 # OpenWOP v2 Core — Overview
 
-> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0167, 0168, 0169, 0171, 0174.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0167, 0168, 0169, 0171, 0174.**
 
 ## Why this exists
 

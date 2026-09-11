@@ -13,6 +13,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.0.12] — 2026-09-10 — host-proprietary paths have a home: `/host/<org>/…` (RFC 0181)
+
+The gap `versioning.md` §5 recorded on 09-09 as undecided-not-permissive is
+decided, after two production hosts measured it the same day (1,062 and 11
+proprietary roots, and one rewrite façade already answering `/host/<org>/…`
+under major 2 by accident). Normative-additive; v1 untouched; comment window
+waived by the sole steward and logged in the RFC.
+
+### Added
+- **RFC 0181 — vendor path namespace** (`Active`). A host MAY serve operations the manifest does not name at `/host/<org>/…` for an org registered in `spec/v2/declaration.json` `extensions`; no major in the path; never a protocol operation, never measured; advertised under `extensions.<org>.<name>`; a `/v1/host/<org>/…` twin MAY ride the overlap and retires atomically. `/v2/host/…` and a `/v1/host/*` retirement exemption are rejected with their clauses.
+- `spec/v2/declaration.json` — orgs `openwop-app` and `myndhyve` registered (both hosts already emit vendor codes and event types under those names; only `example` was registered); `reservedOrgs` gains every manifest segment under `/host/` (`effect-seams`, `events`), which the org grammar previously admitted.
+
+### Changed
+- `versioning.md` §5 — the open-gap paragraph becomes the decision. §1.4 — the non-protocol-response constraints (no `OpenWOP-Version`, not `application/json`) are scoped to a **manifest-named path**, which is what the suite reads; read literally they forbade JSON on a vendor path.
+
+### Clarified, no change
+- `persistence.md` §"The v1 wire of an era-3 log" already states the inverse-codemap MUST a host reported as a gap; cited on the bus rather than restated.
+
 ## [2.0.11] — 2026-09-10 — the emitter scrubbed the key id it was required to publish
 
 Conformance-only. No spec, schema, or scenario-logic change; the pinned

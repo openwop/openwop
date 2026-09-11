@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 516 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 177 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 178 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.0.11 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.0.12 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -31,7 +31,7 @@
 | CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.0.0-rc.1 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.0.3 / ^2.0.3 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.0.8 / ^2.0.8 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -68,7 +68,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 161 |
-| Active | 15 |
+| Active | 16 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -250,6 +250,7 @@
 | RFC 0178 | v2 assurance registers and deprecation machinery: `spec/v1/deprecations.json` becomes normative - every row generates `deprecated: true` and `x-openwop-remove-in` onto its schema and API nodes, and a removal date that has passed with the surface present fails the merge gate; `gaps.json` rows carry a real witness class and a requirement id, the per-RFC `G<n>` becomes an alias row with a scheduled removal, and the RFC falsifiability tables become the same data with a parser gate; cross-repo evidence stays resolved; schema and API hygiene (README maturity column, "kept in sync" mirrors, redocly suppressions, a stale artifact-type gap row) is fixed rather than carried into `schemas/v2/` | Accepted |
 | RFC 0179 | Root `preferredVersion` (optional in v1.x): the `<major>.<minor>` a host serves to a header-less request, which MUST be a member of `protocolVersions[]` and equal `protocolVersion` while the host serves one major - the field RFC 0172 sectionA.1 requires at v2 and said would be "filed separately" so hosts can advertise it before the cut; the 2.0.0 suite's `--target-major` default reads it | Active |
 | RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Active |
+| RFC 0181 | Vendor path namespace: host-proprietary operations live at `/host/<org>/…`, keyed to the org registry, version-agnostic, outside the protocol contract | Active |
 
 ## SDK Helper Coverage
 
@@ -272,7 +273,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 16 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0181) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

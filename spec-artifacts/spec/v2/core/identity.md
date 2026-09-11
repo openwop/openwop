@@ -1,6 +1,6 @@
 # Identity
 
-> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0170, 0165, 0176.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0170, 0165, 0176.**
 
 ## Why this exists
 
