@@ -56,6 +56,6 @@
     "@openwop/spec-artifacts": "file:../spec-artifacts"
   },
   "peerDependencies": {
-    "@openwop/spec-artifacts": "2.0.12"
+    "@openwop/spec-artifacts": "2.0.13"
   }
 }
