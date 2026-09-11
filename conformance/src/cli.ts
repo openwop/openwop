@@ -663,13 +663,20 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       if (!vk || !vkId) { process.stderr.write('openwop-conformance --certify: --evidence-tier independent needs --verifier-key and --verifier-key-id (RFC 0168 §E.2)\n'); process.exit(2); }
       v3.verifierSignature = verifierSign(unsigned, vk, vkId);
     }
-    const secrets3 = evidenceSecretsFromEnv(process.env, [apiKey, signingKeyPem]);
+    // The published keyId is never a secret, whichever variable carried it
+    // (evidenceSecretsFromEnv: the `_ID` exclusion is the rule, `except` is
+    // the belt for a host that names its env var differently).
+    const secrets3 = evidenceSecretsFromEnv(process.env, [apiKey, signingKeyPem], [keyId]);
     const scrubbed3 = scrubEvidence(v3, secrets3);
     const v3Out = scrubbed3.value as BundleV3;
     const audit3 = verifyBundleV3(v3Out, { hostPublicKeyPem: publicKeyFromPrivate(signingKeyPem) });
     const emitterDefects = audit3.rejections.filter((r) => !['blocked-certified', 'relaxed-profile-certified', 'independent-unverifiable'].includes(r.kind));
     if (emitterDefects.length > 0) {
-      process.stderr.write('openwop-conformance --certify: assembled v3 bundle FAILED self-verification (emitter defect):\n' + emitterDefects.map((r) => `  - [${r.kind}] ${r.detail}`).join('\n') + '\n');
+      // Keep the rejected bundle: a self-verification failure with nothing to
+      // inspect sent a host patching a scratch copy of this CLI to see it.
+      const rejectedPath = `${outPath}.rejected.json`;
+      writeFileSync(rejectedPath, `${JSON.stringify(v3Out, null, 2)}\n`);
+      process.stderr.write('openwop-conformance --certify: assembled v3 bundle FAILED self-verification (emitter defect):\n' + emitterDefects.map((r) => `  - [${r.kind}] ${r.detail}`).join('\n') + `\n  the rejected bundle is at ${rejectedPath} (NOT a certification artifact — do not check it in)\n`);
       process.exit(2);
     }
     const v3Schema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'certification-bundle.schema.json'), 'utf8')) as Record<string, unknown>;

@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.0.10] — 2026-09-09 — three webhook scenarios could not be witnessed off-process
+## [2.0.13] — 2026-09-10 — three webhook scenarios could not be witnessed off-process
 
 `webhook-signed-delivery`, `replay-fanout-suppression` and
 `v2-webhook-durable-delivery` each stand up their own HTTP receiver and hand the
@@ -75,6 +75,61 @@ helper branch reds only its own. The bounded wait is pinned the same way and for
 a sharper reason — two consecutive container runs disagreed about the 500ms
 sleep (0 deliveries at 549ms, then 1 at 318ms), so a behavioural test for it
 would itself be a coin flip and could not be trusted to go red on a revert.
+
+## [2.0.12] — 2026-09-10 — corpus peer moves with RFC 0181; no scenario change
+
+No scenario, assertion or CLI change. The pinned `@openwop/spec-artifacts` peer
+moves to `2.0.12` with the corpus: `versioning.md` §5 decides the vendor path
+namespace (`/host/<org>/…`, RFC 0181), §1.4 scopes the non-protocol-response
+rule to manifest-named paths — which is exactly what `reachedUnderMajor2` has
+always probed — and the declaration registers two orgs and reserves the
+manifest's `/host/` segments. The suite never measures a vendor path, and this
+release says so in the RFC rather than inventing a probe.
+
+## [2.0.11] — 2026-09-10 — the emitter scrubbed the key id it was required to publish
+
+`--certify` fix. `evidenceSecretsFromEnv` selected every `OPENWOP_*` variable
+whose name matched `/(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/` and replaced its
+value throughout the bundle after `discovery.sha256` was taken.
+`OPENWOP_BUNDLE_SIGNING_KEY_ID` — the variable `--help` offers — matches on
+`KEY`, and its value is the identifier RFC 0168 §E.2 requires
+`discovery.document.signingKeys[].keyId` to publish. The embedded document lost
+its keyId, the digest kept it, and the emitter rejected its own output
+(`discovery.document ≠ discovery.sha256`). Three MyndHyve cuts on 2.0.8 and
+2.0.9 failed on this alone; the same host passed the day before with the id
+on `--signing-key-id`.
+
+- `*_ID` variable names are excluded from the classifier — an identifier of a
+  key is not the key.
+- The emitter passes the keyId it is about to publish as `except`, so it
+  survives whichever variable carried it.
+- On a self-verification failure the rejected bundle is written to
+  `<out>.rejected.json` and named on stderr, instead of being discarded — the
+  diagnostic a host had to patch a scratch copy of this CLI to obtain.
+- New redaction leg `openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed`.
+
+No scenario logic changes.
+
+## [2.0.10] — 2026-09-10 — the bare-id leg
+
+One new leg in `v2-id-grammar` (`openwop.requirement.0170.id-grammar.bare-id`):
+the run this caller just created is requested again with its tenant segment
+stripped — the v1 spelling of the same resource. While the host advertises a
+`1.x` member the leg requires 200 with the **bound** id in the body (the
+overlap affordance `v2-dual-stack-negotiation` has required since rc.44, now
+stated in `identity.md` §5); once no `1.x` member is advertised it requires
+`400 validation_error`. The branch is read from live discovery.
+
+For the record: the first draft of this leg required 400 unconditionally, on a
+steward ruling given on the bus the same day. Running it against the reference
+host turned `v2-dual-stack-negotiation` and `v2-compensation-read-projection`
+red — the suite already encoded the admission in six places and the prose had
+never said so. The instrument was right; the ruling was withdrawn and the
+prose now matches the instrument.
+
+No other scenario changes. The pinned `@openwop/spec-artifacts` peer moves to
+`2.0.10` with the corpus (`renderEndpoint` default, off-origin facets, the §5
+paragraph).
 
 ## [2.0.9] — 2026-09-09 — the rule this suite measures now says what it measures
 

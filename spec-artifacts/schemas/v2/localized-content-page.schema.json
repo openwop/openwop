@@ -21,7 +21,7 @@
     "slug": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]*$",
-      "description": "URL slug for public delivery (`GET /v1/content/pages/{slug}`). Lowercase, hyphen-separated."
+      "description": "URL slug for public delivery (`GET /content/pages/{slug}`). Lowercase, hyphen-separated."
     },
     "name": {
       "type": "string",

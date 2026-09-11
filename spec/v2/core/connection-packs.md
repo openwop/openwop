@@ -1,6 +1,6 @@
 # Connection Packs
 
-> **Status: Draft · v2.0.0-rc (2026-09-03) · RFC 0177, RFC 0095.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0177, RFC 0095.**
 
 ## Why this exists
 

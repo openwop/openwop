@@ -342,15 +342,32 @@ export function scrubEvidence<T>(value: T, secrets: readonly string[]): ScrubRes
  * The secrets a `--certify` run must keep out of its own evidence: the
  * credential it was handed, plus every `OPENWOP_*` environment value that
  * names a key/token/secret/password, plus the conformance canary.
+ *
+ * An *identifier* of a key is not the key. `OPENWOP_BUNDLE_SIGNING_KEY_ID`
+ * (and `_VERIFIER_KEY_ID`) name the public `keyId` RFC 0168 §E.2 requires the
+ * host to publish in `discovery.document.signingKeys[]`; matching them on
+ * `KEY` scrubbed that id out of the embedded document AFTER `discovery.sha256`
+ * was taken, so every host that passed the id by env failed its own bundle's
+ * self-verification (`discovery.document` ≠ `discovery.sha256`) — suites 2.0.8
+ * and 2.0.9, found by MyndHyve 2026-09-10 across three cuts; the same host had
+ * passed the day before by passing the id as a flag. Names ending in `_ID`
+ * are excluded, and a caller may name values that MUST stay visible (`except`)
+ * regardless of which variable carried them.
  */
-export function evidenceSecretsFromEnv(env: NodeJS.ProcessEnv, extra: readonly (string | undefined)[] = []): string[] {
+export function evidenceSecretsFromEnv(
+  env: NodeJS.ProcessEnv,
+  extra: readonly (string | undefined)[] = [],
+  except: readonly (string | undefined)[] = [],
+): string[] {
+  const keep = new Set(except.filter((s): s is string => s !== undefined && s.trim() !== ''));
   const out = new Set<string>();
   for (const [k, v] of Object.entries(env)) {
     if (!k.startsWith('OPENWOP_')) continue;
     if (!/(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/.test(k)) continue;
-    if (v !== undefined && v.trim() !== '') out.add(v);
+    if (/_ID$/.test(k)) continue; // a key's identifier is published, not secret
+    if (v !== undefined && v.trim() !== '' && !keep.has(v)) out.add(v);
   }
-  for (const s of extra) if (s !== undefined && s.trim() !== '') out.add(s);
+  for (const s of extra) if (s !== undefined && s.trim() !== '' && !keep.has(s)) out.add(s);
   out.add(CONFORMANCE_SECRET_CANARY);
   return [...out];
 }

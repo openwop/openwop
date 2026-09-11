@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 565,
-    "tests": 2151,
-    "withStableId": 2151,
+    "tests": 2153,
+    "withStableId": 2153,
     "interpolatedTitles": 0,
-    "explicitIds": 2106
+    "explicitIds": 2108
   },
   "records": [
     {
@@ -7082,9 +7082,26 @@
       ]
     },
     {
-      "id": "openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc",
+      "id": "openwop.it.certification-bundle-redaction.evidencesecretsfromenv-never-scrubs-a-key-identifier-id-variables-are-excluded-a",
       "file": "certification-bundle-redaction.test.ts",
       "line": 157,
+      "title": "evidenceSecretsFromEnv never scrubs a key IDENTIFIER: *_ID variables are excluded and `except` values stay visible whichever variable carried them",
+      "explicitId": "openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed",
+      "citations": [
+        {
+          "section": "RFC 0168 §E.2",
+          "requirement": "the keyId a host publishes in discovery.document.signingKeys[] MUST survive evidence scrubbing — a *_ID variable is an identifier, not a secret"
+        },
+        {
+          "section": "RFC 0168 §E.2",
+          "requirement": "a value the emitter names as `except` (the keyId it is about to publish) is never scrubbed, whichever variable carried it"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc",
+      "file": "certification-bundle-redaction.test.ts",
+      "line": 177,
       "title": "verifyBundleV2 REJECTS a bundle carrying the conformance canary anywhere, and accepts the scrubbed twin",
       "explicitId": "openwop.it.certification-bundle-redaction.verifybundlev2-rejects-a-bundle-carrying-the-conformance-canary-anywhere-and-acc",
       "citations": [
@@ -7097,7 +7114,7 @@
     {
       "id": "openwop.it.certification-bundle-redaction.the-canary-in-a-discovery-document-key-is-still-a-rejection-keys-are-evidence",
       "file": "certification-bundle-redaction.test.ts",
-      "line": 172,
+      "line": 192,
       "title": "the canary in a discovery-document KEY is still a rejection (keys are evidence)",
       "explicitId": "openwop.it.certification-bundle-redaction.the-canary-in-a-discovery-document-key-is-still-a-rejection-keys-are-evidence",
       "citations": [
@@ -7110,7 +7127,7 @@
     {
       "id": "openwop.it.certification-bundle-redaction.the-target-configuration-digest-is-a-digest-the-api-key-is-not-a-substring-of-an",
       "file": "certification-bundle-redaction.test.ts",
-      "line": 178,
+      "line": 198,
       "title": "the target-configuration digest is a digest: the API key is not a substring of any string in the document",
       "explicitId": "openwop.it.certification-bundle-redaction.the-target-configuration-digest-is-a-digest-the-api-key-is-not-a-substring-of-an",
       "citations": [
@@ -26911,7 +26928,7 @@
     {
       "id": "openwop.it.v2-id-grammar.every-id-on-the-run-snapshot-matches-its-ids-schema-json-kind",
       "file": "v2-id-grammar.test.ts",
-      "line": 43,
+      "line": 53,
       "title": "every id on the run snapshot matches its ids.schema.json kind",
       "explicitId": "openwop.requirement.0170.id-grammar.snapshot",
       "citations": [
@@ -26930,7 +26947,7 @@
     {
       "id": "openwop.it.v2-id-grammar.every-id-on-the-run-events-matches-its-ids-schema-json-kind",
       "file": "v2-id-grammar.test.ts",
-      "line": 53,
+      "line": 63,
       "title": "every id on the run events matches its ids.schema.json kind",
       "explicitId": "openwop.requirement.0170.id-grammar.events",
       "citations": [
@@ -26948,7 +26965,7 @@
     {
       "id": "openwop.it.v2-id-grammar.a-run-id-whose-tenant-segment-is-not-the-caller-s-is-refused",
       "file": "v2-id-grammar.test.ts",
-      "line": 68,
+      "line": 78,
       "title": "a run id whose tenant segment is not the caller's is refused",
       "explicitId": "openwop.requirement.0170.id-grammar.tenant-binding",
       "citations": [
@@ -26965,6 +26982,33 @@
         {
           "section": "spec/v2/core/errors.md",
           "requirement": "the code MUST be answered with its registered HTTP status (id_tenant_mismatch → 403, not_found → 404)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-id-grammar.a-bare-unbound-run-id-in-a-major-2-path-admitted-under-the-caller-s-tenant-throu",
+      "file": "v2-id-grammar.test.ts",
+      "line": 88,
+      "title": "a bare (unbound) run id in a major-2 path: admitted under the caller's tenant through the overlap, refused 400 validation_error after it",
+      "explicitId": "openwop.requirement.0170.id-grammar.bare-id",
+      "citations": [
+        {
+          "section": "spec/v2/core/identity.md §5",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/identity.md §5",
+          "requirement": "a resource reached by its bare id MUST still be named by its bound projection in the major-2 response body (versioning.md §5) — the affordance is on the path parameter, never in a document"
+        },
+        {
+          "section": "spec/v2/core/identity.md §5",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/errors.md",
+          "requirement": "the refusal MUST carry validation_error — not id_tenant_mismatch (no segment to mismatch) and not not_found (a form the host no longer admits is not looked up)"
         }
       ]
     },

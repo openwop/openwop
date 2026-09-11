@@ -1,6 +1,6 @@
 # Discovery and Capabilities
 
-> **Status: Draft · v2.0.0-rc (2026-09-03) · RFC 0169, 0176, 0179.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0169, 0176, 0179.**
 
 ## Why this exists
 
@@ -265,6 +265,8 @@ Witness `witnessable-gated`; owner RFC 0083.
 
 Witness `seam-gated`; owner RFC 0152; facets `versions`, `preferredVersion`, `minimumVersion`, `refreshedAt`, `profiles`, `agentCardUrl`, `streaming`, `pushNotifications`, `durableTasks`.
 
+**A facet MAY name a URL on another origin; that is a claim about the facet, not the origin.** `agentCardUrl` (and `mcp.serverUrls[]`) are `format: uri` with no origin constraint. The advertiser claims to know where the card is — not that the named origin serves `/.well-known/openwop`, speaks any major, or is measured by its bundle; the suite exercises the advertiser only. Certification is per origin: a second origin with its own discovery document is a second host. Open gap (2026-09-10): whether a facet naming an origin that does not answer SHOULD be withdrawn, and how a client learns that origin's major.
+
 ### § budget
 
 Witness `witnessable-gated`; owner RFC 0084.
@@ -316,6 +318,8 @@ Witness `claims-check`; owner RFC 0025.
 ### § mcp
 
 Witness `seam-gated`; owner RFC 0153; facets `revisions`, `preferredVersion`, `minimumRevision`, `refreshedAt`, `profiles`, `features`, `serverUrls`, `serverMount`, `mrtr`.
+
+`serverUrls[]` MAY name other origins; § a2a's off-origin paragraph applies.
 
 ### § sandbox
 

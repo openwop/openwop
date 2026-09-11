@@ -1,6 +1,6 @@
 # Interrupt
 
-> **Status: Draft · v2.0.0-rc (2026-09-03) · RFC 0170 §E.1, RFC 0171 §A.4, RFC 0173 §B.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0170 §E.1, RFC 0171 §A.4, RFC 0173 §B.**
 
 ## Why this exists
 

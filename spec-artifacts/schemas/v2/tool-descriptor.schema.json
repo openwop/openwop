@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/tool-descriptor.schema.json",
   "title": "ToolDescriptor",
-  "description": "RFC 0078. A portable, read-only description of one tool, unifying the five openwop tool surfaces (node-pack / workflow / MCP / connector / host-extension) behind one stable shape. Returned by `GET /v1/tools` + `GET /v1/tools/{toolId}` when the host advertises `capabilities.toolCatalog.supported: true`. The descriptor DESCRIBES a tool; it never carries credential material (SR-1) and is not an invocation path (tools are invoked on their existing surfaces).",
+  "description": "RFC 0078. A portable, read-only description of one tool, unifying the five openwop tool surfaces (node-pack / workflow / MCP / connector / host-extension) behind one stable shape. Returned by `GET /tools` + `GET /tools/{toolId}` when the host advertises `capabilities.toolCatalog.supported: true`. The descriptor DESCRIBES a tool; it never carries credential material (SR-1) and is not an invocation path (tools are invoked on their existing surfaces).",
   "type": "object",
   "additionalProperties": false,
   "required": [

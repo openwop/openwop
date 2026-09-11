@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/annotation.schema.json",
   "title": "Annotation",
-  "description": "RFC 0056. A non-blocking human/agent quality signal attached to a run, event, or node — a side-resource, NOT a replayable run-event-log entry. Recorded via `POST /v1/runs/{runId}/annotations`, listed via `GET`, and surfaced live via the `run.annotated` SSE notification. `signal.correction` and `note` are untrusted user content (SECURITY invariant `annotation-content-redaction`).",
+  "description": "RFC 0056. A non-blocking human/agent quality signal attached to a run, event, or node — a side-resource, NOT a replayable run-event-log entry. Recorded via `POST /runs/{runId}/annotations`, listed via `GET`, and surfaced live via the `run.annotated` SSE notification. `signal.correction` and `note` are untrusted user content (SECURITY invariant `annotation-content-redaction`).",
   "type": "object",
   "required": [
     "annotationId",

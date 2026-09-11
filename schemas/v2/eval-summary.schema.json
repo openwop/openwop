@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/eval-summary.schema.json",
   "title": "EvalSummary",
-  "description": "RFC 0081 \u00a7C. The terminal scorecard of an eval run (the `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 \u00a7B): the aggregate + per-task scores, cost, latency, schema-validity, and safety findings, plus the suite provenance and (for `regression` mode) the score delta vs a baseline. Set as the eval run's output and served by `GET /v1/runs/{runId}/eval-summary`. SECURITY invariant `eval-summary-no-content-leak`: the summary carries scores, ids, counts, and redaction-safe safety descriptors only \u2014 NEVER task output bodies, rubric prose, model completions, prompts, or credential material (SR-1). A consumer reads the run's normal projection for any body.",
+  "description": "RFC 0081 \u00a7C. The terminal scorecard of an eval run (the `mode: \"eval\"` projection over `POST /runs`, RFC 0081 \u00a7B): the aggregate + per-task scores, cost, latency, schema-validity, and safety findings, plus the suite provenance and (for `regression` mode) the score delta vs a baseline. Set as the eval run's output and served by `GET /runs/{runId}/eval-summary`. SECURITY invariant `eval-summary-no-content-leak`: the summary carries scores, ids, counts, and redaction-safe safety descriptors only \u2014 NEVER task output bodies, rubric prose, model completions, prompts, or credential material (SR-1). A consumer reads the run's normal projection for any body.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -164,7 +164,7 @@
         },
         "diffRef": {
           "type": "string",
-          "description": "MAY. A pointer to `GET /v1/runs/{runId}:diff?against={baselineRunId}` (RFC 0054) for the structural delta."
+          "description": "MAY. A pointer to `GET /runs/{runId}:diff?against={baselineRunId}` (RFC 0054) for the structural delta."
         }
       }
     }

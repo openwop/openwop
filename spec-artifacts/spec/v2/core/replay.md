@@ -1,6 +1,6 @@
 # Replay and Fork
 
-> **Status: Draft · v2.0.0-rc (2026-09-03) · RFC 0140, 0041, 0173 §C, 0176 §A.5.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0140, 0041, 0173 §C, 0176 §A.5.**
 
 ## Why this exists
 

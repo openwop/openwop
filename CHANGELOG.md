@@ -1,6 +1,6 @@
-# OpenWOP Spec v1 — Changelog
+# OpenWOP Spec — Changelog
 
-All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs.
+All notable changes to the OpenWOP spec corpus — v2 (the current major, `spec/v2/`) and v1 (the maintained parallel track through the overlap, `spec/v1/`) — its schemas, OpenAPI/AsyncAPI, conformance suite, and contract artifacts.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Versions are spec-corpus-wide (one date, multiple artifact updates per row); per-artifact versions live in their respective `package.json` / schema `$id` fields.
 
@@ -13,12 +13,98 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
-## [2.0.9] — 2026-09-09 — a MUST that bound more path space than any instrument measures
+## [2.0.12] — 2026-09-10 — host-proprietary paths have a home: `/host/<org>/…` (RFC 0181)
 
-Spec errata. No wire shape, field, error code, or schema change; no RFC. One
-normative clause is **narrowed** to the scope its only instrument has always
-measured, and two things the overlap left implicit are written down. No host's
-disposition changes.
+The gap `versioning.md` §5 recorded on 09-09 as undecided-not-permissive is
+decided, after two production hosts measured it the same day (1,062 and 11
+proprietary roots, and one rewrite façade already answering `/host/<org>/…`
+under major 2 by accident). Normative-additive; v1 untouched; comment window
+waived by the sole steward and logged in the RFC.
+
+### Added
+- **RFC 0181 — vendor path namespace** (`Active`). A host MAY serve operations the manifest does not name at `/host/<org>/…` for an org registered in `spec/v2/declaration.json` `extensions`; no major in the path; never a protocol operation, never measured; advertised under `extensions.<org>.<name>`; a `/v1/host/<org>/…` twin MAY ride the overlap and retires atomically. `/v2/host/…` and a `/v1/host/*` retirement exemption are rejected with their clauses.
+- `spec/v2/declaration.json` — orgs `openwop-app` and `myndhyve` registered (both hosts already emit vendor codes and event types under those names; only `example` was registered); `reservedOrgs` gains every manifest segment under `/host/` (`effect-seams`, `events`), which the org grammar previously admitted.
+
+### Changed
+- `versioning.md` §5 — the open-gap paragraph becomes the decision. §1.4 — the non-protocol-response constraints (no `OpenWOP-Version`, not `application/json`) are scoped to a **manifest-named path**, which is what the suite reads; read literally they forbade JSON on a vendor path.
+
+### Clarified, no change
+- `persistence.md` §"The v1 wire of an era-3 log" already states the inverse-codemap MUST a host reported as a gap; cited on the bus rather than restated.
+
+## [2.0.11] — 2026-09-10 — the emitter scrubbed the key id it was required to publish
+
+Conformance-only. No spec, schema, or scenario-logic change; the pinned
+`@openwop/spec-artifacts` peer moves with the suite version.
+
+### Fixed
+- **openwop-app's major-2 bundle re-cut on suite 2.0.11 — 0 executed-fail, 3 blocked.** `evidence/v2-host-bundles/openwop-workflow-engine.json`: `app.openwop.dev` at `f7c631b9b` (serving `openwop-app-backend-00688-9bk`), suite `2.0.11`, signed `openwop-app-self-2026-09-04`, through the production front door: 137 executed-pass / 0 executed-fail / 3 blocked / 87 inapplicable over 227 rows, 1273 assertions (rc.56 cut: 125 / 2 / 29 / 66). Both `v2-poll-cursor-v2` fails closed (ADR 0633); the 25 seams-gated `blocked` rows are `inapplicable` on 2.0.10+ (profile not advertised, honestly); the new `openwop.requirement.0170.id-grammar.bare-id` row passes on the overlap branch. The 3 blocked rows are the SSRF loopback receiver, lane-side. `check-cut-gates.mjs --host-bundle --network`: 9/10 PASS, Front door PASS (was FAIL); Coexistence FAIL only on the seams-gated legs. `openwop-core-standard` witnessCount 12 (was not claimed). Not certified — blocked > 0 (RFC 0168 §E.1). Anchor unchanged (2026-09-05, `223c0edc`).
+- `--certify` (v3 bundles, suites 2.0.8–2.0.10): `evidenceSecretsFromEnv` classified `OPENWOP_BUNDLE_SIGNING_KEY_ID` as a secret because its *name* matches `KEY`, and redacted the published `keyId` out of the embedded `discovery.document` after `discovery.sha256` was taken — so every host that passed the key id by environment failed its own bundle's self-verification. Found by MyndHyve across three cuts; the same host passed the day before with the id on the flag. Names ending in `_ID` are now excluded, the emitter names the keyId it publishes as `except`, and a redaction leg pins both.
+- On a self-verification failure the emitter now writes the rejected bundle to `<out>.rejected.json` (marked not-a-certification-artifact) instead of discarding the only diagnostic.
+
+## [2.0.10] — 2026-09-10 — three things hosts found on the day 2.0.9 shipped
+
+Errata found by two tier-1 hosts within hours of the `v2.0.9` tag, all three
+the same family as 2.0.9's: a v1 spelling or an unstated assumption carried
+into the v2 tree where no instrument read it. No wire shape, field, or error
+code changes; one MUST is stated that the schemas already implied; the suite
+gains one leg. `preferredVersion` stays on `1.x` through the overlap.
+
+### Fixed
+- `schemas/v2/capabilities.schema.json` — `prompts.renderEndpoint` said *"Defaults to `/v1/prompts:render`"* inside the **v2** schema. The default under major 2 is the manifest key `/prompts:render` (`versioning.md` §1.2); a host that advertised `/v1/prompts:render` in its major-2 document was quoting the schema. Found by MyndHyve.
+
+### Changed
+- `identity.md` §5 — states two things the instruments had measured without prose: a tenant-bound id is one percent-encoded path segment (`tenant%2Fopaque`, the bound form MUST be accepted); and **through the overlap the bare form (opaque only, the v1 spelling) is admitted on a major-2 path parameter**, resolved under the caller's tenant only and named bound in the response — the affordance `v2-dual-stack-negotiation` has required since rc.44. It expires with the overlap: a host advertising no `1.x` member MUST refuse the bare form `400 validation_error`. The grammar for ids in documents is unchanged. A same-day steward ruling that said "refuse now" was withdrawn against those witnesses before release; a client that binds at its request seam (as openwop-app now does) is correct either way.
+- `capabilities.md` § a2a / § mcp — a facet MAY name a URL on another origin; that is a claim about the facet, not that the origin speaks v2; certification is per origin. Open gap recorded for the withdrawal question. Found by MyndHyve (facets pointing at a service never in v2 scope).
+
+### Added
+- Conformance `v2-id-grammar` — a fourth leg sends the run this caller just created with its tenant segment stripped: through the overlap it requires 200 with the **bound** id in the body; after it (no `1.x` advertised) it requires `400 validation_error`. The branch is decided from live discovery, so the leg witnesses both the affordance and its expiry.
+
+## [2.0.9] — 2026-09-10 — the corpus says v2, and a MUST that bound more path space than any instrument measures
+
+Spec errata plus a status correction. No wire shape, field, error code, or
+schema change; no RFC. One normative clause is **narrowed** to the scope its
+only instrument has always measured, two things the overlap left implicit are
+written down, and every surface that still described v2 as unreleased is
+corrected. No host's disposition changes, and **nothing about the overlap
+changes**: `preferredVersion` stays on `1.x` by MUST until v1 end-of-support.
+
+Second erratum, same day, same defect shape: `versioning.md` §1.4 read "a
+response on **any path** MUST carry `OpenWOP-Version`" — a quantifier over the
+origin where the rationale (a silent downgrade) and the only instrument
+(`v2-advertised-path-space-served`'s `reachedUnderMajor2`) both quantify over
+protocol operations. Narrowed to *every protocol response*; a non-protocol
+response on a shared name MUST NOT carry the header and MUST NOT be
+`application/json`; content negotiation on `Accept` is permitted under three
+conditions (protocol-client default gets the wire; the page is
+distinguishable; `Vary: Accept, OpenWOP-Version`). §5 names the retirement
+hazard a tier-1 host surfaced — the header-less default is what separates a
+page from the wire on a shared name, and end-of-support flips it — with the
+test `manifest top-level segments ∩ anything else served unversioned`. README
+"Published artifacts" now names the 2.0.0 SDKs the registries serve.
+
+### Changed
+
+- **The corpus now says what major it is on.** `v2.0.0` was tagged 2026-09-05,
+  yet `spec/v2/README.md` still opened with *"in construction … until the
+  `v2.0.0-rc.1` corpus tag"*, all twenty `spec/v2/core/*.md` carried
+  `Status: Draft · v2.0.0-rc`, the root `README.md` led with "v1.x published
+  artifacts" and described the v2 tree as gated on a tag that had landed a
+  week earlier, `CHANGELOG.md` was titled "Spec v1", and `INTEROP-MATRIX.md`
+  headed its v2 table "release candidate". A reader who trusted those lines
+  concluded v2 did not exist — one did, and said so. Each now states the
+  released major, the corpus version, and the file that carries the truth
+  (`spec/v2/release.json`); the twenty core documents are
+  `Status: Stable · v2.0.9`. The v1 tree is described everywhere as what it
+  is: the maintained parallel track through the overlap.
+
+- **`docs/migration/v1-to-v2.md` gains a client section.** The guide was
+  written for hosts. A client's migration is three changes and one
+  non-change, and the same reader got two backwards: `OpenWOP-Version` is
+  **MAY** on a request and **MUST** on a response (not the reverse), and the
+  18-month end-of-support clock is **conditional** on a non-steward host in
+  the matrix at release, not guaranteed. Both are now stated with the rule
+  each comes from, alongside unversioned paths and
+  `principal`/`principalKind` → `owner.subject`.
 
 ### Fixed
 

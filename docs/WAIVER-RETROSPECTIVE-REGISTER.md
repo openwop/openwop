@@ -112,3 +112,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0168 | v2 evidence and conformance (RFC 0167 child C.1) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0179 | Root `preferredVersion` (v1.x additive) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0180 | Vendor-org registration procedure (`spec/v2/declaration.json` `extensions`) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0181 | Vendor path namespace (`/host/<org>/…` for host-proprietary operations under major 2) | in-scope-pending-assessment | — | — | `not-reviewed` |

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/audit-verify-result.schema.json",
   "title": "AuditVerifyResult",
-  "description": "Response payload from `GET /v1/audit/verify` per spec/v1/auth-profiles.md §`openwop-audit-log-integrity` §4 'Verification endpoint'. Hosts advertising the audit-log-integrity profile MUST return this shape on the verify endpoint when called with a valid `audit:read`-scoped credential. The shape carries the verifier's chain-validity verdict, the in-range signed checkpoints, and any anomaly records the verifier detected while re-walking the hash chain.",
+  "description": "Response payload from `GET /audit/verify` per spec/v1/auth-profiles.md §`openwop-audit-log-integrity` §4 'Verification endpoint'. Hosts advertising the audit-log-integrity profile MUST return this shape on the verify endpoint when called with a valid `audit:read`-scoped credential. The shape carries the verifier's chain-validity verdict, the in-range signed checkpoints, and any anomaly records the verifier detected while re-walking the hash chain.",
   "type": "object",
   "required": [
     "fromSeq",

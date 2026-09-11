@@ -35,7 +35,7 @@
           "description": "A vendor/host extension record; its shape is the org's, declared as open on purpose (RFC 0169 §A.4)."
         }
       },
-      "description": "RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: openwop, vendor."
+      "description": "RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: openwop, vendor, effect-seams, events."
     },
     "implementation": {
       "type": "object",
@@ -894,7 +894,7 @@
         },
         "endpointsSupported": {
           "type": "boolean",
-          "description": "RFC 0028 §A. When `true`, the host serves the `/v1/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/v1/prompts*` request returns `501 capability_not_provided`. Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false` (composition without library REST) or `supported: false, endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
+          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request returns `501 capability_not_provided`. Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false` (composition without library REST) or `supported: false, endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
         },
         "templateKinds": {
           "type": "array",
@@ -922,7 +922,7 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 65536,
-          "description": "Host limit on PromptTemplate.text length. MUST NOT exceed the schema cap (65536). When advertised, the host MUST reject larger bodies on install + on `POST /v1/prompts` (RFC 0028)."
+          "description": "Host limit on PromptTemplate.text length. MUST NOT exceed the schema cap (65536). When advertised, the host MUST reject larger bodies on install + on `POST /prompts` (RFC 0028)."
         },
         "observability": {
           "type": "string",
@@ -935,11 +935,11 @@
         },
         "packsSupported": {
           "type": "boolean",
-          "description": "RFC 0028 §C. When `true`, the host installs `kind: \"prompt\"` registry packs and exposes their templates at `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`. When `false` or absent, packs are not loaded; only host built-ins and (when `mutableLibrary: true`) user-created templates are visible."
+          "description": "RFC 0028 §C. When `true`, the host installs `kind: \"prompt\"` registry packs and exposes their templates at `GET /prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`. When `false` or absent, packs are not loaded; only host built-ins and (when `mutableLibrary: true`) user-created templates are visible."
         },
         "mutableLibrary": {
           "type": "boolean",
-          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /v1/prompts`, `PUT /v1/prompts/{templateId}`, `DELETE /v1/prompts/{templateId}`. When `false` or absent, those endpoints return 501. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
+          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /prompts`, `PUT /prompts/{templateId}`, `DELETE /prompts/{templateId}`. When `false` or absent, those endpoints return 501. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
         },
         "library": {
           "type": "object",
@@ -948,17 +948,17 @@
           "properties": {
             "id": {
               "type": "string",
-              "description": "Host's library identifier exposed at `GET /v1/prompts` (filterable via the structured `PromptRef.libraryId` field). Single-library hosts MAY omit this."
+              "description": "Host's library identifier exposed at `GET /prompts` (filterable via the structured `PromptRef.libraryId` field). Single-library hosts MAY omit this."
             },
             "renderEndpoint": {
               "type": "string",
               "format": "uri-reference",
-              "description": "Absolute or relative URI of the `:render` endpoint. Defaults to `/v1/prompts:render`. Useful for hosts mounting the surface under a prefix."
+              "description": "Absolute or relative URI of the `:render` endpoint. Defaults to `/prompts:render`. Useful for hosts mounting the surface under a prefix."
             },
             "maxRenderRequestBytes": {
               "type": "integer",
               "minimum": 1,
-              "description": "Hard cap on `POST /v1/prompts:render` request body size."
+              "description": "Hard cap on `POST /prompts:render` request body size."
             }
           }
         },
@@ -2463,7 +2463,7 @@
             },
             "crossHostCausation": {
               "type": "object",
-              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /v1/runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version: 3` MUST advertise this sub-block with `supported: true` and a stable `hostId`.",
+              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version: 3` MUST advertise this sub-block with `supported: true` and a stable `hostId`.",
               "additionalProperties": false,
               "properties": {
                 "hostId": {
@@ -2473,7 +2473,7 @@
                 },
                 "ancestryEndpointSupported": {
                   "type": "boolean",
-                  "description": "Host serves `GET /v1/runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when crossHostCausation.supported is true — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
+                  "description": "Host serves `GET /runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when crossHostCausation.supported is true — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
                 }
               }
             },
@@ -3003,7 +3003,7 @@
                 "tenant"
               ],
               "default": "host",
-              "description": "RFC 0074. Scope at which manifest agents are installed/approved and therefore enumerated by GET /v1/agents. 'host' (default): a single host-global inventory; the endpoint returns the same set for every caller (RFC 0072's original behavior). 'tenant': agents are installed per tenant·workspace (RFC 0048 owner triple); GET /v1/agents returns ONLY the agents available to the authenticated principal's workspace, and an unapproved/unknown agent 404s — the surface never discloses another tenant's inventory. Does not change dispatch (RFC 0072 §B, owner-triple-scoped POST /v1/runs) or any floor safety guarantee (toolAllowlist/systemPromptRef/SR-1 stay mandatory regardless of scope)."
+              "description": "RFC 0074. Scope at which manifest agents are installed/approved and therefore enumerated by GET /v1/agents. 'host' (default): a single host-global inventory; the endpoint returns the same set for every caller (RFC 0072's original behavior). 'tenant': agents are installed per tenant·workspace (RFC 0048 owner triple); GET /agents returns ONLY the agents available to the authenticated principal's workspace, and an unapproved/unknown agent 404s — the surface never discloses another tenant's inventory. Does not change dispatch (RFC 0072 §B, owner-triple-scoped POST /runs) or any floor safety guarantee (toolAllowlist/systemPromptRef/SR-1 stay mandatory regardless of scope)."
             }
           }
         },
@@ -3031,13 +3031,13 @@
                   "chat-mention"
                 ]
               },
-              "description": "Which invocation entry points the host exposes for live manifest dispatch. `workflow-node`: an agent step inside a workflow run (RFC 0072 §B); `run-api`: an agent as the root of POST /v1/runs; `chat-mention`: a chat @agent invocation mapped onto the run surface. Enum membership is NOT mandatory — a host with no chat surface simply omits `chat-mention`. Absent ⇒ `['workflow-node']` (the RFC 0072 §B normative path). All advertised sources MUST emit the identical `agent.invocation.*` + `agent.*` event family."
+              "description": "Which invocation entry points the host exposes for live manifest dispatch. `workflow-node`: an agent step inside a workflow run (RFC 0072 §B); `run-api`: an agent as the root of POST /runs; `chat-mention`: a chat @agent invocation mapped onto the run surface. Enum membership is NOT mandatory — a host with no chat surface simply omits `chat-mention`. Absent ⇒ `['workflow-node']` (the RFC 0072 §B normative path). All advertised sources MUST emit the identical `agent.invocation.*` + `agent.*` event family."
             }
           }
         },
         "evalSuite": {
           "type": "object",
-          "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (a `mode: \"eval\"` projection over POST /v1/runs, RFC 0081 §B), emits the `eval.started`/`eval.scored`/`eval.completed` content-free family, and terminates with an `eval-summary.schema.json` scorecard. Composes RFC 0026 (per-task cost), RFC 0054 (regression baseline diff), RFC 0056 (human override of an auto-score). Hosts that omit this block reject `mode: \"eval\"` with 501; the behavioral conformance scenario soft-skips. The summary + events are content-free (SECURITY invariant `eval-summary-no-content-leak`).",
+          "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (a `mode: \"eval\"` projection over POST /runs, RFC 0081 §B), emits the `eval.started`/`eval.scored`/`eval.completed` content-free family, and terminates with an `eval-summary.schema.json` scorecard. Composes RFC 0026 (per-task cost), RFC 0054 (regression baseline diff), RFC 0056 (human override of an auto-score). Hosts that omit this block reject `mode: \"eval\"` with 501; the behavioral conformance scenario soft-skips. The summary + events are content-free (SECURITY invariant `eval-summary-no-content-leak`).",
           "additionalProperties": false,
           "properties": {
             "modes": {
@@ -3069,7 +3069,7 @@
         },
         "deployment": {
           "type": "object",
-          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /v1/agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error` and 501 the deployment endpoint. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error` and 501 the deployment endpoint. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "channels": {
@@ -3110,7 +3110,7 @@
         },
         "roster": {
           "type": "object",
-          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /v1/agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime.supported: true` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime.supported: true` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3119,7 +3119,7 @@
                 "host",
                 "tenant"
               ],
-              "description": "RFC 0074 carry-forward. `host`: a single global roster. `tenant`: roster entries are scoped per owner triple; GET /v1/agents/roster returns only the caller's entries and a cross-tenant entry 404s. MUST equal `agents.manifestRuntime.installScope` (a roster cannot be host-global while its manifests are tenant-scoped, or vice-versa)."
+              "description": "RFC 0074 carry-forward. `host`: a single global roster. `tenant`: roster entries are scoped per owner triple; GET /agents/roster returns only the caller's entries and a cross-tenant entry 404s. MUST equal `agents.manifestRuntime.installScope` (a roster cannot be host-global while its manifests are tenant-scoped, or vice-versa)."
             },
             "portfolioTriggerSources": {
               "type": "array",
@@ -3134,7 +3134,7 @@
         },
         "orgChart": {
           "type": "object",
-          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /v1/agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster.supported: true` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster.supported: true` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3143,7 +3143,7 @@
                 "host",
                 "tenant"
               ],
-              "description": "RFC 0074 carry-forward. `host`: a single global chart. `tenant`: charts are scoped per owner triple; GET /v1/agents/org-chart returns only the caller's chart. SHOULD equal `agents.roster.installScope` (the members are roster entries)."
+              "description": "RFC 0074 carry-forward. `host`: a single global chart. `tenant`: charts are scoped per owner triple; GET /agents/org-chart returns only the caller's chart. SHOULD equal `agents.roster.installScope` (the members are roster entries)."
             },
             "departmentNesting": {
               "type": "boolean",
@@ -4367,7 +4367,7 @@
         },
         "compactView": {
           "type": "boolean",
-          "description": "RFC 0112. `true` ⇒ the host honors `GET /v1/tools?view=compact` + `GET /v1/tools/{toolId}?view=compact`, returning the `{ tools: CompactToolDescriptor[] }` projection (`compact-tool-descriptor.schema.json`): the heavy descriptor fields (`outputSchema`/`auth`/`egress`/`approval`/`replayPolicy`/`costHint`/`latencyHint`) are dropped and any `inputSchema` is bounded to the compact structural subset. The compact `tools[]` carries the same `toolId` set as the standard view for the same principal. Absent ⇒ the host treats `view=compact` as an unknown query param (standard view)."
+          "description": "RFC 0112. `true` ⇒ the host honors `GET /tools?view=compact` + `GET /tools/{toolId}?view=compact`, returning the `{ tools: CompactToolDescriptor[] }` projection (`compact-tool-descriptor.schema.json`): the heavy descriptor fields (`outputSchema`/`auth`/`egress`/`approval`/`replayPolicy`/`costHint`/`latencyHint`) are dropped and any `inputSchema` is bounded to the compact structural subset. The compact `tools[]` carries the same `toolId` set as the standard view for the same principal. Absent ⇒ the host treats `view=compact` as an unknown query param (standard view)."
         }
       },
       "allOf": [
@@ -5269,7 +5269,7 @@
             },
             "registrationEndpoint": {
               "type": "boolean",
-              "description": "`true` ⇒ the host serves `POST /v1/trigger-subscriptions` (RFC 0099 §F.2) for portable external-event subscription creation."
+              "description": "`true` ⇒ the host serves `POST /trigger-subscriptions` (RFC 0099 §F.2) for portable external-event subscription creation."
             }
           }
         }

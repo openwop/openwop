@@ -154,6 +154,26 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
     expect(secrets.sort(), req('openwop.it.certification-bundle-redaction.evidencesecretsfromenv-selects-openwop-key-token-secret-password-variables-the-h', 'RFC 0148 §C', 'evidenceSecretsFromEnv selects OPENWOP_* key/token/secret/password variables, the handed credential, and ALWAYS the canary')).toEqual([API_KEY, 'k1', 'p1', 's1', 't1', CONFORMANCE_SECRET_CANARY].sort());
   });
 
+  it('evidenceSecretsFromEnv never scrubs a key IDENTIFIER: *_ID variables are excluded and `except` values stay visible whichever variable carried them', () => {
+    // Suites 2.0.8–2.0.10: OPENWOP_BUNDLE_SIGNING_KEY_ID matched on KEY and the
+    // published keyId was redacted out of discovery.document after its digest —
+    // three MyndHyve cuts failed self-verification on 2026-09-10 for this alone.
+    const env = {
+      OPENWOP_BUNDLE_SIGNING_KEY: '-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----',
+      OPENWOP_BUNDLE_SIGNING_KEY_ID: 'myndhyve-bundle-2026-09',
+      OPENWOP_BUNDLE_VERIFIER_KEY_ID: 'steward-verifier-1',
+      OPENWOP_API_KEY: 'k1',
+      OPENWOP_ODDLY_NAMED_KEY: 'published-key-id-in-a-secret-shaped-variable',
+    } as NodeJS.ProcessEnv;
+    const secrets = evidenceSecretsFromEnv(env, [], ['published-key-id-in-a-secret-shaped-variable']);
+    expect(secrets, req('openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed', 'RFC 0168 §E.2', 'the keyId a host publishes in discovery.document.signingKeys[] MUST survive evidence scrubbing — a *_ID variable is an identifier, not a secret')).not.toContain('myndhyve-bundle-2026-09');
+    expect(secrets).not.toContain('steward-verifier-1');
+    expect(secrets, req('openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed', 'RFC 0168 §E.2', 'a value the emitter names as `except` (the keyId it is about to publish) is never scrubbed, whichever variable carried it')).not.toContain('published-key-id-in-a-secret-shaped-variable');
+    expect(secrets).toContain('k1');
+    expect(secrets.some((s) => s.includes('BEGIN PRIVATE KEY'))).toBe(true);
+    expect(secrets).toContain(CONFORMANCE_SECRET_CANARY);
+  });
+
   it('verifyBundleV2 REJECTS a bundle carrying the conformance canary anywhere, and accepts the scrubbed twin', () => {
     const rs = rows();
     rs[1] = { ...(rs[1] as BundleV2Requirement), detail: `resolved ${CONFORMANCE_SECRET_CANARY} in plain text` };
