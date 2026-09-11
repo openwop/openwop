@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0182                                                            |
 | **Title**         | `GET /runs`: a portable run list — tenant-scoped, bound ids, cursor pagination, filters — advertised by the `runList` family |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-11                                                      |
-| **Updated**       | 2026-09-11 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation"; logged here, in `MAINTAINERS.md`, and in `CHANGELOG.md` 2.1.0.) |
+| **Updated**       | 2026-09-11 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation"; logged here, in `MAINTAINERS.md`, and in `CHANGELOG.md` 2.1.0.) · 2026-09-11 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified** (`GOVERNANCE.md` §"Acceptance evidence tiers"): the reference host (openwop-examples `cc2d181`, suite `2.1.1`) advertises `runList` (`maxPageSize` 100, `filters` `workflowId`/`status`) and its CI run 34558191209 selected 74 major-2 scenario files and passed `v2-run-list` 3/3 (263 tests, 74/74 files). Recorded honestly: suite 2.1.0 packaged the scenario without a `scenario-majors.json` row, so openwop-examples #39's 260/260 never ran it; 2.1.1 (openwop#1327) regenerated the registry and gated its drift, and only the 2.1.1 run counts as evidence. |
 | **Affects**       | `api/v2/openapi.yaml` (`listRuns`), `spec/v2/path-manifest.json`, `schemas/v2/run-list-response.schema.json` (new), `spec/v2/declaration.json` (family `runList`), `spec/v2/facets/runList.schema.json` (new), `spec/v2/core/runs.md` §Surface + §List, `spec/v2/core/capabilities.md` § runList, conformance `v2-run-list` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): one new optional operation gated on a new family; no existing field, MUST, error code or v1 surface changes |
 | **Supersedes**    | —                                                               |
@@ -72,7 +72,7 @@ The reference host implements the list over its run store keyed by tenant; page 
 ## Acceptance criteria
 
 - [x] `Draft → Active`: OpenAPI operation + manifest row, `run-list-response` schema, `runList` family + facets, `runs.md` prose, `v2-run-list` scenario, CHANGELOG 2.1.0. (This PR.)
-- [ ] `Active → Accepted`: the reference host advertises `runList` and passes `v2-run-list` (tier-1), or a tier-2 host does.
+- [x] `Active → Accepted`: the reference host advertises `runList` and passes `v2-run-list` (tier-1), or a tier-2 host does. (openwop-examples `cc2d181`, run 34558191209, suite 2.1.1: 74 files selected, `v2-run-list` 3/3.)
 
 ## References
 
