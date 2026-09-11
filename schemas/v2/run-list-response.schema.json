@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/run-list-response.schema.json",
+  "title": "RunListResponse",
+  "description": "RFC 0182. Response body for `GET /runs` (`listRuns`): one page of the caller's runs as full `RunSnapshot`s, newest first by default, with an opaque cursor for the next page when there is one. Every `runId` is tenant-bound (identity.md §5); a host MUST NOT return more rows than its advertised `runList.maxPageSize`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runs"],
+  "properties": {
+    "runs": {
+      "type": "array",
+      "description": "The page. Empty when the caller has no runs matching the filters.",
+      "items": {
+        "$ref": "run-snapshot.schema.json"
+      }
+    },
+    "nextCursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Opaque host-minted cursor for the next page. Absent on the last page. A host MUST refuse a cursor it did not mint with 400 validation_error."
+    }
+  }
+}

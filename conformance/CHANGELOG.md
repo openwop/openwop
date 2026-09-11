@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.0] — 2026-09-11 — the run-list scenario (RFC 0182)
+
+New scenario `v2-run-list` (target major 2, gated on the `runList` family —
+`inapplicable` on a host that does not advertise it), three legs:
+
+- `openwop.requirement.0182.run-list.tenant-scoped` (one requirement, five assertions) — two runs the caller just created appear in its unfiltered list, every page validates against `run-list-response.schema.json` (so a bare `runId` fails the shape leg), no page exceeds the advertised `maxPageSize`, and every `runId` carries the caller's tenant segment — the segment of the ids the host minted for this credential moments earlier.
+- `…cursor-refused` — a cursor the host did not mint is `400 validation_error`.
+- `…filter-exact` — when `runList.filters` names `workflowId`, the filtered list contains only that workflow and still contains the run just created.
+
+The 2.0.13 receiver fix (below) ships in this release; 2.0.13 itself was never
+tagged. The pinned `@openwop/spec-artifacts` peer moves to `2.1.0`.
+
 ## [2.0.13] — 2026-09-10 — three webhook scenarios could not be witnessed off-process
 
 `webhook-signed-delivery`, `replay-fanout-suppression` and

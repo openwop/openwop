@@ -1,6 +1,6 @@
 # Identity
 
-> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0170, 0165, 0176.**
+> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0170, 0165, 0176.**
 
 ## Why this exists
 
@@ -118,7 +118,7 @@ A host MUST reject a tenant-bound id whose tenant segment is not the caller's wi
 
 **On the wire a tenant-bound id is one percent-encoded path segment** (`tenant%2Fopaque`); a host MUST decode before matching the grammar and MUST accept the bound form on every tenant-bound parameter.
 
-**Through the overlap the bare form is admitted on a major-2 path parameter** — a stated affordance with an expiry, not a legacy branch of the grammar. A parameter carrying only the opaque segment (the spelling a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. Errata 2026-09-10: stated after six scenarios had measured it since rc.44; a same-day "refuse now" draft was withdrawn against them. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
+**Through the overlap the bare form is admitted on a major-2 path parameter** — a stated affordance with an expiry, not a legacy branch of the grammar. A parameter carrying only the opaque segment (the spelling a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
 
 ## 6. Identity error codes (`spec/v2/errors.json`)
 

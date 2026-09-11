@@ -142,6 +142,11 @@
       "operationId": "renderPromptTemplate"
     },
     {
+      "method": "GET",
+      "path": "/runs",
+      "operationId": "listRuns"
+    },
+    {
       "method": "POST",
       "path": "/runs",
       "operationId": "createRun"
@@ -273,7 +278,7 @@
     }
   ],
   "counts": {
-    "operations": 51,
+    "operations": 52,
     "channels": 2
   }
 }

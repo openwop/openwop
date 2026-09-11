@@ -1,6 +1,6 @@
 # Workflow Chain Packs
 
-> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0177, RFC 0133.**
+> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0177, RFC 0133.**
 
 ## Why this exists
 

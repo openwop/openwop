@@ -1,6 +1,6 @@
 # Discovery and Capabilities
 
-> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0169, 0176, 0179.**
+> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0169, 0176, 0179.**
 
 ## Why this exists
 
@@ -265,7 +265,7 @@ Witness `witnessable-gated`; owner RFC 0083.
 
 Witness `seam-gated`; owner RFC 0152; facets `versions`, `preferredVersion`, `minimumVersion`, `refreshedAt`, `profiles`, `agentCardUrl`, `streaming`, `pushNotifications`, `durableTasks`.
 
-**A facet MAY name a URL on another origin; that is a claim about the facet, not the origin.** `agentCardUrl` (and `mcp.serverUrls[]`) are `format: uri` with no origin constraint. The advertiser claims to know where the card is — not that the named origin serves `/.well-known/openwop`, speaks any major, or is measured by its bundle; the suite exercises the advertiser only. Certification is per origin: a second origin with its own discovery document is a second host. Open gap (2026-09-10): whether a facet naming an origin that does not answer SHOULD be withdrawn, and how a client learns that origin's major.
+**A facet MAY name a URL on another origin; that is a claim about the facet, not the origin.** `agentCardUrl` (and `mcp.serverUrls[]`) are `format: uri` with no origin constraint: the advertiser knows where the card is, not that the named origin serves `/.well-known/openwop` or speaks any major; the suite exercises the advertiser only, and certification is per origin. Open gap: whether a facet naming an origin that does not answer SHOULD be withdrawn, and how a client learns that origin's major.
 
 ### § budget
 
@@ -360,6 +360,10 @@ Witness `witnessable-gated`; owner RFC 0098.
 ### § interrupt
 
 Witness `witnessable-gated`; owner RFC 0104; facets `refKinds`, `tokenAlgs`.
+
+### § runList
+
+Witness `witnessable-gated`; owner RFC 0182; facets `maxPageSize`, `filters` (runs.md §List).
 
 ## 6. Extension families (13)
 

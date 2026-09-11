@@ -1,0 +1,24 @@
+{
+  "$comment": "RFC 0182 §A.5 — the run-list family's facets: the page ceiling the host honours and the exact-match filters it implements",
+  "properties": {
+    "maxPageSize": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "filters": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "workflowId",
+          "status"
+        ]
+      }
+    }
+  },
+  "required": [
+    "maxPageSize"
+  ]
+}

@@ -7612,6 +7612,95 @@
       "description": "core/capabilities.md#portability — witness: witnessable-gated; maturity experimental/none; RFC 0098",
       "x-openwop-seeded-from": "v1"
     },
+    "runList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "since",
+        "witness",
+        "maxPageSize"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "stable",
+            "experimental",
+            "deprecated"
+          ]
+        },
+        "since": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "until": {
+          "type": "string",
+          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
+        },
+        "witness": {
+          "enum": [
+            "witnessable-unaided",
+            "witnessable-gated",
+            "seam-gated",
+            "claims-check",
+            "negative-existence"
+          ]
+        },
+        "maxPageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "filters": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "workflowId",
+              "status"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "stable"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "until"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "experimental",
+                  "deprecated"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "until"
+            ]
+          }
+        }
+      ],
+      "description": "core/capabilities.md#runList — witness: witnessable-gated; maturity experimental/none; RFC 0182",
+      "x-openwop-facets-from": "spec/v2/facets/runList.schema.json"
+    },
     "interrupt": {
       "type": "object",
       "additionalProperties": false,
