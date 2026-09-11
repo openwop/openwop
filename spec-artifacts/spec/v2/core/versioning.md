@@ -1,6 +1,6 @@
 # Versioning and Release
 
-> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0172, 0179, 0176.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0172, 0179, 0176.**
 
 ## Why this exists
 
@@ -43,7 +43,7 @@ Every protocol response MUST carry `OpenWOP-Version: <major>.<minor>` naming the
 
 A *protocol response* is one produced by an operation named in `spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap); a shell, a hosting fallback or a proprietary route on the same origin has no version to name. Errata 2026-09-10: this read "any path" — §1.2's quantifier defect again.
 
-**A non-protocol response MUST NOT carry `OpenWOP-Version` and MUST NOT be `application/json`**; a reader, a cache or the suite MUST NOT count a response without the header, or with a `text/html` body, as reaching the operation (`reachedUnderMajor2`).
+**On a manifest-named path, a non-protocol response MUST NOT carry `OpenWOP-Version` and MUST NOT be `application/json`**; a reader, a cache or the suite MUST NOT count a response without the header, or with a `text/html` body, as reaching the operation (`reachedUnderMajor2`). A vendor path (§5, RFC 0181) is not a shared name; nothing about its representation is constrained.
 
 **Content negotiation on a shared name is permitted, with conditions.** A host MAY serve a protocol operation and a page under one unversioned name, selecting on `Accept`, iff:
 
@@ -118,7 +118,7 @@ The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]`
 
 **Retirement flips every header-less request's contract.** Through the overlap a header-less request on an unversioned name is served major 1 (§1.3); where the v1 surface lives under `/v1/` that name is not a v1 key and falls through to whatever else is served there — typically a page. At end-of-support the same request is served major 2 and the page starts answering the operation. A `/v1/`-counting inventory cannot see this. Test: `manifest top-level segments ∩ anything else served unversioned` (`{agents, prompts, runs}` on the host that found it). A non-empty intersection MUST be resolved before end-of-support: move the page, or serve it under §1.4's conditions.
 
-**Open gap — host-proprietary paths have no defined successor.** A host may serve `/v1` roots the manifest does not name. §1.2 does not bind them, and at end-of-support the `/v1` prefix that addressed them is gone, so the protocol says nothing about where they go. This is **undecided, not permissive**: the corpus reserves a vendor namespace for capability records (`capabilities.md` §"extensions"), error codes (`errors.md`), event types (`events.md`), and pack-document properties (`packs.md`), each keyed to an org registered in `spec/v2/declaration.json` — and has no equivalent for paths. RFC 0172 rejected a `/v2/` path space and did not reach this question. The one worked example of a legitimate path space outside the manifest is the seams profile (`conformance.md` §"Test seams"), which stays honest by advertising `openwop-conformance-seams-v2` in `profiles[]` rather than by any path-level rule. A host in this position SHOULD record the affected roots before end-of-support so the set is known when the question is decided.
+**Host-proprietary paths live at `/host/<org>/…` (RFC 0181).** The corpus keys every vendor namespace — capability records (`capabilities.md` §3.2), error codes, event types, pack properties — to an org registered in `spec/v2/declaration.json`; paths join that pattern. A host MAY serve operations the manifest does not name under `/host/<org>/…` for its registered org, with no major in the path (RFC 0172 rejected a `/v2/` space) and regardless of `OpenWOP-Version` — nothing there is a protocol operation, the suite never measures it, and §1.4's shared-name constraints do not apply. An org MUST NOT be named after a manifest segment under `/host/` (`reservedOrgs`), and a host SHOULD advertise the mount under `extensions.<org>.<name>`. A `/v1/host/<org>/…` twin MAY be served through the overlap; it retires atomically with `/v1`. Decided 2026-09-10 after two production hosts measured the gap (1,062 and 11 roots).
 
 ## 6. Migration rows (RFC 0172)
 

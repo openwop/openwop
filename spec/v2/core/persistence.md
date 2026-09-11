@@ -1,6 +1,6 @@
 # Persistence and Coexistence
 
-> **Status: Stable · v2.0.11 (2026-09-10) · RFC 0176 (§A–§B, §D–§E), 0171 §A, 0170 §A.3.**
+> **Status: Stable · v2.0.12 (2026-09-10) · RFC 0176 (§A–§B, §D–§E), 0171 §A, 0170 §A.3.**
 
 ## Why this exists
 

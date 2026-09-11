@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.12] — 2026-09-10 — corpus peer moves with RFC 0181; no scenario change
+
+No scenario, assertion or CLI change. The pinned `@openwop/spec-artifacts` peer
+moves to `2.0.12` with the corpus: `versioning.md` §5 decides the vendor path
+namespace (`/host/<org>/…`, RFC 0181), §1.4 scopes the non-protocol-response
+rule to manifest-named paths — which is exactly what `reachedUnderMajor2` has
+always probed — and the declaration registers two orgs and reserves the
+manifest's `/host/` segments. The suite never measures a vendor path, and this
+release says so in the RFC rather than inventing a probe.
+
 ## [2.0.11] — 2026-09-10 — the emitter scrubbed the key id it was required to publish
 
 `--certify` fix. `evidenceSecretsFromEnv` selected every `OPENWOP_*` variable

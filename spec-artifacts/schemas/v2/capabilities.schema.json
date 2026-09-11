@@ -35,7 +35,7 @@
           "description": "A vendor/host extension record; its shape is the org's, declared as open on purpose (RFC 0169 §A.4)."
         }
       },
-      "description": "RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: openwop, vendor."
+      "description": "RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: openwop, vendor, effect-seams, events."
     },
     "implementation": {
       "type": "object",
