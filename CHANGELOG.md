@@ -13,6 +13,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Changed
+- **RFC 0181 `Active → Accepted`** (2026-09-11). Evidence tier: tier-2 — steward-affiliated sibling host: MyndHyve serves `/host/myndhyve/…` in production and advertises `myndhyve.vendor-namespace = { root, twin, roots[], rfc }`; verified on the wire by the steward. §Unresolved-1 corrected: `GET /runs` list and `DELETE /runs/{runId}` were never v1 protocol operations (only `createRun`/`getRun` exist on those paths) — they are host extensions and fall under §A.1; a portable run list is worth its own additive RFC, a protocol delete would be an erasure-tombstone RFC. §Unresolved-2 has two data points (`root`, `twin`, `rfc` common to both hosts' adverts). No spec, schema or suite change.
+
 ## [2.0.12] — 2026-09-10 — host-proprietary paths have a home: `/host/<org>/…` (RFC 0181)
 
 The gap `versioning.md` §5 recorded on 09-09 as undecided-not-permissive is
