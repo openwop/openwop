@@ -1,5 +1,81 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.0.13] — 2026-09-10 — three webhook scenarios could not be witnessed off-process
+
+`webhook-signed-delivery`, `replay-fanout-suppression` and
+`v2-webhook-durable-delivery` each stand up their own HTTP receiver and hand the
+host under test a URL to POST to. All three hard-coded `127.0.0.1` in the two
+places that matter, so a host running anywhere but *this process* was told to
+deliver to its own loopback.
+
+MEASURED 2026-09-09 on a container lane whose harness doubles (compat provider,
+OIDC issuer) were reachable via `--add-host host.docker.internal:host-gateway`,
+from inside the container:
+
+```
+"msg":"webhook delivery failed","url":"http://127.0.0.1:55469/",
+"detail":"fetch failed (connect ECONNREFUSED 127.0.0.1:55469)"
+```
+
+Two independent blockers, both this suite's, neither the operator's: the
+receiver **advertised** `127.0.0.1`, and it **bound loopback-only**, so no
+external name could have reached it either. The lane was configured correctly.
+The host signs webhooks correctly. The scenarios recorded a plain `fail` while
+being unwitnessable — which is a false accusation, and the mirror of a gate that
+cannot fail: a scenario whose pass condition cannot be satisfied in the posture
+it is run in.
+
+**Fix.** New `receiverBinding()` in `lib/webhook-receiver.ts`, used by all three.
+It is a no-op by default: with `OPENWOP_CONFORMANCE_HARNESS_HOST` unset it
+returns `{ bind: '127.0.0.1', advertise: '127.0.0.1' }`, byte-for-byte today's
+behaviour, and **no receiver's bind widens for an in-process run**. Only when an
+operator sets that variable — declaring that the host under test is somewhere
+`127.0.0.1` does not name this process, and naming how it reaches this machine —
+does the receiver bind `0.0.0.0` and advertise that name. The variable already
+carried exactly this meaning for host-side harness doubles; the suite's own
+receivers simply never consulted it.
+
+**No SSRF gate is relaxed.** `host.docker.internal` is still a private address
+over plain `http`, so the three gates in `webhook-signed-delivery`'s docblock
+apply unchanged and a host must still opt in (or front the receiver with
+`OPENWOP_WEBHOOK_RECEIVER_URL`, which waives nothing) to witness the row. All
+this changes is that the packet now has somewhere to go.
+
+### Second defect, same program: a fixed grace instead of a wait
+
+With the address correct, `webhook-signed-delivery` still failed — now in 549ms,
+with `expected 0 to be greater than 0`. It slept a fixed `setTimeout(500)`
+"for fire-and-forget delivery to land". That assumes delivery is synchronous-ish
+with run completion, which is true of a host that POSTs inline and false of one
+doing what `webhooks.md` §"Delivery" asks for: a durable queue with retries,
+drained by a worker on its own cadence. The reference host polls every 1000ms,
+so the sleep expired before the worker's first tick. **The more durable a host's
+delivery machinery, the more exposed it was here** — and this scenario is
+typically the only automated oracle a host has on delivery header NAMES, so the
+cost of the race was not a checkmark.
+
+Replaced with a bounded wait: poll every 250ms until a delivery for this run
+arrives or a 12s deadline passes. It still FAILS and never soft-skips; the
+failure now means "did not deliver within 12s" rather than "did not deliver
+within one arbitrary tick of an unrelated clock". The deadline is sized to sit
+inside the 30s per-test budget alongside the existing 10s terminal poll, so a
+genuinely slow host fails on the requirement message rather than on a bare
+vitest timeout.
+
+MEASURED end-to-end on the container lane, same image, three runs: **2 failed →
+(address fixed) 1 failed, `replay-fanout-suppression` green → (wait fixed) 0
+failed, both green.**
+
+**Self-tests pin the call sites, not just the helper** — a helper that is
+correct and unused is precisely the defect being fixed, and a unit test on
+`receiverBinding()` alone stays green through a full revert of all three
+scenarios. Sabotage-verified with disjoint red sets: reverting either the bind
+or the advertise of any one scenario reds exactly that scenario's case, and each
+helper branch reds only its own. The bounded wait is pinned the same way and for
+a sharper reason — two consecutive container runs disagreed about the 500ms
+sleep (0 deliveries at 549ms, then 1 at 318ms), so a behavioural test for it
+would itself be a coin flip and could not be trusted to go red on a revert.
+
 ## [2.0.12] — 2026-09-10 — corpus peer moves with RFC 0181; no scenario change
 
 No scenario, assertion or CLI change. The pinned `@openwop/spec-artifacts` peer
