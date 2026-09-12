@@ -13,6 +13,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Erratum** `spec/v1/version-negotiation.md` §"The `engineVersion` axis is split": the paragraph listed `run-snapshot.schema.json` among the string-typed schemas; that schema has been `number` since 2026-09-04, corrected because §Stamping's `engineVersion: number` MUST and a `string` schema were not jointly satisfiable. `spec/v1/deprecations.json` carried the same stale claim in the `engine-version-type-split` surface. The split is three-valued in v1.x: integer at the discovery root, number on the run snapshot, string on the event log.
+- `.github/workflows/conformance-soak.yml`: the header said "Two independent jobs" (there are three) and both it and the `host-conformance` job name advertised a three-language SDK smoke that moved to openwop-sdks. A job name is read as a coverage claim.
+
 - `docs/runbooks/V2-HOST-MIGRATION.md`: the week's two instrument failures recorded as one paired lesson — a scenario that shipped but was never selected (suite 2.1.1), and a host that passed 3,158 unit tests while being unable to answer its own queued callbacks (the tier-2 retirement rehearsal). *"A test suite is not a rehearsal, and a green step is not evidence that the thing was asked."* Non-normative; no cut.
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
