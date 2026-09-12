@@ -21552,7 +21552,7 @@
     {
       "id": "openwop.it.replay-divergence-at-refusal.replaydeterminism-when-present-conforms-to-rfc-0041-d",
       "file": "replay-divergence-at-refusal.test.ts",
-      "line": 79,
+      "line": 111,
       "title": "replayDeterminism (when present) conforms to RFC 0041 §D",
       "explicitId": "openwop.it.replay-divergence-at-refusal.replaydeterminism-when-present-conforms-to-rfc-0041-d",
       "citations": [
@@ -21573,10 +21573,15 @@
     {
       "id": "openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref",
       "file": "replay-divergence-at-refusal.test.ts",
-      "line": 186,
+      "line": 227,
       "title": "Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=valid + replay=refusal",
       "explicitId": "openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref",
       "citations": [
+        {
+          "section": "RFCS/0041-multi-agent-replay-under-nondeterminism.md §D",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "RFCS/0041-multi-agent-replay-under-nondeterminism.md §B + spec/v1/rest-endpoints.md §\"Common error codes\"",
           "requirement": "replay MUST terminate `failed` when refusal-divergence is detected (silent substitution is non-conformant)"
@@ -21602,7 +21607,7 @@
     {
       "id": "openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref~2",
       "file": "replay-divergence-at-refusal.test.ts",
-      "line": 272,
+      "line": 320,
       "title": "Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)",
       "explicitId": "openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref~2",
       "citations": [
@@ -22001,10 +22006,15 @@
     {
       "id": "openwop.it.replay-observable-sequence-determinism.original-and-replay-event-log-prefixes-must-be-byte-equivalent-modulo-per-event",
       "file": "replay-observable-sequence-determinism.test.ts",
-      "line": 168,
+      "line": 210,
       "title": "original and replay event-log prefixes MUST be byte-equivalent (modulo per-event clock + ULID entropy)",
       "explicitId": "openwop.it.replay-observable-sequence-determinism.original-and-replay-event-log-prefixes-must-be-byte-equivalent-modulo-per-event",
       "citations": [
+        {
+          "section": "RFCS/0041-multi-agent-replay-under-nondeterminism.md §C",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "RFCS/0041-multi-agent-replay-under-nondeterminism.md §C",
           "requirement": "a mode:replay fork MUST reproduce the original observable event-log sequence byte-for-byte modulo volatile per-event fields (eventId/ULID entropy, per-region observedAt clock)"
@@ -22014,10 +22024,15 @@
     {
       "id": "openwop.it.replay-observable-sequence-determinism.replay-of-a-nondeterministic-tool-node-reproduces-the-original-observable-result",
       "file": "replay-observable-sequence-determinism.test.ts",
-      "line": 202,
+      "line": 251,
       "title": "replay of a nondeterministic tool node reproduces the ORIGINAL observable result, NOT a fresh call",
       "explicitId": "openwop.it.replay-observable-sequence-determinism.replay-of-a-nondeterministic-tool-node-reproduces-the-original-observable-result",
       "citations": [
+        {
+          "section": "RFCS/0041-multi-agent-replay-under-nondeterminism.md §C",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "RFCS/0041-multi-agent-replay-under-nondeterminism.md §C",
           "requirement": null,

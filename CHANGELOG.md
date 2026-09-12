@@ -17,6 +17,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
 
+## [2.1.4] — 2026-09-12 — a replay-determinism red that could not be diagnosed
+
+Conformance-only; no normative prose changed. A tier-1 host carried
+`expected 'failed' to be 'completed'` from
+`replay-observable-sequence-determinism` across three lanes — green standalone,
+red in the full gate on byte-identical code, with load *falling* during the red
+run — and could not diagnose it once in three attempts, because the suite threw
+away everything that would have explained it.
+
+`expect(sourceTerminal.status).toBe('completed')` discards the run's `error`
+object (`schemas/run-snapshot.schema.json` carries `error` and
+`currentNodeId`). Every occurrence reported that something went wrong and
+nothing about what. That is the suite owing hosts what RFC 0064 §F makes a
+host owe the wire: **a failure MUST be self-describing.**
+
+This does NOT fix the flake — the cause remains unknown, and saying otherwise
+would be the week's fourth instrument answering a narrower question than it
+appears to. It makes the next occurrence carry its own evidence.
+
+### Fixed
+
+- Both replay scenarios (`replay-observable-sequence-determinism`,
+  `replay-divergence-at-refusal`) report the terminal state with
+  `currentNodeId` and `error.{code,message,nodeId,retriable}` when a run does
+  not reach `completed`, and say so explicitly when a non-completed terminal
+  arrives with no error object at all.
+- The same two files were the only scenarios in the suite that rolled their own
+  poll loop and ignored `OPENWOP_POLL_TIMEOUT_SCALE` — the knob `lib/polling.ts`
+  exists to provide, whose own docblock names this failure: *"observe no change
+  in those scenarios, and record a failure that measured the environment rather
+  than the host."* Their 5s bound now scales like every other, and the timeout
+  message prints the bound and the scale it used.
+
 ## [2.1.3] — 2026-09-11 — what `since` names in a capability record
 
 Two hosts read the capability record's `since` differently on the same day

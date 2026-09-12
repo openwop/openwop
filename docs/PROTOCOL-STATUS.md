@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.1.3 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.1.4 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -31,7 +31,7 @@
 | CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.0.0-rc.1 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.0.8 / ^2.0.8 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.1.1 / ^2.1.1 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes

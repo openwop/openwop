@@ -62,6 +62,8 @@ interface DiscoveryDoc {
 
 interface RunSnapshot {
   status?: string;
+  error?: unknown;
+  currentNodeId?: string;
 }
 interface RunEventDoc {
   type: string;
@@ -93,8 +95,16 @@ async function gateOnPhase4(ctx: { skip: () => void }): Promise<boolean> {
   return true;
 }
 
+// The 5s budget below is scaled by OPENWOP_POLL_TIMEOUT_SCALE like every
+// other bound in the suite. `lib/polling.ts` exists so a timeout can say
+// whether it measured the host or the harness — *"observe no change in
+// those scenarios, and record a failure that measured the environment
+// rather than the host"* — and these two replay files were the only ones
+// that rolled their own loop and never read it.
 async function pollUntilTerminal(runId: string): Promise<RunSnapshot> {
-  for (let i = 0; i < 50; i++) {
+  const scale = Number(process.env['OPENWOP_POLL_TIMEOUT_SCALE'] ?? '1');
+  const rounds = Math.max(1, Math.round(50 * (Number.isFinite(scale) && scale > 0 ? scale : 1)));
+  for (let i = 0; i < rounds; i++) {
     const r = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
     const snap = r.json as RunSnapshot;
     if (snap.status === 'completed' || snap.status === 'failed' || snap.status === 'cancelled') {
@@ -102,7 +112,7 @@ async function pollUntilTerminal(runId: string): Promise<RunSnapshot> {
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error(`run ${runId} did not reach terminal within 5s`);
+  throw new Error(`run ${runId} did not reach a terminal state within ${rounds * 100}ms (OPENWOP_POLL_TIMEOUT_SCALE=${process.env['OPENWOP_POLL_TIMEOUT_SCALE'] ?? '1'})`);
 }
 
 async function readEvents(runId: string): Promise<RunEventDoc[]> {
@@ -162,6 +172,38 @@ async function startFixtureRun(ctx: { skip: () => void }): Promise<string | null
   return (create.json as { runId: string }).runId;
 }
 
+/**
+ * Why this says more than `expect(status).toBe('completed')`.
+ *
+ * A terminal run that is `failed` carries `error` (`schemas/run-snapshot.schema.json`),
+ * and the bare equality assertion threw it away: every occurrence of this red
+ * reported only `expected 'failed' to be 'completed'`, with no node, no code and
+ * no message. A tier-1 host carried exactly that line in its notes across three
+ * lanes without ever being able to diagnose it (reported 2026-09-12), because
+ * the suite had recorded that something went wrong and nothing about what.
+ *
+ * That is the suite owing hosts what RFC 0064 §F makes a host owe the wire: a
+ * failure MUST be self-describing. This does not make the flake go away — the
+ * cause is still unknown, and pretending otherwise would be the third instrument
+ * this week that answers a narrower question than it appears to. It makes the
+ * next occurrence carry its own evidence.
+ */
+function terminalDetail(snap: RunSnapshot): string {
+  if (snap.status === 'completed') return '';
+  const err = snap.error as Record<string, unknown> | undefined;
+  const parts: string[] = [`status=${String(snap.status)}`];
+  if (snap.currentNodeId) parts.push(`currentNodeId=${String(snap.currentNodeId)}`);
+  if (err && typeof err === 'object') {
+    for (const k of ['code', 'message', 'nodeId', 'retriable']) {
+      if (err[k] !== undefined) parts.push(`error.${k}=${JSON.stringify(err[k])}`);
+    }
+    if (!('code' in err) && !('message' in err)) parts.push(`error=${JSON.stringify(err).slice(0, 300)}`);
+  } else {
+    parts.push('error=(absent — the host reported a non-completed terminal state with no error object)');
+  }
+  return ` — ${parts.join(' ')}`;
+}
+
 describe.skipIf(HTTP_SKIP)(
   'replay-observable-sequence-determinism: prefix byte-equivalence (RFC 0041 §C)',
   () => {
@@ -171,7 +213,14 @@ describe.skipIf(HTTP_SKIP)(
       const sourceRunId = await startFixtureRun(ctx);
       if (sourceRunId === null) return softSkip('blocked', 'precondition not met — `sourceRunId === null` returned early (seam, prior step, or fixture unavailable)');
       const sourceTerminal = await pollUntilTerminal(sourceRunId);
-      expect(sourceTerminal.status).toBe('completed');
+      expect(
+        sourceTerminal.status,
+        req(
+          'openwop.it.replay-observable-sequence-determinism.original-and-replay-event-log-prefixes-must-be-byte-equivalent-modulo-per-event',
+          'RFCS/0041-multi-agent-replay-under-nondeterminism.md §C',
+          `the source run MUST reach \`completed\` for the replay comparison to mean anything${terminalDetail(sourceTerminal)}`,
+        ),
+      ).toBe('completed');
       const sourceEvents = await readEvents(sourceRunId);
 
       const forkRes = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:fork`, {
@@ -204,7 +253,15 @@ describe.skipIf(HTTP_SKIP)(
 
       const sourceRunId = await startFixtureRun(ctx);
       if (sourceRunId === null) return softSkip('blocked', 'precondition not met — `sourceRunId === null` returned early (seam, prior step, or fixture unavailable)');
-      expect((await pollUntilTerminal(sourceRunId)).status).toBe('completed');
+      const t = await pollUntilTerminal(sourceRunId);
+      expect(
+        t.status,
+        req(
+          'openwop.it.replay-observable-sequence-determinism.replay-of-a-nondeterministic-tool-node-reproduces-the-original-observable-result',
+          'RFCS/0041-multi-agent-replay-under-nondeterminism.md §C',
+          `the source run MUST reach \`completed\` for the replay comparison to mean anything${terminalDetail(t)}`,
+        ),
+      ).toBe('completed');
       const sourceEvents = await readEvents(sourceRunId);
 
       // The terminal event(s) for the nondeterministic node carry its
