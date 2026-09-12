@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.4] — 2026-09-12 — the replay reds now say why
+
+`replay-observable-sequence-determinism` and `replay-divergence-at-refusal`
+asserted `status === 'completed'` bare, discarding the run's `error` and
+`currentNodeId`, so a red reported `expected 'failed' to be 'completed'` and
+nothing else. Both now attach the terminal detail, and both honour
+`OPENWOP_POLL_TIMEOUT_SCALE` — they were the only two scenarios that rolled
+their own poll loop and never read it. No assertion changed meaning.
+
 ## [2.1.3] — 2026-09-11 — `since` is the host's minor, said in the schema
 
 No scenario changed. The contract peer's generated
