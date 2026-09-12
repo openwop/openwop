@@ -1,6 +1,6 @@
 # `spec/v2/` — the OpenWOP v2 tree (the current protocol major)
 
-> **Status: released.** v2 is the current protocol major — `v2.0.0` was tagged 2026-09-05 and this tree is at corpus `v2.1.4` (`release.json`). Everything under `spec/v2/`, `schemas/v2/` and `api/v2/` is normative, is vendored into `@openwop/spec-artifacts`, and is what `@openwop/openwop-conformance` 2.x measures. A new integration targets v2.
+> **Status: released.** v2 is the current protocol major — `v2.0.0` was tagged 2026-09-05 and this tree is at corpus `v2.1.5` (`release.json`). Everything under `spec/v2/`, `schemas/v2/` and `api/v2/` is normative, is vendored into `@openwop/spec-artifacts`, and is what `@openwop/openwop-conformance` 2.x measures. A new integration targets v2.
 >
 > **v1 is not retired.** Through the overlap a host advertises both majors and `preferredVersion` MUST remain a `1.x` member (`core/versioning.md` §1.1); v1 clients keep working unchanged on `/v1/…`. v1 end-of-support is the later of two clocks in `core/overview.md`, earliest 2026-12-04, and until then `spec/v1/` stays the maintained parallel track. A `1.x` conformance tarball still excludes this tree (`conformance/scripts/pack-vendor.sh`).
 >

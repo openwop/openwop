@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.5] — 2026-09-12 — v1 errata only
+
+No scenario changed. The contract peer ships `spec/v1/deprecations.json`, whose
+`engine-version-type-split` surface described `run-snapshot.schema.json` as
+typing `engineVersion` as a string; it has been `number` since 2026-09-04.
+
 ## [2.1.4] — 2026-09-12 — the replay reds now say why
 
 `replay-observable-sequence-determinism` and `replay-divergence-at-refusal`

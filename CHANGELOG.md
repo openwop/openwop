@@ -17,6 +17,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
 
+## [2.1.5] — 2026-09-12 — two stale claims, found by opening a red nobody read
+
+No wire change, no MUST relaxed. Cut because `spec/v1/deprecations.json` ships
+inside `@openwop/spec-artifacts` and its version must keep identifying its
+contents.
+
+### Fixed
+
+- **Erratum** `spec/v1/version-negotiation.md` §"The `engineVersion` axis is
+  split": the paragraph listed `run-snapshot.schema.json` among the
+  string-typed schemas. That schema has been `number` since 2026-09-04,
+  corrected because §Stamping's `engineVersion: number` MUST and a `string`
+  schema were not jointly satisfiable — a host obeying the prose emitted a
+  snapshot failing its own schema. An implementer reading the paragraph today
+  walks back into the bind the correction removed; I nearly did, fixing the
+  SQLite reference host. The split is three-valued in v1.x: `integer` at the
+  discovery root, `number` on the run snapshot, `string` on the event log
+  (`run-event.schema.json` and the `runStarted` /
+  `runRestoredFromSnapshot` / `workflowRestored` payloads).
+  `spec/v1/deprecations.json`'s `engine-version-type-split` `surface` carried
+  the identical stale claim and is corrected with it.
+- `.github/workflows/conformance-soak.yml`: the header said "Two independent
+  jobs" (there are three) and both it and the `host-conformance` job NAME
+  advertised a three-language SDK smoke that moved to openwop-sdks — the same
+  file says so at the point where the step used to be. A job name is read as a
+  coverage claim; one naming a step the job does not have is the same shape as
+  a docstring describing a check that does not exist, which is what let the
+  `eventLogSchemaVersion` MUST go unasserted across 444 scenario files.
+
 ## [2.1.4] — 2026-09-12 — a replay-determinism red that could not be diagnosed
 
 Conformance-only; no normative prose changed. A tier-1 host carried

@@ -1,13 +1,22 @@
 name: Conformance Soak
 
-# Two independent jobs:
+# Three independent jobs:
+#
+#   expansion-drift-guard — RFC 0013 expansion algorithm, conformance vs
+#     the in-memory reference host.
 #
 #   host-conformance — the actual regression gate. Runs the FULL
 #     conformance suite under strict mode against the SQLite reference
 #     host. Multi-process scenarios (restart-during-run + staleClaim).
-#     Three-language SDK smoke. **No external network dependencies** —
-#     if `packs.openwop.dev` is down, this job still passes or fails on
-#     host-only grounds, which is what a regression gate should do.
+#     **No external network dependencies** — if `packs.openwop.dev` is
+#     down, this job still passes or fails on host-only grounds, which is
+#     what a regression gate should do.
+#
+#     The three-language SDK smoke MOVED to openwop-sdks with the SDKs and
+#     does not run here. This header and the job's name both advertised it
+#     for as long as it had been gone; a job name is read as a coverage
+#     claim, and one that names a step the job does not have is the same
+#     shape as a docstring describing a check that does not exist.
 #
 #   registry-health — separate concern: the hosted node-pack registry at
 #     `packs.openwop.dev` is reachable and serves the documented shapes.
@@ -69,7 +78,7 @@ jobs:
         run: node scripts/check-workflow-chain-expansion-sync.mjs
 
   host-conformance:
-    name: SQLite host — full conformance + multi-process + SDK smoke
+    name: SQLite host — full conformance + multi-process
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
