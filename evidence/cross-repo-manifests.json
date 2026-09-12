@@ -168,7 +168,7 @@
       }
     },
     "openwop-registry": {
-      "commit": "0b89122becd995c54bb531dbec6f54d6b8c70968",
+      "commit": "d1863c8d6a8ce3a3e9399e0f008cc5d204ee2914",
       "files": {
         "registry/.well-known/openwop-registry.json": {
           "exists": true,

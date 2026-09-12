@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-11T01:24:00.665Z",
+  "generatedAt": "2026-09-11T12:41:00.712Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.11",
+    "version": "2.1.2",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.11",
-    "stampSha256": "73ec5b7c6f2dceeefad0afb5d47446c3566a33ed6123db4bafcb26af38767fa6"
+    "specArtifactsVersion": "2.1.2",
+    "stampSha256": "0edc38b6fbd090fb3878074bb5836ae535a8fd7e4fa0e835c519e55f8329c545"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "74e2b717e"
+      "id": "340a9d1ec"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "3232d8623b1fa5f050499f0a2098d747100f4b15a962afb14ae2660254349e6e",
+    "sha256": "cc88e725c9b50918a0e9ea849d83e0d158a9cc78fbf8ea57501b18ece6bb6a30",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -821,6 +821,22 @@
           "version": "1.0.0",
           "vendor": "myndhyve"
         },
+        "myndhyve.vendor-namespace": {
+          "root": "/host/myndhyve/",
+          "twin": "/v1/host/myndhyve/",
+          "roots": [
+            "_internal",
+            "a2a",
+            "admin",
+            "canvas-types",
+            "canvases",
+            "mcp",
+            "packs",
+            "packs-test",
+            "schedules"
+          ],
+          "rfc": "0181"
+        },
         "myndhyve.testing": {
           "mockProviders": [
             "stream-text"
@@ -972,10 +988,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 145,
-      "executedFail": 4,
+      "executedPass": 147,
+      "executedFail": 2,
       "skipped": 0,
-      "inapplicable": 78,
+      "inapplicable": 82,
       "blocked": 0
     },
     "requirements": [
@@ -1357,15 +1373,21 @@
       {
         "id": "openwop.scenario.v2-run-fork-prefix",
         "scenario": "v2-run-fork-prefix.test.ts",
-        "result": "executed-fail",
-        "assertions": 3,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-run-fork-refusals",
         "scenario": "v2-run-fork-refusals.test.ts",
         "result": "executed-pass",
         "assertions": 8
+      },
+      {
+        "id": "openwop.scenario.v2-run-list",
+        "scenario": "v2-run-list.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1725,9 +1747,8 @@
       {
         "id": "openwop.requirement.0170.fork-prefix-boundary",
         "scenario": "v2-run-fork-prefix.test.ts",
-        "result": "executed-fail",
-        "assertions": 3,
-        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00345-4wb] spec/v2/core/replay.md §Endpoint: the event at sequence 2 is re-executed, not fixed history: the fork MUST NOT carry the source's node.completed at that sequence — seeing it means the prefix was copied inclusively ([0, 2] instead of [0, 2)): expected 'node.compl"
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0170.id-grammar.bare-id",
@@ -2095,7 +2116,7 @@
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-fail",
         "assertions": 2,
-        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00345-4wb] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
+        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00353-pf6] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -2430,11 +2451,32 @@
         "scenario": "v2-provider-conflict.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.cursor-refused",
+        "scenario": "v2-run-list.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.filter-exact",
+        "scenario": "v2-run-list.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.tenant-scoped",
+        "scenario": "v2-run-list.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "profile not advertised in the captured discovery set"
       }
     ]
   },
-  "witnessSha256": "994dbd09d773bcd614320c432ab5e077f9976bb6a6026f2055a91df0f5601941",
-  "assertionCount": 1609,
+  "witnessSha256": "6f95985f21f2a01d7571c23b87cc7e74a56e37d611bb1ff3c02ac6c721b93b1f",
+  "assertionCount": 1611,
   "detail": {
     "nonPass": [
       {
@@ -2543,9 +2585,9 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-fork-prefix",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
+        "id": "openwop.scenario.v2-run-list",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-subject-link-record",
@@ -2633,11 +2675,6 @@
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
-        "id": "openwop.requirement.0170.fork-prefix-boundary",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00345-4wb] spec/v2/core/replay.md §Endpoint: the event at sequence 2 is re-executed, not fixed history: the fork MUST NOT carry the source's node.completed at that sequence — seeing it means the prefix was copied inclusively ([0, 2] instead of [0, 2)): expected 'node.compl"
-      },
-      {
         "id": "openwop.requirement.0170.revocation-honored",
         "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
@@ -2675,7 +2712,7 @@
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "result": "executed-fail",
-        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00345-4wb] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
+        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00353-pf6] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -2846,13 +2883,28 @@
         "id": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
         "result": "inapplicable",
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.cursor-refused",
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.filter-exact",
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.tenant-scoped",
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "Yx8GqJfh3RQuXlJChQgPvH342A2vPpxLIi320R1vMJ7oU44bHRep4UYu3tNfd8WEmzEEHpi99WyrbxLqlV4OCw",
+    "sig": "9pAQkhMsyt1CD9a7X2M83yon9-ICfYnilJm63tthkA6A6okLTo8-Gz_ZjnQ8Zay4jyVEVrdKRqRmFydbluAFBA",
     "over": [
       "witnessSha256",
       "host.build",
