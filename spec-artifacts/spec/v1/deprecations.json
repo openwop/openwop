@@ -287,7 +287,7 @@
     {
       "id": "openwop.deprecation.engine-version-type-split",
       "status": "proposed",
-      "surface": "`engineVersion` typed integer at the discovery root and string on run-event / run-snapshot / three event payloads",
+      "surface": "`engineVersion` typed integer at the discovery root, number on run-snapshot (corrected 2026-09-04 \u2014 the prose MUST requires a number), and string on run-event / three event payloads",
       "kind": "schema-field",
       "deprecatedIn": null,
       "authority": "RFC 0165 \u00a7A.4 (recorded; unification is a v2 C.5 item \u2014 changing either type is a COMPATIBILITY \u00a72.2 break in v1.x)",

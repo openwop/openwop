@@ -55,11 +55,19 @@ array exists so a host can advertise both majors during the v2 transition
 (`COMPATIBILITY.md` §5); v2 defines the negotiation that acts on it.
 
 **The `engineVersion` axis is split, and this is recorded rather than fixed.** The discovery
-root declares `engineVersion` as an integer; `run-event.schema.json`, `run-snapshot.schema.json`
-and three event payloads carry it as a string. Changing either type is a `COMPATIBILITY.md`
-§2.2 break, so in v1.x the per-event value is the decimal string rendering of the root integer,
-and unification is scheduled for v2 (`spec/v1/deprecations.json`,
-`openwop.deprecation.engine-version-type-split`).
+root declares `engineVersion` as an integer; `run-event.schema.json` and three event payloads
+(`runStarted`, `runRestoredFromSnapshot`, `workflowRestored`) carry it as a string. Changing
+either type is a `COMPATIBILITY.md` §2.2 break, so in v1.x the per-event value is the decimal
+string rendering of the root integer, and unification is scheduled for v2
+(`spec/v1/deprecations.json`, `openwop.deprecation.engine-version-type-split`).
+
+**Erratum 2026-09-12: this paragraph listed `run-snapshot.schema.json` among the string-typed
+schemas until now, and it has been `number` since 2026-09-04.** That schema was corrected
+because the two documents were not jointly satisfiable — §Stamping above requires
+`engineVersion: number` on every persisted run document, so a host obeying the prose emitted a
+snapshot failing its own schema and a host obeying the schema violated a MUST. The correction
+is recorded in the schema's own `description`. The split is therefore three-valued in v1.x:
+integer at the discovery root, number on the run snapshot, string on the event log.
 
 > **Why a pattern and not just prose (RFC 0149 §C).** The field was specified three
 > incompatible ways at once: `capabilities.schema.json` constrained it to `minLength: 1`,
