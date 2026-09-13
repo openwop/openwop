@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "corpusTag": "v2.1.7",
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
@@ -273,5 +273,5 @@
     "spec/v2/release.json": "2bacef4931ec682b7bf003746eb1f69e3b945bbb93b98d76ddf86128e9922be5",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "7202902b89cecb6d3823367646b4ca68bb3415ed"
+  "corpusCommit": "4c50dd0dc8b411090dfeeb3a5bbf9466474807c9"
 }
