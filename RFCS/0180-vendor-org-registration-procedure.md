@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-06                                                      |
-| **Updated**       | 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
+| **Updated**       | 2026-09-13 (§A.4a widened from a SHAPE test to a reserved-prefix test: a shape test still orphans era-2 rows whose types were never well formed — four segments, or an underscore — which turns a writer's past bug into permanent unreadability for every reader. Raised by the tier-1 host against its own 11 malformed durable types.) · 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
 | **Affects**       | `spec/v2/declaration.json` (`$comment` procedure pointer), `spec/v2/core/persistence.md` §"The codemap is data" (one pointer sentence), `RFCS/0169` §Unresolved-1 (closed: short form), suite `2.0.6 → 2.0.7` (packed content) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): no field, MUST, error code, or existing entry changes; the entry shape and org grammar were already pinned by `declaration.schema.json` |
 | **Supersedes**    | —                                                               |
@@ -65,10 +65,32 @@ Where a registrant must be repudiated, the mechanism is a `note`, not a deletion
 sentence does not say whether **carries a vendor org** means vendor-*shaped* or
 vendor-shaped *and registered*, and the two readings differ on durable data.
 
-**For an era-2 read the test is the shape.** A reader MUST accept an era-2 event
-whose `type` matches the vendor branch of the grammar in `events.md` §Types,
-whether or not its first segment is a registered org, and MUST NOT act on it
-beyond passing it through. The registered-org requirement binds the **writer**
+**For an era-2 read the test is the reserved prefix, and nothing else.** A
+reader MUST accept an era-2 event whose `type` the codemap does not name,
+whether or not its first segment is a registered org **and whether or not the
+type is well formed under `events.md` §Types**, and MUST NOT act on it beyond
+passing it through. The sole exception is the reserved prefix: an era-2 type
+beginning `openwop.` that the codemap does not name MUST still fail
+`500 event_type_unmapped`, because that is a type claiming protocol semantics
+the reader does not have, and passing it through would invite exactly the
+misinterpretation the refusal exists to prevent.
+
+This is deliberately broader than a shape test, and the reason is that a shape
+test does not reach the data that needs it most. A host that emitted malformed
+vendor types — four segments, or an underscore — wrote rows that match no
+branch of the grammar under any reading. Those rows are on disk now. A reader
+that tests the shape refuses them forever, which converts a **writer's** past
+bug into permanent unreadability for every reader, and that is precisely the
+harm §A.4 forecloses when it refuses to let deregistration orphan a log. A
+malformed type is no more dangerous to a reader than a well-formed one it also
+cannot interpret: in both cases the reader's only safe action is to carry it
+and not act on it.
+
+What this rule is NOT: a test of whether the type *could have been written* by
+some producer. That question is answerable only from host-local history, so two
+conforming readers would give different answers for the same row, which is the
+private-mapping defect `persistence.md` already forbids. The reserved prefix is
+decidable from the wire alone, by every reader, identically. The registered-org requirement binds the **writer**
 (`events.md` §Vendor events; §Growth — *"a producer MUST NOT emit an
 unregistered protocol type"*), and a producer that emits an unregistered org
 today is non-conformant. What a producer may not write, a reader may still be
@@ -139,7 +161,7 @@ The honest statement is that this RFC is process, and its evidence is that the p
 - [ ] The registrar is unambiguous (A.1) and the refusal predicate is not host-controlled.
 - [ ] The effective date is the release, not the merge (A.5), and the corollary skew behaviour is stated.
 - [ ] Deregistration is foreclosed before anyone attempts it (A.4), with the retroactive-unreadability reason recorded.
-- [ ] An era-2 read is settled against the shape rather than the registration (A.4a), so a writer-side re-namespacing does not orphan logs already on disk.
+- [ ] An era-2 read is settled against the reserved prefix rather than the registration or the shape (A.4a), so neither a writer-side re-namespacing nor a writer's past malformed type orphans logs already on disk; an era-2 `openwop.`-prefixed type the codemap does not name still fails `500 event_type_unmapped`.
 - [ ] RFC 0169 §Unresolved-1 is closed in favour of the short form.
 - [ ] `spec-corpus-validity` stays green; `openwop-check.sh` passes on the merged tree.
 
