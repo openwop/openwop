@@ -36,7 +36,16 @@ import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
-const NODE_ID = 'structured-call';
+/**
+ * The mock-AI program seam is keyed by `nodeId` alone, so a node id is the
+ * unit of isolation between scenarios — see `host-sample-test-seams.md` §5.
+ * This file drives two fixtures, so it resolves the node per fixture rather
+ * than holding one shared id.
+ */
+const NODE_OF: Record<string, string> = {
+  'conformance-envelope-truncated': 'truncated-structured-call',
+  'conformance-envelope-retry-attempted': 'retry-attempted-structured-call',
+};
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -68,8 +77,8 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
   }
 }
 
-async function programMock(program: Array<Record<string, unknown>>): Promise<{ status: number }> {
-  const res = await driver.post('/v1/host/sample/test/mock-ai/program', { nodeId: NODE_ID, program });
+async function programMock(fixture: string, program: Array<Record<string, unknown>>): Promise<{ status: number }> {
+  const res = await driver.post('/v1/host/sample/test/mock-ai/program', { nodeId: NODE_OF[fixture], program });
   return { status: res.status };
 }
 
@@ -84,8 +93,8 @@ async function startRunAndRead(workflowId: string): Promise<{ events: RunEvent[]
   return { events, terminal };
 }
 
-async function lastBudget(): Promise<number | null> {
-  const res = await driver.get(`/v1/host/sample/test/mock-ai/last-dispatch-budget?nodeId=${encodeURIComponent(NODE_ID)}`);
+async function lastBudget(fixture: string): Promise<number | null> {
+  const res = await driver.get(`/v1/host/sample/test/mock-ai/last-dispatch-budget?nodeId=${encodeURIComponent(NODE_OF[fixture] as string)}`);
   if (res.status !== 200) return null;
   return (res.json as { maxTokens?: number | null }).maxTokens ?? null;
 }
@@ -118,7 +127,7 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: trunca
     if (!isFixtureAdvertised(TRUNCATED_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(TRUNCATED_FIXTURE)` returned early');
     const d = await readDiscovery();
     if (capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability?.completion?.distinguishesTruncation !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<stri…');
-    const seed = await programMock([
+    const seed = await programMock(TRUNCATED_FIXTURE, [
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
     ]);
@@ -143,14 +152,14 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: trunca
     if (!isFixtureAdvertised(TRUNCATED_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(TRUNCATED_FIXTURE)` returned early');
     const d = await readDiscovery();
     if (capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability?.completion?.distinguishesTruncation !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<stri…');
-    const seed = await programMock([
+    const seed = await programMock(TRUNCATED_FIXTURE, [
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
     ]);
     if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     await startRunAndRead(TRUNCATED_FIXTURE);
-    const budget = await lastBudget();
+    const budget = await lastBudget(TRUNCATED_FIXTURE);
     if (budget === null) return softSkip('blocked', 'precondition not met — `budget === null` returned early (seam, prior step, or fixture unavailable)');
     expect(
       budget,
@@ -165,7 +174,7 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: trunca
 describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: schema-violation path (RFC 0033 §C)', () => {
   it('schema-violation: NO envelope.truncated; envelope.retry.attempted reason ∈ {schema-violation, parse-error}', async () => {
     if (!isFixtureAdvertised(SCHEMA_VIOLATION_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(SCHEMA_VIOLATION_FIXTURE)` returned early');
-    const seed = await programMock([
+    const seed = await programMock(SCHEMA_VIOLATION_FIXTURE, [
       { content: 'not valid json' },
       { content: '{"valid":true}' },
     ]);
@@ -195,14 +204,14 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: schema
 
   it('schema-violation: retry budget UNCHANGED from initial (no budget multiplication on this path)', async () => {
     if (!isFixtureAdvertised(SCHEMA_VIOLATION_FIXTURE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(SCHEMA_VIOLATION_FIXTURE)` returned early');
-    const seed = await programMock([
+    const seed = await programMock(SCHEMA_VIOLATION_FIXTURE, [
       { content: 'not valid json' },
       { content: '{"valid":true}' },
     ]);
     if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     await startRunAndRead(SCHEMA_VIOLATION_FIXTURE);
-    const budget = await lastBudget();
+    const budget = await lastBudget(SCHEMA_VIOLATION_FIXTURE);
     if (budget === null) return softSkip('blocked', 'precondition not met — `budget === null` returned early (seam, prior step, or fixture unavailable)');
     // The schema-violation fixture doesn't set maxTokens explicitly →
     // budget snapshots whatever the host's default is on each call.

@@ -11218,7 +11218,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.capabilities-envelopes-reliability-completion-when-present-conforms-to-rfc-0033",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 94,
+      "line": 103,
       "title": "capabilities.envelopes.reliability.completion (when present) conforms to RFC 0033 §E",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.capabilities-envelopes-reliability-completion-when-present-conforms-to-rfc-0033",
       "citations": [
@@ -11235,7 +11235,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.truncation-emits-envelope-truncated-envelope-retry-attempted-with-reason-truncat",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 117,
+      "line": 126,
       "title": "truncation: emits envelope.truncated + envelope.retry.attempted with reason: \"truncation\"",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.truncation-emits-envelope-truncated-envelope-retry-attempted-with-reason-truncat",
       "citations": [
@@ -11256,7 +11256,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 142,
+      "line": 151,
       "title": "truncation: retry budget strictly greater than initial (RFC 0033 §B truncationBudgetMultiplier)",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge",
       "citations": [
@@ -11269,7 +11269,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-no-envelope-truncated-envelope-retry-attempted-reason-schema-vi",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 166,
+      "line": 175,
       "title": "schema-violation: NO envelope.truncated; envelope.retry.attempted reason ∈ {schema-violation, parse-error}",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-no-envelope-truncated-envelope-retry-attempted-reason-schema-vi",
       "citations": [
@@ -11286,7 +11286,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 196,
+      "line": 205,
       "title": "schema-violation: retry budget UNCHANGED from initial (no budget multiplication on this path)",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on",
       "citations": [

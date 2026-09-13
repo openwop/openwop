@@ -5,7 +5,7 @@
   "description": "Drives `core.ai.structuredOutput` against the conformance `mock` provider with a program: attempt 1 returns `stopReason: 'max_tokens'` (truncation); attempt 2 returns a valid envelope. The host's `dispatchStructured` retry loop MUST: (a) emit exactly one `envelope.truncated` event with `stopReason: 'max_tokens'`; (b) retry with an INCREASED output budget per RFC 0033 §B (the host's `truncationBudgetMultiplier` — default 2×); (c) NOT inject the corrective schema fragment on the truncation retry (truncation is an output-size problem, not a schema problem). Eventually completes after attempt 2 succeeds. Pairs with `envelope-truncated.test.ts`.",
   "nodes": [
     {
-      "id": "structured-call",
+      "id": "truncated-structured-call",
       "typeId": "core.ai.structuredOutput",
       "name": "Structured output (truncation then success)",
       "position": { "x": 0, "y": 0 },

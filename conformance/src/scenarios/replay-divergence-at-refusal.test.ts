@@ -227,7 +227,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
   it('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=valid + replay=refusal', async (ctx) => {
     if (!(await gateOnPhase4(ctx))) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gateOnPhase4(ctx))` returned early');
 
-    const NODE_ID = 'structured-call';
+    const NODE_ID = 'divergence-structured-call';
     // Original program: valid envelope. Replay program (set after the
     // original completes): refusal. Programming twice is the spec-canonical
     // pattern — see spec/v1/host-sample-test-seams.md §5.
@@ -320,7 +320,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
   it('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)', async (ctx) => {
     if (!(await gateOnPhase4(ctx))) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await gateOnPhase4(ctx))` returned early');
 
-    const NODE_ID = 'structured-call';
+    const NODE_ID = 'divergence-structured-call';
     // Symmetric: original=refusal, replay=valid.
     const programStatus = await programMock(NODE_ID, [
       { content: 'safety-refused-for-conformance', stopReason: 'safety' as const, refusalText: 'safety-refused-for-conformance' },
