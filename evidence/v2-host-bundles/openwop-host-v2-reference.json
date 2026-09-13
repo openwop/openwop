@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-05T16:58:43.542Z",
+  "generatedAt": "2026-09-13T13:34:26.348Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.0-rc.61",
+    "version": "2.1.5",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.0-rc.61",
-    "stampSha256": "67b73f2a8e8399ca1b2dfe35d4f56068272b23c3f9a983149eefff0896c623b5"
+    "specArtifactsVersion": "2.1.5",
+    "stampSha256": "88b9aea840128edb93799af8942d5fe7f8711ed36746f44c971602a4b47b5aea"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,18 +14,247 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "d029f8fe320eaa68df702f3fa110f782d1f02415"
+      "id": "0db8e18706214462ee3022ca9fc2b35d05956e3b"
     },
     "signingKeyId": "v2-reference-2"
   },
   "discovery": {
-    "url": "http://127.0.0.1:3839/.well-known/openwop",
-    "sha256": "9db9dfcaf0accf74315c4f125f017d9e0ccf458bb3390d5141de584582f271e5",
+    "url": "http://127.0.0.1:3860/.well-known/openwop",
+    "sha256": "fdc8ec4e38d3860892177c6e7e5f728924a6ba081e45f0671d205185533392bc",
     "protocolVersions": [
       "1.11",
       "2.0"
     ],
-    "preferredVersion": "1.11"
+    "preferredVersion": "1.11",
+    "document": {
+      "protocolVersions": [
+        "1.11",
+        "2.0"
+      ],
+      "preferredVersion": "1.11",
+      "minClientVersion": "1.0",
+      "implementation": {
+        "name": "openwop-host-v2-reference",
+        "version": "2.0.0-rc.1",
+        "vendor": "openwop (reference example)"
+      },
+      "engineVersion": 1,
+      "eventLogSchemaVersion": 3,
+      "signingKeys": [
+        {
+          "keyId": "v2-reference-2",
+          "alg": "ed25519",
+          "publicKey": "KOkye-Aw3yVIO44oMZwp_IHsPmUaBtjGmHlhYOYW6B8",
+          "use": "certification-bundle"
+        }
+      ],
+      "fixtures": [
+        "conformance-approval",
+        "conformance-approval-approvers",
+        "conformance-cancellable",
+        "conformance-clarification",
+        "conformance-delay",
+        "conformance-failure",
+        "conformance-http-effect",
+        "conformance-idempotent",
+        "conformance-interrupt-external-event",
+        "conformance-multi-node",
+        "conformance-noop"
+      ],
+      "testing": {
+        "testKeyPrefix": "ow2k_"
+      },
+      "extensions": {
+        "openwop-v2-reference.host": {
+          "hostId": "openwop.dev/examples/hosts/v2-reference",
+          "build": {
+            "kind": "commit",
+            "id": "dev"
+          },
+          "webhookBackoffBaseMs": 500,
+          "deadLetterRetentionDays": 7,
+          "deadLetterRead": "/webhooks/{webhookId}/dead-letters"
+        }
+      },
+      "limits": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "clarificationRounds": 0,
+        "schemaRounds": 0,
+        "envelopesPerTurn": 0,
+        "maxNodeExecutions": 1000,
+        "maxRunDurationMs": 600000,
+        "maxRequestBodyBytes": 4194304
+      },
+      "eventLog": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "claims-check",
+        "crossEngineOrdering": {
+          "orderingModel": "global-sequencer"
+        }
+      },
+      "interrupt": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "tokenAlgs": [
+          "hs256"
+        ],
+        "refKinds": [
+          "principal"
+        ]
+      },
+      "runList": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "maxPageSize": 100,
+        "filters": [
+          "workflowId",
+          "status"
+        ]
+      },
+      "replay": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "modes": [
+          "replay",
+          "branch"
+        ],
+        "retention": {
+          "days": 30
+        },
+        "effectSeamsManifest": "/host/effect-seams"
+      },
+      "webhooks": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "signatureAlgorithms": [
+          "v1"
+        ],
+        "retryPolicy": {
+          "maxAttempts": 5,
+          "backoff": "exponential"
+        }
+      },
+      "idempotency": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "crossRegion": "single-region"
+      },
+      "compensation": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "seam-gated",
+        "profileVersion": "1",
+        "orderingModels": [
+          "reverse-completion"
+        ],
+        "manualIntervention": false
+      },
+      "feedback": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "targets": [
+          "run",
+          "event",
+          "node"
+        ],
+        "signals": [
+          "rating",
+          "correction",
+          "label",
+          "flag"
+        ]
+      },
+      "heartbeat": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "minIntervalSec": 5,
+        "maxRuntimeMs": 1000,
+        "deliveryChannel": "/host/events"
+      },
+      "packs": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "claims-check",
+        "testMode": {
+          "isolated": true,
+          "scopes": [
+            "core",
+            "vendor",
+            "community",
+            "private",
+            "local"
+          ]
+        }
+      },
+      "workspace": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "versioned": false,
+        "maxFileBytes": 262144,
+        "maxFiles": 256
+      },
+      "auth": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "seam-gated",
+        "lanes": [
+          {
+            "lane": "api-key",
+            "issuers": [
+              "urn:openwop-host-v2-reference:api-key"
+            ],
+            "revocation": "next-request",
+            "minimumAssurance": "bearer"
+          },
+          {
+            "lane": "session",
+            "issuers": [
+              "urn:openwop-host-v2-reference:session"
+            ],
+            "revocation": "next-request",
+            "minimumAssurance": "bearer"
+          },
+          {
+            "lane": "workload",
+            "issuers": [
+              "spiffe://example"
+            ],
+            "revocation": "delegation-expiry",
+            "minimumAssurance": "key-bound",
+            "delegationProofs": [
+              "svid-chain",
+              "mtls-key-binding"
+            ]
+          }
+        ]
+      },
+      "conformance": {
+        "seamsProfile": "openwop-conformance-seams-v2"
+      }
+    }
   },
   "claimedProfiles": [
     {
@@ -49,10 +278,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 181,
+      "executedPass": 187,
       "executedFail": 0,
       "skipped": 0,
-      "inapplicable": 42,
+      "inapplicable": 44,
       "blocked": 0
     },
     "requirements": [
@@ -60,7 +289,14 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 294
+        "assertions": 295
+      },
+      {
+        "id": "openwop.scenario.memory-attribution-replay-stable",
+        "scenario": "memory-attribution-replay-stable.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -102,7 +338,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 82
+        "assertions": 89
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -221,7 +457,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 15
       },
       {
         "id": "openwop.floor.v2-idempotency-key-grammar",
@@ -418,13 +654,19 @@
         "id": "openwop.scenario.v2-run-fork-prefix",
         "scenario": "v2-run-fork-prefix.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-run-fork-refusals",
         "scenario": "v2-run-fork-refusals.test.ts",
         "result": "executed-pass",
         "assertions": 8
+      },
+      {
+        "id": "openwop.scenario.v2-run-list",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 13
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -473,7 +715,7 @@
         "id": "openwop.scenario.v2-unmapped-type-refused",
         "scenario": "v2-unmapped-type-refused.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-v1-events-translated",
@@ -497,8 +739,8 @@
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 11,
-        "detail": "partial-witness: blocked: [inapplicable] no advertised retryPolicy.backoff other than none — the spacing leg is not asserted; [blocked] no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
+        "assertions": 13,
+        "detail": "partial-witness: blocked: no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -597,6 +839,13 @@
         "assertions": 1
       },
       {
+        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
+        "scenario": "memory-attribution-replay-stable.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
         "scenario": "v2-negotiation-authenticated.test.ts",
         "result": "inapplicable",
@@ -658,13 +907,6 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
-        "scenario": "v2-run-diff-identical.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
       },
       {
         "id": "openwop.requirement.0168.advertised-fixtures-exist",
@@ -737,19 +979,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 48
+        "assertions": 52
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 23
+        "assertions": 25
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 12
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -779,7 +1021,13 @@
         "id": "openwop.requirement.0170.fork-prefix-boundary",
         "scenario": "v2-run-fork-prefix.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0170.id-grammar.bare-id",
+        "scenario": "v2-id-grammar.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0170.id-grammar.events",
@@ -871,6 +1119,13 @@
         "scenario": "v2-run-cancel.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0170.run-diff-identical",
+        "scenario": "v2-run-diff-identical.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
       },
       {
         "id": "openwop.requirement.0170.run-fork-refusals",
@@ -1201,13 +1456,13 @@
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1354,6 +1609,12 @@
         "assertions": 2
       },
       {
+        "id": "openwop.requirement.0176.vendor-type-passthrough",
+        "scenario": "v2-unmapped-type-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0176.well-known-one-resource",
         "scenario": "v2-well-known-one-resource.test.ts",
         "result": "executed-pass",
@@ -1442,13 +1703,36 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.cursor-refused",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.filter-exact",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.tenant-scoped",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
       }
     ]
   },
-  "witnessSha256": "180b49fd2f7f7d37de51d8f0d7099752aa5997f490ce54f91c95bd550f792bf5",
-  "assertionCount": 1551,
+  "witnessSha256": "c7ace8376d379a20da886b3f3b7d64039eca67b668edffb23ff7d7acaf78a7fd",
+  "assertionCount": 1606,
   "detail": {
     "nonPass": [
+      {
+        "id": "openwop.scenario.memory-attribution-replay-stable",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
         "result": "inapplicable",
@@ -1505,6 +1789,11 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
         "result": "inapplicable",
         "reason": "a2a facet not advertised — no negotiation to authenticate"
@@ -1550,11 +1839,6 @@
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
-        "result": "inapplicable",
-        "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
-      },
-      {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
         "result": "inapplicable",
         "reason": "inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host"
@@ -1563,6 +1847,11 @@
         "id": "openwop.requirement.0170.lane-issuer-advertised.window",
         "result": "inapplicable",
         "reason": "no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
+      },
+      {
+        "id": "openwop.requirement.0170.run-diff-identical",
+        "result": "inapplicable",
+        "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
       },
       {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
@@ -1664,7 +1953,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-2",
-    "sig": "Kz1StY1AvllRDD_mg0TakkqoP_IjRVIpb2v6YAxNskgkvm3N6AE_qAKvkyUraLxAmpLwu7xNMF-aM-T3VwRvAA",
+    "sig": "OE1LVQva_iKXeEqBEXutGlF1QqeZdhbn4fhQeNjlgXdwBNdu8mC2BO2mBXukVVKRCa6sP2iwq6_VYTRuokJeBg",
     "over": [
       "witnessSha256",
       "host.build",
