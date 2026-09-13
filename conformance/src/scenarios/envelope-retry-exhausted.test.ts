@@ -33,7 +33,7 @@ import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-retry-exhausted';
-const NODE_ID = 'structured-call';
+const NODE_ID = 'retry-exhausted-structured-call';
 
 const RFC_0032_REASONS = new Set([
   'schema-violation',

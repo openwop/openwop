@@ -5,7 +5,7 @@
   "description": "Drives `core.ai.structuredOutput` against the conformance `mock` provider with a program that returns invalid JSON on EVERY attempt. The host's `dispatchStructured` retry loop MUST exhaust its budget and emit exactly one `envelope.retry.exhausted` event with `finalReason: 'schema-violation'` (or `'parse-error'` per RFC 0032 §B.1 reason enum). The node MUST fail with `error.code: 'envelope_payload_invalid'` (existing RFC 0021 code per RFC 0033 §C). Pairs with `envelope-retry-exhausted.test.ts`.",
   "nodes": [
     {
-      "id": "structured-call",
+      "id": "retry-exhausted-structured-call",
       "typeId": "core.ai.structuredOutput",
       "name": "Structured output via mock provider (always invalid)",
       "position": { "x": 0, "y": 0 },

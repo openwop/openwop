@@ -196,7 +196,7 @@ import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
 const E2E_FIXTURE = 'conformance-envelope-refusal';
-const E2E_NODE_ID = 'structured-call';
+const E2E_NODE_ID = 'refusal-structured-call';
 
 interface E2eEvent {
   type: string;
