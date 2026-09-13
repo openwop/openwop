@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.6] — 2026-09-13 — the unknown-run probe is tenant-bound
+
+`v2-compensation-read-projection` asserted `404 not_found` for an unknown run
+while probing with a BARE id, which `identity.md` §5 requires a v1-retired host
+to refuse `400 validation_error`. The probe now forms a tenant-bound id from a
+run it creates, so it tests existence rather than spelling and passes on
+overlap and retired hosts alike. No other scenario changed.
+
 ## [2.1.5] — 2026-09-12 — v1 errata only
 
 No scenario changed. The contract peer ships `spec/v1/deprecations.json`, whose

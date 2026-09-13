@@ -21,6 +21,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
 
+## [2.1.6] — 2026-09-13 — a probe that asked about shape and never reached the question it asserted
+
+Conformance-only. `v2-compensation-read-projection`'s unknown-run leg probed
+`/runs/conformance-no-such-run-0173/compensation` — a **bare** run id. A bare id
+is the v1 spelling: `identity.md` §5 admits it through the overlap and requires
+a host advertising no `1.x` member to refuse it `400 validation_error`. So on a
+retired host the probe asked about SHAPE and never reached the existence check
+it asserts, failing `expected 400 to be 404` against a host that was correct.
+
+Found on the FIRST RUN of the reference host's new retirement lane
+(openwop-examples#44) — a CI leg that boots the host with v1 retired and runs
+the major-2 suite against it. Nothing else could have found it: every other
+host in the matrix advertises two majors, where the bare form is admitted.
+
+### Fixed
+
+- The probe forms a **tenant-bound** unknown id from a run it creates, so it
+  tests existence rather than spelling. A bound id answers `404` on an overlap
+  host and on a retired one, so the fix needs no branch on the advertisement —
+  it just stops using the one spelling that is conditional. Verified against
+  both.
+
+### Measured and deliberately not changed
+
+Two other major-2 scenarios probe `/runs/does-not-exist`:
+`v2-error-registry` (needs any `>= 400` envelope — a `400 validation_error` is
+one, and arguably a better fit for a helper named `badRequest`) and
+`v2-header-scheme` (collects responses to check the header scheme, any status).
+Neither asserts a status, so neither is wrong on a retired host. Recorded
+rather than changed, because rewriting a passing probe to look tidier is how a
+cheap check acquires a run-creation it never needed.
+
 ## [2.1.5] — 2026-09-12 — two stale claims, found by opening a red nobody read
 
 No wire change, no MUST relaxed. Cut because `spec/v1/deprecations.json` ships
