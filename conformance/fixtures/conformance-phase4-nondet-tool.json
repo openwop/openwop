@@ -16,7 +16,7 @@
       "inputs": {}
     },
     {
-      "id": "structured-call",
+      "id": "nondet-structured-call",
       "typeId": "core.ai.structuredOutput",
       "name": "Structured output via mock provider (consumes nondet-tool result)",
       "position": { "x": 200, "y": 0 },
@@ -40,7 +40,7 @@
     }
   ],
   "edges": [
-    { "id": "e1", "sourceNodeId": "nondet-tool", "targetNodeId": "structured-call" }
+    { "id": "e1", "sourceNodeId": "nondet-tool", "targetNodeId": "nondet-structured-call" }
   ],
   "triggers": [
     { "id": "manual", "type": "manual", "enabled": true }

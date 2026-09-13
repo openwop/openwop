@@ -1,5 +1,37 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.7] — 2026-09-13 — nine fixtures shared one programmable node id
+
+The mock-AI program seam is keyed by `nodeId` alone — no run, no workflow, no
+tenant. `host-sample-test-seams.md` §5 stated the isolation that relies on:
+*"each conformance scenario uses a unique fixture (and therefore unique
+`nodeId`)"*. The corpus did not honour it. Nine fixtures declared a node called
+`structured-call`, and vitest runs scenario files in parallel, so any two of
+them could overwrite each other's program mid-run.
+
+That is the long-standing `replay-observable-sequence-determinism` flake.
+That scenario never programs the mock: it runs `conformance-phase4-nondet-tool`
+and inherits whatever the last writer left. When an envelope scenario had just
+staged `{ stopReason: 'safety' }`, the replay fixture's own node refused, the
+source run reached `failed`, and the scenario reported
+
+    expected 'failed' to be 'completed'
+
+— an assertion about replay determinism failing for a reason that has nothing
+to do with replay. It was green in isolation, red under the full gate, and did
+not track load, because contention was never the variable; overlap was.
+
+Each of the nine nodes is now named for its fixture
+(`refusal-structured-call`, `nondet-structured-call`, and so on), which is what
+§5 always claimed. `conformance/scripts/check-mock-ai-node-ids-unique.mjs`
+holds the line: every fixture node dispatching to the mock provider must be
+owned by exactly one fixture.
+
+**Hosts: re-register the conformance fixtures when you pin 2.1.7.** The node
+ids inside those nine workflow definitions changed. A host still serving the
+old definitions will program a node its fixture no longer has, and the envelope
+scenarios will fail loudly rather than silently — but they will fail.
+
 ## [2.1.6] — 2026-09-13 — the unknown-run probe is tenant-bound
 
 `v2-compensation-read-projection` asserted `404 not_found` for an unknown run

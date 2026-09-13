@@ -5,7 +5,7 @@
   "description": "Drives `core.ai.structuredOutput` against the conformance `mock` provider with a program that returns `stopReason: 'max_tokens'` on EVERY attempt. The host's `dispatchStructured` retry loop MUST: (a) emit `envelope.truncated` on each attempt (or at least the first one — RFC 0032 §B.4 is per-attempt); (b) double the budget each retry (RFC 0033 §B); (c) exhaust retries after `maxRetryAttempts` (default 3); (d) emit exactly one `envelope.retry.exhausted` with `finalReason: 'truncation'`; (e) emit `cap.breached` with `kind: 'schema'`; (f) fail the node with `error.code: 'envelope_truncation_unrecoverable'` per RFC 0033 §F. The run does NOT exceed `maxRetryAttempts` total LLM calls — DoS-bound assertion. Pairs with `envelope-truncation-cap-exhaustion.test.ts`.",
   "nodes": [
     {
-      "id": "structured-call",
+      "id": "truncation-cap-structured-call",
       "typeId": "core.ai.structuredOutput",
       "name": "Structured output (perpetual truncation → cap exhaustion)",
       "position": { "x": 0, "y": 0 },

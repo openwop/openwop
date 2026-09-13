@@ -24,7 +24,7 @@ import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-truncation-cap-exhaustion';
-const NODE_ID = 'structured-call';
+const NODE_ID = 'truncation-cap-structured-call';
 
 interface RunEvent {
   type: string;

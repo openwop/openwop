@@ -119,7 +119,7 @@ import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-envelope-retry-attempted';
-const NODE_ID = 'structured-call';
+const NODE_ID = 'retry-attempted-structured-call';
 
 const RFC_0032_REASONS = new Set([
   'schema-violation',

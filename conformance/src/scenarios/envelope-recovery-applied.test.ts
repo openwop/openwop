@@ -126,7 +126,7 @@ import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
 const RECOVERY_FIXTURE = 'conformance-envelope-recovery-applied';
-const RECOVERY_NODE_ID = 'structured-call';
+const RECOVERY_NODE_ID = 'recovery-applied-structured-call';
 
 interface ProgrammedRunEvent {
   type: string;
