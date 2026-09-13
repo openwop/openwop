@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-11T12:41:00.712Z",
+  "generatedAt": "2026-09-13T21:21:47.318Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.1.2",
+    "version": "2.1.5",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.1.2",
-    "stampSha256": "0edc38b6fbd090fb3878074bb5836ae535a8fd7e4fa0e835c519e55f8329c545"
+    "specArtifactsVersion": "2.1.5",
+    "stampSha256": "88b9aea840128edb93799af8942d5fe7f8711ed36746f44c971602a4b47b5aea"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "340a9d1ec"
+      "id": "2239e1ed4"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "cc88e725c9b50918a0e9ea849d83e0d158a9cc78fbf8ea57501b18ece6bb6a30",
+    "sha256": "d8e60c762318e198cf9784b6a0832d82926309a53adb4493be1494b5dcf507f9",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -968,6 +968,10 @@
               "trustMarkerPropagation": true
             }
           }
+        },
+        "myndhyve.omitted-families": {
+          "a2a": "served by a second origin (Cloud Functions canvas-runtime) that performs no OpenWOP version negotiation, so it cannot honour a major-2 contract; advertised under major 1 only",
+          "mcp": "served by a second origin (Cloud Functions canvas-runtime) that performs no OpenWOP version negotiation, so it cannot honour a major-2 contract; advertised under major 1 only"
         }
       }
     }
@@ -988,8 +992,8 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 147,
-      "executedFail": 2,
+      "executedPass": 149,
+      "executedFail": 0,
       "skipped": 0,
       "inapplicable": 82,
       "blocked": 0
@@ -1095,9 +1099,9 @@
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "executed-fail",
-        "assertions": 2,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 6,
+        "detail": "partial-witness: inapplicable: the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.floor.v2-effect-seam-manifest",
@@ -2114,9 +2118,8 @@
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
-        "result": "executed-fail",
-        "assertions": 2,
-        "detail": "the test executed and failed: [myndhyve-workflow-runtime@00353-pf6] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -2475,8 +2478,8 @@
       }
     ]
   },
-  "witnessSha256": "6f95985f21f2a01d7571c23b87cc7e74a56e37d611bb1ff3c02ac6c721b93b1f",
-  "assertionCount": 1611,
+  "witnessSha256": "1aec8812883e30553a99f0b078a4ae73030e1a9cb6a0152c99cb5d50160e2f80",
+  "assertionCount": 1619,
   "detail": {
     "nonPass": [
       {
@@ -2498,11 +2501,6 @@
         "id": "openwop.scenario.v2-compensation-read-projection",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.floor.v2-effect-identity-business-key",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -2710,11 +2708,6 @@
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.requirement.0173.effect-identity-business-key",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [myndhyve-workflow-runtime@00353-pf6] security-defaults.md §Layer-2 effect identity: a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B): expected 404 to be 200 // Object.is equality"
-      },
-      {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "result": "inapplicable",
         "reason": "the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
@@ -2904,7 +2897,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "9pAQkhMsyt1CD9a7X2M83yon9-ICfYnilJm63tthkA6A6okLTo8-Gz_ZjnQ8Zay4jyVEVrdKRqRmFydbluAFBA",
+    "sig": "4VKlAGSlXV4dHcKg32ISFHBgrLXuNdc02ieUIMQiXtYggnS8FakeXIAj0W5jo4SoHDUjFHkqzFhVrHSPaPS1Aw",
     "over": [
       "witnessSha256",
       "host.build",
