@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-06                                                      |
-| **Updated**       | 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
+| **Updated**       | 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
 | **Affects**       | `spec/v2/declaration.json` (`$comment` procedure pointer), `spec/v2/core/persistence.md` §"The codemap is data" (one pointer sentence), `RFCS/0169` §Unresolved-1 (closed: short form), suite `2.0.6 → 2.0.7` (packed content) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): no field, MUST, error code, or existing entry changes; the entry shape and org grammar were already pinned by `declaration.schema.json` |
 | **Supersedes**    | —                                                               |
@@ -58,6 +58,44 @@ An entry MAY be amended — `name`, `note`, and `reserved: true` may be updated 
 
 Where a registrant must be repudiated, the mechanism is a `note`, not a deletion.
 
+### A.4a Era-2 reads test the SHAPE, not the registration
+
+`events.md` §Era-2 requires a reader to fail with `500 event_type_unmapped` on
+*"a type the codemap does not name and that carries no vendor org"*. That
+sentence does not say whether **carries a vendor org** means vendor-*shaped* or
+vendor-shaped *and registered*, and the two readings differ on durable data.
+
+**For an era-2 read the test is the shape.** A reader MUST accept an era-2 event
+whose `type` matches the vendor branch of the grammar in `events.md` §Types,
+whether or not its first segment is a registered org, and MUST NOT act on it
+beyond passing it through. The registered-org requirement binds the **writer**
+(`events.md` §Vendor events; §Growth — *"a producer MUST NOT emit an
+unregistered protocol type"*), and a producer that emits an unregistered org
+today is non-conformant. What a producer may not write, a reader may still be
+obliged to read.
+
+**Why the other reading is not available.** A host that predates the registry
+has era-2 logs under orgs that were never registered and — unlike §A.5's
+version skew — never will be: no `@openwop/spec-artifacts` release makes them
+legible, because no entry is coming. Under the registered reading, the day that
+host tightens its predicate every one of those runs becomes unreadable, and the
+records are gone in the only sense that matters. That is precisely the harm
+§A.4 forecloses for deregistration, *"a statement about how every reader decodes
+logs already on disk, and those logs do not disappear with the company that
+wrote them"* — the same principle reaching the same conclusion from the other
+end. A registry that did not exist when a row was written cannot retroactively
+invalidate it.
+
+**The consequence a migrating host should plan for.** Re-namespacing vendor
+types under a registered org is a **writer-side** migration: stop emitting the
+old names, start emitting the new, and leave the era-2 rows alone
+(`events.md` §Era-2 — *"a host ... MUST NOT rewrite era-2 rows in place"*). The
+reader keeps accepting both for as long as the logs exist, which is what makes
+the migration performable at all. Recorded here rather than left to each host,
+because a reader rule two hosts implement differently is worse than one nobody
+has written down. Raised by the tier-1 host on 2026-09-13, which declined to
+adopt it as a local convention and asked for it in the corpus instead.
+
 ### A.5 Effective date
 
 An entry takes effect for a consumer when a `@openwop/spec-artifacts` release carrying it is installed. A host MUST NOT emit types under an org before the release carrying it is published, and MUST NOT assume a peer resolves an org merely because the corpus PR merged. Until then the org is unregistered and the refusal at `persistence.md` §"The codemap is data" is the correct behaviour — including for the registrant's own types.
@@ -101,6 +139,7 @@ The honest statement is that this RFC is process, and its evidence is that the p
 - [ ] The registrar is unambiguous (A.1) and the refusal predicate is not host-controlled.
 - [ ] The effective date is the release, not the merge (A.5), and the corollary skew behaviour is stated.
 - [ ] Deregistration is foreclosed before anyone attempts it (A.4), with the retroactive-unreadability reason recorded.
+- [ ] An era-2 read is settled against the shape rather than the registration (A.4a), so a writer-side re-namespacing does not orphan logs already on disk.
 - [ ] RFC 0169 §Unresolved-1 is closed in favour of the short form.
 - [ ] `spec-corpus-validity` stays green; `openwop-check.sh` passes on the merged tree.
 
