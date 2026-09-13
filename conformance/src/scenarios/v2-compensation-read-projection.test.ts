@@ -75,7 +75,20 @@ describe('RFC 0173 §B — compensation-read-projection (gated on compensation)'
     const doc = await discovery();
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     if (!(await gateFamily('compensation'))) return softSkip('inapplicable', 'compensation family not advertised — no obligation (gate recorded under openwop.family.compensation)');
-    const res = await driver.get('/runs/conformance-no-such-run-0173/compensation');
+    // The unknown id MUST be TENANT-BOUND, not bare. A bare id is the v1
+    // spelling: `identity.md` §5 admits it through the overlap and requires a
+    // host that advertises no `1.x` member to refuse it `400 validation_error`
+    // — so on a retired host this probe asked about SHAPE and never reached the
+    // existence check it asserts. Found 2026-09-13 by the reference host's
+    // retirement lane on its first run; the host was right and the probe was
+    // written for the overlap. A bound id answers 404 on both, so this needs no
+    // branch on the advertisement — it just needs to stop using the one
+    // spelling that is conditional.
+    const probe = await driver.post('/runs', { workflowId: FIXTURE });
+    const tenant = String((probe.json as { runId?: string }).runId ?? '').split('/')[0];
+    if (!tenant) return softSkip('blocked', 'could not learn the caller tenant from a created run, so no tenant-bound unknown id can be formed');
+    const unknown = `${tenant}/conformance-no-such-run-0173`;
+    const res = await driver.get(`/runs/${encodeURIComponent(unknown)}/compensation`);
     expect(res.status, req('openwop.requirement.0173.compensation-read-projection.not-found', 'openapi.yaml getRunCompensation 404', 'an unknown runId MUST answer 404')).toBe(404);
     expect(
       readErrorCode(res.json),
