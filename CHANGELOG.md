@@ -13,6 +13,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- `conformance/scripts/generate-scenario-majors.mjs` refuses to promote a scenario to `majors: [1, 2]` while it gates on a capability `.supported` seat. `capabilities.md` line 39 — *"`supported` | does not exist; presence of the record is the claim"* — makes that field absent by construction on a conformant major-2 host, so such a scenario does not fail there: it records `inapplicable` forever and the family silently stops being tested, looking exactly like a host that does not advertise it. 170 of the 443 major-1-only files gate this way; all are correct today because they only run at major 1, and promotion is the act that makes one wrong. Found by the tier-2 host session. Non-normative, generator-only.
+
 - `docs/runbooks/V2-HOST-MIGRATION.md`: the week's two instrument failures recorded as one paired lesson — a scenario that shipped but was never selected (suite 2.1.1), and a host that passed 3,158 unit tests while being unable to answer its own queued callbacks (the tier-2 retirement rehearsal). *"A test suite is not a rehearsal, and a green step is not evidence that the thing was asked."* Non-normative; no cut.
 
 - RFC 0182 `Active → Accepted` on tier-1 evidence: the reference host (openwop-examples `cc2d181`, suite 2.1.1, CI run 34558191209) advertises `runList` and passes `v2-run-list` 3/3 with 74 major-2 files selected — the first run in which the scenario was actually selected (see 2.1.1).
