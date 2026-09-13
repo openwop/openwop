@@ -29,9 +29,9 @@
       "bundle": "evidence/v2-host-bundles/myndhyve.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.1.2",
+        "suiteVersion": "2.1.5",
         "targetMajor": 2,
-        "witnessSha256": "6f95985f21f2a01d7571c23b87cc7e74a56e37d611bb1ff3c02ac6c721b93b1f",
+        "witnessSha256": "1aec8812883e30553a99f0b078a4ae73030e1a9cb6a0152c99cb5d50160e2f80",
         "evidenceTiers": [
           "self"
         ],
