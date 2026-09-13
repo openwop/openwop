@@ -33,7 +33,7 @@ import { softSkip } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-nl-to-format-engaged';
-const NODE_ID = 'structured-call';
+const NODE_ID = 'nl-to-format-structured-call';
 
 interface RunEvent {
   type: string;

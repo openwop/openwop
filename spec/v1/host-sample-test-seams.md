@@ -212,7 +212,7 @@ The `replay.divergedAtRefusal` behavioral assertion requires staging the mock-AI
 }
 ```
 
-The host's mock-AI provider MUST honor the program **deterministically by attempt index**: the first call (original run) returns the first entry; the second call (replay) returns the second entry. The seam is callable BEFORE the run is created — each conformance scenario uses a unique fixture (and therefore unique `nodeId`).
+The host's mock-AI provider MUST honor the program **deterministically by attempt index**: the first call (original run) returns the first entry; the second call (replay) returns the second entry. The seam is callable BEFORE the run is created. The program is stored against the bare `nodeId` — there is no run, workflow, or tenant in the key — so a node id is the **only** unit of isolation this seam has. Two fixtures that declare the same node id therefore share one program, and a suite that runs scenario files in parallel will let them overwrite each other mid-run; the scenario that loses fails an assertion about its own subject rather than about the collision. Every fixture node that dispatches to the mock provider MUST be uniquely named across `conformance/fixtures/`. `conformance/scripts/check-mock-ai-node-ids-unique.mjs` enforces this.
 
 When the replay's mock-AI call hits the `refusal` entry, the host MUST:
 
