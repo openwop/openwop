@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-13T21:21:47.318Z",
+  "generatedAt": "2026-09-14T17:08:00.223Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.1.5",
+    "version": "2.1.7",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.1.5",
-    "stampSha256": "88b9aea840128edb93799af8942d5fe7f8711ed36746f44c971602a4b47b5aea"
+    "specArtifactsVersion": "2.1.7",
+    "stampSha256": "5594e445dafa6f889a005c00556c2ae241f7a591f45e08eee0b126736bfb04d3"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,12 +14,12 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "2239e1ed4"
+      "id": "46917218d19f33b0c0ec9c6267513bafcaeaa55f"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
-    "url": "https://api.myndhyve.ai/.well-known/openwop",
+    "url": "https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop",
     "sha256": "d8e60c762318e198cf9784b6a0832d82926309a53adb4493be1494b5dcf507f9",
     "protocolVersions": [
       "1.0",
@@ -2897,7 +2897,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "4VKlAGSlXV4dHcKg32ISFHBgrLXuNdc02ieUIMQiXtYggnS8FakeXIAj0W5jo4SoHDUjFHkqzFhVrHSPaPS1Aw",
+    "sig": "dcuoYf2NlMX71a2_g1Tuau-CY8o9DM2PM1g4eS-e8nDqekblVA6dCMPhRt84nk9ZF9TI6XTdRR6euXPyrWxWBA",
     "over": [
       "witnessSha256",
       "host.build",
