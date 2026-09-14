@@ -253,6 +253,15 @@
               },
               "facetsFrom": {
                 "type": "string"
+              },
+              "normativeText": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Repo-relative path(s) to the document(s) where this family's normative text is actually written. The `section` pointer names the DECLARATION site (core/capabilities.md), which for most families is a stub naming an owning RFC; this names where a reader finds the behaviour. A path under `spec/v1/` means the family is orphaned at v1 end-of-support \u2014 counted and ratcheted by scripts/check-v2-normative-home.mjs."
               }
             }
           }

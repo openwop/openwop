@@ -1,0 +1,5 @@
+{
+  "$comment": "Ratchet baseline for scripts/check-v2-normative-home.mjs. Both counts MUST reach 0 before evidence/v1-end-of-support.json endOfSupportNotBefore. Lower when you resolve one; never raise.",
+  "v1Dependent": 2,
+  "undeclared": 70
+}
