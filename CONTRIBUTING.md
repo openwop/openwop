@@ -54,6 +54,42 @@ When to bump status:
 - New surface area: add a "Why this exists" paragraph + an "Open spec gaps" table at the end.
 - **Normative examples are declared and validated (RFC 0149 §D).** A fenced ```json / ```jsonc block in `spec/v1/*.md` that is a WHOLE instance of a schema carries the marker `<!-- normative-example: <name>.schema.json -->` on the line immediately above the fence. `normative-example-extraction.test.ts` extracts every declared example at test time and validates it against `schemas/<name>` with the same Ajv registration every other leg uses, and it also fails on the *inverse* — a fenced block that validates as a whole instance of some schema but is not declared. Fragments (`...`, jsonc comments, partial objects) are prose and take no marker; a declared example MUST be strict JSON. Discovery-shaped examples (root `protocolVersion` + `supportedEnvelopes`) MUST be declared against `capabilities.schema.json` and MUST NOT carry credential- or tenant-shaped keys (RFC 0149 §E).
 
+### An RFC MUST NOT state a rule a core doc owns
+
+Before landing any normative sentence in an `RFCS/*.md`, do two things by hand:
+
+1. **Open the `spec/v2/core/*.md` that owns the rule** and read what it already says.
+2. **Grep `conformance/src/scenarios/`** for a scenario asserting it.
+
+`openwop-check.sh` does **not** cross-check an RFC's normative claims against the
+core spec or the suite. The corpus can hold a direct contradiction with every
+gate green, and has: RFC 0180 §A.4a asserted that an era-2 reader MUST *accept* a
+type the codemap does not name, while `persistence.md` §The reader rule,
+`events.md` §Era-2 and RFC 0176 §A.3 all require the opposite, and
+`v2-unmapped-type-refused` witnessed both halves of the opposite. It reversed a
+tracked migration decision (`openwop.migration.C9.3`) from inside a document
+about registration procedure, and was caught only when a host implemented it and
+would have turned a certified bundle red.
+
+**Ownership is the test.** A reader rule belongs to RFC 0176 and `persistence.md`,
+not to whichever RFC happens to find a problem with it. When an RFC's argument is
+sound but the rule is not its to state, record the problem as an open question
+there and move the change to the owning doc — with the conformance scenarios
+moved in the same PR.
+
+**This is a process rule because it does not automate.** Three mechanical proxies
+were designed and measured against the corpus, and all three fail:
+
+| Proxy | Result |
+| --- | --- |
+| RFC asserts a MUST naming an error code, and the core doc owning that code does not cite the RFC | 367 findings, ~all noise — generic codes like `validation_error` appear in five core docs |
+| Same, restricted to codes owned by 1–2 non-registry core docs | 35 findings, 0 real — a core doc absorbing a rule without citing the RFC number is normal |
+| RFC asserting a MUST must name an existing conformance scenario | **0 signal** — all 178 Active/Accepted RFCs already comply, §A.4a included |
+
+The third is the instructive one: **the defective RFC satisfied every structural
+proxy.** It cited `events.md`. It named scenarios. The contradiction was
+semantic, and nothing in the corpus's shape distinguishes it from agreement.
+
 ### JSON Schemas (`schemas/*.schema.json`)
 
 - Every schema declares `$schema: "https://json-schema.org/draft/2020-12/schema"`.
