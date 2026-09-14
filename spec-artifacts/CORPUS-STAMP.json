@@ -217,7 +217,7 @@
     "spec/v2/core/conformance.md": "622084e3c74c4549087f4d861b1bb98cec201a0c5aec23788d27f53a355fde3b",
     "spec/v2/core/connection-packs.md": "1d759681e2962f5103228c52c45f24607ed4bb9ae73e30605f690c1d5a59e9ee",
     "spec/v2/core/errors.md": "74fdb5862f432a831cf0c2eadbe0c8cca6b2660ec578180ae33db54773a1df28",
-    "spec/v2/core/events.md": "defe0969d6ec7c980f415cc0d78b9d065782ac7e5638b12a44aa4895a35d6126",
+    "spec/v2/core/events.md": "3b7d1ad34f9e438c9825d60c0114b9a21c82a468f15ccbd7567022641a4537ad",
     "spec/v2/core/form-content-packs.md": "6ffaae85d4550be48dd53fb6e2959af8aceb35bd87c5343b722885084f197713",
     "spec/v2/core/headers.md": "a795c8cd3e5f004b05dad9603d14b92b639a24ccd23b183716cb01097a106119",
     "spec/v2/core/idempotency.md": "b86c352d964aebad532727f314e26ed2177d49de382076fa64d3162e2f56118d",
@@ -273,5 +273,5 @@
     "spec/v2/release.json": "9cc1eb0af3fca2e317dbd733815d9ff57a2268e26ee19d87bd66f835fb88a819",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "ea49509d418e8ba117099caf6c2fc14a0029f063"
+  "corpusCommit": "e78fcf9ecfce1eb9d09f8d78f119136901cbb4f3"
 }
