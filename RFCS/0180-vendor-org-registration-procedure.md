@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-06                                                      |
-| **Updated**       | 2026-09-13 (§A.4a widened from a SHAPE test to a reserved-prefix test: a shape test still orphans era-2 rows whose types were never well formed — four segments, or an underscore — which turns a writer's past bug into permanent unreadability for every reader. Raised by the tier-1 host against its own 11 malformed durable types.) · 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
+| **Updated**       | 2026-09-14 (§A.4a normative text WITHDRAWN. Its first two revisions asserted an era-2 reader MUST that contradicted `persistence.md` §The reader rule, `events.md` §Era-2, RFC 0176 §A.3 and the `v2-unmapped-type-refused` scenario — a registration procedure is not the seat of a reader rule. The durable-log problem it tried to solve is recorded as an open question for an RFC 0176 amendment.) · 2026-09-13 (§A.4a widened from a SHAPE test to a reserved-prefix test: a shape test still orphans era-2 rows whose types were never well formed — four segments, or an underscore — which turns a writer's past bug into permanent unreadability for every reader. Raised by the tier-1 host against its own 11 malformed durable types.) · 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
 | **Affects**       | `spec/v2/declaration.json` (`$comment` procedure pointer), `spec/v2/core/persistence.md` §"The codemap is data" (one pointer sentence), `RFCS/0169` §Unresolved-1 (closed: short form), suite `2.0.6 → 2.0.7` (packed content) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): no field, MUST, error code, or existing entry changes; the entry shape and org grammar were already pinned by `declaration.schema.json` |
 | **Supersedes**    | —                                                               |
@@ -58,65 +58,62 @@ An entry MAY be amended — `name`, `note`, and `reserved: true` may be updated 
 
 Where a registrant must be repudiated, the mechanism is a `note`, not a deletion.
 
-### A.4a Era-2 reads test the SHAPE, not the registration
+### A.4a Registration does not change the era-2 reader rule
 
-`events.md` §Era-2 requires a reader to fail with `500 event_type_unmapped` on
-*"a type the codemap does not name and that carries no vendor org"*. That
-sentence does not say whether **carries a vendor org** means vendor-*shaped* or
-vendor-shaped *and registered*, and the two readings differ on durable data.
+**This section legislated a rule it does not own, and the normative text is
+withdrawn.** What follows is the correction and the open question it leaves.
 
-**For an era-2 read the test is the reserved prefix, and nothing else.** A
-reader MUST accept an era-2 event whose `type` the codemap does not name,
-whether or not its first segment is a registered org **and whether or not the
-type is well formed under `events.md` §Types**, and MUST NOT act on it beyond
-passing it through. The sole exception is the reserved prefix: an era-2 type
-beginning `openwop.` that the codemap does not name MUST still fail
-`500 event_type_unmapped`, because that is a type claiming protocol semantics
-the reader does not have, and passing it through would invite exactly the
-misinterpretation the refusal exists to prevent.
+**What the shipping rule is.** The era-2 reader rule belongs to RFC 0176 §A.3,
+and is stated normatively in `spec/v2/core/persistence.md` §The reader rule and
+`spec/v2/core/events.md` §Era-2 logs:
 
-This is deliberately broader than a shape test, and the reason is that a shape
-test does not reach the data that needs it most. A host that emitted malformed
-vendor types — four segments, or an underscore — wrote rows that match no
-branch of the grammar under any reading. Those rows are on disk now. A reader
-that tests the shape refuses them forever, which converts a **writer's** past
-bug into permanent unreadability for every reader, and that is precisely the
-harm §A.4 forecloses when it refuses to let deregistration orphan a log. A
-malformed type is no more dangerous to a reader than a well-formed one it also
-cannot interpret: in both cases the reader's only safe action is to carry it
-and not act on it.
+> A type the codemap does not name and that carries no reserved vendor prefix
+> MUST fail the read with `event_type_unmapped` (`500`) — a run whose log the
+> host cannot translate is not readable, not "tolerantly" readable.
 
-What this rule is NOT: a test of whether the type *could have been written* by
-some producer. That question is answerable only from host-local history, so two
-conforming readers would give different answers for the same row, which is the
-private-mapping defect `persistence.md` already forbids. The reserved prefix is
-decidable from the wire alone, by every reader, identically. The registered-org requirement binds the **writer**
-(`events.md` §Vendor events; §Growth — *"a producer MUST NOT emit an
-unregistered protocol type"*), and a producer that emits an unregistered org
-today is non-conformant. What a producer may not write, a reader may still be
-obliged to read.
+That refusal is deliberate, not an oversight. RFC 0176's migration row
+`openwop.migration.C9.3` names v1's tolerant reader — *"unknown `type` passed
+through"* — as the behaviour v2 migrates AWAY from, and
+`conformance/src/scenarios/v2-unmapped-type-refused.test.ts` witnesses it on
+both halves: `foo.bar` (unregistered) MUST fail `500 event_type_unmapped`, and
+`example.thing-happened` (registered, owned by nobody) MUST pass through.
 
-**Why the other reading is not available.** A host that predates the registry
-has era-2 logs under orgs that were never registered and — unlike §A.5's
-version skew — never will be: no `@openwop/spec-artifacts` release makes them
-legible, because no entry is coming. Under the registered reading, the day that
-host tightens its predicate every one of those runs becomes unreadable, and the
-records are gone in the only sense that matters. That is precisely the harm
-§A.4 forecloses for deregistration, *"a statement about how every reader decodes
-logs already on disk, and those logs do not disappear with the company that
-wrote them"* — the same principle reaching the same conclusion from the other
-end. A registry that did not exist when a row was written cannot retroactively
-invalidate it.
+**Registration governs the WRITER, and that is all this RFC decides.** A
+producer MUST NOT emit a type under an unregistered org. Whether a READER
+refuses an already-written row is RFC 0176's question, and the answer there is
+unchanged by anything in this document.
 
-**The consequence a migrating host should plan for.** Re-namespacing vendor
-types under a registered org is a **writer-side** migration: stop emitting the
-old names, start emitting the new, and leave the era-2 rows alone
-(`events.md` §Era-2 — *"a host ... MUST NOT rewrite era-2 rows in place"*). The
-reader keeps accepting both for as long as the logs exist, which is what makes
-the migration performable at all. Recorded here rather than left to each host,
-because a reader rule two hosts implement differently is worse than one nobody
-has written down. Raised by the tier-1 host on 2026-09-13, which declined to
-adopt it as a local convention and asked for it in the corpus instead.
+**The open question, with the evidence that raised it.** A host that emitted
+vendor types under an unregistered org — or emitted malformed ones, which a
+loose `isVendorType` predicate will conceal rather than refuse — has durable
+era-2 rows that the shipping rule makes permanently unreadable. Measured by the
+tier-1 host on 2026-09-13: 42 unnamed types, of which **11 are invalid under
+`events.md` §Types today** (7 exceed the three-segment cap, 4 carry an
+underscore), across 37 files. That is a real cost and it points the same
+direction as §A.4's refusal to let deregistration orphan a log.
+
+It is also NOT resolvable from here, for three reasons worth recording so the
+next person does not repeat the attempt:
+
+1. **The codemap is not the escape hatch.** `spec/v2/event-codemap.json`'s
+   `grammar` admits exactly two kebab segments, so the malformed names cannot be
+   named there even as a courtesy.
+2. **"What the host could have written" is not a wire rule.** It is answerable
+   only from host-local history, so two conforming readers would disagree about
+   the same row — the private-mapping defect `persistence.md` already forbids.
+3. **Relaxing the refusal reverses C9.3**, which is a tracked migration
+   decision with two conformance scenarios behind it. Reversing it is legitimate
+   only as an RFC 0176 amendment that changes `persistence.md`, `events.md` and
+   both scenarios in the same PR.
+
+**Why this section says so little now.** Its first two revisions asserted a
+reader MUST — first shape-gated, then widened to a reserved-prefix test — and
+both contradicted `persistence.md` §The reader rule and the scenario that
+enforces it. Neither revision opened those files. A registration procedure is
+not the seat of a reader rule, and the durable-log problem deserves an amendment
+that argues it against C9.3 on the record, not a parenthetical in a document
+nobody would think to check.
+
 
 ### A.5 Effective date
 
@@ -161,7 +158,7 @@ The honest statement is that this RFC is process, and its evidence is that the p
 - [ ] The registrar is unambiguous (A.1) and the refusal predicate is not host-controlled.
 - [ ] The effective date is the release, not the merge (A.5), and the corollary skew behaviour is stated.
 - [ ] Deregistration is foreclosed before anyone attempts it (A.4), with the retroactive-unreadability reason recorded.
-- [ ] An era-2 read is settled against the reserved prefix rather than the registration or the shape (A.4a), so neither a writer-side re-namespacing nor a writer's past malformed type orphans logs already on disk; an era-2 `openwop.`-prefixed type the codemap does not name still fails `500 event_type_unmapped`.
+- [ ] The era-2 reader rule is left to RFC 0176 §A.3 / `persistence.md` §The reader rule (A.4a): this RFC binds the WRITER only, and `v2-unmapped-type-refused` still witnesses both halves of the shipping rule unchanged.
 - [ ] RFC 0169 §Unresolved-1 is closed in favour of the short form.
 - [ ] `spec-corpus-validity` stays green; `openwop-check.sh` passes on the merged tree.
 
