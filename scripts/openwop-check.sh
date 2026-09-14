@@ -231,6 +231,12 @@ node "$(dirname "$0")/check-waiver-ledger.mjs"
 # review whose outcome was `withdrawn` or `corrective-rfc-required` counted
 # exactly like a `ratified` one. Only `ratified` discharges.
 node "$(dirname "$0")/check-waiver-retrospective.mjs"
+# Every v2 core family must have a normative home that survives v1 end-of-support.
+# `section` names the DECLARATION site — for most core families a stub naming an
+# owning RFC — not where the behaviour is written. For 35 of 72 that is a document
+# under spec/v1/, which stops being operative on the EOS date with nothing to
+# notice. Two ratchets, both due to reach zero before that date.
+node "$(dirname "$0")/check-v2-normative-home.mjs"
 # RFC 0156 §F — the assurance manifest is current AND no public surface carries
 # a claim token the manifest does not permit (RFC 0147 §A claim table).
 node "$(dirname "$0")/generate-assurance-status.mjs" --check

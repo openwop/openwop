@@ -925,7 +925,10 @@
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0064"
+      "owningRfc": "0064",
+      "normativeText": [
+        "spec/v1/host-capabilities.md"
+      ]
     },
     {
       "key": "toolCatalog",
@@ -945,7 +948,10 @@
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0078"
+      "owningRfc": "0078",
+      "normativeText": [
+        "spec/v1/tool-catalog.md"
+      ]
     },
     {
       "key": "httpClient",
