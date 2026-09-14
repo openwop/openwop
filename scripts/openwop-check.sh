@@ -291,6 +291,7 @@ python3 "$(dirname "$0")/derive-v2-api.py" --check
 npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint "$SPEC_ROOT/api/seams-v2.yaml" --config "$SPEC_ROOT/api/v2/redocly.yaml" --format=summary 2>&1 | tail -2
 npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/v2/asyncapi.yaml" 2>&1 | /usr/bin/grep -E "is valid|error" | head -3
 node "$(dirname "$0")/check-path-parity.mjs"
+node "$(dirname "$0")/check-manifest-top-level-segments.mjs"
 node "$(dirname "$0")/check-id-kinds-bound.mjs"
 node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
 node "$(dirname "$0")/generate-v1-eos-clock.mjs" --check
