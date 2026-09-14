@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-06                                                      |
-| **Updated**       | 2026-09-14 (§A.4a normative text WITHDRAWN. Its first two revisions asserted an era-2 reader MUST that contradicted `persistence.md` §The reader rule, `events.md` §Era-2, RFC 0176 §A.3 and the `v2-unmapped-type-refused` scenario — a registration procedure is not the seat of a reader rule. The durable-log problem it tried to solve is recorded as an open question for an RFC 0176 amendment.) · 2026-09-13 (§A.4a widened from a SHAPE test to a reserved-prefix test: a shape test still orphans era-2 rows whose types were never well formed — four segments, or an underscore — which turns a writer's past bug into permanent unreadability for every reader. Raised by the tier-1 host against its own 11 malformed durable types.) · 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
+| **Updated**       | 2026-09-14 (§A.4a records the RULING: the era-2 reader rule stands. A production census put the malformed-name exposure at ONE row and the real exposure at 1273 rows under `ai.*`/`node.*`/`conversation.*` — two of which are namespaces the protocol itself owns, so passing them through would make a protocol typo indistinguishable from a vendor event.) · 2026-09-14 (§A.4a normative text WITHDRAWN. Its first two revisions asserted an era-2 reader MUST that contradicted `persistence.md` §The reader rule, `events.md` §Era-2, RFC 0176 §A.3 and the `v2-unmapped-type-refused` scenario — a registration procedure is not the seat of a reader rule. The durable-log problem it tried to solve is recorded as an open question for an RFC 0176 amendment.) · 2026-09-13 (§A.4a widened from a SHAPE test to a reserved-prefix test: a shape test still orphans era-2 rows whose types were never well formed — four segments, or an underscore — which turns a writer's past bug into permanent unreadability for every reader. Raised by the tier-1 host against its own 11 malformed durable types.) · 2026-09-13 (§A.4a added: an era-2 read tests the vendor SHAPE, not the registration, so a host re-namespacing its vendor types does not retroactively lose the runs it already wrote.) · 2026-09-06 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-06 (filed; the registry shipped at 2.0.0 admitting exactly one reserved org and no way for a second to be added — a predicate every reader evaluates with no procedure behind it) |
 | **Affects**       | `spec/v2/declaration.json` (`$comment` procedure pointer), `spec/v2/core/persistence.md` §"The codemap is data" (one pointer sentence), `RFCS/0169` §Unresolved-1 (closed: short form), suite `2.0.6 → 2.0.7` (packed content) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): no field, MUST, error code, or existing entry changes; the entry shape and org grammar were already pinned by `declaration.schema.json` |
 | **Supersedes**    | —                                                               |
@@ -83,17 +83,55 @@ producer MUST NOT emit a type under an unregistered org. Whether a READER
 refuses an already-written row is RFC 0176's question, and the answer there is
 unchanged by anything in this document.
 
-**The open question, with the evidence that raised it.** A host that emitted
-vendor types under an unregistered org — or emitted malformed ones, which a
-loose `isVendorType` predicate will conceal rather than refuse — has durable
-era-2 rows that the shipping rule makes permanently unreadable. Measured by the
-tier-1 host on 2026-09-13: 42 unnamed types, of which **11 are invalid under
-`events.md` §Types today** (7 exceed the three-segment cap, 4 carry an
-underscore), across 37 files. That is a real cost and it points the same
-direction as §A.4's refusal to let deregistration orphan a log.
+**The question was asked and ANSWERED: the reader rule stands. Decided 2026-09-14.**
 
-It is also NOT resolvable from here, for three reasons worth recording so the
-next person does not repeat the attempt:
+The cost looked large when it was estimated and small when it was measured. The
+tier-1 host ran a read-only census against production
+(`scripts/era2-vendor-type-census.mjs`, openwop-app #3801): **277 (tenant, type)
+pairs over 50 distinct types** — 255 codemap-named, 22 vendor-branch pairs
+totalling **1273 rows**, and 10 pairs flagged invalid under `events.md` §Types.
+
+Two findings reshaped the question:
+
+- **Nine of the ten "invalid" pairs (376 rows) were not malformed names at all.**
+  They were whole serialised JSON envelopes written into the `type` column by an
+  `emit` arity bug — fixed at source (openwop-app #3802) and deliberately not
+  backfilled.
+- **The malformed-name exposure is ONE ROW** (`host.crm.contact.triaged`). The
+  durable-history argument that produced two revisions of this section, and that
+  three parties spent two days reasoning about, was one row on one tenant.
+
+The real exposure is 1273 rows under the orgs `ai.*`, `node.*` and
+`conversation.*` — well formed, but unregistered. **Those stay refused**, for
+three reasons, in order of force:
+
+1. **Two of those three orgs are namespaces the PROTOCOL owns.** The codemap's
+   v1 side carries 10 `node.*` rows (`node.started`, `node.completed`,
+   `node.failed`, `node.suspended`, …) and 3 `conversation.*` rows. So
+   `node.progress` is not a vendor event; it is a host-invented event inside the
+   protocol's own namespace. Under a shape-only pass-through, `node.startd` — a
+   one-character typo of a protocol event — is indistinguishable from it, and a
+   protocol event silently demoted to opaque data is worse than a `500` that says
+   so. **Registration is the only thing separating "a vendor event to carry" from
+   "a protocol event somebody misspelled."**
+2. **Relaxing it would break every certified host.** `COMPATIBILITY.md` §2.2:
+   *"Existing `MUST` requirements MUST NOT be relaxed."* A host that refuses
+   correctly today would become non-conformant and its certified bundle invalid.
+   Keeping the rule invalidates nobody.
+3. **The writer already has the remedy** and it costs nothing: register the org,
+   namespace the events, and the rule never bites again. openwop-app #3800
+   renamed ten of eleven types this way.
+
+A retraction belongs here too, because it was this RFC's argument: the claim that
+registration-gated refusal is incoherent *because the registry ships in
+`spec-artifacts`, so a durable row's readability becomes a function of the
+reader's corpus version* is **true and is not a defect**. The codemap ships in the
+same package and already governs readability by release. Version-dependent
+readability is the design, not a flaw discovered in it.
+
+
+And it could not have been resolved from HERE in any case, for three reasons
+worth recording so the next person does not repeat the attempt:
 
 1. **The codemap is not the escape hatch.** `spec/v2/event-codemap.json`'s
    `grammar` admits exactly two kebab segments, so the malformed names cannot be
@@ -158,7 +196,7 @@ The honest statement is that this RFC is process, and its evidence is that the p
 - [ ] The registrar is unambiguous (A.1) and the refusal predicate is not host-controlled.
 - [ ] The effective date is the release, not the merge (A.5), and the corollary skew behaviour is stated.
 - [ ] Deregistration is foreclosed before anyone attempts it (A.4), with the retroactive-unreadability reason recorded.
-- [ ] The era-2 reader rule is left to RFC 0176 §A.3 / `persistence.md` §The reader rule (A.4a): this RFC binds the WRITER only, and `v2-unmapped-type-refused` still witnesses both halves of the shipping rule unchanged.
+- [ ] The era-2 reader rule is left to RFC 0176 §A.3 / `persistence.md` §The reader rule (A.4a): this RFC binds the WRITER only. Asked and answered 2026-09-14 on a production census — the refusal stands, and `v2-unmapped-type-refused` still witnesses both halves unchanged.
 - [ ] RFC 0169 §Unresolved-1 is closed in favour of the short form.
 - [ ] `spec-corpus-validity` stays green; `openwop-check.sh` passes on the merged tree.
 
