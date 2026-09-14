@@ -1,5 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.1.8] — 2026-09-14 — every v2 core family must have a normative home that survives v1 EOS
+
+The suite's packed corpus changes because `spec/v2/declaration.json` gains an
+optional `normativeText` on family entries: the path(s) where a family's
+behaviour is actually written, as distinct from `section`, which names the
+declaration site (`core/capabilities.md#<key>` — a stub naming an owning RFC for
+most core families).
+
+No scenario behaviour changes. The identity bump is required because the
+declaration and the schemas generated from it ship in the tarball.
+
 ## [2.1.7] — 2026-09-13 — nine fixtures shared one programmable node id
 
 The mock-AI program seam is keyed by `nodeId` alone — no run, no workflow, no
