@@ -6,7 +6,7 @@
   "type": "object",
   "$defs": {
     "_typeIndex": {
-      "description": "Lookup map: RunEventType \u2192 $defs key. Informative \u2014 consumers can derive this themselves but having it explicit aids tooling.",
+      "description": "Lookup map: RunEventType \u2192 $defs key. Informative \u2014 consumers can derive this themselves but having it explicit aids tooling. THE MAP IS THE `properties` OBJECT: this node is a JSON Schema, so its own keys are `description`, `type`, `additionalProperties` and `properties`. Asking for its top-level keys to test whether a type is registered returns those four and reads as a miss. These are v1 vocabulary names (`agent.toolCalled`, `run.resuming`). The NORMATIVE v2 map is the sibling `_typeIndex` at the document root, keyed by v2 names (`agent.tool-called`, `run.resume-started`) \u2014 finding \"a _typeIndex\" is not enough, there are two.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -4238,7 +4238,7 @@
   },
   "additionalProperties": false,
   "_typeIndex": {
-    "description": "NORMATIVE (RFC 0171 \u00a7A.4): v2 event type \u2192 $defs key, generated from spec/v2/event-codemap.json.",
+    "description": "NORMATIVE (RFC 0171 \u00a7A.4): v2 event type \u2192 $defs key, generated from spec/v2/event-codemap.json. THE MAP IS THE `properties` OBJECT: this node is a JSON Schema, so its own keys are `description`, `type`, `additionalProperties` and `properties`. Asking for its top-level keys to test whether a type is registered returns those four and reads as a miss. The sibling `$defs._typeIndex` is the v1-vocabulary map and is informative; this one is the normative v2 map. A type absent here is not a persisted event type \u2014 synthesized SSE frame names (`state.snapshot`, `batch`, `ai.message.chunk`) are deliberately absent, per events.md \u00a7SSE.",
     "type": "object",
     "additionalProperties": false,
     "properties": {

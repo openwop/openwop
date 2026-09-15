@@ -6,7 +6,7 @@
   "type": "object",
   "$defs": {
     "_typeIndex": {
-      "description": "Lookup map: RunEventType \u2192 $defs key. Informative \u2014 consumers can derive this themselves but having it explicit aids tooling.",
+      "description": "Lookup map: RunEventType \u2192 $defs key. Informative \u2014 consumers can derive this themselves but having it explicit aids tooling. THE MAP IS THE `properties` OBJECT: this node is a JSON Schema, so its own keys are `description`, `type`, `additionalProperties` and `properties`. Asking for its top-level keys to test whether a type is registered returns those four and reads as a miss.",
       "type": "object",
       "additionalProperties": false,
       "properties": {

@@ -82,7 +82,7 @@
     "schemas/residency.schema.json": "b45fdc91ae88091251914dbd6787a1e2ce687580b91d31a759217b7a1f0010c0",
     "schemas/run-ancestry-response.schema.json": "963a5763b03216aa72fc2854560c778e53994f8cb06ea9a4053e541273c87f5c",
     "schemas/run-diff-response.schema.json": "d9d196730b5d5d8a04a591d21a8fc6b44be7fa134f11827ff7e4f1a86d47e83d",
-    "schemas/run-event-payloads.schema.json": "37cdbdb5038e148056c104a49b8d28a9668479e06d401309d354a8b0a70921a3",
+    "schemas/run-event-payloads.schema.json": "2f2a5192a6262758bbffb358d2044ebe4ad234b388ddcd47b818602897efb93f",
     "schemas/run-event.schema.json": "c70c06932b9831295042836213e617c8e946f20ddd49cf4e889b74d89d2175a8",
     "schemas/run-options.schema.json": "f8241ece6ddc6527de9160d811d42c231b4f77b935f2e107b3c05608545c59ab",
     "schemas/run-orchestrator-decided-event.schema.json": "17a43a3c44680a24d411141357a867b3caed6107d56de88fe2e062eaf93fa2c1",
@@ -169,7 +169,7 @@
     "schemas/v2/residency.schema.json": "3fd23c9732beb140504e81560fc426eb6764d547e56da5fb92c5a5c7bf04db3a",
     "schemas/v2/run-ancestry-response.schema.json": "334c17f2062dea62726ca1d07b8be3f169cdc422af843c1def5fb317039814c9",
     "schemas/v2/run-diff-response.schema.json": "8bdb2045c274580038bd74781f7d062f5049839797c164a89de4ed89edc53a74",
-    "schemas/v2/run-event-payloads.schema.json": "1d3ccffc4e506d3109c17990e01976ba935e61672562684b9635743d56af3f57",
+    "schemas/v2/run-event-payloads.schema.json": "7d178052232497a548e15a246e83792354190a61a91a2fcb429eec4540f37e59",
     "schemas/v2/run-event.schema.json": "1a9946374af9323b71635d00fed22abe02c300fa2cf3ae3e9c30f3e553e408ec",
     "schemas/v2/run-list-response.schema.json": "c2dbc34768dcf64528914a213aa3cb55952e8e3e90a64b04a9423b2a19749d38",
     "schemas/v2/run-options.schema.json": "f0e9f494d80086c2ed2cf9fe87df54e5b4e66601699c4a1089f4edbc7ba58867",
@@ -273,5 +273,5 @@
     "spec/v2/release.json": "9cc1eb0af3fca2e317dbd733815d9ff57a2268e26ee19d87bd66f835fb88a819",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "f78cdc2ff185f5d0206bef6635d6b5c9a5ea3163"
+  "corpusCommit": "5c372e6e842e1fae699e76c9a99c8a64a8dfe6b5"
 }
