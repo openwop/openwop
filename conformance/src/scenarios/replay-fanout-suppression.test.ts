@@ -36,6 +36,24 @@
  * operator raising the scale on a slow host makes this scenario harder to pass,
  * not easier.
  *
+ * CORRECTED 2026-09-15 — the paragraph above described a property this file did
+ * not have, and argued for it at length, which is the most expensive kind of
+ * stale comment. The scale knob DID multiply every poll and quiet window, and it
+ * did NOT touch vitest's own `testTimeout` (30_000, `conformance/vitest.config.ts`).
+ * The declared budgets in this one test already summed to ~77.5 s — 10 s + 30 s +
+ * 30 s of polling plus three quiet windows — so at scale 1 the second and third
+ * poll budgets were UNREACHABLE, and raising the scale made the test die at the
+ * same 30 s wall having spent even less of the window it was told to wait.
+ *
+ * So the knob could not make this scenario harder to pass. It could only make it
+ * fail sooner, on the clock, with vitest's generic "Test timed out in 30000ms" in
+ * place of `pollUntil`'s message naming the run, the predicate and the last
+ * status. A host that genuinely re-fired on replay and a host that was merely
+ * slow produced the same output.
+ *
+ * `TEST_TIMEOUT_MS` below now derives the test's own wall clock from the same
+ * budgets and the same scale, so the paragraph above is true as written.
+ *
  * ── Deliberately NOT in the `openwop-replay-fork` floor ──────────────────────
  * This scenario needs the host to accept a loopback receiver. A host with an
  * SSRF guard on `POST /v1/webhooks` correctly refuses one, and the suite's
@@ -155,6 +173,34 @@ const DELIVERY_GRACE_MS = 1_500;
  */
 const SUPPRESSION_WINDOW_MS = 6_000;
 
+/** Poll ceilings, named so the test's own wall clock can be derived from them
+ *  rather than guessed alongside them. */
+const SOURCE_POLL_MS = 10_000;
+const FORK_POLL_MS = 30_000;
+
+/**
+ * THE TEST'S OWN WALL CLOCK, and it must be computed, not defaulted.
+ *
+ * Every budget in this file is a claim about how long a legitimate host may
+ * take. A `testTimeout` smaller than their sum does not tighten those claims —
+ * it DELETES them, silently, because vitest kills the test before the budget it
+ * was given can be spent. The suite default (30_000) is smaller than the first
+ * two budgets alone.
+ *
+ * It scales with `scaledTimeoutMs` for the same reason: an operator who raises
+ * `OPENWOP_POLL_TIMEOUT_SCALE` is saying "this host is slow, wait longer". A
+ * scaled poll budget under an unscaled wall clock turns that instruction into
+ * its opposite. Both move together or neither should.
+ *
+ * The flat slack covers the run submissions, receiver registration and
+ * assertions between the waits — work with no budget of its own. It is added
+ * AFTER scaling deliberately: it is fixed overhead, not host latency, so
+ * multiplying it would inflate the ceiling for a reason that is not the host's.
+ */
+const TEST_TIMEOUT_MS =
+  scaledTimeoutMs(SOURCE_POLL_MS + FORK_POLL_MS * 2 + DELIVERY_GRACE_MS * 2 + SUPPRESSION_WINDOW_MS)
+  + 15_000;
+
 describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted events', () => {
   it('delivers for a live run, suppresses for a replay fork, and delivers again for a branch fork', async (ctx) => {
     const disco = await driver.get('/.well-known/openwop');
@@ -204,7 +250,7 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });
     expect(create.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'webhooks.md §"Register"', 'failed to start conformance-noop')).toBe(201);
     const sourceRunId = (create.json as { runId: string }).runId;
-    await pollUntilTerminal(sourceRunId, { timeoutMs: 10_000 });
+    await pollUntilTerminal(sourceRunId, { timeoutMs: SOURCE_POLL_MS });
     await quietWindow(DELIVERY_GRACE_MS);
 
     expect(
@@ -267,7 +313,7 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     }
     expect(replay.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'webhooks.md §"Register"', 'replay fork should be accepted')).toBe(201);
     const replayRunId = (replay.json as { runId: string }).runId;
-    await pollUntilTerminal(replayRunId, { timeoutMs: 30_000 });
+    await pollUntilTerminal(replayRunId, { timeoutMs: FORK_POLL_MS });
     await quietWindow(SUPPRESSION_WINDOW_MS);
 
     expect(
@@ -315,7 +361,7 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     }
     expect(branch.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'replay.md §"Host-initiated fan-out is an external effect"', 'branch fork should be accepted')).toBe(201);
     const branchRunId = (branch.json as { runId: string }).runId;
-    await pollUntilTerminal(branchRunId, { timeoutMs: 30_000 });
+    await pollUntilTerminal(branchRunId, { timeoutMs: FORK_POLL_MS });
     await quietWindow(DELIVERY_GRACE_MS);
 
     expect(
@@ -326,5 +372,7 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
           + 'means the host keyed on "is a fork" rather than on replay-ness read from the run',
       ),
     ).toBeGreaterThan(0);
-  });
+    // The third positional argument is the whole point of this fix: without it
+    // the suite default (30_000) silently overrides every budget above.
+  }, TEST_TIMEOUT_MS);
 });
