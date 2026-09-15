@@ -204,7 +204,7 @@
     "spec/v1/deprecations.json": "a2022c2d6eb501bf406b5d75fe2d431a3fe0158e8509125d2453985eb1bf511a",
     "spec/v1/deprecations.schema.json": "18c87e78bedc210431f795ae44c5b5d202f2f3317850d5cf86867d4f1fa1cdfb",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
-    "spec/v1/event-codemap.schema.json": "d52caf29071e3784d4c20259cdbd5a7b533986548a440bb632a80b82cadd7ea5",
+    "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
     "spec/v1/gaps.json": "96ca051cb20f1a669b355d67a89421c56fef28aa5e6710c9519f592f26af33a3",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
@@ -237,7 +237,7 @@
     "spec/v2/declaration.schema.json": "c86e3083fb9789c1958ecb4576cc6f71aa90e6f339521139238543ed08211dd4",
     "spec/v2/errors.json": "f179414a92f30b5dadf26e9e57699649a67324bd7186d5287647d17605d137d3",
     "spec/v2/event-codemap.json": "37869a03cdfd8758b57e6f350641a6ebbd383231cebda51f5473ad85f94ab74c",
-    "spec/v2/event-codemap.schema.json": "ce2d0ca085d7668d7ef745d2560b385ec6881d24a6d4b47c49931986b2ba642d",
+    "spec/v2/event-codemap.schema.json": "b173f2a9bcc0bf9b62a474ce3b91e1431d597e64fd1560fc58662cd8606eaf9c",
     "spec/v2/ext/a2uiSurface/README.md": "176cb0542e1c236ffcd6d682536ba0081242684444e2dec790abd480a44a571e",
     "spec/v2/ext/brand/README.md": "1a80102a9cd766dcb6098c999e552af88f5b83c88951acde18d17cc0b29aa09d",
     "spec/v2/ext/canvas/README.md": "a2d5f28523753e8e85cc9042db39faf9207a2eebce1a8553be22e341f7ea58d9",
@@ -273,5 +273,5 @@
     "spec/v2/release.json": "9cc1eb0af3fca2e317dbd733815d9ff57a2268e26ee19d87bd66f835fb88a819",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "e78fcf9ecfce1eb9d09f8d78f119136901cbb4f3"
+  "corpusCommit": "f78cdc2ff185f5d0206bef6635d6b5c9a5ea3163"
 }
