@@ -25,6 +25,7 @@
  * `it` here; vitest treats setupFiles differently from scenario files.
  */
 
+import { driver } from './lib/driver.js';
 import { setAdvertisedFixtures, setDiscoveryUnreadable } from './lib/fixtures.js';
 import { setMultiAgentCapabilities } from './lib/multi-agent-capabilities.js';
 import { OtelCollector, setCollector } from './lib/otel-collector.js';
@@ -351,6 +352,43 @@ beforeEach(({ task }) => {
   _itSoftSkipMarks.set(file, softSkipMark()); // rc.56: this test's own softSkip window
   takeExplicitRequirementId(); // clear any override left by a test that threw before afterEach
 });
+/**
+ * Wipe the host's conformance-mock program store between scenario FILES.
+ *
+ * WHY THIS IS NECESSARY AND WAS MISSING. The host keeps the mock's programs in a
+ * module-level map keyed by `nodeId`, with a cursor. Several scenarios here
+ * deliberately seed programs that return `finishReason: 'length'` to exercise
+ * RFC 0033 truncation handling — `envelope-truncation-cap-exhaustion`,
+ * `envelope-truncated`, `envelope-retry-exhausted`,
+ * `envelope-completion-distinguishes-truncation`. A program that a scenario does
+ * not fully DRAIN stays pending for the life of the host process.
+ *
+ * This suite had no way to clear it. The host exposed a seam to SEED
+ * (`POST …/test/mock-ai/program`) and none to reset, while the host-side
+ * `resetMockPrograms` carried a header claiming it was "called between
+ * conformance scenarios" — it was called only by the host's own unit tests.
+ *
+ * The failure it produced accuses the wrong file: a later scenario dispatching
+ * on a colliding nodeId consumes the leftover truncation entries, its run fails
+ * `envelope_truncation_unrecoverable`, and nothing in that scenario explains it.
+ * MEASURED on `replay-observable-sequence-determinism`: red in-suite, green
+ * alone, five runs across unchanged bases, one of the reds at load1 3.4 on an
+ * idle box — so not contention, and a WRONG VALUE rather than a missing result.
+ *
+ * Per FILE rather than per test: programs are seeded for a whole scenario's
+ * sequence and a mid-file wipe would break the multi-attempt scenarios this
+ * store exists to serve. Best-effort — a host that predates the reset seam
+ * answers 404, and a conformance suite must not fail a compliant host for
+ * lacking a TEST seam.
+ */
+afterAll(async () => {
+  try {
+    await driver.post('/v1/host/openwop-app/test/mock-ai/reset', {});
+  } catch {
+    /* seam absent or host down — see above; never fail a scenario for this */
+  }
+});
+
 afterEach(({ task }) => {
   const file = _fileOf(task as { file?: { filepath?: string; name?: string } });
   if (file === null) return;
