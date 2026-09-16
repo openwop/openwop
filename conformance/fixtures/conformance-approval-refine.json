@@ -1,0 +1,45 @@
+{
+  "id": "conformance-approval-refine",
+  "name": "Conformance: Approval (refine)",
+  "version": "1.0",
+  "description": "Suspends on an approval gate offering accept|reject|refine. Resume with {action:'refine', refineFeedback:{...}} exercises RFC 0183 \u00a7A.1/\u00a7A.2 \u2014 the resolved payload must carry the action and its structured feedback.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Approval Gate",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "title": "Conformance approval (refine-capable)",
+        "description": "Conformance suite \u2014 please accept to complete the run.",
+        "actions": [
+          "accept",
+          "reject",
+          "refine"
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}
