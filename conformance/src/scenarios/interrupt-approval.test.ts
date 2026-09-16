@@ -20,6 +20,9 @@ const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
 const REFINE_WORKFLOW_ID = 'conformance-approval-refine';
 const SKIP_NO_REFINE = !isFixtureAdvertised(REFINE_WORKFLOW_ID);
 
+const EDIT_ACCEPT_WORKFLOW_ID = 'conformance-approval-edit-accept';
+const SKIP_NO_EDIT_ACCEPT = !isFixtureAdvertised(EDIT_ACCEPT_WORKFLOW_ID);
+
 describe.skipIf(SKIP_NO_FIXTURE)('interrupt: approval accept resumes to `completed`', () => {
   it('run suspends at gate, accept resolution drives terminal completed', async () => {
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
@@ -179,6 +182,83 @@ describe.skipIf(SKIP_NO_REFINE)('interrupt: refine resolution carries action + r
       req('openwop.it.interrupt-approval.refuses-a-refine-resolution-that-supplies-no-refinefeedback',
         'RFCS/0183-interrupt-resolved-action-fidelity.md §A.2',
         'refine without refineFeedback MUST be refused — the feedback is what the action means',
+      ),
+    ).toBe(true);
+  });
+});
+
+/**
+ * RFC 0183 §A.2, the `edit-accept` arm — an edit-accept resolution must be
+ * recordable with the artifact the approver edited. The refine block above
+ * witnesses one of §A.2's two conditional MUSTs; until this block the other was
+ * stated in `spec/v2/core/interrupt.md` §Approval and witnessed nowhere.
+ */
+describe.skipIf(SKIP_NO_EDIT_ACCEPT)('interrupt: edit-accept resolution carries action + editedArtifactData (RFC 0183)', () => {
+  it('an edit-accept resolve round-trips `action` and the edited artifact it requires', async () => {
+    const create = await driver.post('/v1/runs', { workflowId: EDIT_ACCEPT_WORKFLOW_ID });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+
+    const suspended = await pollUntilStatus(runId, 'waiting-approval', { timeoutMs: 10_000 });
+    expect(suspended.currentNodeId).toBe(NODE_ID);
+
+    const editedArtifactData = { summary: 'conformance: edited by the approver' };
+    const resolve = await driver.post(
+      `/v1/runs/${encodeURIComponent(runId)}/interrupts/${encodeURIComponent(NODE_ID)}`,
+      { resumeValue: { action: 'edit-accept', editedArtifactData } },
+    );
+    expect(
+      resolve.status,
+      req('openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires',
+        'RFCS/0183-interrupt-resolved-action-fidelity.md §A.2',
+        'a gate offering `edit-accept` MUST accept an edit-accept resolution carrying editedArtifactData',
+      ),
+    ).toBe(200);
+
+    const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+    expect(events.status).toBe(200);
+    const rows = ((events.json as { events?: Array<Record<string, unknown>> } | undefined)?.events ?? []);
+    const resolved = rows.find((e) => String(e.type).endsWith('interrupt.resolved') || String(e.type).endsWith('approval.received'));
+    expect(
+      resolved,
+      req('openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires',
+        'RFCS/0183-interrupt-resolved-action-fidelity.md §A.1',
+        'the resolution MUST be recorded as an event',
+      ),
+    ).toBeDefined();
+
+    const payload = (resolved?.payload ?? {}) as Record<string, unknown>;
+    expect(
+      payload.action,
+      req('openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires',
+        'RFCS/0183-interrupt-resolved-action-fidelity.md §A.1',
+        'the resolved payload MUST carry `action: "edit-accept"`',
+      ),
+    ).toBe('edit-accept');
+    expect(
+      payload.editedArtifactData,
+      req('openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires',
+        'RFCS/0183-interrupt-resolved-action-fidelity.md §A.2',
+        'an edit-accept resolution MUST carry the editedArtifactData it was given',
+      ),
+    ).toEqual(editedArtifactData);
+  });
+
+  it('refuses an edit-accept resolution that supplies no editedArtifactData', async () => {
+    const create = await driver.post('/v1/runs', { workflowId: EDIT_ACCEPT_WORKFLOW_ID });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilStatus(runId, 'waiting-approval', { timeoutMs: 10_000 });
+
+    const resolve = await driver.post(
+      `/v1/runs/${encodeURIComponent(runId)}/interrupts/${encodeURIComponent(NODE_ID)}`,
+      { resumeValue: { action: 'edit-accept' } },
+    );
+    expect(
+      [400, 422].includes(resolve.status),
+      req('openwop.it.interrupt-approval.refuses-an-edit-accept-resolution-that-supplies-no-editedartifactdata',
+        'RFCS/0183-interrupt-resolved-action-fidelity.md §A.2',
+        'edit-accept without editedArtifactData MUST be refused — the edit is what the action means',
       ),
     ).toBe(true);
   });

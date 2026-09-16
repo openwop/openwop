@@ -48,6 +48,7 @@ All fixtures MUST advertise:
 | Failure                                   | `conformance-failure`                                                                           | Verifies error-event surface                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `failed`                                                                            | ≤ 5s                         |
 | Approval                                  | `conformance-approval`                                                                          | Verifies HITL approval interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `completed` after resolve                                                           | unbounded (suspends)         |
 | Approval (refine)                         | `conformance-approval-refine`                                                                   | RFC 0183 — refine resolution carries action + refineFeedback                                                        |
+| Approval (edit-accept)                    | `conformance-approval-edit-accept`                                                                 | RFC 0183 — edit-accept resolution carries action + editedArtifactData                                                        |
 | Clarification                             | `conformance-clarification`                                                                     | Verifies HITL clarification interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `completed` after resolve                                                           | unbounded (suspends)         |
 | Multi-node                                | `conformance-multi-node`                                                                        | Verifies edge ordering + per-node events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `completed`                                                                         | ≤ 10s                        |
 | Idempotent                                | `conformance-idempotent`                                                                        | Verifies `Idempotency-Key` cache                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `completed`                                                                         | ≤ 5s                         |
@@ -191,6 +192,18 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Why it is separate from `conformance-approval`**: adding `refine` to that fixture's `actions` would change a
   registered workflow definition every host already serves, forcing a re-registration for a test-only widening.
   A new id costs one catalog row and no host churn.
+
+### `conformance-approval-edit-accept`
+
+- **Purpose**: verify an `edit-accept` resolution round-trips its action and the edited artifact (RFC 0183 §A.2, the arm `conformance-approval-refine` does not reach).
+- **Inputs**: none.
+- **Behavior**:
+  1. Run starts and reaches an `approvalGate` offering `accept | reject | edit-accept`.
+  2. Run status MUST be `waiting-approval`.
+  3. Client POSTs `{action: 'edit-accept', editedArtifactData: {...}}` to the interrupt.
+  4. The resolved event payload MUST carry `action: 'edit-accept'` and the `editedArtifactData` supplied.
+  5. An `edit-accept` resolution supplying no `editedArtifactData` MUST be refused.
+- **Why it is separate**: same reason as `conformance-approval-refine` — widening a registered fixture's `actions` forces every host to re-register a test-only change.
 
 ### `conformance-clarification`
 
@@ -503,6 +516,7 @@ conformance/
     conformance-failure.json
     conformance-approval.json
     conformance-approval-refine.json
+    conformance-approval-edit-accept.json
     conformance-clarification.json
     conformance-multi-node.json
     conformance-idempotent.json

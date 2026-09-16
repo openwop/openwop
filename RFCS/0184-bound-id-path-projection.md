@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0184                                                            |
 | **Title**         | A tenant-bound id cannot survive a front door as `%2F`          |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-16                                                      |
-| **Updated**       | 2026-09-16                                                      |
+| **Updated**       | 2026-09-16 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §\"Bootstrap-phase RFC waivers\". **RFC 0147 §A.6 overridden and named:** this RFC touches identity (the bound-id path spelling), which §A.6 says MUST complete the full window. Override grounds: nothing accepted today stops being accepted (additive — a second spelling beside `%2F`), the defect was live on a tier-1 host's front door, and suite 2.2.0 already enforces the scenario, so the Draft status contradicted a shipped MUST. Counterfactual: had any host's accepted spelling been narrowed, `safety-fix` and the full window. `Accepted` waits on the reference host's evidence bundle.)                                                      |
 | **Affects**       | `spec/v2/core/identity.md` §5, `schemas/v2/ids.schema.json` (five tenant-bound kinds, `tenantId`, `$comment`), `conformance/src/lib/bound-id.ts`, `conformance/src/scenarios/v2-bound-id-path-projection.test.ts` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1) — a new accepted spelling beside the existing one, five grammars WIDENED, one erratum to a doc table that contradicted its own schema; nothing accepted today stops being accepted |
 | **Supersedes**    | —                                                               |

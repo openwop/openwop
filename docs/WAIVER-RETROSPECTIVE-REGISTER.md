@@ -114,3 +114,5 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0180 | Vendor-org registration procedure (`spec/v2/declaration.json` `extensions`) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0181 | Vendor path namespace (`/host/<org>/…` for host-proprietary operations under major 2) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0182 | `listRuns` — portable, tenant-scoped, paginated run list (`GET /runs`, family `runList`) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0183 | `interruptResolved` action fidelity (`action`, `refineFeedback`, `editedArtifactData`) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0184 | Bound-id path projection (`~`-escaped single segment; RFC 0147 §A.6 override named) | in-scope-pending-assessment | — | — | `not-reviewed` |
