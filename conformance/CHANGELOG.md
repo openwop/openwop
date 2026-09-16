@@ -16,6 +16,17 @@ existing scenario file are a patch; no scenario file is added.
   measured nowhere. Gated on the fixture being advertised, like the refine block;
   a host that does not serve the fixture skips rather than fails.
 
+### Fixed
+
+- **`replay-fanout-suppression` declared ~77.5 s of poll budget inside vitest's
+  30 s wall** (openwop #1355). The second and third poll ceilings were
+  unreachable, `OPENWOP_POLL_TIMEOUT_SCALE` could not extend the wait (the
+  header claimed the opposite), and a slow host and a host that re-fired
+  fan-out on a replay fork failed with the same generic vitest timeout. The
+  test's wall is now derived from its own scaled budgets plus a 15 s margin,
+  so every declared ceiling is reachable and a failure names the predicate. No
+  assertion changed.
+
 ### Changed (spec side, no assertion change)
 
 - **The `payload.action` assertion in the refine leg is no longer stricter than
