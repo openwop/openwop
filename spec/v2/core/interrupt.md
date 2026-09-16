@@ -25,7 +25,7 @@
 
 ## Events
 
-Every kind is recorded by two registered types (events.md): `interrupt.requested`, whose payload is the `InterruptPayload` verbatim, and `interrupt.resolved`, whose payload is `{ nodeId, interruptId, kind?, resumeValue? }` (closed). The legacy `approval.*` and `clarification.*` types remain registered; their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved` (RFC 0171 §A.4 E4), so there is one shape per direction. A host emitting `interrupt.requested` SHOULD also emit the legacy kind-specific type until its consumers migrate. Both events are durable and appear in the `updates` and `debug` stream modes. While suspended, `RunSnapshot.currentNodeId` names the node and `status` is `waiting-approval`, `waiting-input` or `waiting-external`.
+Every kind uses two registered types (events.md): `interrupt.requested`, whose payload is the `InterruptPayload` verbatim, and `interrupt.resolved`, whose closed payload is `interruptResolved`; resolving an approval-kind interrupt MUST record the applied `action` there, with the field §Approval requires. The legacy `approval.*` and `clarification.*` types remain registered; their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved` (RFC 0171 §A.4 E4), so there is one shape per direction. A host emitting `interrupt.requested` SHOULD also emit the legacy kind-specific type until its consumers migrate. Both events are durable and appear in the `updates` and `debug` stream modes. While suspended, `RunSnapshot.currentNodeId` names the node and `status` is `waiting-approval`, `waiting-input` or `waiting-external`.
 
 ## Resolve surfaces
 
@@ -35,7 +35,7 @@ Every kind is recorded by two registered types (events.md): `interrupt.requested
 | `inspectInterruptByToken` | `GET /interrupts/{token}` | the token | — (returns the `InterruptPayload`) |
 | `resolveInterruptByToken` | `POST /interrupts/{token}` | the token | `{ resumeValue }` (closed) |
 
-A host MUST expose the run-scoped surface and SHOULD expose the signed-token surface for callers not authenticated to the protocol (a payment webhook, a mail link). Every resolve MUST honor `Idempotency-Key` (idempotency.md). Exactly one of two concurrent resolves MUST succeed; the other MUST receive `409 interrupt_already_resolved`.
+A host MUST expose the run-scoped surface and SHOULD expose the signed-token surface for callers not authenticated to the protocol. Every resolve MUST honor `Idempotency-Key` (idempotency.md). Exactly one of two concurrent resolves MUST succeed; the other MUST receive `409 interrupt_already_resolved`.
 
 | Status | Code | Condition |
 | --- | --- | --- |

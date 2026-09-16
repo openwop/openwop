@@ -15,6 +15,12 @@
  *      an RFC that is already Accepted fails (§D.2);
  *   6. schemas/README.md maturity column: a row stating an RFC status that
  *      contradicts the RFC's real status fails (RFC 0178 §E.1).
+ *   7. shipped requirement on a Draft RFC: a conformance scenario whose string
+ *      literal cites `RFCS/NNNN-…` or `openwop.requirement.NNNN.…` where NNNN
+ *      is `Draft` fails. A scenario the
+ *      suite enforces is a contract; a `Draft` header says the wire may still
+ *      move, and a host's ratchet cannot tell the two apart (suite 2.2.0 shipped
+ *      RFC 0183/0184 legs against `Draft` headers). Flip the RFC or gate the leg.
  * Exit 0 on success, 1 on any failure.  --update-baseline rewrites the ratchet.
  */
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -57,9 +63,14 @@ for (const f of readdirSync(specDir).filter((f) => f.endsWith('.md'))) {
 // 6
 const readme = readFileSync(join(ROOT, 'schemas', 'README.md'), 'utf8').split('\n');
 readme.forEach((l, i) => { if (!l.startsWith('|')) return; for (const m of l.matchAll(/RFC (\d{4}) \(`(Draft|Active|Accepted|Withdrawn|Superseded|Rejected)`\)/g)) if (status.has(m[1]) && status.get(m[1]) !== m[2]) failures.push(`schemas/README.md:${i + 1} says RFC ${m[1]} is \`${m[2]}\`; it is \`${status.get(m[1])}\` (RFC 0178 §E.1)`); });
+// 7
+const scenDir = join(ROOT, 'conformance', 'src', 'scenarios');
+if (existsSync(scenDir)) for (const f of readdirSync(scenDir).filter((f) => f.endsWith('.ts'))) {
+  readFileSync(join(scenDir, f), 'utf8').split('\n').forEach((l, i) => { for (const m of l.matchAll(/['"`]RFCS\/(\d{4})-|['"`]openwop\.requirement\.(\d{4})\./g)) if (status.get(m[1] ?? m[2]) === 'Draft') failures.push(`draft-enforced: conformance/src/scenarios/${f}:${i + 1} ships a requirement citing RFC ${m[1] ?? m[2]}, which is \`Draft\` — flip it to \`Active\` or gate the leg`); });
+}
 // ratchet
 const base = existsSync(BASE) ? JSON.parse(readFileSync(BASE, 'utf8')) : {};
 if (update) { writeFileSync(BASE, JSON.stringify({ ...base, selfCarried }, null, 2) + '\n'); }
 else if (typeof base.selfCarried === 'number' && selfCarried > base.selfCarried) failures.push(`self-carry ratchet: ${selfCarried} self-carried rows on terminal RFCs, baseline ${base.selfCarried} — a carry must name a different open row or a tracked surface (RFC 0174 §C.2)`);
 if (failures.length > 0) { console.error(`=== check-rfc-status-coherence FAILED — ${failures.length} problem(s) ===`); for (const x of failures) console.error(`  ${x}`); process.exit(1); }
-console.log(`=== check-rfc-status-coherence OK — ${rfcFiles.length} RFCs; supersession pairs coherent; every register under registers/; self-carried rows on terminal RFCs ${selfCarried} (baseline ${base.selfCarried ?? 'unset'}); banners, deferrals and schemas/README agree with RFC status ===`);
+console.log(`=== check-rfc-status-coherence OK — ${rfcFiles.length} RFCs; supersession pairs coherent; every register under registers/; self-carried rows on terminal RFCs ${selfCarried} (baseline ${base.selfCarried ?? 'unset'}); banners, deferrals and schemas/README agree with RFC status; no shipped requirement cites a Draft RFC ===`);

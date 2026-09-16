@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.2.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.2.1 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -31,7 +31,7 @@
 | CLI `@openwop/cli` | 0.18.2 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | unpinned | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.1.5 / ^2.1.5 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.2.0 / ^2.2.0 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -68,8 +68,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 163 |
-| Active | 15 |
-| Draft | 3 |
+| Active | 17 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -252,8 +252,8 @@
 | RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Active |
 | RFC 0181 | Vendor path namespace: host-proprietary operations live at `/host/<org>/…`, keyed to the org registry, version-agnostic, outside the protocol contract | Accepted |
 | RFC 0182 | `GET /runs`: a portable run list - tenant-scoped, bound ids, cursor pagination, filters - advertised by the `runList` family | Accepted |
-| RFC 0183 | `interruptResolved` cannot record four of the five resume actions | Draft |
-| RFC 0184 | A tenant-bound id cannot survive a front door as `%2F` | Draft |
+| RFC 0183 | `interruptResolved` cannot record four of the five resume actions | Active |
+| RFC 0184 | A tenant-bound id cannot survive a front door as `%2F` | Active |
 
 ## SDK Helper Coverage
 
@@ -275,8 +275,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0038, RFC 0183, RFC 0184) — advance with schema/conformance proof or defer.
-- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 17 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0183, RFC 0184) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

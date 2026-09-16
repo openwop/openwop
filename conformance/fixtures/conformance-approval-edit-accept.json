@@ -1,0 +1,45 @@
+{
+  "id": "conformance-approval-edit-accept",
+  "name": "Conformance: Approval (edit-accept)",
+  "version": "1.0",
+  "description": "Suspends on an approval gate offering accept|reject|edit-accept. Resume with {action:'edit-accept', editedArtifactData:{...}} exercises RFC 0183 \u00a7A.2's edit-accept arm \u2014 the resolved payload must carry the action and the edited artifact data.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Approval Gate",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "title": "Conformance approval (edit-accept-capable)",
+        "description": "Conformance suite \u2014 please accept to complete the run.",
+        "actions": [
+          "accept",
+          "reject",
+          "edit-accept"
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}
