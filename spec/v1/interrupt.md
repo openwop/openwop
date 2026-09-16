@@ -108,7 +108,7 @@ interface ApprovalData {
   description?: string;
   artifactData: unknown;
   /** Allowed actions on this approval gate. Server enforces. */
-  actions: Array<'accept' | 'reject' | 'refine' | 'edit' | 'ask'>;
+  actions: Array<'accept' | 'reject' | 'refine' | 'edit-accept' | 'ask'>;
   /** Multi-approver quorum (default 1 = single approver). */
   requiredApprovals?: number;
   approversList?: string[];
