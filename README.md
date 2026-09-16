@@ -71,7 +71,7 @@ For an honest comparison of OpenWOP vs **Temporal, Airflow, Argo Workflows, AWS 
 >
 > **Status: v1.0 core locked (2026-05-12); v1.x extension surfaces in motion.** The v1.0 core spec corpus is locked and evolves additively per [`COMPATIBILITY.md`](./COMPATIBILITY.md); `Active` / `Draft` RFCs are gated behind capability advertisement, so a v1.0-only host passes the locked-core suite. Authoritative per-doc + per-RFC maturity: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
 >
-> **RFC status (180 RFCs excluding template):** RFCs that are `Accepted` (163), that are `Active` (15 — RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180), and that are `Draft` (2 — RFC 0038 Parked, RFC 0183). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
+> **RFC status (181 RFCs excluding template):** RFCs that are `Accepted` (163), that are `Active` (15 — RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180), and that are `Draft` (3 — RFC 0038 Parked, RFC 0183, RFC 0184). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
 >
 > **SECURITY surface:** 200 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 167 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 31 reference-impl-tier (verified by reference impls' CI), 2 advisory. Every protocol-tier MUST-NOT has at least one public conformance test. Strict-mode behavioral conformance runs under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 >
@@ -397,7 +397,7 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 The current in-motion cohort is the **agent-platform arc (RFCs 0077–0087)** — agent run lifecycle + live manifest dispatch, portable tool catalog, credential-provenance/egress policy, memory reconciliation, evaluation & scorecards, deployment lifecycle, durable trigger/channel bridge, budget/quota policy, the agent-platform meta-profile, and the standing agent roster + org-chart. See [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md) for which of these are `Active` vs `Draft` today.
 
 **v1 Foundation (2026-04-27):**
-Current generated state: 60 prose specs (49 Stable + 11 Draft) · 81 JSON Schemas · 56 OpenAPI operations · AsyncAPI 3.1 · 517 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
+Current generated state: 60 prose specs (49 Stable + 11 Draft) · 81 JSON Schemas · 56 OpenAPI operations · AsyncAPI 3.1 · 518 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** — Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** — OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.
