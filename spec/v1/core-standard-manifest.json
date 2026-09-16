@@ -4,7 +4,7 @@
   "provenance": {
     "suite": {
       "package": "@openwop/openwop-conformance",
-      "version": "2.1.8"
+      "version": "2.2.0"
     },
     "note": "Derived from the corpus at generation time. Regenerate with --write; verify with --check."
   },
@@ -419,5 +419,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "ca2a8a293b562968309c1d24d150b005fdf328e77ad11593805671383bae074d"
+  "digest": "ec0aab427ffc60ec0fcfbdeba3ca2cc7f7a3a8dcbe0f5fa24d52325fb8435813"
 }
