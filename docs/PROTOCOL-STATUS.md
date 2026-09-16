@@ -68,8 +68,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 163 |
-| Active | 15 |
-| Draft | 3 |
+| Active | 17 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -252,8 +252,8 @@
 | RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Active |
 | RFC 0181 | Vendor path namespace: host-proprietary operations live at `/host/<org>/…`, keyed to the org registry, version-agnostic, outside the protocol contract | Accepted |
 | RFC 0182 | `GET /runs`: a portable run list - tenant-scoped, bound ids, cursor pagination, filters - advertised by the `runList` family | Accepted |
-| RFC 0183 | `interruptResolved` cannot record four of the five resume actions | Draft |
-| RFC 0184 | A tenant-bound id cannot survive a front door as `%2F` | Draft |
+| RFC 0183 | `interruptResolved` cannot record four of the five resume actions | Active |
+| RFC 0184 | A tenant-bound id cannot survive a front door as `%2F` | Active |
 
 ## SDK Helper Coverage
 
@@ -275,8 +275,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0038, RFC 0183, RFC 0184) — advance with schema/conformance proof or defer.
-- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 17 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0183, RFC 0184) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

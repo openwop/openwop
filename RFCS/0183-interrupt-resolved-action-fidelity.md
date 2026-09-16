@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0183                                                            |
 | **Title**         | `interruptResolved` cannot record four of the five resume actions |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-16                                                      |
-| **Updated**       | 2026-09-16                                                      |
+| **Updated**       | 2026-09-16 (`Draft` → `Active`; 7-day window waived by the steward, logged in `MAINTAINERS.md` §\"Bootstrap-phase RFC waivers\". §A.1 raised from SHOULD to a MUST conditioned on approval kind, with its normative home in `spec/v2/core/interrupt.md` §Events — the suite already asserted it, and `COMPATIBILITY.md` §2.3 forbids a suite stricter on wire shape than the spec. `Accepted` waits on the reference host's evidence bundle.)                                                      |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` (`interruptResolved`), `spec/v1/interrupt.md` §`ApprovalResume` (cited, unchanged), `conformance/src/scenarios/interrupt-approval.test.ts`, `conformance/fixtures/conformance-approval.json` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1) — new OPTIONAL properties on a closed def; no required field added, no existing field retyped, no MUST relaxed |
 | **Supersedes**    | —                                                               |
@@ -51,7 +51,7 @@ v2 is both **narrower** and **closed**, so a host cannot even carry the lost fie
 
 ## Proposal
 
-**§A.1 — `interruptResolved` gains `action`.** OPTIONAL, `type: string`, `enum: ["accept", "reject", "refine", "edit-accept", "timeout"]` — the `ApprovalResume` vocabulary verbatim. A host that resolves an approval-kind interrupt SHOULD record the action it applied. It is OPTIONAL rather than required because the def serves all eight `kind` values and only approval-kind resolutions have an action.
+**§A.1 — `interruptResolved` gains `action`.** OPTIONAL, `type: string`, `enum: ["accept", "reject", "refine", "edit-accept", "timeout"]` — the `ApprovalResume` vocabulary verbatim. A host that resolves an approval-kind interrupt MUST record the action it applied (normative home: `spec/v2/core/interrupt.md` §Events). The property is OPTIONAL in the schema because the def serves all eight `kind` values and only approval-kind resolutions have an action; the obligation is conditional on kind, not optional. *(Raised from SHOULD at `Active`: `interrupt-approval.test.ts` asserted the MUST from the first cut, and a suite stricter than the spec on wire shape violates `COMPATIBILITY.md` §2.3 — the text rose to meet the test rather than the test dropping to a witness of nothing.)*
 
 **§A.2 — `interruptResolved` gains `refineFeedback` and `editedArtifactData`.** OPTIONAL. `refineFeedback` is **modelled as a closed object** from `interrupt.md` §`RefineFeedback` — `required: [scope]`, `scope: whole | section | items`, with `sectionPath`, `itemIds`, `tags`, `text`, and `additionalProperties: false`. v1 left it an open `type: object` whose shape lived only in prose; v2's closed-object discipline (`check-v2-schemas`) forced the shape to be stated, which is the better outcome: the host that reported this gap described `refineFeedback` as having no v2 schema home, and now it has one rather than a mirror of an open object. `editedArtifactData` is unconstrained, as in v1. A host recording `action: 'refine'` MUST carry `refineFeedback`; a host recording `action: 'edit-accept'` MUST carry `editedArtifactData` — the two actions whose meaning is incomplete without the payload.
 
@@ -103,4 +103,5 @@ The v1 `refineFeedback` `$def` lives in `schemas/run-event-payloads.schema.json`
 - [ ] `decision` carries `enum: ["granted", "rejected", "overridden"]`.
 - [ ] A new `conformance-approval-refine` fixture declares `refine` among its `actions` — new rather than widening `conformance-approval`, whose `actions` every host already serves — and `interrupt-approval.test.ts` round-trips a refine resolution carrying `refineFeedback`.
 - [ ] A resolution recording `action: 'refine'` without `refineFeedback` is refused.
+- [ ] The `edit-accept` arm of §A.2 is witnessed: a `conformance-approval-edit-accept` fixture and a leg round-tripping `editedArtifactData`, plus a refusal leg (suite 2.2.1).
 - [ ] `openwop-check.sh` passes on the merged tree; the suite cut carries the schema change.
