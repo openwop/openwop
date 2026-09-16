@@ -1,5 +1,32 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.2.1] — 2026-09-16 — RFC 0183's `edit-accept` arm is witnessed, and the MUST the suite already enforced is now the spec's
+
+**Why a patch.** `PUBLISHING.md` §"Versioning alignment": new `it` blocks in an
+existing scenario file are a patch; no scenario file is added.
+
+### Added
+
+- **`interrupt-approval.test.ts` witnesses the `edit-accept` arm of RFC 0183
+  §A.2** — two legs on a new `conformance-approval-edit-accept` fixture: an
+  edit-accept resolve MUST round-trip `action: "edit-accept"` and the
+  `editedArtifactData` supplied, and an edit-accept resolve with no
+  `editedArtifactData` MUST be refused. Until now the refine arm was witnessed
+  and the edit-accept arm was stated in `spec/v2/core/interrupt.md` §Approval and
+  measured nowhere. Gated on the fixture being advertised, like the refine block;
+  a host that does not serve the fixture skips rather than fails.
+
+### Changed (spec side, no assertion change)
+
+- **The `payload.action` assertion in the refine leg is no longer stricter than
+  the spec.** It asserted a MUST from 2.2.0 while RFC 0183 §A.1 said SHOULD —
+  a `COMPATIBILITY.md` §2.3 violation (a suite MUST NOT be stricter than the spec
+  on wire shape). The spec was raised, not the assertion lowered: RFC 0183 is now
+  `Active` and §A.1 is a MUST conditioned on approval kind, with its normative
+  home in `spec/v2/core/interrupt.md` §Events. RFC 0184 is `Active` too; suite
+  2.2.0 had shipped both RFCs' legs enforced against `Draft` headers, and the
+  corpus gate now refuses that (`check-rfc-status-coherence` rule 7).
+
 ## [2.2.0] — 2026-09-16 — the suite wipes the host's mock program store between scenario files, and a bound id travels as one segment
 
 **Why a minor and not the 2.1.8 that was pinned for two days.** `PUBLISHING.md`
