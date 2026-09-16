@@ -62,6 +62,27 @@ A host MUST NOT mint a tenant-bound id containing `~`. Ids already minted MUST s
 
 That last point is the distinction this RFC turns on, and it is the same one that killed my own §A.4a in RFC 0180: a reader cannot be asked to resolve host-local history it does not have. Here it is not being asked to. The ids are its own.
 
+### §A.5 Apply exactly once (normative, added after host review)
+
+**A host MUST apply the projection exactly once, where an id leaves the host, and MUST NOT re-encode an id read back from its own output.**
+
+The codec is **not idempotent**: `a~3Ab` encodes to `a~7E3Ab`. That is required — escaping the marker is what makes the function injective — but it means a second application silently corrupts, and **nothing about a correctly-projected id marks it as already projected**.
+
+Both reporting hosts raised this independently, and neither was speculating:
+
+- one projects payloads on both the era-3 write path and the era-2 read path, and observed that the only thing preventing a double-encode is that the two are mutually exclusive by era — *"an accident of my design rather than something the rule protects"*;
+- the other already composes **two** payload projections in a single major-2 read function, and found it only because a first draft wrote them as two `payload:` keys where the second silently won.
+
+So the invariant is stated on the **value**, not the call site. *"Call it once"* is unenforceable because nobody can see the whole call graph; *"project where an id leaves the host, never re-encode your own output"* is checkable in review. That framing is the second host's, and it is better than the one I would have written.
+
+**It is witnessed**, not merely asserted: a double-projected segment MUST 404, so a host that projects twice strands its own links and the scenario says so.
+
+### §A.6 Scope — what is NOT projected
+
+- **`nodeId` and the other author-minted kinds.** They carry no tenant segment and `nodeId` already admits `:` by design. Projecting them would change ids that are legal today — the exact cost base64url was rejected for. Named because a rule about "ids" invites exactly that generalisation.
+- **`Idempotency-Key`** (`idempotency.md` §Layer 1, `^[A-Za-z0-9._~-]{22,128}$`). Caller-supplied and **tilde-legal**. It is not an id kind, §5 does not bind it, nothing changes. Recorded because *"escape `~` in identifiers"* is the sentence a later reader applies to it.
+- **Length.** The `{16,128}` bounds govern the **id**, never the projected segment — a bound id is already up to 257 characters before any byte escapes. A host validating the projected segment against an id pattern is checking the wrong string. Raised as "the ceiling can be crossed"; the answer is that the ceiling was never on this string.
+
 ### §A.3 The tenant segment already contradicted itself (erratum, widening)
 
 `ids.schema.json` `tenantId` admits an optional `anon:` prefix. All five tenant-bound kinds — `runId`, `interruptId`, `subscriptionId`, `deliveryId`, `effectId` — spelled their tenant segment `[A-Za-z0-9._~-]{1,128}`, which does **not** admit `:`.
@@ -102,6 +123,19 @@ The one behaviour a host must change is **emit** side: a host spelling `%2F` in 
 
 **This witness needs no `conformance.seamsProfile`,** which I previously told both hosts it would. I was wrong in the pessimistic direction: I assumed witnessing the *escaping* required a host to mint an id containing an exotic character, which needs a seam. It does not — **the separator is already in every tenant-bound id**, so `/` → `~2F` is witnessed by any run a host can create. Only a literal `~` in an id would need a seam, and §A.2 legislates that case out of existence rather than testing for it.
 
+**Witnessed against a running host, with negative controls.** A six-variant stub host was driven by the real scenario: a conforming host **passes**, and five distinct defects each red their own leg —
+
+| host variant | defect | leg that caught it |
+| --- | --- | --- |
+| `conforming` | — | **passes** |
+| `percent-only` | the pre-RFC-0184 host: understands `%2F`, not `~` | accept side, 404 |
+| `emit-legacy` | accepts `~` but still spells links `%2F` | emit side |
+| `lax-decoder` | 404s a malformed escape instead of 400 | decoder rule |
+| `wrong-run` | resolves the segment to a different run | injectivity |
+| `double-ok` | un-projects twice, so a double-projected segment resolves | §A.5 apply-once |
+
+The first attempt at the `wrong-run` control was **vacuous** — it looked for a second run to hand back and the scenario creates only one, so the stub served the correct run and the leg passed. A negative control that cannot fail is worth less than no negative control, because it reports confidence.
+
 The self-test is sabotage-checked: three plausible wrong codecs (marker unescaped, UTF-16 code units instead of UTF-8 bytes, decoder tolerating a lone `~`) were each injected and each turned the suite red (3, 2 and 1 failures respectively), then the codec was restored green. A round-trip suite built only from already-safe ids passes all three.
 
 ## Alternatives considered
@@ -131,3 +165,5 @@ The self-test is sabotage-checked: three plausible wrong codecs (marker unescape
 | 5 | `identity.md`'s `typeId` row matches the schema | `identity.md` §5 table |
 | 6 | The codec is witnessed against a host, unaided, with no seam | `v2-bound-id-path-projection.test.ts` |
 | 7 | The codec self-test is proven able to fail | three sabotages, §Conformance |
+| 8 | The projection is applied exactly once | §A.5; `double-ok` control |
+| 9 | The SCENARIO is proven able to fail | six host variants, §Conformance |
