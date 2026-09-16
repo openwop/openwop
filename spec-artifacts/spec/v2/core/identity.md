@@ -101,24 +101,22 @@ Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and 
 
 | Kinds | Grammar | Minted |
 | --- | --- | --- |
-| `runId`, `interruptId`, `subscriptionId`, `deliveryId`, `effectId` | tenant-bound `<tenantId>/<opaque>`: `^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$` | host |
+| `runId`, `interruptId`, `subscriptionId`, `deliveryId`, `effectId` | tenant-bound: `^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$` | host |
 | `eventId` | `^[A-Za-z0-9._~-]{16,128}$` | host |
 | `tenantId`, `workspaceId` | `^[A-Za-z0-9._~-]{1,128}$` | host |
 | `subjectId` | `^[^\s/]{1,256}$` (the issuer's grammar) | host |
 | `traceId`, `spanId` | W3C `^[0-9a-f]{32}$`, `^[0-9a-f]{16}$` | host |
 | `keyId` | `^[A-Za-z0-9._~-]{1,128}$` (signing keys, resume-token `kid`, bundle signatures) | registry |
 | `nodeId`, `workflowId`, `agentId`, `chainId`, `pluginId`, `templateId`, `libraryId` | `^[A-Za-z0-9._~:-]{1,128}$` | author |
-| `typeId` | `^[a-z][a-z0-9-]*(\.[a-z][a-zA-Z0-9-]*)+$` | author |
+| `typeId` | `^[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+$`, maxLength 256 | author |
 
-This obligation is enforced by `scripts/check-id-kinds-bound.mjs` against `spec/v2/id-field-bindings.json`, which places every `*Id` property in a v2 schema into one of two sets: it **is** one of the kinds above (and MUST `$ref` it), or nothing here governs it (with the reason recorded). A property in neither **fails**, so a new id field cannot be added without someone deciding which it is. The map exists rather than a name-matching rule because only 20 of the 88 `*Id` properties share a name with a kind: `childRunId` sat as `{type: string, minLength: 1}` in the same file where `parentRunId` was correctly bound, and a check keyed on names would have reported green over it. The rule above says *every id field*, not *every field whose name matches*.
+`scripts/check-id-kinds-bound.mjs` enforces this against `spec/v2/id-field-bindings.json`, which sorts every `*Id` property in a v2 schema into two sets: it **is** a kind above (and MUST `$ref` it), or nothing here governs it (reason recorded). Neither **fails**, so no id field lands without someone deciding which it is. A map rather than a name rule because only 20 of 88 `*Id` properties share a name with a kind: `childRunId` sat as `{type: string, minLength: 1}` in the file where `parentRunId` was bound, and a name-keyed check reports green over that. *Every id field*, not every matching name.
 
-The `typeId` grammar admits `_` because `node-pack-manifest.schema.json`'s `name` pattern does and a pack's node type ids are derived from its name — a pack legally named `vendor.acme.my_tools` MUST be able to declare `vendor.acme.my_tools.echo`. A kind that rejects an id a legal name generates is a constraint that cannot express a legitimate value.
+A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`. A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`.
 
-A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`. A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`: no `@`, no whitespace, no `/`.
+**On the wire a tenant-bound id is one path segment, projected** (RFC 0184): every UTF-8 byte outside `[A-Za-z0-9._-]` becomes `~` plus two uppercase hex digits, so `acme/r-9f3c…` travels as `acme~2Fr-9f3c…`. A host MUST emit it in every link and MUST accept it on every tenant-bound parameter; it MUST still accept `tenant%2Fopaque`, and MUST decode either before matching the grammar. A host MUST NOT mint a tenant-bound id containing `~`; ids already minted MUST still resolve. `~` is the escape, not `%`, because RFC 3986 §2.3 makes it unreserved — no intermediary may rewrite it (`ids.schema.json` records what `%2F` costs).
 
-**On the wire a tenant-bound id is one percent-encoded path segment** (`tenant%2Fopaque`); a host MUST decode before matching the grammar and MUST accept the bound form on every tenant-bound parameter.
-
-**Through the overlap the bare form is admitted on a major-2 path parameter** — a stated affordance with an expiry, not a legacy branch of the grammar. A parameter carrying only the opaque segment (the spelling a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
+**Through the overlap the bare form is admitted on a major-2 path parameter** — an affordance with an expiry, not a branch of the grammar. A parameter carrying only the opaque segment (what a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
 
 ## 6. Identity error codes (`spec/v2/errors.json`)
 

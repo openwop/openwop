@@ -27,10 +27,10 @@ import { v2Discovery, v2Validator } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { BOUND_ID as RUN_ID } from '../lib/bound-id.js';
 
 const DOC = 'spec/v2/core/identity.md §5';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
-const RUN_ID = /^[A-Za-z0-9._~-]{1,128}\/[A-Za-z0-9._~-]{16,128}$/;
 const FOREIGN_RUN_ID = 'openwop-conformance-foreign-tenant/foreignopaque0123456789abcdef';
 
 async function discovery(): Promise<Record<string, unknown> | null> {

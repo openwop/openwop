@@ -3,6 +3,7 @@
   "$id": "https://openwop.dev/spec/v2/ids.schema.json",
   "title": "OpenWOP v2 identifier grammars (RFC 0170 \u00a7D.1)",
   "description": "One $defs entry per id kind. Every id field in every v2 schema, OpenAPI parameter and response body $refs its kind. `minted` records who mints the id: host (opaque, checkable: `^[A-Za-z0-9._~-]{16,128}$` after any tenant segment), author (a workflow/pack author chooses it; the v1 grammar stands), registry (the pack registry mints it). Tenant-bound kinds (runId, interruptId, subscriptionId, deliveryId, effectId) carry the tenant segment: a host MUST reject an id whose tenant segment is not the caller's.",
+  "$comment": "PATH PROJECTION (RFC 0184 \u00a7A.1). A tenant-bound id is TWO segments joined by `/`, and a URL path parameter is ONE segment, so the id must be projected. ENCODE: UTF-8 the id, then per byte emit it verbatim if it is in `[A-Za-z0-9._-]`, else `~` + two UPPERCASE hex digits (`/`\u2192`~2F`, `:`\u2192`~3A`, `~`\u2192`~7E`). DECODE: replace every `~HH`; a `~` not followed by two hex digits is `400 validation_error`. The escape marker is `~` and NOT `%` because `~` is RFC 3986 \u00a72.3 UNRESERVED: an intermediary has no license to rewrite it, so `~2F` reaches the origin byte-for-byte. `%2F` does not \u2014 handling it correctly requires an intermediary to distinguish a percent-encoded RESERVED octet (which \u00a76.2.2.2 says it MUST NOT decode) from an unreserved one (which it SHOULD), and deployed front doors demonstrably do not: a reference host lost every bound id at its origin to exactly this. The codec is TOTAL over bytes, so it cannot be invalidated by a later widening of any id grammar. It is injective because it escapes its own marker \u2014 but ONLY over its own output, which is why \u00a7A.2 forbids MINTING a tenant-bound id containing `~`: an unprojected legacy segment carrying a literal `~` is the one ambiguous input, and a host can resolve those from its OWN store because they are its own ids.",
   "type": "object",
   "additionalProperties": false,
   "$defs": {
@@ -15,7 +16,7 @@
       "type": "string",
       "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}$",
       "x-openwop-minted": "host",
-      "description": "A tenant identifier. The optional `anon:` prefix is the ONLY colon admitted, and it exists because RFC 0132 anonymous tenants are `anon:<hash>` while RFC 0170 \u00a7A.5 makes the anonymous surface first-class \u2014 without it a conforming host can serve an anonymous run with neither a valid `owner.tenant` nor a valid tenant-bound `runId`. `:` is a legal path character (RFC 3986 pchar), so this stays safe inside the `<tenantId>/<opaque>` run-id form. The alternative \u2014 renaming anonymous tenants at the cut \u2014 was rejected: it is a write to historical identity, which is the one thing the v2 migration does not do."
+      "description": "A tenant identifier. The optional `anon:` prefix is the ONLY colon admitted. Its ORIGINAL rationale here cited RFC 0132, and that citation was WRONG: RFC 0132 puts `anon:` on the **principal** and \u00a7C.1 requires the host to resolve a real `tenant` (the surface owner) \u2014 `{tenant: \"acme\", principal: \"anon:sess-3f9c\"}`. The prefix is kept because a REPORTING HOST was observed minting `tenantId: \"anon:<sid>\"` (`conformance/src/scenarios/test-seam-unauthenticated.test.ts`), and that grammar shipped in v2.0.0; removing it is a major-version change, not an erratum. Whether it belongs on a tenant at all is deferred to v3 (RFC 0184 \u00a7A.3). `:` is a legal path character (RFC 3986 pchar), but the claim that it \"stays safe inside the `<tenantId>/<opaque>` run-id form\" was FALSE ON ARRIVAL: this pattern admitted `anon:`, and all five tenant-bound kinds rejected it, so every runId an anon-tenant host minted was schema-invalid. RFC 0184 \u00a7A.3 widened those five to match. On the wire the question is moot \u2014 the \u00a7A.1 projection escapes `:` to `~3A` like any other non-passthrough byte. The alternative \u2014 renaming anonymous tenants at the cut \u2014 was rejected: it is a write to historical identity, which is the one thing the v2 migration does not do."
     },
     "workspaceId": {
       "type": "string",
@@ -30,32 +31,32 @@
     },
     "runId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
       "description": "Tenant-bound: `<tenantId>/<opaque>`.",
       "x-openwop-minted": "host",
       "x-openwop-tenant-bound": true
     },
     "interruptId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
       "x-openwop-minted": "host",
       "x-openwop-tenant-bound": true
     },
     "subscriptionId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
       "x-openwop-minted": "host",
       "x-openwop-tenant-bound": true
     },
     "deliveryId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
       "x-openwop-minted": "host",
       "x-openwop-tenant-bound": true
     },
     "effectId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
+      "pattern": "^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$",
       "x-openwop-minted": "host",
       "x-openwop-tenant-bound": true
     },

@@ -29,11 +29,11 @@ import { streamEvents } from '../lib/era2-seed.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { BOUND_ID as RUN_ID } from '../lib/bound-id.js';
 
 const ID = 'openwop.requirement.0171.stream-sse-projection';
 const DOC = 'spec/v2/core/events.md §SSE frames';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
-const RUN_ID = /^[A-Za-z0-9._~-]{1,128}\/[A-Za-z0-9._~-]{16,128}$/;
 
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> {
   try { return await fn(); } catch { return null; }
