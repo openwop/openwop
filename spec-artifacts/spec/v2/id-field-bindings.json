@@ -76,6 +76,7 @@
     "hostId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "instanceId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "invocationId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
+    "itemIds": "no openwop id kind governs this surface; these are artifact-local item identifiers inside RefineFeedback (interrupt.md \u00a7RefineFeedback), opaque to the protocol",
     "leaseId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "memoryId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "mergedIds": "memory-entry ids (agentMemoryConsolidated); no openwop id kind governs memory entries",

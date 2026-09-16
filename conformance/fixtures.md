@@ -47,6 +47,7 @@ All fixtures MUST advertise:
 | Delay                                     | `conformance-delay`                                                                             | Verifies poll/SSE behavior over time                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `completed`                                                                         | ≤ 30s (input-controlled)     |
 | Failure                                   | `conformance-failure`                                                                           | Verifies error-event surface                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `failed`                                                                            | ≤ 5s                         |
 | Approval                                  | `conformance-approval`                                                                          | Verifies HITL approval interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `completed` after resolve                                                           | unbounded (suspends)         |
+| Approval (refine)                         | `conformance-approval-refine`                                                                   | RFC 0183 — refine resolution carries action + refineFeedback                                                        |
 | Clarification                             | `conformance-clarification`                                                                     | Verifies HITL clarification interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `completed` after resolve                                                           | unbounded (suspends)         |
 | Multi-node                                | `conformance-multi-node`                                                                        | Verifies edge ordering + per-node events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `completed`                                                                         | ≤ 10s                        |
 | Idempotent                                | `conformance-idempotent`                                                                        | Verifies `Idempotency-Key` cache                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `completed`                                                                         | ≤ 5s                         |
@@ -176,6 +177,20 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
   5. Run reaches `completed`.
 - **Terminal status (after accept)**: `completed`.
 - **Resolve schema**: `{action: "accept" | "reject"}`. Server MUST reject any other shape with 400.
+
+### `conformance-approval-refine`
+
+- **Purpose**: verify a `refine` resolution round-trips its action and structured feedback (RFC 0183 §A.1/§A.2).
+- **Inputs**: none.
+- **Behavior**:
+  1. Run starts and reaches an `approvalGate` offering `accept | reject | refine`.
+  2. Run status MUST be `waiting-approval`.
+  3. Client POSTs `{action: 'refine', refineFeedback: {scope: 'whole', ...}}` to the interrupt.
+  4. The resolved event payload MUST carry `action: 'refine'` and the `refineFeedback` supplied.
+  5. A `refine` resolution supplying no `refineFeedback` MUST be refused.
+- **Why it is separate from `conformance-approval`**: adding `refine` to that fixture's `actions` would change a
+  registered workflow definition every host already serves, forcing a re-registration for a test-only widening.
+  A new id costs one catalog row and no host churn.
 
 ### `conformance-clarification`
 
@@ -487,6 +502,7 @@ conformance/
     conformance-delay.json
     conformance-failure.json
     conformance-approval.json
+    conformance-approval-refine.json
     conformance-clarification.json
     conformance-multi-node.json
     conformance-idempotent.json

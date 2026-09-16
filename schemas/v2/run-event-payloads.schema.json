@@ -1409,7 +1409,47 @@
         },
         "decision": {
           "type": "string",
-          "description": "The decision recorded for approval-kind interrupts (granted | rejected | overridden), carried from the v1 approval.* payloads."
+          "enum": ["granted", "rejected", "overridden"],
+          "description": "RFC 0183 \u00a7A.3 \u2014 the GOVERNANCE outcome for approval-kind interrupts, carried from the v1 approval.* payloads. Enum-constrained as of RFC 0183: it was an unconstrained string, so an off-vocabulary value such as a resume action validated. This is a different axis from `action`: an override and a refine are orthogonal facts about one resolution, not alternatives."
+        },
+        "action": {
+          "type": "string",
+          "enum": ["accept", "reject", "refine", "edit-accept", "timeout"],
+          "description": "RFC 0183 \u00a7A.1 \u2014 the ApprovalResume action applied at resolution (interrupt.md \u00a7ApprovalResume). OPTIONAL: this def serves all eight interrupt kinds and only approval-kind resolutions have an action. A host recording `refine` MUST carry `refineFeedback`; one recording `edit-accept` MUST carry `editedArtifactData`."
+        },
+        "refineFeedback": {
+          "type": "object",
+          "description": "RFC 0183 \u00a7A.2 \u2014 structured feedback for `action: 'refine'`, modelled from interrupt.md \u00a7RefineFeedback. v1 left this an open object; v2 closes it, so the shape is stated here rather than implied by prose.",
+          "required": ["scope"],
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "type": "string",
+              "enum": ["whole", "section", "items"],
+              "description": "Target of the feedback."
+            },
+            "sectionPath": {
+              "type": "string",
+              "description": "JSON path into artifactData when `scope === 'section'`."
+            },
+            "itemIds": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Item identifiers when `scope === 'items'`."
+            },
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Structured chip selections \u2014 UI-aware, AI-interpreted."
+            },
+            "text": {
+              "type": "string",
+              "description": "Free-text feedback. At least one of {tags, text} SHOULD be populated."
+            }
+          }
+        },
+        "editedArtifactData": {
+          "description": "RFC 0183 \u00a7A.2 \u2014 user-edited artifact bytes when `action: 'edit-accept'`."
         }
       },
       "additionalProperties": false
