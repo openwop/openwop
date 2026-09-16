@@ -1,110 +1,153 @@
 # Implement a conforming OpenWOP host
 
-> **Read this instead of the corpus.** The specification is 60 documents and
-> ~220,000 words. **You do not need most of it.** A host that satisfies
-> `openwop-core-standard` is conformant, interoperable, and can advertise itself
-> as such; every other document in `spec/v1/` describes an **optional** surface
-> you may ignore until you want it.
+> **Read this instead of the corpus.** v2 is the current protocol major
+> (`spec/v2/README.md`; corpus tag in `spec/v2/release.json`), and a new host
+> targets it. The normative v2 text is **twenty documents in `spec/v2/core/`**,
+> held under a 25,000-word budget by `scripts/check-core-budget.mjs`. Everything
+> under `spec/v2/ext/` is an extension you may ignore until you want it.
 >
-> This page exists because the size of the corpus, not its content, is the main
-> barrier to an independent implementation — and an independent implementation is
-> the one thing the protocol most needs. If anything here is wrong or
-> under-specified for a real implementer, that is a defect worth a PR.
+> The size of the corpus, not its content, has been the main barrier to an
+> independent implementation, and an independent implementation is the one thing
+> the protocol most needs. If anything here is wrong or under-specified for a
+> real implementer, that is a defect worth a PR.
+>
+> **Implementing v1 instead?** v1 is the maintained parallel track until v1
+> end-of-support (`spec/v2/core/overview.md` §"v1 end-of-support"). The v1 bar is
+> [`spec/v1/core-standard-profile.md`](../spec/v1/core-standard-profile.md) and
+> [`spec/v1/core-standard-manifest.json`](../spec/v1/core-standard-manifest.json);
+> the v1 documents this page used to point at are
+> [`rest-endpoints.md`](../spec/v1/rest-endpoints.md),
+> [`capabilities.md`](../spec/v1/capabilities.md),
+> [`stream-modes.md`](../spec/v1/stream-modes.md),
+> [`interrupt.md`](../spec/v1/interrupt.md) and
+> [`idempotency.md`](../spec/v1/idempotency.md) §A. Run the suite with `--target-major 1`.
 
 ## What conformance actually requires
 
-`openwop-core-standard` has **nine floor scenarios**. That is the whole bar.
+A v2 profile is a predicate over the declaration file, published in
+[`spec/v2/profiles.json`](../spec/v2/profiles.json). There is no `profiles[]`
+field on the v2 discovery root; the suite derives your profiles from which
+families you advertise (`spec/v2/core/capabilities.md` §7). Two profiles matter to
+a new host:
 
-| Floor scenario | What your host must do |
-| --- | --- |
-| `discovery` | Serve `GET /.well-known/openwop` describing what you support |
-| `runs-lifecycle` | Create a run, report its status, reach a terminal state |
-| `auth` | Reject unauthenticated and cross-tenant access |
-| `eventOrdering` | Emit a run's events in a stable, monotonic order |
-| `failure-path` | Reach terminal `failed` with a structured `error` object |
-| `idempotency` | Honour `Idempotency-Key` on run creation |
-| `idempotency-key-determinism` | Derive the key deterministically from the documented tuple |
-| `webhook-negative` | Refuse malformed webhook registrations correctly |
-| `any.interrupt-` | Support **at least one** interrupt kind end-to-end |
+| Profile | Predicate | Floor scenarios |
+| --- | --- | --- |
+| `openwop-discovery-core` | metadata `protocolVersions`, `preferredVersion` | 3: `v2-capabilities-root-closed`, `v2-preferred-version-default`, `v2-version-header-honored` |
+| `openwop-core-standard` | families `interrupt`, `replay`, `webhooks`, `idempotency`, `eventLog` | 13: `v2-interrupt-token-scheme`, `v2-effect-seam-manifest`, `v2-webhook-durable-delivery`, `v2-idempotency-key-grammar`, `v2-era-key`, `v2-era-stamp-universal`, `v2-event-type-closed`, `v2-poll-cursor-v2`, `v2-run-cancel`, `v2-run-bulk-cancel`, `v2-run-pause-resume`, `v2-run-options-limits`, `v2-sse-last-event-id` |
 
-Note the shape of the last row: the floor asks for *one* interrupt kind, not all
-eight. That pattern repeats throughout — **the floor asks for the property, not
-for the full surface.**
+`overview.md` §"Profile claim vocabulary" fixes what a claim means: an
+unqualified "OpenWOP conformant" statement MUST mean `openwop-core-standard`, and
+a discovery-only claim MUST say `openwop-discovery-core`. The alias
+`openwop-core` is deleted in v2.
 
-## The four documents you need
+**The v2 floor is larger than the v1 floor.** In v1, replay, fork and webhooks
+were optional for core-standard. In v2 the predicate names `replay` and
+`webhooks`, and advertising a surface binds its security behaviour
+(`security-defaults.md` §"The rule"): a `replay` host MUST suppress external
+effects during a replay fork and publish `GET /host/effect-seams`; a `webhooks`
+host MUST retry, dead-letter and deliver at least once. If you are not ready for
+that, `openwop-discovery-core` is the honest smaller claim.
 
-Read these, in this order. Everything else is reference.
+Two v1 floor rows have no v2 floor scenario of their own: `auth` (cross-tenant
+refusal) and `failure-path`. The obligations still bind — tenant isolation in
+`identity.md` and `security-defaults.md`, the terminal `error` object in
+`runs.md` §Snapshot — but `profiles.json` does not list a floor scenario for them.
 
-1. **[`rest-endpoints.md`](../spec/v1/rest-endpoints.md)** — the endpoints, request and response shapes.
-2. **[`capabilities.md`](../spec/v1/capabilities.md)** — the discovery document, and §"What a capability may vary" so you advertise honestly.
-3. **[`stream-modes.md`](../spec/v1/stream-modes.md)** — how a run's events reach a client, and the order they must arrive in. (`eventOrdering.test.ts` verifies against this and `observability.md`.)
-4. **[`interrupt.md`](../spec/v1/interrupt.md)** — durable suspend and resume; pick one kind.
+## The documents you need
 
-Plus **[`idempotency.md`](../spec/v1/idempotency.md) §A** when you get to run
-creation, and **[`error-envelope.schema.json`](../schemas/error-envelope.schema.json)**,
-which is small and which everything else assumes.
+`overview.md` §"Reading order" is the authoritative order. For the
+`openwop-core-standard` floor, read these, all in `spec/v2/core/`:
+
+1. **[`overview.md`](../spec/v2/core/overview.md)** — axioms, the closed-enum growth rule, the claim vocabulary.
+2. **[`versioning.md`](../spec/v2/core/versioning.md)** §1 — `protocolVersions[]`, `preferredVersion`, the `OpenWOP-Version` header, and the path rule: v2 operations are unversioned (`/runs`, not `/v2/runs`).
+3. **[`capabilities.md`](../spec/v2/core/capabilities.md)** §1–§3, §7 — one well-known resource, the capability record, the closed root.
+4. **[`runs.md`](../spec/v2/core/runs.md)** — the run surface table, create, snapshot, cancel, pause/resume, fork.
+5. **[`events.md`](../spec/v2/core/events.md)** — the closed event envelope, `sequence`, the SSE channel, the poll cursor, era-2 logs.
+6. **[`errors.md`](../spec/v2/core/errors.md)** and **[`headers.md`](../spec/v2/core/headers.md)** — one registry of codes (`spec/v2/errors.json`) and every `OpenWOP-*` header.
+7. **[`interrupt.md`](../spec/v2/core/interrupt.md)**, **[`idempotency.md`](../spec/v2/core/idempotency.md)**, **[`replay.md`](../spec/v2/core/replay.md)**, **[`webhooks.md`](../spec/v2/core/webhooks.md)** — the four families the predicate names besides `eventLog`.
+8. **[`identity.md`](../spec/v2/core/identity.md)** — the Subject that owns every run and the tenant-bound id grammar (§5).
+9. **[`security-defaults.md`](../spec/v2/core/security-defaults.md)** — the obligation table; what advertising each surface binds.
+
+`persistence.md` matters as soon as you store events; `conformance.md` matters
+when you produce a bundle. The machine contract is
+[`api/v2/openapi.yaml`](../api/v2/openapi.yaml),
+[`api/v2/asyncapi.yaml`](../api/v2/asyncapi.yaml) and
+[`schemas/v2/`](../schemas/v2/); the operation list is
+[`spec/v2/path-manifest.json`](../spec/v2/path-manifest.json).
 
 ## What you can ignore, and for how long
 
 | Surface | Ignore until |
 | --- | --- |
-| Multi-agent orchestration, agent packs, memory | You want agents. The core has no opinion about them. |
-| Replay and fork | You want time travel. A host with no `:fork` endpoint is conformant. |
-| Compensation | You have effects worth unwinding. Non-advertising hosts **refuse** compensation workflows — which is correct, not degraded. |
-| MCP / A2A composition | You want to talk to other ecosystems. |
-| Node packs, sandboxing, registries | You want third-party code in your runs. |
-| Workload identity, mTLS, delegation | Your deployment needs them. Bearer-token auth is conformant. |
-| Multi-region, effect fencing | You are multi-region. |
-| OpenTelemetry mapping | You want cross-host traces. |
+| Agents, roster, org chart, memory, prompts | You want agents. Their families are optional records in `capabilities.md` §5. |
+| Packs (`packs.md` and the three per-kind pack documents) | You want third-party code in your runs. Advertising `packs` binds the sandbox invariants (`security-defaults.md`). |
+| Compensation | You have effects worth unwinding. Advertising `compensation` binds its plan and read projection. |
+| A2A and MCP (`interop.md`) | You want to talk to other ecosystems. |
+| Auth lanes beyond what you use | Your deployment needs them. Each lane in `auth.lanes[]` binds its own obligations (`identity.md`). |
+| The seams profile `openwop-conformance-seams-v2` | You want the four seam-driven scenarios measured. It is a test mount (`conformance.md` §"The seams profile"), not a capability. |
+| Everything in `spec/v2/ext/` | You want that extension. Each document declares its own witness class and maturity. |
 
-**None of these are second-class.** They are optional because a protocol whose
-core is small is one people can implement, and OpenWOP's optional surfaces are
-where most of its design work went. The point is that they are optional *in the
-order you need them*, not all at once on day one.
+**None of these are second-class.** They are optional because a small core is one
+people can implement. In v2 the rule for all of them is the same: a family you do
+not support is **omitted**, since presence of the record is the claim
+(`capabilities.md` §2).
 
 ## Verifying yourself
+
+Install the suite and its contract peer at the same version (`conformance/README.md`
+explains why both are needed), then run the major-2 scenarios:
 
 ```bash
 npx @openwop/openwop-conformance \
   --base-url https://your-host.example \
   --api-key "$KEY" \
-  --filter "discovery|runs-lifecycle|auth|eventOrdering|failure-path|idempotency|webhook-negative|interrupt-"
+  --target-major 2
 ```
 
-When those pass, run the whole suite. Most of it will record `inapplicable` or
-`blocked`, and **that is the correct result** — those dispositions mean
-*"this host does not advertise the capability"* and *"this host has not wired the
-seam"*, not *"this host failed"*. Read
-[`conformance/coverage.md`](../conformance/coverage.md) for the vocabulary.
+`--target-major` defaults from your `preferredVersion`, which through the overlap
+MUST be a `1.x` member if you also serve v1 (`versioning.md` §1.1). A dual-stack
+host that omits the flag measures v1. `--filter <pattern>` narrows the run, as in v1.
 
-Then produce a certification bundle:
+Most rows will record `inapplicable` or `blocked`. `inapplicable` means the
+requirement does not bind your host; `blocked` means it was not measured, and a
+bundle with `totals.blocked > 0` does not certify (`conformance.md` §"Bundle v3").
+Read [`conformance/coverage.md`](../conformance/coverage.md) for the vocabulary.
+
+Then produce a signed v3 certification bundle (the CLI default):
 
 ```bash
-npx @openwop/openwop-conformance --base-url … --api-key … --certify bundle.json
+npx @openwop/openwop-conformance --base-url … --api-key … --target-major 2 \
+  --certify bundle.json \
+  --host-build commit:<sha> --signing-key key.pem --signing-key-id <keyId>
 ```
 
-The bundle derives your claimed profiles **from your discovery document**, not
-from anything you assert. You cannot over-claim in it, which is the point.
+An unsigned v3 bundle does not exist, and `keyId` must be published in your
+discovery `signingKeys[]` or the signature attests integrity only
+(`conformance.md` §"Bundle v3"). Claimed profiles are derived from your discovery
+document, not from anything you assert.
 
 ## Three things implementers get wrong
 
-1. **Advertising a capability you have not wired.** The suite runs
-   `OPENWOP_REQUIRE_BEHAVIOR=true` in strict mode and fails an advertisement with
-   no behavioural witness. Advertise nothing until it works; an unadvertised
-   capability is not a gap, it is an honest host.
-2. **Treating `blocked` as failure.** A `blocked` row means *unobservable*, not
-   *unmet*. Hosts with an SSRF guard correctly refuse the suite's loopback
-   webhook receiver and record `blocked` — the security control is right and the
-   row is honest.
-3. **Substituting instead of refusing.** If you do not support a construct,
-   **refuse it observably** (`capability_required`). Silently doing something
-   adjacent is the one thing `capabilities.md` §"Unsupported capability"
-   forbids, because it makes a workflow's meaning depend on which host ran it.
+1. **Advertising a surface you have not wired.** In v2 the advertisement binds the
+   security behaviour, not just the endpoint. Under `OPENWOP_REQUIRE_BEHAVIOR=true`
+   an advertised profile with a missing seam fails instead of recording `blocked`
+   (`conformance/coverage.md`). Omit the record until it works.
+2. **Mounting v2 at `/v2/…`, or not under the advertised major at all.** There is
+   no `/v2/` path space. If `/v1/<op>` answers and `/<op>` returns `404` under
+   major 2, you MUST NOT advertise major 2 (`versioning.md` §1.2). Tenant-bound ids
+   must also survive your front door (`identity.md` §5).
+3. **Substituting instead of refusing.** A workflow that needs a capability you do
+   not advertise MUST be rejected with `422 capability_required` (`runs.md` §Create),
+   and every error is a registered code in the closed `{ error, message, details? }`
+   envelope (`errors.md`).
 
 ## When you are done
 
-Publish your bundle at a stable URL and tell us — an
-[`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) row from an implementer outside this
-project is worth more to the protocol than any specification work currently on
-the roadmap. **Publish it whatever it says.** A bundle with failures and blocked
-rows is evidence; a bundle that was tuned until it was green is not.
+Publish your bundle and open a PR adding a row to the v2 table in
+[`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md); checked-in bundles live in
+`evidence/v2-host-bundles/`, and a row is verified with
+`node scripts/check-cut-gates.mjs --host-bundle <bundle>`. Every host in that table
+today is steward-built or steward-affiliated, so a row from an implementer outside
+this project is the most useful evidence the protocol can get. **Publish it
+whatever it says.** A bundle with blocked and inapplicable rows is evidence; a
+bundle that was tuned until it was green is not.
