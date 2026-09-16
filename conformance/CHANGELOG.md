@@ -1,15 +1,70 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.1.8] — 2026-09-14 — every v2 core family must have a normative home that survives v1 EOS
+## [2.2.0] — 2026-09-16 — the suite wipes the host's mock program store between scenario files, and a bound id travels as one segment
 
-The suite's packed corpus changes because `spec/v2/declaration.json` gains an
-optional `normativeText` on family entries: the path(s) where a family's
-behaviour is actually written, as distinct from `section`, which names the
-declaration site (`core/capabilities.md#<key>` — a stub naming an owning RFC for
-most core families).
+**Why a minor and not the 2.1.8 that was pinned for two days.** `PUBLISHING.md`
+§"Versioning alignment": a conformance scenario addition is a minor bump, and
+#1359 added `v2-bound-id-path-projection` (its header says so). No 2.1.x patch
+ever added a scenario file; this release does, so it is 2.2.0. Nothing was
+published as 2.1.8.
 
-No scenario behaviour changes. The identity bump is required because the
-declaration and the schemas generated from it ship in the tarball.
+This entry was first written on 2026-09-14 and said *"No scenario behaviour
+changes."* That was true when written and false by the time the tag was cut, so
+the entry is rewritten rather than appended to: two behaviour changes rode this
+version after the pin was bumped, and a package whose changelog denies them is a
+package lying about itself.
+
+### Fixed
+
+- **The suite now wipes the host's conformance-mock program store between
+  scenario FILES** (openwop #1357; half two of two, paired with openwop-app
+  #3870, which adds the seam). `src/setup.ts` posts
+  `POST /v1/host/openwop-app/test/mock-ai/reset` in a per-file `afterAll`.
+  Why: a host that keeps mock programs in a module-level map keyed by `nodeId`
+  retains any program a scenario does not fully drain, and the four
+  envelope-truncation scenarios seed `finishReason: 'length'` programs on
+  purpose — so a later file dispatching on a colliding node consumed the
+  leftovers and failed `envelope_truncation_unrecoverable` with nothing in that
+  file to explain it. Measured on `replay-observable-sequence-determinism`: red
+  in-suite, green alone, five runs on unchanged bases, one red at load 3.4 on an
+  idle box — not contention, and a wrong value rather than a missing result.
+  2.1.7's per-fixture node ids narrowed the collision; this removes the
+  leftover. **Best-effort by design:** a host without the seam answers 404 and
+  the call is swallowed, because a suite must never fail a compliant host for
+  lacking a TEST seam — so on such a host the leak, if it has one, persists
+  silently. Per file rather than per test because programs are seeded for a
+  whole scenario's attempt sequence.
+
+### Changed
+
+- **A tenant-bound id travels as one `~`-escaped path segment** (RFC 0184 §A.1,
+  openwop #1359; §A.5 exactly-once projection, #1360). A bound id is two
+  segments joined by `/`; a path parameter is one. The corpus said `%2F`
+  carried the separator, and a tier-1 host's front door decoded it back to `/`
+  before forwarding, so every bound id was unreachable through its own front
+  door. The escape marker is now `~` (RFC 3986 unreserved — an intermediary has
+  no license to rewrite it): every byte outside `[A-Za-z0-9._-]` becomes
+  `~XX`, total over bytes so a later grammar widening cannot invalidate a
+  projection already on the wire. New `src/lib/bound-id.ts` codec;
+  `v2-id-grammar` asserts the new form; new scenario
+  `v2-bound-id-path-projection` creates one run and asserts the projection is
+  applied exactly once (the codec is deliberately not idempotent — `a~3Ab` →
+  `a~7E3Ab` — so a double projection corrupts silently, and both reporting hosts
+  found a read path that already composed one). **Hosts: a v2 path parameter
+  carrying a bound id is now expected in the `~` form. `%2F` is no longer the
+  contract.**
+- **RFC 0183 requirement rows** (openwop #1358): `requirements.json` gains the
+  ids for the resume actions `interruptResolved` cannot record, and
+  `fixtures.md` documents `conformance-approval-refine`. The RFC is `Draft`; no
+  scenario asserts these rows yet.
+
+### Packaging
+
+- `spec/v2/declaration.json` gains an optional `normativeText` on family
+  entries (RFC 0169, openwop #1351): the path(s) where a family's behaviour is
+  actually written, as distinct from `section`, which names the declaration
+  site. The declaration and the schemas generated from it ship in the tarball,
+  which is what first required the identity bump.
 
 ## [2.1.7] — 2026-09-13 — nine fixtures shared one programmable node id
 
