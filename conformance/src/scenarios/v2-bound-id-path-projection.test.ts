@@ -96,6 +96,19 @@ describe('v2 bound-id path projection (identity.md §5)', () => {
       ).toBe(true);
     }
 
+    // APPLY-ONCE. The codec is deliberately NOT idempotent — escaping the
+    // marker is what makes it injective — so a host that projects twice breaks
+    // its OWN links. Both reporting hosts found they already compose payload
+    // projections on a single read path, so this is a live shape, not a
+    // thought experiment. Asserting 404 (not merely "not 200") keeps the leg
+    // from passing on a 500.
+    const twice = projectBoundId(projected);
+    const doubled = await http(() => driver.get(`/runs/${twice}`));
+    expect(
+      doubled?.status ?? null,
+      req(ID, DOC, `a DOUBLE-projected segment MUST NOT resolve — the codec is not idempotent, so projecting twice yields a different id and a host that does it strands its own links. Expected 404 for ${twice}, got ${doubled?.status ?? 'no response'}`),
+    ).toBe(404);
+
     // DECODER RULE. A `~` not introducing two hex digits is malformed input, so
     // 400 — not 404, which would say "no such run" about a request that never
     // named one.
