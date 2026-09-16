@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 567,
-    "tests": 2159,
-    "withStableId": 2159,
+    "tests": 2161,
+    "withStableId": 2161,
     "interpolatedTitles": 0,
-    "explicitIds": 2114
+    "explicitIds": 2116
   },
   "records": [
     {
@@ -14544,7 +14544,7 @@
     {
       "id": "openwop.it.interrupt-approval.run-suspends-at-gate-accept-resolution-drives-terminal-completed",
       "file": "interrupt-approval.test.ts",
-      "line": 24,
+      "line": 27,
       "title": "run suspends at gate, accept resolution drives terminal completed",
       "explicitId": "openwop.it.interrupt-approval.run-suspends-at-gate-accept-resolution-drives-terminal-completed",
       "citations": [
@@ -14565,7 +14565,7 @@
     {
       "id": "openwop.it.interrupt-approval.400-or-422-when-action-is-not-in-accept-reject",
       "file": "interrupt-approval.test.ts",
-      "line": 53,
+      "line": 56,
       "title": "400 (or 422) when action is not in {accept, reject}",
       "explicitId": "openwop.it.interrupt-approval.400-or-422-when-action-is-not-in-accept-reject",
       "citations": [
@@ -14578,7 +14578,7 @@
     {
       "id": "openwop.it.interrupt-approval.400-404-when-nodeid-does-not-match-an-active-interrupt",
       "file": "interrupt-approval.test.ts",
-      "line": 81,
+      "line": 84,
       "title": "400/404 when nodeId does not match an active interrupt",
       "explicitId": "openwop.it.interrupt-approval.400-404-when-nodeid-does-not-match-an-active-interrupt",
       "citations": [
@@ -14591,7 +14591,7 @@
     {
       "id": "openwop.it.interrupt-approval.a-refine-resolve-round-trips-action-and-the-structured-feedback-it-requires",
       "file": "interrupt-approval.test.ts",
-      "line": 117,
+      "line": 120,
       "title": "a refine resolve round-trips `action` and the structured feedback it requires",
       "explicitId": "openwop.it.interrupt-approval.a-refine-resolve-round-trips-action-and-the-structured-feedback-it-requires",
       "citations": [
@@ -14616,13 +14616,51 @@
     {
       "id": "openwop.it.interrupt-approval.refuses-a-refine-resolution-that-supplies-no-refinefeedback",
       "file": "interrupt-approval.test.ts",
-      "line": 167,
+      "line": 170,
       "title": "refuses a refine resolution that supplies no refineFeedback",
       "explicitId": "openwop.it.interrupt-approval.refuses-a-refine-resolution-that-supplies-no-refinefeedback",
       "citations": [
         {
           "section": "RFCS/0183-interrupt-resolved-action-fidelity.md §A.2",
           "requirement": "refine without refineFeedback MUST be refused — the feedback is what the action means"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires",
+      "file": "interrupt-approval.test.ts",
+      "line": 197,
+      "title": "an edit-accept resolve round-trips `action` and the edited artifact it requires",
+      "explicitId": "openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires",
+      "citations": [
+        {
+          "section": "RFCS/0183-interrupt-resolved-action-fidelity.md §A.2",
+          "requirement": "a gate offering `edit-accept` MUST accept an edit-accept resolution carrying editedArtifactData"
+        },
+        {
+          "section": "RFCS/0183-interrupt-resolved-action-fidelity.md §A.1",
+          "requirement": "the resolution MUST be recorded as an event"
+        },
+        {
+          "section": "RFCS/0183-interrupt-resolved-action-fidelity.md §A.1",
+          "requirement": "the resolved payload MUST carry `action: \"edit-accept\"`"
+        },
+        {
+          "section": "RFCS/0183-interrupt-resolved-action-fidelity.md §A.2",
+          "requirement": "an edit-accept resolution MUST carry the editedArtifactData it was given"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.interrupt-approval.refuses-an-edit-accept-resolution-that-supplies-no-editedartifactdata",
+      "file": "interrupt-approval.test.ts",
+      "line": 247,
+      "title": "refuses an edit-accept resolution that supplies no editedArtifactData",
+      "explicitId": "openwop.it.interrupt-approval.refuses-an-edit-accept-resolution-that-supplies-no-editedartifactdata",
+      "citations": [
+        {
+          "section": "RFCS/0183-interrupt-resolved-action-fidelity.md §A.2",
+          "requirement": "edit-accept without editedArtifactData MUST be refused — the edit is what the action means"
         }
       ]
     },
