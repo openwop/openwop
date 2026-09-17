@@ -13,6 +13,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.2.3] — 2026-09-16 — v2 closed 53 payload defs that v1 left open, with no hatch
+
+### Added
+
+- **RFC 0185 §B — the RFC 0177 §C.2 vendor hatch on 53 run-event payload defs.** v1's `run-event-payloads.schema.json` declares `additionalProperties: **true**`; v2's declares `false` on the same defs. 53 made that transition, **none carried a hatch, and no migration row recorded it** — so every extra key a host legitimately recorded under v1, because v1 explicitly invited them, became invalid at the cut with nowhere to go. Two production hosts lost data independently: one drops 32 distinct keys at the major-2 read (the conversation content among them); the other projects era-3 rows **on write** and lost a variable's value **at rest**. The defs stay `additionalProperties: false`; `^(openwop-|x-|vendor\.)` is carried opaquely.
+
+### Fixed
+
+- **`events.md` §Era-2: a projection MUST NOT silently drop a property** — carry it or fail. `additionalProperties: false` means *invalid*, not *delete the offending key*; dropping is the cheapest implementation, leaves no trace, and on a write path is irreversible. Both reporting hosts arrived at it independently and neither intended to.
+
+### Noted, not fixed
+
+- **`conversation.exchanged` has two closed, contradictory defs.** `conversation-event.schema.json`'s `ConversationExchangedPayload` seats `{conversationId, turn, turnIndex}`; `run-event-payloads.schema.json`'s `conversationExchanged` seats `{conversationId, outcome, turnIndex}`. A payload with `turn` fails one, with `outcome` fails the other. The codemap binds the one **without** `turn`, while a fully-specified `ConversationTurn` sits next door `$ref`d by nothing outside its own file. So the host that reported the conversation content as unmodelled was wrong — and so was I for confirming it. RFC 0185 §D records it; flipping the binding changes validation for every host emitting `outcome`, so it is not done here.
+
 ## [2.2.2] — 2026-09-16 — "read-only" did not say the v1 registry tree is deliberately behind
 
 ### Fixed

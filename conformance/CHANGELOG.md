@@ -1,5 +1,23 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.2.3] — 2026-09-16 — a payload def that v1 left open gets a conforming escape hatch
+
+**Why a patch.** `PUBLISHING.md` §"Versioning alignment": one scenario file is
+added, which is a minor — but `v2-payload-vendor-hatch.test.ts` is server-free
+and additive to a corpus rule, and no existing scenario changes. Cut as a patch
+alongside the spec edit it witnesses.
+
+### Added
+
+- **`v2-payload-vendor-hatch.test.ts`** (server-free) — a def v1 left open
+  admits `vendor.*` / `x-` / `openwop-` keys; still **refuses** a bare
+  unmodelled key, because the hatch is an escape valve rather than a reopening;
+  and a vendor key nested inside `refineFeedback` is **refused**, since RFC 0183
+  modelled that object closed on purpose and it was never open in v1. That third
+  leg is the load-bearing one: it fails if a later edit sprays
+  `patternProperties` down the tree instead of applying it to the 53 narrowed
+  defs. Sabotage-proved both ways.
+
 ## [2.2.2] — 2026-09-16 — a registry tree that says "read-only" when it means "deliberately behind"
 
 **Why a patch.** `PUBLISHING.md` §"Versioning alignment": no scenario file is

@@ -962,6 +962,7 @@
           "type": "boolean"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "_inputsObject": {
@@ -1032,6 +1033,7 @@
           "additionalProperties": true
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "runCompleted": {
@@ -1046,6 +1048,7 @@
           "minimum": 0
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false,
       "required": [
         "outputs"
@@ -1069,6 +1072,7 @@
           "minimum": 0
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "runCancelled": {
@@ -1092,6 +1096,7 @@
           "description": "When this cancellation was triggered by a parent-cancel cascade (`interrupt-profiles.md \u00a7openwop-interrupt-cascade-cancel`), the parent runId that initiated it. Pairs with `reason: 'parent-cancelled'`. Absent for direct cancellations."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "runResuming": {
@@ -1102,6 +1107,7 @@
           "type": "string"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "runPaused": {
@@ -1129,6 +1135,7 @@
           "description": "The attempt number that was cut; the resumed run's node.started begins a fresh attempt."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "runResumed": {
@@ -1150,6 +1157,7 @@
           "description": "v2: integer everywhere (RFC 0172 \u00a7B axis 3)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "runDeadLettered": {
@@ -1201,6 +1209,7 @@
           "description": "Zero-based retry counter."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeCompleted": {
@@ -1221,6 +1230,7 @@
           "minimum": 0
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeFailed": {
@@ -1242,6 +1252,7 @@
           "minimum": 1
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeSuspended": {
@@ -1277,6 +1288,7 @@
           "minLength": 1
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeSuspendFailed": {
@@ -1294,6 +1306,7 @@
           "$ref": "#/$defs/_errorObject"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeResumed": {
@@ -1311,6 +1324,7 @@
         },
         "resumeValue": {}
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeRetried": {
@@ -1336,6 +1350,7 @@
           "$ref": "#/$defs/_errorObject"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeSkipped": {
@@ -1352,6 +1367,7 @@
           "type": "string"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "nodeCancelled": {
@@ -1368,6 +1384,7 @@
           "type": "string"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "interruptRequested": {
@@ -1452,6 +1469,7 @@
           "description": "RFC 0183 \u00a7A.2 \u2014 user-edited artifact bytes when `action: 'edit-accept'`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "channelWritten": {
@@ -1551,6 +1569,7 @@
           "description": "RFC 0075. Provenance of a registered type: `pack` (matches an installed artifact-type pack) or `host` (a host-native type the host validates against a host-known schema, independent of any pack \u2014 e.g. an AI host's built-in artifact types). Optional; meaningful only when `registered: true`. Absent \u21d2 unspecified provenance (existing semantics)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "outputChunk": {
@@ -1585,6 +1604,7 @@
           "$ref": "#/$defs/_chunkMeta"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "_chunkMeta": {
@@ -1661,6 +1681,7 @@
           "$ref": "ids.schema.json#/$defs/nodeId"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "logAppended": {
@@ -1691,6 +1712,7 @@
           "additionalProperties": true
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "versionPinned": {
@@ -1713,6 +1735,7 @@
           "$ref": "ids.schema.json#/$defs/nodeId"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "workflowRestored": {
@@ -1729,6 +1752,7 @@
           "description": "v2: integer everywhere (RFC 0172 \u00a7B axis 3)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "workflowLoopbackLimit": {
@@ -1751,6 +1775,7 @@
           "minimum": 1
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "workflowStalled": {
@@ -1765,6 +1790,7 @@
           "$ref": "ids.schema.json#/$defs/nodeId"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "capBreached": {
@@ -1808,6 +1834,7 @@
           "$ref": "ids.schema.json#/$defs/nodeId"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "leaseLifecycle": {
@@ -1844,6 +1871,7 @@
           ]
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "leaseHandedOff": {
@@ -1877,6 +1905,7 @@
           "type": "string"
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "replayDivergedAtRefusal": {
@@ -1961,6 +1990,7 @@
           "description": "RFC 0027 \u00a7F. Verbatim `RunEventType` enum string identifying which event-emission the replay diverged at (e.g., `\"prompt.composed\"` per RFC 0027, `\"agent.promptResolved\"` per RFC 0029, `\"envelope.retry.exhausted\"` / `\"envelope.recovery.applied\"` per RFC 0032). Set when divergence is detected on a specific cross-kind operational event's payload. When divergence is purely structural (output/missing/extra at the event-array level rather than within a typed payload), `divergenceKind` carries the shape and `divergencePoint` MAY be omitted. The two fields are complementary: a single `replay.diverged` event MAY carry both (e.g., `{ divergenceKind: \"output\", divergencePoint: \"prompt.composed\" }` reads as \"the `prompt.composed` event at sequence N had a different output on replay than the original\"). The field is defined by RFC 0027; values are contributed by consuming RFCs (0029 adds `agent.promptResolved`, 0032 adds the envelope-reliability event names)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentReasoned": {
@@ -1994,6 +2024,7 @@
           "description": "RFC 0040 \u00a7A \u2014 optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentReasoningDelta": {
@@ -2028,6 +2059,7 @@
           "description": "Verbosity mode the host resolved for this block. SHOULD match the verbosity reported on the closing `agent.reasoned`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "providerUsage": {
@@ -2614,6 +2646,7 @@
           "description": "RFC 0040 \u00a7A \u2014 optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentToolReturned": {
@@ -2664,6 +2697,7 @@
           "description": "RFC 0040 \u00a7A \u2014 optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentHandoff": {
@@ -2706,6 +2740,7 @@
           "description": "RFC 0040 \u00a7A \u2014 optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentDecided": {
@@ -2734,6 +2769,7 @@
           "description": "RFC 0040 \u00a7A \u2014 optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentVerified": {
@@ -2934,6 +2970,7 @@
           "description": "Optional `AgentRef.agentId` of the agent that opened the conversation."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "conversationExchanged": {
@@ -2958,6 +2995,7 @@
           "description": "Validated turn outcome per the per-turn schema declared in `core.conversationGate` config."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "conversationClosed": {
@@ -2982,6 +3020,7 @@
           "description": "Total turns completed in this conversation (number of `conversation.exchanged` events emitted)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "memoryCompacted": {
@@ -3058,6 +3097,7 @@
           }
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "memoryWritten": {
@@ -3094,6 +3134,7 @@
           "description": "MAY \u2014 the entry's non-secret labels. MUST NOT carry secret material (the no-content invariant covers payload bodies)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentMemoryConsolidated": {
@@ -3138,6 +3179,7 @@
           "description": "MAY \u2014 which initiation path drove this pass (mirrors `agents.memoryConsolidation.schedule`)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "commitmentFired": {
@@ -3177,6 +3219,7 @@
           "description": "MAY \u2014 id of the run the fired commitment enqueued, when the host initiates one. Absent when the commitment fires as a notification without a run."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentInvocationStarted": {
@@ -3236,6 +3279,7 @@
           "description": "MAY \u2014 whether a long-term memory backend was bound for the invocation."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "agentInvocationCompleted": {
@@ -3282,6 +3326,7 @@
           "description": "MAY \u2014 id of a follow-on run the invocation enqueued (e.g. a sub-run), when applicable."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "workspaceUpdated": {
@@ -3350,6 +3395,7 @@
           "description": "MAY \u2014 for `regression` mode, the prior eval run this run is scored against."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "evalScored": {
@@ -3396,6 +3442,7 @@
           "description": "MAY \u2014 count of safety findings for the task (the redaction-safe descriptors live on `EvalSummary`; the event carries the count only)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "evalCompleted": {
@@ -3435,6 +3482,7 @@
           "description": "MAY \u2014 for `regression` mode, `aggregateScore` minus the baseline's (negative \u21d2 regression)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "toolSessionOpened": {
@@ -3456,6 +3504,7 @@
           "description": "The `ToolDescriptor.toolId` the session is for (`<scope>:<tool-id>`)."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "toolSessionClosed": {
@@ -3487,6 +3536,7 @@
           "description": "Terminal disposition of the session. Content-free \u2014 no failure detail/result on the payload."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "egressDecided": {
@@ -3536,6 +3586,7 @@
           "description": "MAY \u2014 correlates to the provenance descriptor + host audit log."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "triggerSubscriptionStateChanged": {
@@ -3598,6 +3649,7 @@
           "description": "MAY \u2014 a machine-stable reason code (a CLOSED enum \u2014 a free-form reason is a leak vector that would let a host spill an inbound URL/host/header into it). The load-bearing field is `toState`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "triggerDeliveryAttempted": {
@@ -3638,6 +3690,7 @@
           "description": "MAY \u2014 the run started by a `delivered` outcome (the run's `run.started` carries this delivery's id as `causationId`, RFC 0040). Absent for `retrying` / `dead-lettered`."
         }
       },
+      "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
       "additionalProperties": false
     },
     "budgetReserved": {
