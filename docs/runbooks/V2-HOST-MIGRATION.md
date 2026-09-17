@@ -258,6 +258,32 @@ The two defences differ, and both are cheap. For the registry: after adding a sc
 
 And one rule for the guards you write in response, in the tier-2 host's words after auditing its own inbound paths: **"not-exploitable-because-of-something-else is a coincidence, not a control."** A tenant-segment check that only *happens* to be safe because a downstream SQL layer binds parameters is not holding the property — the code that states the rule has to be the code that holds it. The host found this by applying the sabotage pair (break it each way; confirm both redden with disjoint sets) to a guard it had shipped an hour earlier, and finding it covered the sites where the bug had been found rather than every site that consumes an id. **A guard that covers the paths someone enumerated has the same shape as the projection that covered "both JSON senders."**
 
+
+## The read projection is per channel
+
+The rules are stated once — `events.md` §Era-2 for the projection, `webhooks.md` §Delivery for the envelope, `persistence.md` §The v1 wire of an era-`3` log for the inverse map — and a host applies them at *every* place an event leaves it. Two findings from 2026-09-17 are the reason this section exists, and neither produced an error anywhere.
+
+A tier-1 host had two major-2 egress channels. Poll and SSE applied the owner echo and the envelope ids; the webhook fan-out projected the event *type* and forwarded the raw in-process payload, so a major-2 subscriber received the v1 owner block with every webhook scenario green. The same week the reference host served the v2 owner echo and the integer `engineVersion` on the **v1** wire — poll, SSE, snapshot, every subscriber — because one rendering function fed all of them. The wire truth is per channel, and a channel nobody's scenario reads is a channel that can drift.
+
+Run this list once per channel, not once per host. A channel is any path an event or snapshot takes out of the process; the seeded era-2 branch counts as a channel of its own because a fresh run cannot reach it.
+
+| Channel | What leaves | Read it as | Cite |
+| --- | --- | --- | --- |
+| `GET …/events/poll` | `events[]` | the contract of the request (`OpenWOP-Version`, or the `/v1/` path key) | `events.md` §Poll, §Era-2 |
+| `GET …/events` (SSE) | each `data:` frame and its `event:` name | same as poll; the `event:` name follows the rendered `type` | `events.md` §SSE frames |
+| `GET /runs/{id}` | `owner`, `engineVersion` | the contract of the request | `identity.md` §1, `versioning.md` §1.2 |
+| Webhook fan-out | `event` in the envelope **and** the `OpenWOP-Event-Type` header | the contract the subscription was registered under — not the contract of the request that caused the event | `webhooks.md` §Delivery |
+| Seeded era-2 log (seams) | every row above | the read projection, the same as a fresh run's | `persistence.md` §The reader rule |
+| Major-1 reader of an era-3 log | `type` | the codemap row, inverted; verify the bijection at load | `persistence.md` §The v1 wire of an era-`3` log |
+
+Three checks that catch the drift before a scenario does:
+
+1. **One renderer, called with the reader's contract at every channel.** If a channel builds its own body, it will diverge; if a channel calls the shared renderer with the wrong contract (the request's instead of the subscriber's), it will diverge more quietly.
+2. **The field that differs is the one to assert.** Between the majors the owner echo, `engineVersion`'s type, and the 36 renamed event types differ; a v2 owner is also a valid v1 owner (RFC 0165 §B admits `subject`), so an owner-keys check proves nothing — validate the payload against the *other* major's definition and watch it fail.
+3. **Register under one contract, drive the run under the other.** The delivery must follow the registration. A host that projects every channel to v2 is as wrong as one that projects none.
+
+`v2-webhook-delivery-shape` (suite 2.3.2+) reads the fan-out both ways; poll and SSE are read by `v2-run-completed-outputs`, `v2-stream-sse-projection` and the dual-stack scenarios. Nothing reads a host's snapshot-adjacent surfaces per contract yet — check those by hand.
+
 ---
 
 ## Open items a third host should expect
