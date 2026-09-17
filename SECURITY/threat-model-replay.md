@@ -72,6 +72,14 @@ A replay reuses the source's LLM cache key. If the key is not tenant-scoped, a f
 
 A fork inherits the source's history but not its authority. Fork creation is a decision in the *caller's* tenant; nothing about the source run confers permission to create it.
 
+### 3.5 `projection-carry-or-fail` — a lossy projection forks against state the writer never had
+
+**Threat.** A host projects run-event payloads onto the closed v2 defs at a storage boundary — on the era-2 read path, or on the era-3 write path. If the projection *drops* a property the def does not name, the run's durable record no longer contains what the writer recorded. Fork and replay then reconstruct from the projected log: a variable reads as `undefined`, a divergence event has no `expected`/`actual`, a conversation turn has no content. Nothing fails; the loss is silent and, on a write path, irreversible.
+
+**Why it is a replay threat and not a schema nit.** v1 declared these defs `additionalProperties: true`, so the dropped keys were conforming data. Two production hosts lost data this way independently before RFC 0185 (one at rest). The replay guarantee (§C.2 byte-equivalence) is only as good as the log it replays.
+
+**Control.** RFC 0185 §C: a projection MUST carry the property — the 56 narrowed defs hatch `^(openwop-|x-|vendor\.)` opaquely — or fail. Invariant `projection-carry-or-fail`; witness `v2-payload-vendor-hatch.test.ts`.
+
 ## 4. A property of the evidence, not a caveat about it
 
 `replay-fanout-suppression.test.ts` observes the MUST NOT by **being the subscriber**: it boots a loopback HTTP receiver and registers it via `POST /v1/webhooks`.

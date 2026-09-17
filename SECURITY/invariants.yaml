@@ -4194,3 +4194,24 @@ invariants:
       re-tiered when a scenario lands
     witness: unwitnessable
     witnessReview: reviewed-2026-09-03
+
+  - id: projection-carry-or-fail
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-replay.md
+    tests:
+      - conformance/src/scenarios/v2-payload-vendor-hatch.test.ts
+    note: |
+      RFC 0185 §C / spec/v2/core/events.md §Era-2. A projection MUST NOT
+      silently drop a payload property: it MUST carry it (the 56 defs that v1
+      left `additionalProperties: true` and v2 closed now hatch
+      `^(openwop-|x-|vendor\.)` opaquely) or fail the projection. Dropping is
+      the cheapest implementation, passes every schema check afterwards, and on
+      a write path is irreversible — two production hosts lost data to it
+      independently, one at rest. A run reconstructed from a projected log that
+      dropped keys forks and replays against state the writer never had, which
+      is the replay threat surface. The public witness is the hatch scenario:
+      a vendor key validates on a hatched def, a bare key still fails, and a
+      def closed deliberately in v2 (`refineFeedback`) refuses both.
+    witness: witnessable-unaided
+    witnessReview: reviewed-2026-09-17
