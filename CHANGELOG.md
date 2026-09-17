@@ -13,7 +13,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **Reference host evidence re-cut on suite `2.3.3`** (`evidence/v2-host-bundles/openwop-host-v2-reference.json`, openwop-examples #48): 195 / 0 / 0 / 44 / 0, 1682 assertions, all three claimed profiles certified, signed `v2-reference-3`; the host now accepts and emits the RFC 0184 `~`-projection and renders every channel per subscriber contract. INTEROP-MATRIX row updated.
 
 ## [2.3.3] — 2026-09-17 — the retirement lane bites again
 
