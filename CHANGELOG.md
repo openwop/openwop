@@ -13,6 +13,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **RFC 0183 and RFC 0184: `Active → Accepted`, tier-1.** The reference host `app.openwop.dev` now runs openwop-app `0ab209b0e` on suite 2.2.1.
+  - **RFC 0183:** its served certification bundle records every `interrupt-approval` requirement `executed-pass`, with no skips. That covers the refine and edit-accept round-trips and both refusal legs.
+  - **RFC 0184, accept side:** measured on the production front door. `~2F` and `%2F` both answer 403 `id_tenant_mismatch`, so the id is decoded; the pre-RFC build answered 404.
+  - **RFC 0184, emit side and the unaided scenario:** witnessed in the deployed commit's major-2 lane (73 pass / 0 red), with kicktodo.com `bd73008` as the second deployed witness.
+  - **Recorded gaps:** the bundle's 0184 row is `inapplicable`, because the certify lane runs at major 1. The openwop-examples SQLite host does not yet implement RFC 0183, which is why Conformance Soak is red on those legs.
+
 ## [2.2.3] — 2026-09-16 — v2 closed 53 payload defs that v1 left open, with no hatch
 
 ### Added

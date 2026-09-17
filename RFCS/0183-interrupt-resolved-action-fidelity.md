@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0183                                                            |
 | **Title**         | `interruptResolved` cannot record four of the five resume actions |
-| **Status**        | `Active`                                                         |
+| **Status**        | `Accepted`                                                       |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-16                                                      |
-| **Updated**       | 2026-09-16 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §\"Bootstrap-phase RFC waivers\". §A.1 raised from SHOULD to a MUST conditioned on approval kind, with its normative home in `spec/v2/core/interrupt.md` §Events — the suite already asserted it, and `COMPATIBILITY.md` §2.3 forbids a suite stricter on wire shape than the spec. `Accepted` waits on the reference host's evidence bundle.)                                                      |
+| **Updated**       | 2026-09-16 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §\"Bootstrap-phase RFC waivers\". §A.1 raised from SHOULD to a MUST conditioned on approval kind, with its normative home in `spec/v2/core/interrupt.md` §Events — the suite already asserted it, and `COMPATIBILITY.md` §2.3 forbids a suite stricter on wire shape than the spec. `Accepted` waits on the reference host's evidence bundle.) · 2026-09-17 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified** (`GOVERNANCE.md` §"Acceptance evidence tiers"). The reference host `app.openwop.dev` runs openwop-app `0ab209b0e` (`/api/readiness` `build.commit`, deployed 2026-09-17T01:47Z, revision `openwop-app-backend-00706-f8w`; `contractProvenance.suiteVersion` 2.2.1). Its served certification bundle (`/v1/host/openwop-app/conformance/certification-bundle`, generated 01:45:20Z by `conformance/run.ts --certify` on that commit against `@openwop/openwop-conformance` 2.2.1, digest verified by `verify-deploy.sh`) records every `interrupt-approval` requirement `executed-pass`: the refine round-trip (7 assertions), refine-without-`refineFeedback` refusal (2), the edit-accept round-trip (7), edit-accept-without-`editedArtifactData` refusal (2), and the file (26). None is skipped: the host vendors and advertises both `conformance-approval-refine` and `conformance-approval-edit-accept` (openwop-app #3904). Second deployed witness: kicktodo.com `bd73008` passed the refine round-trip on suite 2.2.0. Recorded honestly: the openwop-examples SQLite host does not yet implement this RFC, so Conformance Soak is red on its refine and edit-accept legs; a host lagging is not a defect in the RFC, and the fix is tracked in openwop-examples.) |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` (`interruptResolved`), `spec/v1/interrupt.md` §`ApprovalResume` (cited, unchanged), `conformance/src/scenarios/interrupt-approval.test.ts`, `conformance/fixtures/conformance-approval.json` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1) — new OPTIONAL properties on a closed def; no required field added, no existing field retyped, no MUST relaxed |
 | **Supersedes**    | —                                                               |
@@ -99,9 +99,9 @@ The v1 `refineFeedback` `$def` lives in `schemas/run-event-payloads.schema.json`
 
 ## Acceptance criteria
 
-- [ ] `interruptResolved` admits `action`, `refineFeedback`, `editedArtifactData`; all OPTIONAL; the def stays `additionalProperties: false`.
-- [ ] `decision` carries `enum: ["granted", "rejected", "overridden"]`.
-- [ ] A new `conformance-approval-refine` fixture declares `refine` among its `actions` — new rather than widening `conformance-approval`, whose `actions` every host already serves — and `interrupt-approval.test.ts` round-trips a refine resolution carrying `refineFeedback`.
-- [ ] A resolution recording `action: 'refine'` without `refineFeedback` is refused.
-- [ ] The `edit-accept` arm of §A.2 is witnessed: a `conformance-approval-edit-accept` fixture and a leg round-tripping `editedArtifactData`, plus a refusal leg (suite 2.2.1).
-- [ ] `openwop-check.sh` passes on the merged tree; the suite cut carries the schema change.
+- [x] `interruptResolved` admits `action`, `refineFeedback`, `editedArtifactData`; all OPTIONAL; the def stays `additionalProperties: false`.
+- [x] `decision` carries `enum: ["granted", "rejected", "overridden"]`.
+- [x] A new `conformance-approval-refine` fixture declares `refine` among its `actions` — new rather than widening `conformance-approval`, whose `actions` every host already serves — and `interrupt-approval.test.ts` round-trips a refine resolution carrying `refineFeedback`.
+- [x] A resolution recording `action: 'refine'` without `refineFeedback` is refused.
+- [x] The `edit-accept` arm of §A.2 is witnessed: a `conformance-approval-edit-accept` fixture and a leg round-tripping `editedArtifactData`, plus a refusal leg (suite 2.2.1).
+- [x] `openwop-check.sh` passes on the merged tree; the suite cut carries the schema change.
