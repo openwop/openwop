@@ -13,6 +13,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.3.1] — 2026-09-17 — a channel nobody's scenario read, a register that could not bite, a status that could only go one way
+
+### Added
+
+- **`v2-webhook-delivery-shape.test.ts` (W3b).** `webhooks.md:22` already required a major-2 delivery body to be the v2 payload — "one source, three renderings" — and **0 of 7 webhook scenarios validated the body.** A tier-1 host had two major-2 egress channels; poll/SSE projected, the webhook fan-out forwarded the in-process event, and a major-2 subscriber received the v1 owner block with every webhook scenario green. Three legs: a major-2 subscriber's body validates against `run-event.schema.json` and `owner` is exactly `{tenant, subject}`; a **major-1** subscriber still receives `principal` (`versioning.md` §1.2 — projecting every channel is as wrong as projecting none); and, seam-gated, an **era-2** seeded run delivers projected — the tier-2 host's fan-out is era-aware, not major-aware, so a single fresh run witnesses only one branch.
+- **`spec/v2/ext/README.md` + `check-ext-status-coherence.mjs` (W8).** Seventeen ext docs shipped `Draft` and nothing said what moves one. Status is now a predicate over evidence: `Stable` requires an `executed-pass` row under the family's witness id in a **certified** bundle; a `Draft` doc whose family has that row is reported **graduable**; `Retired` requires the family gone from the declaration. Both directions gated and sabotage-proved. The four `ext/` directories with no declared family (`grpc-transport`, `portability`, `provider-idempotency`, `sandbox-runtime-notes`) say in their headers that they are notes outside the rule.
+
+### Changed
+
+- **`spec/v1/deprecations.json` (W7).** 37 rows with `removeIn: 2.0` and no `removalTrigger` now carry `v2.0-cut` — v2.0.0 was tagged 2026-09-05, so the trigger is a fact, not a plan. Four `proposed` rows whose surface has no occurrence anywhere in `spec/v2`, `schemas/v2` or `api/v2` (`gap-local-alias`, `supported-transports-field`, `manifest-signing-method`, `seam-operations-in-canonical-api`) flipped to `deprecated` with the reason recorded. **Twenty stay `proposed`**: their surfaces still occur in v2 and each needs a per-row decision, not a script.
+- **RFC 0183 §Unresolved 1 resolved — `action: 'timeout'` is record-only.** v1 `interrupt.md:165` already said `timeout` is *"host-internal — emit timeout sentinel, not a resume."* A host MUST NOT accept `timeout` on a resume request; it is minted by the host's own timer branch, and `resolvedBy` on such a row is the host's subject or absent — a client posting it could disguise a decision as expiry while `resolvedBy` named them. Stated in the `action` schema description (unbudgeted) and the RFC; witnessed by the tier-2 host's route tests.
+
 ## [2.3.0] — 2026-09-17 — three payload seats the hosts measured and the corpus lacked
 
 ### Added

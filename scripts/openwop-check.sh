@@ -275,6 +275,7 @@ echo
 
 echo "[9/9] Published-version identity..."
 node "$(dirname "$0")/check-payload-closure-hatched.mjs"
+node "$(dirname "$0")/check-ext-status-coherence.mjs"
 node "$(dirname "$0")/check-published-suite-identity.mjs"
 node "$(dirname "$0")/check-published-suite-identity.mjs" --package spec-artifacts
 node "$(dirname "$0")/generate-spec-artifacts.mjs" --check

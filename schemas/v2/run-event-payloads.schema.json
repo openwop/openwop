@@ -1444,7 +1444,7 @@
         "action": {
           "type": "string",
           "enum": ["accept", "reject", "refine", "edit-accept", "timeout"],
-          "description": "RFC 0183 \u00a7A.1 \u2014 the ApprovalResume action applied at resolution (interrupt.md \u00a7ApprovalResume). OPTIONAL: this def serves all eight interrupt kinds and only approval-kind resolutions have an action. A host recording `refine` MUST carry `refineFeedback`; one recording `edit-accept` MUST carry `editedArtifactData`."
+          "description": "RFC 0183 \u00a7A.1 \u2014 the ApprovalResume action applied at resolution (interrupt.md \u00a7ApprovalResume). OPTIONAL: this def serves all eight interrupt kinds and only approval-kind resolutions have an action. A host recording `refine` MUST carry `refineFeedback`; one recording `edit-accept` MUST carry `editedArtifactData`. RECORD-ONLY VALUE: `timeout` is minted by the host's own timer branch and MUST NOT be accepted on a resume request — v1 interrupt.md:165 already says it is host-internal, a sentinel and not a resume. A client that could post it could disguise a decision as expiry while `resolvedBy` named them; on a timeout row `resolvedBy` is the host's subject or absent (RFC 0183 §Unresolved 1, resolved 2026-09-17; witnessed by a tier-2 host's route tests)."
         },
         "refineFeedback": {
           "type": "object",
