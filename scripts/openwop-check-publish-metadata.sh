@@ -91,5 +91,26 @@ if [[ "$PEER" != "$EXPECTED_SPEC_ARTIFACTS_VERSION" ]]; then
 else
   ok "conformance pins the spec-artifacts peer exactly ($PEER)."
 fi
+
+# The lockfile is a THIRD copy of the version and the peer pin, and it drifts
+# silently: `package-lock.json` carried `@openwop/spec-artifacts: 2.0.0-rc.0`
+# for the whole 2.x line while package.json tracked every release, because its
+# own `version` field updates on `npm install` and its `peerDependencies` does
+# not. Fixed 2026-09-16 — and reintroduced the same hour by a `git checkout --`
+# that reverted the lockfile during a merge, which is the argument for a gate
+# rather than for being careful.
+LOCK_VER=$(node -e "console.log(require('$SPEC_ROOT/conformance/package-lock.json').version ?? 'absent')")
+LOCK_PEER=$(node -e "console.log(require('$SPEC_ROOT/conformance/package-lock.json').packages?.['']?.peerDependencies?.['@openwop/spec-artifacts'] ?? 'absent')")
+if [[ "$LOCK_VER" != "$EXPECTED_CONFORMANCE_VERSION" ]]; then
+  err "conformance/package-lock.json version is '$LOCK_VER', expected $EXPECTED_CONFORMANCE_VERSION — the lockfile ships to consumers and must name the version it locks."
+else
+  ok "lockfile version is $LOCK_VER."
+fi
+if [[ "$LOCK_PEER" != "$EXPECTED_SPEC_ARTIFACTS_VERSION" ]]; then
+  err "conformance/package-lock.json peerDependencies[@openwop/spec-artifacts] is '$LOCK_PEER', expected $EXPECTED_SPEC_ARTIFACTS_VERSION — a consumer installing from the lockfile resolves THIS pin, not package.json's."
+else
+  ok "lockfile pins the spec-artifacts peer exactly ($LOCK_PEER)."
+fi
+
 [[ $fail -eq 0 ]] || exit 1
 
