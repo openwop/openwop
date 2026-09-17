@@ -1,8 +1,8 @@
 {
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
-  "$comment": "RFC 0171 \u00a7B.1 \u2014 the error registry: one row per code {code, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (\u00a7B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code \u2014 closure over details is the RFC 0171 Phase 3 follow-up G-row).",
+  "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-09-05",
+  "updated": "2026-09-17",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
@@ -21,7 +21,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "credential_scope_unsupported",
@@ -30,7 +30,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "delegation_chain_cyclic",
@@ -39,7 +39,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1"
+      "source": "RFC 0170 §B.1"
     },
     {
       "code": "delegation_chain_too_long",
@@ -48,7 +48,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1"
+      "source": "RFC 0170 §B.1"
     },
     {
       "code": "idempotency_key_invalid",
@@ -57,7 +57,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7D.3"
+      "source": "RFC 0170 §D.3"
     },
     {
       "code": "interop_version_unsupported",
@@ -66,7 +66,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "oauth_provider_unsupported",
@@ -75,7 +75,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "oauth_scope_unsupported",
@@ -84,7 +84,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "pack_dependency_cycle",
@@ -102,7 +102,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0177 \u00a7A.1"
+      "source": "RFC 0177 §A.1"
     },
     {
       "code": "pack_integrity_failure",
@@ -174,7 +174,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0172 \u00a7A.3"
+      "source": "RFC 0172 §A.3"
     },
     {
       "code": "schedule_horizon_exceeded",
@@ -183,7 +183,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "sub_chain_cycle",
@@ -192,7 +192,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0133 \u00a7Unresolved 3 (resolved: maxSubChainDepth 8, fail closed); carried into v2 by RFC 0177 \u00a7E"
+      "source": "RFC 0133 §Unresolved 3 (resolved: maxSubChainDepth 8, fail closed); carried into v2 by RFC 0177 §E"
     },
     {
       "code": "sub_chain_depth_exceeded",
@@ -201,7 +201,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0133 \u00a7Unresolved 3 \u2014 the depth ceiling breach (distinct from a cycle)"
+      "source": "RFC 0133 §Unresolved 3 — the depth ceiling breach (distinct from a cycle)"
     },
     {
       "code": "unsupported_stream_mode",
@@ -226,13 +226,13 @@
                 "debug"
               ]
             },
-            "description": "Each individual mode the host serves; combinations are not listed (events.md \u00a7The events channel)."
+            "description": "Each individual mode the host serves; combinations are not listed (events.md §The events channel)."
           }
         },
         "additionalProperties": true
       },
       "since": "1.0",
-      "source": "api/openapi.yaml UnsupportedStreamMode (RFC 0171 \u00a7B.1 folds the one-member enum)"
+      "source": "api/openapi.yaml UnsupportedStreamMode (RFC 0171 §B.1 folds the one-member enum)"
     },
     {
       "code": "until_in_past",
@@ -241,7 +241,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0169 \u00a7A.3 (validation_error details.reason in v1; a code in v2)"
+      "source": "RFC 0169 §A.3 (validation_error details.reason in v1; a code in v2)"
     },
     {
       "code": "validation_error",
@@ -250,7 +250,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "webhook_url_rejected",
@@ -259,7 +259,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "spec/v2/core/webhooks.md \u00a7Egress"
+      "source": "spec/v2/core/webhooks.md §Egress"
     },
     {
       "code": "audience_mismatch",
@@ -268,7 +268,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1"
+      "source": "RFC 0170 §B.1"
     },
     {
       "code": "connector_auth_expired",
@@ -277,7 +277,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "credential_revoked",
@@ -286,7 +286,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.3"
+      "source": "RFC 0170 §B.3"
     },
     {
       "code": "delegation_expired",
@@ -295,7 +295,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1"
+      "source": "RFC 0170 §B.1"
     },
     {
       "code": "identity_unresolvable",
@@ -304,7 +304,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1"
+      "source": "RFC 0170 §B.1"
     },
     {
       "code": "identity_unverified",
@@ -313,7 +313,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1 / RFC 0154"
+      "source": "RFC 0170 §B.1 / RFC 0154"
     },
     {
       "code": "interrupt_token_invalid",
@@ -322,7 +322,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7E.1"
+      "source": "RFC 0170 §E.1"
     },
     {
       "code": "key_revoked",
@@ -331,7 +331,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "sender_constraint_missing",
@@ -340,7 +340,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.4"
+      "source": "RFC 0170 §B.4"
     },
     {
       "code": "unauthenticated",
@@ -349,7 +349,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "credential_forbidden",
@@ -358,7 +358,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "delegation_scope_amplified",
@@ -367,7 +367,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7B.1"
+      "source": "RFC 0170 §B.1"
     },
     {
       "code": "forbidden",
@@ -394,7 +394,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0170 \u00a7D.1 (an id whose tenant segment is not the caller's)"
+      "source": "RFC 0170 §D.1 (an id whose tenant segment is not the caller's)"
     },
     {
       "code": "mock_provider_forbidden",
@@ -421,7 +421,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "sandbox_capability_denied",
@@ -430,7 +430,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "sandbox_escape_attempt",
@@ -439,7 +439,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "workspace_membership_required",
@@ -448,7 +448,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "credential_not_found",
@@ -457,7 +457,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "interrupt_not_found",
@@ -475,7 +475,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "pack_version_not_found",
@@ -493,7 +493,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "signature_not_available",
@@ -511,7 +511,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0172 \u00a7A.3"
+      "source": "RFC 0172 §A.3"
     },
     {
       "code": "connection_provider_conflict",
@@ -520,7 +520,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/connection-packs.md; RFC 0177 \u00a7D.1 fail-closed"
+      "source": "spec/v1/connection-packs.md; RFC 0177 §D.1 fail-closed"
     },
     {
       "code": "envelope_correlation_conflict",
@@ -538,7 +538,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/idempotency.md \u00a7Concurrent duplicates (v1 MUST; RFC 0171 \u00a7B.2 keeps one mismatch code, this is the in-flight state)"
+      "source": "spec/v1/idempotency.md §Concurrent duplicates (v1 MUST; RFC 0171 §B.2 keeps one mismatch code, this is the in-flight state)"
     },
     {
       "code": "idempotency_key_mismatch",
@@ -547,7 +547,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/idempotency.md (the only spelling; RFC 0171 \u00a7B.2)"
+      "source": "spec/v1/idempotency.md (the only spelling; RFC 0171 §B.2)"
     },
     {
       "code": "interrupt_already_resolved",
@@ -556,7 +556,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/interrupt.md (409/410 overlap: RFC 0171 row C4.6 \u2014 one code per state)"
+      "source": "spec/v1/interrupt.md (409/410 overlap: RFC 0171 row C4.6 — one code per state)"
     },
     {
       "code": "pack_dependency_conflict",
@@ -583,7 +583,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "replay_memory_snapshot_unavailable",
@@ -592,7 +592,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "run_already_active",
@@ -601,7 +601,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "run_terminal",
@@ -625,13 +625,13 @@
         "properties": {
           "runStatus": {
             "type": "string",
-            "description": "The run status that refused the transition (runs.md \u00a7Pause and resume)."
+            "description": "The run status that refused the transition (runs.md §Pause and resume)."
           }
         },
         "additionalProperties": true
       },
       "since": "2.0",
-      "source": "spec/v2/core/runs.md \u00a7Pause and resume"
+      "source": "spec/v2/core/runs.md §Pause and resume"
     },
     {
       "code": "version_conflict",
@@ -649,7 +649,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "interrupt_cancelled",
@@ -676,7 +676,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "spec/v2/core/errors.md \u00a7The envelope \u2014 a request body a host refuses on size before parsing it (RFC 9110 \u00a715.5.14); registered 2026-09-05 because both production hosts had to invent it"
+      "source": "spec/v2/core/errors.md §The envelope — a request body a host refuses on size before parsing it (RFC 9110 §15.5.14); registered 2026-09-05 because both production hosts had to invent it"
     },
     {
       "code": "workspace_too_large",
@@ -685,7 +685,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "unsupported_media_type",
@@ -694,7 +694,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "spec/v2/core/errors.md \u00a7The envelope \u2014 a request body whose Content-Type the host does not accept (RFC 9110 \u00a715.5.16); registered 2026-09-05 because both production hosts had to invent it"
+      "source": "spec/v2/core/errors.md §The envelope — a request body whose Content-Type the host does not accept (RFC 9110 §15.5.16); registered 2026-09-05 because both production hosts had to invent it"
     },
     {
       "code": "capability_not_provided",
@@ -703,7 +703,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "capability_required",
@@ -712,7 +712,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "credential_required",
@@ -721,7 +721,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "envelope_invalid",
@@ -730,7 +730,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "envelope_refusal",
@@ -739,7 +739,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "envelope_truncation_unrecoverable",
@@ -748,7 +748,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "fork_point_invalid",
@@ -757,7 +757,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "spec/v2/core/runs.md \u00a7Fork"
+      "source": "spec/v2/core/runs.md §Fork"
     },
     {
       "code": "loop_limit_exceeded",
@@ -766,7 +766,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "mcp_mrtr_rounds_exceeded",
@@ -775,7 +775,7 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0175 \u00a7E.1"
+      "source": "RFC 0175 §E.1"
     },
     {
       "code": "pack_runtime_requirement_unmet",
@@ -793,7 +793,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "residency_unavailable",
@@ -802,7 +802,7 @@
       "retriable": true,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "run_timeout",
@@ -811,7 +811,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "sandbox_memory_exceeded",
@@ -820,7 +820,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "sandbox_timeout",
@@ -829,7 +829,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "token_budget_exceeded",
@@ -838,7 +838,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "client_version_unsupported",
@@ -856,7 +856,7 @@
       "retriable": true,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "event_type_unmapped",
@@ -865,7 +865,44 @@
       "retriable": false,
       "details": null,
       "since": "2.0",
-      "source": "RFC 0176 \u00a7A.3 (a run whose log the host cannot translate is not readable)"
+      "source": "RFC 0176 §A.3 (a run whose log the host cannot translate is not readable)"
+    },
+    {
+      "code": "payload_unprojectable",
+      "httpStatus": 500,
+      "statusSource": "v2 decision (sibling of event_type_unmapped)",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "keys"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "the event type whose payload could not be projected"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "the property names the host could neither carry nor seat"
+          },
+          "eventId": {
+            "$ref": "ids.schema.json#/$defs/eventId"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "since": "2.3",
+      "source": "RFC 0185 §C (a row whose payload the host can neither carry nor seat is not readable under that contract — the property-level sibling of event_type_unmapped; never retried: it is a permanent fact about the row)"
     },
     {
       "code": "internal_error",
@@ -874,7 +911,7 @@
       "retriable": true,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "pack_load_failure",
@@ -892,7 +929,7 @@
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     },
     {
       "code": "pack_registry_unreachable",
@@ -910,7 +947,7 @@
       "retriable": true,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md \u00a7Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape"
     }
   ]
 }

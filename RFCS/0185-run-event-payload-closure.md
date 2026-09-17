@@ -67,7 +67,7 @@ This is deliberately the *same* pattern as RFC 0177 §C.2 rather than a new one.
 
 ### §C Silence is not a disposition (normative)
 
-**A host MUST NOT silently drop a property when projecting a run-event payload.** It MUST either carry it (under §B, or because the def names it), or fail the projection.
+**A host MUST NOT silently drop a property when projecting a run-event payload.** It MUST either carry it (under §B, or because the def names it), or fail the projection `500 payload_unprojectable` (`spec/v2/errors.json`, registered 2.3.2 — the property-level sibling of `event_type_unmapped`; not retriable, because an unseatable property is a permanent fact about the row, and a webhook fan-out MUST dead-letter it on the first attempt rather than retry).
 
 Dropping is currently the cheapest implementation and the only one that leaves no trace. Both reporting hosts arrived at it independently, neither intended it, and one of them found it only because a *different* audit went looking for something else.
 
