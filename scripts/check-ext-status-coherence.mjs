@@ -26,11 +26,17 @@ const fams = Array.isArray(decl.families) ? Object.fromEntries(decl.families.map
 const extFamilies = new Map(Object.entries(fams).filter(([, v]) => v && v.anchor === 'ext'));
 
 // certified passing rows: familyKey -> bundle names
+const problems = [];
 const witnessed = new Map();
 const bundlesDir = join(ROOT, 'evidence', 'v2-host-bundles');
 for (const f of existsSync(bundlesDir) ? readdirSync(bundlesDir) : []) {
   if (!f.endsWith('.json')) continue;
-  const b = readJson(join(bundlesDir, f));
+  let b;
+  try { b = readJson(join(bundlesDir, f)); } catch (err) {
+    // An unreadable bundle is a finding, not a stack trace — and it must not
+    // silently shrink the witnessed set, which would demote a Stable doc.
+    problems.push(`${f}: unreadable bundle (${err instanceof Error ? err.message : String(err)})`); continue;
+  }
   const certified = (b.claimedProfiles ?? []).some((p) => p && p.certified === true);
   if (!certified) continue;
   const rows = b.results?.requirements ?? [];
@@ -42,7 +48,7 @@ for (const f of existsSync(bundlesDir) ? readdirSync(bundlesDir) : []) {
   }
 }
 
-const problems = []; const graduable = []; let checked = 0;
+const graduable = []; let checked = 0;
 for (const dir of readdirSync(EXT)) {
   const readme = join(EXT, dir, 'README.md');
   if (!existsSync(readme)) continue;

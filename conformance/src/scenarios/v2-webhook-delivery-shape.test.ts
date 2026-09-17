@@ -102,7 +102,7 @@ function v2RunEventValidator(): (doc: unknown) => { ok: boolean; errors: string 
 
 describe('webhook delivery shape is per-contract (webhooks.md §Deliveries, versioning.md §1.2)', () => {
   let active: Server | null = null;
-  afterEach(async () => { if (active) { await new Promise<void>((r) => active!.close(() => r())); active = null; } });
+  afterEach(async () => { const s = active; active = null; if (s) await new Promise<void>((r) => s.close(() => r())); });
 
   it('a major-2 subscriber receives the v2 payload: the body validates and owner is exactly {tenant, subject}', async () => {
     if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
