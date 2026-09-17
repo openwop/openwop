@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-17T16:14:32.566Z",
+  "generatedAt": "2026-09-17T16:44:28.540Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.3.2",
+    "version": "2.3.3",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.3.2",
-    "stampSha256": "289cdb31636a1924cde0a125d8cd2d5d1ae5d9c590a59ec10dddf0344ebac4a2"
+    "specArtifactsVersion": "2.3.3",
+    "stampSha256": "9f6224ad9ab04be25d40ba336e3992ec1c65ed4675f1b6c10298573ca42177af"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "4e164465af07a1206792f3dc93aeb5d26cb97d24"
+      "id": "2d37375093474d26436239594426ba17a52f699c"
     },
     "signingKeyId": "v2-reference-3"
   },
@@ -684,7 +684,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 13
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1751,7 +1751,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 9
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1773,8 +1773,8 @@
       }
     ]
   },
-  "witnessSha256": "2a400860063565518dfc5fba5c199362cc68f819807cf13c57fbf3bb7530cbb9",
-  "assertionCount": 1682,
+  "witnessSha256": "429fedbc53ebef50f091ca619eb2e1be4db79f1ca127d716244c575f7eb6eae0",
+  "assertionCount": 1686,
   "detail": {
     "nonPass": [
       {
@@ -2002,7 +2002,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-3",
-    "sig": "tq1TLSa6QaVOQ0COFRrQYPOcblz-rXM5P0zArkC0uVrH7UH7nrUXIEuYetf55vd9HhmKuWBtn_QYpvfxzdcMCw",
+    "sig": "8_PM4vrAE_iPRQd_Npa5d3QeP8KFYM_yKNXsjZlSD2bF9aWFsYCbHtP8hDSJYuzRhkFkYxVvb22L8N2ar-_zAA",
     "over": [
       "witnessSha256",
       "host.build",
