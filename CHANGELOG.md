@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Changed
 
+- **RFC 0174 §E.2a — the core word budget stays at 25,000 and the rule already practised is now written down:** core prose carries the MUSTs; rationale, measurement and history live in schema `description`/`$comment` fields, which the budget does not count. Two guards from a real near-miss (a compression briefly changed `MUST NOT rewrite era-2 rows in place` before review caught it): a budget trim MUST NOT alter a normative clause — diff the RFC 2119 sentences before and after — and a paragraph that duplicates a schema description is deleted, not compressed. Raising the ceiling was rejected: 16 core RFCs have landed against it. Governance prose only; no wire change; no cut.
+
+### Changed
+
 - **RFC 0183 and RFC 0184: `Active → Accepted`, tier-1.** The reference host `app.openwop.dev` now runs openwop-app `0ab209b0e` on suite 2.2.1.
   - **RFC 0183:** its served certification bundle records every `interrupt-approval` requirement `executed-pass`, with no skips. That covers the refine and edit-accept round-trips and both refusal legs.
   - **RFC 0184, accept side:** measured on the production front door. `~2F` and `%2F` both answer 403 `id_tenant_mismatch`, so the id is decoded; the pre-RFC build answered 404.
