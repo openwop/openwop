@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.3.3] — 2026-09-17 — the retirement lane bites again
+
+**Why a patch.** One leg corrected, nothing added or removed.
+
+### Fixed
+
+- **`v2-bound-id-path-projection.test.ts`** — the double-projection leg expects
+  `404` on a dual-stack host and `400 validation_error` on a single-major one
+  (`identity.md` §5 refuses the bare form once no 1.x member is advertised),
+  read from `protocolVersions`. Found by the reference host's retirement lane.
+- **`v2-webhook-delivery-shape.test.ts`** — one Ajv per wire, cached across legs.
+
 ## [2.3.2] — 2026-09-17 — the webhook reader read the wrong field
 
 **Why a patch.** No scenario is added or removed; one is corrected. The 2.3.1 file asserted `event.owner` on a `run.completed` delivery — the envelope is closed and names no `owner`, and that payload carries none — so leg 1 was unsatisfiable and leg 3 vacuous on every host. Found by the reference host's W4 cut.

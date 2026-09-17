@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-Polling a run for progress is inefficient, and SSE cannot reach systems that need server-to-server delivery. A client registers a URL and an event filter once; the host POSTs matching events, signed, as they happen. In v2 durable delivery binds with the surface — a signed event that may be dropped is not a delivery contract.
+Polling is inefficient and SSE cannot reach server-to-server consumers. A client registers a URL and an event filter once; the host POSTs matching events, signed, as they happen. In v2 durable delivery binds with the surface — a signed event that may be dropped is not a delivery contract.
 
 ## Surfaces
 
@@ -49,9 +49,10 @@ Durable delivery is an obligation of the `webhooks` surface (RFC 0173 §B; secur
 
 - retry a failed attempt per its advertised `retryPolicy` (`maxAttempts`, `backoff ∈ none | fixed | exponential`) with backoff between attempts;
 - route a delivery whose retries are exhausted to the dead-letter sink, inspectable for `retentionDays`, rather than drop it;
-- deliver each matching event at least once; a receiver MAY observe the same event more than once.
+- deliver each matching event at least once; a receiver MAY observe the same event more than once;
+- dead-letter a `payload_unprojectable` delivery (events.md §Era-2) on the first attempt, never retry it.
 
-Best-effort delivery is not a conforming mode. A `3xx` response is a delivery failure and is retried under the same policy. The `webhook-durable-delivery` scenario observes retry then dead-letter (conformance.md).
+Best-effort delivery is not a conforming mode. A `3xx` response is a delivery failure, retried under the same policy. `webhook-durable-delivery` witnesses it.
 
 ## Replay
 

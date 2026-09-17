@@ -23,6 +23,18 @@ const ledgerPath = join(ROOT, 'evidence', 'corpus-ledger.json');
 const ledger = existsSync(ledgerPath) ? JSON.parse(readFileSync(ledgerPath, 'utf8')) : { requirements: {} };
 const failures = [];
 const hostGaps = [];
+// Every requirement id any v2-era RFC declares in its Falsifiability table. A
+// row id under a parent (`<id>.<leg>`) witnesses the parent ONLY when it is a
+// leg — not when it is itself a declared requirement: two real pairs exist
+// (0168 bundle-signature-attributable ⊂ .v1-root, 0176 well-known-one-resource
+// ⊂ .v2-representation), and a pass on the refinement must not stand in for
+// the base's own scenario.
+const declaredIds = new Set();
+for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n))) {
+  if (Number(f.slice(0, 4)) < 167) continue;
+  const t = readFileSync(join(RFCS, f), 'utf8').split(/### Falsifiability/)[1]?.split(/^## /m)[0] ?? '';
+  for (const row of t.split('\n')) if (row.startsWith('| §') || row.startsWith('| `openwop.requirement')) for (const m of row.matchAll(/openwop\.requirement\.[a-z0-9.-]+/g)) declaredIds.add(m[0]);
+}
 // every requirement id with an executed-pass row in any committed host bundle
 const bundleRows = new Set();
 {
@@ -70,7 +82,7 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
         // on every committed bundle). An exact-key lookup reported those three
         // RFC 0169 ids as unwitnessed for four days while every bundle carried
         // them. A parent is witnessed when it or any leg under it passes.
-        const witnessed = (rowId) => rowId === id || rowId.startsWith(`${id}.`);
+        const witnessed = (rowId) => rowId === id || (rowId.startsWith(`${id}.`) && !declaredIds.has(rowId));
         const inLedger = Object.entries(ledger.requirements ?? {}).some(([k, rows]) => witnessed(k) && rows.some((r) => r.result === 'executed-pass'));
         const inBundle = [...bundleRows].some(witnessed);
         if (!inLedger && !inBundle) hostGaps.push(`${f.slice(0, 4)} ${id}`);

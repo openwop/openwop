@@ -13,8 +13,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [2.3.3] — 2026-09-17 — the retirement lane bites again
+
 ### Fixed
 
+- **`v2-bound-id-path-projection` failed a conformant single-major host.** The double-projection leg asserted `404` unconditionally. Decoded once, a double projection is a *bare* id; through the overlap it resolves under the caller's tenant and is not found, but once a host advertises no 1.x member `identity.md` §5 requires the bare form to be refused `400 validation_error` — which is exactly what the reference host's retirement lane did, and the leg called it a failure. The leg now expects `404` on a dual-stack host and `400 validation_error` on a single-major one, read from `protocolVersions`. Second time the retirement lane has caught what no dual-stack host can surface (rc-era `v2-version-header-honored` was the first). Suite `2.3.3`, spec-artifacts `2.3.3`.
+- **`v2-webhook-delivery-shape` builds one Ajv per wire, cached across legs** (code review).
+- **The `payload_unprojectable` dead-letter rule is stated where core owns delivery.** 2.3.2 put "dead-letter on the first attempt, never retry" in RFC 0185 §C alone; `webhooks.md` §Durability now carries it and the RFC cites it (architect finding, normative ownership).
+- **`check-accepted-predicate.mjs` roll-up cannot be satisfied by a sibling requirement.** A `<id>.<leg>` row witnesses its parent only when it is not itself a declared Falsifiability id — two such pairs exist (0168 `bundle-signature-attributable` / `.v1-root`, 0176 `well-known-one-resource` / `.v2-representation`). Sabotage-proved.
 - **`check-accepted-predicate.mjs` host-tier witness check is a failure, and it rolls legs up to their requirement (W5).** RFC 0174 §B.1 rule 4 names host bundles as evidence; since #1373 an Accepted RFC's host-tier id with no `executed-pass` row anywhere was *reported*, because three RFC 0169 ids read as unwitnessed. They were witnessed on every committed bundle — as suffixed legs (`capability-record-shape.required-fields`, …) that an exact-key lookup missed. A requirement is now witnessed when it or any `<id>.<leg>` under it passes, in the ledger or a bundle, and a real gap fails the gate. Sabotage-proved: removing those legs from every bundle reds it.
 - **`GOVERNANCE.md` §"Acceptance evidence tiers" regains its "Deployed, not merged" rule.** RFC 0165's `Updated` field and the CHANGELOG entry for #1222 both cite the rule "a merge is a promise; only a deployment is a witness". The paragraph that states it was written on a revert branch that never landed, so both citations pointed at text main did not have. It is restored as written, except that its history now matches #1222: the revert to `Active` was drafted, never landed, and the acceptance was re-grounded on deployed evidence instead.
 
