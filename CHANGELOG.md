@@ -15,6 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Fixed
 
+- **`check-accepted-predicate.mjs` host-tier witness check is a failure, and it rolls legs up to their requirement (W5).** RFC 0174 §B.1 rule 4 names host bundles as evidence; since #1373 an Accepted RFC's host-tier id with no `executed-pass` row anywhere was *reported*, because three RFC 0169 ids read as unwitnessed. They were witnessed on every committed bundle — as suffixed legs (`capability-record-shape.required-fields`, …) that an exact-key lookup missed. A requirement is now witnessed when it or any `<id>.<leg>` under it passes, in the ledger or a bundle, and a real gap fails the gate. Sabotage-proved: removing those legs from every bundle reds it.
 - **`GOVERNANCE.md` §"Acceptance evidence tiers" regains its "Deployed, not merged" rule.** RFC 0165's `Updated` field and the CHANGELOG entry for #1222 both cite the rule "a merge is a promise; only a deployment is a witness". The paragraph that states it was written on a revert branch that never landed, so both citations pointed at text main did not have. It is restored as written, except that its history now matches #1222: the revert to `Active` was drafted, never landed, and the acceptance was re-grounded on deployed evidence instead.
 
 ## [2.3.2] — 2026-09-17 — the webhook reader read the wrong field
