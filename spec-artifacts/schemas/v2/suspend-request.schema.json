@@ -93,6 +93,11 @@
           "type": "string",
           "minLength": 1
         },
+        "onTimeout": {
+          "type": "string",
+          "enum": ["reject", "approve", "escalate"],
+          "description": "RFC 0186 §A.3 — the disposition applied when `timeoutMs` elapses with no resolution. Every gate with a timer needs one; two production hosts recorded it as a bare key on `approval.requested` (280 rows on one) because the seat did not exist. `escalate` pairs with a host-defined escalation target. A `timeoutMs` of `0` means no timer, and `onTimeout` is then meaningless."
+        },
         "description": {
           "type": "string"
         },

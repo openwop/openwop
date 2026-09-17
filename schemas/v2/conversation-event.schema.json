@@ -214,30 +214,8 @@
       ]
     },
     "ConversationExchangedPayload": {
-      "type": "object",
-      "description": "Payload for `RunEventType: 'conversation.exchanged'`. Emitted on each `operation: 'exchange'` turn round-trip. The `turnIndex` MUST monotonically increase within a `conversationId`.",
-      "required": [
-        "conversationId",
-        "turnIndex",
-        "turn"
-      ],
-      "properties": {
-        "conversationId": {
-          "type": "string",
-          "description": "MUST match the `conversation.opened` payload's `conversationId`.",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "turnIndex": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "1-based index within the conversation. `conversation.opened.initialTurn` is `turnIndex: 0`; the first `exchanged` is `turnIndex: 1`; etc."
-        },
-        "turn": {
-          "$ref": "#/$defs/ConversationTurn"
-        }
-      },
-      "additionalProperties": false
+      "$ref": "run-event-payloads.schema.json#/$defs/conversationExchanged",
+      "description": "RFC 0186 §A.1 — an ALIAS of the codemap-bound def, kept so this file's own `$ref` and any consumer that reached this name keep resolving. Until 0186 this was a second, closed def for the same event that REQUIRED `turn` while the bound def could not carry it; a tier-1 host emitted this shape and failed the bound def for as long as both existed. The union lives in one place now and `turn` is optional there."
     },
     "ConversationClosedPayload": {
       "type": "object",

@@ -45,8 +45,18 @@ const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
  * as loudly as an unwaived one, so the list cannot become a parking lot.
  */
 const PENDING = new Map([
-  ['approvalRequested', 'v1 inline object with additionalProperties:true; v2 collapses onto suspend-request.schema.json, which is closed AND was closed in v1. Hatching that file would widen a schema that was never open, so the remedy depends on whether hosts record extras here — asked 2026-09-17, not guessed (RFC 0185 §E).'],
-  ['clarificationRequested', 'same chain and same question as approvalRequested.'],
+  ['clarificationRequested', 'v1 inline object with additionalProperties:true; v2 collapses onto suspend-request.schema.json ClarificationData. One production host has NO emitter for it (no sample in 3000 runs); the other has not answered. If neither emits it, this row is a deletion, not a hatch (RFC 0185 §E).'],
+]);
+
+/**
+ * Open → closed defs whose narrowing was DELIBERATE and resolved by modelling
+ * the seat rather than hatching it. Also shrink-only, also cited. The
+ * difference from PENDING is that these are decided: the fields hosts recorded
+ * have a named place now, so a hatch would only invite them to go back to bare
+ * keys.
+ */
+const MODELLED = new Map([
+  ['approvalRequested', 'RFC 0186 §A.3 — suspend-request.schema.json ApprovalData already seated title/artifactId/artifactType/actions/description; timeout is suspend-request.timeoutMs; the one genuinely unseated field, onTimeout (reject|approve|escalate), was added. The historical bare keys were the WRONG MODEL, not extras on the right one — hatching would keep them wrong.'],
 ]);
 
 /** Resolve a schema through `$ref` (within-file and cross-file) to its effective form. */
@@ -112,10 +122,13 @@ for (const [name, raw2] of Object.entries(v2Defs)) {
   // the hatch may sit on the def OR on whatever it resolves to
   const hatched = Boolean(raw2.patternProperties?.[HATCH] ?? e2.patternProperties?.[HATCH]);
   const waived = PENDING.get(name);
-  if (hatched && waived) {
-    problems.push(`${name} is waived as PENDING but IS hatched — drop the waiver`);
+  const modelled = MODELLED.get(name);
+  if (hatched && (waived || modelled)) {
+    problems.push(`${name} is listed as ${waived ? 'PENDING' : 'MODELLED'} but IS hatched — drop the entry`);
   } else if (hatched) {
     continue;
+  } else if (modelled) {
+    continue;                                   // deliberate closure with a cited seat
   } else if (waived) {
     pending.push(`${name} — ${waived}`);
   } else {
