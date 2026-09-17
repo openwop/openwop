@@ -64,8 +64,15 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
     const corpus = /\(corpus\)/.test(row);
     for (const id of ids) {
       if (!corpus) {
-        const inLedger = ledger.requirements?.[id]?.some((r) => r.result === 'executed-pass');
-        const inBundle = bundleRows.has(id);
+        // A Falsifiability row names the requirement; the scenarios mint it as
+        // that id OR as suffixed legs (`<id>.<leg>` — capability-record-shape
+        // is witnessed as .required-fields / .until-iff-not-stable / .until-not-past
+        // on every committed bundle). An exact-key lookup reported those three
+        // RFC 0169 ids as unwitnessed for four days while every bundle carried
+        // them. A parent is witnessed when it or any leg under it passes.
+        const witnessed = (rowId) => rowId === id || rowId.startsWith(`${id}.`);
+        const inLedger = Object.entries(ledger.requirements ?? {}).some(([k, rows]) => witnessed(k) && rows.some((r) => r.result === 'executed-pass'));
+        const inBundle = [...bundleRows].some(witnessed);
         if (!inLedger && !inBundle) hostGaps.push(`${f.slice(0, 4)} ${id}`);
       }
     }
@@ -74,12 +81,12 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
 }
 const hostGapsUnique = [...new Set(hostGaps)];
 if (hostGapsUnique.length) {
-  // RFC 0174 §B.1 rule 4 names host bundles as well as the ledger; until every
-  // Accepted RFC's host-tier ids are witnessed on a current bundle this is
-  // REPORTED, not failed — a red that no PR can clear teaches everyone to
-  // ignore it. Flip to a failure once W4 re-cuts the bundles (gap-closure W5).
-  console.warn(`  host-tier requirement ids with no executed-pass row in the ledger OR any committed bundle: ${hostGapsUnique.length}`);
-  for (const g of hostGapsUnique) console.warn(`    ${g}`);
+  // RFC 0174 §B.1 rule 4 names host bundles as well as the ledger. A failure
+  // since 2.3.2 (gap-closure W5): every Accepted RFC's host-tier id is
+  // witnessed on a committed bundle today, so a new gap is a real one — an
+  // RFC accepted on a witness no host has produced, or a bundle re-cut that
+  // lost a row. Either is the thing this gate exists to refuse.
+  failures.push(`host-tier requirement ids with no executed-pass row in the ledger OR any committed bundle (RFC 0174 §B.1 rule 4): ${hostGapsUnique.join(', ')}`);
 }
 if (failures.length) { console.error('=== check-accepted-predicate FAILED ===\n  ' + failures.join('\n  ')); process.exit(1); }
 console.log(`=== check-accepted-predicate OK — ${checked} v2-era Accepted RFC(s) satisfy RFC 0174 §B.1 ===`);
