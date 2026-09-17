@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **`GOVERNANCE.md` §"Acceptance evidence tiers" regains its "Deployed, not merged" rule.** RFC 0165's `Updated` field and the CHANGELOG entry for #1222 both cite the rule "a merge is a promise; only a deployment is a witness". The paragraph that states it was written on a revert branch that never landed, so both citations pointed at text main did not have. It is restored as written, except that its history now matches #1222: the revert to `Active` was drafted, never landed, and the acceptance was re-grounded on deployed evidence instead.
+
 ## [2.3.1] — 2026-09-17 — a channel nobody's scenario read, a register that could not bite, a status that could only go one way
 
 ### Added
