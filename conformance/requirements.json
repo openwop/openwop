@@ -29227,51 +29227,69 @@
       ]
     },
     {
-      "id": "openwop.it.v2-webhook-delivery-shape.a-major-2-subscriber-receives-the-v2-payload-the-body-validates-and-owner-is-exa",
+      "id": "openwop.it.v2-webhook-delivery-shape.a-major-2-subscriber-receives-the-v2-rendering-the-delivery-validates-and-run-st",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 107,
-      "title": "a major-2 subscriber receives the v2 payload: the body validates and owner is exactly {tenant, subject}",
+      "line": 172,
+      "title": "a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
         {
-          "section": "spec/v2/core/webhooks.md §Deliveries",
+          "section": "spec/v2/core/webhooks.md §Delivery",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/webhooks.md §Deliveries",
-          "requirement": "a major-2 delivery's owner MUST be exactly {tenant, subject} — a v1 owner block (principal, principalKind) on a v2 delivery is the fan-out forwarding the in-process dialect instead of projecting"
+          "section": "spec/v2/core/webhooks.md §Delivery",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/webhooks.md §Delivery",
+          "requirement": "a major-2 run.started payload MUST carry the owner echo { tenant, subject } (identity.md §1; run-event-payloads runStarted.owner requires both)"
+        },
+        {
+          "section": "spec/v2/core/webhooks.md §Delivery",
+          "requirement": "a major-2 owner echo MUST NOT carry the v1 keys principal / principalKind — that is the fan-out forwarding the in-process dialect instead of projecting"
+        },
+        {
+          "section": "spec/v2/core/webhooks.md §Delivery",
+          "requirement": "a major-2 owner echo carries tenant and subject"
         }
       ]
     },
     {
-      "id": "openwop.it.v2-webhook-delivery-shape.a-major-1-subscriber-still-receives-principal-the-v1-wire-does-not-move-mid-over",
+      "id": "openwop.it.v2-webhook-delivery-shape.a-major-1-subscriber-still-receives-the-v1-rendering-the-v1-wire-does-not-move-m",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 123,
-      "title": "a major-1 subscriber still receives principal — the v1 wire does not move mid-overlap",
+      "line": 191,
+      "title": "a major-1 subscriber still receives the v1 rendering — the v1 wire does not move mid-overlap",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
         {
           "section": "spec/v2/core/versioning.md §1.2",
-          "requirement": "a major-1 subscriber MUST still receive the v1 owner block (principal) — projecting every channel to v2 is as wrong as projecting none; the projection is contract-scoped"
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/versioning.md §1.2",
+          "requirement": "a v1 owner echo, when present, names the tenant (v1 runStarted.owner requires it)"
         }
       ]
     },
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-seeded-era-2-run-is-delivered-projected-too-the-fan-out-branch-a-fresh-run-can",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 140,
+      "line": 214,
       "title": "a seeded era-2 run is delivered projected too — the fan-out branch a fresh run cannot reach (seam-gated)",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
         {
-          "section": "spec/v2/core/webhooks.md §Deliveries",
+          "section": "spec/v2/core/webhooks.md §Delivery",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/webhooks.md §Deliveries",
-          "requirement": "a projected era-2 delivery MUST NOT carry the v1 owner block"
+          "section": "spec/v2/core/webhooks.md §Delivery",
+          "requirement": "a projected era-2 delivery MUST NOT carry the v1 owner keys"
         }
       ]
     },

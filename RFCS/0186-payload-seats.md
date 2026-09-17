@@ -69,7 +69,7 @@ RFC 0185's closure gate waived `approvalRequested` pending host input. The tier-
 
 **The closure gate learns a third disposition.** `approvalRequested` moves from `PENDING` to a new `MODELLED` map in `check-payload-closure-hatched.mjs`: a deliberate open → closed narrowing whose remedy was a seat, cited. Hatching it would only invite hosts back to bare keys. Shrink-only like `PENDING`; a `MODELLED` def that turns out to be hatched fails the gate.
 
-**`clarificationRequested` stays `PENDING`.** The tier-2 host has no emitter for it (no sample in 3000 runs — clarifications route through `SuspendManager` and surface as `node.suspended{kind:'clarification'}`); the tier-1 host has not answered. If neither emits it, the waiver becomes a deletion.
+**`clarificationRequested` is a deletion (2.3.2).** Neither host emits it: the tier-2 host has no emitter (no sample in 3000 runs — clarifications route through `SuspendManager` and surface as `node.suspended{kind:'clarification'}`), and the tier-1 host measured one hit, a type list in its divergence classifier, with zero write-seam samples (2026-09-17). A def with no population is a deletion under RFC 0185 §E: `ClarificationData` is the only shape, the def stays closed, and the row moves to `MODELLED` so a future hatch fails the gate.
 
 ## Compatibility
 
@@ -83,7 +83,6 @@ Sabotage-proved: removing `turn` from the union, removing `reason` from `nodeSus
 
 ## Unresolved
 
-- `clarificationRequested` — deletion or seat, pending the tier-1 host's emitter answer.
 - Whether `reason`'s domain should close to an enum once both hosts' values stabilise. Not now: the values are host-grown and a fifth would otherwise need an RFC.
 - `escalate` names a target the corpus does not model (`escalationTarget`, `escalationTimeout` on one host). Out of scope here; recorded so it is not rediscovered.
 

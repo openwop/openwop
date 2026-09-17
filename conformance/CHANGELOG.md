@@ -1,5 +1,25 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.3.2] — 2026-09-17 — the webhook reader read the wrong field
+
+**Why a patch.** No scenario is added or removed; one is corrected. The 2.3.1 file asserted `event.owner` on a `run.completed` delivery — the envelope is closed and names no `owner`, and that payload carries none — so leg 1 was unsatisfiable and leg 3 vacuous on every host. Found by the reference host's W4 cut.
+
+### Fixed
+
+- **`v2-webhook-delivery-shape.test.ts`** — subscribes to `run.started`, whose
+  payload is where the owner echo lives (`runStarted.owner`). Leg 1 validates the
+  delivery against `webhook-delivery.schema.json` (v2) and the payload against the
+  v2 `runStarted` definition; the owner carries `subject`, never `principal`.
+  Leg 2 registers at `POST /v1/webhooks` (`versioning.md` §1.4) and validates the
+  payload against the **v1** `runStarted` definition — the owner's keys are not
+  the discriminator (v1 admits `subject`, RFC 0165 §B); the integer-vs-string
+  `engineVersion` is. A host with no 1.x webhook surface records leg 2
+  `inapplicable`. Leg 3 reads the seeded era-2 run's `run.started`; a host that
+  does not fan out seeded history records it `inapplicable`. Two 2.3.1 gates were
+  vacuous and are fixed: leg 2 read `versions.supported` (no such field — it is
+  `protocolVersions`), leg 3 read `era2Gate`'s `null` (= seam advertised) as
+  absence. Same requirement id, same gate.
+
 ## [2.3.1] — 2026-09-17 — the webhook body is finally read
 
 **Why a patch.** One scenario file is added, which `PROTOCOL-STATUS.md` calls a minor — but the previous cut (2.3.0) was a minor ninety minutes ago and this file witnesses a MUST that predates it; cut as a patch alongside the register and ext-rule edits it ships with. If that reads as bending the rule, the rule wins and this becomes 2.4.0 on review.

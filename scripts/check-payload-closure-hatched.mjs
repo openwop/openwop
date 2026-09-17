@@ -45,7 +45,6 @@ const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
  * as loudly as an unwaived one, so the list cannot become a parking lot.
  */
 const PENDING = new Map([
-  ['clarificationRequested', 'v1 inline object with additionalProperties:true; v2 collapses onto suspend-request.schema.json ClarificationData. One production host has NO emitter for it (no sample in 3000 runs); the other has not answered. If neither emits it, this row is a deletion, not a hatch (RFC 0185 §E).'],
 ]);
 
 /**
@@ -56,6 +55,7 @@ const PENDING = new Map([
  * keys.
  */
 const MODELLED = new Map([
+  ['clarificationRequested', 'RFC 0185 §E deletion, decided 2026-09-17: NEITHER production host emits it — tier 2: no sample in 3000 runs (clarifications surface as node.suspended{kind:clarification} via ctx.suspend); tier 1 (origin/main db7211fe1): one hit and it is a type list, zero write-seam samples. A def with no population is a deletion, not a hatch; ClarificationData (suspend-request.schema.json) is the only shape and the def stays closed. A future hatch here fails this gate.'],
   ['approvalRequested', 'RFC 0186 §A.3 — suspend-request.schema.json ApprovalData already seated title/artifactId/artifactType/actions/description; timeout is suspend-request.timeoutMs; the one genuinely unseated field, onTimeout (reject|approve|escalate), was added. The historical bare keys were the WRONG MODEL, not extras on the right one — hatching would keep them wrong.'],
 ]);
 
