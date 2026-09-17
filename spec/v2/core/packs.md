@@ -12,9 +12,9 @@ A manifest's `engines.openwop` MUST match the grammar in `schemas/v2/node-pack-m
 
 ## The registry tree
 
-The registry is versioned by tree, not by header. It publishes `registry/v2/packs/<name>/-/<version>.{json,sbom.json,sig,tgz}` as a parallel tree of re-signed manifests with regenerated SBOMs and index; the v1 tree is served read-only through the overlap. A signed compatibility overlay MUST be rejected: signatures authorize by namespace, and a mirror re-derives the signer at ingest.
+The registry is versioned by tree, not header. It publishes `registry/v2/packs/<name>/-/<version>.{json,sbom.json,sig,tgz}` as a parallel tree of re-signed manifests with regenerated SBOMs and index; the v1 tree is frozen through the overlap, deliberately behind this one. A signed compatibility overlay MUST be rejected: signatures authorize by namespace, and a mirror re-derives the signer at ingest.
 
-`.well-known/openwop-registry.json` `endpoints` is the negotiation: it names both trees, and a client MUST resolve every registry path through `endpoints` rather than by constructing one. `publicKey` is unversioned; keys are not protocol-versioned.
+`.well-known/openwop-registry.json` `endpoints` is the negotiation: it names both trees, and a client MUST resolve every registry path through it rather than construct one. `publicKey` is unversioned: keys are not protocol-versioned.
 
 ## Peer-dependency identifiers
 

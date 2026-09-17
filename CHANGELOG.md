@@ -13,6 +13,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.2.2] — 2026-09-16 — "read-only" did not say the v1 registry tree is deliberately behind
+
+### Fixed
+
+- **`packs.md` §The registry tree: "the v1 tree is served read-only through the overlap" → "frozen through the overlap, deliberately behind this one."** A tier-1 host operator read "read-only" as *current, just not accepting writes*, resolved `packs.openwop.dev/v1/index.json` from a major-2 host, and reported 154 of 156 packs drifted. A second session reproduced and confirmed the number. Against `registry/v2/` — the tree a major-2 client resolves against — the drift was **zero**. The MUST that would have prevented it was already there in the next sentence (*"a client MUST resolve every registry path through `endpoints` rather than construct one"*); what was missing was any hint that constructing the v1 path returns deliberately-older versions rather than an error. Word-neutral: paid for from two adjacent connectives.
+- **`evidence/cross-repo-manifests.json` was stale against `openwop-registry`** for `registry/.well-known/openwop-registry.json` and `registry/scripts/verify-signatures.mjs`, both unchanged since 2026-09-04. **Pre-existing on `origin/main`, independent of this change** — verified by running the check on a clean `origin/main` worktree before touching anything. Re-vendored.
+- **`conformance/package-lock.json` pinned the `@openwop/spec-artifacts` peer at `2.0.0-rc.0`** while `package.json` had moved to the current release. The lockfile's own `version` tracked; its `peerDependencies` did not.
+- **`spec/v2/peer-dependency-aliases.json`** regenerated from the declaration (stale against the registry's published manifests).
+
 ### Added
 
 - **Suite 2.2.1 — RFC 0183 §A.2's `edit-accept` arm is witnessed.** New fixture `conformance-approval-edit-accept` (catalogued in `conformance/fixtures.md`) and two legs in `interrupt-approval.test.ts`: the resolved payload MUST carry `action: "edit-accept"` and the `editedArtifactData` supplied, and an edit-accept with no `editedArtifactData` MUST be refused. The refine arm was witnessed in 2.2.0; this arm was stated in `spec/v2/core/interrupt.md` §Approval and measured nowhere. Gated on fixture advertisement.

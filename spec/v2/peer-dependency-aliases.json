@@ -26,7 +26,7 @@
     {
       "alias": "host.agentRuntime",
       "family": "agentRuntime",
-      "publishedUses": 29,
+      "publishedUses": 41,
       "removalTrigger": "v1-end-of-support"
     },
     {
@@ -92,7 +92,7 @@
     {
       "alias": "host.fs",
       "family": "fs",
-      "publishedUses": 1,
+      "publishedUses": 2,
       "removalTrigger": "v1-end-of-support"
     },
     {
@@ -128,7 +128,7 @@
     {
       "alias": "host.queueBus",
       "family": "queueBus",
-      "publishedUses": 1,
+      "publishedUses": 2,
       "removalTrigger": "v1-end-of-support"
     },
     {
@@ -149,7 +149,7 @@
       "facets": [
         "memoryBackends"
       ],
-      "publishedUses": 9,
+      "publishedUses": 11,
       "removalTrigger": "v1-end-of-support"
     },
     {

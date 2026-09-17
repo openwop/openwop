@@ -1,5 +1,27 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.2.2] — 2026-09-16 — a registry tree that says "read-only" when it means "deliberately behind"
+
+**Why a patch.** `PUBLISHING.md` §"Versioning alignment": no scenario file is
+added or removed; this is spec prose plus packaging metadata.
+
+### Fixed
+
+- **`spec/v2/core/packs.md` §The registry tree** now says the v1 tree is
+  *"frozen through the overlap, deliberately behind this one"* rather than
+  *"served read-only through the overlap."* A tier-1 host operator read
+  "read-only" as *current, just not accepting writes*, resolved
+  `packs.openwop.dev/v1/index.json` from a major-2 host, and reported 154 of 156
+  packs drifted; a second session reproduced and confirmed it. Against
+  `registry/v2/` the drift was **zero**. The MUST that prevents this was already
+  in the next sentence — a client MUST resolve registry paths through
+  `endpoints` rather than construct one — but nothing said that constructing the
+  v1 path returns deliberately-older versions instead of failing.
+- **`package-lock.json`** pinned the `@openwop/spec-artifacts` peer at
+  `2.0.0-rc.0` while `package.json` tracked the current release. Consumers
+  installing from the lockfile resolved a peer range two majors' worth of
+  prereleases behind the one the package declares.
+
 ## [2.2.1] — 2026-09-16 — RFC 0183's `edit-accept` arm is witnessed, and the MUST the suite already enforced is now the spec's
 
 **Why a patch.** `PUBLISHING.md` §"Versioning alignment": new `it` blocks in an
