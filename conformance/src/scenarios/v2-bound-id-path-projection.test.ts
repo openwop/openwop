@@ -102,12 +102,26 @@ describe('v2 bound-id path projection (identity.md §5)', () => {
     // projections on a single read path, so this is a live shape, not a
     // thought experiment. Asserting 404 (not merely "not 200") keeps the leg
     // from passing on a 500.
+    // What "not resolve" looks like depends on the host's majors. Decoded once, a
+    // double projection is a BARE id (it still carries `~2F`, no slash). Through
+    // the overlap the bare form is admitted and resolved under the caller's tenant
+    // — no such run, 404. Once the host advertises no 1.x member, identity.md §5
+    // requires the bare form itself to be refused `400 validation_error` — and
+    // the reference host's retirement lane (2.3.2) failed a CONFORMANT retired
+    // host on an unconditional 404 here.
     const twice = projectBoundId(projected);
     const doubled = await http(() => driver.get(`/runs/${twice}`));
+    const disc = await v2Discovery();
+    const versions = Array.isArray(disc?.['protocolVersions']) ? (disc?.['protocolVersions'] as unknown[]).map(String) : [];
+    const singleMajor = !versions.some((v) => v.startsWith('1.'));
+    const want = singleMajor ? 400 : 404;
     expect(
       doubled?.status ?? null,
-      req(ID, DOC, `a DOUBLE-projected segment MUST NOT resolve — the codec is not idempotent, so projecting twice yields a different id and a host that does it strands its own links. Expected 404 for ${twice}, got ${doubled?.status ?? 'no response'}`),
-    ).toBe(404);
+      req(ID, DOC, `a DOUBLE-projected segment MUST NOT resolve — the codec is not idempotent, so projecting twice yields a different id and a host that does it strands its own links. Expected ${want} (${singleMajor ? 'single-major host: the decoded bare form is refused 400 validation_error' : 'dual-stack host: the bare form resolves under the caller tenant and is not found'}) for ${twice}, got ${doubled?.status ?? 'no response'} ${readErrorCode(doubled?.json) ?? ''}`.trim()),
+    ).toBe(want);
+    if (singleMajor) {
+      expect(readErrorCode(doubled?.json), req(ID, DOC, 'a single-major host refuses the bare form with validation_error (identity.md §5), not not_found')).toBe('validation_error');
+    }
 
     // DECODER RULE. A `~` not introducing two hex digits is malformed input, so
     // 400 — not 404, which would say "no such run" about a request that never

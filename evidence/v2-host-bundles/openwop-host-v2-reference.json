@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-13T13:34:26.348Z",
+  "generatedAt": "2026-09-17T16:14:32.566Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.1.5",
+    "version": "2.3.2",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.1.5",
-    "stampSha256": "88b9aea840128edb93799af8942d5fe7f8711ed36746f44c971602a4b47b5aea"
+    "specArtifactsVersion": "2.3.2",
+    "stampSha256": "289cdb31636a1924cde0a125d8cd2d5d1ae5d9c590a59ec10dddf0344ebac4a2"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "0db8e18706214462ee3022ca9fc2b35d05956e3b"
+      "id": "4e164465af07a1206792f3dc93aeb5d26cb97d24"
     },
-    "signingKeyId": "v2-reference-2"
+    "signingKeyId": "v2-reference-3"
   },
   "discovery": {
-    "url": "http://127.0.0.1:3860/.well-known/openwop",
-    "sha256": "fdc8ec4e38d3860892177c6e7e5f728924a6ba081e45f0671d205185533392bc",
+    "url": "http://127.0.0.1:3838/.well-known/openwop",
+    "sha256": "bf0585bbd851663144b061e0dcfa3e7c8a0717d5d55ec4c775fd039f4ee55650",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -42,9 +42,9 @@
       "eventLogSchemaVersion": 3,
       "signingKeys": [
         {
-          "keyId": "v2-reference-2",
+          "keyId": "v2-reference-3",
           "alg": "ed25519",
-          "publicKey": "KOkye-Aw3yVIO44oMZwp_IHsPmUaBtjGmHlhYOYW6B8",
+          "publicKey": "AkFQZ3z07zJUF2TUU_XFhT9HdUv9eF33K7scxSF4Bt0",
           "use": "certification-bundle"
         }
       ],
@@ -278,7 +278,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 187,
+      "executedPass": 195,
       "executedFail": 0,
       "skipped": 0,
       "inapplicable": 44,
@@ -289,7 +289,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 295
+        "assertions": 301
       },
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
@@ -321,6 +321,12 @@
         "scenario": "v2-assurance-downgrade-audited.test.ts",
         "result": "executed-pass",
         "assertions": 4
+      },
+      {
+        "id": "openwop.scenario.v2-bound-id-path-projection",
+        "scenario": "v2-bound-id-path-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-bundle-v3-signed",
@@ -563,6 +569,18 @@
         "assertions": 8
       },
       {
+        "id": "openwop.scenario.v2-payload-seats-0186",
+        "scenario": "v2-payload-seats-0186.test.ts",
+        "result": "executed-pass",
+        "assertions": 18
+      },
+      {
+        "id": "openwop.scenario.v2-payload-vendor-hatch",
+        "scenario": "v2-payload-vendor-hatch.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
         "id": "openwop.scenario.v2-peer-dependency-declared",
         "scenario": "v2-peer-dependency-declared.test.ts",
         "result": "executed-pass",
@@ -666,7 +684,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 11
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -736,6 +754,13 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-webhook-delivery-shape",
+        "scenario": "v2-webhook-delivery-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 12,
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance)"
+      },
+      {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
@@ -758,13 +783,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 86
+        "assertions": 88
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 86
+        "assertions": 88
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -1293,6 +1318,12 @@
         "assertions": 13
       },
       {
+        "id": "openwop.requirement.0171.webhook-delivery-shape",
+        "scenario": "v2-webhook-delivery-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
         "id": "openwop.requirement.0172.advertised-path-space-served",
         "scenario": "v2-advertised-path-space-served.test.ts",
         "result": "executed-pass",
@@ -1720,12 +1751,30 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0184.bound-id-path-projection",
+        "scenario": "v2-bound-id-path-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0185.payload-vendor-hatch",
+        "scenario": "v2-payload-vendor-hatch.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0186.payload-seats",
+        "scenario": "v2-payload-seats-0186.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       }
     ]
   },
-  "witnessSha256": "c7ace8376d379a20da886b3f3b7d64039eca67b668edffb23ff7d7acaf78a7fd",
-  "assertionCount": 1606,
+  "witnessSha256": "2a400860063565518dfc5fba5c199362cc68f819807cf13c57fbf3bb7530cbb9",
+  "assertionCount": 1682,
   "detail": {
     "nonPass": [
       {
@@ -1952,8 +2001,8 @@
   },
   "signature": {
     "alg": "ed25519",
-    "keyId": "v2-reference-2",
-    "sig": "OE1LVQva_iKXeEqBEXutGlF1QqeZdhbn4fhQeNjlgXdwBNdu8mC2BO2mBXukVVKRCa6sP2iwq6_VYTRuokJeBg",
+    "keyId": "v2-reference-3",
+    "sig": "tq1TLSa6QaVOQ0COFRrQYPOcblz-rXM5P0zArkC0uVrH7UH7nrUXIEuYetf55vd9HhmKuWBtn_QYpvfxzdcMCw",
     "over": [
       "witnessSha256",
       "host.build",

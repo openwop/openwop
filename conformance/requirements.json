@@ -26044,6 +26044,10 @@
         },
         {
           "section": "spec/v2/core/identity.md §5",
+          "requirement": "a single-major host refuses the bare form with validation_error (identity.md §5), not not_found"
+        },
+        {
+          "section": "spec/v2/core/identity.md §5",
           "requirement": null,
           "interpolated": true
         }
@@ -29229,7 +29233,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-2-subscriber-receives-the-v2-rendering-the-delivery-validates-and-run-st",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 172,
+      "line": 175,
       "title": "a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -29260,7 +29264,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-1-subscriber-still-receives-the-v1-rendering-the-v1-wire-does-not-move-m",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 191,
+      "line": 194,
       "title": "a major-1 subscriber still receives the v1 rendering — the v1 wire does not move mid-overlap",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -29278,7 +29282,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-seeded-era-2-run-is-delivered-projected-too-the-fan-out-branch-a-fresh-run-can",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 214,
+      "line": 217,
       "title": "a seeded era-2 run is delivered projected too — the fan-out branch a fresh run cannot reach (seam-gated)",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [

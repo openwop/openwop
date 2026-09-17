@@ -1,6 +1,6 @@
 /**
  * `spec/v2/core/webhooks.md` §Delivery — a webhook delivery's `event` is the
- * verbatim run event AS THE SUBSCRIBER'S CONTRACT RENDERS IT (suite 2.3.2,
+ * verbatim run event AS THE SUBSCRIBER'S CONTRACT RENDERS IT (suite 2.3.3,
  * target major 2; gated on the `webhooks` family; creates one run per leg).
  *
  * `webhooks.md:22`: "The delivery envelope is generated from the same payload
@@ -146,8 +146,11 @@ function ownerOf(event: Record<string, unknown>): Record<string, unknown> | null
 }
 
 /** One Ajv per wire: the v2 tree under `schemas/v2/`, the v1 tree at the root — each addressed by its absolute `$id`. */
+const AJV_BY_MAJOR = new Map<1 | 2, Ajv2020>();
 function validators(major: 1 | 2): { ref: (id: string) => Validator } {
-  const a = new Ajv2020({ strict: false, allErrors: true }); addFormats(a);
+  const cached = AJV_BY_MAJOR.get(major);
+  if (cached) return { ref: (id) => { const fn = cached.compile({ $ref: id }); return (doc) => ({ ok: fn(doc) === true, errors: cached.errorsText(fn.errors, { separator: '; ' }) }); } };
+  const a = new Ajv2020({ strict: false, allErrors: true }); addFormats(a); AJV_BY_MAJOR.set(major, a);
   const dir = major === 2 ? join(SCHEMAS_DIR, 'v2') : SCHEMAS_DIR;
   for (const f of readdirSync(dir)) {
     const full = join(dir, f);
