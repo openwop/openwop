@@ -1283,6 +1283,12 @@
           ],
           "description": "RFC 0094 \u00a7E \u2014 the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
         },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "RFC 0186 §A.2 — WHY this happened without a human, a CAUSE axis disjoint from `kind` (the interrupt kind), RFC 0183 `decision` (what was decided) and `action` (how the resume applied). A string with a documented domain rather than an enum, because the domain is host-grown: `timeout`, `condition`, `false-positive`, `over-threshold`, `quorum-reject`, `timer` are the values two production hosts record today. Measured single-valued `timeout` on one host at `interrupt.resolved`; dropped on 350 rows of `node.suspended` on the other."
+        },
         "key": {
           "type": "string",
           "minLength": 1
@@ -1418,6 +1424,12 @@
             "low-confidence"
           ],
           "description": "RFC 0094 \u00a7E \u2014 the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "RFC 0186 §A.2 — WHY this happened without a human, a CAUSE axis disjoint from `kind` (the interrupt kind), RFC 0183 `decision` (what was decided) and `action` (how the resume applied). A string with a documented domain rather than an enum, because the domain is host-grown: `timeout`, `condition`, `false-positive`, `over-threshold`, `quorum-reject`, `timer` are the values two production hosts record today. Measured single-valued `timeout` on one host at `interrupt.resolved`; dropped on 350 rows of `node.suspended` on the other."
         },
         "resumeValue": {},
         "resolvedBy": {
@@ -2990,6 +3002,10 @@
           "type": "integer",
           "minimum": 0,
           "description": "0-indexed turn within this conversation. Strictly monotonic."
+        },
+        "turn": {
+          "$ref": "conversation-event.schema.json#/$defs/ConversationTurn",
+          "description": "RFC 0186 §A.1 — the turn content. Until 0186 this def and `conversation-event.schema.json` `ConversationExchangedPayload` were two CLOSED defs for one event that could not both be satisfied: this one seated `outcome` and not `turn`, the other `turn` and not `outcome`, and the codemap bound this one while a tier-1 host emitted the other. One production host writes `turn` and never `outcome`; the other writes `outcome` (the `ctx.suspend` resume value) and never `turn`. Both are optional here so the union is a strict widening of both prior shapes."
         },
         "outcome": {
           "description": "Validated turn outcome per the per-turn schema declared in `core.conversationGate` config."

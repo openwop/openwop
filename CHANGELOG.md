@@ -13,6 +13,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-09-17 — three payload seats the hosts measured and the corpus lacked
+
+### Added
+
+- **RFC 0186 §A.1 — `conversation.exchanged` is one def, not two.** The corpus carried two closed defs for one event that could not both be satisfied: the codemap-bound `conversationExchanged` seated `outcome` and not `turn`; the orphaned `ConversationExchangedPayload` seated `turn` (required) and not `outcome`. The tier-1 host emits `turn` and never `outcome`; the tier-2 host emits `outcome` (the `ctx.suspend` resume value) and never `turn`. The bound def is now the union `{conversationId, turnIndex, turn?, outcome?}` — a strict widening of both — and the orphan is an alias. `conversation-event`'s `oneOf` cannot double-match: `opened` requires `initialTurn`, `closed` requires `finalTurn`, and the closed union names neither.
+- **RFC 0186 §A.2 — `reason` on `interruptResolved` and `nodeSuspended`.** A cause axis — *what triggered a resolution without a human* — disjoint from `kind`, RFC 0183 `decision` (what) and `action` (how). String with a documented host-grown domain (`timeout`, `condition`, `false-positive`, `over-threshold`, `quorum-reject`, `timer`), not an enum. Measured single-valued `timeout` on one host; dropped on 350 rows on the other. `interrupt.resolved.outcome` is deliberately **not** seated: single-valued `'rejected'`, a duplicate of `decision`.
+- **RFC 0186 §A.3 — `ApprovalData.onTimeout`** (`reject | approve | escalate`), the one field in the hosts' historical `{title, message, timeout, onTimeout}` that was unmodelled anywhere; the other three were already seated (`title`, `description`, `suspend-request.timeoutMs` — where `0` means no timer). The RFC 0185 closure gate gains a `MODELLED` disposition for a deliberate narrowing resolved by a seat rather than a hatch.
+
+### Why a minor
+
+`PROTOCOL-STATUS.md`: minor on scenario add/remove. `v2-payload-seats-0186.test.ts` is new, server-free, sabotage-proved three ways.
+
 ### Changed
 
 - **RFC 0174 §E.2a — the core word budget stays at 25,000 and the rule already practised is now written down:** core prose carries the MUSTs; rationale, measurement and history live in schema `description`/`$comment` fields, which the budget does not count. Two guards from a real near-miss (a compression briefly changed `MUST NOT rewrite era-2 rows in place` before review caught it): a budget trim MUST NOT alter a normative clause — diff the RFC 2119 sentences before and after — and a paragraph that duplicates a schema description is deleted, not compressed. Raising the ceiling was rejected: 16 core RFCs have landed against it. Governance prose only; no wire change; no cut.

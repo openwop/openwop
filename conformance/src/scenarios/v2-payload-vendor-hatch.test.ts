@@ -45,7 +45,10 @@ function defValidator(def: string): (doc: unknown) => boolean {
     if (!f.endsWith('.schema.json') || statSync(join(dir, f)).isDirectory()) continue;
     try { ajv.addSchema(JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>); } catch { /* duplicate $id */ }
   }
-  return ajv.compile({ $ref: `https://openwop.dev/spec/v2/run-event-payloads.schema.json#/$defs/${def}` }) as unknown as (doc: unknown) => boolean;
+  // No cast (code-review banned-pattern): the compiled validator is callable
+  // and returns `boolean` for a synchronous schema; `=== true` narrows it.
+  const fn = ajv.compile({ $ref: `https://openwop.dev/spec/v2/run-event-payloads.schema.json#/$defs/${def}` });
+  return (doc: unknown): boolean => fn(doc) === true;
 }
 
 describe('v2 payload vendor hatch (RFC 0185 §B)', () => {

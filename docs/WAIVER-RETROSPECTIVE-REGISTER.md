@@ -116,3 +116,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0182 | `listRuns` — portable, tenant-scoped, paginated run list (`GET /runs`, family `runList`) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0183 | `interruptResolved` action fidelity (`action`, `refineFeedback`, `editedArtifactData`) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0184 | Bound-id path projection (`~`-escaped single segment; RFC 0147 §A.6 override named) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0186 | Three payload seats the hosts measured and the corpus lacked (`conversation.exchanged` union, `reason`, `ApprovalData.onTimeout`) | in-scope-pending-assessment | — | — | `not-reviewed` |

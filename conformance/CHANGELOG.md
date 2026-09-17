@@ -1,5 +1,22 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.3.0] — 2026-09-17 — the three RFC 0186 payload seats are witnessed
+
+**Why a minor.** `PROTOCOL-STATUS.md` §suite version: minor on scenario add/remove. One scenario file is added.
+
+### Added
+
+- **`v2-payload-seats-0186.test.ts`** (server-free, unconditional) — both hosts'
+  `conversation.exchanged` shapes validate against the single bound def and a
+  payload with neither `turn` nor `outcome` still does; the union stays closed;
+  the former orphan is an alias; the `conversation-event` `oneOf` matches
+  exactly one branch for an exchanged **and** a closed payload; `reason`
+  validates on `interruptResolved` and `nodeSuspended`, refuses empty, and
+  neither def reopens; `ApprovalData.onTimeout` admits `reject|approve|escalate`,
+  refuses a fourth, and the def still refuses the legacy bare `message`.
+  Sabotage-proved: removing `turn`, removing `reason`, and widening the enum
+  each red it.
+
 ## [2.2.3] — 2026-09-16 — a payload def that v1 left open gets a conforming escape hatch
 
 **Why a patch.** `PUBLISHING.md` §"Versioning alignment": one scenario file is
