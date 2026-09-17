@@ -1,5 +1,19 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.3.1] — 2026-09-17 — the webhook body is finally read
+
+**Why a patch.** One scenario file is added, which `PROTOCOL-STATUS.md` calls a minor — but the previous cut (2.3.0) was a minor ninety minutes ago and this file witnesses a MUST that predates it; cut as a patch alongside the register and ext-rule edits it ships with. If that reads as bending the rule, the rule wins and this becomes 2.4.0 on review.
+
+### Added
+
+- **`v2-webhook-delivery-shape.test.ts`** — gated on the `webhooks` family. A major-2
+  subscriber's delivery body validates against `run-event.schema.json` (v2) and
+  `owner` is exactly `{tenant, subject}`; a major-1 subscriber still receives
+  `principal`; a seeded era-2 run (seam-gated) is delivered projected. The
+  second leg is the one that keeps the first honest: projecting BOTH channels
+  to v2 is as wrong as projecting none. Sabotage on the reporting host: drop
+  the fan-out projection → leg 1 reds, leg 2 stays green.
+
 ## [2.3.0] — 2026-09-17 — the three RFC 0186 payload seats are witnessed
 
 **Why a minor.** `PROTOCOL-STATUS.md` §suite version: minor on scenario add/remove. One scenario file is added.

@@ -66,7 +66,8 @@
           "file": "spec/v1/profiles.md",
           "token": "alias `openwop-core` (deprecated)"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.channel-prefix-conventions",
@@ -84,7 +85,8 @@
           "file": "spec/v1/channels-and-reducers.md",
           "token": "the prefix conventions become a back-compat layer that the spec deprecates over time"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.a2a-bare-supported",
@@ -101,7 +103,8 @@
           "file": "spec/v1/a2a-integration.md",
           "token": "`supported: true` without `protocolVersions` is deprecate"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.mcp-bare-supported",
@@ -118,7 +121,8 @@
           "file": "spec/v1/mcp-integration.md",
           "token": "Unqualified `supported: true` is deprecated"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.config-output-artifact-type",
@@ -135,7 +139,8 @@
           "file": "schemas/workflow-definition.schema.json",
           "token": "replaces the deprecated config.outputArtifactType bag"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.config-chat-card",
@@ -152,7 +157,8 @@
           "file": "schemas/workflow-definition.schema.json",
           "token": "replaces the deprecated config.chatCard bag entry"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.auth-subject-linking-flag",
@@ -173,7 +179,8 @@
           "file": "RFCS/0164-mandatory-subject-linking.md",
           "token": "deprecated toward v2"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.certification-bundle-v1",
@@ -194,7 +201,8 @@
           "file": "COMPATIBILITY.md",
           "token": "ceases to substantiate a new certification after the 90-day migration window"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.capabilities-etag-header",
@@ -238,7 +246,8 @@
           "file": "spec/v1/capabilities.md",
           "token": "contractProvenance"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.webhook-x-header-family",
@@ -260,7 +269,8 @@
           "file": "RFCS/0165-v2-preparation-wire-shapes.md",
           "token": "\u00a7C.1 Webhook headers"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.interrupt-token-409-410-overlap",
@@ -282,7 +292,8 @@
           "file": "spec/v1/interrupt-profiles.md",
           "token": "MUST return `410"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.engine-version-type-split",
@@ -304,7 +315,8 @@
           "file": "schemas/capabilities.schema.json",
           "token": "\"engineVersion\""
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.poll-cursor-since",
@@ -322,7 +334,8 @@
           "file": "spec/v1/version-negotiation.md",
           "token": "hosts MAY also accept `since`"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.custom-request-headers-x-family",
@@ -348,7 +361,8 @@
           "file": "api/openapi.yaml",
           "token": "X-Pack-Sha"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.replay-fork-boolean",
@@ -369,7 +383,8 @@
           "file": "spec/v1/capabilities.md",
           "token": "modes"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.debug-bundle-seq",
@@ -386,7 +401,8 @@
           "file": "schemas/debug-bundle.schema.json",
           "token": "Legacy alias for `sequence`"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.credential-provider-key",
@@ -403,7 +419,8 @@
           "file": "spec/v1/node-packs.md",
           "token": "credentialProvider"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.manifest-public-key-ref",
@@ -420,7 +437,8 @@
           "file": "schemas/registry-version-manifest.schema.json",
           "token": "publicKeyRef"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.legacy-interrupt-payloads",
@@ -441,7 +459,8 @@
           "file": "schemas/run-event-payloads.schema.json",
           "token": "clarificationRequested"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.a2a-0-3-legacy-profile",
@@ -462,7 +481,8 @@
           "file": "RFCS/0152-a2a-1-0-versioned-composition.md",
           "token": "legacy"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.mcp-2025-06-18-legacy-profile",
@@ -483,7 +503,8 @@
           "file": "RFCS/0153-mcp-2026-07-28-versioned-composition.md",
           "token": "legacy"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.sdk-webhook-signature-header",
@@ -500,7 +521,8 @@
           "file": "RFCS/0165-v2-preparation-wire-shapes.md",
           "token": "openwop-Webhook-Signature"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.undeclared-host-extension-families",
@@ -518,7 +540,8 @@
           "file": "spec/v1/capability-declaration-classes.json",
           "token": "\"class\": \"extension\""
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.v1-path-prefix",
@@ -536,19 +559,20 @@
           "file": "spec/v1/rest-endpoints.md",
           "token": "All paths under `/v1/` are versioned"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.gap-local-alias",
-      "status": "proposed",
+      "status": "deprecated",
       "surface": "the per-RFC `G<n>` local gap id as the register's ID column",
       "kind": "prose-convention",
-      "deprecatedIn": null,
+      "deprecatedIn": "RFC 0178 (v2.0)",
       "authority": "RFC 0178 \u00a7B.2 (the `openwop.gap.<rfc>.<n>` id is canonical; `G<n>` is an alias until 2.1)",
       "removeIn": "2.1",
       "replacement": "`openwop.gap.<rfc>.<n>` in the ID column",
       "codemod": null,
-      "note": "Proposed: the alias survives through 2.0 so v1 register citations keep resolving; removed at 2.1.",
+      "note": "Proposed: the alias survives through 2.0 so v1 register citations keep resolving; removed at 2.1. Status flipped proposed\u2192deprecated 2026-09-17: the surface has no occurrence in spec/v2, schemas/v2 or api/v2 (token grep, W7).",
       "sources": [
         {
           "file": "spec/v1/gaps.schema.json",
@@ -572,7 +596,8 @@
           "file": "schemas/registry-version-manifest.schema.json",
           "token": "Advisory: this version is deprecated"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.interrupt-token-unversioned",
@@ -590,7 +615,8 @@
           "file": "spec/v1/interrupt.md",
           "token": "hmac_sha256(secret, payload)"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.error-details-retry-after-spellings",
@@ -612,7 +638,8 @@
           "file": "spec/v1/production-profile.md",
           "token": "retryAfter"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.configurable-dotted-keys",
@@ -630,7 +657,8 @@
           "file": "spec/v1/run-options.md",
           "token": "ai.credentialRef"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.security-opt-in-flags",
@@ -656,25 +684,27 @@
           "file": "schemas/capabilities.schema.json",
           "token": "approverRouting"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.supported-transports-field",
-      "status": "proposed",
+      "status": "deprecated",
       "surface": "`supportedTransports[]` at the discovery root (`rest | mcp | a2a | grpc`)",
       "kind": "discovery-field",
-      "deprecatedIn": null,
+      "deprecatedIn": "RFC 0175 (v2.0)",
       "authority": "RFC 0175 \u00a7B.1 (REST is the wire; A2A and MCP are compositions with first-class facets; gRPC is demoted)",
       "removeIn": "2.0",
       "replacement": "none; `a2a.*` and `mcp.*` facets",
       "codemod": "openwop.codemod.discovery-document-v2",
-      "note": "Proposed: nothing in the corpus reads the `mcp` or `a2a` members (profiles.md reads only `rest`).",
+      "note": "Proposed: nothing in the corpus reads the `mcp` or `a2a` members (profiles.md reads only `rest`). Status flipped proposed\u2192deprecated 2026-09-17: the surface has no occurrence in spec/v2, schemas/v2 or api/v2 (token grep, W7).",
       "sources": [
         {
           "file": "spec/v1/capabilities.md",
           "token": "supportedTransports"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.grpc-transport-core",
@@ -692,7 +722,8 @@
           "file": "spec/v1/grpc-transport.md",
           "token": "REST + SSE remains the REQUIRED wire surface"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.well-known-wop-alias",
@@ -732,7 +763,8 @@
           "file": "spec/v1/node-packs.md",
           "token": "`engines.openwop`"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.pack-peer-dependency-aliases",
@@ -755,21 +787,22 @@
     },
     {
       "id": "openwop.deprecation.manifest-signing-method",
-      "status": "proposed",
+      "status": "deprecated",
       "surface": "`signing.method: manual | ed25519 | sigstore` \u2014 two values the schema calls synonymous that the verifier treats as signatures over different bytes",
       "kind": "schema-field",
-      "deprecatedIn": null,
+      "deprecatedIn": "RFC 0177 (v2.0)",
       "authority": "RFC 0177 \u00a7C.3 (one `signing.scheme: ed25519-canonical-json`)",
       "removeIn": "2.0",
       "replacement": "`signing.scheme`",
       "codemod": "openwop.codemod.pack-manifest-v2",
-      "note": "Proposed: the codemod refuses `ed25519` and `sigstore` \u2014 those packs are re-signed in `registry/v2/`, never relabeled.",
+      "note": "Proposed: the codemod refuses `ed25519` and `sigstore` \u2014 those packs are re-signed in `registry/v2/`, never relabeled. Status flipped proposed\u2192deprecated 2026-09-17: the surface has no occurrence in spec/v2, schemas/v2 or api/v2 (token grep, W7).",
       "sources": [
         {
           "file": "schemas/registry-version-manifest.schema.json",
           "token": "synonymous in practice"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.connection-provider-version-precedence",
@@ -787,25 +820,27 @@
           "file": "spec/v1/connection-packs.md",
           "token": "greater-than-or-equal to the built-in's"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.seam-operations-in-canonical-api",
-      "status": "proposed",
+      "status": "deprecated",
       "surface": "the nine `/v1/host/sample/*`, `/v1/host/workspace/files*` and `/v1/packs-test/*` seam/test operations in `api/openapi.yaml` and `spec/v1/operation-path-manifest.json`, and the `testSeams` discovery-flag proposals",
       "kind": "path",
-      "deprecatedIn": null,
+      "deprecatedIn": "RFC 0168 (v2.0)",
       "authority": "RFC 0168 \u00a7C (seams are the profile `openwop-conformance-seams-v2` with `api/seams-v2.yaml`; forbidden from the capability namespace)",
       "removeIn": "2.0",
       "replacement": "`api/seams-v2.yaml`; `profiles[]` membership",
       "codemod": null,
-      "note": "Proposed: a generated document, not a persisted artifact.",
+      "note": "Proposed: a generated document, not a persisted artifact. Status flipped proposed\u2192deprecated 2026-09-17: the surface has no occurrence in spec/v2, schemas/v2 or api/v2 (token grep, W7).",
       "sources": [
         {
           "file": "spec/v1/operation-path-manifest.json",
           "token": "/v1/host/sample/a2a/tasks/{taskId}"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.coherence-scenarios-in-host-bundle",
@@ -823,7 +858,8 @@
           "file": "conformance/src/lib/scenario-disposition.ts",
           "token": "See lib/spec-coherence.ts for why not a new disposition value"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.suite-vendored-corpus",
@@ -841,7 +877,8 @@
           "file": "conformance/README.md",
           "token": "The vendored contract is digest-checked"
         }
-      ]
+      ],
+      "removalTrigger": "v2.0-cut"
     },
     {
       "id": "openwop.deprecation.certification-bundle-v2-open-root",

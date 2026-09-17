@@ -90,7 +90,7 @@ The existing `interrupt-approval.test.ts` already drives a live suspend → resu
 
 ## Unresolved questions
 
-1. **`timeout` as an action.** v1 lists it in the `action` enum and `decidedBy`'s description exempts it (*"Hosts MUST populate this for non-timeout actions"*). Carried verbatim here. Whether a timeout is an *action* or a *disposition* is a real modelling question this RFC does not reopen.
+1. **`timeout` as an action.** v1 lists it in the `action` enum and `decidedBy`'s description exempts it (*"Hosts MUST populate this for non-timeout actions"*). Carried verbatim here. Whether a timeout is an *action* or a *disposition* is a real modelling question this RFC does not reopen. **Resolved 2026-09-17: record-only.** v1 `interrupt.md:165` already lists `decision: 'timeout'` as *"host-internal — emit timeout sentinel, not a resume"*. A host MUST NOT accept `action: 'timeout'` on a resume request; it is minted by the host's timer branch, and `resolvedBy` on such a row is the host's subject or absent. Raised by the tier-2 host from its implementation (a client that could post it could disguise a decision as expiry while `resolvedBy` named them) and witnessed there by route tests that never stamp a body-supplied `resolvedBy`. The enum keeps all five values because the *record* carries all five.
 2. **`reason`.** A host reported carrying `reason: 'timeout'` with real information and no seat in the closed def. Not addressed here; it is a separate question about whether resolution carries a cause distinct from its action.
 
 ## Implementation notes (non-normative)
