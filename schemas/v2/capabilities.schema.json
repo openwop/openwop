@@ -104,10 +104,12 @@
               "type": "boolean",
               "description": "Host exposes `POST /v1/host/sample/test/debug-bundle/export` returning the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. Conformance verifies the serialized bundle doesn't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
             }
-          }
+          },
+          "deprecated": true,
+          "x-openwop-remove-in": "3.0"
         }
       },
-      "additionalProperties": true,
+      "additionalProperties": false,
       "x-openwop-seeded-from": "v1"
     },
     "minClientVersion": {
@@ -6546,7 +6548,7 @@
         },
         "testMode": {
           "type": "object",
-          "description": "RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise `supported: true` MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
+          "description": "Deprecated 2026-09-18, removeIn 3.0 (spec/v1/deprecations.json). A test-seam flag in the capability namespace, which spec/v2/core/conformance.md §\"The seams profile\" forbids: seams are the profile `openwop-conformance-seams-v2` in the /conformance/seams/ path space. NOT removed at 2.x because live v2 discovery documents advertise it and the v2 root is additionalProperties:false. RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise this facet MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
           "properties": {
             "isolated": {
               "type": "boolean",
@@ -6574,7 +6576,9 @@
               "description": "RFC 0025 §A. Which namespace scopes the test catalog accepts in pack names. Public test catalogs SHOULD refuse `private` and `local` (matching the production-registry rule for `packs.openwop.dev`); private dev catalogs MAY accept all five. When omitted, the test catalog defaults to the same scope set as the production namespace it mirrors."
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "deprecated": true,
+          "x-openwop-remove-in": "3.0"
         }
       },
       "allOf": [
@@ -6613,7 +6617,7 @@
         }
       ],
       "description": "core/capabilities.md#packs — witness: claims-check; maturity experimental/none; RFC 0025",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/packs.schema.json"
     },
     "mcp": {
       "type": "object",

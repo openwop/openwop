@@ -1,0 +1,39 @@
+{
+  "$comment": "Hand-decided v2 facet set for `packs` (2.10.0). Exists so the deprecation of its seam facet is emitted BY generate-from-declaration.mjs rather than stamped on afterwards by generate-deprecation-annotations.mjs — the two generators write the same file, and these are the first discovery-field rows sourced to schemas/v2/, so that interaction had never been exercised. A facet's deprecation is a decision, and a decision belongs on the record.",
+  "properties": {
+    "testMode": {
+      "type": "object",
+      "description": "Deprecated 2026-09-18, removeIn 3.0 (spec/v1/deprecations.json). A test-seam flag in the capability namespace, which spec/v2/core/conformance.md §\"The seams profile\" forbids: seams are the profile `openwop-conformance-seams-v2` in the /conformance/seams/ path space. NOT removed at 2.x because live v2 discovery documents advertise it and the v2 root is additionalProperties:false. RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise this facet MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
+      "properties": {
+        "isolated": {
+          "type": "boolean",
+          "description": "RFC 0025 §C point 1. MUST be `true` when `supported` is `true` — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
+        },
+        "catalogResetEndpoint": {
+          "type": "string",
+          "description": "RFC 0025 §C point 4. Optional URL path (e.g. `/v1/packs-test/reset`) that clears the entire test catalog. When advertised, conformance-suite teardown SHOULD call it; the endpoint MUST be idempotent. Hosts MAY omit; in that case the suite leaves disposable timestamped pack names in place and relies on the next host restart to clear in-memory state.",
+          "pattern": "^/"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "core",
+              "vendor",
+              "community",
+              "private",
+              "local"
+            ]
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "RFC 0025 §A. Which namespace scopes the test catalog accepts in pack names. Public test catalogs SHOULD refuse `private` and `local` (matching the production-registry rule for `packs.openwop.dev`); private dev catalogs MAY accept all five. When omitted, the test catalog defaults to the same scope set as the production namespace it mirrors."
+        }
+      },
+      "additionalProperties": false,
+      "deprecated": true,
+      "x-openwop-remove-in": "3.0"
+    }
+  }
+}

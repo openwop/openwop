@@ -284,6 +284,18 @@
       "file": "spec/v2/core/identity.md",
       "token": "Through the overlap the bare form is admitted on a major-2 path parameter",
       "deprecation": "openwop.deprecation.bare-webhook-id"
+    },
+    {
+      "alias": "packs.testMode facet",
+      "file": "spec/v2/core/packs.md",
+      "token": "`testMode` is DEPRECATED",
+      "deprecation": "openwop.deprecation.packs-test-mode-facet"
+    },
+    {
+      "alias": "observability.testSeams facet",
+      "file": "schemas/v2/capabilities.schema.json",
+      "token": "testSeams",
+      "deprecation": "openwop.deprecation.observability-test-seams-facet"
     }
   ]
 }

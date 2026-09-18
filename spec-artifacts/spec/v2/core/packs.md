@@ -10,6 +10,22 @@ Every one of the 282 pack versions published under v1 either pins `<2.0.0` or de
 
 A manifest's `engines.openwop` MUST match the grammar in `schemas/v2/node-pack-manifest.schema.json`: a `>=` lower bound and an explicit `<` major ceiling (`^>=\d+(\.\d+){0,2} <\d+\.0\.0$`). A v2 host MUST treat a range with no upper bound as bounded by `<2.0.0`. A host MUST refuse to install a version whose range does not admit the host's protocol major with `pack_engine_unsupported` (`spec/v2/errors.json`); `pack_runtime_requirement_unmet` remains a runtime-requirement code and MUST NOT be used for the protocol major. The check MUST run at install on every publication path — the canonical registry, a vendor registry's write API, and a mirror ingest — so no registry-side artifact can bypass it.
 
+## The `packs` capability
+
+A host advertises `packs` when it serves the registry surface above. The record
+is the advertisement: a host MUST NOT advertise `packs` unless it resolves pack
+references through a registry reachable from its discovery document, and a
+client MUST treat an absent record as "this host installs no packs" rather than
+as an unknown.
+
+`testMode` is DEPRECATED and MUST NOT be relied on by a client. It advertises
+the v1 `/v1/packs-test/*` mirror, a conformance seam — and `conformance.md`
+§"The seams profile" places seams in the `openwop-conformance-seams-v2` profile
+and the `/conformance/seams/` path space, not in the capability namespace. It
+remains advertisable through the overlap because hosts already publish it; it is
+removed at 3.0. A host mounting a test catalog SHOULD advertise the seams
+profile instead, and MUST NOT treat `testMode` as a second way to claim one.
+
 ## The registry tree
 
 The registry is versioned by tree, not header. It publishes `registry/v2/packs/<name>/-/<version>.{json,sbom.json,sig,tgz}` as a parallel tree of re-signed manifests with regenerated SBOMs and index; the v1 tree is frozen through the overlap, deliberately behind this one. A signed compatibility overlay MUST be rejected: signatures authorize by namespace, and a mirror re-derives the signer at ingest.
