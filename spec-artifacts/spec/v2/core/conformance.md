@@ -1,6 +1,6 @@
 # Conformance
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0168.**
+> **Status: Stable · RFC 0168.**
 
 ## Why this exists
 

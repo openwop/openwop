@@ -1,6 +1,6 @@
 # Discovery and Capabilities
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0169, 0176, 0179.**
+> **Status: Stable · RFC 0169, 0176, 0179.**
 
 ## Why this exists
 

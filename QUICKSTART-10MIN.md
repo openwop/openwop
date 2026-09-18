@@ -1,5 +1,11 @@
 # OpenWOP in 10 Minutes
 
+> **⚠️ v1 DOCUMENT.** The calls below speak v1, which is what the host serves by default — `spec/v2/core/versioning.md` §1.1 requires `preferredVersion` to name a 1.x member through the overlap, so a header-less request is a v1 request.
+>
+> **To exercise v2 instead:** add `-H 'OpenWOP-Version: 2'` to every call and drop the `/v1` prefix — v2 operations are unversioned (`/runs`, not `/v2/runs`). Adding the prefix change without the header would silently keep you on v1.
+>
+> Implementing a host? Read [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md) instead.
+
 > The fastest possible path from "what is openwop?" to "I have a workflow running on my laptop." Zero vendor SDK / managed-service / framework setup. Just Node 20+ and a clone of [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) — the reference hosts + runnable samples, extracted from this spec repo (2026-06).
 
 This guide walks through:

@@ -1,6 +1,6 @@
 # Packs
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0177.**
+> **Status: Stable · RFC 0177.**
 
 ## Why this exists
 

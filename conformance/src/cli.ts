@@ -677,9 +677,24 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     // `certified` IS the verdict (RFC 0148 §A; RFC 0168 §E.1 adds the bundle-wide
     // blocked rule). Until rc.45 it was `!notHeld && !rejected && blocked === 0`
     // and never read `certifiable` — an empty v2 floor certified on no evidence.
-    const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: (verdictFor(p)?.certifiable ?? false) && !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
+    // Relaxations are parsed BEFORE the verdict, because they are part of it.
+    // `security-defaults.md` §Relaxations is explicit: "A bundle that records a
+    // relaxation MUST NOT certify the profile the relaxed obligation belongs to"
+    // (RFC 0173 §A.2). The emitter computed `certified` with no relaxation term —
+    // and parsed relaxations on the NEXT line, so it was structurally impossible
+    // for one to affect the verdict — then excluded `relaxed-profile-certified`
+    // from its own self-check. The shipped artifact asserted `certified: true`
+    // for a profile that cannot certify, and only `--verify` disagreed with the
+    // file. A reader who parses `.certified` — the obvious thing to do — got the
+    // wrong answer.
     let relaxations: BundleV3['host']['relaxations'];
     if (process.env['OPENWOP_HOST_RELAXATIONS']) { try { relaxations = JSON.parse(process.env['OPENWOP_HOST_RELAXATIONS']) as BundleV3['host']['relaxations']; } catch { process.stderr.write('openwop-conformance --certify: OPENWOP_HOST_RELAXATIONS is not JSON\n'); process.exit(2); } }
+    // RFC 0173 §A.2: a recorded relaxation denies the profile its obligation
+    // belongs to. Matched the same way the verifier matches it, so the emitter
+    // and `verifyBundleV3` cannot disagree about the same bundle.
+    const relaxedObligations = new Set((relaxations ?? []).map((r) => r.obligation));
+    const relaxedProfile = (p: string): boolean => [...relaxedObligations].some((o) => p.includes(o));
+    const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: !relaxedProfile(p) && (verdictFor(p)?.certifiable ?? false) && !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
     const lockPath = resolvePath(conformanceRoot, 'dist', 'spec-artifacts.lock.json');
     const lock = existsSync(lockPath) ? (JSON.parse(readFileSync(lockPath, 'utf8')) as { version: string; stampSha256: string }) : undefined;
     const nonPass = rows3.filter((r) => r.result !== 'executed-pass');
@@ -714,7 +729,10 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     const scrubbed3 = scrubEvidence(v3, secrets3);
     const v3Out = scrubbed3.value as BundleV3;
     const audit3 = verifyBundleV3(v3Out, { hostPublicKeyPem: publicKeyFromPrivate(signingKeyPem) });
-    const emitterDefects = audit3.rejections.filter((r) => !['blocked-certified', 'relaxed-profile-certified', 'independent-unverifiable'].includes(r.kind));
+    // `relaxed-profile-certified` is no longer excused: the emitter now computes
+    // the relaxation into `certified`, so if the verifier still finds that
+    // contradiction the bundle is genuinely malformed and MUST NOT be written.
+    const emitterDefects = audit3.rejections.filter((r) => !['blocked-certified', 'independent-unverifiable'].includes(r.kind));
     if (emitterDefects.length > 0) {
       // Keep the rejected bundle: a self-verification failure with nothing to
       // inspect sent a host patching a scratch copy of this CLI to see it.
