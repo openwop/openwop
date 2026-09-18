@@ -8,7 +8,7 @@
 | **witness:** | `witnessable-gated` |
 | **technical:** | `experimental` |
 | **adoption:** | `none` |
-| **advertised as** | not a discovery family — a data registry (`registry.json`) the Layer-2 obligation reads |
+| **advertised as** | not applicable; supporting registry only |
 | **owning RFC** | RFC 0173 §C.2, RFC 0150 G3 |
 
 [`registry.json`](./registry.json) lists providers known to expose a natural

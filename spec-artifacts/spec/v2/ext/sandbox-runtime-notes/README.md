@@ -9,7 +9,7 @@
 | **technical:** | `experimental` |
 | **adoption:** | `none` |
 | **advertised as** | not advertisable (notes, not a surface) |
-| **owning RFC** | RFC 0173 §D (RFC 0035 superseded by the `packs` obligation at the cut) |
+| **owning RFC** | RFC 0173 §D; RFC 0035 (superseded) |
 
 RFC 0035's `node:vm` demonstrator is retained only as implementation history;
 `node:vm` is not an isolation model. The v2 contract is in
