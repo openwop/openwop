@@ -59,6 +59,28 @@ for (const [rel, doc] of docs) {
     }
   };
   visit(doc, '$');
+  // 6. Every root-level `examples` entry MUST validate against its own schema.
+  //    The structural walk above SKIPs `examples` — correctly, an example is an
+  //    instance and not a schema — and nothing else looked at them, so they were
+  //    unchecked corpus-wide. Measured when this landed: 13 invalid examples
+  //    across 6 files, 9 of them ids minted BEFORE RFC 0184/0187 made their kind
+  //    tenant-bound (`"deliveryId": "dlv_a1b2"` under a `$ref` that requires a
+  //    tenant segment plus 16+ chars). An example is the first thing an
+  //    implementer copies; one that cannot validate teaches a shape the schema
+  //    refuses. This is the gate that keeps the next kind-tightening from
+  //    silently re-seeding the same defect.
+  if (Array.isArray(doc.examples)) {
+    let validate;
+    try { validate = ajv.getSchema(doc.$id) ?? ajv.compile(doc); } catch { validate = null; }
+    if (validate) {
+      doc.examples.forEach((ex, i) => {
+        if (!validate(ex)) {
+          const first = (validate.errors ?? [])[0];
+          failures.push(`${rel}: examples[${i}] does not validate against its own schema — ${first?.instancePath || '(root)'} ${first?.message ?? ''}`);
+        }
+      });
+    }
+  }
 }
 if (failures.length) { console.error(`=== check-v2-schemas FAILED — ${failures.length} problem(s) ===\n  ` + failures.slice(0, 60).join('\n  ') + (failures.length > 60 ? `\n  … ${failures.length - 60} more` : '')); process.exit(1); }
 console.log(`=== check-v2-schemas OK — ${files.length} schema(s) compile with $id under /spec/v2/, closure holds; ${seeded} still seeded-from-v1 (awaiting their child's hand edit) ===`);
