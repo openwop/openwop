@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0185                                                            |
 | **Title**         | v2 closed 53 run-event payload defs that v1 left open, with no hatch and no migration row |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-16                                                      |
-| **Updated**       | 2026-09-16                                                      |
+| **Updated**       | 2026-09-16 · 2026-09-18 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified** (`GOVERNANCE.md` §"Acceptance evidence tiers"): `openwop.requirement.0185.payload-vendor-hatch` is `executed-pass` on the reference host's certified bundle (suite 2.4.1, witness `b8a7d1d6941d…`, all three profiles certified).                                                      |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` (53 defs), `spec/v2/core/events.md`, `spec/v2/event-codemap.json` (§D, proposed), `schemas/v2/conversation-event.schema.json` (§D, cited) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1) — a `patternProperties` hatch WIDENS a closed object; no property is added, removed or retyped, and no MUST is relaxed. §C adds one MUST NOT. |
 | **Supersedes**    | —                                                               |
@@ -105,6 +105,13 @@ So the host reporting that the conversation content is unmodelled is **wrong, an
 ## Unresolved
 
 Everything in §E, plus: whether the 53 defs are the whole set. The count is derived by comparing v1 and v2 `additionalProperties` per def; a def that was *absent* in v1 and closed in v2 is not counted and may deserve the same treatment.
+
+### Falsifiability — one row per normative requirement
+
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A every def closed by this RFC carries the vendor hatch | `openwop.requirement.0185.payload-vendor-hatch` — a payload carrying an `x-`/`vendor.`-prefixed member validates; a bare unknown member does not | the suite, unaided | witnessable — unaided, `executed-pass` on the reference host's certified bundle |
+| §A the hatch is RFC 0177 §C.2's pattern and not a second one | the closed `^(openwop-\|x-\|vendor\.)` prefix in every touched def; `check-v2-schemas` enforces the closure | the corpus gate | witnessable — unaided (corpus) |
 
 ## Acceptance criteria
 

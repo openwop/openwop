@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 165 |
-| Active | 18 |
+| Accepted | 168 |
+| Active | 15 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -249,13 +249,13 @@
 | RFC 0177 | v2 registry, packs, and the extension tail: a v2 host reads an absent `engines.openwop` ceiling as `<2.0.0` and refuses with `pack_engine_unsupported` at install, on every publication path including a mirror; `registry/v2/` is a parallel published tree of re-signed manifests (a signed overlay is rejected: signatures authorize by namespace and the mirror path re-derives the signer at ingest); the peer-dependency identifier is the C.2 declaration-file key and `pack_peer_dependency_undefined` reads against that file, with a generated alias table for the four grammars in the wild and a scheduled removal; the 13 manifest schemas re-`$id` under `/spec/v2/` with the RFC 0138 hatch on every pack-authored document (RFC 0138 G4 decided); `signing.method`'s two conventions that sign different bytes become one `signing.scheme`; `publicKeyRef` and `kind`-absent are gone; the registry is versioned by tree and its `endpoints` map is the negotiation; provider-id precedence (RFC 0095 UQ4) is decided as fail-closed conflict with a qualified form; form-content packs reuse the edge-condition operator set and `i18n.md`'s localized string; chains pin exact versions (WCP2), children are reference-counted (WCP5), and the portable parameter deferral (WCP4) is a named v2.x follow-up | Active |
 | RFC 0178 | v2 assurance registers and deprecation machinery: `spec/v1/deprecations.json` becomes normative - every row generates `deprecated: true` and `x-openwop-remove-in` onto its schema and API nodes, and a removal date that has passed with the surface present fails the merge gate; `gaps.json` rows carry a real witness class and a requirement id, the per-RFC `G<n>` becomes an alias row with a scheduled removal, and the RFC falsifiability tables become the same data with a parser gate; cross-repo evidence stays resolved; schema and API hygiene (README maturity column, "kept in sync" mirrors, redocly suppressions, a stale artifact-type gap row) is fixed rather than carried into `schemas/v2/` | Accepted |
 | RFC 0179 | Root `preferredVersion` (optional in v1.x): the `<major>.<minor>` a host serves to a header-less request, which MUST be a member of `protocolVersions[]` and equal `protocolVersion` while the host serves one major - the field RFC 0172 sectionA.1 requires at v2 and said would be "filed separately" so hosts can advertise it before the cut; the 2.0.0 suite's `--target-major` default reads it | Active |
-| RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Active |
+| RFC 0180 | How an org gets into `spec/v2/declaration.json` `extensions`: the corpus is the sole registrar, registration takes effect on a `@openwop/spec-artifacts` release, and a shipped entry is append-only because deregistering an org retroactively converts pass-through into refusal for every log already written | Accepted |
 | RFC 0181 | Vendor path namespace: host-proprietary operations live at `/host/<org>/…`, keyed to the org registry, version-agnostic, outside the protocol contract | Accepted |
 | RFC 0182 | `GET /runs`: a portable run list - tenant-scoped, bound ids, cursor pagination, filters - advertised by the `runList` family | Accepted |
 | RFC 0183 | `interruptResolved` cannot record four of the five resume actions | Accepted |
 | RFC 0184 | A tenant-bound id cannot survive a front door as `%2F` | Accepted |
-| RFC 0185 | v2 closed 53 run-event payload defs that v1 left open, with no hatch and no migration row | Active |
-| RFC 0186 | Three payload seats the hosts measured and the corpus lacked | Active |
+| RFC 0185 | v2 closed 53 run-event payload defs that v1 left open, with no hatch and no migration row | Accepted |
+| RFC 0186 | Three payload seats the hosts measured and the corpus lacked | Accepted |
 | RFC 0187 | Four rules the corpus owed after a host measured them: the `webhookId` mint surface carries the `subscriptionId` kind; a v2-only event type passes through on the v1 wire; a rule enforced per route is only as complete as the census of writers; a legacy writer marks the row it cannot seat | Active |
 
 ## SDK Helper Coverage
@@ -279,7 +279,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 18 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0185, RFC 0186, RFC 0187) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 15 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0187) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
