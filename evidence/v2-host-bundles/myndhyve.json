@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-14T17:08:00.223Z",
+  "generatedAt": "2026-09-18T03:08:24.185Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.1.7",
+    "version": "2.3.3",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.1.7",
-    "stampSha256": "5594e445dafa6f889a005c00556c2ae241f7a591f45e08eee0b126736bfb04d3"
+    "specArtifactsVersion": "2.3.3",
+    "stampSha256": "9f6224ad9ab04be25d40ba336e3992ec1c65ed4675f1b6c10298573ca42177af"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "46917218d19f33b0c0ec9c6267513bafcaeaa55f"
+      "id": "00959fd8d96c03e03a891b99b714acef253fe62d"
     },
     "signingKeyId": "myndhyve-bundle-2026-09"
   },
   "discovery": {
     "url": "https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop",
-    "sha256": "d8e60c762318e198cf9784b6a0832d82926309a53adb4493be1494b5dcf507f9",
+    "sha256": "e18f05ba422528eddf698b3e34e5fe2069cfa12d62285c03ce2925760bd8d86b",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -61,6 +61,8 @@
         "conformance-channel-ttl",
         "conformance-subworkflow-parent",
         "conformance-approval",
+        "conformance-approval-refine",
+        "conformance-approval-approvers",
         "conformance-clarification",
         "conformance-agent-identity",
         "conformance-orchestrator-low-confidence",
@@ -992,7 +994,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 149,
+      "executedPass": 157,
       "executedFail": 0,
       "skipped": 0,
       "inapplicable": 82,
@@ -1003,7 +1005,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 295
+        "assertions": 301
       },
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
@@ -1028,8 +1030,7 @@
         "id": "openwop.scenario.v2-approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
         "result": "executed-pass",
-        "assertions": 2,
-        "detail": "partial-witness: blocked: no interrupt-raising fixture with an approversList the suite's bearer is not on — advertise `conformance-approval-approvers` (a core.approvalGate whose approversList is [\"urn:conformance:listed-approver\"]) so a non-listed resolve can be driven"
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
@@ -1037,6 +1038,12 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-bound-id-path-projection",
+        "scenario": "v2-bound-id-path-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-bundle-v3-signed",
@@ -1286,6 +1293,18 @@
         "assertions": 10
       },
       {
+        "id": "openwop.scenario.v2-payload-seats-0186",
+        "scenario": "v2-payload-seats-0186.test.ts",
+        "result": "executed-pass",
+        "assertions": 18
+      },
+      {
+        "id": "openwop.scenario.v2-payload-vendor-hatch",
+        "scenario": "v2-payload-vendor-hatch.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
         "id": "openwop.scenario.v2-peer-dependency-declared",
         "scenario": "v2-peer-dependency-declared.test.ts",
         "result": "inapplicable",
@@ -1464,6 +1483,13 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-webhook-delivery-shape",
+        "scenario": "v2-webhook-delivery-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 4,
+        "detail": "partial-witness: blocked: [blocked] no run.started delivery for this run arrived inside 15s — durability is v2-webhook-durable-delivery's claim, not this file's; [blocked] no run.started delivery for this run arrived inside 15s; [inapplicable] seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+      },
+      {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
@@ -1486,13 +1512,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 86
+        "assertions": 88
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 86
+        "assertions": 88
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -2024,6 +2050,12 @@
         "assertions": 19
       },
       {
+        "id": "openwop.requirement.0171.webhook-delivery-shape",
+        "scenario": "v2-webhook-delivery-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0172.advertised-path-space-served",
         "scenario": "v2-advertised-path-space-served.test.ts",
         "result": "executed-pass",
@@ -2099,7 +2131,7 @@
         "id": "openwop.requirement.0173.approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
@@ -2475,11 +2507,29 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0184.bound-id-path-projection",
+        "scenario": "v2-bound-id-path-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0185.payload-vendor-hatch",
+        "scenario": "v2-payload-vendor-hatch.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0186.payload-seats",
+        "scenario": "v2-payload-seats-0186.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       }
     ]
   },
-  "witnessSha256": "1aec8812883e30553a99f0b078a4ae73030e1a9cb6a0152c99cb5d50160e2f80",
-  "assertionCount": 1619,
+  "witnessSha256": "32e230be031ce40d9a1aef26eacd7d40b37f13cf51b44041034acdf657bb01a0",
+  "assertionCount": 1696,
   "detail": {
     "nonPass": [
       {
@@ -2897,7 +2947,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09",
-    "sig": "dcuoYf2NlMX71a2_g1Tuau-CY8o9DM2PM1g4eS-e8nDqekblVA6dCMPhRt84nk9ZF9TI6XTdRR6euXPyrWxWBA",
+    "sig": "M9ZQr0CyaZg5BciWXOXJyIka0DLILQZWkecSzArNsqJUf43FPMcgvQeBn9K_5PLVtKCy8uWnab2ZLq6cR_vBDw",
     "over": [
       "witnessSha256",
       "host.build",
