@@ -109,6 +109,7 @@ for (const f of core) {
   }
   let bad = false;
   let prose = '';
+  let obligationProse = '';
   for (const h of homes) {
     const cls = homeClass(h);
     // §A — a declaration site cannot be its own behaviour home. Every core
@@ -119,18 +120,31 @@ for (const f of core) {
     if (cls === 'rfc') { refused.push(`${f.key} -> ${h} (an RFC is history, not operative text; owningRfc already records it)`); bad = true; continue; }
     if (cls === 'refused') { refused.push(`${f.key} -> ${h} (not a normative home: only spec/v2/core, spec/v2/ext, a v2 schema as a CO-pointer, or spec/v1 as a declared dependency)`); bad = true; continue; }
     if (!existsSync(join(ROOT, h))) { missing.push(`${f.key} -> ${h}`); bad = true; continue; }
-    if (cls !== 'schema') prose += readFileSync(join(ROOT, h), 'utf8') + '\n';
+    // RFC 0190 §B — `ext` is a CO-POINTER, never the target that carries the
+    // family's obligation. spec/v2/ext/ is the UNWITNESSED TAIL (RFC 0174
+    // §E.2), not a second kernel: letting it satisfy §B(b)/(c) resolved a core
+    // family with zero words in core/ and no stub — and it resolved
+    // `authorization` against thirteen unrelated ext READMEs, each of which
+    // happens to carry the boilerplate "clients MUST NOT infer ... authorization
+    // semantics from its presence". So ext prose contributes FACET COVERAGE
+    // (§B(d)) and nothing else; the obligation must come from core/ or v1.
+    if (cls !== 'schema') {
+      const text = readFileSync(join(ROOT, h), 'utf8') + '\n';
+      prose += text;
+      if (cls !== 'ext') obligationProse += text;
+    }
   }
   if (bad) continue;
   // §A — a schema may co-point, never stand alone: RFC 0174 §E.2a parks
   // rationale in schema descriptions precisely because the budget does not
   // count them, and a schema-only home turns that escape into "no prose".
   if (prose === '') { refused.push(`${f.key} -> schema-only (a schema MAY co-point; it MUST NOT be the sole home — RFC 0174 §E.2a)`); continue; }
+  if (obligationProse === '') { refused.push(`${f.key} -> ext-only (spec/v2/ext/ is the unwitnessed tail and MAY co-point; it MUST NOT be the sole home — RFC 0190 §B)`); continue; }
   // §B(b) — the target names the family.
-  if (!namesKey(prose, f.key)) { unnamed.push(`${f.key} (no target names it)`); continue; }
+  if (!namesKey(obligationProse, f.key)) { unnamed.push(`${f.key} (no core/ or v1 target names it — an ext co-pointer cannot carry the obligation, RFC 0190 §B)`); continue; }
   // §B(c) — an obligation ABOUT the family: a 2119 keyword in a paragraph that
   // also names it. Document scope would pass on almost any v2 core doc.
-  const paras = prose.split(/\n\s*\n/);
+  const paras = obligationProse.split(/\n\s*\n/);
   if (!paras.some((q) => namesKey(q, f.key) && KEYWORD.test(q))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it)`); continue; }
   // §B(d) — facet completeness, counted rather than failed (see the ratchet).
   for (const facet of f.facets ?? []) if (!namesKey(prose, facet)) facetsUncovered.push(`${f.key}.${facet}`);
@@ -185,14 +199,71 @@ if (eosDate) {
         '  a cliff: a schedule that only fails on the last day is a statistic.\n',
     );
   }
+  // RFC 0190 §C — `v1Carried` must equal the computed v1-dependent set.
+  //
+  // §C leaves `v1Dependent` unconstrained UPWARD on purpose, so a family may
+  // legally become v1-dependent at any time. Nothing checked that it also
+  // entered `v1Carried` — and `v1Carried` is what the §D fallback covers. A
+  // family could therefore be v1-dependent, uncovered by the fallback, and
+  // green until the day the fallback ran. This is the same class as the
+  // fallback that was printed and never applied: a list whose membership
+  // nothing maintained.
+  {
+    const carried = new Set(base0.v1Carried ?? []);
+    const missing = v1dep.filter((k) => !carried.has(k));
+    const stale = [...carried].filter((k) => !v1dep.includes(k));
+    if (missing.length || stale.length) {
+      process.stdout.write('\n  FAIL — docs/normative-home-baseline.json `v1Carried` does not match the\n  computed v1-dependent set, and `v1Carried` is what the RFC 0189 §D fallback covers:\n');
+      for (const k of missing) process.stdout.write(`    ${k}: v1-dependent but NOT listed — the fallback would not cover it\n`);
+      for (const k of stale) process.stdout.write(`    ${k}: listed but no longer v1-dependent — remove it\n`);
+      process.exit(1);
+    }
+  }
+
   // --deadline: opt-in, so a contributor's unrelated PR never reds on a calendar.
   if (process.argv.includes('--deadline') && open > 0) {
     const t0 = base0.t0 ?? null;
     const openAtT0 = base0.openAtT0 ?? open;
     if (Date.parse(NOW) >= Date.parse(eosDate)) {
-      process.stdout.write(`\n  FAIL — v1 end-of-support (${eosDate}) has passed and ${open} famil(ies) still have no home that survives it.\n`);
-      process.stdout.write('  The fallback RFC 0189 §D names: spec/v1/** is frozen-but-operative for the\n  families still listed in `v1Carried`, and this gate then fails only if one of\n  those targets is DELETED or its Status banner changes.\n');
-      process.exit(1);
+      // RFC 0190 §C — APPLY the §D fallback rather than printing it.
+      //
+      // This branch used to describe the fallback and then exit 1 regardless:
+      // `v1Carried` was read into base0 and never used, and nothing ever checked
+      // whether a carried target had been deleted or had its Status banner
+      // changed. So on 2026-12-04 the daily job would have gone permanently red
+      // even in the world §D calls acceptable — which is precisely the defect
+      // RFC 0189's own Motivation exists to end ("a sentence describing a check
+      // the code did not perform"). It was committed by the RFC that named it.
+      //
+      // §D's actual rule: at end-of-support spec/v1/** is FROZEN-BUT-OPERATIVE
+      // for exactly the families in `v1Carried`. End-of-support ends new v1 wire
+      // support; it does not de-normativize prose a v2 family still points at.
+      // So after the date this fails on two things only: a family still
+      // undeclared, or a carried target deleted / its Status banner changed.
+      const carried = new Set(base0.v1Carried ?? []);
+      const uncarried = v1dep.filter((k) => !carried.has(k));
+      const broken = [];
+      for (const f of core) {
+        if (!carried.has(f.key)) continue;
+        for (const h of f.normativeText ?? []) {
+          if (!h.startsWith('spec/v1/')) continue;
+          const abs = join(ROOT, h);
+          if (!existsSync(abs)) { broken.push(`${f.key} -> ${h} (DELETED)`); continue; }
+          const head = readFileSync(abs, 'utf8').slice(0, 2000);
+          if (!/\*\*Status:?\*\*|Status:/.test(head)) broken.push(`${f.key} -> ${h} (no Status banner)`);
+          else if (!/Stable|FINAL/i.test(head.split('\n').find((l) => /Status/.test(l)) ?? '')) {
+            broken.push(`${f.key} -> ${h} (Status banner no longer Stable/FINAL: ${(head.split('\n').find((l) => /Status/.test(l)) ?? '').trim().slice(0, 80)})`);
+          }
+        }
+      }
+      const fatal = [...undeclared.map((k) => `${k} (no declared home)`), ...uncarried.map((k) => `${k} (v1-dependent but not in v1Carried)`), ...broken];
+      if (fatal.length === 0) {
+        process.stdout.write(`\n  v1 end-of-support (${eosDate}) has passed. RFC 0189 §D fallback APPLIES: every\n  remaining family points into spec/v1/**, which is frozen-but-operative for the\n  ${carried.size} famil(ies) in \`v1Carried\`, and every target still exists with a Stable\n  banner. This is the world §D calls acceptable, so it is not a failure.\n`);
+      } else {
+        process.stdout.write(`\n  FAIL — v1 end-of-support (${eosDate}) has passed and the §D fallback does NOT cover:\n`);
+        for (const m of fatal) process.stdout.write(`    ${m}\n`);
+        process.exit(1);
+      }
     }
     if (t0) {
       const span = Date.parse(eosDate) - Date.parse(t0);

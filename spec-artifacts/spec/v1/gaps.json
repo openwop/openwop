@@ -10319,11 +10319,11 @@
       "rfc": "0189",
       "local": "G2",
       "section": "§E.2",
-      "surface": "62 families must find v2 homes inside the RFC 0174 §E.2 kernel budget, which `check-core-budget.mjs` reads over `spec/v2/core/*.md` only (non-recursive). At 2.9.0 the budget is **24,695 / 25,000** — 305 words free for 62 families. `spec/v2/ext/**` is a legal home under `homeClass()` and is **not** counted by the budget, and the precedent already exists (`spec/v2/ext/provider-idempotency/README.md` is supporting normative text for the **core** `idempotency` family). Left implicit, 62 authors each discover the escape valve independently and `ext/` silently becomes \"core, but unbudgeted\" — the 25,000-word cap defeated by directory name.",
+      "surface": "61 families must find v2 homes inside the RFC 0174 §E.2 kernel budget, which `check-core-budget.mjs` reads over `spec/v2/core/*.md` only (non-recursive). At 2.9.0 the budget is **24,836 / 25,000** — 164 words free for 61 families. `spec/v2/ext/**` is a legal home under `homeClass()` and is **not** counted by the budget, and the precedent already exists (`spec/v2/ext/provider-idempotency/README.md` is supporting normative text for the **core** `idempotency` family). Left implicit, 62 authors each discover the escape valve independently and `ext/` silently becomes \"core, but unbudgeted\" — the 25,000-word cap defeated by directory name.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0189.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0189-normative-home.gaps.md",
@@ -10339,11 +10339,62 @@
       "surface": "The burn-down decays `open` linearly to zero at v1 end-of-support, and `open = v1Dependent + undeclared` — but `v1Carried` families (`toolHooks`, `toolCatalog`) are explicitly tolerated past end-of-support by §D itself, which fails only if their target is deleted or its `Status:` banner changes. Counting a deliberately-tolerated family in a burn-down that must reach zero asks for work the RFC says is not required.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0189.3",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0190.1",
+      "rfc": "0190",
+      "local": "G1",
+      "section": "§A",
+      "surface": "The per-family grant is **200 words** against a measured mean of **140.75** (four families, 563 words, five sections). That mean is drawn entirely from families with one or two facets. The remaining set includes `agents` (19 facets) and `aiProviders` (12), and a grounded model — ~110 base + ~20 per facet beyond the first — puts the remainder near 9,170 against 12,600 granted. If the real per-facet cost is higher than 20 words, the grant is too thin for the wide families even though the aggregate holds, and the self-funding property forces them to land LAST, when the cheap families have funded them.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0190.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0190.2",
+      "rfc": "0190",
+      "local": "G2",
+      "section": "§A",
+      "surface": "The cap reads `resolved` from `spec/v2/declaration.json` while the budget counts words — two different files, one number. A family could in principle be declared, grant 200 words, and later have its home refused by a tightened §B predicate, retroactively lowering the cap under prose already written.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0190.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0190.3",
+      "rfc": "0190",
+      "local": "G3",
+      "section": "§B",
+      "surface": "`spec/v2/ext/` is now a co-pointer that contributes facet coverage only. Nothing checks that an ext document cited as a co-pointer is *about* the family citing it — the same bare-token weakness as RFC 0189 G1, one directory over. The `authorization`-against-thirteen-READMEs case is closed for the OBLIGATION predicate but not for facet coverage: a facet name appearing incidentally in an unrelated ext page still counts as covered.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0190.3",
+      "sources": [
+        {
+          "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
           "token": "G3"
         }
       ]

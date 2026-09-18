@@ -13,6 +13,8 @@
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
+> **Amended 2026-09-18 by RFC 0190** (in place, legal while `Active` — RFC 0174 §A.4 restricts the new-RFC requirement to `Accepted` RFCs). Two changes: **§A** — `spec/v2/ext/**` is a CO-POINTER that contributes facet coverage only; it may no longer satisfy §B(b)/(c), because an ext-only home resolved a core family with zero words in `core/` and resolved `authorization` against thirteen unrelated ext READMEs. **§D** — the fallback this RFC named is now APPLIED rather than printed; the gate previously described it and exited 1 regardless, with `v1Carried` read and never used. That is the defect this RFC's own Motivation exists to end, committed by this RFC.
+
 ## Summary
 
 `check-v2-normative-home.mjs` asks whether every v2 core family's behaviour survives v1 end-of-support. It shipped four days before this RFC with no RFC of its own, a content check that accepted any file that exists, a ratchet that failed on the first honest declaration, and a deadline it printed but never compared. This RFC gives it a contract and fixes all four.
