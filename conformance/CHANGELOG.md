@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.7.1] — 2026-09-18 — the open-gap ratchet
+
+**Why a patch.** No conformance code changes; register dispositions, one stale
+declaration stub, and a new ratchet in `check-registers.mjs`.
+
+### Added
+
+- `openGaps` in `docs/witness-baseline.json`, seeded at **0** — the corpus's
+  last eleven open gap rows were disposed of, and the ratchet holds it there.
+
 ## [2.7.0] — 2026-09-18 — the dead-letter read gets its scenarios
 
 ### Added
