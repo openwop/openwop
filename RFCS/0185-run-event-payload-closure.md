@@ -111,7 +111,7 @@ Everything in §E, plus: whether the 53 defs are the whole set. The count is der
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
 | §A every def closed by this RFC carries the vendor hatch | `openwop.requirement.0185.payload-vendor-hatch` — a payload carrying an `x-`/`vendor.`-prefixed member validates; a bare unknown member does not | the suite, unaided | witnessable — unaided, `executed-pass` on the reference host's certified bundle |
-| §A the hatch is RFC 0177 §C.2's pattern and not a second one | the closed `^(openwop-\|x-\|vendor\.)` prefix in every touched def; `check-v2-schemas` enforces the closure | the corpus gate | witnessable — unaided (corpus) |
+| §A the hatch is RFC 0177 §C.2's pattern and not a second one | every touched def carries that one prefix pattern and no second spelling; `check-v2-schemas` enforces the closure | the corpus gate | witnessable — unaided (corpus) |
 
 ## Acceptance criteria
 
