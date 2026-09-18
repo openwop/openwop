@@ -1,6 +1,7 @@
 # Connection Packs
 
 > **Status: Stable · RFC 0177, RFC 0095.**
+> **Normative home:** `connections`.
 
 ## Why this exists
 

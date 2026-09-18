@@ -1,6 +1,7 @@
 # Replay and Fork
 
 > **Status: Stable · RFC 0140, 0041, 0173 §C, 0176 §A.5.**
+> **Normative home:** `eventLog`, `replay`.
 
 ## Why this exists
 

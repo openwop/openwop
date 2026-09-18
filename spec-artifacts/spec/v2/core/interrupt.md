@@ -1,6 +1,7 @@
 # Interrupt
 
 > **Status: Stable · RFC 0170 §E.1, RFC 0171 §A.4, RFC 0173 §B.**
+> **Normative home:** `interrupt`.
 
 ## Why this exists
 

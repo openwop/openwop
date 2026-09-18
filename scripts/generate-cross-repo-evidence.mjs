@@ -55,15 +55,21 @@ function pointers() {
  */
 function registryPeerDependencyKeys(dir) {
   const { readdirSync } = require_fs();
-  const packs = join(dir, 'registry', 'v1', 'packs');
-  if (!existsSync(packs)) return null;
+  // BOTH trees. This read `registry/v1` only, so the corpus's witness for the
+  // peer-dependency rule (check-declaration.mjs rule 7) measured the frozen v1
+  // tree — the one tree the v2 rule in packs.md §"Peer-dependency identifiers"
+  // does not bind. The v2 tree had never been inventoried here at all.
+  const trees = ['v1', 'v2'].map((t) => join(dir, 'registry', t, 'packs')).filter((p) => existsSync(p));
+  if (trees.length === 0) return null;
   const counts = {};
+  for (const packs of trees) {
   for (const name of readdirSync(packs)) {
     const vdir = join(packs, name, '-'); if (!existsSync(vdir)) continue;
     for (const f of readdirSync(vdir)) {
       if (!f.endsWith('.json') || f.includes('sbom')) continue;
       try { const m = JSON.parse(readFileSync(join(vdir, f), 'utf8')); for (const k of Object.keys(m.peerDependencies ?? {})) counts[k] = (counts[k] ?? 0) + 1; } catch { /* not a manifest */ }
     }
+  }
   }
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
 }

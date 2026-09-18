@@ -86,6 +86,7 @@ const missing = [];
 const refused = [];
 const unnamed = [];
 const noObligation = [];
+const unclaimed = [];
 const facetsUncovered = [];
 
 /** RFC 0189 §A — the legal home classes. */
@@ -130,6 +131,38 @@ for (const f of core) {
     // (§B(d)) and nothing else; the obligation must come from core/ or v1.
     if (cls !== 'schema') {
       const text = readFileSync(join(ROOT, h), 'utf8') + '\n';
+      // RFC 0191 §A — the RECIPROCAL marker. A `spec/v2/**` home must itself
+      // claim the family, in a `> **Normative home:** \`key\`.` line under its
+      // Status banner (an ext README uses a `| **homes:** | \`key\` |` row, the
+      // same shape check-declaration.mjs already requires for `witness:`).
+      //
+      // Why a marker and not a better regex: no syntactic predicate over prose
+      // satisfies both constraints. Measured at 2.11.0, `replay` and `interrupt`
+      // each have an obligation paragraph naming them in NINE core documents,
+      // `idempotency` in eight, `packs` in seven including security-defaults.md
+      // and versioning.md. Requiring backticks fails five of the eleven declared
+      // families, because honest prose names a family in words ("connection
+      // packs"); requiring the key in a heading fails six, for the same reason.
+      // A concentration ratchet creates action-at-a-distance failures.
+      //
+      // So this does NOT make a false declaration impossible — it makes it
+      // EXPLICIT, LOCAL and REVIEWABLE. The cheapest green path becomes writing
+      // a false sentence into a document whose own prose contradicts it, in the
+      // diff, in a file CODEOWNERS routes to the lead maintainer. Claiming more
+      // than that would repeat the defect RFC 0189's Motivation exists to end.
+      //
+      // spec/v1/ targets are exempt: v1 prose is frozen-but-operative (§D) and
+      // must not be edited for v2 bookkeeping. That buys nothing on the
+      // burn-down, since open = v1Dependent + undeclared counts them either way.
+      if (h.startsWith('spec/v2/')) {
+        const claims = [...text.matchAll(/(?:\*\*Normative home:\*\*|\*\*homes:\*\*)([^\n|]*)/g)]
+          .flatMap((m) => [...m[1].matchAll(/`([A-Za-z0-9_.-]+)`/g)].map((x) => x[1]));
+        if (!claims.includes(f.key)) {
+          unclaimed.push(`${f.key} -> ${h} (the document does not claim it — add a "> **Normative home:** \`${f.key}\`." line under its Status banner)`);
+          bad = true;
+          continue;
+        }
+      }
       prose += text;
       if (cls !== 'ext') obligationProse += text;
     }
@@ -159,7 +192,7 @@ process.stdout.write(
 // RFC 0189 §B — a declared home that is not a home, or does not carry an
 // obligation about its family, reads as resolved and is not. Hard fail: unlike
 // the counters below, these are authoring errors, not debt.
-const predicateFailures = [...refused, ...unnamed, ...noObligation];
+const predicateFailures = [...refused, ...unnamed, ...noObligation, ...unclaimed];
 if (predicateFailures.length > 0) {
   process.stdout.write(`\n  FAIL — ${predicateFailures.length} normativeText declaration(s) do not carry their family's behaviour:\n`);
   for (const m of predicateFailures) process.stdout.write(`    ${m}\n`);
