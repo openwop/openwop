@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/trigger-event.schema.json",
   "title": "TriggerEvent",
-  "description": "RFC 0099 §F.1. The normalized external-event envelope a host hands a started run as `ctx.triggerData` when an externally-originated event (`webhook`/`email`/`form`/`stream`/`change`) is delivered to an `active` TriggerSubscription (RFC 0083). This is an IN-RUN payload only — it never appears on the durable event log; the `trigger.delivery.attempted` event stays content-free (RFC 0083 §C / SECURITY `trigger-ingestion-content-redaction`). A TriggerEvent carries exactly the per-source sub-object matching its `source`. All content is `untrusted` (SECURITY `threat-model-prompt-injection.md`).",
+  "description": "RFC 0099 \u00a7F.1. The normalized external-event envelope a host hands a started run as `ctx.triggerData` when an externally-originated event (`webhook`/`email`/`form`/`stream`/`change`) is delivered to an `active` TriggerSubscription (RFC 0083). This is an IN-RUN payload only \u2014 it never appears on the durable event log; the `trigger.delivery.attempted` event stays content-free (RFC 0083 \u00a7C / SECURITY `trigger-ingestion-content-redaction`). A TriggerEvent carries exactly the per-source sub-object matching its `source`. All content is `untrusted` (SECURITY `threat-model-prompt-injection.md`).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -21,19 +21,19 @@
         "stream",
         "change"
       ],
-      "description": "Which external source originated the event. A TriggerEvent MUST carry exactly the per-source sub-object matching this value and MUST NOT carry the others (RFC 0099 §F.1; `stream`/`change` per RFC 0127)."
+      "description": "Which external source originated the event. A TriggerEvent MUST carry exactly the per-source sub-object matching this value and MUST NOT carry the others (RFC 0099 \u00a7F.1; `stream`/`change` per RFC 0127)."
     },
     "subscriptionId": {
       "$ref": "ids.schema.json#/$defs/subscriptionId",
-      "description": "The RFC 0083 §B subscription this event was delivered to."
+      "description": "The RFC 0083 \u00a7B subscription this event was delivered to."
     },
     "deliveryId": {
       "$ref": "ids.schema.json#/$defs/deliveryId",
-      "description": "Stable per-delivery id; equals the `causationId` stamped on `run.started` (RFC 0083 §C-3 / RFC 0040)."
+      "description": "Stable per-delivery id for this trigger delivery, tenant-bound per `identity.md` \u00a75. **It is NOT the `causationId` stamped on `run.started`.** An earlier revision of this description said it was; that claim was unsatisfiable from the moment RFC 0184/0187 made this kind tenant-bound \u2014 `deliveryId` REQUIRES a `<tenant>/<opaque>` form and `causationId` is typed as `eventId`, whose grammar admits no `/`, so no string can be both. No host emitted the pairing (the kind has no v2 read surface at all), so nothing was relying on it. How a run points back at the delivery that caused it is deliberately left open: RFC 0040 \u00a7Alternatives already rejected overloading `causationId` for a cross-space pointer in favour of a sibling field, and the v2 seat belongs in `spec/v2/core/webhooks.md` when `deliveryId` gets a read surface (RFC 0187 \u00a7Unresolved tracks it). A normative cross-field rule does not belong in a schema description in the first place."
     },
     "dedupKey": {
       "type": "string",
-      "description": "The host-opaque dedup key (RFC 0083 §C-1). Present iff the subscription's `dedupEnabled`. MUST NOT embed inbound body/header content in cleartext (SECURITY `trigger-ingestion-content-redaction`)."
+      "description": "The host-opaque dedup key (RFC 0083 \u00a7C-1). Present iff the subscription's `dedupEnabled`. MUST NOT embed inbound body/header content in cleartext (SECURITY `trigger-ingestion-content-redaction`)."
     },
     "receivedAt": {
       "type": "string",
@@ -42,21 +42,21 @@
     },
     "verified": {
       "type": "boolean",
-      "description": "Whether the host verified the source's authenticity (webhook signature / email DMARC / form CSRF+origin) before delivery per the subscription's `verification` policy (RFC 0099 §F.2). A run MUST be able to gate on this."
+      "description": "Whether the host verified the source's authenticity (webhook signature / email DMARC / form CSRF+origin) before delivery per the subscription's `verification` policy (RFC 0099 \u00a7F.2). A run MUST be able to gate on this."
     },
     "contentTrust": {
       "type": "string",
       "enum": [
         "untrusted"
       ],
-      "description": "Always `untrusted`. Inbound external content reaching an LLM node MUST be wrapped per `threat-model-prompt-injection.md` §UNTRUSTED; a TriggerEvent MUST NOT directly advance a HITL approval gate (the `prompt-injection-mcp-no-approval` invariant generalizes)."
+      "description": "Always `untrusted`. Inbound external content reaching an LLM node MUST be wrapped per `threat-model-prompt-injection.md` \u00a7UNTRUSTED; a TriggerEvent MUST NOT directly advance a HITL approval gate (the `prompt-injection-mcp-no-approval` invariant generalizes)."
     },
     "permittedPurposes": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "RFC 0128 — OPTIONAL declared uses the receiver is permitted to make of the accompanying data. Opaque purpose strings mapped to the host's local vocabulary; carries purpose categories only, never subject identifiers or consent records. Absent ⇒ unlabelled (no constraint asserted); `[]` ⇒ no onward use permitted (NOT the same as absent). A host advertising `purposePropagation` MUST honor the RFC 0128 §3 propagation rules for this label."
+      "description": "RFC 0128 \u2014 OPTIONAL declared uses the receiver is permitted to make of the accompanying data. Opaque purpose strings mapped to the host's local vocabulary; carries purpose categories only, never subject identifiers or consent records. Absent \u21d2 unlabelled (no constraint asserted); `[]` \u21d2 no onward use permitted (NOT the same as absent). A host advertising `purposePropagation` MUST honor the RFC 0128 \u00a73 propagation rules for this label."
     },
     "webhook": {
       "$ref": "#/$defs/WebhookEvent"
@@ -76,7 +76,7 @@
   },
   "allOf": [
     {
-      "description": "RFC 0099 §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others.",
+      "description": "RFC 0099 \u00a7F.1 \u2014 a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others.",
       "if": {
         "properties": {
           "source": {
@@ -271,7 +271,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Host-allowlisted headers only — a host MUST NOT pass through `Authorization`, `Cookie`, `Proxy-Authorization`, or any header carrying credential material (RFC 0099 §F.1 / SECURITY `trigger-ingestion-content-redaction`)."
+          "description": "Host-allowlisted headers only \u2014 a host MUST NOT pass through `Authorization`, `Cookie`, `Proxy-Authorization`, or any header carrying credential material (RFC 0099 \u00a7F.1 / SECURITY `trigger-ingestion-content-redaction`)."
         },
         "body": {
           "description": "The parsed JSON body, or a string for non-JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`."
@@ -339,7 +339,7 @@
         "partition": {
           "type": "integer",
           "minimum": 0,
-          "description": "Broker partition/shard, where the broker has one. With `offset`, feeds the RFC 0127 §4 dedup-key guidance `(topic, partition, offset)`."
+          "description": "Broker partition/shard, where the broker has one. With `offset`, feeds the RFC 0127 \u00a74 dedup-key guidance `(topic, partition, offset)`."
         },
         "offset": {
           "type": "string",
@@ -350,7 +350,7 @@
           "description": "The message key, where the broker has one."
         },
         "message": {
-          "description": "The consumed message payload — parsed JSON, or a string for non-JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`."
+          "description": "The consumed message payload \u2014 parsed JSON, or a string for non-JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`."
         }
       }
     },
@@ -369,11 +369,11 @@
             "update",
             "delete"
           ],
-          "description": "The change operation. REQUIRED (RFC 0127 §2 / resolved Q1 — one `change` source with an `op` discriminator, not per-verb sources)."
+          "description": "The change operation. REQUIRED (RFC 0127 \u00a72 / resolved Q1 \u2014 one `change` source with an `op` discriminator, not per-verb sources)."
         },
         "table": {
           "type": "string",
-          "description": "The source table/collection/entity name. With `changelogId`, feeds the RFC 0127 §4 dedup-key guidance `(table, changelog-id)`."
+          "description": "The source table/collection/entity name. With `changelogId`, feeds the RFC 0127 \u00a74 dedup-key guidance `(table, changelog-id)`."
         },
         "changelogId": {
           "type": "string",
@@ -393,7 +393,7 @@
       "required": [
         "ref"
       ],
-      "description": "A host-internal opaque handle to a resolved attachment/upload — NEVER a raw external URL the run is expected to fetch itself (RFC 0099 §F.1/§F.4). The host resolves and ingests attachments through its SSRF guard (SECURITY `trigger-ingestion-ssrf`), then hands the run an internal ref.",
+      "description": "A host-internal opaque handle to a resolved attachment/upload \u2014 NEVER a raw external URL the run is expected to fetch itself (RFC 0099 \u00a7F.1/\u00a7F.4). The host resolves and ingests attachments through its SSRF guard (SECURITY `trigger-ingestion-ssrf`), then hands the run an internal ref.",
       "properties": {
         "ref": {
           "type": "string",
@@ -416,8 +416,8 @@
   "examples": [
     {
       "source": "email",
-      "subscriptionId": "sub_7",
-      "deliveryId": "dlv_a1b2",
+      "subscriptionId": "acme/sub_7-xxxxxxxxxx",
+      "deliveryId": "acme/dlv_a1b2-xxxxxxx",
       "dedupKey": "msgid:abc@in.example.com",
       "receivedAt": "2026-06-13T18:04:11Z",
       "verified": true,
@@ -441,8 +441,8 @@
     },
     {
       "source": "webhook",
-      "subscriptionId": "sub_9",
-      "deliveryId": "dlv_c3d4",
+      "subscriptionId": "acme/sub_9-xxxxxxxxxx",
+      "deliveryId": "acme/dlv_c3d4-xxxxxxx",
       "receivedAt": "2026-06-13T18:10:00Z",
       "verified": true,
       "contentTrust": "untrusted",
@@ -461,8 +461,8 @@
     },
     {
       "source": "stream",
-      "subscriptionId": "sub_12",
-      "deliveryId": "dlv_e5f6",
+      "subscriptionId": "acme/sub_12-xxxxxxxxx",
+      "deliveryId": "acme/dlv_e5f6-xxxxxxx",
       "dedupKey": "events:3:88412",
       "receivedAt": "2026-07-06T12:00:00Z",
       "verified": true,
@@ -480,8 +480,8 @@
     },
     {
       "source": "change",
-      "subscriptionId": "sub_13",
-      "deliveryId": "dlv_a7b8",
+      "subscriptionId": "acme/sub_13-xxxxxxxxx",
+      "deliveryId": "acme/dlv_a7b8-xxxxxxx",
       "dedupKey": "contacts:lsn:0/1C4F9D0",
       "receivedAt": "2026-07-06T12:01:00Z",
       "verified": true,

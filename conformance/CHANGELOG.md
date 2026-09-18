@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.7] — 2026-09-18 — schema examples are validated now
+
+**Why a patch.** No conformance code changes; the corpus version moves because
+`schemas/v2/` content and a root gate script changed.
+
+### Fixed
+
+- `scripts/check-v2-schemas.mjs` now validates every root-level `examples` entry
+  against its own schema. It found **13 invalid examples across 6 v2 schemas**,
+  9 of them ids minted before RFC 0184/0187 made their kind tenant-bound. All
+  re-minted.
+
 ## [2.4.6] — 2026-09-18 — the npm page told the world to install a release candidate
 
 ### Fixed
