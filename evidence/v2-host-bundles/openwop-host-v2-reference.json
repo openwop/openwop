@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-17T16:44:28.540Z",
+  "generatedAt": "2026-09-18T03:52:16.240Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.3.3",
+    "version": "2.4.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.3.3",
-    "stampSha256": "9f6224ad9ab04be25d40ba336e3992ec1c65ed4675f1b6c10298573ca42177af"
+    "specArtifactsVersion": "2.4.0",
+    "stampSha256": "5b68f54de94dc0d6693867080f33f9004a4d4455648f899cd7ae8f7a6276ef38"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "2d37375093474d26436239594426ba17a52f699c"
+      "id": "f940927928a63dbcf2417760a99befc3c6a0330c"
     },
     "signingKeyId": "v2-reference-3"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "bf0585bbd851663144b061e0dcfa3e7c8a0717d5d55ec4c775fd039f4ee55650",
+    "sha256": "6707c42870b3b14927670f96918b268c054091d7ad909bab453d935691db5862",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -190,6 +190,45 @@
         "maxRuntimeMs": 1000,
         "deliveryChannel": "/host/events"
       },
+      "a2a": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "seam-gated",
+        "versions": [
+          "1.0"
+        ],
+        "preferredVersion": "1.0",
+        "minimumVersion": "1.0",
+        "refreshedAt": "2026-09-18",
+        "streaming": false,
+        "pushNotifications": false,
+        "durableTasks": false
+      },
+      "mcp": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "seam-gated",
+        "revisions": [
+          "2026-07-28"
+        ],
+        "preferredVersion": "2026-07-28",
+        "minimumRevision": "2026-07-28",
+        "refreshedAt": "2026-09-18",
+        "mrtr": {
+          "maxRounds": 4
+        }
+      },
+      "workflowChainPacks": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "subChains": {
+          "maxDepth": 8
+        }
+      },
       "packs": {
         "status": "experimental",
         "since": "2.0",
@@ -205,6 +244,18 @@
             "local"
           ]
         }
+      },
+      "sandbox": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "seam-gated",
+        "isolationModel": "process",
+        "allowedHostCalls": [
+          "fetch"
+        ],
+        "memoryLimitBytes": 50331648,
+        "wallClockLimitMs": 2000
       },
       "workspace": {
         "status": "experimental",
@@ -238,6 +289,22 @@
             "minimumAssurance": "bearer"
           },
           {
+            "lane": "saml",
+            "issuers": [
+              "urn:openwop:conformance:idp"
+            ],
+            "revocation": "not-on-or-after",
+            "minimumAssurance": "bearer"
+          },
+          {
+            "lane": "scim",
+            "issuers": [
+              "urn:openwop:conformance:idp"
+            ],
+            "revocation": "bound-connection",
+            "minimumAssurance": "bearer"
+          },
+          {
             "lane": "workload",
             "issuers": [
               "spiffe://example"
@@ -249,7 +316,8 @@
               "mtls-key-binding"
             ]
           }
-        ]
+        ],
+        "subjectLinkKey": "opaque-idp"
       },
       "conformance": {
         "seamsProfile": "openwop-conformance-seams-v2"
@@ -278,10 +346,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 195,
+      "executedPass": 229,
       "executedFail": 0,
       "skipped": 0,
-      "inapplicable": 44,
+      "inapplicable": 14,
       "blocked": 0
     },
     "requirements": [
@@ -323,6 +391,13 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-bound-id-kinds",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 7,
+        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion."
+      },
+      {
         "id": "openwop.scenario.v2-bound-id-path-projection",
         "scenario": "v2-bound-id-path-projection.test.ts",
         "result": "executed-pass",
@@ -344,14 +419,13 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 89
+        "assertions": 117
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.scenario.v2-coherence-not-in-bundle",
@@ -481,15 +555,14 @@
         "id": "openwop.scenario.v2-lane-issuer-advertised",
         "scenario": "v2-lane-issuer-advertised.test.ts",
         "result": "executed-pass",
-        "assertions": 13,
+        "assertions": 21,
         "detail": "partial-witness: inapplicable: no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
       },
       {
         "id": "openwop.scenario.v2-legacy-profiles-absent",
         "scenario": "v2-legacy-profiles-absent.test.ts",
         "result": "executed-pass",
-        "assertions": 1,
-        "detail": "partial-witness: inapplicable: host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id"
+        "assertions": 3
       },
       {
         "id": "openwop.scenario.v2-malformed-body-envelope",
@@ -518,36 +591,32 @@
       {
         "id": "openwop.scenario.v2-minimum-version-refused",
         "scenario": "v2-minimum-version-refused.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 15
       },
       {
         "id": "openwop.scenario.v2-mrtr-rounds-ceiling",
         "scenario": "v2-mrtr-rounds-ceiling.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-negotiation-authenticated",
         "scenario": "v2-negotiation-authenticated.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-negotiation-decided-emitted",
         "scenario": "v2-negotiation-decided-emitted.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 26
       },
       {
         "id": "openwop.scenario.v2-no-transport-advertisement",
         "scenario": "v2-no-transport-advertisement.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 5
       },
       {
         "id": "openwop.scenario.v2-owner-subject-required",
@@ -558,9 +627,8 @@
       {
         "id": "openwop.scenario.v2-pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 27
       },
       {
         "id": "openwop.scenario.v2-payload-registry-closed",
@@ -621,9 +689,8 @@
       {
         "id": "openwop.scenario.v2-refresh-sla",
         "scenario": "v2-refresh-sla.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 12
       },
       {
         "id": "openwop.scenario.v2-relaxation-recorded",
@@ -684,7 +751,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -725,9 +792,8 @@
       {
         "id": "openwop.scenario.v2-subject-link-record",
         "scenario": "v2-subject-link-record.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.scenario.v2-unmapped-type-refused",
@@ -871,67 +937,11 @@
         "detail": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
-        "scenario": "v2-negotiation-authenticated.test.ts",
+        "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
+        "scenario": "v2-bound-id-kinds.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "a2a facet not advertised — no negotiation to authenticate"
-      },
-      {
-        "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-mcp-exchange-cannot-lower-the-revision-below-preferredversion",
-        "scenario": "v2-negotiation-authenticated.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp facet not advertised — no negotiation to authenticate"
-      },
-      {
-        "id": "openwop.it.v2-negotiation-decided-emitted.an-a2a-exchange-leaves-negotiation-decided-on-the-host-log",
-        "scenario": "v2-negotiation-decided-emitted.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a facet not advertised — no negotiation to audit"
-      },
-      {
-        "id": "openwop.it.v2-negotiation-decided-emitted.an-mcp-exchange-leaves-negotiation-decided-on-the-host-log",
-        "scenario": "v2-negotiation-decided-emitted.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp facet not advertised — no negotiation to audit"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
-        "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
-        "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
-        "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
-        "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
-        "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion."
       },
       {
         "id": "openwop.requirement.0168.advertised-fixtures-exist",
@@ -1004,19 +1014,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 52
+        "assertions": 68
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 25
+        "assertions": 33
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 12
+        "assertions": 16
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -1100,7 +1110,7 @@
         "id": "openwop.requirement.0170.lane-issuer-advertised.members",
         "scenario": "v2-lane-issuer-advertised.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 21
       },
       {
         "id": "openwop.requirement.0170.lane-issuer-advertised.window",
@@ -1173,16 +1183,14 @@
       {
         "id": "openwop.requirement.0170.subject-link-record.denied-at",
         "scenario": "v2-subject-link-record.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise both the saml and scim lanes — advertising both is what implies the linking contract (row C2.5)"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0170.subject-link-record.shape",
         "scenario": "v2-subject-link-record.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise both the saml and scim lanes — advertising both is what implies the linking contract (row C2.5)"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0171.configurable-closed.dotted-key",
@@ -1446,30 +1454,56 @@
       {
         "id": "openwop.requirement.0173.pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.fs-read",
+        "scenario": "v2-pack-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.fs-write",
+        "scenario": "v2-pack-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.network",
+        "scenario": "v2-pack-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.no-env",
+        "scenario": "v2-pack-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.no-process",
+        "scenario": "v2-pack-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded",
@@ -1498,9 +1532,8 @@
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
         "scenario": "v2-legacy-profiles-absent.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent.no-root-profiles",
@@ -1511,43 +1544,62 @@
       {
         "id": "openwop.requirement.0175.minimum-version-refused",
         "scenario": "v2-minimum-version-refused.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a facet not advertised — no floor to enforce"
+        "result": "executed-pass",
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0175.minimum-version-refused.mcp",
         "scenario": "v2-minimum-version-refused.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp facet not advertised — no floor to enforce"
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0175.mrtr-rounds-ceiling",
         "scenario": "v2-mrtr-rounds-ceiling.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp facet not advertised — no MRTR ceiling"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0175.mrtr-rounds-ceiling.refused",
         "scenario": "v2-mrtr-rounds-ceiling.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp facet not advertised — no MRTR ceiling"
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0175.negotiation-authenticated",
+        "scenario": "v2-negotiation-authenticated.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0175.negotiation-authenticated.mcp",
+        "scenario": "v2-negotiation-authenticated.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0175.negotiation-decided-emitted",
+        "scenario": "v2-negotiation-decided-emitted.test.ts",
+        "result": "executed-pass",
+        "assertions": 13
+      },
+      {
+        "id": "openwop.requirement.0175.negotiation-decided-emitted.mcp",
+        "scenario": "v2-negotiation-decided-emitted.test.ts",
+        "result": "executed-pass",
+        "assertions": 13
       },
       {
         "id": "openwop.requirement.0175.no-transport-advertisement",
         "scenario": "v2-no-transport-advertisement.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0175.refresh-sla",
         "scenario": "v2-refresh-sla.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host advertises neither a2a nor mcp — no refreshedAt to check"
+        "result": "executed-pass",
+        "assertions": 12
       },
       {
         "id": "openwop.requirement.0176.era-2-append-vocabulary",
@@ -1660,16 +1712,14 @@
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
@@ -1751,7 +1801,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1770,20 +1820,27 @@
         "scenario": "v2-payload-seats-0186.test.ts",
         "result": "executed-pass",
         "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0187.bound-id-kinds.per-kind",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0187.bound-id-kinds.webhook",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
       }
     ]
   },
-  "witnessSha256": "429fedbc53ebef50f091ca619eb2e1be4db79f1ca127d716244c575f7eb6eae0",
-  "assertionCount": 1686,
+  "witnessSha256": "d3241cbf163bafea58f60bf88099a2176316c96deb0f0e2227a7ce3c7d29ba56",
+  "assertionCount": 1971,
   "detail": {
     "nonPass": [
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-chain-pin-exact",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -1793,37 +1850,7 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-minimum-version-refused",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-mrtr-rounds-ceiling",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-negotiation-authenticated",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-negotiation-decided-emitted",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-pack-isolation",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-provider-conflict",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-refresh-sla",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -1833,59 +1860,14 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-subject-link-record",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "inapplicable",
         "reason": "profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
+        "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
         "result": "inapplicable",
-        "reason": "a2a facet not advertised — no negotiation to authenticate"
-      },
-      {
-        "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-mcp-exchange-cannot-lower-the-revision-below-preferredversion",
-        "result": "inapplicable",
-        "reason": "mcp facet not advertised — no negotiation to authenticate"
-      },
-      {
-        "id": "openwop.it.v2-negotiation-decided-emitted.an-a2a-exchange-leaves-negotiation-decided-on-the-host-log",
-        "result": "inapplicable",
-        "reason": "a2a facet not advertised — no negotiation to audit"
-      },
-      {
-        "id": "openwop.it.v2-negotiation-decided-emitted.an-mcp-exchange-leaves-negotiation-decided-on-the-host-log",
-        "result": "inapplicable",
-        "reason": "mcp facet not advertised — no negotiation to audit"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion."
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -1903,79 +1885,9 @@
         "reason": "diffRun is OPTIONAL and answered 404 (runs.md §Surface)"
       },
       {
-        "id": "openwop.requirement.0170.subject-link-record.denied-at",
-        "result": "inapplicable",
-        "reason": "the host does not advertise both the saml and scim lanes — advertising both is what implies the linking contract (row C2.5)"
-      },
-      {
-        "id": "openwop.requirement.0170.subject-link-record.shape",
-        "result": "inapplicable",
-        "reason": "the host does not advertise both the saml and scim lanes — advertising both is what implies the linking contract (row C2.5)"
-      },
-      {
         "id": "openwop.requirement.0171.error-registry.retry-after",
         "result": "inapplicable",
         "reason": "no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
-      },
-      {
-        "id": "openwop.requirement.0173.pack-isolation",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.pack-isolation.isolated-context",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.pack-isolation.memory-cap",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.pack-isolation.timeout",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0175.legacy-profiles-absent",
-        "result": "inapplicable",
-        "reason": "host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id"
-      },
-      {
-        "id": "openwop.requirement.0175.minimum-version-refused",
-        "result": "inapplicable",
-        "reason": "a2a facet not advertised — no floor to enforce"
-      },
-      {
-        "id": "openwop.requirement.0175.minimum-version-refused.mcp",
-        "result": "inapplicable",
-        "reason": "mcp facet not advertised — no floor to enforce"
-      },
-      {
-        "id": "openwop.requirement.0175.mrtr-rounds-ceiling",
-        "result": "inapplicable",
-        "reason": "mcp facet not advertised — no MRTR ceiling"
-      },
-      {
-        "id": "openwop.requirement.0175.mrtr-rounds-ceiling.refused",
-        "result": "inapplicable",
-        "reason": "mcp facet not advertised — no MRTR ceiling"
-      },
-      {
-        "id": "openwop.requirement.0175.refresh-sla",
-        "result": "inapplicable",
-        "reason": "host advertises neither a2a nor mcp — no refreshedAt to check"
-      },
-      {
-        "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
@@ -2002,7 +1914,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-3",
-    "sig": "8_PM4vrAE_iPRQd_Npa5d3QeP8KFYM_yKNXsjZlSD2bF9aWFsYCbHtP8hDSJYuzRhkFkYxVvb22L8N2ar-_zAA",
+    "sig": "JqxNYKq4EceR53BGPuOg4l7H3X-Y6T9Au9KafrCJLqOplmlfDmyQrbUN9Rt15JsUMxE1_-kePcxlDYZKfrNIAQ",
     "over": [
       "witnessSha256",
       "host.build",
