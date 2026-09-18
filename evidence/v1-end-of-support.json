@@ -25,7 +25,7 @@
     },
     {
       "name": "myndhyve",
-      "matrixVersion": "0dbdddf44",
+      "matrixVersion": "46917218",
       "bundle": "evidence/v2-host-bundles/myndhyve.json",
       "present": true,
       "latest": {
