@@ -117,3 +117,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0183 | `interruptResolved` action fidelity (`action`, `refineFeedback`, `editedArtifactData`) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0184 | Bound-id path projection (`~`-escaped single segment; RFC 0147 §A.6 override named) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0186 | Three payload seats the hosts measured and the corpus lacked (`conversation.exchanged` union, `reason`, `ApprovalData.onTimeout`) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0187 | Four bindings the hosts found (`webhookId` kind, v1-wire pass-through, the census of writers, the legacy writer's mark) | in-scope-pending-assessment | — | — | `not-reviewed` |

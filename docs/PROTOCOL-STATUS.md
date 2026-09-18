@@ -11,8 +11,8 @@
 | JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 521 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 183 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 522 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 184 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.3.4 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.4.0 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -68,7 +68,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 165 |
-| Active | 17 |
+| Active | 18 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -256,6 +256,7 @@
 | RFC 0184 | A tenant-bound id cannot survive a front door as `%2F` | Accepted |
 | RFC 0185 | v2 closed 53 run-event payload defs that v1 left open, with no hatch and no migration row | Active |
 | RFC 0186 | Three payload seats the hosts measured and the corpus lacked | Active |
+| RFC 0187 | Four rules the corpus owed after a host measured them: the `webhookId` mint surface carries the `subscriptionId` kind; a v2-only event type passes through on the v1 wire; a rule enforced per route is only as complete as the census of writers; a legacy writer marks the row it cannot seat | Active |
 
 ## SDK Helper Coverage
 
@@ -278,7 +279,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 17 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0185, RFC 0186) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 18 RFCs `Active` (RFC 0035, RFC 0111, RFC 0121, RFC 0158, RFC 0167, RFC 0168, RFC 0170, RFC 0171, RFC 0172, RFC 0173, RFC 0175, RFC 0176, RFC 0177, RFC 0179, RFC 0180, RFC 0185, RFC 0186, RFC 0187) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

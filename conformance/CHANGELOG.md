@@ -1,5 +1,36 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.0] — 2026-09-18 — every bound kind, not just runId
+
+**Why a minor.** One scenario file is added (`PROTOCOL-STATUS.md` §suite version).
+
+### Added
+
+- **`v2-bound-id-kinds.test.ts`** — one leg per tenant-bound kind with a wire
+  surface (`subscriptionId` via `webhookId`, `interruptId`, `effectId`), each
+  gated on the family that mints it: the grammar, the `~`-projected accept side,
+  and the `403 id_tenant_mismatch` a foreign tenant segment MUST draw whether or
+  not the id exists. Until now every v2 scenario that read a bound id read
+  `runId`, so a host binding one kind of five was green — which is what a tier-1
+  host's own audit found on its wire. The `deliveryId` leg records
+  `inapplicable`: the corpus serves no dead-letter read, so that kind has
+  nowhere to appear (RFC 0187 §Unresolved).
+
+### Fixed
+
+- **`v2-webhook-durable-delivery` counted another scenario's deliveries against
+  its retry budget.** Both legs filtered attempts by `runId` alone; a host that
+  cannot reach the suite's loopback registers every scenario against one
+  tunnelled receiver URL, so a concurrent scenario's subscription matched the
+  same run. A tier-2 host measured 6 attempts against a `maxAttempts` of 5 at
+  `--max-workers 2` while its own logs showed five. Both legs now also filter on
+  the delivery's own `webhookId` — exact, and holds at any worker count.
+- **`McpFakeServer.needs_input_loop`** re-issues `input_required` for
+  `arguments.rounds` retries, so a host's MRTR loop can be driven past its
+  ceiling; `v2-mrtr-rounds-ceiling` recorded `blocked` without it.
+- **`v2-negotiation-authenticated`** reads `details.runId` off the closed error
+  envelope like `v2-minimum-version-refused` does.
+
 ## [2.3.4] — 2026-09-17 — registers regenerated
 
 **Why a patch.** No scenario changed; `spec/v1/gaps.json` (shipped in spec-artifacts) regenerated from the dispositioned registers (openwop CHANGELOG [2.3.4]).

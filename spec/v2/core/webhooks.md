@@ -12,7 +12,7 @@ A host that advertises `webhooks` (capabilities.md) serves `registerWebhook` (`P
 
 | Operation | Request | Response |
 | --- | --- | --- |
-| `registerWebhook` | `{ url, events[], secret?, tags? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }` |
+| `registerWebhook` | `{ url, events[], secret?, tags? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }`, tenant-bound (identity.md §5) |
 | `unregisterWebhook` | path `webhookId` | `204`; `404` when unknown; `403` when the caller is outside the subscription's tenant |
 
 A subscription MUST receive only events from runs within its tenant scope; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
@@ -21,7 +21,7 @@ A subscription MUST receive only events from runs within its tenant scope; cross
 
 The delivery envelope is generated from the same payload definition as the event itself and the CloudEvents mapping — one source, three renderings (RFC 0171 §A.4). The body is `{ runId, workspaceId?, event }` where `event` is the verbatim run event (events.md), and it MUST validate against `schemas/v2/webhook-delivery.schema.json`. `workspaceId` is present exactly when `RunSnapshot.owner.workspace` is (`identity.md` §1) — a host MUST NOT substitute its tenant id for an absent workspace.
 
-The envelope's `runId` is tenant-bound (`identity.md` §5), like every other rendering of a v2 `runId`. An outbound emission is not a response to a versioned request, so nothing in the request cycle supplies the form — the grammar does. **A host that projects on responses and not on emissions hands the subscriber an identifier the client has never seen**, and the failure is silent: the subscriber's correlation matches nothing, with no error, no `4xx` and no log line. Until 2026-09-04 the nested `event.runId` was bound by `run-event.schema.json` while the envelope's own was carried by this paragraph alone, which is how a real host shipped the split.
+The envelope's `runId` is tenant-bound (`identity.md` §5), like every other rendering of a v2 `runId`: an outbound emission is not a response to a versioned request, so the grammar supplies the form, not the request cycle. `webhook-delivery.schema.json` binds it and records what the split cost.
 
 ### Headers
 

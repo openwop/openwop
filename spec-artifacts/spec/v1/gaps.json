@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-17",
+  "updated": "2026-09-18",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",

@@ -71,6 +71,10 @@ read with `event_type_unmapped` on a name the codemap does not carry on its v1
 side. A run created after the upgrade is era `3` and is written in v2
 vocabulary, untranslated.
 
+A writer that emits a property a closed def cannot seat (RFC 0185 §B) MUST
+mark the row with what it could not seat, so the refusal names the writer
+instead of surfacing as an unexplained read failure (RFC 0187 §D.1).
+
 This binds every writer for as long as an era-`2` run stays open, which on a
 host with human-approval interrupts can be days. Draining era-`2` runs before
 serving v2 is not the path — see §"Runs pinned to v1" — so the writer rule is
@@ -95,18 +99,17 @@ property at load rather than assume it; if a future row folds two v1 names onto
 one v2 name, the inverse stops being a function and the host MUST refuse to
 serve the v1 representation rather than guess which spelling to emit.
 
-Two alternatives are rejected, and naming them is the point of this section.
-Storing v1 spellings under an era-`3` stamp makes the stamp a lie, and the
-closed-enum scenario would pass it by luck on any run whose types happen to be
-identity rows. Serving v2 names on `/v1/…` breaks the v1 wire, which the
-overlap exists to preserve. Neither is a smaller change than the inverse map;
-they are the same change with the honesty removed.
+A type with NO codemap row — v2-only vocabulary, anything RFC 0185/0186 seated
+— has no v1 spelling to invert to. A host MUST emit it unchanged on the v1 read
+path, MUST NOT drop the row, and MUST NOT refuse the read for it (RFC 0187
+§B.1): a v1 consumer already tolerates an unknown `type`, and the alternatives
+lose data or make one new row cost an otherwise readable run.
 
 ### The seat
 
 The adapter MUST sit at the storage boundary every reader passes through — the storage interface's event-list method, not a wrapper some call sites bypass. A host leg MUST name its seat in its ADR.
 
-The seat is a **claims-check** (conformance.md §Witness class): it is discharged by that disclosure and by audit, never by the wire. `v2-v1-events-translated` drives poll, SSE and a fork, and what those three legs witness is that *those three readers* translate. They do not witness the seat. Three wrappers pass them exactly as one correctly seated adapter does, and the rule binds **every** reader — including the ones the suite has no name for. A universal is not discharged by three examples: the scenario catches a reader that was *missed*, not an adapter that was *misplaced*.
+The seat is a **claims-check** (conformance.md §Witness class): discharged by that disclosure and by audit, never by the wire. The rule binds **every** reader, including the ones the suite has no name for; `run-event.schema.json` records why three passing legs do not discharge it.
 
 ### Forking a v1 run
 

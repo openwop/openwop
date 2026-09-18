@@ -39,7 +39,7 @@ import { req } from '../lib/requirement-ids.js';
 const FIXTURE = 'conformance-noop';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
-interface Attempt { readonly key: string; readonly runId: string | null; readonly status: number; readonly at: number }
+interface Attempt { readonly key: string; readonly runId: string | null; readonly webhookId: string; readonly status: number; readonly at: number }
 
 /**
  * A receiver that fails the first `failFirst` attempts for each delivery key
@@ -67,7 +67,7 @@ async function startReceiver(failFirst: number): Promise<{ server: Server; url: 
       const n = (seen.get(key) ?? 0) + 1;
       seen.set(key, n);
       const status = n <= failFirst ? 500 : 204;
-      attempts.push({ key, runId, status, at: Date.now() });
+      attempts.push({ key, runId, webhookId, status, at: Date.now() });
       res.writeHead(status);
       res.end();
     });
@@ -246,7 +246,14 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const runId = (create.json as { runId: string }).runId;
     await waitTerminal(runId, 10_000);
 
-    const ours = () => receiver.attempts.filter((a) => a.runId === runId);
+    // Filter by the delivery's own SUBSCRIPTION, not just its run. A host that
+    // cannot reach the suite's loopback registers every scenario against one
+    // tunnelled receiver URL (`resolveRegistrationUrl`), so a concurrently
+    // running scenario's subscription matches this run too and its attempts
+    // landed in this budget: a tier-2 host measured 6 attempts against a
+    // maxAttempts of 5 at `--max-workers 2`, with its own logs showing five.
+    // The webhook id is on every delivery (webhooks.md §Headers).
+    const ours = () => receiver.attempts.filter((a) => a.runId === runId && a.webhookId === sub.webhookId);
     const retried = await waitFor(() => ours().some((a) => a.status === 204), retryWaitMs(doc));
     const attempts = ours();
     expect(
@@ -326,7 +333,14 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     expect(create.status, req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
     const runId = (create.json as { runId: string }).runId;
     await waitTerminal(runId, 10_000);
-    const ours = () => receiver.attempts.filter((a) => a.runId === runId);
+    // Filter by the delivery's own SUBSCRIPTION, not just its run. A host that
+    // cannot reach the suite's loopback registers every scenario against one
+    // tunnelled receiver URL (`resolveRegistrationUrl`), so a concurrently
+    // running scenario's subscription matches this run too and its attempts
+    // landed in this budget: a tier-2 host measured 6 attempts against a
+    // maxAttempts of 5 at `--max-workers 2`, with its own logs showing five.
+    // The webhook id is on every delivery (webhooks.md §Headers).
+    const ours = () => receiver.attempts.filter((a) => a.runId === runId && a.webhookId === sub.webhookId);
     await waitFor(() => ours().length > 1, retryWaitMs(doc));
     const attempts = ours();
     expect(

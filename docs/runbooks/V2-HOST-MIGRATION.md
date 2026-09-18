@@ -284,6 +284,13 @@ Three checks that catch the drift before a scenario does:
 
 `v2-webhook-delivery-shape` (suite 2.3.2+) reads the fan-out both ways; poll and SSE are read by `v2-run-completed-outputs`, `v2-stream-sse-projection` and the dual-stack scenarios. Nothing reads a host's snapshot-adjacent surfaces per contract yet — check those by hand.
 
+
+## Cut against the revision that is serving
+
+A bundle is evidence about a deployed host, so it is evidence about the revision serving traffic when it was cut. If production moves while you are preparing the PR — a redeploy, a rollback, a traffic shift — re-cut rather than submit the earlier bundle: the numbers may be identical and the claim still wrong, because the thing the claim is about is gone. A tier-2 host did exactly this on 2026-09-18, re-cutting against `00363` after `00362` stopped serving, and said so in the PR.
+
+The same rule in the other direction: cut against a commit that will be on `main`. A bundle naming a `--host-build commit:<sha>` that never merges cannot be checked by anyone later.
+
 ---
 
 ## Open items a third host should expect
