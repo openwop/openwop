@@ -34,7 +34,13 @@ const hostGaps = [];
 const declaredIds = new Set();
 for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n))) {
   if (Number(f.slice(0, 4)) < 167) continue;
-  const t = readFileSync(join(RFCS, f), 'utf8').split(/### Falsifiability/)[1]?.split(/^## /m)[0] ?? '';
+  // ANCHORED. An unanchored split matches the literal inside prose too, so an
+  // RFC that MENTIONS `### Falsifiability` in a sentence before its real table
+  // had the wrong section read — RFC 0178 (prose at §C.1) and RFC 0184 (a second
+  // mention three lines after the heading, which truncated the split) each
+  // presented ZERO ids to rule 4 while carrying a passing one.
+  // `check-falsifiability.mjs` already anchored; the two gates disagreed.
+  const t = readFileSync(join(RFCS, f), 'utf8').split(/^### Falsifiability[^\n]*$/m)[1]?.split(/^## /m)[0] ?? '';
   for (const row of t.split('\n')) if (row.startsWith('| §') || row.startsWith('| `openwop.requirement')) for (const m of row.matchAll(/openwop\.requirement\.[a-z0-9.-]+/g)) declaredIds.add(m[0]);
 }
 // every requirement id with an executed-pass row in any committed host bundle
@@ -108,7 +114,7 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
   // declared no tier at all. GOVERNANCE §"Acceptance evidence tiers" names the
   // label; the RFC must state it.
   if (!/Evidence tier:\s*\**\s*(tier-[123]|corpus gate)/i.test(updated)) failures.push(`${f}: Updated declares no evidence tier — write \`Evidence tier: tier-N — <label>\` or \`Evidence tier: corpus gate — …\` (GOVERNANCE §"Acceptance evidence tiers")`);
-  const table = text.split(/### Falsifiability/)[1]?.split(/^## /m)[0] ?? '';
+  const table = text.split(/^### Falsifiability[^\n]*$/m)[1]?.split(/^## /m)[0] ?? '';  // anchored — see the note at declaredIds above
   // Rule 4 iterated ids and therefore passed VACUOUSLY for an RFC that named
   // none: five of the fourteen Active RFCs had no Falsifiability section or a
   // table with no ids in it, including the umbrella RFC 0167 — the largest flip

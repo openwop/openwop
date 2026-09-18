@@ -47,10 +47,10 @@ New scenario `v2-run-list` (target major 2, gated on `runList`): creates two run
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.2 a created run appears; every id bound to the caller's tenant | the list body | the suite, unaided (create, then list) | witnessable — unaided |
+| §A.2 a created run appears; every id bound to the caller's tenant | `openwop.requirement.0182.run-list.tenant-scoped` — the list body | the suite, unaided (create, then list) | witnessable — unaided |
 | §A.2 another tenant's run appears | a `runId` whose tenant segment is not the caller's | a host defect; the suite has one credential | witnessable in the negative only — every id is checked against the caller's segment; a foreign run cannot be planted |
-| §A.3 page ceiling; foreign cursor refused | row count; `400 validation_error` on a garbage cursor | the suite, unaided | witnessable — unaided |
-| §A.4 filter exactness | a `workflowId` filter returning only that workflow | the suite, unaided (when advertised) | witnessable — gated on the `filters` facet |
+| §A.3 page ceiling; foreign cursor refused | `openwop.requirement.0182.run-list.cursor-refused` — row count; `400 validation_error` on a garbage cursor | the suite, unaided | witnessable — unaided |
+| §A.4 filter exactness | `openwop.requirement.0182.run-list.filter-exact` — a `workflowId` filter returning only that workflow | the suite, unaided (when advertised) | witnessable — gated on the `filters` facet |
 | §A.5 unadvertised → 404 | `GET /runs` on a host without `runList` | any host | witnessable — unaided |
 
 ## Alternatives considered

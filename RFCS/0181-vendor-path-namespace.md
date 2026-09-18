@@ -52,7 +52,7 @@ No new scenario. §A.1/§A.4 are unwitnessable by construction — the suite nev
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
 | §A.2 unregistered org served under `/host/` | a `/host/<org>/…` answer with no declaration row | a host, unaided | witnessable by inspection; **not probed** — the suite does not enumerate vendor paths |
-| §A.3 reserved segment registered as an org | `check-declaration` refuses the declaration | a corpus PR | witnessable — corpus gate |
+| §A.3 reserved segment registered as an org | `openwop.requirement.0169.declaration-parity` — `check-declaration` refuses the declaration; `executed-pass` in `evidence/corpus-ledger.json` | a corpus PR | witnessable — unaided (corpus) |
 | §A.4 vendor response counted as a protocol response | `reachedUnderMajor2` / any scenario asserting on a vendor path | the suite (must not) | witnessable — suite review; none exist |
 | §A.5 twin survives retirement | `/v1/host/<org>/…` answers after `protocolVersions[]` drops `1.x` | operator (retirement) | seam-gated (retirement is a host event) |
 

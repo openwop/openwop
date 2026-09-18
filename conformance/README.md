@@ -11,10 +11,20 @@
 # --legacy-peer-deps is REQUIRED, not optional: the exact peer pin is what npm's
 # default resolver refuses. npm 10.9 fails outright with
 # "Cannot read properties of null (reading 'edgesOut')" — use npm >= 11.
-npm install --legacy-peer-deps @openwop/openwop-conformance@2.4.7 @openwop/spec-artifacts@2.4.7
+npm install --legacy-peer-deps @openwop/openwop-conformance@2.5.0 @openwop/spec-artifacts@2.5.0
 # or run without install:
 npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk_test_...
 ```
+
+### Auditing someone else's bundle
+
+```bash
+npx @openwop/openwop-conformance --verify bundle-v3.json --host-key host.pub.pem
+```
+
+No host, no clone. Exit `0` verified · `1` rejected · **`2` coherent but not independently verified** · `3` not a bundle.
+
+Exit 2 is the one that matters: without `--host-key` the signature is unchecked, and a bundle that merely *hangs together* is not a bundle that has been *verified*. The command also prints what it does **not** do — it never re-runs anything, so a host that measured itself wrongly and signed the result verifies clean here. It audits an attestation, not a host.
 
 > **Spec:** [github.com/openwop/openwop](https://github.com/openwop/openwop) · See `CHANGELOG.md` below for release history.
 

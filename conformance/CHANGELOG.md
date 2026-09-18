@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.5.0] — 2026-09-18 — `--verify`, for auditing a bundle you did not cut
+
+### Added
+
+- **`--verify <bundle> [--host-key <pem>]`** audits a certification bundle with
+  no host and no corpus clone. Exit `0` verified · `1` rejected · **`2` coherent
+  but NOT independently verified** · `3` not a bundle. Exit 2 is load-bearing:
+  without it, `--verify` with no key returns green and the program re-creates
+  the vacuous pass that bundle v3 exists to eliminate. The output states what
+  the command does NOT do — it never re-runs anything, so a host that measured
+  itself wrongly and signed the result verifies clean here.
+
 ## [2.4.7] — 2026-09-18 — schema examples are validated now
 
 **Why a patch.** No conformance code changes; the corpus version moves because

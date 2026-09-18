@@ -24,7 +24,7 @@
  * Exit 0 on success, 1 on any failure.  --update-baseline rewrites the ratchet.
  */
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BASE = join(ROOT, 'docs', 'witness-baseline.json');
@@ -33,13 +33,69 @@ const failures = [];
 const TERMINAL = new Set(['Accepted', 'Superseded', 'Withdrawn', 'Rejected']);
 const rfcFiles = readdirSync(join(ROOT, 'RFCS')).filter((f) => /^\d{4}-.*\.md$/.test(f) && !f.startsWith('0000'));
 const status = new Map(); const supersedes = new Map();
+const supersededBy = new Map();
 for (const f of rfcFiles) {
   const t = readFileSync(join(ROOT, 'RFCS', f), 'utf8');
   const m = t.match(/\*\*Status\*\*\s*\|\s*`(\w+)`/); if (m) status.set(f.slice(0, 4), m[1]);
-  const s = t.match(/\*\*Supersedes\*\*\s*\|\s*([^\n|]*)/); if (s && !/^\s*—|amends|corrects|where it|§/i.test(s[1])) for (const n of s[1].matchAll(/\b(\d{4})\b/g)) supersedes.set(f.slice(0, 4), [...(supersedes.get(f.slice(0, 4)) ?? []), n[1]]);
+  // ANCHORED. Only `^\s*—` was anchored before; `amends`, `corrects`, `where it`
+  // and `§` matched ANYWHERE in the cell, so a cell reading `RFC 0035 §B — …`
+  // silently exempted itself from RFC 0174 §A.1. Measured: no RFC is exempted by
+  // a stray `§` today, and the corpus's one live pair (0173 → 0035) fires — but
+  // it fires only because its author happened not to write a section sign. The
+  // first supersession in corpus history passed by that accident.
+  const s = t.match(/\*\*Supersedes\*\*\s*\|\s*([^\n|]*)/);
+  if (s && !/^\s*(—|.*\b(?:amends|corrects|where it)\b)/i.test(s[1])) for (const n of s[1].matchAll(/\b(\d{4})\b/g)) supersedes.set(f.slice(0, 4), [...(supersedes.get(f.slice(0, 4)) ?? []), n[1]]);
+  // The reverse edge: the pointer a reader of the OLD RFC follows.
+  const sb = t.match(/\*\*Superseded by\*\*\s*\|\s*([^\n|]*)/);
+  if (sb) supersededBy.set(f.slice(0, 4), sb[1]);
 }
 // 1
 for (const [rfc, targets] of supersedes) for (const t of targets) if (status.has(t) && status.get(t) !== 'Superseded' && status.get(rfc) === 'Accepted') failures.push(`supersession: RFC ${rfc} (Accepted) supersedes ${t}, but ${t} is ${status.get(t)} — flip it in the same PR (RFC 0174 §A.1)`);
+// 1b. The FORWARD POINTER. The docblock has always said this rule checks
+// "`Superseded` WITH A FORWARD POINTER (§A.1)" and only the status flip was
+// implemented — a docblock that outran its code. A dangling or misdirected
+// pointer passed, and the reverse edge is exactly what a reader of the OLD RFC
+// follows. Reciprocal and bidirectional:
+for (const [rfc, targets] of supersedes) {
+  if (status.get(rfc) !== 'Accepted') continue;
+  for (const t of targets) {
+    if (!status.has(t)) continue;
+    const ptr = supersededBy.get(t) ?? '';
+    if (!ptr.trim() || /^\s*—\s*$/.test(ptr)) failures.push(`supersession: RFC ${t} is superseded by RFC ${rfc} but carries no \`Superseded by\` pointer (RFC 0174 §A.1) — the reader of ${t} has no way forward`);
+    else if (!new RegExp(`\\b${rfc}\\b`).test(ptr)) failures.push(`supersession: RFC ${t}'s \`Superseded by\` names ${JSON.stringify(ptr.trim().slice(0, 60))}, which does not include RFC ${rfc} — the forward pointer points somewhere else`);
+  }
+}
+for (const [rfc, st] of status) {
+  if (st !== 'Superseded') continue;
+  const ptr = supersededBy.get(rfc) ?? '';
+  if (!ptr.trim() || /^\s*—\s*$/.test(ptr)) failures.push(`supersession: RFC ${rfc} reads \`Superseded\` but names no \`Superseded by\` — a terminal-status RFC that is a dead end`);
+}
+// 1c. spec/v2 banners. Rules 4-5 below scan spec/v1 ONLY, and every
+// spec/v2/**/*.md `Status:` banner cites RFC numbers — so the v2 tree, which is
+// the CURRENT major, had no banner rule at all. A `Stable` document is a
+// promise; one resting on an RFC that is still `Draft`/`Active`, or on one that
+// has been `Superseded`, is a promise against a moving or dead target. The
+// stricter form (cite only `Accepted`) is used deliberately: the weaker "not
+// non-terminal" form would permit a Stable doc to cite a `Superseded` RFC
+// forever, which is precisely the stale citation a reader would follow into a
+// dead end. Measured when this landed: 39 v2 docs with a banner, 53 citations,
+// 0 violations — a pure ratchet with no cleanup debt.
+{
+  const walkMd = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+    const p = join(d, e.name);
+    return e.isDirectory() ? walkMd(p) : e.name.endsWith('.md') ? [p] : [];
+  });
+  const v2 = join(ROOT, 'spec', 'v2');
+  if (existsSync(v2)) for (const p of walkMd(v2)) {
+    const banner = readFileSync(p, 'utf8').split('\n').find((l) => /^>\s*\*\*Status:/.test(l));
+    if (!banner || !/Stable/.test(banner)) continue;
+    for (const m of banner.matchAll(/RFC\s+(\d{4})|(?<=,\s*)(\d{4})/g)) {
+      const n = m[1] ?? m[2];
+      if (!status.has(n)) continue;
+      if (status.get(n) !== 'Accepted') failures.push(`spec/v2 banner: ${relative(ROOT, p)} reads \`Stable\` but cites RFC ${n}, which is \`${status.get(n)}\` — a Stable document may cite only \`Accepted\` RFCs (RFC 0174 §D.1, v2 analogue)`);
+    }
+  }
+}
 // 2
 for (const f of readdirSync(join(ROOT, 'RFCS'))) if (/\.(gaps|risks)\.md$/.test(f)) failures.push(`register location: RFCS/${f} must live under RFCS/registers/ (RFC 0174 §C.1)`);
 // 3
