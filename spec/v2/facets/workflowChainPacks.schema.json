@@ -1,0 +1,18 @@
+{
+  "$comment": "RFC 0013 \u00a7Composition depth \u2014 the v2 facet set for workflowChainPacks. Two v1-seeded facets are NOT carried into v2: `deferredParameters` (RFC 0124, still `Active`; spec/v2/core/workflow-chain-packs.md \u00a7Parameter substitution states the portable per-run deferral \"is a named v2.x additive RFC and is not part of v2.0\", so binding it as an advertisable v2 facet let a host truthfully advertise a capability v2.0 does not define) and `hostExpansionSeam` (a self-described conformance-only test seam on POST /v1/host/sample/workflow-chain:expand \u2014 spec/v2/core/conformance.md \u00a7The seams profile forbids a test-seam capability flag: seams are the profile openwop-conformance-seams-v2 in the /conformance/seams/ path space, and the v1 path is removeIn 2.0 per spec/v1/deprecations.json). No v2 host bundle advertises either.",
+  "properties": {
+    "subChains": {
+      "type": "object",
+      "description": "RFC 0133 (workflow-chain composition, `Accepted`). OPTIONAL. When `supported: true`, the host's `POST \u2026/workflows/from-chain` implements RUNTIME sub-chain composition per `workflow-chain-packs.md` \u00a7\"Sub-chain composition (RFC 0133)\": for each `config.subChainRef` reachable from a parent chain, it resolves the referenced chain (sibling or external), recursively expands + co-registers it as its own owned workflow (deterministic TENANT-SCOPED id from `(tenantId, childChainId, version)` \u2014 two tenants never collide on the global registry, a shared child registers once across parents in a tenant, a repeat instantiation converges), rewrites the referencing node's `subChainRef` \u2192 the minted child `config.workflowId`, and dispatches the child as a child run (`core.subWorkflow` / `core.dispatch` child-run); the `from-chain` response carries `{ workflowId, subChainWorkflowIds[], nodeCount }`. Bounded by a cycle check (`sub_chain_cycle`) + a depth cap (`sub_chain_max_depth_exceeded`). A host that does NOT advertise this block MUST refuse a `subChains`-bearing chain at author/instantiate time with `sub_chain_unsupported` (422) \u2014 it never silently flattens. `producedVariables` (RFC 0133 \u00a72) needs NO flag: it is pure variable emission under the base `workflowChainPacks.supported`. Conformance scenarios `chain-subchain-fanout.test.ts` + `chain-subchain-unsupported-refused.test.ts` gate on this flag; the server-free `chain-subchain-sibling` / `chain-subchain-cycle-rejected` / `chain-produced-var-roundtrip` legs run unconditionally against the reference library.",
+      "properties": {
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 8,
+          "description": "RFC 0133 \u00a71.3 (resolves UQ3). RECOMMENDED default 8. The maximum sub-chain nesting depth the host co-expands; exceeding it fails closed with the DISTINCT code `sub_chain_max_depth_exceeded` (the DoS depth backstop, alongside the `sub_chain_cycle` self-composition check \u2014 SECURITY `sub-chain-expansion-bounded`)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

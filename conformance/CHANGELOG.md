@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.8.1] — 2026-09-18 — two facets leave the closed capabilities schema
+
+**Why a patch.** No conformance code changes. `schemas/v2/capabilities.schema.json`
+and `spec/v2/declaration.json` are published artifacts: `workflowChainPacks`
+loses `deferredParameters` (a capability `spec/v2/core/workflow-chain-packs.md`
+says is "not part of v2.0") and `hostExpansionSeam` (a self-described
+conformance-only test seam, which `spec/v2/core/conformance.md` §"The seams
+profile" forbids in the capability namespace). No v2 host bundle advertises
+either, so no host's discovery document stops validating.
+
 ## [2.8.0] — 2026-09-18 — RFC 0189 (corpus gate)
 
 **Why a minor.** No conformance code changes; `spec/v2/declaration.json` is a
