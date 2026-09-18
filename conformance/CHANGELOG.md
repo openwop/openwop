@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.1] — 2026-09-18 — the leg that reads the host, not the schema
+
+**Why a patch.** A leg is added to an existing scenario file; no file is added or removed.
+
+### Fixed
+
+- **`v2-chain-pin-exact`** gains a third leg: an EXTERNAL `subChainRef` carrying
+  `version: "^1.0.0"`. The existing legs are satisfied by schema validation
+  alone (sabotage-proved: delete the reference host's pin rule and both stay
+  green); `SubChainRef.ref` types the external `version` as a semver range, so
+  this leg is the only one that reads the host's rule.
+
 ## [2.4.0] — 2026-09-18 — every bound kind, not just runId
 
 **Why a minor.** One scenario file is added (`PROTOCOL-STATUS.md` §suite version).

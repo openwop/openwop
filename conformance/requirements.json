@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 571,
-    "tests": 2172,
-    "withStableId": 2172,
+    "tests": 2173,
+    "withStableId": 2173,
     "interpolatedTitles": 0,
-    "explicitIds": 2125
+    "explicitIds": 2126
   },
   "records": [
     {
@@ -26310,7 +26310,7 @@
     {
       "id": "openwop.it.v2-chain-pin-exact.a-chain-reference-carrying-a-range-core-ai-callprompt-1-is-refused-at-register",
       "file": "v2-chain-pin-exact.test.ts",
-      "line": 102,
+      "line": 116,
       "title": "a chain reference carrying a range (core.ai.callPrompt@^1) is refused at register",
       "explicitId": "openwop.requirement.0177.chain-pin-exact.range-refused",
       "citations": [
@@ -26326,9 +26326,27 @@
       ]
     },
     {
+      "id": "openwop.it.v2-chain-pin-exact.an-external-sub-chain-reference-carrying-a-range-is-refused-the-one-pin-the-sche",
+      "file": "v2-chain-pin-exact.test.ts",
+      "line": 125,
+      "title": "an EXTERNAL sub-chain reference carrying a range is refused — the one pin the schema cannot catch",
+      "explicitId": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
+      "citations": [
+        {
+          "section": "workflow-chain-packs.md §\"Exact pins\" (RFC 0177 §E.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "workflow-chain-packs.md §\"Exact pins\" (RFC 0177 §E.1)",
+          "requirement": "the refusal MUST carry an error code in the canonical envelope"
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-chain-pin-exact.a-chain-reference-pinning-an-exact-version-core-ai-callprompt-1-0-0-registers",
       "file": "v2-chain-pin-exact.test.ts",
-      "line": 111,
+      "line": 140,
       "title": "a chain reference pinning an exact version (core.ai.callPrompt@1.0.0) registers",
       "explicitId": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
       "citations": [
