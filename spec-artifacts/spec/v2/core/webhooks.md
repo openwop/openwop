@@ -12,7 +12,7 @@ A host that advertises `webhooks` (capabilities.md) serves `registerWebhook` (`P
 
 | Operation | Request | Response |
 | --- | --- | --- |
-| `registerWebhook` | `{ url, events[], secret?, tags? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }`, tenant-bound (identity.md §5) |
+| `registerWebhook` | `{ url, events[], secret?, tags? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }` |
 | `unregisterWebhook` | path `webhookId` | `204`; `404` when unknown; `403` when the caller is outside the subscription's tenant |
 
 A subscription MUST receive only events from runs within its tenant scope; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
@@ -21,7 +21,10 @@ A subscription MUST receive only events from runs within its tenant scope; cross
 
 The delivery envelope is generated from the same payload definition as the event itself and the CloudEvents mapping — one source, three renderings (RFC 0171 §A.4). The body is `{ runId, workspaceId?, event }` where `event` is the verbatim run event (events.md), and it MUST validate against `schemas/v2/webhook-delivery.schema.json`. `workspaceId` is present exactly when `RunSnapshot.owner.workspace` is (`identity.md` §1) — a host MUST NOT substitute its tenant id for an absent workspace.
 
-The envelope's `runId` is tenant-bound (`identity.md` §5), like every other rendering of a v2 `runId`: an outbound emission is not a response to a versioned request, so the grammar supplies the form, not the request cycle. `webhook-delivery.schema.json` binds it and records what the split cost.
+The envelope's `runId` MUST use the tenant-bound v2 form defined by
+`identity.md` §5, matching the nested event and every response representation.
+This requirement applies to outbound delivery even though no versioned request
+exists at delivery time.
 
 ### Headers
 

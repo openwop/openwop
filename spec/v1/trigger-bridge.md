@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Durable Trigger + Channel Bridge
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0083](../../RFCS/0083-durable-trigger-and-channel-bridge-profile.md) (2026-05-31).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the `triggerBridge` capability + the opt-in `webhooks.durable` mode, the `TriggerSubscription` record + four-state machine, the content-free `trigger.subscription.state.changed` / `trigger.delivery.attempted` events, and the derived `openwop-trigger-bridge` profile. The behavioral delivery scenario, the subscription-management OpenAPI surface, and the reference-host durable-delivery implementation land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0083.** Capability-gated contract for durable trigger subscriptions and webhook delivery.
 
 ## Why this exists
 
@@ -101,8 +101,3 @@ two per-source sub-objects grow:
 ## §G — `paused` semantics
 
 Pausing a webhook stops delivery. Pausing a _schedule_ **skips** ticks (no catch-up); resume starts fresh (honoring the RFC 0052 §B missed-tick "skip" policy, not queue-and-replay).
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.trigger-bridge.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

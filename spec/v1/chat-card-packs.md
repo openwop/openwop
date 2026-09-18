@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — AI Chat Card Packs
 
-> **Status: Stable · v1.1 (2026-05-27) — Phase 2 graduated to `Accepted`; RFC 0071 Accepted overall.** Phase 2 of [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md). Specifies a pack kind that distributes **AI chat cards** — a prompt template bound to a typed output artifact. Depends on Phase 1 (artifact-type packs, `Accepted`) for the `outputArtifactType` linkage. **Phase 2 graduated `Active → Accepted` 2026-05-27** on MyndHyve's production adoption: the non-steward `workflow-runtime` host (rev `workflow-runtime-00402-bey`) advertises `host.chat.cardPacks` + `host.aiEnvelope` unconditionally on `api.myndhyve.ai` (steward curl-verified) with a real `core.chat.cardExecute` node routing through `ctx.aiEnvelope.generate`, and passes the `chat-card-pack-execution` R2 trust-tag proof (registry resolution + output-schema validation + `contentTrust:"untrusted"` propagation). G9 (the portable `inputs[].type` subset) is resolved against MyndHyve's authoritative `CardFieldType`; the R2 `chat-card-input-trust-boundary` invariant is enforced. With Phase 1 already `Accepted`, **RFC 0071 is now `Accepted` overall.** Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Stable · v1.1 · RFC 0071.** Normative pack format for prompt-driven, typed chat cards.
 
 ---
 
@@ -129,10 +129,6 @@ A `WorkflowNode.cardType` value (and the `cardType` argument to `ctx.chat.emitCa
 **Positive.** The manifest above with a resolvable `outputSchemaRef` and `outputArtifactType` referencing an installed artifact-type pack validates and installs.
 
 **Negative — `pack_kind_invalid`.** A manifest declaring both `cards[]` and `artifactTypes[]`. **Negative — schema.** An `inputs[].type` of `canvas-reference` (not in the closed enum and not `vendor.*`/`x-` prefixed); a `cardTypeId` with an uppercase scope; a card missing `prompt.template`.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.chat-card-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Run Debug Bundle
 
-> **Status: Stable · v1.1 (2026-05-05).** Defines `GET /v1/runs/{runId}/debug-bundle` — a portable JSON export of a single run's diagnostic state. Additive over v1 per `COMPATIBILITY.md` §2.1: optional endpoint; hosts MAY omit. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1.** Defines `GET /v1/runs/{runId}/debug-bundle`, a portable JSON export of one run's diagnostic state. Additive per [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §2.1: the endpoint is OPTIONAL and a host MAY omit it.
 
 ---
 
@@ -197,10 +197,6 @@ A bundle is JSON. Hosts MAY use HTTP-level compression (`Content-Encoding: gzip`
 ## Annotations (RFC 0056)
 
 When a host advertises `capabilities.feedback.supported`, a run's debug bundle SHOULD include the run's annotations — read from the side-store, already secret-redacted per the `annotation-content-redaction` invariant — so a flagged run travels with its reviewer notes. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) §D.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.debug-bundle.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

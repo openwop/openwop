@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Observability and OpenTelemetry Taxonomy
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the canonical `openwop.*` attribute namespace, span naming conventions, and metric kinds. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the canonical `openwop.*` attribute namespace, span naming, and metric kinds.
 
 ---
 
@@ -561,7 +561,7 @@ Gated on `capabilities.idempotency.crossRegion ∈ {"reconciled-records","fenced
 | Description           | RFC 0150 §A/§D — a pending idempotency lease was reclaimed after its owner failed to complete within the lease window. A rising rate is a stuck-owner or lease-too-short signal, not a duplicate-effect signal on its own. |
 | Attributes (Required) | `openwop.tenant_id`, `openwop.route`                                                                                                                                   |
 | Attributes (Optional) | `openwop.idempotency.scope` (`layer-1` \| `layer-2`)                                                                                                                  |
-| Stability             | Experimental (RFC 0150 §F, added 2026-08-16)                                                                                                                           |
+| Stability             | Experimental (RFC 0150 §F)                                                                                                                           |
 
 #### `openwop.idempotency.stale_fence_rejections_total`
 
@@ -571,7 +571,7 @@ Gated on `capabilities.idempotency.crossRegion ∈ {"reconciled-records","fenced
 | Unit                  | rejections                                                                                                                                                             |
 | Description           | RFC 0150 §D `fenced-effects` — an effect was refused because the issuing owner's fence token was stale (a losing owner after a partition). Every increment is a duplicate effect that did NOT happen; a host under `reconciled-records` never emits it. |
 | Attributes (Required) | `openwop.tenant_id`, `openwop.route`, `openwop.region_pair`                                                                                                             |
-| Stability             | Experimental (RFC 0150 §F, added 2026-08-16)                                                                                                                           |
+| Stability             | Experimental (RFC 0150 §F)                                                                                                                           |
 
 #### `openwop.replay.effect_suppressions_total`
 
@@ -581,7 +581,7 @@ Gated on `capabilities.idempotency.crossRegion ∈ {"reconciled-records","fenced
 | Unit                  | suppressions                                                                                                                                                           |
 | Description           | RFC 0150 §C — a replay/fork used the recorded outcome of an effect instead of re-issuing it (`replay.md`, `sideEffectSuppression: recorded-outcome`). Emitted per suppressed effect; a host advertising `sideEffectSuppression: none` never emits it. |
 | Attributes (Required) | `openwop.tenant_id`, `openwop.workflow_id`, `openwop.replay.mode` (`replay` \| `branch`)                                                                               |
-| Stability             | Experimental (RFC 0150 §F, added 2026-08-16)                                                                                                                           |
+| Stability             | Experimental (RFC 0150 §F)                                                                                                                           |
 
 **Attribute rule for all idempotency / effect-identity telemetry (RFC 0150 §F).** Spans, logs, and metric attributes MUST NOT carry the caller's idempotency key, the effect key, or request content — the key is caller-controlled and routinely embeds customer identifiers. A host MAY carry `openwop.idempotency.key_hash` (a **truncated keyed hash** — keyed with a host secret so it is not reversible by dictionary, truncated so it is not a stable global identifier); it MUST NOT carry the key. The same rule already governs the `redaction` attributes above and `SECURITY/threat-model-secret-leakage.md` SR-1.
 
@@ -865,7 +865,7 @@ See `spec/v1/rest-endpoints.md` §"Common error codes" for the two new codes; `a
 
 ## OTel collector test seam (RFC 0034)
 
-Per [RFC 0034](../../RFCS/0034-otel-collector-test-seam.md) (`Active` 2026-05-21).
+Per [RFC 0034](../../RFCS/0034-otel-collector-test-seam.md).
 
 Cross-host conformance scenarios need an introspection endpoint to verify that BYOK canaries do not leak into OTel span attributes or debug-bundle exports. The two protocol-tier SECURITY invariants `secret-leakage-otel-attribute` and `secret-leakage-debug-bundle-otel` (SECURITY/invariants.yaml) graduate from `reference-impl` to `protocol` tier on the strength of this test seam.
 
@@ -907,10 +907,6 @@ Annotations are a **per-run side-resource**, NOT entries in the replayable run e
 - audit-log each recording with the acting principal (`auth.md`).
 
 Consumers derive quality metrics (correction rate, mean rating, flag rate) from this surface; they complement — but are distinct from — the `openwop.*` telemetry spans/metrics above. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md).
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.observability.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

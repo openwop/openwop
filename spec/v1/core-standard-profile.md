@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — `openwop-core-standard` Operational Annex
 
-> **Status: Stable · v1.x — the Core Standard Profile reached `Accepted` via [RFC 0088](../../RFCS/0088-core-standard-profile.md) (2026-06-01; filed 2026-05-31).** Additive v1.x extension — an **operational annex** (the [`production-profile.md`](./production-profile.md) / [`agent-platform-profile.md`](./agent-platform-profile.md) pattern), NOT a new entry in the closed [`profiles.md`](./profiles.md) predicate catalog. Names the small, stable **Core Standard Profile** — the floor of normative MUSTs that have black-box production-path conformance — so an adopter can build against a frozen target without inheriting the in-motion agent-platform surface. RFC 0088 reached `Accepted` on the aggregate-floor evidence (the four reference hosts pass the §C floor scenarios with 0 deterministic failures vs the current suite); a per-profile machine-readable certification bundle is tracked as an open gap below. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0088.** Operational profile defining the minimum black-box conformance floor for a v1 host.
 
 ## Why this exists
 
@@ -53,7 +53,7 @@ Everything not in §B is an **extension**, kept out by exactly one lever, chosen
 
 **None at present.** Every agent-platform extension capability previously tracked here — `agents.memoryConsolidation`/`commitments` (0068), `toolCatalog` (0078), `httpClient.egressPolicy` (0079), `memory.search`/`retention` (0080), `agents.evalSuite` (0081), `agents.deployment` (0082), `budget` (0084) — has since reached `Accepted`. Per RFC 0042 a capability on an `Accepted` RFC MUST NOT advertise `tier: "experimental"`, so these are no longer Lever-1 extensions: they are **agent-platform extension capabilities governed by RFC 0085's `openwop-agent-platform` `partial`/`full` claim** (§E), and remain **outside the Core floor**. Each graduates _into_ the floor only if/when it gains black-box production-path proof (Lever 2).
 
-### Graduated to black-box production-path (capability-gated; proof landed 2026-06-01)
+### Graduated to black-box production-path (capability-gated)
 
 These `Accepted` capabilities have moved out of the seam-gated set: their behavioral conformance is now proven on the **production wire with no `/v1/host/sample/*` seam** (capability-gated — a host that advertises the capability MUST pass the black-box scenario). This is the Lever-2 "graduate in" outcome.
 
@@ -73,8 +73,3 @@ These `Accepted` capabilities have moved out of the seam-gated set: their behavi
 ## §E — Relationship to `openwop-agent-platform` (RFC 0085)
 
 The aggregate agent-platform target is named separately by RFC 0085's `openwop-agent-platform` annex. `openwop-core-standard` does not duplicate it: the agent-platform capabilities are extensions **outside** the Core floor — now that every one has reached `Accepted`, they are governed by RFC 0085's `partial`/`full` claim (no longer Lever-1 experimental signals). A host MAY advertise both annexes; they are orthogonal — Core = the stable wire floor, agent-platform = the aggregate platform claim.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.core-standard-profile.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

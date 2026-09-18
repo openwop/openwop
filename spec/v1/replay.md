@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, idempotency requirements on side-effecting nodes, side-effect suppression in replay (RFC 0140), and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2.** Normative contract for `POST /v1/runs/{runId}:fork` (replay and branch-from-past), determinism guarantees, idempotency on side-effecting nodes, replay side-effect suppression (RFC 0140), and the admin Run Timeline View.
 >
 > **Correction (2026-08-08), superseding the note this line carried earlier today.** RFC 0140 originally removed "idempotency requirements on side-effecting nodes" from the status line above, on the grounds that no such section existed. **That was wrong** — §"Determinism guarantees" caveat 1 has always carried it, as an unconditional MUST. The claim was true; deleting it was the regression, and it is restored. What v1 actually lacked is narrower and is what RFC 0140 supplies: caveat 1 names the Layer-2 invocation log as the mechanism, and that mechanism **cannot** span a fork (its key includes `runId`, which a fork changes), so the requirement was real, its named mechanism unworkable across a fork, and its conformance coverage nil.
 
@@ -115,12 +115,11 @@ while `subject` is a field no host emitted before RFC 0165.
 
 ## The determinism model
 
-*(Added 2026-08-19. Non-normative framing of requirements that already exist; the
-numbered caveats below remain the normative text and are unchanged.)*
+*Non-normative framing of requirements that already exist; the numbered caveats
+below are the normative text.*
 
-The caveats accreted one at a time, each correct and each written when a gap was
-found. Read as a list they are hard to implement against, because an implementer
-has to infer the model from its exceptions. Stated directly, the model is three
+A reader given only the numbered caveats has to infer the model from its
+exceptions. Stated directly, the model is three
 sentences:
 
 > **1. A run's event log is the only authority on what happened.**
@@ -305,7 +304,7 @@ The §"LLM cache-key recipe" §A + §B above already establishes a CONDITIONAL M
 1. **Unconditional MUST.** Phase 4 hosts MUST follow the recipe for ALL LLM-calling nodes regardless of whether they use Layer-2 idempotency. The "for Layer-2 idempotency only" conditional in the original §"LLM cache-key recipe" intro does NOT apply when `multiAgent.executionModel.version >= 4`.
 2. **Observable commitment.** Phase 4 hosts MUST advertise the recipe they honor via `capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe`. The value `spec-rfc-0041` claims the canonical recipe; vendor recipes use the canonical host-extension namespace `x-host-<host>-<recipe-name>` per `host-extensions.md` §"Canonical prefixes". The advertisement lets cross-host replay rely on byte-identical keys without trial computation.
 
-Closes RFC 0037 §"Open spec gaps" MAE-7.
+Resolves the replay gap recorded by RFC 0037 as MAE-7.
 
 ### §B — Envelope-refusal recovery in replay (MAE-8 closure)
 
@@ -501,7 +500,6 @@ effects are effects the operator asked for; a replay re-executes fixed history,
 so its effects are duplicates by definition. A host MAY suppress branch effects
 too, but MUST NOT report that as `sideEffectSuppression`.
 
-
 ### Host-initiated fan-out is an external effect (2026-08-18)
 
 Everything above binds **nodes**: caveat 1 binds "a node calling an external API",
@@ -554,7 +552,7 @@ Requirements:
   what a host does with *node* effects on replay and makes no claim about host-level
   fan-out.
 
-> **Prior art (added 2026-08-18).** This is not a new constraint invented for OpenWOP;
+> **Prior art.** This is not a new constraint invented for OpenWOP;
 > it is a named pattern that predates it. Martin Fowler's *Event Sourcing* §"External
 > Updates" states the failure mode directly — *"those external systems don't know the
 > difference between real processing and replays"* — and prescribes the same fix this
@@ -594,7 +592,6 @@ Requirements:
 > [`storage-adapters.md`](./storage-adapters.md) §"Claim acquisition" that a claim
 > transfer is not itself a run event: **what a run reports outward must not depend on
 > the mechanics of how it was executed.**
-
 
 ## Replay-from-event-log internals
 
@@ -684,7 +681,7 @@ The conformance suite should treat exact fixture replay as a pass/fail assertion
 
 ## Cross-region replay (RFC 0036)
 
-Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21).
+Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md).
 
 When BOTH `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region than the original run MUST produce a fork whose **observable state at the `fromSeq` boundary** matches a fork served by the original region.
 
@@ -697,10 +694,6 @@ Hosts that advertise one of the two capabilities but not the other retain the ex
 ## Annotations and fork (RFC 0056)
 
 RFC 0056 annotations are a per-run side-resource, **not** event-log entries — so they sit entirely outside the fork/replay model. A fork inherits **zero** annotations (it is a new run with no human judgments yet) and MAY carry a back-reference to the source. `run.annotated` is a live SSE notification, never a persisted/replayed event. This is deliberate: a replayable annotation event would be copied into forks (which replay source events `< fromSeq`), contradicting its side-resource semantics. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) §D.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.replay.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Localized Content Surface
 
-> **Status: Stable · v1.x (2026-06-17).** RFC 0103. A capability-gated surface for durable, authored, structured localized content (pages → sections), extending the Stable `i18n.md` annex. It **reuses** the annex's `Accept-Language`/`Content-Language` negotiation and fallback verbatim and adds only the content data model + a per-section field merge. Additive; layers on `i18n.md` (Stable v1.1). Keywords MUST, SHOULD, MAY, MUST NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0103.** Capability-gated authored content with locale negotiation and field-level fallback.
 
 ---
 

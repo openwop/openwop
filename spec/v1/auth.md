@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Authentication and Authorization
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by `schemas/error-envelope.schema.json` per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1.** Normative authentication, authorization, identity, and error-envelope contract.
 >
 > **Status legend** (used across all spec/v1/\*.md). Full policy at [/governance/spec-status/](/governance/spec-status/):
 >
@@ -199,7 +199,7 @@ Rate-limit decisions MUST be made before scope checks (so a flooded key can be t
 
 ## Workload identity and delegated actor chain (RFC 0154)
 
-> **Status: additive, normative for any host that advertises `capabilities.auth.workloadIdentity` (2026-08-16, [RFC 0154](../../RFCS/0154-workload-identity-delegation-telemetry-and-provenance.md) `Accepted`; shape landed 2026-08-13, prose here).** The machine-caller counterpart of the identity triple above: how a *workload* (an agent, a service, a CI job) proves which workload it is, how a request may carry a verified chain of delegation, and what none of that grants. Wire shape: [`workload-identity.schema.json`](../../schemas/workload-identity.schema.json); advertisement: `capabilities.auth.workloadIdentity { supported, schemes[], senderConstraint[], delegation? }` (`capabilities.schema.json`). Seam: [`host-sample-test-seams.md`](./host-sample-test-seams.md) §20. Threat model: [`SECURITY/threat-model-workload-identity.md`](../../SECURITY/threat-model-workload-identity.md).
+> **Status: additive, normative for any host that advertises `capabilities.auth.workloadIdentity` ([RFC 0154](../../RFCS/0154-workload-identity-delegation-telemetry-and-provenance.md)).** The machine-caller counterpart of the identity triple above: how a *workload* (an agent, a service, a CI job) proves which workload it is, how a request may carry a verified chain of delegation, and what none of that grants. Wire shape: [`workload-identity.schema.json`](../../schemas/workload-identity.schema.json); advertisement: `capabilities.auth.workloadIdentity { supported, schemes[], senderConstraint[], delegation? }` (`capabilities.schema.json`). Seam: [`host-sample-test-seams.md`](./host-sample-test-seams.md) §20. Threat model: [`SECURITY/threat-model-workload-identity.md`](../../SECURITY/threat-model-workload-identity.md).
 
 **Identity is not authorization** (RFC 0147 R12). Everything in this section establishes *who called* — the §"Authorization" rules and RFC 0049 still decide *what they may do*, at every boundary, after this section has done its work.
 
@@ -244,10 +244,6 @@ It does not establish provenance attestations for artifacts (RFC 0154 §E spans 
 An OpenWOP-compliant server SHOULD log every authenticated request with at minimum: keyId, scope used, request method+path, timestamp, response status, latency. Logs MUST NOT include the API key value or any credential material.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.auth.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

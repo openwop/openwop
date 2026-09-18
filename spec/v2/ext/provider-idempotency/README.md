@@ -1,4 +1,7 @@
-# `provider-idempotency` — extension (registry)
+# Provider idempotency registry
+
+> **Status: Draft · supporting registry.** This is not a declared extension
+> family and is outside this rule.
 
 | Field | Value |
 | --- | --- |
@@ -8,4 +11,9 @@
 | **advertised as** | not a discovery family — a data registry (`registry.json`) the Layer-2 obligation reads |
 | **owning RFC** | RFC 0173 §C.2, RFC 0150 G3 |
 
-> **Status: Draft · v2.0.0-rc (2026-09-03).** `registry.json` records which providers have a natural business-identity key (RFC 0173 §C.2: business-identity keying is the core obligation; the activity recipe is the documented fallback). Rows are measured by the Phase 4 host legs. The witness is `GET /runs/{runId}/effects` (`effect-ledger-projection.schema.json` `keying`). **Not a declared family — notes, outside the `ext/README.md` maturity rule; `Draft` here means unfrozen prose, not an unwitnessed family.**
+[`registry.json`](./registry.json) lists providers known to expose a natural
+business-identity key. It informs the Layer-2 idempotency requirement in
+[`security-defaults.md`](../../core/security-defaults.md); it does not add a
+discovery family. Hosts report the chosen strategy through
+`GET /runs/{runId}/effects` and the `keying` field of
+`effect-ledger-projection.schema.json`.

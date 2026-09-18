@@ -30,6 +30,9 @@
   ceiling; `v2-mrtr-rounds-ceiling` recorded `blocked` without it.
 - **`v2-negotiation-authenticated`** reads `details.runId` off the closed error
   envelope like `v2-minimum-version-refused` does.
+## [2.3.5] — 2026-09-17 — spec prose editorial pass
+
+**Why a patch.** No scenario changed. The v2 prose shipped in spec-artifacts was edited (openwop CHANGELOG [2.3.5]), so 2.3.4 no longer identifies its published contents and the pins move together.
 
 ## [2.3.4] — 2026-09-17 — registers regenerated
 

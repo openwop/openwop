@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent-Platform Portability
 
-> **Status: Stable · v1.x (RFC 0098, `Accepted`; graduated 2026-09-03 under RFC 0174 §D.1 — the banner's own predicate had fired).** Normative spec for the portable agent-platform export bundle and the tenant import contract. Capability-gated on `capabilities.portability`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. This doc graduates `Draft → Stable` when RFC 0098 reaches `Accepted`.
+> **Status: Stable · v1.x · RFC 0098.** Normative contract for the portable agent-platform export bundle and the tenant import path. Capability-gated on `capabilities.portability`.
 
 ## Why this exists
 
@@ -33,10 +33,6 @@ The host serves portability as a host-extension (see `host-sample-test-seams.md`
 | `POST /import` | **Apply**: execute the plan idempotently; returns an `ImportResult` per item (`created \| updated \| skipped \| failed`) + `secretsToRebind`. |
 
 One additive, content-free event is emitted (gated on the capability): `import.applied` (`run-event-payloads.schema.json`) — counts + refs only, never item payloads or secret values. The existing host-private anon→user migration remains valid: its response is a subset of the `ImportResult` aggregate.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.portability.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

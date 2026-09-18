@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Conformance Certification Bundle
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0089](../../RFCS/0089-conformance-certification-bundle.md) (2026-06-02).** Additive v1.x extension. Defines a **machine-readable conformance certification bundle** — an out-of-band artifact that binds a host's claimed profiles to the reproducible run that substantiates them. NOT a runtime wire surface (no `/v1/*` endpoint); the only discovery touch is one optional pointer field. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0089.** Out-of-band evidence bundle binding a host build to measured profile results.
 
 ## Why this exists
 
@@ -26,8 +26,3 @@ The reference conformance harness SHOULD provide a `--certify <out.json>` mode t
 ## §D — Optional discovery pointer
 
 A host MAY advertise `conformance.certificationBundleUrl` (an optional `format: uri` field on the discovery document, per `capabilities.schema.json`) pointing at its most recent published bundle. Omitting it is fully conformant; clients MUST tolerate its absence.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.conformance-certification.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Node Packs and the Public Registry
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at `https://packs.openwop.dev/`; local registry contents are summarized in `docs/PROTOCOL-STATUS.md`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the pack manifest format, distribution, signing, and the registry HTTP API. The hosted reference registry is `https://packs.openwop.dev/`.
 
 ---
 
@@ -442,7 +442,7 @@ A node MAY declare an optional `nodes[].artifact` block stating that the node pr
 
 ### Model-capability declarations on NodeModules
 
-> Added by RFC 0031 (`Active` 2026-05-20). Parallel surface to `requiresSecrets[]` — declares MODEL capability requirements for envelope-emitting NodeModules. The host's dispatch contract is normated in `host-capabilities.md` §"Model-capability declarations"; this section documents the per-pack authoring surface.
+> Defined by RFC 0031. Parallel surface to `requiresSecrets[]` — declares MODEL capability requirements for envelope-emitting NodeModules. The host's dispatch contract is normated in `host-capabilities.md` §"Model-capability declarations"; this section documents the per-pack authoring surface.
 
 A NodeModule whose execution involves emitting a structured envelope via an LLM call MAY declare two optional fields:
 
@@ -862,10 +862,6 @@ A workflow that references a typeId not provided by any registered pack MUST be 
 The registry publishes **discrete semver tags** — which version of a pack (and its `agents[]`) _exists_. A **deployment channel** (`stable` / `canary` / the reserved `latest`) is a distinct, host-runtime concern — which version _serves_. The two MUST NOT be conflated: a published version may be `staged`, `paused`, or `rolled-back` and therefore not serve, and "latest published" is not "current production". A channel is a named pointer, resolved per-run and pinned as a recorded fact (`version-negotiation.md` §"Channel resolution + replay"), into the host's per-(agentId, version) deployment records. The deployment lifecycle, the channel→version resolution, the canary split, and the promotion contract are normative in [`agent-deployment.md`](./agent-deployment.md); the registry surface here is unchanged.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.node-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

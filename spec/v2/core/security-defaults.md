@@ -75,21 +75,20 @@ Every security obligation in `core/` is exactly one of (RFC 0173 §D.1):
 | extension | `spec/v2/ext/` | MUST declare a witness class and both maturity axes. |
 | removed | — | No text survives. |
 
-There is no unimplemented MUST. Compensation and Layer-2 effect identity are core obligations at filing; either MUST move to `ext/` at the cut if its witness does not land. RFC 0150's sub-decisions: operation ids in the declaration file are canonical and aliases are register rows; the provider semantic-option registry is `spec/v2/ext/provider-idempotency/registry.json` with a witness per provider; the qualification test is a fixture provider that rejects a changed key (§D.2).
-
-### RFC 0035
-
-RFC 0035 (Parked) is resolved by the `packs` row: its §B probes become the `packs` obligation, and the RFC flips `Superseded` by RFC 0173 at the cut in the same PR (RFC 0174 §A.1). Its tripwire — a non-steward host fencing untrusted packs — becomes the `adoption: independent` axis, not a status gate.
+Operation ids in the declaration file are canonical, and aliases are migration
+register rows. The provider semantic-option registry is
+`spec/v2/ext/provider-idempotency/registry.json`; provider qualification uses a
+fixture that rejects a changed idempotency key (§D.2).
 
 ## Threat models
 
-RFC 0173 §E requires three threat-model artifacts before its dependents flip Accepted:
+The following threat-model artifacts are required:
 
 | Artifact | Requirement |
 | --- | --- |
 | `SECURITY/threat-model-replay.md` §6 Residual risks | MUST record branch re-fires, seams outside the manifest, and the manifest as a self-declaration. |
 | `SECURITY/threat-model-replay.md` §7 Verification, §8 References | MUST name the manifest scenario and `fork-a-v1-run`; a threat model missing a sibling section fails the template gate. |
-| `SECURITY/threat-model-interop.md` | MUST exist before RFC 0175 flips Accepted (written by RFC 0175's cut). |
+| `SECURITY/threat-model-interop.md` | MUST cover downgrade, identity, and cross-tenant risks in protocol composition. |
 
 ## Migration
 

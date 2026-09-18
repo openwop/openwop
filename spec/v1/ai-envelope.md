@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — AI Envelope Primitive
 
-> **Status: Stable · v1.1.1 (promoted via [RFC 0021](../../RFCS/0021-ai-envelope-primitive.md), 2026-05-18; first cut 2026-05-17). Extended additively by [RFC 0030](../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md) (§"Reasoning field"), [RFC 0031](../../RFCS/0031-envelope-variants-and-model-capabilities.md) (§"Variant payload discrimination"), [RFC 0032](../../RFCS/0032-envelope-reliability-events.md) (line-448 scope clarification + §"Envelope-reliability events"), and [RFC 0033](../../RFCS/0033-envelope-completion-contract.md) (§"Envelope-completion criteria"), all `Accepted` 2026-05-21.** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
+> **Status: Stable · v1.1.1 · RFC 0021, 0030–0033.** Normative contract for typed AI outputs, validation, refusal, reasoning, and retry behavior.
 
 ---
 
@@ -258,7 +258,7 @@ The `error` envelope is the **LLM's** error report (the model said "I couldn't d
 
 ## Reasoning field (normative)
 
-> Added by RFC 0030 (`Active` 2026-05-20). Closes the empirical reasoning-collapse finding from Tam et al., _"Let Me Speak Freely?"_ (arXiv 2408.02442): when models are forced into strict-JSON output WITHOUT a free reasoning field, reasoning quality collapses materially across multi-step tasks. The mitigation is to give the model an in-schema reasoning slot.
+> Defined by RFC 0030. Closes the empirical reasoning-collapse finding from Tam et al., _"Let Me Speak Freely?"_ (arXiv 2408.02442): when models are forced into strict-JSON output WITHOUT a free reasoning field, reasoning quality collapses materially across multi-step tasks. The mitigation is to give the model an in-schema reasoning slot.
 
 Every envelope payload schema defined by this specification SHALL support an OPTIONAL `reasoning` field of type `string`. The field SHOULD appear as the first property in `propertyOrdering` when the underlying schema dialect supports ordering hints (e.g., Gemini's `responseSchema`).
 
@@ -438,7 +438,7 @@ The per-kind schema check is **warning-only** when `Capabilities.schemaVersions`
 
 ## Variant payload discrimination (normative)
 
-> Added by RFC 0031 (`Active` 2026-05-20). Codifies the de-facto `anyOf` + single-string-enum discriminator pattern as normative for variant envelope payloads. Prevents future schema authors from accidentally using `oneOf` (cross-vendor incompatible — Gemini silently drops the keyword per `structured-output-subset.md`).
+> Defined by RFC 0031. Codifies the de-facto `anyOf` + single-string-enum discriminator pattern as normative for variant envelope payloads. Prevents future schema authors from accidentally using `oneOf` (cross-vendor incompatible — Gemini silently drops the keyword per `structured-output-subset.md`).
 
 When an envelope payload schema accepts variant shapes (a sum type), the schema SHALL express the variants as an `anyOf` composition where every branch:
 
@@ -586,7 +586,7 @@ The handler-registry layer is not normative — hosts MAY implement it as a swit
 
 ## Envelope-completion criteria
 
-> Added by RFC 0033 (`Active` 2026-05-20). Closes spec gap E5 — refusal-mode interaction with retry policies — by normating the **truncation-vs-schema-violation retry-routing distinction** that hosts MUST honor when emitting structured envelopes via LLM calls.
+> Defined by RFC 0033. Closes spec gap E5 — refusal-mode interaction with retry policies — by normating the **truncation-vs-schema-violation retry-routing distinction** that hosts MUST honor when emitting structured envelopes via LLM calls.
 
 A host SHALL treat an envelope as **complete** only when BOTH of the following hold:
 
@@ -673,7 +673,7 @@ Implementations MAY cache outcomes in memory for in-process replays; they MUST c
 
 ## Prompt-prefix cache (RFC 0116)
 
-> Added by RFC 0116 (`Active` 2026-06-26). A portable, opt-in cost hint for server-side provider context caching. Additive: absent ⇒ no behavior change.
+> Defined by RFC 0116. A portable, opt-in cost hint for server-side provider context caching. Additive: absent ⇒ no behavior change.
 
 `ctx.aiEnvelope.generate` accepts an OPTIONAL `cachePrefixId` (string) — a stable, tenant-namespaced, secret-free label that declares a request's prompt prefix (e.g. the front-loaded system prompt + the RFC 0112 compact tool surface) as cacheable. A host MAY use it to route the stable prefix to its provider's context cache (e.g. Anthropic ephemeral prefix caching). It is governed by these normative rules:
 
@@ -769,7 +769,7 @@ For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's han
 
 ## Envelope-reliability events
 
-> Added by RFC 0032 (`Active` 2026-05-20). Six new cross-kind operational `RunEventType` entries that standardize the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Conformance suites use this vocabulary to assert correct host behavior on adverse paths; observability tools dashboard against it.
+> Defined by RFC 0032. Six new cross-kind operational `RunEventType` entries that standardize the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Conformance suites use this vocabulary to assert correct host behavior on adverse paths; observability tools dashboard against it.
 
 | Event                         | Tier     | When emitted                                                                                                                       | Schema                                                     |
 | ----------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -837,10 +837,6 @@ For pre-v1.x hosts that already advertise `supportedEnvelopes` with unnamespaced
 See `docs/migration/v1.0-to-v1.1.md` for the field-by-field migration table once this spec is implemented in the reference host.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.ai-envelope.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Interrupt Profiles
 
-> **Status: Stable · v1.1 (2026-05-10).** Optional interrupt-profile annex for hosts that implement stronger human-in-the-loop and external-event flows than the base `interrupt.md` contract. This document is additive and does not change required v1 interrupt wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Optional annex for hosts implementing stronger human-in-the-loop and external-event flows than the base [`interrupt.md`](./interrupt.md) contract. Additive: does not change required v1 interrupt wire shapes.
 
 ---
 
@@ -51,7 +51,7 @@ The host can suspend until an external event arrives and can correlate that even
 - External event ingestion is idempotent by `(correlationId, eventId)` or an equivalent documented key.
 - Unknown, expired, or already-resolved correlations return canonical error envelopes.
 - The resumed run records the external event payload in the event log or run state with redaction applied.
-- While suspended, the run's `RunSnapshot.status` is `"waiting-external"` (added to the enum in `schemas/run-snapshot.schema.json` 2026-05-20). Hosts that pre-date the enum addition MAY surface `"waiting-input"` instead — readers MUST treat both as observably-equivalent for this profile.
+- While suspended, the run's `RunSnapshot.status` is `"waiting-external"` (see the enum in `schemas/run-snapshot.schema.json`). A host that pre-dates that enum member MAY surface `"waiting-input"` instead — readers MUST treat both as observably-equivalent for this profile.
 
 ### `openwop-interrupt-cascade-cancel`
 

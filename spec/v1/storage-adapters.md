@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Storage Adapters
 
-> **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of the two normative storage-adapter contracts (`RunEventLogIO` and `SuspendIO`) that any OpenWOP-compliant engine implementation MUST satisfy. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the two storage-adapter interfaces — `RunEventLogIO` and `SuspendIO` — that any OpenWOP-compliant engine MUST satisfy.
 
 ---
 
@@ -159,7 +159,7 @@ interface PendingDoc {
 
 ## Claim acquisition
 
-> **Added 2026-08-18 (SP-04).** Four artifacts have cited `storage-adapters.md` §"Claim acquisition" since RFC 0009 — `production-profile.md` §Durability ("Storage adapters MUST satisfy `storage-adapters.md` lease and event-log invariants, including stale-claim recovery"), RFC 0009's scenario-citation table, and the docstrings of `staleClaim.test.ts` and `restart-during-run.test.ts` — and the section did not exist. The contract below is the one the SQLite reference host and the tier-1 host already implement and the one those two scenarios already assert; writing it down resolves the citations rather than introducing a new requirement.
+> **Why this section exists.** `production-profile.md` §Durability, RFC 0009's scenario-citation table, and the `staleClaim.test.ts` / `restart-during-run.test.ts` scenarios all cite a stale-claim recovery contract in this document. The contract below states it: it is the one the SQLite reference host already implements and those two scenarios already assert, not a new requirement.
 
 A host that runs more than one process against shared storage MUST NOT execute a
 run in two processes at once, and MUST NOT strand a run whose executing process
@@ -228,8 +228,6 @@ unhealthy by some other signal. Expiry is the only reclaim authority; adding a
 second one reintroduces the double-execution the claim exists to prevent.
 
 #### Expiry is authority; the sweeper is the exercise of it
-
-*(Added 2026-08-19, from a tier-1 host's measured failure.)*
 
 The clauses above make expiry the sole **authority** to reclaim. They say nothing
 about the thing that *exercises* that authority — the periodic lane that looks for
@@ -349,15 +347,6 @@ A storage adapter SHOULD:
 - [ ] Provide a `clear()` test helper.
 - [ ] Provide a `size()` test helper.
 - [ ] Tolerate subscriber-callback exceptions without crashing the storage layer.
-
----
-
-## Future work
-
-- **Postgres reference implementation** — `pg`-backed adapter as a durable example for distributed deployments. SQLite covers self-hosted single-instance deployments; Postgres adds the distributed-write story (LISTEN/NOTIFY for change feeds, multi-writer concurrency).
-- **SQLite reference implementation** — `SqliteEventLogIO` + `SqliteSuspendIO` demonstrate the single-node durable pattern. Zero-install on Node 22.5+ via the built-in `node:sqlite` module.
-- **Adapter compliance suite** — shared vitest test suite that any third-party adapter can run to verify spec compliance. The in-memory adapter tests
-  (`InMemoryEventLogIO.test.ts`, `InMemorySuspendIO.test.ts`) are the prototypes for this; extracting them into a parameterized harness is post-v1 ecosystem work.
 
 ---
 

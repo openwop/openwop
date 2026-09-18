@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Per-Run Options Overlay
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of `RunOptions` schema covering `configurable`, `tags`, `metadata`, and `recursionLimit` overrides. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the `RunOptions` overlay: `configurable`, `tags`, `metadata`, and `recursionLimit`.
 
 ---
 
@@ -345,10 +345,6 @@ An OpenWOP-compliant server MUST persist `RunOptions` on the run document at cre
 A server MAY allow caller modification of `tags` and `metadata` after creation via a host extension or future `PATCH /v1/runs/{runId}` endpoint. It MUST NOT allow modification of `configurable` after run creation — that breaks replay determinism.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.run-options.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

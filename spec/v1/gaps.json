@@ -10312,10 +10312,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g1"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10334,10 +10330,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g2"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10356,10 +10348,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g3"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10378,10 +10366,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g4"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10400,10 +10384,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g5"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10422,10 +10402,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g6"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10444,10 +10420,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g7"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10466,10 +10438,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g8"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10488,10 +10456,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g9"
-        },
-        {
-          "file": "spec/v1/a2a-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10509,10 +10473,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-1"
-        },
-        {
-          "file": "spec/v1/agent-deployment.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10530,10 +10490,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-2"
-        },
-        {
-          "file": "spec/v1/agent-deployment.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10551,10 +10507,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-3"
-        },
-        {
-          "file": "spec/v1/agent-deployment.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10572,10 +10524,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-4"
-        },
-        {
-          "file": "spec/v1/agent-deployment.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10593,10 +10541,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-1"
-        },
-        {
-          "file": "spec/v1/agent-evaluation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10614,10 +10558,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-2"
-        },
-        {
-          "file": "spec/v1/agent-evaluation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10635,10 +10575,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-3"
-        },
-        {
-          "file": "spec/v1/agent-evaluation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10656,10 +10592,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-4"
-        },
-        {
-          "file": "spec/v1/agent-evaluation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10677,10 +10609,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r1"
-        },
-        {
-          "file": "spec/v1/agent-memory.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10698,10 +10626,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r2"
-        },
-        {
-          "file": "spec/v1/agent-memory.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10719,10 +10643,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r3"
-        },
-        {
-          "file": "spec/v1/agent-memory.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10740,10 +10660,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r4"
-        },
-        {
-          "file": "spec/v1/agent-memory.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10761,10 +10677,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r5"
-        },
-        {
-          "file": "spec/v1/agent-memory.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10783,10 +10695,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r6"
-        },
-        {
-          "file": "spec/v1/agent-memory.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10805,10 +10713,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r1"
-        },
-        {
-          "file": "spec/v1/agent-org-chart.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10827,10 +10731,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r2"
-        },
-        {
-          "file": "spec/v1/agent-org-chart.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10849,10 +10749,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r3"
-        },
-        {
-          "file": "spec/v1/agent-org-chart.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10871,10 +10767,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r4"
-        },
-        {
-          "file": "spec/v1/agent-org-chart.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10893,10 +10785,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r5"
-        },
-        {
-          "file": "spec/v1/agent-org-chart.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10914,10 +10802,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-platform-profile.r1"
-        },
-        {
-          "file": "spec/v1/agent-platform-profile.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10935,10 +10819,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-platform-profile.r2"
-        },
-        {
-          "file": "spec/v1/agent-platform-profile.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10957,10 +10837,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r1"
-        },
-        {
-          "file": "spec/v1/agent-roster.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -10979,10 +10855,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r2"
-        },
-        {
-          "file": "spec/v1/agent-roster.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11001,10 +10873,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r3"
-        },
-        {
-          "file": "spec/v1/agent-roster.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11023,10 +10891,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r4"
-        },
-        {
-          "file": "spec/v1/agent-roster.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11045,10 +10909,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r5"
-        },
-        {
-          "file": "spec/v1/agent-roster.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11067,10 +10927,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-runtime.r1"
-        },
-        {
-          "file": "spec/v1/agent-runtime.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11089,10 +10945,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-runtime.r2"
-        },
-        {
-          "file": "spec/v1/agent-runtime.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11111,10 +10963,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-runtime.r3"
-        },
-        {
-          "file": "spec/v1/agent-runtime.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11133,10 +10981,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r1"
-        },
-        {
-          "file": "spec/v1/agent-workspace.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11155,10 +10999,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r2"
-        },
-        {
-          "file": "spec/v1/agent-workspace.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11177,10 +11017,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r3"
-        },
-        {
-          "file": "spec/v1/agent-workspace.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11199,10 +11035,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r4"
-        },
-        {
-          "file": "spec/v1/agent-workspace.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11221,10 +11053,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r5"
-        },
-        {
-          "file": "spec/v1/agent-workspace.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11243,10 +11071,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r6"
-        },
-        {
-          "file": "spec/v1/agent-workspace.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11265,10 +11089,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e1"
-        },
-        {
-          "file": "spec/v1/ai-envelope.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11287,10 +11107,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e2"
-        },
-        {
-          "file": "spec/v1/ai-envelope.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11309,10 +11125,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e3"
-        },
-        {
-          "file": "spec/v1/ai-envelope.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11331,10 +11143,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e4"
-        },
-        {
-          "file": "spec/v1/ai-envelope.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11353,10 +11161,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e5"
-        },
-        {
-          "file": "spec/v1/ai-envelope.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11375,10 +11179,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e6"
-        },
-        {
-          "file": "spec/v1/ai-envelope.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11397,10 +11197,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.artifact-type-packs.r1"
-        },
-        {
-          "file": "spec/v1/artifact-type-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11419,10 +11215,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.artifact-type-packs.r2"
-        },
-        {
-          "file": "spec/v1/artifact-type-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11441,10 +11233,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a1"
-        },
-        {
-          "file": "spec/v1/auth.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11463,10 +11251,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a2"
-        },
-        {
-          "file": "spec/v1/auth.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11485,10 +11269,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a3"
-        },
-        {
-          "file": "spec/v1/auth.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11507,10 +11287,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a4"
-        },
-        {
-          "file": "spec/v1/auth.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11529,10 +11305,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a5"
-        },
-        {
-          "file": "spec/v1/auth.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11551,10 +11323,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a6"
-        },
-        {
-          "file": "spec/v1/auth.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11573,10 +11341,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.budget-policy.r1"
-        },
-        {
-          "file": "spec/v1/budget-policy.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11595,10 +11359,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.capabilities.c2"
-        },
-        {
-          "file": "spec/v1/capabilities.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11617,10 +11377,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.capabilities.c3"
-        },
-        {
-          "file": "spec/v1/capabilities.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11639,10 +11395,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.capabilities.c5"
-        },
-        {
-          "file": "spec/v1/capabilities.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11661,10 +11413,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c1"
-        },
-        {
-          "file": "spec/v1/channels-and-reducers.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11683,10 +11431,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c2"
-        },
-        {
-          "file": "spec/v1/channels-and-reducers.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11705,10 +11449,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c3"
-        },
-        {
-          "file": "spec/v1/channels-and-reducers.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11727,10 +11467,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c4"
-        },
-        {
-          "file": "spec/v1/channels-and-reducers.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11749,10 +11485,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c5"
-        },
-        {
-          "file": "spec/v1/channels-and-reducers.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11771,10 +11503,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.chat-card-packs.r1"
-        },
-        {
-          "file": "spec/v1/chat-card-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11793,10 +11521,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.chat-card-packs.r2"
-        },
-        {
-          "file": "spec/v1/chat-card-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11815,10 +11539,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.chat-card-packs.r3"
-        },
-        {
-          "file": "spec/v1/chat-card-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11837,10 +11557,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g1"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11859,10 +11575,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g2"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11881,10 +11593,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g3"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11903,10 +11611,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g4"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11925,10 +11629,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g5"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11947,10 +11647,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g6"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11969,10 +11665,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g7"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -11991,10 +11683,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g8"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12013,10 +11701,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g9"
-        },
-        {
-          "file": "spec/v1/compensation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12035,10 +11719,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r1"
-        },
-        {
-          "file": "spec/v1/conformance-certification.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12057,10 +11737,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r2"
-        },
-        {
-          "file": "spec/v1/conformance-certification.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12079,10 +11755,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r3"
-        },
-        {
-          "file": "spec/v1/conformance-certification.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12101,10 +11773,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r4"
-        },
-        {
-          "file": "spec/v1/conformance-certification.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12122,10 +11790,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r5"
-        },
-        {
-          "file": "spec/v1/conformance-certification.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12144,10 +11808,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r1"
-        },
-        {
-          "file": "spec/v1/connection-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12166,10 +11826,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r2"
-        },
-        {
-          "file": "spec/v1/connection-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12188,10 +11844,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r3"
-        },
-        {
-          "file": "spec/v1/connection-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12210,10 +11862,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r4"
-        },
-        {
-          "file": "spec/v1/connection-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12232,10 +11880,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r5"
-        },
-        {
-          "file": "spec/v1/connection-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12254,10 +11898,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.core-standard-profile.r1"
-        },
-        {
-          "file": "spec/v1/core-standard-profile.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12275,10 +11915,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.core-standard-profile.r2"
-        },
-        {
-          "file": "spec/v1/core-standard-profile.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12296,10 +11932,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.debug-bundle.debug-bundle-1"
-        },
-        {
-          "file": "spec/v1/debug-bundle.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12317,10 +11949,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.debug-bundle.debug-bundle-2"
-        },
-        {
-          "file": "spec/v1/debug-bundle.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12338,10 +11966,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.debug-bundle.debug-bundle-3"
-        },
-        {
-          "file": "spec/v1/debug-bundle.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12360,10 +11984,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r1"
-        },
-        {
-          "file": "spec/v1/form-content-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12382,10 +12002,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r2"
-        },
-        {
-          "file": "spec/v1/form-content-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12404,10 +12020,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r3"
-        },
-        {
-          "file": "spec/v1/form-content-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12426,10 +12038,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r4"
-        },
-        {
-          "file": "spec/v1/form-content-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12448,10 +12056,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r5"
-        },
-        {
-          "file": "spec/v1/form-content-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12470,10 +12074,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r1"
-        },
-        {
-          "file": "spec/v1/frontend-plugin-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12492,10 +12092,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r2"
-        },
-        {
-          "file": "spec/v1/frontend-plugin-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12514,10 +12110,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r3"
-        },
-        {
-          "file": "spec/v1/frontend-plugin-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12536,10 +12128,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r4"
-        },
-        {
-          "file": "spec/v1/frontend-plugin-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12558,10 +12146,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r5"
-        },
-        {
-          "file": "spec/v1/frontend-plugin-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12579,10 +12163,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.host-sample-test-seams.r1"
-        },
-        {
-          "file": "spec/v1/host-sample-test-seams.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12600,10 +12180,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.host-sample-test-seams.r2"
-        },
-        {
-          "file": "spec/v1/host-sample-test-seams.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12622,10 +12198,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i1"
-        },
-        {
-          "file": "spec/v1/idempotency.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12644,10 +12216,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i2"
-        },
-        {
-          "file": "spec/v1/idempotency.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12666,10 +12234,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i3"
-        },
-        {
-          "file": "spec/v1/idempotency.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12688,10 +12252,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i4"
-        },
-        {
-          "file": "spec/v1/idempotency.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12710,10 +12270,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i5"
-        },
-        {
-          "file": "spec/v1/idempotency.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12732,10 +12288,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i1"
-        },
-        {
-          "file": "spec/v1/interrupt.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12754,10 +12306,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i2"
-        },
-        {
-          "file": "spec/v1/interrupt.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12776,10 +12324,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i3"
-        },
-        {
-          "file": "spec/v1/interrupt.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12798,10 +12342,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i4"
-        },
-        {
-          "file": "spec/v1/interrupt.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12820,10 +12360,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g1"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12842,10 +12378,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g2"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12864,10 +12396,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g3"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12886,10 +12414,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g4"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12908,10 +12432,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g5"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12930,10 +12450,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g6"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12952,10 +12468,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g7"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12974,10 +12486,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g8"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -12996,10 +12504,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g9"
-        },
-        {
-          "file": "spec/v1/mcp-integration.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13018,10 +12522,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-1"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13040,10 +12540,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-2"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13062,10 +12558,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-3"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13084,10 +12576,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-4"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13106,10 +12594,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-5"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13128,10 +12612,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-6"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13150,10 +12630,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-7"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13172,10 +12648,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-8"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13194,10 +12666,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-9"
-        },
-        {
-          "file": "spec/v1/multi-agent-execution.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13216,10 +12684,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np1"
-        },
-        {
-          "file": "spec/v1/node-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13238,10 +12702,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np2"
-        },
-        {
-          "file": "spec/v1/node-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13260,10 +12720,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np3"
-        },
-        {
-          "file": "spec/v1/node-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13282,10 +12738,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np4"
-        },
-        {
-          "file": "spec/v1/node-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13304,10 +12756,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np5"
-        },
-        {
-          "file": "spec/v1/node-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13326,10 +12774,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o1"
-        },
-        {
-          "file": "spec/v1/observability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13348,10 +12792,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o2"
-        },
-        {
-          "file": "spec/v1/observability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13370,10 +12810,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o3"
-        },
-        {
-          "file": "spec/v1/observability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13392,10 +12828,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o4"
-        },
-        {
-          "file": "spec/v1/observability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13414,10 +12846,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o5"
-        },
-        {
-          "file": "spec/v1/observability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13436,10 +12864,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.portability.r1"
-        },
-        {
-          "file": "spec/v1/portability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13458,10 +12882,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.portability.r2"
-        },
-        {
-          "file": "spec/v1/portability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13480,10 +12900,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.portability.r3"
-        },
-        {
-          "file": "spec/v1/portability.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13501,10 +12917,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.profiles.profile-1"
-        },
-        {
-          "file": "spec/v1/profiles.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13522,10 +12934,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.profiles.profile-2"
-        },
-        {
-          "file": "spec/v1/profiles.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13543,10 +12951,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.profiles.profile-3"
-        },
-        {
-          "file": "spec/v1/profiles.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13565,10 +12969,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p1"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13587,10 +12987,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p2"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13609,10 +13005,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p3"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13631,10 +13023,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p4"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13653,10 +13041,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p5"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13675,10 +13059,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p6"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13697,10 +13077,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p7"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13719,10 +13095,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p8"
-        },
-        {
-          "file": "spec/v1/prompts.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13741,10 +13113,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp1"
-        },
-        {
-          "file": "spec/v1/replay.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13763,10 +13131,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp2"
-        },
-        {
-          "file": "spec/v1/replay.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13785,10 +13149,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp3"
-        },
-        {
-          "file": "spec/v1/replay.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13807,10 +13167,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp4"
-        },
-        {
-          "file": "spec/v1/replay.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13829,10 +13185,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp5"
-        },
-        {
-          "file": "spec/v1/replay.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13851,10 +13203,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r1"
-        },
-        {
-          "file": "spec/v1/rest-endpoints.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13873,10 +13221,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r2"
-        },
-        {
-          "file": "spec/v1/rest-endpoints.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13895,10 +13239,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r3"
-        },
-        {
-          "file": "spec/v1/rest-endpoints.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13917,10 +13257,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r4"
-        },
-        {
-          "file": "spec/v1/rest-endpoints.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13939,10 +13275,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro1"
-        },
-        {
-          "file": "spec/v1/run-options.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13961,10 +13293,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro2"
-        },
-        {
-          "file": "spec/v1/run-options.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -13983,10 +13311,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro3"
-        },
-        {
-          "file": "spec/v1/run-options.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14005,10 +13329,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro4"
-        },
-        {
-          "file": "spec/v1/run-options.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14026,10 +13346,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.scale-profiles.scale-1"
-        },
-        {
-          "file": "spec/v1/scale-profiles.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14047,10 +13363,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.scale-profiles.scale-2"
-        },
-        {
-          "file": "spec/v1/scale-profiles.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14068,10 +13380,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.scale-profiles.scale-3"
-        },
-        {
-          "file": "spec/v1/scale-profiles.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14090,10 +13398,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g1"
-        },
-        {
-          "file": "spec/v1/self-hosted-runner.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14112,10 +13416,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g2"
-        },
-        {
-          "file": "spec/v1/self-hosted-runner.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14134,10 +13434,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g3"
-        },
-        {
-          "file": "spec/v1/self-hosted-runner.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14156,10 +13452,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g4"
-        },
-        {
-          "file": "spec/v1/self-hosted-runner.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14178,10 +13470,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s1"
-        },
-        {
-          "file": "spec/v1/stream-modes.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14200,10 +13488,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s2"
-        },
-        {
-          "file": "spec/v1/stream-modes.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14222,10 +13506,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s3"
-        },
-        {
-          "file": "spec/v1/stream-modes.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14244,10 +13524,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s4"
-        },
-        {
-          "file": "spec/v1/stream-modes.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14265,10 +13541,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.tool-catalog.r1"
-        },
-        {
-          "file": "spec/v1/tool-catalog.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14286,10 +13558,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.tool-catalog.r2"
-        },
-        {
-          "file": "spec/v1/tool-catalog.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14307,10 +13575,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.trigger-bridge.r1"
-        },
-        {
-          "file": "spec/v1/trigger-bridge.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14328,10 +13592,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.trigger-bridge.r2"
-        },
-        {
-          "file": "spec/v1/trigger-bridge.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14350,10 +13610,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v1"
-        },
-        {
-          "file": "spec/v1/version-negotiation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14372,10 +13628,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v2"
-        },
-        {
-          "file": "spec/v1/version-negotiation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14394,10 +13646,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v3"
-        },
-        {
-          "file": "spec/v1/version-negotiation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14416,10 +13664,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v4"
-        },
-        {
-          "file": "spec/v1/version-negotiation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14438,10 +13682,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v5"
-        },
-        {
-          "file": "spec/v1/version-negotiation.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14460,10 +13700,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp1"
-        },
-        {
-          "file": "spec/v1/workflow-chain-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14482,10 +13718,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp2"
-        },
-        {
-          "file": "spec/v1/workflow-chain-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14504,10 +13736,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp3"
-        },
-        {
-          "file": "spec/v1/workflow-chain-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14526,10 +13754,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp4"
-        },
-        {
-          "file": "spec/v1/workflow-chain-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14548,10 +13772,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp5"
-        },
-        {
-          "file": "spec/v1/workflow-chain-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     },
@@ -14570,10 +13790,6 @@
         {
           "file": "spec/v1/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp6"
-        },
-        {
-          "file": "spec/v1/workflow-chain-packs.md",
-          "token": "Absorbed into `spec/v1/gaps.json`"
         }
       ]
     }

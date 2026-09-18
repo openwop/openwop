@@ -1,6 +1,6 @@
 # Host-sample test seams
 
-> **Status: Stable · v1.1 (2026-05-22).** Normative spec for conformance-only host-sample test seams under `/v1/host/sample/*`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the conformance-only host-sample test seams under `/v1/host/sample/*`. These are observation seams, not application endpoints.
 
 OpenWOP's [conformance suite](../../conformance/) verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:
 
@@ -536,7 +536,7 @@ All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in prod
   sites: flipping the variable removes both at once. A defense-in-depth claim requires the
   layers to fail independently.
 
-> **Why these two were added (2026-08-15).** A tier-1 host's production deployment had the
+> **Why these two exist.** A tier-1 host's production deployment had the
 > seam env-gate enabled, and a seam answered an **unauthenticated** request from the public
 > internet with real seam JSON. The registration path logged *"test seam ENABLED — NEVER
 > enable in production"* while doing exactly that. Its second guard was commented as
@@ -643,10 +643,6 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
   ```
 
   A host advertising the capability MUST enforce, on `exchange`: (1) a `role: 'agent'` turn that omits `speakerId` is rejected `validation_error` (the §Spec attribution MUST); (2) a turn whose `speakerId` is NOT in the conversation's declared `participants` roster is rejected `validation_error` (the §Spec membership MUST, RFC 0005 §E turn-validation path); and on `open`: (3) a `participants` array exceeding the request's or the host's advertised `maxParticipants` is rejected `validation_error` (the §Spec maxParticipants MUST). RFC 0005 §E pins the error *code* (`validation_error`), not the HTTP status — a host MAY use `400` or `422`; the conformance leg asserts on `error.code` and tolerates either. A roster-valid, attributed agent turn MUST be accepted. `multi-party-conversation-behavioral.test.ts` drives all four (one positive + three rejections) via `behaviorGate('openwop-multi-party-conversation', …)`; the always-on `multi-party-conversation-shape.test.ts` covers the schema-expressible facts server-free regardless of this seam. **This is the RFC 0101 → behavioral-conformance bar** (reference impl: the postgres example host). A host whose multi-party enforcement is bound to a product flow rather than a generic open (e.g. openwop-app ADR 0040's advisory-board council, which keys roster enforcement on a board group) MAY instead witness via its own host-side behavioral test + an `INTEROP-MATRIX.md` row — the RFC 0086 dual-staging — but the reference seam ensures the behavioral MUSTs have at least one suite-executable, host-agnostic witness.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.host-sample-test-seams.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Cross-references
 
@@ -765,7 +761,7 @@ OPTIONAL. The runner↔host channel ([`self-hosted-runner.md`](./self-hosted-run
 - **`register` request:** a [`SelfHostedRunnerRegistration`](../../schemas/self-hosted-runner-registration.schema.json) `{ runnerId, subject, capabilities }`. Records a runner bound to `subject` (the run's owning RFC 0048 principal). **Response 200/201:** `{ "runnerId": string }`.
 - **`dispatch` request:** `{ subject, ...<SelfHostedRunnerDispatchFrame> }` — the owning `subject` plus a [dispatch frame](../../schemas/self-hosted-runner-dispatch-frame.schema.json) (`{ runId, stepId, seq, kind, provider?/model?/tool?, inputs }`). The router matches a runner owned by `subject` FIRST, then capability.
 - **Response 200 (routed):** `{ "result": <SelfHostedRunnerResultFrame.output>, "deduped": boolean }`. `deduped` is `true` iff a result for this `{runId, stepId}` was already persisted (the redelivery was dropped, not re-executed — at-most-once).
-- **Response 4xx (no owning-subject runner):** the canonical flat envelope `{ "error": "runner_unavailable", "message": "…", "details": { "retriable": true } }` (corrected 2026-08-16, S22 — this line read the nested `{ error: { code, retriable } }` shape before; the suite tolerates the nested shape from a seam through the first minor after 2026-11-10 while hosts converge). A dispatch for a subject with no registered runner MUST fail this way and MUST NOT fall back to another subject's runner (subject-first isolation).
+- **Response 4xx (no owning-subject runner):** the canonical flat envelope `{ "error": "runner_unavailable", "message": "…", "details": { "retriable": true } }` (the suite tolerates the nested `{ error: { code, retriable } }` shape from a seam through the first minor after 2026-11-10 while hosts converge). A dispatch for a subject with no registered runner MUST fail this way and MUST NOT fall back to another subject's runner (subject-first isolation).
 - **404 / 403:** seam not wired — the gated scenario (`self-hosted-runner.test.ts`) soft-skips its behavioral legs.
 - **Non-vacuity (RFC 0122):** the witness is non-vacuous because the router runs the host's **real** subject-first match (registering a runner for subject B and dispatching for subject A yields `runner_unavailable`, proving no cross-subject fallback) and the **real** `{runId, stepId}` result store (a second identical dispatch returns `deduped: true` only if the first result was actually persisted). A credential MUST NOT appear on the dispatch frame, the returned result, or any event/log (`runner-credential-non-transit`; the frame schemas are `additionalProperties:false`).
 
@@ -779,7 +775,7 @@ OPTIONAL. The runner↔host channel ([`self-hosted-runner.md`](./self-hosted-run
 | Introduced                | RFC 0154 §A/§B — closes the gap that made §A's requirements unobservable              |
 
 OPTIONAL. RFC 0154 §A's requirements are behavioral and, without this seam, **unobservable
-from the wire**: a host must cryptographically verify the presented identity, bind it to the
+from the wire**: a host MUST cryptographically verify the presented identity, bind it to the
 request, resolve it to an OpenWOP principal **before** authorization, and **fail closed**
 when it cannot. None of that is visible in a normal request's response — a call either
 succeeds or 401s, and both outcomes look identical whether the host verified anything or
@@ -800,10 +796,10 @@ request path consults, or the witness proves nothing about production.
 - **Response 200 (resolved):** `{ "principalId": string, "resolved": true }`. `principalId`
   is the OpenWOP principal the identity mapped to — opaque, and never the presented subject
   verbatim unless the host genuinely uses it as its principal ID.
-- **Response 4xx (fail closed):** the canonical flat envelope `{ "error": <code>, "message": "…", "details": { "retriable": false } }` (corrected 2026-08-16, S22 — read nested before; tolerated during the window) with
+- **Response 4xx (fail closed):** the canonical flat envelope `{ "error": <code>, "message": "…", "details": { "retriable": false } }` (the nested shape is tolerated during the convergence window) with
   a closed reason code — `identity_unverified`, `identity_unresolvable`,
   `audience_mismatch`, `delegation_expired`, `sender_constraint_missing`, or (chain bounds,
-  added 2026-08-16 — RFC 0154 §B / `auth.md` §"Bounds") `delegation_chain_too_long`,
+  RFC 0154 §B / `auth.md` §"Bounds") `delegation_chain_too_long`,
   `delegation_chain_cyclic`, `delegation_scope_amplified`. **`retriable`
   MUST be `false`**: an identity that does not resolve will not resolve on retry, and
   marking it retriable invites a caller to hammer a failing authorization path.
@@ -850,7 +846,7 @@ ordering must be the ones the production failure path uses, or the witness prove
 fail the last node, and let the host unwind.
 
 - **Request:** `{ nodes?: integer, fail?: boolean }`.
-- **`fail`** (OPTIONAL, default `true`, SP-11a 2026-08-18) — when `false`, the seam runs the
+- **`fail`** (OPTIONAL, default `true`) — when `false`, the seam runs the
   same compensator-declaring workflow **to successful completion**: no node fails, no trigger
   fires, and the host MUST record no `compensation.requested`. The returned snapshot MUST
   therefore read `compensationStatus: "none"` (`compensation.md` §"Run rollup"). This is the
@@ -992,7 +988,6 @@ OPTIONAL. Same shape and reason as §22's A2A `invoke`: RFC 0153 §B is about th
 OPTIONAL. Registers a workflow the host will serve for the duration of the conformance run (an exposed MCP tool/resource/prompt, a dispatch parent, an MRTR suspending tool). The seam accepts the **host's registration shape** — `{ workflowId, nodes: [{ nodeId, typeId, config, inputs? }], edges?: [{ edgeId, sourceNodeId, targetNodeId }] }` — and answers `201 { workflowId, nodeCount }`, `400 validation_error` on a malformed body, `404`/`403` when the seam is not mounted.
 
 > **Recorded divergence.** This shape keys nodes and edges by `nodeId` / `edgeId`; the canonical `workflow-definition.schema.json` keys both by `id`. Every leg posting here has used `nodeId` since the seam existed, so the seam is documented as it behaves rather than as the canonical schema would have it. The RFC 0013 workflow-**chain** vocabulary (`edges: [{ from, to }]`) is NOT accepted here — `mcp-mrtr-roundtrip.test.ts` posted it until 2026-08-16 and the first 2026-07-28 host answered `400`, which the leg then walked past into `tools/call` on a tool that was never registered (S17). A calling leg MUST treat a `4xx` on this registration as a **suite defect** (assert `< 400`), never as seam absence. Aligning the seam to canonical `id` (accepting both during a window) is an open item for the reference host; the corpus does not change the canonical schema for it.
-
 
 ### 25. Concurrent duplicate-delivery driver — `POST /v1/host/sample/test/idempotency/concurrent-claim` (RFC 0150 §B)
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Deployment Lifecycle
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0082](../../RFCS/0082-agent-deployment-lifecycle.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the `agentId@channel` binding, the seven-state deployment machine, the channel→version replay pin (§B), the content-free `deployment.*` events, the `capabilities.agents.deployment` advertisement, and the promotion contract. The `POST /v1/agents/{agentId}/deployments` endpoint, the SDK helpers, the behavioral lifecycle scenario, and the reference-host deployment store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0082.** Capability-gated agent deployment, channel resolution, promotion, and audit-event contract.
 
 ## Why this exists
 
@@ -86,10 +86,6 @@ The promotion fail-closed guarantee is, at this stage, the existing protocol-tie
 ```
 
 Truthful advertisement (RFC 0031): a host that doesn't split traffic **MUST** advertise `canary: false` and **MUST** reject any `canaryPercent < 100`; a host that implements a subset of states **MUST** advertise that subset and **MUST** reject transitions outside it. Tenant scoping follows `agents.manifestRuntime.installScope` (RFC 0074) — deployment channels are tenant-scoped on a `'tenant'` host.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.agent-deployment.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

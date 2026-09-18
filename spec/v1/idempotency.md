@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Idempotency
 
-> **Status: Stable · v1.7 (2026-08-21).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `logicalInvocationId` (Layer 2). v1.2 retires the v1 Layer-2 composition, which carried the retry counter and so could not deliver the retry deduplication it promised (RFC 0150 §B, safety-fix). v1.3 separates record reconciliation from effect authorization and retires the `strict` / `best-effort` / time-ordered recovery vocabulary (RFC 0150 §D, safety-fix). v1.4 states that Layer-2 identity is run-scoped and requires a business identity in addition where a node effect is also reachable outside any run (RFC 0150 §B, additive). v1.5 lands RFC 0150 §A: the Layer-1 record shape (digest, state, lease), atomic reclaim of an expired pending owner, the keyspace-separation `MUST NOT` for host-generated identifiers, and — new — the canonical **`idempotency_key_mismatch`** error for a same-key/different-body replay, which the spec had never named (SP-03, additive: it names an error hosts already had to return and states a shape they already had to keep). v1.6 states the **recovery-boundary precondition** for Layer-2 identity: the ordinal reproduces across crash-and-resume **iff** the host re-executes the node's logical activities from the start on resume — the precondition RFC 0158's `kill-during-execution` / `duplicate-delivery` witnesses depend on, previously presumed but unstated (RFC 0150 §B, additive). v1.7 states that the Layer-2 invocation-log claim **MUST be atomic** (compare-and-set / insert-if-absent): a non-atomic read-then-write double-fires under **concurrent** duplicate delivery, so exactly-once was never satisfiable without it — the Layer-2 counterpart of the Layer-1 §"Concurrent duplicates" rule, previously explicit only one layer up (RFC 0158 §C.7 / RFC 0150 §B, additive). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.7 · RFC 0150.** Normative contract for HTTP request idempotency and run-scoped logical effect identity.
 
 ---
 
@@ -90,8 +90,8 @@ shape — `{ "error": "idempotency_key_mismatch", "message": "…" }`. This is
 distinct from `idempotency_in_flight` below: *mismatch* is a different body under
 a settled key, *in-flight* is the same key still executing.
 
-> **Naming note (2026-08-18, SP-03).** The spec named no mismatch error until
-> now, so implementations diverged: `grpc-transport.md` mapped both
+> **Naming note.** The spec originally named no mismatch error, so
+> implementations diverged: `grpc-transport.md` mapped both
 > `idempotency_key_conflict` and `idempotency_key_mismatch` (two spellings, one
 > concept, in a single table row), the published TypeScript SDK's
 > `HTTP_ERROR_CODES` carried `idempotency_key_mismatch`, the SQLite reference
@@ -267,7 +267,6 @@ interchangeable and the failure is silent in both directions.
 > a `refund-order` node and three non-run entry points reach one `refundOrder`
 > implementation, which is keyed on business identity **deliberately** — because for that
 > effect, run scope is the wrong scope.
-
 
 ### Engine guarantees
 
@@ -463,7 +462,7 @@ Clients SHOULD inspect `capabilities.idempotency.crossRegion` before relying on 
 
 ### `multiRegion` sub-block (RFC 0036, normative when `multiRegion.supported: true`)
 
-Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21), revised by RFC 0150 §D. The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "fenced-effects"` SHOULD also advertise `multiRegion.supported: true`. A host that advertises `crossRegion: "reconciled-records"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
+Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md), revised by RFC 0150 §D. The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "fenced-effects"` SHOULD also advertise `multiRegion.supported: true`. A host that advertises `crossRegion: "reconciled-records"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
 
 `replicationLagBoundMs` is a **record read-visibility** bound and nothing more. It is not an
 input to the effect-safety posture: a `0` bound does not make a host `fenced-effects`, and a
@@ -478,10 +477,6 @@ When `multiRegion.supported: true`:
 - Conformance asserts both contracts via `multi-region-idempotency.test.ts` against the host's multi-region test simulator (per RFC 0036 §C).
 
 Hosts that do NOT advertise the `multiRegion` block retain the existing best-effort posture documented above.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.idempotency.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

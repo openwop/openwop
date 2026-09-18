@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Scale Profiles
 
-> **Status: Stable · v1.1 (2026-05-05).** Defines three scale tiers a host MAY claim. Scale claims are advertised in host documentation and verified at runtime by `@openwop/openwop-conformance` scenarios. No discovery-payload schema change. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1.** Defines the three scale tiers a host MAY claim. Claims are advertised in host documentation and verified at runtime by `@openwop/openwop-conformance`; no discovery-payload change.
 
 ---
 
@@ -129,10 +129,6 @@ The numbers above derive from observed practice at small-to-medium production Op
 Hosts whose workloads don't fit these tiers MAY define their own profile in a follow-up RFC. The closed catalog of three is the v1.x default; profiles MAY be added per `RFCS/0001-rfc-process.md`.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.scale-profiles.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

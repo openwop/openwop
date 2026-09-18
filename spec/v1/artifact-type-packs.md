@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Artifact-Type Packs
 
-> **Status: Stable · v1.1 (2026-05-27; amended by [RFC 0075](../../RFCS/0075-artifact-type-packs-realworld-amendment.md) 2026-05-27).** **RFC 0075 (real-world adoption amendment)** folds in the gaps the first AI-native adopter (MyndHyve) surfaced: a **host-registered** tier with `registrationSource` (P0-1), `additionalProperties:false` relaxed MUST→SHOULD + a `validation: "open"\|"closed"` field for AI-produced artifacts (P0-2), per-type capability facets + `validated`-vs-`schemaVersions` decoupling (P1-1/P1-2), and serving the canonical schema URL as a MUST for no-pack types (P1-3). All additive or MUST→SHOULD relaxations — existing conformance unaffected. Phase 1 of [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md), promoted DRAFT → FINAL on MyndHyve's production adoption: the non-steward `workflow-runtime` host advertises `host.artifactTypes` unconditionally on `api.myndhyve.ai` (steward curl-verified 2026-05-27, revision `workflow-runtime-00396-cuj`) with a live `WorkflowNode.artifactType` validate-before-emit binding, and passes the manifest-validation + install + store-without-render conformance scenarios. Specifies a pack kind that publishes **typed artifact definitions** — the schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce (documents, slides, app designs, CAD drawings). Phase 2 (chat card packs) graduated to `Accepted` (2026-05-27) — see [`chat-card-packs.md`](./chat-card-packs.md). Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Stable · v1.1 · RFC 0071, amended by RFC 0075.** Normative contract for portable and host-registered artifact-type definitions.
 
 ---
 
@@ -119,8 +119,7 @@ Hosts that predate this document commonly carry artifact-type identifiers that d
 
 **An alias map is a host-internal compatibility shim, not a conformance claim.** A host serving legacy identifiers through an alias is not thereby "conformant under its old names" — the legacy spellings remain non-conformant on the wire; the *canonical* spellings the alias resolves are what a conformant peer may rely on. A host MUST NOT advertise or imply otherwise.
 
-> **Why this section exists.** Before RFC 0141, the rewrite prohibition was real but only derivable by composing three documents (this one, `run-event-payloads.schema.json`, and `replay.md`) — and a merged RFC briefly recommended a backfill before being corrected (RFC 0138, corrected 2026-08-07). A constraint that is only compositionally derivable will be re-derived wrongly; this states it in one place. See also RFC 0140, which hardens the same fixed-history premise from the side-effect direction.
-
+> **Why this section exists.** The rewrite prohibition is otherwise derivable only by composing three documents — this one, `run-event-payloads.schema.json`, and `replay.md`. A constraint that is only compositionally derivable will be re-derived wrongly, so it is stated here in one place. See also RFC 0140, which hardens the same fixed-history premise from the side-effect direction.
 
 ## Host capability — `host.artifactTypes`
 
@@ -186,10 +185,6 @@ The RFC 0071 architect pass resolved the design questions this doc was drafted a
 | Versioning axis    | **Integer `schemaVersion` on the artifact type (riding `capabilities.schemaVersions{}`); the _pack_ keeps SemVer.**                                             | Exactly the envelope split (`schemaVersions: Record<string, number>`); semver's minor/patch is meaningless for a wire schema.                                                       |
 | `exportFormats`    | **Reserved core identifier set + `vendor.*`/`x-` extension.**                                                                                                   | Mirrors the `requiredModelCapabilities` reserved-core + extension idiom; gives interop without a codec spec.                                                                        |
 | Unregistered types | **Permanent first-class tier** (`registered: false`), not a transitional escape hatch.                                                                          | The adoption on-ramp; the `local.*`-scope analog.                                                                                                                                   |
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.artifact-type-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Runtime: Standing Goals
 
-> **Status: Stable · v1.x (RFC 0097, `Accepted`; graduated 2026-09-03 under RFC 0174 §D.1 — the banner's own predicate had fired).** Normative spec for the standing-goal primitive — a durable objective with judge-based completion and bounded continuation. Capability-gated on `capabilities.agents.goals`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. This doc graduates `Draft → Stable` when RFC 0097 reaches `Accepted`.
+> **Status: Stable · v1.x · RFC 0097.** Capability-gated standing goals with bounded, judge-based continuation.
 
 ## Why this exists
 
@@ -25,10 +25,6 @@ Hosts advertise the supported `judge`, the `continuation` modes, and `requiresBo
 ## Endpoints + events
 
 The host serves the goal surface as a host-extension under `/v1/host/sample/goals` (`GET` list/read, `POST` create, `PATCH` edit, `POST .../pause|resume|abandon` — see `host-sample-test-seams.md`), promotable to the normative `/v1/goals` at graduation. There is **no** `complete`/`satisfy` write — completion is the judge's verdict, never a client assertion. Two additive, content-free events are emitted (gated on the capability): `goal.evaluated` (after each judge check) and `goal.closed` (`run-event-payloads.schema.json`).
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.agent-runtime.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

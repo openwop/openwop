@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Budget, Quota, and Cost Policy
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0084](../../RFCS/0084-budget-quota-and-cost-policy.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the reserved `budget` run-options key, the content-free `budget.{reserved,consumed,threshold.crossed,exhausted}` events, the four `cap.breached{budget-*}` kinds, and the `budget` capability + `limits` ceilings. The behavioral enforcement scenario, the `budget_exhausted`/`budget_model_denied` OpenAPI error codes, and the reference-host accounting land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0084.** Capability-gated budget, quota, and cost-enforcement contract.
 
 ## Why this exists
 
@@ -45,8 +45,3 @@ A host advertises `capabilities.budget` (`supported` + `dimensions[]` truthful +
 The new protocol-tier invariant **`budget-no-pricing-leak`**: the four `budget.*` events + `cap.breached{budget-*}` MUST NOT carry the host's **pricing model** — rate cards, per-token / per-unit prices, cost breakdowns, provider credentials, or model prose. Verified always-on by `budget-policy-shape.test.ts` (the content-free negatives — a payload with a `ratePerToken` / `rateCard` / `pricing` field — are its public test).
 
 **Aggregate cost vs. pricing model (the precise line).** The `cost` dimension's **aggregate total** — `budget.consumed{dimension:"cost", consumed, limit}` and the `maxCostUsd` the user _set_ — IS permitted and is load-bearing (the headline "do not spend more than $1" feature). It is the user's own budget reflected back, and the aggregate is already derivable from the **accepted** RFC 0026 `provider.usage.costEstimateUsd` surface — so it introduces no new leak. What is forbidden is the host's **rate card** (the per-token/per-unit price *breakdown* by which that aggregate was computed): a single aggregate total cannot reconstruct a rate card, but a per-unit price field would expose commercially-sensitive pricing. The host's pricing *model* (how it computes `costEstimateUsd`) stays a host choice (RFC 0026); this RFC fixes only the policy shape, the events, and the enforcement seam. A host that prefers to never put any `$`-denominated value on the wire MAY advertise only the non-cost dimensions (`tokens`/`toolCalls`/`retries`) — the cost dimension is optional.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 1 row(s) this table carried are now `openwop.gap.spec.budget-policy.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

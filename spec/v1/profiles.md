@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compatibility Profiles
 
-> **Status: Stable · v1.2 (2026-08-16 — RFC 0155 §A: `openwop-discovery-core` is the canonical name of the discovery predicate, `openwop-core` its deprecated alias for all of v1; claim vocabulary in §"Claim vocabulary"). v1.1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003).** Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing `/.well-known/openwop` fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.2 · RFC 0003, 0155.** Derived compatibility predicates over the v1 discovery document.
 
 ---
 
@@ -361,7 +361,7 @@ A new profile MUST NOT cause a previously-passing host to fail an existing profi
 
 ## Why this is not a wire field
 
-An earlier draft of this document proposed `capabilities.profiles: string[]` advertised in `/.well-known/openwop`. Reasons it was rejected:
+A wire field — `capabilities.profiles: string[]` advertised in `/.well-known/openwop` — was considered and rejected. Profile membership is **derived** by the conformance suite instead, for three reasons:
 
 1. **Two answers to one question.** A host could advertise `profiles: ["openwop-secrets"]` while `capabilities.secrets.supported = false` because two code paths set them. Derivation makes this impossible.
 2. **Host redeploy.** Adding a wire field forces every host to redeploy. Derivation runs in the suite, no redeploy.
@@ -370,10 +370,6 @@ An earlier draft of this document proposed `capabilities.profiles: string[]` adv
 The derivation library is the single canonical implementation of profile membership.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.profiles.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

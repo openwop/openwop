@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Version Negotiation and Deploy-Skew Safety
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the four version axes: engine, per-run event-log, per-event, and runtime pinning.
 
 ---
 
@@ -363,7 +363,7 @@ composition".
 
 This is **not** one of the four version axes above. The identity is engine-internal: it
 never appears on the wire between a caller and a host, it is not stamped on an event, and no
-client negotiates it. A host may therefore migrate unilaterally, without deploy
+client negotiates it. A host MAY therefore migrate unilaterally, without deploy
 coordination and without a `protocolVersion` bump.
 
 The operator sequence:
@@ -494,10 +494,6 @@ RFC 0164 (`additive`, 2026-09-02) made the SCIM ⟷ SAML leaver contract (`auth-
 | **Suite** | Both subject-link scenarios gate on the pair; a combined host that opted out now fails where it previously read `inapplicable` — the `COMPATIBILITY.md` §2.3 case of a new scenario finding a previously untested gap. | Suite ≥ 1.150.0. |
 
 Nothing on the wire changes for SAML-only or SCIM-only hosts.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.version-negotiation.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

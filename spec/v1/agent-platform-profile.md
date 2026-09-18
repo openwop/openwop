@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — `openwop-agent-platform` Operational Annex
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0085](../../RFCS/0085-agent-platform-meta-profile.md) (2026-06-01).** Additive v1.x extension — an **operational annex** (the [`production-profile.md`](./production-profile.md) / [`auth-profiles.md`](./auth-profiles.md) pattern), NOT a new entry in the closed [`profiles.md`](./profiles.md) predicate catalog. Names one coherent "this host behaves like a full agent platform" target with a `partial`/`full` status, an aggregating conformance scenario, and a badge. The live aggregate-evidence assertion against a reference host + the badge rendering land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0085.** Operational profile for hosts exposing the complete agent-platform capability set.
 
 ## Why this exists
 
@@ -65,8 +65,3 @@ A new **`openwop-agent-platform` badge** ([`openwop.dev/badge/openwop-agent-plat
 **Honest advertisement (the `production-profile.md` discipline):** a host MUST report `partial` (not `full`) until the full-tier scenarios actually pass — reporting `full` on shape alone is non-conformant by the §C aggregate-evidence rule.
 
 **`satisfiedTerms[]` — the richer interop signal (adoption is non-contiguous).** The flat `none`/`partial`/`full` ladder implicitly assumes _monotonic_ adoption (floor before full), but a real host built feature-by-feature satisfies terms **out of order** — e.g. a host honoring RBAC (RFC 0049) + memory-attribution (RFC 0057) + tenant-scoping (RFC 0074) — three `full`-tier terms — while still missing `liveRuntime`/`toolCatalog` floor terms reads `none`, _identical to a do-nothing host_. To avoid understating such a host, a host SHOULD ALSO report `satisfiedTerms[]` — the exact list of floor/full term ids it satisfies (`floor:memory`, `full:authorization`, …) — alongside the flat status. The reference helper is `agentPlatformSatisfiedTerms` in `conformance/src/lib/profiles.ts`. The flat status remains the headline claim (and gates the badge); `satisfiedTerms[]` is the honest per-term breakdown a registry/Mission Control renders so a `none`-but-6/16 host is distinguishable from a `none`-and-0/16 one. (This non-contiguous-adoption finding came from the first live-host curl-verify of the predicate — RFC 0085 §UQ-followup.)
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.agent-platform-profile.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

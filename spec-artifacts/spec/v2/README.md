@@ -1,19 +1,58 @@
-# `spec/v2/` — the OpenWOP v2 tree (the current protocol major)
+# OpenWOP v2 specification
 
-> **Status: released.** v2 is the current protocol major — `v2.0.0` was tagged 2026-09-05 and this tree is at corpus `v2.2.1` (`release.json`). Everything under `spec/v2/`, `schemas/v2/` and `api/v2/` is normative, is vendored into `@openwop/spec-artifacts`, and is what `@openwop/openwop-conformance` 2.x measures. A new integration targets v2.
->
-> **v1 is not retired.** Through the overlap a host advertises both majors and `preferredVersion` MUST remain a `1.x` member (`core/versioning.md` §1.1); v1 clients keep working unchanged on `/v1/…`. v1 end-of-support is the later of two clocks in `core/overview.md`, earliest 2026-12-04, and until then `spec/v1/` stays the maintained parallel track. A `1.x` conformance tarball still excludes this tree (`conformance/scripts/pack-vendor.sh`).
->
-> The banner that stood here until 2026-09-10 said *"in construction … until the `v2.0.0-rc.1` corpus tag"*. That tag landed 2026-09-03 and the line was never updated; a reader who trusted it concluded v2 did not exist. Status lines that are hand-kept drift; this one now names the tag and the file that carry the truth.
+> **Status: released · corpus v2.3.3.** The authoritative version is
+> [`release.json`](./release.json). Target v2 for new implementations.
 
-Layout (RFC 0167 §C; RFC 0174 §E.2 budget):
+OpenWOP v2 is the current protocol major. Its contract consists of this
+directory, [`schemas/v2/`](../../schemas/v2/), and
+[`api/v2/`](../../api/v2/). Those artifacts are published together in
+`@openwop/spec-artifacts` and measured by `@openwop/openwop-conformance` 2.x.
 
-| Path | Owner | What |
-| --- | --- | --- |
-| `declaration.json` (+ `declaration.schema.json`) | RFC 0169 §B | The one declaration file: every root key of the v2 discovery document with its anchor (`core`, `ext` or `deleted`), witness class, maturity, facets, peer-dependency identifier (≡ key), floor scenarios and requirement ids, and the profile predicates. Hand-reviewed source; everything else is generated from it (`scripts/generate-from-declaration.mjs`) and checked against it (`scripts/check-declaration.mjs`). |
-| `profiles.json`, `peer-dependency-aliases.json` | RFC 0169 §C, RFC 0177 §B.2 | Generated. |
-| `errors.json` (→ generated `schemas/v2/error-envelope.schema.json`), `event-codemap.json` (all rows decided), `path-manifest.json` (operations + channels), `release.json` (the one release identity `info.version` reads), `facets/<key>.schema.json` (hand-decided facet shapes the capabilities generator reads) | RFC 0171, 0176, 0172, 0169 | Landed P3-B/P3-C. `migrations.json` / `deprecations.json` stay at `spec/v1/` until the RC promotes them with `applied` marks (RFC 0167). |
-| `core/*.md` | one per child | Normative prose, ≤ 25,000 words total (`scripts/check-core-budget.mjs`, `wc -w` on raw markdown, generated `core/headers.md` included). `capabilities.md` carries one `### § <key>` heading per core family (`check-declaration.mjs`). Lands in P3-D. |
-| `ext/<key>/` | RFC 0169 §B.3, RFC 0175 §A.1, RFC 0173 §D | Extension documents with a declared `witness:` / `technical:` / `adoption:` header: the 13 ext-anchored families, plus `grpc-transport/` (demoted; non-normative proto), `portability/` (goals/export/import), `sandbox-runtime-notes/` (RFC 0035 history), `provider-idempotency/` (the Layer-2 provider registry). |
+v1 remains available during the overlap period. Dual-stack requirements and
+the retirement rule are defined in
+[`core/versioning.md`](./core/versioning.md#5-the-overlap-rfc-0167-b5-rfc-0176)
+and [`core/overview.md`](./core/overview.md).
 
-Machine artifacts here are published in `@openwop/spec-artifacts` (RFC 0168 §D.2), never inside the suite tarball.
+## Start here
+
+1. [`core/overview.md`](./core/overview.md) — scope, conformance target, and
+   lifecycle.
+2. [`core/versioning.md`](./core/versioning.md) — discovery and major-version
+   negotiation.
+3. [`core/capabilities.md`](./core/capabilities.md) — the closed discovery
+   document.
+4. [`core/runs.md`](./core/runs.md), [`core/events.md`](./core/events.md), and
+   [`core/interrupt.md`](./core/interrupt.md) — the execution model.
+5. [`core/security-defaults.md`](./core/security-defaults.md) and
+   [`core/conformance.md`](./core/conformance.md) — mandatory safety defaults
+   and evidence rules.
+
+## Source-of-truth map
+
+| Path | Purpose |
+| --- | --- |
+| [`declaration.json`](./declaration.json) | Hand-reviewed inventory of discovery keys, capability families, maturity, witnesses, facets, profiles, and peer-dependency identifiers. |
+| [`declaration.schema.json`](./declaration.schema.json) | Schema for the declaration. |
+| [`core/`](./core/) | Normative protocol prose. |
+| [`ext/`](./ext/) | Optional extensions and explicitly non-core notes. See the extension maturity rules in [`ext/README.md`](./ext/README.md). |
+| [`facets/`](./facets/) | Hand-reviewed capability facet schemas. |
+| [`errors.json`](./errors.json) | Error-code registry. |
+| [`event-codemap.json`](./event-codemap.json) | v1-to-v2 event-name mapping. |
+| [`path-manifest.json`](./path-manifest.json) | Canonical operation and channel paths. |
+| [`profiles.json`](./profiles.json) | Generated profile predicates. |
+| [`peer-dependency-aliases.json`](./peer-dependency-aliases.json) | Generated v1 alias mapping. |
+| [`release.json`](./release.json) | Authoritative corpus release identity. |
+
+Generated files identify their generator in `$comment` or their header. Do not
+edit generated outputs directly. Machine artifacts are published in
+`@openwop/spec-artifacts`; the conformance package consumes them as an
+exact-version peer dependency.
+
+## Core documents
+
+| Area | Documents |
+| --- | --- |
+| Foundation | [`overview`](./core/overview.md), [`versioning`](./core/versioning.md), [`headers`](./core/headers.md), [`identity`](./core/identity.md), [`capabilities`](./core/capabilities.md) |
+| Execution | [`runs`](./core/runs.md), [`events`](./core/events.md), [`interrupt`](./core/interrupt.md), [`persistence`](./core/persistence.md), [`idempotency`](./core/idempotency.md), [`replay`](./core/replay.md) |
+| Integration | [`webhooks`](./core/webhooks.md), [`interop`](./core/interop.md), [`packs`](./core/packs.md), [`connection packs`](./core/connection-packs.md), [`form-content packs`](./core/form-content-packs.md), [`workflow-chain packs`](./core/workflow-chain-packs.md) |
+| Reliability | [`errors`](./core/errors.md), [`security defaults`](./core/security-defaults.md), [`conformance`](./core/conformance.md) |

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Connection Packs
 
-> **Status: Stable · v1.x (2026-06-12) — RFC 0095 `Accepted`.** Normative surface for [RFC 0095 — Connection packs](../../RFCS/0095-connection-packs-portable-provider-definitions.md) — a registry-distributable **provider definition** pack. Companion to [`node-packs.md`](./node-packs.md) §Connectors (RFC 0045), [`auth.md`](./auth.md) (the `host.oauth` flow), and the credential/oauth capabilities of RFC 0046/0047. Graduated `Active → Accepted` 2026-06-12: the non-steward MyndHyve `workflow-runtime` host advertises `connections.packsSupported` live on `api.myndhyve.ai` and passes all five RFC 0095 scenarios non-vacuously vs the published 1.23.0 suite under `OPENWOP_REQUIRE_BEHAVIOR=true`; the openwop-app reference host implements §Resolution (boot-time loader) with the same strict pass. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Stable · v1.x · RFC 0095.** Normative pack format for portable provider and credential-connection definitions.
 
 ## Why this exists
 
@@ -267,10 +267,6 @@ A well-formed `openapi`-reach provider declaring its credential-egress allow-lis
   "apiHosts": ["facebook.com"] } }
 // graph.facebook.com (the real API host) matches facebook.com by dot-anchored eTLD+1 containment.
 ```
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.connection-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

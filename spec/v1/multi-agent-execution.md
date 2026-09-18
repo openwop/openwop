@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Multi-Agent Execution Model
 
-> **Status: Draft v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a five-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models), and [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md) at `version: 5` (stateful agent-loop lifecycle — per-iteration snapshot inputs, the observable `iteration` counter, stateful HITL resume). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Draft · v1.x · RFC 0037, 0039–0041, 0061.** Normative execution, handoff, memory, causation, replay, and agent-loop contract.
 
 ## Why this exists
 
@@ -141,7 +141,11 @@ Hosts that advertise `crossHostCausation.supported: true` but NOT the ancestry e
 
 ## Replay determinism under nondeterminism (RFC 0041, normative — `version >= 4`)
 
-Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 4` AND `capabilities.multiAgent.executionModel.replayDeterminism.supported: true`. Closes RFC 0037 §"Open spec gaps" MAE-7 + MAE-8 + MAE-9.
+Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md).
+Applies only when the host advertises
+`capabilities.multiAgent.executionModel.version >= 4` and
+`capabilities.multiAgent.executionModel.replayDeterminism.supported: true`.
+This resolves the MAE-7, MAE-8, and MAE-9 gaps recorded by RFC 0037.
 
 The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism under nondeterministic models (RFC 0041, normative — `version >= 4`)":
 
@@ -313,10 +317,6 @@ Hosts that do NOT advertise this capability MAY implement RFCs 0006/0007/0022 in
 Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: true` MUST NOT emit this event (the event is the wire signature of the contract being advertised).
 
 `schemas/run-event-payloads.schema.json` ALSO gains `context.summarized` (RFC 0111, §"Context economy") — emitted when the host replaces older in-window transcript turns with a summary to honor `contextBudget.transcriptTokenBudget`. Payload `{ iteration, replacedTurns: string[], summaryRef, tokenCounter, tokensBefore, tokensAfter }`. **Content-free**: `summaryRef` is an artifactId (the summary text never rides the wire); `replacedTurns` lists the event ids the summary stands in for so a replay engine reconstructs the exact transcript. A host MUST NOT emit it unless it advertises `contextBudget.summarization.supported: true`.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.multi-agent-execution.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

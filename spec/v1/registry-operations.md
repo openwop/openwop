@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Node-Pack Registry Operations
 
-> **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of the operational lifecycle for a hosted node-pack registry: submission, validation, deprecation, yank, and signing-key rotation flows. Pairs with the registry HTTP API in `node-packs.md` §"Registry HTTP API" — that doc covers wire shapes; this doc covers the lifecycle operations + their security model. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Operational lifecycle and security model for a node-pack registry.
 
 ---
 
@@ -367,7 +367,11 @@ The registry's role is structural — it can't decide which packs are legitimate
 
 ## Registry mirror + federation (closes NP3)
 
-Closes NP3 from `node-packs.md` §"Open spec gaps". A workspace MAY consume packs from multiple registries — a primary (typically `packs.openwop.dev`) with one or more fallbacks (private mirror, enterprise self-host, air-gapped read-only replica). This section defines the cross-registry trust + resolution rules.
+This section resolves `openwop.gap.spec.node-packs.np3` from
+[`gaps.json`](./gaps.json). A workspace MAY consume packs from multiple
+registries: a primary (typically `packs.openwop.dev`) and one or more fallbacks
+(private mirror, enterprise self-host, or air-gapped read-only replica). The
+rules below define cross-registry trust and resolution.
 
 ### Workspace federation configuration
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Typed State Channels and Reducers
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of channel declarations, six canonical reducers, the migration path from variable-prefix conventions, and the back-compat layer. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for channel declarations, the six canonical reducers, and the back-compat layer over variable-prefix conventions.
 
 ---
 
@@ -615,10 +615,6 @@ Semantics:
 Range: `1 ≤ ttlMs ≤ 365 * 24 * 60 * 60 * 1000` (1 ms to 1 year). `0` means "no TTL" (same as omitting).
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.channels-and-reducers.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

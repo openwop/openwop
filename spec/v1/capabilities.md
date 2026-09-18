@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Capability Declaration (`/.well-known/openwop`)
 
-> **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Formalized as `schemas/capabilities.schema.json`. The public network handshake at `GET /.well-known/openwop` is the canonical v1 capability declaration. Fields marked **required v1** are required for conformance; fields marked **optional v1** have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative `/.well-known/openwop` discovery and capability-advertisement contract.
 
 ---
 
@@ -523,7 +523,7 @@ RFC 0122 (`Active`). When `supported: true`, the host routes a run's per-step mo
 
 **Field shape:** OPTIONAL `object`. When present, `supported: boolean` is REQUIRED. `dispatchKinds` MAY enumerate which dispatch kinds (`model`/`tool`) the host actually routes to runners (a host MAY ship `model`-dispatch first and add `tool` later behind the same gate). This block is the discovery-time capability shape ONLY — the per-subject `SelfHostedRunnerRegistration` record ([`self-hosted-runner-registration.schema.json`](../../schemas/self-hosted-runner-registration.schema.json)) is runtime state and MUST NOT appear on `/.well-known/openwop`. Hosts that offer no runner channel omit the block entirely.
 
-**A.2 — Truthful advertisement (normative).** A host MUST NOT advertise `selfHostedRunner.supported: true` unless it actually honors the runner↔host channel ([`self-hosted-runner.md`](./self-hosted-runner.md)) — accepting runner registrations, routing matching dispatch, and delivering results. Advertising the capability without honoring the channel is a dishonest capability claim per [§Truthful advertisement](#truthful-advertisement) and is non-conformant; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it. Because RFC 0122 is `Active` (not yet `Accepted`), **no host may advertise `selfHostedRunner.supported: true` until RFC 0122 reaches `Accepted`** — reference hosts wire the channel behind the gate (seam-wired, soft-skipping) in the interim.
+**A.2 — Truthful advertisement (normative).** A host MUST NOT advertise `selfHostedRunner.supported: true` unless it actually honors the runner↔host channel ([`self-hosted-runner.md`](./self-hosted-runner.md)) — accepting runner registrations, routing matching dispatch, and delivering results. Advertising the capability without honoring the channel is a dishonest capability claim per [§Truthful advertisement](#truthful-advertisement) and is non-conformant; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it. Because RFC 0122 is `Active` (not yet `Accepted`), **a host MUST NOT advertise `selfHostedRunner.supported: true` until RFC 0122 reaches `Accepted`** — reference hosts wire the channel behind the gate (seam-wired, soft-skipping) in the interim.
 
 **Conformance.** The `self-hosted-runner-*` schema probes (dispatch/result frame + registration + capability shape) are always-on (server-free); the behavioral `self-hosted-runner` scenario gates on `selfHostedRunner.supported` and soft-skips when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`), driving the `POST /v1/host/sample/runner/*` seam to assert subject-first match, at-most-once dispatch, credential non-transit, and `runner_unavailable` on liveness loss.
 
@@ -896,11 +896,10 @@ A host advertising any `tier: "experimental"` capability derives the `openwop-ex
 
 ## What a capability may vary
 
-*(Added 2026-08-19. This section introduces no new requirement. It states the
-discipline the corpus already follows across `replay.sideEffectSuppression`,
-`compensation`, `idempotency.crossRegion` and the refusal contract below, so that
-the author of the next capability does not have to re-derive it — or get it
-wrong.)*
+*This section introduces no new requirement. It states the discipline the corpus
+already follows across `replay.sideEffectSuppression`, `compensation`,
+`idempotency.crossRegion` and the refusal contract below, so that the author of
+the next capability does not have to re-derive it.*
 
 A discovery advertisement is a statement about a **host**. It is not a dial on
 the meaning of the protocol. The distinction that matters:
@@ -1088,10 +1087,6 @@ Adding new fields to the `Capabilities` shape is non-breaking — clients ignore
 The required/optional split protects implementers from over-pinning: a host can be conformant with only the required base fields, while richer hosts can advertise optional profiles and capabilities without changing the protocol version.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.capabilities.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

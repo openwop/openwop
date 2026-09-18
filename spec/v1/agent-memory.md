@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Memory
 
-> **Status: Stable · v1.1 (2026-05-10).** Normative spec for cross-run agent memory — `memoryRef` resolution, `MemoryAdapter` host-interface contract, cross-tenant isolation invariant (CTI-1), and BYOK secret-redaction invariant (SR-1). Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative cross-run agent-memory contract: `memoryRef` resolution, the `MemoryAdapter` host interface, cross-tenant isolation (CTI-1), and BYOK secret redaction (SR-1).
 
 ## Why this exists
 
@@ -208,10 +208,6 @@ Consolidation is a read-modify-write of long-term memory; it is NOT a token-budg
 4. MAY enqueue a run when a commitment fires; when it does, the run inherits the source memory's tenant and the `enqueuedRunId` is reported on the event.
 
 Both events (`agent.memory.consolidated`, `commitment.fired`) are defined in `schemas/run-event-payloads.schema.json` and are additive RunEventTypes — consumers that don't recognize them fold best-effort per `observability.md §"Forward-compat"`.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.agent-memory.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Reviewable learning (RFC 0096)
 

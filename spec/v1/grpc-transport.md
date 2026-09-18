@@ -1,6 +1,10 @@
 # OpenWOP Spec v1 — gRPC Transport Profile
 
-> **Status: Stable · v1.1 (2026-05-12).** Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per `rest-endpoints.md`); a host MAY ALSO expose the gRPC surface defined here under `capabilities.supportedTransports: ["grpc"]`. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in `rest-endpoints.md` §"Open spec gaps". Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Optional alternative transport profile.
+> REST + SSE remains the REQUIRED wire surface for every v1-conforming host; a host MAY
+> additionally expose the gRPC surface defined here under
+> `capabilities.supportedTransports: ["grpc"]`. Both surfaces describe the same
+> protocol semantics.
 
 ---
 
@@ -202,7 +206,7 @@ REST + SSE remains exposed at the host's HTTP endpoint regardless of whether gRP
 
 ## Conformance
 
-The `capabilities.grpc` block described in §"Field semantics" above was added to `capabilities.schema.json` by RFC 0094 (Accepted; this sentence said "in flight" until RFC 0175 corrected it on 2026-09-03), which also added the capability-gated scenario `conformance/src/scenarios/grpc-transport.test.ts`. Until RFC 0094 lands, the schema does not yet carry the block. Hosts that advertise `capabilities.grpc.supported: true` are expected to pass that scenario, which verifies:
+The `capabilities.grpc` block described in §"Field semantics" above is carried in [`capabilities.schema.json`](../../schemas/capabilities.schema.json) per RFC 0094, which also added the capability-gated scenario `conformance/src/scenarios/grpc-transport.test.ts`. A host that advertises `capabilities.grpc.supported: true` MUST pass that scenario, which verifies:
 
 1. `GetCapabilities` returns a payload byte-equivalent to the REST `/.well-known/openwop` response (after Protobuf↔JSON normalization).
 2. `CreateRun` + `GetRun` + `StreamRunEvents` round-trip a workflow run with the same event sequence the REST surface produces.
