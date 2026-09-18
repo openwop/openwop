@@ -21,7 +21,9 @@ operations, payloads, or authorization semantics from its presence. A pack may
 name `chat` as a dependency only when the host and pack share
 an out-of-band definition of that dependency.
 
-The v1 description, [`spec/v1/host-capabilities.md`](https://github.com/openwop/openwop/blob/main/spec/v1/host-capabilities.md#hostchat) (§host.chat), is useful for migration but is not a
+The v1 description,
+[`spec/v1/host-capabilities.md`](https://github.com/openwop/openwop/blob/main/spec/v1/host-capabilities.md#hostchat)
+(§host.chat), is useful for migration but is not a
 standalone v2 interoperability contract. A future revision can replace this
 boundary with normative behavior, schemas, and a behavioral witness.
 

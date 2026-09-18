@@ -52,7 +52,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
-## [2.8.1] — 2026-09-18 — two facets that advertised contracts v2 does not have
+## [2.8.2] — 2026-09-18 — two facets that advertised contracts v2 does not have
 
 ### Fixed
 
@@ -65,6 +65,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - `workflowChainPacks` declares its normative home — `spec/v2/core/workflow-chain-packs.md`, whose §"Composition depth" already carries the `subChains` MUST. The family resolves under RFC 0189 §C with no new prose, and `docs/normative-home-baseline.json` lowers `undeclared` 66 → 65.
 
 **Compatibility: safety-fix** per `COMPATIBILITY.md` §3. Both removals delete a property from a closed published record, but each advertised a contract v2 explicitly does not have or a seam path v2 deleted, and **no v2 host bundle advertises either** — verified against all three bundles in `evidence/v2-host-bundles/`.
+## [2.8.1] — 2026-09-18 — the extension pages, formatted for reading
+
+- **The v2 extension index and every extension page are re-formatted for reading.** `spec/v2/ext/README.md`'s status table — one row per label, cells carrying whole paragraphs — is now three `###` subsections (`Draft`, `Stable`, `Retired`) with each rule spelled out as prose and its gate predicate named. All seventeen extension READMEs re-wrap the long v1-migration links and field descriptions that ran past the margin, and three metadata cells are said plainly rather than in a parenthetical: `provider-idempotency`'s advertised-as is *"not applicable; supporting registry only"*, `sandbox-runtime-notes` names its owning RFCs as `RFC 0173 §D; RFC 0035 (superseded)`, and `portability` names `RFC 0168 §C.1; RFC 0174 §E.2; RFCs 0086 and 0087 (v1 text)`. No status, witness-class or RFC 2119 word changed.
 
 ## [2.8.0] — 2026-09-18 — RFC 0189: the gate that was measuring nothing, given a contract
 
