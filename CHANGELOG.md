@@ -13,6 +13,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.3.5] — 2026-09-17 — the prose stops narrating its own edit history
+
 ### Changed
 
 - **Editorial pass over `spec/v1/` and `spec/v2/` — the prose now reads as a specification rather than as its own edit history.** No normative requirement changed; every `MUST` / `SHOULD` / `MAY` in the corpus is the same obligation it was, and `openwop:check` steps 1–8 are green on the result. What went: status banners that recited authoring dates, landing sequences and superseded wordings instead of stating what the document specifies; the retired `## Open spec gaps` stubs left behind when RFC 0174 §E.3 absorbed those tables into `gaps.json` (the register rows are unchanged — only the dangling `sources` tokens pointing at the deleted banners were dropped); errata narration (`Errata 2026-09-10: this read "any path"`), self-referential editing warnings, and rationale paragraphs that argued with earlier drafts of themselves. Requirements that were stated only inside that narration were rewritten as direct normative prose in place rather than deleted — `versioning.md` §1.2 / §1.4 / §5 and `security-defaults.md` §Threat models are the substantive cases. Added [`spec/v1/README.md`](./spec/v1/README.md), the v1 tree's missing entry point: source-of-truth precedence, task-oriented reading paths, and a grouped document map (the v2 tree already had one; v1 sent readers to a flat 60-file directory listing). `spec/v2/README.md` was rewritten to the same shape. v2 ext documents gained an explicit "Contract boundary" section stating what a discovery-only reservation does and does not promise a client.

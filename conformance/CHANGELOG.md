@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.3.5] — 2026-09-17 — spec prose editorial pass
+
+**Why a patch.** No scenario changed. The v2 prose shipped in spec-artifacts was edited (openwop CHANGELOG [2.3.5]), so 2.3.4 no longer identifies its published contents and the pins move together.
+
 ## [2.3.4] — 2026-09-17 — registers regenerated
 
 **Why a patch.** No scenario changed; `spec/v1/gaps.json` (shipped in spec-artifacts) regenerated from the dispositioned registers (openwop CHANGELOG [2.3.4]).
