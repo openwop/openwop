@@ -116,7 +116,12 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
     expect(typeof r.result?.['ttlMs']).toBe('number');
     expect(r.result?.['cacheScope']).toBe('public');
     const names = (r.result?.['tools'] as Array<{ name: string }>).map((t) => t.name);
-    expect(names).toEqual(['echo', 'needs_input']);
+    // `needs_input_loop` is the MRTR tool this `it` is named for — it was added to the
+    // fake server in 2.4.0 so the mrtr-rounds-ceiling leg could reach a ceiling >= 1,
+    // and this assertion was never moved with it. A host that proxies the fake server
+    // faithfully returns all three, so the leg red on every certify run while the
+    // corpus gate quarantined it locally.
+    expect(names).toEqual(['echo', 'needs_input', 'needs_input_loop']);
     // legacy list does NOT carry the current-revision fields
     const legacy = await call(server.endpoint(), 'tools/list', {});
     expect(legacy.result?.['ttlMs']).toBeUndefined();

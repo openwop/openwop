@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.9.2] — 2026-09-18 — mcp-2026-07-28-discover matches its own fake server
+
+**Why a patch.** One assertion in `mcp-2026-07-28-discover.test.ts` listed two
+tools where `McpFakeServer` has served three since 2.4.0. No host-visible
+contract changes; the scenario now passes unquarantined (9/9 executed-pass).
+
 ## [2.9.1] — 2026-09-18 — RFC 0189 gap register
 
 **Why a patch.** No conformance code changes; `spec/v1/gaps.json` is a published
