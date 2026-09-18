@@ -61,3 +61,17 @@ jobs:
         env:
           OPENWOP_PENDING_RELEASE_GRACE_HOURS: ${{ github.event.inputs.grace_hours || '24' }}
         run: node scripts/check-pending-suite-release.mjs --require-network
+
+      # RFC 0189 §D — the v1 normative-home clock, daily on main.
+      #
+      # It lives HERE and not in openwop-check.sh on purpose. The ratchets run
+      # on every PR; the calendar does not. Reding a contributor's unrelated PR
+      # because a date passed punishes the wrong person and teaches everyone
+      # that red means nothing — the same argument this workflow's header makes
+      # about a missed tag.
+      #
+      # Before 0189 the gate computed the days remaining and never compared
+      # them, AND nothing scheduled it — two independent reasons it could not
+      # fire, while its own output claimed it "becomes one on the date".
+      - name: Do all v2 core families have a home that survives v1 end-of-support?
+        run: node scripts/check-v2-normative-home.mjs --deadline

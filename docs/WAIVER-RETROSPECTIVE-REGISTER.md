@@ -119,3 +119,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0186 | Three payload seats the hosts measured and the corpus lacked (`conversation.exchanged` union, `reason`, `ApprovalData.onTimeout`) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0187 | Four bindings the hosts found (`webhookId` kind, v1-wire pass-through, the census of writers, the legacy writer's mark) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0188 | The webhook delivery dead-letter read: the seat that makes `deliveryId` witnessable, the run/delivery sink split, and the `webhooks` family's first owning RFC | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0189 | The normative-home gate given a contract: home classes, a content predicate, a non-punitive ratchet, and a deadline that can fire | in-scope-pending-assessment | — | — | `not-reviewed` |

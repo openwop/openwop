@@ -83,15 +83,57 @@ const v1dep = [];
 const undeclared = [];
 const missing = [];
 
+const refused = [];
+const unnamed = [];
+const noObligation = [];
+const facetsUncovered = [];
+
+/** RFC 0189 §A — the legal home classes. */
+const homeClass = (h) => {
+  if (h === 'spec/v2/core/capabilities.md') return 'declaration-site';
+  if (h.startsWith('spec/v2/core/')) return 'core';
+  if (h.startsWith('spec/v2/ext/')) return 'ext';
+  if (h.startsWith('schemas/v2/') || h.startsWith('spec/v2/facets/')) return 'schema';
+  if (h.startsWith('spec/v1/')) return 'v1';
+  if (h.startsWith('RFCS/')) return 'rfc';
+  return 'refused';
+};
+const KEYWORD = /\b(MUST NOT|MUST|SHOULD NOT|SHOULD|MAY)\b/;
+const namesKey = (text, key) => new RegExp(`(^|[^A-Za-z0-9])\`?${key}\`?([^A-Za-z0-9]|$)`).test(text);
+
 for (const f of core) {
   const homes = f.normativeText;
   if (!Array.isArray(homes) || homes.length === 0) {
     undeclared.push(f.key);
     continue;
   }
+  let bad = false;
+  let prose = '';
   for (const h of homes) {
-    if (!existsSync(join(ROOT, h))) missing.push(`${f.key} -> ${h}`);
+    const cls = homeClass(h);
+    // §A — a declaration site cannot be its own behaviour home. Every core
+    // family's `section` is ALREADY `core/capabilities.md#<key>`, and every one
+    // of those bodies is a one-line stub, so allowing it would resolve all 72
+    // for free and make the gate `section` spelled twice.
+    if (cls === 'declaration-site') { refused.push(`${f.key} -> ${h} (the declaration site: capabilities.md § ${f.key} is a stub, not behaviour)`); bad = true; continue; }
+    if (cls === 'rfc') { refused.push(`${f.key} -> ${h} (an RFC is history, not operative text; owningRfc already records it)`); bad = true; continue; }
+    if (cls === 'refused') { refused.push(`${f.key} -> ${h} (not a normative home: only spec/v2/core, spec/v2/ext, a v2 schema as a CO-pointer, or spec/v1 as a declared dependency)`); bad = true; continue; }
+    if (!existsSync(join(ROOT, h))) { missing.push(`${f.key} -> ${h}`); bad = true; continue; }
+    if (cls !== 'schema') prose += readFileSync(join(ROOT, h), 'utf8') + '\n';
   }
+  if (bad) continue;
+  // §A — a schema may co-point, never stand alone: RFC 0174 §E.2a parks
+  // rationale in schema descriptions precisely because the budget does not
+  // count them, and a schema-only home turns that escape into "no prose".
+  if (prose === '') { refused.push(`${f.key} -> schema-only (a schema MAY co-point; it MUST NOT be the sole home — RFC 0174 §E.2a)`); continue; }
+  // §B(b) — the target names the family.
+  if (!namesKey(prose, f.key)) { unnamed.push(`${f.key} (no target names it)`); continue; }
+  // §B(c) — an obligation ABOUT the family: a 2119 keyword in a paragraph that
+  // also names it. Document scope would pass on almost any v2 core doc.
+  const paras = prose.split(/\n\s*\n/);
+  if (!paras.some((q) => namesKey(q, f.key) && KEYWORD.test(q))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it)`); continue; }
+  // §B(d) — facet completeness, counted rather than failed (see the ratchet).
+  for (const facet of f.facets ?? []) if (!namesKey(prose, facet)) facetsUncovered.push(`${f.key}.${facet}`);
   if (homes.some((h) => h.startsWith('spec/v1/'))) v1dep.push(f.key);
   else resolved.push(f.key);
 }
@@ -100,6 +142,17 @@ process.stdout.write(
   `  ${core.length} core families: ${resolved.length} resolved, ${v1dep.length} v1-dependent, ${undeclared.length} undeclared.\n`,
 );
 
+// RFC 0189 §B — a declared home that is not a home, or does not carry an
+// obligation about its family, reads as resolved and is not. Hard fail: unlike
+// the counters below, these are authoring errors, not debt.
+const predicateFailures = [...refused, ...unnamed, ...noObligation];
+if (predicateFailures.length > 0) {
+  process.stdout.write(`\n  FAIL — ${predicateFailures.length} normativeText declaration(s) do not carry their family's behaviour:\n`);
+  for (const m of predicateFailures) process.stdout.write(`    ${m}\n`);
+  process.stdout.write('  A declared home must NAME the family and carry an RFC 2119 obligation about it\n  in the same paragraph. `existsSync` alone let README.md resolve all 72.\n');
+  process.exit(1);
+}
+
 // A pointer to a file that does not exist reads as resolved. Never tolerated.
 if (missing.length > 0) {
   process.stdout.write(`\n  FAIL — ${missing.length} normativeText path(s) do not exist:\n`);
@@ -107,6 +160,9 @@ if (missing.length > 0) {
   process.stdout.write('  A pointer to a missing file is worse than no pointer: it reads as resolved.\n');
   process.exit(1);
 }
+
+let base0 = { v1Dependent: v1dep.length, undeclared: undeclared.length, facetsUncovered: facetsUncovered.length };
+if (existsSync(BASELINE)) base0 = JSON.parse(readFileSync(BASELINE, 'utf8'));
 
 let eosDate = null;
 try {
@@ -118,21 +174,53 @@ if (eosDate) {
   const open = v1dep.length + undeclared.length;
   process.stdout.write(`  v1 end-of-support not before ${eosDate} — ${days} day(s) from ${NOW}.\n`);
   if (open > 0) {
+    // RFC 0189 §D. The line this replaces said the count "becomes one on the
+    // date, silently" — and the comparison did not exist, nor did any scheduled
+    // job run this gate, so it could not have. A gate that describes a check it
+    // does not perform is the defect this corpus keeps finding in others.
     process.stdout.write(
-      `  ${open} core famil(ies) have no normative home that survives that date.\n` +
-        '  Not a failure today: v1 is not retired and a host advertises both majors\n' +
-        '  through the overlap. It becomes one on the date, silently, unless this\n' +
-        '  number reaches zero first.\n',
+      `  ${undeclared.length} famil(ies) have NO declared home; ${v1dep.length} declare one that dies with v1.\n` +
+        '  Not a failure on a PR: this gate runs the ratchets there, never the clock.\n' +
+        '  The clock runs daily on main under --deadline, as a BURN-DOWN rather than\n' +
+        '  a cliff: a schedule that only fails on the last day is a statistic.\n',
     );
+  }
+  // --deadline: opt-in, so a contributor's unrelated PR never reds on a calendar.
+  if (process.argv.includes('--deadline') && open > 0) {
+    const t0 = base0.t0 ?? null;
+    const openAtT0 = base0.openAtT0 ?? open;
+    if (Date.parse(NOW) >= Date.parse(eosDate)) {
+      process.stdout.write(`\n  FAIL — v1 end-of-support (${eosDate}) has passed and ${open} famil(ies) still have no home that survives it.\n`);
+      process.stdout.write('  The fallback RFC 0189 §D names: spec/v1/** is frozen-but-operative for the\n  families still listed in `v1Carried`, and this gate then fails only if one of\n  those targets is DELETED or its Status banner changes.\n');
+      process.exit(1);
+    }
+    if (t0) {
+      const span = Date.parse(eosDate) - Date.parse(t0);
+      const left = Date.parse(eosDate) - Date.parse(NOW);
+      const allowed = Math.ceil(openAtT0 * (left / span));
+      process.stdout.write(`  burn-down: ${open} open, ${allowed} allowed at this point on the schedule (${openAtT0} at t0 ${t0}).\n`);
+      if (open > allowed) {
+        process.stdout.write(`\n  FAIL — behind the burn-down: ${open} open against ${allowed} allowed.\n  Detected the week it slips rather than on the day nothing can be done.\n`);
+        process.exit(1);
+      }
+    }
   }
 }
 
-let base = { v1Dependent: v1dep.length, undeclared: undeclared.length };
-if (existsSync(BASELINE)) base = JSON.parse(readFileSync(BASELINE, 'utf8'));
+const base = base0;
 
+// RFC 0189 §C. The old rule failed when `v1Dependent` ROSE — which is exactly
+// what the first HONEST declaration does: moving a family from `undeclared` to
+// `v1-dependent` gains information and leaves total debt unchanged, and the
+// gate exited 1 on it. So the cheapest way to stay green was to declare
+// nothing, on 70 of 72 rows. Now: `undeclared` may never rise, and the SUM may
+// never rise; `v1Dependent` alone is unconstrained upward.
 const grew = [];
-if (v1dep.length > base.v1Dependent) grew.push(`v1-dependent ${base.v1Dependent} -> ${v1dep.length}`);
-if (undeclared.length > base.undeclared) grew.push(`undeclared ${base.undeclared} -> ${undeclared.length}`);
+const du = undeclared.length - base.undeclared;
+const dv = v1dep.length - base.v1Dependent;
+if (du > 0) grew.push(`undeclared ${base.undeclared} -> ${undeclared.length} (a core family with no declared home is new debt)`);
+if (du + dv > 0) grew.push(`total open debt ${base.undeclared + base.v1Dependent} -> ${undeclared.length + v1dep.length}`);
+if (facetsUncovered.length > (base.facetsUncovered ?? facetsUncovered.length)) grew.push(`facets with no normative text ${base.facetsUncovered} -> ${facetsUncovered.length} (${facetsUncovered.slice(0, 4).join(', ')})`);
 
 if (grew.length > 0) {
   process.stdout.write(`\n  FAIL — a ratchet grew: ${grew.join('; ')}.\n`);
@@ -144,7 +232,7 @@ if (grew.length > 0) {
   process.exit(1);
 }
 
-if (v1dep.length < base.v1Dependent || undeclared.length < base.undeclared) {
+if (undeclared.length + v1dep.length < base.undeclared + base.v1Dependent || facetsUncovered.length < (base.facetsUncovered ?? facetsUncovered.length)) {
   process.stdout.write(
     `\n  Improved: v1-dependent ${base.v1Dependent} -> ${v1dep.length}, undeclared ${base.undeclared} -> ${undeclared.length}.\n` +
       `  Lower the baseline in ${BASELINE.replace(ROOT + '/', '')} so the gain is held.\n`,
