@@ -161,7 +161,7 @@ says **when** the host starts an unwind and **how** it runs one:
   advertises `compensation` MUST validate the policy at registration and refuse a workflow
   that names an unadvertised model or version (`validation_error`), so an unwind never
   learns at failure time that its ordering rule is unimplemented.
-- **A host MUST likewise refuse, at registration, a policy naming a `triggers` entry the host does not fire** (`validation_error`, naming the offending trigger). The four triggers form a closed vocabulary, but a host need not implement all ofthem. Unsupported triggers MUST be refused during registration rather than accepted and ignored during a failure.
+- **A host MUST likewise refuse, at registration, a policy naming a `triggers` entry the host does not fire** (`validation_error`, naming the offending trigger). The four triggers form a closed vocabulary, but a host need not implement all of them. Unsupported triggers MUST be refused during registration rather than accepted and ignored during a failure.
 
   `capabilities.compensation` has no per-trigger advertisement. A possible
   `supportedTriggers` facet is tracked in [`gaps.json`](./gaps.json); until such a facet is standardized, registration-time refusal is the portable discovery mechanism.
