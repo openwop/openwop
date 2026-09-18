@@ -89,9 +89,9 @@ two per-source sub-objects grow:
 - A `change` event carries a `change` sub-object in which **`op` (`"insert" | "update" |
   "delete"`) is REQUIRED** — one `change` source with an operation discriminator, not per-verb
   sources (RFC 0127 resolved Q1). Its dedup key SHOULD derive from `(table, changelog-id)`.
-- **Direction inverts:** unlike `webhook`/`email`/`form`, the host is the *consumer* — there is
+- **Direction inverts:** unlike `webhook`/`email`/`form`, the host is the _consumer_ — there is
   no inbound ingest URL. A §F.2 registration for `stream`/`change` returns an **empty `binding`**
-  (`{}`); the broker/warehouse *connection* is a credential-brokered egress (RFC 0095), never a
+  (`{}`); the broker/warehouse _connection_ is a credential-brokered egress (RFC 0095), never a
   wire field. Any fetch the ingestion path performs (e.g. resolving a schema-registry reference)
   MUST pass the §F.4 SSRF guard.
 - **No delivery-guarantee advertisement.** The wire promises the §C-1 dedup floor, not

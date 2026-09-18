@@ -115,8 +115,8 @@ while `subject` is a field no host emitted before RFC 0165.
 
 ## The determinism model
 
-*Non-normative framing of requirements that already exist; the numbered caveats
-below are the normative text.*
+_Non-normative framing of requirements that already exist; the numbered caveats
+below are the normative text._
 
 A reader given only the numbered caveats has to infer the model from its
 exceptions. Stated directly, the model is three
@@ -142,8 +142,8 @@ tells an implementer what to do about an observation the caveats do not name.
 | a **fact the run already recorded** (e.g. `memory.written`) | re-emitting from the log without regenerating identifiers | 5 |
 | the host's **own outbound projection** (webhooks, sinks) | suppressing outbound delivery for re-emitted events | §"Host-initiated fan-out is an external effect" |
 
-**The gap the table makes visible.** Caveat 4 ends *"or accept
-non-determinism"* — the only caveat that offers an escape rather than a
+**The gap the table makes visible.** Caveat 4 ends _"or accept
+non-determinism"_ — the only caveat that offers an escape rather than a
 mechanism. That is deliberate (the protocol cannot stop a node calling
 `Date.now()`), but it means the model has exactly one hole, and an implementer
 should know where it is rather than discover it. A host that cannot supply
@@ -236,11 +236,11 @@ The canonical object is stamped `recipe: "openwop-semantic-request-v2"`, so a di
 **Transport-only fields MUST NOT influence the digest:** timeout, trace context, request and correlation IDs, retry counters, credential handles, tenant id, run id, and host metadata. The test is whether the field can change what the model returns — not whether it appears in the HTTP request.
 
 > **v1 excluded `max_tokens`, `stop`, and `seed`, and that was the defect (RFC 0150 §C).**
-> This section previously read: *"Fields NOT in this set MUST NOT influence the cache key —
-> including but not limited to: `max_tokens`, `stop`, `stream`, `metadata`, `user`, `seed`…"*
+> This section previously read: _"Fields NOT in this set MUST NOT influence the cache key —
+> including but not limited to: `max_tokens`, `stop`, `stream`, `metadata`, `user`, `seed`…"_
 > Every one of those three **changes the completion**. Two requests differing only in `stop`
 > produce different text; `seed` exists to change output; the output bound decides whether a
-> response is truncated. Keying them identically does not cause a cache *miss* — it causes a
+> response is truncated. Keying them identically does not cause a cache _miss_ — it causes a
 > **wrong hit**, returning a response the caller never asked for, and doing so deterministically
 > rather than intermittently. `stream`, `metadata`, and `user` remain excluded because they are
 > transport or bookkeeping and cannot alter the completion.
@@ -344,7 +344,7 @@ Scenarios verifying §A + §B + §C gate on `capabilities.multiAgent.executionMo
 > §"Determinism guarantees" caveat 1 has always required, unconditionally, that
 > a node calling an external API consult the durable invocation log so "the
 > external system is NOT called twice." The requirement predates RFC 0140 and is
-> **not relaxed by it**. What follows refines *how* a host demonstrates
+> **not relaxed by it**. What follows refines _how_ a host demonstrates
 > compliance; it does not create the obligation, and a host that advertises
 > nothing is still bound by caveat 1.
 
@@ -356,7 +356,7 @@ the Layer-2 invocation log — that **cannot deliver it across a fork**.
 providerKey)`, and §"Response" above specifies that a fork returns a **new
 `runId`**. Every Layer-2 key computed during a replay therefore differs from its
 counterpart in the source run, so the Layer-2 cache — correct as it is for
-retries *within* a run — never collides across a fork. Suppression is a separate
+retries _within_ a run — never collides across a fork. Suppression is a separate
 mechanism.
 
 Hosts advertise it via `replay.sideEffectSuppression` (`capabilities.md`):
@@ -398,7 +398,7 @@ For a fork with `mode: "replay"`:
    never a substitute for it: it may classify additional nodes as side-effecting,
    and it MUST NOT classify fewer.
 
-   **Why this clause exists.** Requirement 1 defines the obligation *behaviorally*
+   **Why this clause exists.** Requirement 1 defines the obligation _behaviorally_
    — any operation observable outside the run's own event log — which is the right
    definition and is not mechanically checkable at classification time. A host
    therefore needs some concrete signal to decide which nodes qualify, and a pack
@@ -446,7 +446,7 @@ For a fork with `mode: "replay"`:
    observable state be byte-equivalent at each event-log index.
 6. **The whole-run guarantee requires two mechanisms, not one.** A host MUST NOT
    advertise `recorded-outcome` unless **both** hold:
-   - **(a) Classification** short-circuits known side-effecting nodes *before*
+   - **(a) Classification** short-circuits known side-effecting nodes _before_
      they execute, per requirement 2. This keeps a replay **correct** — it
      reproduces the right observable output.
    - **(b) A default-deny guard at every host effect seam** fails the node
@@ -519,18 +519,18 @@ The interaction is easy to miss and gets worse the more correct the host is:
   `memory.written`.
 - A host that fans out on every append will therefore deliver them.
 - The re-emitted envelope legitimately carries a **fresh `eventId`** (envelope
-  identity is volatile; caveat 5 pins the *payload's* identifiers, e.g. `memoryId`).
+  identity is volatile; caveat 5 pins the _payload's_ identifiers, e.g. `memoryId`).
 - Webhook dedup keys on `(subscriptionId, eventId)` per `webhooks.md`.
 
 So a correct re-emission defeats subscriber-side dedup by construction, and the
-subscriber receives a durable-sounding claim — *this run wrote this memory entry* —
+subscriber receives a durable-sounding claim — _this run wrote this memory entry_ —
 about a write that did not happen in that run. Lifecycle events (`run.started`,
 `run.completed`) have the same shape but are ambiguous noise; a recorded-fact event
 is a false statement.
 
-**That contrast ranks the harm; it does not narrow the scope** *(clarified
+**That contrast ranks the harm; it does not narrow the scope** _(clarified
 2026-08-19, after a host implementing this section read it as a possible
-carve-out)*. Lifecycle events are re-emitted as fixed history like any other, and
+carve-out)_. Lifecycle events are re-emitted as fixed history like any other, and
 the first requirement below decides the question directly: replay-ness is read
 from the run, never from the event type. A host suppressing only recorded-fact
 deliveries would be selecting by event type — the exact thing that requirement
@@ -549,13 +549,13 @@ Requirements:
 - A `branch` fork is out of scope for the same reason it is out of scope above: its
   events are new facts, and its effects are effects the operator asked for.
 - This is unconditional. It is not gated on `sideEffectSuppression`, which describes
-  what a host does with *node* effects on replay and makes no claim about host-level
+  what a host does with _node_ effects on replay and makes no claim about host-level
   fan-out.
 
 > **Prior art.** This is not a new constraint invented for OpenWOP;
-> it is a named pattern that predates it. Martin Fowler's *Event Sourcing* §"External
-> Updates" states the failure mode directly — *"those external systems don't know the
-> difference between real processing and replays"* — and prescribes the same fix this
+> it is a named pattern that predates it. Martin Fowler's _Event Sourcing_ §"External
+> Updates" states the failure mode directly — _"those external systems don't know the
+> difference between real processing and replays"_ — and prescribes the same fix this
 > section requires, at the same place: a **Gateway** that "should handle that
 > distinction by having a reference to the event processor and checking the whether it's
 > in replay mode before passing the external call off to the outside world."
@@ -565,7 +565,7 @@ Requirements:
 > survey of "deliver the event anyway, tag it `isReplay`, let the receiver filter" found
 > that pattern **only for internal observability sinks** — Azure Durable Functions
 > stamps `isReplay` on its telemetry so operators can exclude replayed spans from
-> queries. No surveyed system tags an *external* delivery and sends it. That is why this
+> queries. No surveyed system tags an _external_ delivery and sends it. That is why this
 > section is unconditional rather than gated on a capability or a delivery flag: a gate
 > would have been the novel choice, not the conservative one.
 >
@@ -578,7 +578,7 @@ Requirements:
 > outbound exposure this section closes. The nearest precedent for the strictness is
 > Temporal's non-determinism error, where a replay producing a command sequence that
 > does not match recorded history is an error rather than an accepted variant; a replay
-> whose log is *shorter* than history fails there too, which is caveat 5's position
+> whose log is _shorter_ than history fails there too, which is caveat 5's position
 > reached independently.
 >
 > **Why this is stated separately.** The principle — replay MUST NOT re-fire external

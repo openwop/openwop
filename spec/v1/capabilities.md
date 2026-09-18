@@ -88,7 +88,7 @@ The full `GET /.well-known/openwop` response. Only `protocolVersion`, `supported
 
 Every capability family — the required `protocolVersion` / `supportedEnvelopes` / `schemaVersions` / `limits`, and every optional family (`agents`, `secrets`, `aiProviders`, `auth`, `memory`, `multiAgent`, `authorization`, and all others defined in `schemas/capabilities.schema.json`) — MUST appear as a property of the **document root** of the `GET /.well-known/openwop` response. `capabilities.schema.json` validates this full response: its properties are the root properties, and it declares **no `capabilities` wrapper property**. A host MUST NOT require a `capabilities` wrapper object to convey them.
 
-**Contract provenance (RFC 0146).** A host MAY advertise `contractProvenance` at the document root — `{ suiteVersion, corpusCommit }` — naming **which corpus revision its contract handling corresponds to**, i.e. the copy it validates and serves against. It exists because nothing else on the wire answers that: `protocolVersion` is `1.0` across the entire v1 line, and the drift it detects happens *inside* that value; `schemaVersions` is keyed by envelope type. A host that advertises it MUST report the revision it **actually implements** — advertising one it does not is a false statement. It is **OPTIONAL**, and **absent ⇒ unspecified provenance**: neither current nor stale, and a consumer MUST NOT infer a version from its absence. It is **ADVISORY**: a consumer **MUST NOT** reject a request, refuse interop, or fail a run solely because a host's `contractProvenance` differs from its own — within v1.x, corpus revisions are additive, so a host on an older revision is **conformant**, and this field detects drift rather than making drift an error. A consumer MAY warn, log, or surface the difference. It is **not** an integrity check: `corpusCommit` identifies *which* contract, never whether a copy was modified.
+**Contract provenance (RFC 0146).** A host MAY advertise `contractProvenance` at the document root — `{ suiteVersion, corpusCommit }` — naming **which corpus revision its contract handling corresponds to**, i.e. the copy it validates and serves against. It exists because nothing else on the wire answers that: `protocolVersion` is `1.0` across the entire v1 line, and the drift it detects happens _inside_ that value; `schemaVersions` is keyed by envelope type. A host that advertises it MUST report the revision it **actually implements** — advertising one it does not is a false statement. It is **OPTIONAL**, and **absent ⇒ unspecified provenance**: neither current nor stale, and a consumer MUST NOT infer a version from its absence. It is **ADVISORY**: a consumer **MUST NOT** reject a request, refuse interop, or fail a run solely because a host's `contractProvenance` differs from its own — within v1.x, corpus revisions are additive, so a host on an older revision is **conformant**, and this field detects drift rather than making drift an error. A consumer MAY warn, log, or surface the difference. It is **not** an integrity check: `corpusCommit` identifies _which_ contract, never whether a copy was modified.
 
 A top-level `capabilities` wrapper object is a **deprecated legacy shape**, tolerated only by the schema's `additionalProperties: true`. Through the v1.x migration window a host MAY additionally mirror the families under a `capabilities` object for backward compatibility; **clients** SHOULD read the document root first and MAY fall back to a `capabilities.*` wrapper. The **conformance suite reads the root only** — root is the MUST above, so a host that serves families exclusively under the wrapper is non-conformant and is graded as such (RFC 0073 Phase 4). Hosts MUST serve families at the root and SHOULD NOT emit the wrapper. The host-side mirror affordance and the schema's `additionalProperties` tolerance are scheduled to retire together at the next major version (v2.0), at which point `capabilities.schema.json` tightens to forbid the wrapper — see RFC 0073.
 
@@ -286,7 +286,7 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 **A.3 — Endpoint non-disclosure (normative).** The provider id in `selfHosted[]` is an opaque host-chosen label. A host MUST NOT encode the endpoint's network location (scheme, host, port, path, or base-URL) in the provider id, and MUST NOT disclose that location on any wire surface — the capabilities document, any `run.*` event payload, error envelopes, the debug bundle, exports, or replay state. See the `self-hosted-endpoint-no-disclosure` SECURITY invariant. Disclosing the endpoint leaks internal network topology and enables SSRF reconnaissance against the operator's network. The endpoint base-URL is **configuration, not a credential**; an optional endpoint key remains a BYOK credential governed by RFC 0046 verbatim.
 
-**B — Capability non-inference (normative).** For a provider id present in `aiProviders.selfHosted[]`, a client MUST NOT infer model capabilities (e.g. `structured-output`, `discriminator-enum`, `function-calling`, `long-context`, `reasoning` per RFC 0031 §C, or input modalities per RFC 0091) from the provider id or from any known-vendor capability mapping. The **only** authoritative source of a self-hosted provider's capabilities is what the host actually advertises and gates on: `capabilities.modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091). A self-hosted endpoint whose capabilities the host does not advertise is treated as text-only; the host MUST refuse a request for an unadvertised capability or modality per the RFC 0031 model-capability gate (`capability_not_provided`), exactly as for any other provider. This prevents a client from assuming, e.g., that a `selfHosted` id named `ollama` supports vision merely because some public deployment of that engine does. How a host *derives* a self-hosted endpoint's capabilities — a static declaration captured at configuration time, or a runtime probe — is host-internal and out of scope, exactly as RFC 0031 §C leaves the derivation of the model-capability mapping host-internal.
+**B — Capability non-inference (normative).** For a provider id present in `aiProviders.selfHosted[]`, a client MUST NOT infer model capabilities (e.g. `structured-output`, `discriminator-enum`, `function-calling`, `long-context`, `reasoning` per RFC 0031 §C, or input modalities per RFC 0091) from the provider id or from any known-vendor capability mapping. The **only** authoritative source of a self-hosted provider's capabilities is what the host actually advertises and gates on: `capabilities.modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091). A self-hosted endpoint whose capabilities the host does not advertise is treated as text-only; the host MUST refuse a request for an unadvertised capability or modality per the RFC 0031 model-capability gate (`capability_not_provided`), exactly as for any other provider. This prevents a client from assuming, e.g., that a `selfHosted` id named `ollama` supports vision merely because some public deployment of that engine does. How a host _derives_ a self-hosted endpoint's capabilities — a static declaration captured at configuration time, or a runtime probe — is host-internal and out of scope, exactly as RFC 0031 §C leaves the derivation of the model-capability mapping host-internal.
 
 #### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Active`)
 
@@ -509,7 +509,7 @@ RFC 0095 (`Draft`). When `packsSupported: true`, the host installs `kind: "conne
 
 **Field shape:** OPTIONAL `object`. When present, `packsSupported: boolean` is REQUIRED. Hosts that don't install connection packs omit the block entirely (provider resolution stays implementation-defined / host-built-in, exactly as before RFC 0095). An optional `supported: boolean` MAY accompany it for family-shape uniformity; behavior keys on `packsSupported` only.
 
-**Composition.** Connection packs are only *useful* alongside `oauth.supported` (RFC 0047) or `credentials.supported` (RFC 0046); a host SHOULD NOT advertise `connections.packsSupported` without at least one of those.
+**Composition.** Connection packs are only _useful_ alongside `oauth.supported` (RFC 0047) or `credentials.supported` (RFC 0046); a host SHOULD NOT advertise `connections.packsSupported` without at least one of those.
 
 **Conformance.** The `connection-pack-manifest-valid` / `connection-pack-no-credential-material` / `connection-pack-reach-exclusive` schema probes are always-on (server-free); the behavioral `connection-provider-resolution` / `connection-pack-write-reconsent` scenarios gate on `connections.packsSupported` and soft-skip when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
 
@@ -543,11 +543,11 @@ honored as "no onward use permitted" (not forwarded at all). Full propagation ru
 
 **Field shape:** OPTIONAL `object`. When present, `supported: boolean` is REQUIRED.
 `propagatesOnward` distinguishes hosts that read labels but have no onward-hop surface at all; a
-host *with* onward hops that advertises `supported: true` MUST also propagate. Hosts that neither
+host _with_ onward hops that advertises `supported: true` MUST also propagate. Hosts that neither
 read nor forward the label omit the block entirely (an incoming label is then ignored as unknown
 metadata — additive, no breakage).
 
-**This family advertises label *propagation*, not purpose *enforcement*.** Whether the host's own
+**This family advertises label _propagation_, not purpose _enforcement_.** Whether the host's own
 internal use of the data honors the declared purposes is the receiver's local-governance
 responsibility (RFC 0128 §4) — deliberately a `SHOULD`/declared-intent, not a wire promise,
 because internal use is not observable over the wire. Reading `supported: true` as "the receiver
@@ -583,7 +583,7 @@ residency pinning. Region codes are the host's own vocabulary — the spec freez
 region registry (that would be unfalsifiable and operator-fragmenting). A host MUST advertise a
 code only if it can process a run entirely within it.
 
-**This family advertises the admission *decision*, not physical *location*.** Whether an accepted
+**This family advertises the admission _decision_, not physical _location_.** Whether an accepted
 region-pinned run's data physically remains in-region is unobservable over the wire and is a
 declared operator SHOULD backed by attestation/audit (RFC 0129 §4) — **not** a wire `MUST` and
 **not** conformance-gated. This is the same honesty boundary `purposePropagation` (§4 internal use)
@@ -896,10 +896,10 @@ A host advertising any `tier: "experimental"` capability derives the `openwop-ex
 
 ## What a capability may vary
 
-*This section introduces no new requirement. It states the discipline the corpus
+_This section introduces no new requirement. It states the discipline the corpus
 already follows across `replay.sideEffectSuppression`, `compensation`,
 `idempotency.crossRegion` and the refusal contract below, so that the author of
-the next capability does not have to re-derive it.*
+the next capability does not have to re-derive it._
 
 A discovery advertisement is a statement about a **host**. It is not a dial on
 the meaning of the protocol. The distinction that matters:
@@ -917,9 +917,9 @@ adding one, say in the RFC which class it is.
 
 | Class | The advertisement means | Absence means | Worked example |
 | --- | --- | --- | --- |
-| **1 — Probeability** | "I declare a specific mechanism, and conformance can probe it." | The **obligation still binds**; conformance has nothing to probe and soft-skips. | `replay.sideEffectSuppression`. Caveat 1 of §"Determinism guarantees" binds every host unconditionally; `none` declares no mechanism and is explicitly *not* a licence to re-fire. |
+| **1 — Probeability** | "I declare a specific mechanism, and conformance can probe it." | The **obligation still binds**; conformance has nothing to probe and soft-skips. | `replay.sideEffectSuppression`. Caveat 1 of §"Determinism guarantees" binds every host unconditionally; `none` declares no mechanism and is explicitly _not_ a licence to re-fire. |
 | **2 — Gated construct** | "I accept workflows that use this construct." | The host **MUST refuse observably** (`capability_required`), at registration or run creation. Silent substitution is forbidden — see §"Unsupported capability" below. | `compensation`; `conversationPrimitive` gating `core.conversationGate`. |
-| **3 — Declared posture** | "My guarantee is *this* one of an enumerated set." | Not applicable — the enum is closed and one value is the default posture. Clients that need a specific guarantee **MUST** check for it by name. | `idempotency.crossRegion`: `single-region` / `reconciled-records` / `fenced-effects`. |
+| **3 — Declared posture** | "My guarantee is _this_ one of an enumerated set." | Not applicable — the enum is closed and one value is the default posture. Clients that need a specific guarantee **MUST** check for it by name. | `idempotency.crossRegion`: `single-region` / `reconciled-records` / `fenced-effects`. |
 
 **Class 1 carries an obligation on the corpus, not just on the host.** An
 unconditional requirement whose only conformance probe is gated on an optional
@@ -933,9 +933,9 @@ obligation is unwitnessable when unadvertised, and why no cheaper probe exists.
 **Class 3 is the class to be suspicious of.** It is the only one where two
 conforming hosts genuinely differ in what a client can rely on, so it is the only
 one where a portable workflow can be silently wrong. Reach for class 3 only when
-the difference is a property of the *deployment* (regions, storage topology) that
+the difference is a property of the _deployment_ (regions, storage topology) that
 no host can be required to have. If the difference is a property of the
-*implementation*, it belongs in class 1 or 2.
+_implementation_, it belongs in class 1 or 2.
 
 **What none of the three permits.** No class licenses a host to accept a
 construct and then do something else with it. That rule has one statement, below,

@@ -305,7 +305,7 @@ ctx.aiEnvelope.await({
 A host that renders agent-authored A2UI surfaces advertises the **optional, advertised** kind `ui.a2ui-surface` (`ai-envelope.md` §"A2UI surfaces") exactly as it advertises any other advertised envelope kind — there is **no** separate `host.a2ui` capability block:
 
 - It lists `ui.a2ui-surface` in `Capabilities.supportedEnvelopes`, and gives it a `Capabilities.schemaVersions["ui.a2ui-surface"]` entry.
-- The **supported A2UI catalog versions** and the **day-1 component allowlist** are carried by the per-kind schema itself, not by a separate capability field: the `catalogVersion` enum in `schemas/envelopes/ui.a2ui-surface.schema.json` *is* the supported-version set, and the closed `surface` `anyOf` *is* the component allowlist. Discovery stays single-sourced.
+- The **supported A2UI catalog versions** and the **day-1 component allowlist** are carried by the per-kind schema itself, not by a separate capability field: the `catalogVersion` enum in `schemas/envelopes/ui.a2ui-surface.schema.json` _is_ the supported-version set, and the closed `surface` `anyOf` _is_ the component allowlist. Discovery stays single-sourced.
 - A host **SHOULD** advertise `ui.a2ui-surface` only when its renderer actually renders the enumerated catalog versions — capability honesty; a host running with `OPENWOP_REQUIRE_BEHAVIOR=true` fails a dishonest advertisement.
 
 `ui.a2ui-surface` is **not** a MUST-recognize universal kind: a host that does not render A2UI simply omits it from `supportedEnvelopes`, and a consumer receiving an unrecognized `ui.a2ui-surface` falls back to store-without-render (it MUST NOT fail the run). Requires `host.aiEnvelope: supported`.
@@ -1450,7 +1450,7 @@ The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user
 
 **Connector-auth declaration.** A node declares `auth: { type: 'oauth2', provider, scopes[] }`. The host matches `provider` against an advertised `oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
 
-**Provider definition source (RFC 0095).** What a `provider` id *resolves to* — its authorize/token/revoke endpoints, scope catalog, and reach — has a portable, registry-distributable representation: the **connection pack** ([`connection-packs.md`](./connection-packs.md), `kind: "connection"`). On a host advertising `capabilities.connections.packsSupported: true`, resolution MUST follow `connection-packs.md` §Manifest clause 6 (installed pack keyed by `provider.id`, installed-vs-built-in precedence per SemVer §11, `connection_provider_unresolved` / `connection_provider_conflict` diagnostics). Hosts without that flag keep their provider catalog implementation-defined, exactly as before RFC 0095.
+**Provider definition source (RFC 0095).** What a `provider` id _resolves to_ — its authorize/token/revoke endpoints, scope catalog, and reach — has a portable, registry-distributable representation: the **connection pack** ([`connection-packs.md`](./connection-packs.md), `kind: "connection"`). On a host advertising `capabilities.connections.packsSupported: true`, resolution MUST follow `connection-packs.md` §Manifest clause 6 (installed pack keyed by `provider.id`, installed-vs-built-in precedence per SemVer §11, `connection_provider_unresolved` / `connection_provider_conflict` diagnostics). Hosts without that flag keep their provider catalog implementation-defined, exactly as before RFC 0095.
 
 **Events (additive, redaction-safe):**
 

@@ -73,7 +73,7 @@ integer at the discovery root, number on the run snapshot, string on the event l
 > incompatible ways at once: `capabilities.schema.json` constrained it to `minLength: 1`,
 > the suite's core predicate tested `startsWith('1.')`, and prose called it semver while
 > every example showed two components. So `"v1.0"`, `"1.0.0"`, and `"banana"` all validated,
-> and `"1.0.0"` additionally *derived* `openwop-core`. Comparison needs an integer major and
+> and `"1.0.0"` additionally _derived_ `openwop-core`. Comparison needs an integer major and
 > an integer minor; neither can be extracted from a string nothing constrains, which left
 > two hosts advertising `"1.0"` and `"1.0.0"` with no way for a consumer to tell a patch
 > convention from a typo from a different protocol. Closes gap V2.
@@ -403,8 +403,8 @@ values differ, so a host and a client can disagree across a deploy.
 
 | Old value | New value | Why |
 | --- | --- | --- |
-| `crossRegion: "best-effort"` | `"reconciled-records"` | Same meaning, honest name — it always described *record* convergence |
-| `crossRegion: "strict"` | *(removed)* | A read-visibility latency claim in an effect-safety slot; see `idempotency.md` §"Recovery postures" |
+| `crossRegion: "best-effort"` | `"reconciled-records"` | Same meaning, honest name — it always described _record_ convergence |
+| `crossRegion: "strict"` | _(removed)_ | A read-visibility latency claim in an effect-safety slot; see `idempotency.md` §"Recovery postures" |
 | — | `crossRegion: "fenced-effects"` | New, strictly stronger: every effect fenced or provider-idempotent |
 | `partitionRecoveryStrategy: "last-writer-wins"` / `"first-writer-wins"` | `"lexicographic-min-run-id"` | Time-ordered rules cannot produce a reproducible survivor without a shared clock |
 
@@ -417,7 +417,7 @@ The operator sequence:
    where it belongs — in `multiRegion.replicationLagBoundMs`, which is unchanged.
 2. **Roll clients before hosts.** A client validating discovery against the old closed enum
    rejects `reconciled-records` and `fenced-effects`. This is the reverse of the usual
-   ordering, because the *host's* document is what changes shape.
+   ordering, because the _host's_ document is what changes shape.
 3. **Re-derive the recovery strategy, do not translate it.** A host that implemented
    `last-writer-wins` was not conforming — the annex has always MUSTed lex-min(runId), and a
    clock-ordered winner contradicts it. Advertising `lexicographic-min-run-id` is a claim
@@ -475,11 +475,11 @@ RFC 0148 classified certification evidence as a `safety-fix` (`COMPATIBILITY.md`
 | Who | What | When |
 | --- | --- | --- |
 | **Host operator** (publishing evidence) | Regenerate with `openwop-conformance --certify <out.json> --bundle-version 2` against a suite ≥ `1.114.0` (dispositions + `assertionCount` per requirement, `blocked` total REQUIRED, evidence scrubbed of the handed credential / `OPENWOP_*` secrets / the SR-1 canary). Publish the v2 file beside (not instead of) any v1 file for the window; link it from `capabilities.conformance.certificationBundleUrl` if you advertise one. A bundle with `blocked > 0` is honest evidence that does not certify the blocked claims — publish it anyway. | Now; v1 ceases to substantiate a **new** certification 90 days after 2026-08-12 (2026-11-10). |
-| **Consumer** (badge / interop matrix / procurement) | Re-derive with `verifyBundleV2` (`conformance/src/lib/certification-bundle-verify.ts`): `evidenceValid` (no unwitnessed / vacuous / duplicate / tampered / canary rows) and per-profile `certified`. Treat a v1 bundle as a *measurement*, not a claim, after the window; before it, read v1 `passed[]` knowing it may include zero-assertion passes. Never trust `claimedProfiles` verbatim (RFC 0089 §B(1)). | Now. |
+| **Consumer** (badge / interop matrix / procurement) | Re-derive with `verifyBundleV2` (`conformance/src/lib/certification-bundle-verify.ts`): `evidenceValid` (no unwitnessed / vacuous / duplicate / tampered / canary rows) and per-profile `certified`. Treat a v1 bundle as a _measurement_, not a claim, after the window; before it, read v1 `passed[]` knowing it may include zero-assertion passes. Never trust `claimedProfiles` verbatim (RFC 0089 §B(1)). | Now. |
 | **Reference hosts** | Already reissued as v2 (`openwop-examples#14`, 2026-08-16; `docs/CERTIFICATION-BUNDLE-INVENTORY.md` rows 2–5). | Done. |
 | **Suite** | v1 emission (`--bundle-version 1`) stays for the window; the emitter scrubs v1 too. After the window the default flips to v2 (a suite minor); v1 remains parseable. | Window end. |
 
-Nothing on the wire changes: discovery, runs, events are untouched. Only what a certification *claim* is allowed to rest on changes.
+Nothing on the wire changes: discovery, runs, events are untouched. Only what a certification _claim_ is allowed to rest on changes.
 
 ## Combined SAML + SCIM hosts (RFC 0164 — the leaver contract is implied)
 
