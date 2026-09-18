@@ -31,6 +31,7 @@ import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 import { req } from '../lib/requirement-ids.js';
 import { projectBoundId, BOUND_ID } from '../lib/bound-id.js';
 
@@ -60,9 +61,16 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
   it('subscriptionId: POST /webhooks mints a bound webhookId, the projected segment is accepted, and a foreign tenant segment is refused 403', async () => {
     if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised — no subscription to mint (gate recorded under openwop.family.webhooks)');
-    const reg = await http(() => driver.post('/webhooks', { url: 'https://subscriber.invalid/hook', events: ['run.completed'] }));
+    // Route the mint through `resolveRegistrationUrl` so an operator who sets
+    // OPENWOP_WEBHOOK_RECEIVER_URL actually gets a reachable registration here.
+    // Before this, the blocked note TOLD them to set that variable and this file
+    // never read it — inoperative advice in a suite where one blocked row denies
+    // every claimed profile (RFC 0168 §E.1). The fallback stays a reserved
+    // `.invalid` host: this leg only needs the mint, never a delivery.
+    const registration = resolveRegistrationUrl('https://subscriber.invalid/hook');
+    const reg = await http(() => driver.post('/webhooks', { url: registration.url, events: ['run.completed'] }));
     if (reg === null) return softSkip('blocked', 'POST /webhooks unreachable (fetch failed)');
-    if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') return softSkip('blocked', 'host SSRF guard rejected the fixture receiver URL — set OPENWOP_WEBHOOK_RECEIVER_URL or allow the reserved .invalid host to witness');
+    if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') return softSkip('blocked', `host SSRF guard rejected the registration URL ${registration.url}${registration.tunnelled ? ' (from OPENWOP_WEBHOOK_RECEIVER_URL)' : ' — set OPENWOP_WEBHOOK_RECEIVER_URL to a public https receiver, which THIS leg now honours'}`);
     expect(reg.status, req(WEBHOOK_ID, 'webhooks.md §Surfaces', 'POST /webhooks MUST answer 201 { webhookId }')).toBe(201);
     const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
     expectBound(webhookId, 'webhookId', 'POST /webhooks 201', WEBHOOK_ID);

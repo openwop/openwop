@@ -41,6 +41,7 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n))) {
 const bundleRows = new Set();
 const uncertified = [];
 const accountedRows = new Map();
+const partialRows = new Map();
 {
   const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'evidence', 'v2-host-bundles');
   if (existsSync(dir)) for (const b of readdirSync(dir)) {
@@ -59,7 +60,15 @@ const accountedRows = new Map();
     const rows = doc.results?.requirements ?? [];
     for (const r of Array.isArray(rows) ? rows : Object.values(rows)) {
       const rid = r.id ?? r.requirementId;
-      if (r.result === 'executed-pass') bundleRows.add(rid);
+      // A row the suite itself annotated `partial-witness:` asserted something
+      // and then soft-skipped the requirement it was for. It is NOT a witness.
+      // Measured: `…0173.webhook-durable-delivery.dead-letter` ends in an
+      // unconditional `softSkip('blocked', …)` on every host — there is no
+      // dead-letter read surface in the corpus — and carried a bare
+      // `executed-pass` that satisfied RFC 0173 §B's row on every bundle.
+      const partial = typeof r.detail === 'string' && r.detail.startsWith('partial-witness:');
+      if (r.result === 'executed-pass' && !partial) bundleRows.add(rid);
+      else if (partial) partialRows.set(rid, r.detail.trim());
       // §B.1's second branch: a row the suite REACHED and recorded a reason for
       // accounts for a declared non-executable verdict. Silence never does.
       else if (typeof r.detail === 'string' && r.detail.trim() !== '') accountedRows.set(rid, `${r.result} — ${r.detail.trim()}`);
@@ -140,7 +149,16 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
         const declared = DECLARED_VERDICT.test(row);
         const accounted = declared && [...accountedRows.keys()].some(witnessed);
         if (!inLedger && !inBundle && !accounted) {
-          hostGaps.push(`${f.slice(0, 4)} ${id}${declared ? ' (verdict declares a non-executable class, but NO bundle row accounts for it — the suite must reach the leg and record a reason)' : ''}`);
+          const partialNote = [...partialRows.entries()].find(([k]) => witnessed(k));
+          hostGaps.push(
+            `${f.slice(0, 4)} ${id}${
+              partialNote
+                ? ` — the only bundle row for it is a PARTIAL witness: ${partialNote[1].slice(0, 160)}`
+                : declared
+                  ? ' (verdict declares a non-executable class, but NO bundle row accounts for it — the suite must reach the leg and record a reason)'
+                  : ''
+            }`,
+          );
         }
       }
     }
