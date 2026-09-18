@@ -58,9 +58,9 @@ workflow node (`workflow-definition.schema.json`):
   compensation input during replay: an inverse built from a re-inferred value is not
   the inverse of what was actually done.
 
-  **Value grammar** *(added 2026-08-18 — SP-11a; the rule above said where values come
-  from and never said what a value looks like, so two hosts could read the same mapping
-  differently).* An `inputMapping` value is either a literal (any JSON that contains no
+  **Value grammar.** The rule above says where values come from; this one says what a
+  value looks like, so that two hosts cannot read the same mapping differently. An
+  `inputMapping` value is either a literal (any JSON that contains no
   reference token) or a **reference**, which MUST be one of exactly two forms:
 
   | Form | Resolves to |
@@ -335,7 +335,7 @@ the snapshot asserts exactly this table.
 
 | Value | When |
 | --- | --- |
-| `none` | No `compensation.requested` has been recorded for the run, **or** the only such record was inherited by a `branch` fork whose plan was still non-terminal at `fromSeq` (see §"Forked runs" below). **This includes a run that completed successfully while declaring compensable nodes** — a healthy run has nothing to unwind, so its rollup is `none`, not `pending`. *(Stated explicitly 2026-08-18, SP-11a: the fold is over the PLAN, and no plan exists until a trigger fires. A host deriving the rollup from the existence of obligation rows — which are minted per compensable node, healthy or not — reports `pending` on every successful run that declares a compensator, and every pre-existing witness of this table drives a failure, so none of them could see it.)* |
+| `none` | No `compensation.requested` has been recorded for the run, **or** the only such record was inherited by a `branch` fork whose plan was still non-terminal at `fromSeq` (see §"Forked runs" below). **This includes a run that completed successfully while declaring compensable nodes** — a healthy run has nothing to unwind, so its rollup is `none`, not `pending`. The fold is over the **plan**, and no plan exists until a trigger fires. A host deriving the rollup from the existence of obligation rows — which are minted per compensable node, healthy or not — would report `pending` on every successful run that declares a compensator. |
 | `pending` | `compensation.requested` recorded and `compensation.started` has not. |
 | `running` | `compensation.started` recorded and the plan is still active. A §E approval pause (`compensation.paused` while an RFC 0051 approval interrupt is open) does **not** change it — the run's own `status: waiting-approval` and `interrupt` already carry the wait, which is why the two fields are separate. |
 | `completed` | Every inverse action in the persisted plan completed. A plan containing an `irreversible` entry (§B/§C) can never reach this value. |

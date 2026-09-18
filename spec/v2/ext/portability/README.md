@@ -14,7 +14,7 @@
 The v2 core API does not define goals, export, or import operations. The
 [`export-bundle` schema](../../../../schemas/v2/export-bundle.schema.json) records
 the proposed bundle shape, but no portable transport or behavioral witness is
-defined. A host may expose an organization-specific portability extension; a
-client must not assume it is compatible with another host's extension.
+defined. A host MAY expose an organization-specific portability extension; a
+client MUST NOT assume it is compatible with another host's extension.
 
 The v1 background is in [`spec/v1/portability.md`](https://github.com/openwop/openwop/blob/v2.3.3/spec/v1/portability.md).

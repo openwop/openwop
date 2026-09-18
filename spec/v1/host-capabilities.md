@@ -314,7 +314,7 @@ A host that renders agent-authored A2UI surfaces advertises the **optional, adve
 
 ## Model-capability declarations
 
-> Added by RFC 0031 (`Active` 2026-05-20). Normates how hosts dispatch envelope-emitting NodeModules whose execution depends on specific model capabilities (`structured-output`, `discriminator-enum`, `long-context`, `reasoning`, `function-calling`, or `x-host-<host>-*` extensions).
+> Defined by RFC 0031. Normates how hosts dispatch envelope-emitting NodeModules whose execution depends on specific model capabilities (`structured-output`, `discriminator-enum`, `long-context`, `reasoning`, `function-calling`, or `x-host-<host>-*` extensions).
 
 NodeModules MAY declare model-capability requirements via `NodeModule.requiredModelCapabilities[]` + an optional `NodeModule.fallbackModel` per `node-packs.md` §"Model-capability declarations on NodeModules." This is a parallel surface to `NodeModule.requires[]` — `requires` gates on HOST capabilities (e.g., `chat.sendPrompt`, `secrets.byok`); `requiredModelCapabilities` gates on MODEL capabilities advertised at `capabilities.modelCapabilities.advertised[]`.
 
@@ -1924,7 +1924,7 @@ ctx.storage.cache.delete({ key: string }) → Promise<{ deleted: boolean }>
 
 ## Sandbox execution contract (RFC 0035)
 
-Per [RFC 0035](../../RFCS/0035-sandbox-execution-contract.md) (`Active` 2026-05-21).
+Per [RFC 0035](../../RFCS/0035-sandbox-execution-contract.md).
 
 Sandbox is a **meta-capability**: it governs how OTHER host capabilities (`host.fs`, `host.kvStorage`, `host.sql`, et al.) are exposed to pack-loaded code. It lives at the top-level `capabilities.sandbox` block (NOT under `host.*` — sandbox isn't itself a pack-consumable surface; it's the runtime envelope around them).
 

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Memory
 
-> **Status: Stable · v1.1 (2026-05-10).** Normative spec for cross-run agent memory — `memoryRef` resolution, `MemoryAdapter` host-interface contract, cross-tenant isolation invariant (CTI-1), and BYOK secret-redaction invariant (SR-1). Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative cross-run agent-memory contract: `memoryRef` resolution, the `MemoryAdapter` host interface, cross-tenant isolation (CTI-1), and BYOK secret redaction (SR-1).
 
 ## Why this exists
 

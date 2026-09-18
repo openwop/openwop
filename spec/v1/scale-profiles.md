@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Scale Profiles
 
-> **Status: Stable · v1.1 (2026-05-05).** Defines three scale tiers a host MAY claim. Scale claims are advertised in host documentation and verified at runtime by `@openwop/openwop-conformance` scenarios. No discovery-payload schema change. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1.** Defines the three scale tiers a host MAY claim. Claims are advertised in host documentation and verified at runtime by `@openwop/openwop-conformance`; no discovery-payload change.
 
 ---
 

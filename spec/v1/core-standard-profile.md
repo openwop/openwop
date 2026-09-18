@@ -53,7 +53,7 @@ Everything not in §B is an **extension**, kept out by exactly one lever, chosen
 
 **None at present.** Every agent-platform extension capability previously tracked here — `agents.memoryConsolidation`/`commitments` (0068), `toolCatalog` (0078), `httpClient.egressPolicy` (0079), `memory.search`/`retention` (0080), `agents.evalSuite` (0081), `agents.deployment` (0082), `budget` (0084) — has since reached `Accepted`. Per RFC 0042 a capability on an `Accepted` RFC MUST NOT advertise `tier: "experimental"`, so these are no longer Lever-1 extensions: they are **agent-platform extension capabilities governed by RFC 0085's `openwop-agent-platform` `partial`/`full` claim** (§E), and remain **outside the Core floor**. Each graduates _into_ the floor only if/when it gains black-box production-path proof (Lever 2).
 
-### Graduated to black-box production-path (capability-gated; proof landed 2026-06-01)
+### Graduated to black-box production-path (capability-gated)
 
 These `Accepted` capabilities have moved out of the seam-gated set: their behavioral conformance is now proven on the **production wire with no `/v1/host/sample/*` seam** (capability-gated — a host that advertises the capability MUST pass the black-box scenario). This is the Lever-2 "graduate in" outcome.
 

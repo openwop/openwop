@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Node Packs and the Public Registry
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at `https://packs.openwop.dev/`; local registry contents are summarized in `docs/PROTOCOL-STATUS.md`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the pack manifest format, distribution, signing, and the registry HTTP API. The hosted reference registry is `https://packs.openwop.dev/`.
 
 ---
 
@@ -442,7 +442,7 @@ A node MAY declare an optional `nodes[].artifact` block stating that the node pr
 
 ### Model-capability declarations on NodeModules
 
-> Added by RFC 0031 (`Active` 2026-05-20). Parallel surface to `requiresSecrets[]` — declares MODEL capability requirements for envelope-emitting NodeModules. The host's dispatch contract is normated in `host-capabilities.md` §"Model-capability declarations"; this section documents the per-pack authoring surface.
+> Defined by RFC 0031. Parallel surface to `requiresSecrets[]` — declares MODEL capability requirements for envelope-emitting NodeModules. The host's dispatch contract is normated in `host-capabilities.md` §"Model-capability declarations"; this section documents the per-pack authoring surface.
 
 A NodeModule whose execution involves emitting a structured envelope via an LLM call MAY declare two optional fields:
 

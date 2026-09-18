@@ -212,7 +212,7 @@
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
     "spec/v1/operation-path-manifest.json": "5f5f4e3842669371730ebbd1aace3fb794192615f0018dc144f484ba5db82ac3",
     "spec/v1/spec-gaps.json": "eb3bfcb9c7d05c9a6845d4a40ec9493cfaa5a671932daf1af561310136fdabe8",
-    "spec/v2/README.md": "f2e7ec380e0ce7acb41a2664bd51e87a9276fa4555467f01e07640e6a42d986a",
+    "spec/v2/README.md": "5d49f56f41e06b44312c61ad8144b786c9a90ec42fd0660a40d89520ef206137",
     "spec/v2/core/capabilities.md": "c5107a4964e487c20bbb5254cfe1f706e0d9ba7e34da9070bc43b50b385e7948",
     "spec/v2/core/conformance.md": "b8d7dae142e3708a7597533cb77827363b6cfc91b89538081a9afe5e23c975f4",
     "spec/v2/core/connection-packs.md": "1d759681e2962f5103228c52c45f24607ed4bb9ae73e30605f690c1d5a59e9ee",
@@ -251,7 +251,7 @@
     "spec/v2/ext/knowledge/README.md": "067280b15e14b3c46550d7b0ee68d49e7d1455ce86218d05bbc44535eb668bf1",
     "spec/v2/ext/launchStudio/README.md": "3c4258e781d069dced34ab45552ce5b2b4af6ec7e08f0e2e00584d87a7981b15",
     "spec/v2/ext/messaging/README.md": "0ce7535498458ad63d9b7d5b143da618a2da2ce4033ca53ea3fc4cb0c65419db",
-    "spec/v2/ext/portability/README.md": "94f0d1219e72d811f294c2cafd6bda797afa694ca3eb6320ad0ab922ded4f0b8",
+    "spec/v2/ext/portability/README.md": "15b8a881df861ff289489ca13a3a4871cf6e14aed90ca018afadff2388a05476",
     "spec/v2/ext/provider-idempotency/README.md": "e3f159b2d1b53c4c279b911de91d80b5410a1e6a05ba940a7f4d2c0d547cf000",
     "spec/v2/ext/provider-idempotency/registry.json": "5b5fecad604fb4ab38da39f5abe697a4e57b05406c398f8afeb377331b2bd965",
     "spec/v2/ext/restTransport/README.md": "8cfc6471ca1ca6e43bb53b21d47b33e73c6a5821e631eb4f565b971c01e2e5de",
@@ -274,5 +274,5 @@
     "spec/v2/release.json": "29312d4cea9276ad835bd521cc3bc704e38ea67e6d7674f41a53bcade6220f8b",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "c453be0e98a888370794f99db6967c51a3379069"
+  "corpusCommit": "4c18f85a26e858c4b18e7c0546fdb05b8f3b61a6"
 }

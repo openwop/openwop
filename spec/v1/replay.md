@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: Stable · v1.2 (2026-08-08).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, determinism guarantees, idempotency requirements on side-effecting nodes, side-effect suppression in replay (RFC 0140), and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2.** Normative contract for `POST /v1/runs/{runId}:fork` (replay and branch-from-past), determinism guarantees, idempotency on side-effecting nodes, replay side-effect suppression (RFC 0140), and the admin Run Timeline View.
 >
 > **Correction (2026-08-08), superseding the note this line carried earlier today.** RFC 0140 originally removed "idempotency requirements on side-effecting nodes" from the status line above, on the grounds that no such section existed. **That was wrong** — §"Determinism guarantees" caveat 1 has always carried it, as an unconditional MUST. The claim was true; deleting it was the regression, and it is restored. What v1 actually lacked is narrower and is what RFC 0140 supplies: caveat 1 names the Layer-2 invocation log as the mechanism, and that mechanism **cannot** span a fork (its key includes `runId`, which a fork changes), so the requirement was real, its named mechanism unworkable across a fork, and its conformance coverage nil.
 
@@ -115,12 +115,11 @@ while `subject` is a field no host emitted before RFC 0165.
 
 ## The determinism model
 
-*(Added 2026-08-19. Non-normative framing of requirements that already exist; the
-numbered caveats below remain the normative text and are unchanged.)*
+*Non-normative framing of requirements that already exist; the numbered caveats
+below are the normative text.*
 
-The caveats accreted one at a time, each correct and each written when a gap was
-found. Read as a list they are hard to implement against, because an implementer
-has to infer the model from its exceptions. Stated directly, the model is three
+A reader given only the numbered caveats has to infer the model from its
+exceptions. Stated directly, the model is three
 sentences:
 
 > **1. A run's event log is the only authority on what happened.**
@@ -553,7 +552,7 @@ Requirements:
   what a host does with *node* effects on replay and makes no claim about host-level
   fan-out.
 
-> **Prior art (added 2026-08-18).** This is not a new constraint invented for OpenWOP;
+> **Prior art.** This is not a new constraint invented for OpenWOP;
 > it is a named pattern that predates it. Martin Fowler's *Event Sourcing* §"External
 > Updates" states the failure mode directly — *"those external systems don't know the
 > difference between real processing and replays"* — and prescribes the same fix this
@@ -682,7 +681,7 @@ The conformance suite should treat exact fixture replay as a pass/fail assertion
 
 ## Cross-region replay (RFC 0036)
 
-Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21).
+Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md).
 
 When BOTH `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region than the original run MUST produce a fork whose **observable state at the `fromSeq` boundary** matches a fork served by the original region.
 

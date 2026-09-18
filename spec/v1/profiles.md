@@ -361,7 +361,7 @@ A new profile MUST NOT cause a previously-passing host to fail an existing profi
 
 ## Why this is not a wire field
 
-An earlier draft of this document proposed `capabilities.profiles: string[]` advertised in `/.well-known/openwop`. Reasons it was rejected:
+A wire field — `capabilities.profiles: string[]` advertised in `/.well-known/openwop` — was considered and rejected. Profile membership is **derived** by the conformance suite instead, for three reasons:
 
 1. **Two answers to one question.** A host could advertise `profiles: ["openwop-secrets"]` while `capabilities.secrets.supported = false` because two code paths set them. Derivation makes this impossible.
 2. **Host redeploy.** Adding a wire field forces every host to redeploy. Derivation runs in the suite, no redeploy.

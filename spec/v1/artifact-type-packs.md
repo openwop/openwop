@@ -119,7 +119,7 @@ Hosts that predate this document commonly carry artifact-type identifiers that d
 
 **An alias map is a host-internal compatibility shim, not a conformance claim.** A host serving legacy identifiers through an alias is not thereby "conformant under its old names" — the legacy spellings remain non-conformant on the wire; the *canonical* spellings the alias resolves are what a conformant peer may rely on. A host MUST NOT advertise or imply otherwise.
 
-> **Why this section exists.** Before RFC 0141, the rewrite prohibition was real but only derivable by composing three documents (this one, `run-event-payloads.schema.json`, and `replay.md`) — and a merged RFC briefly recommended a backfill before being corrected (RFC 0138, corrected 2026-08-07). A constraint that is only compositionally derivable will be re-derived wrongly; this states it in one place. See also RFC 0140, which hardens the same fixed-history premise from the side-effect direction.
+> **Why this section exists.** The rewrite prohibition is otherwise derivable only by composing three documents — this one, `run-event-payloads.schema.json`, and `replay.md`. A constraint that is only compositionally derivable will be re-derived wrongly, so it is stated here in one place. See also RFC 0140, which hardens the same fixed-history premise from the side-effect direction.
 
 ## Host capability — `host.artifactTypes`
 

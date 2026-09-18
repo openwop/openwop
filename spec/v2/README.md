@@ -1,7 +1,7 @@
 # OpenWOP v2 specification
 
 > **Status: released · corpus v2.3.3.** The authoritative version is
-> [`release.json`](./release.json). New implementations should target v2.
+> [`release.json`](./release.json). Target v2 for new implementations.
 
 OpenWOP v2 is the current protocol major. Its contract consists of this
 directory, [`schemas/v2/`](../../schemas/v2/), and

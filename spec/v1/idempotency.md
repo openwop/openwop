@@ -90,8 +90,8 @@ shape — `{ "error": "idempotency_key_mismatch", "message": "…" }`. This is
 distinct from `idempotency_in_flight` below: *mismatch* is a different body under
 a settled key, *in-flight* is the same key still executing.
 
-> **Naming note (2026-08-18, SP-03).** The spec named no mismatch error until
-> now, so implementations diverged: `grpc-transport.md` mapped both
+> **Naming note.** The spec originally named no mismatch error, so
+> implementations diverged: `grpc-transport.md` mapped both
 > `idempotency_key_conflict` and `idempotency_key_mismatch` (two spellings, one
 > concept, in a single table row), the published TypeScript SDK's
 > `HTTP_ERROR_CODES` carried `idempotency_key_mismatch`, the SQLite reference
@@ -462,7 +462,7 @@ Clients SHOULD inspect `capabilities.idempotency.crossRegion` before relying on 
 
 ### `multiRegion` sub-block (RFC 0036, normative when `multiRegion.supported: true`)
 
-Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21), revised by RFC 0150 §D. The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "fenced-effects"` SHOULD also advertise `multiRegion.supported: true`. A host that advertises `crossRegion: "reconciled-records"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
+Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md), revised by RFC 0150 §D. The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "fenced-effects"` SHOULD also advertise `multiRegion.supported: true`. A host that advertises `crossRegion: "reconciled-records"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
 
 `replicationLagBoundMs` is a **record read-visibility** bound and nothing more. It is not an
 input to the effect-safety posture: a `0` bound does not make a host `fenced-effects`, and a

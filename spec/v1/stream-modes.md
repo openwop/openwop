@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — SSE Stream Modes
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the four canonical stream consumption modes (values, updates, messages, debug), the `?streamMode=` query parameter, event-type-to-mode mapping, and CLI default. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the four stream consumption modes (`values`, `updates`, `messages`, `debug`), the `?streamMode=` parameter, and event-type-to-mode mapping.
 
 ---
 

@@ -4,8 +4,8 @@
 > should target v2; this tree remains normative for v1 clients and dual-stack
 > hosts during the migration window.
 
-OpenWOP v1 is the maintained compatibility major. New implementations should
-target [v2](../v2/README.md); implement v1 when supporting an existing v1 client
+OpenWOP v1 is the maintained compatibility major. Target
+[v2](../v2/README.md) for new work; implement v1 when supporting an existing v1 client
 or a dual-stack host during the migration window.
 
 This directory contains explanatory and normative prose. When prose and a

@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Version Negotiation and Deploy-Skew Safety
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative contract for the four version axes: engine, per-run event-log, per-event, and runtime pinning.
 
 ---
 
@@ -363,7 +363,7 @@ composition".
 
 This is **not** one of the four version axes above. The identity is engine-internal: it
 never appears on the wire between a caller and a host, it is not stamped on an event, and no
-client negotiates it. A host may therefore migrate unilaterally, without deploy
+client negotiates it. A host MAY therefore migrate unilaterally, without deploy
 coordination and without a `protocolVersion` bump.
 
 The operator sequence:
