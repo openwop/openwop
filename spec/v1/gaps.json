@@ -10298,6 +10298,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.1",
+      "rfc": "0189",
+      "local": "G1",
+      "section": "§B(c)",
+      "surface": "`namesKey` is a bare token match, so a family key that is a common English noun is satisfied by prose that merely uses the word. Measured against `spec/v2/core/*.md` with the gate's own predicate: `packs` has an obligation paragraph naming it in **7** documents — including `security-defaults.md` and `versioning.md`, which say nothing about the packs family's contract — and `idempotency` in **7**. Paragraph scope narrowed document scope but does not fix a common noun, and five of the families still undeclared (`packs`, `forms`, `replay`, `interrupt`, `connections`) are common nouns. A contributor under burn-down pressure can resolve `packs` against `security-defaults.md` and the gate will applaud.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0189.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.2",
+      "rfc": "0189",
+      "local": "G2",
+      "section": "§E.2",
+      "surface": "62 families must find v2 homes inside the RFC 0174 §E.2 kernel budget, which `check-core-budget.mjs` reads over `spec/v2/core/*.md` only (non-recursive). At 2.9.0 the budget is **24,695 / 25,000** — 305 words free for 62 families. `spec/v2/ext/**` is a legal home under `homeClass()` and is **not** counted by the budget, and the precedent already exists (`spec/v2/ext/provider-idempotency/README.md` is supporting normative text for the **core** `idempotency` family). Left implicit, 62 authors each discover the escape valve independently and `ext/` silently becomes \"core, but unbudgeted\" — the 25,000-word cap defeated by directory name.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0189.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.3",
+      "rfc": "0189",
+      "local": "G3",
+      "section": "§D",
+      "surface": "The burn-down decays `open` linearly to zero at v1 end-of-support, and `open = v1Dependent + undeclared` — but `v1Carried` families (`toolHooks`, `toolCatalog`) are explicitly tolerated past end-of-support by §D itself, which fails only if their target is deleted or its `Status:` banner changes. Counting a deliberately-tolerated family in a burn-down that must reach zero asks for work the RFC says is not required.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0189.3",
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
