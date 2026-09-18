@@ -1,5 +1,21 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.3] — 2026-09-18 — a check with nothing to complain about is not `blocked`
+
+**Why a patch.** Two assertions change shape inside existing legs; no scenario
+file is added or removed and no host obligation changes.
+
+### Fixed
+
+- **`spec-corpus-validity`'s per-file `$ref` and Markdown-link legs asserted
+  only on failure.** A schema with no absolute `$ref`, or a Markdown file with
+  no local links, ran an empty loop and asserted nothing — and an `it` that
+  passes with zero assertions resolves to `blocked` with the unclassified-return
+  detail. 608 of the corpus ledger's 943 ids read `blocked` for that reason.
+  Each leg now collects its offenders and asserts once, unconditionally, which
+  also reports every bad link or `$ref` rather than only the first. Ledger:
+  `blocked` 608 → 0, `executed-pass` 841 → 1449.
+
 ## [2.4.2] — 2026-09-18 — an id no host could ever witness
 
 **Why a patch.** One assertion moves into its own `it`; no scenario file is
