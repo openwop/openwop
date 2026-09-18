@@ -17,4 +17,4 @@ the proposed bundle shape, but no portable transport or behavioral witness is
 defined. A host MAY expose an organization-specific portability extension; a
 client MUST NOT assume it is compatible with another host's extension.
 
-The v1 background is in [`spec/v1/portability.md`](https://github.com/openwop/openwop/blob/v2.3.3/spec/v1/portability.md).
+The v1 background is in [`spec/v1/portability.md`](https://github.com/openwop/openwop/blob/main/spec/v1/portability.md).

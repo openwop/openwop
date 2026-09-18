@@ -285,7 +285,7 @@ openwop doesn't prescribe tag syntax. The following CONVENTIONS are widely used:
 
 Servers MUST NOT reject tags based on format (other than non-string entries or excessive length).
 
-### Limits
+### Tag limits
 
 An OpenWOP-compliant server SHOULD enforce these limits on tags:
 
@@ -308,7 +308,7 @@ Free-form key/value object attached to the run. Engine MUST NOT consume metadata
 
 Servers MUST persist metadata and MAY include it in OTel span attributes as `openwop.run.metadata.<key>`.
 
-### Limits
+### Metadata limits
 
 An OpenWOP-compliant server SHOULD enforce:
 

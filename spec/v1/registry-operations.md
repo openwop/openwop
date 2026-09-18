@@ -186,7 +186,7 @@ A pack MAY declare the abstract platform primitives its runtime code exercises v
 
 Marking a published version deprecated without unpublishing it. Lets pinned consumers continue resolving the version while signaling new consumers to migrate.
 
-### Endpoint
+### Deprecation endpoint
 
 ```http
 POST /v1/packs/{name}/-/{version}/deprecate
@@ -222,7 +222,7 @@ The version metadata at `GET /v1/packs/{name}/-/{version}.json` gains a `depreca
 }
 ```
 
-### Consumer semantics
+### Deprecation consumer semantics
 
 - Engine consumers in `pinned` or `allowlist` mode continue to resolve deprecated versions (pinning is contractual; deprecation is informational).
 - Engine consumers in `open` or `verified` mode SHOULD log a warning when resolving a deprecated version. The warning MUST include `deprecation.reason` and `deprecation.supersededBy` if set.
@@ -243,7 +243,7 @@ Removes the deprecation marker. Same auth as the POST.
 
 Emergency removal for security issues. Distinct from `DELETE /v1/packs/{name}/-/{version}` (which is the standard unpublish, refused for versions >72h old per the npm convention).
 
-### Endpoint
+### Yank endpoint
 
 ```http
 POST /v1/packs/{name}/-/{version}/yank
@@ -269,7 +269,7 @@ A yanked version is:
 3. **Excluded from semver range resolution.** Engine consumers resolving `engines.openwop` semver ranges MUST exclude yanked versions from the candidate set. New runs that previously would have picked the yanked version MUST pick the next-best non-yanked version (or fail with a descriptive error if no candidate remains).
 4. **Logged on every resolve.** Engine consumers that resolve a pinned-by-hash reference to a yanked version MUST emit a structured warning to operations (the run may proceed; the operator gets the signal).
 
-### Consumer semantics
+### Yank consumer semantics
 
 - Pinned-by-version (`vendor.acme.stripe-tools@1.4.2`): yank does NOT block resolution; the consumer still gets the yanked version. The pin is contractual.
 - Pinned-by-hash (`vendor.acme.stripe-tools@sha256-...`): same as above; hash pinning is the strongest contract.
@@ -347,7 +347,7 @@ Body:
 
 The `rotationProof` MUST be a signature produced by the OLD key over the canonical payload `{kid_new}||{publicKey_new}||{validFrom}` (concatenated UTF-8 bytes). The registry verifies the proof against the latest valid key in the keychain BEFORE accepting the rotation. Without rotation proof, rotation requires an out-of-band recovery flow (operator intervention; deliberately painful).
 
-### Consumer semantics
+### Key-rotation consumer semantics
 
 - Verifying a pack signature: consumers walk the `keychain` finding the key whose `validFrom <= signedAt <= validUntil` matches the version's publication timestamp. Mismatch → signature verification fails (the version was signed with a key that doesn't cover its publication time).
 - Rotation chains: consumers MAY require rotation proofs for keys whose `rotatedFrom` is set. Rejection of a rotation chain whose proof fails verification is implementation-defined; the recommended behavior is to refuse to verify packs signed under the rotated-to key until the proof verifies.

@@ -82,7 +82,7 @@ integer at the discovery root, number on the run snapshot, string on the event l
 
 ## Engine version
 
-### Stamping
+### Engine-version stamping
 
 Every persisted run document MUST carry an `engineVersion: number` field set to the writer engine's `CURRENT_ENGINE_VERSION` constant at write time. Servers MAY omit this field on legacy runs that predate the contract; readers MUST treat absent values as "compatible" (best-effort backward read).
 
@@ -134,7 +134,7 @@ Implementers SHOULD follow this sequence when changing persistence shape:
 
 ## Event-log schema version
 
-### Stamping
+### Event-log stamping
 
 Every persisted run document MUST carry an `eventLogSchemaVersion: number` field. The current v1 value is `2`.
 
@@ -149,7 +149,7 @@ Hosts identify an older run document as legacy when `eventLogSchemaVersion` is u
 
 An OpenWOP-compliant server MAY surface a banner inviting the operator to complete or cancel legacy runs to migrate to the v2 path. Hosts MAY provide their own batch-cancellation or migration tooling as an operational convenience.
 
-### Bumping
+### Event-log bumping
 
 Bump `eventLogSchemaVersion` when any of:
 
@@ -164,7 +164,7 @@ Adding new optional event types or new optional payload fields does NOT require 
 
 ## Per-event schema version
 
-### Stamping
+### Per-event stamping
 
 Each individual event document inside `runs/{runId}/events/{seq}` carries its own `schemaVersion: number` field, stamped at append time by `EventLog.appendAtomic`. This is **distinct** from the per-run `eventLogSchemaVersion`:
 
@@ -185,9 +185,9 @@ Per-event readers MUST be tolerant. The compatibility table:
 
 Tolerance is intentional: the projection's job is to produce best-possible state from whatever events exist. A future event with extra fields shouldn't break replay of earlier events with the older shape.
 
-### Bumping
+### Per-event bumping
 
-Bump the per-event `schemaVersion` stamp when an _individual_ event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump. This is distinct from bumping the per-run `eventLogSchemaVersion` (§"Event-log schema version" → "Bumping" above), which tracks the subcollection contract, not individual payload shapes.
+Bump the per-event `schemaVersion` stamp when an _individual_ event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump. This is distinct from bumping the per-run `eventLogSchemaVersion` (§"Event-log schema version" → "Event-log bumping" above), which tracks the subcollection contract, not individual payload shapes.
 
 ---
 

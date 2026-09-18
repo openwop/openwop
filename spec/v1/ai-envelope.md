@@ -788,7 +788,7 @@ The `reason` enum on `envelope.retry.attempted` (and the parallel `finalReason` 
 
 Event payloads that carry diagnostic strings (`previousError`, `finalError`, `refusalText`) MUST be passed through the same SR-1 redaction harness applied to envelope payloads per §"Redaction (SR-1 carry-forward)". The `envelope.refusal.refusalText` field is particularly load-bearing: provider safety-refusal messages can echo back the offending prompt content. Hosts MUST redact `refusalText` against the BYOK secret set AND apply prompt-content redaction if the host's policy is to not leak the offending prompt material. SECURITY invariants `envelope-refusal-no-prompt-leak` and `envelope-recovery-no-content-leak` (gate timing: lands with reference-host implementation, per RFC 0027 §G staging precedent) enforce this.
 
-### Replay determinism
+### Envelope-reliability replay determinism
 
 All six events are durable and participate in replay per `spec/v1/replay.md`. `envelope.retry.exhausted.totalAttempts` MUST replay identically. `envelope.truncated.outputTokenCount` MUST replay identically. `envelope.recovery.applied.path` MUST replay identically. `envelope.refusal.refusalText` MAY replay differently if the host's redaction policy changed between runs — replay consumers MUST tolerate `refusalText: null` even when the original was non-null. Divergence MUST emit `replay.diverged` with `divergencePoint` set verbatim to the diverging event's `RunEventType` string per RFC 0027 §F.
 

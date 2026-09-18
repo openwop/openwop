@@ -869,7 +869,8 @@ fail the last node, and let the host unwind.
 - **Non-vacuity:** the fake effects MUST record their inverse execution so
   `compensatedOrder` is what happened, not what was scheduled; and payloads MUST be
   content-free — the witness rejects a serialized event containing credential or
-  provider-body markers (`-----BEGIN`, `Bearer `, `sk-`, `authorization`, `providerResponse`).
+  provider-body markers (`-----BEGIN`, the `Bearer` scheme prefix, `sk-`,
+  `authorization`, `providerResponse`).
 
 **`replay`** — replay a run whose recorded outcomes include a completed unwind.
 

@@ -56,7 +56,7 @@ The `Postgres` reference host at `examples/hosts/postgres/` implements this nego
 
 A host that advertises `a2uiSurface.deltaTransport: true` (`capabilities.schema.json`) **MAY** transport [`ui.a2ui-surface`](ai-envelope.md#a2ui-surfaces-rfc-0102) updates to a subscriber as RFC 6902 (JSON-Patch) **delta frames** instead of re-materializing the full surface tree on every emission. This is a per-subscriber **transport** choice negotiated at subscribe time on the events stream, like `?streamMode=` — not an envelope handshake and not a recorded-payload change. The frame shape is [`schemas/a2ui-surface-delta-frame.schema.json`](../../schemas/a2ui-surface-delta-frame.schema.json).
 
-```
+```http
 GET /v1/runs/{runId}/events?a2uiDelta=1
 ```
 

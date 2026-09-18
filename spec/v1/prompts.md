@@ -395,7 +395,7 @@ If all four layers yield `null`, the resolved ref for that `(nodeId, kind)` is `
 
 Hosts MAY honor `RunOptions.configurable.promptOverrides` as the **highest-precedence layer** — applied _before_ layer 1 in the traversal, taking precedence over node-config refs. When a host implements this extension, it MUST emit a chain entry with `layer: "run-configurable"` ahead of the `node` entry so cross-host debuggers render the additional step. This extension is non-normative in v1.x; a future RFC may promote it to a normative layer.
 
-### Replay determinism
+### Prompt-resolution replay determinism
 
 `agent.promptResolved` events are durable and participate in replay. Invariants:
 

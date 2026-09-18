@@ -226,7 +226,7 @@ is served the first tenant's cached provider response.
 > the invocation log under a v1 key MAY be left to expire under their TTL; they cannot
 > collide with a v2 identity, which is what the domain tag is for. See
 > `version-negotiation.md` §"Layer-2 effect identity v2" for the operator runbook.
-
+>
 > **Layer 2 does not survive a fork (RFC 0140).** `runId` is part of the key, and
 > `POST /v1/runs/{runId}:fork` mints a new one — so every key computed during a
 > replay differs from its counterpart in the source run, and this cache can never
