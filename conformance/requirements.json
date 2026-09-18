@@ -15622,7 +15622,7 @@
     {
       "id": "openwop.it.mcp-2026-07-28-discover.mrtr-needs-input-answers-input-required-elicitation-opaque-requeststate-and-comp",
       "file": "mcp-2026-07-28-discover.test.ts",
-      "line": 125,
+      "line": 130,
       "title": "MRTR: needs_input answers input_required (elicitation + opaque requestState) and completes on the retry; missing capability ⇒ -32021",
       "explicitId": "openwop.it.mcp-2026-07-28-discover.mrtr-needs-input-answers-input-required-elicitation-opaque-requeststate-and-comp",
       "citations": [
@@ -15635,7 +15635,7 @@
     {
       "id": "openwop.it.mcp-2026-07-28-discover.server-discover-reports-supportedversions-equal-to-capabilities-mcp-protocolvers",
       "file": "mcp-2026-07-28-discover.test.ts",
-      "line": 181,
+      "line": 186,
       "title": "server/discover reports supportedVersions equal to capabilities.mcp.protocolVersions, with resultType + cache hints",
       "explicitId": "openwop.it.mcp-2026-07-28-discover.server-discover-reports-supportedversions-equal-to-capabilities-mcp-protocolvers",
       "citations": [
@@ -15656,7 +15656,7 @@
     {
       "id": "openwop.it.mcp-2026-07-28-discover.a-header-body-revision-mismatch-is-refused-400-32020-an-unsupported-revision-400",
       "file": "mcp-2026-07-28-discover.test.ts",
-      "line": 193,
+      "line": 198,
       "title": "a header/body revision mismatch is refused 400 + -32020; an unsupported revision 400 + -32022",
       "explicitId": "openwop.it.mcp-2026-07-28-discover.a-header-body-revision-mismatch-is-refused-400-32020-an-unsupported-revision-400",
       "citations": [
