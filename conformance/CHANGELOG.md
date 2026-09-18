@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.6.1] — 2026-09-18 — the correction that half-landed
+
+**Why a patch.** No conformance code changes; two schema descriptions.
+
+### Fixed
+
+- The unsatisfiable `deliveryId == causationId` claim survived 2.6.0 on
+  `run-event-payloads.schema.json`'s `triggerDeliveryAttempted.runId` — the
+  durable event-log payload, and the more load-bearing of the two sites.
+- `trigger-event.schema.json` pointed the causing-delivery seat at
+  `webhooks.md`, which is the OUTBOUND document for an INBOUND pointer.
+
 ## [2.6.0] — 2026-09-18 — a relaxed profile cannot certify, and five corpus ids for the umbrella
 
 ### Fixed
