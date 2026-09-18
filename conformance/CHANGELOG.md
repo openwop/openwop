@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.9.1] — 2026-09-18 — RFC 0189 gap register
+
+**Why a patch.** No conformance code changes; `spec/v1/gaps.json` is a published
+artifact and gains three `carried` rows from a new RFC 0189 register.
+
 ## [2.9.0] — 2026-09-18 — eventLog, idempotency and forms get v2 normative text
 
 **Why a minor.** No conformance code changes. `spec/v2/core/` prose and
