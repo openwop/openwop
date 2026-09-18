@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-18T03:52:16.240Z",
+  "generatedAt": "2026-09-18T04:44:55.791Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.4.0",
+    "version": "2.4.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.4.0",
-    "stampSha256": "5b68f54de94dc0d6693867080f33f9004a4d4455648f899cd7ae8f7a6276ef38"
+    "specArtifactsVersion": "2.4.1",
+    "stampSha256": "576f2a6451072e6ae17a6398428f6fba4c8a505d80e8899431d4bcf69a2c0fec"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "f940927928a63dbcf2417760a99befc3c6a0330c"
+      "id": "c6ee97c247ef4d255d67afb61daf615c71e0dfe4"
     },
     "signingKeyId": "v2-reference-3"
   },
@@ -346,7 +346,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 229,
+      "executedPass": 230,
       "executedFail": 0,
       "skipped": 0,
       "inapplicable": 14,
@@ -425,7 +425,7 @@
         "id": "openwop.scenario.v2-chain-pin-exact",
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 5
       },
       {
         "id": "openwop.scenario.v2-coherence-not-in-bundle",
@@ -751,7 +751,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 11
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1716,6 +1716,12 @@
         "assertions": 1
       },
       {
+        "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
+        "scenario": "v2-chain-pin-exact.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "executed-pass",
@@ -1801,7 +1807,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1835,8 +1841,8 @@
       }
     ]
   },
-  "witnessSha256": "d3241cbf163bafea58f60bf88099a2176316c96deb0f0e2227a7ce3c7d29ba56",
-  "assertionCount": 1971,
+  "witnessSha256": "b8a7d1d6941df6cde7953a808ae1d11297f80abb3dc8cc48b7d3d5572564ba59",
+  "assertionCount": 1979,
   "detail": {
     "nonPass": [
       {
@@ -1914,7 +1920,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-3",
-    "sig": "JqxNYKq4EceR53BGPuOg4l7H3X-Y6T9Au9KafrCJLqOplmlfDmyQrbUN9Rt15JsUMxE1_-kePcxlDYZKfrNIAQ",
+    "sig": "I5fbvBanOeKnX96USlJVBxDVesQCgLa00MY_1aEJ0V6xs8hAPK8YjquHMSVmFUwBQz_Krq_IAv_utimvJP3BBA",
     "over": [
       "witnessSha256",
       "host.build",
