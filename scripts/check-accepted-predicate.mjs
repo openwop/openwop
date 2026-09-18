@@ -22,6 +22,8 @@ const RFCS = join(ROOT, 'RFCS');
 const ledgerPath = join(ROOT, 'evidence', 'corpus-ledger.json');
 const ledger = existsSync(ledgerPath) ? JSON.parse(readFileSync(ledgerPath, 'utf8')) : { requirements: {} };
 const failures = [];
+// Verdict cells that declare a witness class no `executed-pass` can ever have.
+const DECLARED_VERDICT = /seam-gated|negative[- ]existence|unwitnessable|witnessable\s*—\s*gated|host-pending/i;
 const hostGaps = [];
 // Every requirement id any v2-era RFC declares in its Falsifiability table. A
 // row id under a parent (`<id>.<leg>`) witnesses the parent ONLY when it is a
@@ -38,6 +40,7 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n))) {
 // every requirement id with an executed-pass row in any committed host bundle
 const bundleRows = new Set();
 const uncertified = [];
+const accountedRows = new Map();
 {
   const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'evidence', 'v2-host-bundles');
   if (existsSync(dir)) for (const b of readdirSync(dir)) {
@@ -54,7 +57,13 @@ const uncertified = [];
       continue;
     }
     const rows = doc.results?.requirements ?? [];
-    for (const r of Array.isArray(rows) ? rows : Object.values(rows)) if (r.result === 'executed-pass') bundleRows.add(r.id ?? r.requirementId);
+    for (const r of Array.isArray(rows) ? rows : Object.values(rows)) {
+      const rid = r.id ?? r.requirementId;
+      if (r.result === 'executed-pass') bundleRows.add(rid);
+      // §B.1's second branch: a row the suite REACHED and recorded a reason for
+      // accounts for a declared non-executable verdict. Silence never does.
+      else if (typeof r.detail === 'string' && r.detail.trim() !== '') accountedRows.set(rid, `${r.result} — ${r.detail.trim()}`);
+    }
   }
 } let checked = 0;
 for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()) {
@@ -120,7 +129,19 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
         const witnessed = (rowId) => rowId === id || (rowId.startsWith(`${id}.`) && !declaredIds.has(rowId));
         const inLedger = Object.entries(ledger.requirements ?? {}).some(([k, rows]) => witnessed(k) && rows.some((r) => r.result === 'executed-pass'));
         const inBundle = [...bundleRows].some(witnessed);
-        if (!inLedger && !inBundle) hostGaps.push(`${f.slice(0, 4)} ${id}`);
+        // RFC 0174 §B.1 rule 4, second branch. A row whose VERDICT declares a
+        // non-executable witness class is accounted for by a non-pass bundle row
+        // that states a reason — the suite reached the leg and said why. Without
+        // this, the honest move (declare the verdict) and the checkable move
+        // (name an id) are in conflict, and the only way out is a vacuous leg.
+        // Measured: RFC 0177 §E.4's form-when id carries `inapplicable` +
+        // "profile not advertised in the captured discovery set", which §G.2
+        // accepts, and rule 4 refused the flip anyway.
+        const declared = DECLARED_VERDICT.test(row);
+        const accounted = declared && [...accountedRows.keys()].some(witnessed);
+        if (!inLedger && !inBundle && !accounted) {
+          hostGaps.push(`${f.slice(0, 4)} ${id}${declared ? ' (verdict declares a non-executable class, but NO bundle row accounts for it — the suite must reach the leg and record a reason)' : ''}`);
+        }
       }
     }
     for (const id of ids) { const rows = ledger.requirements?.[id]; if (corpus && !rows?.some((r) => r.result === 'executed-pass')) failures.push(`${f}: ${id} has no executed-pass row in evidence/corpus-ledger.json`); }

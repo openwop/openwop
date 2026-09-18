@@ -21,7 +21,7 @@ Four rules, each one the corpus owed after a production host measured its absenc
 
 **The `webhookId` mint surface has no kind.** `identity.md` §5 names `subscriptionId` tenant-bound and `spec/v2/id-field-bindings.json` binds the property — but the property lives only in `trigger-subscription.schema.json` and `run-event-payloads.schema.json`. The surface that *mints* the thing, `POST /webhooks → { webhookId }`, is triaged `notAKind` ("the grammar is the owning schema's own"), so the kind has no HTTP surface and the HTTP surface has no kind. Both production hosts mint it bare and said so; a tier-1 host's audit found the same hole in four of the five bound kinds on its own wire. Zero scenarios read any tenant-bound id but `runId`, so a host binding one kind of five is green.
 
-**A v2-only event type has no v1 spelling.** `persistence.md` §The v1 wire of an era-`3` log requires the inverse codemap row on the v1 read path. It does not say what happens to a type with no row — `interrupt.requested`, anything RFC 0185/0186 seated. Both hosts chose pass-through independently (`inverse.get(type) ?? type`); the corpus said nothing, so drop and refuse were equally conformant.
+**A v2-only event type has no v1 spelling.** `persistence.md` §The v1 wire of an era-`3` log requires the inverse codemap row on the v1 read path. It does not say what happens to a type with no row. **Which types those are, measured 2026-09-18:** none of the 118 in the closed registry — `event-codemap.json` carries a row for every member of `run-event.schema.json`'s `type` enum, `interrupt.requested` included, and `conformance/src/coherence/event-codemap-complete.test.ts` asserts that bijection at the corpus gate. The rule therefore binds (a) **registered vendor-org types**, which `oneOf[1]`'s `^(?!openwop\.)` branch admits and the codemap deliberately never names, and (b) any future 119th core type seated without a row — which the same coherence test would catch. An earlier draft of this paragraph cited `interrupt.requested` as an instance; it is mapped, and naming a mapped type as the example undermined the rule it was meant to motivate. Both hosts chose pass-through independently (`inverse.get(type) ?? type`); the corpus said nothing, so drop and refuse were equally conformant.
 
 **A rule enforced per route is only as complete as the census of writers.** A tier-2 host gated approver eligibility on all three of its resolve routes, then found its client-writable durable store let any workspace member rewrite a pending suspension and self-resolve it. The host's watch teed the rewrite as the resolution. Every route was gated; the store was a fourth writer nobody had counted.
 
@@ -59,13 +59,13 @@ Additive per `COMPATIBILITY.md` §2.1. No required field is removed or retyped; 
 
 ### Falsifiability — one row per normative requirement
 
-| Requirement | Witness | Tier |
-| --- | --- | --- |
-| §A.1 `webhookId` is bound, projected, and tenant-checked | `openwop.requirement.0187.bound-id-kinds.webhook` (register → read by projected segment → foreign tenant `403`) | host |
-| §A.3 every bound kind with a wire surface is witnessed | `openwop.requirement.0187.bound-id-kinds.per-kind` (`interruptId`, `effectId`, `deliveryId`) | host |
-| §B.1 a v2-only type passes through on the v1 wire | `openwop.requirement.0187.v1-wire-passthrough` | host |
-| §C.1 eligibility binds every writer | `openwop.requirement.0187.census-of-writers` — `witnessable-gated`; unobservable on a host with no client-writable store | host |
-| §D.1 the legacy writer marks the row | `openwop.requirement.0187.legacy-writer-mark` — `witnessable-gated`; unobservable on a host with no legacy writer | host |
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A.1 `webhookId` is bound, projected, and tenant-checked | `openwop.requirement.0187.bound-id-kinds.webhook` — register → read by projected segment → foreign tenant `403` | the suite, gated on `webhooks` | witnessable — gated on the `webhooks` family |
+| §A.3 every bound kind with a wire surface is witnessed | `openwop.requirement.0187.bound-id-kinds.per-kind` — `interruptId`, `effectId`, `deliveryId` | the suite, each leg gated on its family | witnessable — gated on each kind's family |
+| §B.1 a v2-only type passes through on the v1 wire | the type is read under its own name on the v1 path, neither dropped nor refused. The corpus half is already proved: `event-codemap-complete.test.ts` shows all 118 core types are mapped, so the rule's live subject is a registered vendor-org type | a host serving an era-`3` log on the v1 path | seam-gated — `api/seams-v2.yaml`'s era-seed seam pins `eventLogSchemaVersion: { const: 2 }`, so no suite can seed the era-`3` log this rule is about until the seam admits era 3 |
+| §C.1 eligibility binds every writer | nothing. A census of writers is a property of the host's storage topology, not of its wire: a black-box probe reaches a record only through routes, and so cannot enumerate the writers that are not routes — which is precisely the fourth writer this rule exists to catch | a host whose durable store is client-writable | unwitnessable — no black-box observation distinguishes a host that gated every writer from one that gated every ROUTE; the enforcement is external audit, in the class of RFC 0166's `externally-gated` |
+| §D.1 the legacy writer marks the row | nothing yet. §Unresolved records that the mark's wire spelling is deliberately undecided until a second host has one, and a requirement with no declared spelling cannot have a wire witness — an observer cannot tell a host that marks from one that never wrote an unseated row | a host with a pre-migration writer | negative-existence — witnessable only once §Unresolved is settled and the mark has a spelling to look for |
 
 ## Alternatives considered
 

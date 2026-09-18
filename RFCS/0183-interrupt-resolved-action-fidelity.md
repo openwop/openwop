@@ -69,12 +69,12 @@ v2 is both **narrower** and **closed**, so a host cannot even carry the lost fie
 
 ### Falsifiability — one row per normative requirement
 
-| Requirement | Witness | Runs unaided? |
-| --- | --- | --- |
-| §A.1 `action` is admitted and enum-constrained | `interrupt-approval.test.ts` — a refine resolution round-trips `action: 'refine'`; `action: 'maybe'` is refused | witnessable — needs a live host, no seam |
-| §A.2 `refineFeedback` rides with `action: 'refine'` | same scenario — the resolved payload carries the structured feedback the resume supplied | witnessable — needs a live host, no seam |
-| §A.2 `refineFeedback` is a CLOSED object requiring `scope` | server-free schema validation; `check-v2-schemas` enforces the closure | witnessable — unaided |
-| §A.3 `decision` rejects an off-vocabulary value | server-free schema validation in `approval-gate-events.test.ts` | witnessable — unaided |
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A.1 `action` is admitted and enum-constrained | `interrupt-approval.test.ts` — a refine resolution round-trips `action: 'refine'`; `action: 'maybe'` is refused | the suite against a live host, no seam | witnessable — unaided |
+| §A.2 `refineFeedback` rides with `action: 'refine'` | same scenario — the resolved payload carries the structured feedback the resume supplied | the suite against a live host, no seam | witnessable — unaided |
+| §A.2 `refineFeedback` is a CLOSED object requiring `scope` | server-free schema validation; `check-v2-schemas` enforces the closure | the corpus gate | witnessable — unaided (corpus) |
+| §A.3 `decision` rejects an off-vocabulary value | server-free schema validation in `approval-gate-events.test.ts` | the corpus gate | witnessable — unaided (corpus) |
 
 The existing `interrupt-approval.test.ts` already drives a live suspend → resume → terminal round-trip, but its fixture `conformance-approval` declares `actions: ["accept", "reject"]` and therefore **cannot exercise `refine` today**. The fixture gains `refine` and the scenario gains a third leg.
 
