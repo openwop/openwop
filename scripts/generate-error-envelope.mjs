@@ -30,6 +30,37 @@ const schema = {
   'x-openwop-retriable': reg.rows.filter((r) => r.retriable).map((r) => r.code),
 };
 const render = JSON.stringify(schema, null, 2) + '\n';
-if (process.argv.includes('--write')) { writeFileSync(OUT, render); console.log(`wrote schemas/v2/error-envelope.schema.json (${reg.rows.length} codes)`); }
-else if (!existsSync(OUT) || readFileSync(OUT, 'utf8') !== render) { console.error('generate-error-envelope: stale — run --write'); process.exit(1); }
-else console.log(`=== generate-error-envelope OK — ${reg.rows.length} codes, ${withDetails.length} with a details schema ===`);
+
+// --- spec/v2/core/errors.md ------------------------------------------------
+// The doc said "Generated from spec/v2/errors.json" in two places and named a
+// count in both, while NOTHING generated or checked it. Adding one registry row
+// left a published table silently one code short. The two counts and the
+// status table are now derived here, so the claim is true.
+const DOC = join(ROOT, 'spec', 'v2', 'core', 'errors.md');
+const n = reg.rows.length;
+const table = [...reg.rows]
+  .sort((a, b) => a.httpStatus - b.httpStatus || a.code.localeCompare(b.code))
+  .map((r) => `\`${r.code}\` | ${r.httpStatus}`)
+  .join('\n');
+const docSrc = readFileSync(DOC, 'utf8');
+let docOut = docSrc
+  .replace(/It registers \*\*\d+\*\* codes\./, `It registers **${n}** codes.`)
+  .replace(/Generated from `spec\/v2\/errors\.json` \(\d+ codes;/, `Generated from \`spec/v2/errors.json\` (${n} codes;`);
+const head = docOut.indexOf('Code | Status\n--- | ---\n');
+if (head === -1) { console.error('generate-error-envelope: errors.md has no `Code | Status` table'); process.exit(1); }
+const start = head + 'Code | Status\n--- | ---\n'.length;
+let end = docOut.indexOf('\n\n', start);
+if (end === -1) end = docOut.length;
+docOut = docOut.slice(0, start) + table + docOut.slice(end);
+
+if (process.argv.includes('--write')) {
+  writeFileSync(OUT, render);
+  writeFileSync(DOC, docOut);
+  console.log(`wrote schemas/v2/error-envelope.schema.json + spec/v2/core/errors.md (${n} codes)`);
+} else if (!existsSync(OUT) || readFileSync(OUT, 'utf8') !== render) {
+  console.error('generate-error-envelope: schemas/v2/error-envelope.schema.json is stale — run --write');
+  process.exit(1);
+} else if (docSrc !== docOut) {
+  console.error('generate-error-envelope: spec/v2/core/errors.md is stale (count or status table) — run --write');
+  process.exit(1);
+} else console.log(`=== generate-error-envelope OK — ${n} codes, ${withDetails.length} with a details schema; errors.md current ===`);

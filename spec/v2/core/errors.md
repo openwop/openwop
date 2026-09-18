@@ -8,7 +8,7 @@ Every error a v2 host returns is a row in one registry. A client routes on `erro
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code: `{ code, httpStatus, retriable, details, since, deprecated? }` plus the provenance fields `statusSource` and `source`. It registers **98** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code: `{ code, httpStatus, retriable, details, since, deprecated? }` plus the provenance fields `statusSource` and `source`. It registers **99** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
 A host MUST return a registered code, or a vendor code, in every error response. A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$` with its first segment an org registered in `spec/v2/declaration.json`; `openwop.` is reserved. The registry grows by the closed-enum rule in overview.md §0: a producer MUST NOT emit an unregistered member, and a consumer MUST accept an unknown registered member and MUST NOT act on it.
 
@@ -28,7 +28,7 @@ An interrupt has one code per state: a token or run-scoped resolve against an in
 
 ## Codes by HTTP status
 
-Generated from `spec/v2/errors.json` (98 codes; `retriable` and `statusSource` are in the registry).
+Generated from `spec/v2/errors.json` (99 codes; `retriable` and `statusSource` are in the registry).
 
 Code | Status
 --- | ---
@@ -69,6 +69,7 @@ Code | Status
 `sender_constraint_missing` | 401
 `unauthenticated` | 401
 `credential_forbidden` | 403
+`credential_scope_forbidden` | 403
 `delegation_scope_amplified` | 403
 `forbidden` | 403
 `force_engine_version_forbidden` | 403
@@ -96,22 +97,22 @@ Code | Status
 `replay_diverged_at_refusal` | 409
 `replay_memory_snapshot_unavailable` | 409
 `run_already_active` | 409
-`run_terminal` | 409
 `run_state_conflict` | 409
+`run_terminal` | 409
 `version_conflict` | 409
 `workspace_conflict` | 409
 `interrupt_cancelled` | 410
 `interrupt_expired` | 410
-`workspace_too_large` | 413
 `payload_too_large` | 413
+`workspace_too_large` | 413
 `unsupported_media_type` | 415
 `capability_not_provided` | 422
 `capability_required` | 422
 `credential_required` | 422
 `envelope_invalid` | 422
 `envelope_refusal` | 422
-`fork_point_invalid` | 422
 `envelope_truncation_unrecoverable` | 422
+`fork_point_invalid` | 422
 `loop_limit_exceeded` | 422
 `mcp_mrtr_rounds_exceeded` | 422
 `pack_runtime_requirement_unmet` | 422
@@ -125,8 +126,8 @@ Code | Status
 `rate_limited` | 429
 `event_type_unmapped` | 500
 `internal_error` | 500
-`payload_unprojectable` | 500
 `pack_load_failure` | 500
+`payload_unprojectable` | 500
 `credential_unavailable` | 501
 `pack_registry_unreachable` | 503
 `runner_unavailable` | 503

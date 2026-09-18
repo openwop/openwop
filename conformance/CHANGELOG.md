@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.8.3] — 2026-09-18 — the error registry gains the code §B.8 requires
+
+**Why a patch.** No conformance code changes. `spec/v2/errors.json` and the
+generated `schemas/v2/error-envelope.schema.json` are published artifacts:
+`credential_scope_forbidden` (403) is registered, so a host honouring
+`spec/v1/capabilities.md` §B.8 no longer emits an envelope that fails the
+closed `error` enum. Purely additive to the enum — no existing code changes
+meaning, and `aiproviders-subscription-scope.test.ts` already asserted it.
+
 ## [2.8.2] — 2026-09-18 — two facets leave the closed capabilities schema
 
 **Why a patch.** No conformance code changes. `schemas/v2/capabilities.schema.json`
