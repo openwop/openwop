@@ -93,6 +93,23 @@ function metadataSchema(key) {
         seamsProfile: { const: 'openwop-conformance-seams-v2', description: 'RFC 0168 §C.1 — the host serves the conformance seams profile (api/seams-v2.yaml) at /conformance/seams/…. Absent means the seam-driven scenarios record `blocked`, never a pass.' } },
         'x-openwop-seeded-from': 'v1' };
     }
+    case 'observability': {
+      // `testSeams` is a test-seam flag in the capability namespace, which
+      // spec/v2/core/conformance.md §"The seams profile" forbids: seams are the
+      // profile `openwop-conformance-seams-v2` in the /conformance/seams/ path
+      // space. It is NOT removed at 2.x — MyndHyve's live v2 discovery document
+      // advertises it and the v2 root is additionalProperties:false, so deleting
+      // the property breaks a published closed record with no host change.
+      // Deprecated here rather than stamped on afterwards by
+      // generate-deprecation-annotations.mjs: both write this file, and these are
+      // the first discovery-field rows sourced to schemas/v2/, so that ordering
+      // had never been exercised and the two generators fought.
+      const seeded = stripSupported(v1.properties.observability);
+      const ts = seeded.properties?.testSeams;
+      return { ...seeded, additionalProperties: false, properties: { ...seeded.properties,
+        ...(ts ? { testSeams: { ...ts, deprecated: true, 'x-openwop-remove-in': '3.0' } } : {}) },
+        'x-openwop-seeded-from': 'v1' };
+    }
     case 'extensions': return { type: 'object', additionalProperties: false, patternProperties: { [decl.extensionsKeyPattern]: { type: 'object', additionalProperties: true, description: 'A vendor/host extension record; its shape is the org\'s, declared as open on purpose (RFC 0169 §A.4).' } }, description: 'RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: ' + decl.reservedOrgs.join(', ') + '.' };
     default: {
       const p = v1.properties[key];

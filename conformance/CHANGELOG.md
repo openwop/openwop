@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.10.0] — 2026-09-18 — packs resolves; two seam facets deprecated
+
+**Why a minor.** No conformance code changes. `spec/v2/core/packs.md`,
+`spec/v2/declaration.json`, `spec/v1/deprecations.json` and the generated
+`api/v2/openapi.yaml` are published artifacts: `packs` gains its normative home,
+`packs.testMode` and `observability.testSeams` are deprecated at 3.0 (NOT
+removed — live v2 discovery documents advertise them), and an orphaned
+`packs-test` tag is pruned.
+
 ## [2.9.2] — 2026-09-18 — mcp-2026-07-28-discover matches its own fake server
 
 **Why a patch.** One assertion in `mcp-2026-07-28-discover.test.ts` listed two

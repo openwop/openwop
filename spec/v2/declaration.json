@@ -1396,6 +1396,9 @@
       "facets": [
         "testMode"
       ],
+      "normativeText": [
+        "spec/v2/core/packs.md"
+      ],
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0025"

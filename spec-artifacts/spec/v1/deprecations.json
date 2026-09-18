@@ -826,14 +826,14 @@
     {
       "id": "openwop.deprecation.seam-operations-in-canonical-api",
       "status": "deprecated",
-      "surface": "the nine `/v1/host/sample/*`, `/v1/host/workspace/files*` and `/v1/packs-test/*` seam/test operations in `api/openapi.yaml` and `spec/v1/operation-path-manifest.json`, and the `testSeams` discovery-flag proposals",
+      "surface": "the nine `/v1/host/sample/*`, `/v1/host/workspace/files*` and `/v1/packs-test/*` seam/test OPERATIONS in `api/openapi.yaml` and `spec/v1/operation-path-manifest.json`",
       "kind": "path",
       "deprecatedIn": "RFC 0168 (v2.0)",
       "authority": "RFC 0168 §C (seams are the profile `openwop-conformance-seams-v2` with `api/seams-v2.yaml`; forbidden from the capability namespace)",
       "removeIn": "2.0",
       "replacement": "`api/seams-v2.yaml`; `profiles[]` membership",
       "codemod": null,
-      "note": "Proposed: a generated document, not a persisted artifact. Status flipped proposed→deprecated 2026-09-17: the surface has no occurrence in spec/v2, schemas/v2 or api/v2 (token grep, W7).",
+      "note": "Proposed: a generated document, not a persisted artifact. Status flipped proposed→deprecated 2026-09-17 on a token grep asserting the surface had no occurrence in spec/v2, schemas/v2 or api/v2. THAT CLAIM WAS FALSE — three residues were present: `packs.testMode` and `observability.testSeams` in schemas/v2/capabilities.schema.json, and an orphaned `packs-test` tag in api/v2/openapi.yaml. Corrected 2026-09-18 by NARROWING this row to the path operations, which its removeIn:2.0 genuinely did satisfy, and moving the two capability facets to their own removeIn:3.0 rows — they CANNOT be removed at 2.x because live v2 discovery documents advertise them (myndhyve emits both; openwop-host-v2-reference emits packs.testMode) and the v2 root is additionalProperties:false. The orphaned tag is deleted in this change. Two lessons: a row that bundles surfaces with different removal horizons cannot be honestly satisfied at either; and check-removal-dates.mjs only reads a row's declared sources[], so a row can certify its own absence by declaring too few.",
       "sources": [
         {
           "file": "spec/v1/operation-path-manifest.json",
@@ -916,6 +916,48 @@
           "token": "A host MUST NOT mint one after this RFC"
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.packs-test-mode-facet",
+      "status": "deprecated",
+      "surface": "`capabilities.packs.testMode` — the v2 advertisement of the v1 `/v1/packs-test/*` conformance-seam mirror",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.10 (RFC 0189 Phase 1)",
+      "authority": "spec/v2/core/conformance.md §\"The seams profile\" (a test-seam capability flag MUST NOT be advertised) + spec/v2/path-manifest.json (no packs path in v2)",
+      "removeIn": "3.0",
+      "replacement": "`openwop-conformance-seams-v2` profile membership (`api/seams-v2.yaml`)",
+      "codemod": null,
+      "note": "NOT removed at 2.x. Unlike workflowChainPacks.deferredParameters/hostExpansionSeam (2.8.2), which no host advertised, TWO live v2 discovery documents carry this facet — evidence/v2-host-bundles/myndhyve.json and openwop-host-v2-reference.json — and the v2 root is additionalProperties:false, so removal breaks a published closed record with no host change (COMPATIBILITY.md §2.2; §3's second clause fails because deprecation is available and adequate).",
+      "sources": [
+        {
+          "file": "schemas/v2/capabilities.schema.json",
+          "token": "testMode"
+        },
+        {
+          "file": "spec/v2/core/packs.md",
+          "token": "`testMode` is DEPRECATED"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "id": "openwop.deprecation.observability-test-seams-facet",
+      "status": "deprecated",
+      "surface": "`capabilities.observability.testSeams` — a test-seam flag in the capability namespace",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.10 (RFC 0189 Phase 1)",
+      "authority": "spec/v2/core/conformance.md §\"The seams profile\" (a `testSeams` capability flag does not exist and MUST NOT be advertised)",
+      "removeIn": "3.0",
+      "replacement": "`openwop-conformance-seams-v2` profile membership (`api/seams-v2.yaml`)",
+      "codemod": null,
+      "note": "NOT removed at 2.x. MyndHyve's live v2 discovery document advertises `observability.testSeams: {\"otelScrape\": true}` (evidence/v2-host-bundles/myndhyve.json), so this is the same closed-record hazard as packs.testMode — not the 2.8.2 zero-bundle case.",
+      "sources": [
+        {
+          "file": "schemas/v2/capabilities.schema.json",
+          "token": "testSeams"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support"
     }
   ]
 }

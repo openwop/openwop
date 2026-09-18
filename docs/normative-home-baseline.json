@@ -3,7 +3,7 @@
   "t0": "2026-09-18",
   "openAtT0": 68,
   "v1Dependent": 2,
-  "undeclared": 62,
+  "undeclared": 61,
   "facetsUncovered": 0,
   "v1Carried": [
     "toolHooks",
