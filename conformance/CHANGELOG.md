@@ -1,5 +1,23 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.2] — 2026-09-18 — an id no host could ever witness
+
+**Why a patch.** One assertion moves into its own `it`; no scenario file is
+added or removed and no host obligation changes.
+
+### Fixed
+
+- **`openwop.requirement.0173.pack-isolation.seam`** was minted inside
+  `v2-pack-isolation`'s shared `invoke()` helper.
+  `generate-requirement-registry.mjs` harvests `req(…)` only within an `it`, so
+  the id never reached `requirements.json` and no bundle could carry a row for
+  it — while `check-cut-gates.mjs` scans every `req(` in the source and went on
+  demanding one, failing RFC 0167 §G.2 on a row no host could supply. The seam
+  contract now has its own `it`, which is the copy the registry can see. The
+  helper keeps its `req(…)` call — RFC 0168 §A.1 makes `req(…)` the only
+  assertion-message form in `src/scenarios`, so the fix is the extra `it`, not
+  a quieter assertion.
+
 ## [2.4.1] — 2026-09-18 — the leg that reads the host, not the schema
 
 **Why a patch.** A leg is added to an existing scenario file; no file is added or removed.

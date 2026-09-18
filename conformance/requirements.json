@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 571,
-    "tests": 2173,
-    "withStableId": 2173,
+    "tests": 2174,
+    "withStableId": 2174,
     "interpolatedTitles": 0,
-    "explicitIds": 2126
+    "explicitIds": 2127
   },
   "records": [
     {
@@ -27681,7 +27681,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.sandbox-isolationmodel-names-a-real-mechanism-never-node-vm",
       "file": "v2-pack-isolation.test.ts",
-      "line": 70,
+      "line": 78,
       "title": "sandbox.isolationModel names a real mechanism, never node:vm",
       "explicitId": "openwop.requirement.0173.pack-isolation",
       "citations": [
@@ -27697,9 +27697,23 @@
       ]
     },
     {
+      "id": "openwop.it.v2-pack-isolation.the-sandbox-invoke-seam-answers-the-seam-contract",
+      "file": "v2-pack-isolation.test.ts",
+      "line": 92,
+      "title": "the sandbox-invoke seam answers the seam contract",
+      "explicitId": "openwop.requirement.0173.pack-isolation.seam",
+      "citations": [
+        {
+          "section": "host-sample-test-seams.md §8",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 84,
+      "line": 104,
       "title": "node-pack-sandbox-fs-gated: a host filesystem read is refused",
       "explicitId": null,
       "citations": []
@@ -27707,7 +27721,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 91,
+      "line": 111,
       "title": "node-pack-sandbox-fs-gated: a host filesystem write is refused",
       "explicitId": null,
       "citations": []
@@ -27715,7 +27729,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
       "file": "v2-pack-isolation.test.ts",
-      "line": 98,
+      "line": 118,
       "title": "node-pack-sandbox-no-env: the host environment does not leak",
       "explicitId": null,
       "citations": []
@@ -27723,7 +27737,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 105,
+      "line": 125,
       "title": "node-pack-sandbox-network-gated: ungated network egress is refused",
       "explicitId": null,
       "citations": []
@@ -27731,7 +27745,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 112,
+      "line": 132,
       "title": "node-pack-sandbox-no-process: host process access is refused",
       "explicitId": null,
       "citations": []
@@ -27739,7 +27753,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-timeout-exceeding-wallclocklimitms-fails-with-sandbox-timeout",
       "file": "v2-pack-isolation.test.ts",
-      "line": 119,
+      "line": 139,
       "title": "node-pack-sandbox-timeout: exceeding wallClockLimitMs fails with sandbox_timeout",
       "explicitId": "openwop.requirement.0173.pack-isolation.timeout",
       "citations": [
@@ -27752,7 +27766,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-memory-cap-exceeding-memorylimitbytes-fails-with-sandbox-memor",
       "file": "v2-pack-isolation.test.ts",
-      "line": 126,
+      "line": 146,
       "title": "node-pack-sandbox-memory-cap: exceeding memoryLimitBytes fails with sandbox_memory_exceeded",
       "explicitId": "openwop.requirement.0173.pack-isolation.memory-cap",
       "citations": [
@@ -27765,7 +27779,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-isolated-context-a-pack-cannot-mutate-state-another-invocation",
       "file": "v2-pack-isolation.test.ts",
-      "line": 133,
+      "line": 153,
       "title": "node-pack-sandbox-isolated-context: a pack cannot mutate state another invocation sees",
       "explicitId": "openwop.requirement.0173.pack-isolation.isolated-context",
       "citations": [
