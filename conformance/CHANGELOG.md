@@ -1,5 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.6] — 2026-09-18 — the npm page told the world to install a release candidate
+
+### Fixed
+
+- **`README.md` — the package page, and the corpus's actual front door** — told
+  readers to install `2.0.0-rc.57` while `latest` was 2.4.5, and declared
+  *"Tracks the FINAL v1 protocol contract."* It tracks v2. Both corrected, and
+  `--legacy-peer-deps` is now documented as REQUIRED rather than a footnote,
+  with the npm 10.9 failure named (`Cannot read properties of null (reading
+  'edgesOut')` — use npm >= 11).
+
 ## [2.4.5] — 2026-09-18 — the strict flag that was not wired, and the soft-skip that counted as a pass
 
 ### Fixed

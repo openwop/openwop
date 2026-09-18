@@ -4,11 +4,14 @@
 
 ```bash
 # Install BOTH packages at the SAME explicit version — the suite declares
-# @openwop/spec-artifacts as an exact-pinned peer, and `npm i --legacy-peer-deps`
-# on the suite alone does not pull it (a host measured "corpus stamp MISMATCH —
-# missing @openwop/spec-artifacts" on 2026-09-05). Pre-release 2.x is on the
-# `next` dist-tag; pin the version, never the tag (runbook §0.2b).
-npm install @openwop/openwop-conformance@2.0.0-rc.57 @openwop/spec-artifacts@2.0.0-rc.57
+# @openwop/spec-artifacts as an exact-pinned peer, and installing the suite
+# alone does not pull it (a host measured "corpus stamp MISMATCH — missing
+# @openwop/spec-artifacts"). Pin the version, never a dist-tag.
+#
+# --legacy-peer-deps is REQUIRED, not optional: the exact peer pin is what npm's
+# default resolver refuses. npm 10.9 fails outright with
+# "Cannot read properties of null (reading 'edgesOut')" — use npm >= 11.
+npm install --legacy-peer-deps @openwop/openwop-conformance@2.4.6 @openwop/spec-artifacts@2.4.6
 # or run without install:
 npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk_test_...
 ```
@@ -17,7 +20,7 @@ npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk
 
 The suite is intentionally self-contained — it does NOT depend on the reference implementation. A spec-compliant server written in any language can run this suite against itself by spinning up its server, exporting the env vars, and running `npx vitest run`.
 
-> **Status:** Tracks the FINAL v1 protocol contract. The suite version evolves independently as new scenarios ship (vendor-neutral redaction, cost attribution, post-v1 ecosystem triggers); see [`CHANGELOG.md`](./CHANGELOG.md) for the current release.
+> **Status:** Tracks the **v2** protocol contract (`spec/v2/`), the current major. The suite still runs v1 scenarios through the overlap — pass `--target-major 1` for a v1 host, `--target-major 2` for a v2 host. The suite version evolves independently as new scenarios ship (vendor-neutral redaction, cost attribution, post-v1 ecosystem triggers); see [`CHANGELOG.md`](./CHANGELOG.md) for the current release.
 
 ---
 

@@ -416,10 +416,15 @@ Per-bundle and per-deploy conformance history for the rows above (newest first).
 
 ## Add A Host
 
-1. Implement the openwop v1 wire contract.
-2. Run `@openwop/openwop-conformance` against the host.
-3. Publish a result file or Markdown summary in a public repository.
-4. Add a row above with compatibility, scale, production-profile, and evidence claims.
+**The full path is [`docs/IMPLEMENTER-PATH.md`](docs/IMPLEMENTER-PATH.md); build against [`docs/IMPLEMENT-CORE.md`](docs/IMPLEMENT-CORE.md).** In outline:
+
+1. Implement the **v2** wire contract (`spec/v2/core/`). The bar is published: `spec/v2/profiles.json` names every scenario in the `openwop-core-standard` floor, so you can read what you must pass before you write a line.
+2. Seed the fixtures the floor needs (`conformance-noop`, `conformance-cancellable`, `conformance-delay`) and advertise them at `/.well-known/openwop`.
+3. Run the suite: `npx @openwop/openwop-conformance --base-url <url> --api-key <key> --target-major 2 --require-behavior`. `--require-behavior` is strict mode — an advertised behaviour that cannot be observed FAILS rather than soft-skipping. Use it, and declare anything you genuinely do not implement via `OPENWOP_OPTED_OUT_PROFILES` so the bundle records the claim.
+4. Cut a signed bundle: add `--certify bundle-v3.json --bundle-version 3 --host-build commit:<sha> --signing-key <pem> --signing-key-id <id>`, and publish the matching public key in your own discovery document's `signingKeys[]` — a verifier resolves `keyId` there, not against any list the steward keeps. See §"Signing keys" in `docs/IMPLEMENT-CORE.md`.
+5. Open a PR adding your bundle under `evidence/v2-host-bundles/` and a row above. **`scripts/check-cut-gates.mjs --host-bundle <your bundle>` reports `blocked` on the matrix-row check until that row exists — that is expected on a first submission, not a failure of your host.**
+
+Your evidence is your own signed bundle. Nothing in this path requires the steward's permission, and the tier your acceptance may cite is defined in `GOVERNANCE.md` §"Acceptance evidence tiers" — an independent organisation's host is **tier 3**, the highest.
 
 ## See Also
 
