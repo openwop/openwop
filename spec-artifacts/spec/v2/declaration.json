@@ -1370,9 +1370,10 @@
         "adoption": "none"
       },
       "facets": [
-        "deferredParameters",
-        "hostExpansionSeam",
         "subChains"
+      ],
+      "normativeText": [
+        "spec/v2/core/workflow-chain-packs.md"
       ],
       "floorScenarios": [],
       "requirementIds": [],
