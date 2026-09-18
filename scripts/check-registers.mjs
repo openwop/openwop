@@ -46,6 +46,25 @@ for (const file of listRegisterFiles()) {
 
 for (const r of counts.acceptedWithOpenGaps) fail(`${r}: 'open' gap row on an RFC whose Status is terminal — close, transfer, carry (carried:<gap-id>), or externally-gate it (RFCS/README.md §"Companion gap & risk registers")`);
 
+// RFC 0166 §C — the `open` ratchet. The corpus reached ZERO open gap rows on
+// 2026-09-18 (the RFC 0111 / 0121 sweep: seven answered by fact, two by ruling,
+// two re-tokened `externally-gated` because they are nobody here's work). Zero
+// is the only baseline that makes `open` self-policing: with it, a new open row
+// must be argued for; without it, open rows accumulate and the count is a
+// statistic rather than a bound.
+{
+  const baselinePath = join(ROOT, 'docs', 'witness-baseline.json');
+  if (existsSync(baselinePath)) {
+    const want = JSON.parse(readFileSync(baselinePath, 'utf8')).openGaps;
+    const have = counts.gaps.open ?? 0;
+    if (typeof want === 'number' && have > want) {
+      failures.push(
+        `open gap rows rose ${want} -> ${have} (docs/witness-baseline.json openGaps). An open row says a steward owes work: ` +
+        `close it, rule it, or re-token it \`externally-gated:<tripwire>\` when it is nobody here's to do.`,
+      );
+    }
+  }
+}
 if (failures.length > 0) {
   console.error(`=== check-registers FAILED — ${failures.length} problem(s) ===`);
   for (const f of failures.slice(0, 40)) console.error(`  ${f}`);

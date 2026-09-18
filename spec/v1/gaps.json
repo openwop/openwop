@@ -4355,7 +4355,7 @@
       "surface": "`tokenCounter` enum vs provider-native tokenizers — does a portable enum diverge too far from real cost?",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4372,7 +4372,7 @@
       "surface": "Transcript seam: host-sample-only seam vs a normative read endpoint",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4389,7 +4389,7 @@
       "surface": "Replay determinism of host summaries — must `summaryRef` artifact be byte-stable across replays?",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4406,7 +4406,7 @@
       "surface": "Verbatim floor unit: `keepLastTurns` (count) vs `keepLastTokens` (tokens)",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4423,8 +4423,8 @@
       "surface": "No non-steward host advertises `contextBudget` yet",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "non-steward-host",
       "sources": [
         {
           "file": "RFCS/registers/0111-context-economy.gaps.md",
@@ -5120,8 +5120,8 @@
       "surface": "No confirmed provider terms-of-service permits API-shaped third-party automation under a reused consumer-subscription login, for any vendor.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "provider-tos-clearance",
       "sources": [
         {
           "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
@@ -5137,7 +5137,7 @@
       "surface": "Whether the acquisition mechanism is direct API calls under a borrowed session (ToS-risky, cheap) or an official-client subprocess harness (ToS-safer, architecturally distinct — closer to RFC 0035 than to `ctx.callAI`) is unresolved.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -5154,7 +5154,7 @@
       "surface": "Whether `subscription`-mode credentials need their own dedicated schema shape beyond reusing `host.credentials` `scope: \"user\"`, or whether the existing RFC 0046 credential-reference shape is sufficient as-is.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -5171,7 +5171,7 @@
       "surface": "The existing `conformance/src/scenarios/byok-auth-modes.test.ts` scenario hard-codes the current four-item enum via `toEqual([...])`; it will fail once the schema enum gains a fifth value unless updated in the same conformance release.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -5188,8 +5188,8 @@
       "surface": "Rate-limit/seat-abuse potential — even at correct single-user scope (§B clause 8), a host could still architect around the scope constraint by rapidly rotating which user \"owns\" a shared login. Not fully closed by the scope-binding MUST alone.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "docs/KNOWN-LIMITS.md",
       "sources": [
         {
           "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
@@ -5205,7 +5205,7 @@
       "surface": "The new `credential_scope_forbidden` error code's exact envelope shape (does it follow the standard OpenWOP error envelope 1:1, or does it need additional fields identifying which scope was attempted?) is sketched but not fully specified.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {

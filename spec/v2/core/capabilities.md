@@ -255,7 +255,7 @@ Witness `witnessable-gated`; owner RFC 0053.
 
 ### § webhooks
 
-Witness `witnessable-gated`; owner no owning RFC (declaration row); facets `signatureAlgorithms`.
+Witness `witnessable-gated`; owner RFC 0188; facets `deadLetter`, `retryPolicy`, `signatureAlgorithms`.
 
 ### § triggerBridge
 

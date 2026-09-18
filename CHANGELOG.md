@@ -52,6 +52,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.7.1] — 2026-09-18 — zero open gap rows, and a ratchet that keeps it there
+
+### Changed
+
+- **The corpus's last eleven `open` gap rows are disposed of, and nine of them were already answered.** RFC 0111's five and RFC 0121's six were the only `open` rows left anywhere. **Seven closed by fact** — the tree had answered the question and the register had not caught up: `tokenCounter` ships the exact portable enum the row proposed as its default; the transcript seam shipped as a host-sample seam, which is the "avoid a new normative REST surface" answer the row asked for; replay determinism is settled normatively in three places (reuse the recorded `summaryRef`, never re-summarize — a better answer than the question's framing); `keepLastTurns` shipped while `keepLastTokens` exists nowhere in the corpus but that gap row; the five-mode auth enum and its assertion have been shipping since conformance 1.47.0; no dedicated `subscription` schema shape was ever minted because the RFC 0046 credential reference sufficed; and the error envelope needed no extra fields. **Two closed by ruling**, both written down rather than left implicit. **Two re-tokened `externally-gated`**, because they say a steward owes work and no steward does.
+- **RFC 0121 G1 is `externally-gated:provider-tos-clearance` — unownable, and now labelled as such.** Whether a provider's terms permit API-shaped automation under a reused consumer subscription is a legal question about third parties' contracts: no artifact in any repository answers it and no design work moves it. A new tripwire name is used deliberately; `unspecified` would erase the one precise thing about the gap.
+- **RFC 0121 G5 is `transferred:docs/KNOWN-LIMITS.md`.** The row proposed an audit-event MUST for `subscription`-mode credential resolution. On a Parked RFC no host may advertise, that would be a requirement **nothing could ever witness** — no scenario could exercise it, no bundle could carry a row — which reads as a protection that does not exist. Recorded as a known limit instead, with the reasoning.
+
+### Added
+
+- **`openGaps: 0` in `docs/witness-baseline.json`, enforced by `check-registers.mjs`.** Zero is the only baseline value that makes the `open` token self-policing: with it, a new open row has to be argued for; without it, open rows accumulate and the count is a statistic rather than a bound. Sabotage-proved by re-opening one row and watching the gate name it.
+
+### Fixed
+
+- **RFC 0188 left a stub stale one release ago.** `spec/v2/core/capabilities.md` §webhooks still read *"owner no owning RFC (declaration row); facets `signatureAlgorithms`"* while the declaration says `owningRfc: 0188` and three facets. `check-declaration.mjs` verifies the heading exists and nothing about the body, so it passed clean — the same shape of gap this sweep exists to close.
+
+### Known
+
+- **`credential_scope_forbidden` is absent from `spec/v2/errors.json`** while `capabilities.md` §B.8 makes emitting it a MUST — so a v2 host implementing that section has no registered code to emit. Surfaced by the G6 disposition; it is a v2-era registry gap, not an RFC 0121 design gap, and is filed rather than folded into this sweep.
+
 ## [2.7.0] — 2026-09-18 — RFC 0188: the dead-letter read, and a bound kind that finally has somewhere to appear
 
 ### Added
