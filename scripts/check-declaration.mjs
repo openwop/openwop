@@ -202,6 +202,64 @@ for (const p of decl.profiles) {
   console.log(`check-declaration rule 11: ${scanned} source file(s) under conformance/src/{scenarios,lib} check the seams advert; each records \`inapplicable\` when it is absent.`);
 }
 
+// --- rule 12: a declared facet and the advertisable surface agree -----------
+//
+// The facet properties in schemas/v2/capabilities.schema.json come from a
+// hand-decided spec/v2/facets/<key>.schema.json override, or are SEEDED FROM
+// V1 when there is none. They are NOT derived from declaration.facets. So the
+// two can drift in both directions, and each direction is a different bug:
+//
+//   schema has it, declaration does not  →  an advertisable facet that no
+//       family owns: it carries no RFC 0189 coverage obligation, so nothing
+//       ever demands v2 text for something a host can put on the wire. This
+//       is how workflowChainPacks.deferredParameters and .hostExpansionSeam
+//       survived (2.8.2) — removing them from the declaration ALONE would
+//       have dropped the obligation and left both advertisable.
+//
+//   declaration has it, schema does not  →  usually the same drift, but NOT
+//       always. A facet can exist to anchor a v1 peer-dependency alias that
+//       v2 never meant to make advertisable: the alias generator builds its
+//       family map from declaration.facets, so deleting the entry would make
+//       the alias `unresolved`. secrets.resolveInPack is exactly this — three
+//       published registry packs name it, and its alias row carries
+//       removalTrigger: v1-end-of-support. So this direction is a failure
+//       only when NO alias row explains it.
+{
+  const RESERVED = new Set(['supported', 'status', 'since', 'until', 'witness', 'maturity', 'adoption', 'notes', 'note']);
+  const caps = read('schemas/v2/capabilities.schema.json');
+  const aliasFacets = new Set();
+  for (const r of read('spec/v2/peer-dependency-aliases.json').rows) {
+    for (const x of r.facets ?? []) aliasFacets.add(`${r.family}.${x}`);
+  }
+  const blocks = {};
+  (function walk(o) {
+    if (Array.isArray(o)) { for (const i of o) walk(i); return; }
+    if (!o || typeof o !== 'object') return;
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === 'object' && v.properties && typeof v.properties === 'object'
+          && ('witness' in v.properties || 'status' in v.properties) && !(k in blocks)) blocks[k] = v;
+      walk(v);
+    }
+  })(caps);
+  let compared = 0, anchored = 0;
+  for (const f of decl.families) {
+    const block = blocks[f.key];
+    if (!block) continue;
+    compared += 1;
+    const onWire = new Set(Object.keys(block.properties).filter((p) => !RESERVED.has(p)));
+    const declared = new Set(f.facets ?? []);
+    for (const x of onWire) {
+      if (!declared.has(x)) failures.push(`${f.key}.${x}: advertisable in schemas/v2/capabilities.schema.json but NOT in declaration.json facets[] — an advertisable facet no family owns carries no RFC 0189 coverage obligation, so nothing will ever demand v2 text for it. Add it to facets[], or cut it from the wire with a spec/v2/facets/${f.key}.schema.json override.`);
+    }
+    for (const x of declared) {
+      if (onWire.has(x)) continue;
+      if (aliasFacets.has(`${f.key}.${x}`)) { anchored += 1; continue; }
+      failures.push(`${f.key}.${x}: declared in declaration.json facets[] but has NO property in schemas/v2/capabilities.schema.json, and no peer-dependency-aliases.json row explains it — a host cannot advertise it (the record is additionalProperties:false). Give it a property in spec/v2/facets/${f.key}.schema.json, or remove it from facets[].`);
+    }
+  }
+  console.log(`check-declaration rule 12: ${compared} family facet set(s) compared against the advertisable schema; ${anchored} declared-only facet(s) anchored by a v1 peer-dependency alias row`);
+}
+
 console.log(`check-declaration rule 10: ${floorFilesRead} floor file(s) read for family gates and seam tokens; facet conditionals (refKinds, a signed-token mount) are not decided by this rule`);
 
 if (failures.length) { console.error('=== check-declaration FAILED ===\n  ' + failures.join('\n  ')); process.exit(1); }
