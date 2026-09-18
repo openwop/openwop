@@ -9846,7 +9846,7 @@
       "surface": "RFC 0035 (Active, Parked on a non-steward fencing host) is superseded by this child's `packs` obligation at the cut; until then it stays Parked and its §B probes are the eight `sandbox-*` scenarios this RFC binds to execution.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
