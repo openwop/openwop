@@ -137,6 +137,36 @@ def v2_openapi_and_seams():
             {'name': 'workflowId', 'in': 'query', 'required': False, 'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/workflowId'}, 'description': 'Exact-match filter (when advertised in runList.filters).'},
             {'name': 'status', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'enum': ['pending', 'running', 'paused', 'waiting-approval', 'waiting-input', 'waiting-external', 'completed', 'failed', 'cancelling', 'cancelled']}, 'description': 'Exact-match filter (when advertised in runList.filters).'}],
         'responses': {'200': {'description': 'One page of the caller\'s runs.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/run-list-response.schema.json'}}}}, '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}
+    # RFC 0188 — the webhook DELIVERY dead-letter read (gated on the webhooks.deadLetter facet).
+    # `webhooks.md` §Durability has always said an exhausted delivery is routed to a sink
+    # "inspectable for retentionDays", and the corpus served no endpoint that could see it — so
+    # every host bundle recorded "exhaustion was observed, routing to the sink was not", and the
+    # `deliveryId` KIND had no v2 surface to appear on at all. This is that read.
+    paths['/webhooks/{webhookId}/dead-letters'] = {'get': {
+        'tags': ['Webhooks'],
+        'operationId': 'listWebhookDeadLetters',
+        'summary': "A subscription's dead-lettered deliveries (RFC 0188 §A.1)",
+        'description': ('The read that makes `webhooks.md` §Durability observable. A delivery whose retries are exhausted, '
+            'or a `payload_unprojectable` delivery dead-lettered on its first attempt, appears here until `retentionDays` '
+            'elapse. Gated on the `webhooks.deadLetter` facet: a host that does not advertise it answers `404 not_found`. '
+            '**Content-free (RFC 0188 §B.1):** the record NAMES a delivery and never carries the delivered bytes, the '
+            'request headers, or the subscription secret \u2014 a dead-letter read is a diagnostic surface, not a '
+            'payload-replay surface.'),
+        'parameters': [
+            {'name': 'webhookId', 'in': 'path', 'required': True,
+             'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'},
+             'description': 'The subscription, tenant-bound (`identity.md` \u00a75, RFC 0187 \u00a7A.1) and carried as ONE path segment \u2014 `~`-projected per RFC 0184, or percent-encoded.'},
+            {'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1},
+             'description': 'Page size; clamped to `webhooks.deadLetter.maxPageSize`.'},
+            {'name': 'cursor', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 2048},
+             'description': "Opaque cursor from a previous page's `nextCursor`. A cursor minted for another subscription MUST be refused `400 validation_error`."}],
+        'responses': {
+            '200': {'description': 'One page of dead-lettered deliveries, newest first.',
+                    'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/webhook-dead-letter-page.schema.json'}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
     paths['/host/events'] = {'get': {'tags': ['Host'], 'operationId': 'streamHostEvents', 'summary': 'Host-scoped events (heartbeat.*) as SSE (RFC 0171 §E.1)', 'description': 'The documented default hostEvents address; a host MAY declare another under `heartbeat.deliveryChannel`. Content-free of run data.', 'responses': {'200': {'description': 'text/event-stream of hostEvents messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})

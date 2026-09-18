@@ -128,9 +128,23 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
     for (const e of effects) expectBound(e['effectId'], 'effectId', 'GET /runs/{runId}/effects', PER_KIND);
   });
 
-  it('deliveryId: the kind has no wire surface to be bound on — a corpus gap, recorded', async () => {
+  it('deliveryId: every record in the dead-letter read carries a bound id in the caller\'s tenant', async () => {
+    // Until RFC 0188 this leg was an unconditional softSkip recording a CORPUS
+    // gap: `identity.md` §5 bound the kind and no v2 surface returned one, so no
+    // host could be held to it. The dead-letter read is that surface.
     if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
-    if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
-    return softSkip('inapplicable', 'identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion.');
+    const fam = await gateFamily('webhooks');
+    if (!fam) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
+    if (!fam['deadLetter']) return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — it serves no dead-letter read, and RFC 0188 §A.5 makes that a 404 rather than an obligation');
+    const reg = await http(() => driver.post('/webhooks', { url: 'https://subscriber.invalid/hook', events: ['run.completed'] }));
+    if (reg === null || reg.status !== 201) return softSkip('blocked', `POST /webhooks answered ${reg?.status ?? 'no response'} — no subscription to read a sink for`);
+    const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
+    if (typeof webhookId !== 'string') return softSkip('blocked', 'the mint returned no webhookId');
+    const res = await http(() => driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`));
+    if (res === null) return softSkip('blocked', 'GET /webhooks/{webhookId}/dead-letters unreachable (fetch failed)');
+    expect(res.status, req(PER_KIND, 'RFC 0188 §A.1', 'a host advertising webhooks.deadLetter MUST serve the dead-letter read (200)')).toBe(200);
+    const rows = ((res.json as { deliveries?: Array<Record<string, unknown>> } | null)?.deliveries ?? []);
+    if (rows.length === 0) return softSkip('inapplicable', 'the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record');
+    for (const r of rows) expectBound(r['deliveryId'], 'deliveryId', 'GET /webhooks/{webhookId}/dead-letters', PER_KIND);
   });
 });

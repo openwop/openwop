@@ -113,7 +113,7 @@ New fixture: a workflow node that deterministically exhausts a short retry polic
 - [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises `host.deadLetter` and passes retry-exhaustion + fork-replayable.
 
-**Implementation note (2026-05-25):** Capability block (top-level `capabilities.deadLetter`) + `run.dead_lettered` event + `§host.deadLetter` contract + the two scenarios + the `deadletter/exhaust` seam landed on `main`. Composes with RFC 0009 retry + RFC 0011 fork; distinct from `queueBus.deadLetterSupported` (transport-level). No new SECURITY invariant. Status stays `Draft`. **Completes the MyndHyve protocol-extension batch (RFCs 0045–0054) on the openwop side.**
+**Implementation note (2026-05-25):** Capability block (top-level `capabilities.deadLetter`) + `run.dead_lettered` event + `§host.deadLetter` contract + the two scenarios + the `deadletter/exhaust` seam landed on `main`. Composes with RFC 0009 retry + RFC 0011 fork; distinct from `queueBus.deadLetterSupported` (transport-level). No new SECURITY invariant. Status stayed `Draft` **at the time of that note** — the header above is current and reads `Accepted`. (Clarified 2026-09-18: the sentence was read as a live contradiction. It is a dated record of the filing PR, not a standing status claim. **Scope, since RFC 0188 now cites this RFC for the split:** this RFC's sink is RUN-scoped — `run.dead-lettered`, and a `retentionDays` that governs a dead-lettered run's fork-eligibility window. It is not the webhook DELIVERY sink, which RFC 0188 owns under a `webhooks.deadLetter` facet.) **Completes the MyndHyve protocol-extension batch (RFCs 0045–0054) on the openwop side.**
 
 ## References
 

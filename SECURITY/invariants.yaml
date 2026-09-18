@@ -4215,3 +4215,28 @@ invariants:
       def closed deliberately in v2 (`refineFeedback`) refuses both.
     witness: witnessable-unaided
     witnessReview: reviewed-2026-09-17
+  - id: dead-letter-read-carries-no-payload
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-durable-delivery.test.ts
+    note: |
+      RFC 0188 §B.1 / spec/v2/core/webhooks.md §Durability. A dead-letter record
+      MUST NOT carry the delivered body, the delivery headers, or the
+      subscription secret. It names a delivery — id, run, event, attempt count,
+      timestamps, reason — and nothing more.
+
+      Why this is an invariant and not a preference: a subscriber's dead-letter
+      queue is, by construction, every event the subscriber FAILED to receive.
+      A record that carried the body would turn one read scope into a complete
+      replay of the traffic a subscriber never saw, retained for
+      `retentionDays` — the largest single payload-disclosure surface the
+      protocol could have, and it would look like a diagnostic.
+
+      The read is also the seat that makes the `deliveryId` kind witnessable
+      (identity.md §5), so the temptation to enrich it is real: every field
+      added here is visible to anyone with `webhooks:manage` on the
+      subscription, forever, without the tenant check that guards the run.
+    witness: witnessable-unaided
+    witnessReview: reviewed-2026-09-18

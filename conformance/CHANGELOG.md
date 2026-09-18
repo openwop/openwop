@@ -1,5 +1,19 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.7.0] — 2026-09-18 — the dead-letter read gets its scenarios
+
+### Added
+
+- `v2-webhook-durable-delivery` gains two legs: the dead-letter read is served,
+  and its records carry no delivered payload. Its §Durability leg stops
+  soft-skipping unconditionally — it now asserts the exhausted delivery is IN
+  the sink, the half no bundle has ever witnessed.
+- `v2-bound-id-kinds`'s `deliveryId` leg stops recording a corpus gap and
+  asserts the bound grammar on a real record.
+
+Both are gated on the new `webhooks.deadLetter` facet; a host without it records
+`inapplicable`, not `blocked`.
+
 ## [2.6.1] — 2026-09-18 — the correction that half-landed
 
 **Why a patch.** No conformance code changes; two schema descriptions.

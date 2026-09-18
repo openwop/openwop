@@ -263,6 +263,11 @@
     },
     {
       "method": "GET",
+      "path": "/webhooks/{webhookId}/dead-letters",
+      "operationId": "listWebhookDeadLetters"
+    },
+    {
+      "method": "GET",
       "path": "/workflows/{workflowId}",
       "operationId": "getWorkflow"
     }
@@ -278,7 +283,7 @@
     }
   ],
   "counts": {
-    "operations": 52,
+    "operations": 53,
     "channels": 2
   }
 }

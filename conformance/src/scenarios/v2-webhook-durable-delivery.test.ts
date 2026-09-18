@@ -31,6 +31,7 @@ import { afterEach, describe, it, expect } from 'vitest';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
+import { projectBoundId } from '../lib/bound-id.js';
 import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
@@ -357,11 +358,64 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
         req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', `retries MUST stop at the advertised retryPolicy.maxAttempts (${policy.maxAttempts}) — exhaustion routes to the dead-letter sink, not to an unbounded loop`),
       ).toBeLessThanOrEqual(policy.maxAttempts);
     }
+    // The sink itself. Until RFC 0188 this was an UNCONDITIONAL soft-skip on
+    // every host — `webhooks.md` §Durability said the sink was "inspectable for
+    // retentionDays" and the corpus served no read that could inspect it, so
+    // every bundle recorded "exhaustion was observed, routing to the sink was
+    // not". The read exists now; read it before deleting the subscription.
+    const fam = await gateFamily('webhooks');
+    if (!fam?.['deadLetter']) {
+      await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
+      return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)');
+    }
+    const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
     await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
-    // The sink itself: webhooks.md §Durability says "inspectable for retentionDays",
-    // but api/v2/openapi.yaml carries no dead-letter read for webhook deliveries
-    // (no GET /webhooks/{webhookId}/dead-letters). Without a normative read the
-    // routing to the sink is not observable from the suite.
-    return softSkip('blocked', 'no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not');
+    expect(
+      sink.status === 200 && ((sink.json as { deliveries?: unknown[] } | null)?.deliveries ?? []).some((r) => (r as Record<string, unknown>)['runId'] === runId),
+      req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', 'an exhausted delivery MUST be routed to the sink, not dropped — the half no bundle could witness before RFC 0188 served a read'),
+    ).toBe(true);
+  }, DEAD_LETTER_TEST_TIMEOUT_MS);
+
+  it('the dead-letter read is served and its records carry no payload', async () => {
+    // Its own `it` on purpose: `generate-requirement-registry.mjs` takes the
+    // FIRST req() id in a body as the explicitId, so an id minted second in a
+    // shared `it` never reaches requirements.json and no bundle can carry a row
+    // for it — the same trap that made `0173.pack-isolation.seam` unwitnessable.
+    if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
+    const fam = await gateFamily('webhooks');
+    if (!fam) return softSkip('inapplicable', 'webhooks family not advertised');
+    if (!fam['deadLetter']) return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation');
+    const reg = await driver.post('/webhooks', { url: 'https://subscriber.invalid/hook', events: ['run.completed'] });
+    if (reg.status !== 201) return softSkip('blocked', `POST /webhooks answered ${reg.status} — no subscription to read a sink for`);
+    const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
+    if (typeof webhookId !== 'string') return softSkip('blocked', 'the mint returned no webhookId');
+    const sink = await driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`);
+    await driver.delete(`/webhooks/${encodeURIComponent(webhookId)}`);
+    expect(
+      sink.status,
+      req('openwop.requirement.0188.dead-letter-read', 'RFC 0188 §A.1', 'a host advertising webhooks.deadLetter MUST serve GET /webhooks/{webhookId}/dead-letters'),
+    ).toBe(200);
+  }, DEAD_LETTER_TEST_TIMEOUT_MS);
+
+  it('a dead-letter record carries no delivered payload', async () => {
+    // Its own `it`: RFC 0168 §A.1 allows one explicit requirement id per it(),
+    // and `check-req-only` enforces it.
+    if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
+    const fam = await gateFamily('webhooks');
+    if (!fam?.['deadLetter']) return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet');
+    const reg = await driver.post('/webhooks', { url: 'https://subscriber.invalid/hook', events: ['run.completed'] });
+    if (reg.status !== 201) return softSkip('blocked', `POST /webhooks answered ${reg.status}`);
+    const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
+    if (typeof webhookId !== 'string') return softSkip('blocked', 'the mint returned no webhookId');
+    const sink = await driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`);
+    await driver.delete(`/webhooks/${encodeURIComponent(webhookId)}`);
+    if (sink.status !== 200) return softSkip('blocked', `the dead-letter read answered ${sink.status}`);
+    const rows = ((sink.json as { deliveries?: Array<Record<string, unknown>> } | null)?.deliveries ?? []);
+    for (const r of rows) {
+      expect(
+        r['body'] === undefined && r['headers'] === undefined && r['secret'] === undefined,
+        req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', 'a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received'),
+      ).toBe(true);
+    }
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
 });
