@@ -178,6 +178,14 @@ The delivery-time guard is what contains this: a host that correctly implements 
 
 **Enforcement: host self-attestation + code review.** Filing this as a protocol-tier MUST-NOT would repeat the RFC 0144 defect §4.8 names — a normative claim whose enforcement surface was never declared.
 
+### 4.10 `dead-letter-read-carries-no-payload` — the diagnostic that replays the traffic a subscriber never saw
+
+**Threat.** RFC 0188 adds `GET /webhooks/{webhookId}/dead-letters`, the read that finally makes `webhooks.md` §Durability observable. A dead-letter queue is, by construction, **every event the subscriber failed to receive** — so a record that carried the delivered body would turn one `webhooks:manage` read into a complete replay of exactly the traffic that never arrived, retained for `retentionDays`. It would be the largest single payload-disclosure surface in the protocol, and it would look like a diagnostic.
+
+**Why the pressure is real.** The read is also the seat that makes the `deliveryId` kind witnessable (`identity.md` §5), so there is a standing reason to enrich it — and every field added is visible for the whole retention window, to anyone with manage scope on the subscription, without the tenant check that guards a run.
+
+**Control.** RFC 0188 §B.1 and `webhooks.md` §Durability: the record MUST NOT carry the delivered body, the delivery headers, or the subscription secret. `schemas/v2/webhook-dead-letter-page.schema.json` is `additionalProperties: false` over a closed field list — id, subscription, run, event, attempt count, timestamps, reason, last status — so a host cannot add one without failing validation.
+
 ## 6. Residual risks
 
 - **Host-internal memory.** A reference impl that holds decrypted secrets in process memory remains vulnerable to OS-level attacks (core dumps, swap, debug attach). Out of scope for protocol-level threat model; handled by host operator policy.

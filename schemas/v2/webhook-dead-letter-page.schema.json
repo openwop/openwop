@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/webhook-dead-letter-page.schema.json",
+  "title": "WebhookDeadLetterPage",
+  "description": "RFC 0188 §A.1 — one page of dead-lettered deliveries for a subscription. This is the read that makes `webhooks.md` §Durability observable: before it, the corpus asserted that an exhausted delivery is routed to a sink `inspectable for retentionDays` and served no endpoint that could see it, so every host's bundle recorded `exhaustion was observed, routing to the sink was not`. The record NAMES a delivery; it never carries the delivered bytes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deliveries"],
+  "properties": {
+    "deliveries": {
+      "type": "array",
+      "description": "Dead-lettered deliveries, newest first. Empty when the subscription has none within `retentionDays`.",
+      "items": { "$ref": "#/$defs/deadLetteredDelivery" }
+    },
+    "nextCursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Opaque continuation cursor; absent on the last page. A cursor minted by one subscription MUST NOT be accepted on another (RFC 0182 §A.3 cursor discipline)."
+    }
+  },
+  "$defs": {
+    "deadLetteredDelivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deliveryId", "webhookId", "runId", "eventId", "eventType", "attempts", "deadLetteredAt", "expiresAt", "reason"],
+      "description": "One delivery that will not be retried again. **Content-free by construction (RFC 0188 §B.1):** no request body, no delivery headers, no subscription secret. A dead-letter read is a diagnostic surface, not a payload-replay surface, and a record that carried the body would hand an attacker with read scope every event the subscriber ever failed to receive.",
+      "properties": {
+        "deliveryId": {
+          "$ref": "ids.schema.json#/$defs/deliveryId",
+          "description": "The delivery attempt's tenant-bound id. This is the seat that makes the `deliveryId` KIND witnessable: `identity.md` §5 bound it and, until this read existed, no v2 surface returned one, so `v2-bound-id-kinds` recorded a CORPUS gap rather than a host one."
+        },
+        "webhookId": { "$ref": "ids.schema.json#/$defs/subscriptionId", "description": "The subscription the delivery was for. Equals the path segment." },
+        "runId": { "$ref": "ids.schema.json#/$defs/runId", "description": "The run whose event was being delivered." },
+        "eventId": { "$ref": "ids.schema.json#/$defs/eventId", "description": "The event that was being delivered." },
+        "eventType": { "type": "string", "minLength": 1, "description": "The event type, in the spelling the subscription's contract major renders (RFC 0187 §B)." },
+        "attempts": { "type": "integer", "minimum": 1, "description": "How many delivery attempts were made before the host gave up. `1` for `payload_unprojectable`, which is dead-lettered on first attempt." },
+        "deadLetteredAt": { "type": "string", "format": "date-time", "description": "When the host routed the delivery to the sink." },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this record ages out. **This is what makes `retentionDays` observable rather than merely advertised:** a reader can check `expiresAt − deadLetteredAt` against the advertised facet, which no surface could do before."
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["retries_exhausted", "payload_unprojectable"],
+          "description": "Why it will not be retried. `retries_exhausted`: the retry policy ran out. `payload_unprojectable`: the event could not be rendered into the subscription's contract major, which `webhooks.md` dead-letters on the FIRST attempt because retrying cannot change the outcome."
+        },
+        "lastStatus": { "type": "integer", "description": "The HTTP status of the final attempt, when there was a response. Absent when every attempt failed to connect." }
+      }
+    }
+  }
+}

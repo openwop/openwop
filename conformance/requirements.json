@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 576,
-    "tests": 2179,
-    "withStableId": 2179,
+    "tests": 2181,
+    "withStableId": 2181,
     "interpolatedTitles": 0,
-    "explicitIds": 2132
+    "explicitIds": 2135
   },
   "records": [
     {
@@ -26055,12 +26055,17 @@
       ]
     },
     {
-      "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
+      "id": "openwop.it.v2-bound-id-kinds.deliveryid-every-record-in-the-dead-letter-read-carries-a-bound-id-in-the-caller",
       "file": "v2-bound-id-kinds.test.ts",
       "line": 131,
-      "title": "deliveryId: the kind has no wire surface to be bound on — a corpus gap, recorded",
-      "explicitId": null,
-      "citations": []
+      "title": "deliveryId: every record in the dead-letter read carries a bound id in the caller's tenant",
+      "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
+      "citations": [
+        {
+          "section": "RFC 0188 §A.1",
+          "requirement": "a host advertising webhooks.deadLetter MUST serve the dead-letter read (200)"
+        }
+      ]
     },
     {
       "id": "openwop.it.v2-bound-id-path-projection.a-tenant-bound-id-is-readable-at-its-escaped-path-segment-links-carry-that-form",
@@ -29388,7 +29393,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-failed-attempt-is-retried-and-the-event-is-delivered-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 233,
+      "line": 234,
       "title": "a failed attempt is retried and the event is delivered at least once",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery",
       "citations": [
@@ -29419,7 +29424,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 321,
+      "line": 322,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -29435,6 +29440,36 @@
           "section": "webhooks.md §Durability",
           "requirement": null,
           "interpolated": true
+        },
+        {
+          "section": "webhooks.md §Durability",
+          "requirement": "an exhausted delivery MUST be routed to the sink, not dropped — the half no bundle could witness before RFC 0188 served a read"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
+      "file": "v2-webhook-durable-delivery.test.ts",
+      "line": 379,
+      "title": "the dead-letter read is served and its records carry no payload",
+      "explicitId": "openwop.requirement.0188.dead-letter-read",
+      "citations": [
+        {
+          "section": "RFC 0188 §A.1",
+          "requirement": "a host advertising webhooks.deadLetter MUST serve GET /webhooks/{webhookId}/dead-letters"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
+      "file": "v2-webhook-durable-delivery.test.ts",
+      "line": 400,
+      "title": "a dead-letter record carries no delivered payload",
+      "explicitId": "openwop.requirement.0188.dead-letter-content-free",
+      "citations": [
+        {
+          "section": "RFC 0188 §B.1",
+          "requirement": "a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received"
         }
       ]
     },
