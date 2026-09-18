@@ -192,13 +192,13 @@ The honest statement is that this RFC is process, and its evidence is that the p
 
 ## Acceptance criteria
 
-- [ ] `extensions` entries are governed by a written procedure; a second org can be added without inventing one.
-- [ ] The registrar is unambiguous (A.1) and the refusal predicate is not host-controlled.
-- [ ] The effective date is the release, not the merge (A.5), and the corollary skew behaviour is stated.
-- [ ] Deregistration is foreclosed before anyone attempts it (A.4), with the retroactive-unreadability reason recorded.
-- [ ] The era-2 reader rule is left to RFC 0176 §A.3 / `persistence.md` §The reader rule (A.4a): this RFC binds the WRITER only. Asked and answered 2026-09-14 on a production census — the refusal stands, and `v2-unmapped-type-refused` still witnesses both halves unchanged.
-- [ ] RFC 0169 §Unresolved-1 is closed in favour of the short form.
-- [ ] `spec-corpus-validity` stays green; `openwop-check.sh` passes on the merged tree.
+- [x] `extensions` entries are governed by a written procedure; a second org can be added without inventing one. — evidence: §A (this RFC) — `spec/v2/declaration.json` `extensions` has three orgs registered under it (2026-09-17)
+- [x] The registrar is unambiguous (A.1) and the refusal predicate is not host-controlled. — evidence: §A.1 (2026-09-17)
+- [x] The effective date is the release, not the merge (A.5), and the corollary skew behaviour is stated. — evidence: §A.5 (2026-09-17)
+- [x] Deregistration is foreclosed before anyone attempts it (A.4), with the retroactive-unreadability reason recorded. — evidence: §A.4 (2026-09-17)
+- [x] The era-2 reader rule is left to RFC 0176 §A.3 / `persistence.md` §The reader rule (A.4a): this RFC binds the WRITER only. Asked and answered 2026-09-14 on a production census — the refusal stands, and `v2-unmapped-type-refused` still witnesses both halves unchanged. — evidence: §A.4a; `persistence.md` §The reader rule (2026-09-17)
+- [x] RFC 0169 §Unresolved-1 is closed in favour of the short form. — evidence: RFC 0169 §Unresolved (2026-09-17)
+- [x] `spec-corpus-validity` stays green; `openwop-check.sh` passes on the merged tree. — evidence: `openwop-check.sh` green on main at every merge since (2026-09-17)
 
 ## References
 

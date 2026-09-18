@@ -9370,7 +9370,7 @@
       "surface": "The C.5 header-negotiation rule has no v1 precedent: a v1 client never sends `OpenWOP-Version`, so the rule for an unversioned path with no header (default to `preferredVersion`) is asserted here and witnessed only by the Phase 3 dual-stack scenario.",
       "witness": "witnessable-gated",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9387,7 +9387,7 @@
       "surface": "Eighteen axes were found by grep; the umbrella cannot prove the enumeration is complete. A nineteenth found later is added to the table by the child that meets it, not silently.",
       "witness": "negative-existence",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9404,7 +9404,7 @@
       "surface": "Codemods are pure transforms over persisted artifacts; nothing rewrites an SDK consumer's source. The migration guide carries that; no gate proves the guide is complete.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9421,7 +9421,7 @@
       "surface": "v2 MUST-NOTs cannot enter `SECURITY/invariants.yaml` at Draft (`check-security-invariants.sh` requires a v1 public test), so they live as child falsifiability rows in `gaps.json` until Phase 3. The witness-class gate does not see them until then.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9438,7 +9438,7 @@
       "surface": "The org question for `openwop.dev/spec/v2/`.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9455,7 +9455,7 @@
       "surface": "Whether the bundle attestation is a bare Ed25519 envelope or an in-toto statement.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9472,7 +9472,7 @@
       "surface": "`@openwop/spec-artifacts` does not exist; its publish is tag-triggered like the suite's and needs its own identity check (`check-published-suite-identity.mjs` generalized).",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9489,7 +9489,7 @@
       "surface": "23 interpolated test titles can never derive a stable id; they need explicit ids minted by hand before the lint can be total.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9506,7 +9506,7 @@
       "surface": "55 `unwitnessable` invariants exist; the protocol-tier subset must be given a path, demoted, or fail the gate at the cut. The count is measured, not decided, here.",
       "witness": "unwitnessable",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9608,7 +9608,7 @@
       "surface": "The Subject MUST on the `run.started` echo is unenforceable while `runStarted` is `additionalProperties: true` (63 of 120 payload defs open).",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9625,8 +9625,8 @@
       "surface": "mTLS revocation: CRL, OCSP, or short-lived certificates — which a host advertises is its choice, but no host has any today, and the corpus has no CRL/OCSP text at all.",
       "witness": "seam-gated",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "non-steward-host",
       "sources": [
         {
           "file": "RFCS/registers/0170-v2-identity.gaps.md",
@@ -9642,7 +9642,7 @@
       "surface": "DPoP availability across the three SDKs is unmeasured (RFC 0154 G2).",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9659,7 +9659,7 @@
       "surface": "Whether `tenantId` itself needs a grammar beyond the opaque form (host-minted vs operator-chosen).",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9676,7 +9676,7 @@
       "surface": "Eight invariants named here enter `SECURITY/invariants.yaml` only with tests (RFC 0167 §C rule); until Phase 3 they exist as falsifiability rows.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9693,7 +9693,7 @@
       "surface": "Whether `keyClass` extends to `oidc` (a stable `sub` is `opaque-idp` by RFC 0163's argument).",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9710,7 +9710,7 @@
       "surface": "The generator folded 21 three-segment types silently; two are recorded exceptions (`envelope.nl-to-format-engaged`, `trigger.subscription-state-changed`) and the rest fold cleanly — re-verified in this PR; the corpus gate over the enum lands in Phase 3.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9727,7 +9727,7 @@
       "surface": "The poll response shape disagreed between `version-negotiation.md:300–308` (five fields, `isTerminal`) and `api/openapi.yaml:427–435` (two fields, `isComplete`) and no register recorded it; hosts implemented the OpenAPI shape.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9744,7 +9744,7 @@
       "surface": "`hostEvents` (heartbeat) needs a declared delivery address; whether a normative transport is required is undecided.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9761,7 +9761,7 @@
       "surface": "The suite's `LEGACY` tolerance for two retired idempotency spellings leaves at the cut; a host still emitting one fails `error-registry`.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9778,7 +9778,7 @@
       "surface": "E1 (partial reassembly) and E2 (multi-turn correlation) get a contract in `spec/v2/core/events.md`; the contract text is not written here.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9795,7 +9795,7 @@
       "surface": "The header-less default to `preferredVersion` has no v1 precedent on the protocol surface (the A2A lane has one); witnessed only by the dual-stack scenario on a host advertising two majors. Carried from RFC 0167 G1.",
       "witness": "witnessable-gated",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9812,7 +9812,7 @@
       "surface": "MAINTAINERS §\"Major bump\" step 6 edits `spec/v1/auth.md`'s status legend at the cut while RFC 0167 says the v1 tree is read-only from the cut.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9829,7 +9829,7 @@
       "surface": "Whether `OpenWOP-Version` on requests accepts `major.minor`.",
       "witness": "claims-check",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9863,8 +9863,8 @@
       "surface": "The effect-seam manifest is a host self-declaration; a seam omitted from it is invisible to the suite (`negative-existence`). The RFC 0140 R5 audit class (outbound clients vs the manifest) is the only check and is not a corpus gate.",
       "witness": "negative-existence",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "non-steward-host",
       "sources": [
         {
           "file": "RFCS/registers/0173-v2-security-defaults.gaps.md",
@@ -9880,7 +9880,7 @@
       "surface": "`approversList` enforcement on a host with no RBAC surface (`refKinds` group or role).",
       "witness": "witnessable-gated",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9897,7 +9897,7 @@
       "surface": "Compensation and Layer 2 are core obligations *of their surfaces* with declared witnesses; either may still end in `ext/` at the cut if the witness (read projection, fixture provider) does not land.",
       "witness": "seam-gated",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9914,7 +9914,7 @@
       "surface": "`interrupt.approverRouting` has two named advertisers in RFC 0104's header and no INTEROP-MATRIX row; `compensation.supported`'s advertiser status is recorded three ways (extensions.json, two matrix rows).",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9999,8 +9999,8 @@
       "surface": "The 90-day refresh SLA is the shortest window both upstreams' lifecycle policies exceed; it has not been measured against an actual upstream release cadence.",
       "witness": "unwitnessable",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "ROADMAP.md#implementation-ecosystem",
       "sources": [
         {
           "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
@@ -10016,7 +10016,7 @@
       "surface": "Authenticated negotiation and the floor are witnessed only through the C.1 seams profile (the wire toward a peer is unobservable from the host's own API); the `negotiation.decided` event is the normative surface.",
       "witness": "seam-gated",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10050,7 +10050,7 @@
       "surface": "Whether `negotiation.decided` carries the peer origin in clear or as a digest.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10067,7 +10067,7 @@
       "surface": "Whether the atomic per-run backfill (stamp `3`, rewrite `type` under the same key, original preserved) is allowed in v2.0 or deferred to a later RFC.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10101,7 +10101,7 @@
       "surface": "The corpus-tag pin was recorded as a done Phase 0 item; the inventory finds 1 of 3 consumers pinned (openwop-app) — openwop-sdks tracks `main`, MyndHyve has no vendored corpus and a caret range, and the registry is unpinned and drifted (RFC 0177 §C.6).",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10152,7 +10152,7 @@
       "surface": "Whether `registry/v2/` carries steward re-signs of `core.openwop.*` / `vendor.openwop*` or only author re-publications.",
       "witness": "unwitnessable",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10169,7 +10169,7 @@
       "surface": "The alias table cannot be generated until `spec/v2/declaration.json` exists (RFC 0169, Phase 3); the seven guaranteed rows are known from the inventory.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10203,8 +10203,8 @@
       "surface": "The portable `{{params.*}}` deferral (WCP4): expansion materializes `parameters` into workflow `variables[]` and rewrites `{{params.x}}` into a PromptTemplate `{{varName}}` with `source: \"variable\"`, gated behind a capability with replay determinism for the run-scoped bag. Not in v2.0.",
       "witness": "unwitnessable",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "ROADMAP.md#implementation-ecosystem",
       "sources": [
         {
           "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
@@ -10220,7 +10220,7 @@
       "surface": "The registry's vendored `node-pack-manifest.schema.json` lacks the RFC 0138 hatch (drifted, unpinned) — the registry rejects the field the protocol requires; 7 of 13 vendored schemas drift from the corpus.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
