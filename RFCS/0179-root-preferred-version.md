@@ -37,7 +37,7 @@ Suite 1.163.0: schema acceptance only (`spec-corpus-validity` compiles the field
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 member of `protocolVersions[]`; equals `protocolVersion` on a single-major host | discovery document | the suite, unaided (2.0.0 `dual-stack-negotiation`) | witnessable — unaided |
+| §A.1 member of `protocolVersions[]`; equals `protocolVersion` on a single-major host | `openwop.requirement.0172.preferred-version-default` — its `.member` leg asserts both clauses by name, `executed-pass` on BOTH certified bundles | the suite, unaided | witnessable — unaided |
 
 ## Alternatives considered
 

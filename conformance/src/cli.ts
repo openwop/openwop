@@ -75,6 +75,10 @@ interface ParsedArgs {
   readonly signingKeyPath: string | undefined;
   readonly signingKeyId: string | undefined;
   readonly verifierKeyPath: string | undefined;
+  /** `--verify <bundle.json>` — audit a bundle someone else cut, without cloning the corpus. */
+  readonly verifyPath: string | undefined;
+  /** `--host-key <pem>` — the key `--verify` checks the host signature under. Absent ⇒ the verdict is INCOMPLETE, not clean. */
+  readonly verifyHostKeyPath: string | undefined;
   readonly verifierKeyId: string | undefined;
   /**
    * S43 (2026-08-18) — cap on concurrently running scenario FILES, forwarded to
@@ -100,6 +104,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let bundleVersion: '2' | '3' = '3';
   let hostBuild: ParsedArgs['hostBuild'];
   let evidenceTier: ParsedArgs['evidenceTier'] = 'self';
+  let verifyPath: string | undefined, verifyHostKeyPath: string | undefined;
   let signingKeyPath: string | undefined, signingKeyId: string | undefined, verifierKeyPath: string | undefined, verifierKeyId: string | undefined;
   let targetMajor: 1 | 2 | undefined;
   let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
@@ -187,6 +192,12 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       // `OPENWOP_REQUIRE_BEHAVIOR=true` did anything. So a cut that named the
       // flag measured the LOOSE answer and reported the strict one — the exact
       // failure shape the runbook warns about, in the tool that measures it.
+      case '--verify':
+        verifyPath = nextValue();
+        break;
+      case '--host-key':
+        verifyHostKeyPath = nextValue();
+        break;
       case '--require-behavior':
         process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
         break;
@@ -223,6 +234,8 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     verifierKeyPath,
     verifierKeyId,
     maxWorkers,
+    verifyPath,
+    verifyHostKeyPath,
   };
 }
 
@@ -283,6 +296,17 @@ Certification (RFC 0089):
                         to <out.json>. Requires --base-url (and --api-key as usual).
 
 Other:
+  --verify <bundle>     Audit a certification bundle WITHOUT a host. Exit codes:
+                          0  verified — no rejections, host signature checked,
+                             certified list re-derived from the bundle's own
+                             discovery document
+                          1  rejected — one or more problems, each printed
+                          2  coherent but NOT independently verified (no
+                             --host-key, or the certified list is the emitter's
+                             word). Do not quote this as "verified"
+                          3  the file is missing or is not a bundle
+  --host-key <pem>      The key --verify checks the host signature under. Without
+                        it the signature is unverified and --verify exits 2.
   --require-behavior    Strict mode: an ADVERTISED behaviour that cannot be
                         observed FAILS instead of soft-skipping (RFC 0148 §B).
                         Equivalent to OPENWOP_REQUIRE_BEHAVIOR=true.
@@ -858,6 +882,74 @@ async function main(): Promise<never> {
 
   if (args.help) {
     process.stdout.write(HELP_TEXT);
+    process.exit(0);
+  }
+
+  // `--verify <bundle.json>` — audit a bundle WITHOUT a host and without cloning
+  // the corpus. `verifyBundleV3` was exported but only ever called as the
+  // emitter's self-check, so auditing a third party's certification claim meant
+  // writing a driver script — which means in practice nobody did, and a
+  // certification program whose verifier ships only as a library function is
+  // asking to be taken on trust.
+  //
+  // The exit contract has FOUR values on purpose. "Structurally coherent" and
+  // "verified" are different facts, and collapsing them is how the vacuous pass
+  // gets rebuilt: without exit 2, every CI that runs `--verify` with no key
+  // prints green and reports "verified".
+  if (args.verifyPath !== undefined) {
+    if (!existsSync(args.verifyPath)) {
+      process.stderr.write(`openwop-conformance --verify: no such file: ${args.verifyPath}\n`);
+      process.exit(3);
+    }
+    let bundle: BundleV3;
+    try {
+      bundle = JSON.parse(readFileSync(args.verifyPath, 'utf8')) as BundleV3;
+    } catch (e) {
+      process.stderr.write(`openwop-conformance --verify: ${args.verifyPath} is not readable JSON — ${(e as Error).message}\n`);
+      process.exit(3);
+    }
+    const hostKey = args.verifyHostKeyPath !== undefined ? readFileSync(args.verifyHostKeyPath, 'utf8') : undefined;
+    const verifierKey = args.verifierKeyPath !== undefined ? readFileSync(args.verifierKeyPath, 'utf8') : undefined;
+    const verdict = verifyBundleV3(bundle, {
+      ...(hostKey !== undefined ? { hostPublicKeyPem: hostKey } : {}),
+      ...(verifierKey !== undefined ? { verifierPublicKeyPem: verifierKey } : {}),
+    });
+    const t = bundle.results?.totals ?? {};
+    const out: string[] = [
+      `bundle:    ${args.verifyPath}`,
+      `host:      ${bundle.host?.name ?? '?'} build ${bundle.host?.build?.kind ?? '?'}:${String(bundle.host?.build?.id ?? '?').slice(0, 12)}`,
+      `suite:     ${bundle.suite?.version ?? '?'} (this CLI is ${suiteVersion()})`,
+      `totals:    executedPass=${t.executedPass ?? '?'} executedFail=${t.executedFail ?? '?'} blocked=${t.blocked ?? '?'} inapplicable=${t.inapplicable ?? '?'} skipped=${t.skipped ?? '?'}`,
+      `certified: ${verdict.certifiedProfiles.length > 0 ? verdict.certifiedProfiles.join(', ') : '(none)'}`,
+      '',
+      'What this command does NOT do:',
+      '  · It does not re-run anything. A host that measured itself wrongly, and signed',
+      '    the result, verifies clean here. This audits an attestation, not a host.',
+      '  · It does not resolve keyId against the live host. It checks the signature under',
+      '    the key YOU supply with --host-key; it cannot tell you that key is the host\u2019s.',
+      '  · It does not judge suite currency. The suite version is reported above as data:',
+      '    an older bundle measured less, and whose fact that is belongs to its emitter.',
+      '',
+    ];
+    if (verdict.rejections.length > 0) {
+      out.push(`REJECTED \u2014 ${verdict.rejections.length} problem(s):`);
+      for (const r of verdict.rejections) out.push(`  [${r.kind}]${r.profile ? ` (${r.profile})` : ''} ${r.detail}`);
+      process.stdout.write(out.join('\n') + '\n');
+      process.exit(1);
+    }
+    const gaps: string[] = [];
+    if (!verdict.signatureVerified) gaps.push('the host signature was NOT verified (no --host-key supplied)');
+    if (!verdict.derivabilityChecked) gaps.push('the certified list was NOT re-derived from the bundle\u2019s discovery document \u2014 it is the emitter\u2019s word');
+    if ((bundle.claimedProfiles ?? []).some((p) => p.evidenceTier === 'independent') && !verdict.verifierSignatureVerified) gaps.push('an `independent` tier is claimed but the verifier signature was NOT verified (no --verifier-key)');
+    if (gaps.length > 0) {
+      out.push('COHERENT, NOT INDEPENDENTLY VERIFIED \u2014 zero rejections, but:');
+      for (const g of gaps) out.push(`  \u00b7 ${g}`);
+      out.push('', 'Do not quote this as "verified". Exit 2 exists to keep that distinction.');
+      process.stdout.write(out.join('\n') + '\n');
+      process.exit(2);
+    }
+    out.push('VERIFIED \u2014 zero rejections, host signature checked, certified list re-derived.');
+    process.stdout.write(out.join('\n') + '\n');
     process.exit(0);
   }
 
