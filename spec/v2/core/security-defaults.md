@@ -1,6 +1,6 @@
 # Security Defaults
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0173 (§A–§E), 0164 §22, 0170 §B.**
+> **Status: Stable · RFC 0173 (§A–§E), 0164 §22, 0170 §B.**
 
 ## Why this exists
 
@@ -61,7 +61,7 @@ A relaxation, where one is legitimate — a development deployment, a single-ten
 | --- | --- |
 | `session` | Lost on restart. |
 | `deployment` | Set at deploy time. |
-| `permanent` | Survives restarts and is auditable. |
+| `persisted` | Survives restarts and is auditable. |
 
 A bundle that records a relaxation MUST NOT certify the profile the relaxed obligation belongs to; the `relaxation-recorded` scenario verifies it unaided (conformance.md). RFC 0158's ladder is the model: evidence lives in the bundle, and a field that let a host assert a property with nothing behind it is the failure the ladder prevents.
 

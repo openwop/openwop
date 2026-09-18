@@ -137,12 +137,12 @@ No new v1.x scenario: this RFC adds no v1 wire surface. Its witnesses are the th
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §C (a)–(f) every child carries the six parts | `check-migrations.mjs` (b), `check-waiver-ledger.mjs` (f), the child's own register (c–e) | the corpus gate, unaided | witnessable — unaided (corpus) |
-| §D.1 a rename/remove/delete-alias row names a deprecationId | `check-migrations.mjs` | the corpus gate | witnessable — unaided (corpus) |
-| §D.3 a codemod passes the four legs; the runner sabotages itself | `check-codemods.mjs` | the corpus gate | witnessable — unaided (corpus) |
-| §D.3 every codemod-able row of an Active child has a codemod | `check-codemods.mjs --at-active` at §G.1 | the corpus gate | witnessable — unaided (corpus) |
-| §E.2 every alias has a register row | `check-alias-coverage.mjs` | the corpus gate | witnessable — unaided (corpus) |
-| §G.2 the cut predicates | the Phase 3 release gate | the steward at the cut | witnessable — gated on the release candidate |
+| §C (a)–(f) every child carries the six parts | `openwop.requirement.0167.child-parts` — `check-migrations.mjs` (b) and `check-waiver-ledger.mjs` (f), both asserted under that id; the child's own register carries (c–e) | the corpus gate, unaided | witnessable — unaided (corpus) |
+| §D.1 a rename/remove/delete-alias row names a deprecationId | `openwop.requirement.0167.migration-deprecation-bound` — `check-migrations.mjs` | the corpus gate | witnessable — unaided (corpus) |
+| §D.3 a codemod passes the four legs; the runner sabotages itself | `openwop.requirement.0167.codemod-legs` — `check-codemods.mjs` | the corpus gate | witnessable — unaided (corpus) |
+| §D.3 every codemod-able row of an Active child has a codemod | `openwop.requirement.0167.codemod-at-active` — `check-codemods.mjs --at-active`, which the merge gate did NOT run until this id existed: `openwop-check.sh` invoked the script without the flag, so this row was unexercised outside a cut | the corpus gate | witnessable — unaided (corpus) |
+| §E.2 every alias has a register row | `openwop.requirement.0167.alias-covered` — `check-alias-coverage.mjs` | the corpus gate | witnessable — unaided (corpus) |
+| §G.2 the cut predicates | `scripts/check-cut-gates.mjs --host-bundle <bundle>` — ten predicate groups, and it reports `blocked` rather than green without a bundle | the steward at the cut | witnessable — gated on the release candidate |
 
 ## Alternatives considered
 

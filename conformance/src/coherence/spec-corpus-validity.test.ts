@@ -1378,6 +1378,15 @@ describe.skipIf(README_PATH === null)('spec-corpus: public docs avoid private im
   const banned = [
     { label: 'private workflow-runtime paths', pattern: /services\/workflow-runtime/ },
     { label: 'private workflow-engine paths', pattern: /packages\/workflow-engine/ },
+    // `apps/workflow-engine` was the demo app's path in THIS repo until it was
+    // extracted to openwop/openwop-app with full history. The two patterns above
+    // never matched it, which is why two `cd apps/workflow-engine/…` lines
+    // survived the split and told readers to enter a directory that no longer
+    // exists. Scoped to the INSTRUCTION form on purpose: the corpus must stay
+    // free to describe its own history ("extracted from `apps/workflow-engine/`"
+    // in README and SECURITY are provenance, not directions), and a blanket ban
+    // would forbid the sentence that explains the move.
+    { label: 'cd into the extracted demo app', pattern: /cd\s+apps\/workflow-engine/ },
     { label: 'internal PRD references', pattern: /PRD §/ },
     { label: 'old openwop plan references', pattern: /openwop plan/i },
     { label: 'pre-v1 release markers', pattern: /\bv0\.(?:1|2|3)\b/i },

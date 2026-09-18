@@ -1,5 +1,24 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.6.0] — 2026-09-18 — a relaxed profile cannot certify, and five corpus ids for the umbrella
+
+### Fixed
+
+- **`--certify` wrote `certified: true` for a profile carrying a relaxation.**
+  `security-defaults.md` §Relaxations and RFC 0173 §A.2 both say it MUST NOT.
+  The predicate had no relaxation term and parsed relaxations on the next line;
+  the emitter then excluded `relaxed-profile-certified` from its self-check and
+  exited 0, so only `--verify` disagreed with the shipped file. Relaxations are
+  now parsed first and folded into the verdict, matched exactly as the verifier
+  matches them.
+
+### Added
+
+- Five `src/coherence/` wrappers minting `openwop.requirement.0167.*`, so the v2
+  umbrella's falsifiability table stops passing rule 4 on zero ids. One spawns
+  `check-codemods.mjs --at-active`, which the merge gate never ran.
+- `apps/workflow-engine` added to the public-docs banned-pattern scan.
+
 ## [2.5.0] — 2026-09-18 — `--verify`, for auditing a bundle you did not cut
 
 ### Added
