@@ -80,4 +80,10 @@ Enforcement is an obligation of the fields, not a discovery flag (RFC 0173 §B).
 | `approverRoleRefs` | Only where `refKinds` includes `role`: as for groups, with holders |
 | `audience` | A notification hint, never eligibility; omitted ⇒ the host SHOULD notify the union of the eligibility refs |
 
+Eligibility binds every WRITER of the suspension record, not every route. A
+host whose durable store is writable by a principal other than the engine MUST
+enforce the same eligibility at the store, or MUST NOT expose the record to
+that principal for write: a rule enforced per route is only as complete as the
+census of writers (RFC 0187 §C.1).
+
 Refs are opaque to the engine; the host resolves them against its own identity model. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history (replay.md). A host that does not advertise a ref kind MUST ignore that field. A relaxation of any obligation here is an operator setting recorded in the certification bundle, never a discovery field (security-defaults.md).

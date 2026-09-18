@@ -88,6 +88,13 @@ const NEEDS_INPUT_TOOL = {
   inputSchema: { type: 'object', properties: {}, additionalProperties: false },
 };
 
+/** The MRTR ceiling fixture: keeps asking for `arguments.rounds` retries (RFC 0175 §E.1). */
+const NEEDS_INPUT_LOOP_TOOL = {
+  name: 'needs_input_loop',
+  description: 'Re-issues input_required for `rounds` retries before completing — drives a host past its mcp.mrtr.maxRounds ceiling.',
+  inputSchema: { type: 'object', properties: { rounds: { type: 'integer', minimum: 1 } }, required: ['rounds'] },
+};
+
 export class McpFakeServer {
   private _server: Server | null = null;
   private _boundPort = 0;
@@ -263,7 +270,7 @@ export class McpFakeServer {
         });
 
       case 'tools/list':
-        return ok({ resultType: 'complete', tools: [ECHO_TOOL, NEEDS_INPUT_TOOL], ttlMs: 60_000, cacheScope: 'public' });
+        return ok({ resultType: 'complete', tools: [ECHO_TOOL, NEEDS_INPUT_TOOL, NEEDS_INPUT_LOOP_TOOL], ttlMs: 60_000, cacheScope: 'public' });
 
       case 'tools/call': {
         const name = params['name'];
@@ -277,6 +284,30 @@ export class McpFakeServer {
             : {};
           this._nextResultAssertsAuthority = false;
           return ok({ resultType: 'complete', content: [{ type: 'text', text }], isError: false, ...extra });
+        }
+        if (name === 'needs_input_loop') {
+          // The ceiling fixture (RFC 0175 §E.1): re-issues `input_required` for
+          // `arguments.rounds` retries before completing, so a host's MRTR loop
+          // can be driven PAST `mcp.mrtr.maxRounds`. `needs_input` completes on
+          // the first retry and therefore cannot reach any ceiling >= 1, which is
+          // why `v2-mrtr-rounds-ceiling` recorded `blocked` until this existed.
+          if (clientCaps['elicitation'] === undefined) {
+            return err(400, MCP_ERR.MISSING_REQUIRED_CLIENT_CAPABILITY, 'needs_input_loop requires the elicitation client capability', { requiredCapabilities: ['elicitation'] });
+          }
+          const wanted = Number(((params['arguments'] ?? {}) as { rounds?: unknown }).rounds ?? 1);
+          const state = params['requestState'];
+          let served = 0;
+          if (typeof state === 'string') {
+            const m = /^mrtr:needs_input_loop:(\d+)$/.exec(state);
+            if (m === null) return err(400, -32602, 'requestState missing or not the value this server issued (clients MUST echo it exactly)');
+            served = Number(m[1]);
+          }
+          if (served >= wanted) return ok({ resultType: 'complete', content: [{ type: 'text', text: `looped ${served}` }], isError: false });
+          return ok({
+            resultType: 'input_required',
+            inputRequests: { who: { method: 'elicitation/create', params: { mode: 'form', message: `round ${served + 1} of ${wanted}`, requestedSchema: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] } } } },
+            requestState: `mrtr:needs_input_loop:${served + 1}`,
+          });
         }
         if (name === 'needs_input') {
           const responses = params['inputResponses'] as Record<string, { action?: string; content?: { name?: string } }> | undefined;

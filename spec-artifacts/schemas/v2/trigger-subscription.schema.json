@@ -64,9 +64,8 @@
       }
     },
     "webhookId": {
-      "type": "string",
-      "minLength": 1,
-      "description": "MAY — for `source: \"webhook\"`, the existing webhooks.md register key (unchanged; the state machine layers over it)."
+      "$ref": "ids.schema.json#/$defs/subscriptionId",
+      "description": "MAY — for `source: \"webhook\"`, the existing webhooks.md register key. Tenant-bound since RFC 0187 §A.1 (the state machine layers over it unchanged)."
     },
     "secretFingerprint": {
       "type": "string",

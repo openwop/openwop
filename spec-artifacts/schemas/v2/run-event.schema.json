@@ -195,7 +195,7 @@
       "description": "Optional ID of the event that caused this one (e.g., node.completed caused by approval.received). Lets projections build causal chains without inferring from timing."
     }
   },
-  "$comment": "RFC 0171 §A / `events.md` §\"The envelope\": in v2 RunEventDoc is CLOSED (`additionalProperties: false`). This reverses the v1 rule, which left the envelope open so v1.x hosts could add optional fields additively. The v2 envelope carries host-specific data in the registered vendor branch, not at the root. Do not restore the v1 sentence: a host that follows it emits root-level extension fields and fails `v2-event-type-closed`, and the schema keyword is the contract while a comment is only a claim about it.",
+  "$comment": "RFC 0171 §A / `events.md` §\"The envelope\": in v2 RunEventDoc is CLOSED (`additionalProperties: false`). This reverses the v1 rule, which left the envelope open so v1.x hosts could add optional fields additively. The v2 envelope carries host-specific data in the registered vendor branch, not at the root. Do not restore the v1 sentence: a host that follows it emits root-level extension fields and fails `v2-event-type-closed`, and the schema keyword is the contract while a comment is only a claim about it. persistence.md §The reader rule: the translation seat is a claims-check. `v2-v1-events-translated` drives poll, SSE and a fork, and what those three legs witness is that THOSE THREE readers translate — not that the seat is at the storage boundary. Three wrappers pass them exactly as one correctly seated adapter does. A universal is not discharged by three examples: the scenario catches a reader that was missed, not an adapter that was misplaced.",
   "additionalProperties": false,
   "$defs": {}
 }

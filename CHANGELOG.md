@@ -13,6 +13,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-09-18 — four bindings the hosts found
+
+### Added
+
+- **RFC 0187 `Active` — four rules the corpus owed after a production host measured their absence.** §A: `webhookId` IS the `subscriptionId` kind (`identity.md` §5) — the mint surface (`POST /webhooks → { webhookId }`) had inherited v1's bare `type: string`, so the kind had no HTTP surface and the HTTP surface had no kind, and §5's `403 id_tenant_mismatch` check had nothing to read. The path parameter and the register response now `$ref` the kind in the derived `api/v2/openapi.yaml`, `trigger-subscription.schema.json` binds it, and `id-field-bindings.json` moves it out of `notAKind`. §B: a `type` with no codemap row passes through unchanged on the v1 read path of an era-`3` log — a host MUST NOT drop the row and MUST NOT refuse the read for it (both production hosts chose pass-through independently; the corpus said nothing, so drop and refuse were equally conformant). §C: approver eligibility binds every WRITER of the suspension record, not every route — a host whose durable store is client-writable MUST enforce it at the store (a tier-2 host gated all three of its resolve routes, then found its store was a fourth writer and its own watch teed the rewrite as the resolution). §D: a writer that emits a property a closed def cannot seat MUST mark the row, so the refusal names the writer instead of surfacing as an unexplained read failure far from it.
+- **`v2-bound-id-kinds.test.ts`** — one leg per tenant-bound kind with a wire surface. Until now every v2 scenario that read a bound id read `runId`, so a host binding one kind of five was green — which is exactly what a tier-1 host's own audit found on its wire. The `deliveryId` leg records `inapplicable` on a corpus gap, not a host one: `api/v2/openapi.yaml` serves no dead-letter read, so the kind has nowhere to appear.
+- **The `typeId` kind admits the exact pin `@<major>.<minor>.<patch>`** so a chain reference can carry one (RFC 0177 §E.1) while still `$ref`ing its kind as `identity.md` §5 requires; the kind's description states the one place a pin is permitted (a document that REFERENCES a type) and the one place it is forbidden (a document that DEFINES one) and **`form-content-pack-manifest.schema.json` `FormField.when` carries the `EdgeCondition` object** (§E.4). Both scenarios recorded `blocked` on the schema gap; the pattern admits the unpinned spelling so existing manifests stay valid and the MUST stays where §E.1 put it — refusal at register.
+- **`spec/v1/deprecations.json`**: the bare `webhookId`, `removalTrigger: v1-end-of-support`.
+
+### Fixed
+
+- **`v2-webhook-durable-delivery` counted another scenario's deliveries against its retry budget.** Both legs filtered attempts by `runId` alone; a host that cannot reach the suite's loopback registers every scenario against one tunnelled receiver URL, so a concurrently running scenario's subscription matched the same run. A tier-2 host measured 6 attempts against a `maxAttempts` of 5 at `--max-workers 2` while its own logs showed five. Both legs now filter on the delivery's own `webhookId` as well, which is exact and holds at any worker count.
+- **`McpFakeServer` gains `needs_input_loop`** — `needs_input` completes on the first retry and cannot reach any ceiling ≥ 1, so `v2-mrtr-rounds-ceiling` recorded `blocked` on every host. **`v2-negotiation-authenticated` reads `details.runId`** off the closed error envelope, where `v2-minimum-version-refused` already reads it; it recorded `blocked` on a host that had emitted the event correctly.
+- Two non-normative paragraphs moved out of core prose into the schemas they govern (`webhook-delivery.schema.json` `runId`, `run-event.schema.json` `$comment`), per RFC 0174 §E.2a. Core budget 24,985 / 25,000.
+
 ## [2.3.5] — 2026-09-17 — the prose stops narrating its own edit history
 
 ### Changed
@@ -30,6 +45,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - **36 gap rows dispositioned with evidence (X2a–c of the open-items plan).** Every `closed` cell now names the PR, scenario, schema line or bundle row that resolved it. Three rows are `externally-gated:non-steward-host` (mTLS revocation, independent seam audit — a host or auditor outside the steward organization); two are `transferred:ROADMAP.md#implementation-ecosystem` (refresh-SLA re-measure, portable `{{params.*}}`). Open gap rows corpus-wide 46 → 12. RFC 0173 G1 stays open: RFC 0035's supersession is 0173's own flip PR. Tier labels are deliberately **not** written on `Active` RFCs — `GOVERNANCE.md` states the tier at the flip, on a deployed bundle.
 - **Why a cut.** `spec/v1/gaps.json` ships inside `@openwop/spec-artifacts`, so regenerating it moves the published contract; version sites → 2.3.4. This section was reconstructed from the commit in [2.3.5] — the 2.3.4 release PR wrote its `conformance/CHANGELOG.md` row and left this one unwritten, so the row's own reference to "openwop CHANGELOG [2.3.4]" pointed at nothing.
+
+## [2.3.4] — 2026-09-17 — the registers say where
+
+_Entry added in 2.4.0: the cut shipped without it — the edit's anchor missed behind an earlier assertion in the same script, and `check-shipped-changelog` only guards the packed per-package file. The rule the miss teaches is in CONTRIBUTING §"Two rules for the scripts you write"._
+
+### Changed
+
+- **36 gap-register rows on the v2-era Active RFCs carry a disposition with evidence** (RFC 0166 §A.1): `closed` naming the PR, scenario, schema line or bundle row that resolved it; `externally-gated:non-steward-host` for the three needing a host or auditor outside the steward organisation; `transferred:ROADMAP.md#implementation-ecosystem` for the two v2.x follow-ups. Corpus-wide `open` gap rows 46 → 12. RFC 0173 G1 stays `open` on purpose — RFC 0035's supersession is 0173's own flip PR.
+- **RFC 0180's seven acceptance boxes and RFC 0167's §G.1 box ticked** with the section or check that proves each. Evidence-tier labels are deliberately NOT written on Active RFCs: GOVERNANCE states the tier at the flip, on a deployed bundle.
+- `spec/v1/gaps.json` regenerated (it ships in spec-artifacts, which is why the register work was a cut); README advertises the SDKs at 2.3.0.
 
 ## [2.3.3] — 2026-09-17 — the retirement lane bites again
 

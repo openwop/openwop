@@ -174,6 +174,29 @@ def v2_openapi_and_seams():
     # it owns answers `not_found`, per id, silently. The projection covered the
     # way out and not the way in. Bind the items to the kind so the inbound
     # contract states what the outbound one already does.
+    # RFC 0187 §A.1 — the MINT surface carries the kind. `identity.md` §5 binds
+    # `subscriptionId`, `id-field-bindings.json` binds the property, and the one
+    # place the thing is created (`POST /webhooks -> { webhookId }`) inherited
+    # v1's bare `type: string`: the kind had no HTTP surface and the HTTP
+    # surface had no kind, so the §5 `403 id_tenant_mismatch` check had nothing
+    # to read. Bind the path parameter and the response property.
+    wh = paths.get('/webhooks/{webhookId}', {})
+    for op in wh.values():
+        if not isinstance(op, dict):
+            continue
+        for p in op.get('parameters', []) or []:
+            if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
+                p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
+                p['description'] = (
+                    'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
+                    'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
+                )
+    try:
+        reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
+        reg.clear()
+        reg['$ref'] = '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'
+    except (KeyError, TypeError):
+        pass
     bc = paths.get('/runs:bulk-cancel', {}).get('post', {})
     try:
         items = bc['requestBody']['content']['application/json']['schema']['properties']['runIds']['items']
