@@ -369,7 +369,10 @@
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0095"
+      "owningRfc": "0095",
+      "normativeText": [
+        "spec/v2/core/connection-packs.md"
+      ]
     },
     {
       "key": "selfHostedRunner",
@@ -504,7 +507,10 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0140",
-      "facetsFrom": "spec/v2/facets/replay.schema.json"
+      "facetsFrom": "spec/v2/facets/replay.schema.json",
+      "normativeText": [
+        "spec/v2/core/replay.md"
+      ]
     },
     {
       "key": "oauth",
@@ -1102,7 +1108,10 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0188",
-      "facetsFrom": "spec/v2/facets/webhooks.schema.json"
+      "facetsFrom": "spec/v2/facets/webhooks.schema.json",
+      "normativeText": [
+        "spec/v2/core/webhooks.md"
+      ]
     },
     {
       "key": "triggerBridge",
@@ -1633,7 +1642,10 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0104",
-      "facetsFrom": "spec/v2/facets/interrupt.schema.json"
+      "facetsFrom": "spec/v2/facets/interrupt.schema.json",
+      "normativeText": [
+        "spec/v2/core/interrupt.md"
+      ]
     },
     {
       "key": "restTransport",

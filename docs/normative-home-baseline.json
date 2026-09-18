@@ -1,5 +1,13 @@
 {
-  "$comment": "Ratchet baseline for scripts/check-v2-normative-home.mjs. Both counts MUST reach 0 before evidence/v1-end-of-support.json endOfSupportNotBefore. Lower when you resolve one; never raise.",
+  "$comment": "Ratchet baseline for scripts/check-v2-normative-home.mjs (RFC 0189). THREE rules: `undeclared` may never rise; `undeclared + v1Dependent` may never rise; `facetsUncovered` may never rise. `v1Dependent` alone is unconstrained UPWARD on purpose \u2014 moving a family from undeclared to honestly-v1-dependent gains information and leaves total debt unchanged, and the pre-0189 rule exited 1 on exactly that move, which made silence the cheapest way to stay green. Lower these when you resolve something; never raise.",
+  "t0": "2026-09-18",
+  "openAtT0": 68,
   "v1Dependent": 2,
-  "undeclared": 70
+  "undeclared": 66,
+  "facetsUncovered": 0,
+  "v1Carried": [
+    "toolHooks",
+    "toolCatalog"
+  ],
+  "$v1CarriedComment": "RFC 0189 \u00a7D. At v1 end-of-support, spec/v1/** is FROZEN-BUT-OPERATIVE for exactly these families: EOS ends new v1 wire support, it does not de-normativize prose a v2 family still points at. After the date the gate fails only if one of these targets is DELETED or its Status banner changes \u2014 which is the real hazard, rather than a calendar square."
 }
