@@ -181,9 +181,26 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--max-workers':
         maxWorkers = parseMaxWorkers(nextValue(), '--max-workers');
         break;
+      // `--require-behavior` was PRESCRIBED as the certification setting by the
+      // v2 migration runbook and recorded in INTEROP-MATRIX rows, and the CLI
+      // never parsed it: it fell into the silent default arm below while only
+      // `OPENWOP_REQUIRE_BEHAVIOR=true` did anything. So a cut that named the
+      // flag measured the LOOSE answer and reported the strict one — the exact
+      // failure shape the runbook warns about, in the tool that measures it.
+      case '--require-behavior':
+        process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
+        break;
       default:
         if (arg.startsWith('-')) {
-          // Unknown flag — pass through to vitest by ignoring here.
+          // An unknown flag is now a HARD ERROR, not a silent pass-through. The
+          // old arm is why the miss above went unnoticed for the whole v2
+          // program: a typo or a removed flag looked identical to a working one.
+          process.stderr.write(
+            `openwop-conformance: unknown flag ${arg}\n` +
+              'Run `openwop-conformance --help` for usage. (A flag the CLI does not know is refused rather than ignored: ' +
+              'a certification run MUST NOT silently measure something other than what its command line says.)\n',
+          );
+          process.exit(2);
         }
     }
   }
@@ -266,6 +283,9 @@ Certification (RFC 0089):
                         to <out.json>. Requires --base-url (and --api-key as usual).
 
 Other:
+  --require-behavior    Strict mode: an ADVERTISED behaviour that cannot be
+                        observed FAILS instead of soft-skipping (RFC 0148 §B).
+                        Equivalent to OPENWOP_REQUIRE_BEHAVIOR=true.
   --help, -h            Show this message
 
 Examples:

@@ -26009,7 +26009,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.subscriptionid-post-webhooks-mints-a-bound-webhookid-the-projected-segment-is-ac",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 60,
+      "line": 61,
       "title": "subscriptionId: POST /webhooks mints a bound webhookId, the projected segment is accepted, and a foreign tenant segment is refused 403",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.webhook",
       "citations": [
@@ -26036,7 +26036,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.interruptid-the-id-a-suspension-puts-on-the-wire-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 87,
+      "line": 95,
       "title": "interruptId: the id a suspension puts on the wire is bound",
       "explicitId": null,
       "citations": []
@@ -26044,7 +26044,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.effectid-every-row-get-runs-runid-effects-serves-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 108,
+      "line": 116,
       "title": "effectId: every row GET /runs/{runId}/effects serves is bound",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -26057,7 +26057,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 123,
+      "line": 131,
       "title": "deliveryId: the kind has no wire surface to be bound on — a corpus gap, recorded",
       "explicitId": null,
       "citations": []
@@ -29321,7 +29321,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-2-subscriber-receives-the-v2-rendering-the-delivery-validates-and-run-st",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 175,
+      "line": 186,
       "title": "a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -29352,7 +29352,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-1-subscriber-still-receives-the-v1-rendering-the-v1-wire-does-not-move-m",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 194,
+      "line": 205,
       "title": "a major-1 subscriber still receives the v1 rendering — the v1 wire does not move mid-overlap",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -29370,7 +29370,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-seeded-era-2-run-is-delivered-projected-too-the-fan-out-branch-a-fresh-run-can",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 217,
+      "line": 228,
       "title": "a seeded era-2 run is delivered projected too — the fan-out branch a fresh run cannot reach (seam-gated)",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [

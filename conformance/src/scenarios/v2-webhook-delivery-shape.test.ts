@@ -77,11 +77,22 @@ async function startReceiver(): Promise<{ server: Server; url: string; deliverie
       res.writeHead(204); res.end();
     });
   });
-  const { bind, advertise } = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(0, bind, () => resolve()));
+  // Honour OPENWOP_WEBHOOK_RECEIVER_PORT like `v2-webhook-durable-delivery`
+  // does. Without it, a tunnelled run registers the tunnel URL here and the
+  // tunnel forwards to the PINNED port — held by the other receiver, which
+  // answers 500 by design — so this file's `deliveries` stays empty, its legs
+  // soft-skip, and (because `register()` already asserted) the rows resolve
+  // `executed-pass`. A wire-shape scenario that never opened a delivery body
+  // went green. Two major-2 files now want the same pinned port, so the
+  // webhook lane MUST run with `--max-workers 1`, which is already the
+  // certification setting.
+  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
+  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
   const addr = server.address();
   const port = typeof addr === 'object' && addr ? addr.port : 0;
-  return { server, url: `http://${advertise}:${port}/hook`, deliveries };
+  return { server, url: `http://${binding.advertise}:${port}/hook`, deliveries };
 }
 
 /**

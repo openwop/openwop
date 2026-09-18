@@ -1,5 +1,24 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.5] — 2026-09-18 — the strict flag that was not wired, and the soft-skip that counted as a pass
+
+### Fixed
+
+- **`--require-behavior` was never parsed** — it hit the arg loop's silent
+  default arm, so only `OPENWOP_REQUIRE_BEHAVIOR=true` enabled strict mode. A
+  cut naming the flag measured the loose answer. The flag now sets the variable,
+  and an unknown `--flag` exits 2 rather than being ignored.
+- **`resolveItRecord` dropped the `partial-witness:` note** that
+  `resolveFileRecord` computes, so a leg that asserted and then soft-skipped
+  recorded a bare `executed-pass` at the granularity the RFC acceptance gate
+  reads.
+- **`v2-bound-id-kinds`** now routes its mint through `resolveRegistrationUrl`,
+  so `OPENWOP_WEBHOOK_RECEIVER_URL` works on the leg whose blocked note told
+  operators to set it.
+- **`v2-webhook-delivery-shape`** now honours `OPENWOP_WEBHOOK_RECEIVER_PORT`
+  and is registered in the receiver guard's scenario list. Two major-2 files
+  pin that port, so the webhook lane requires `--max-workers 1`.
+
 ## [2.4.4] — 2026-09-18 — the corpus's first `Superseded` RFC
 
 **Why a patch, and why the suite version moves at all.** No conformance code
