@@ -438,7 +438,26 @@ if (!hb) {
     corpusWitness[1],
     suiteRow,
     { ok: totals.executedFail === 0, evidence: `${hb.path} results.totals`, tail: `executedFail=${totals.executedFail} executedPass=${totals.executedPass} blocked=${totals.blocked}` },
-    { ok: matrix.includes(hostName), evidence: 'INTEROP-MATRIX.md', tail: matrix.includes(hostName) ? `row for ${hostName}` : `no row names host ${hostName}` },
+    // A host with no matrix row yet is PRE-REGISTRATION, not failing. This gate
+    // is advertised to newcomers as their self-check (INTEROP-MATRIX §Add A
+    // Host, docs/IMPLEMENTER-PATH.md, docs/IMPLEMENT-CORE.md) — and the row
+    // only exists after the PR that adds it, so a first-time implementer got
+    // exit 1 with nothing explaining that it was expected. `blocked` is the
+    // corpus's own token for "a precondition is absent", and unlike `fail` it
+    // says whose move it is. Note the check is a substring match, so it is weak
+    // evidence by construction: it tells a newcomer where they are in the
+    // process, and proves nothing about the host.
+    matrix.includes(hostName)
+      ? { ok: true, evidence: 'INTEROP-MATRIX.md', tail: `row for ${hostName}` }
+      : {
+          ok: false,
+          blocked: true,
+          evidence: 'INTEROP-MATRIX.md',
+          tail:
+            `no row names host ${hostName} — PRE-REGISTRATION, which is expected before your first submission. ` +
+            'Open the PR that adds your bundle under evidence/v2-host-bundles/ and your row to INTEROP-MATRIX.md; ' +
+            'this check turns green when it lands. Nothing about your host is failing here.',
+        },
     signatureCheck(hb, hd),
   ]);
 }

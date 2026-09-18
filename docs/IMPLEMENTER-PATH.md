@@ -88,7 +88,11 @@ Method names are not repeated here; this repo does not carry the SDK sources. Us
 Install the suite and its exact-pinned contract peer at the same version ([`conformance/README.md`](../conformance/README.md)); the suite refuses to start on a mismatch (`conformance.md` §"Two products, two ledgers"):
 
 ```bash
-npm install @openwop/openwop-conformance@<version> @openwop/spec-artifacts@<version>
+# --legacy-peer-deps is REQUIRED, not a workaround: the suite pins
+# @openwop/spec-artifacts as an EXACT peer, which npm's default resolver
+# refuses. Use npm >= 11 — npm 10.9 fails outright with
+# "Cannot read properties of null (reading 'edgesOut')".
+npm install --legacy-peer-deps @openwop/openwop-conformance@<version> @openwop/spec-artifacts@<version>
 ```
 
 Run against major 2:
@@ -206,3 +210,8 @@ This is what you keep host-private. Don't try to make it normative.
 - [`spec/v1/`](../spec/v1/) — the v1 parallel track
 - [`MAINTAINERS.md`](../MAINTAINERS.md) — review + waiver tables
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md) — full contribution guide
+
+## If you need your own event types or path space
+
+You do not, to pass the floor — the `openwop-core-standard` scenarios never touch either. But when you want to emit vendor event types (`yourorg.thing.happened`) or serve `/host/<yourorg>/…`, your organisation needs a row in `spec/v2/declaration.json`. **That is a self-serve PR under RFC 0180 §A.2**, and its bar is explicitly *disambiguation, not endorsement*: the registrar checks that your segment is unique and not reserved, and the RFC carries an anti-discrimination clause. It is not an approval step and there is no queue.
+

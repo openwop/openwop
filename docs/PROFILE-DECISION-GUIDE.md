@@ -1,5 +1,7 @@
 # OpenWOP Profile Decision Guide
 
+> **⚠️ v1 DOCUMENT — the profile names below no longer exist.** `openwop-core`, `openwop-stream-sse` and `openwop-stream-poll` were removed at the v2 cut. The v2 profiles are `openwop-discovery-core`, `openwop-core-standard` and `openwop-conformance-seams-v2`, defined in [`spec/v2/profiles.json`](../spec/v2/profiles.json). **If you are implementing a host today, read [`docs/IMPLEMENT-CORE.md`](IMPLEMENT-CORE.md) and [`docs/IMPLEMENTER-PATH.md`](IMPLEMENTER-PATH.md) instead** — a v2 conformance claim is a signed bundle, not the self-declaration this document describes. Kept for hosts still serving v1 through the overlap (to 2026-12-04).
+
 > DOC-2 from `plans/openwop-protocol-gap-closure-plan.md`. Decision guide for choosing the OpenWOP capability profiles your host should claim.
 
 The protocol is intentionally additive: you claim what you implement and you skip what you don't. Strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`) makes that contract auditable. This guide walks you from "what kind of host are you building?" to "here are the exact profile strings to put in your discovery payload."
