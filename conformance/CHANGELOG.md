@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.11.0] — 2026-09-18 — RFC 0190 (corpus gates)
+
+**Why a minor.** No conformance code changes; `RFCS/0190-*.md` and the amended
+RFC 0189 are published artifacts. The kernel budget now measures what the
+normative-home gate accepts, `spec/v2/ext/` becomes a co-pointer, and RFC 0189
+§D's end-of-support fallback is applied rather than printed.
+
 ## [2.10.0] — 2026-09-18 — packs resolves; two seam facets deprecated
 
 **Why a minor.** No conformance code changes. `spec/v2/core/packs.md`,
