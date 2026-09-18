@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.4.4] — 2026-09-18 — the corpus's first `Superseded` RFC
+
+**Why a patch, and why the suite version moves at all.** No conformance code
+changes. RFC 0173 reached `Accepted` and RFC 0035 became `Superseded` in the
+same PR (RFC 0174 §A.1), which closed gap G1 and therefore moved
+`spec/v1/gaps.json` — a packed artifact — so the corpus version and the pinned
+`@openwop/spec-artifacts` peer move with it.
+
 ## [2.4.3] — 2026-09-18 — a check with nothing to complain about is not `blocked`
 
 **Why a patch.** Two assertions change shape inside existing legs; no scenario
