@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.3.4] — 2026-09-17 — registers regenerated
+
+**Why a patch.** No scenario changed; `spec/v1/gaps.json` (shipped in spec-artifacts) regenerated from the dispositioned registers (openwop CHANGELOG [2.3.4]).
+
 ## [2.3.3] — 2026-09-17 — the retirement lane bites again
 
 **Why a patch.** One leg corrected, nothing added or removed.

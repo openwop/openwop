@@ -163,7 +163,7 @@ Phase 2 sequencing: PR A (this RFC + machinery) → PR B (C.2, C.5) ∥ PR B′ 
 ## Acceptance criteria
 
 - [x] `Draft → Active`: RFC text, the RFC 0001 §3 amendment, `migrations.json` + schema (27 rows), `alias-detectors.json` (28), 11 deprecation rows, the codemod harness with one codemod, the three checks wired into `openwop:check`, the two editorial corrections, waiver ledger row, CHANGELOG. (This PR.)
-- [ ] §G.1 — every child `Active`; `check-codemods.mjs --at-active`, `check-alias-coverage.mjs`, `check-migrations.mjs` green. (Phase 2 exit; recorded in `Updated`.)
+- [x] §G.1 — every child `Active`; `check-codemods.mjs --at-active`, `check-alias-coverage.mjs`, `check-migrations.mjs` green. (Phase 2 exit; recorded in `Updated`.) — evidence: every child `Active` (13/13, 2026-09-17); `check-codemods.mjs --at-active`, `check-alias-coverage.mjs`, `check-migrations.mjs` green in `openwop-check.sh`.
 - [ ] `Active → Accepted` — §G.2 on the v2.0 release candidate; every child `Accepted`. (Phase 3 cut.)
 
 ## Migration table
