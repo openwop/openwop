@@ -1017,6 +1017,9 @@
       "facets": [
         "contentPacks"
       ],
+      "normativeText": [
+        "spec/v2/core/form-content-packs.md"
+      ],
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0137"
@@ -1484,6 +1487,9 @@
         "multiRegion",
         "crossRegion"
       ],
+      "normativeText": [
+        "spec/v2/core/idempotency.md"
+      ],
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0150"
@@ -1501,6 +1507,10 @@
       },
       "facets": [
         "crossEngineOrdering"
+      ],
+      "normativeText": [
+        "spec/v2/core/persistence.md",
+        "spec/v2/core/replay.md"
       ],
       "floorScenarios": [],
       "requirementIds": [],

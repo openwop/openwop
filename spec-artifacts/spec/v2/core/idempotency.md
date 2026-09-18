@@ -43,3 +43,16 @@ A host that advertises `idempotency` MUST serve `schemas/v2/effect-ledger-projec
 ## Composition
 
 Layer 1 deduplicates the caller's request; Layer 2 deduplicates the run's effects. A retried provider call inside a run MUST resolve to the same effect record. Effects under replay and fork are in replay.md; identifier grammars are in identity.md.
+
+## Multi-region
+
+`multiRegion` and `crossRegion` are the two region facets of `idempotency`, and
+they claim different things. `crossRegion` names the host's deployment posture
+for this axis and MUST be held constant for the life of an advertisement.
+`multiRegion` is the behavioural claim: when a host advertises it, both layers
+above MUST hold across regions — an `Idempotency-Key` replayed into a second
+region MUST resolve to the first region's response rather than starting new
+work, and effect identity MUST collapse a duplicate effect wherever it is
+observed. A host that does not advertise `multiRegion` makes no cross-region
+promise, and a client MUST NOT infer one from `crossRegion` alone.
+

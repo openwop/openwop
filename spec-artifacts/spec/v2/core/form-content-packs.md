@@ -15,6 +15,18 @@ A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.cond
   "when": { "type": "equals", "left": "fields.shipping", "right": "international" } }
 ```
 
+## Instantiation
+
+A form instantiated from a pack advertised through `forms.contentPacks` MUST be
+created through the same path a hand-authored form uses, and MUST remain
+editable afterwards: the pack is a starting point, not a managed object. A host
+MUST degrade an unrecognized field type to plain text rather than failing the
+instantiation, and MUST NOT execute anything carried by the pack. A pack-authored
+string, and any value collected through an instantiated template, is untrusted
+input: when one is interpolated into a prompt, the composed envelope MUST carry
+`meta.contentTrust: "untrusted"`, so a downstream reader can tell authored text
+from pack-supplied text.
+
 ## Localized strings
 
 `label`, `title`, and `description` are localized strings. A host MUST select the rendered language by the locale-selection and fallback rules of i18n.md, and MUST treat every rendered string as untrusted: escaped for the target surface, never interpreted as markup, script, or a template directive.
