@@ -13,6 +13,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+## [2.4.1] — 2026-09-18 — the leg that reads the host, not the schema
+
+### Fixed
+
+- **`v2-chain-pin-exact` could not see the host's rule.** Its two legs assert a 4xx for `core.ai.callPrompt@^1` — which `ids.schema.json`'s `typeId` pattern already refuses, so the legs pass on schema validation alone. Sabotage-proved on the reference host: delete its §Exact pins enforcement entirely and both legs stay green. The new third leg publishes a chain whose **external** `subChainRef` carries `version: "^1.0.0"`, which `SubChainRef.ref` `oneOf[1]` types as a semver *range* and no schema can refuse — so it reads the host's rule or nothing. A tier-1 host measured the external branch as *typed, reachable and unexercised* on both production hosts, which is the precondition for exactly this class of vacuity. When RFC 0177 flips, its `chain-pin-exact` row reads **host-enforced** only for bundles cut on 2.4.1 or later.
+- **Runbook, two host-reported operational rules.** *Preflight every opt-in fixture before you certify*: one `blocked` row denies certification, so a dead fixture and a broken host give the same verdict from opposite causes — measured here when a synthetic IdP tied to its stdin exited on a detached launch and blocked three rows in a bundle whose other 226 passed. Check the FIELD the scenario reads, not that a process exists. *Wait on the workers, never on the wrapper*: a wrapper that is itself waiting is indistinguishable from one that is testing, so two cut scripts can each count the other's waiter as a runner and hold a free machine idle — the tell a tier-1 host measured was 0.06 s of CPU in 23 minutes with zero workers.
+
 ## [2.4.0] — 2026-09-18 — four bindings the hosts found
 
 ### Added

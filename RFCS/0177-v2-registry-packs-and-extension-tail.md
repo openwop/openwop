@@ -112,7 +112,7 @@ v2 scenarios (suite 2.0.0): `manifest-ceiling-refused` (gated on `packs`: an unb
 | §C.2 hatch on `agents[]`/`prompts[]` | install accepts the `x-` field — `openwop.requirement.0177.manifest-hatch-carried` | the suite, gated on `packs` | witnessable — gated |
 | §C.3–§C.5 one scheme, `keyId`, `kind` | schema + registry gate — `openwop.requirement.0177.one-signing-scheme` | the corpus gate | witnessable — unaided (corpus) |
 | §D.1 conflict fails closed | `connection_provider_conflict` — `openwop.requirement.0177.provider-conflict` | the suite via the RFC 0095 `install`/`resolve` seams | seam-gated |
-| §E.1 exact pin | refusal at register — `openwop.requirement.0177.chain-pin-exact` | the suite, gated on `workflowChains` | witnessable — gated |
+| §E.1 exact pin | refusal at register — `openwop.requirement.0177.chain-pin-exact`, and `…chain-pin-exact.external-range-refused` for the EXTERNAL `subChainRef` branch, whose `version` the schema types as a semver *range* and therefore cannot refuse | the suite, gated on `workflowChainPacks` | witnessable — gated (the sibling-string legs are satisfied by schema validation alone, so this row reads **host-enforced** only for bundles cut on suite 2.4.1 or later) |
 | §E.2 reference counting | host-side lifecycle | the suite via the chain seams | seam-gated |
 | §E.4 `when` is the edge-condition grammar | schema + a form pack fixture — `openwop.requirement.0177.form-when-reuses-edge-conditions` | the suite, gated on `forms` (no reference host: `host-pending`) | witnessable — gated |
 

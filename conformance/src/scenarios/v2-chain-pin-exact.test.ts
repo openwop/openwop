@@ -76,6 +76,20 @@ function chainPack(name: string, reference: string): Record<string, unknown> {
     }],
   };
 }
+/**
+ * The same fixture with an EXTERNAL sub-chain reference. `SubChainRef.ref`
+ * oneOf[1] types `version` as a semver RANGE, so — unlike the node reference
+ * above — the schema cannot refuse a range here. A host either carries the
+ * §Exact pins rule or it does not, and this is the only shape that tells the
+ * two apart.
+ */
+function externalRefPack(name: string, version: string): Record<string, unknown> {
+  const pack = chainPack(name, 'core.ai.callPrompt@1.0.0');
+  const chain = (pack['chains'] as Array<Record<string, unknown>>)[0] as Record<string, unknown>;
+  chain['subChains'] = [{ ref: { packName: 'core.openwop.v2-pin-external', chainId: 'c.remote', version } }];
+  return pack;
+}
+
 async function publish(manifest: Record<string, unknown>) {
   const name = manifest['name'] as string;
   const version = manifest['version'] as string;
@@ -106,6 +120,21 @@ describe('v2-chain-pin-exact (RFC 0177 §E.1)', () => {
     if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
     expect(res.status >= 400 && res.status < 500, req('openwop.requirement.0177.chain-pin-exact.range-refused', SECTION, `a ranged reference MUST be refused at register (got ${res.status})`)).toBe(true);
     expect(typeof readErrorCode(res.json), req('openwop.requirement.0177.chain-pin-exact.range-refused', SECTION, 'the refusal MUST carry an error code in the canonical envelope')).toBe('string');
+  });
+
+  it('an EXTERNAL sub-chain reference carrying a range is refused — the one pin the schema cannot catch', async () => {
+    const skip = await preflight();
+    if (skip) return softSkip(skip.kind, skip.reason);
+    // Measured 2026-09-18 on both production hosts: the external branch is
+    // typed, reachable and UNEXERCISED — every shipped pack uses the sibling
+    // string form — so nothing on either host would have noticed a range here.
+    // The two legs above are satisfied by schema validation alone (sabotage on
+    // the reference host: delete its pin rule and they stay green), which is
+    // why this leg exists: it is the only one that reads the HOST's rule.
+    const res = await publish(externalRefPack(freshName('chain-ext-range'), '^1.0.0'));
+    if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
+    expect(res.status >= 400 && res.status < 500, req('openwop.requirement.0177.chain-pin-exact.external-range-refused', SECTION, `an external reference carrying a range MUST be refused at register — the schema types this field as a semver range, so only the host's rule can refuse it (got ${res.status})`)).toBe(true);
+    expect(typeof readErrorCode(res.json), req('openwop.requirement.0177.chain-pin-exact.external-range-refused', SECTION, 'the refusal MUST carry an error code in the canonical envelope')).toBe('string');
   });
 
   it('a chain reference pinning an exact version (core.ai.callPrompt@1.0.0) registers', async () => {
