@@ -141,6 +141,32 @@ document, not from anything you assert.
    and every error is a registered code in the closed `{ error, message, details? }`
    envelope (`errors.md`).
 
+## Signing keys, and the one step that silently does nothing
+
+A certification bundle is signed with Ed25519. You sign with a **PKCS8 private key**; you publish the **raw 32-byte public key, base64url, unpadded — exactly 43 characters** in your own discovery document's `signingKeys[]`. Those are different encodings of different halves, and nothing converts one to the other for you. Publish a PEM or an SPKI blob and it fails the schema pattern; publish nothing and your signature **attests integrity only** — it proves the bundle was not altered after signing and says nothing about who signed it, because anyone can mint a keypair and a key id at will.
+
+Generate the pair:
+
+```bash
+node -e 'const {generateKeyPairSync}=require("node:crypto");
+const {privateKey}=generateKeyPairSync("ed25519");
+require("node:fs").writeFileSync("host.pem", privateKey.export({type:"pkcs8",format:"pem"}));'
+```
+
+Derive the value you publish — the last 32 bytes of the SPKI DER are the raw key:
+
+```bash
+node -e 'const {createPublicKey}=require("node:crypto");
+const k=createPublicKey(require("node:fs").readFileSync("host.pem"));
+const der=k.export({type:"spki",format:"der"});
+console.log(der.subarray(der.length-32).toString("base64")
+  .replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""));'
+```
+
+Put that string in `signingKeys[]` with `alg: "ed25519"` and the same `keyId` you pass to `--signing-key-id`. **A verifier resolves that `keyId` in YOUR discovery document** — there is no key list the steward keeps, and no approval step. That is what makes the trust root self-asserted: you publish the key, and anyone can check the bundle against it.
+
+Do not use `openssl genpkey` recipes written for the node-pack signing surface; those emit SPKI PEM and will not match the pattern.
+
 ## When you are done
 
 Publish your bundle and open a PR adding a row to the v2 table in

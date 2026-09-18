@@ -57,6 +57,14 @@ async function invoke(typeId: string, extra: Record<string, unknown> = {}): Prom
   if (!doc || !seamsProfileAdvertised(doc)) { softSkip('inapplicable', `the ${typeId} leg is seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised`); return null; }
   const res = await driver.post(INVOKE, { typeId, ...extra });
   if (res.status === 404 || res.status === 403 || res.status === 405) { seamAbsent(`host advertises packs + sandbox but ${INVOKE} answered ${res.status} — the ${typeId} leg is unobservable (host-sample-test-seams.md §8)`); return null; }
+  // The same id is ALSO asserted by its own `it` above, and that is the copy the
+  // registry can see: `generate-requirement-registry.mjs` harvests `req(…)` only
+  // within an `it`, so this helper-level call alone left the id out of
+  // requirements.json — and no bundle could carry a row for it — while
+  // `check-cut-gates.mjs`, which scans every `req(` in the source, went on
+  // demanding one. §G.2 failed on a row no host could supply. RFC 0168 §A.1
+  // requires `req(…)` here rather than a bare describe, so the fix is the extra
+  // `it`, not a quieter assertion.
   expect(res.status, req('openwop.requirement.0173.pack-isolation.seam', 'host-sample-test-seams.md §8', `${INVOKE} MUST answer 200 { result } | 200 { error } for ${typeId}`)).toBe(200);
   return (res.json ?? {}) as InvokeResult;
 }
@@ -79,6 +87,18 @@ describe('RFC 0173 §B — pack-isolation (gated on packs + sandbox)', () => {
       ISOLATION_MODELS,
       req('openwop.requirement.0173.pack-isolation', 'facets/sandbox.schema.json isolationModel', `isolationModel MUST be one of ${ISOLATION_MODELS.join(' | ')} (got ${String(model)})`),
     ).toContain(model);
+  });
+
+  it('the sandbox-invoke seam answers the seam contract', async () => {
+    if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
+    const doc = await discovery();
+    if (!doc || !seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised');
+    const res = await driver.post(INVOKE, { typeId: 'misbehave.fs-escape-read' });
+    if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises packs + sandbox but ${INVOKE} answered ${res.status}`);
+    expect(
+      res.status,
+      req('openwop.requirement.0173.pack-isolation.seam', 'host-sample-test-seams.md §8', `${INVOKE} MUST answer 200 { result } | 200 { error } — the eight behavioural legs are unobservable otherwise`),
+    ).toBe(200);
   });
 
   it('node-pack-sandbox-fs-gated: a host filesystem read is refused', async () => {

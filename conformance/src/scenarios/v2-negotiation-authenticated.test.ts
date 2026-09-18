@@ -66,7 +66,12 @@ async function assertNotLowered(id: string, preferred: string, lower: string, re
       req(id, 'interop.md §Authentication', `the wire toward the peer MUST NOT carry the lower version (${lower}) under an unauthenticated exchange — captured ${v}`),
     ).not.toBe(lower);
   }
-  const runId = (res.json as { runId?: unknown } | null)?.runId;
+  // A refusal is the closed error envelope (errors.md): the run that carries the
+  // decision is named in `details.runId`, exactly where v2-minimum-version-refused
+  // reads it. Reading only the top-level key recorded `blocked` on a host that had
+  // emitted the event correctly.
+  const body = (res.json ?? {}) as { runId?: unknown; details?: Record<string, unknown> };
+  const runId = body.runId ?? body.details?.['runId'];
   if (typeof runId !== 'string') {
     softSkip('blocked', 'the seam answered without a runId — the negotiation.decided event for the unauthenticated exchange is not addressable from the suite');
     return;

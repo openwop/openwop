@@ -4,20 +4,33 @@
 
 ```bash
 # Install BOTH packages at the SAME explicit version — the suite declares
-# @openwop/spec-artifacts as an exact-pinned peer, and `npm i --legacy-peer-deps`
-# on the suite alone does not pull it (a host measured "corpus stamp MISMATCH —
-# missing @openwop/spec-artifacts" on 2026-09-05). Pre-release 2.x is on the
-# `next` dist-tag; pin the version, never the tag (runbook §0.2b).
-npm install @openwop/openwop-conformance@2.0.0-rc.57 @openwop/spec-artifacts@2.0.0-rc.57
+# @openwop/spec-artifacts as an exact-pinned peer, and installing the suite
+# alone does not pull it (a host measured "corpus stamp MISMATCH — missing
+# @openwop/spec-artifacts"). Pin the version, never a dist-tag.
+#
+# --legacy-peer-deps is REQUIRED, not optional: the exact peer pin is what npm's
+# default resolver refuses. npm 10.9 fails outright with
+# "Cannot read properties of null (reading 'edgesOut')" — use npm >= 11.
+npm install --legacy-peer-deps @openwop/openwop-conformance@2.12.0 @openwop/spec-artifacts@2.12.0
 # or run without install:
 npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk_test_...
 ```
+
+### Auditing someone else's bundle
+
+```bash
+npx @openwop/openwop-conformance --verify bundle-v3.json --host-key host.pub.pem
+```
+
+No host, no clone. Exit `0` verified · `1` rejected · **`2` coherent but not independently verified** · `3` not a bundle.
+
+Exit 2 is the one that matters: without `--host-key` the signature is unchecked, and a bundle that merely *hangs together* is not a bundle that has been *verified*. The command also prints what it does **not** do — it never re-runs anything, so a host that measured itself wrongly and signed the result verifies clean here. It audits an attestation, not a host.
 
 > **Spec:** [github.com/openwop/openwop](https://github.com/openwop/openwop) · See `CHANGELOG.md` below for release history.
 
 The suite is intentionally self-contained — it does NOT depend on the reference implementation. A spec-compliant server written in any language can run this suite against itself by spinning up its server, exporting the env vars, and running `npx vitest run`.
 
-> **Status:** Tracks the FINAL v1 protocol contract. The suite version evolves independently as new scenarios ship (vendor-neutral redaction, cost attribution, post-v1 ecosystem triggers); see [`CHANGELOG.md`](./CHANGELOG.md) for the current release.
+> **Status:** Tracks the **v2** protocol contract (`spec/v2/`), the current major. The suite still runs v1 scenarios through the overlap — pass `--target-major 1` for a v1 host, `--target-major 2` for a v2 host. The suite version evolves independently as new scenarios ship (vendor-neutral redaction, cost attribution, post-v1 ecosystem triggers); see [`CHANGELOG.md`](./CHANGELOG.md) for the current release.
 
 ---
 
@@ -86,6 +99,8 @@ Run `npm run test` for normal CI cadence; `npm run test:strict` when claiming fu
 
 | Variable                                  | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENWOP_HOST_RELAXATIONS`                | Sets `host.relaxations[]` in the bundle. **It relaxes nothing in the suite** — it is your declaration that the HOST runs relaxed, and the suite cannot detect an undeclared one. A profile carrying a relaxation **cannot certify** (`security-defaults.md` §Relaxations, RFC 0173 §A.2), and since 2.6.0 the emitter enforces that rather than writing `certified: true` and leaving the contradiction to `--verify`. JSON array of `{obligation, durability, reason}`; `durability` is `session \| deployment \| persisted` — **not** `permanent`. Unparseable JSON exits 2; a wrong enum value exits 2 later, at schema validation. |
+| `OPENWOP_TARGET_MAJOR`                    | Selects the scenario lane. **Only the literal `"2"` selects major 2** — unlike `--target-major`, which validates and exits 2 on a bad value, the env var falls back to major 1 for `"1"`, `"3"`, `"two"` or empty. The runner and every vitest worker MUST see the same value: when they disagreed, the worker minted `openwop.floor.*` while the runner looked up `openwop.scenario.*`, producing a vacuous-pass emitter defect and **no bundle at all**. Prefer `--target-major`; set this only when driving `vitest` directly. |
 | `OPENWOP_REQUIRE_BEHAVIOR=true`           | Capability-gated scenarios (audit-log integrity, rate-limit envelope, multi-region idempotency, `configurableSchema`, webhook sig versioning, etc.) FAIL instead of skipping when the host doesn't advertise the profile. Lets a host claim "full coverage" mechanically. See [`coverage.md`](./coverage.md) §"Capability-gated scenarios".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `OPENWOP_TEST_PUBLIC_REGISTRY=true`       | Runs `registry-public.test.ts` against the hosted registry at `packs.openwop.dev`. Skipped by default so the suite doesn't depend on outbound connectivity.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `OPENWOP_OTEL_COLLECTOR=true`             | Boots the in-suite OTLP collector for `otel-emission.test.ts`, `otel-trace-propagation.test.ts`, `metric-emission.test.ts`, and `otel-emission-grpc.test.ts`. The collector accepts OTLP/HTTP-JSON (`application/json`), OTLP/HTTP-protobuf (`application/x-protobuf` — hand-rolled decoder at `src/lib/otlp-protobuf.ts`), and OTLP/gRPC (when `OPENWOP_OTEL_COLLECTOR_GRPC=true` — h2c HTTP/2 + hand-rolled framing at `src/lib/grpc-framing.ts`). Zero new npm deps. Hosts may emit via `OTEL_EXPORTER_OTLP_PROTOCOL=http/json`, `http/protobuf`, or `grpc`. Skipped by default. **Run OTel scenarios with `--no-file-parallelism`** — each vitest worker spawns its own collector and only one can bind the same port, so concurrent file execution causes ephemeral-port fallbacks that don't receive the host's OTLP traffic. |
@@ -117,7 +132,7 @@ Exit code is non-zero on any failed assertion. `--certify` distinguishes: `0` �
 
 ## What's Covered
 
-The current suite has 521 scenario files under `src/scenarios/`.
+The current suite has 522 scenario files under `src/scenarios/`.
 - 2026-09-03 (suite `1.157.0 -> 1.158.0`, gap G17): NEW `idempotency-concurrent-claim.test.ts` — drives the new `host-sample-test-seams.md` §25 concurrent duplicate-delivery seam for the RFC 0150 §B / `idempotency.md` §"Concurrent duplicates (Layer 2)" atomic-claim MUST, which is unconditional and had no witness of any kind. Asserts every executor mints the SAME `logicalInvocationId` **before** asserting `delivered === 1` — without the identity check a host passes by minting different ids and never colliding, one effect because nothing raced. Not profile-gated and so not opt-out-able (the obligation is unconditional); an unmounted seam records `blocked`, which is not certifiable. Graduates `layer2-invocation-claim-atomic` reference-impl -> protocol.
 - 2026-08-19 (suite `1.137.0 → 1.138.0`): NEW `durability-poison-exhaustion.test.ts` — RFC 0158 §C.8, the FIRST row of that RFC's conformance table to land. Asserts what `failure-path.test.ts` cannot: not just that deterministically failing work reaches terminal, but that attempts STOP — counted on the log, re-counted after a scaled quiet window, asserted unchanged. A host still redelivering records more. Seam-gated on the existing event-log seam (`blocked` = unobservable, not unmet) and outside every profile floor.
 - 2026-08-19 (suite `1.136.15 → 1.137.0`): NEW `replay-fanout-suppression.test.ts` — capability-gated on `webhooks.supported`, **outside every profile floor**; witnesses `replay.md` §"Host-initiated fan-out is an external effect", which was the largest normative MUST NOT on the replay surface with no scenario and no SECURITY invariant. Three legs in ONE `it` against ONE receiver and ONE subscription — a positive control, the MUST NOT, and a `branch` boundary leg — because "no delivery arrived" passes identically when delivery never worked, so absence is asserted only after presence is proven on that exact wiring. A host with an SSRF guard correctly refuses the loopback receiver and records `blocked`: **unobservable, not unmet.**
@@ -462,7 +477,7 @@ Server-required (added in 1.7.0):
 | ------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 521 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 522 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 

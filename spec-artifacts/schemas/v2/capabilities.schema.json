@@ -104,10 +104,12 @@
               "type": "boolean",
               "description": "Host exposes `POST /v1/host/sample/test/debug-bundle/export` returning the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. Conformance verifies the serialized bundle doesn't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
             }
-          }
+          },
+          "deprecated": true,
+          "x-openwop-remove-in": "3.0"
         }
       },
-      "additionalProperties": true,
+      "additionalProperties": false,
       "x-openwop-seeded-from": "v1"
     },
     "minClientVersion": {
@@ -5146,6 +5148,28 @@
             }
           },
           "description": "spec/v2/core/webhooks.md §Delivery — the policy a host retries a failed attempt under. The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."
+        },
+        "deadLetter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retentionDays",
+            "maxPageSize"
+          ],
+          "description": "RFC 0188 §A.5 — the DELIVERY dead-letter sink, advertised only by a host that serves `GET /webhooks/{webhookId}/dead-letters`. **Distinct from the top-level `deadLetter` FAMILY (RFC 0053), which is the RUN sink** and whose own `retentionDays` governs a dead-lettered run's fork-eligibility window. Three documents previously routed delivery dead-letters to RFC 0053, which is run-scoped and says so twice; this facet is where the delivery sink actually lives.",
+          "properties": {
+            "retentionDays": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How long a dead-lettered delivery stays readable. Observable: a record's `expiresAt − deadLetteredAt` matches it."
+            },
+            "maxPageSize": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "Ceiling the host clamps `limit` to (RFC 0182 §A.3 page-ceiling idiom)."
+            }
+          }
         }
       },
       "allOf": [
@@ -5183,7 +5207,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#webhooks — witness: witnessable-gated; maturity experimental/none",
+      "description": "core/capabilities.md#webhooks — witness: witnessable-gated; maturity experimental/none; RFC 0188",
       "x-openwop-facets-from": "spec/v2/facets/webhooks.schema.json"
     },
     "triggerBridge": {
@@ -6436,16 +6460,6 @@
             "negative-existence"
           ]
         },
-        "deferredParameters": {
-          "type": "object",
-          "description": "RFC 0124 (WCP4, `Active`). OPTIONAL. When `supported: true`, the host offers a capability-gated deferred-parameter expansion mode in ADDITION to expansion-time substitution (which remains the default and floor): at drop time it materializes the chain's `parameters` into top-level workflow `variables[]` (author value as `defaultValue`) and rewrites `{{params.<name>}}` into a spec'd runtime binding (PromptTemplate `{{varName}}` with `source:\"variable\"`, or a variable-sourced PortValue), so chain parameters stay overridable per run via `configurable` while the persisted definition keeps ZERO `{{params.*}}` tokens. A parameter marked `x-openwop-sensitive` MUST be deferred or the expansion fail-closed (`sensitive_param_not_deferrable`, 422) — never frozen into persisted `config`. Omission (or `supported:false`) signals the host does NOT offer deferred mode. No host may advertise `supported:true` until RFC 0124 is `Accepted`. See `workflow-chain-packs.md` §\"Deferred-parameter expansion\".",
-          "properties": {},
-          "additionalProperties": false
-        },
-        "hostExpansionSeam": {
-          "type": "boolean",
-          "description": "RFC 0013 erratum (2026-07-05). OPTIONAL. A **conformance-only test seam** advertisement (category: test harness, cf. `observability.testSeams` — NOT a product capability): when `true`, the host serves `POST /v1/host/sample/workflow-chain:expand` returning the `vendor.openwop.workflow-chain-sample` v1.0.0 expansion that `conformance/src/scenarios/workflow-chain-host-expansion.test.ts` asserts against. Absent/`false` ⇒ that live-host expansion scenario soft-skips; the semantic `workflowChainPacks.supported` claim is witnessed by the server-free `workflow-chain-expansion.test.ts` legs. This flag is DISTINCT from `deferredParameters` (RFC 0124), which is witnessed through its own `POST /v1/host/sample/chain/deferred-expand` seam — so a host MAY advertise `supported` / `deferredParameters.supported` without standing up the RFC 0013 sample-pack seam it was never handed a published fixture for. Advertising `supported:true` no longer conscripts a host into the RFC 0013 host-expansion scenario."
-        },
         "subChains": {
           "type": "object",
           "description": "RFC 0133 (workflow-chain composition, `Accepted`). OPTIONAL. When `supported: true`, the host's `POST …/workflows/from-chain` implements RUNTIME sub-chain composition per `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\": for each `config.subChainRef` reachable from a parent chain, it resolves the referenced chain (sibling or external), recursively expands + co-registers it as its own owned workflow (deterministic TENANT-SCOPED id from `(tenantId, childChainId, version)` — two tenants never collide on the global registry, a shared child registers once across parents in a tenant, a repeat instantiation converges), rewrites the referencing node's `subChainRef` → the minted child `config.workflowId`, and dispatches the child as a child run (`core.subWorkflow` / `core.dispatch` child-run); the `from-chain` response carries `{ workflowId, subChainWorkflowIds[], nodeCount }`. Bounded by a cycle check (`sub_chain_cycle`) + a depth cap (`sub_chain_max_depth_exceeded`). A host that does NOT advertise this block MUST refuse a `subChains`-bearing chain at author/instantiate time with `sub_chain_unsupported` (422) — it never silently flattens. `producedVariables` (RFC 0133 §2) needs NO flag: it is pure variable emission under the base `workflowChainPacks.supported`. Conformance scenarios `chain-subchain-fanout.test.ts` + `chain-subchain-unsupported-refused.test.ts` gate on this flag; the server-free `chain-subchain-sibling` / `chain-subchain-cycle-rejected` / `chain-produced-var-roundtrip` legs run unconditionally against the reference library.",
@@ -6496,7 +6510,7 @@
         }
       ],
       "description": "core/capabilities.md#workflowChainPacks — witness: witnessable-gated; maturity experimental/none; RFC 0013",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/workflowChainPacks.schema.json"
     },
     "packs": {
       "type": "object",
@@ -6534,7 +6548,7 @@
         },
         "testMode": {
           "type": "object",
-          "description": "RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise `supported: true` MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
+          "description": "Deprecated 2026-09-18, removeIn 3.0 (spec/v1/deprecations.json). A test-seam flag in the capability namespace, which spec/v2/core/conformance.md §\"The seams profile\" forbids: seams are the profile `openwop-conformance-seams-v2` in the /conformance/seams/ path space. NOT removed at 2.x because live v2 discovery documents advertise it and the v2 root is additionalProperties:false. RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise this facet MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
           "properties": {
             "isolated": {
               "type": "boolean",
@@ -6562,7 +6576,9 @@
               "description": "RFC 0025 §A. Which namespace scopes the test catalog accepts in pack names. Public test catalogs SHOULD refuse `private` and `local` (matching the production-registry rule for `packs.openwop.dev`); private dev catalogs MAY accept all five. When omitted, the test catalog defaults to the same scope set as the production namespace it mirrors."
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "deprecated": true,
+          "x-openwop-remove-in": "3.0"
         }
       },
       "allOf": [
@@ -6601,7 +6617,7 @@
         }
       ],
       "description": "core/capabilities.md#packs — witness: claims-check; maturity experimental/none; RFC 0025",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/packs.schema.json"
     },
     "mcp": {
       "type": "object",

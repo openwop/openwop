@@ -126,18 +126,48 @@ def v2_openapi_and_seams():
         'responses': {'200': {'description': 'The verifier verdict.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['accepted'], 'properties': {'accepted': {'type': 'boolean'}, 'reason': {'type': 'string'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     # RFC 0173 read surfaces + hostEvents default address
-    paths['/host/effect-seams'] = {'get': {'tags': ['Host'], 'operationId': 'getEffectSeamManifest', 'summary': 'The host-declared effect-seam manifest (RFC 0173 §C)', 'description': 'Every outbound effect seam replay suppression covers. A seam omitted here is invisible to the suite; the RFC 0140 R5 audit is the control.', 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
-    paths['/runs/{runId}/compensation'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['Runs'], 'operationId': 'getRunCompensation', 'summary': 'Compensation plan and attempts for a run (RFC 0173 §C.1)', 'description': 'The read projection that makes compensation a core obligation with a deployed-wire witness (RFC 0151 G9 / RFC 0173 §B).', 'responses': {'200': {'description': 'The projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/compensation-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}
-    paths['/runs/{runId}/effects'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['Runs'], 'operationId': 'getRunEffects', 'summary': 'The Layer-2 effect ledger for a run (RFC 0173 §C.2)', 'description': 'Business-identity keyed effect records; the witness for the Layer-2 effect-identity obligation.', 'responses': {'200': {'description': 'The ledger projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-ledger-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': 'The host-declared effect-seam manifest (RFC 0173 §C)', 'description': 'Every outbound effect seam replay suppression covers. A seam omitted here is invisible to the suite; the RFC 0140 R5 audit is the control.', 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    paths['/runs/{runId}/compensation'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['runs'], 'operationId': 'getRunCompensation', 'summary': 'Compensation plan and attempts for a run (RFC 0173 §C.1)', 'description': 'The read projection that makes compensation a core obligation with a deployed-wire witness (RFC 0151 G9 / RFC 0173 §B).', 'responses': {'200': {'description': 'The projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/compensation-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    paths['/runs/{runId}/effects'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['runs'], 'operationId': 'getRunEffects', 'summary': 'The Layer-2 effect ledger for a run (RFC 0173 §C.2)', 'description': 'Business-identity keyed effect records; the witness for the Layer-2 effect-identity obligation.', 'responses': {'200': {'description': 'The ledger projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-ledger-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0182 — the portable run list (gated on the runList family); shares the /runs path item with createRun
-    paths.setdefault('/runs', {})['get'] = {'tags': ['Runs'], 'operationId': 'listRuns', 'summary': 'The caller\'s runs, newest first, cursor-paginated (RFC 0182)', 'description': 'Tenant-scoped by construction: only runs whose tenant segment is the caller\'s, every runId bound (identity.md §5). Gated on the `runList` family — 404 not_found when unadvertised. `limit` is honoured up to `runList.maxPageSize`; `cursor` is opaque and a cursor the host did not mint is 400 validation_error; `workflowId` and `status` are exact-match filters when `runList.filters` names them (an unadvertised filter is ignored).',
+    paths.setdefault('/runs', {})['get'] = {'tags': ['runs'], 'operationId': 'listRuns', 'summary': 'The caller\'s runs, newest first, cursor-paginated (RFC 0182)', 'description': 'Tenant-scoped by construction: only runs whose tenant segment is the caller\'s, every runId bound (identity.md §5). Gated on the `runList` family — 404 not_found when unadvertised. `limit` is honoured up to `runList.maxPageSize`; `cursor` is opaque and a cursor the host did not mint is 400 validation_error; `workflowId` and `status` are exact-match filters when `runList.filters` names them (an unadvertised filter is ignored).',
         'parameters': [
             {'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1}, 'description': 'Page size; clamped to runList.maxPageSize.'},
             {'name': 'cursor', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 2048}, 'description': 'Opaque cursor from a previous page\'s nextCursor.'},
             {'name': 'workflowId', 'in': 'query', 'required': False, 'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/workflowId'}, 'description': 'Exact-match filter (when advertised in runList.filters).'},
             {'name': 'status', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'enum': ['pending', 'running', 'paused', 'waiting-approval', 'waiting-input', 'waiting-external', 'completed', 'failed', 'cancelling', 'cancelled']}, 'description': 'Exact-match filter (when advertised in runList.filters).'}],
         'responses': {'200': {'description': 'One page of the caller\'s runs.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/run-list-response.schema.json'}}}}, '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}
-    paths['/host/events'] = {'get': {'tags': ['Host'], 'operationId': 'streamHostEvents', 'summary': 'Host-scoped events (heartbeat.*) as SSE (RFC 0171 §E.1)', 'description': 'The documented default hostEvents address; a host MAY declare another under `heartbeat.deliveryChannel`. Content-free of run data.', 'responses': {'200': {'description': 'text/event-stream of hostEvents messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    # RFC 0188 — the webhook DELIVERY dead-letter read (gated on the webhooks.deadLetter facet).
+    # `webhooks.md` §Durability has always said an exhausted delivery is routed to a sink
+    # "inspectable for retentionDays", and the corpus served no endpoint that could see it — so
+    # every host bundle recorded "exhaustion was observed, routing to the sink was not", and the
+    # `deliveryId` KIND had no v2 surface to appear on at all. This is that read.
+    paths['/webhooks/{webhookId}/dead-letters'] = {'get': {
+        'tags': ['webhooks'],
+        'operationId': 'listWebhookDeadLetters',
+        'summary': "A subscription's dead-lettered deliveries (RFC 0188 §A.1)",
+        'description': ('The read that makes `webhooks.md` §Durability observable. A delivery whose retries are exhausted, '
+            'or a `payload_unprojectable` delivery dead-lettered on its first attempt, appears here until `retentionDays` '
+            'elapse. Gated on the `webhooks.deadLetter` facet: a host that does not advertise it answers `404 not_found`. '
+            '**Content-free (RFC 0188 §B.1):** the record NAMES a delivery and never carries the delivered bytes, the '
+            'request headers, or the subscription secret \u2014 a dead-letter read is a diagnostic surface, not a '
+            'payload-replay surface.'),
+        'parameters': [
+            {'name': 'webhookId', 'in': 'path', 'required': True,
+             'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'},
+             'description': 'The subscription, tenant-bound (`identity.md` \u00a75, RFC 0187 \u00a7A.1) and carried as ONE path segment \u2014 `~`-projected per RFC 0184, or percent-encoded.'},
+            {'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1},
+             'description': 'Page size; clamped to `webhooks.deadLetter.maxPageSize`.'},
+            {'name': 'cursor', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 2048},
+             'description': "Opaque cursor from a previous page's `nextCursor`. A cursor minted for another subscription MUST be refused `400 validation_error`."}],
+        'responses': {
+            '200': {'description': 'One page of dead-lettered deliveries, newest first.',
+                    'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/webhook-dead-letter-page.schema.json'}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
+    paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Host-scoped events (heartbeat.*) as SSE (RFC 0171 §E.1)', 'description': 'The documented default hostEvents address; a host MAY declare another under `heartbeat.deliveryChannel`. Content-free of run data.', 'responses': {'200': {'description': 'text/event-stream of hostEvents messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': 'RFC 0172 §A.3 — selects a listed major.minor; absent ⇒ the host\'s `preferredVersion`; unlisted ⇒ 406 protocol_version_unsupported.'}
@@ -174,6 +204,29 @@ def v2_openapi_and_seams():
     # it owns answers `not_found`, per id, silently. The projection covered the
     # way out and not the way in. Bind the items to the kind so the inbound
     # contract states what the outbound one already does.
+    # RFC 0187 §A.1 — the MINT surface carries the kind. `identity.md` §5 binds
+    # `subscriptionId`, `id-field-bindings.json` binds the property, and the one
+    # place the thing is created (`POST /webhooks -> { webhookId }`) inherited
+    # v1's bare `type: string`: the kind had no HTTP surface and the HTTP
+    # surface had no kind, so the §5 `403 id_tenant_mismatch` check had nothing
+    # to read. Bind the path parameter and the response property.
+    wh = paths.get('/webhooks/{webhookId}', {})
+    for op in wh.values():
+        if not isinstance(op, dict):
+            continue
+        for p in op.get('parameters', []) or []:
+            if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
+                p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
+                p['description'] = (
+                    'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
+                    'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
+                )
+    try:
+        reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
+        reg.clear()
+        reg['$ref'] = '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'
+    except (KeyError, TypeError):
+        pass
     bc = paths.get('/runs:bulk-cancel', {}).get('post', {})
     try:
         items = bc['requestBody']['content']['application/json']['schema']['properties']['runIds']['items']
@@ -275,6 +328,21 @@ def prune_unused(doc):
                         del comps[group][name]; changed = True
         if not comps[group]:
             del comps[group]
+    # A top-level tag no operation carries is dangling metadata. The v2 doc
+    # inherits `tags` wholesale from v1, so every tag whose operations were
+    # moved out (the seams) or deleted at the cut survived as an orphan
+    # describing a path space v2 does not define -- `packs-test` was one,
+    # still citing RFC 0025 as `Draft` (Accepted 2026-05-29) and a
+    # `capabilities.packs.testMode.supported` gate whose field v2 dropped.
+    used = set()
+    for path_item in doc.get('paths', {}).values():
+        for op in path_item.values():
+            if isinstance(op, dict):
+                used.update(op.get('tags', []) or [])
+    if 'tags' in doc:
+        doc['tags'] = [t for t in doc['tags'] if t.get('name') in used]
+        if not doc['tags']:
+            del doc['tags']
     return doc
 
 def headers_doc(doc):
@@ -300,7 +368,7 @@ def headers_doc(doc):
                 for hn, h in (rr.get('headers') or {}).items():
                     hh = comps.get('headers', {}).get(h['$ref'].split('/')[-1], {}) if '$ref' in h else h
                     resp.setdefault(hn, {'desc': (hh.get('description') or '').split('\n')[0], 'ops': set()})['ops'].add(op.get('operationId'))
-    lines = ['# Headers', '', f'> **Status: Stable · v{REL["version"]} ({REL["updated"]}) · RFC 0171 §C.1, RFC 0172 §A.3–§A.4.** GENERATED by `scripts/derive-v2-api.py` from `api/v2/openapi.yaml`; do not edit.', '',
+    lines = ['# Headers', '', f'> **Status: Stable · RFC 0171 §C.1, RFC 0172 §A.3–§A.4.** GENERATED by `scripts/derive-v2-api.py` from `api/v2/openapi.yaml`; do not edit.', '',
              '## Why this exists', '', 'RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header is declared in OpenAPI, so this table — generated from the same declaration — enumerates all of them. A header that is not in this table is not part of the protocol. Standard headers keep their standard names (`Idempotency-Key`, `ETag`, `If-None-Match`, `Last-Event-ID`, `Retry-After`, `Authorization`).', '',
              '## Request headers', '', '| Header | Operations | Meaning |', '| --- | --- | --- |']
     for n in sorted(req):

@@ -1,6 +1,7 @@
 # Webhooks
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4.**
+> **Status: Stable · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4.**
+> **Normative home:** `webhooks`.
 
 ## Why this exists
 
@@ -51,7 +52,7 @@ A host advertising both majors MUST send, on every delivery, the `X-openwop-*` f
 Durable delivery is an obligation of the `webhooks` surface (RFC 0173 §B; security-defaults.md). A host MUST:
 
 - retry a failed attempt per its advertised `retryPolicy` (`maxAttempts`, `backoff ∈ none | fixed | exponential`) with backoff between attempts;
-- route a delivery whose retries are exhausted to the dead-letter sink, inspectable for `retentionDays`, rather than drop it;
+- route a delivery whose retries are exhausted to the dead-letter sink, rather than drop it. A host advertising `webhooks.deadLetter` MUST serve `GET /webhooks/{webhookId}/dead-letters` (RFC 0188), and that record MUST NOT carry the delivered body, the delivery headers, or the subscription secret — a dead-letter read names a delivery, it does not replay one. This sink is the DELIVERY sink; the `deadLetter` family (RFC 0053) is the RUN sink and is a different thing;
 - deliver each matching event at least once; a receiver MAY observe the same event more than once;
 - dead-letter a `payload_unprojectable` delivery (events.md §Era-2) on the first attempt, never retry it.
 

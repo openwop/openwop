@@ -106,7 +106,19 @@ export function resolveItRecord(
   firstError?: string,
 ): { disposition: Disposition; detail?: string } {
   if (state === 'fail') return { disposition: 'executed-fail', detail: `the test executed and failed: ${(firstError ?? 'no message').slice(0, 300)}` };
-  if (state === 'pass' && assertionCalls > 0) return { disposition: 'executed-pass' };
+  if (state === 'pass' && assertionCalls > 0) {
+    // A leg that asserted AND THEN soft-skipped is only a partial witness, and
+    // the file-level record has always said so (`resolveFileRecord` below).
+    // This `it`-level record dropped the note — and the `it`-level rows are the
+    // ones RFC 0174 §B.1 rule 4 reads for acceptance. Measured consequence:
+    // `openwop.requirement.0173.webhook-durable-delivery.dead-letter` ends in an
+    // UNCONDITIONAL `softSkip('blocked', 'no normative dead-letter read surface…')`
+    // on every host, and still recorded a bare `executed-pass` that satisfied
+    // RFC 0173 §B's dead-letter row on every bundle in the corpus.
+    return noted !== null
+      ? { disposition: 'executed-pass', detail: `${PARTIAL_WITNESS_PREFIX}${noted.kind}: ${noted.reason}` }
+      : { disposition: 'executed-pass' };
+  }
   if (gate !== undefined) return { disposition: gate.disposition, detail: gate.detail ?? `${gate.disposition} (gate recorded no reason)` };
   if (noted !== null) return { disposition: noted.kind, detail: noted.reason };
   if (state === 'pass') return { disposition: 'blocked', detail: 'unclassified return: the test passed with zero assertions and recorded no reason — RFC 0148 §A resolves it to blocked, never to a pass' };

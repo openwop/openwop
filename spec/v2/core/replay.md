@@ -1,6 +1,7 @@
 # Replay and Fork
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0140, 0041, 0173 §C, 0176 §A.5.**
+> **Status: Stable · RFC 0140, 0041, 0173 §C, 0176 §A.5.**
+> **Normative home:** `eventLog`, `replay`.
 
 ## Why this exists
 
@@ -96,6 +97,18 @@ A host advertising `replay` MUST publish `schemas/v2/effect-seam-manifest.schema
 ## Forking a v1 run
 
 A v2 host MUST fork a run created before the cut (era `2`, persistence.md). The fork's prefix MUST be byte-equivalent to the *translated* parent — the parent as read through the codemap, not its stored bytes — and `run.started` on the fork MUST carry the legacy Subject (`issuer: urn:openwop:legacy`, identity.md) where the parent had none (RFC 0176 §A.5, scenario `fork-a-v1-run`). A backfill of an era-`2` log is permitted only atomically per run with the original preserved, so this obligation stays checkable.
+
+## Cross-engine ordering
+
+When a host advertises both `idempotency.multiRegion` and
+`eventLog.crossEngineOrdering`, a fork served by a region other than the one
+that wrote the run MUST produce the same observable state at the `fromSeq`
+boundary as a fork served by the writing region: `status`, `variables`, and the
+projected event log up to `fromSeq` MUST be byte-equivalent across regions.
+Per-region wall-clock and entropy fields in events AFTER the boundary MAY
+differ. A host that advertises one of the two and not the other keeps the
+single-region contract above; a host that advertises neither is single-region
+and the cross-region claim does not apply.
 
 ## Retention
 

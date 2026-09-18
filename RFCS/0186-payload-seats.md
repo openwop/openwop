@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0186                                                            |
 | **Title**         | Three payload seats the hosts measured and the corpus lacked    |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-17                                                      |
-| **Updated**       | 2026-09-17 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under the bootstrap rule — every seat is a strict widening measured from two hosts' persisted payloads, and the witness ships in the same PR) |
+| **Updated**       | 2026-09-17 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under the bootstrap rule — every seat is a strict widening measured from two hosts' persisted payloads, and the witness ships in the same PR) · 2026-09-18 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified** (`GOVERNANCE.md` §"Acceptance evidence tiers"): `openwop.requirement.0186.payload-seats` is `executed-pass` on the reference host's certified bundle (suite 2.4.1, witness `b8a7d1d6941d…`, all three profiles certified). |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` (`conversationExchanged`, `interruptResolved`, `nodeSuspended`), `schemas/v2/conversation-event.schema.json` (`ConversationExchangedPayload` becomes an alias), `schemas/v2/suspend-request.schema.json` (`ApprovalData.onTimeout`), `scripts/check-payload-closure-hatched.mjs` (a `MODELLED` disposition), `conformance/src/scenarios/v2-payload-seats-0186.test.ts` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1) — three optional properties added, one closed def widened to the union of two existing shapes, one orphan turned into an alias; no required field, no retype, no MUST relaxed |
 | **Supersedes**    | —                                                               |
@@ -85,6 +85,13 @@ Sabotage-proved: removing `turn` from the union, removing `reason` from `nodeSus
 
 - Whether `reason`'s domain should close to an enum once both hosts' values stabilise. Not now: the values are host-grown and a fifth would otherwise need an RFC.
 - `escalate` names a target the corpus does not model (`escalationTarget`, `escalationTimeout` on one host). Out of scope here; recorded so it is not rediscovered.
+
+### Falsifiability — one row per normative requirement
+
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A the three seats admit the shapes both hosts persist, under one bound def | `openwop.requirement.0186.payload-seats` — each host's `conversation.exchanged` payload validates; the `oneOf` matches exactly one branch | the suite, unaided | witnessable — unaided, `executed-pass` on the reference host's certified bundle |
+| §A the orphan is an alias and the `oneOf` cannot double-match | a payload matching two branches is refused at schema level | the corpus gate | witnessable — unaided (corpus) |
 
 ## Acceptance criteria
 

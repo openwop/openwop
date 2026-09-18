@@ -284,6 +284,38 @@ Three checks that catch the drift before a scenario does:
 
 `v2-webhook-delivery-shape` (suite 2.3.2+) reads the fan-out both ways; poll and SSE are read by `v2-run-completed-outputs`, `v2-stream-sse-projection` and the dual-stack scenarios. Nothing reads a host's snapshot-adjacent surfaces per contract yet — check those by hand.
 
+
+## Cut against the revision that is serving
+
+A bundle is evidence about a deployed host, so it is evidence about the revision serving traffic when it was cut. If production moves while you are preparing the PR — a redeploy, a rollback, a traffic shift — re-cut rather than submit the earlier bundle: the numbers may be identical and the claim still wrong, because the thing the claim is about is gone. A tier-2 host did exactly this on 2026-09-18, re-cutting against `00363` after `00362` stopped serving, and said so in the PR.
+
+The same rule in the other direction: cut against a commit that will be on `main`. A bundle naming a `--host-build commit:<sha>` that never merges cannot be checked by anyone later.
+
+
+## Wait on the workers, never on the wrapper
+
+If your cut script serialises against a shared machine with a `pgrep`-style wait, match the pattern on a live **worker** — a `vitest` fork actually running tests — not on the wrapper that launched it. A wrapper that is itself waiting is indistinguishable from one that is testing, so two scripts can each count the other's *waiter* as a runner and hold a free machine idle indefinitely.
+
+The tell, measured by a tier-1 host on 2026-09-18: the process it was waiting on had burned **0.06 s of CPU in 23 minutes with zero workers**. A real suite run does not look like that. Check CPU time and worker count before concluding the machine is busy — the same discipline as the wedged-suite tell above, applied to the thing doing the waiting.
+
+
+## Preflight every opt-in fixture before you certify
+
+A scenario whose opt-in fixture is unreachable records `blocked`, and **one `blocked` row denies certification** (RFC 0168 §E.1) — so a dead fixture and a broken host produce the same verdict, from opposite causes. The run says which row blocked; it does not say that your IdP exited four seconds after you launched it.
+
+Measured on the reference host, 2026-09-18: a synthetic IdP tied to its stdin exited immediately when launched detached, and the subject-link rows recorded `blocked` in a bundle whose other 226 rows passed. The cut looked like a host regression and was a launch bug.
+
+Before `--certify`, prove each opt-in surface answers, not just that the process started:
+
+```bash
+curl -sf "$OPENWOP_TEST_SAML_IDP_URL/metadata" | grep -q entityID   # the fixture is serving
+# drive one real exchange through the seam and check the FIELD the scenario reads
+curl -s … /auth/scim/provision  -d '{"op":"create-user","externalId":"preflight"}'
+curl -s … /auth/saml/validate   -d '{"variant":"valid","nameId":"preflight"}' | grep -q '"link"'
+```
+
+The rule generalises: a preflight that checks a process exists proves less than one that checks the field the scenario will read. Assert the effect, not the liveness — the same discipline as "assert the effect, not the acceptance" above.
+
 ---
 
 ## Open items a third host should expect

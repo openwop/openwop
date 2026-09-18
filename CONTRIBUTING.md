@@ -203,6 +203,13 @@ hook is fast (<1s) and only fires when staged paths match
 
 **Never write the literal you are policing.** A checker that greps the tree for a string must not contain that string — not in its docblock, not in an example, not in its own error message. `check-conformance-registry` once explained, in a comment, the exact spelling it forbade, and from then on the file it lived in was the one hit its own grep reported (#1151). Name the literal indirectly ("the retired cursor name"), build it from parts, or read it from the registry the rule comes from.
 
+**Assert every anchor before you edit anything.** A version-bump script that
+edits ten files in sequence will stop at the first anchor it cannot find — and
+everything after it silently does not happen. Twice in one day a CHANGELOG entry
+was skipped that way, and the per-package `check-shipped-changelog` caught one of
+them a cut later while the root file went unnoticed. Resolve every anchor first,
+then write; or make each edit its own step whose failure is visible.
+
 **Never run a global substitution over a lockfile or a generated file.** A version bump is a handful of known sites — `package.json`, the lockfile's root `version` and `packages[""]` block, the release manifest, the publish-metadata expectations — and each is edited by address. A `sed …/2.3.1/2.3.2/g` over `package-lock.json` rewrote an unrelated dependency's recorded version against its `resolved` tarball, and nothing noticed for two cuts. Edit by line, then audit the lockfile entry-by-entry (`version` against `resolved`) before a cut.
 
 ---

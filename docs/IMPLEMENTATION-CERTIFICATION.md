@@ -1,5 +1,7 @@
 # OpenWOP Implementation Certification
 
+> **⚠️ v1 DOCUMENT — the profile names below no longer exist.** `openwop-core`, `openwop-stream-sse` and `openwop-stream-poll` were removed at the v2 cut. The v2 profiles are `openwop-discovery-core`, `openwop-core-standard` and `openwop-conformance-seams-v2`, defined in [`spec/v2/profiles.json`](../spec/v2/profiles.json). **If you are implementing a host today, read [`docs/IMPLEMENT-CORE.md`](IMPLEMENT-CORE.md) and [`docs/IMPLEMENTER-PATH.md`](IMPLEMENTER-PATH.md) instead** — a v2 conformance claim is a signed bundle, not the self-declaration this document describes. Kept for hosts still serving v1 through the overlap (to 2026-12-04).
+
 > GOV-4 from `plans/openwop-protocol-gap-closure-plan.md`. How a host author publishes a conformance claim that third parties can audit, reproduce, and pin to a commit hash.
 
 There is no central certifying body. The protocol's "certification" is **reproducible mechanical evidence + a public row in the interop matrix**. A claim is credible because anyone can run the same conformance suite against your host and get the same result.

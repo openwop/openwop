@@ -5,8 +5,8 @@
 > hosts during the migration window.
 
 OpenWOP v1 is the maintained compatibility major. Target
-[v2](../v2/README.md) for new work; implement v1 when supporting an existing v1 client
-or a dual-stack host during the migration window.
+[v2](../v2/README.md) for new work; implement v1 when supporting an existing
+v1 client or a dual-stack host during the migration window.
 
 This directory contains explanatory and normative prose. When prose and a
 machine-readable contract disagree, use the following precedence:

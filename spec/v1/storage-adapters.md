@@ -19,7 +19,7 @@ Concrete deployments choose their own backing store. Worked examples include in-
 
 The event-log persistence contract. Implementations MUST persist append-only events keyed on `(runId, sequence)` with monotonic sequence assignment per run.
 
-### Methods
+### Event-log methods
 
 ```typescript
 interface RunEventLogIO {
@@ -72,7 +72,7 @@ interface RunEventLogIO {
 }
 ```
 
-### Reference implementations (non-normative)
+### Event-log reference implementations (non-normative)
 
 The example hosts ship two reference implementations (in-memory + SQLite). Both are illustrative — third-party hosts MAY ship their own.
 
@@ -89,7 +89,7 @@ The contract surface above is the normative part and is reusable for any backend
 
 The suspension-state persistence contract. Implementations MUST persist pending suspensions keyed on `suspensionId` and surface them for cross-process resume.
 
-### Methods
+### Suspension methods
 
 ```typescript
 interface SuspendIO {
@@ -148,7 +148,7 @@ interface PendingDoc {
 }
 ```
 
-### Reference implementations (non-normative)
+### Suspension reference implementations (non-normative)
 
 | Implementation      | Use                                                                                                                       | Module                                |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |

@@ -559,7 +559,7 @@ An OpenWOP-compliant server SHOULD ship a codemod tool that does steps 2–3 mec
 
 ---
 
-## Replay determinism
+## Reducer-version replay determinism
 
 When the reducer for an existing channel changes (e.g., upgrading `append` to `append` with `maxSize` enforcement), replay reconstruction uses the **reducer-at-write-time** stored on each `channel.written` event. This guarantees that a replay produces the same post-reduction state the original run had, even if the workflow definition's declared reducer has since changed.
 

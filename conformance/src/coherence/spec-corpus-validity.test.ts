@@ -631,12 +631,18 @@ describe('spec-corpus: absolute JSON Schema refs resolve inside the corpus', () 
         .filter((ref) => ref.startsWith('https://openwop.dev/spec/v1/'))
         .map((ref) => ref.split('#')[0] ?? ref);
 
-      for (const ref of refs) {
-        expect(
-          schemaIds.has(ref),
-          req('openwop.it.spec-corpus-validity.absolute-refs-point-to-known-schema-ids', 'spec-corpus-validity.test.ts (no spec citation in file)', `${file} has absolute $ref ${ref}, but no schema file declares that $id`),
-        ).toBe(true);
-      }
+      // One assertion, ALWAYS executed. The per-ref loop asserted nothing for a
+      // schema that declares no absolute $ref, and an `it` that passes with zero
+      // assertions resolves to `blocked` / "unclassified return" — so 77 of
+      // these legs sat in the corpus ledger looking like failures while being
+      // the opposite. RFC 0148 §A reserves `blocked` for behaviour that could
+      // not be exercised; nothing here was unavailable. Naming every unknown ref
+      // at once also beats failing on the first.
+      const unknown = refs.filter((ref) => !schemaIds.has(ref));
+      expect(
+        unknown,
+        req('openwop.it.spec-corpus-validity.absolute-refs-point-to-known-schema-ids', 'spec-corpus-validity.test.ts (no spec citation in file)', `${file} has absolute $ref(s) that no schema file declares as an $id: ${unknown.join(', ')}`),
+      ).toEqual([]);
     });
   }
 });
@@ -1311,6 +1317,7 @@ describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve
     const relFile = relative(repoRoot, file);
     it(`${relFile} has no broken local Markdown file links`, () => {
       const links = extractLocalMarkdownLinks(readFileSync(file, 'utf8'));
+      const broken: string[] = [];
       for (const link of links) {
         const filePart = link.split('#')[0] ?? link;
         if (filePart === '') continue;
@@ -1328,11 +1335,17 @@ describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve
         // `target === repoRoot || target.startsWith(repoRoot + sep)` form avoids a sibling-path
         // false-negative when repoRoot=/foo/bar and target=/foo/barbaz.
         if (LAYOUT === 'published' && target !== repoRoot && !target.startsWith(repoRoot + '/')) continue;
-        expect(
-          existsSync(target),
-          req('openwop.it.spec-corpus-validity.has-no-broken-local-markdown-file-links', 'spec-corpus-validity.test.ts (no spec citation in file)', `${relFile} links to missing local target: ${link}`),
-        ).toBe(true);
+        if (!existsSync(target)) broken.push(link);
       }
+      // One assertion, ALWAYS executed — same reason as the $ref leg above. A
+      // Markdown file with no local links asserted nothing, and an `it` that
+      // passes with zero assertions resolves to `blocked` / "unclassified
+      // return": 184 of these were the largest single family in the corpus
+      // ledger, every one of them a file that was perfectly fine.
+      expect(
+        broken,
+        req('openwop.it.spec-corpus-validity.has-no-broken-local-markdown-file-links', 'spec-corpus-validity.test.ts (no spec citation in file)', `${relFile} links to missing local target(s): ${broken.join(', ')}`),
+      ).toEqual([]);
     });
   }
 });
@@ -1365,6 +1378,15 @@ describe.skipIf(README_PATH === null)('spec-corpus: public docs avoid private im
   const banned = [
     { label: 'private workflow-runtime paths', pattern: /services\/workflow-runtime/ },
     { label: 'private workflow-engine paths', pattern: /packages\/workflow-engine/ },
+    // `apps/workflow-engine` was the demo app's path in THIS repo until it was
+    // extracted to openwop/openwop-app with full history. The two patterns above
+    // never matched it, which is why two `cd apps/workflow-engine/…` lines
+    // survived the split and told readers to enter a directory that no longer
+    // exists. Scoped to the INSTRUCTION form on purpose: the corpus must stay
+    // free to describe its own history ("extracted from `apps/workflow-engine/`"
+    // in README and SECURITY are provenance, not directions), and a blanket ban
+    // would forbid the sentence that explains the move.
+    { label: 'cd into the extracted demo app', pattern: /cd\s+apps\/workflow-engine/ },
     { label: 'internal PRD references', pattern: /PRD §/ },
     { label: 'old openwop plan references', pattern: /openwop plan/i },
     { label: 'pre-v1 release markers', pattern: /\bv0\.(?:1|2|3)\b/i },

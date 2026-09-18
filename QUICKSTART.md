@@ -1,5 +1,7 @@
 # OpenWOP Quickstart
 
+> **⚠️ v1 DOCUMENT.** This guide speaks the v1 wire, which is what a conformant host serves by default: `spec/v2/core/versioning.md` §1.1 requires `preferredVersion` to name a 1.x member through the overlap, so a request with no `OpenWOP-Version` header is a **v1** request. **If you are implementing a host today, read [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md) and [`docs/IMPLEMENTER-PATH.md`](./docs/IMPLEMENTER-PATH.md) instead.** Kept for hosts still serving v1 through the overlap (to 2026-12-04).
+
 > **Status: Stable · v1.1 (2026-04-29).** End-to-end developer onboarding guide covering discovery, auth, run lifecycle, live event delivery (SSE + webhooks), time-travel debugging via fork, BYOK + RunOptions, node-pack authoring, conformance, SDKs, and storage adapters. Cross-references the canonical specs for full normative detail. See `auth.md` for the status legend.
 
 > **Audience:** developers integrating with an OpenWOP-compliant server for the first time.
@@ -296,12 +298,12 @@ Want a starting template that bundles a single-container backend with a React fr
 
 ```bash
 # Terminal 1 — backend
-cd apps/workflow-engine/backend/typescript
+cd backend/typescript
 npm install
 npm run dev          # http://localhost:8080
 
 # Terminal 2 — frontend
-cd apps/workflow-engine/frontend/react
+cd frontend/react
 npm install
 npm run dev          # http://localhost:5173
 ```

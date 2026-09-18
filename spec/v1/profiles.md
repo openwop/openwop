@@ -269,13 +269,13 @@ openwop-trigger-bridge(c) :=
                || includes(c.triggerBridge.ingestion.externalSources, "form") )) )
 ```
 
-Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their _bridge_ into a run is uniform.
+Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their *bridge* into a run is uniform.
 
 > **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-trigger-bridge` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `trigger-bridge-shape.test.ts` and `trigger-bridge-delivery.test.ts` (profile-gated behavioural leg). Before this date the profile had no floor and every bundle read it as *unprovable*.
 
 ### `openwop-experimental`
 
-A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals _instability_, not a feature set: clients that require stable-only contracts filter on its **negation**.
+A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals *instability*, not a feature set: clients that require stable-only contracts filter on its **negation**.
 
 **Predicate:** any object-valued capability sub-block carries `tier: "experimental"` (with its required `experimentalUntil` sunset date, `capabilities.md` §"Capability stability tier").
 

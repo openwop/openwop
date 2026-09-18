@@ -99,7 +99,7 @@ The core decision: **content is one section record with a base `data` payload pl
 
 **Per-section field merge (the one new normative algorithm).** After negotiation selects `negotiatedLocale`, each section resolves its body:
 
-```
+```text
 resolveSection(section, negotiatedLocale, baseLocale):
   if negotiatedLocale == baseLocale or section.localizations is empty:
       return section.data
@@ -125,7 +125,7 @@ resolveSection(section, negotiatedLocale, baseLocale):
 
 **Public delivery (cacheable, published-only, locale via `Accept-Language`):**
 
-```
+```http
 GET /v1/content/pages/{slug}        Accept-Language: pt-BR  →  resolved page, Content-Language: pt-BR
 GET /v1/content/sections/{sectionId}
 ```
@@ -136,7 +136,7 @@ GET /v1/content/sections/{sectionId}
 
 **Admin CRUD (auth + write scope, tenant-scoped; locale targeted in the request body for writes):**
 
-```
+```http
 GET    /v1/content/pages                      POST   /v1/content/pages
 PATCH  /v1/content/pages/{pageId}             DELETE /v1/content/pages/{pageId}
 POST   /v1/content/pages/{pageId}/sections

@@ -1,5 +1,5 @@
 {
-  "$comment": "RFC 0173 §B — durable delivery binds with webhooks; no durable flag; retryPolicy is the v2 carrier of the delivery obligation (was triggerBridge.retryPolicy at v1)",
+  "$comment": "RFC 0173 \u00a7B \u2014 durable delivery binds with webhooks; no durable flag; retryPolicy is the v2 carrier of the delivery obligation (was triggerBridge.retryPolicy at v1)",
   "properties": {
     "signatureAlgorithms": {
       "type": "array",
@@ -32,7 +32,29 @@
           ]
         }
       },
-      "description": "spec/v2/core/webhooks.md §Delivery — the policy a host retries a failed attempt under. The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."
+      "description": "spec/v2/core/webhooks.md \u00a7Delivery \u2014 the policy a host retries a failed attempt under. The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."
+    },
+    "deadLetter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retentionDays",
+        "maxPageSize"
+      ],
+      "description": "RFC 0188 \u00a7A.5 \u2014 the DELIVERY dead-letter sink, advertised only by a host that serves `GET /webhooks/{webhookId}/dead-letters`. **Distinct from the top-level `deadLetter` FAMILY (RFC 0053), which is the RUN sink** and whose own `retentionDays` governs a dead-lettered run's fork-eligibility window. Three documents previously routed delivery dead-letters to RFC 0053, which is run-scoped and says so twice; this facet is where the delivery sink actually lives.",
+      "properties": {
+        "retentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a dead-lettered delivery stays readable. Observable: a record's `expiresAt \u2212 deadLetteredAt` matches it."
+        },
+        "maxPageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Ceiling the host clamps `limit` to (RFC 0182 \u00a7A.3 page-ceiling idiom)."
+        }
+      }
     }
   },
   "required": [

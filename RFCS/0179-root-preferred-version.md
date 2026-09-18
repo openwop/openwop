@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0179                                                            |
 | **Title**         | Root `preferredVersion` (optional in v1.x): the `<major>.<minor>` a host serves to a header-less request, which MUST be a member of `protocolVersions[]` and equal `protocolVersion` while the host serves one major — the field RFC 0172 §A.1 requires at v2 and said would be "filed separately" so hosts can advertise it before the cut; the 2.0.0 suite's `--target-major` default reads it |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-03                                                      |
-| **Updated**       | 2026-09-03 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-03 (filed; v2 charter Phase 3, P3-A — the /architect pass on the Phase 3 plan found the suite defaulting on a field no v1 host could advertise) |
+| **Updated**       | 2026-09-03 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md`.) · 2026-09-03 (filed; v2 charter Phase 3, P3-A — the /architect pass on the Phase 3 plan found the suite defaulting on a field no v1 host could advertise) · 2026-09-18 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified**, corroborated by a live tier-2 fetch. The advertisement half is checked against the live `/.well-known/openwop` as `GOVERNANCE.md` §"Deployed, not merged" requires, on both production hosts, at 2026-09-18T06:08Z. The scenario half rests on `openwop-host-v2-reference` build `commit:87cb8a007d05`, suite 2.4.2, `witnessSha256 9217e347b85f…`, signed `v2-reference-3`, all three profiles certified. **Stated plainly:** that host is tier-1 by `GOVERNANCE.md` §"Acceptance evidence tiers" (a reference host in `openwop-examples`), but it is run from the pinned example and its bundle's `discovery.url` is `http://127.0.0.1:3838` — it is not a host that serves traffic, and this acceptance does not call it deployed. and on `myndhyve` build `commit:46917218d19f`, suite **2.1.7** (five of the 79 scenario files applicable at major 2 were not yet in that suite and have no row), both claimed profiles certified. |
 | **Affects**       | `schemas/capabilities.schema.json` (root `preferredVersion`, optional, RFC 0165 §A grammar), `spec/v1/capabilities.md` §"Document-root layout" (one row), suite `1.162.0 → 1.163.0` (packed content) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1): one optional root field; no existing field, MUST, or error changes |
 | **Supersedes**    | —                                                               |
@@ -37,7 +37,7 @@ Suite 1.163.0: schema acceptance only (`spec-corpus-validity` compiles the field
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 member of `protocolVersions[]`; equals `protocolVersion` on a single-major host | discovery document | the suite, unaided (2.0.0 `dual-stack-negotiation`) | witnessable — unaided |
+| §A.1 member of `protocolVersions[]`; equals `protocolVersion` on a single-major host | `openwop.requirement.0172.preferred-version-default` — its `.member` leg asserts both clauses by name, `executed-pass` on BOTH certified bundles | the suite, unaided | witnessable — unaided |
 
 ## Alternatives considered
 
@@ -50,7 +50,7 @@ None.
 ## Acceptance criteria
 
 - [x] `Draft → Active`: schema field; capabilities.md row; suite 1.163.0. (This PR.)
-- [ ] `Active → Accepted`: openwop-app advertises it (Phase 4 leg) and the 2.0.0 `dual-stack-negotiation` scenario reads it.
+- [x] `Active → Accepted`: openwop-app advertises it (Phase 4 leg) and the 2.0.0 `dual-stack-negotiation` scenario reads it. — evidence: **both halves, measured 2026-09-18T06:08Z.** `GET https://app.openwop.dev/.well-known/openwop` with `OpenWOP-Version: 2.0` serves `"preferredVersion": "1.1"` inside `"protocolVersions": ["1.1", "2.0"]`; MyndHyve corroborates with `"preferredVersion": "1.0"` in `["1.0", "2.0"]`. `openwop.requirement.0172.dual-stack-negotiation` is `executed-pass` (4 legs) and `…preferred-version-default` `executed-pass` (3 legs) on BOTH certified bundles. Recorded honestly: openwop-app's own bundle also carries those rows, but it is not certified (3 blocked rows, RFC 0168 §E.1), so it supplies no §B.1 witness — the witnesses are the reference and MyndHyve bundles, and the advertisement half is the live fetch above.
 
 ## References
 

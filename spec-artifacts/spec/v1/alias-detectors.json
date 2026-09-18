@@ -1,7 +1,7 @@
 {
   "$comment": "RFC 0167 §E — the alias inventory as data. Each detector names a literal token that, while present in the named file, proves an alias or legacy spelling is still in the corpus, and the spec/v1/deprecations.json row that must cover it. scripts/check-alias-coverage.mjs fails when a token is present and its row is missing, or when a row's detector token has disappeared (the alias is gone — retire the detector with the surface). Reviewed, not derived: a grep cannot decide what is an alias; this file records the decision.",
   "version": 1,
-  "updated": "2026-09-03",
+  "updated": "2026-09-18",
   "detectors": [
     {
       "alias": "capabilities wrapper object",
@@ -278,6 +278,24 @@
       "file": "schemas/certification-bundle-v2.schema.json",
       "token": "\"const\": \"2\"",
       "deprecation": "openwop.deprecation.certification-bundle-v2-open-root"
+    },
+    {
+      "alias": "bare (opaque-only) webhookId on a major-2 path parameter",
+      "file": "spec/v2/core/identity.md",
+      "token": "Through the overlap the bare form is admitted on a major-2 path parameter",
+      "deprecation": "openwop.deprecation.bare-webhook-id"
+    },
+    {
+      "alias": "packs.testMode facet",
+      "file": "spec/v2/core/packs.md",
+      "token": "`testMode` is DEPRECATED",
+      "deprecation": "openwop.deprecation.packs-test-mode-facet"
+    },
+    {
+      "alias": "observability.testSeams facet",
+      "file": "schemas/v2/capabilities.schema.json",
+      "token": "testSeams",
+      "deprecation": "openwop.deprecation.observability-test-seams-facet"
     }
   ]
 }

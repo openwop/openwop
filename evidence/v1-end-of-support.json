@@ -11,9 +11,9 @@
       "bundle": "evidence/v2-host-bundles/openwop-host-v2-reference.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.3.3",
+        "suiteVersion": "2.4.5",
         "targetMajor": 2,
-        "witnessSha256": "429fedbc53ebef50f091ca619eb2e1be4db79f1ca127d716244c575f7eb6eae0",
+        "witnessSha256": "4d76b664e02efa66b6f259ccb61ef7fb56ab8cc452a75b6d81aebb7b1db65b35",
         "evidenceTiers": [
           "self"
         ],
@@ -25,7 +25,7 @@
     },
     {
       "name": "myndhyve",
-      "matrixVersion": "0dbdddf44",
+      "matrixVersion": "46917218",
       "bundle": "evidence/v2-host-bundles/myndhyve.json",
       "present": true,
       "latest": {

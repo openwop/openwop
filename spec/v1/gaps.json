@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-17",
+  "updated": "2026-09-18",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -4355,7 +4355,7 @@
       "surface": "`tokenCounter` enum vs provider-native tokenizers — does a portable enum diverge too far from real cost?",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4372,7 +4372,7 @@
       "surface": "Transcript seam: host-sample-only seam vs a normative read endpoint",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4389,7 +4389,7 @@
       "surface": "Replay determinism of host summaries — must `summaryRef` artifact be byte-stable across replays?",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4406,7 +4406,7 @@
       "surface": "Verbatim floor unit: `keepLastTurns` (count) vs `keepLastTokens` (tokens)",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -4423,8 +4423,8 @@
       "surface": "No non-steward host advertises `contextBudget` yet",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "non-steward-host",
       "sources": [
         {
           "file": "RFCS/registers/0111-context-economy.gaps.md",
@@ -5120,8 +5120,8 @@
       "surface": "No confirmed provider terms-of-service permits API-shaped third-party automation under a reused consumer-subscription login, for any vendor.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "provider-tos-clearance",
       "sources": [
         {
           "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
@@ -5137,7 +5137,7 @@
       "surface": "Whether the acquisition mechanism is direct API calls under a borrowed session (ToS-risky, cheap) or an official-client subprocess harness (ToS-safer, architecturally distinct — closer to RFC 0035 than to `ctx.callAI`) is unresolved.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -5154,7 +5154,7 @@
       "surface": "Whether `subscription`-mode credentials need their own dedicated schema shape beyond reusing `host.credentials` `scope: \"user\"`, or whether the existing RFC 0046 credential-reference shape is sufficient as-is.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -5171,7 +5171,7 @@
       "surface": "The existing `conformance/src/scenarios/byok-auth-modes.test.ts` scenario hard-codes the current four-item enum via `toEqual([...])`; it will fail once the schema enum gains a fifth value unless updated in the same conformance release.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -5188,8 +5188,8 @@
       "surface": "Rate-limit/seat-abuse potential — even at correct single-user scope (§B clause 8), a host could still architect around the scope constraint by rapidly rotating which user \"owns\" a shared login. Not fully closed by the scope-binding MUST alone.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "docs/KNOWN-LIMITS.md",
       "sources": [
         {
           "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
@@ -5205,7 +5205,7 @@
       "surface": "The new `credential_scope_forbidden` error code's exact envelope shape (does it follow the standard OpenWOP error envelope 1:1, or does it need additional fields identifying which scope was attempted?) is sketched but not fully specified.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -9846,7 +9846,7 @@
       "surface": "RFC 0035 (Active, Parked on a non-steward fencing host) is superseded by this child's `packs` obligation at the cut; until then it stays Parked and its §B probes are the eight `sandbox-*` scenarios this RFC binds to execution.",
       "witness": "witnessable-unaided",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -10294,6 +10294,108 @@
         {
           "file": "RFCS/registers/0178-v2-assurance-registers-and-deprecation-machinery.gaps.md",
           "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.1",
+      "rfc": "0189",
+      "local": "G1",
+      "section": "§B(c)",
+      "surface": "`namesKey` is a bare token match, so a family key that is a common English noun is satisfied by prose that merely uses the word. Measured against `spec/v2/core/*.md` with the gate's own predicate: `packs` has an obligation paragraph naming it in **7** documents — including `security-defaults.md` and `versioning.md`, which say nothing about the packs family's contract — and `idempotency` in **7**. Paragraph scope narrowed document scope but does not fix a common noun, and five of the families still undeclared (`packs`, `forms`, `replay`, `interrupt`, `connections`) are common nouns. A contributor under burn-down pressure can resolve `packs` against `security-defaults.md` and the gate will applaud.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.2",
+      "rfc": "0189",
+      "local": "G2",
+      "section": "§E.2",
+      "surface": "61 families must find v2 homes inside the RFC 0174 §E.2 kernel budget, which `check-core-budget.mjs` reads over `spec/v2/core/*.md` only (non-recursive). At 2.9.0 the budget is **24,836 / 25,000** — 164 words free for 61 families. `spec/v2/ext/**` is a legal home under `homeClass()` and is **not** counted by the budget, and the precedent already exists (`spec/v2/ext/provider-idempotency/README.md` is supporting normative text for the **core** `idempotency` family). Left implicit, 62 authors each discover the escape valve independently and `ext/` silently becomes \"core, but unbudgeted\" — the 25,000-word cap defeated by directory name.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.3",
+      "rfc": "0189",
+      "local": "G3",
+      "section": "§D",
+      "surface": "The burn-down decays `open` linearly to zero at v1 end-of-support, and `open = v1Dependent + undeclared` — but `v1Carried` families (`toolHooks`, `toolCatalog`) are explicitly tolerated past end-of-support by §D itself, which fails only if their target is deleted or its `Status:` banner changes. Counting a deliberately-tolerated family in a burn-down that must reach zero asks for work the RFC says is not required.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0190.1",
+      "rfc": "0190",
+      "local": "G1",
+      "section": "§A",
+      "surface": "The per-family grant is **200 words** against a measured mean of **140.75** (four families, 563 words, five sections). That mean is drawn entirely from families with one or two facets. The remaining set includes `agents` (19 facets) and `aiProviders` (12), and a grounded model — ~110 base + ~20 per facet beyond the first — puts the remainder near 9,170 against 12,600 granted. If the real per-facet cost is higher than 20 words, the grant is too thin for the wide families even though the aggregate holds, and the self-funding property forces them to land LAST, when the cheap families have funded them.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0190.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0190.2",
+      "rfc": "0190",
+      "local": "G2",
+      "section": "§A",
+      "surface": "The cap reads `resolved` from `spec/v2/declaration.json` while the budget counts words — two different files, one number. A family could in principle be declared, grant 200 words, and later have its home refused by a tightened §B predicate, retroactively lowering the cap under prose already written.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0190.3",
+      "rfc": "0190",
+      "local": "G3",
+      "section": "§B",
+      "surface": "`spec/v2/ext/` is now a co-pointer that contributes facet coverage only. Nothing checks that an ext document cited as a co-pointer is *about* the family citing it — the same bare-token weakness as RFC 0189 G1, one directory over. The `authorization`-against-thirteen-READMEs case is closed for the OBLIGATION predicate but not for facet coverage: a facet name appearing incidentally in an unrelated ext page still counts as covered.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0190.3",
+      "sources": [
+        {
+          "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
+          "token": "G3"
         }
       ]
     },

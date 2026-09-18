@@ -195,6 +195,10 @@ describe('receiverBinding: every scenario receiver actually uses it', () => {
     'webhook-signed-delivery.test.ts',
     'replay-fanout-suppression.test.ts',
     'v2-webhook-durable-delivery.test.ts',
+    // Added 2026-09-18. This guard's own comment says "any future one belongs
+    // here too"; `v2-webhook-delivery-shape` landed at suite 2.3.1 and was not
+    // added, and it then ignored the port pin for four releases.
+    'v2-webhook-delivery-shape.test.ts',
   ] as const;
 
   const here = dirname(fileURLToPath(import.meta.url));

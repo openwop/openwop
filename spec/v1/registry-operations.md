@@ -157,7 +157,7 @@ This has two operational consequences a registry and its consumers MUST account 
 
    For **declarative** pack kinds (RFC 0107), the per-pack index SHOULD denormalize the kind's consumer-facing ids the same way: `artifactTypes[].artifactTypeId` for `kind: "artifact-type"`, `provider.id` for `kind: "connection"`, `chains[].chainId` for `kind: "workflow-chain"`, `templates[].templateId` for `kind: "form-content"` (RFC 0137). A registry MAY surface them under the same `publishedTypeIds[]` union or under kind-specific fields; consumers MUST inspect `kind` before assuming what an id denotes (a `node` typeId dispatches; an `artifactType` id names a type; a `provider` id names a connection; a `templateId` names an instantiable form template). Absence is tolerated as above.
 
-   > **Discoverability note (RFC 0137, non-normative).** Because this denormalization is a SHOULD and consumers MUST tolerate its absence, a registry that adds a new declarative `kind` to its manifest validation *without* extending its indexer will accept and serve the pack while surfacing **no** ids for it — the pack publishes green and is undiscoverable, and no validation check fires because nothing normative is violated. This is a real operational trap rather than a spec violation; a registry SHOULD treat an empty denormalized id set for a pack whose kind declares ids as a build-time warning. Deliberately kept a SHOULD: promoting it to MUST would retroactively invalidate registries that are conformant today, for what remains a discovery convenience.
+   > **Discoverability note (RFC 0137, non-normative).** Because this denormalization is a SHOULD and consumers MUST tolerate its absence, a registry that adds a new declarative `kind` to its manifest validation _without_ extending its indexer will accept and serve the pack while surfacing **no** ids for it — the pack publishes green and is undiscoverable, and no validation check fires because nothing normative is violated. This is a real operational trap rather than a spec violation; a registry SHOULD treat an empty denormalized id set for a pack whose kind declares ids as a build-time warning. Deliberately kept a SHOULD: promoting it to MUST would retroactively invalidate registries that are conformant today, for what remains a discovery convenience.
 
 **Agent-manifest pack dependencies (informative).** Because an agent's `toolAllowlist` may reference cross-namespace typeIds, "which packs must this workspace approve to run this agent?" is not derivable from the agent manifest by inspection alone. A tool that computes the dependency closure — resolve each `toolAllowlist` entry through the `publishedTypeIds[]` index to its providing pack — is the recommended way to present that set to a workspace admin (RFC 0074 approval). The protocol does not yet normate a `packDeps` block on the agent manifest; the reverse index above is the supported resolution path.
 
@@ -186,7 +186,7 @@ A pack MAY declare the abstract platform primitives its runtime code exercises v
 
 Marking a published version deprecated without unpublishing it. Lets pinned consumers continue resolving the version while signaling new consumers to migrate.
 
-### Endpoint
+### Deprecation endpoint
 
 ```http
 POST /v1/packs/{name}/-/{version}/deprecate
@@ -222,7 +222,7 @@ The version metadata at `GET /v1/packs/{name}/-/{version}.json` gains a `depreca
 }
 ```
 
-### Consumer semantics
+### Deprecation consumer semantics
 
 - Engine consumers in `pinned` or `allowlist` mode continue to resolve deprecated versions (pinning is contractual; deprecation is informational).
 - Engine consumers in `open` or `verified` mode SHOULD log a warning when resolving a deprecated version. The warning MUST include `deprecation.reason` and `deprecation.supersededBy` if set.
@@ -243,7 +243,7 @@ Removes the deprecation marker. Same auth as the POST.
 
 Emergency removal for security issues. Distinct from `DELETE /v1/packs/{name}/-/{version}` (which is the standard unpublish, refused for versions >72h old per the npm convention).
 
-### Endpoint
+### Yank endpoint
 
 ```http
 POST /v1/packs/{name}/-/{version}/yank
@@ -269,7 +269,7 @@ A yanked version is:
 3. **Excluded from semver range resolution.** Engine consumers resolving `engines.openwop` semver ranges MUST exclude yanked versions from the candidate set. New runs that previously would have picked the yanked version MUST pick the next-best non-yanked version (or fail with a descriptive error if no candidate remains).
 4. **Logged on every resolve.** Engine consumers that resolve a pinned-by-hash reference to a yanked version MUST emit a structured warning to operations (the run may proceed; the operator gets the signal).
 
-### Consumer semantics
+### Yank consumer semantics
 
 - Pinned-by-version (`vendor.acme.stripe-tools@1.4.2`): yank does NOT block resolution; the consumer still gets the yanked version. The pin is contractual.
 - Pinned-by-hash (`vendor.acme.stripe-tools@sha256-...`): same as above; hash pinning is the strongest contract.
@@ -347,7 +347,7 @@ Body:
 
 The `rotationProof` MUST be a signature produced by the OLD key over the canonical payload `{kid_new}||{publicKey_new}||{validFrom}` (concatenated UTF-8 bytes). The registry verifies the proof against the latest valid key in the keychain BEFORE accepting the rotation. Without rotation proof, rotation requires an out-of-band recovery flow (operator intervention; deliberately painful).
 
-### Consumer semantics
+### Key-rotation consumer semantics
 
 - Verifying a pack signature: consumers walk the `keychain` finding the key whose `validFrom <= signedAt <= validUntil` matches the version's publication timestamp. Mismatch → signature verification fails (the version was signed with a key that doesn't cover its publication time).
 - Rotation chains: consumers MAY require rotation proofs for keys whose `rotatedFrom` is set. Rejection of a rotation chain whose proof fails verification is implementation-defined; the recommended behavior is to refuse to verify packs signed under the rotated-to key until the proof verifies.

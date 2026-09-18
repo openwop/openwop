@@ -1,6 +1,6 @@
 # Runs
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
+> **Status: Stable · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
 
 ## Why this exists
 

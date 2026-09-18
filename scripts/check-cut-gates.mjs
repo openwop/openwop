@@ -85,11 +85,57 @@ function v2RequirementIds() {
     // carry ids as data (`v2-bundle-v3-signed` builds bundles whose rows name
     // `…fixture-a`), and no bundle can ever carry those — they are inputs to an
     // assertion, not requirements a host witnesses.
+    //
+    // This LITERAL scan is no longer the source of truth; it is kept as the
+    // second opinion for the divergence check below. It cannot see an id the
+    // scenario hoists into a `const`, and ~30 v2 files use that idiom — so on
+    // its own it audited 113 of the 166 ids the registry knows, and demanded
+    // nothing of a host for the rest.
     for (const [, id] of readFileSync(path, 'utf8').matchAll(/\breq\(\s*'(openwop\.requirement\.[a-z0-9.-]+)'/g)) {
       ids.set(id, file);
     }
   }
+  // The GENERATED registry is the source: `generate-requirement-registry.mjs`
+  // resolves module-level `const ID = '…'` bindings, so it sees `req(ID, …)`.
+  // Two harvesters that disagree is how `…0173.pack-isolation.seam` became a
+  // §G.2 failure on an id `requirements.json` never declared — the inverse of
+  // this hole, and the reason the two are now pinned together below.
+  const registry = readJson('conformance/requirements.json').records ?? [];
+  for (const r of registry) {
+    const id = r.explicitId;
+    if (typeof id !== 'string' || !id.startsWith('openwop.requirement.')) continue;
+    const file = r.file;
+    if (!majors[file]?.includes?.(2)) continue;
+    if (!existsSync(join(dir, file))) continue;   // src/coherence ids are corpus evidence (RFC 0168 §D.1)
+    ids.set(id, file);
+  }
   return ids;
+}
+
+/**
+ * The two harvests must agree. A literal id the registry does not know is minted
+ * outside an `it` — from a shared helper — which means no bundle can ever carry
+ * a row for it while this gate goes on demanding one. That exact divergence
+ * failed §G.2 for four days on an id no host could supply.
+ */
+function harvestDivergence() {
+  const majors = readJson('conformance/scenario-majors.json').majors ?? {};
+  const dir = join(ROOT, 'conformance', 'src', 'scenarios');
+  const registry = new Set(
+    (readJson('conformance/requirements.json').records ?? [])
+      .filter((r) => typeof r.explicitId === 'string' && r.explicitId.startsWith('openwop.requirement.') && majors[r.file]?.includes?.(2))
+      .map((r) => r.explicitId),
+  );
+  const orphans = [];
+  for (const [file, m] of Object.entries(majors)) {
+    if (!m.includes(2)) continue;
+    const path = join(dir, file);
+    if (!existsSync(path)) continue;
+    for (const [, id] of readFileSync(path, 'utf8').matchAll(/\breq\(\s*'(openwop\.requirement\.[a-z0-9.-]+)'/g)) {
+      if (!registry.has(id)) orphans.push(`${id} (${file})`);
+    }
+  }
+  return orphans;
 }
 
 // ── Signature attribution (RFC 0168 §E.2) ─────────────────────────────────────
@@ -343,6 +389,7 @@ if (!hb) {
     return r !== undefined && (r.result === 'inapplicable' || r.result === 'blocked') && typeof r.detail === 'string' && r.detail.trim() !== '';
   };
   const missing = [...ids.entries()].filter(([id, file]) => !byId.has(id) && !excused(file)).map(([id]) => id);
+  const divergence = harvestDivergence();
   const nonPass = rows.filter((r) => r.result !== 'executed-pass' && !r.detail && r.result !== 'inapplicable');
   gate('Witness', [
     corpusWitness[0],
@@ -352,6 +399,17 @@ if (!hb) {
       tail: missing.length === 0
         ? `${ids.size} v2 requirement ids each carry ≥1 ledger row`
         : `${missing.length}/${ids.size} v2 requirement ids have no ledger row and no excusing file row: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ', …' : ''}`,
+    },
+    {
+      // The two harvesters must agree. An id minted from a shared helper is
+      // invisible to the registry, so no bundle can carry a row for it while
+      // this gate demands one — which is exactly how §G.2 failed for four days
+      // on `…0173.pack-isolation.seam`, an id no host could ever supply.
+      ok: divergence.length === 0,
+      evidence: 'conformance/requirements.json vs req() literals in src/scenarios',
+      tail: divergence.length === 0
+        ? 'every literal req() id in a major-2 scenario is declared in the generated registry'
+        : `${divergence.length} req() id(s) minted outside an it(), so no bundle can carry a row: ${divergence.slice(0, 3).join(', ')}${divergence.length > 3 ? ', …' : ''}`,
     },
     {
       // RFC 0168 §A.2: a soft-skip never records a pass, and every non-pass
@@ -380,7 +438,26 @@ if (!hb) {
     corpusWitness[1],
     suiteRow,
     { ok: totals.executedFail === 0, evidence: `${hb.path} results.totals`, tail: `executedFail=${totals.executedFail} executedPass=${totals.executedPass} blocked=${totals.blocked}` },
-    { ok: matrix.includes(hostName), evidence: 'INTEROP-MATRIX.md', tail: matrix.includes(hostName) ? `row for ${hostName}` : `no row names host ${hostName}` },
+    // A host with no matrix row yet is PRE-REGISTRATION, not failing. This gate
+    // is advertised to newcomers as their self-check (INTEROP-MATRIX §Add A
+    // Host, docs/IMPLEMENTER-PATH.md, docs/IMPLEMENT-CORE.md) — and the row
+    // only exists after the PR that adds it, so a first-time implementer got
+    // exit 1 with nothing explaining that it was expected. `blocked` is the
+    // corpus's own token for "a precondition is absent", and unlike `fail` it
+    // says whose move it is. Note the check is a substring match, so it is weak
+    // evidence by construction: it tells a newcomer where they are in the
+    // process, and proves nothing about the host.
+    matrix.includes(hostName)
+      ? { ok: true, evidence: 'INTEROP-MATRIX.md', tail: `row for ${hostName}` }
+      : {
+          ok: false,
+          blocked: true,
+          evidence: 'INTEROP-MATRIX.md',
+          tail:
+            `no row names host ${hostName} — PRE-REGISTRATION, which is expected before your first submission. ` +
+            'Open the PR that adds your bundle under evidence/v2-host-bundles/ and your row to INTEROP-MATRIX.md; ' +
+            'this check turns green when it lands. Nothing about your host is failing here.',
+        },
     signatureCheck(hb, hd),
   ]);
 }

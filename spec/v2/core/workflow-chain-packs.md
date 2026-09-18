@@ -1,6 +1,7 @@
 # Workflow Chain Packs
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0177, RFC 0133.**
+> **Status: Stable · RFC 0177, RFC 0133.**
+> **Normative home:** `workflowChainPacks`.
 
 ## Why this exists
 

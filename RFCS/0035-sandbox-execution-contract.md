@@ -4,14 +4,14 @@
 | --- | --- |
 | **RFC** | 0035 |
 | **Title** | Sandbox execution contract for pack-loaded typeIds |
-| **Status** | `Active` (**Parked**) |
+| **Status** | `Superseded` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | **Parked 2026-08-13 — tripwire:** a **non-steward** host that runs untrusted pack code in a real-isolation sandbox advertises `capabilities.sandbox.supported: true` and passes the §B probes. See [Amendment record](#amendment-record). |
+| **Updated** | **Parked 2026-08-13 — tripwire:** a **non-steward** host that runs untrusted pack code in a real-isolation sandbox advertises `capabilities.sandbox.supported: true` and passes the §B probes. See [Amendment record](#amendment-record). · 2026-09-18 (`Active` (Parked) → `Superseded` by RFC 0173, in that RFC's own `Active → Accepted` PR, per RFC 0174 §A.1 and RFC 0001's rule that `Superseded` is flipped when the replacement reaches `Accepted`). **The tripwire above is retired by REPLACEMENT, not satisfied.** It asked for a NON-STEWARD host; `openwop.requirement.0173.pack-isolation` is `executed-pass` (ten legs) on the steward's own reference host and `inapplicable — profile not advertised` on both production hosts. No non-steward host ever advertised `capabilities.sandbox.supported`. What replaces the v1 contract is RFC 0173 §B, which binds the same eight `node-pack-sandbox-*` invariants to pack execution at major 2. The seven protocol-tier rows in `SECURITY/invariants.yaml` and the four `sandbox_*` error codes in `rest-endpoints.md` keep this RFC as their v1 citation through the overlap — v1 is served until 2026-12-04 — which is why this flip waited for its replacement rather than leading it. |
 | **Affects** | `spec/v1/host-capabilities.md` (adds §"Sandbox execution contract") · `schemas/capabilities.schema.json` (adds `capabilities.sandbox` block) · `SECURITY/invariants.yaml` (graduates **7 of the 8** `node-pack-sandbox-*` rows — the JS-specific `no-eval` row excepted — from `reference-impl` to `protocol` tier) · 8 conformance scenario files (the tier graduation is backed by `sandbox-wasm-{isolation,timeout}.test.ts` against the real-WebAssembly fixtures) · reference hosts (NEW: `examples/hosts/wasm-sandbox/` OR Postgres extension) · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
-| **Superseded by** | — |
+| **Superseded by** | RFC 0173 (v2 security defaults) — the sandbox obligation binds with pack EXECUTION at the v2 cut. |
 
 ## Summary
 

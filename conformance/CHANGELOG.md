@@ -1,5 +1,270 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.12.0] — 2026-09-18 — RFC 0191 + the engine-range truth condition
+
+**Why a minor.** No conformance code changes. `spec/v2/core/packs.md` gains the
+engine-range truth condition and a corrected peer-dependency sentence (it stated
+"a root key of `spec/v2/declaration.json`", which that file does not have);
+`RFCS/0191-*.md` and nine seeded `Normative home:` markers are published
+artifacts.
+
+## [2.11.0] — 2026-09-18 — RFC 0190 (corpus gates)
+
+**Why a minor.** No conformance code changes; `RFCS/0190-*.md` and the amended
+RFC 0189 are published artifacts. The kernel budget now measures what the
+normative-home gate accepts, `spec/v2/ext/` becomes a co-pointer, and RFC 0189
+§D's end-of-support fallback is applied rather than printed.
+
+## [2.10.0] — 2026-09-18 — packs resolves; two seam facets deprecated
+
+**Why a minor.** No conformance code changes. `spec/v2/core/packs.md`,
+`spec/v2/declaration.json`, `spec/v1/deprecations.json` and the generated
+`api/v2/openapi.yaml` are published artifacts: `packs` gains its normative home,
+`packs.testMode` and `observability.testSeams` are deprecated at 3.0 (NOT
+removed — live v2 discovery documents advertise them), and an orphaned
+`packs-test` tag is pruned.
+
+## [2.9.2] — 2026-09-18 — mcp-2026-07-28-discover matches its own fake server
+
+**Why a patch.** One assertion in `mcp-2026-07-28-discover.test.ts` listed two
+tools where `McpFakeServer` has served three since 2.4.0. No host-visible
+contract changes; the scenario now passes unquarantined (9/9 executed-pass).
+
+## [2.9.1] — 2026-09-18 — RFC 0189 gap register
+
+**Why a patch.** No conformance code changes; `spec/v1/gaps.json` is a published
+artifact and gains three `carried` rows from a new RFC 0189 register.
+
+## [2.9.0] — 2026-09-18 — eventLog, idempotency and forms get v2 normative text
+
+**Why a minor.** No conformance code changes. `spec/v2/core/` prose and
+`spec/v2/declaration.json` are published artifacts: three families that the
+`openwop-core-standard` predicate and the capability schema referenced now have
+v2 text, including a §"Instantiation" the v2 form-content-packs schema already
+cited but which did not exist.
+
+## [2.8.3] — 2026-09-18 — the error registry gains the code §B.8 requires
+
+**Why a patch.** No conformance code changes. `spec/v2/errors.json` and the
+generated `schemas/v2/error-envelope.schema.json` are published artifacts:
+`credential_scope_forbidden` (403) is registered, so a host honouring
+`spec/v1/capabilities.md` §B.8 no longer emits an envelope that fails the
+closed `error` enum. Purely additive to the enum — no existing code changes
+meaning, and `aiproviders-subscription-scope.test.ts` already asserted it.
+
+## [2.8.2] — 2026-09-18 — two facets leave the closed capabilities schema
+
+**Why a patch.** No conformance code changes. `schemas/v2/capabilities.schema.json`
+and `spec/v2/declaration.json` are published artifacts: `workflowChainPacks`
+loses `deferredParameters` (a capability `spec/v2/core/workflow-chain-packs.md`
+says is "not part of v2.0") and `hostExpansionSeam` (a self-described
+conformance-only test seam, which `spec/v2/core/conformance.md` §"The seams
+profile" forbids in the capability namespace). No v2 host bundle advertises
+either, so no host's discovery document stops validating.
+## [2.8.1] — 2026-09-18 — the extension pages, formatted
+
+**Why a patch.** No conformance code changes; the vendored `spec/v2/ext/`
+READMEs are re-formatted for readability (status table to prose subsections,
+link re-wraps, plainer metadata cells), which moves the corpus stamp.
+
+## [2.8.0] — 2026-09-18 — RFC 0189 (corpus gate)
+
+**Why a minor.** No conformance code changes; `spec/v2/declaration.json` is a
+published artifact and gains populated `normativeText` on four families.
+
+## [2.7.1] — 2026-09-18 — the open-gap ratchet
+
+**Why a patch.** No conformance code changes; register dispositions, one stale
+declaration stub, and a new ratchet in `check-registers.mjs`.
+
+### Added
+
+- `openGaps` in `docs/witness-baseline.json`, seeded at **0** — the corpus's
+  last eleven open gap rows were disposed of, and the ratchet holds it there.
+
+## [2.7.0] — 2026-09-18 — the dead-letter read gets its scenarios
+
+### Added
+
+- `v2-webhook-durable-delivery` gains two legs: the dead-letter read is served,
+  and its records carry no delivered payload. Its §Durability leg stops
+  soft-skipping unconditionally — it now asserts the exhausted delivery is IN
+  the sink, the half no bundle has ever witnessed.
+- `v2-bound-id-kinds`'s `deliveryId` leg stops recording a corpus gap and
+  asserts the bound grammar on a real record.
+
+Both are gated on the new `webhooks.deadLetter` facet; a host without it records
+`inapplicable`, not `blocked`.
+
+## [2.6.1] — 2026-09-18 — the correction that half-landed
+
+**Why a patch.** No conformance code changes; two schema descriptions.
+
+### Fixed
+
+- The unsatisfiable `deliveryId == causationId` claim survived 2.6.0 on
+  `run-event-payloads.schema.json`'s `triggerDeliveryAttempted.runId` — the
+  durable event-log payload, and the more load-bearing of the two sites.
+- `trigger-event.schema.json` pointed the causing-delivery seat at
+  `webhooks.md`, which is the OUTBOUND document for an INBOUND pointer.
+
+## [2.6.0] — 2026-09-18 — a relaxed profile cannot certify, and five corpus ids for the umbrella
+
+### Fixed
+
+- **`--certify` wrote `certified: true` for a profile carrying a relaxation.**
+  `security-defaults.md` §Relaxations and RFC 0173 §A.2 both say it MUST NOT.
+  The predicate had no relaxation term and parsed relaxations on the next line;
+  the emitter then excluded `relaxed-profile-certified` from its self-check and
+  exited 0, so only `--verify` disagreed with the shipped file. Relaxations are
+  now parsed first and folded into the verdict, matched exactly as the verifier
+  matches them.
+
+### Added
+
+- Five `src/coherence/` wrappers minting `openwop.requirement.0167.*`, so the v2
+  umbrella's falsifiability table stops passing rule 4 on zero ids. One spawns
+  `check-codemods.mjs --at-active`, which the merge gate never ran.
+- `apps/workflow-engine` added to the public-docs banned-pattern scan.
+
+## [2.5.0] — 2026-09-18 — `--verify`, for auditing a bundle you did not cut
+
+### Added
+
+- **`--verify <bundle> [--host-key <pem>]`** audits a certification bundle with
+  no host and no corpus clone. Exit `0` verified · `1` rejected · **`2` coherent
+  but NOT independently verified** · `3` not a bundle. Exit 2 is load-bearing:
+  without it, `--verify` with no key returns green and the program re-creates
+  the vacuous pass that bundle v3 exists to eliminate. The output states what
+  the command does NOT do — it never re-runs anything, so a host that measured
+  itself wrongly and signed the result verifies clean here.
+
+## [2.4.7] — 2026-09-18 — schema examples are validated now
+
+**Why a patch.** No conformance code changes; the corpus version moves because
+`schemas/v2/` content and a root gate script changed.
+
+### Fixed
+
+- `scripts/check-v2-schemas.mjs` now validates every root-level `examples` entry
+  against its own schema. It found **13 invalid examples across 6 v2 schemas**,
+  9 of them ids minted before RFC 0184/0187 made their kind tenant-bound. All
+  re-minted.
+
+## [2.4.6] — 2026-09-18 — the npm page told the world to install a release candidate
+
+### Fixed
+
+- **`README.md` — the package page, and the corpus's actual front door** — told
+  readers to install `2.0.0-rc.57` while `latest` was 2.4.5, and declared
+  *"Tracks the FINAL v1 protocol contract."* It tracks v2. Both corrected, and
+  `--legacy-peer-deps` is now documented as REQUIRED rather than a footnote,
+  with the npm 10.9 failure named (`Cannot read properties of null (reading
+  'edgesOut')` — use npm >= 11).
+
+## [2.4.5] — 2026-09-18 — the strict flag that was not wired, and the soft-skip that counted as a pass
+
+### Fixed
+
+- **`--require-behavior` was never parsed** — it hit the arg loop's silent
+  default arm, so only `OPENWOP_REQUIRE_BEHAVIOR=true` enabled strict mode. A
+  cut naming the flag measured the loose answer. The flag now sets the variable,
+  and an unknown `--flag` exits 2 rather than being ignored.
+- **`resolveItRecord` dropped the `partial-witness:` note** that
+  `resolveFileRecord` computes, so a leg that asserted and then soft-skipped
+  recorded a bare `executed-pass` at the granularity the RFC acceptance gate
+  reads.
+- **`v2-bound-id-kinds`** now routes its mint through `resolveRegistrationUrl`,
+  so `OPENWOP_WEBHOOK_RECEIVER_URL` works on the leg whose blocked note told
+  operators to set it.
+- **`v2-webhook-delivery-shape`** now honours `OPENWOP_WEBHOOK_RECEIVER_PORT`
+  and is registered in the receiver guard's scenario list. Two major-2 files
+  pin that port, so the webhook lane requires `--max-workers 1`.
+
+## [2.4.4] — 2026-09-18 — the corpus's first `Superseded` RFC
+
+**Why a patch, and why the suite version moves at all.** No conformance code
+changes. RFC 0173 reached `Accepted` and RFC 0035 became `Superseded` in the
+same PR (RFC 0174 §A.1), which closed gap G1 and therefore moved
+`spec/v1/gaps.json` — a packed artifact — so the corpus version and the pinned
+`@openwop/spec-artifacts` peer move with it.
+
+## [2.4.3] — 2026-09-18 — a check with nothing to complain about is not `blocked`
+
+**Why a patch.** Two assertions change shape inside existing legs; no scenario
+file is added or removed and no host obligation changes.
+
+### Fixed
+
+- **`spec-corpus-validity`'s per-file `$ref` and Markdown-link legs asserted
+  only on failure.** A schema with no absolute `$ref`, or a Markdown file with
+  no local links, ran an empty loop and asserted nothing — and an `it` that
+  passes with zero assertions resolves to `blocked` with the unclassified-return
+  detail. 608 of the corpus ledger's 943 ids read `blocked` for that reason.
+  Each leg now collects its offenders and asserts once, unconditionally, which
+  also reports every bad link or `$ref` rather than only the first. Ledger:
+  `blocked` 608 → 0, `executed-pass` 841 → 1449.
+
+## [2.4.2] — 2026-09-18 — an id no host could ever witness
+
+**Why a patch.** One assertion moves into its own `it`; no scenario file is
+added or removed and no host obligation changes.
+
+### Fixed
+
+- **`openwop.requirement.0173.pack-isolation.seam`** was minted inside
+  `v2-pack-isolation`'s shared `invoke()` helper.
+  `generate-requirement-registry.mjs` harvests `req(…)` only within an `it`, so
+  the id never reached `requirements.json` and no bundle could carry a row for
+  it — while `check-cut-gates.mjs` scans every `req(` in the source and went on
+  demanding one, failing RFC 0167 §G.2 on a row no host could supply. The seam
+  contract now has its own `it`, which is the copy the registry can see. The
+  helper keeps its `req(…)` call — RFC 0168 §A.1 makes `req(…)` the only
+  assertion-message form in `src/scenarios`, so the fix is the extra `it`, not
+  a quieter assertion.
+
+## [2.4.1] — 2026-09-18 — the leg that reads the host, not the schema
+
+**Why a patch.** A leg is added to an existing scenario file; no file is added or removed.
+
+### Fixed
+
+- **`v2-chain-pin-exact`** gains a third leg: an EXTERNAL `subChainRef` carrying
+  `version: "^1.0.0"`. The existing legs are satisfied by schema validation
+  alone (sabotage-proved: delete the reference host's pin rule and both stay
+  green); `SubChainRef.ref` types the external `version` as a semver range, so
+  this leg is the only one that reads the host's rule.
+
+## [2.4.0] — 2026-09-18 — every bound kind, not just runId
+
+**Why a minor.** One scenario file is added (`PROTOCOL-STATUS.md` §suite version).
+
+### Added
+
+- **`v2-bound-id-kinds.test.ts`** — one leg per tenant-bound kind with a wire
+  surface (`subscriptionId` via `webhookId`, `interruptId`, `effectId`), each
+  gated on the family that mints it: the grammar, the `~`-projected accept side,
+  and the `403 id_tenant_mismatch` a foreign tenant segment MUST draw whether or
+  not the id exists. Until now every v2 scenario that read a bound id read
+  `runId`, so a host binding one kind of five was green — which is what a tier-1
+  host's own audit found on its wire. The `deliveryId` leg records
+  `inapplicable`: the corpus serves no dead-letter read, so that kind has
+  nowhere to appear (RFC 0187 §Unresolved).
+
+### Fixed
+
+- **`v2-webhook-durable-delivery` counted another scenario's deliveries against
+  its retry budget.** Both legs filtered attempts by `runId` alone; a host that
+  cannot reach the suite's loopback registers every scenario against one
+  tunnelled receiver URL, so a concurrent scenario's subscription matched the
+  same run. A tier-2 host measured 6 attempts against a `maxAttempts` of 5 at
+  `--max-workers 2` while its own logs showed five. Both legs now also filter on
+  the delivery's own `webhookId` — exact, and holds at any worker count.
+- **`McpFakeServer.needs_input_loop`** re-issues `input_required` for
+  `arguments.rounds` retries, so a host's MRTR loop can be driven past its
+  ceiling; `v2-mrtr-rounds-ceiling` recorded `blocked` without it.
+- **`v2-negotiation-authenticated`** reads `details.runId` off the closed error
+  envelope like `v2-minimum-version-refused` does.
 ## [2.3.5] — 2026-09-17 — spec prose editorial pass
 
 **Why a patch.** No scenario changed. The v2 prose shipped in spec-artifacts was edited (openwop CHANGELOG [2.3.5]), so 2.3.4 no longer identifies its published contents and the pins move together.

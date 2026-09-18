@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/self-hosted-runner-dispatch-frame.schema.json",
   "title": "SelfHostedRunnerDispatchFrame",
-  "description": "RFC 0122 §Registration + channel. A single model/tool DISPATCH STEP the host routes to a registered runner over the runner↔host channel (`self-hosted-runner.md`). The host is the sole orchestration/persistence/replay authority; this frame carries ONE step's inputs, never a whole run. `inputs` is opaque model/tool input (messages, tool arguments) and MUST NOT contain runner-credential material — the runner holds its own credential locally (SECURITY invariant `runner-credential-non-transit`). `seq` is the per-runner monotonic DISPATCH cursor, a DISTINCT sequence from the run event-log `sequence` (they MUST NOT be conflated); a reconnecting runner resumes via `Last-Event-ID` at this cursor and the host drops any redelivered `{runId, stepId}` whose result is already persisted (at-most-once).",
+  "description": "RFC 0122 \u00a7Registration + channel. A single model/tool DISPATCH STEP the host routes to a registered runner over the runner\u2194host channel (`self-hosted-runner.md`). The host is the sole orchestration/persistence/replay authority; this frame carries ONE step's inputs, never a whole run. `inputs` is opaque model/tool input (messages, tool arguments) and MUST NOT contain runner-credential material \u2014 the runner holds its own credential locally (SECURITY invariant `runner-credential-non-transit`). `seq` is the per-runner monotonic DISPATCH cursor, a DISTINCT sequence from the run event-log `sequence` (they MUST NOT be conflated); a reconnecting runner resumes via `Last-Event-ID` at this cursor and the host drops any redelivered `{runId, stepId}` whose result is already persisted (at-most-once).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,7 +25,7 @@
     "seq": {
       "type": "integer",
       "minimum": 0,
-      "description": "The per-runner monotonic dispatch cursor for the channel. DISTINCT from the run event-log `sequence` (MUST NOT be conflated — conflating them breaks resume dedup). A reconnecting runner resumes via the SSE `Last-Event-ID` at this cursor so a dispatch is never redelivered past it (`stream-modes.md §Resumption`)."
+      "description": "The per-runner monotonic dispatch cursor for the channel. DISTINCT from the run event-log `sequence` (MUST NOT be conflated \u2014 conflating them breaks resume dedup). A reconnecting runner resumes via the SSE `Last-Event-ID` at this cursor so a dispatch is never redelivered past it (`stream-modes.md \u00a7Resumption`)."
     },
     "kind": {
       "type": "string",
@@ -89,7 +89,7 @@
   ],
   "examples": [
     {
-      "runId": "run_x",
+      "runId": "acme/run_x-xxxxxxxxxx",
       "stepId": "step_3",
       "seq": 12,
       "kind": "model",
@@ -105,7 +105,7 @@
       }
     },
     {
-      "runId": "run_y",
+      "runId": "acme/run_y-xxxxxxxxxx",
       "stepId": "step_1",
       "seq": 0,
       "kind": "tool",

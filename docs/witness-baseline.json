@@ -1,8 +1,9 @@
 {
-  "$comment": "RFC 0166 §C ratchet baseline — counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering",
+  "$comment": "RFC 0166 \u00a7C ratchet baseline \u2014 counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering | openGaps: the corpus reached ZERO open gap rows on 2026-09-18 and this pins it there. Zero is the only baseline value that makes the `open` token self-policing: after it, a new `open` row has to be argued for rather than accumulated.",
   "measured": "2026-09-04",
   "unwitnessable": 21,
   "unreviewedInvariants": 166,
   "unreviewedExtensions": 67,
-  "selfCarried": 342
+  "selfCarried": 342,
+  "openGaps": 0
 }

@@ -138,6 +138,16 @@ The first attempt at the `wrong-run` control was **vacuous** — it looked for a
 
 The self-test is sabotage-checked: three plausible wrong codecs (marker unescaped, UTF-16 code units instead of UTF-8 bytes, decoder tolerating a lone `~`) were each injected and each turned the suite red (3, 2 and 1 failures respectively), then the codec was restored green. A round-trip suite built only from already-safe ids passes all three.
 
+### Falsifiability — one row per normative requirement
+
+Added 2026-09-18. This RFC flipped `Accepted` with a `## Conformance` section carrying a six-variant sabotage matrix but no `### Falsifiability` heading, so RFC 0174 §B.1 rule 4 had no requirement id to look up and said nothing about it. The evidence was always there; it was not in the shape the gate reads.
+
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A.1–§A.5 the projection round-trips, apply-once, malformed refused | `openwop.requirement.0184.bound-id-path-projection` — `executed-pass` on the reference host bundle; five stub-host defects each red their own leg (`percent-only`, `emit-legacy`, `lax-decoder`, `wrong-run`, `double-ok`) | the suite, unaided — no seam required | witnessable — unaided |
+| §A.1 the codec itself (marker escaping, UTF-8 bytes, lone `~`) | `conformance/src/lib/bound-id.test.ts`; three wrong codecs each turn the self-test red | the corpus gate | witnessable — unaided (corpus) |
+| accept side on a production front door | `GET /api/runs/<tenant>~2F<uuid>` → 403 `id_tenant_mismatch` where the pre-RFC build answered 404 | a deployed host | witnessable — measured on two deployed hosts, recorded in `Updated` |
+
 ## Alternatives considered
 
 | Alternative | Why not |

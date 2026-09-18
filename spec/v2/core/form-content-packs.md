@@ -1,6 +1,7 @@
 # Form Content Packs
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0177, RFC 0137.**
+> **Status: Stable · RFC 0177, RFC 0137.**
+> **Normative home:** `forms`.
 
 ## Why this exists
 
@@ -14,6 +15,18 @@ A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.cond
 { "id": "region", "type": "select", "label": "Region",
   "when": { "type": "equals", "left": "fields.shipping", "right": "international" } }
 ```
+
+## Instantiation
+
+A form instantiated from a pack advertised through `forms.contentPacks` MUST be
+created through the same path a hand-authored form uses, and MUST remain
+editable afterwards: the pack is a starting point, not a managed object. A host
+MUST degrade an unrecognized field type to plain text rather than failing the
+instantiation, and MUST NOT execute anything carried by the pack. A pack-authored
+string, and any value collected through an instantiated template, is untrusted
+input: when one is interpolated into a prompt, the composed envelope MUST carry
+`meta.contentTrust: "untrusted"`, so a downstream reader can tell authored text
+from pack-supplied text.
 
 ## Localized strings
 

@@ -217,3 +217,14 @@ See [`spec/v1/positioning.md`](../spec/v1/positioning.md) §"Standards compositi
 - [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — profile-selection decision tree.
 - [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — public host roster + evidence claims.
 - [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml) — protocol-tier + reference-impl-tier invariants with test references or non-testability rationales.
+
+## Seat rotation under `subscription`-mode credentials (RFC 0121 G5)
+
+**The limit.** A `subscription`-mode credential is resolved with `scope: "user"`, so the protocol binds it to one resolving user. Nothing in the wire prevents an operator from rotating which user occupies that seat over time, and the protocol cannot see that it happened.
+
+**Why no MUST was written.** The obvious candidate — an audit-event obligation logging every `subscription`-mode credential resolution with the resolving user id — would be a requirement nothing can witness: RFC 0121 is Parked, no host may advertise the mode, so no conformance scenario could ever exercise it and no bundle could ever carry a row. A rule that cannot be checked is worse than a recorded limit, because it reads as a protection that does not exist.
+
+**What the protocol does do.** §B.8's user-scope MUST plus the storage-tenant binding is the whole of the wire's answer. Seat rotation is an operator and provider concern, and belongs to whoever holds the provider relationship.
+
+Transferred here from `RFCS/registers/0121-subscription-provider-auth.gaps.md` G5 on 2026-09-18.
+

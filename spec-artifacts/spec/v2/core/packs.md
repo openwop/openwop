@@ -1,6 +1,7 @@
 # Packs
 
-> **Status: Stable · v2.1.0 (2026-09-11) · RFC 0177.**
+> **Status: Stable · RFC 0177.**
+> **Normative home:** `packs`.
 
 ## Why this exists
 
@@ -8,7 +9,23 @@ Every one of the 282 pack versions published under v1 either pins `<2.0.0` or de
 
 ## The engine range
 
-A manifest's `engines.openwop` MUST match the grammar in `schemas/v2/node-pack-manifest.schema.json`: a `>=` lower bound and an explicit `<` major ceiling (`^>=\d+(\.\d+){0,2} <\d+\.0\.0$`). A v2 host MUST treat a range with no upper bound as bounded by `<2.0.0`. A host MUST refuse to install a version whose range does not admit the host's protocol major with `pack_engine_unsupported` (`spec/v2/errors.json`); `pack_runtime_requirement_unmet` remains a runtime-requirement code and MUST NOT be used for the protocol major. The check MUST run at install on every publication path — the canonical registry, a vendor registry's write API, and a mirror ingest — so no registry-side artifact can bypass it.
+A manifest's `engines.openwop` MUST match the grammar in `schemas/v2/node-pack-manifest.schema.json`: a `>=` lower bound and an explicit `<` major ceiling (`^>=\d+(\.\d+){0,2} <\d+\.0\.0$`). A v2 host MUST treat a range with no upper bound as bounded by `<2.0.0`. A host MUST refuse to install a version whose range does not admit the host's protocol major with `pack_engine_unsupported` (`spec/v2/errors.json`); `pack_runtime_requirement_unmet` remains a runtime-requirement code and MUST NOT be used for the protocol major. The range is a claim about the pack's own surface, not about run semantics: admitting major M asserts that the manifest validates against the `schemas/v2/` manifest schema for its `kind`, that every `peerDependencies` key resolves (§"Peer-dependency identifiers"), and that the version carries a §Signing signature. Each conjunct keeps its own refusal code; a mechanical ceiling bump is not a verification. Both checks MUST run at install on every publication path — the canonical registry, a vendor registry's write API, and a mirror ingest — so no registry-side artifact can bypass it.
+
+## The `packs` capability
+
+A host advertises `packs` when it serves the registry surface above. The record
+is the advertisement: a host MUST NOT advertise `packs` unless it resolves pack
+references through a registry reachable from its discovery document, and a
+client MUST treat an absent record as "this host installs no packs" rather than
+as an unknown.
+
+`testMode` is DEPRECATED and MUST NOT be relied on by a client. It advertises
+the v1 `/v1/packs-test/*` mirror, a conformance seam — and `conformance.md`
+§"The seams profile" places seams in the `openwop-conformance-seams-v2` profile
+and the `/conformance/seams/` path space, not in the capability namespace. It
+remains advertisable through the overlap because hosts already publish it; it is
+removed at 3.0. A host mounting a test catalog SHOULD advertise the seams
+profile instead, and MUST NOT treat `testMode` as a second way to claim one.
 
 ## The registry tree
 
@@ -18,7 +35,7 @@ The registry is versioned by tree, not header. It publishes `registry/v2/packs/<
 
 ## Peer-dependency identifiers
 
-A `peerDependencies` key MUST be a root key of `spec/v2/declaration.json`; the declaration key, the peer-dependency identifier, and the capabilities.md section anchor are one identifier. A host MUST refuse a key the declaration file does not name with `pack_peer_dependency_undefined`. Facet paths are not identifiers: a pack requires a family by its key and names facets in `peerDependenciesMeta.<family>.facets[]`.
+A `peerDependencies` key MUST be a `families[].key` in `spec/v2/declaration.json` whose `anchor` is not `deleted` — equivalently a root key of the generated `schemas/v2/capabilities.schema.json` — or carry a row in `spec/v2/peer-dependency-aliases.json`, which is how a v1-era key reaches a v2 family through the overlap; the declaration key, the peer-dependency identifier, and the capabilities.md section anchor are one identifier. A host MUST refuse a key the declaration file does not name with `pack_peer_dependency_undefined`. Facet paths are not identifiers: a pack requires a family by its key and names facets in `peerDependenciesMeta.<family>.facets[]`.
 
 ```jsonc
 "peerDependencies": { "aiProviders": "required" },

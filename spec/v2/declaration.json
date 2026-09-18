@@ -25,12 +25,12 @@
       "note": "Never assignable to a real vendor (RFC 2606 precedent). A conformance scenario needs one registered org whose events no host owns, so the positive half of the vendor rule is drivable; without it the registry could only ever say no."
     },
     "openwop-app": {
-      "name": "openwop-app — the reference application host (app.openwop.dev), steward-affiliated; github.com/openwop/openwop-app",
+      "name": "openwop-app \u2014 the reference application host (app.openwop.dev), steward-affiliated; github.com/openwop/openwop-app",
       "registered": "2026-09-11",
       "note": "Ships vendor event types (e.g. openwop-app.conversation.recall_used), vendor error codes, and the /host/openwop-app/ path namespace (RFC 0181). Registered by the steward on the host's application over the steward bus, 2026-09-10."
     },
     "myndhyve": {
-      "name": "MyndHyve — workflow-runtime host (api.myndhyve.ai), steward-affiliated sibling",
+      "name": "MyndHyve \u2014 workflow-runtime host (api.myndhyve.ai), steward-affiliated sibling",
       "registered": "2026-09-11",
       "note": "Ships vendor event types and error codes under myndhyve.* and the /host/myndhyve/ path namespace (RFC 0181). Registered by the steward on the host's application over the steward bus, 2026-09-10."
     }
@@ -369,7 +369,10 @@
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0095"
+      "owningRfc": "0095",
+      "normativeText": [
+        "spec/v2/core/connection-packs.md"
+      ]
     },
     {
       "key": "selfHostedRunner",
@@ -504,7 +507,10 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0140",
-      "facetsFrom": "spec/v2/facets/replay.schema.json"
+      "facetsFrom": "spec/v2/facets/replay.schema.json",
+      "normativeText": [
+        "spec/v2/core/replay.md"
+      ]
     },
     {
       "key": "oauth",
@@ -1011,6 +1017,9 @@
       "facets": [
         "contentPacks"
       ],
+      "normativeText": [
+        "spec/v2/core/form-content-packs.md"
+      ],
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0137"
@@ -1095,13 +1104,17 @@
         "adoption": "none"
       },
       "facets": [
+        "deadLetter",
         "retryPolicy",
         "signatureAlgorithms"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": null,
-      "facetsFrom": "spec/v2/facets/webhooks.schema.json"
+      "owningRfc": "0188",
+      "facetsFrom": "spec/v2/facets/webhooks.schema.json",
+      "normativeText": [
+        "spec/v2/core/webhooks.md"
+      ]
     },
     {
       "key": "triggerBridge",
@@ -1360,9 +1373,10 @@
         "adoption": "none"
       },
       "facets": [
-        "deferredParameters",
-        "hostExpansionSeam",
         "subChains"
+      ],
+      "normativeText": [
+        "spec/v2/core/workflow-chain-packs.md"
       ],
       "floorScenarios": [],
       "requirementIds": [],
@@ -1381,6 +1395,9 @@
       },
       "facets": [
         "testMode"
+      ],
+      "normativeText": [
+        "spec/v2/core/packs.md"
       ],
       "floorScenarios": [],
       "requirementIds": [],
@@ -1473,6 +1490,9 @@
         "multiRegion",
         "crossRegion"
       ],
+      "normativeText": [
+        "spec/v2/core/idempotency.md"
+      ],
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0150"
@@ -1490,6 +1510,10 @@
       },
       "facets": [
         "crossEngineOrdering"
+      ],
+      "normativeText": [
+        "spec/v2/core/persistence.md",
+        "spec/v2/core/replay.md"
       ],
       "floorScenarios": [],
       "requirementIds": [],
@@ -1632,7 +1656,10 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0104",
-      "facetsFrom": "spec/v2/facets/interrupt.schema.json"
+      "facetsFrom": "spec/v2/facets/interrupt.schema.json",
+      "normativeText": [
+        "spec/v2/core/interrupt.md"
+      ]
     },
     {
       "key": "restTransport",
