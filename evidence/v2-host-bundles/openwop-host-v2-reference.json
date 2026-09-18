@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-18T05:21:41.978Z",
+  "generatedAt": "2026-09-18T07:57:18.402Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.4.2",
+    "version": "2.4.5",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.4.2",
-    "stampSha256": "cb840f92cef6dbff3beed39b860bde984adf1080e830dab5088487f2bf17d767"
+    "specArtifactsVersion": "2.4.5",
+    "stampSha256": "2d625db1edc658e5ca483a95028e5db84c62bef71c8ced299e817c6875fbfbfd"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "87cb8a007d056b2579ccfab622498fcca427088c"
+      "id": "5416757dbe697edeb3ca50cd0c985c949348b8d9"
     },
     "signingKeyId": "v2-reference-3"
   },
@@ -348,8 +348,8 @@
     "totals": {
       "executedPass": 231,
       "executedFail": 0,
-      "skipped": 0,
-      "inapplicable": 14,
+      "skipped": 7,
+      "inapplicable": 7,
       "blocked": 0
     },
     "requirements": [
@@ -362,9 +362,9 @@
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
         "scenario": "memory-attribution-replay-stable.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -523,9 +523,9 @@
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-header-scheme",
@@ -682,9 +682,9 @@
       {
         "id": "openwop.scenario.v2-provider-conflict",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-refresh-sla",
@@ -751,7 +751,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 17
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -932,9 +932,9 @@
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "scenario": "memory-attribution-replay-stable.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
@@ -1425,7 +1425,8 @@
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 4,
+        "detail": "partial-witness: inapplicable: the noop fixture issued no external effect — the per-row keying leg had no rows (an effect-issuing fixture would exercise it)"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -1533,7 +1534,8 @@
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 5,
+        "detail": "partial-witness: blocked: no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1736,9 +1738,9 @@
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -1786,16 +1788,16 @@
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.requirement.0182.run-list.cursor-refused",
@@ -1813,7 +1815,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 13
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1847,24 +1849,24 @@
       }
     ]
   },
-  "witnessSha256": "9217e347b85fd33fa5bac50e21033f8c29a4d312874e195abad679b0f308ce7b",
-  "assertionCount": 1985,
+  "witnessSha256": "4d76b664e02efa66b6f259ccb61ef7fb56ab8cc452a75b6d81aebb7b1db65b35",
+  "assertionCount": 1993,
   "detail": {
     "nonPass": [
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-run-diff-identical",
@@ -1873,8 +1875,8 @@
       },
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
@@ -1903,8 +1905,8 @@
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.requirement.0177.peer-dependency-declared.alias-overlap",
@@ -1913,20 +1915,20 @@
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-3",
-    "sig": "SiVuFFpopve4GA2GV_Qu5q3EoKN9MuGfAmRZk4DgYlHYJnoff80dQ5rrY-oGeuIOuW5UwGmld8gonI6xMHVGDQ",
+    "sig": "Z0D2F9bAIhGZQjPKmC63CvwotwW1sdfcoHStjxeOUQCBE-aigvhzXChYoV9Wv68kxJHwhBYCfR377MqypubBDQ",
     "over": [
       "witnessSha256",
       "host.build",
