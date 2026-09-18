@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 522 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 187 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 188 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,17 +21,17 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.11.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.12.0 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
 | Python SDK `openwop-client` | 1.7.0 | openwop-sdks `sdk/python/pyproject.toml` | as above |
 | Go SDK `github.com/openwop/openwop-sdks/go` | 1.5.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file) | as above |
-| openwop-sdks corpus pin | v2.1.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
+| openwop-sdks corpus pin | v2.4.1 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
 | CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
-| openwop-registry corpus pin | v2.1.7 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.1.1 / ^2.1.1 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-registry corpus pin | v2.4.3 | openwop-registry `CORPUS_TAG` | as the SDK pin |
+| openwop-app corpus pin / suite pin | v2.3.3 / ^2.3.3 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -68,7 +68,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 179 |
-| Active | 6 |
+| Active | 7 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -261,6 +261,7 @@
 | RFC 0188 | `GET /webhooks/{webhookId}/dead-letters`: the read that makes `webhooks.md` sectionDurability observable, gated on a new `webhooks.deadLetter` facet | Active |
 | RFC 0189 | `normativeText` as a checkable declaration field: legal homes, a content predicate, a ratchet that does not punish honesty, and a deadline that can actually fire | Active |
 | RFC 0190 | the kernel budget's denominator follows the home gate's acceptance, and its cap grows only as debt is retired | Active |
+| RFC 0191 | the reciprocal normative-home marker: why no regex over prose can decide a semantic claim, and what to do instead | Active |
 
 ## SDK Helper Coverage
 
@@ -283,7 +284,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 6 RFCs `Active` (RFC 0111, RFC 0121, RFC 0158, RFC 0188, RFC 0189, RFC 0190) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 7 RFCs `Active` (RFC 0111, RFC 0121, RFC 0158, RFC 0188, RFC 0189, RFC 0190, RFC 0191) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

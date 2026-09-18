@@ -10305,8 +10305,8 @@
       "surface": "`namesKey` is a bare token match, so a family key that is a common English noun is satisfied by prose that merely uses the word. Measured against `spec/v2/core/*.md` with the gate's own predicate: `packs` has an obligation paragraph naming it in **7** documents — including `security-defaults.md` and `versioning.md`, which say nothing about the packs family's contract — and `idempotency` in **7**. Paragraph scope narrowed document scope but does not fix a common noun, and five of the families still undeclared (`packs`, `forms`, `replay`, `interrupt`, `connections`) are common nouns. A contributor under burn-down pressure can resolve `packs` against `security-defaults.md` and the gate will applaud.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0189.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0189-normative-home.gaps.md",
@@ -10373,8 +10373,8 @@
       "surface": "The cap reads `resolved` from `spec/v2/declaration.json` while the budget counts words — two different files, one number. A family could in principle be declared, grant 200 words, and later have its home refused by a tightened §B predicate, retroactively lowering the cap under prose already written.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0190.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",

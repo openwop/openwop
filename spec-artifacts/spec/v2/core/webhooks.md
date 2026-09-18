@@ -1,6 +1,7 @@
 # Webhooks
 
 > **Status: Stable · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4.**
+> **Normative home:** `webhooks`.
 
 ## Why this exists
 

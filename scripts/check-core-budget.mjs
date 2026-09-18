@@ -79,6 +79,18 @@ if (existsSync(declPath)) {
     if (f.anchor !== 'core') continue;
     const homes = f.normativeText;
     if (!Array.isArray(homes) || homes.length === 0) continue;
+    // RFC 0190 G2, made concrete: `homed` must apply the home gate's OWN class
+    // rule, or a family whose sole normativeText is `RFCS/0189-*.md` or a path
+    // that does not exist counts as homed and grants 200 words of cap, while
+    // check-v2-normative-home.mjs hard-refuses it. Inside openwop:check both run
+    // and the tree reds, so the window is one commit — but this script is also a
+    // standalone npm script, and it would report a cap 200 too high.
+    const legal = (h) =>
+      h !== 'spec/v2/core/capabilities.md' &&
+      (h.startsWith('spec/v2/core/') || h.startsWith('spec/v2/ext/') || h.startsWith('spec/v1/') ||
+       h.startsWith('schemas/v2/') || h.startsWith('spec/v2/facets/')) &&
+      existsSync(join(ROOT, h));
+    if (!homes.every(legal)) continue;
     if (!homes.some((h) => h.startsWith('spec/v1/'))) homed += 1;
     for (const h of homes) {
       if (h.startsWith('spec/v2/ext/') && existsSync(join(ROOT, h)) && !extHomes.includes(h)) extHomes.push(h);

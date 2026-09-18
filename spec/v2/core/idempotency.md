@@ -1,6 +1,7 @@
 # Idempotency
 
 > **Status: Stable · RFC 0170 §D.3, RFC 0171 §B.2, RFC 0173 §B.**
+> **Normative home:** `idempotency`.
 
 ## Why this exists
 

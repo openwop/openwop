@@ -1,6 +1,7 @@
 # Form Content Packs
 
 > **Status: Stable · RFC 0177, RFC 0137.**
+> **Normative home:** `forms`.
 
 ## Why this exists
 

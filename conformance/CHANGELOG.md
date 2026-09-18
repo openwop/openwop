@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.12.0] — 2026-09-18 — RFC 0191 + the engine-range truth condition
+
+**Why a minor.** No conformance code changes. `spec/v2/core/packs.md` gains the
+engine-range truth condition and a corrected peer-dependency sentence (it stated
+"a root key of `spec/v2/declaration.json`", which that file does not have);
+`RFCS/0191-*.md` and nine seeded `Normative home:` markers are published
+artifacts.
+
 ## [2.11.0] — 2026-09-18 — RFC 0190 (corpus gates)
 
 **Why a minor.** No conformance code changes; `RFCS/0190-*.md` and the amended
