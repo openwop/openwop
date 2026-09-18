@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.9.0] — 2026-09-18 — eventLog, idempotency and forms get v2 normative text
+
+**Why a minor.** No conformance code changes. `spec/v2/core/` prose and
+`spec/v2/declaration.json` are published artifacts: three families that the
+`openwop-core-standard` predicate and the capability schema referenced now have
+v2 text, including a §"Instantiation" the v2 form-content-packs schema already
+cited but which did not exist.
+
 ## [2.8.3] — 2026-09-18 — the error registry gains the code §B.8 requires
 
 **Why a patch.** No conformance code changes. `spec/v2/errors.json` and the

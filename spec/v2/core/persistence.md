@@ -49,6 +49,18 @@ falsify a host's era handling on its own. What falsifies that is the vocabulary
 of the events themselves, which is why the reader and writer rules below carry
 the obligation and this field only reports it.
 
+## The `eventLog` family
+
+`eventLog` is the capability record by which a host advertises the era contract
+above. A host that advertises `eventLog` MUST stamp `eventLogSchemaVersion` on
+every run it creates, MUST serve the cursor contract in events.md §"Poll" over
+that log, and MUST NOT emit an event `type` the codemap does not name. The
+record carries no separate storage claim: it asserts that the era key, the
+codemap and the poll cursor are implemented as written here, which is why its
+floor scenarios are the era-key and cursor witnesses rather than tests of a
+surface of its own. Its `crossEngineOrdering` facet is a replay property and is
+normed in replay.md §"Cross-engine ordering".
+
 ## The reader rule
 
 A v2 host reading a run in era `2` MUST translate every event through the codemap at the storage boundary:
