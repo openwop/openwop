@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.8.1] — 2026-09-18 — the extension pages, formatted
+
+**Why a patch.** No conformance code changes; the vendored `spec/v2/ext/`
+READMEs are re-formatted for readability (status table to prose subsections,
+link re-wraps, plainer metadata cells), which moves the corpus stamp.
+
 ## [2.8.0] — 2026-09-18 — RFC 0189 (corpus gate)
 
 **Why a minor.** No conformance code changes; `spec/v2/declaration.json` is a
