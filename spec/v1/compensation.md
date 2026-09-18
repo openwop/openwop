@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compensation and Partial-Failure Profile
 
-> **Status: Draft · v1.x (2026-08-18; §C/§E/§G prose landed 2026-08-16; SP-11a landed the `inputMapping` value grammar, the unfired-trigger registration refusal, and the healthy-run `none` rule 2026-08-18) — RFC 0151 `Accepted`.** Normative surface for [RFC 0151 — Compensation and Partial-Failure Profile](../../RFCS/0151-compensation-and-partial-failure-profile.md): the host-ordered, persisted, retried unwind of committed business effects after a later node fails. This document covers **only what has landed on the wire** — the `compensation` capability family (§A), the node-level declaration (§B), the six `compensation.*` events and the run-level `compensationStatus` rollup (§D), and the replay rule (§F). RFC 0151's own header records that the profile is `Accepted` as text and **carried forward** as implementation; the sections still carried are named in [Open spec gaps](#open-spec-gaps) rather than implied. (2026-08-16: §B gained the workflow-level policy, `settings.compensation`.) Companion to [`capabilities.md`](./capabilities.md), [`stream-modes.md`](./stream-modes.md) (how the events surface), [`replay.md`](./replay.md), [`interrupt.md`](./interrupt.md) (RFC 0051 approvals), [`host-capabilities.md` §host.deadLetter](./host-capabilities.md#hostdeadletter) (RFC 0053), and [`host-sample-test-seams.md`](./host-sample-test-seams.md) §21. Keywords MUST, SHOULD, MAY, MUST NOT, SHOULD NOT follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x · RFC 0151.** Capability-gated contract for persisted, retried compensation after partial failure.
 
 ## Why this exists
 
@@ -161,44 +161,15 @@ says **when** the host starts an unwind and **how** it runs one:
   advertises `compensation` MUST validate the policy at registration and refuse a workflow
   that names an unadvertised model or version (`validation_error`), so an unwind never
   learns at failure time that its ordering rule is unimplemented.
-- **A host MUST likewise refuse, at registration, a policy naming a `triggers` entry the
-  host does not fire** (`validation_error`, naming the offending trigger). *(Erratum,
-  2026-08-18 — SP-11a.)* The four triggers are a closed vocabulary, but implementing them
-  is not all-or-nothing: a host can ship `node-failure` long before `cap-breach` or
-  `operator-request`. Silently accepting a policy that lists a trigger the host never
-  fires is the worst of the three possible behaviours — the author has written down a
-  guarantee, the registration succeeded, and the absence only becomes observable during
-  the incident the policy existed for, when the unwind that was promised does not start.
-  This is the same principle as the `capability_required` refusal above and as the
-  `orderingModel` rule in this bullet's predecessor: **an unimplemented obligation is
-  refused when it is declared, not discovered when it is needed.**
+- **A host MUST likewise refuse, at registration, a policy naming a `triggers` entry the host does not fire** (`validation_error`, naming the offending trigger). The four triggers form a closed vocabulary, but a host need not implement all ofthem. Unsupported triggers MUST be refused during registration rather than accepted and ignored during a failure.
 
-  There is deliberately **no advertisement surface** for per-trigger support in this
-  document — `capabilities.compensation` carries no `supportedTriggers`, and adding one
-  is a new optional wire capability, carried in [Open spec gaps](#open-spec-gaps).
-  Omitting it is a **design decision**, and the argument below is what carries it. The refusal is what a host owes in the meantime, and
-  it needs no new wire surface: the host already knows which triggers it fires.
+  `capabilities.compensation` has no per-trigger advertisement. A possible
+  `supportedTriggers` facet is tracked in [`gaps.json`](./gaps.json); until such a facet is standardized, registration-time refusal is the portable discovery mechanism.
 
-  > **⚠️ Editing this refusal changes the case for omitting the advert — read before you relax
-  > it (2026-08-18).** The advert is omitted because it is *ergonomics, not safety*, and the
-  > reason it is only ergonomics is **this paragraph**: the safety hole — an author writing
-  > down an unwind guarantee that silently never fires — is already closed at registration
-  > time by the refusal above. The advert would move discovery from registration-time to
-  > authoring-time, which is ergonomics.
-  >
-  > **If this registration refusal is ever weakened or removed, that analysis inverts.**
-  > `supportedTriggers` would then be the only thing standing between an author and a
-  > silently inert policy — which would make the advert **necessary**, not merely convenient. Anyone relaxing the refusal therefore owes a re-derivation of the
-  > case for omitting the advert, not just an edit here. Recorded at the point of edit so the
-  > dependency is visible to whoever makes it, rather than living only in the reasoning
-  > that produced it.
-
-  **Compatibility.** Classified a **safety-fix** under `COMPATIBILITY.md` §3, not an
-  additive change: it turns a registration that previously succeeded into a
-  `validation_error`. The break is the point — the accepted-then-silent path is the
-  defect. Hosts that fire all four triggers see no change; a host that fires a subset
-  begins refusing policies that named the rest, which is the honest answer it should
-  always have given.
+  **Compatibility.** This refusal is a **safety-fix** under `COMPATIBILITY.md`
+  §3, not an additive change: a registration that previously succeeded now
+  returns `validation_error`. A host that fires all four triggers is unaffected;
+  a host that fires a subset begins refusing policies naming the rest.
 - `retry` / `timeoutMs` are defaults for inverse actions whose node declaration carries
   none. **A node's own bounds always win.**
 - `exhaustedDisposition` chooses between recording the failure and continuing
@@ -571,10 +542,6 @@ no host has run it yet.
   audited), §B/§F recorded-facts replay (`replayed` ≡ `source`, `refiredEffects: 0`).
 - Until a host advertises the family and wires the seams, the behavioral requirements
   resolve to `blocked` per RFC 0148 §A — not to a pass.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.compensation.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

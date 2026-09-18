@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Capability Declaration (`/.well-known/openwop`)
 
-> **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Formalized as `schemas/capabilities.schema.json`. The public network handshake at `GET /.well-known/openwop` is the canonical v1 capability declaration. Fields marked **required v1** are required for conformance; fields marked **optional v1** have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative `/.well-known/openwop` discovery and capability-advertisement contract.
 
 ---
 
@@ -1088,10 +1088,6 @@ Adding new fields to the `Capabilities` shape is non-breaking — clients ignore
 The required/optional split protects implementers from over-pinning: a host can be conformant with only the required base fields, while richer hosts can advertise optional profiles and capabilities without changing the protocol version.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.capabilities.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

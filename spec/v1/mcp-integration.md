@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — MCP Integration
 
-> **Status: Stable · v1.2 (2026-08-16 — RFC 0153 MCP 2026-07-28 versioned composition landed as §"MCP 2026-07-28 versioned composition"; the pre-existing body is the `mcp-2025-06-18-legacy` profile).** Worked example of how OpenWOP and the Model Context Protocol (MCP) compose. Non-normative composition pattern; the §"Trust boundary" rules restate normative invariants from `SECURITY/threat-model-prompt-injection.md` (3 RFC 2119 keywords, all citing pre-existing invariants). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend.
+> **Status: Stable · v1.2 · RFC 0153.** MCP composition profile: legacy 2025-06-18 mapping plus the current 2026-07-28 mapping for hosts that advertise it.
 
 ---
 
@@ -316,20 +316,6 @@ Upstream 2026-07-28 replaced server-initiated requests (`roots/list`, `sampling/
 - **Legacy-profile scenarios** (`mcp-server-*-roundtrip`, `mcp-server-sampling-bridge`, `mcp-server-elicitation-bridge`, `mcp-server-untrusted-args`) remain gated on `mcp.serverMount.supported` and describe `mcp-2025-06-18-legacy`; a current-profile host passes them only in legacy mode.
 - **RFC 0153 §B/§C/§D/§E legs (added 2026-08-16, suite 1.113.0), all gated on `mcp.profiles ∋ mcp-2026-07-28` (+ `serverMount.supported` for the server halves) or the §B advert + seam for the client halves — `blocked` on today's 2025-06-18 hosts, witnesses the day one flips:** `mcp-2026-07-28-discover` (peer pin + host `server/discover` ⇔ `capabilities.mcp.protocolVersions`, `-32020`/`-32022` refusals), `mcp-stateless-request` (no `initialize`, no session, `resultType` + cache hints, two connections agree), `mcp-mrtr-roundtrip` (client half via the seam's `mrtr` block cross-checked against the wire; server half: an exposed suspending tool answers `input_required` + `requestState`, the retry resolves, a forged state is refused), `mcp-cache-tenant-scope` (`cacheScope` present; differing per-caller lists MUST be `private` — needs `OPENWOP_TEST_SECONDARY_API_KEY` for the cross-caller half), `mcp-extension-opacity` (client half via `extensionAuthority`; server half: unknown `_meta` extension keys ignored, not refused, not honoured), `mcp-current-auth-boundary` (unauthenticated current-profile request refused unless `anonymousActor` is advertised). Invariants `mcp-header-body-consistent`, `mcp-cache-tenant-scoped`, `mcp-extension-no-authority` are now witnessable; still not registered pending a first advertiser.
 - **Named by RFC 0153 §Conformance:** all six ✓ (gated); `mcp-version-header` / `mcp-version-downgrade` covered under `mcp-version-negotiation` — per `scripts/rfc-conformance-coverage.mjs`.
-
-### Open spec gaps (RFC 0153)
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.mcp-integration.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
-## Future work
-
-- A vendor-neutral way for a host to advertise its supported MCP servers in `/.well-known/openwop`. Currently `capabilities.mcp` is host-implementation-defined; an additive field would let clients query before sending workflows.
-- A conformance scenario that drives an MCP round-trip without depending on a specific MCP server, using a synthetic MCP-server fixture.
-- A worked node-pack example showing an LLM-using-tools node that integrates MCP.
-
-**Per-tool authorization, rate limiting, and a content-free tool-call audit trail** across transports (`mcp` / `http` / `native`) are specified by RFC 0064 (`host.toolHooks`) — see [host-capabilities.md §host.toolHooks](host-capabilities.md#hosttoolhooks). It layers `argsHash` / `principal` / `transport` / `status` / `durationMs` onto the existing `agent.toolCalled` / `agent.toolReturned` events and reuses RFC 0049's `forbidden` + `authorization-fail-closed` for the per-tool gate, rather than minting an MCP-specific surface.
-
----
 
 ## See also
 

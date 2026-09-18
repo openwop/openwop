@@ -209,10 +209,6 @@ Consolidation is a read-modify-write of long-term memory; it is NOT a token-budg
 
 Both events (`agent.memory.consolidated`, `commitment.fired`) are defined in `schemas/run-event-payloads.schema.json` and are additive RunEventTypes — consumers that don't recognize them fold best-effort per `observability.md §"Forward-compat"`.
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.agent-memory.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## Reviewable learning (RFC 0096)
 
 > **Status: Active · v1.x (RFC 0096).** Capability-gated on `capabilities.agents.proposals`. Hosts that omit the block are unchanged.

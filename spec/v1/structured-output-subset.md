@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Tier 1 Structured-Output Compatibility Subset (informative)
 
-> **Status: Stable · v1.1.1 (informative — non-normative companion to `ai-envelope.md`, not a contract).** Introduced by [RFC 0030](../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md) (`Active` 2026-05-20). Companion to `spec/v1/ai-envelope.md` §"Reasoning field (normative)" and §"Schema discipline." This document is **informative**, not normative — the OpenWOP protocol cannot mandate vendor behavior, only document the intersection of vendor capabilities as of this document's last-verified date. See `auth.md` for the status legend; the `FINAL` tag denotes that the document's structure is stable, not that its contents are normative.
+> **Status: Stable · informative · RFC 0030.** Non-normative snapshot of the structured-output features shared by major model providers.
 
 ## Why this exists
 

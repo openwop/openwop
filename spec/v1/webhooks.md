@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Webhook Subscriptions
 
-> **Status: Stable · v1.2 (2026-09-02).** Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. v1.2 states that the register body's `tenantId` carries the RFC 0048 **`workspace`**, not the RFC 0048 `tenant` — the field name predates RFC 0048 and is retained for wire compatibility, and a host MUST NOT accept its `tenant` label as an alias (clarifying, additive: it states the membership scope the route already required, which every example in this document already showed). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.2.** Normative contract for subscription registration, signed delivery, replay protection, and failure handling.
 
 ---
 
@@ -256,15 +256,6 @@ curl -X DELETE "https://api.example.com/v1/webhooks/wh_a3b9c2?tenantId=workspace
 The delivery contract above is **best-effort** (per-attempt timeout, a circuit breaker, no durable retry). RFC 0083 adds an **opt-in durable mode** via `capabilities.webhooks.durable: true`. When advertised, webhook delivery participates in the [`trigger-bridge.md`](./trigger-bridge.md) durable model: the webhook registration becomes a `TriggerSubscription` with the four-state machine (`active`/`paused`/`failed`/`dead-lettered`), each delivery is tracked as an attempt with a `dedupKey` (at-least-once de-duplication), retries follow the advertised `retryPolicy`, and on exhaustion the delivery is routed to the RFC 0053 dead-letter sink (inspectable for `retentionDays`) instead of being dropped by the circuit breaker. The run a successful delivery starts carries the delivery id as `causationId` (RFC 0040).
 
 **The best-effort default is unchanged.** A host that omits `webhooks.durable` (or sets it `false`) behaves exactly as the contract above — durability is strictly additive, and the subscriber-side signature-verification recipe is identical in both modes.
-
-## Future work
-
-- ~~**Durable retries** via Cloud Tasks (or equivalent)~~ — now specified as the opt-in `webhooks.durable` mode (RFC 0083 / `trigger-bridge.md`).
-- **Custom secret generation**: allow callers to supply their own secret at registration (rejected today).
-- **Additional event filters** beyond tags: per-canvas-type, per-project, regex on event type.
-- **Subscription introspection endpoint** (`GET /v1/webhooks/{id}`): currently admin-only via Firestore.
-
----
 
 ## See also
 

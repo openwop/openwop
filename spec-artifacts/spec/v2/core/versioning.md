@@ -20,7 +20,9 @@ v1 operations keep their `/v1/…` path keys unchanged through the overlap. v2 o
 
 A host that advertises a major in `protocolVersions[]` MUST reach, under that major, every operation **named in `spec/v2/path-manifest.json`** that it serves under the other. Advertising a major is a claim about the **path space**, not about `/.well-known/openwop` alone — that resource's representation is *selected* by the request header (§1.3), so it answers correctly for a host that has mounted nothing else, and every discovery-level probe of the advertisement passes with it. Concretely: if `/v1/<op>` answers and the unversioned `/<op>` returns `404` under the advertised major, the advertisement overstates what the host serves and the host MUST NOT advertise that major until the surface is reachable. The pairing is normative because a lone `404` cannot distinguish *"this host does not serve that operation"* from *"this host serves it and did not mount it under this major"*, and only the second is a defect.
 
-**The manifest is the scope, and that qualifier is load-bearing.** An earlier wording quantified over *every operation it serves*, which is not jointly satisfiable with `conformance.md` §"Test seams": the seams profile mounts the real path space `/conformance/seams/…`, and that same document requires `spec/v2/path-manifest.json` and `api/v2/openapi.yaml` to contain **no** seam operation. Under the unqualified reading a host serving seams under one major owed them under the other, while the manifest against which the claim is measured was forbidden to name them. Surfaces a host serves that the manifest does not name — seam paths, and any path the protocol does not define — are **not** bound by this paragraph; §5 records what the protocol does and does not say about the second class. The narrowing does not weaken the case the rule exists for: the defect that motivated it was `POST /webhooks` answering `404` under major 2 while `POST /v1/webhooks` answered `201`, and `webhooks` is a manifest operation.
+The manifest defines the scope of this pairing rule. Seam paths and proprietary
+paths are not manifest operations and do not require a per-major twin. The
+canonical OpenAPI therefore contains no conformance-seam operation.
 
 `spec/v2/path-manifest.json` (generated) carries operations (`method`, `path`, `operationId`) and channels (`name`, `address`) on a bare origin, and **every path in it is unversioned** — there are no `/v1` rows. The `/v1` twin of a manifest row is derived by prefixing, which is what the pairing above compares. OpenAPI (`api/v2/openapi.yaml`), AsyncAPI (`api/v2/asyncapi.yaml`), and any kept proto MUST resolve to identical absolute paths for the shared event stream (`scripts/check-path-parity.mjs`); the canonical OpenAPI MUST contain no seam or test-mode operation (those live in the seams profile, see `conformance.md`).
 
@@ -41,7 +43,10 @@ A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value 
 
 Every protocol response MUST carry `OpenWOP-Version: <major>.<minor>` naming the contract that produced it. Reporting a version other than the one used is a silent downgrade and non-conformant; the `dual-stack-negotiation` scenario falsifies it. Emitting the header on `/v1/` responses is additive in v1.x and REQUIRED in v2.
 
-A *protocol response* is one produced by an operation named in `spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap); a shell, a hosting fallback or a proprietary route on the same origin has no version to name. Errata 2026-09-10: this read "any path" — §1.2's quantifier defect again.
+A *protocol response* is one produced by an operation named in
+`spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap). A shell,
+hosting fallback, conformance seam, or proprietary route has no protocol
+version to name.
 
 **On a manifest-named path, a non-protocol response MUST NOT carry `OpenWOP-Version` and MUST NOT be `application/json`**; a reader, a cache or the suite MUST NOT count a response without the header, or with a `text/html` body, as reaching the operation (`reachedUnderMajor2`). A vendor path (§5) is not a shared name and is unconstrained.
 
@@ -57,7 +62,9 @@ Otherwise the page MUST move off the shared name.
 
 When both majors are advertised, a v2 client MUST select the highest major it implements that the host lists; a v1 client (no header, `/v1/` paths) is unaffected. `minClientVersion` (axis 15, grammar as axis 1) is a MUST: a host MAY refuse a client below it with `426` `client_version_unsupported`.
 
-`OpenWOP-Version` on a request selects by MAJOR; the `<major>.<minor>` spelling is accepted because `protocolVersions[]` members are `<major>.<minor>` and a client echoing one back is the obvious thing to do — the conformance driver does exactly that. A minor pin is what `minClientVersion` and the additive rules cover (RFC 0172 UQ1, recommended disposition; the integer-only reading was corrected in Phase 4 after it contradicted the suite that tests it).
+`OpenWOP-Version` selects by major. The `<major>.<minor>` spelling is accepted so
+a client may echo a `protocolVersions[]` member. Minor compatibility is governed
+by `minClientVersion` and the additive-change rules.
 
 ## 2. The 18 version axes (RFC 0172 §B; RFC 0167 §E.1)
 
@@ -108,15 +115,20 @@ A consumer that vendors any file from `schemas/`, `api/`, or `spec/` MUST pin to
 
 Through the overlap a host MUST advertise both majors (§1.1), MUST emit `OpenWOP-Version` on every response (§1.4), and MUST serve `/.well-known/openwop` as one resource whose representation the request header selects (`capabilities.md`). The dual-stack scenario creates one run through `/v1/runs` with no header and reads it through `/runs` with `OpenWOP-Version: 2`; the response headers name the contract used.
 
-**A run minted under major 1 and read under major 2 MUST be named by its tenant-bound projection** `<tenantId>/<the v1 id>` (`identity.md` §5). A host MUST NOT return the bare v1 id in a major-2 response body. Normative since 2026-09-04, when a conformance check asserting byte-equality with the v1 id and a host implementing `identity.md` §5 could not both hold — §5 had no reading.
-
-The projection is mandatory for a reason that is not stylistic: a tenant-bound id carries the segment `identity.md` §5's `403 id_tenant_mismatch` check reads, and **a bare id has none, so the cross-tenant refusal cannot run on it at all.** A legacy unprefixed form in documents would be a class of long-lived identifiers on which major 2's tenant isolation is structurally inapplicable; the grammar in `ids.schema.json` has no legacy branch and MUST NOT acquire one.
+**A run minted under major 1 and read under major 2 MUST use the tenant-bound
+projection** `<tenantId>/<v1-id>` (`identity.md` §5). A host MUST NOT return a
+bare v1 id in a major-2 response. The tenant segment is required for the
+`id_tenant_mismatch` check; `ids.schema.json` has no legacy unprefixed branch.
 
 The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]` drops the `1.<n>` member and every alias carrying the `v1-end-of-support` trigger is removed.
 
 **Retirement is atomic, and that is a consequence of §1.1 rather than a separate rule.** Through the overlap `preferredVersion` MUST name a `1.x` member; a host that drops v1 from `protocolVersions[]` advertises a `2.x` `preferredVersion`. There is no legal intermediate state in which both majors are advertised and `2.x` is preferred, so flipping `preferredVersion` ahead of the drop is not a smaller first step — it is the same step. Dropping v1 therefore retires the whole `/v1` path space at once, not incrementally.
 
-**Retirement flips every header-less request's contract.** Through the overlap a header-less request on an unversioned name is served major 1 (§1.3); where the v1 surface lives under `/v1/` that name is not a v1 key and falls through to whatever else is served there — typically a page. At end-of-support the same request is served major 2 and the page starts answering the operation. A `/v1/`-counting inventory cannot see this. Test: `manifest top-level segments ∩ anything else served unversioned` (`{agents, prompts, runs}` on the host that found it). A non-empty intersection MUST be resolved before end-of-support: move the page, or serve it under §1.4's conditions.
+**Retirement changes every header-less request's default contract.** Before
+end-of-support, a header-less unversioned request uses major 1; afterward it uses
+major 2. Before retirement, a host MUST check for collisions between manifest
+top-level path segments and non-protocol unversioned routes. It MUST move each
+colliding route or apply §1.4 content negotiation.
 
 **Host-proprietary paths live at `/host/<org>/…` (RFC 0181).** Every vendor namespace — capability records (`capabilities.md` §3.2), error codes, event types, pack properties — is keyed to an org registered in `spec/v2/declaration.json`; paths join that pattern. A host MAY serve operations the manifest does not name under `/host/<org>/…` for its registered org: no major in the path, served regardless of `OpenWOP-Version`, never a protocol operation, never measured, outside §1.4. An org MUST NOT be named after a manifest segment under `/host/` (`reservedOrgs`); a host SHOULD advertise the mount under `extensions.<org>.<name>`. A `/v1/host/<org>/…` twin MAY ride the overlap and retires atomically with `/v1`.
 

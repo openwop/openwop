@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — AI Envelope Primitive
 
-> **Status: Stable · v1.1.1 (promoted via [RFC 0021](../../RFCS/0021-ai-envelope-primitive.md), 2026-05-18; first cut 2026-05-17). Extended additively by [RFC 0030](../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md) (§"Reasoning field"), [RFC 0031](../../RFCS/0031-envelope-variants-and-model-capabilities.md) (§"Variant payload discrimination"), [RFC 0032](../../RFCS/0032-envelope-reliability-events.md) (line-448 scope clarification + §"Envelope-reliability events"), and [RFC 0033](../../RFCS/0033-envelope-completion-contract.md) (§"Envelope-completion criteria"), all `Accepted` 2026-05-21.** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
+> **Status: Stable · v1.1.1 · RFC 0021, 0030–0033.** Normative contract for typed AI outputs, validation, refusal, reasoning, and retry behavior.
 
 ---
 
@@ -837,10 +837,6 @@ For pre-v1.x hosts that already advertise `supportedEnvelopes` with unnamespaced
 See `docs/migration/v1.0-to-v1.1.md` for the field-by-field migration table once this spec is implemented in the reference host.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.ai-envelope.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

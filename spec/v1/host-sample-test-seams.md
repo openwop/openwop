@@ -644,10 +644,6 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 
   A host advertising the capability MUST enforce, on `exchange`: (1) a `role: 'agent'` turn that omits `speakerId` is rejected `validation_error` (the §Spec attribution MUST); (2) a turn whose `speakerId` is NOT in the conversation's declared `participants` roster is rejected `validation_error` (the §Spec membership MUST, RFC 0005 §E turn-validation path); and on `open`: (3) a `participants` array exceeding the request's or the host's advertised `maxParticipants` is rejected `validation_error` (the §Spec maxParticipants MUST). RFC 0005 §E pins the error *code* (`validation_error`), not the HTTP status — a host MAY use `400` or `422`; the conformance leg asserts on `error.code` and tolerates either. A roster-valid, attributed agent turn MUST be accepted. `multi-party-conversation-behavioral.test.ts` drives all four (one positive + three rejections) via `behaviorGate('openwop-multi-party-conversation', …)`; the always-on `multi-party-conversation-shape.test.ts` covers the schema-expressible facts server-free regardless of this seam. **This is the RFC 0101 → behavioral-conformance bar** (reference impl: the postgres example host). A host whose multi-party enforcement is bound to a product flow rather than a generic open (e.g. openwop-app ADR 0040's advisory-board council, which keys roster enforcement on a board group) MAY instead witness via its own host-side behavioral test + an `INTEROP-MATRIX.md` row — the RFC 0086 dual-staging — but the reference seam ensures the behavioral MUSTs have at least one suite-executable, host-agnostic witness.
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.host-sample-test-seams.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## Cross-references
 
 - `host-extensions.md` §"Canonical prefixes" — the `/v1/host/sample/*` namespace contract
@@ -992,7 +988,6 @@ OPTIONAL. Same shape and reason as §22's A2A `invoke`: RFC 0153 §B is about th
 OPTIONAL. Registers a workflow the host will serve for the duration of the conformance run (an exposed MCP tool/resource/prompt, a dispatch parent, an MRTR suspending tool). The seam accepts the **host's registration shape** — `{ workflowId, nodes: [{ nodeId, typeId, config, inputs? }], edges?: [{ edgeId, sourceNodeId, targetNodeId }] }` — and answers `201 { workflowId, nodeCount }`, `400 validation_error` on a malformed body, `404`/`403` when the seam is not mounted.
 
 > **Recorded divergence.** This shape keys nodes and edges by `nodeId` / `edgeId`; the canonical `workflow-definition.schema.json` keys both by `id`. Every leg posting here has used `nodeId` since the seam existed, so the seam is documented as it behaves rather than as the canonical schema would have it. The RFC 0013 workflow-**chain** vocabulary (`edges: [{ from, to }]`) is NOT accepted here — `mcp-mrtr-roundtrip.test.ts` posted it until 2026-08-16 and the first 2026-07-28 host answered `400`, which the leg then walked past into `tools/call` on a tool that was never registered (S17). A calling leg MUST treat a `4xx` on this registration as a **suite defect** (assert `< 400`), never as seam absence. Aligning the seam to canonical `id` (accepting both during a window) is an open item for the reference host; the corpus does not change the canonical schema for it.
-
 
 ### 25. Concurrent duplicate-delivery driver — `POST /v1/host/sample/test/idempotency/concurrent-claim` (RFC 0150 §B)
 

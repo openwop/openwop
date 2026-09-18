@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — HITL Interrupt Primitive
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the canonical `interrupt(payload)` primitive, deterministic resume keys, the eight `kind` discriminators (`approval`, `clarification`, `external-event`, `custom`, `conversation.start`, `conversation.exchange`, `conversation.close`, `low-confidence` — union completed per RFC 0094), the 5-action approval vocabulary, and the signed-token callback URL surface. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative suspend/resume primitive, approval vocabulary, and signed callback-token contract.
 
 ---
 
@@ -193,7 +193,11 @@ This factoring keeps openwop minimal — the protocol describes the lifecycle (r
 1. _Host-composed quorum_: the host's resolution endpoint accumulates verified resumes (one per approver), applies `rejectionPolicy` (`single-veto` / `majority`) and delivers ONE final `ApprovalResume` to the engine when quorum is reached. The engine sees a single terminal `approval.received` event.
 2. _Engine-composed quorum_: the engine accumulates votes via per-resume calls to its resolution surface and emits one `approval.received` per vote (or a single terminal one — implementation choice).
 
-Either model satisfies the v1 wire contract: the FINAL terminal `approval.received` MUST carry a `decidedBy` representing whoever closed the quorum (the last approver, or a synthetic `quorum:<n>-of-<m>` identifier). The intermediate event sequence (whether per-vote partial-state events appear) is NOT spec-locked at v1 — see I1 in §"Open spec gaps."
+Either model satisfies the v1 wire contract: the FINAL terminal
+`approval.received` MUST carry a `decidedBy` representing whoever closed the
+quorum (the last approver, or a synthetic `quorum:<n>-of-<m>` identifier). The
+intermediate event sequence is not specified in v1; see
+`openwop.gap.spec.interrupt.i1` in [`gaps.json`](./gaps.json).
 
 **Interop note.** Conformance scenarios assert the wire-level contract (`decidedBy` non-empty, recorded in payload, immutable across replay) but DO NOT assert that any specific principal value is honored — that's host-policy territory.
 
@@ -440,10 +444,6 @@ OTel attributes per `observability.md`:
 ## Annotations are not interrupts (RFC 0056)
 
 A run **annotation** (RFC 0056 — rating / correction / label / flag) is distinct from an `interrupt`. An interrupt **blocks** a run awaiting a human decision and carries a signed-token resume contract; an annotation is **non-blocking**, may be attached during or after a run (including a terminal run), and never gates execution. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) and [`observability.md`](./observability.md) §"Quality signals".
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.interrupt.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

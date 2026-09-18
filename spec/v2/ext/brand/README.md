@@ -1,4 +1,7 @@
-# `brand` — extension
+# `brand` extension
+
+> **Status: Draft · v2 extension.** Discovery-only reservation; no portable
+> operations or payload contract is defined in v2.3.3.
 
 | Field | Value |
 | --- | --- |
@@ -6,15 +9,23 @@
 | **technical:** | `experimental` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `brand` |
-| **advertised as** | `extensions.<org>.brand` (RFC 0169 §A.4) — never a root key |
+| **advertised as** | `extensions.<org>.brand` |
 | **owning RFC** | RFC 0144 |
+| **declared facets** | none defined |
 
-> **Status: Draft · v2.0.0-rc (2026-09-03).** Extension document (RFC 0169 §B.3; RFC 0167 Axiom 1: a family that cannot be witnessed unaided lives here and is not a core obligation).
+## Contract boundary
 
-## What it is
+A host MAY advertise this identifier under its registered organization namespace.
+The extension record is organization-defined, so clients MUST NOT infer portable
+operations, payloads, or authorization semantics from its presence. A pack may
+name `brand` as a dependency only when the host and pack share
+an out-of-band definition of that dependency.
 
-RFC 0169 §B.3 (RFC 0144 extension class; prose-only §host.* section in v1; served under extensions.openwop-app.* by the one host that has it) The v1 prose that defines the surface is `spec/v1/host-capabilities.md` §host.brand (RFC 0144 extension class); it stands as the definition until this document carries its own normative text (P3-E and the Phase 4 host legs). A host that serves this surface advertises it under `extensions.<org>.brand` with the RFC 0169 record shape; a pack that requires it names `brand` in `peerDependencies` (RFC 0177 §B.1).
+The v1 description, [`spec/v1/host-capabilities.md`](https://github.com/openwop/openwop/blob/v2.3.3/spec/v1/host-capabilities.md#hostbrand) (§host.brand), is useful for migration but is not a
+standalone v2 interoperability contract. A future revision can replace this
+boundary with normative behavior, schemas, and a behavioral witness.
 
-## Witness
+## Conformance
 
-`claims-check`: the suite can read the claim from discovery but has no behavioral probe; adoption is measured by the INTEROP-MATRIX bundle evidence.
+The current `claims-check` witness validates only that the discovery claim is
+well formed. It does not demonstrate compatible runtime behavior.

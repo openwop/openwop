@@ -863,10 +863,6 @@ The registry publishes **discrete semver tags** — which version of a pack (and
 
 ---
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.node-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## References
 
 - `auth.md` — the `packs:publish` scope used by the publish endpoint.

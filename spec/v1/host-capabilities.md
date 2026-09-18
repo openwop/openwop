@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Host Capability Surfaces
 
-> **Status: Stable · v1.1 (2026-05-12).** Promoted DRAFT → FINAL after Phase B audit confirmed all 14 `host.*` capability sections are internally consistent + RFC 2119-clean + cross-linked to `capabilities.md` §"runtimeCapabilities" + `node-packs.md` §"Manifest format" `peerDependencies`. Normative contracts for the `host.*` capabilities that node-pack `peerDependencies` may declare. A pack that declares `peerDependencies: { "host.canvas": "supported" }` consumes the canvas surface defined here; the host that advertises `host.canvas: supported` in `/.well-known/openwop` MUST expose the contract specified in §host.canvas. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 · RFC 0144 and owning feature RFCs.** Normative pack-facing contracts for advertised `host.*` services.
 
 ---
 

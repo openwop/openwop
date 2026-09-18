@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Workflow-Chain Packs
 
-> **Status: Draft (2026-05-17).** Closes Phase 1 of [RFC 0013 — Workflow-chain packs](../../RFCS/0013-workflow-chain-packs.md). Specifies a new pack kind that publishes pre-configured DAG fragments — registry-distributed sub-workflows that hosts expand inline at workflow-author time. Promotes to FINAL when (a) the reference host implements expansion and (b) at least the manifest-validation + expansion conformance scenarios both pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x · RFC 0013.** Normative pack format and expansion rules for reusable workflow fragments.
 
 ---
 
@@ -177,7 +177,14 @@ String fields in the chain's `dag` MAY contain `{{params.<name>}}` placeholders.
 
 **`inputs` preservation.** When a fragment node carries a populated `inputs` object (PortValue references per `schemas/workflow-definition.schema.json#/$defs/WorkflowNode`), expansion and registration MUST preserve it verbatim — only `{{params.*}}` tokens within its string leaves are substituted. Hosts MUST NOT drop a present `inputs` map during expansion or when persisting the spliced workflow. (Authors MAY still omit `inputs` for trivial pass-through nodes per §WorkflowDefinitionFragment; this rule constrains what happens to a `inputs` that *is* present.)
 
-Substitution is a workflow-edit-time concern; the dispatching runtime sees concrete string values with no placeholders remaining. Hosts MUST NOT defer substitution to dispatch time. Re-parameterization of an already-dropped tile is a **re-expansion** concern — a host offers it by re-running expansion from the `metadata.expandedFrom` marker (§Round-trip note) with fresh parameter values, not by leaving `{{params.*}}` tokens in the persisted definition for a runtime to resolve. `{{params.*}}` is not a runtime-interpolation construct: `WorkflowNode.config` holds pre-execution constants and `inputs` holds PortValue references, and no `{{...}}` interpolation is defined over them (the only spec'd runtime `{{varName}}` surface is `prompts.md` §"Variable interpolation", scoped to PromptTemplate `text`). A workflow persisted with unresolved `{{params.*}}` in `config`/`inputs` is therefore non-portable — a destination host treats the placeholder as a literal constant. See §Open spec gaps WCP4 for a proposed portable deferral mode.
+Substitution is a workflow-edit-time concern; the dispatching runtime sees
+concrete values with no placeholders remaining. Hosts MUST NOT defer
+substitution to dispatch time. Re-parameterization re-runs expansion from the
+`metadata.expandedFrom` marker with new values. `{{params.*}}` is not runtime
+interpolation: `WorkflowNode.config` contains constants and `inputs` contains
+PortValue references. A persisted unresolved token is therefore a literal and
+is non-portable. Portable per-run deferral remains
+`openwop.gap.spec.workflow-chain-packs.wcp4` in [`gaps.json`](./gaps.json).
 
 Templating beyond literal substitution (conditional rendering, loops, expression evaluation) is out of scope for v1. Future RFCs MAY add richer expression syntax under a distinct prefix (e.g., `{{expr:...}}`) without altering literal-`{{params.<name>}}` semantics.
 
@@ -499,10 +506,6 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 - **RFC 0133 additive extensions.** `subChains`, `producedVariables`, and `config.subChainRef` are all OPTIONAL; a chain declaring none expands byte-identically to RFC 0013. Sub-chain composition dispatches through the *existing* `core.subWorkflow` / `core.dispatch` framework nodes (no new dispatch primitive), and child ids are minted at `from-chain` instantiate time (baked into the persisted parent before any run) so the run event log gains no new non-determinism and `:fork` replays byte-identically. A host without runtime child dispatch refuses at instantiate time (`sub_chain_unsupported`) rather than mis-dispatching. RFC 0133 amends this doc's §"Expansion semantics" step 9 + §"What hosts dispatch" to name the opt-in runtime-child mode; the RFC 0013 inline mode is unchanged.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.workflow-chain-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

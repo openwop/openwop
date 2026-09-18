@@ -130,10 +130,6 @@ Hosts whose workloads don't fit these tiers MAY define their own profile in a fo
 
 ---
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.scale-profiles.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## References
 
 - `idempotency.md` — Layer 1 idempotency contract that retry semantics build on.

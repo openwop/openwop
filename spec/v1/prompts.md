@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Prompt Templates
 
-> **Status: Draft v1.x (filed via [RFC 0027](../../RFCS/0027-prompt-templates.md), 2026-05-19; first cut 2026-05-20).** Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where `core.ai.callPrompt` config (`workflow-chain-packs.md` line 69, `host-capabilities.md` line 347) and `AgentManifest.systemPrompt | systemPromptRef` (`agent-manifest.schema.json` lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
+> **Status: Draft · v1.x · RFC 0027.** Normative shape and resolution rules for portable, versioned prompt templates.
 
 ---
 
@@ -413,10 +413,6 @@ Per the envelope-track RFC 0031 (Draft), `NodeModule.requiredModelCapabilities` 
 A node MAY carry both surfaces independently. The `agent.promptResolved` event emitted by this section and the `model.capability.*` events emitted by RFC 0031 are distinct observability surfaces and MAY both fire for the same node execution. No precedence rule applies between them.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 8 row(s) this table carried are now `openwop.gap.spec.prompts.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## Cross-reference
 

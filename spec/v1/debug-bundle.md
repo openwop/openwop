@@ -198,10 +198,6 @@ A bundle is JSON. Hosts MAY use HTTP-level compression (`Content-Encoding: gzip`
 
 When a host advertises `capabilities.feedback.supported`, a run's debug bundle SHOULD include the run's annotations — read from the side-store, already secret-redacted per the `annotation-content-redaction` invariant — so a flagged run travels with its reviewer notes. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) §D.
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.debug-bundle.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## References
 
 - `spec/v1/observability.md` — span naming, attribute taxonomy, privacy classification.

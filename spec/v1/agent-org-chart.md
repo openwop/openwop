@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Org-Chart
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0087](../../RFCS/0087-agent-org-chart.md) (2026-05-31).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the descriptive org-chart record over RFC 0086 roster members, the derived responsibility roll-up, the `capabilities.agents.orgChart` advertisement, and — the normative heart — the protocol-tier `org-position-no-authority-escalation` SECURITY invariant. The `GET /v1/agents/org-chart` endpoint, the SDK helpers, the behavioral non-authority scenario, and the reference-host org store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0087.** Capability-gated descriptive org chart; organizational position never grants protocol authority.
 
 ## Why this exists
 
@@ -54,8 +54,3 @@ GET /v1/agents/org-chart/{departmentId}         → one department's subtree + r
 ```
 
 `agents.orgChart` **REQUIRES** `agents.roster.supported: true` (the chart's members are RFC 0086 roster entries); advertising `orgChart` without `roster` is a `validation_error`. Truthful advertisement (RFC 0031): a host without department nesting advertises `departmentNesting:false` and rejects a non-null `parentDepartmentId`. A host that omits the block has no org-chart surface (today's default). **Crucially, the §B non-authority invariant holds for every host that advertises `orgChart`, at every `installScope` — it is not gated, weakened, or opt-out.**
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.agent-org-chart.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

@@ -1,4 +1,7 @@
-# `portability` — extension (goals, export, import)
+# Portability notes
+
+> **Status: Draft · non-core note.** This is not a declared extension family
+> and is outside this rule.
 
 | Field | Value |
 | --- | --- |
@@ -8,4 +11,10 @@
 | **advertised as** | `extensions.<org>.portability` |
 | **owning RFC** | RFC 0168 (decided in C.1 per RFC 0174 §E.2), RFC 0086/0087 (v1 text) |
 
-> **Status: Draft · v2.0.0-rc (2026-09-03).** `/v1/goals`, `/v1/export`, `/v1/import` were absent from the v1 OpenAPI while `spec/v1/portability.md` and the goals prose described them (RFC 0174 §E.2 noted the decision belongs to C.1). Decided (Phase 3 plan §11): they do not enter `api/v2/openapi.yaml`; the export/import bundle (`schemas/v2/export-bundle.schema.json`, `bundleVersion` "2") and the goals surface are this extension, advertised under `extensions.<org>.portability`, with `spec/v1/portability.md` as the definition until a v2.x additive RFC lands their operations with a witness. **Not a declared family — notes, outside the `ext/README.md` maturity rule; `Draft` here means unfrozen prose, not an unwitnessed family.**
+The v2 core API does not define goals, export, or import operations. The
+[`export-bundle` schema](../../../../schemas/v2/export-bundle.schema.json) records
+the proposed bundle shape, but no portable transport or behavioral witness is
+defined. A host may expose an organization-specific portability extension; a
+client must not assume it is compatible with another host's extension.
+
+The v1 background is in [`spec/v1/portability.md`](https://github.com/openwop/openwop/blob/v2.3.3/spec/v1/portability.md).

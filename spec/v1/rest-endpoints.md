@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — REST Endpoint Catalog
 
-> **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in `api/openapi.yaml` against the JSON Schemas in `schemas/`. Replay/fork has shipped at `replay.md` + the `POST /v1/runs/{runId}:fork` endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1.** Normative REST operation catalog; `api/openapi.yaml` is the machine-readable contract.
 
 ---
 
@@ -448,10 +448,6 @@ Some deployments may have surfaces that predate openwop and use a slightly diffe
 These canvas-typed routes MAY be served as aliases that map internally to the spec routes. They are not part of the v1 conformance surface.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.rest-endpoints.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

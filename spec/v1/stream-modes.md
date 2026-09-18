@@ -251,10 +251,6 @@ An OpenWOP-compliant CLI (e.g., a host's workflow-run command with `--watch`) SH
 
 ---
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.stream-modes.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## References
 
 - `auth.md` — auth model + status legend

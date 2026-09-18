@@ -1,4 +1,7 @@
-# `sandbox-runtime-notes` — extension (non-normative)
+# Sandbox runtime notes
+
+> **Status: Draft · non-normative note.** This is not a declared extension
+> family and is outside this rule.
 
 | Field | Value |
 | --- | --- |
@@ -8,4 +11,8 @@
 | **advertised as** | not advertisable (notes, not a surface) |
 | **owning RFC** | RFC 0173 §D (RFC 0035 superseded by the `packs` obligation at the cut) |
 
-> **Status: Draft · v2.0.0-rc (2026-09-03).** RFC 0035's `node:vm` demonstrator and its runtime notes are kept here as implementation history. In v2 isolation binds with pack execution (`security-defaults.md`): `sandbox.isolationModel` names `wasm | process | container | vm`; `node:vm` is not a value (RFC 0035 §20, `:130`: escapable by design). A host MAY register and validate packs without executing them. RFC 0035 flips `Superseded` at the RC. **Not a declared family — notes, outside the `ext/README.md` maturity rule; `Draft` here means unfrozen prose, not an unwitnessed family.**
+RFC 0035's `node:vm` demonstrator is retained only as implementation history;
+`node:vm` is not an isolation model. The v2 contract is in
+[`security-defaults.md`](../../core/security-defaults.md):
+`sandbox.isolationModel` is one of `wasm`, `process`, `container`, or `vm`, and
+pack execution is bound to the advertised isolation mode.

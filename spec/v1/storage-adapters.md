@@ -352,15 +352,6 @@ A storage adapter SHOULD:
 
 ---
 
-## Future work
-
-- **Postgres reference implementation** — `pg`-backed adapter as a durable example for distributed deployments. SQLite covers self-hosted single-instance deployments; Postgres adds the distributed-write story (LISTEN/NOTIFY for change feeds, multi-writer concurrency).
-- **SQLite reference implementation** — `SqliteEventLogIO` + `SqliteSuspendIO` demonstrate the single-node durable pattern. Zero-install on Node 22.5+ via the built-in `node:sqlite` module.
-- **Adapter compliance suite** — shared vitest test suite that any third-party adapter can run to verify spec compliance. The in-memory adapter tests
-  (`InMemoryEventLogIO.test.ts`, `InMemorySuspendIO.test.ts`) are the prototypes for this; extracting them into a parameterized harness is post-v1 ecosystem work.
-
----
-
 ## See also
 
 - `auth.md` — API key + scope vocabulary

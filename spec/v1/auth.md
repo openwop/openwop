@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Authentication and Authorization
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by `schemas/error-envelope.schema.json` per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1.** Normative authentication, authorization, identity, and error-envelope contract.
 >
 > **Status legend** (used across all spec/v1/\*.md). Full policy at [/governance/spec-status/](/governance/spec-status/):
 >
@@ -244,10 +244,6 @@ It does not establish provenance attestations for artifacts (RFC 0154 §E spans 
 An OpenWOP-compliant server SHOULD log every authenticated request with at minimum: keyId, scope used, request method+path, timestamp, response status, latency. Logs MUST NOT include the API key value or any credential material.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.auth.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

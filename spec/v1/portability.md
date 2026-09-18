@@ -34,10 +34,6 @@ The host serves portability as a host-extension (see `host-sample-test-seams.md`
 
 One additive, content-free event is emitted (gated on the capability): `import.applied` (`run-event-payloads.schema.json`) — counts + refs only, never item payloads or secret values. The existing host-private anon→user migration remains valid: its response is a subset of the `ImportResult` aggregate.
 
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 3 row(s) this table carried are now `openwop.gap.spec.portability.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
 ## References
 
 - `schemas/export-bundle.schema.json`

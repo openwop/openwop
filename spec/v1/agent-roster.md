@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Standing Agent Roster + Workflow Portfolio
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0086](../../RFCS/0086-standing-agent-roster-and-workflow-portfolio.md) (2026-05-31).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the standing agent-instance record, the workflow-portfolio + inventory projection, the content-free `roster.run.initiated` attribution event, and the `capabilities.agents.roster` advertisement. The `GET /v1/agents/roster` endpoint, the SDK helpers, the behavioral attribution scenario, and the reference-host roster store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0086.** Capability-gated standing-agent roster and workflow-portfolio projection.
 
 ## Why this exists
 
@@ -50,8 +50,3 @@ This surface does **not** standardize Kanban boards, columns, cards, swimlanes, 
 ```
 
 `agents.roster` **REQUIRES** `agents.manifestRuntime.supported: true` (a roster entry instantiates a manifest agent — RFC 0070); advertising `roster` without `manifestRuntime` is a `validation_error`. `agents.roster.installScope` **MUST equal** `agents.manifestRuntime.installScope`. Truthful advertisement (RFC 0031): a source not listed in `portfolioTriggerSources` does not fire portfolios on this host. A host that omits the block does not maintain a roster (today's default); the behavioral conformance scenarios skip cleanly.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.agent-roster.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-

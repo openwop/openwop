@@ -305,7 +305,7 @@ The §"LLM cache-key recipe" §A + §B above already establishes a CONDITIONAL M
 1. **Unconditional MUST.** Phase 4 hosts MUST follow the recipe for ALL LLM-calling nodes regardless of whether they use Layer-2 idempotency. The "for Layer-2 idempotency only" conditional in the original §"LLM cache-key recipe" intro does NOT apply when `multiAgent.executionModel.version >= 4`.
 2. **Observable commitment.** Phase 4 hosts MUST advertise the recipe they honor via `capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe`. The value `spec-rfc-0041` claims the canonical recipe; vendor recipes use the canonical host-extension namespace `x-host-<host>-<recipe-name>` per `host-extensions.md` §"Canonical prefixes". The advertisement lets cross-host replay rely on byte-identical keys without trial computation.
 
-Closes RFC 0037 §"Open spec gaps" MAE-7.
+Resolves the replay gap recorded by RFC 0037 as MAE-7.
 
 ### §B — Envelope-refusal recovery in replay (MAE-8 closure)
 
@@ -501,7 +501,6 @@ effects are effects the operator asked for; a replay re-executes fixed history,
 so its effects are duplicates by definition. A host MAY suppress branch effects
 too, but MUST NOT report that as `sideEffectSuppression`.
 
-
 ### Host-initiated fan-out is an external effect (2026-08-18)
 
 Everything above binds **nodes**: caveat 1 binds "a node calling an external API",
@@ -594,7 +593,6 @@ Requirements:
 > [`storage-adapters.md`](./storage-adapters.md) §"Claim acquisition" that a claim
 > transfer is not itself a run event: **what a run reports outward must not depend on
 > the mechanics of how it was executed.**
-
 
 ## Replay-from-event-log internals
 
@@ -697,10 +695,6 @@ Hosts that advertise one of the two capabilities but not the other retain the ex
 ## Annotations and fork (RFC 0056)
 
 RFC 0056 annotations are a per-run side-resource, **not** event-log entries — so they sit entirely outside the fork/replay model. A fork inherits **zero** annotations (it is a new run with no human judgments yet) and MAY carry a back-reference to the source. `run.annotated` is a live SSE notification, never a persisted/replayed event. This is deliberate: a replayable annotation event would be copied into forks (which replay source events `< fromSeq`), contradicting its side-resource semantics. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) §D.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.replay.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

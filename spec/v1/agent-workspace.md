@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Workspace (`host.workspace`)
 
-> **Status: Draft v1.x (2026-05-25).** Normative spec for the RFC 0059 `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent _ground-truth_ artifacts (identity / directives / memory-index), loaded as a read snapshot at run start. Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Draft · v1.x · RFC 0059.** Normative tenant- and workspace-scoped file service for persistent agent artifacts.
 
 ## Why this exists
 
@@ -81,10 +81,6 @@ WSR-1 reuses the SR-1 mechanism (`agent-memory.md` §SR-1): it binds to BYOK-res
 ## Workspace ↔ memory-index coupling (RFC 0062)
 
 Per the RFC 0059 Phase-0 ruling, the RFC 0062 distillation memory-index manifest is a workspace file `MEMORY-INDEX.json` (machine-loaded, normative); an optional human-editable `.md` sibling MAY accompany it. This keeps a single durable layer rather than introducing a parallel surface.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 6 row(s) this table carried are now `openwop.gap.spec.agent-workspace.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

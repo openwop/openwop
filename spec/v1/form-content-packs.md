@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Form-Content Packs
 
-> **Status: Draft · v1.0 (2026-08-05).** [RFC 0137 — Form-content packs](../../RFCS/0137-form-content-packs.md). Specifies a declarative pack kind that distributes **form templates** — a named, versioned set of typed input fields a host instantiates into an ordinary, editable form. Depends on [`chat-card-packs.md`](./chat-card-packs.md) §"Input fields" (RFC 0071 Phase 2) for the portable field-type subset, which this kind **reuses rather than redefines**. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft · v1.x · RFC 0137.** Normative pack format for declarative, typed form templates.
 
 ---
 
@@ -172,10 +172,6 @@ Because that denormalization is a SHOULD, a registry that validates a form-conte
 **Negative — schema.** A `fields[].type` of `email` or `textarea` (neither is in the closed subset, and neither is `vendor.*` / `x-`-prefixed — use `text` + `format: "email"` and `longtext` respectively); a `fields[].key` instead of `fields[].id`; a `templates[].version` of `3` (the integer axis — MUST be SemVer); a `templateId` with an uppercase scope; a template with an empty `fields[]`; a manifest carrying `runtime`.
 
 ---
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 5 row(s) this table carried are now `openwop.gap.spec.form-content-packs.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

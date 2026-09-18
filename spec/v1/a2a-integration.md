@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — A2A Integration
 
-> **Status: Stable · v1.2 (2026-08-16 — RFC 0152 A2A 1.0 versioned composition landed as §"A2A 1.0 versioned composition"; the pre-existing body is the `a2a-0.3-legacy` profile).** Worked example of how OpenWOP and the Agent2Agent Protocol (A2A) compose. The composition pattern is non-normative; the state-projection rules in §"State projection" are normative for any host that opts into A2A composition (14 RFC 2119 keywords). Pinned to A2A v1 as published at `https://a2a-protocol.org/latest/specification/`. Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.2 · RFC 0152.** A2A composition profile: legacy 0.3 mapping plus the normative 1.0 mapping for hosts that advertise it.
 
 ---
 
@@ -345,7 +345,6 @@ Normative for both directions; the outbound half is what `a2a-version-negotiatio
 
 The 1.0 Agent Card (`AgentCard` in `a2a.proto` v1.0.0) is a different shape from 0.3. The fields, with the OpenWOP source each **MUST** be derived from:
 
-
 > **Which card a header-less GET returns (decided 2026-08-16, RFC 0152 register S18 Q1).** The §B receiver rule — *an absent `A2A-Version` means 0.3* — applies to the Agent Card GET as to every other inbound request. While a host advertises `a2a-0.3-legacy` (`protocolVersions ∋ 0.3`) it **MUST** serve the **0.3-shaped** card (`url`, `preferredTransport`, …) for a header-less `GET agentCardUrl`, and the **1.0-shaped** card (`supportedInterfaces[]`) when the request carries `A2A-Version: 1.0`; a 1.0 client **MUST** send that header on the card GET. This is the only reading under which an external 0.3 client that reads `card.url` header-less keeps working through the legacy window (the point of advertising the legacy profile at all); serving 1.0 header-less breaks such clients now instead of at the sunset. A host that has **dropped** 0.3 (`protocolVersions ∌ 0.3`) serves the card of its `preferredVersion` header-less — a card GET is discovery, and refusing it would defeat the discovery a client needs in order to learn which versions to ask for. The suite's fake peer has served exactly this since 1.112.0; `a2a-card-runtime-consistency.test.ts` sends `A2A-Version: 1.0` on the GET from suite 1.122.0 (it fetched header-less and asserted the 1.0 shape before, which is what forced the first 1.0 host onto the wrong side of this rule).
 
 | A2A 1.0 `AgentCard` field | Required upstream | OpenWOP source of truth |
@@ -494,20 +493,6 @@ Error `message` text in either direction **MUST NOT** carry stack traces, provid
 - **RFC 0152 §C/§D/§E legs (added 2026-08-16, suite 1.112.0):** `a2a-1-0-agent-card.test.ts` (server-free — the suite's own peer at 1.0, pinned from the wire); `a2a-card-runtime-consistency.test.ts` (black-box, gated on `a2a.profiles ∋ a2a-1.0`: 1.0-shaped card at `agentCardUrl`, `supportedInterfaces[].protocolVersion` set == `protocolVersions`, JSON-RPC-at-1.0 floor, streaming/push flags equal — invariant `a2a-card-runtime-consistent` is now witnessable, not yet registered); `a2a-1-0-task-roundtrip.test.ts` (host as 1.0 server, gated on `a2a-1.0`: `SendMessage` → `{ task }` with `Task.id == runId`, `TASK_STATE_*`, `Part` oneof, `GetTask`, `TASK_NOT_FOUND` for unknown/unreadable ids); `a2a-peer-authority.test.ts` (host as client, gated on §B advert + seam `scenario`, records `blocked` until the host reports the `peerAuthority` block — invariant `a2a-peer-no-authority-escalation`). **Still absent:** `a2a-1.0-stream-push` (the peer honestly advertises `streaming: false`; a streaming peer is a further suite gap).
 - **Named by RFC 0152 §Conformance:** `a2a-1.0-agent-card` ✓, `a2a-1.0-version-header` (covered under `a2a-version-negotiation`), `a2a-1.0-task-roundtrip` ✓ (host half gated), `a2a-1.0-stream-push` ✗, `a2a-version-downgrade` (covered under `a2a-version-negotiation`), `a2a-card-runtime-consistency` ✓, `a2a-peer-authority` ✓ — per `scripts/rfc-conformance-coverage.mjs`.
 - **The suite's fake peer is dual-era (since 1.112.0).** `conformance/src/lib/a2a-fake-peer.ts` speaks A2A 1.0 (`SendMessage`/`GetTask`/`CancelTask`/`ListTasks`, 1.0 card with `supportedInterfaces[]`, `TASK_STATE_*`, `Part` oneof, `-32009` on an unsupported `A2A-Version`) **and** 0.3 (header-less requests are 0.3 by upstream rule; the card shape follows the era asked for, defaulting 0.3-first because today's hosts are 0.3 clients that read `card.url`). It does not stream (`capabilities.streaming: false`, `SubscribeToTask` ⇒ `UNSUPPORTED_OPERATION`), so `a2a-1.0-stream-push` remains a gap; a real upstream 1.0 peer in CI is externally gated (RFC 0152 acceptance).
-
-### Open spec gaps (RFC 0152)
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 9 row(s) this table carried are now `openwop.gap.spec.a2a-integration.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
-## Future work
-
-- ~~Codify a recommended `metadata.openwop.*` shape so A2A clients can render openwop-interrupt-rich payloads consistently across hosts.~~ ✅ Codified for the interrupt-kind carrier by RFC 0100 (`metadata.openwop.interrupt.kind`, `A2ATaskState.interruptKind`); the broader namespace stays a host extension.
-- ~~Add an `a2a` capability slot to `/.well-known/openwop` discovery.~~ ✅ Added by RFC 0100 (`capabilities.a2a`).
-- Specify a normative `auth-required` interrupt kind in v1.x to remove drift point #3.
-- ~~Ship `a2a-task-roundtrip.test.ts` in a future conformance minor.~~ ✅ Live as of 2026-05-10; real-peer interop-evidence mode added 2026-05-11 (Phase 3 T3.4).
-- Worked node-pack example: `examples/a2a-bridge/` showing an OpenWOP node that invokes an external A2A agent. Filed as a candidate post-v1 example.
-
----
 
 ## See also
 

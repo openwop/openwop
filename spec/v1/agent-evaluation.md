@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Evaluation
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0081](../../RFCS/0081-agent-evaluation-and-scorecards.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the portable `AgentEvalSuite` artifact, the `mode: "eval"` run projection, the `eval.*` event family + `EvalSummary` scorecard, the `capabilities.agents.evalSuite` advertisement, and the deployment-promotion seam. The behavioral eval-run scenario, the `GET /v1/runs/{runId}/eval-summary` endpoint, the SDK helpers, and the reference-host eval projection land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0081.** Capability-gated evaluation suite, scorecard, and deployment-promotion contract.
 
 ## Why this exists
 
@@ -75,10 +75,6 @@ This document defines _how an eval result is referenced by a deployment gate_, n
 ```
 
 A host that omits the block does not run evals; `mode: "eval"` 501s and the behavioral conformance scenario soft-skips. See [`capabilities.md`](./capabilities.md) §`agents` and [`host-capabilities.md`](./host-capabilities.md).
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 4 row(s) this table carried are now `openwop.gap.spec.agent-evaluation.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
 
 ## References
 

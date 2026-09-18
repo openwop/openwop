@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Portable Tool Catalog
 
-> **Status: Stable · v1.x — reached `Accepted` via [RFC 0078](../../RFCS/0078-portable-tool-catalog-and-tool-session-contract.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the read-only `GET /v1/tools` + `GET /v1/tools/{toolId}` projection, the normative `ToolDescriptor` shape, the `capabilities.toolCatalog` advertisement, and the optional content-free `tool.session.*` lifecycle. The behavioral projection + session scenarios, the `GET /v1/tools` OpenAPI surface, the SDK helpers, and the reference-host catalog land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x · RFC 0078.** Capability-gated read-only tool catalog and optional tool-session lifecycle.
 
 ## Why this exists
 
@@ -81,8 +81,3 @@ The host MAY emit `tool.session.opened { sessionId, toolId }` and `tool.session.
 2. **Authorization-scoped + non-disclosing** — `GET /v1/tools` returns only the principal's authorized/tenant-visible tools; `GET /v1/tools/{toolId}` `404`s an unauthorized id (RFC 0074 pattern; no cross-tenant disclosure).
 3. **Secret-free** — descriptors carry requirement _flags_ (`auth.credentialRef`), never credential material (SR-1).
 4. **Exec honesty** — `safetyTier: "exec"` ⇒ `source: "host-extension"` (RFC 0069); the catalog MUST NOT present an exec-class tool as a protocol-tier (`node-pack`/`workflow`) source.
-
-## Open spec gaps
-
-> **Absorbed into `spec/v1/gaps.json` (RFC 0174 §E.3, 2026-09-03).** The 2 row(s) this table carried are now `openwop.gap.spec.tool-catalog.<local>` entries with a disposition and a witness class, one namespace with every RFC register (RFC 0166 §B). The table is retired; do not add rows here.
-
