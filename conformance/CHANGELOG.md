@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.31.0] — 2026-09-19 — the fifth rung row, and the projection helper
+
+- `v2-durability-recovery` gains `poison-exhaustion`, completing RFC 0158's `durable-single-instance` rung at major 2. The existing scenario was major-1 only and seam-bound; the port reads the canonical `GET /runs/{runId}/events` and needs **no seam**, so it can never record `blocked` for want of one. The v1 scenario is untouched.
+- `src/lib/v2-projection.ts` — `stripSupported()` (every depth, including `required[]`) and `carriesUnspliceablePayload()`. Three hand-written v1→v2 projections went wrong in one week; this is the one function they were each re-deriving. It reports unspliceable payload rather than converting it (RFC 0193 §B: only a person can name the seat).
+- Suite pinned to corpus `2.31.0`.
+
 ## [2.30.0] — 2026-09-19 — the unbacked ratchet
 
 - No scenario change. `check-registers` now actually ratchets the open-risk count it has always printed `(ratchet)` after. Suite pinned to corpus `2.30.0`.

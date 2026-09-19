@@ -1,12 +1,18 @@
 /**
  * RFC 0158 — the `durable-single-instance` recovery rows.
  *
- * These are the four rows the RFC names that no scenario has ever existed for.
- * `durability/poison-exhaustion` is the fifth and is written
- * (`durability-poison-exhaustion.test.ts`) — but it is registered at MAJOR 1
- * ONLY, so no v2 bundle has ever carried a durability row of any kind. Porting
- * it to major 2 needs the v2 event-log read and is tracked separately; without
- * it, the rung is still unwitnessable at major 2 even when these four pass.
+ * All five `durable-single-instance` rows the RFC names, four of which no
+ * scenario had ever existed for.
+ *
+ * `durability/poison-exhaustion` DID exist
+ * (`durability-poison-exhaustion.test.ts`) but was registered at MAJOR 1 ONLY
+ * and read a hard-coded `/v1/host/sample/test/runs/{runId}/events` seam, so no
+ * v2 bundle could carry a durability row of any kind and the rung was
+ * unwitnessable at major 2 even with the other four passing. The port is the
+ * fifth `it` below, and it needs NO SEAM: at major 2 the canonical
+ * `GET /runs/{runId}/events` answers the same question the v1 sample seam was
+ * invented to answer, so the row can never be `blocked` for want of a seam a
+ * host did not wire. The v1 scenario stays where it is, unchanged.
  *
  * ── The disposition ruling, which is the load-bearing design decision ────────
  * §E says an unmet OPERATOR PRECONDITION is `blocked` with the precondition
@@ -51,10 +57,28 @@ import { driver } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
-import { scaledTimeoutMs } from '../lib/polling.js';
+import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-noop';
+const FAILURE_FIXTURE = 'conformance-failure';
+
+/** A `node.started` is attempt 1; each `node.retried` is one more. Counting BOTH
+ *  catches a host that re-dispatches without emitting `node.retried`. */
+const ATTEMPT_TYPES = new Set(['node.started', 'node.retried']);
+
+/** Watch window after terminal. A LONGER wait is a STRONGER claim here, because
+ *  it is a wait for something that must not happen. */
+const QUIET_WINDOW_MS = 4_000;
+
+/** The canonical major-2 run-event read. Null when it does not answer. */
+async function runEvents(runId: string): Promise<Array<{ type: string }> | null> {
+  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events`);
+  if (r.status !== 200) return null;
+  const events = (r.json as { events?: Array<{ type?: unknown }> } | null)?.events;
+  if (!Array.isArray(events)) return null;
+  return events.filter((e): e is { type: string } => typeof e.type === 'string');
+}
 
 /** The host-extension seam these rows drive. Non-normative; advertises nothing. */
 const KILL_SEAM = '/host/durability/kill';
@@ -239,5 +263,56 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       Number.isFinite(summed) && Math.abs(summed - bound) <= 1,
       req('openwop.requirement.0158.bound-is-derived', 'RFC 0158 §B.5', `the declared recovery bound MUST follow from the per-class terms that produce it — declared ${bound}, terms sum to ${summed}. A host that states a bound it cannot produce fails; a host whose sweeper wedges still passes, which is why this row MUST NOT be read as evidence that the mechanism runs`),
     ).toBe(true);
+  }, 120_000);
+
+  it('deterministically failing work reaches a terminal state and stops being retried', async () => {
+    // NO SEAM GATE. The v1 twin reads `/v1/host/sample/test/runs/{runId}/events`
+    // and records `blocked` when a host has not wired it — "unobservable, not
+    // unmet". At major 2 the canonical run-event read answers the same
+    // question, so this row is black-box and cannot be blocked for want of
+    // infrastructure. That is the whole reason the port was worth doing rather
+    // than dual-majoring the original.
+    const doc = await v2Discovery();
+    if (!doc) return softSkip('blocked', 'v2 discovery unreachable');
+    if (!isFixtureAdvertised(FAILURE_FIXTURE)) {
+      return softSkip('inapplicable', `${FAILURE_FIXTURE} fixture not advertised — there is no deterministically failing work to bound`);
+    }
+
+    const create = await driver.post('/runs', { workflowId: FAILURE_FIXTURE });
+    if (create.status !== 201) return softSkip('blocked', `POST /runs answered ${create.status} for the failing fixture`);
+    const runId = (create.json as { runId: string }).runId;
+
+    // First clause: a terminal, operator-visible state.
+    const terminal = await pollUntilTerminal(runId, { timeoutMs: scaledTimeoutMs(30_000) });
+    expect(
+      terminal.status,
+      req('openwop.requirement.0158.poison-exhaustion', 'RFC 0158 §C.8', `deterministically failing work MUST reach a terminal, operator-visible state — read ${terminal.status}`),
+    ).toBe('failed');
+
+    const before = await runEvents(runId);
+    if (before === null) return softSkip('blocked', 'GET /runs/{runId}/events did not answer — attempts are unobservable, so boundedness would be a vacuous claim');
+    // Non-vacuity: the failure must actually be ON the log. Without this a host
+    // returning an empty array sails through every count comparison below,
+    // because 0 === 0 after any wait.
+    if (!before.some((e) => e.type === 'node.failed')) {
+      return softSkip('blocked', 'the run log records no node.failed — an empty or unprojected log makes every attempt count vacuous');
+    }
+    const attemptsBefore = before.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
+    expect(
+      attemptsBefore > 0,
+      req('openwop.requirement.0158.poison-exhaustion', 'RFC 0158 §C.8', 'at least one attempt MUST be recorded — zero attempts means nothing was ever delivered, and the bound below would hold vacuously'),
+    ).toBe(true);
+
+    // The load-bearing clause: NOT redelivered indefinitely. "The run reached
+    // failed" says nothing about it — a host that redelivers forever ALSO
+    // reports a terminal status at some point. Count, wait, count again.
+    await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
+    const after = await runEvents(runId);
+    if (after === null) return softSkip('blocked', 'the second GET /runs/{runId}/events did not answer, so the stability comparison has one side');
+    const attemptsAfter = after.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
+    expect(
+      attemptsAfter,
+      req('openwop.requirement.0158.poison-exhaustion', 'RFC 0158 §C.8', `attempts MUST NOT continue after the run reports terminal — a host still redelivering records more (${attemptsBefore} before the quiet window, ${attemptsAfter} after)`),
+    ).toBe(attemptsBefore);
   }, 120_000);
 });
