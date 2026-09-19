@@ -250,6 +250,7 @@
     {
       "key": "envelopeContracts",
       "kind": "family",
+      "normativeText": ["spec/v1/ai-envelope.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopeContracts",
       "peerDependencyId": "envelopeContracts",
@@ -339,6 +340,7 @@
     {
       "key": "secrets",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#secrets",
       "peerDependencyId": "secrets",
@@ -634,6 +636,7 @@
     {
       "key": "modelCapabilities",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#modelCapabilities",
       "peerDependencyId": "modelCapabilities",
@@ -672,6 +675,7 @@
     {
       "key": "aiProviders",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md", "spec/v1/capabilities.md", "spec/v1/ai-envelope.md"],
       "anchor": "core",
       "section": "core/capabilities.md#aiProviders",
       "peerDependencyId": "aiProviders",
@@ -703,6 +707,7 @@
     {
       "key": "agents",
       "kind": "family",
+      "normativeText": ["spec/v1/multi-agent-execution.md", "spec/v1/agent-memory.md", "spec/v1/agent-runtime.md", "spec/v1/agent-org-chart.md", "spec/v1/agent-evaluation.md", "spec/v1/capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#agents",
       "peerDependencyId": "agents",
@@ -740,6 +745,7 @@
     {
       "key": "memory",
       "kind": "family",
+      "normativeText": ["spec/v1/agent-memory.md", "spec/v1/capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#memory",
       "peerDependencyId": "memory",
@@ -1006,6 +1012,7 @@
     {
       "key": "artifactTypes",
       "kind": "family",
+      "normativeText": ["spec/v1/artifact-type-packs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#artifactTypes",
       "peerDependencyId": "artifactTypes",
@@ -1253,6 +1260,7 @@
     {
       "key": "uiPlugins",
       "kind": "family",
+      "normativeText": ["spec/v1/frontend-plugin-packs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#uiPlugins",
       "peerDependencyId": "uiPlugins",
@@ -1557,6 +1565,7 @@
     {
       "key": "production",
       "kind": "family",
+      "normativeText": ["spec/v1/production-profile.md"],
       "anchor": "core",
       "section": "core/capabilities.md#production",
       "peerDependencyId": "production",

@@ -160,6 +160,21 @@ for (const f of core) {
     if (cls === 'rfc') { refused.push(`${f.key} -> ${h} (an RFC is history, not operative text; owningRfc already records it)`); bad = true; continue; }
     if (cls === 'refused') { refused.push(`${f.key} -> ${h} (not a normative home: only spec/v2/core, spec/v2/ext, a v2 schema as a CO-pointer, or spec/v1 as a declared dependency)`); bad = true; continue; }
     if (!existsSync(join(ROOT, h))) { missing.push(`${f.key} -> ${h}`); bad = true; continue; }
+    // RFC 0189 G13 — a document that declares itself NON-NORMATIVE cannot be a
+    // normative home. `spec/v1/structured-output-subset.md` is titled
+    // "(informative)" and banners "Non-normative snapshot" — and it is the ONLY
+    // prose site of `envelopes.tierOneSubsetCompliance` corpus-wide, so the
+    // cheapest way to resolve `envelopes` was to declare an informative document
+    // as operative prose. The gate checked only that a Status banner EXISTS, so
+    // it would have accepted it, and the §D fallback would then assert at
+    // end-of-support that an informative document is operative.
+    {
+      const banner = (readFileSync(join(ROOT, h), 'utf8').slice(0, 2000).split('\n').find((l) => /Status/.test(l)) ?? '');
+      if (/\binformative\b|\bNon-normative\b/i.test(banner)) {
+        refused.push(`${f.key} -> ${h} (the document declares itself non-normative: ${banner.trim().slice(0, 90)})`);
+        bad = true; continue;
+      }
+    }
     // RFC 0190 §B — `ext` is a CO-POINTER, never the target that carries the
     // family's obligation. spec/v2/ext/ is the UNWITNESSED TAIL (RFC 0174
     // §E.2), not a second kernel: letting it satisfy §B(b)/(c) resolved a core
@@ -250,10 +265,19 @@ for (const f of core) {
   // family's section title is the narrow form, and `host.` is admitted because it
   // is the v1 capability namespace these sections are named in.
   const titledFor = (h, k) => new RegExp(`^#{1,6}\\s*§?\\s*\`?(?:host\\.)?${k}\`?\\s*$`).test(h.trim());
+  // RFC 0189 G12 — a fenced code block is an illustrative shape, not an
+  // obligation. Before G10 such a block was usually self-blocking: it spells the
+  // family `ctx.<key>.…`, and G5 refuses a preceding dot. G10 made the HEADING
+  // supply the name, so any `## §host.<key>` section opening with a TypeScript
+  // sketch containing a stray MUST/SHOULD/MAY in a comment now satisfies §B(c) —
+  // `host-capabilities.md`'s §host.secrets block does exactly that via a
+  // "pack SHOULD treat as advisory" comment. Measured: stripping fenced blocks
+  // costs ZERO currently-declared families. Strictly narrowing.
+  const obligationText = obligationProse.replace(/^```[\s\S]*?^```[^\n]*$/gm, '\n');
   const paras = [];
   {
     let heading = '';
-    for (const block of obligationProse.split(/\n\s*\n/)) {
+    for (const block of obligationText.split(/\n\s*\n/)) {
       const lines = block.split('\n').filter((l) => l.trim() !== '');
       if (lines.length && /^#{1,6}\s/.test(lines[0].trim())) heading = lines[0];
       const isTable = lines.length > 1 && lines.every((l) => l.trim().startsWith('|'));
