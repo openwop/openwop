@@ -170,6 +170,15 @@ for (const f of core) {
     // end-of-support that an informative document is operative.
     {
       const banner = (readFileSync(join(ROOT, h), 'utf8').slice(0, 2000).split('\n').find((l) => /Status/.test(l)) ?? '');
+      // A conformance-seam catalog is no more a behaviour home than an
+      // informative document: spec/v1/host-sample-test-seams.md banners
+      // "observation seams, not application endpoints", and its
+      // multiPartyConversation bullet says in its own matched text that
+      // RFC 0101 "mints no normative client wire-route".
+      if (h.endsWith('host-sample-test-seams.md')) {
+        refused.push(`${f.key} -> ${h} (a conformance-seam catalog is an observation surface, not a behaviour home)`);
+        bad = true; continue;
+      }
       if (/\binformative\b|\bNon-normative\b/i.test(banner)) {
         refused.push(`${f.key} -> ${h} (the document declares itself non-normative: ${banner.trim().slice(0, 90)})`);
         bad = true; continue;
@@ -280,8 +289,20 @@ for (const f of core) {
     for (const block of obligationText.split(/\n\s*\n/)) {
       const lines = block.split('\n').filter((l) => l.trim() !== '');
       if (lines.length && /^#{1,6}\s/.test(lines[0].trim())) heading = lines[0];
+      // RFC 0189 G14 — a BULLET LIST is not one paragraph either.
+      //
+      // G4 split tables so a MUST in row 15 could not satisfy a family named in
+      // row 6. It did not split bullet lists, and the same exploit lives one
+      // syntax down: in spec/v1/ai-envelope.md the `envelopeContracts.advertised`
+      // bullet carries NO 2119 keyword, and passed §B(c) only because the
+      // ADJACENT `envelopeStrictness` bullet says "MUST cause refusal". That
+      // declaration shipped in 2.21.0 and this is what catches it.
+      //
+      // Unlike G4 and G12 this is not free: it removes 27 pre-existing candidate
+      // pairs and breaks exactly one declared family — the one that is false.
       const isTable = lines.length > 1 && lines.every((l) => l.trim().startsWith('|'));
-      for (const unit of (isTable ? lines : [block])) paras.push({ text: unit, heading });
+      const isList = lines.length > 1 && lines.every((l) => /^\s*([-*+]|\d+\.)\s/.test(l));
+      for (const unit of (isTable || isList ? lines : [block])) paras.push({ text: unit, heading });
     }
   }
   if (!paras.some((q) => KEYWORD.test(q.text) && (namesKey(q.text, f.key) || titledFor(q.heading, f.key)))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it, nor under a section titled for it)`); continue; }
@@ -293,6 +314,17 @@ for (const f of core) {
   // `family.facet` is the canonical form. So accept the qualified spelling too.
   const namesFacet = (text, key, facet) =>
     namesKey(text, facet) || new RegExp(`(^|[^A-Za-z0-9\\-_/])${key}\\.${facet}\\b`).test(text);
+  // RFC 0189 G15 was PROPOSED and REJECTED on measurement. The proposal was to
+  // strip fenced blocks from the facet arm as G12 does for the obligation arm,
+  // on the claim that it costs zero declared families. Measured: it breaks
+  // SIXTEEN facets — credentials.encryptionAtRest, oauth.grants,
+  // kvStorage.maxTtlSeconds and thirteen more — every one of them named in a
+  // JSON ADVERTISEMENT EXAMPLE, which is precisely how a facet is legitimately
+  // named. §B(d) is a naming count by design, not an obligation check, so the
+  // two arms are not symmetric: a code block cannot carry an obligation, but it
+  // can perfectly well name a field. The `aiEnvelope.await` case that motivated
+  // the proposal is a HOMONYM, not a fence problem, and stripping fences is the
+  // wrong instrument for it.
   for (const facet of f.facets ?? []) if (!namesFacet(prose, f.key, facet)) facetsUncovered.push(`${f.key}.${facet}`);
   if (homes.some((h) => h.startsWith('spec/v1/'))) v1dep.push(f.key);
   else resolved.push(f.key);

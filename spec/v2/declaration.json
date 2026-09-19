@@ -250,7 +250,7 @@
     {
       "key": "envelopeContracts",
       "kind": "family",
-      "normativeText": ["spec/v1/ai-envelope.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopeContracts",
       "peerDependencyId": "envelopeContracts",

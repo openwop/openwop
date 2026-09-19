@@ -10519,6 +10519,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.14",
+      "rfc": "0189",
+      "local": "G14",
+      "section": "§B(c)",
+      "surface": "A BULLET LIST is not one paragraph either. G4 split tables so a MUST in row 15 could not satisfy a family named in row 6; it left bullet lists fused, and the same exploit lives one syntax down. `spec/v1/ai-envelope.md`'s `envelopeContracts.advertised` bullet carries NO 2119 keyword and passed §B(c) only because the ADJACENT `envelopeStrictness` bullet says \"MUST cause refusal\". That declaration SHIPPED in 2.21.0 — hand-read, right about the family, wrong about the anchor — and the §D fallback would have asserted it at end-of-support.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G14"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.15",
+      "rfc": "0189",
+      "local": "G15",
+      "section": "§B(d)",
+      "surface": "PROPOSED AND REJECTED ON MEASUREMENT. The proposal was to strip fenced code blocks from the facet arm as G12 does for the obligation arm, on the claim it costs zero declared families. Measured: it breaks SIXTEEN facets — `credentials.encryptionAtRest`, `oauth.grants`, `kvStorage.maxTtlSeconds` and thirteen more — every one named in a JSON ADVERTISEMENT EXAMPLE, which is precisely how a facet is legitimately named.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G15"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.16",
+      "rfc": "0189",
+      "local": "G16",
+      "section": "§A",
+      "surface": "A conformance-seam catalog could be a normative home. `spec/v1/host-sample-test-seams.md` banners \"observation seams, not application endpoints\", and its `multiPartyConversation` bullet says in its own matched text that RFC 0101 \"mints no normative client wire-route\" — so the paragraph that would have satisfied §B(c) is the paragraph disclaiming the contract. G13's informative-banner refusal does not catch it, because the document is genuinely `Stable` and genuinely normative ABOUT SEAMS.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G16"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0190.1",
       "rfc": "0190",
       "local": "G1",
