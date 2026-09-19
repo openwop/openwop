@@ -269,6 +269,7 @@
     {
       "key": "envelopes",
       "kind": "family",
+      "normativeText": ["spec/v1/ai-envelope.md", "spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopes",
       "peerDependencyId": "envelopes",
@@ -289,6 +290,7 @@
     {
       "key": "prompts",
       "kind": "family",
+      "normativeText": ["spec/v1/prompts.md", "spec/v1/capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#prompts",
       "peerDependencyId": "prompts",
@@ -321,6 +323,7 @@
     {
       "key": "nodePackRuntimes",
       "kind": "family",
+      "normativeText": ["spec/v1/node-packs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#nodePackRuntimes",
       "peerDependencyId": "nodePackRuntimes",
@@ -483,6 +486,7 @@
     {
       "key": "feedback",
       "kind": "family",
+      "normativeText": ["spec/v1/observability.md", "spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#feedback",
       "peerDependencyId": "feedback",
@@ -566,6 +570,7 @@
     {
       "key": "multiPartyConversation",
       "kind": "family",
+      "normativeText": ["spec/v2/core/conversation.md"],
       "anchor": "core",
       "section": "core/capabilities.md#multiPartyConversation",
       "peerDependencyId": "multiPartyConversation",
@@ -584,6 +589,7 @@
     {
       "key": "conversationTurnModelProvenance",
       "kind": "family",
+      "normativeText": ["spec/v2/core/conversation.md"],
       "anchor": "core",
       "section": "core/capabilities.md#conversationTurnModelProvenance",
       "peerDependencyId": "conversationTurnModelProvenance",
@@ -600,6 +606,7 @@
     {
       "key": "channelPresence",
       "kind": "family",
+      "normativeText": ["spec/v2/core/conversation.md"],
       "anchor": "core",
       "section": "core/capabilities.md#channelPresence",
       "peerDependencyId": "channelPresence",
@@ -656,6 +663,7 @@
     {
       "key": "providerUsage",
       "kind": "family",
+      "normativeText": ["spec/v1/observability.md", "spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#providerUsage",
       "peerDependencyId": "providerUsage",
@@ -1055,6 +1063,7 @@
     {
       "key": "aiEnvelope",
       "kind": "family",
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#aiEnvelope",
       "peerDependencyId": "aiEnvelope",
@@ -1073,6 +1082,7 @@
     {
       "key": "promptLibrary",
       "kind": "family",
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#promptLibrary",
       "peerDependencyId": "promptLibrary",
@@ -1089,6 +1099,7 @@
     {
       "key": "agentRuntime",
       "kind": "family",
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#agentRuntime",
       "peerDependencyId": "agentRuntime",
@@ -1220,6 +1231,7 @@
     {
       "key": "nondeterminismPolicy",
       "kind": "family",
+      "normativeText": ["spec/v2/core/replay.md"],
       "anchor": "core",
       "section": "core/capabilities.md#nondeterminismPolicy",
       "peerDependencyId": "nondeterminismPolicy",

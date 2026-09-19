@@ -1,7 +1,7 @@
 # Events
 
 > **Status: Stable · RFC 0171 §A, §E; RFC 0176 §A.**
-> **Normative home:** `heartbeat`, `envelopeContracts`.
+> **Normative home:** `heartbeat`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`.
 
 ## Why this exists
 
@@ -121,4 +121,19 @@ sets. A host advertising `envelopeContracts.advertised` MUST refuse a node whose
 emitted envelope `type` is neither universal nor listed in that node's accepted
 set, and MUST refuse it distinctly from the capability-gated `typeId` refusal —
 the two stack rather than substitute.
+
+## Envelope, feedback and usage facets
+
+`envelopes.tierOneSubsetCompliance` advertises that the host accepts the Tier 1
+structured-output subset shared across major providers; a host advertising it MUST
+accept an envelope restricted to that subset from any provider it advertises, rather
+than refusing on provider-specific grounds.
+
+`feedback.targets` names the resources an annotation may be attached to. A host MUST
+refuse an annotation whose target is outside the advertised set, and MUST NOT write it
+to the replayable run event log.
+
+`providerUsage.costEstimates` advertises that the host stamps a derived cost on the
+`provider.usage` event. That figure is an estimate from the host's own rate table, and
+a consumer MUST NOT treat it as a billed amount.
 

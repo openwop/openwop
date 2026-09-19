@@ -135,6 +135,22 @@ const namesKey = (text, key, facets = []) => {
   const B = '[^A-Za-z0-9\\-_/.]';        // a real boundary: not alnum, not - _ / .
   const A = '[^A-Za-z0-9\\-_/]';         // trailing: a dot may still open a facet ref
   if (new RegExp(`(^|${B})\`?${key}\`?($|${A})`).test(text)) return true;
+  // RFC 0189 G11 — `capabilities.<key>` IS the family's name.
+  //
+  // G5's preceding-dot rule is right that `owner.workspace` does not name
+  // `workspace` — that is a field-path tail. It is wrong that
+  // `capabilities.prompts` does not name `prompts`: that is the CANONICAL way v1
+  // prose names a capability family, and G10 already admits `(?:host\.)?` in
+  // `titledFor` for exactly this reason — it fixed headings and left body prose
+  // behind.
+  //
+  // Restricted to `capabilities.` alone, deliberately. Measured across all 72
+  // families: `capabilities.` adds 37 candidate pairs, `host.` adds 8 more and
+  // buys ZERO additional honest closures while admitting `aiEnvelope` against an
+  // editorial "a future v1.x evolution MAY widen the projection" note under its
+  // own section heading. One closed namespace whose post-dot token is the family
+  // key by construction.
+  if (new RegExp(`(^|${B})\`?capabilities\.${key}\`?($|${A})`).test(text)) return true;
   for (const f of facets) {
     if (new RegExp(`(^|${B})\`?${key}\\.${f}\\b`).test(text)) return true;
   }
