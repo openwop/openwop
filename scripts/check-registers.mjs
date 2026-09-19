@@ -55,12 +55,28 @@ for (const r of counts.acceptedWithOpenGaps) fail(`${r}: 'open' gap row on an RF
 {
   const baselinePath = join(ROOT, 'docs', 'witness-baseline.json');
   if (existsSync(baselinePath)) {
-    const want = JSON.parse(readFileSync(baselinePath, 'utf8')).openGaps;
+    const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
+    const want = baseline.openGaps;
     const have = counts.gaps.open ?? 0;
     if (typeof want === 'number' && have > want) {
       failures.push(
         `open gap rows rose ${want} -> ${have} (docs/witness-baseline.json openGaps). An open row says a steward owes work: ` +
         `close it, rule it, or re-token it \`externally-gated:<tripwire>\` when it is nobody here's to do.`,
+      );
+    }
+    // The summary line below has printed `(ratchet)` after the open-risk count
+    // since that count was added, and NOTHING COMPARED IT TO ANYTHING. A word in
+    // the output that the code does not back is the defect this corpus spent
+    // 2026-09-19 removing from its prose; it was sitting in the gate's own
+    // summary. Zero is not the right baseline here the way it is for gaps — an
+    // open risk is a legitimate standing state, an open gap is work owed — so
+    // the baseline pins the count where it stands and makes a rise deliberate.
+    const wantRisks = baseline.openRisks;
+    if (typeof wantRisks === 'number' && counts.openRiskRows > wantRisks) {
+      failures.push(
+        `open risk rows rose ${wantRisks} -> ${counts.openRiskRows} (docs/witness-baseline.json openRisks). ` +
+        `An open risk is allowed to stand, but the count may not climb in silence: mitigate, accept, or transfer ` +
+        `one to make room, or move the baseline in the same commit and say why.`,
       );
     }
   }
@@ -72,5 +88,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `=== check-registers OK — ${counts.files} registers, ${counts.rows} rows, every row tokened; gaps ${JSON.stringify(counts.gaps)}; risks ${JSON.stringify(counts.risks)}; open risk rows ${counts.openRiskRows} (ratchet) ===`,
+  `=== check-registers OK — ${counts.files} registers, ${counts.rows} rows, every row tokened; gaps ${JSON.stringify(counts.gaps)}; risks ${JSON.stringify(counts.risks)}; open risk rows ${counts.openRiskRows} (ratchet, baseline ${JSON.parse(readFileSync(join(ROOT, 'docs', 'witness-baseline.json'), 'utf8')).openRisks ?? 'unset'}) ===`,
 );
