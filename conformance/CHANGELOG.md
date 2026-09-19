@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.15.1] — 2026-09-19 — restored schema conditionals and required fields
+
+**Why a patch.** No conformance code changes. `schemas/v2/capabilities.schema.json`
+is a published artifact: the generator had deleted every conditional at every
+depth (including RFC 0132 §B.2's fail-open guard) and rebuilt `required` without
+the seeded family's own fields. All three host bundles still validate.
+
 ## [2.15.0] — 2026-09-19 — three v1-dependent homes; G6 + G7 gate fixes
 
 **Why a minor.** No conformance code changes. `spec/v2/declaration.json` and two
