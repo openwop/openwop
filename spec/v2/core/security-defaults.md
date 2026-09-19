@@ -1,6 +1,7 @@
 # Security Defaults
 
 > **Status: Stable · RFC 0173 (§A–§E), 0164 §22, 0170 §B.**
+> **Normative home:** `sandbox`, `compensation`.
 
 ## Why this exists
 
@@ -45,9 +46,13 @@ A host that surfaces `approversList`, or advertises `refKinds` including `group`
 
 A host that executes third-party packs MUST enforce the eight `node-pack-sandbox-*` invariants of `SECURITY/invariants.yaml` (`no-process`, `network-gated`, `fs-gated`, `no-env`, `timeout`, `memory-cap`, `isolated-context`, `no-eval`) and MUST advertise `sandbox.isolationModel ∈ wasm | process | container | vm` (`spec/v2/facets/sandbox.schema.json`). `node:vm` is not a value. A host that cannot isolate MUST NOT execute third-party packs; it MAY register and validate them. The `no-eval` row stays reference-impl in `ext/sandbox-runtime-notes` (§D.1). The `pack-isolation` scenario drives the eight legs.
 
+The remaining `sandbox` facets name the bound each invariant already carries: `allowedHostCalls` is the host-call allowlist `network-gated` and `fs-gated` enforce, `memoryLimitBytes` is the ceiling of `memory-cap`, and `wallClockLimitMs` is the ceiling of `timeout`. An advertised bound MUST be enforced; none of the three gates the invariant, which binds whether or not the facet is advertised.
+
 ### Compensation
 
 A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`): `{ runId, status, plan[], attempts[] }`, the plan carrying `{ nodeId, order, policy?, irreversibleEffect? }` and each attempt `{ nodeId, attempt, outcome, at, reason? }`, keyed on the node and attempt the operator family uses. The trichotomy of §D.1 resolves to core obligation with a declared witness; a host that does not advertise `compensation` has no obligation.
+
+The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`): `compensation.orderingModels` MUST list `reverse-completion` and MAY add `dependency-graph`, and a policy naming a model outside it MUST be refused at registration; `compensation.profileVersion` participates in the inverse-action identity, so a policy naming a different one MUST be refused; `compensation.manualIntervention` is the `manual` status above — a host advertising it records the unwind rather than abandoning it.
 
 ### Layer-2 effect identity
 

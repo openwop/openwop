@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.14.0] — 2026-09-19 — three homes; the token-bleed fix (G5)
+
+**Why a minor.** No conformance code changes. `spec/v2/declaration.json` and two
+`spec/v2/core/*.md` documents are published artifacts: `sandbox`, `compensation`
+and `authorization` declare homes, and the normative-home predicate stops
+treating `-`, `_`, `.` and `/` as word boundaries.
+
 ## [2.13.0] — 2026-09-18 — four normative homes; the table-paragraph fix
 
 **Why a minor.** No conformance code changes. `spec/v2/declaration.json` and

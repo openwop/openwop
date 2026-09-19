@@ -1,7 +1,7 @@
 # Identity
 
 > **Status: Stable · RFC 0170, 0165, 0176.**
-> **Normative home:** `auth`.
+> **Normative home:** `auth`, `authorization`.
 
 ## Why this exists
 
@@ -42,6 +42,8 @@ An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: a
 ### 2.1 The pipeline (§B.1)
 
 Every lane MUST: verify the credential against the lane's trust root; bind the verified identity to the request, never to an asserted header; check audience; resolve to a Subject before any authorization decision; and fail closed. The closed reason vocabulary is the family-wide error set in §6. Every lane is advertised as one member of the `auth.lanes[]` facet (`spec/v2/facets/auth.schema.json`):
+
+`authorization.failClosed` advertises that rule and MUST be `true` when present; it does not gate it (invariant `authorization-fail-closed`). `authorization.roles` is the host role catalog: a request is authorized when any role-derived scope matches the required scope, under the same scope-match semantics this document applies to a credential.
 
 ```json
 { "lane": "oidc", "issuers": ["https://idp.example"], "revocation": "exp-and-recheck",

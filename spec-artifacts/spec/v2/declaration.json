@@ -535,6 +535,7 @@
     {
       "key": "authorization",
       "kind": "family",
+      "normativeText": ["spec/v2/core/identity.md"],
       "anchor": "core",
       "section": "core/capabilities.md#authorization",
       "peerDependencyId": "authorization",
@@ -1437,6 +1438,7 @@
     {
       "key": "sandbox",
       "kind": "family",
+      "normativeText": ["spec/v2/core/security-defaults.md"],
       "anchor": "core",
       "section": "core/capabilities.md#sandbox",
       "peerDependencyId": "sandbox",
@@ -1461,6 +1463,7 @@
     {
       "key": "compensation",
       "kind": "family",
+      "normativeText": ["spec/v2/core/security-defaults.md"],
       "anchor": "core",
       "section": "core/capabilities.md#compensation",
       "peerDependencyId": "compensation",
