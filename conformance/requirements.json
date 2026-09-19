@@ -29469,7 +29469,8 @@
       "citations": [
         {
           "section": "RFC 0188 §B.1",
-          "requirement": "a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received"
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
