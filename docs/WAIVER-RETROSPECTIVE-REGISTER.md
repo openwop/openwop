@@ -122,3 +122,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0189 | The normative-home gate given a contract: home classes, a content predicate, a non-punitive ratchet, and a deadline that can fire | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0190 | The kernel budget measures what the home gate accepts, and its cap grows only as debt is retired | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0191 | The reciprocal normative-home marker, and why no regex over prose decides a semantic claim | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0192 | A facet is advertised by the presence of its key; the 26 descriptions that gated on a retired field | in-scope-pending-assessment | — | — | `not-reviewed` |

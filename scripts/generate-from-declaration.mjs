@@ -121,10 +121,69 @@ function metadataSchema(key) {
   }
 }
 
+// RFC 0192 §B — the `supported` ghost in seeded descriptions.
+//
+// v2 retired the `supported` flag but the prose came across untouched, so 26
+// facet descriptions still condition a MUST on a field the closed schema
+// forbids: "Hosts that advertise `supported: true` MUST include ...", "MUST be
+// `true` when `supported` is `true`". In v2 those MUSTs can never fire — a MUST
+// that cannot fire is a relaxed MUST.
+//
+// A bulk regex is not safe: the 26 say materially different things — opt-in,
+// conditional-required, cross-family reference, and one three-way combinatorial
+// explanation (`prompts.endpointsSupported`) that collapses entirely under
+// presence-semantics. Each is rewritten by hand, keyed by the exact v1 sentence
+// so a changed seed fails loudly rather than silently keeping the old text.
+const SUPPORTED_REWRITES = [
+  ['Hosts opt into the family via `supported: true` AND explicitly list the events they emit via `events[]`.',
+   'Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`.'],
+  ['Hosts that advertise `supported: true` MUST include', 'A host advertising this facet MUST include'],
+  ['Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false`',
+   'Independent of the family record — a host MAY advertise the family with `endpointsSupported: false`'],
+  ['`supported: false, endpointsSupported: true`', 'the family omitted and `endpointsSupported: true`'],
+  ['MUST advertise `supported: true` and at least one entry', 'MUST advertise this facet and at least one entry'],
+  ['a host WITH onward hops advertising `supported: true` MUST also propagate',
+   'a host WITH onward hops that advertises this facet MUST also propagate'],
+  ['MUST advertise this sub-block with `supported: true` and a stable `hostId`',
+   'MUST advertise this sub-block with a stable `hostId`'],
+  ['MUST advertise this sub-block with `supported: true`.', 'MUST advertise this sub-block.'],
+  ['When `supported: true`, the host MAY replace older in-window turns',
+   'When this facet is present, the host MAY replace older in-window turns'],
+  ['(default when absent and supported:true)', '(the default when absent)'],
+  ['When `supported: true`, the host implements RFC 0003 `installAgents`',
+   'When this facet is present, the host implements RFC 0003 `installAgents`'],
+  ['REQUIRED when `supported: true` per RFC 0012 §A (enforced via the `if/then` clause).',
+   'REQUIRED when this facet is present, per RFC 0012 §A (enforced by this facet\'s `required`).'],
+  ['Only meaningful when `supported: true`.', 'Only meaningful when the family record is present.'],
+  ['MUST be set when `supported: true`.', 'MUST be set when this facet is present.'],
+  ['MUST be `true` when `supported` (the `http-client-ssrf-guard` invariant).',
+   'MUST be `true` when this facet is present (the `http-client-ssrf-guard` invariant).'],
+  ['When `supported: true`, the host\'s `POST', 'When this facet is present, the host\'s `POST'],
+  ['MUST be `true` when `supported` is `true` —', 'MUST be `true` when this facet is present —'],
+  ['MUST NOT claim `supported: true` while doing so', 'MUST NOT advertise this facet while doing so'],
+  // Cross-references to ANOTHER record's retired flag: "X.supported is true"
+  // is now simply "X is advertised".
+  ['`capabilities.secrets.supported` is also true', 'the `secrets` family is advertised'],
+  ['REQUIRED when `injectionBudget.supported` (enforced via the `if/then` clause).', 'REQUIRED when `injectionBudget` is advertised (enforced by that facet\'s `required`).'],
+  ['Distinct from `supported` only for hosts', 'Distinct from the family record only for hosts'],
+  ['Optional even when crossHostCausation.supported is true', 'Optional even when `crossHostCausation` is advertised'],
+  ['WITHOUT `summarization.supported`', 'WITHOUT `summarization`'],
+  ['A host advertising `host.agentRuntime: supported` is treated', 'A host advertising `agentRuntime` is treated'],
+  ['REQUIRES `agents.manifestRuntime.supported: true`', 'REQUIRES `agents.manifestRuntime`'],
+  ['REQUIRES `agents.roster.supported: true`', 'REQUIRES `agents.roster`'],
+  ['the host advertises `supported` but gates nothing', 'the host advertises the family but gates nothing'],
+  ['Stricter than the existing `capabilities.debugBundle.supported` advertised', 'Stricter than the existing `capabilities.debugBundle` advertised'],
+];
+const rewriteSupportedProse = (d) => {
+  let out = d;
+  for (const [from, to] of SUPPORTED_REWRITES) out = out.split(from).join(to);
+  return out;
+};
+
 function stripSupported(schema) {
   if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return schema;
   const out = { ...schema };
-  if (typeof out.description === 'string') out.description = unversionManifestSpellings(out.description);
+  if (typeof out.description === 'string') out.description = rewriteSupportedProse(unversionManifestSpellings(out.description));
   if (out.properties) {
     out.properties = Object.fromEntries(Object.entries(out.properties).filter(([k]) => !['supported', 'tier', 'experimentalUntil'].includes(k)).map(([k, v]) => [k, stripSupported(v)]));
   }
@@ -146,12 +205,28 @@ function stripSupported(schema) {
   // the last two still DESCRIBED as "enforced via the if/then clause", naming a
   // clause that was not there.
   const gatesOnSupported = (node) => JSON.stringify(node ?? null).includes('"supported"');
+  // RFC 0192 §A — a `supported`-gated conditional is MIGRATED, not dropped.
+  // v1 said "if supported:true then these fields are required". Under
+  // presence-semantics the antecedent IS the facet being present, so the rule
+  // becomes an unconditional `required` on the facet itself. Deleting these
+  // silently relaxed memory.compaction ⇒ trigger and memory.injectionBudget ⇒
+  // tokenCounter — both of which are still DESCRIBED as "enforced via the
+  // if/then clause". Folding restores the obligation and makes the text true.
+  const foldSupportedGate = (node) => {
+    if (!node || typeof node !== 'object') return;
+    const req = node.then?.required;
+    if (gatesOnSupported(node.if) && Array.isArray(req)) {
+      const add = req.filter((k) => !['supported', 'tier', 'experimentalUntil'].includes(k));
+      if (add.length) out.required = [...new Set([...(out.required ?? []), ...add])];
+    }
+  };
   for (const k of ['allOf', 'anyOf', 'oneOf']) {
     if (!Array.isArray(out[k])) continue;
+    for (const c of out[k]) if (gatesOnSupported(c)) foldSupportedGate(c);
     const kept = out[k].filter((c) => !gatesOnSupported(c)).map((c) => stripSupported(c));
     if (kept.length) out[k] = kept; else delete out[k];
   }
-  if (gatesOnSupported(out.if)) { delete out.if; delete out.then; delete out.else; }
+  if (gatesOnSupported(out.if)) { foldSupportedGate(out); delete out.if; delete out.then; delete out.else; }
   else { for (const k of ['if', 'then', 'else']) if (out[k]) out[k] = stripSupported(out[k]); }
   if (out.type === 'object' && out.additionalProperties === undefined) out.additionalProperties = false;
   return out;
@@ -244,6 +319,36 @@ function buildAliases() {
 
 const outputs = [[OUT_SCHEMA, buildSchema()], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
 const render = (o) => JSON.stringify(o, null, 2) + '\n';
+// RFC 0192 §C — the 27th occurrence cannot appear silently.
+//
+// The 26 stale descriptions were not a one-time cleanup: the v1 seed is still
+// the source, so any newly-seeded family arrives with the same idiom. This
+// fails the GENERATOR — not a separate checker — because generate-deprecation-
+// annotations.mjs also writes this file, and 2.10.0 established that a
+// correction applied as a post-pass gets overwritten by whichever generator
+// runs last.
+function assertNoSupportedGhost(schema) {
+  const bad = [];
+  const walk = (node, path) => {
+    if (Array.isArray(node)) { node.forEach((x) => walk(x, path)); return; }
+    if (!node || typeof node !== 'object') return;
+    if (typeof node.description === 'string' && !node.description.startsWith('GENERATED from')
+        && /(^|[^A-Za-z0-9])`?supported`?([^A-Za-z0-9]|$)/.test(node.description)) {
+      bad.push(`${path || '(root)'}: ${node.description.slice(0, 120)}`);
+    }
+    for (const [k, v] of Object.entries(node)) walk(v, k === 'properties' ? path : `${path}.${k}`);
+  };
+  walk(schema, '');
+  if (bad.length) {
+    console.error(`=== generate-from-declaration FAILED — ${bad.length} description(s) still condition on \`supported\`, a field v2 retired (RFC 0192 §B).\n  A MUST that cannot fire is a relaxed MUST. Add a rewrite to SUPPORTED_REWRITES, or edit the spec/v2/facets/<key>.schema.json override if the text is hand-authored:\n  ${bad.join('\n  ')}`);
+    process.exit(1);
+  }
+}
+
+// Runs on BOTH paths: --write must not emit a ghost, and --check must not
+// pass a tree that already contains one.
+for (const [p, o] of outputs) if (p.endsWith('capabilities.schema.json')) assertNoSupportedGhost(o);
+
 if (process.argv.includes('--write')) {
   for (const [p, o] of outputs) { mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, render(o)); console.log(`wrote ${p.replace(ROOT + '/', '')}`); }
 } else {

@@ -786,7 +786,7 @@
         "reliability": {
           "type": "object",
           "additionalProperties": false,
-          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts opt into the family via `supported: true` AND explicitly list the events they emit via `events[]`. Hosts that advertise `supported: true` MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
+          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`. A host advertising this facet MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
           "properties": {
             "events": {
               "type": "array",
@@ -802,7 +802,7 @@
                 ]
               },
               "uniqueItems": true,
-              "description": "Subset of the six reliability events the host actually emits. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal`. Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
+              "description": "Subset of the six reliability events the host actually emits. A host advertising this facet MUST include `envelope.retry.exhausted` and `envelope.refusal`. Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
             },
             "maxRetryAttempts": {
               "type": "integer",
@@ -907,7 +907,7 @@
         },
         "endpointsSupported": {
           "type": "boolean",
-          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request returns `501 capability_not_provided`. Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false` (composition without library REST) or `supported: false, endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
+          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request returns `501 capability_not_provided`. Independent of the family record — a host MAY advertise the family with `endpointsSupported: false` (composition without library REST) or the family omitted and `endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
         },
         "templateKinds": {
           "type": "array",
@@ -929,7 +929,7 @@
             ]
           },
           "uniqueItems": true,
-          "description": "Subset of PromptVariable.source values the host supports. `secret` SHOULD only appear when `capabilities.secrets.supported` is also true."
+          "description": "Subset of PromptVariable.source values the host supports. `secret` SHOULD only appear when the `secrets` family is advertised."
         },
         "maxTemplateBytes": {
           "type": "integer",
@@ -1073,7 +1073,7 @@
         },
         "wasm": {
           "type": "object",
-          "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise `supported: true` and at least one entry in `abiVersions[]`. `additionalProperties: true` preserved for future RFC 0008 amendments (e.g., per-pack memory accounting fields).",
+          "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise this facet and at least one entry in `abiVersions[]`. `additionalProperties: true` preserved for future RFC 0008 amendments (e.g., per-pack memory accounting fields).",
           "properties": {
             "abiVersions": {
               "type": "array",
@@ -1441,7 +1441,7 @@
         },
         "propagatesOnward": {
           "type": "boolean",
-          "description": "RFC 0128. When `true`, the host's onward OpenWOP-envelope hops (A2A forwards, trigger/sync events to OpenWOP peers) re-emit the label. Distinct from `supported` only for hosts that read labels but have no onward-hop surface at all; a host WITH onward hops advertising `supported: true` MUST also propagate."
+          "description": "RFC 0128. When `true`, the host's onward OpenWOP-envelope hops (A2A forwards, trigger/sync events to OpenWOP peers) re-emit the label. Distinct from the family record only for hosts that read labels but have no onward-hop surface at all; a host WITH onward hops that advertises this facet MUST also propagate."
         }
       },
       "allOf": [
@@ -2537,7 +2537,7 @@
             },
             "crossHostCausation": {
               "type": "object",
-              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version: 3` MUST advertise this sub-block with `supported: true` and a stable `hostId`.",
+              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version: 3` MUST advertise this sub-block with a stable `hostId`.",
               "additionalProperties": false,
               "properties": {
                 "hostId": {
@@ -2547,13 +2547,13 @@
                 },
                 "ancestryEndpointSupported": {
                   "type": "boolean",
-                  "description": "Host serves `GET /runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when crossHostCausation.supported is true — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
+                  "description": "Host serves `GET /runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when `crossHostCausation` is advertised — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
                 }
               }
             },
             "replayDeterminism": {
               "type": "object",
-              "description": "RFC 0041 §D — Phase 4 replay determinism. When advertised, the host honors the LLM cache-key recipe in `replay.md` §\"LLM cache-key recipe\" as NORMATIVE (graduated from informative for version >= 4), emits `replay.divergedAtRefusal` events + fails with `replay_diverged_at_refusal` on refusal-divergence (RFC 0041 §B), and guarantees observable-output-sequence determinism per RFC 0041 §C. Hosts advertising `version: 4` MUST advertise this sub-block with `supported: true`.",
+              "description": "RFC 0041 §D — Phase 4 replay determinism. When advertised, the host honors the LLM cache-key recipe in `replay.md` §\"LLM cache-key recipe\" as NORMATIVE (graduated from informative for version >= 4), emits `replay.divergedAtRefusal` events + fails with `replay_diverged_at_refusal` on refusal-divergence (RFC 0041 §B), and guarantees observable-output-sequence determinism per RFC 0041 §C. Hosts advertising `version: 4` MUST advertise this sub-block.",
               "additionalProperties": false,
               "properties": {
                 "llmCacheKeyRecipe": {
@@ -2585,7 +2585,7 @@
             },
             "contextBudget": {
               "type": "object",
-              "description": "RFC 0111 (`Active`, `version >= 5`). Opt-in, token-denominated bound on the orchestrator transcript the host feeds each iteration, plus a declared summarization contract for turns evicted beyond that budget. SCOPE: governs the RFC 0061 per-iteration ORCHESTRATOR-LOOP transcript (`multi-agent-execution.md` §\"Per-iteration state inputs\" input 3 — the same transcript `transcriptWindow` bounds), NOT a general chat-conversation history. A host whose orchestrator loop does not run real model turns (e.g. a mock supervisor) MUST NOT advertise this block, exactly as it MUST NOT dishonestly advertise `transcriptWindow`. Budget-only advertisement (`transcriptTokenBudget` + `tokenCounter` WITHOUT `summarization.supported`) is valid for a host that HAS a real orchestrator loop but does not summarize. Purely additive: a host that omits this block behaves exactly as today, including `transcriptWindow`'s `absent ⇒ unbounded` default (NOT flipped by this RFC). Complements (does not replace) the event-count `transcriptWindow`; when both bound a turn the host MUST honor whichever is tighter. Summarization here is a NONDETERMINISTIC host output governed exactly like an RFC 0041 envelope: each substitution MUST be recorded as a `context.summarized` event whose `summaryRef` artifact replay reuses (never re-summarizes) per `multi-agent-execution.md` §\"Context economy (RFC 0111)\".",
+              "description": "RFC 0111 (`Active`, `version >= 5`). Opt-in, token-denominated bound on the orchestrator transcript the host feeds each iteration, plus a declared summarization contract for turns evicted beyond that budget. SCOPE: governs the RFC 0061 per-iteration ORCHESTRATOR-LOOP transcript (`multi-agent-execution.md` §\"Per-iteration state inputs\" input 3 — the same transcript `transcriptWindow` bounds), NOT a general chat-conversation history. A host whose orchestrator loop does not run real model turns (e.g. a mock supervisor) MUST NOT advertise this block, exactly as it MUST NOT dishonestly advertise `transcriptWindow`. Budget-only advertisement (`transcriptTokenBudget` + `tokenCounter` WITHOUT `summarization`) is valid for a host that HAS a real orchestrator loop but does not summarize. Purely additive: a host that omits this block behaves exactly as today, including `transcriptWindow`'s `absent ⇒ unbounded` default (NOT flipped by this RFC). Complements (does not replace) the event-count `transcriptWindow`; when both bound a turn the host MUST honor whichever is tighter. Summarization here is a NONDETERMINISTIC host output governed exactly like an RFC 0041 envelope: each substitution MUST be recorded as a `context.summarized` event whose `summaryRef` artifact replay reuses (never re-summarizes) per `multi-agent-execution.md` §\"Context economy (RFC 0111)\".",
               "additionalProperties": false,
               "properties": {
                 "transcriptTokenBudget": {
@@ -2606,7 +2606,7 @@
                 "summarization": {
                   "type": "object",
                   "additionalProperties": false,
-                  "description": "RFC 0111. Declared contract for turns evicted beyond `transcriptTokenBudget`. When `supported: true`, the host MAY replace older in-window turns with a host-produced summary; it MUST keep the most recent `keepLastTurns` turns verbatim and MUST NOT summarize the active (most recent) turn. Each substitution MUST be recorded as a `context.summarized` event and is replay-governed under RFC 0041 (replay reuses the recorded `summaryRef`, never re-summarizes).",
+                  "description": "RFC 0111. Declared contract for turns evicted beyond `transcriptTokenBudget`. When this facet is present, the host MAY replace older in-window turns with a host-produced summary; it MUST keep the most recent `keepLastTurns` turns verbatim and MUST NOT summarize the active (most recent) turn. Each substitution MUST be recorded as a `context.summarized` event and is replay-governed under RFC 0041 (replay reuses the recorded `summaryRef`, never re-summarizes).",
                   "properties": {
                     "strategy": {
                       "type": "string",
@@ -3052,7 +3052,7 @@
                 "scheduled",
                 "on-demand"
               ],
-              "description": "How a consolidation pass is initiated. `host-managed`: a host-internal cadence clients do not control (default when absent and supported:true). `scheduled`: bound to a `capabilities.scheduling` (RFC 0052) trigger. `on-demand`: the host runs a pass when explicitly requested. A host MAY honor more than one path but advertises the primary."
+              "description": "How a consolidation pass is initiated. `host-managed`: a host-internal cadence clients do not control (the default when absent). `scheduled`: bound to a `capabilities.scheduling` (RFC 0052) trigger. `on-demand`: the host runs a pass when explicitly requested. A host MAY honor more than one path but advertises the primary."
             }
           }
         },
@@ -3085,7 +3085,7 @@
         },
         "manifestRuntime": {
           "type": "object",
-          "description": "RFC 0070. Agent-manifest runtime floor — the minimal tier that makes a published agent pack (RFC 0003) runnable. When `supported: true`, the host implements RFC 0003 `installAgents`: it loads each installed pack's `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). Does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond `agents.dispatch`. A host advertising `host.agentRuntime: supported` is treated as also satisfying this flag (RFC 0070 §B). Hosts that omit this block do not instantiate manifest agents (today's default).",
+          "description": "RFC 0070. Agent-manifest runtime floor — the minimal tier that makes a published agent pack (RFC 0003) runnable. When this facet is present, the host implements RFC 0003 `installAgents`: it loads each installed pack's `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). Does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond `agents.dispatch`. A host advertising `agentRuntime` is treated as also satisfying this flag (RFC 0070 §B). Hosts that omit this block do not instantiate manifest agents (today's default).",
           "additionalProperties": false,
           "properties": {
             "handoffValidation": {
@@ -3106,7 +3106,7 @@
         },
         "liveRuntime": {
           "type": "object",
-          "description": "RFC 0077. The host executes manifest agents against LIVE models and tools (not the deterministic RFC 0070 sample floor) per the normative AgentManifest→live-run mapping (`multi-agent-execution.md` §\"Live manifest dispatch\"), and emits the `agent.invocation.started`/`agent.invocation.completed` content-free bracket around the existing `agent.*` family. REQUIRES `agents.manifestRuntime.supported: true` — `liveRuntime` is a strict superset of the floor. The floor's mandatory safety guarantees (toolAllowlist enforcement, handoff inbound validation, tenant scoping, untrusted-model-output handling, fail-closed per-tool authorization) stay unconditional under `liveRuntime`. Hosts that omit this block run the floor only; the behavioral conformance scenarios skip cleanly.",
+          "description": "RFC 0077. The host executes manifest agents against LIVE models and tools (not the deterministic RFC 0070 sample floor) per the normative AgentManifest→live-run mapping (`multi-agent-execution.md` §\"Live manifest dispatch\"), and emits the `agent.invocation.started`/`agent.invocation.completed` content-free bracket around the existing `agent.*` family. REQUIRES `agents.manifestRuntime` — `liveRuntime` is a strict superset of the floor. The floor's mandatory safety guarantees (toolAllowlist enforcement, handoff inbound validation, tenant scoping, untrusted-model-output handling, fail-closed per-tool authorization) stay unconditional under `liveRuntime`. Hosts that omit this block run the floor only; the behavioral conformance scenarios skip cleanly.",
           "additionalProperties": false,
           "properties": {
             "structuredOutput": {
@@ -3150,7 +3150,7 @@
                   "live-shadow"
                 ]
               },
-              "description": "Which eval modes the host actually implements (RFC 0081 §D closed vocabulary). Truthful advertisement (RFC 0031): a host advertises ONLY the modes it gates on; a suite requesting an unadvertised mode is rejected at run-create with `400 validation_error`. Absent ⇒ no modes (the host advertises `supported` but gates nothing — effectively shape-only)."
+              "description": "Which eval modes the host actually implements (RFC 0081 §D closed vocabulary). Truthful advertisement (RFC 0031): a host advertises ONLY the modes it gates on; a suite requesting an unadvertised mode is rejected at run-create with `400 validation_error`. Absent ⇒ no modes (the host advertises the family but gates nothing — effectively shape-only)."
             },
             "maxTasksPerSuite": {
               "type": "integer",
@@ -3207,7 +3207,7 @@
         },
         "roster": {
           "type": "object",
-          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime.supported: true` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3231,7 +3231,7 @@
         },
         "orgChart": {
           "type": "object",
-          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster.supported: true` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3457,7 +3457,7 @@
                 "client-requested",
                 "both"
               ],
-              "description": "REQUIRED when `supported: true` per RFC 0012 §A (enforced via the `if/then` clause). `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
+              "description": "REQUIRED when this facet is present, per RFC 0012 §A (enforced by this facet's `required`). `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
             },
             "maxInputEntries": {
               "type": "integer",
@@ -3470,7 +3470,10 @@
               "description": "Informational ceiling on the distilled entry size. SHOULD be ≤ `memory.maxEntrySizeBytes`."
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "trigger"
+          ]
         },
         "distillation": {
           "type": "object",
@@ -3513,7 +3516,7 @@
         },
         "writable": {
           "type": "boolean",
-          "description": "RFC 0080 §A (`write` dimension). Absent ⇒ the host implements the full RFC 0004 four-operation MemoryAdapter (`put`/`delete` available — i.e. writable), the back-compatible default. A read-only host (`get`/`list` only) MUST set `writable: false` so a consumer can distinguish a read-only store from a read/write one. Only meaningful when `supported: true`."
+          "description": "RFC 0080 §A (`write` dimension). Absent ⇒ the host implements the full RFC 0004 four-operation MemoryAdapter (`put`/`delete` available — i.e. writable), the back-compatible default. A read-only host (`get`/`list` only) MUST set `writable: false` so a consumer can distinguish a read-only store from a read/write one. Only meaningful when the family record is present."
         },
         "search": {
           "type": "object",
@@ -3562,9 +3565,12 @@
                 "chars",
                 "host-defined"
               ],
-              "description": "The unit `tokenBudget` is denominated in. REQUIRED when `injectionBudget.supported` (enforced via the `if/then` clause). `o200k_base`/`cl100k_base` are tokenizer encodings; `chars` counts UTF-8/Unicode characters of the entry `content` (a tokenizer-free unit a client can reason about directly — preferred over opaque `host-defined`); `host-defined` is an opaque host unit. The over-budget-single-entry-omitted rule applies regardless of unit. RFC 0111 aligns to these same values when it lands (0113 lands first); no shared `$ref` (decoupled)."
+              "description": "The unit `tokenBudget` is denominated in. REQUIRED when `injectionBudget` is advertised (enforced by that facet's `required`). `o200k_base`/`cl100k_base` are tokenizer encodings; `chars` counts UTF-8/Unicode characters of the entry `content` (a tokenizer-free unit a client can reason about directly — preferred over opaque `host-defined`); `host-defined` is an opaque host unit. The over-budget-single-entry-omitted rule applies regardless of unit. RFC 0111 aligns to these same values when it lands (0113 lands first); no shared `$ref` (decoupled)."
             }
-          }
+          },
+          "required": [
+            "tokenCounter"
+          ]
         }
       },
       "allOf": [
@@ -3762,7 +3768,8 @@
       "required": [
         "status",
         "since",
-        "witness"
+        "witness",
+        "sandboxRoot"
       ],
       "properties": {
         "status": {
@@ -3792,7 +3799,7 @@
         },
         "sandboxRoot": {
           "type": "string",
-          "description": "Absolute path. Every fs operation is resolved relative to this root. MUST be set when `supported: true`."
+          "description": "Absolute path. Every fs operation is resolved relative to this root. MUST be set when this facet is present."
         },
         "maxFileSizeBytes": {
           "type": "integer",
@@ -4552,7 +4559,7 @@
         },
         "ssrfGuard": {
           "type": "boolean",
-          "description": "Host rejects egress to loopback / RFC 1918 / link-local / cloud-metadata addresses (resolve→pin→connect). MUST be `true` when `supported` (the `http-client-ssrf-guard` invariant)."
+          "description": "Host rejects egress to loopback / RFC 1918 / link-local / cloud-metadata addresses (resolve→pin→connect). MUST be `true` when this facet is present (the `http-client-ssrf-guard` invariant)."
         },
         "maxResponseBodyBytes": {
           "type": "integer",
@@ -6545,7 +6552,7 @@
         },
         "subChains": {
           "type": "object",
-          "description": "RFC 0133 (workflow-chain composition, `Accepted`). OPTIONAL. When `supported: true`, the host's `POST …/workflows/from-chain` implements RUNTIME sub-chain composition per `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\": for each `config.subChainRef` reachable from a parent chain, it resolves the referenced chain (sibling or external), recursively expands + co-registers it as its own owned workflow (deterministic TENANT-SCOPED id from `(tenantId, childChainId, version)` — two tenants never collide on the global registry, a shared child registers once across parents in a tenant, a repeat instantiation converges), rewrites the referencing node's `subChainRef` → the minted child `config.workflowId`, and dispatches the child as a child run (`core.subWorkflow` / `core.dispatch` child-run); the `from-chain` response carries `{ workflowId, subChainWorkflowIds[], nodeCount }`. Bounded by a cycle check (`sub_chain_cycle`) + a depth cap (`sub_chain_max_depth_exceeded`). A host that does NOT advertise this block MUST refuse a `subChains`-bearing chain at author/instantiate time with `sub_chain_unsupported` (422) — it never silently flattens. `producedVariables` (RFC 0133 §2) needs NO flag: it is pure variable emission under the base `workflowChainPacks.supported`. Conformance scenarios `chain-subchain-fanout.test.ts` + `chain-subchain-unsupported-refused.test.ts` gate on this flag; the server-free `chain-subchain-sibling` / `chain-subchain-cycle-rejected` / `chain-produced-var-roundtrip` legs run unconditionally against the reference library.",
+          "description": "RFC 0133 (workflow-chain composition, `Accepted`). OPTIONAL. When this facet is present, the host's `POST …/workflows/from-chain` implements RUNTIME sub-chain composition per `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\": for each `config.subChainRef` reachable from a parent chain, it resolves the referenced chain (sibling or external), recursively expands + co-registers it as its own owned workflow (deterministic TENANT-SCOPED id from `(tenantId, childChainId, version)` — two tenants never collide on the global registry, a shared child registers once across parents in a tenant, a repeat instantiation converges), rewrites the referencing node's `subChainRef` → the minted child `config.workflowId`, and dispatches the child as a child run (`core.subWorkflow` / `core.dispatch` child-run); the `from-chain` response carries `{ workflowId, subChainWorkflowIds[], nodeCount }`. Bounded by a cycle check (`sub_chain_cycle`) + a depth cap (`sub_chain_max_depth_exceeded`). A host that does NOT advertise this block MUST refuse a `subChains`-bearing chain at author/instantiate time with `sub_chain_unsupported` (422) — it never silently flattens. `producedVariables` (RFC 0133 §2) needs NO flag: it is pure variable emission under the base `workflowChainPacks` record. Conformance scenarios `chain-subchain-fanout.test.ts` + `chain-subchain-unsupported-refused.test.ts` gate on this flag; the server-free `chain-subchain-sibling` / `chain-subchain-cycle-rejected` / `chain-produced-var-roundtrip` legs run unconditionally against the reference library.",
           "properties": {
             "maxDepth": {
               "type": "integer",
@@ -6635,7 +6642,7 @@
           "properties": {
             "isolated": {
               "type": "boolean",
-              "description": "RFC 0025 §C point 1. MUST be `true` when `supported` is `true` — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
+              "description": "RFC 0025 §C point 1. MUST be `true` when this facet is present — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
             },
             "catalogResetEndpoint": {
               "type": "string",
@@ -7295,7 +7302,7 @@
             "minWindowSeconds": {
               "type": "integer",
               "minimum": 604800,
-              "description": "Documented minimum retention window in seconds. Per production-profile.md §\"Event retention\", MUST be ≥ 604800 (7 days) for public hosts; development-only hosts MAY advertise a smaller window but MUST NOT claim `supported: true` while doing so."
+              "description": "Documented minimum retention window in seconds. Per production-profile.md §\"Event retention\", MUST be ≥ 604800 (7 days) for public hosts; development-only hosts MAY advertise a smaller window but MUST NOT advertise this facet while doing so."
             },
             "testForceExpire": {
               "type": "boolean",
@@ -7306,7 +7313,7 @@
         },
         "debugBundle": {
           "type": "object",
-          "description": "Debug-bundle truncation advertisement (production-profile.md §\"Debug bundle behavior\"). Stricter than the existing `capabilities.debugBundle.supported` advertised per debug-bundle.md — this block adds the production-profile MUSTs (truncation metadata, redaction).",
+          "description": "Debug-bundle truncation advertisement (production-profile.md §\"Debug bundle behavior\"). Stricter than the existing `capabilities.debugBundle` advertised per debug-bundle.md — this block adds the production-profile MUSTs (truncation metadata, redaction).",
           "properties": {
             "truncationMetadata": {
               "type": "boolean",

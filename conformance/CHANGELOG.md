@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.16.0] — 2026-09-19 — RFC 0192 (facet advertisement)
+
+**Why a minor.** No conformance code changes. `spec/v2/core/capabilities.md`,
+`schemas/v2/capabilities.schema.json` and two facet overrides are published
+artifacts: the facet advertisement rule is stated, 26 descriptions that gated on
+the retired `supported` flag are rewritten, and two silently-relaxed obligations
+are restored as `required`.
+
 ## [2.15.1] — 2026-09-19 — restored schema conditionals and required fields
 
 **Why a patch.** No conformance code changes. `schemas/v2/capabilities.schema.json`

@@ -37,7 +37,7 @@ Every family at the v2 root is one object:
 | `until` in the past | non-conformant; a validator MUST answer `400` `until_in_past` |
 | `witness` | MUST be one of the five wire-legal classes; `unwitnessable` MUST NOT appear on a wire record — such a family lives in `spec/v2/ext/` and is not advertised |
 | `supported` | does not exist; presence of the record is the claim, and a host that does not support a family MUST omit it |
-| facets | the named per-family fields; `aiProviders.providers[]` carries the v1 `supported` list |
+| facets | the named per-family fields; a facet is advertised by the presence of its key, and a host MUST omit the key for a facet it does not offer, except where the facet's own schema states a meaning for its absence; `aiProviders.providers[]` carries the v1 `supported` list |
 
 `until` absorbs v1 `tier` / `experimentalUntil`. A family's facets are hand-decided where `spec/v2/facets/<key>.schema.json` exists and otherwise generated from the declaration row.
 

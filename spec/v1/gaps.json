@@ -10468,6 +10468,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0192.1",
+      "rfc": "0192",
+      "local": "G1",
+      "section": "§A",
+      "surface": "A host has no way to advertise a facet NEGATIVELY — \"I know about this and do not offer it\". Presence-semantics makes omission the only spelling, which cannot distinguish *unsupported* from *not yet considered*. MyndHyve expresses exactly this today as `extensions.myndhyve.runs.pauseResume.supported = false`, fleeing to the vendor namespace because the core root cannot say it. That is a production host routing around a missing surface, which is evidence the gap is real rather than theoretical.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0192.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0192-facet-advertisement.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0192.2",
+      "rfc": "0192",
+      "local": "G2",
+      "section": "§B",
+      "surface": "The rewrite table is keyed on the exact v1 sentence, so a reworded v1 seed silently stops matching and the ghost returns — caught by §C's gate, but as a new failure rather than as a diff on the table.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0192.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0192-facet-advertisement.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0192.3",
+      "rfc": "0192",
+      "local": "G3",
+      "section": "§A",
+      "surface": "Eight core families carry zero facets, so the facet rule is vacuous for them, and `facetsUncovered` gives them no backstop either (RFC 0190 §B). Nothing in the corpus distinguishes \"this family genuinely has no sub-capabilities\" from \"its facets were never modelled\".",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0192.3",
+      "sources": [
+        {
+          "file": "RFCS/registers/0192-facet-advertisement.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
