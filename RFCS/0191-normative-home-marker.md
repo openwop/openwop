@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0191                                                            |
 | **Title**         | the reciprocal normative-home marker: why no regex over prose can decide a semantic claim, and what to do instead |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-18                                                      |
-| **Updated**       | 2026-09-18 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no wire surface, no identity or auth surface, no MUST strength changes — this RFC governs a gate over source artifacts.) |
+| **Updated**       | 2026-09-18 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no wire surface, no identity or auth surface, no MUST strength changes — this RFC governs a gate over source artifacts.) · **Active → Accepted 2026-09-19.** Evidence tier: corpus gate — every requirement id in the falsifiability table carries a row in `evidence/corpus-ledger.json`, minted by `conformance/src/coherence/`. No host bundle is involved: these RFCs govern gates over source artifacts, and their witnesses are `witnessable — unaided (corpus)`. The marker has refused real declaration attempts — `production` against `security-defaults.md` is the ledger-witnessed case. |
 | **Affects**       | `scripts/check-v2-normative-home.mjs` · `spec/v2/core/*.md` (nine documents gain a marker line) |
 | **Compatibility** | `editorial + gate` (COMPATIBILITY.md): no wire artifact, no schema shape, no endpoint contract, no error meaning, no MUST relaxed |
 | **Supersedes**    | —                                                               |
@@ -86,6 +86,12 @@ It does **not** make a false declaration impossible. A contributor can edit `sec
 | §A a home claims its family | `openwop.requirement.0191.home-marker` — declaring a family against a document with no matching `Normative home:` marker fails by name, with the line to add | any contributor, by declaring a home | witnessable — unaided (corpus) |
 | §A the known-bad cases are rejected | `openwop.requirement.0191.home-marker` — `packs` against `security-defaults.md`, and `idempotency` against `versioning.md`, are refused | any contributor | witnessable — unaided (corpus) |
 | §A every honestly declared family still resolves | `openwop.requirement.0191.home-marker` — the eleven families declared at filing remain resolved with the seeded markers | the steward, by removing a marker | witnessable — unaided (corpus) |
+
+
+## Acceptance criteria
+
+- [x] `Draft → Active`: the reciprocal marker is required of every `spec/v2/**` home, the corpus is seeded so the predicate holds on the tree that introduces it, and the known-bad declarations are refused by name.
+- [x] `Active → Accepted`: every requirement id in the falsifiability table carries a row in `evidence/corpus-ledger.json`, and the marker has refused at least one real declaration attempt — the rule earns its place by catching something, not by being green.
 
 ## Alternatives considered
 

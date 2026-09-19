@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0192                                                            |
 | **Title**         | the v2 facet advertisement semantic, the 26 descriptions that still gated on a retired field, and the generator that stops the 27th |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-19                                                      |
-| **Updated**       | 2026-09-19 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no identity, authorization, isolation, idempotency, replay, external-effect or certification surface changes.) |
+| **Updated**       | 2026-09-19 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no identity, authorization, isolation, idempotency, replay, external-effect or certification surface changes.) · **Active → Accepted 2026-09-19.** Evidence tier: corpus gate — every requirement id in the falsifiability table carries a row in `evidence/corpus-ledger.json`, minted by `conformance/src/coherence/`. No host bundle is involved: these RFCs govern gates over source artifacts, and their witnesses are `witnessable — unaided (corpus)`. The generator guard has been exercised by sabotage, not a clean-tree exit 0: a reintroduced ghost in a facet override fails the generator by path. |
 | **Affects**       | `spec/v2/core/capabilities.md` · `scripts/generate-from-declaration.mjs` · `spec/v2/facets/packs.schema.json` · `spec/v2/facets/workflowChainPacks.schema.json` |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
@@ -63,9 +63,15 @@ The rule itself narrows what a conforming host may do — it states an obligatio
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A a facet is advertised by its key's presence | `openwop.requirement.0192.facet-presence` — `capabilities.md` §2's facets row states the rule, with the absence exception; the corpus gate reads it | any contributor, by editing the row | witnessable — unaided (corpus) |
+| §A a facet is advertised by its key's presence | `openwop.requirement.0192.facet-presence` — `capabilities.md` §2's facets row states the rule WITH the absence exception, asserted by `conformance/src/coherence/v2-facet-advertisement.test.ts` | any contributor, by editing the row | witnessable — unaided (corpus) |
 | §B no published description conditions on a retired field | `openwop.requirement.0192.no-supported-ghost` — zero descriptions in `schemas/v2/capabilities.schema.json` match `supported` outside the generated root note | any contributor, by seeding a new family | witnessable — unaided (corpus) |
 | §C the generator refuses to emit one | `openwop.requirement.0192.no-supported-ghost` — reintroducing the idiom in an override fails `generate-from-declaration.mjs` by path | any contributor | witnessable — unaided (corpus) |
+
+
+## Acceptance criteria
+
+- [x] `Draft → Active`: the facet advertisement rule is stated in `capabilities.md` §2 with the absence exception, all 26 stale descriptions are rewritten, `supported`-gated conditionals are migrated to `required` rather than dropped, and the generator refuses the 27th.
+- [x] `Active → Accepted`: every requirement id in the falsifiability table carries a row in `evidence/corpus-ledger.json`, and the generator guard has been exercised against a reintroduced ghost (sabotage, not a clean-tree exit 0).
 
 ## Alternatives considered
 

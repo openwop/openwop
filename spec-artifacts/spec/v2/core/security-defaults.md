@@ -60,7 +60,7 @@ A host that advertises `idempotency` MUST assign a logical effect id once per ef
 
 ## Relaxations
 
-A relaxation, where one is legitimate — a development deployment, a single-tenant appliance — is an operator setting, never a discovery field (RFC 0173 §A.2). Every relaxation a host runs under MUST be recorded in its certification bundle as `host.relaxations[]` (`schemas/v2/certification-bundle.schema.json`): `{ obligation, durability, reason }`, `durability ∈ session | deployment | permanent`.
+A relaxation, where one is legitimate — a development deployment, a single-tenant appliance — is an operator setting, never a discovery field (RFC 0173 §A.2). Every relaxation a host runs under MUST be recorded in its certification bundle as `host.relaxations[]` (`schemas/v2/certification-bundle.schema.json`): `{ obligation, durability, reason }`, `durability ∈ session | deployment | persisted`.
 
 | Durability | Meaning |
 | --- | --- |

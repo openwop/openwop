@@ -10424,8 +10424,8 @@
       "surface": "G5 closed a PRECEDING dot but not a FOLLOWING one, and this register's own G5 row plus the gate's docblock CLAIMED otherwise — naming `i18n` ← \"see i18n.md\" as closed when it is not. The trailing boundary class excludes `-`, `_` and `/` but must leave `.` open for the `key.facet` arm, so `see i18n.md` still names `i18n` and `` `channelPresence.supported` `` still names `channelPresence`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0189.8",
+      "disposition": "transferred",
+      "target": "scripts/check-v2-normative-home.mjs",
       "sources": [
         {
           "file": "RFCS/registers/0189-normative-home.gaps.md",
@@ -10475,8 +10475,8 @@
       "surface": "The per-family grant is **200 words** against a measured mean of **140.75** (four families, 563 words, five sections). That mean is drawn entirely from families with one or two facets. The remaining set includes `agents` (19 facets) and `aiProviders` (12), and a grounded model — ~110 base + ~20 per facet beyond the first — puts the remainder near 9,170 against 12,600 granted. If the real per-facet cost is higher than 20 words, the grant is too thin for the wide families even though the aggregate holds, and the self-funding property forces them to land LAST, when the cheap families have funded them.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0190.1",
+      "disposition": "transferred",
+      "target": "scripts/check-core-budget.mjs",
       "sources": [
         {
           "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
@@ -10509,8 +10509,8 @@
       "surface": "`spec/v2/ext/` is now a co-pointer that contributes facet coverage only. Nothing checks that an ext document cited as a co-pointer is *about* the family citing it — the same bare-token weakness as RFC 0189 G1, one directory over. The `authorization`-against-thirteen-READMEs case is closed for the OBLIGATION predicate but not for facet coverage: a facet name appearing incidentally in an unrelated ext page still counts as covered.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0190.3",
+      "disposition": "transferred",
+      "target": "scripts/check-core-budget.mjs",
       "sources": [
         {
           "file": "RFCS/registers/0190-kernel-budget-denominator.gaps.md",
@@ -10526,8 +10526,8 @@
       "surface": "A host has no way to advertise a facet NEGATIVELY — \"I know about this and do not offer it\". Presence-semantics makes omission the only spelling, which cannot distinguish *unsupported* from *not yet considered*. MyndHyve expresses exactly this today as `extensions.myndhyve.runs.pauseResume.supported = false`, fleeing to the vendor namespace because the core root cannot say it. That is a production host routing around a missing surface, which is evidence the gap is real rather than theoretical.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0192.1",
+      "disposition": "transferred",
+      "target": "schemas/v2/capabilities.schema.json",
       "sources": [
         {
           "file": "RFCS/registers/0192-facet-advertisement.gaps.md",
@@ -10543,8 +10543,8 @@
       "surface": "The rewrite table is keyed on the exact v1 sentence, so a reworded v1 seed silently stops matching and the ghost returns — caught by §C's gate, but as a new failure rather than as a diff on the table.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0192.2",
+      "disposition": "transferred",
+      "target": "schemas/v2/capabilities.schema.json",
       "sources": [
         {
           "file": "RFCS/registers/0192-facet-advertisement.gaps.md",
@@ -10560,8 +10560,8 @@
       "surface": "Eight core families carry zero facets, so the facet rule is vacuous for them, and `facetsUncovered` gives them no backstop either (RFC 0190 §B). Nothing in the corpus distinguishes \"this family genuinely has no sub-capabilities\" from \"its facets were never modelled\".",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0192.3",
+      "disposition": "transferred",
+      "target": "schemas/v2/capabilities.schema.json",
       "sources": [
         {
           "file": "RFCS/registers/0192-facet-advertisement.gaps.md",
