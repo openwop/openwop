@@ -3,8 +3,8 @@
   "t0": "2026-09-18",
   "openAtT0": 66,
   "$openAtT0Comment": "Re-seeded 2026-09-19 from 68 to 66 when the burn-down denominator changed from `v1Dependent + undeclared` to what RFC 0189 §D actually makes fatal (`undeclared + uncarried`). 66 is what `undeclared` was at t0; the 2 v1-dependent families of that day are no longer counted by the calendar. A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower \u2014 two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
-  "v1Dependent": 41,
-  "undeclared": 12,
+  "v1Dependent": 46,
+  "undeclared": 0,
   "facetsUncovered": 0,
   "v1Banners": {
     "spec/v1/capabilities.md": "> **Status: Stable \u00b7 v1.1.** Normative `/.well-known/openwop` discovery and capability-advertisement contract.",
@@ -25,7 +25,9 @@
     "spec/v1/agent-runtime.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0097.** Capability-gated standing goals with bounded, judge-based continuation.",
     "spec/v1/artifact-type-packs.md": "> **Status: Stable \u00b7 v1.1 \u00b7 RFC 0071, amended by RFC 0075.** Normative contract for portable and host-registered artifact-type definitions.",
     "spec/v1/frontend-plugin-packs.md": "> **Status: Draft \u00b7 v1.x \u00b7 RFC 0117.** Capability-gated contract for signed UI plugins isolated behind the `ui-plugin/1` RPC boundary.",
-    "spec/v1/production-profile.md": "> **Status: Stable \u00b7 v1.1.** Operational-readiness profile for public OpenWOP hosts. Additive: combines existing v1 contracts into a production claim without changing required wire shapes."
+    "spec/v1/production-profile.md": "> **Status: Stable \u00b7 v1.1.** Operational-readiness profile for public OpenWOP hosts. Additive: combines existing v1 contracts into a production claim without changing required wire shapes.",
+    "spec/v1/observability.md": "> **Status: Stable \u00b7 v1.1.** Normative contract for the canonical `openwop.*` attribute namespace, span naming, and metric kinds.",
+    "spec/v1/prompts.md": "> **Status: Draft \u00b7 v1.x \u00b7 RFC 0027.** Normative shape and resolution rules for portable, versioned prompt templates."
   },
   "v1Carried": [
     "toolHooks",
@@ -68,7 +70,12 @@
     "memory",
     "aiProviders",
     "agents",
-    "production"
+    "production",
+    "prompts",
+    "nodePackRuntimes",
+    "envelopes",
+    "feedback",
+    "providerUsage"
   ],
   "$v1CarriedComment": "RFC 0189 \u00a7D. At v1 end-of-support, spec/v1/** is FROZEN-BUT-OPERATIVE for exactly these families: EOS ends new v1 wire support, it does not de-normativize prose a v2 family still points at. After the date the gate fails only if one of these targets is DELETED or its Status banner changes \u2014 which is the real hazard, rather than a calendar square."
 }

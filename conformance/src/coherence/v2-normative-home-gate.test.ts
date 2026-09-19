@@ -67,6 +67,20 @@ function withDeclaration(mutate: (s: string) => string, fn: (cwd: string) => voi
 // DUPLICATE key and JSON.parse kept the later (original) one. The sabotage then
 // silently tested nothing and the assertion failed for an unrelated-looking
 // reason. A test whose mutation no-ops is worse than no test.
+// Removes a family's declaration entirely — the post-EOS witnesses assert that
+// the §D fallback NAMES an undeclared family, and as of 2.23.0 there are none
+// left in the tree. The condition the test witnesses has to be created, not
+// borrowed from a corpus that happens to be broken.
+const undeclare = (key: string) => (s: string) => {
+  // Position-independent: `normativeText` does not sit at a fixed offset in a
+  // family object — families declared at different times carry it in different
+  // places, and a regex that assumed one position silently matched nothing.
+  // Re-serialising is safe because this only ever writes the scratch copy.
+  const doc = JSON.parse(s) as { families: Array<Record<string, unknown>> };
+  for (const f of doc.families) if (f['key'] === key) delete f['normativeText'];
+  return `${JSON.stringify(doc, null, 2)}\n`;
+};
+
 const declare = (key: string, home: string) => (s: string) => {
   const stripped = s.replace(new RegExp(`("key": "${key}",\\n\\s+"kind": "family",)(\\n\\s+"normativeText": \\[[^\\]]*\\],)`), '$1');
   return stripped.replace(new RegExp(`("key": "${key}",\\n(\\s+)"kind": "family",)`), (_m, head, pad) => `${head}\n${pad}"normativeText": ["${home}"],`);
@@ -102,8 +116,10 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
 
   it('the deadline can actually fire', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
-    const r = run(HOME, ['--deadline'], { OPENWOP_NORMATIVE_HOME_TODAY: '2026-12-05' });
-    expect(r.status, req('openwop.requirement.0189.deadline-live', 'RFC 0189 §D', `past end-of-support with families still undeclared the gate exits 1 — ${tail(r)}`)).toBe(1);
+    withDeclaration(undeclare('replay'), (dir) => {
+      const r = run(HOME, ['--deadline'], { OPENWOP_NORMATIVE_HOME_TODAY: '2026-12-05' }, dir);
+      expect(r.status, req('openwop.requirement.0189.deadline-live', 'RFC 0189 §D', `past end-of-support with a family undeclared the gate exits 1 — ${tail(r)}`)).toBe(1);
+    });
   }, 180_000);
 
   it('the budget measures what the home gate accepts', () => {
@@ -125,9 +141,12 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
 
   it('the end-of-support fallback is applied, not printed', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
-    const r = run(HOME, ['--deadline'], { OPENWOP_NORMATIVE_HOME_TODAY: '2026-12-05' });
-    const out = (String(r.stderr ?? '') + String(r.stdout ?? ''));
-    expect(r.status !== 0 && /fallback does NOT cover/.test(out) && /no declared home/.test(out),
+    let r = run(HOME), out = '';
+    withDeclaration(undeclare('replay'), (dir) => {
+      r = run(HOME, ['--deadline'], { OPENWOP_NORMATIVE_HOME_TODAY: '2026-12-05' }, dir);
+      out = String(r.stderr ?? '') + String(r.stdout ?? '');
+    });
+    expect(r.status !== 0 && /fallback does NOT cover/.test(out) && /replay \(no declared home\)/.test(out),
       req('openwop.requirement.0190.fallback-applied', 'RFC 0190 §C', `past end-of-support the gate NAMES what the §D fallback fails to cover rather than printing the fallback and exiting 1 regardless — ${tail(r)}`)).toBe(true);
   }, 180_000);
 

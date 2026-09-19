@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.23.0] — 2026-09-19 — zero undeclared families
+
+**Why a minor.** Three new `spec/v2/core/*.md` documents and `spec/v2/declaration.json`
+are published artifacts: the last twelve core families declare homes, `undeclared`
+reaches 0, and the RFC 0189 §D end-of-support predicate passes 76 days early.
+
 ## [2.22.0] — 2026-09-19 — G14 + G16; envelopeContracts re-anchored
 
 **Why a minor.** `spec/v2/core/events.md` and `spec/v2/declaration.json` are

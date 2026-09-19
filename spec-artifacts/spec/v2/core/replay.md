@@ -1,7 +1,7 @@
 # Replay and Fork
 
 > **Status: Stable · RFC 0140, 0041, 0173 §C, 0176 §A.5.**
-> **Normative home:** `eventLog`, `replay`.
+> **Normative home:** `eventLog`, `replay`, `nondeterminismPolicy`.
 
 ## Why this exists
 
@@ -115,3 +115,12 @@ and the cross-region claim does not apply.
 A host advertising `replay` MUST document retention for source snapshots, source logs, the invocation records replay depends on, and forked runs; `retention.days` MAY advertise the window. When the range `fromSeq` needs has expired, the host MUST reject the fork with `410` or `422`; `details` SHOULD carry `sourceRunId`, `fromSeq`, and the boundary.
 
 See also: events.md, runs.md, persistence.md, security-defaults.md.
+
+## Declared nondeterminism
+
+`nondeterminismPolicy` is the host's statement of which nondeterministic sources it
+declares rather than suppresses. A host advertising `nondeterminismPolicy.declared`
+MUST record every declared source in the run's event log at the point it is read, so
+a fork replays the recorded value rather than re-drawing it; a source the host neither
+declares nor suppresses is a replay defect, not a policy choice.
+
