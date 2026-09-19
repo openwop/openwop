@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.27.0] — 2026-09-19 — the four RFC 0158 recovery rows
+
+- `v2-durability-recovery.test.ts` — `kill-after-accept` (hold-dispatch), `kill-during-execution` (never observable as completed without re-execution), `duplicate-delivery` (counted per effect identity), `bound-is-derived` (an explicitly-labelled paper check that MUST NOT be cited as evidence the mechanism runs).
+- **Disposition rule:** no `POST /host/durability/kill` route ⇒ `inapplicable` (the host claims no rung); route present but an operator precondition unmet ⇒ `blocked` with the precondition named. Collapsing the two would deny certification to every host the day these rows entered the lane.
+- `peer-resume` is deliberately not written — §E makes it bundle-witnessed, so a scenario could only ever record `blocked`.
+- README scenario counts 522 → 523. Suite pinned to corpus `2.27.0`.
+
 ## [2.26.0] — 2026-09-19 — RFC 0188 Accepted
 
 - No scenario change. Suite pinned to corpus `2.26.0`; the reference-host bundle it certified is checked in at suite 2.25.0.
