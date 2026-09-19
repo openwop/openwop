@@ -54,6 +54,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.27.0] — 2026-09-19 — the four RFC 0158 recovery rows that never existed, and the disposition rule that keeps them from stripping the fleet
+
+### Added
+
+- **`v2-durability-recovery.test.ts` — the four `durable-single-instance` rows RFC 0158 names and no scenario has ever covered.** `kill-after-accept` (a **hold-dispatch** exercise, not a termination-timing one — on a host where acceptance and dispatch are microseconds apart, racing a kill into that window cannot reliably hit it), `kill-during-execution` (work executing at a real process death MUST NOT be observable as completed without re-execution), `duplicate-delivery` (invocation counts **per effect identity**, because a legal end state is exactly what a double-fire produces), and `bound-is-derived`.
+
+- **The disposition rule is the load-bearing decision, and it protects fleet certification.** §E says an unmet operator precondition is `blocked` with the precondition named; §E also says the seam is a non-normative host-extension route that *"advertises nothing"* and that a host never running the exercises *"exposes no such route"*. Those are **different states**, and collapsing them would deny certification to every host the day these rows entered the major-2 lane, because a `blocked` row denies certification (RFC 0168 §E.1):
+
+  | state | disposition |
+  | --- | --- |
+  | no seam route at all | **`inapplicable`** — §E.10 mints no capability field, so seam *presence* is how a host claims a rung; blocking a host for a claim it never made is the false-refusal half of the same error as a vacuous pass |
+  | seam present, precondition unmet | **`blocked`**, precondition **named** — a restart supervisor is required and a black-box suite cannot supply one |
+
+  Verified against the reference host: `/host/durability/kill` answers `404` while `/host/events` answers `200`, so the four rows record `inapplicable` and **all three profiles still certify**.
+
+- **`peer-resume` is deliberately not written.** It is the `durable-multi-instance` discriminator, not part of the rung these rows witness, and §E makes it **bundle-witnessed** via an opaque per-boot incarnation token rather than black-box observable. A scenario for it could only ever record `blocked` — which is precisely the defect found in `0188.dead-letter-content-free` this same day, and writing a second one knowingly would be worse than the first.
+
+### Fixed
+
+- `conformance/README.md`'s two scenario-file counts (522 → 523). The gate compares them against the live tree, as it should.
+
+### Known gap, stated rather than hidden
+
+- **`durability/poison-exhaustion` is registered at MAJOR 1 ONLY**, so no v2 bundle has ever carried a durability row of any kind. RFC 0158's acceptance needs all five rows of the rung at major 2; porting it needs the v2 event-log read, and it is tracked rather than quietly assumed. Until then the rung is unwitnessable at major 2 even with these four passing.
+
 ## [2.26.0] — 2026-09-19 — RFC 0188 Accepted: the read existed, the shape did not
 
 ### Changed
