@@ -1,7 +1,7 @@
 # Runs
 
 > **Status: Stable · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
-> **Normative home:** `runList`.
+> **Normative home:** `runList`, `limits`.
 
 ## Why this exists
 

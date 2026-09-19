@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.15.0] — 2026-09-19 — three v1-dependent homes; G6 + G7 gate fixes
+
+**Why a minor.** No conformance code changes. `spec/v2/declaration.json` and two
+`spec/v2/core/*.md` markers are published artifacts: `oauth`, `heartbeat` and
+`limits` record v1 homes for rules that already existed, and the normative-home
+gate's facet predicate and end-of-support fallback are corrected.
+
 ## [2.14.0] — 2026-09-19 — three homes; the token-bleed fix (G5)
 
 **Why a minor.** No conformance code changes. `spec/v2/declaration.json` and two

@@ -13,6 +13,8 @@
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
+> **Amended 2026-09-19 (G6, G7).** §B.4's facet-coverage predicate tolerates a dotted prefix on the family key (`Capabilities.limits.maxBudgetTokens` names the facet); §D's fallback compares a carried target's `Status:` banner against the one recorded when it was carried, rather than testing whether it currently reads `Stable`/`FINAL` — §D says "changes", and the state test was already failing on a banner that never changed. Both in place while `Active` (RFC 0174 §A.4).
+
 > **Amended 2026-09-18 by RFC 0190** (in place, legal while `Active` — RFC 0174 §A.4 restricts the new-RFC requirement to `Accepted` RFCs). Two changes: **§A** — `spec/v2/ext/**` is a CO-POINTER that contributes facet coverage only; it may no longer satisfy §B(b)/(c), because an ext-only home resolved a core family with zero words in `core/` and resolved `authorization` against thirteen unrelated ext READMEs. **§D** — the fallback this RFC named is now APPLIED rather than printed; the gate previously described it and exited 1 regardless, with `v1Carried` read and never used. That is the defect this RFC's own Motivation exists to end, committed by this RFC.
 
 ## Summary

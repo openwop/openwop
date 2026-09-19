@@ -205,6 +205,7 @@
     {
       "key": "limits",
       "kind": "family",
+      "normativeText": ["spec/v2/core/runs.md", "spec/v1/capabilities.md", "spec/v1/budget-policy.md"],
       "anchor": "core",
       "section": "core/capabilities.md#limits",
       "peerDependencyId": "limits",
@@ -516,6 +517,7 @@
     {
       "key": "oauth",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#oauth",
       "peerDependencyId": "oauth",
@@ -898,6 +900,7 @@
     {
       "key": "heartbeat",
       "kind": "family",
+      "normativeText": ["spec/v2/core/events.md", "spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#heartbeat",
       "peerDependencyId": "heartbeat",
