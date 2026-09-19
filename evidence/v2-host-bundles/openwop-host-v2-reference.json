@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-18T07:57:18.402Z",
+  "generatedAt": "2026-09-19T17:45:09.766Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.4.5",
+    "version": "2.24.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.4.5",
-    "stampSha256": "2d625db1edc658e5ca483a95028e5db84c62bef71c8ced299e817c6875fbfbfd"
+    "specArtifactsVersion": "2.24.0",
+    "stampSha256": "78d9e4c20c6b3cf16bf1605637d2a509a2f809ecb9e852d4f8588be61a6aa79d"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "5416757dbe697edeb3ca50cd0c985c949348b8d9"
+      "id": "b3c06d179f49fb579ce6524afca64495f7ca3165"
     },
     "signingKeyId": "v2-reference-3"
   },
@@ -349,7 +349,7 @@
       "executedPass": 231,
       "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 7,
+      "inapplicable": 8,
       "blocked": 0
     },
     "requirements": [
@@ -395,7 +395,7 @@
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
         "assertions": 7,
-        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion."
+        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] host does not advertise the webhooks.deadLetter facet — it serves no dead-letter read, and RFC 0188 §A.5 makes that a 404 rather than an obligation"
       },
       {
         "id": "openwop.scenario.v2-bound-id-path-projection",
@@ -751,7 +751,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 17
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -831,7 +831,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: blocked: no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
+        "detail": "partial-witness: inapplicable: [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed); [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation; [inapplicable] host does not advertise the webhooks.deadLetter facet"
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -935,13 +935,6 @@
         "result": "skipped",
         "assertions": 0,
         "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
-        "scenario": "v2-bound-id-kinds.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion."
       },
       {
         "id": "openwop.requirement.0168.advertised-fixtures-exist",
@@ -1535,7 +1528,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: blocked: no normative dead-letter read surface for webhook deliveries in api/v2/openapi.yaml (a GET /webhooks/{webhookId}/dead-letters projection is needed) — exhaustion was observed, routing to the sink was not"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1815,7 +1808,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1846,11 +1839,25 @@
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
         "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-content-free",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise the webhooks.deadLetter facet"
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-read",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
       }
     ]
   },
-  "witnessSha256": "4d76b664e02efa66b6f259ccb61ef7fb56ab8cc452a75b6d81aebb7b1db65b35",
-  "assertionCount": 1993,
+  "witnessSha256": "277906937a148fc2a2fab5b81de3bc8f4bc4b283205381711c95cb7801e33400",
+  "assertionCount": 1977,
   "detail": {
     "nonPass": [
       {
@@ -1877,11 +1884,6 @@
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.it.v2-bound-id-kinds.deliveryid-the-kind-has-no-wire-surface-to-be-bound-on-a-corpus-gap-recorded",
-        "result": "inapplicable",
-        "reason": "identity.md §5 binds deliveryId, but api/v2/openapi.yaml serves no dead-letter read (a GET /webhooks/{webhookId}/dead-letters projection is needed) — the kind has nowhere to appear on the wire, so no host can be held to it. RFC 0187 §Unresolved; v2-webhook-durable-delivery records the same absence for exhaustion."
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -1922,13 +1924,23 @@
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-content-free",
+        "result": "inapplicable",
+        "reason": "host does not advertise the webhooks.deadLetter facet"
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-read",
+        "result": "inapplicable",
+        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-3",
-    "sig": "Z0D2F9bAIhGZQjPKmC63CvwotwW1sdfcoHStjxeOUQCBE-aigvhzXChYoV9Wv68kxJHwhBYCfR377MqypubBDQ",
+    "sig": "ElNMeTlmT7NNj9FYSK8czar_i8EpzXkCTv2s7dEm87B-DxEYCD0ZxhXS5whI20QGYrloRi3MNEumsg2VV7aGCg",
     "over": [
       "witnessSha256",
       "host.build",
