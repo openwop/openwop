@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-10T21:40:49.131Z",
+  "generatedAt": "2026-09-19T20:37:24.112Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.0.11",
+    "version": "2.3.3",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.0.11",
-    "stampSha256": "73ec5b7c6f2dceeefad0afb5d47446c3566a33ed6123db4bafcb26af38767fa6"
+    "specArtifactsVersion": "2.3.3",
+    "stampSha256": "9f6224ad9ab04be25d40ba336e3992ec1c65ed4675f1b6c10298573ca42177af"
   },
   "host": {
     "name": "openwop-workflow-engine",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "f7c631b9b3d32acfd6607a03e5d217a3af6b7b32"
+      "id": "3080f2f24a0f49e8b56df728ba2224fe054f98d4"
     },
-    "signingKeyId": "openwop-app-self-2026-09-04"
+    "signingKeyId": "openwop-app-bundle-1"
   },
   "discovery": {
-    "url": "https://app.openwop.dev/.well-known/openwop",
-    "sha256": "8825f2c7baba50d0574f0f354d9544ecd6896298f3d80d196cd07316f51e1a01",
+    "url": "https://app.openwop.dev/api/.well-known/openwop",
+    "sha256": "6455b2a59a2e808d00b24eddf3dd63acc1bff5114a65c65f3ccd56c3665b8c4e",
     "protocolVersions": [
       "1.1",
       "2.0"
@@ -37,10 +37,17 @@
       "eventLogSchemaVersion": 3,
       "signingKeys": [
         {
+          "keyId": "openwop-app-bundle-1",
+          "alg": "ed25519",
+          "publicKey": "LScAhSRhmis61ScTN4wgwn8Ul19u01V148PkP7ok5ec",
+          "use": "certification-bundle"
+        },
+        {
           "keyId": "openwop-app-self-2026-09-04",
           "alg": "ed25519",
           "publicKey": "SFBjFSjHaQSUbIb-FQudyk-DwOagmGyshJBwC-0zvZ4",
-          "use": "certification-bundle"
+          "use": "certification-bundle",
+          "retiredAt": "2026-09-19T00:00:00Z"
         }
       ],
       "implementation": {
@@ -56,6 +63,8 @@
         "conformance-agent-pack-install",
         "conformance-agent-pack-provenance",
         "conformance-approval",
+        "conformance-approval-edit-accept",
+        "conformance-approval-refine",
         "conformance-cancellable",
         "conformance-cap-breach",
         "conformance-channel-ttl",
@@ -124,7 +133,169 @@
       "extensions": {
         "openwop-app.host": {
           "notes": "OpenWOP reference application. Serving the v2 wire through the overlap; not production-hardened.",
-          "demoMode": true
+          "demoMode": true,
+          "root": "/host/openwop-app/",
+          "twin": "/v1/host/openwop-app/",
+          "rfc": "0181"
+        },
+        "openwop-app.host-surfaces": {
+          "surfaces": [
+            {
+              "name": "host.a2a",
+              "supported": true,
+              "note": "RFC 0076 §A + RFC 0100. A2A 0.3 JSON-RPC client AND a live server endpoint at POST /v1/host/openwop-app/a2a with DURABLE Tasks — message/send persists the projected A2ATaskState, tasks/get returns live state after disconnect, tasks/resubscribe re-attaches the update stream, and tasks/pushNotificationConfig/set registers an SSRF-guarded push (ADR 0035).",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.aiProviders",
+              "supported": true,
+              "note": "BYOK via /v1/host/openwop-app/byok/secrets.",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.artifactTypes",
+              "supported": true,
+              "note": "ADR 0055 (RFC 0071/0075). Host artifact-type registry — host-native doc.* types with JSON-Schema validation, schemas served at /schemas/artifacts/{id}.schema.json, typed artifact.created emission from feature.documents.nodes. The kind:artifact-type pack tier IS implemented (artifactTypePackLoader registers pack types at boot; RFC 0071 schemaRef + inline schema both accepted).",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.blobStorage",
+              "supported": true,
+              "note": "In-memory tier: presign() returns a synthetic data: URL (select OPENWOP_SURFACE_BLOB=s3 for real SigV4 presigns; the enterprise/auth posture boot guard requires a real backend).",
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.cache",
+              "supported": true,
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.canvas",
+              "supported": true,
+              "note": "Durable versioned shared-canvas store for vendor.myndhyve.canvas. read/write/create are real (optimistic-concurrency, shallow/deep/replace merge, field projection); crossCanvasInvoke spawns a real child run (depth/cycle guard, awaitTerminal, circuit breaker).",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.chat",
+              "supported": true,
+              "note": "Bridges vendor.myndhyve.chat to the demo chat store (the same /v1/host/openwop-app/chat tables the SPA reads). sendMessage/progressCard/updateCard run; the suspend-based gate nodes (phaseInputGate/approvalGate/clarificationGate) run via the ctx.suspend/ctx.interrupt primitive (re-invoke resume, interrupt.md).",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.connectors",
+              "supported": true,
+              "note": "ADR 0037. connectorInvoker.invoke(providerId, {context,request}) resolves the acting user’s Connection through the broker + brokered egress (RFC 0093 SSRF + apiHosts pin + connections:use gate + RFC 0079 provenance). Per-provider reach is deploy-gated behind a configured Connection — unconfigured fails closed.",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.db.nosql",
+              "supported": true,
+              "note": "tenant → datasource/collection → doc. Exact-match filters only ($-operators refused); $set/$unset updates. Real impls use MongoDB / DynamoDB / Firestore / CosmosDB.",
+              "implementation": "nested-map-document-store"
+            },
+            {
+              "name": "host.db.search",
+              "supported": true,
+              "note": "Token-frequency relevance score. Real impls use Elasticsearch / OpenSearch / Meilisearch / Typesense.",
+              "implementation": "naive-bag-of-words"
+            },
+            {
+              "name": "host.db.sql",
+              "supported": true,
+              "note": "better-sqlite3, one in-memory DB per tenant.",
+              "implementation": "sqlite-in-memory"
+            },
+            {
+              "name": "host.db.vector",
+              "supported": true,
+              "note": "O(n) cosine over an in-memory Map.",
+              "implementation": "brute-force-cosine"
+            },
+            {
+              "name": "host.fs",
+              "supported": true,
+              "note": "Sandboxed under /app/data/host-fs.",
+              "implementation": "sandboxed-local-fs"
+            },
+            {
+              "name": "host.interrupts",
+              "supported": true,
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.kanban",
+              "supported": true,
+              "note": "Bridges vendor.myndhyve.kanban to the demo kanban store (kanbanService.ts) — boards/cards shared with the builder UI. boardReview/timelinePlan/resourceMonitor are genuinely computed; automation rules persist in-process.",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.knowledge",
+              "supported": true,
+              "note": "Lexical RAG retrieval (token-frequency over a seeded demo corpus) for vendor.myndhyve.knowledge-tools. Real retrieve-with-citations; lexical not semantic (sample host ships no embedding model).",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.kvStorage",
+              "supported": true,
+              "note": "Demo only. Restarts wipe state.",
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.launchStudio",
+              "supported": true,
+              "note": "Multi-canvas studio backbone for vendor.myndhyve.launch-studio. getStudio returns a seeded demo studio; buildProjectContext/resolveLinkedArtifacts are pure derivations; task dispatch composes ctx.kanban.",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.mcp",
+              "supported": true,
+              "note": "RFC 0020 (Active). Sample-host MCP server mount at /v1/host/openwop-app/mcp; advertise streamable-http transport. OFF by default — set OPENWOP_MCP_SERVER_ENABLED=true.",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.memory",
+              "supported": true,
+              "note": "RFC 0004 read-side (list/get); host writes a run-summary on completion. In-memory tier: restarts wipe state (select OPENWOP_SURFACE_MEMORY=durable to persist).",
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.messaging",
+              "supported": true,
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.observability",
+              "supported": true,
+              "note": "Routes through the workflow-engine logger.",
+              "implementation": "structured-logger"
+            },
+            {
+              "name": "host.queue",
+              "supported": true,
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.tableStorage",
+              "supported": true,
+              "note": "Demo only. No indexes; query is O(n).",
+              "implementation": "in-memory"
+            },
+            {
+              "name": "host.triggers",
+              "supported": true,
+              "note": "Trigger entry nodes (webhook/schedule/cron/email/mailhook/rss/form) surface the run-scoped ctx.triggerData payload; runs are started by the RFC 0083 trigger bridge, scheduler, and kanban paths. webhook-respond durably records the reply via ctx.respondToWebhook.",
+              "implementation": "workflow-engine"
+            },
+            {
+              "name": "host.webResearch",
+              "supported": true,
+              "note": "For vendor.myndhyve.web-research. fetchBatch is real (concurrent HTTP fetch + readable-text extraction); search is provider-gated — live when a BYOK secret web-search or OPENWOP_WEBSEARCH_API_KEY is set (Brave-shaped, OPENWOP_WEBSEARCH_BASE_URL override), else an honest demo result; research composes the two.",
+              "implementation": "workflow-engine"
+            }
+          ]
+        },
+        "openwop-app.ai-providers": {
+          "subscriptionProviders": []
         }
       },
       "limits": {
@@ -147,12 +318,122 @@
           "v1"
         ]
       },
+      "auth": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "seam-gated",
+        "lanes": [
+          {
+            "lane": "api-key",
+            "issuers": [
+              "urn:openwop-app:env-key"
+            ],
+            "revocation": "next-request",
+            "minimumAssurance": "bearer"
+          },
+          {
+            "lane": "session",
+            "issuers": [
+              "urn:openwop-app:session"
+            ],
+            "revocation": "next-request",
+            "minimumAssurance": "bearer"
+          },
+          {
+            "lane": "anonymous",
+            "issuers": [
+              "urn:openwop-app:anon"
+            ],
+            "revocation": "next-request",
+            "minimumAssurance": "bearer"
+          }
+        ],
+        "subjectLinkKey": "opaque-idp"
+      },
+      "prompts": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "endpointsSupported": true,
+        "mutableLibrary": true,
+        "agentBindings": true,
+        "templateKinds": [
+          "system",
+          "user",
+          "few-shot",
+          "schema-hint"
+        ],
+        "variableSources": [
+          "input",
+          "variable",
+          "secret",
+          "context"
+        ],
+        "maxTemplateBytes": 65536,
+        "observability": "full"
+      },
+      "secrets": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "scopes": [
+          "tenant",
+          "user",
+          "run"
+        ],
+        "resolution": "host-managed"
+      },
+      "modelCapabilities": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "advertised": [
+          "discriminator-enum",
+          "function-calling",
+          "long-context",
+          "reasoning",
+          "structured-output",
+          "vision-input"
+        ],
+        "substitutionSupported": false
+      },
+      "aiProviders": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "providers": [
+          "anthropic",
+          "openai",
+          "google",
+          "minimax"
+        ],
+        "authModes": [
+          "api-key"
+        ],
+        "selfHosted": false
+      },
       "idempotency": {
         "status": "experimental",
         "since": "2.0",
         "until": "2.1",
         "witness": "witnessable-unaided",
         "crossRegion": "single-region"
+      },
+      "runList": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "maxPageSize": 100,
+        "filters": [
+          "workflowId",
+          "status"
+        ]
       },
       "replay": {
         "status": "experimental",
@@ -180,6 +461,31 @@
         "until": "2.1",
         "witness": "witnessable-unaided"
       },
+      "feedback": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "targets": [
+          "run",
+          "event",
+          "node"
+        ],
+        "signals": [
+          "rating",
+          "correction",
+          "label",
+          "flag"
+        ]
+      },
+      "workflowChainPacks": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "deferredParameters": {},
+        "subChains": {}
+      },
       "packs": {
         "status": "experimental",
         "since": "2.0",
@@ -193,7 +499,7 @@
       "id": "openwop-discovery-core",
       "evidenceTier": "self",
       "witnessCount": 3,
-      "certified": false
+      "certified": true
     },
     {
       "id": "openwop-core-standard",
@@ -204,18 +510,18 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 137,
-      "executedFail": 0,
+      "executedPass": 154,
+      "executedFail": 2,
       "skipped": 0,
-      "inapplicable": 87,
-      "blocked": 3
+      "inapplicable": 83,
+      "blocked": 0
     },
     "requirements": [
       {
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 295
+        "assertions": 301
       },
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
@@ -251,6 +557,12 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-bound-id-path-projection",
+        "scenario": "v2-bound-id-path-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
         "id": "openwop.scenario.v2-bundle-v3-signed",
         "scenario": "v2-bundle-v3-signed.test.ts",
         "result": "executed-pass",
@@ -266,7 +578,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 47
+        "assertions": 103
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -406,9 +718,9 @@
       {
         "id": "openwop.scenario.v2-lane-issuer-advertised",
         "scenario": "v2-lane-issuer-advertised.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 12,
+        "detail": "partial-witness: inapplicable: no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
       },
       {
         "id": "openwop.scenario.v2-legacy-profiles-absent",
@@ -497,6 +809,18 @@
         "assertions": 10
       },
       {
+        "id": "openwop.scenario.v2-payload-seats-0186",
+        "scenario": "v2-payload-seats-0186.test.ts",
+        "result": "executed-pass",
+        "assertions": 18
+      },
+      {
+        "id": "openwop.scenario.v2-payload-vendor-hatch",
+        "scenario": "v2-payload-vendor-hatch.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
         "id": "openwop.scenario.v2-peer-dependency-declared",
         "scenario": "v2-peer-dependency-declared.test.ts",
         "result": "inapplicable",
@@ -558,9 +882,8 @@
       {
         "id": "openwop.scenario.v2-run-annotation-not-event",
         "scenario": "v2-run-annotation-not-event.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.floor.v2-run-bulk-cancel",
@@ -598,6 +921,12 @@
         "scenario": "v2-run-fork-refusals.test.ts",
         "result": "executed-pass",
         "assertions": 8
+      },
+      {
+        "id": "openwop.scenario.v2-run-list",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 15
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -670,11 +999,18 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-webhook-delivery-shape",
+        "scenario": "v2-webhook-delivery-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 4,
+        "detail": "partial-witness: blocked: [blocked] no run.started delivery for this run arrived inside 15s — durability is v2-webhook-durable-delivery's claim, not this file's; [blocked] no run.started delivery for this run arrived inside 15s; [inapplicable] seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+      },
+      {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "blocked",
-        "assertions": 0,
-        "detail": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
+        "result": "executed-fail",
+        "assertions": 9,
+        "detail": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -692,13 +1028,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 86
+        "assertions": 88
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 86
+        "assertions": 88
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -913,19 +1249,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 28
+        "assertions": 60
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 29
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 14
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -1010,16 +1346,15 @@
       {
         "id": "openwop.requirement.0170.lane-issuer-advertised.members",
         "scenario": "v2-lane-issuer-advertised.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise the `auth` family at the v2 root"
+        "result": "executed-pass",
+        "assertions": 12
       },
       {
         "id": "openwop.requirement.0170.lane-issuer-advertised.window",
         "scenario": "v2-lane-issuer-advertised.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the host does not advertise the `auth` family at the v2 root"
+        "detail": "no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
       },
       {
         "id": "openwop.requirement.0170.owner-subject-required.no-principal",
@@ -1043,9 +1378,8 @@
       {
         "id": "openwop.requirement.0170.run-annotation-not-event",
         "scenario": "v2-run-annotation-not-event.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0170.run-bulk-cancel",
@@ -1232,6 +1566,12 @@
         "assertions": 16
       },
       {
+        "id": "openwop.requirement.0171.webhook-delivery-shape",
+        "scenario": "v2-webhook-delivery-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0172.advertised-path-space-served",
         "scenario": "v2-advertised-path-space-served.test.ts",
         "result": "executed-pass",
@@ -1399,16 +1739,15 @@
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "blocked",
-        "assertions": 0,
-        "detail": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
+        "result": "executed-fail",
+        "assertions": 5,
+        "detail": "the test executed and failed: [unknown@unknown] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "blocked",
-        "assertions": 0,
-        "detail": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1589,14 +1928,14 @@
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
@@ -1667,11 +2006,47 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.cursor-refused",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.filter-exact",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0182.run-list.tenant-scoped",
+        "scenario": "v2-run-list.test.ts",
+        "result": "executed-pass",
+        "assertions": 11
+      },
+      {
+        "id": "openwop.requirement.0184.bound-id-path-projection",
+        "scenario": "v2-bound-id-path-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0185.payload-vendor-hatch",
+        "scenario": "v2-payload-vendor-hatch.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0186.payload-seats",
+        "scenario": "v2-payload-seats-0186.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       }
     ]
   },
-  "witnessSha256": "c4499983b93019c5196b011f9734c0572ef8d40ccc5ea252bd7cfa4d64e6c903",
-  "assertionCount": 1273,
+  "witnessSha256": "668410d3c99f605d3a38b156c0b5c201a7b41aef536e21a0d3307a95435fa531",
+  "assertionCount": 1536,
   "detail": {
     "nonPass": [
       {
@@ -1716,11 +2091,6 @@
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-lane-issuer-advertised",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -1785,11 +2155,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-annotation-not-event",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-run-diff-identical",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -1811,8 +2176,8 @@
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
-        "result": "blocked",
-        "reason": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
+        "result": "executed-fail",
+        "reason": "one or more assertions in the file failed"
       },
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
@@ -1880,24 +2245,14 @@
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
       },
       {
-        "id": "openwop.requirement.0170.lane-issuer-advertised.members",
-        "result": "inapplicable",
-        "reason": "the host does not advertise the `auth` family at the v2 root"
-      },
-      {
         "id": "openwop.requirement.0170.lane-issuer-advertised.window",
         "result": "inapplicable",
-        "reason": "the host does not advertise the `auth` family at the v2 root"
+        "reason": "no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
       },
       {
         "id": "openwop.requirement.0170.revocation-honored",
         "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — revocation is seam-gated and cannot be observed from the canonical API"
-      },
-      {
-        "id": "openwop.requirement.0170.run-annotation-not-event",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0170.run-diff-identical",
@@ -1966,13 +2321,8 @@
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
-        "result": "blocked",
-        "reason": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
-      },
-      {
-        "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
-        "result": "blocked",
-        "reason": "[blocked] host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver; [blocked] registration refused (reason recorded above)"
+        "result": "executed-fail",
+        "reason": "the test executed and failed: [unknown@unknown] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -2067,12 +2417,12 @@
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
@@ -2128,8 +2478,8 @@
   },
   "signature": {
     "alg": "ed25519",
-    "keyId": "openwop-app-self-2026-09-04",
-    "sig": "BvM2n3fgyy4lTGU9alusGR6dKBgiywprZkXEDh169aMi7ks4b75Dhs2QsvUyEyCsvTP6nMYI5GKJEEKRG0J0Ag",
+    "keyId": "openwop-app-bundle-1",
+    "sig": "FPCpFJ6NFdwZ0-etAmBw-bgsc6kfUB8RM0rkV342JBfbqJ-Xc0LAafDYMaHWMjDOdhnmUbO7GmGkKCfatjMmAw",
     "over": [
       "witnessSha256",
       "host.build",
