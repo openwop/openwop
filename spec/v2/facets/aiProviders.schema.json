@@ -43,11 +43,67 @@
     },
     "policies": {
       "type": "object",
-      "additionalProperties": true
+      "description": "Optional v1 host-side policy enforcement modes for per-provider gating. Omitted → no enforcement; clients see only `optional` semantics. When present, MUST declare `modes` — an empty `{}` is not a valid third state. See `capabilities.md` §`aiProviders.policies`. **Restored 2026-09-19:** the v2 override had reduced this to `{type: object, additionalProperties: true}` — an open object with no properties, no enum and no description — so anything validated, including a misspelled member. It was one of only TWO such facets in the whole v2 schema. MyndHyve's live major-2 document already advertises exactly the v1 shape, so restoring the constraint rejects nothing published and makes a typo fail instead of ship.",
+      "required": [
+        "modes"
+      ],
+      "properties": {
+        "modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "optional",
+              "required",
+              "restricted"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Subset of policy modes this host can enforce. `disabled` = provider may not be used; `optional` = no restriction (default); `required` = BYOK required; `restricted` = model must match the policy's `allowedModels` glob list. Hosts MAY support a subset; clients MUST tolerate any subset."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Resolution layers the host evaluates. Conventional ids: `workspace`, `project`, `canvas-type`. Precedence is host-defined and SHOULD be documented per-deployment."
+        },
+        "errorCode": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
+        }
+      },
+      "additionalProperties": false
     },
     "input": {
       "type": "object",
-      "additionalProperties": true
+      "additionalProperties": false,
+      "description": "RFC 0091. Multimodal PERCEPTION input on `ctx.callAI` — the modalities a `callAI` message ContentPart may carry as model INPUT. Absent ⇒ text-only (today's behavior); a `string` message content is always valid. Distinct from `imageGeneration` (output) and the `ai-envelope.md` media emission types (output). **Restored 2026-09-19:** the v2 override had reduced this to `{type: object, additionalProperties: true}` — an open object with no properties, no enum and no description — so anything validated, including a misspelled member. It was one of only TWO such facets in the whole v2 schema. MyndHyve's live major-2 document already advertises exactly the v1 shape, so restoring the constraint rejects nothing published and makes a typo fail instead of ship.",
+      "properties": {
+        "modalities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "audio",
+              "document"
+            ]
+          },
+          "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `unsupported_modality` (never silently dropped)."
+        },
+        "maxBytesPerPart": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optional host cap on a single inline (`data`) or `mediaRef` part."
+        }
+      }
     }
   },
   "required": [

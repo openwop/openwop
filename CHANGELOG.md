@@ -54,6 +54,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.28.0] — 2026-09-19 — the bundle's two arrays, and two v2 facets that validated anything
+
+### Fixed
+
+- **A certification bundle carries the same requirement id in two arrays with different field sets, and nothing said which to count.** `results.requirements[]` is the ledger (`id, scenario, result, assertions, detail`); `detail.nonPass[]` re-lists the same ids as a derived view (`id, result, reason`). A consumer walking the document generically sees every non-pass id **twice**. Two sessions did exactly that on one file within an hour of each other: one read **227** rows and the other **317** (227 + 90), and a blocked-row count came out as **3 or 6** by the same mechanism. Reported by openwop-app-1, who hit it from the other side. `certification-bundle.schema.json` now says which array is the ledger and that the other MAY omit fields **by design, not by accident**.
+
+- **`aiProviders.input` and `aiProviders.policies` validated anything at major 2.** The hand-authored v2 facet override had reduced both to `{type: "object", additionalProperties: true}` — open objects with no properties, no enum and no description — while v1 defines them **closed**: `input` with a `modalities` enum (`text`/`image`/`audio`/`document`, RFC 0091) and `policies` with `{modes, scopes, errorCode}`. They were the **only two** open-and-empty facets in the entire v2 schema. A misspelled modality would have shipped silently.
+
+  Restored from the v1 owner. **This rejects nothing published**, measured rather than assumed: MyndHyve's live major-2 document already advertises exactly the v1 shapes (`input: {"modalities":["text","image"]}`, `policies: {modes, scopes, errorCode}`), and all three host documents in `evidence/v2-host-bundles/` validate clean against the tightened schema. Sabotage-proven in both directions — a typo'd modality and an invented `policies` key are now refused.
+
+  Same family as RFC 0193 (a v2 projection that silently lost a constraint), different mechanism: 0193 was the **generator** dropping payload it could not splice; this was a **hand-authored override** replacing a closed shape with an open one.
+
+### Timing
+
+- Landed deliberately **before** openwop-app's post-tunnel cut, which is about to advertise `aiProviders.input.modalities` at major 2 for the first time. They flagged the change and asked to hear if any of it looked wrong before their evidence baked it in — it did, and this is the answer.
+
 ## [2.27.1] — 2026-09-19 — two stale register rows, and a gate I measured and declined to add
 
 ### Fixed

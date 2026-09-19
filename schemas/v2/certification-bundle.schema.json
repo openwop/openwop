@@ -283,7 +283,8 @@
                 "type": "string"
               }
             }
-          }
+          },
+          "description": "RFC 0148 §A — **THE LEDGER, and the array a consumer counts.** One row per requirement id the run resolved, carrying `scenario`, the `result` disposition and `assertions`. `results.totals` is this array tallied. `detail.nonPass[]` re-lists the SAME ids as a derived view with a different, smaller field set, so a consumer that walks the document generically sees every non-pass id TWICE and, depending on where it stops, reports either count as the size of the run. Two sessions did exactly that on one file within an hour of each other on 2026-09-19 — one read 227 rows and the other 317 (227 + 90), and a blocked-row count came out as 3 or 6 by the same mechanism. Count THIS array; read `detail.nonPass[]` for its `reason` text and nothing else."
         }
       }
     },
@@ -323,10 +324,11 @@
                 "type": "string"
               }
             }
-          }
+          },
+          "description": "RFC 0148 §A — **a DERIVED VIEW, not a second ledger.** Every id here also appears in `results.requirements[]`; this array exists to carry the human-readable `reason` for each non-pass row in one place. It MAY omit fields the ledger carries (`scenario` and `assertions` are absent by design, not by accident), so its rows are NOT interchangeable with ledger rows and MUST NOT be summed with them. A tool counting dispositions reads `results.requirements[]` or `results.totals`."
         }
       },
-      "description": "Required when any result is not executed-pass (allOf below)."
+      "description": "Required when any result is not executed-pass (allOf below). A DERIVED projection of `results.requirements[]` for readability — never an independent source of counts."
     },
     "signature": {
       "type": "object",

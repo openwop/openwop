@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.28.0] — 2026-09-19 — the bundle's two arrays, documented
+
+- `certification-bundle.schema.json` now states that `results.requirements[]` is the ledger a consumer counts and `detail.nonPass[]` is a derived view that MAY omit fields. The same id appears in both with different field sets; two sessions counted 227 vs 317 rows on one file.
+- `aiProviders.input` / `.policies` restored to their v1 closed shapes — the v2 override had made both `additionalProperties: true` with no properties. Suite pinned to corpus `2.28.0`.
+
 ## [2.27.1] — 2026-09-19 — register corrections
 
 - No scenario change. Two stale rows corrected in RFC 0121's gap register. Suite pinned to corpus `2.27.1`.
