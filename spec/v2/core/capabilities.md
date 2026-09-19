@@ -69,7 +69,7 @@ Vendor and host extensions live under one key, `extensions`, whose members MUST 
 
 `spec/v2/declaration.json` (schema `spec/v2/declaration.schema.json`) is the single source for: the generated `schemas/v2/capabilities.schema.json`; each family's `witness` class and maturity; the pack peer-dependency identifier (identical to the root key); the spec anchor (`core/capabilities.md#<key>` or `ext/<key>/`); the floor scenarios and requirement ids that define `openwop-core-standard`; and the profile predicates (§7). It replaces `extensions.json`, `core-standard-manifest.json`, `capability-declaration-classes.json`, and the capabilities half of `operation-path-manifest.json` (the operations half is `spec/v2/path-manifest.json`, `versioning.md`). It is generated from nothing and checked against everything (`scripts/check-declaration.mjs`).
 
-## 5. Core families (71)
+## 5. Core families (72)
 
 Each heading is a `spec/v2/declaration.json` row with `anchor: core`; `scripts/check-declaration.mjs` MUST fail when a heading here, a root key in the generated schema, or a pack peer-dependency identifier names a family the declaration does not. The peer-dependency identifier is identical to the key (`packs.md`). Maturity axes are §7; the sentence under each heading names the witness class, the owning RFC, and, where `spec/v2/facets/<key>.schema.json` exists, the hand-decided facets.
 
