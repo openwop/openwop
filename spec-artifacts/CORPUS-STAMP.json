@@ -234,7 +234,7 @@
     "spec/v2/core/versioning.md": "27b88cde88f9060567ef7e46f4897b6be8892ade9f4a46c2ab16e314c515eabd",
     "spec/v2/core/webhooks.md": "46c1311c1897236f9bf9db5025c8af31dd84cd19208da3e5e9ff69eec9436965",
     "spec/v2/core/workflow-chain-packs.md": "df78b76dd79f2267fb6b72c08e0911e5f9d5bb1925c6efdd6deda62fe8a51dc8",
-    "spec/v2/declaration.json": "060891d1e261ce830a78dc84735c2f3d4881aa192fe276019259c0a0317cc99b",
+    "spec/v2/declaration.json": "6182a370811133d9033591fd357cf6973a9c4e5b01cf25988922d6c621db5d0d",
     "spec/v2/declaration.schema.json": "c86e3083fb9789c1958ecb4576cc6f71aa90e6f339521139238543ed08211dd4",
     "spec/v2/errors.json": "aac91b12f954cc90574d310070ae3c651b131055d4389d2c6155242763765195",
     "spec/v2/event-codemap.json": "37869a03cdfd8758b57e6f350641a6ebbd383231cebda51f5473ad85f94ab74c",
@@ -277,5 +277,5 @@
     "spec/v2/release.json": "d791fcb236173a8a074d3874f072fa1f753a6369279ed0ba19e318603375efc4",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "835090505c7d05c3322e9721d5c17de399247c50"
+  "corpusCommit": "0a845654ef20fb40204e2d88df2f450fe3c8db84"
 }

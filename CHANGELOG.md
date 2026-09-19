@@ -66,7 +66,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ### Changed
 
 - **Seven families declared v1-dependent**: `fs`, `kvStorage`, `tableStorage`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage` — all with **zero facets uncovered**, all with recorded banners.
-- `undeclared` **33 → 26**; `v1Dependent` 21 → 28. First red moves **~2026-10-28 → ~2026-11-08**.
+- **Twelve families declared v1-dependent**, all with zero facets uncovered and recorded banners: the seven storage surfaces above, plus `cache`, `sql`, `deadLetter`, `queueBus` and `scheduling` — each of whose obligation is a table row under its own `## §host.<key>` section, and each of which I had rejected by hand one release earlier *because* it was a table row. G10 is what made the difference between "a table row, therefore not an anchor" and "a table row under a heading that names the family, therefore exactly an anchor".
+- `undeclared` **33 → 21**; `v1Dependent` 21 → 33. First red moves **~2026-10-28 → ~2026-11-12**.
 
 **Compatibility: editorial + gate.** No wire artifact, schema shape, endpoint contract or error meaning changes.
 

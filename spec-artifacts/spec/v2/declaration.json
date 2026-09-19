@@ -871,6 +871,7 @@
     {
       "key": "queueBus",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#queueBus",
       "peerDependencyId": "queueBus",
@@ -891,6 +892,7 @@
     {
       "key": "scheduling",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#scheduling",
       "peerDependencyId": "scheduling",
@@ -1096,6 +1098,7 @@
     {
       "key": "deadLetter",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#deadLetter",
       "peerDependencyId": "deadLetter",
@@ -1271,6 +1274,7 @@
     {
       "key": "sql",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#sql",
       "peerDependencyId": "sql",
@@ -1372,6 +1376,7 @@
     {
       "key": "cache",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#cache",
       "peerDependencyId": "cache",
