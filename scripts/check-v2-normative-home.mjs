@@ -232,7 +232,7 @@ for (const f of core) {
   // is not the `workspace` family — and exactly wrong for a facet, where
   // `family.facet` is the canonical form. So accept the qualified spelling too.
   const namesFacet = (text, key, facet) =>
-    namesKey(text, facet) || new RegExp(`(^|[^A-Za-z0-9\\-_/.])\\\`?${key}\\.${facet}\\b`).test(text);
+    namesKey(text, facet) || new RegExp(`(^|[^A-Za-z0-9\\-_/])${key}\\.${facet}\\b`).test(text);
   for (const facet of f.facets ?? []) if (!namesFacet(prose, f.key, facet)) facetsUncovered.push(`${f.key}.${facet}`);
   if (homes.some((h) => h.startsWith('spec/v1/'))) v1dep.push(f.key);
   else resolved.push(f.key);
@@ -327,6 +327,7 @@ if (eosDate) {
       // So after the date this fails on two things only: a family still
       // undeclared, or a carried target deleted / its Status banner changed.
       const carried = new Set(base0.v1Carried ?? []);
+      const banners = base0.v1Banners ?? {};
       const uncarried = v1dep.filter((k) => !carried.has(k));
       const broken = [];
       for (const f of core) {
@@ -336,9 +337,19 @@ if (eosDate) {
           const abs = join(ROOT, h);
           if (!existsSync(abs)) { broken.push(`${f.key} -> ${h} (DELETED)`); continue; }
           const head = readFileSync(abs, 'utf8').slice(0, 2000);
+          const banner = (head.split('\n').find((l) => /Status/.test(l)) ?? '').trim();
+          // §D fails after the date only if a carried target is DELETED or its
+          // banner CHANGES. Testing /Stable|FINAL/ tested the banner's STATE, a
+          // different question — and it already failed on the pristine tree:
+          // spec/v1/multi-agent-execution.md has read `Status: Draft` since long
+          // before `multiAgent` was carried into it, so a banner that never changed
+          // failed a check whose only purpose is to notice change. Compare against
+          // the banner recorded at declaration time instead.
           if (!/\*\*Status:?\*\*|Status:/.test(head)) broken.push(`${f.key} -> ${h} (no Status banner)`);
-          else if (!/Stable|FINAL/i.test(head.split('\n').find((l) => /Status/.test(l)) ?? '')) {
-            broken.push(`${f.key} -> ${h} (Status banner no longer Stable/FINAL: ${(head.split('\n').find((l) => /Status/.test(l)) ?? '').trim().slice(0, 80)})`);
+          else if (banners[h] === undefined) {
+            broken.push(`${f.key} -> ${h} (carried with no recorded banner — add it to \`v1Banners\` in docs/normative-home-baseline.json so a later change is detectable)`);
+          } else if (banners[h] !== banner) {
+            broken.push(`${f.key} -> ${h} (Status banner CHANGED since it was carried)\n      was: ${banners[h].slice(0, 90)}\n      now: ${banner.slice(0, 90)}`);
           }
         }
       }

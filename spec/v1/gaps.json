@@ -10383,6 +10383,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.6",
+      "rfc": "0189",
+      "local": "G6",
+      "section": "§B.4",
+      "surface": "`namesFacet`'s qualified form kept the FAMILY key's leading-boundary requirement, so it matched `limits.maxBudgetTokens` but not `Capabilities.limits.maxBudgetTokens` — the canonical spelling in v1 prose. `spec/v1/budget-policy.md` clamps to \"the host ceiling (`Capabilities.limits.maxBudgetTokens` / `maxBudgetCostUsd`)\": one sentence, a coordinated pair, and the gate covered the second and missed the first. G5's own closure note stated the intent correctly — *facet coverage takes the mirror rule* — but the implementation applied a family rule to a facet.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.7",
+      "rfc": "0189",
+      "local": "G7",
+      "section": "§D",
+      "surface": "The end-of-support fallback tested the banner's STATE (a regex matching `Stable` or `FINAL`) rather than whether it CHANGED — and §D's own words are \"deleted or its `Status:` banner changes\". The two differ, and the difference was already live: `spec/v1/multi-agent-execution.md` has read `Status: Draft` since long before `multiAgent` was carried into it in 2.13.0, so on 2026-12-04 the daily job would have gone permanently red on a banner that never changed. Introduced by RFC 0190 §C, which implemented the fallback that RFC 0189 had only printed — one layer down from the defect it was fixing.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0190.1",
       "rfc": "0190",
       "local": "G1",

@@ -1,6 +1,7 @@
 # Events
 
 > **Status: Stable · RFC 0171 §A, §E; RFC 0176 §A.**
+> **Normative home:** `heartbeat`.
 
 ## Why this exists
 
