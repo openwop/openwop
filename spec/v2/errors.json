@@ -957,6 +957,24 @@
       "details": null,
       "since": "1.0",
       "source": "spec/v1/rest-endpoints.md §Error response shape"
+    },
+    {
+      "code": "unknown_envelope_kind",
+      "httpStatus": 422,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/ai-envelope.md §\"Refusal taxonomy\" (unknown type, not in supportedEnvelopes)"
+    },
+    {
+      "code": "unknown_schema_version",
+      "httpStatus": 422,
+      "statusSource": "v1 prose",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/ai-envelope.md §\"Schema version advertisement\" (emitted schemaVersion above the advertised floor)"
     }
   ]
 }

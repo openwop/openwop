@@ -1,0 +1,18 @@
+{
+  "$comment": "RFC 0193 §B — the seat for the v1 map. `versioning.md` axis 6 rules this axis first-class with its own grammar; the generated record had the `retire` shape instead. propertyNames is the kind grammar rather than a closed enum: axis 6 says `additionalProperties: false over declared kinds`, but a vendor kind is host-published and never corpus-declared (`ai-envelope.schema.json` requires exactly that), so a literal enum would forbid the entries the catalog exists to carry. RFC 0193 §D corrects the axis row to match.",
+  "properties": {
+    "kinds": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "Active schema version per envelope kind, as in v1 `Capabilities.schemaVersions` (e.g. `{\"vendor.acme.prd.create\": 2}`). A kind absent from this map has no advertised floor; an emitted `schemaVersion` is then compared against 0. An emitted version HIGHER than the advertised floor MUST be refused with `unknown_schema_version` regardless of strictness; LOWER is governed by `envelopeStrictness.mode` (`events.md` §\"The envelope-kind catalog\")."
+    }
+  }
+}

@@ -172,7 +172,7 @@
     {
       "key": "supportedEnvelopes",
       "kind": "family",
-      "normativeText": ["spec/v1/ai-envelope.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#supportedEnvelopes",
       "peerDependencyId": "supportedEnvelopes",
@@ -181,15 +181,15 @@
         "technical": "stable",
         "adoption": "none"
       },
-      "facets": [],
+      "facets": ["kinds"],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": null
+      "owningRfc": "0193"
     },
     {
       "key": "schemaVersions",
       "kind": "family",
-      "normativeText": ["spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#schemaVersions",
       "peerDependencyId": "schemaVersions",
@@ -198,10 +198,10 @@
         "technical": "stable",
         "adoption": "none"
       },
-      "facets": [],
+      "facets": ["kinds"],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": null
+      "owningRfc": "0193"
     },
     {
       "key": "limits",
@@ -233,7 +233,7 @@
     {
       "key": "envelopeStrictness",
       "kind": "family",
-      "normativeText": ["spec/v1/ai-envelope.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopeStrictness",
       "peerDependencyId": "envelopeStrictness",
@@ -242,10 +242,10 @@
         "technical": "experimental",
         "adoption": "none"
       },
-      "facets": [],
+      "facets": ["mode"],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": null
+      "owningRfc": "0193"
     },
     {
       "key": "envelopeContracts",

@@ -1,7 +1,7 @@
 # Events
 
 > **Status: Stable · RFC 0171 §A, §E; RFC 0176 §A.**
-> **Normative home:** `heartbeat`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`.
+> **Normative home:** `heartbeat`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`.
 
 ## Why this exists
 
@@ -113,6 +113,30 @@ The response is `{ runId, events, lastSequence, status, isTerminal }` (closed): 
 ## Era-2 logs
 
 An `eventLogSchemaVersion` of `2` means v1-written. Every reader (poll, stream, fork, diff, debug bundle) MUST translate each event through `spec/v2/event-codemap.json` at storage — `type` is mapped, the payload projected; `sequence` (including `0`), `eventId`, `timestamp`, `causationId` pass through. A type the codemap does not name, carrying no vendor org, MUST fail the read `500 event_type_unmapped`. A host MUST NOT carry a private mapping, nor rewrite era-2 rows in place. **A projection MUST NOT silently drop a property**: carry or fail `500 payload_unprojectable` (hatch `^(openwop-|x-|vendor\.)`; RFC 0185). Fork and replay over an era-2 parent: replay.md.
+
+## The envelope-kind catalog
+
+`supportedEnvelopes`, `schemaVersions` and `envelopeStrictness` are one flow, read in
+that order on every inbound envelope. v1 carried them as an array, a map and an enum;
+a v2 capability record is an object, so each holds its value in a named seat.
+
+`supportedEnvelopes.kinds` is the catalog. A host advertising it MUST refuse an
+emitted `type` that is neither universal nor a member, with `unknown_envelope_kind`.
+**An absent `kinds` is not an empty catalog and is not an unrestricted one**: a host
+advertising `supportedEnvelopes` without it has made no catalog claim, and an engine
+MUST refuse every non-universal kind rather than admit it unchecked. Absence that
+reads as "unrestricted" would let a record claiming `stable` admit any kind an
+attacker can name, which is precisely what `prompt-injection-envelope-typecheck`
+forbids.
+
+`schemaVersions.kinds` maps a kind to its advertised floor; a kind absent from the map
+has a floor of `0`. An emitted `schemaVersion` ABOVE the floor MUST be refused with
+`unknown_schema_version` whatever the strictness.
+
+`envelopeStrictness.mode` governs drift BELOW the floor only. Under `warn` — the value
+when the seat is absent — an engine MUST validate against the advertised version and
+log `envelope_schema_version_drift`. Under `strict` the same condition MUST refuse with
+`unknown_schema_version`. A host MUST NOT read an absent `mode` as "no checking".
 
 ## Envelope contracts
 
