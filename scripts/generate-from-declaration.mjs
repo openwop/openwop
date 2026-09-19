@@ -232,6 +232,29 @@ function stripSupported(schema) {
   return out;
 }
 
+// RFC 0193 §B — a v1 property carries payload the family record cannot splice
+// when it has no `properties` of its own but is not merely a presence flag.
+// `boolean` is exempt: presence of the record IS the claim in v2 (RFC 0192), so
+// a v1 boolean loses nothing. An open object (`additionalProperties: true`, or
+// absent with no properties) is exempt for the same reason — it asserted no shape.
+function carriesUnspliceablePayload(p) {
+  if (!p || typeof p !== 'object') return false;
+  if (p.properties && Object.keys(p.properties).length) return false;
+  if (p.type === 'boolean') return false;
+  if (Array.isArray(p.enum)) return true;
+  if (p.type === 'array') return true;
+  if (p.type === 'string' || p.type === 'integer' || p.type === 'number') return true;
+  if (p.type === 'object' && p.additionalProperties && typeof p.additionalProperties === 'object') return true;
+  return false;
+}
+
+function describeShape(p) {
+  if (Array.isArray(p.enum)) return `enum[${p.enum.join('|')}]`;
+  if (p.type === 'array') return `array<${p.items?.type ?? '?'}>`;
+  if (p.type === 'object') return `map<${p.additionalProperties?.type ?? 'object'}>`;
+  return String(p.type ?? 'unknown');
+}
+
 function familyRecord(f) {
   // A child's hand-decided facet schema (spec/v2/facets/<key>.schema.json)
   // replaces the seeded v1 copy: its `properties` are the facets and its
@@ -240,6 +263,28 @@ function familyRecord(f) {
   const override = existsSync(overridePath) ? JSON.parse(readFileSync(overridePath, 'utf8')) : null;
   const v1p = v1.properties[f.key] ?? {};
   const facets = override ?? stripSupported(v1p);
+
+  // RFC 0193 §B — the silent payload drop.
+  //
+  // The record below splices `facets.properties` in as siblings of the uniform
+  // four. A v1 family that was an OBJECT therefore kept its payload (`limits`
+  // still carries clarificationRounds/schemaRounds/envelopesPerTurn). A v1
+  // family that was an ARRAY, a MAP, or an ENUM has no `.properties` at all, so
+  // its payload was dropped — silently, with the record still validating and a
+  // host still able to advertise it. That is how MyndHyve came to publish
+  // `supportedEnvelopes: {status:"stable", since:"1.0", witness:"..."}`: a
+  // stable claim to an envelope-kind catalog containing no catalog.
+  //
+  // The generator cannot invent the seat name — the v1 value was the whole
+  // property, so there is nothing to name it after. So it refuses, and the
+  // decision is made by hand in spec/v2/facets/<key>.schema.json.
+  if (!override && carriesUnspliceablePayload(facets)) {
+    throw new Error(
+      `generate-from-declaration FAILED — family \`${f.key}\` has a v1 payload the record cannot carry (RFC 0193 §B).\n` +
+      `  v1 shape: ${describeShape(facets)}. A v2 capability record is an object, so an array/map/enum value needs a NAMED SEAT,\n` +
+      `  and only a person can name it. Add spec/v2/facets/${f.key}.schema.json with the seat, and state in its owning doc what an\n` +
+      `  ABSENT seat means — absent MUST NOT be read as "unrestricted" for a catalog that gates a refusal.`);
+  }
   const props = {
     status: { enum: ['stable', 'experimental', 'deprecated'] },
     since: {

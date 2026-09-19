@@ -1,0 +1,9 @@
+{
+  "$comment": "RFC 0193 §B — the seat for the v1 enum. v1 default-when-absent was `warn`; the v2 record keeps that default, so an advertised record with no `mode` means `warn` and not `unset`.",
+  "properties": {
+    "mode": {
+      "enum": ["warn", "strict"],
+      "description": "Schema-version drift handling. `warn` (the default when this seat is absent, as in v1): an engine MUST attempt validation against the advertised version and log `envelope_schema_version_drift`. `strict`: the same condition MUST refuse with `unknown_schema_version`. Drift ABOVE the advertised floor refuses under both (`events.md` §\"The envelope-kind catalog\")."
+    }
+  }
+}

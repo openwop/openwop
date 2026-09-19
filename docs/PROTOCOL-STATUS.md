@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 522 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 189 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 190 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.23.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.24.0 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -67,7 +67,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 183 |
+| Accepted | 184 |
 | Active | 4 |
 | Draft | 1 |
 | Superseded | 1 |
@@ -263,6 +263,7 @@
 | RFC 0190 | the kernel budget's denominator follows the home gate's acceptance, and its cap grows only as debt is retired | Accepted |
 | RFC 0191 | the reciprocal normative-home marker: why no regex over prose can decide a semantic claim, and what to do instead | Accepted |
 | RFC 0192 | the v2 facet advertisement semantic, the 26 descriptions that still gated on a retired field, and the generator that stops the 27th | Accepted |
+| RFC 0193 | the three envelope families whose payload the v2 generator dropped in silence, the live `stable` record with nothing in it, and the guard that stops the fourth | Accepted |
 
 ## SDK Helper Coverage
 

@@ -825,6 +825,12 @@ invariants:
       - conformance/src/scenarios/discovery.test.ts
     note: |
       Envelope types validated against capabilities.supportedEnvelopes.
+      At major 2 the list is `supportedEnvelopes.kinds` (RFC 0193). The seat is
+      OPTIONAL in the schema because a live host already published the record
+      without one, so this invariant rests on the fail-closed reading in
+      events.md §"The envelope-kind catalog": an ABSENT `kinds` admits no
+      non-universal kind. Reading absence as "unrestricted" fails this invariant
+      open, which is how the major-2 record shipped with no list at all.
     witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
