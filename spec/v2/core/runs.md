@@ -1,7 +1,7 @@
 # Runs
 
 > **Status: Stable · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
-> **Normative home:** `runList`, `limits`.
+> **Normative home:** `runList`, `limits`, `conversationPrimitive`, `dataResidency`.
 
 ## Why this exists
 
@@ -58,7 +58,7 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`, `status` one o
 | Section | Keys | Rule |
 | --- | --- | --- |
 | `run` | `recursionLimit`, `runTimeoutMs`, `maxLoopIterations`, `escalationThreshold` | `recursionLimit` is clamped to `limits.maxNodeExecutions`. `runTimeoutMs` resolves to `min(runTimeoutMs, limits.maxRunDurationMs)`; an out-of-range value MUST return `400 validation_error` at create, and a breach MUST emit `cap.breached { kind: 'run-duration' }` and terminate the run `failed` with `run_timeout`. `maxLoopIterations` resolves against `limits.maxLoopIterations`; a breach MUST emit `cap.breached { kind: 'loop-iterations' }` and fail with `loop_limit_exceeded`. `escalationThreshold` is the `low-confidence` threshold (interrupt.md). |
-| `ai` | `provider`, `model`, `temperature` (0..2), `maxTokens`, `credentialRef`, `promptOverrides`, `mockProvider`, `reasoningVerbosity` (`none` \| `summary` \| `full`), `maxRefusals` | `provider` MUST be in `aiProviders.supported`, else `400 validation_error`. `credentialRef` MUST reference a provider in `aiProviders.byok`, else `403 credential_forbidden`; it never carries key material. `mockProvider` is test-keys-only: a host MUST refuse it on a production credential with `403`. `maxRefusals` is the refusal ceiling (events.md E5). |
+| `ai` | `provider`, `model`, `temperature` (0..2), `maxTokens`, `credentialRef`, `promptOverrides`, `mockProvider`, `reasoningVerbosity` (`none` \| `summary` \| `full`), `maxRefusals` | `provider` MUST be in `aiProviders.providers`, else `400 validation_error`. `credentialRef` MUST reference a provider in `aiProviders.byok`, else `403 credential_forbidden`; it never carries key material. `mockProvider` is test-keys-only: a host MUST refuse it on a production credential with `403`. `maxRefusals` is the refusal ceiling (events.md E5). |
 | `distillation` | `tokenBudget` | Resolves to `min(tokenBudget, memory.distillation.maxTokenBudget)`; a run that cannot distill within it MUST fail atomically with `token_budget_exceeded`. |
 | `budget` | `schemas/v2/budget-policy.schema.json` | The run's budget policy. |
 | `extensions` | `<org>: {…}` | A vendor key lives under its registered org and nowhere else. |
@@ -113,3 +113,16 @@ A non-terminal run a v2 host inherits from v1 whose `version.pinned` change ids 
 ## Annotations, artifacts, eval summary
 
 `createAnnotation` accepts `schemas/v2/annotation-create.schema.json` and returns `201` with `schemas/v2/annotation.schema.json`; `listAnnotations` returns `{ annotations[] }`. An annotation is a live notification (`run.annotated`), never a run event: it MUST NOT enter the event log and MUST be excluded from fork, replay and diff. `getArtifact` returns the artifact as an implementation-defined JSON object. `getEvalSummary` returns `schemas/v2/eval-summary.schema.json` for a terminal eval run, `409` while it is running, `404` when the run is not an eval run; the summary MUST be content-free of task output, rubric prose and credentials.
+
+## Conversation and residency capabilities
+
+`conversationPrimitive` carries no payload: its presence is the claim (capabilities.md §2). A
+workflow whose `nodes[].typeId` references `core.conversationGate` MUST be refused by a host that
+does not advertise `conversationPrimitive`, at registration or at run creation, with `422
+capability_required` naming the family in `details.requiredCapability`.
+
+A host advertising `dataResidency` MUST honor-or-reject: accept a `residency` constraint naming a
+region in `dataResidency.regions`, refuse one it does not advertise with `residency_unavailable`,
+and MUST NOT silently accept-and-ignore. Advertising `regions` while accepting an unadvertised
+region is a hollow advertisement. A host that does not advertise `dataResidency` MAY ignore or
+reject a `residency` constraint but MUST NOT claim to honor it.

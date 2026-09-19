@@ -1,0 +1,49 @@
+name: Normative-home clock
+
+# RFC 0189 §D — the v1 normative-home burn-down, daily on main.
+#
+# WHY THIS IS ITS OWN WORKFLOW. It used to be the second step of
+# `pending-suite-release.yml`, whose FIRST step is the unpublished-suite-tag
+# alarm — the one that caught 25 unshipped bumps (1.73.0 → 1.98.0). This clock
+# is expected to go red for a stretch: the burn-down deliberately measures
+# `v1Dependent + undeclared` and drives toward v2 text, while RFC 0189 §D's
+# terminal fallback accepts a carried v1-dependent family. RFC 0190 §C made that
+# choice explicitly — "a fallback is what happens when you miss the target; it is
+# not an exemption from the target" — so a red here is an accurate signal, not a
+# defect to tune away.
+#
+# But a job that is red-by-design for weeks trains you to stop reading the run it
+# shares. Sharing one with the missed-tag alarm would have meant a standing red
+# masking exactly the finding that alarm exists to surface. So they are split:
+# this one may stand red and stay informative; that one must only ever be red for
+# a reason.
+#
+# Deliberately NOT part of `openwop:check`. The ratchets run on every PR; the
+# calendar does not. Reding a contributor's unrelated PR because a date passed
+# punishes the wrong person.
+
+on:
+  schedule:
+    # 07:30 UTC — after the pending-release alarm, so the two never report at once.
+    - cron: '30 7 * * *'
+  workflow_dispatch:
+    inputs:
+      today:
+        description: 'Override the clock date (YYYY-MM-DD) to check the schedule ahead'
+        required: false
+
+jobs:
+  normative-home-clock:
+    name: Do all v2 core families have a home that survives v1 end-of-support?
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Burn-down against the v1 end-of-support clock
+        env:
+          OPENWOP_NORMATIVE_HOME_TODAY: ${{ github.event.inputs.today }}
+        run: node scripts/check-v2-normative-home.mjs --deadline
