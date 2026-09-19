@@ -177,7 +177,25 @@ for (const f of core) {
   if (!namesKey(obligationProse, f.key)) { unnamed.push(`${f.key} (no core/ or v1 target names it — an ext co-pointer cannot carry the obligation, RFC 0190 §B)`); continue; }
   // §B(c) — an obligation ABOUT the family: a 2119 keyword in a paragraph that
   // also names it. Document scope would pass on almost any v2 core doc.
-  const paras = obligationProse.split(/\n\s*\n/);
+  // RFC 0189 G4 — a markdown TABLE is not one paragraph.
+  //
+  // `split(/\n\s*\n/)` collapsed an entire table into a single block, so a
+  // MUST anywhere in it satisfied EVERY family named anywhere in it. Measured:
+  // `versioning.md`'s 18-axis disposition table is one 20-line "paragraph";
+  // `multiAgent` (row 13) and `schemaVersions` (row 6) were both satisfied by
+  // the MUST in row 15, which is about `minClientVersion`. Both rows name
+  // `events.md` as their owner in their own Owner column, and events.md
+  // mentions neither family. The gate green-lit both declarations.
+  //
+  // Eleven of the still-undeclared families have a table-only match waiting.
+  // Splitting table rows into their own units strictly NARROWS the predicate:
+  // no honestly declared family relies on a cross-row match, so unlike the four
+  // tightenings RFC 0191 measured and rejected, this one breaks nothing.
+  const paras = obligationProse.split(/\n\s*\n/).flatMap((block) => {
+    const lines = block.split('\n').filter((l) => l.trim() !== '');
+    const isTable = lines.length > 1 && lines.every((l) => l.trim().startsWith('|'));
+    return isTable ? lines : [block];
+  });
   if (!paras.some((q) => namesKey(q, f.key) && KEYWORD.test(q))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it)`); continue; }
   // §B(d) — facet completeness, counted rather than failed (see the ratchet).
   for (const facet of f.facets ?? []) if (!namesKey(prose, facet)) facetsUncovered.push(`${f.key}.${facet}`);

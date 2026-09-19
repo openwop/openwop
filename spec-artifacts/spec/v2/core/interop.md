@@ -1,6 +1,7 @@
 # Interop
 
 > **Status: Stable · RFC 0175.**
+> **Normative home:** `a2a`, `mcp`.
 
 ## Why this exists
 

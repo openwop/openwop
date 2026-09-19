@@ -112,4 +112,4 @@ Corpus-gate only. Sabotage-proved at filing:
 ## Acceptance criteria
 
 - [x] `Draft → Active`: the four rules implemented, the baseline re-seeded with `t0`/`openAtT0`/`facetsUncovered`/`v1Carried`, the daily `--deadline` step, four families declared, and each rule sabotage-proved. (This PR.)
-- [ ] `Active → Accepted`: `facetsUncovered` and `undeclared + v1Dependent` both strictly below their filing values, demonstrating the ratchet admits real progress and not only paperwork.
+- [ ] `Active → Accepted`: `facetsUncovered` has NOT RISEN, and `undeclared + v1Dependent` is strictly below its filing value, demonstrating the ratchet admits real progress and not only paperwork. (Amended 2026-09-18: the original said BOTH strictly below their filing values. `facetsUncovered` filed at **0** and §C forbids it rising, so "strictly below 0" was unsatisfiable — this RFC could never have flipped, however many families landed. Amended in place while `Active`, which RFC 0174 §A.4 permits.)
