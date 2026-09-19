@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.30.0] — 2026-09-19 — the unbacked ratchet
+
+- No scenario change. `check-registers` now actually ratchets the open-risk count it has always printed `(ratchet)` after. Suite pinned to corpus `2.30.0`.
+
 ## [2.29.0] — 2026-09-19 — the front-door counts
 
 - `v2-front-door-counts.test.ts` — the stated count of `spec/v2/core/` documents (three prose sites) and `capabilities.md` §5's core-family total are held against the tree. Both had drifted in 2.23.0. Sabotage-proven.

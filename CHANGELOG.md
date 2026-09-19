@@ -54,6 +54,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.30.0] — 2026-09-19 — the gate printed "(ratchet)" after a number nothing ratcheted
+
+### Fixed
+
+- **`check-registers` has printed `open risk rows 330 (ratchet)` on every run, and nothing compared that count to anything.** The baseline in `docs/witness-baseline.json` covered `openGaps` only. A word in a gate's own output that the code does not back is precisely the defect this corpus spent the day removing from its *prose* — and it was sitting in the instrument.
+
+  This session's own docket repeated the claim ("a ratcheted backlog with a gate that already tells the truth about them"), which is how an unbacked word survives: it gets quoted by someone who trusted the output.
+
+  `openRisks: 330` is now a real baseline and the summary names it: `open risk rows 330 (ratchet, baseline 330)`. Sabotage-proven — lowering the baseline to 329 fails the gate by name.
+
+- **Zero is deliberately NOT the baseline here, unlike `openGaps`.** An open *gap* says a steward owes work, so zero is the only self-policing value. An open *risk* is a legitimate standing state — a hazard recorded as live rather than pretended away. What the baseline buys is that the count cannot climb **in silence**: a new open risk must lower another or move the number deliberately, in the same commit, with a reason.
+
+### Verified, not changed
+
+- **The tier-3 tripwire is stated honestly across the corpus** and needs no work. `INTEROP-MATRIX.md` says **"no independent-organization row exists"** in its own header vocabulary; every graduation records its tier explicitly (*"Not dual-witness, not independent-organization evidence"*); `MAINTAINERS.md` records the condition that retires the bootstrap waiver. Checked rather than assumed — the docket said "leave it alone", which is a conclusion that still has to be earned.
+
 ## [2.29.0] — 2026-09-19 — the front door was misreporting the corpus's own size, and I caused it
 
 ### Fixed

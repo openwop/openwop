@@ -1,9 +1,10 @@
 {
-  "$comment": "RFC 0166 \u00a7C ratchet baseline \u2014 counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering | openGaps: the corpus reached ZERO open gap rows on 2026-09-18 and this pins it there. Zero is the only baseline value that makes the `open` token self-policing: after it, a new `open` row has to be argued for rather than accumulated.",
+  "$comment": "RFC 0166 \u00a7C ratchet baseline \u2014 counts may only go down; rewrite with scripts/check-witness-classes.mjs --update-baseline after lowering | openGaps: the corpus reached ZERO open gap rows on 2026-09-18 and this pins it there. Zero is the only baseline value that makes the `open` token self-policing: after it, a new `open` row has to be argued for rather than accumulated. | openRisks: 330 on 2026-09-19. Unlike `openGaps`, ZERO is not the right baseline here \u2014 an open risk is a legitimate standing state (a hazard recorded as accepted-and-live), whereas an open GAP says a steward owes work. What the baseline buys is that the count cannot rise in silence: a new open risk has to lower another or move the number deliberately. The summary line had printed '(ratchet)' after this count since it was added, while nothing compared it to anything.",
   "measured": "2026-09-04",
   "unwitnessable": 21,
   "unreviewedInvariants": 166,
   "unreviewedExtensions": 67,
   "selfCarried": 342,
-  "openGaps": 0
+  "openGaps": 0,
+  "openRisks": 330
 }
