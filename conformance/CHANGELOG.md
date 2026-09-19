@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.19.0] — 2026-09-19 — section-scoped obligations (G10); seven storage families homed
+
+**Why a minor.** No conformance code changes. `spec/v2/declaration.json` gains
+seven `normativeText` declarations; the normative-home predicate now reads an
+obligation under a section titled for the family, which G4 had severed.
+
 ## [2.18.0] — 2026-09-19 — fourteen v1-dependent homes; burn-down denominator corrected
 
 **Why a minor.** No conformance code changes. `spec/v2/declaration.json` is a

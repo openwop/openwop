@@ -803,6 +803,7 @@
     {
       "key": "fs",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#fs",
       "peerDependencyId": "fs",
@@ -825,6 +826,7 @@
     {
       "key": "kvStorage",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#kvStorage",
       "peerDependencyId": "kvStorage",
@@ -847,6 +849,7 @@
     {
       "key": "tableStorage",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#tableStorage",
       "peerDependencyId": "tableStorage",
@@ -1288,6 +1291,7 @@
     {
       "key": "nosql",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#nosql",
       "peerDependencyId": "nosql",
@@ -1307,6 +1311,7 @@
     {
       "key": "vectorStore",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#vectorStore",
       "peerDependencyId": "vectorStore",
@@ -1326,6 +1331,7 @@
     {
       "key": "searchIndex",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#searchIndex",
       "peerDependencyId": "searchIndex",
@@ -1345,6 +1351,7 @@
     {
       "key": "blobStorage",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#blobStorage",
       "peerDependencyId": "blobStorage",

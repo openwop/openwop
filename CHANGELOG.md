@@ -54,6 +54,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.19.0] — 2026-09-19 — seven families did not need a design decision; their contract was already written
+
+### Fixed
+
+- **G4 severed obligations from the section headings that scope them.** G4 (2.13.0) split table rows into separate paragraph units so a `MUST` in row 15 could not satisfy a family named in row 6. That was right, and it had a cost nobody measured: it also cut those rows loose from their **section heading**.
+  - `spec/v1/host-capabilities.md` carries `## §host.kvStorage`, `## §host.blobStorage`, `## §host.vectorStore` and five more. Each is a real contract with **three to five MUSTs** — and every one is a table row reading *"A `get` for tenant A MUST NOT return values written by tenant B, even with identical keys."* The family's name is in the heading; the obligation is in the row; G4 put them in different units, and the gate concluded the contract did not exist.
+  - **Seven families had been classified as needing a design decision** about where a `ctx.*` host service lives in v2. They needed no decision. Their contract was written, and unreadable to the predicate.
+  - Closed as **G10**: an obligation inside a section **titled for** the family counts as an obligation about it. The heading must *be* the section title (`## §host.kvStorage`, `### § packs`) — not merely mention the key, which is the G1 homonym hazard one level up. `host.` is admitted because it is the v1 capability namespace those sections are named in. Sabotage-proved: `promptLibrary`'s section *is* titled for it and carries **zero** MUSTs — still refused.
+
+### Changed
+
+- **Seven families declared v1-dependent**: `fs`, `kvStorage`, `tableStorage`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage` — all with **zero facets uncovered**, all with recorded banners.
+- `undeclared` **33 → 26**; `v1Dependent` 21 → 28. First red moves **~2026-10-28 → ~2026-11-08**.
+
+**Compatibility: editorial + gate.** No wire artifact, schema shape, endpoint contract or error meaning changes.
+
 ## [2.18.0] — 2026-09-19 — fourteen families declared, and a decline I got wrong
 
 ### Fixed
