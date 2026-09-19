@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.22.0] — 2026-09-19 — G14 + G16; envelopeContracts re-anchored
+
+**Why a minor.** `spec/v2/core/events.md` and `spec/v2/declaration.json` are
+published artifacts: `envelopeContracts` moves from a false v1 anchor to a real
+v2 home, and the normative-home gate splits bullet lists per item and refuses a
+conformance-seam catalog as a behaviour home.
+
 ## [2.21.0] — 2026-09-19 — nine v1-dependent homes; G12 + G13
 
 **Why a minor.** `spec/v2/declaration.json` is a published artifact and gains
