@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.27.1] — 2026-09-19 — register corrections
+
+- No scenario change. Two stale rows corrected in RFC 0121's gap register. Suite pinned to corpus `2.27.1`.
+
 ## [2.27.0] — 2026-09-19 — the four RFC 0158 recovery rows
 
 - `v2-durability-recovery.test.ts` — `kill-after-accept` (hold-dispatch), `kill-during-execution` (never observable as completed without re-execution), `duplicate-delivery` (counted per effect identity), `bound-is-derived` (an explicitly-labelled paper check that MUST NOT be cited as evidence the mechanism runs).

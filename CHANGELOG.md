@@ -54,6 +54,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.27.1] — 2026-09-19 — two stale register rows, and a gate I measured and declined to add
+
+### Fixed
+
+- **RFC 0121's G1 gated the un-parking tripwire on a flip the RFC had already made.** The row read *"this IS the un-parking tripwire — the gating condition for `Draft (Parked) → Active`"*, while the RFC's header has said `Active` (**Parked**) for weeks and its `Updated` field records 6 of 8 `Accepted` criteria met. A reader checking whether the tripwire had fired would have measured the wrong flip. Target corrected to `Active (Parked) → Accepted`.
+
+- **RFC 0121's G6 asserted a defect that does not exist.** It filed *"`credential_scope_forbidden` is absent from `spec/v2/errors.json`"*. Re-measured: it **is** registered — `spec/v2/errors.json` carries it at `403`, `spec/v2/core/errors.md` lists it, and `schemas/v2/error-envelope.schema.json` carries it in both the code enum and the status map. The claim is struck rather than left standing: a register row asserting a defect that does not exist sends the next reader to fix nothing.
+
+### Declined, with the measurement
+
+- **A gate for "a live gap gated on a flip the RFC has already made" was written, measured, and reverted.** It found **50 rows**, and they were not defects: the Blocks column is a *deadline* ("resolve by this flip"), not a prediction, so a `carried` row on an `Accepted` RFC naming "Active status" is history, not a live claim. What made 0121's G1 wrong was its **prose** asserting a present gating condition — a semantic claim, and no regex decides a semantic claim. Narrowing the rule until it matched only the row already fixed would have bought a gate that catches nothing. The reasoning is recorded instead of a rule.
+
+### Not changed, deliberately
+
+- **RFC 0121 is NOT withdrawn**, reversing this session's own docket recommendation. Its G1 is tokened `externally-gated:provider-tos-clearance` with a named un-parking tripwire. `Withdrawn` implies a decision not to pursue and would **lose** the tripwire; `Active (Parked)` with an externally-gated gap says more, and says it precisely.
+- **RFC 0111 is NOT un-parked.** The docket said it had "five open design gaps answerable by design work". It has **zero** open gaps: four `closed` and one `externally-gated:non-steward-host`, which is its own parking tripwire — workstream G, unownable. The docket's count came from grepping the word "open", which appears inside that row's prose explaining why it is *not* open.
+
 ## [2.27.0] — 2026-09-19 — the four RFC 0158 recovery rows that never existed, and the disposition rule that keeps them from stripping the fleet
 
 ### Added
