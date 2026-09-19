@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.24.0] — 2026-09-19 — the envelope-kind catalog gets a seat
+
+- `v2-envelope-catalog.test.ts` — six corpus witnesses for RFC 0193. The generator leg sabotages a scratch copy (removes a seat file, asserts the refusal names the family), because the committed tree is clean and a bare exit-0 wrapper would pass just as happily with the guard deleted. The optionality leg asserts no seat is `required` — MyndHyve publishes two of these records without one, and the v2 root is closed.
+- Suite pinned to corpus `2.24.0`.
+
 ## [2.23.0] — 2026-09-19 — zero undeclared families
 
 **Why a minor.** Three new `spec/v2/core/*.md` documents and `spec/v2/declaration.json`

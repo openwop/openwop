@@ -1,0 +1,15 @@
+{
+  "$comment": "RFC 0193 §B — the seat for the v1 array. `supportedEnvelopes` was an array of kind strings in v1; the v2 record is an object, so the catalog needs a name. OPTIONAL, not required: MyndHyve's live v2 document already publishes this record without one, and the v2 root is additionalProperties:false, so a required seat would invalidate a published closed record with no host change (the same rule that kept observability.testSeams). §C makes the absence fail CLOSED instead.",
+  "properties": {
+    "kinds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "description": "The envelope `type` strings this host recognizes, as in v1 `Capabilities.supportedEnvelopes`. Universal kinds (`clarification.request`, `schema.request`, `schema.response`, `error`) are always allowed and need not be listed. Every other member MUST be namespaced under the `<org>.` rule (`events.md`). ABSENT IS NOT `[]` AND IS NOT `all`: an engine MUST refuse every non-universal kind with `unknown_envelope_kind` when this seat is absent (`events.md` §\"The envelope-kind catalog\"). The refusal is what makes the protocol-tier invariant `prompt-injection-envelope-typecheck` enforceable at major 2."
+    }
+  }
+}

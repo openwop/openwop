@@ -339,6 +339,16 @@
             "claims-check",
             "negative-existence"
           ]
+        },
+        "kinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "description": "The envelope `type` strings this host recognizes, as in v1 `Capabilities.supportedEnvelopes`. Universal kinds (`clarification.request`, `schema.request`, `schema.response`, `error`) are always allowed and need not be listed. Every other member MUST be namespaced under the `<org>.` rule (`events.md`). ABSENT IS NOT `[]` AND IS NOT `all`: an engine MUST refuse every non-universal kind with `unknown_envelope_kind` when this seat is absent (`events.md` §\"The envelope-kind catalog\"). The refusal is what makes the protocol-tier invariant `prompt-injection-envelope-typecheck` enforceable at major 2."
         }
       },
       "allOf": [
@@ -376,8 +386,8 @@
           }
         }
       ],
-      "description": "core/capabilities.md#supportedEnvelopes — witness: witnessable-gated; maturity stable/none",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#supportedEnvelopes — witness: witnessable-gated; maturity stable/none; RFC 0193",
+      "x-openwop-facets-from": "spec/v2/facets/supportedEnvelopes.schema.json"
     },
     "schemaVersions": {
       "type": "object",
@@ -412,6 +422,19 @@
             "claims-check",
             "negative-existence"
           ]
+        },
+        "kinds": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Active schema version per envelope kind, as in v1 `Capabilities.schemaVersions` (e.g. `{\"vendor.acme.prd.create\": 2}`). A kind absent from this map has no advertised floor; an emitted `schemaVersion` is then compared against 0. An emitted version HIGHER than the advertised floor MUST be refused with `unknown_schema_version` regardless of strictness; LOWER is governed by `envelopeStrictness.mode` (`events.md` §\"The envelope-kind catalog\")."
         }
       },
       "allOf": [
@@ -449,8 +472,8 @@
           }
         }
       ],
-      "description": "core/capabilities.md#schemaVersions — witness: witnessable-gated; maturity stable/none",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#schemaVersions — witness: witnessable-gated; maturity stable/none; RFC 0193",
+      "x-openwop-facets-from": "spec/v2/facets/schemaVersions.schema.json"
     },
     "limits": {
       "type": "object",
@@ -606,6 +629,13 @@
             "claims-check",
             "negative-existence"
           ]
+        },
+        "mode": {
+          "enum": [
+            "warn",
+            "strict"
+          ],
+          "description": "Schema-version drift handling. `warn` (the default when this seat is absent, as in v1): an engine MUST attempt validation against the advertised version and log `envelope_schema_version_drift`. `strict`: the same condition MUST refuse with `unknown_schema_version`. Drift ABOVE the advertised floor refuses under both (`events.md` §\"The envelope-kind catalog\")."
         }
       },
       "allOf": [
@@ -643,8 +673,8 @@
           }
         }
       ],
-      "description": "core/capabilities.md#envelopeStrictness — witness: claims-check; maturity experimental/none",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#envelopeStrictness — witness: claims-check; maturity experimental/none; RFC 0193",
+      "x-openwop-facets-from": "spec/v2/facets/envelopeStrictness.schema.json"
     },
     "envelopeContracts": {
       "type": "object",

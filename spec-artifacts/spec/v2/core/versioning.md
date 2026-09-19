@@ -77,7 +77,7 @@ by `minClientVersion` and the additive-change rules.
 | 3 | `engineVersion` | unify: integer everywhere; codemod `openwop.codemod.engine-version-unify` | `integer, minimum 0` | this document |
 | 4 | `eventLogSchemaVersion` | first-class, the era key | integer; v2 writes `3` | `persistence.md` |
 | 5 | per-event `schemaVersion` | first-class; §0 growth rule | integer | `events.md` |
-| 6 | `schemaVersions` map | first-class; keys = envelope-kind grammar | `additionalProperties: false` over declared kinds | `events.md` |
+| 6 | `schemaVersions` map | first-class; the map moves into the record's `kinds` seat (RFC 0193) | `propertyNames` = the envelope-kind grammar, values `integer, minimum 0`; NOT a closed enum — a vendor kind is host-published and never corpus-declared | `events.md` |
 | 7 | `version.pinned` | first-class; the v1-pinned-run disposition | integer min/max | `persistence.md` |
 | 8 | `contractProvenance` | delete | — | `capabilities.md` |
 | 9 | `minimumSuiteVersion` | retire into `spec/v2/declaration.json` | semver | `capabilities.md` |
