@@ -4,13 +4,13 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0190                                                            |
 | **Title**         | the kernel budget's denominator follows the home gate's acceptance, and its cap grows only as debt is retired |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-18                                                      |
-| **Updated**       | 2026-09-18 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no wire surface, no identity or auth surface, no MUST strength changes — this RFC governs a gate over source artifacts.) |
+| **Updated**       | 2026-09-18 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no wire surface, no identity or auth surface, no MUST strength changes — this RFC governs a gate over source artifacts.) · **Active → Accepted 2026-09-19.** Evidence tier: corpus gate — every requirement id in the falsifiability table carries a row in `evidence/corpus-ledger.json`, minted by `conformance/src/coherence/`. No host bundle is involved: these RFCs govern gates over source artifacts, and their witnesses are `witnessable — unaided (corpus)`. The cap has been exercised: families landed against it across 2.13.0–2.19.0 and the printed cap tracked `25,000 + 200 × (resolved − 9)` at each step. |
 | **Affects**       | `scripts/check-core-budget.mjs` · `scripts/check-v2-normative-home.mjs` · `docs/normative-home-baseline.json` |
 | **Compatibility** | `editorial + gate` (COMPATIBILITY.md): no wire artifact, no schema shape, no endpoint contract, no error meaning, no MUST relaxed |
-| **Supersedes**    | RFC 0174 §E.2, §E.2a                                            |
+| **Supersedes**    | RFC 0174 §E.2 and §E.2a — amends those two sections only; RFC 0174 otherwise stands as the v2 governance RFC |
 | **Superseded by** | —                                                               |
 
 ## Summary
@@ -68,6 +68,12 @@ At end-of-support the gate fails on exactly two things: a family with no declare
 | §B ext is a co-pointer, never a sole home | `openwop.requirement.0189.home-class` — a family whose only home is under `spec/v2/ext/` is refused by name | any contributor, by declaring an ext-only home | witnessable — unaided (corpus) |
 | §C the §D fallback is applied rather than printed | `openwop.requirement.0190.fallback-applied` — past end-of-support the gate names an undeclared family, a deleted `v1Carried` target, or a changed `Status:` banner, and otherwise exits 0 | the steward, by moving the clock or editing a carried target | witnessable — unaided (corpus) |
 | §C `v1Carried` matches the computed set | `openwop.requirement.0190.v1carried-matches` — a v1-dependent family absent from `v1Carried`, or a listed family that is no longer v1-dependent, fails by name | any contributor, by declaring a v1 home without updating the baseline | witnessable — unaided (corpus) |
+
+
+## Acceptance criteria
+
+- [x] `Draft → Active`: the measured set follows the home gate (`spec/v2/core/**` recursive plus ext documents a core family cites), the cap is `25,000 + 200 × (resolved − 9)`, `spec/v2/ext/**` is demoted to a co-pointer, and RFC 0189 §D's fallback is applied rather than printed — each sabotage-proved.
+- [x] `Active → Accepted`: every requirement id in the falsifiability table carries a row in `evidence/corpus-ledger.json`, and the cap has been exercised by at least one family landing against it (a grant that is never spent is not a demonstrated instrument).
 
 ## Alternatives considered
 

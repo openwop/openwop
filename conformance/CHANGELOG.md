@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.20.0] — 2026-09-19 — eleven corpus witnesses; four RFCs Accepted
+
+**Why a minor.** Two new coherence scenarios under `conformance/src/coherence/`
+mint the eleven requirement ids RFCs 0189–0192 name, taking the corpus ledger
+from 345 to 357. `spec/v2/core/security-defaults.md` gains a one-word erratum
+(`permanent` → `persisted`) matching the bundle schema's enum.
+
 ## [2.19.0] — 2026-09-19 — section-scoped obligations (G10); seven storage families homed
 
 **Why a minor.** No conformance code changes. `spec/v2/declaration.json` gains
