@@ -61,8 +61,16 @@ function withDeclaration(mutate: (s: string) => string, fn: (cwd: string) => voi
     fn(dir);
   });
 }
-const declare = (key: string, home: string) => (s: string) =>
-  s.replace(new RegExp(`("key": "${key}",\\n(\\s+)"kind": "family",)`), (_m, head, pad) => `${head}\n${pad}"normativeText": ["${home}"],`);
+// REPLACES any existing `normativeText`, never prepends a second one. The first
+// version inserted after `"kind": "family",` — but an already-declared family
+// carries `normativeText` at that exact position, so the mutation produced a
+// DUPLICATE key and JSON.parse kept the later (original) one. The sabotage then
+// silently tested nothing and the assertion failed for an unrelated-looking
+// reason. A test whose mutation no-ops is worse than no test.
+const declare = (key: string, home: string) => (s: string) => {
+  const stripped = s.replace(new RegExp(`("key": "${key}",\\n\\s+"kind": "family",)(\\n\\s+"normativeText": \\[[^\\]]*\\],)`), '$1');
+  return stripped.replace(new RegExp(`("key": "${key}",\\n(\\s+)"kind": "family",)`), (_m, head, pad) => `${head}\n${pad}"normativeText": ["${home}"],`);
+};
 
 describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 0191 §A)', () => {
   it('a refused home class is refused by name', () => {

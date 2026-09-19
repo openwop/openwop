@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.21.0] — 2026-09-19 — nine v1-dependent homes; G12 + G13
+
+**Why a minor.** `spec/v2/declaration.json` is a published artifact and gains
+nine `normativeText` declarations. The normative-home gate stops treating a
+fenced code block as an obligation (G12) and refuses a document that declares
+itself non-normative (G13); a coherence sabotage helper that would have silently
+no-opped is corrected.
+
 ## [2.20.0] — 2026-09-19 — eleven corpus witnesses; four RFCs Accepted
 
 **Why a minor.** Two new coherence scenarios under `conformance/src/coherence/`

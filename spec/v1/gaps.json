@@ -10468,6 +10468,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.11",
+      "rfc": "0189",
+      "local": "G11",
+      "section": "§B(b)",
+      "surface": "G5's preceding-dot rule is right that `owner.workspace` does not name `workspace`, and wrong that `capabilities.prompts` does not name `prompts` — the `capabilities.<key>` and `host.<key>` forms are the CANONICAL way v1 prose names a capability family. Measured: admitting those two closed namespaces unlocks true homes for `prompts` (`spec/v1/prompts.md`, two protocol-tier invariants), `feedback` (`observability.md`), `nodePackRuntimes` (`node-packs.md` — a textbook home I had classified as \"no candidate anywhere\") and `aiEnvelope`. G10 already admits `(?:host\\.)?` in `titledFor` for exactly this reason; it fixed headings and left body prose behind.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "scripts/check-v2-normative-home.mjs",
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G11"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.12",
+      "rfc": "0189",
+      "local": "G12",
+      "section": "§B(c)",
+      "surface": "G10 made the HEADING supply the family name, which removed an accidental defence: a fenced code block under `## §host.<key>` spells the family `ctx.<key>.…` and was preceding-dot-dead before G10. After it, any such block containing a stray MUST/SHOULD/MAY **in a comment** satisfies §B(c). Live instance: §host.secrets' TypeScript sketch matched on `// pack SHOULD treat as advisory`. A fenced block is an illustrative shape, not an obligation.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G12"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.13",
+      "rfc": "0189",
+      "local": "G13",
+      "section": "§A",
+      "surface": "A document that declares itself NON-NORMATIVE could be a normative home. `spec/v1/structured-output-subset.md` is titled \"(informative)\" and banners \"Non-normative snapshot\" — and it is the ONLY prose site of `envelopes.tierOneSubsetCompliance` corpus-wide, so declaring it was the cheapest way to resolve `envelopes`. The gate checked only that a Status banner EXISTS. At end-of-support the §D fallback would then have asserted that an informative document is operative prose.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G13"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0190.1",
       "rfc": "0190",
       "local": "G1",
