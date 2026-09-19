@@ -230,12 +230,37 @@ for (const f of core) {
   // Splitting table rows into their own units strictly NARROWS the predicate:
   // no honestly declared family relies on a cross-row match, so unlike the four
   // tightenings RFC 0191 measured and rejected, this one breaks nothing.
-  const paras = obligationProse.split(/\n\s*\n/).flatMap((block) => {
-    const lines = block.split('\n').filter((l) => l.trim() !== '');
-    const isTable = lines.length > 1 && lines.every((l) => l.trim().startsWith('|'));
-    return isTable ? lines : [block];
-  });
-  if (!paras.some((q) => namesKey(q, f.key) && KEYWORD.test(q))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it)`); continue; }
+  // RFC 0189 G10 — an obligation inside a section TITLED for the family is an
+  // obligation about that family.
+  //
+  // G4 split table rows apart so a MUST in row 15 could not satisfy a family
+  // named in row 6. Correct, and it had a cost nobody measured: it also severed
+  // rows from the SECTION HEADING that scopes them. `spec/v1/host-capabilities.md`
+  // carries `## §host.kvStorage`, `## §host.blobStorage`, `## §host.vectorStore`
+  // and five more — each a real contract with three to five MUSTs, every one of
+  // them a table row reading "A `get` for tenant A MUST NOT return values written
+  // by tenant B". The family's name is in the heading; the obligation is in the
+  // row; G4 put them in different units and the gate concluded the contract did
+  // not exist. Seven families looked like they needed a design decision about
+  // where a host service lives in v2, when their contract was already written.
+  //
+  // The heading must be TITLED for the family — `## §host.kvStorage`, `### § packs`,
+  // `## \`replay\`` — not merely mention it. A heading that happens to contain the
+  // word is the G1 homonym hazard one level up; requiring the heading to BE the
+  // family's section title is the narrow form, and `host.` is admitted because it
+  // is the v1 capability namespace these sections are named in.
+  const titledFor = (h, k) => new RegExp(`^#{1,6}\\s*§?\\s*\`?(?:host\\.)?${k}\`?\\s*$`).test(h.trim());
+  const paras = [];
+  {
+    let heading = '';
+    for (const block of obligationProse.split(/\n\s*\n/)) {
+      const lines = block.split('\n').filter((l) => l.trim() !== '');
+      if (lines.length && /^#{1,6}\s/.test(lines[0].trim())) heading = lines[0];
+      const isTable = lines.length > 1 && lines.every((l) => l.trim().startsWith('|'));
+      for (const unit of (isTable ? lines : [block])) paras.push({ text: unit, heading });
+    }
+  }
+  if (!paras.some((q) => KEYWORD.test(q.text) && (namesKey(q.text, f.key) || titledFor(q.heading, f.key)))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it, nor under a section titled for it)`); continue; }
   // §B(d) — facet completeness, counted rather than failed (see the ratchet).
   // A facet is legitimately named EITHER bare (`packsSupported`) or, far more
   // often, qualified by its family (`connections.packsSupported`). G5's rule that

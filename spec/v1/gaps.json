@@ -10451,6 +10451,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.10",
+      "rfc": "0189",
+      "local": "G10",
+      "section": "§B(c)",
+      "surface": "G4 split table rows apart so a MUST in row 15 could not satisfy a family named in row 6 — correct, and it had a cost nobody measured. It also severed those rows from the SECTION HEADING that scopes them. `spec/v1/host-capabilities.md` carries `## §host.kvStorage`, `## §host.blobStorage`, `## §host.vectorStore` and five more, each a real contract with three to five MUSTs — every one a table row reading \"A `get` for tenant A MUST NOT return values written by tenant B\". The family's name is in the heading; the obligation is in the row; G4 put them in different units and the gate concluded the contract did not exist. SEVEN families were classified as needing a design decision about where a `ctx.*` host service lives in v2, when their contract was already written and merely unreadable to the predicate.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G10"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0190.1",
       "rfc": "0190",
       "local": "G1",
