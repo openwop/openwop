@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 522 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 188 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 189 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.15.1 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.16.0 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -68,7 +68,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 179 |
-| Active | 7 |
+| Active | 8 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -262,6 +262,7 @@
 | RFC 0189 | `normativeText` as a checkable declaration field: legal homes, a content predicate, a ratchet that does not punish honesty, and a deadline that can actually fire | Active |
 | RFC 0190 | the kernel budget's denominator follows the home gate's acceptance, and its cap grows only as debt is retired | Active |
 | RFC 0191 | the reciprocal normative-home marker: why no regex over prose can decide a semantic claim, and what to do instead | Active |
+| RFC 0192 | the v2 facet advertisement semantic, the 26 descriptions that still gated on a retired field, and the generator that stops the 27th | Active |
 
 ## SDK Helper Coverage
 
@@ -284,7 +285,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 7 RFCs `Active` (RFC 0111, RFC 0121, RFC 0158, RFC 0188, RFC 0189, RFC 0190, RFC 0191) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 8 RFCs `Active` (RFC 0111, RFC 0121, RFC 0158, RFC 0188, RFC 0189, RFC 0190, RFC 0191, RFC 0192) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

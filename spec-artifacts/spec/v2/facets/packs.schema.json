@@ -7,7 +7,7 @@
       "properties": {
         "isolated": {
           "type": "boolean",
-          "description": "RFC 0025 §C point 1. MUST be `true` when `supported` is `true` — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
+          "description": "RFC 0025 §C point 1. MUST be `true` when this facet is present — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
         },
         "catalogResetEndpoint": {
           "type": "string",
