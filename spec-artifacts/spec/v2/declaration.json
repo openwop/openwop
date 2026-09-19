@@ -415,6 +415,7 @@
     {
       "key": "dataResidency",
       "kind": "family",
+      "normativeText": ["spec/v2/core/runs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#dataResidency",
       "peerDependencyId": "dataResidency",
@@ -760,6 +761,7 @@
     {
       "key": "conversationPrimitive",
       "kind": "family",
+      "normativeText": ["spec/v2/core/runs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#conversationPrimitive",
       "peerDependencyId": "conversationPrimitive",

@@ -107,7 +107,7 @@ const KEYWORD = /\b(MUST NOT|MUST|SHOULD NOT|SHOULD|MAY)\b/;
 // the twenty families that satisfied §B(c) did so ONLY through this:
 //   fs          <- "nodes are fs-gated"            (hyphen)
 //   budget      <- "token_budget_exceeded"         (underscore)
-//   i18n        <- "see i18n.md"                   (file extension)
+//   i18n        <- "see i18n.md"                   (file extension) -- NOT CLOSED, see below
 //   portability <- "spec/v2/ext/portability/"      (path segment)
 //   workspace   <- "RunSnapshot.owner.workspace"   (field-path SUFFIX)
 //
@@ -117,6 +117,17 @@ const KEYWORD = /\b(MUST NOT|MUST|SHOULD NOT|SHOULD|MAY)\b/;
 // what follows is a DECLARED FACET of that family; a PRECEDING dot never counts.
 //
 // Like G4 this strictly narrows and breaks no honest declaration — verified against
+// WHAT G5 DOES NOT CLOSE, stated because an earlier version of this comment
+// claimed otherwise. The trailing class `A` excludes `-`, `_` and `/` but NOT
+// `.`, because a following dot must stay open for the `key.facet` arm. So a
+// FOLLOWING dot still bleeds: "see i18n.md" names `i18n`, and
+// `channelPresence.supported` names `channelPresence`. Only a PRECEDING dot
+// is closed. Adding `.` to `A` was measured and breaks EIGHT honestly
+// declared families (connections, oauth, multiAgent, toolHooks, ...) whose
+// real mentions are `key.<something>` where <something> is not a declared
+// facet. Recorded as G8 rather than left as a false claim in the file whose
+// whole purpose is not making false claims.
+//
 // all 13 resolved families. It does not catch English homonyms ("MUST cache the
 // result" still names `cache`); that is what the RFC 0191 marker and a reader are
 // for, and RFC 0191 §B says so rather than claiming otherwise.

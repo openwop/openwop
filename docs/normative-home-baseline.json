@@ -4,7 +4,7 @@
   "openAtT0": 68,
   "$openAtT0Comment": "A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower \u2014 two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
   "v1Dependent": 7,
-  "undeclared": 49,
+  "undeclared": 47,
   "facetsUncovered": 0,
   "v1Banners": {
     "spec/v1/capabilities.md": "> **Status: Stable \u00b7 v1.1.** Normative `/.well-known/openwop` discovery and capability-advertisement contract.",

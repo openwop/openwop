@@ -10417,6 +10417,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.8",
+      "rfc": "0189",
+      "local": "G8",
+      "section": "§B(b)",
+      "surface": "G5 closed a PRECEDING dot but not a FOLLOWING one, and this register's own G5 row plus the gate's docblock CLAIMED otherwise — naming `i18n` ← \"see i18n.md\" as closed when it is not. The trailing boundary class excludes `-`, `_` and `/` but must leave `.` open for the `key.facet` arm, so `see i18n.md` still names `i18n` and `` `channelPresence.supported` `` still names `channelPresence`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0189.8",
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.9",
+      "rfc": "0189",
+      "local": "G9",
+      "section": "§D",
+      "surface": "The burn-down denominator (`open = v1Dependent + undeclared`) is STRICTER than the terminal predicate it schedules (`fatal = undeclared + uncarried + broken`) — at end-of-support a carried v1-dependent family is acceptable, but before it every such family still counts against the daily clock. A review recommended aligning them by changing the denominator to `undeclared`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0190.1",
       "rfc": "0190",
       "local": "G1",

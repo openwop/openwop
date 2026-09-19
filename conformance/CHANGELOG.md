@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.17.0] — 2026-09-19 — the core-prose `supported` ghost; two more homes
+
+**Why a minor.** No conformance code changes. `spec/v2/core/runs.md` and
+`spec/v2/declaration.json` are published artifacts: a MUST conditioned on
+`aiProviders.supported` (not a facet) is corrected to `aiProviders.providers`,
+and `conversationPrimitive` / `dataResidency` declare normative homes.
+
 ## [2.16.0] — 2026-09-19 — RFC 0192 (facet advertisement)
 
 **Why a minor.** No conformance code changes. `spec/v2/core/capabilities.md`,
