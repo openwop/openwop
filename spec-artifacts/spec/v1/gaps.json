@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-18",
+  "updated": "2026-09-19",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -10345,6 +10345,23 @@
         {
           "file": "RFCS/registers/0189-normative-home.gaps.md",
           "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0189.4",
+      "rfc": "0189",
+      "local": "G4",
+      "section": "§B(c)",
+      "surface": "A markdown TABLE is not one paragraph, but `split(/\\n\\s*\\n/)` treated it as one — so an RFC 2119 keyword ANYWHERE in a table satisfied EVERY family named anywhere in it. Measured: `versioning.md`'s 18-axis disposition table is a single 20-line block; `multiAgent` (row 13) and `schemaVersions` (row 6) were both satisfied by the `MUST` in row 15, which is about `minClientVersion`. Both rows name `events.md` as their owner in their own Owner column, and `events.md` mentions neither family. The gate green-lit both declarations, with the RFC 0191 marker in place — so the marker's \"explicit, local and reviewable\" guarantee was being read against a reference table where the claim is contradicted three rows away. Eleven of the then-57 undeclared families had a table-only match waiting.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G4"
         }
       ]
     },

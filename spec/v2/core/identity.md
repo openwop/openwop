@@ -1,6 +1,7 @@
 # Identity
 
 > **Status: Stable · RFC 0170, 0165, 0176.**
+> **Normative home:** `auth`.
 
 ## Why this exists
 

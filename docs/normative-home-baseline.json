@@ -3,12 +3,14 @@
   "t0": "2026-09-18",
   "openAtT0": 68,
   "$openAtT0Comment": "A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower \u2014 two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
-  "v1Dependent": 2,
-  "undeclared": 61,
+  "v1Dependent": 4,
+  "undeclared": 55,
   "facetsUncovered": 0,
   "v1Carried": [
     "toolHooks",
-    "toolCatalog"
+    "toolCatalog",
+    "multiAgent",
+    "schemaVersions"
   ],
   "$v1CarriedComment": "RFC 0189 \u00a7D. At v1 end-of-support, spec/v1/** is FROZEN-BUT-OPERATIVE for exactly these families: EOS ends new v1 wire support, it does not de-normativize prose a v2 family still points at. After the date the gate fails only if one of these targets is DELETED or its Status banner changes \u2014 which is the real hazard, rather than a calendar square."
 }

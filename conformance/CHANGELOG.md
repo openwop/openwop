@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.13.0] — 2026-09-18 — four normative homes; the table-paragraph fix
+
+**Why a minor.** No conformance code changes. `spec/v2/declaration.json` and
+three `spec/v2/core/*.md` documents are published artifacts: `a2a`, `mcp`,
+`auth` and `runList` declare v2 homes, and two families are recorded as
+v1-dependent after the table-paragraph defect (G4) showed their candidate homes
+were false.
+
 ## [2.12.0] — 2026-09-18 — RFC 0191 + the engine-range truth condition
 
 **Why a minor.** No conformance code changes. `spec/v2/core/packs.md` gains the
