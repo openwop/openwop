@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.25.0] — 2026-09-19 — a leg that asserted nothing
+
+- `v2-webhook-durable-delivery` — the `0188.dead-letter-content-free` leg read a **fresh** subscription's sink, looped over zero rows, and asserted nothing; RFC 0148 §A resolves that silent return to `blocked`, denying certification. It now exhausts a real delivery first and asserts over the records it gets, and records `blocked` with a reason when the sink is empty.
+- Suite pinned to corpus `2.25.0`.
+
 ## [2.24.0] — 2026-09-19 — the envelope-kind catalog gets a seat
 
 - `v2-envelope-catalog.test.ts` — six corpus witnesses for RFC 0193. The generator leg sabotages a scratch copy (removes a seat file, asserts the refusal names the family), because the committed tree is clean and a bare exit-0 wrapper would pass just as happily with the guard deleted. The optionality leg asserts no seat is `required` — MyndHyve publishes two of these records without one, and the v2 root is closed.

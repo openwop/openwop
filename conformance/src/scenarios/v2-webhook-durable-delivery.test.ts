@@ -400,22 +400,57 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
   it('a dead-letter record carries no delivered payload', async () => {
     // Its own `it`: RFC 0168 §A.1 allows one explicit requirement id per it(),
     // and `check-req-only` enforces it.
-    if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
+    //
+    // THIS LEG USED TO REGISTER A FRESH SUBSCRIPTION AND READ ITS SINK. A fresh
+    // subscription has no dead letters by construction, so the loop over
+    // `deliveries` ran zero times, the test asserted NOTHING, and RFC 0148 §A
+    // resolves a silent return to `blocked` — which denies certification
+    // (RFC 0168 §E.1). It went unnoticed because every host recorded
+    // `inapplicable` for want of the facet: the first host ever to advertise
+    // `webhooks.deadLetter` was refused certification by this leg on its first
+    // cut, with 232 other rows passing and zero failing.
+    //
+    // §B.1 is a claim about what a REAL record carries, so the leg has to make
+    // one: exhaust a delivery against a receiver that never succeeds — the same
+    // move the sibling 0173 dead-letter leg performs — and then read.
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', 'discovery unreachable');
     const fam = await gateFamily('webhooks');
-    if (!fam?.['deadLetter']) return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet');
-    const reg = await driver.post('/webhooks', { url: 'https://subscriber.invalid/hook', events: ['run.completed'] });
-    if (reg.status !== 201) return softSkip('blocked', `POST /webhooks answered ${reg.status}`);
-    const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
-    if (typeof webhookId !== 'string') return softSkip('blocked', 'the mint returned no webhookId');
-    const sink = await driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`);
-    await driver.delete(`/webhooks/${encodeURIComponent(webhookId)}`);
+    if (!fam) return softSkip('inapplicable', 'webhooks family not advertised');
+    if (!fam['deadLetter']) return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation');
+    if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no delivery to exhaust`);
+
+    const receiver = await startReceiver(Number.POSITIVE_INFINITY); // never succeeds
+    active = receiver.server;
+    const sub = await register(receiver.url);
+    if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
+    const create = await driver.post('/runs', { workflowId: FIXTURE });
+    if (create.status !== 201) {
+      await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
+      return softSkip('blocked', `POST /runs answered ${create.status} — no delivery to exhaust`);
+    }
+    const runId = (create.json as { runId: string }).runId;
+    await waitTerminal(runId, 10_000);
+    const policy = advertisedRetryPolicy(doc);
+    // Filter by SUBSCRIPTION as well as run, as the sibling leg does: a host
+    // that cannot reach loopback shares one tunnelled receiver URL across
+    // scenarios, so another scenario's attempts land in this budget otherwise.
+    const ours = () => receiver.attempts.filter((a) => a.runId === runId && a.webhookId === sub.webhookId);
+    await waitFor(() => ours().length >= (policy?.maxAttempts ?? 2), retryWaitMs(doc));
+    await new Promise((r) => setTimeout(r, 1_000));
+
+    const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
+    await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
     if (sink.status !== 200) return softSkip('blocked', `the dead-letter read answered ${sink.status}`);
     const rows = ((sink.json as { deliveries?: Array<Record<string, unknown>> } | null)?.deliveries ?? []);
-    for (const r of rows) {
-      expect(
-        r['body'] === undefined && r['headers'] === undefined && r['secret'] === undefined,
-        req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', 'a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received'),
-      ).toBe(true);
+    // An empty sink is NOT a pass. Recording one as a pass is exactly the
+    // vacuous witness this leg used to produce; say so instead.
+    if (rows.length === 0) {
+      return softSkip('blocked', 'the exhausted delivery did not reach the sink inside the retry window — §B.1 is a claim about a real record and there is none here to read');
     }
+    expect(
+      rows.every((r) => r['body'] === undefined && r['headers'] === undefined && r['secret'] === undefined),
+      req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', `a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received, so a record carrying any of it turns one read scope into a replay of that traffic for the whole retention window (read ${rows.length} record(s))`),
+    ).toBe(true);
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
 });

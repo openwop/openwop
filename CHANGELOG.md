@@ -54,6 +54,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.25.0] — 2026-09-19 — the §B.1 leg asserted nothing, and that denied certification to the first host that advertised the facet
+
+### Fixed
+
+- **`openwop.requirement.0188.dead-letter-content-free` could never pass on any host.** The leg registered a **fresh** subscription and read its dead-letter sink. A fresh subscription has no dead letters by construction, so the loop over `deliveries` ran zero times, the test asserted nothing, and RFC 0148 §A resolves a silent return to **`blocked`** — which denies certification under RFC 0168 §E.1.
+
+  It went unnoticed because every host recorded `inapplicable` for want of the facet. The first host ever to advertise `webhooks.deadLetter` was refused certification by this leg on its first cut, with 232 other rows passing and zero failing.
+
+  §B.1 is a claim about what a **real** record carries, so the leg now makes one: it exhausts a delivery against a receiver that never succeeds — the same move the sibling `0173` dead-letter leg already performs — then reads the sink and asserts content-freeness across the rows it actually got. An empty sink now records `blocked` **with a reason** rather than passing silently.
+
+- **The shape of the bug is worth naming: a loop over a possibly-empty collection is not an assertion.** It type-checks, it runs, it reports success, and it witnesses nothing. The disposition machinery caught it correctly — the defect was that nothing had ever exercised the path.
+
+### Changed
+
+- The leg now filters receiver attempts by **subscription as well as run**, matching the sibling leg: a host that cannot reach loopback shares one tunnelled receiver URL across scenarios, so another scenario's attempts otherwise land in this leg's budget.
+
 ## [2.24.0] — 2026-09-19 — a capability record is an object, so a v1 array needs a seat (RFC 0193)
 
 ### Fixed
