@@ -172,6 +172,7 @@
     {
       "key": "supportedEnvelopes",
       "kind": "family",
+      "normativeText": ["spec/v1/ai-envelope.md"],
       "anchor": "core",
       "section": "core/capabilities.md#supportedEnvelopes",
       "peerDependencyId": "supportedEnvelopes",
@@ -232,6 +233,7 @@
     {
       "key": "envelopeStrictness",
       "kind": "family",
+      "normativeText": ["spec/v1/ai-envelope.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopeStrictness",
       "peerDependencyId": "envelopeStrictness",
@@ -379,6 +381,7 @@
     {
       "key": "selfHostedRunner",
       "kind": "family",
+      "normativeText": ["spec/v1/capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#selfHostedRunner",
       "peerDependencyId": "selfHostedRunner",
@@ -397,6 +400,7 @@
     {
       "key": "purposePropagation",
       "kind": "family",
+      "normativeText": ["spec/v1/capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#purposePropagation",
       "peerDependencyId": "purposePropagation",
@@ -434,6 +438,7 @@
     {
       "key": "anonymousActor",
       "kind": "family",
+      "normativeText": ["spec/v1/capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#anonymousActor",
       "peerDependencyId": "anonymousActor",
@@ -454,6 +459,7 @@
     {
       "key": "credentials",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#credentials",
       "peerDependencyId": "credentials",
@@ -778,6 +784,7 @@
     {
       "key": "subWorkflow",
       "kind": "family",
+      "normativeText": ["spec/v1/node-packs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#subWorkflow",
       "peerDependencyId": "subWorkflow",
@@ -970,6 +977,7 @@
     {
       "key": "httpClient",
       "kind": "family",
+      "normativeText": ["spec/v1/host-capabilities.md"],
       "anchor": "core",
       "section": "core/capabilities.md#httpClient",
       "peerDependencyId": "httpClient",
@@ -1127,6 +1135,7 @@
     {
       "key": "triggerBridge",
       "kind": "family",
+      "normativeText": ["spec/v1/trigger-bridge.md"],
       "anchor": "core",
       "section": "core/capabilities.md#triggerBridge",
       "peerDependencyId": "triggerBridge",
@@ -1177,6 +1186,7 @@
     {
       "key": "budget",
       "kind": "family",
+      "normativeText": ["spec/v1/budget-policy.md"],
       "anchor": "core",
       "section": "core/capabilities.md#budget",
       "peerDependencyId": "budget",
@@ -1215,6 +1225,7 @@
     {
       "key": "workspace",
       "kind": "family",
+      "normativeText": ["spec/v1/agent-workspace.md"],
       "anchor": "core",
       "section": "core/capabilities.md#workspace",
       "peerDependencyId": "workspace",
@@ -1575,6 +1586,7 @@
     {
       "key": "i18n",
       "kind": "family",
+      "normativeText": ["spec/v1/i18n.md"],
       "anchor": "core",
       "section": "core/capabilities.md#i18n",
       "peerDependencyId": "i18n",
@@ -1594,6 +1606,7 @@
     {
       "key": "content",
       "kind": "family",
+      "normativeText": ["spec/v1/localized-content.md"],
       "anchor": "core",
       "section": "core/capabilities.md#content",
       "peerDependencyId": "content",
@@ -1613,6 +1626,7 @@
     {
       "key": "portability",
       "kind": "family",
+      "normativeText": ["spec/v1/portability.md"],
       "anchor": "core",
       "section": "core/capabilities.md#portability",
       "peerDependencyId": "portability",

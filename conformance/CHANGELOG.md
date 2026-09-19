@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.18.0] — 2026-09-19 — fourteen v1-dependent homes; burn-down denominator corrected
+
+**Why a minor.** No conformance code changes. `spec/v2/declaration.json` is a
+published artifact and gains 14 `normativeText` declarations; the normative-home
+burn-down now measures what RFC 0189 §D makes fatal.
+
 ## [2.17.0] — 2026-09-19 — the core-prose `supported` ghost; two more homes
 
 **Why a minor.** No conformance code changes. `spec/v2/core/runs.md` and

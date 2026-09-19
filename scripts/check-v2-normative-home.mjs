@@ -282,7 +282,29 @@ try {
 
 if (eosDate) {
   const days = Math.round((Date.parse(eosDate) - Date.parse(NOW)) / 86_400_000);
-  const open = v1dep.length + undeclared.length;
+  // RFC 0189 §D / G9 (REOPENED) — the burn-down measures what §D makes FATAL.
+  //
+  // This counted `v1dep + undeclared`, which is STRICTER than the terminal
+  // predicate it schedules: at end-of-support `fatal = undeclared + uncarried +
+  // broken`, so a CARRIED v1-dependent family is acceptable. The daily clock was
+  // demanding v2 text for families §D says are fine.
+  //
+  // RFC 0190 §C rejected aligning them, reasoning that `v1Carried` is hand-written
+  // and excluding it would make "add your family to v1Carried" a zero-work way to
+  // lower the count. THAT PREMISE IS NO LONGER TRUE, and it was falsified by work
+  // that landed after it: G7 requires `v1Carried` to EQUAL the computed
+  // v1-dependent set, and §B(b)/(c) + G5 require the v1 target to genuinely name
+  // the family and carry a 2119 obligation about it — the same predicate a v2
+  // resolution must pass. Sabotage-proved: pointing `promptLibrary` at an
+  // unrelated v1 document is refused by name. There is no hatch left to close.
+  //
+  // So the two are aligned, deliberately and with the reason recorded. This is
+  // not schedule relief: `v1Dependent` remains reported and unconstrained
+  // upward only because §C is right that punishing the first honest declaration
+  // is what made silence cheapest. What changed is which number the CALENDAR is
+  // attached to.
+  const uncarriedNow = v1dep.filter((k) => !(base0.v1Carried ?? []).includes(k));
+  const open = undeclared.length + uncarriedNow.length;
   process.stdout.write(`  v1 end-of-support not before ${eosDate} — ${days} day(s) from ${NOW}.\n`);
   if (open > 0) {
     // RFC 0189 §D. The line this replaces said the count "becomes one on the

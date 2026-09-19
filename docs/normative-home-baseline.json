@@ -1,16 +1,24 @@
 {
   "$comment": "Ratchet baseline for scripts/check-v2-normative-home.mjs (RFC 0189). THREE rules: `undeclared` may never rise; `undeclared + v1Dependent` may never rise; `facetsUncovered` may never rise. `v1Dependent` alone is unconstrained UPWARD on purpose \u2014 moving a family from undeclared to honestly-v1-dependent gains information and leaves total debt unchanged, and the pre-0189 rule exited 1 on exactly that move, which made silence the cheapest way to stay green. Lower these when you resolve something; never raise.",
   "t0": "2026-09-18",
-  "openAtT0": 68,
-  "$openAtT0Comment": "A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower \u2014 two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
-  "v1Dependent": 7,
-  "undeclared": 47,
+  "openAtT0": 66,
+  "$openAtT0Comment": "Re-seeded 2026-09-19 from 68 to 66 when the burn-down denominator changed from `v1Dependent + undeclared` to what RFC 0189 §D actually makes fatal (`undeclared + uncarried`). 66 is what `undeclared` was at t0; the 2 v1-dependent families of that day are no longer counted by the calendar. A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower \u2014 two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
+  "v1Dependent": 21,
+  "undeclared": 33,
   "facetsUncovered": 0,
   "v1Banners": {
     "spec/v1/capabilities.md": "> **Status: Stable \u00b7 v1.1.** Normative `/.well-known/openwop` discovery and capability-advertisement contract.",
     "spec/v1/host-capabilities.md": "> **Status: Stable \u00b7 v1.1 \u00b7 RFC 0144 and owning feature RFCs.** Normative pack-facing contracts for advertised `host.*` services.",
     "spec/v1/multi-agent-execution.md": "> **Status: Draft \u00b7 v1.x \u00b7 RFC 0037, 0039\u20130041, 0061.** Normative execution, handoff, memory, causation, replay, and agent-loop contract.",
-    "spec/v1/tool-catalog.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0078.** Capability-gated read-only tool catalog and optional tool-session lifecycle."
+    "spec/v1/tool-catalog.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0078.** Capability-gated read-only tool catalog and optional tool-session lifecycle.",
+    "spec/v1/agent-workspace.md": "> **Status: Draft \u00b7 v1.x \u00b7 RFC 0059.** Normative tenant- and workspace-scoped file service for persistent agent artifacts.",
+    "spec/v1/ai-envelope.md": "> **Status: Stable \u00b7 v1.1.1 \u00b7 RFC 0021, 0030\u20130033.** Normative contract for typed AI outputs, validation, refusal, reasoning, and retry behavior.",
+    "spec/v1/budget-policy.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0084.** Capability-gated budget, quota, and cost-enforcement contract.",
+    "spec/v1/i18n.md": "> **Status: Stable \u00b7 v1.1.** Optional annex for negotiating locale on human-targeted text \u2014 interrupt prompts, error envelopes, and host-extension UI strings. Additive to [`interrupt.md`](./interrupt.md) and the error-envelope contract.",
+    "spec/v1/localized-content.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0103.** Capability-gated authored content with locale negotiation and field-level fallback.",
+    "spec/v1/node-packs.md": "> **Status: Stable \u00b7 v1.1.** Normative contract for the pack manifest format, distribution, signing, and the registry HTTP API. The hosted reference registry is `https://packs.openwop.dev/`.",
+    "spec/v1/portability.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0098.** Normative contract for the portable agent-platform export bundle and the tenant import path. Capability-gated on `capabilities.portability`.",
+    "spec/v1/trigger-bridge.md": "> **Status: Stable \u00b7 v1.x \u00b7 RFC 0083.** Capability-gated contract for durable trigger subscriptions and webhook delivery."
   },
   "v1Carried": [
     "toolHooks",
@@ -19,7 +27,21 @@
     "schemaVersions",
     "oauth",
     "heartbeat",
-    "limits"
+    "limits",
+    "selfHostedRunner",
+    "purposePropagation",
+    "anonymousActor",
+    "credentials",
+    "subWorkflow",
+    "httpClient",
+    "triggerBridge",
+    "supportedEnvelopes",
+    "envelopeStrictness",
+    "content",
+    "budget",
+    "i18n",
+    "portability",
+    "workspace"
   ],
   "$v1CarriedComment": "RFC 0189 \u00a7D. At v1 end-of-support, spec/v1/** is FROZEN-BUT-OPERATIVE for exactly these families: EOS ends new v1 wire support, it does not de-normativize prose a v2 family still points at. After the date the gate fails only if one of these targets is DELETED or its Status banner changes \u2014 which is the real hazard, rather than a calendar square."
 }
