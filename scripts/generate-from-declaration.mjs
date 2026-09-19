@@ -129,8 +129,30 @@ function stripSupported(schema) {
     out.properties = Object.fromEntries(Object.entries(out.properties).filter(([k]) => !['supported', 'tier', 'experimentalUntil'].includes(k)).map(([k, v]) => [k, stripSupported(v)]));
   }
   if (Array.isArray(out.required)) { out.required = out.required.filter((k) => !['supported', 'tier', 'experimentalUntil'].includes(k)); if (!out.required.length) delete out.required; }
-  for (const k of ['allOf', 'anyOf', 'oneOf']) if (Array.isArray(out[k])) delete out[k]; // v1 if/then gates on `supported`; re-decided per child
-  for (const k of ['if', 'then', 'else']) delete out[k];
+  // A conditional is deleted ONLY when it gates on `supported`, the field v2
+  // retired. The blanket delete this replaces was written on the premise that
+  // every v1 if/then gates on `supported`; half of them do not, and dropping
+  // those silently relaxed the schema. The worst was RFC 0132 §B.2 on
+  // `anonymousActor` — "writeEgressControls is REQUIRED and non-empty when
+  // bounded-write-egress is advertised … a control-less write/egress tier is
+  // the fail-open shape this RFC forbids". Proved by construction: before this
+  // fix, `{tiers:["bounded-write-egress"]}` with no controls VALIDATED at
+  // major 2. A guard whose whole purpose is to forbid a fail-open shape had
+  // been deleted by a comment's assumption.
+  //
+  // Also lost: fs `supported ⇒ sandboxRoot` (path-traversal root),
+  // aiProviders `realtimeVoice.synthesis ⇒ speechSynthesis` (RFC 0106 §A),
+  // memory.compaction `⇒ trigger`, memory.injectionBudget `⇒ tokenCounter` —
+  // the last two still DESCRIBED as "enforced via the if/then clause", naming a
+  // clause that was not there.
+  const gatesOnSupported = (node) => JSON.stringify(node ?? null).includes('"supported"');
+  for (const k of ['allOf', 'anyOf', 'oneOf']) {
+    if (!Array.isArray(out[k])) continue;
+    const kept = out[k].filter((c) => !gatesOnSupported(c)).map((c) => stripSupported(c));
+    if (kept.length) out[k] = kept; else delete out[k];
+  }
+  if (gatesOnSupported(out.if)) { delete out.if; delete out.then; delete out.else; }
+  else { for (const k of ['if', 'then', 'else']) if (out[k]) out[k] = stripSupported(out[k]); }
   if (out.type === 'object' && out.additionalProperties === undefined) out.additionalProperties = false;
   return out;
 }
@@ -156,11 +178,23 @@ function familyRecord(f) {
     ...(facets.properties ?? {}),
   };
   return {
-    type: 'object', additionalProperties: false, required: [...new Set(['status', 'since', 'witness', ...(override?.required ?? [])])],
+    // `facets.required` is the SEEDED family's own required[] (minus `supported`,
+    // which stripSupported already removed). Dropping it lost a non-`supported`
+    // required field on eight families — anonymousActor.tiers, dataResidency.regions,
+    // content.{baseLocale,supportedLocales}, limits.{clarificationRounds,schemaRounds,
+    // envelopesPerTurn}, nondeterminismPolicy.declared (a floor predicate),
+    // envelopeContracts.advertised, connections.packsSupported, a2a.agentCardUrl.
+    type: 'object', additionalProperties: false, required: [...new Set(['status', 'since', 'witness', ...(override?.required ?? facets.required ?? [])])],
     properties: props,
+    // The two status/until clauses are INJECTED; the seeded family's own
+    // surviving conditionals are carried alongside them. Overwriting `allOf`
+    // here is what actually dropped RFC 0132 §B.2 on anonymousActor — even once
+    // stripSupported stopped deleting it, this assignment threw it away again.
     allOf: [
       { if: { properties: { status: { const: 'stable' } } }, then: { not: { required: ['until'] } } },
       { if: { properties: { status: { enum: ['experimental', 'deprecated'] } } }, then: { required: ['until'] } },
+      ...(override?.allOf ?? facets.allOf ?? []),
+      ...(facets.if && !override ? [{ ...(facets.if ? { if: facets.if } : {}), ...(facets.then ? { then: facets.then } : {}), ...(facets.else ? { else: facets.else } : {}) }] : []),
     ],
     description: `${f.section} — witness: ${f.witness}; maturity ${f.maturity.technical}/${f.maturity.adoption}${f.owningRfc ? `; RFC ${f.owningRfc}` : ''}`,
     ...(override ? { 'x-openwop-facets-from': `spec/v2/facets/${f.key}.schema.json` } : { 'x-openwop-seeded-from': v1.properties[f.key] ? 'v1' : 'declaration' }),
