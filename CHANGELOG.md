@@ -54,6 +54,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.26.0] — 2026-09-19 — RFC 0188 Accepted: the read existed, the shape did not
+
+### Changed
+
+- **RFC 0188 `Active → Accepted`.** Evidence tier **tier-1 — steward-verified**: the reference host advertises `webhooks.deadLetter` and serves the canonical §A read, with `openwop.requirement.0188.dead-letter-read` and `.dead-letter-content-free` both `executed-pass` on a bundle carrying **0 blocked** and all three profiles certified (suite 2.25.0, witness `c27516af1841`, openwop/openwop-examples#63).
+
+- **The RFC's own acceptance criterion understated the work, and the docket repeated it.** It read as though the host merely had to *"advertise the facet, move the path off `extensions.<org>.deadLetterRead`, and re-cut."* The host had indeed served `GET /webhooks/{webhookId}/dead-letters` for some time — but as a **vendor extension whose shape did not conform**. Advertising a facet over a non-conforming shape publishes exactly the vacuous claim RFC 0193 exists to stop, so the projection was rewritten to §A first: the closed `{deliveries, nextCursor}` page, the nine required record fields, §A.2's tenant check **before** the lookup, and §A.3 pagination with a subscription-bound cursor.
+
+- **`lastError` was the field that mattered.** The old record carried the subscriber's response text. §B.1 makes the record content-free *by construction* precisely because a dead-letter queue is the traffic the subscriber never received — a record carrying any of the exchange turns one read scope into a replay of it for the whole retention window.
+
+- **`0173.webhook-durable-delivery.dead-letter` is now a clean `executed-pass`.** It had carried a partial-witness note on **every bundle ever cut** — first "the corpus serves no dead-letter read surface", then "the host does not advertise the facet". The sink half of `webhooks.md` §Durability is witnessed for the first time by any bundle.
+
+- Reference-host evidence re-checked in at suite 2.25.0: **233 / 0 / 0 / 6 / 7**, 1996 assertions across 246 rows. `INTEROP-MATRIX.md` updated.
+
 ## [2.25.0] — 2026-09-19 — the §B.1 leg asserted nothing, and that denied certification to the first host that advertised the facet
 
 ### Fixed

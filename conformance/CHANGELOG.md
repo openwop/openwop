@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.26.0] — 2026-09-19 — RFC 0188 Accepted
+
+- No scenario change. Suite pinned to corpus `2.26.0`; the reference-host bundle it certified is checked in at suite 2.25.0.
+
 ## [2.25.0] — 2026-09-19 — a leg that asserted nothing
 
 - `v2-webhook-durable-delivery` — the `0188.dead-letter-content-free` leg read a **fresh** subscription's sink, looped over zero rows, and asserted nothing; RFC 0148 §A resolves that silent return to `blocked`, denying certification. It now exhausts a real delivery first and asserts over the records it gets, and records `blocked` with a reason when the sink is empty.

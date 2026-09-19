@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-19T17:45:09.766Z",
+  "generatedAt": "2026-09-19T20:21:26.019Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.24.0",
+    "version": "2.25.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.24.0",
-    "stampSha256": "78d9e4c20c6b3cf16bf1605637d2a509a2f809ecb9e852d4f8588be61a6aa79d"
+    "specArtifactsVersion": "2.25.0",
+    "stampSha256": "240fb0a1cba70c2a5263b6ef5e150614de639d3cac668c4f7d7875780e0e0a49"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "b3c06d179f49fb579ce6524afca64495f7ca3165"
+      "id": "796b076623f6ecf55363ce200f96a6ea49f0fc20"
     },
     "signingKeyId": "v2-reference-3"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "6707c42870b3b14927670f96918b268c054091d7ad909bab453d935691db5862",
+    "sha256": "7a03e5c0dad355c69edb9d7a057e6e453f361eb6afb7038f60e6b8b54b16ba2e",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -72,8 +72,7 @@
             "id": "dev"
           },
           "webhookBackoffBaseMs": 500,
-          "deadLetterRetentionDays": 7,
-          "deadLetterRead": "/webhooks/{webhookId}/dead-letters"
+          "deadLetterRetentionDays": 7
         }
       },
       "limits": {
@@ -144,6 +143,10 @@
         "retryPolicy": {
           "maxAttempts": 5,
           "backoff": "exponential"
+        },
+        "deadLetter": {
+          "retentionDays": 7,
+          "maxPageSize": 100
         }
       },
       "idempotency": {
@@ -346,10 +349,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 231,
+      "executedPass": 233,
       "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 8,
+      "inapplicable": 6,
       "blocked": 0
     },
     "requirements": [
@@ -394,8 +397,8 @@
         "id": "openwop.scenario.v2-bound-id-kinds",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 7,
-        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] host does not advertise the webhooks.deadLetter facet — it serves no dead-letter read, and RFC 0188 §A.5 makes that a 404 rather than an obligation"
+        "assertions": 8,
+        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
       },
       {
         "id": "openwop.scenario.v2-bound-id-path-projection",
@@ -751,7 +754,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 13
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -830,8 +833,7 @@
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 13,
-        "detail": "partial-witness: inapplicable: [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed); [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation; [inapplicable] host does not advertise the webhooks.deadLetter facet"
+        "assertions": 18
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -1527,8 +1529,7 @@
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)"
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1808,7 +1809,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 9
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1843,21 +1844,19 @@
       {
         "id": "openwop.requirement.0188.dead-letter-content-free",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise the webhooks.deadLetter facet"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+        "result": "executed-pass",
+        "assertions": 1
       }
     ]
   },
-  "witnessSha256": "277906937a148fc2a2fab5b81de3bc8f4bc4b283205381711c95cb7801e33400",
-  "assertionCount": 1977,
+  "witnessSha256": "c27516af1841a87ab6decc084a4f070027daa1e0ea925be0f898d537aa19c3ed",
+  "assertionCount": 1996,
   "detail": {
     "nonPass": [
       {
@@ -1924,23 +1923,13 @@
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.requirement.0188.dead-letter-content-free",
-        "result": "inapplicable",
-        "reason": "host does not advertise the webhooks.deadLetter facet"
-      },
-      {
-        "id": "openwop.requirement.0188.dead-letter-read",
-        "result": "inapplicable",
-        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-3",
-    "sig": "ElNMeTlmT7NNj9FYSK8czar_i8EpzXkCTv2s7dEm87B-DxEYCD0ZxhXS5whI20QGYrloRi3MNEumsg2VV7aGCg",
+    "sig": "k10cM1wVYuzRDC5QXffJAayhf3mae35Az8Yxqq1A8v7TpJypfFvL6_3oLapvl8Tpu3kvhbKzYpLrK_2a1CLxDQ",
     "over": [
       "witnessSha256",
       "host.build",
