@@ -54,6 +54,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.29.0] — 2026-09-19 — the front door was misreporting the corpus's own size, and I caused it
+
+### Fixed
+
+- **Three documents said `spec/v2/core/` holds "twenty documents". It holds twenty-two.** README line 11, README's Document-index banner, and `docs/IMPLEMENT-CORE.md`. The drift landed in **2.23.0** — this same day — when `host-services.md` and `conversation.md` were added to give the last homeless families a home, in the release whose entire point was that a claim should match what is measurable.
+
+  These are the **first numbers a newcomer reads**: README line 11 sizes the implementation job, and `IMPLEMENT-CORE.md` is the document the README tells an implementer to start with *instead of* the corpus. A wrong number there is the corpus misreporting its own size to the one reader the project most needs.
+
+- **`capabilities.md` §5 was headed "Core families (71)" against 72 core rows** in `spec/v2/declaration.json`. `check-declaration` already fails when a *heading* names a family the declaration does not; it never compared the **totals**.
+
+- `QUICKSTART.md`'s two remaining `apps/workflow-engine/` labels now name the repo they actually link to. The links resolved to `openwop-app` and the visible path had not existed for months.
+
+### Added
+
+- **`v2-front-door-counts.test.ts`** holds both counts against the tree. Sabotage-proven: reverting one site names the file, the stated word and the real number.
+
+### Declined, and this is the more useful half
+
+- **The plan proposed ratcheting README's `spec/v2/` link count above its `spec/v1/` count (18 vs 93). That instrument is wrong and the gate was not built.** The Document index **is** the v1 tree by design and says so in its own banner; `spec/v2/` cites `spec/v1/` **101 times** because the 25,000-word core budget makes v2 a declaration surface; and three v1 documents have no v2 counterpart at all. The ratio measures **tree size, not navigational intent** — and the README already opens its v1 reading order with *"Building a v2 host? The v2 reading order is `docs/IMPLEMENT-CORE.md`."* A gate demanding the ratio invert would have forced dishonest prose to satisfy a number.
+
+  The docket's "the front door still describes v1" item was itself a measurement error — counting links and calling the result intent. A file count and a row count are mechanical facts; those are the ones worth gating, and those are what shipped.
+
 ## [2.28.0] — 2026-09-19 — the bundle's two arrays, and two v2 facets that validated anything
 
 ### Fixed
