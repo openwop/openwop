@@ -13,7 +13,7 @@ REST and SSE are the wire. A host MUST NOT advertise a transport list; `supporte
 
 ## The facets
 
-A host that speaks either protocol MUST advertise the corresponding facet with every required field (`spec/v2/facets/a2a.schema.json`, `spec/v2/facets/mcp.schema.json`).
+A host that speaks either protocol MUST advertise the corresponding facet — `a2a` or `mcp` — with every required field (`spec/v2/facets/a2a.schema.json`, `spec/v2/facets/mcp.schema.json`).
 
 | Facet field | A2A (`a2a`) | MCP (`mcp`) | Rule |
 | --- | --- | --- | --- |

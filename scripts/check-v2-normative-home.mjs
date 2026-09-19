@@ -100,7 +100,35 @@ const homeClass = (h) => {
   return 'refused';
 };
 const KEYWORD = /\b(MUST NOT|MUST|SHOULD NOT|SHOULD|MAY)\b/;
-const namesKey = (text, key) => new RegExp(`(^|[^A-Za-z0-9])\`?${key}\`?([^A-Za-z0-9]|$)`).test(text);
+// RFC 0189 G5 — `-`, `_`, `.` and `/` are not word boundaries for a family key.
+//
+// The original predicate treated every non-alphanumeric as a boundary, so a key
+// was "named" by any token that merely contained it. Measured at 2.13.0, six of
+// the twenty families that satisfied §B(c) did so ONLY through this:
+//   fs          <- "nodes are fs-gated"            (hyphen)
+//   budget      <- "token_budget_exceeded"         (underscore)
+//   i18n        <- "see i18n.md"                   (file extension)
+//   portability <- "spec/v2/ext/portability/"      (path segment)
+//   workspace   <- "RunSnapshot.owner.workspace"   (field-path SUFFIX)
+//
+// The dot is asymmetric and that asymmetry is the whole rule: `runList.maxPageSize`
+// genuinely names `runList` (family.facet), while `owner.workspace` does not name
+// `workspace` (it is the tail of a field path). So a FOLLOWING dot counts only when
+// what follows is a DECLARED FACET of that family; a PRECEDING dot never counts.
+//
+// Like G4 this strictly narrows and breaks no honest declaration — verified against
+// all 13 resolved families. It does not catch English homonyms ("MUST cache the
+// result" still names `cache`); that is what the RFC 0191 marker and a reader are
+// for, and RFC 0191 §B says so rather than claiming otherwise.
+const namesKey = (text, key, facets = []) => {
+  const B = '[^A-Za-z0-9\\-_/.]';        // a real boundary: not alnum, not - _ / .
+  const A = '[^A-Za-z0-9\\-_/]';         // trailing: a dot may still open a facet ref
+  if (new RegExp(`(^|${B})\`?${key}\`?($|${A})`).test(text)) return true;
+  for (const f of facets) {
+    if (new RegExp(`(^|${B})\`?${key}\\.${f}\\b`).test(text)) return true;
+  }
+  return false;
+};
 
 for (const f of core) {
   const homes = f.normativeText;
@@ -198,7 +226,14 @@ for (const f of core) {
   });
   if (!paras.some((q) => namesKey(q, f.key) && KEYWORD.test(q))) { noObligation.push(`${f.key} (named, but no MUST/SHOULD/MAY in a paragraph that names it)`); continue; }
   // §B(d) — facet completeness, counted rather than failed (see the ratchet).
-  for (const facet of f.facets ?? []) if (!namesKey(prose, facet)) facetsUncovered.push(`${f.key}.${facet}`);
+  // A facet is legitimately named EITHER bare (`packsSupported`) or, far more
+  // often, qualified by its family (`connections.packsSupported`). G5's rule that
+  // a PRECEDING dot does not name a key is right for a family — `owner.workspace`
+  // is not the `workspace` family — and exactly wrong for a facet, where
+  // `family.facet` is the canonical form. So accept the qualified spelling too.
+  const namesFacet = (text, key, facet) =>
+    namesKey(text, facet) || new RegExp(`(^|[^A-Za-z0-9\\-_/.])\\\`?${key}\\.${facet}\\b`).test(text);
+  for (const facet of f.facets ?? []) if (!namesFacet(prose, f.key, facet)) facetsUncovered.push(`${f.key}.${facet}`);
   if (homes.some((h) => h.startsWith('spec/v1/'))) v1dep.push(f.key);
   else resolved.push(f.key);
 }
