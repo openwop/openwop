@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. · §Conformance note added: the recovery interval is measured kill → **resumption** (first re-execution observation, e.g. a second `run.started`), never kill → terminal — from a second tier-1 measured failure where time-to-terminal read as a false §B.5 violation. |
+| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. · §Conformance note added: the recovery interval is measured kill → **resumption** (first re-execution observation, e.g. a second `run.started`), never kill → terminal — from a second tier-1 measured failure where time-to-terminal read as a false §B.5 violation. · 2026-09-20 — §"Witnessing the recovery rows" note: the kill rows observe until the host's declared recovery bound elapses (they read once, at the instant of return, and so mandated a fast bound); `kill-during-execution` asserts both clauses of item 11; the registry's recovery events count as resumption; `duplicate-delivery`'s seam chooses the effectful work. Scenario corrected in suite 2.32.0. No normative requirement changed. |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
@@ -214,6 +214,29 @@ fake it. What the suite observes is what is normative.
     > on a **subsequent** observation" item 11 requires. It does **not** discriminate a *peer*: a second
     > `run.started` cannot tell "a different process resumed" from "the same process restarted", so it does not
     > substitute for `peer-resume`'s opaque per-boot token.
+
+    > **The observation runs to the declared bound, and the seam chooses the effectful work** *(added
+    > 2026-09-20, from a reference-host review of the scenario before any host had built the seam)*. Three
+    > defects in `v2-durability-recovery`, all of the same kind — the scenario asserting something narrower or
+    > wider than this section says:
+    >
+    > - **Both kill rows read the log once, the instant the service answered again.** That demands resumption
+    >   within ~0 ms of the listener returning — a fast bound, which §"Alternatives considered" rejects and §B.6
+    >   makes non-normative. A host whose sweeper first ticks 5 s after boot, against a derived 65 s bound, read
+    >   zero `run.started` and failed, then resumed correctly ten seconds later. The witness **MUST** keep
+    >   observing until resumption is seen **or the host's own declared recovery bound elapses**. The bound is a
+    >   ceiling for waiting only; a bound longer than the suite's observation ceiling is `blocked`, not failed.
+    > - **`kill-during-execution` asserted only this item's first clause.** "Not completed, or re-started" holds
+    >   forever for a run that is never resumed, so the row passed on a host that lost the work. Both clauses are
+    >   now asserted: never observable as completed un-re-executed (latched across every observation), **and**
+    >   resumed within the bound.
+    > - **A resumption signal is a further `run.started` *or* the registry's own recovery event**
+    >   (`workflow.restored`, `run.restored-from-snapshot`) — the "equivalent progress-past-the-pre-kill-point
+    >   signal" this item already allows, now named so a host is not failed for using the event minted for it.
+    > - **`duplicate-delivery` named `conformance-noop`,** which records no effect on a host whose noop is a true
+    >   no-op, so the row could only ever record `blocked` — and `blocked` denies certification. No canonical
+    >   fixture is guaranteed effectful, so the scenario sends no `workflowId` for this mode: **the seam chooses
+    >   the work and MUST choose work that records at least one effect.**
 
 12. **The seam MUST be gated on a deployment-time flag that is unset in production, and MUST be fail-closed.**
     This RFC names no specific environment variable — a host that already gates a test seam (e.g. a boot-read

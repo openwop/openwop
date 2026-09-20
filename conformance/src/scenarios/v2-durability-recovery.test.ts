@@ -41,6 +41,15 @@
  * derived bound: a §B.5 violation that did not happen. Both measured failures
  * are recorded in the RFC.
  *
+ * ── 2.32.0: the observation runs to the DECLARED bound ───────────────────────
+ * Until 2.32.0 both kill rows read the log ONCE, the instant discovery answered
+ * again — mandating resumption within ~0 ms of the listener returning, i.e. a
+ * fast bound, which the RFC rejects. Found by the openwop-app host reading this
+ * file against its own sweeper BEFORE building the seam; a first witness on a
+ * host that re-enters runs at boot would have passed the single read and hidden
+ * it. `kill-during-execution` also asserted only the first clause of item 11
+ * and so passed on a host that never resumed. See the RFC's 2026-09-20 note.
+ *
  * ── What this file deliberately does not do ─────────────────────────────────
  * `durability/peer-resume` is the `durable-multi-instance` discriminator and is
  * NOT required for the rung these rows witness. §E makes it bundle-witnessed
@@ -117,12 +126,72 @@ async function waitBack(deadlineMs: number): Promise<number | null> {
   return null;
 }
 
-/** Count the run-lifecycle re-starts on a run: §B.4's resumption observation. */
-async function runStartedCount(runId: string): Promise<number> {
+/**
+ * §B.4's resumption observation, read off the canonical event log.
+ *
+ * RFC 0158 §E item 11 names "a second `run.started`, or any equivalent
+ * progress-past-the-pre-kill-point signal". The registry already has two events
+ * whose whole meaning is that signal — `workflow.restored` ("an in-flight run is
+ * recovered from the event log on a fresh engine boot") and
+ * `run.restored-from-snapshot` — so a host that reports recovery with the event
+ * minted for it is not failed for declining to re-emit `run.started`.
+ */
+const RESTORED_TYPES = new Set(['workflow.restored', 'run.restored-from-snapshot']);
+interface Observation { readable: boolean; runStarted: number; nodeStarted: number; restored: number }
+async function observe(runId: string): Promise<Observation> {
   const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events`);
-  if (r.status !== 200) return -1;
+  if (r.status !== 200) return { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
   const events = (r.json as { events?: Array<{ type?: string }> } | null)?.events ?? [];
-  return events.filter((e) => e.type === 'run.started').length;
+  const n = (pred: (t: string) => boolean): number => events.filter((e) => typeof e.type === 'string' && pred(e.type)).length;
+  return { readable: true, runStarted: n((t) => t === 'run.started'), nodeStarted: n((t) => t === 'node.started'), restored: n((t) => RESTORED_TYPES.has(t)) };
+}
+
+/** The longest this suite will wait for a resumption, whatever a host declares. */
+const OBSERVATION_CEILING_MS = 240_000;
+/** Used only when the host serves no bound to read; named in the row's detail. */
+const UNDECLARED_BOUND_FALLBACK_MS = 60_000;
+
+/**
+ * How long to keep observing: the host's OWN declared recovery bound.
+ *
+ * §E item 11: resumption "MUST be observed on a subsequent observation within
+ * the declared recovery bound", and §B.6 makes a long bound conformant. Until
+ * 2.32.0 both kill rows read the log ONCE, the instant discovery answered
+ * again — which demanded resumption within ~0 ms of the listener coming up, a
+ * fast bound the RFC's §"Alternatives considered" explicitly rejects. A host
+ * whose sweeper first ticks 5 s after boot against a 65 s derived bound read
+ * `0 run.started` and failed, then resumed correctly ten seconds later. The
+ * bound is used as a CEILING FOR WAITING only; it is never asserted as a
+ * scalar here (`bound-is-derived` owns the arithmetic).
+ */
+async function declaredBoundMs(): Promise<{ ms: number; declared: boolean }> {
+  const r = await driver.get('/host/durability/bound');
+  const bound = (r.json as { bound?: unknown } | null)?.bound;
+  return r.status === 200 && typeof bound === 'number' && Number.isFinite(bound) && bound > 0
+    ? { ms: bound, declared: true }
+    : { ms: UNDECLARED_BOUND_FALLBACK_MS, declared: false };
+}
+
+interface Watch { resumedAfterMs: number | null; last: Observation; completedUnresumed: boolean; waitedMs: number }
+/**
+ * Observe `runId` from the moment the service answers again until `resumed`
+ * holds or `budgetMs` elapses. `completedUnresumed` latches if ANY observation
+ * shows the run `completed` while `resumed` is still false — the item-11 defect
+ * is a state a later observation can paper over, so it is checked at every read.
+ */
+async function watchForResumption(runId: string, budgetMs: number, resumed: (o: Observation) => boolean): Promise<Watch> {
+  const t0 = Date.now();
+  let last: Observation = { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
+  let completedUnresumed = false;
+  for (;;) {
+    last = await observe(runId);
+    const waitedMs = Date.now() - t0;
+    if (last.readable && resumed(last)) return { resumedAfterMs: waitedMs, last, completedUnresumed, waitedMs };
+    const snap = await driver.get(`/runs/${encodeURIComponent(runId)}`);
+    if ((snap.json as { status?: unknown } | null)?.status === 'completed' && !(last.readable && resumed(last))) completedUnresumed = true;
+    if (waitedMs >= budgetMs) return { resumedAfterMs: null, last, completedUnresumed, waitedMs };
+    await new Promise((r) => setTimeout(r, 500));
+  }
 }
 
 describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-single-instance rows)', () => {
@@ -155,12 +224,20 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       return softSkip('blocked', 'the service never answered again within the window — the operator precondition for this row is a restart supervisor (something must restart the killed instance; the suite cannot)');
     }
 
-    const starts = await runStartedCount(runId);
+    // Accepted-but-undispatched work has, by definition, not executed: any
+    // dispatch evidence after the death is the resumption. Observed until the
+    // host's OWN declared bound elapses, never once at the instant of return.
+    const bound = await declaredBoundMs();
+    const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
+    const w = await watchForResumption(runId, budget, (o) => o.runStarted >= 1 || o.nodeStarted >= 1 || o.restored >= 1);
+    if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
+      return softSkip('blocked', `no dispatch observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this suite observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here`);
+    }
     expect(
-      starts >= 1,
-      req('openwop.requirement.0158.kill-after-accept', 'RFC 0158 §B.4', `work accepted before a real process death MUST dispatch on resume — the run's log MUST show it being executed after the kill, observed ${starts} run.started (service answered again after ${backIn}ms)`),
+      w.resumedAfterMs !== null,
+      req('openwop.requirement.0158.kill-after-accept', 'RFC 0158 §B.4', `work accepted before a real process death MUST dispatch on resume within the declared recovery bound — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.nodeStarted} node.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; dispatch first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
-  }, 120_000);
+  }, 360_000);
 
   it('work executing at a real process death is never reported complete, and resumes', async () => {
     const doc = await v2Discovery();
@@ -183,18 +260,30 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       return softSkip('blocked', 'the service never answered again within the window — the operator precondition for this row is a restart supervisor (something must restart the killed instance; the suite cannot)');
     }
 
-    // §E item 11's first clause, and the one a host is most likely to get
-    // wrong: work that was executing when the process died MUST NOT be
-    // observable as completed. A host that marks it complete on restart has
-    // reported success for work it never finished.
-    const snap = await driver.get(`/runs/${encodeURIComponent(runId)}`);
-    const status = (snap.json as { status?: unknown } | null)?.status;
-    const starts = await runStartedCount(runId);
+    // §E item 11 is TWO clauses and until 2.32.0 only the first was asserted:
+    // `status !== 'completed' || starts > 1` holds forever for a run that is
+    // simply never resumed, so the row passed on a host that lost the work —
+    // weaker than its own RFC table row ("resumed within the declared bound").
+    // (1) work executing at the death MUST NOT be observable as completed
+    //     without having been re-executed — latched across EVERY observation;
+    // (2) resumption MUST be observed within the declared recovery bound.
+    // Work that was executing already has one `run.started`; resumption is a
+    // further one, or the registry's own recovery event.
+    const bound = await declaredBoundMs();
+    const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
+    const w = await watchForResumption(runId, budget, (o) => o.runStarted > 1 || o.restored >= 1);
     expect(
-      status !== 'completed' || starts > 1,
-      req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST NOT be observable as completed without having been re-executed — read status ${String(status)} with ${starts} run.started (service answered again after ${backIn}ms); §B.4 measures kill → RESUMPTION, never kill → terminal`),
+      w.completedUnresumed,
+      req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST NOT be observable as completed without having been re-executed — an observation after the kill read status completed with ${w.last.runStarted} run.started and ${w.last.restored} restored (service answered again after ${backIn}ms)`),
+    ).toBe(false);
+    if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
+      return softSkip('blocked', `no resumption observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this suite observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here`);
+    }
+    expect(
+      w.resumedAfterMs !== null,
+      req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST resume within the declared recovery bound; §B.4 measures kill → RESUMPTION, never kill → terminal — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; resumption first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
-  }, 120_000);
+  }, 360_000);
 
   it('the same accepted work delivered twice fires each effect exactly once', async () => {
     const doc = await v2Discovery();
@@ -202,7 +291,14 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     const seam = await probeSeam();
     if (seam.kind === 'absent') return softSkip('inapplicable', seam.why);
 
-    const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery', workflowId: FIXTURE });
+    // NO `workflowId` is sent. No canonical fixture is guaranteed to record an
+    // effect (`conformance-noop` records none, and the one effectful fixture is
+    // gated on a replay capability this rung does not require), so naming one
+    // made the row unpassable on a host whose noop is a true no-op: it could
+    // only ever record `blocked`, and `blocked` denies certification. The seam
+    // is host test infrastructure (§E) and knows what is effectful on its host:
+    // it MUST stage work that records at least one effect, and name its runId.
+    const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery' });
     if (fired.status >= 400) {
       return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery — the host exposes the route but could not stage a double delivery`);
     }
@@ -217,7 +313,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     }
     const effects = (eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? [];
     if (effects.length === 0) {
-      return softSkip('blocked', 'the staged run recorded no effects — there is no identity to count invocations against, and an end-state assertion is exactly what §C rules out');
+      return softSkip('blocked', 'the seam staged a run that recorded no effects — for mode=duplicate-delivery the seam chooses the work and MUST choose work that records at least one effect; with no identity to count invocations against, only an end-state assertion is left, and that is exactly what §C rules out');
     }
     // §C: assert INVOCATION COUNTS PER IDENTITY, not final state. A legal end
     // state is precisely what a double-fire produces, so an end-state

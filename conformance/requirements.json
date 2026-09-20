@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 581,
-    "tests": 2205,
-    "withStableId": 2205,
+    "tests": 2207,
+    "withStableId": 2207,
     "interpolatedTitles": 0,
-    "explicitIds": 2159
+    "explicitIds": 2161
   },
   "records": [
     {
@@ -26650,7 +26650,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.accepted-work-survives-a-kill-before-dispatch-and-dispatches-on-resume",
       "file": "v2-durability-recovery.test.ts",
-      "line": 129,
+      "line": 198,
       "title": "accepted work survives a kill before dispatch and dispatches on resume",
       "explicitId": "openwop.requirement.0158.kill-after-accept",
       "citations": [
@@ -26664,10 +26664,15 @@
     {
       "id": "openwop.it.v2-durability-recovery.work-executing-at-a-real-process-death-is-never-reported-complete-and-resumes",
       "file": "v2-durability-recovery.test.ts",
-      "line": 165,
+      "line": 242,
       "title": "work executing at a real process death is never reported complete, and resumes",
       "explicitId": "openwop.requirement.0158.kill-during-execution",
       "citations": [
+        {
+          "section": "RFC 0158 §B.4 / §E item 11",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "RFC 0158 §B.4 / §E item 11",
           "requirement": null,
@@ -26678,7 +26683,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-same-accepted-work-delivered-twice-fires-each-effect-exactly-once",
       "file": "v2-durability-recovery.test.ts",
-      "line": 199,
+      "line": 288,
       "title": "the same accepted work delivered twice fires each effect exactly once",
       "explicitId": "openwop.requirement.0158.duplicate-delivery",
       "citations": [
@@ -26692,7 +26697,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-declared-recovery-bound-is-derived-from-the-mechanism-that-enforces-it",
       "file": "v2-durability-recovery.test.ts",
-      "line": 238,
+      "line": 334,
       "title": "the declared recovery bound is derived from the mechanism that enforces it",
       "explicitId": "openwop.requirement.0158.bound-is-derived",
       "citations": [
@@ -26706,7 +26711,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.deterministically-failing-work-reaches-a-terminal-state-and-stops-being-retried",
       "file": "v2-durability-recovery.test.ts",
-      "line": 268,
+      "line": 364,
       "title": "deterministically failing work reaches a terminal state and stops being retried",
       "explicitId": "openwop.requirement.0158.poison-exhaustion",
       "citations": [
@@ -36398,7 +36403,7 @@
     {
       "id": "openwop.it.v2-one-signing-scheme.registry-version-manifest-signing-has-exactly-one-scheme-ed25519-canonical-json",
       "file": "v2-one-signing-scheme.test.ts",
-      "line": 37,
+      "line": 42,
       "title": "registry-version-manifest signing has exactly one scheme, ed25519-canonical-json, and no method / publicKeyRef",
       "explicitId": "openwop.requirement.0177.one-signing-scheme",
       "citations": [
@@ -36425,6 +36430,70 @@
         {
           "section": "RFC 0177 §C.3",
           "requirement": "signing.publicKeyRef is gone in v2 — the key is addressed by keyId alone"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-one-signing-scheme.every-bare-pack-manifest-carries-the-same-closed-keyid-scheme-signing-block-and",
+      "file": "v2-one-signing-scheme.test.ts",
+      "line": 62,
+      "title": "every bare *-pack-manifest carries the same closed { keyId, scheme } signing block, and none keeps the v1 one",
+      "explicitId": "openwop.requirement.0177.one-signing-scheme.bare-manifests",
+      "citations": [
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": "schemas/v2/ MUST hold the bare pack-manifest schemas this rule covers"
+        },
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0177 §C.3",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-one-signing-scheme.fragmentnode-config-is-open-exactly-as-the-workflownode-config-it-expands-into-a",
+      "file": "v2-one-signing-scheme.test.ts",
+      "line": 90,
+      "title": "FragmentNode.config is open exactly as the WorkflowNode.config it expands into, and keeps its documented subChainRef key",
+      "explicitId": "openwop.requirement.0177.chain-fragment-config-open",
+      "citations": [
+        {
+          "section": "spec/v2/core/workflow-chain-packs.md §Parameter substitution",
+          "requirement": "WorkflowNode.config is a free-form map validated against the typeId's own config schema — the premise this rule compares against"
+        },
+        {
+          "section": "spec/v2/core/workflow-chain-packs.md §Parameter substitution",
+          "requirement": "FragmentNode.config MUST be open: a fragment node expands into a WorkflowNode, so a config the expanded node may carry MUST be expressible in the fragment"
+        },
+        {
+          "section": "spec/v2/core/workflow-chain-packs.md §Parameter substitution",
+          "requirement": "opening the map MUST NOT drop the documented `subChainRef` key (RFC 0133)"
         }
       ]
     },

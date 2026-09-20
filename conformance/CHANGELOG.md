@@ -1,5 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.32.0] — 2026-09-20 — every published v2 pack failed the corpus schema, and two kill rows that mandated a fast bound
+
+- **`v2-one-signing-scheme` now covers every bare `*-pack-manifest`, enumerated rather than listed** (openwop#1367). It pinned one file — `registry-version-manifest` — while six bare manifests kept the v1 `{ publicKeyRef, signatureRef, method }` block, closed, and `connection-pack-manifest` had no `signing` seat at all. Measured against the published v2 registry: **0 of 190** `pack.json` documents validated. New id `openwop.requirement.0177.one-signing-scheme.bare-manifests`. Sabotage-proven: fails on the 2.31.1 `node-pack-manifest`.
+- **`openwop.requirement.0177.chain-fragment-config-open`** — `FragmentNode.config` is open exactly as the `WorkflowNode.config` it expands into. The v1→v2 seed closed it because it documents one key (`subChainRef`); 73 of 81 published chain packs failed on `config must NOT have additional properties`. With both corrections: **185 of 190** validate; the remaining five fail on constraints identical in v1 (registry data, not schema).
+- **`v2-durability-recovery`: both kill rows observe until the host's DECLARED recovery bound elapses.** They read the log once, the instant discovery answered again — demanding resumption within ~0 ms of the listener returning, a fast bound RFC 0158 rejects. A host whose sweeper first ticks 5 s after boot against a derived 65 s bound failed, then resumed correctly ten seconds later. The bound (`GET /host/durability/bound`) is a ceiling for waiting only; 60 s fallback when unserved; a bound over the 240 s observation ceiling records `blocked`, not fail. The row detail records the observed kill → resumption interval.
+- **`kill-during-execution` asserts both clauses of §E item 11.** `status !== 'completed' || starts > 1` held forever for a run that was never resumed, so the row passed on a host that lost the work. Now: never observable as completed un-re-executed (latched across every observation) **and** resumed within the bound.
+- **A resumption signal is a further `run.started` or the registry's own recovery event** (`workflow.restored`, `run.restored-from-snapshot`) — item 11's "equivalent progress-past-the-pre-kill-point signal", named.
+- **`duplicate-delivery` sends no `workflowId`.** It named `conformance-noop`, which records no effect on a host whose noop is a true no-op, so the row could only record `blocked` — and `blocked` denies certification. The seam chooses the work and MUST choose work that records at least one effect.
+- The three durability defects were found by the openwop-app host reading the scenario against its own mechanism **before building the seam**. No host has witnessed these rows yet, so no bundle is invalidated.
+- Suite pinned to corpus `2.32.0`.
+
 ## [2.31.1] — 2026-09-20 — major-correct shared polling
 
 - Fixed the shared run polling helper to use `/runs/{runId}` in the major-2 lane and retain `/v1/runs/{runId}` only in the major-1 lane. The old helper combined a `/v1` path with `OpenWOP-Version: 2`, so a conforming host correctly answered `protocol_version_mismatch`; `v2-durability-recovery` then misreported an unreachable run even though it had already failed terminally.
