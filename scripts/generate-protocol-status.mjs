@@ -747,6 +747,10 @@ function renderRfcsReadmeIndex(text, rfcs) {
     return sel.map((r) => (r.parked ? `${r.id} Parked` : prev.get(r.id) ?? r.id)).join(', ');
   };
 
+  const open = rfcs.filter((r) => r.status === 'Draft' || r.status === 'Active');
+  const parkedN = open.filter((r) => r.parked).length;
+  const workN = open.length - parkedN;
+
   const lines = [
     heading,
     '',
@@ -756,8 +760,11 @@ function renderRfcsReadmeIndex(text, rfcs) {
     '',
     // Two different numbers, and only the first is anyone here's to move. An
     // index that reports one count cannot distinguish an RFC blocked on the
-    // world from one blocked on somebody's unfinished work.
-    `Of the ${rfcs.filter((r) => r.status !== 'Accepted').length} non-\`Accepted\` RFCs, **${rfcs.filter((r) => r.status !== 'Accepted' && r.parked).length} are [Parked](#parked-rfcs)** on a named external tripwire and **${rfcs.filter((r) => r.status !== 'Accepted' && !r.parked).length} await repository work**.`,
+    // world from one blocked on somebody's unfinished work. Only Draft and
+    // Active RFCs are open: a Superseded, Withdrawn or Rejected RFC is as
+    // finished as an Accepted one, and counting it here reported a replaced
+    // RFC as pending work.
+    `Of the ${open.length} open (\`Draft\` or \`Active\`) RFCs, **${parkedN} ${parkedN === 1 ? 'is' : 'are'} [Parked](#parked-rfcs)** on a named external tripwire and **${workN} ${workN === 1 ? 'awaits' : 'await'} repository work**.`,
     '',
     '| RFC | Title | Status |',
     '| --- | --- | --- |',

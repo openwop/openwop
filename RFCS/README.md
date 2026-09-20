@@ -125,7 +125,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 Current tally: **Accepted 185 · Active 3 · Draft 1 · Superseded 1** (190 RFCs, excluding the `0000` template; Active = 0111 Parked, 0121 Parked, 0158; Draft = 0038 Parked).
 
-Of the 5 non-`Accepted` RFCs, **3 are [Parked](#parked-rfcs)** on a named external tripwire and **2 await repository work**.
+Of the 4 open (`Draft` or `Active`) RFCs, **3 are [Parked](#parked-rfcs)** on a named external tripwire and **1 awaits repository work**.
 
 | RFC | Title | Status |
 | --- | --- | --- |
