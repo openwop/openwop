@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.31.1] — 2026-09-20 — major-correct shared polling
+
+- Fixed the shared run polling helper to use `/runs/{runId}` in the major-2 lane and retain `/v1/runs/{runId}` only in the major-1 lane. The old helper combined a `/v1` path with `OpenWOP-Version: 2`, so a conforming host correctly answered `protocol_version_mismatch`; `v2-durability-recovery` then misreported an unreachable run even though it had already failed terminally.
+- Added a two-major self-test that pins both paths. Suite remains pinned to corpus `2.31.0`; this is a conformance-harness patch only.
+
 ## [2.31.0] — 2026-09-19 — the fifth rung row, and the projection helper
 
 - `v2-durability-recovery` gains `poison-exhaustion`, completing RFC 0158's `durable-single-instance` rung at major 2. The existing scenario was major-1 only and seam-bound; the port reads the canonical `GET /runs/{runId}/events` and needs **no seam**, so it can never record `blocked` for want of one. The v1 scenario is untouched.

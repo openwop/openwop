@@ -28,6 +28,7 @@
  */
 
 import { driver } from './driver.js';
+import { targetMajor } from './seams.js';
 
 export interface RunSnapshot {
   readonly runId: string;
@@ -73,9 +74,14 @@ export function scaledTimeoutMs(timeoutMs: number): number {
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
 export async function getRun(runId: string): Promise<RunSnapshot> {
-  const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
+  // A major-2 request MUST use the unversioned path space. The driver adds the
+  // OpenWOP-Version: 2 header, so retaining `/v1` here asked the host to serve
+  // two different majors at once and a conforming negotiator correctly refused
+  // it with protocol_version_mismatch. Keep the v1 key only in the v1 lane.
+  const prefix = targetMajor() === 2 ? '' : '/v1';
+  const res = await driver.get(`${prefix}/runs/${encodeURIComponent(runId)}`);
   if (res.status !== 200) {
-    throw new Error(`GET /v1/runs/${runId} returned ${res.status}: ${res.text.slice(0, 200)}`);
+    throw new Error(`GET ${prefix}/runs/${runId} returned ${res.status}: ${res.text.slice(0, 200)}`);
   }
   return res.json as RunSnapshot;
 }
