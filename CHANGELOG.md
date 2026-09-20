@@ -54,6 +54,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.31.0] — 2026-09-19 — the fifth rung row, and the projection helper three separate mistakes asked for
+
+### Added
+
+- **`durability/poison-exhaustion` ported to major 2, completing the `durable-single-instance` rung.** It existed — at **major 1 only**, reading a hard-coded `/v1/host/sample/test/runs/{runId}/events` seam — so **no v2 bundle could carry a durability row of any kind**, and RFC 0158's rung was unwitnessable at major 2 no matter what a host did. A host could have passed the other four and still not moved the RFC.
+
+  **The port needs no seam.** At major 2 the canonical `GET /runs/{runId}/events` answers the same question the v1 sample seam was invented to answer, so the row is black-box and **cannot record `blocked` for want of infrastructure a host did not wire** — a strict improvement on its v1 twin, which records `blocked` in exactly that case. The v1 scenario is untouched.
+
+  This was the blocker openwop-app was about to plan around. Told them directly rather than leaving it in a changelog for whoever cut next: they had asked whether RFC 0158 needed a *current* bundle or a *certified* one, and the honest answer was **neither** — their cut was on suite 2.3.3 and the rung scenarios landed in 2.27.0, so there was nothing there to witness either way.
+
+- **`src/lib/v2-projection.ts` — the v1→v2 capability projection, in one place.** Three hand-written projections in one week, each silently wrong in a different direction:
+
+  | who | what |
+  | --- | --- |
+  | openwop-app | `aiProviders.selfHosted` `string[]` → `boolean` |
+  | steward | `aiProviders.input` flattened to `additionalProperties: true`, losing the RFC 0091 `modalities` enum |
+  | steward | `aiProviders.policies` flattened the same way |
+
+  That is not three mistakes; it is **one missing function**. `stripSupported()` strips the retired flag **at every depth** — v1 owners carry `supported` nested *inside* each facet, which is how 26 facet descriptions came to condition a MUST on a field the closed v2 schema forbids — and drops it out of any `required[]`, because a `required` naming a retired field makes a closed record unsatisfiable by any honest host.
+
+  **It deliberately does not invent shape.** `carriesUnspliceablePayload()` reports an array, map, enum or scalar rather than converting it: that is RFC 0193's named-seat problem, the seat name cannot be derived because the v1 value *was* the whole property, and guessing one is how `supportedEnvelopes: {"status":"stable"}` reached a production host. Five unit tests, each written against one of the instances above.
+
 ## [2.30.0] — 2026-09-19 — the gate printed "(ratchet)" after a number nothing ratcheted
 
 ### Fixed
