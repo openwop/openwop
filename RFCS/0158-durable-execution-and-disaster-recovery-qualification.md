@@ -225,7 +225,11 @@ fake it. What the suite observes is what is normative.
     >   makes non-normative. A host whose sweeper first ticks 5 s after boot, against a derived 65 s bound, read
     >   zero `run.started` and failed, then resumed correctly ten seconds later. The witness **MUST** keep
     >   observing until resumption is seen **or the host's own declared recovery bound elapses**. The bound is a
-    >   ceiling for waiting only; a bound longer than the suite's observation ceiling is `blocked`, not failed.
+    >   ceiling for waiting only. A host whose bound is per class (Unresolved Question 1) names the governing
+    >   figure on the seam's own response. The suite's observation ceiling is **operator-raisable**: a fixed one
+    >   is the same defect moved from 0 s to the ceiling — a conformant 12.5-minute leased-class bound would record
+    >   `blocked`, which denies certification, and the only way out would be shortening a lease, the outcome
+    >   §"Alternatives considered" rejects. A bound over the ceiling is `blocked` with that precondition named.
     > - **`kill-during-execution` asserted only this item's first clause.** "Not completed, or re-started" holds
     >   forever for a run that is never resumed, so the row passed on a host that lost the work. Both clauses are
     >   now asserted: never observable as completed un-re-executed (latched across every observation), **and**

@@ -146,8 +146,25 @@ async function observe(runId: string): Promise<Observation> {
   return { readable: true, runStarted: n((t) => t === 'run.started'), nodeStarted: n((t) => t === 'node.started'), restored: n((t) => RESTORED_TYPES.has(t)) };
 }
 
-/** The longest this suite will wait for a resumption, whatever a host declares. */
-const OBSERVATION_CEILING_MS = 240_000;
+/**
+ * The longest this suite will wait for a resumption. 240 s by DEFAULT, and
+ * operator-raisable, because a fixed ceiling is the single read's defect moved
+ * from 0 s to 240 s: a host whose leased-class bound is 12.5 min (a 12 min
+ * dispatch lease + a 30 s orphan sweep) is conformant under §B.6, would observe
+ * nothing in 240 s, record `blocked`, and — `blocked` denying certification
+ * (RFC 0168 §E.1) — could never certify the rung without shortening a lease,
+ * the outcome §"Alternatives considered" rejects. An operator with a long bound
+ * sets `OPENWOP_DURABILITY_OBSERVATION_CEILING_MS` and waits it out; a
+ * 13-minute row in a certification cut is affordable, an uncertifiable
+ * conformant host is not. The `it` timeouts below scale from it.
+ */
+const DEFAULT_OBSERVATION_CEILING_MS = 240_000;
+const OBSERVATION_CEILING_MS = ((): number => {
+  const raw = Number(process.env['OPENWOP_DURABILITY_OBSERVATION_CEILING_MS']);
+  return Number.isFinite(raw) && raw >= DEFAULT_OBSERVATION_CEILING_MS ? raw : DEFAULT_OBSERVATION_CEILING_MS;
+})();
+/** RESUME_WINDOW + the observation + slack for the reads themselves. */
+const KILL_ROW_TIMEOUT_MS = OBSERVATION_CEILING_MS + 120_000;
 /** Used only when the host serves no bound to read; named in the row's detail. */
 const UNDECLARED_BOUND_FALLBACK_MS = 60_000;
 
@@ -164,7 +181,14 @@ const UNDECLARED_BOUND_FALLBACK_MS = 60_000;
  * bound is used as a CEILING FOR WAITING only; it is never asserted as a
  * scalar here (`bound-is-derived` owns the arithmetic).
  */
-async function declaredBoundMs(): Promise<{ ms: number; declared: boolean }> {
+async function declaredBoundMs(fired: unknown): Promise<{ ms: number; declared: boolean }> {
+  // A host whose bound is PER CLASS (Unresolved Question 1: unleased work waits
+  // out an outbox lease, leased work a dispatch lease — 65 s against 750 s on
+  // one measured host) names the figure that governs THIS work on the seam's
+  // own response. The bare read below returns one class and would report the
+  // interval against a bound that does not govern the staged run.
+  const governing = (fired as { recoveryBoundMs?: unknown } | null)?.recoveryBoundMs;
+  if (typeof governing === 'number' && Number.isFinite(governing) && governing > 0) return { ms: governing, declared: true };
   const r = await driver.get('/host/durability/bound');
   const bound = (r.json as { bound?: unknown } | null)?.bound;
   return r.status === 200 && typeof bound === 'number' && Number.isFinite(bound) && bound > 0
@@ -227,17 +251,17 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // Accepted-but-undispatched work has, by definition, not executed: any
     // dispatch evidence after the death is the resumption. Observed until the
     // host's OWN declared bound elapses, never once at the instant of return.
-    const bound = await declaredBoundMs();
+    const bound = await declaredBoundMs(fired.json);
     const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
     const w = await watchForResumption(runId, budget, (o) => o.runStarted >= 1 || o.nodeStarted >= 1 || o.restored >= 1);
     if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
-      return softSkip('blocked', `no dispatch observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this suite observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here`);
+      return softSkip('blocked', `no dispatch observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this run observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here; the operator precondition for this row is OPENWOP_DURABILITY_OBSERVATION_CEILING_MS >= the declared bound`);
     }
     expect(
       w.resumedAfterMs !== null,
       req('openwop.requirement.0158.kill-after-accept', 'RFC 0158 §B.4', `work accepted before a real process death MUST dispatch on resume within the declared recovery bound — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.nodeStarted} node.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; dispatch first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
-  }, 360_000);
+  }, KILL_ROW_TIMEOUT_MS);
 
   it('work executing at a real process death is never reported complete, and resumes', async () => {
     const doc = await v2Discovery();
@@ -269,7 +293,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // (2) resumption MUST be observed within the declared recovery bound.
     // Work that was executing already has one `run.started`; resumption is a
     // further one, or the registry's own recovery event.
-    const bound = await declaredBoundMs();
+    const bound = await declaredBoundMs(fired.json);
     const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
     const w = await watchForResumption(runId, budget, (o) => o.runStarted > 1 || o.restored >= 1);
     expect(
@@ -277,13 +301,13 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST NOT be observable as completed without having been re-executed — an observation after the kill read status completed with ${w.last.runStarted} run.started and ${w.last.restored} restored (service answered again after ${backIn}ms)`),
     ).toBe(false);
     if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
-      return softSkip('blocked', `no resumption observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this suite observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here`);
+      return softSkip('blocked', `no resumption observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this run observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here; the operator precondition for this row is OPENWOP_DURABILITY_OBSERVATION_CEILING_MS >= the declared bound`);
     }
     expect(
       w.resumedAfterMs !== null,
       req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST resume within the declared recovery bound; §B.4 measures kill → RESUMPTION, never kill → terminal — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; resumption first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
-  }, 360_000);
+  }, KILL_ROW_TIMEOUT_MS);
 
   it('the same accepted work delivered twice fires each effect exactly once', async () => {
     const doc = await v2Discovery();
