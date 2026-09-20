@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.31.0",
+  "version": "2.31.1",
   "corpusTag": "v2.31.0",
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
@@ -201,7 +201,7 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "40069d5976eeb6ba1384a648e57e5cfd673db3fce36175115fb8293bee9664d4",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "c8cc668bd5c1e504e8b0171e3c078f770f9d9e5765938750f600defb2fcb986f",
+    "spec/v1/core-standard-manifest.json": "0640fb5fdced5af7a5e2ae2108c69da13d79bd3c5373128ee5039e9cd1af0e43",
     "spec/v1/deprecations.json": "307083ce29c23fd406015951f99a30d78d6187ff061d38dc9732f62191b40f3f",
     "spec/v1/deprecations.schema.json": "18c87e78bedc210431f795ae44c5b5d202f2f3317850d5cf86867d4f1fa1cdfb",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
@@ -282,5 +282,5 @@
     "spec/v2/release.json": "92131d62a7fcd12445d7e04eb588e2297f839b7e5e2a87f89ae9e61593f837cd",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "cb0aa58bb79366383a13b4b2843f47662888a189"
+  "corpusCommit": "691974ccf758a6ea42dad8c38ab6b5570e8f89f2"
 }
