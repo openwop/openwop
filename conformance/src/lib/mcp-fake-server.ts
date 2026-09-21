@@ -34,6 +34,7 @@
  * @see SECURITY/threat-model-prompt-injection.md §"UNTRUSTED marker"
  */
 
+import { resolvePublicFront } from './webhook-receiver.js';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -147,6 +148,18 @@ export class McpFakeServer {
 
   endpoint(): string {
     return `http://127.0.0.1:${this._boundPort}`;
+  }
+
+  /**
+   * The address to hand THE HOST UNDER TEST — `OPENWOP_MCP_FAKE_SERVER_URL` when the operator fronts
+   * this server publicly (https, publicly resolvable; validated loudly, same rule
+   * as the webhook receiver), else `endpoint()`. The suite's own requests to its
+   * own fake keep using `endpoint()`: they need no tunnel and must not depend on
+   * one. Pin the listener with the matching `_PORT` variable so the front has a
+   * fixed port to forward to.
+   */
+  hostFacingEndpoint(): string {
+    return resolvePublicFront('OPENWOP_MCP_FAKE_SERVER_URL', this.endpoint()).url;
   }
 
   invocations(): readonly McpInvocation[] {

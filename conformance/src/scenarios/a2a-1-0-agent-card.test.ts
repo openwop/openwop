@@ -62,7 +62,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     expect(ifaces.map((i) => i.protocolVersion)).toEqual(['1.0', '0.3']);
     for (const i of ifaces) {
       expect(i.protocolBinding).toBe('JSONRPC');
-      expect(i.url.startsWith(peer.endpoint())).toBe(true);
+      expect(i.url.startsWith(peer.hostFacingEndpoint())).toBe(true);
     }
     expect(card['url'], req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', '1.0 removed top-level url')).toBeUndefined();
     expect(card['protocolVersion'], req('openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio', 'RFC 0152 §A/§B/§C/§D', '1.0 removed top-level protocolVersion (it is per interface)')).toBeUndefined();

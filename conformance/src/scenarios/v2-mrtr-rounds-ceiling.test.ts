@@ -73,7 +73,7 @@ describe('RFC 0175 §E.1 — mrtr-rounds-ceiling (gated on mcp + mrtr)', () => {
     // input_required for `arguments.rounds` retries before completing.
     const rounds = (maxRounds as number) + 1;
     const res = await driver.post(`${SEAMS_PREFIX}/sample/mcp/invoke`, {
-      serverUrl: server.endpoint(),
+      serverUrl: server.hostFacingEndpoint(),
       tool: LOOP_TOOL,
       arguments: { rounds },
       clientCapabilities: { elicitation: {} },

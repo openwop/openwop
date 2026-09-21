@@ -66,7 +66,7 @@ function probePeer(): { url: string; isReal: boolean } | null {
   const real = process.env.OPENWOP_A2A_REAL_PEER_URL;
   if (real && real.length > 0) return { url: real.replace(/\/$/, ''), isReal: true };
   const fake = getA2AFakePeer();
-  if (fake) return { url: fake.endpoint(), isReal: false };
+  if (fake) return { url: fake.hostFacingEndpoint(), isReal: false };
   return null;
 }
 

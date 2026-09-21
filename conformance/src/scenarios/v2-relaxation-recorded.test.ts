@@ -28,6 +28,8 @@ import { generateKeyPairSync } from 'node:crypto';
 import { signBundleV3, verifyBundleV3, witnessDigest, type BundleV3, type BundleV3Relaxation } from '../lib/certification-bundle-v3.js';
 import { v2Validator } from '../lib/v2.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { v2RegistryAvailable } from '../lib/v2-profiles.js';
 
 const host = generateKeyPairSync('ed25519');
 const hostPem = host.privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
@@ -38,7 +40,7 @@ const ROWS: BundleV3['results']['requirements'] = [
 ];
 
 /** A schema-valid, verifier-clean bundle v3; `relaxations` and the claimed profile vary per leg. */
-function bundle(opts: { relaxations?: BundleV3Relaxation[]; certified: boolean }): BundleV3 {
+function bundle(opts: { relaxations?: BundleV3Relaxation[]; certified: boolean; profileId?: string }): BundleV3 {
   const unsigned: Omit<BundleV3, 'signature'> = {
     bundleVersion: '3',
     generatedAt: '2026-09-03T00:00:00Z',
@@ -52,7 +54,7 @@ function bundle(opts: { relaxations?: BundleV3Relaxation[]; certified: boolean }
     },
     discovery: { url: 'https://fixture.invalid/.well-known/openwop', sha256: 'a'.repeat(64), protocolVersions: ['2.0'], preferredVersion: '2.0' },
     claimedProfiles: [
-      { id: 'openwop-webhooks', evidenceTier: 'self', witnessCount: 1, certified: opts.certified },
+      { id: opts.profileId ?? 'openwop-webhooks', evidenceTier: 'self', witnessCount: 1, certified: opts.certified },
       { id: 'openwop-discovery-core', evidenceTier: 'self', witnessCount: 1, certified: true },
     ],
     results: { totals: { executedPass: ROWS.length, executedFail: 0, skipped: 0, inapplicable: 0, blocked: 0 }, requirements: ROWS },
@@ -103,6 +105,39 @@ describe('RFC 0173 §A.2 — relaxation-recorded (unaided, fixture bundle)', () 
       honest.rejections.map((r) => r.kind),
       req('openwop.requirement.0173.relaxation-recorded', 'security-defaults.md §Relaxations', 'a relaxation recorded against an unclaimed profile is not a rejection — recording is the obligation, claiming is the defect'),
     ).not.toContain('relaxed-profile-certified');
+  });
+
+  // Until 2.33.0 every leg above used the FIXTURE profile `openwop-webhooks`, and
+  // the verifier matched a relaxation to a profile by testing whether the profile
+  // ID contained the family name. No real v2 profile id contains one —
+  // `openwop-discovery-core`, `openwop-core-standard`,
+  // `openwop-conformance-seams-v2` — so on every real host a DECLARED relaxation
+  // denied nothing, and this file stayed green because its fixture was the one
+  // id the rule could match. Ownership is what `spec/v2/profiles.json` states:
+  // `openwop-core-standard`'s predicate is built on `webhooks`.
+  it('a relaxation denies the REAL profile that owns its family, not only one named after it', () => {
+    if (!v2RegistryAvailable()) return softSkip('inapplicable', 'spec/v2/profiles.json is absent from this layout — profile ownership cannot be read, so only the id-named arm of the rule can run');
+    const EGRESS: BundleV3Relaxation = { obligation: 'webhooks.egress-guard', durability: 'session', reason: 'conformance cut against loopback fixtures' };
+    const control = verifyBundleV3(bundle({ certified: true, profileId: 'openwop-core-standard' }));
+    expect(
+      control.certifiedProfiles,
+      req('openwop.requirement.0173.relaxation-recorded.owned-by-registry', 'security-defaults.md §Relaxations', 'control: with no relaxation recorded, the real profile certifies — so the rejection below is the relaxation\'s'),
+    ).toContain('openwop-core-standard');
+    const relaxed = verifyBundleV3(bundle({ relaxations: [EGRESS], certified: true, profileId: 'openwop-core-standard' }));
+    expect(
+      relaxed.rejections.find((r) => r.kind === 'relaxed-profile-certified')?.profile,
+      req('openwop.requirement.0173.relaxation-recorded.owned-by-registry', 'security-defaults.md §Relaxations', 'a relaxation on `webhooks.*` MUST deny `openwop-core-standard`, whose registry predicate is built on the `webhooks` family — ownership is read from spec/v2/profiles.json, never from the spelling of the profile id'),
+    ).toBe('openwop-core-standard');
+    expect(
+      relaxed.certifiedProfiles,
+      req('openwop.requirement.0173.relaxation-recorded.owned-by-registry', 'security-defaults.md §Relaxations', 'the owning profile is not certified, and a profile that does not own the family still is'),
+    ).toEqual(['openwop-discovery-core']);
+    // A family no claimed profile owns denies nothing — the relaxation is still recorded, which is the obligation.
+    const unowned = verifyBundleV3(bundle({ relaxations: [{ ...EGRESS, obligation: 'mcp.egress-guard' }], certified: true, profileId: 'openwop-core-standard' }));
+    expect(
+      unowned.certifiedProfiles,
+      req('openwop.requirement.0173.relaxation-recorded.owned-by-registry', 'security-defaults.md §Relaxations', 'a relaxation on a family outside every claimed profile\'s predicate is scoped to nothing claimed — it does not poison an unrelated profile'),
+    ).toContain('openwop-core-standard');
   });
 
   it('durability is a closed set: session | deployment | persisted', () => {

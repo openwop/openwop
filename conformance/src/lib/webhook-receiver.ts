@@ -235,7 +235,26 @@ export async function discoverOwnedTenant(
  * "the host could not be exercised".
  */
 export function resolveRegistrationUrl(localUrl: string): { url: string; tunnelled: boolean } {
-  const raw = process.env.OPENWOP_WEBHOOK_RECEIVER_URL?.trim();
+  return resolvePublicFront('OPENWOP_WEBHOOK_RECEIVER_URL', localUrl);
+}
+
+/**
+ * The same rule, for ANY suite fixture the host under test must reach — the
+ * webhook receiver, the A2A fake peer, the MCP fake server. `envName` names the
+ * operator's public front for that one fixture; unset means the local address.
+ *
+ * Generalised in 2.33.0. Until then only the webhook receiver had a front, so a
+ * host that advertised `a2a` or `mcp` could be measured ONLY with its egress
+ * guard relaxed — those fakes advertised `http://127.0.0.1:<port>` and nothing
+ * else — and a relaxed guard is a relaxation the bundle must declare and cannot
+ * certify under (`security-defaults.md` §Relaxations). The two production hosts
+ * cut relaxation-free only because they advertise neither family. The rule made
+ * a host that implements MORE of the protocol LESS able to certify; found when
+ * the steward's own reference host turned out to be certifying under an
+ * undeclared one.
+ */
+export function resolvePublicFront(envName: string, localUrl: string): { url: string; tunnelled: boolean } {
+  const raw = process.env[envName]?.trim();
   if (!raw) return { url: localUrl, tunnelled: false };
 
   let parsed: URL;
@@ -243,7 +262,7 @@ export function resolveRegistrationUrl(localUrl: string): { url: string; tunnell
     parsed = new URL(raw);
   } catch {
     throw new Error(
-      `OPENWOP_WEBHOOK_RECEIVER_URL is not a valid URL: ${JSON.stringify(raw)}`,
+      `${envName} is not a valid URL: ${JSON.stringify(raw)}`,
     );
   }
 
@@ -252,7 +271,7 @@ export function resolveRegistrationUrl(localUrl: string): { url: string; tunnell
   // ALLOW_PRIVATE flag insufficient in the first place.
   if (parsed.protocol !== 'https:') {
     throw new Error(
-      `OPENWOP_WEBHOOK_RECEIVER_URL MUST be https: (got ${parsed.protocol}). ` +
+      `${envName} MUST be https: (got ${parsed.protocol}). ` +
         'A plain-http front cannot clear the scheme gate, so it cannot witness this scenario.',
     );
   }
@@ -272,13 +291,13 @@ export function resolveRegistrationUrl(localUrl: string): { url: string; tunnell
     /^(fc|fd)/.test(host);
   if (isLoopback || isPrivate) {
     throw new Error(
-      `OPENWOP_WEBHOOK_RECEIVER_URL MUST be a publicly-resolvable host (got ${parsed.hostname}). ` +
+      `${envName} MUST be a publicly-resolvable host (got ${parsed.hostname}). ` +
         'It is the PUBLIC front for the local receiver — a tunnel or TLS-terminating proxy — ' +
         'not the receiver address itself.',
     );
   }
 
-  return { url: raw, tunnelled: true };
+  return { url: envName === 'OPENWOP_WEBHOOK_RECEIVER_URL' ? raw : raw.replace(/\/+$/, ''), tunnelled: true };
 }
 
 /**

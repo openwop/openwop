@@ -35,6 +35,8 @@ The relaxation was recorded, but in prose: the host's `conformance.md` and `READ
 
 `conformance/README.md` says of `OPENWOP_HOST_RELAXATIONS` that *"the suite cannot detect an undeclared one."* For this relaxation that is not true: a host that **accepts** a `127.0.0.1` webhook registration has demonstrated on the wire that its guard is open.
 
+**Status 2026-09-21: steps (1) and (2) are done** — the three suite defects below are fixed in suite 2.33.0. Steps (3) and (4) are open, so everything above about the *committed bundle* still holds.
+
 **The path to close, in order.** (1) This entry. (2) A suite release that gives the A2A / MCP fakes a public-front override, maps a relaxed obligation to the profile that *owns* it, brings the egress-refusal legs into the major-2 lane, and refuses to certify a bundle in whose run the host was observed accepting a loopback destination without a declared relaxation. (3) The reference host's `cut-bundle.sh` declares the relaxation whenever it sets the flag, so a loopback cut becomes an honest regression lane that never certifies. (4) A relaxation-free re-cut of the reference host through public fronts — the posture both production hosts already use — replaces the committed bundle, re-grounding the four RFCs above and carrying RFC 0158's witness in the same cut.
 
 ---

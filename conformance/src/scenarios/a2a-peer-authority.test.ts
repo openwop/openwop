@@ -64,7 +64,7 @@ describe('RFC 0152 §E — a2a-peer-no-authority-escalation (host as A2A client,
     peer.reset();
     peer.setNextPeerAssertsAuthority(true);
     const drive = await driver.post('/v1/host/sample/a2a/invoke', {
-      peerUrl: peer.endpoint(),
+      peerUrl: peer.hostFacingEndpoint(),
       scenario: 'peer-asserts-authority',
     });
     if (drive.status === 404 || drive.status === 403) {

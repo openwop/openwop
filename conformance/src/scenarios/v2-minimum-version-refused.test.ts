@@ -96,7 +96,7 @@ describe('RFC 0175 §D.2 — minimum-version-refused (gated on a2a/mcp + seams)'
     const peer = new A2AFakePeer({ protocolVersions: ['0.3'] });
     await peer.start();
     try {
-      const res = await driver.post(`${SEAMS_PREFIX}/sample/a2a/invoke`, { peerUrl: peer.endpoint(), authenticated: true, peerOffersOnly: A2A_LOWEST });
+      const res = await driver.post(`${SEAMS_PREFIX}/sample/a2a/invoke`, { peerUrl: peer.hostFacingEndpoint(), authenticated: true, peerOffersOnly: A2A_LOWEST });
       if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises a2a but ${SEAMS_PREFIX}/sample/a2a/invoke answered ${res.status} (host-sample-test-seams.md §22)`);
       await assertRefused('openwop.requirement.0175.minimum-version-refused', 'a2a', floor, res);
       // The wire leg: the host MUST NOT have spoken the below-floor version to the peer.
@@ -124,7 +124,7 @@ describe('RFC 0175 §D.2 — minimum-version-refused (gated on a2a/mcp + seams)'
     const server = new McpFakeServer({ protocolVersions: ['2025-06-18'] });
     await server.start();
     try {
-      const res = await driver.post(`${SEAMS_PREFIX}/sample/mcp/invoke`, { serverUrl: server.endpoint(), requestVersion: MCP_LOWEST });
+      const res = await driver.post(`${SEAMS_PREFIX}/sample/mcp/invoke`, { serverUrl: server.hostFacingEndpoint(), requestVersion: MCP_LOWEST });
       if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises mcp but ${SEAMS_PREFIX}/sample/mcp/invoke answered ${res.status} (host-sample-test-seams.md §23)`);
       await assertRefused('openwop.requirement.0175.minimum-version-refused.mcp', 'mcp', floor, res);
       for (const c of server.invocations()) {
