@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.33.2] — 2026-09-21 — `v2-run-snapshot-etag` took its tag from a run that was still moving
+
+- **The scenario slept a fixed 1 s after `POST /runs`, took the snapshot's `ETag`, and demanded `304`.** A host whose ETag tracks the run's event-log sequence — the strong tag `runs.md` §Snapshot asks for — is still appending while a noop executes, so between the two GETs the representation **changes** and `200` with a new tag is the only correct answer; a `304` there would be a stale-cache bug. **Measured on a tier-2 production host, 4 of 4:** immediately after create `etag1 ≠ etag2` and the conditional GET answers `200`; after the run settles the same request answers `304` every time. The row had passed three earlier cuts of that host and failed the fourth — a timing lottery, won whenever the run finished inside the sleep.
+- **It now waits for the run to be terminal, and the violation is stated exactly:** a `200` whose `ETag` **equals** the `If-None-Match` that was sent. A `200` carrying a *different* tag means the representation moved and the tag sent was honestly stale, so the scenario takes the new tag and retries (up to four reads); a terminal run whose snapshot never holds still records `blocked`, not fail.
+- A host with a **constant** ETag passed the old row for the wrong reason whenever it won the lottery; the non-matching control (`If-None-Match: "…no-such-tag"` MUST answer `200`) still catches a host that answers `304` to everything.
+- False FAIL only. Found by the MyndHyve host session, reproduced by hand on production before being reported.
+- Suite patch: corpus release stays `2.33.0`.
+
 ## [2.33.1] — 2026-09-21 — two false fails: a race between two reads, and a subscription nobody unregistered
 
 - **`v2-durability-recovery`: the "completed without re-execution" latch was decided from two non-atomic reads in the wrong order.** Each iteration read the LOG, then the STATUS, and latched when the status said `completed` and the — older — log showed no resumption. A host that re-dispatched between the two requests read as "completed un-re-executed" while being neither. `conformance-noop` re-executes in milliseconds, so the window is real: per run roughly (gap between the requests) / (500 ms poll), a few percent. **Measured on a tier-1 host:** after a genuine SIGKILL and a correct recovery by lease expiry (727 s inside a declared 750 s bound) the row failed with *"read status completed with 2 run.started"* — printing the re-execution it was denying, because the message used a later read than the latch. The same host and code had passed the two previous runs.

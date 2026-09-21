@@ -28985,7 +28985,7 @@
     {
       "id": "openwop.it.v2-run-snapshot-etag.a-matching-if-none-match-receives-304-with-no-body-and-the-version-header-a-non",
       "file": "v2-run-snapshot-etag.test.ts",
-      "line": 34,
+      "line": 35,
       "title": "a matching If-None-Match receives 304 with no body and the version header; a non-matching one receives 200",
       "explicitId": "openwop.requirement.0170.run-snapshot-etag",
       "citations": [
