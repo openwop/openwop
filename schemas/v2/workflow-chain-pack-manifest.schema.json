@@ -424,7 +424,7 @@
         "config": {
           "type": "object",
           "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time. RFC 0133: a `core.subWorkflow` / `core.dispatch` (child-run) node MAY carry `subChainRef: string` — a declared `subChains[].ref` (sibling `chainId` or external ref) the host rewrites to the minted child `workflowId` at co-expansion time (§1.3 step 3). A concrete `config.workflowId` inside a fragment remains INVALID — a chain MUST NOT pin a host-specific workflow id (the `not` guard below enforces it).",
-          "additionalProperties": false,
+          "additionalProperties": true,
           "not": {
             "required": [
               "workflowId"
@@ -577,31 +577,26 @@
     },
     "Signing": {
       "type": "object",
-      "description": "Optional signing metadata. Reuses node-packs.md §signing unchanged.",
+      "additionalProperties": false,
+      "required": [
+        "keyId",
+        "scheme"
+      ],
       "properties": {
-        "publicKeyRef": {
-          "type": "string",
-          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        "keyId": {
+          "$ref": "ids.schema.json#/$defs/keyId"
         },
-        "signatureRef": {
-          "type": "string",
-          "description": "Path to the detached signature over `pack.json`."
-        },
-        "method": {
-          "type": "string",
-          "enum": [
-            "manual",
-            "sigstore"
-          ]
+        "scheme": {
+          "const": "ed25519-canonical-json",
+          "description": "RFC 0177 §C.3 — one scheme: a detached 64-byte Ed25519 signature over the canonical-JSON pack.json inside a deterministic tarball. method and publicKeyRef are gone."
         }
       },
-      "additionalProperties": false
+      "description": "RFC 0177 §C.3/§C.4 — OPTIONAL on a bare manifest (an authoring-time pack.json exists before it is signed); when present it is the same closed { keyId, scheme } block a version manifest carries (registry-version-manifest.schema.json). The v1 { publicKeyRef, signatureRef, method } block does not exist in v2 (migration row openwop.migration.C10.1)."
     }
   },
   "patternProperties": {
     "^(openwop-|x-|vendor\\.)": {
       "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` §\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque — a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` §\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

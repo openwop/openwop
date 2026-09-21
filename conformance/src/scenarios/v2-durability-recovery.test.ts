@@ -10,7 +10,7 @@
  * v2 bundle could carry a durability row of any kind and the rung was
  * unwitnessable at major 2 even with the other four passing. The port is the
  * fifth `it` below, and it needs NO SEAM: at major 2 the canonical
- * `GET /runs/{runId}/events` answers the same question the v1 sample seam was
+ * `GET /runs/{runId}/events/poll` answers the same question the v1 sample seam was
  * invented to answer, so the row can never be `blocked` for want of a seam a
  * host did not wire. The v1 scenario stays where it is, unchanged.
  *
@@ -41,6 +41,18 @@
  * derived bound: a §B.5 violation that did not happen. Both measured failures
  * are recorded in the RFC.
  *
+ * ── 2.32.0: the observation runs to the DECLARED bound ───────────────────────
+ * Until 2.32.0 both kill rows read the log ONCE, the instant discovery answered
+ * again — mandating resumption within ~0 ms of the listener returning, i.e. a
+ * fast bound, which the RFC rejects. Found by the openwop-app host reading this
+ * file against its own sweeper BEFORE building the seam; a first witness on a
+ * host that re-enters runs at boot would have passed the single read and hidden
+ * it. `kill-during-execution` also asserted only the first clause of item 11
+ * and so passed on a host that never resumed. See the RFC's 2026-09-20 note.
+ * `duplicate-delivery` counted rows per identity on an identity-keyed ledger,
+ * which cannot show a double-fire; the effect is now counted at a receiver the
+ * suite owns. All four were found by hosts reading this file, not by a run.
+ *
  * ── What this file deliberately does not do ─────────────────────────────────
  * `durability/peer-resume` is the `durable-multi-instance` discriminator and is
  * NOT required for the rung these rows witness. §E makes it bundle-witnessed
@@ -52,6 +64,7 @@
  * @see RFCS/0158-durable-execution-and-disaster-recovery-qualification.md §B.4 §D.9 §E
  */
 
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
@@ -59,6 +72,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
+import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 
 const FIXTURE = 'conformance-noop';
 const FAILURE_FIXTURE = 'conformance-failure';
@@ -71,9 +85,23 @@ const ATTEMPT_TYPES = new Set(['node.started', 'node.retried']);
  *  it is a wait for something that must not happen. */
 const QUIET_WINDOW_MS = 4_000;
 
-/** The canonical major-2 run-event read. Null when it does not answer. */
+/**
+ * The canonical major-2 JSON read of a run's log. Null when it does not answer.
+ *
+ * `GET /runs/{runId}/events/poll` — NOT `/runs/{runId}/events`. At major 2 the
+ * latter is `streamRunEvents`, `text/event-stream` ONLY (api/v2/openapi.yaml);
+ * the JSON read is `pollRunEvents`. Until 2.32.0 this file parsed the STREAM
+ * path as JSON. A host that content-negotiates the stream path answered anyway;
+ * a host that serves exactly what the OpenAPI states answered SSE, the parse
+ * came back null, and `poison-exhaustion` — having already asserted the
+ * terminal status — soft-skipped its load-bearing clause and resolved
+ * `executed-pass` with the detail "partial-witness: blocked". Measured on the
+ * v2 reference host: a vacuous pass sitting in a bundle, from the suite reading
+ * the wrong one of the corpus's own two operations. `timeout=1`: existing
+ * events are returned at once; the wait only applies when there are none.
+ */
 async function runEvents(runId: string): Promise<Array<{ type: string }> | null> {
-  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events`);
+  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
   if (r.status !== 200) return null;
   const events = (r.json as { events?: Array<{ type?: unknown }> } | null)?.events;
   if (!Array.isArray(events)) return null;
@@ -117,12 +145,117 @@ async function waitBack(deadlineMs: number): Promise<number | null> {
   return null;
 }
 
-/** Count the run-lifecycle re-starts on a run: §B.4's resumption observation. */
-async function runStartedCount(runId: string): Promise<number> {
-  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events`);
-  if (r.status !== 200) return -1;
-  const events = (r.json as { events?: Array<{ type?: string }> } | null)?.events ?? [];
-  return events.filter((e) => e.type === 'run.started').length;
+/**
+ * §B.4's resumption observation, read off the canonical event log.
+ *
+ * RFC 0158 §E item 11 names "a second `run.started`, or any equivalent
+ * progress-past-the-pre-kill-point signal". The registry already has two events
+ * whose whole meaning is that signal — `workflow.restored` ("an in-flight run is
+ * recovered from the event log on a fresh engine boot") and
+ * `run.restored-from-snapshot` — so a host that reports recovery with the event
+ * minted for it is not failed for declining to re-emit `run.started`.
+ */
+const RESTORED_TYPES = new Set(['workflow.restored', 'run.restored-from-snapshot']);
+interface Observation { readable: boolean; runStarted: number; nodeStarted: number; restored: number }
+async function observe(runId: string): Promise<Observation> {
+  const events = await runEvents(runId);
+  if (events === null) return { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
+  const n = (pred: (t: string) => boolean): number => events.filter((e) => pred(e.type)).length;
+  return { readable: true, runStarted: n((t) => t === 'run.started'), nodeStarted: n((t) => t === 'node.started'), restored: n((t) => RESTORED_TYPES.has(t)) };
+}
+
+/**
+ * The longest this suite will wait for a resumption. 240 s by DEFAULT, and
+ * operator-raisable, because a fixed ceiling is the single read's defect moved
+ * from 0 s to 240 s: a host whose leased-class bound is 12.5 min (a 12 min
+ * dispatch lease + a 30 s orphan sweep) is conformant under §B.6, would observe
+ * nothing in 240 s, record `blocked`, and — `blocked` denying certification
+ * (RFC 0168 §E.1) — could never certify the rung without shortening a lease,
+ * the outcome §"Alternatives considered" rejects. An operator with a long bound
+ * sets `OPENWOP_DURABILITY_OBSERVATION_CEILING_MS` and waits it out; a
+ * 13-minute row in a certification cut is affordable, an uncertifiable
+ * conformant host is not. The `it` timeouts below scale from it.
+ */
+const DEFAULT_OBSERVATION_CEILING_MS = 240_000;
+const OBSERVATION_CEILING_MS = ((): number => {
+  const raw = Number(process.env['OPENWOP_DURABILITY_OBSERVATION_CEILING_MS']);
+  return Number.isFinite(raw) && raw >= DEFAULT_OBSERVATION_CEILING_MS ? raw : DEFAULT_OBSERVATION_CEILING_MS;
+})();
+/** RESUME_WINDOW + the observation + slack for the reads themselves. */
+const KILL_ROW_TIMEOUT_MS = OBSERVATION_CEILING_MS + 120_000;
+/** Used only when the host serves no bound to read; named in the row's detail. */
+const UNDECLARED_BOUND_FALLBACK_MS = 60_000;
+
+/**
+ * How long to keep observing: the host's OWN declared recovery bound.
+ *
+ * §E item 11: resumption "MUST be observed on a subsequent observation within
+ * the declared recovery bound", and §B.6 makes a long bound conformant. Until
+ * 2.32.0 both kill rows read the log ONCE, the instant discovery answered
+ * again — which demanded resumption within ~0 ms of the listener coming up, a
+ * fast bound the RFC's §"Alternatives considered" explicitly rejects. A host
+ * whose sweeper first ticks 5 s after boot against a 65 s derived bound read
+ * `0 run.started` and failed, then resumed correctly ten seconds later. The
+ * bound is used as a CEILING FOR WAITING only; it is never asserted as a
+ * scalar here (`bound-is-derived` owns the arithmetic).
+ */
+async function declaredBoundMs(fired: unknown): Promise<{ ms: number; declared: boolean }> {
+  // A host whose bound is PER CLASS (Unresolved Question 1: unleased work waits
+  // out an outbox lease, leased work a dispatch lease — 65 s against 750 s on
+  // one measured host) names the figure that governs THIS work on the seam's
+  // own response. The bare read below returns one class and would report the
+  // interval against a bound that does not govern the staged run.
+  const governing = (fired as { recoveryBoundMs?: unknown } | null)?.recoveryBoundMs;
+  if (typeof governing === 'number' && Number.isFinite(governing) && governing > 0) return { ms: governing, declared: true };
+  const r = await driver.get('/host/durability/bound');
+  const bound = (r.json as { bound?: unknown } | null)?.bound;
+  return r.status === 200 && typeof bound === 'number' && Number.isFinite(bound) && bound > 0
+    ? { ms: bound, declared: true }
+    : { ms: UNDECLARED_BOUND_FALLBACK_MS, declared: false };
+}
+
+interface Watch { resumedAfterMs: number | null; last: Observation; completedUnresumed: boolean; waitedMs: number }
+/**
+ * Observe `runId` from the moment the service answers again until `resumed`
+ * holds or `budgetMs` elapses. `completedUnresumed` latches if ANY observation
+ * shows the run `completed` while `resumed` is still false — the item-11 defect
+ * is a state a later observation can paper over, so it is checked at every read.
+ */
+async function watchForResumption(runId: string, budgetMs: number, resumed: (o: Observation) => boolean): Promise<Watch> {
+  const t0 = Date.now();
+  let last: Observation = { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
+  let completedUnresumed = false;
+  for (;;) {
+    last = await observe(runId);
+    const waitedMs = Date.now() - t0;
+    if (last.readable && resumed(last)) return { resumedAfterMs: waitedMs, last, completedUnresumed, waitedMs };
+    const snap = await driver.get(`/runs/${encodeURIComponent(runId)}`);
+    if ((snap.json as { status?: unknown } | null)?.status === 'completed' && !(last.readable && resumed(last))) completedUnresumed = true;
+    if (waitedMs >= budgetMs) return { resumedAfterMs: null, last, completedUnresumed, waitedMs };
+    await new Promise((r) => setTimeout(r, 500));
+  }
+}
+
+/**
+ * The suite's own destination for the one staged effect. Every request that
+ * reaches it is an INVOCATION — the thing §C says to count. Honours
+ * OPENWOP_WEBHOOK_RECEIVER_PORT so a tunnelled cut forwards here (the
+ * certification setting is already `--max-workers 1`, so the pinned port is
+ * not contended by the webhook files).
+ */
+async function startEffectReceiver(): Promise<{ server: Server; url: string; arrivals: Array<{ method: string; at: number }> }> {
+  const arrivals: Array<{ method: string; at: number }> = [];
+  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
+    request.on('data', () => { /* drain */ });
+    request.on('end', () => { arrivals.push({ method: request.method ?? '', at: Date.now() }); res.writeHead(204); res.end(); });
+  });
+  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
+  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
+  const addr = server.address();
+  const port = typeof addr === 'object' && addr ? addr.port : 0;
+  return { server, url: `http://${binding.advertise}:${port}/effect`, arrivals };
 }
 
 describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-single-instance rows)', () => {
@@ -155,12 +288,21 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       return softSkip('blocked', 'the service never answered again within the window — the operator precondition for this row is a restart supervisor (something must restart the killed instance; the suite cannot)');
     }
 
-    const starts = await runStartedCount(runId);
+    // Accepted-but-undispatched work has, by definition, not executed: any
+    // dispatch evidence after the death is the resumption. Observed until the
+    // host's OWN declared bound elapses, never once at the instant of return.
+    const bound = await declaredBoundMs(fired.json);
+    const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
+    const w = await watchForResumption(runId, budget, (o) => o.runStarted >= 1 || o.nodeStarted >= 1 || o.restored >= 1);
+    if (!w.last.readable) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer after the restart — resumption is unobservable, and an unreadable log must not read as "nothing resumed"');
+    if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
+      return softSkip('blocked', `no dispatch observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this run observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here; the operator precondition for this row is OPENWOP_DURABILITY_OBSERVATION_CEILING_MS >= the declared bound`);
+    }
     expect(
-      starts >= 1,
-      req('openwop.requirement.0158.kill-after-accept', 'RFC 0158 §B.4', `work accepted before a real process death MUST dispatch on resume — the run's log MUST show it being executed after the kill, observed ${starts} run.started (service answered again after ${backIn}ms)`),
+      w.resumedAfterMs !== null,
+      req('openwop.requirement.0158.kill-after-accept', 'RFC 0158 §B.4', `work accepted before a real process death MUST dispatch on resume within the declared recovery bound — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.nodeStarted} node.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; dispatch first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
-  }, 120_000);
+  }, KILL_ROW_TIMEOUT_MS);
 
   it('work executing at a real process death is never reported complete, and resumes', async () => {
     const doc = await v2Discovery();
@@ -183,18 +325,31 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       return softSkip('blocked', 'the service never answered again within the window — the operator precondition for this row is a restart supervisor (something must restart the killed instance; the suite cannot)');
     }
 
-    // §E item 11's first clause, and the one a host is most likely to get
-    // wrong: work that was executing when the process died MUST NOT be
-    // observable as completed. A host that marks it complete on restart has
-    // reported success for work it never finished.
-    const snap = await driver.get(`/runs/${encodeURIComponent(runId)}`);
-    const status = (snap.json as { status?: unknown } | null)?.status;
-    const starts = await runStartedCount(runId);
+    // §E item 11 is TWO clauses and until 2.32.0 only the first was asserted:
+    // `status !== 'completed' || starts > 1` holds forever for a run that is
+    // simply never resumed, so the row passed on a host that lost the work —
+    // weaker than its own RFC table row ("resumed within the declared bound").
+    // (1) work executing at the death MUST NOT be observable as completed
+    //     without having been re-executed — latched across EVERY observation;
+    // (2) resumption MUST be observed within the declared recovery bound.
+    // Work that was executing already has one `run.started`; resumption is a
+    // further one, or the registry's own recovery event.
+    const bound = await declaredBoundMs(fired.json);
+    const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
+    const w = await watchForResumption(runId, budget, (o) => o.runStarted > 1 || o.restored >= 1);
+    if (!w.last.readable) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer after the restart — resumption is unobservable, and an unreadable log must not read as "nothing resumed"');
     expect(
-      status !== 'completed' || starts > 1,
-      req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST NOT be observable as completed without having been re-executed — read status ${String(status)} with ${starts} run.started (service answered again after ${backIn}ms); §B.4 measures kill → RESUMPTION, never kill → terminal`),
+      w.completedUnresumed,
+      req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST NOT be observable as completed without having been re-executed — an observation after the kill read status completed with ${w.last.runStarted} run.started and ${w.last.restored} restored (service answered again after ${backIn}ms)`),
+    ).toBe(false);
+    if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
+      return softSkip('blocked', `no resumption observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this run observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here; the operator precondition for this row is OPENWOP_DURABILITY_OBSERVATION_CEILING_MS >= the declared bound`);
+    }
+    expect(
+      w.resumedAfterMs !== null,
+      req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST resume within the declared recovery bound; §B.4 measures kill → RESUMPTION, never kill → terminal — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; resumption first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
-  }, 120_000);
+  }, KILL_ROW_TIMEOUT_MS);
 
   it('the same accepted work delivered twice fires each effect exactly once', async () => {
     const doc = await v2Discovery();
@@ -202,38 +357,73 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     const seam = await probeSeam();
     if (seam.kind === 'absent') return softSkip('inapplicable', seam.why);
 
-    const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery', workflowId: FIXTURE });
-    if (fired.status >= 400) {
-      return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery — the host exposes the route but could not stage a double delivery`);
-    }
-    const runId = (fired.json as { runId?: unknown } | null)?.runId;
-    if (typeof runId !== 'string') {
-      return softSkip('blocked', 'the seam staged a duplicate delivery but named no runId');
-    }
+    // THE EFFECT IS COUNTED WHERE IT LANDS, not where the host says it landed.
+    // Until 2.32.0 this row counted rows per identity on GET /runs/{id}/effects.
+    // A ledger keyed on effect identity admits AT MOST ONE ROW per identity by
+    // construction — a second fire at the same identity writes the same key —
+    // so `no identity appears twice` held whatever the effect did. Measured by
+    // the openwop-app host before it built to this row: with its dedup claim
+    // forced to always win, and then with the effect emitted twice per fire (an
+    // unambiguous double-fire), the per-identity count stayed 1 and the row
+    // stayed green. §C asks for INVOCATION counts; the projection exposes
+    // IDENTITIES. The only black-box oracle for "fired once" is a receiver the
+    // suite owns, so the seam aims the staged work's effect at `effectUrl`.
+    //
+    // NO `workflowId` is sent: no canonical fixture is guaranteed effectful
+    // (`conformance-noop` records none). The seam is host test infrastructure
+    // (§E) and chooses the work; it MUST stage work that performs EXACTLY ONE
+    // outbound effect, addressed to `effectUrl`, and deliver it twice.
+    const rx = await startEffectReceiver();
+    try {
+      const target = resolveRegistrationUrl(rx.url);
+      const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery', effectUrl: target.url });
+      if (fired.status >= 400) {
+        return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery with effectUrl ${target.tunnelled ? '(tunnelled)' : rx.url} — the host exposes the route but could not stage a double delivery; if its egress guard refused the receiver, the operator precondition is the webhook rows' own: a publicly-resolvable https front (OPENWOP_WEBHOOK_RECEIVER_URL) or a host run with its private-egress relaxation recorded`);
+      }
+      const runId = (fired.json as { runId?: unknown } | null)?.runId;
+      if (typeof runId !== 'string') {
+        return softSkip('blocked', 'the seam staged a duplicate delivery but named no runId');
+      }
 
-    const eff = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
-    if (eff.status !== 200) {
-      return softSkip('blocked', `GET /runs/{runId}/effects answered ${eff.status} — per-identity invocation counts are unobservable, so the assertion would be vacuous`);
+      await pollUntilTerminal(runId, { timeoutMs: scaledTimeoutMs(60_000) });
+      // A LONGER wait is a STRONGER claim: this is a wait for a second arrival
+      // that must not happen, and the second delivery may trail the first.
+      await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
+
+      const arrivals = rx.arrivals.length;
+      if (arrivals === 0 && !target.tunnelled) {
+        return softSkip('blocked', `the staged work's effect never reached the suite's receiver at ${rx.url} — for mode=duplicate-delivery the seam MUST aim exactly one outbound effect at the given effectUrl; with nothing landed there is no invocation to count, and the ledger alone cannot witness a double-fire`);
+      }
+      // With a tunnel declared, zero arrivals is a hard failure, never a skip
+      // (webhook-receiver.ts): a mis-wired tunnel must not read as a pass.
+      expect(
+        arrivals,
+        req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the same accepted work delivered twice MUST fire each effect exactly once, counted at the effect's destination — the suite's receiver observed ${arrivals} arrival(s) of the one staged effect for run ${runId}`),
+      ).toBe(1);
+
+      // Secondary, and labelled for what it is: the host's own account agrees
+      // with what landed. On an identity-keyed ledger this can never exceed one
+      // row per identity, so it witnesses that the PROJECTION IS CONSISTENT, not
+      // that no double-fire happened — the arrival count above owns that.
+      const eff = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
+      if (eff.status === 200) {
+        const effects = (eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? [];
+        const byIdentity = new Map<string, number>();
+        for (const e of effects) {
+          const id = String(e['effectId'] ?? e['keying'] ?? '');
+          if (id === '') continue;
+          byIdentity.set(id, (byIdentity.get(id) ?? 0) + 1);
+        }
+        const doubled = [...byIdentity.entries()].filter(([, n]) => n > 1);
+        expect(
+          doubled.length === 0,
+          req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the effect ledger MUST agree with the destination: no effect identity recorded more than once — ${byIdentity.size} identity/identities, ${doubled.length} recorded more than once${doubled.length ? ` (${doubled.map(([k, n]) => `${k}×${n}`).join(', ')})` : ''}`),
+        ).toBe(true);
+      }
+    } finally {
+      await new Promise<void>((r) => rx.server.close(() => r()));
     }
-    const effects = (eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? [];
-    if (effects.length === 0) {
-      return softSkip('blocked', 'the staged run recorded no effects — there is no identity to count invocations against, and an end-state assertion is exactly what §C rules out');
-    }
-    // §C: assert INVOCATION COUNTS PER IDENTITY, not final state. A legal end
-    // state is precisely what a double-fire produces, so an end-state
-    // assertion passes on the defect it exists to catch.
-    const byIdentity = new Map<string, number>();
-    for (const e of effects) {
-      const id = String(e['effectId'] ?? e['keying'] ?? '');
-      if (id === '') continue;
-      byIdentity.set(id, (byIdentity.get(id) ?? 0) + 1);
-    }
-    const doubled = [...byIdentity.entries()].filter(([, n]) => n > 1);
-    expect(
-      doubled.length === 0,
-      req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the same accepted work delivered twice MUST fire each effect exactly once, asserted per effect identity — ${byIdentity.size} identity/identities recorded, ${doubled.length} fired more than once${doubled.length ? ` (${doubled.map(([k, n]) => `${k}×${n}`).join(', ')})` : ''}`),
-    ).toBe(true);
-  }, 120_000);
+  }, 180_000);
 
   it('the declared recovery bound is derived from the mechanism that enforces it', async () => {
     const doc = await v2Discovery();
@@ -290,7 +480,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     ).toBe('failed');
 
     const before = await runEvents(runId);
-    if (before === null) return softSkip('blocked', 'GET /runs/{runId}/events did not answer — attempts are unobservable, so boundedness would be a vacuous claim');
+    if (before === null) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer — attempts are unobservable, so boundedness would be a vacuous claim');
     // Non-vacuity: the failure must actually be ON the log. Without this a host
     // returning an empty array sails through every count comparison below,
     // because 0 === 0 after any wait.
@@ -308,7 +498,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // reports a terminal status at some point. Count, wait, count again.
     await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
     const after = await runEvents(runId);
-    if (after === null) return softSkip('blocked', 'the second GET /runs/{runId}/events did not answer, so the stability comparison has one side');
+    if (after === null) return softSkip('blocked', 'the second GET /runs/{runId}/events/poll did not answer, so the stability comparison has one side');
     const attemptsAfter = after.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
     expect(
       attemptsAfter,

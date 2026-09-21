@@ -70,6 +70,8 @@ There is one signing scheme. `signing` on a version manifest (`schemas/v2/regist
 | `keyId` | the signing key id; `publicKeyRef` does not exist |
 | `method` | does not exist; a manifest carrying it fails validation |
 
+The same block applies to a **bare manifest** — the `pack.json` inside the tarball, which is the document the signature covers. `signing` is OPTIONAL there, because an authoring-time `pack.json` exists before it is signed; when present it MUST be the identical closed `{ keyId, scheme }` object, and the v1 `{ publicKeyRef, signatureRef, method }` block fails validation on every bare manifest kind (migration row `openwop.migration.C10.1`).
+
 A verifier MUST verify the signature against the issuing registry's key for `keyId` and MUST check the pack name against that key's `permittedNamespaces`. A signature over tarball bytes is not a v2 signature; such a pack MUST be re-signed, not relabeled.
 
 ## Version manifests
