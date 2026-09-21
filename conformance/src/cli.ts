@@ -42,6 +42,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from './lib/paths.js';
 import { readLedgerFile } from './lib/requirement-ledger.js';
+import { deriveRung, emittedByNewerSuite, type RowEvidence } from './lib/durability-evidence.js';
 import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
 import { scrubEvidence, evidenceSecretsFromEnv, verifyBundleV2 } from './lib/certification-bundle-verify.js';
 import { publicKeyFromPrivate, signBundleV3, verifierSign, verifyBundleV3, witnessDigest, type BundleV3, type BundleV3Requirement } from './lib/certification-bundle-v3.js';
@@ -658,7 +659,13 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       process.stderr.write('openwop-conformance --certify: a v3 bundle needs --host-build <kind>:<id> (or OPENWOP_HOST_BUILD), --signing-key <pem> (or OPENWOP_BUNDLE_SIGNING_KEY) and --signing-key-id (or OPENWOP_BUNDLE_SIGNING_KEY_ID) — an unsigned bundle does not exist in v3 (RFC 0168 §E.2).\n');
       process.exit(2);
     }
-    const rows3: BundleV3Requirement[] = derived.requirements.map((r) => ({ id: r.requirementId, scenario: r.scenarioId, result: r.disposition as BundleV3Requirement['result'], ...(r.assertionCount === undefined ? {} : { assertions: r.assertionCount }), ...(r.detail === undefined ? {} : { detail: r.detail }) }));
+    const evidenceById = new Map<string, RowEvidence>();
+    for (const e of ledgerEntries) if (e.evidence !== undefined && e.disposition === 'executed-pass') evidenceById.set(e.requirementId, e.evidence);
+    const rows3: BundleV3Requirement[] = derived.requirements.map((r) => ({ id: r.requirementId, scenario: r.scenarioId, result: r.disposition as BundleV3Requirement['result'], ...(r.assertionCount === undefined ? {} : { assertions: r.assertionCount }), ...(r.detail === undefined ? {} : { detail: r.detail }),
+      // RFC 0158 §E: structured evidence rides on the ROW, so the witness digest —
+      // and through it the signature — covers it. Lifted from the raw ledger by
+      // requirement id, and only onto a row that is itself `executed-pass`.
+      ...(r.disposition === 'executed-pass' && evidenceById.has(r.requirementId) ? { evidence: evidenceById.get(r.requirementId) as RowEvidence } : {}) }));
     const totals3 = derived.totals;
     const doc3 = document as Record<string, unknown>;
     const protocolVersions = Array.isArray(doc3['protocolVersions']) ? (doc3['protocolVersions'] as string[]) : [String(doc3['protocolVersion'] ?? '')];
@@ -701,6 +708,10 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     const lockPath = resolvePath(conformanceRoot, 'dist', 'spec-artifacts.lock.json');
     const lock = existsSync(lockPath) ? (JSON.parse(readFileSync(lockPath, 'utf8')) as { version: string; stampSha256: string }) : undefined;
     const nonPass = rows3.filter((r) => r.result !== 'executed-pass');
+    const rung3 = deriveRung(rows3);
+    if (rows3.some((r) => r.id.startsWith('openwop.requirement.0158.') && r.result === 'executed-pass' && r.id !== 'openwop.requirement.0158.poison-exhaustion')) {
+      process.stderr.write(`openwop-conformance --certify: RFC 0158 rung — ${rung3.rung ?? 'NONE'} (${rung3.why})\n`);
+    }
     const unsigned: Omit<BundleV3, 'signature'> = {
       bundleVersion: '3',
       generatedAt: new Date().toISOString(),
@@ -716,6 +727,10 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       witnessSha256: witnessDigest(rows3),
       assertionCount: rows3.reduce((n, r) => n + (r.assertions ?? 0), 0),
       ...(nonPass.length ? { detail: { nonPass: nonPass.map((r) => ({ id: r.id, result: r.result, reason: r.detail ?? '' })) } } : {}),
+      // RFC 0158 §D: claimed ONLY when these rows support it. The verifier
+      // re-derives the same answer from the same signed rows, so an emitter that
+      // claimed more would be writing a bundle its own `--verify` rejects.
+      ...(rung3.rung === null ? {} : { durability: { rung: rung3.rung } }),
     };
     const signature = signBundleV3(unsigned, signingKeyPem, keyId);
     const v3: BundleV3 = { ...unsigned, signature };
@@ -942,6 +957,8 @@ async function main(): Promise<never> {
       `suite:     ${bundle.suite?.version ?? '?'} (this CLI is ${suiteVersion()})`,
       `totals:    executedPass=${t.executedPass ?? '?'} executedFail=${t.executedFail ?? '?'} blocked=${t.blocked ?? '?'} inapplicable=${t.inapplicable ?? '?'} skipped=${t.skipped ?? '?'}`,
       `certified: ${verdict.certifiedProfiles.length > 0 ? verdict.certifiedProfiles.join(', ') : '(none)'}`,
+      // RFC 0158 §D/§E: the rung is a CLAIM; a claim the signed rows do not support is a rejection below.
+      `rung:      ${bundle.durability?.rung ?? '(none claimed)'}`,
       '',
       'What this command does NOT do:',
       '  · It does not re-run anything. A host that measured itself wrongly, and signed',
@@ -952,6 +969,11 @@ async function main(): Promise<never> {
       '    an older bundle measured less, and whose fact that is belongs to its emitter.',
       '',
     ];
+    if (emittedByNewerSuite(bundle.suite?.version, suiteVersion())) {
+      out.push(`NOTE \u2014 this bundle was emitted by suite ${String(bundle.suite?.version)}, NEWER than this verifier (${suiteVersion()}).`,
+        '  A newer suite may digest row members this verifier does not know. If a `witness-digest`',
+        '  rejection follows, upgrade the verifier before reading it as tampering.', '');
+    }
     if (verdict.rejections.length > 0) {
       out.push(`REJECTED \u2014 ${verdict.rejections.length} problem(s):`);
       for (const r of verdict.rejections) out.push(`  [${r.kind}]${r.profile ? ` (${r.profile})` : ''} ${r.detail}`);

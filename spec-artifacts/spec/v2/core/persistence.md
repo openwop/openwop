@@ -179,6 +179,20 @@ Template — one row per store:
 
 The reference hosts' dispositions are recorded in RFC 0176; a host MUST NOT decide a store's disposition during the migration.
 
+## Durable acceptance and recovery
+
+RFC 0158 §A–§D, restated because its v1 homes (`idempotency.md`, `storage-adapters.md`) retire with v1. Nothing here is new.
+
+| Clause | Requirement |
+| --- | --- |
+| Acceptance (§A) | A host that returns success for work it accepted MUST have made the intent to perform it durable in the same transaction as the work record; a wakeup, hint, or in-process dispatch MUST NOT be the only record. It MUST resume accepted-but-unstarted work after the accepting process dies, without client action. |
+| Liveness (§B.3) | A host MUST distinguish how long a unit of work may legitimately run from the interval in which a live worker demonstrates liveness, and MUST NOT use the duration bound as the sole liveness signal. |
+| Recovery bound (§B.4–6) | A host MUST declare the longest interval between an instance ceasing to make progress and another becoming eligible to resume its work, and MUST derive it from the mechanism that enforces it — one bound per enforcing mechanism, never a single aggregate. Any length is conformant; an undeclared or unenforced bound is not. |
+| Duplicates (§C.7) | Duplicate delivery of accepted work MUST NOT produce duplicate external effects; the host MUST dedupe on an identity that survives redelivery (idempotency.md). |
+| Poison work (§C.8) | Work that fails deterministically MUST reach a terminal, operator-visible state within a bounded number of attempts. |
+
+A host MAY claim a qualification rung (`durable-single-instance`, `durable-multi-instance`, `multi-region-qualified`; cumulative) only with the evidence named for it, and MUST NOT claim one from tests in which no process was terminated (§D.9). A rung is evidence, not a capability: discovery carries none, and the rung and its bounds are published in the certification bundle (conformance.md §Bundle v3).
+
 ## The corpus-tag pin
 
 A consumer that vendors any file from `schemas/`, `api/`, or `spec/` MUST pin to a published `openwop-conformance/vX.Y.Z` tag, MUST record the tag, and MUST refuse a sync from any other ref. A v1.x consumer MUST NOT vendor `schemas/v2/` (RFC 0176 §E.1). The `corpus-tag-pinned` check verifies that each consumer's recorded tag resolves (conformance.md).

@@ -19,6 +19,7 @@
  */
 import { createHash, createPrivateKey, createPublicKey, sign as edSign, verify as edVerify, type KeyObject } from 'node:crypto';
 import { profileDerivable, type DiscoveryPayload } from './profiles.js';
+import { checkRungClaim, type DurabilityRung, type RowEvidence } from './durability-evidence.js';
 import { profilesDeniedByObservedRelaxation, profilesRelaxedBy, v2RegistryAvailable } from './v2-profiles.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
@@ -29,6 +30,8 @@ export interface BundleV3Requirement {
   readonly result: BundleV3Result;
   readonly assertions?: number;
   readonly detail?: string;
+  /** RFC 0158 §E — structured evidence. Inside the witness digest, hence inside the signature. */
+  readonly evidence?: RowEvidence;
 }
 export interface BundleV3Profile {
   readonly id: string;
@@ -67,6 +70,8 @@ export interface BundleV3 {
   witnessSha256: string;
   assertionCount: number;
   detail?: { nonPass: { id: string; result: string; reason: string }[] };
+  /** RFC 0158 §D — a CLAIM, outside the signature and never trusted: the verifier re-derives it from the signed rows. */
+  durability?: { rung: DurabilityRung };
   signature: BundleV3Signature;
   verifierSignature?: { alg: 'ed25519'; keyId: string; sig: string };
 }
@@ -84,7 +89,9 @@ export function canonicalJSON(value: unknown): string {
 
 /** RFC 0148 §C — the digest over the reporter record (the requirement rows). */
 export function witnessDigest(rows: readonly BundleV3Requirement[]): string {
-  const canonicalRows = [...rows].sort((a, b) => a.id.localeCompare(b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }) }));
+  const canonicalRows = [...rows].sort((a, b) => a.id.localeCompare(b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
+    // ONLY WHEN PRESENT: every bundle cut before 2.34.0 has no `evidence` and digests byte-identically.
+    ...(r.evidence === undefined ? {} : { evidence: r.evidence }) }));
   return createHash('sha256').update(canonicalJSON(canonicalRows), 'utf8').digest('hex');
 }
 
@@ -181,6 +188,11 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   const relaxed = new Set((bundle.host?.relaxations ?? []).map((r) => r.obligation.split('.')[0]));
   // Ownership comes from the profile registry, not from the profile's name — see profilesRelaxedBy.
   const relaxedProfiles = profilesRelaxedBy((bundle.host?.relaxations ?? []).map((r) => r.obligation), (bundle.claimedProfiles ?? []).map((p) => p.id));
+  // RFC 0158 §D: a rung is CLAIMED at the top level, outside the signature, and
+  // is therefore only ever as good as its re-derivation from the signed rows.
+  const rung = checkRungClaim(bundle.durability?.rung, rows);
+  if (!rung.ok) rejections.push({ kind: 'rung-not-derivable', detail: rung.detail });
+
   // An OBSERVED relaxation nobody declared: the bundle's own results show the
   // host accepting a destination its egress guard MUST refuse. Same denial as a
   // declared one, so declaring nothing is not a way around the rule.
