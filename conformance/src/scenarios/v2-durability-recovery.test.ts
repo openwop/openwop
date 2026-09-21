@@ -73,6 +73,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
 import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { watchForResumption, type Observation, type Watch } from '../lib/durability-watch.js';
 
 const FIXTURE = 'conformance-noop';
 const FAILURE_FIXTURE = 'conformance-failure';
@@ -156,7 +157,6 @@ async function waitBack(deadlineMs: number): Promise<number | null> {
  * minted for it is not failed for declining to re-emit `run.started`.
  */
 const RESTORED_TYPES = new Set(['workflow.restored', 'run.restored-from-snapshot']);
-interface Observation { readable: boolean; runStarted: number; nodeStarted: number; restored: number }
 async function observe(runId: string): Promise<Observation> {
   const events = await runEvents(runId);
   if (events === null) return { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
@@ -214,26 +214,18 @@ async function declaredBoundMs(fired: unknown): Promise<{ ms: number; declared: 
     : { ms: UNDECLARED_BOUND_FALLBACK_MS, declared: false };
 }
 
-interface Watch { resumedAfterMs: number | null; last: Observation; completedUnresumed: boolean; waitedMs: number }
 /**
- * Observe `runId` from the moment the service answers again until `resumed`
- * holds or `budgetMs` elapses. `completedUnresumed` latches if ANY observation
- * shows the run `completed` while `resumed` is still false — the item-11 defect
- * is a state a later observation can paper over, so it is checked at every read.
+ * Observe `runId` until `resumed` holds or `budgetMs` elapses. The loop itself —
+ * and the reason the STATUS is read before the LOG — lives in
+ * `lib/durability-watch.ts`, where the ordering is unit-tested without a host.
  */
-async function watchForResumption(runId: string, budgetMs: number, resumed: (o: Observation) => boolean): Promise<Watch> {
-  const t0 = Date.now();
-  let last: Observation = { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
-  let completedUnresumed = false;
-  for (;;) {
-    last = await observe(runId);
-    const waitedMs = Date.now() - t0;
-    if (last.readable && resumed(last)) return { resumedAfterMs: waitedMs, last, completedUnresumed, waitedMs };
-    const snap = await driver.get(`/runs/${encodeURIComponent(runId)}`);
-    if ((snap.json as { status?: unknown } | null)?.status === 'completed' && !(last.readable && resumed(last))) completedUnresumed = true;
-    if (waitedMs >= budgetMs) return { resumedAfterMs: null, last, completedUnresumed, waitedMs };
-    await new Promise((r) => setTimeout(r, 500));
-  }
+function watch(runId: string, budgetMs: number, resumed: (o: Observation) => boolean): Promise<Watch> {
+  return watchForResumption({
+    readStatus: async () => { const snap = await driver.get(`/runs/${encodeURIComponent(runId)}`); const st = (snap.json as { status?: unknown } | null)?.status; return typeof st === 'string' ? st : null; },
+    readLog: () => observe(runId),
+    now: () => Date.now(),
+    sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  }, budgetMs, resumed);
 }
 
 /**
@@ -293,7 +285,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // host's OWN declared bound elapses, never once at the instant of return.
     const bound = await declaredBoundMs(fired.json);
     const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
-    const w = await watchForResumption(runId, budget, (o) => o.runStarted >= 1 || o.nodeStarted >= 1 || o.restored >= 1);
+    const w = await watch(runId, budget, (o) => o.runStarted >= 1 || o.nodeStarted >= 1 || o.restored >= 1);
     if (!w.last.readable) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer after the restart — resumption is unobservable, and an unreadable log must not read as "nothing resumed"');
     if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
       return softSkip('blocked', `no dispatch observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this run observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here; the operator precondition for this row is OPENWOP_DURABILITY_OBSERVATION_CEILING_MS >= the declared bound`);
@@ -336,7 +328,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // further one, or the registry's own recovery event.
     const bound = await declaredBoundMs(fired.json);
     const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
-    const w = await watchForResumption(runId, budget, (o) => o.runStarted > 1 || o.restored >= 1);
+    const w = await watch(runId, budget, (o) => o.runStarted > 1 || o.restored >= 1);
     if (!w.last.readable) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer after the restart — resumption is unobservable, and an unreadable log must not read as "nothing resumed"');
     expect(
       w.completedUnresumed,

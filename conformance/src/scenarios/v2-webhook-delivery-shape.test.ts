@@ -115,7 +115,30 @@ async function register(url: string, major: 1 | 2): Promise<string | null> {
   }
   expect(reg.status, req(ID, 'webhooks.md §Surfaces', 'POST /webhooks MUST answer 201 { webhookId }')).toBe(201);
   const id = (reg.json as { webhookId?: unknown } | null)?.webhookId;
+  if (typeof id === 'string') registered.push({ id, major });
   return typeof id === 'string' ? id : null;
+}
+
+/**
+ * Every subscription this file registers, unregistered after the leg that made
+ * it. Until 2.33.1 NOTHING here was ever unregistered. On loopback that was
+ * invisible: each leg's receiver bound its own ephemeral port, so a leftover
+ * subscription delivered to a dead address. Behind a public front every leg
+ * shares ONE URL on ONE pinned port - so leg 1's still-live MAJOR-2
+ * subscription delivered its v2 rendering into leg 2, and the major-1 leg read
+ * it and failed a host that had rendered both contracts correctly ("a major-1
+ * run.started payload MUST validate against the V1 definition … engineVersion
+ * must be string"). Found on the v2 reference host's first relaxation-free cut;
+ * reproduced with no ingress at all by pinning OPENWOP_WEBHOOK_RECEIVER_PORT on
+ * a loopback run. It also left a live subscription on every host this file ever
+ * ran against.
+ */
+const registered: Array<{ id: string; major: 1 | 2 }> = [];
+async function unregisterAll(): Promise<void> {
+  for (const r of registered.splice(0)) {
+    const path = `${r.major === 2 ? '' : '/v1'}/webhooks/${encodeURIComponent(r.id)}`;
+    try { await driver.delete(path, { headers: { 'OpenWOP-Version': r.major === 2 ? '2.0' : '1.0' } }); } catch { /* best effort: the leg's verdict is already recorded */ }
+  }
 }
 
 async function driveRun(): Promise<string> {
@@ -135,10 +158,21 @@ async function waitFor<T>(fn: () => T | undefined, ms: number): Promise<T | unde
  * receive the bare opaque id (versioning.md §5), so the match is on the segment
  * both spellings share.
  */
-function deliveryFor(deliveries: Delivery[], runId: string): { event: Record<string, unknown>; envelope: Record<string, unknown> } | undefined {
+/** The subscription a delivery says it belongs to, from either header family; undefined when it carries neither. */
+function subscriptionOf(d: Delivery): string | undefined {
+  const h = d.headers['openwop-webhook-id'] ?? d.headers['x-openwop-webhook-id'];
+  return typeof h === 'string' ? h : Array.isArray(h) ? h[0] : undefined;
+}
+const bare = (id: string): string => (id.includes('/') ? id.slice(id.indexOf('/') + 1) : id);
+
+function deliveryFor(deliveries: Delivery[], runId: string, webhookId?: string): { event: Record<string, unknown>; envelope: Record<string, unknown> } | undefined {
   const opaque = runId.includes('/') ? runId.slice(runId.indexOf('/') + 1) : runId;
   for (const d of deliveries) {
     if (!d.body.includes(opaque)) continue;
+    // Belt and braces beside unregisterAll(): a delivery that NAMES another
+    // subscription is not this leg's, whatever URL it arrived on.
+    const sub = subscriptionOf(d);
+    if (webhookId !== undefined && sub !== undefined && bare(sub) !== bare(webhookId)) continue;
     let parsed: unknown;
     try { parsed = JSON.parse(d.body); } catch { continue; }
     if (parsed === null || typeof parsed !== 'object') continue;
@@ -181,15 +215,16 @@ const V1 = 'https://openwop.dev/spec/v1/';
 
 describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versioning.md §1.2)', () => {
   let active: Server | null = null;
-  afterEach(async () => { const s = active; active = null; if (s) await new Promise<void>((r) => s.close(() => r())); });
+  afterEach(async () => { await unregisterAll(); const s = active; active = null; if (s) await new Promise<void>((r) => s.close(() => r())); });
 
   it('a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal', async () => {
     if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
     const receiver = await startReceiver(); active = receiver.server;
-    if ((await register(receiver.url, 2)) === null) return softSkip('blocked', 'registration refused (reason recorded above)');
+    const webhookId = await register(receiver.url, 2);
+    if (webhookId === null) return softSkip('blocked', 'registration refused (reason recorded above)');
     const runId = await driveRun();
-    const d = await waitFor(() => deliveryFor(receiver.deliveries, runId), 15_000);
+    const d = await waitFor(() => deliveryFor(receiver.deliveries, runId, webhookId), 15_000);
     if (!d) return softSkip('blocked', `no ${EVENT_TYPE} delivery for this run arrived inside 15s — durability is v2-webhook-durable-delivery's claim, not this file's`);
     const v2 = validators(2);
     const envelope = v2.ref(`${V2}webhook-delivery.schema.json`)(d.envelope);
@@ -211,9 +246,10 @@ describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versio
     const versions = Array.isArray(disc?.['protocolVersions']) ? (disc?.['protocolVersions'] as unknown[]).map(String) : [];
     if (!versions.some((v) => v.startsWith('1.'))) return softSkip('inapplicable', `host advertises [${versions.join(', ') || 'no protocolVersions'}] — no 1.x member, so there is no v1 wire to keep still`);
     const receiver = await startReceiver(); active = receiver.server;
-    if ((await register(receiver.url, 1)) === null) return softSkip('blocked', 'registration refused or inapplicable (disposition recorded above)');
+    const webhookId = await register(receiver.url, 1);
+    if (webhookId === null) return softSkip('blocked', 'registration refused or inapplicable (disposition recorded above)');
     const runId = await driveRun();
-    const d = await waitFor(() => deliveryFor(receiver.deliveries, runId), 15_000);
+    const d = await waitFor(() => deliveryFor(receiver.deliveries, runId, webhookId), 15_000);
     if (!d) return softSkip('blocked', `no ${EVENT_TYPE} delivery for this run arrived inside 15s`);
     // The v1 definition is the discriminator, not the owner's keys: v1's owner admits `subject` (RFC 0165
     // §B, echoed verbatim when present) alongside `principal`, so a v2 owner is ALSO a valid v1 owner.
@@ -234,11 +270,12 @@ describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versio
     const gate = era2Gate(disc);
     if (gate !== null && !gate.ok) return softSkip(gate.kind, gate.reason);
     const receiver = await startReceiver(); active = receiver.server;
-    if ((await register(receiver.url, 2)) === null) return softSkip('blocked', 'registration refused (reason recorded above)');
+    const webhookId = await register(receiver.url, 2);
+    if (webhookId === null) return softSkip('blocked', 'registration refused (reason recorded above)');
     const log = await seedEra2Log(v1FixtureLog(FIXTURE), 'completed');
     if (!log.ok) return softSkip(log.kind, log.reason);
     const runId = log.runId;
-    const d = await waitFor(() => deliveryFor(receiver.deliveries, runId), 15_000);
+    const d = await waitFor(() => deliveryFor(receiver.deliveries, runId, webhookId), 15_000);
     // The seam appends HISTORY — rows that already happened — and a host MAY not fan out history (the
     // reference host's seam appends with fan-out suppressed by design). No delivery inside 15s means the
     // era-2 fan-out branch is unobservable on this host, not that a measurement failed: inapplicable.
