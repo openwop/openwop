@@ -29,7 +29,7 @@
  * Readers are injected so the ordering itself is testable without a host.
  */
 export interface Observation { readonly readable: boolean; readonly runStarted: number; readonly nodeStarted: number; readonly restored: number }
-export interface Watch { readonly resumedAfterMs: number | null; readonly last: Observation; readonly completedUnresumed: boolean; readonly waitedMs: number }
+export interface Watch { readonly resumedAfterMs: number | null; readonly last: Observation; readonly completedUnresumed: boolean; readonly waitedMs: number; readonly transportErrors: number }
 export interface WatchIo {
   readStatus(): Promise<string | null>;
   readLog(): Promise<Observation>;
@@ -37,17 +37,41 @@ export interface WatchIo {
   sleep(ms: number): Promise<void>;
 }
 
+const UNREADABLE: Observation = { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
+
+/**
+ * A TRANSPORT failure is an unreadable observation, never a verdict (2.34.2).
+ *
+ * The kill rows are the one place the suite causes the host to disappear, and a
+ * seam may kill at a point AFTER it has answered - `during-execution` dies at
+ * the first `node.started`, which can land seconds later. `waitBack()` already
+ * treated a refused connection as "down, keep waiting"; these two reads did
+ * not, so a process that died mid-watch threw `fetch failed` out of the
+ * scenario and failed the row - for recovering. Measured on a tier-1 host at
+ * its production image, behind a port proxy that accepts and then closes: four
+ * of five RFC 0158 rows `executed-fail` on `UND_ERR_SOCKET: other side closed`,
+ * twice. A status that cannot be read is `null`; a log that cannot be read is
+ * `readable: false` - both already mean "conclude nothing, poll again", and the
+ * budget still bounds the wait, so a host that never comes back still fails.
+ */
+async function orNull<T>(read: () => Promise<T>, fallback: T): Promise<{ value: T; failed: boolean }> {
+  try { return { value: await read(), failed: false }; } catch { return { value: fallback, failed: true }; }
+}
+
 export async function watchForResumption(io: WatchIo, budgetMs: number, resumed: (o: Observation) => boolean, pollMs = 500): Promise<Watch> {
   const t0 = io.now();
   let completedUnresumed = false;
+  let transportErrors = 0;
   for (;;) {
-    const status = await io.readStatus();   // FIRST
-    const last = await io.readLog();        // SECOND — never older than the status it is judged against
+    const st = await orNull(() => io.readStatus(), null);   // FIRST
+    const lg = await orNull(() => io.readLog(), UNREADABLE); // SECOND — never older than the status it is judged against
+    if (st.failed || lg.failed) transportErrors++;
+    const status = st.value; const last = lg.value;
     const waitedMs = io.now() - t0;
     const isResumed = last.readable && resumed(last);
     if (status === 'completed' && last.readable && !isResumed) completedUnresumed = true;
-    if (isResumed) return { resumedAfterMs: waitedMs, last, completedUnresumed, waitedMs };
-    if (waitedMs >= budgetMs) return { resumedAfterMs: null, last, completedUnresumed, waitedMs };
+    if (isResumed) return { resumedAfterMs: waitedMs, last, completedUnresumed, waitedMs, transportErrors };
+    if (waitedMs >= budgetMs) return { resumedAfterMs: null, last, completedUnresumed, waitedMs, transportErrors };
     await io.sleep(pollMs);
   }
 }

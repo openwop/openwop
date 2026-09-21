@@ -66,3 +66,32 @@ describe('watchForResumption — the two reads are not atomic, so their ORDER de
     expect(w.last.readable).toBe(false);
   });
 });
+
+describe('a transport failure mid-watch is unreadable, not a verdict (2.34.2)', () => {
+  /** Dies for `down` requests after the first `upFor`, then answers again. */
+  function dyingHost(upFor: number, down: number, after: { status: string; log: Observation }): WatchIo {
+    let n = 0; let t = 0;
+    const fail = (): boolean => { n++; return n > upFor && n <= upFor + down; };
+    return {
+      readStatus: async () => { if (fail()) throw new TypeError('fetch failed'); return n <= upFor ? 'running' : after.status; },
+      readLog: async () => { if (fail()) throw new TypeError('fetch failed'); return n <= upFor ? obs(1) : after.log; },
+      now: () => t,
+      sleep: async (ms) => { t += ms; },
+    };
+  }
+  it('a host that dies AFTER the seam answered, and comes back, is observed resuming — the throw no longer fails the row', async () => {
+    const w = await watchForResumption(dyingHost(2, 6, { status: 'running', log: obs(2) }), 60_000, resumedDuringExecution);
+    expect(w.resumedAfterMs).not.toBeNull();
+    expect(w.transportErrors).toBeGreaterThan(0);
+  });
+  it('a host that never comes back still runs out the budget and resumes nothing', async () => {
+    const io: WatchIo = { readStatus: async () => { throw new TypeError('fetch failed'); }, readLog: async () => { throw new TypeError('fetch failed'); }, now: (() => { let t = 0; return () => (t += 500); })(), sleep: async () => undefined };
+    const w = await watchForResumption(io, 5_000, resumedDuringExecution);
+    expect(w.resumedAfterMs).toBeNull();
+    expect(w.last.readable).toBe(false);
+  });
+  it('an unreadable read concludes nothing about completed-un-re-executed', async () => {
+    const w = await watchForResumption(dyingHost(0, 4, { status: 'completed', log: obs(2) }), 60_000, resumedDuringExecution);
+    expect(w.completedUnresumed).toBe(false);
+  });
+});

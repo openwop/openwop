@@ -50,6 +50,17 @@ import { takeNotedEvidence } from './lib/durability-evidence.js';
 // vacuous `inapplicable`. Measured 2026-09-05 on a host answering in 200 ms.
 const SUITE_INIT_TIMEOUT_MS = 20_000;
 const SUITE_INIT_ATTEMPTS = 2;
+/**
+ * 2.34.2: a TRANSPORT failure (refused, reset, closed) is retried for up to
+ * this long, 1 s apart, before discovery is declared unreadable. Two
+ * back-to-back attempts gave a host restarted by the RFC 0158 kill rows about
+ * a millisecond to come back: every file set up while it was restarting logged
+ * "discovery unreadable" and recorded its fixture gates `blocked`, so one kill
+ * contaminated the rest of the run. An HTTP answer is not retried here - a host
+ * that answers 500 is up and its answer stands. A timeout (the 20 s abort) is
+ * not a transport failure either and still counts as an attempt.
+ */
+const SUITE_INIT_RESTART_WINDOW_MS = 45_000;
 
 async function loadHostFixtures(): Promise<void> {
   const baseUrl = process.env.OPENWOP_BASE_URL?.trim();
@@ -67,6 +78,7 @@ async function loadHostFixtures(): Promise<void> {
   if (targetMajor() === 2) headers['OpenWOP-Version'] = '2.0';
 
   let lastFailure = 'unknown';
+  const initStarted = Date.now();
   for (let attempt = 1; attempt <= SUITE_INIT_ATTEMPTS; attempt += 1) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), SUITE_INIT_TIMEOUT_MS);
@@ -82,6 +94,11 @@ async function loadHostFixtures(): Promise<void> {
       return;
     } catch (err) {
       lastFailure = `${(err as Error).message ?? 'unknown'} on attempt ${attempt}`;
+      const aborted = (err as Error).name === 'AbortError';
+      if (!aborted && Date.now() - initStarted < SUITE_INIT_RESTART_WINDOW_MS) {
+        attempt -= 1; // a restarting host: wait, and do not spend an attempt on it
+        await new Promise((r) => setTimeout(r, 1_000));
+      }
     } finally {
       clearTimeout(timer);
     }
