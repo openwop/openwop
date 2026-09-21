@@ -24,7 +24,7 @@ function bundle(egress: 'executed-pass' | 'executed-fail' | 'inapplicable', rela
       { id: 'openwop-discovery-core', evidenceTier: 'self', witnessCount: 1, certified: true },
     ],
     results: { totals: { executedPass: pass, executedFail: egress === 'executed-fail' ? 1 : 0, skipped: 0, inapplicable: egress === 'inapplicable' ? 1 : 0, blocked: 0 }, requirements: rows },
-    witnessSha256: witnessDigest(rows),
+    witnessSha256: witnessDigest(rows, relaxations),
     assertionCount: rows.reduce((n, r) => n + (r.assertions ?? 0), 0),
     ...(nonPass.length > 0 ? { detail: { nonPass } } : {}),
   };

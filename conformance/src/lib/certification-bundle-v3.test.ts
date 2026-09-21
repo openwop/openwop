@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createHash, generateKeyPairSync } from 'node:crypto';
-import { signBundleV3, verifyBundleV3, witnessDigest, verifierSign, publicKeyFromPrivate, canonicalJSON, type BundleV3 } from './certification-bundle-v3.js';
+import { signBundleV3, verifyBundleV3, witnessDigest, verifierSign, publicKeyFromPrivate, canonicalJSON, optedOutFromRows, type BundleV3 } from './certification-bundle-v3.js';
 
 const pem = (k: ReturnType<typeof generateKeyPairSync>['privateKey']) => k.export({ type: 'pkcs8', format: 'pem' }) as string;
 const host = generateKeyPairSync('ed25519');
@@ -179,12 +179,55 @@ describe('certification bundle v3 (RFC 0168 §E)', () => {
     const b: BundleV3 = { ...u, signature: signBundleV3(u, pem(host.privateKey), 'host-key-1') };
     const v = verifyBundleV3(b, { hostPublicKeyPem: hostPub });
     expect(v.rejections.map((r) => r.kind)).toContain('blocked-certified'); expect(v.certifiedProfiles).toEqual([]);
-    const u2 = unsigned(good, { host: { name: 'h', version: '1', build: { kind: 'commit', id: 'c' }, relaxations: [{ obligation: 'webhooks.durable-delivery', durability: 'deployment', reason: 'dev' }] }, claimedProfiles: [{ id: 'openwop-webhooks', evidenceTier: 'self', witnessCount: 1, certified: true }] });
+    const u2raw = unsigned(good, { host: { name: 'h', version: '1', build: { kind: 'commit', id: 'c' }, relaxations: [{ obligation: 'webhooks.durable-delivery', durability: 'deployment', reason: 'dev' }] }, claimedProfiles: [{ id: 'openwop-webhooks', evidenceTier: 'self', witnessCount: 1, certified: true }] });
+    // 2.35.0: declared relaxations are inside the witness digest.
+    const u2 = { ...u2raw, witnessSha256: witnessDigest(good, u2raw.host.relaxations) };
     const b2: BundleV3 = { ...u2, signature: signBundleV3(u2, pem(host.privateKey), 'k') };
     expect(verifyBundleV3(b2).rejections.map((r) => r.kind)).toContain('relaxed-profile-certified');
   });
   it('canonical JSON is key-sorted and whitespace-free; the public key derives from the private key', () => {
     expect(canonicalJSON({ b: 1, a: [2, { d: 3, c: 4 }] })).toBe('{"a":[2,{"c":4,"d":3}],"b":1}');
     expect(publicKeyFromPrivate(pem(host.privateKey))).toBe(hostPub);
+  });
+});
+
+describe('host.relaxations is signed through the witness digest (2.35.0)', () => {
+  const row = { id: 'openwop.requirement.0171.webhook-egress-refused', scenario: 'v2-webhook-egress-refusal.test.ts', result: 'executed-pass' as const, assertions: 2 };
+  const R = [{ obligation: 'webhooks.egress-guard', durability: 'session' as const, reason: 'loopback cut' }];
+  it('an empty or absent list digests exactly like the rows alone — no committed bundle moves', () => {
+    expect(witnessDigest([row], [])).toBe(witnessDigest([row]));
+    expect(witnessDigest([row], undefined)).toBe(witnessDigest([row]));
+  });
+  it('a declared relaxation changes the digest, so stripping it after signing is a witness-digest rejection', () => {
+    expect(witnessDigest([row], R)).not.toBe(witnessDigest([row]));
+  });
+});
+
+describe('opt-outs are derived from signed rows and checked against the signed discovery document (2.35.0)', () => {
+  const OPT = 'operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES';
+  const rows: BundleV3['results']['requirements'] = [
+    { id: 'openwop.requirement.0171.webhook-egress-refused', scenario: 'v2-webhook-egress-refusal.test.ts', result: 'executed-pass', assertions: 2 },
+    { id: 'openwop.profile.family.forms', scenario: 'v2-forms.test.ts', result: 'skipped', detail: OPT },
+    { id: 'openwop.profile.family.webhooks', scenario: 'v2-webhook.test.ts', result: 'skipped', detail: OPT },
+    { id: 'openwop.profile.family.sandbox', scenario: 'v2-sandbox.test.ts', result: 'skipped', detail: 'gate: not advertised' },
+  ];
+  it('derives exactly the rows the behavior gate writes for an opt-out', () => {
+    expect(optedOutFromRows(rows)).toEqual(['family.forms', 'family.webhooks']);
+  });
+  function withDocument(document: Record<string, unknown>): BundleV3 {
+    const sha256 = createHash('sha256').update(canonicalJSON(document)).digest('hex');
+    const u = unsigned(rows, { claimedProfiles: [{ id: 'openwop-discovery-core', evidenceTier: 'self', witnessCount: 1, certified: false }] });
+    const w = { ...u, suite: { ...u.suite, targetMajor: 2 as const }, discovery: { ...u.discovery, sha256, document } };
+    return { ...w, signature: signBundleV3(w, pem(host.privateKey), 'host-key-1') };
+  }
+  it('an opted-out family the document ADVERTISES is a bundle-wide rejection', () => {
+    const v = verifyBundleV3(withDocument({ protocolVersions: ['2.0'], webhooks: { status: 'stable' } }));
+    expect(v.rejections.map((r) => r.kind)).toContain('opted-out-but-advertised');
+    expect(v.rejections.find((r) => r.kind === 'opted-out-but-advertised')?.detail).toContain('family.webhooks');
+    expect(v.optedOut).toEqual(['family.forms', 'family.webhooks']);
+  });
+  it('opt-outs the document does not advertise are clean', () => {
+    const v = verifyBundleV3(withDocument({ protocolVersions: ['2.0'] }));
+    expect(v.rejections.map((r) => r.kind)).not.toContain('opted-out-but-advertised');
   });
 });

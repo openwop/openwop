@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 582,
-    "tests": 2209,
-    "withStableId": 2209,
+    "tests": 2210,
+    "withStableId": 2210,
     "interpolatedTitles": 0,
-    "explicitIds": 2163
+    "explicitIds": 2164
   },
   "records": [
     {
@@ -26009,7 +26009,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.subscriptionid-post-webhooks-mints-a-bound-webhookid-the-projected-segment-is-ac",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 61,
+      "line": 89,
       "title": "subscriptionId: POST /webhooks mints a bound webhookId, the projected segment is accepted, and a foreign tenant segment is refused 403",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.webhook",
       "citations": [
@@ -26034,9 +26034,28 @@
       ]
     },
     {
+      "id": "openwop.it.v2-bound-id-kinds.subscriptionid-the-webhookid-a-host-emits-on-a-delivery-is-the-one-it-minted",
+      "file": "v2-bound-id-kinds.test.ts",
+      "line": 132,
+      "title": "subscriptionId: the webhookId a host EMITS on a delivery is the one it minted",
+      "explicitId": "openwop.requirement.0187.bound-id-kinds.webhook-emitted",
+      "citations": [
+        {
+          "section": "webhooks.md §Headers (RFC 0187 §A.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "webhooks.md §Headers (dual emission, RFC 0176 §D.2)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-bound-id-kinds.interruptid-the-id-a-suspension-puts-on-the-wire-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 95,
+      "line": 179,
       "title": "interruptId: the id a suspension puts on the wire is bound",
       "explicitId": null,
       "citations": []
@@ -26044,7 +26063,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.effectid-every-row-get-runs-runid-effects-serves-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 116,
+      "line": 200,
       "title": "effectId: every row GET /runs/{runId}/effects serves is bound",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -26057,7 +26076,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.deliveryid-every-record-in-the-dead-letter-read-carries-a-bound-id-in-the-caller",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 131,
+      "line": 215,
       "title": "deliveryId: every record in the dead-letter read carries a bound id in the caller's tenant",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -28418,13 +28437,17 @@
         {
           "section": "security-defaults.md §Relaxations",
           "requirement": "a relaxation recorded against an unclaimed profile is not a rejection — recording is the obligation, claiming is the defect"
+        },
+        {
+          "section": "conformance.md §Bundle v3",
+          "requirement": "a relaxation removed after signing MUST be detected — the declaration is covered by witnessSha256, so the stripped bundle fails `witness-digest`"
         }
       ]
     },
     {
       "id": "openwop.it.v2-relaxation-recorded.a-relaxation-denies-the-real-profile-that-owns-its-family-not-only-one-named-aft",
       "file": "v2-relaxation-recorded.test.ts",
-      "line": 118,
+      "line": 130,
       "title": "a relaxation denies the REAL profile that owns its family, not only one named after it",
       "explicitId": "openwop.requirement.0173.relaxation-recorded.owned-by-registry",
       "citations": [
@@ -28449,7 +28472,7 @@
     {
       "id": "openwop.it.v2-relaxation-recorded.durability-is-a-closed-set-session-deployment-persisted",
       "file": "v2-relaxation-recorded.test.ts",
-      "line": 143,
+      "line": 155,
       "title": "durability is a closed set: session | deployment | persisted",
       "explicitId": "openwop.requirement.0173.relaxation-recorded.durability-closed",
       "citations": [
@@ -29603,7 +29626,7 @@
     {
       "id": "openwop.it.v2-webhook-egress-refusal.a-webhook-registration-naming-a-destination-the-guard-must-refuse-is-refused-400",
       "file": "v2-webhook-egress-refusal.test.ts",
-      "line": 82,
+      "line": 92,
       "title": "a webhook registration naming a destination the guard MUST refuse is refused 400 webhook_url_rejected",
       "explicitId": "openwop.requirement.0171.webhook-egress-refused",
       "citations": [

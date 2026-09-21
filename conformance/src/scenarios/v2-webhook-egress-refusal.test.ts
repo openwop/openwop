@@ -64,6 +64,16 @@ const PROBES: ReadonlyArray<{ readonly url: string; readonly cls: string }> = [
   { url: 'https://192.168.255.1/openwop-egress-probe', cls: 'RFC 1918 (192.168/16)' },
   { url: 'https://169.254.169.254/latest/meta-data/', cls: 'link-local / cloud metadata' },
   { url: 'https://[fd00::1]/openwop-egress-probe', cls: 'IPv6 ULA' },
+  // 2.35.0 — the same MUST, spelled the way a URL parser spells it. An
+  // IPv4-mapped IPv6 literal is normalised to HEX (`[::ffff:127.0.0.1]` has
+  // hostname `::ffff:7f00:1`), and a guard that matched only the dotted mapped
+  // form let loopback, metadata and RFC 1918 through at registration and at
+  // delivery. Measured on the steward's own reference host.
+  // These are loopback / link-local / RFC 1918 addresses by any reading of
+  // webhooks.md §SSRF, so they enforce the existing obligation — same id.
+  { url: 'https://[::ffff:7f00:1]/openwop-egress-probe', cls: 'loopback as IPv4-mapped IPv6 (hex)' },
+  { url: 'https://[::ffff:a9fe:a9fe]/latest/meta-data/', cls: 'cloud metadata as IPv4-mapped IPv6 (hex)' },
+  { url: 'https://[::ffff:a00:1]/openwop-egress-probe', cls: 'RFC 1918 (10/8) as IPv4-mapped IPv6 (hex)' },
 ];
 
 /** The `webhooks.*` obligations the operator declared relaxed, if any. */

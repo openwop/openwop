@@ -82,6 +82,8 @@ Additive per `COMPATIBILITY.md` §2.1. No required field is removed or retyped; 
 
 ## Implementation notes (non-normative)
 
+- **Added 2026-09-21, suite 2.35.0 — the emitted half of §A.1 (openwop#1450).** `openwop.requirement.0187.bound-id-kinds.webhook-emitted` asserts that a delivery's `OpenWOP-Webhook-Id` (and, on a host advertising both majors, `X-openwop-Webhook-Id`) equals the `webhookId` the host minted. The row above reads only the mint; a tier-2 host bound the 201 and left the delivery headers bare, and this RFC's row stayed green. The id joins the falsifiability table once a committed host bundle carries it — the acceptance predicate would otherwise demand a row no bundle can yet contain.
+
 The reference host mints bound `webhookId`s already; the binding cost it nothing but the scenario. Both production hosts mint bare and will record `executed-fail` on §A.1 until they bind — which is the point of a witness.
 
 ## Acceptance criteria
