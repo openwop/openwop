@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-21T13:32:00.414Z",
+  "generatedAt": "2026-09-21T16:09:54.389Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.33.2",
+    "version": "2.34.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.33.2",
-    "stampSha256": "005732c466b247dadf5ee3d8c68186c6ce4f586febbaa260b7906fd496153965"
+    "specArtifactsVersion": "2.34.1",
+    "stampSha256": "3f491c227a43a26ab8f77081df1443d066b404d3af64e50c5e9786d8f03462e5"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "be31c078cd4add88dd9b79116057ee3a0a293c8c"
+      "id": "0259dc9ed05abe79285fbc245ff2a4a956ddd850"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "aea1f80d3c68f9fd27a02c011eb9a0490164b3f62e834dd942457960dc6f3519",
+    "sha256": "f7f598c8851030019874a19b654697d7205536f885dfab97f91c67d6ad4e01d7",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -824,6 +824,16 @@
         "since": "2.0",
         "witness": "claims-check"
       },
+      "runList": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "maxPageSize": 1000,
+        "filters": [
+          "workflowId",
+          "status"
+        ]
+      },
       "extensions": {
         "myndhyve.implementation": {
           "name": "workflow-runtime",
@@ -1001,10 +1011,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 165,
+      "executedPass": 173,
       "executedFail": 0,
-      "skipped": 24,
-      "inapplicable": 66,
+      "skipped": 20,
+      "inapplicable": 62,
       "blocked": 0
     },
     "requirements": [
@@ -1075,7 +1085,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 200,
+        "assertions": 205,
         "detail": "partial-witness: inapplicable: no advertised family record carries an `until` (every record is stable, or none is advertised)"
       },
       {
@@ -1121,8 +1131,7 @@
         "id": "openwop.scenario.v2-durability-recovery",
         "scenario": "v2-durability-recovery.test.ts",
         "result": "executed-pass",
-        "assertions": 3,
-        "detail": "partial-witness: inapplicable: no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
@@ -1429,9 +1438,8 @@
       {
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "result": "executed-pass",
+        "assertions": 29
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1692,30 +1700,62 @@
       {
         "id": "openwop.requirement.0158.bound-is-derived",
         "scenario": "v2-durability-recovery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+        "result": "executed-pass",
+        "assertions": 1,
+        "evidence": {
+          "recoveryBounds": [
+            {
+              "class": "dispatch-lease",
+              "bound": 100000,
+              "terms": [
+                {
+                  "name": "lease-expiry-wait",
+                  "ms": 60000
+                },
+                {
+                  "name": "redelivery-after-expiry",
+                  "ms": 10000
+                },
+                {
+                  "name": "reentry-slack",
+                  "ms": 30000
+                }
+              ]
+            }
+          ]
+        }
       },
       {
         "id": "openwop.requirement.0158.duplicate-delivery",
         "scenario": "v2-durability-recovery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0158.kill-after-accept",
         "scenario": "v2-durability-recovery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+        "result": "executed-pass",
+        "assertions": 1,
+        "evidence": {
+          "recovery": {
+            "class": "dispatch-lease",
+            "boundMs": 100000,
+            "observedMs": 16376
+          }
+        }
       },
       {
         "id": "openwop.requirement.0158.kill-during-execution",
         "scenario": "v2-durability-recovery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+        "result": "executed-pass",
+        "assertions": 2,
+        "evidence": {
+          "recovery": {
+            "class": "dispatch-lease",
+            "boundMs": 100000,
+            "observedMs": 71157
+          }
+        }
       },
       {
         "id": "openwop.requirement.0158.poison-exhaustion",
@@ -1794,13 +1834,13 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 160
+        "assertions": 164
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 40
+        "assertions": 41
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
@@ -2579,23 +2619,20 @@
       {
         "id": "openwop.requirement.0182.run-list.cursor-refused",
         "scenario": "v2-run-list.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0182.run-list.filter-exact",
         "scenario": "v2-run-list.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "result": "executed-pass",
+        "assertions": 25
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -2643,8 +2680,8 @@
       }
     ]
   },
-  "witnessSha256": "17aacb7e924c3339c129ae433f98179f3bfa0b139d59543c7957345b4874d3d5",
-  "assertionCount": 1739,
+  "witnessSha256": "2bec2971144763bb8554dc78ee8c2136ffd9f845fbd1c3d4f306f18f6f1923fd",
+  "assertionCount": 1819,
   "detail": {
     "nonPass": [
       {
@@ -2748,11 +2785,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-run-list",
-        "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
-      },
-      {
         "id": "openwop.scenario.v2-subject-link-record",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -2816,26 +2848,6 @@
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.requirement.0158.bound-is-derived",
-        "result": "inapplicable",
-        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
-      },
-      {
-        "id": "openwop.requirement.0158.duplicate-delivery",
-        "result": "inapplicable",
-        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
-      },
-      {
-        "id": "openwop.requirement.0158.kill-after-accept",
-        "result": "inapplicable",
-        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
-      },
-      {
-        "id": "openwop.requirement.0158.kill-during-execution",
-        "result": "inapplicable",
-        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -3073,21 +3085,6 @@
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
       },
       {
-        "id": "openwop.requirement.0182.run-list.cursor-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.requirement.0182.run-list.filter-exact",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.requirement.0182.run-list.tenant-scoped",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
         "id": "openwop.requirement.0188.dead-letter-content-free",
         "result": "inapplicable",
         "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
@@ -3099,10 +3096,13 @@
       }
     ]
   },
+  "durability": {
+    "rung": "durable-single-instance"
+  },
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "rKUyTjb54k9LJqB69p6OAyZoWjhOi5XkLR7iG5VuNbe2WOWyvDjwnRfZ7oreCVEHqq-6sFe3DkTqdoqUlN3sCA",
+    "sig": "9FhWkHq0_d4P1d8UMU3VsCFIy099OCjhRyruBd8lTY8GypmAjZfBIq53EdTfFDEkqmW0zGlBoMCQ8Nh6N91MAg",
     "over": [
       "witnessSha256",
       "host.build",
