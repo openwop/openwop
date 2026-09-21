@@ -1,5 +1,25 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.35.0] — 2026-09-21 — blocked means blocked, the declarations are signed, and the header a subscriber reads is checked
+
+### Security
+
+- **`v2-webhook-egress-refusal` (`0171.webhook-egress-refused`) now registers loopback, cloud metadata and RFC 1918 written as IPv4-mapped IPv6** — `https://[::ffff:7f00:1]/`, `https://[::ffff:a9fe:a9fe]/`, `https://[::ffff:a00:1]/` — eleven probes, up from eight. A URL parser emits the mapped form in hex (`[::ffff:127.0.0.1]` has hostname `::ffff:7f00:1`), and an egress guard that recognises only the dotted mapped form lets all three through at registration and at delivery. They are loopback, link-local and RFC 1918 addresses under `webhooks.md` §SSRF as written, so this enforces an existing MUST under the same id. Measured: the steward's reference host before its fix accepted exactly these three (`3 of 11`); after the fix, none.
+
+### Changed
+
+- **A `blocked` note stands at major 2 even after setup assertions.** A test that asserted something and then soft-skipped `blocked` recorded `executed-pass` with a `partial-witness:` detail — refused by the acceptance predicate, but counted by certification, so a profile could certify on a requirement nobody observed. At major 2 it now records `blocked`, which denies certification (`conformance.md` §Bundle v3). Swept first: every one of the 24 major-2 sites is "requirement unobserved" (unreachable, a control that did not answer, a window that closed), none an optional extra. Major 1 keeps its convention; the 146 v1-side sites were not measured and v1 bundles are read through its end of support. Measured on the committed bundles: the next cut changes 0 rows on the reference host and MyndHyve, 1 on openwop-app.
+- **`host.relaxations[]` is signed.** It sits outside the attestation, so a relaxation deleted after signing let the verifier re-derive the relaxed profile as certified on a bundle that still verified. `witnessSha256` now digests `{ rows, relaxations }` whenever relaxations are declared, and the rows alone otherwise — every committed bundle digests unchanged. An older verifier fails closed (`witness-digest`) on a 2.35.0 bundle that declares relaxations. `v2-relaxation-recorded` now strips a signed relaxation and requires the rejection.
+- **Opt-outs are derived and checked.** The verifier derives the operator's opt-outs from the signed `skipped` rows the behavior gate writes and rejects a bundle whose captured discovery document advertises one (`opted-out-but-advertised`); `--verify` prints the set. No schema change — a root-level list would have been unsigned. The file-level detail now says "profile or family".
+
+### Added
+
+- **`0187.bound-id-kinds.webhook-emitted` (openwop#1450).** The mint row reads the `webhookId` a host returns; a subscriber identifies its deliveries by the one it emits. A tier-2 host bound the 201 and left the delivery headers bare, and the mint row stayed green — the defect surfaced only as a durability failure elsewhere. The new leg drives one delivery, selects it by the run in the body (never by the header under test), and requires `OpenWOP-Webhook-Id` — and `X-openwop-Webhook-Id` on a host advertising both majors — to equal the minted id.
+
+### Fixed
+
+- **`v2-bound-id-kinds` left a subscription behind on every run** (its `deliveryId` leg registered and never deleted). Every registering leg now deletes in `finally`. Measured: 1 leftover subscription per run before, 0 after.
+
 ## [2.34.2] — 2026-09-21 — a host that died on schedule failed the rows that were watching it recover
 
 - **The RFC 0158 kill rows read the host through two calls that did not survive the host dying.** `waitBack()` treated a refused connection as "down, keep waiting"; the watch's `readStatus` / `readLog` called `driver.get` bare. A seam may answer and *then* die — `during-execution` dies at the first `node.started`, seconds after its response — so `waitBack` saw a 200 from the still-living process, the process died mid-watch, and `fetch failed` escaped the scenario as an **`executed-fail` — for recovering.** Measured by a tier-1 host at its exact production image under a real restart supervisor, behind a port proxy that accepts and then closes: four of five rows `executed-fail` on `UND_ERR_SOCKET: other side closed`, reproduced twice; the one that passed was the row whose kill lands before the seam answers.

@@ -724,7 +724,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion, document },
       claimedProfiles: claimed3,
       results: { totals: totals3, requirements: rows3 },
-      witnessSha256: witnessDigest(rows3),
+      witnessSha256: witnessDigest(rows3, relaxations),
       assertionCount: rows3.reduce((n, r) => n + (r.assertions ?? 0), 0),
       ...(nonPass.length ? { detail: { nonPass: nonPass.map((r) => ({ id: r.id, result: r.result, reason: r.detail ?? '' })) } } : {}),
       // RFC 0158 §D: claimed ONLY when these rows support it. The verifier
@@ -959,6 +959,8 @@ async function main(): Promise<never> {
       `certified: ${verdict.certifiedProfiles.length > 0 ? verdict.certifiedProfiles.join(', ') : '(none)'}`,
       // RFC 0158 §D/§E: the rung is a CLAIM; a claim the signed rows do not support is a rejection below.
       `rung:      ${bundle.durability?.rung ?? '(none claimed)'}`,
+      // 2.35.0: derived from the signed `skipped` rows; checked against the signed discovery document.
+      `opted out: ${verdict.optedOut.length > 0 ? verdict.optedOut.join(', ') : '(none)'}`,
       '',
       'What this command does NOT do:',
       '  · It does not re-run anything. A host that measured itself wrongly, and signed',

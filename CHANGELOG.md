@@ -87,6 +87,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 
+## [2.35.0] — 2026-09-21 — blocked means blocked, and the bundle's declarations are signed
+
+### Security
+
+- **The webhook egress refusal row now includes addresses written as IPv4-mapped IPv6.** A URL parser emits them in hex, and a guard that recognises only the dotted mapped form lets loopback, cloud metadata and RFC 1918 through. They are covered by `webhooks.md` §SSRF as written; the row enforces an existing MUST. See `conformance/CHANGELOG.md`.
+
+### Changed
+
+- **`spec/v2/core/conformance.md` §Bundle v3:** at major 2 a requirement a test did not observe records `blocked` even after setup assertions; `witnessSha256` covers `host.relaxations[]` whenever it is non-empty; a verifier derives opt-outs from the signed `skipped` rows and rejects a bundle whose captured discovery document advertises one. Additive — every committed bundle verifies unchanged.
+- **RFC 0187** records the emitted half of §A.1 (`0187.bound-id-kinds.webhook-emitted`, openwop#1450) as a later addition, joining its falsifiability table once a committed bundle carries it.
+
 ## [2.34.0] — 2026-09-21 — the rung and the recovery bound, in the bundle RFC 0158 said they were in
 
 ### Added

@@ -87,12 +87,26 @@ export function canonicalJSON(value: unknown): string {
   return JSON.stringify(value);
 }
 
-/** RFC 0148 §C — the digest over the reporter record (the requirement rows). */
-export function witnessDigest(rows: readonly BundleV3Requirement[]): string {
+/**
+ * RFC 0148 §C — the digest over the reporter record (the requirement rows),
+ * and, from 2.35.0, the operator's declared relaxations when there are any.
+ *
+ * Why relaxations are in here: the attestation covers exactly
+ * `{ witnessSha256, host.build, suite.version, discovery.sha256 }`, so a
+ * `host.relaxations[]` beside the rows was UNSIGNED — strip it after signing
+ * and the verifier re-derives the relaxed profile as certified, on a bundle
+ * that still verifies. Included ONLY WHEN NON-EMPTY: the preimage is the rows
+ * array exactly as before for every bundle that declares nothing (all
+ * committed bundles digest unchanged, pinned in durability-evidence.test.ts),
+ * and `{ rows, relaxations }` otherwise. An older verifier fails closed on a
+ * 2.35.0 bundle that declares relaxations — `witness-digest`, never a pass.
+ */
+export function witnessDigest(rows: readonly BundleV3Requirement[], relaxations?: readonly BundleV3Relaxation[]): string {
   const canonicalRows = [...rows].sort((a, b) => a.id.localeCompare(b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
     // ONLY WHEN PRESENT: every bundle cut before 2.34.0 has no `evidence` and digests byte-identically.
     ...(r.evidence === undefined ? {} : { evidence: r.evidence }) }));
-  return createHash('sha256').update(canonicalJSON(canonicalRows), 'utf8').digest('hex');
+  const preimage = relaxations !== undefined && relaxations.length > 0 ? { rows: canonicalRows, relaxations } : canonicalRows;
+  return createHash('sha256').update(canonicalJSON(preimage), 'utf8').digest('hex');
 }
 
 /** The bytes the attestation covers. */
@@ -138,6 +152,22 @@ export interface V3Verdict {
    * checked. Read it before quoting a verdict.
    */
   readonly derivabilityChecked: boolean;
+  /**
+   * 2.35.0 — the profiles and families the operator opted out of, derived from
+   * the SIGNED `skipped` rows `behaviorGate` writes (`openwop.profile.<name>`,
+   * where a family is `family.<key>`). Derived rather than read from a root
+   * member because a root member would sit outside the attestation.
+   */
+  readonly optedOut: string[];
+}
+
+const OPT_OUT_ROW = 'openwop.profile.';
+/** The opt-outs a bundle's signed rows record. */
+export function optedOutFromRows(rows: ReadonlyArray<{ readonly id: string; readonly result: string; readonly detail?: string }>): string[] {
+  return rows
+    .filter((r) => r.id.startsWith(OPT_OUT_ROW) && r.result === 'skipped' && (r.detail ?? '').includes('OPENWOP_OPTED_OUT_PROFILES'))
+    .map((r) => r.id.slice(OPT_OUT_ROW.length))
+    .sort();
 }
 
 export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3Verdict {
@@ -154,8 +184,8 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   const count = (d: BundleV3Result): number => rows.filter((r) => r.result === d).length;
   const expected = { executedPass: count('executed-pass'), executedFail: count('executed-fail'), skipped: count('skipped'), inapplicable: count('inapplicable'), blocked: count('blocked') };
   for (const k of Object.keys(expected) as (keyof typeof expected)[]) if (bundle.results?.totals?.[k] !== expected[k]) rejections.push({ kind: 'totals-mismatch', detail: `totals.${k} is ${String(bundle.results?.totals?.[k])} but the rows count ${expected[k]}` });
-  const digest = witnessDigest(rows);
-  if (bundle.witnessSha256 !== digest) rejections.push({ kind: 'witness-digest', detail: `witnessSha256 ${String(bundle.witnessSha256).slice(0, 12)} does not equal the digest of the rows (${digest.slice(0, 12)})` });
+  const digest = witnessDigest(rows, bundle.host?.relaxations);
+  if (bundle.witnessSha256 !== digest) rejections.push({ kind: 'witness-digest', detail: `witnessSha256 ${String(bundle.witnessSha256).slice(0, 12)} does not equal the digest of the rows and declared relaxations (${digest.slice(0, 12)})` });
   const assertions = rows.reduce((n, r) => n + (r.assertions ?? 0), 0);
   if (bundle.assertionCount !== assertions) rejections.push({ kind: 'assertion-count', detail: `assertionCount is ${String(bundle.assertionCount)} but the rows sum to ${assertions}` });
   const nonPass = rows.filter((r) => r.result !== 'executed-pass');
@@ -243,6 +273,20 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
         derivabilityChecked = false;
       } else {
         derivabilityChecked = true;
+        // RFC 0148 §B: "A host MUST NOT both advertise and opt out of the same
+        // profile." The suite refuses that at run time (behaviorGate throws),
+        // so a bundle that records both was edited after the run or emitted by
+        // something else. Both inputs are signed — the rows through
+        // witnessSha256, the document through discovery.sha256 — so the
+        // contradiction is checkable offline, and it is bundle-wide: an opt-out
+        // list that is false makes every `skipped` row in the bundle suspect.
+        const root = document as unknown as Record<string, unknown>;
+        for (const name of optedOutFromRows(rows)) {
+          const advertised = name.startsWith('family.')
+            ? (() => { const v = root[name.slice('family.'.length)]; return typeof v === 'object' && v !== null && !Array.isArray(v); })()
+            : profileDerivable(document as DiscoveryPayload, name, targetMajor);
+          if (advertised) rejections.push({ kind: 'opted-out-but-advertised', detail: `${name} is recorded as an operator opt-out, but the captured discovery document advertises it — a host MUST NOT both advertise and opt out of the same profile (RFC 0148 §B)` });
+        }
         for (const p of bundle.claimedProfiles ?? []) {
           // §B(1) binds the CERTIFICATION, not the listing: a profile a bundle
           // names without certifying makes no claim for derivability to falsify.
@@ -268,5 +312,6 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     verifierSignatureVerified,
     certifiedProfiles: bundleWide.length > 0 ? [] : certifiedProfiles.filter((p) => !scoped.has(p)),
     derivabilityChecked,
+    optedOut: optedOutFromRows(rows),
   };
 }

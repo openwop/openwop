@@ -114,3 +114,21 @@ describe('blockedDespiteAssertions — a conclusive blocked survives setup asser
     expect(r.disposition).toBe('executed-pass');
   });
 });
+
+describe('major 2: a blocked note stands even after setup assertions (2.35.0)', () => {
+  it('blockedStands turns an ordinary blocked-after-assertions note into blocked', () => {
+    expect(resolveItRecord('pass', 3, undefined, { kind: 'blocked', reason: 'GET unreachable' }, undefined, true)).toEqual({ disposition: 'blocked', detail: 'GET unreachable' });
+  });
+  it('it does not touch inapplicable / skipped notes after assertions — those stay partial-witness passes', () => {
+    const r = resolveItRecord('pass', 3, undefined, { kind: 'inapplicable', reason: 'optional facet absent' }, undefined, true);
+    expect(r.disposition).toBe('executed-pass');
+    expect(r.detail).toBe('partial-witness: inapplicable: optional facet absent');
+  });
+  it('a clean pass and a failure are unchanged', () => {
+    expect(resolveItRecord('pass', 3, undefined, null, undefined, true)).toEqual({ disposition: 'executed-pass' });
+    expect(resolveItRecord('fail', 3, undefined, { kind: 'blocked', reason: 'x' }, 'boom', true).disposition).toBe('executed-fail');
+  });
+  it('major 1 (the default) keeps the partial-witness convention', () => {
+    expect(resolveItRecord('pass', 3, undefined, { kind: 'blocked', reason: 'later leg' }).disposition).toBe('executed-pass');
+  });
+});

@@ -470,7 +470,7 @@ afterEach(({ task }) => {
     // `inapplicable` came out `blocked` — which denies certification bundle-wide).
     const noted = softSkipDispositionSince(file, _itSoftSkipMarks.get(file) ?? 0);
     const err = (task.result?.errors ?? [])[0] as { message?: string } | undefined;
-    const rec = resolveItRecord(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip', calls, gate, noted, err?.message);
+    const rec = resolveItRecord(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip', calls, gate, noted, err?.message, targetMajor() === 2);
     disposition = rec.disposition;
     detail = rec.detail;
   }

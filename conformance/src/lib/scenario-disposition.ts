@@ -104,12 +104,26 @@ export function resolveItRecord(
   gate: { disposition: 'inapplicable' | 'skipped'; detail?: string } | undefined,
   noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string; conclusive?: true } | null,
   firstError?: string,
+  /**
+   * 2.35.0, major 2 (`conformance.md` §Bundle v3): a requirement the test did
+   * not observe records `blocked` even when the test asserted setup facts
+   * first. At major 1 a `blocked` note after assertions stays a
+   * `partial-witness` pass unless the leg used `blockedDespiteAssertions`.
+   *
+   * Why the rule changed: a `partial-witness` row is refused by the acceptance
+   * predicate but COUNTED by certification, so a profile could certify on a
+   * requirement nobody observed. Swept before the change: all 24 major-2
+   * sites were "requirement unobserved" (unreachable, control silent, window
+   * closed), none an optional extra. Scoped to major 2 because the 146 v1-side
+   * sites were not measured and v1 bundles are read through its EOS.
+   */
+  blockedStands = false,
 ): { disposition: Disposition; detail?: string } {
   if (state === 'fail') return { disposition: 'executed-fail', detail: `the test executed and failed: ${(firstError ?? 'no message').slice(0, 300)}` };
   if (state === 'pass' && assertionCalls > 0) {
     // `blockedDespiteAssertions` (soft-skip.ts): the leg says its setup
     // assertions are not the requirement, and the requirement went unobserved.
-    if (noted !== null && noted.kind === 'blocked' && noted.conclusive === true) return { disposition: 'blocked', detail: noted.reason };
+    if (noted !== null && noted.kind === 'blocked' && (noted.conclusive === true || blockedStands)) return { disposition: 'blocked', detail: noted.reason };
     // A leg that asserted AND THEN soft-skipped is only a partial witness, and
     // the file-level record has always said so (`resolveFileRecord` below).
     // This `it`-level record dropped the note — and the `it`-level rows are the
@@ -148,12 +162,12 @@ export function fileDisposition(
       return { disposition: 'inapplicable', detail: 'every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set' };
     }
     if (assertionCount === 0 && gateReason === 'skipped') {
-      return { disposition: 'skipped', detail: 'every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)' };
+      return { disposition: 'skipped', detail: 'every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)' };
     }
     return { disposition: 'executed-pass' };
   }
   if (gateReason === 'inapplicable') return { disposition: 'inapplicable', detail: 'every test skipped: profile not advertised in the captured discovery set (behaviorGate)' };
-  if (gateReason === 'skipped') return { disposition: 'skipped', detail: 'every test skipped: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)' };
+  if (gateReason === 'skipped') return { disposition: 'skipped', detail: 'every test skipped: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)' };
   return {
     disposition: 'blocked',
     detail:

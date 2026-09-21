@@ -58,7 +58,7 @@ function bundle(opts: { relaxations?: BundleV3Relaxation[]; certified: boolean; 
       { id: 'openwop-discovery-core', evidenceTier: 'self', witnessCount: 1, certified: true },
     ],
     results: { totals: { executedPass: ROWS.length, executedFail: 0, skipped: 0, inapplicable: 0, blocked: 0 }, requirements: ROWS },
-    witnessSha256: witnessDigest(ROWS),
+    witnessSha256: witnessDigest(ROWS, opts.relaxations),
     assertionCount: ROWS.reduce((n, r) => n + (r.assertions ?? 0), 0),
   };
   return { ...unsigned, signature: signBundleV3(unsigned, hostPem, 'host-key-1') };
@@ -105,6 +105,18 @@ describe('RFC 0173 §A.2 — relaxation-recorded (unaided, fixture bundle)', () 
       honest.rejections.map((r) => r.kind),
       req('openwop.requirement.0173.relaxation-recorded', 'security-defaults.md §Relaxations', 'a relaxation recorded against an unclaimed profile is not a rejection — recording is the obligation, claiming is the defect'),
     ).not.toContain('relaxed-profile-certified');
+
+    // 2.35.0: the declaration is SIGNED. `host.relaxations[]` sits outside the
+    // attestation, so until the witness digest covered it a relaxation could be
+    // deleted after signing and the relaxed profile re-derived as certified on a
+    // bundle that still verified. Strip it from the honest bundle and re-verify.
+    const signed = bundle({ relaxations: [RELAXED], certified: false });
+    const stripped = { ...signed, host: { ...signed.host } };
+    delete (stripped.host as { relaxations?: unknown }).relaxations;
+    expect(
+      verifyBundleV3(stripped).rejections.map((r) => r.kind),
+      req('openwop.requirement.0173.relaxation-recorded', 'conformance.md §Bundle v3', 'a relaxation removed after signing MUST be detected — the declaration is covered by witnessSha256, so the stripped bundle fails `witness-digest`'),
+    ).toContain('witness-digest');
   });
 
   // Until 2.33.0 every leg above used the FIXTURE profile `openwop-webhooks`, and
