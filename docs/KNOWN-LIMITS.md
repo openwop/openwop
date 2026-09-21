@@ -8,6 +8,37 @@ For machine-readable counts, see [`docs/PROTOCOL-STATUS.md`](./PROTOCOL-STATUS.m
 
 ---
 
+## The reference host's certified bundles were cut under an undeclared relaxation (added 2026-09-21)
+
+**The rule.** `spec/v2/core/security-defaults.md` §Relaxations: *"Every relaxation a host runs under MUST be recorded in its certification bundle as `host.relaxations[]`"*, and *"a bundle that records a relaxation MUST NOT certify the profile the relaxed obligation belongs to."* §"The rule" adds that a host MUST NOT advertise a surface whose obligation it has relaxed.
+
+**What was done instead.** The steward's v2 reference host (`openwop-examples/examples/hosts/v2-reference`) cuts its bundle with `OPENWOP_WEBHOOK_ALLOW_PRIVATE=1` — its own `scripts/cut-bundle.sh` calls the flag *"required, not optional"*, because the suite's webhook receivers, the synthetic IdP and the A2A / MCP fakes are all loopback listeners and a conforming egress guard refuses them. `conformance/README.md` describes that flag, in its own words, as one that *"relaxes the webhook egress guard"*. On that host the one flag gates webhook registration and delivery, the `http.fetch` effect, SAML/SCIM and the A2A/MCP interop egress. Every reference-host bundle committed to `evidence/v2-host-bundles/openwop-host-v2-reference.json` — including the current one, cut on suite 2.25.0 — records **`host.relaxations` absent** and claims all three profiles `certified: true`.
+
+The relaxation was recorded, but in prose: the host's `conformance.md` and `README.md` both say the measurement was taken under it. §Relaxations requires the **bundle** to carry it, because the bundle is what a gate reads.
+
+**Found by the steward, on the steward's own host,** while preparing RFC 0158's `Accepted` flip on a fresh 2.32.0 cut of that host. That cut certified (239 pass / 0 fail / 0 blocked, all five RFC 0158 rows `executed-pass`, two SIGKILLs counted by the restart supervisor) and **has not been committed**, for this reason. RFC 0158 stays `Active`.
+
+**What it does and does not reach — measured, not estimated.**
+
+- `check-accepted-predicate.mjs` passes 27 v2-era Accepted RFCs. With the reference bundle removed it fails on **8 requirement ids across 4 RFCs**, which are therefore witnessed by that bundle *alone*: RFC 0175 (`negotiation-authenticated`, `negotiation-decided-emitted`, `refresh-sla`), RFC 0182 (`run-list.cursor-refused`, `run-list.tenant-scoped`), RFC 0187 (`bound-id-kinds.per-kind`, `bound-id-kinds.webhook`) and RFC 0188 (`dead-letter-read`). The other 23 are also witnessed by MyndHyve's bundle, which was cut from production through a public `https` receiver and relaxes nothing. **That bundle is not a clean bill either, and its own operator says so:** it was cut on suite 2.3.3, before `--require-behavior` was wired (2.4.5), so it measured loose mode whatever flag was passed; and its `0171.webhook-delivery-shape` pass is known vacuous (the receiver bound an ephemeral port behind the tunnel and no delivery body was ever opened — the 2.4.5 changelog describes the defect). A strict re-cut on 2.31.1 found two real host defects, fixed and awaiting deploy. It is a second witness that relaxes nothing; it is not a current one.
+- The relaxed obligation is the **private-address / scheme refusal of the egress guard**. A row that does not depend on the host reaching a loopback listener — runs, replay, identity, the RFC 0158 kill rows — measured the same code it would have measured unrelaxed. A row that *does* depend on it (webhook delivery, the dead-letter read, the A2A/MCP negotiation rows, RFC 0158 `duplicate-delivery`) witnessed the property it names, on a host whose guard was open to the address the suite listened on.
+- **No row in the bundle passed *because* of the relaxation — but for a reason that is itself a gap.** Checked against the committed bundle: it carries **no row at all** asserting that the egress guard refuses a private address. The scenarios that assert the refusal (`http-client-ssrf`, `webhook-negative`) are registered at **major 1 only** (`conformance/scenario-majors.json`); the three major-2 files that name `webhook_url_rejected` do so only as the soft-skip path taken when a host refuses the suite's receiver. So no measurement was inverted by the open guard. What is wrong is the **claim** — `certified: true` with no relaxation declared — and, separately, that the guard the relaxation opens is unwitnessed at major 2 in every bundle there is.
+
+**Why no status is reverted.** The precedent is RFC 0165 (`GOVERNANCE.md` §"Deployed, not merged"): flipped `Accepted` on evidence that did not hold, then **re-grounded on witnessed evidence rather than reverted** (#1222). The same is done here. Reverting four RFCs to `Active` would record a judgement about the *requirements*, which no measurement has called into question; what is in question is whether one bundle may say `certified`.
+
+**Three suite defects this exposed — all the corpus's, none the host's.**
+
+1. **A host that advertises `a2a` or `mcp` cannot be cut relaxation-free at all.** `a2a-fake-peer.ts` and `mcp-fake-server.ts` bind `127.0.0.1` and, unlike the webhook receiver (`OPENWOP_WEBHOOK_RECEIVER_URL`), have no public-front override. The two production hosts cut cleanly only because they advertise neither family, so those rows record `inapplicable`. The rule as written therefore makes any host that implements more of the protocol *less* able to certify.
+2. **A declared relaxation denies nothing on any real host.** `verifyBundleV3` maps a relaxed obligation to a profile by testing whether the profile **id** contains the obligation's first segment. The scenario that pins this (`v2-relaxation-recorded`) uses a fixture profile named `openwop-webhooks`. The three profiles that exist — `openwop-discovery-core`, `openwop-core-standard`, `openwop-conformance-seams-v2` — contain no family name, so `webhooks.egress-guard` matches none of them and `openwop-core-standard`, which owns the webhook requirements in `spec/v2/profiles.json`, would still certify.
+
+3. **The egress guard's refusal is unwitnessed at major 2.** As above: the refusal legs never made the major-2 lane, so a v2 bundle can certify `openwop-core-standard` on a host whose guard refuses nothing, relaxed or not.
+
+`conformance/README.md` says of `OPENWOP_HOST_RELAXATIONS` that *"the suite cannot detect an undeclared one."* For this relaxation that is not true: a host that **accepts** a `127.0.0.1` webhook registration has demonstrated on the wire that its guard is open.
+
+**The path to close, in order.** (1) This entry. (2) A suite release that gives the A2A / MCP fakes a public-front override, maps a relaxed obligation to the profile that *owns* it, brings the egress-refusal legs into the major-2 lane, and refuses to certify a bundle in whose run the host was observed accepting a loopback destination without a declared relaxation. (3) The reference host's `cut-bundle.sh` declares the relaxation whenever it sets the flag, so a loopback cut becomes an honest regression lane that never certifies. (4) A relaxation-free re-cut of the reference host through public fronts — the posture both production hosts already use — replaces the committed bundle, re-grounding the four RFCs above and carrying RFC 0158's witness in the same cut.
+
+---
+
 ## Shape-only conformance coverage
 
 These conformance scenarios validate the discovery / capability shape but cannot mechanically verify the host's run-time behavior without operator-supplied harness state.
