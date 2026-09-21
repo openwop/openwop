@@ -86,7 +86,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     const server = getMcpFakeServer();
     if (server === null) return softSkip('blocked', 'precondition not met — `server === null` returned early (seam, prior step, or fixture unavailable)');
     server.reset();
-    const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint() });
+    const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.hostFacingEndpoint() });
     if (drive.status === 404 || drive.status === 403) {
       expect(
         drive.status,
@@ -125,7 +125,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     if (server === null) return softSkip('blocked', 'precondition not met — `server === null` returned early (seam, prior step, or fixture unavailable)');
     const caps = await mcp();
     server.reset();
-    const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint() });
+    const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.hostFacingEndpoint() });
     if (drive.status === 404 || drive.status === 403) return seamAbsent(`host advertises mcp version negotiation but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status} — the host-as-client legs are unobservable (host-sample-test-seams.md)`);
     // it never advertised has made its own discovery document unreliable, which
     // is worse than advertising nothing — a consumer that read it made a
@@ -148,7 +148,7 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     const server = getMcpFakeServer();
     if (server === null) return softSkip('blocked', 'precondition not met — `server === null` returned early (seam, prior step, or fixture unavailable)');
     const drive = await driver.post('/v1/host/sample/mcp/invoke', {
-      serverUrl: server.endpoint(),
+      serverUrl: server.hostFacingEndpoint(),
       requestVersion: '1999-01-01',
     });
     if (drive.status === 404 || drive.status === 403) return seamAbsent(`host advertises mcp version negotiation but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status} — the host-as-client legs are unobservable (host-sample-test-seams.md)`);

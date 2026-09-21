@@ -47,7 +47,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
     if (server === null) return softSkip('blocked', 'the suite MCP fake server is not started in this run — the host-as-client leg cannot be driven');
     server.reset();
     server.setNextResultAssertsAuthority(true);
-    const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.endpoint(), tool: 'echo', arguments: { text: 'opaque' }, scenario: 'extension-asserts-authority' });
+    const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.hostFacingEndpoint(), tool: 'echo', arguments: { text: 'opaque' }, scenario: 'extension-asserts-authority' });
     if (drive.status === 404 || drive.status === 403) {
       // Advertised mcp-2026-07-28 but the invoke seam answered {drive.status}: not observable here.
       // Default mode records `blocked` (RFC 0148 §A); OPENWOP_REQUIRE_BEHAVIOR=true fails

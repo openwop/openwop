@@ -99,7 +99,7 @@ describe('RFC 0175 §D.1 — negotiation-authenticated (gated on a2a/mcp + seams
     const peer = new A2AFakePeer({ protocolVersions: ['0.3'] });
     await peer.start();
     try {
-      const res = await driver.post(`${SEAMS_PREFIX}/sample/a2a/invoke`, { peerUrl: peer.endpoint(), authenticated: false, peerOffersOnly: A2A_LOWER });
+      const res = await driver.post(`${SEAMS_PREFIX}/sample/a2a/invoke`, { peerUrl: peer.hostFacingEndpoint(), authenticated: false, peerOffersOnly: A2A_LOWER });
       if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises a2a but ${SEAMS_PREFIX}/sample/a2a/invoke answered ${res.status} (host-sample-test-seams.md §22)`);
       const wire = peer.invocations().filter((i) => i.method !== 'GET').map((i) => String(i.headers['a2a-version'] ?? ''));
       await assertNotLowered('openwop.requirement.0175.negotiation-authenticated', preferred, A2A_LOWER, res, wire);
@@ -119,7 +119,7 @@ describe('RFC 0175 §D.1 — negotiation-authenticated (gated on a2a/mcp + seams
     const server = new McpFakeServer({ protocolVersions: ['2025-06-18'] });
     await server.start();
     try {
-      const res = await driver.post(`${SEAMS_PREFIX}/sample/mcp/invoke`, { serverUrl: server.endpoint(), authenticated: false });
+      const res = await driver.post(`${SEAMS_PREFIX}/sample/mcp/invoke`, { serverUrl: server.hostFacingEndpoint(), authenticated: false });
       if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises mcp but ${SEAMS_PREFIX}/sample/mcp/invoke answered ${res.status} (host-sample-test-seams.md §23)`);
       const wire = server.invocations().map((i) => String(i.headers['mcp-protocol-version'] ?? ''));
       await assertNotLowered('openwop.requirement.0175.negotiation-authenticated.mcp', preferred, MCP_LOWER, res, wire);

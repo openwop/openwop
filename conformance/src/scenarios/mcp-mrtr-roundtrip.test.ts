@@ -58,7 +58,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     if (server === null) return softSkip('blocked', 'the suite MCP fake server is not started in this run — the client half cannot be driven');
     server.reset();
     const drive = await driver.post('/v1/host/sample/mcp/invoke', {
-      serverUrl: server.endpoint(),
+      serverUrl: server.hostFacingEndpoint(),
       tool: 'needs_input',
       clientCapabilities: { elicitation: {} },
       elicitationAnswer: { name: 'Ada' },

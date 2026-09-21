@@ -95,7 +95,7 @@ async function leg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
   const validate = payloadValidator();
   if (!validate) return softSkip('blocked', 'run-event-payloads.schema.json#/$defs/negotiationDecided not readable from SCHEMAS_DIR');
 
-  const driven = await drive(protocol, peer.endpoint());
+  const driven = await drive(protocol, peer.hostFacingEndpoint());
   if (!driven) return softSkip('blocked', 'invoke seam unavailable (reason recorded above)');
   const runId = driven.body['runId'];
   if (typeof runId !== 'string') {
@@ -117,11 +117,11 @@ async function leg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
       expect(
         p['peerDigest'],
         req(id, 'interop.md §The audit event', 'peerDigest MUST be the SHA-256 of the peer origin — never the origin in clear (RFC 0175 §D.3)'),
-      ).toBe(originDigest(peer.endpoint()));
+      ).toBe(originDigest(peer.hostFacingEndpoint()));
     }
     for (const v of Object.values(p)) {
       expect(
-        typeof v === 'string' && v.includes(new URL(peer.endpoint()).host),
+        typeof v === 'string' && v.includes(new URL(peer.hostFacingEndpoint()).host),
         req(id, 'interop.md §The audit event', 'the event is content-free: the peer origin MUST NOT appear in clear in any field'),
       ).toBe(false);
     }

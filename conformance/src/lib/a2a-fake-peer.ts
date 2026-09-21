@@ -38,6 +38,7 @@
  * @see https://a2a-protocol.org/v0.3.0/specification
  */
 
+import { resolvePublicFront } from './webhook-receiver.js';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -198,6 +199,18 @@ export class A2AFakePeer {
     return `http://127.0.0.1:${this._boundPort}`;
   }
 
+  /**
+   * The address to hand THE HOST UNDER TEST — `OPENWOP_A2A_FAKE_PEER_URL` when the operator fronts
+   * this peer publicly (https, publicly resolvable; validated loudly, same rule
+   * as the webhook receiver), else `endpoint()`. The suite's own requests to its
+   * own fake keep using `endpoint()`: they need no tunnel and must not depend on
+   * one. Pin the listener with the matching `_PORT` variable so the front has a
+   * fixed port to forward to.
+   */
+  hostFacingEndpoint(): string {
+    return resolvePublicFront('OPENWOP_A2A_FAKE_PEER_URL', this.endpoint()).url;
+  }
+
   reset(): void {
     this._tasks.clear();
     this._invocations.length = 0;
@@ -293,7 +306,7 @@ export class A2AFakePeer {
       description: 'Synthetic A2A peer for openwop conformance suite (dual-era: 1.0 + 0.3-legacy)',
       version: '1.1.0',
       supportedInterfaces: [...this._protocolVersions].sort((a, b) => (a === '1.0' ? -1 : b === '1.0' ? 1 : 0)).map((v) => ({
-        url: `${this.endpoint()}/a2a/jsonrpc`,
+        url: `${this.hostFacingEndpoint()}/a2a/jsonrpc`,
         protocolBinding: 'JSONRPC',
         protocolVersion: v,
       })),
@@ -310,13 +323,13 @@ export class A2AFakePeer {
       protocolVersion: '0.3.0',
       name: 'openwop-conformance-fake-a2a',
       description: 'Synthetic A2A peer for openwop conformance suite',
-      url: `${this.endpoint()}/a2a/jsonrpc`,
+      url: `${this.hostFacingEndpoint()}/a2a/jsonrpc`,
       version: '1.0.0',
       capabilities: { streaming: false, pushNotifications: false },
       skills: [{ id: 'echo', name: 'echo', description: 'Returns input verbatim', tags: ['echo'] }],
       defaultInputModes: ['text'],
       defaultOutputModes: ['text'],
-      additionalInterfaces: [{ url: `${this.endpoint()}/a2a/jsonrpc`, transport: 'JSONRPC' }],
+      additionalInterfaces: [{ url: `${this.hostFacingEndpoint()}/a2a/jsonrpc`, transport: 'JSONRPC' }],
     };
   }
 

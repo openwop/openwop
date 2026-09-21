@@ -54,7 +54,7 @@ import {
   PROFILE_FLOOR_SCENARIOS,
 } from './lib/profiles.js';
 import { setV2ProfileFloors, v2ProfileFloorFiles } from './lib/requirement-registry.js';
-import { v2ProfileIds } from './lib/v2-profiles.js';
+import { profilesDeniedByObservedRelaxation, profilesRelaxedBy, v2ProfileIds } from './lib/v2-profiles.js';
 import { childEnv } from './lib/child-env.js';
 
 interface ParsedArgs {
@@ -694,7 +694,9 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     // belongs to. Matched the same way the verifier matches it, so the emitter
     // and `verifyBundleV3` cannot disagree about the same bundle.
     const relaxedObligations = new Set((relaxations ?? []).map((r) => r.obligation));
-    const relaxedProfile = (p: string): boolean => [...relaxedObligations].some((o) => p.includes(o));
+    const relaxedProfileIds = profilesRelaxedBy([...relaxedObligations], claimedProfiles);
+    const observedRelaxed = profilesDeniedByObservedRelaxation(rows3, claimedProfiles).profiles;
+    const relaxedProfile = (p: string): boolean => relaxedProfileIds.has(p) || observedRelaxed.has(p);
     const claimed3 = claimedProfiles.filter((p) => !(p in DEPRECATED_PROFILE_ALIASES)).map((p) => ({ id: p, evidenceTier: args.evidenceTier, witnessCount: witnessCountFor(p), certified: !relaxedProfile(p) && (verdictFor(p)?.certifiable ?? false) && !notHeld.has(p) && !rejectedProfiles.some((v) => v.profile === p) && totals3.blocked === 0 }));
     const lockPath = resolvePath(conformanceRoot, 'dist', 'spec-artifacts.lock.json');
     const lock = existsSync(lockPath) ? (JSON.parse(readFileSync(lockPath, 'utf8')) as { version: string; stampSha256: string }) : undefined;

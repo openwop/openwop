@@ -78,7 +78,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
     const peer = getA2AFakePeer();
     if (peer === null) return softSkip('blocked', 'precondition not met — `peer === null` returned early (no fake peer wired in this run) (seam, prior step, or fixture unavailable)'); // no fake peer wired in this run
     peer.reset();
-    const drive = await driver.post('/v1/host/sample/a2a/invoke', { peerUrl: peer.endpoint() });
+    const drive = await driver.post('/v1/host/sample/a2a/invoke', { peerUrl: peer.hostFacingEndpoint() });
     if (drive.status === 404 || drive.status === 403) {
       // Seam absent. RFC 0148 §A: unobservable resolves to `blocked`, not a pass.
       expect(
@@ -114,7 +114,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
     const preferred = caps?.preferredVersion;
     peer.reset();
     const drive = await driver.post('/v1/host/sample/a2a/invoke', {
-      peerUrl: peer.endpoint(),
+      peerUrl: peer.hostFacingEndpoint(),
       authenticated: true,
       peerOffersOnly: '0.3',
     });
@@ -151,7 +151,7 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
     const peer = getA2AFakePeer();
     if (peer === null) return softSkip('blocked', 'precondition not met — `peer === null` returned early (seam, prior step, or fixture unavailable)');
     const drive = await driver.post('/v1/host/sample/a2a/invoke', {
-      peerUrl: peer.endpoint(),
+      peerUrl: peer.hostFacingEndpoint(),
       requestVersion: '99.0',
     });
     if (drive.status === 404 || drive.status === 403) return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (seam, prior step, or fixture unavailable)');

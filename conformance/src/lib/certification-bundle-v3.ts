@@ -19,7 +19,7 @@
  */
 import { createHash, createPrivateKey, createPublicKey, sign as edSign, verify as edVerify, type KeyObject } from 'node:crypto';
 import { profileDerivable, type DiscoveryPayload } from './profiles.js';
-import { v2RegistryAvailable } from './v2-profiles.js';
+import { profilesDeniedByObservedRelaxation, profilesRelaxedBy, v2RegistryAvailable } from './v2-profiles.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
 
@@ -179,9 +179,18 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   }
   // Relaxations: a relaxed obligation's profile cannot certify (RFC 0173 §A.2).
   const relaxed = new Set((bundle.host?.relaxations ?? []).map((r) => r.obligation.split('.')[0]));
+  // Ownership comes from the profile registry, not from the profile's name — see profilesRelaxedBy.
+  const relaxedProfiles = profilesRelaxedBy((bundle.host?.relaxations ?? []).map((r) => r.obligation), (bundle.claimedProfiles ?? []).map((p) => p.id));
+  // An OBSERVED relaxation nobody declared: the bundle's own results show the
+  // host accepting a destination its egress guard MUST refuse. Same denial as a
+  // declared one, so declaring nothing is not a way around the rule.
+  const observed = profilesDeniedByObservedRelaxation(bundle.results?.requirements ?? [], (bundle.claimedProfiles ?? []).map((p) => p.id));
+  for (const p of bundle.claimedProfiles ?? []) {
+    if (p.certified && observed.profiles.has(p.id) && !relaxedProfiles.has(p.id)) rejections.push({ kind: 'undeclared-relaxation-observed', profile: p.id, detail: `${p.id} is marked certified, but this bundle's own results show the host running relaxed on ${observed.obligations.join(', ')} with no host.relaxations[] entry recording it (security-defaults.md §Relaxations: every relaxation a host runs under MUST be recorded, and its profile MUST NOT certify)` });
+  }
   const certifiedProfiles: string[] = [];
   for (const p of bundle.claimedProfiles ?? []) {
-    if (p.certified && relaxed.size > 0 && [...relaxed].some((o) => p.id.includes(o))) rejections.push({ kind: 'relaxed-profile-certified', profile: p.id, detail: `${p.id} is marked certified while a relaxation on ${[...relaxed].join(', ')} is recorded (RFC 0173 §A.2)` });
+    if (p.certified && relaxedProfiles.has(p.id)) rejections.push({ kind: 'relaxed-profile-certified', profile: p.id, detail: `${p.id} is marked certified while a relaxation on ${[...relaxed].join(', ')} is recorded (RFC 0173 §A.2)` });
     else if (p.certified) certifiedProfiles.push(p.id);
   }
   if (expected.blocked > 0 && certifiedProfiles.length > 0) rejections.push({ kind: 'blocked-certified', detail: `${expected.blocked} blocked row(s): a bundle with blocked > 0 does not certify (RFC 0168 §E.1)` });
