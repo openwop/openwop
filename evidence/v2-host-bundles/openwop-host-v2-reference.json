@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-21T12:14:36.234Z",
+  "generatedAt": "2026-09-21T14:29:57.852Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.33.1",
+    "version": "2.34.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.33.1",
-    "stampSha256": "132270b1cd8c97bed21d57a5b08c9abe89d10a56ff1aadf9ff3119edafb4d121"
+    "specArtifactsVersion": "2.34.0",
+    "stampSha256": "68cccf1a2b742ba8666acfa944d92ef209dd5cef3a7b067b06a5d36dbac31d03"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "a08421847bc15e0d2470fc3af560a748454b2a22"
+      "id": "2e6e42d657b9bcba2299f0fdc3679627ada6e57f"
     },
     "signingKeyId": "v2-reference-4"
   },
@@ -954,7 +954,25 @@
         "id": "openwop.requirement.0158.bound-is-derived",
         "scenario": "v2-durability-recovery.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 1,
+        "evidence": {
+          "recoveryBounds": [
+            {
+              "class": "single-instance-restart",
+              "bound": 6000,
+              "terms": [
+                {
+                  "name": "supervisor.restartDelay",
+                  "ms": 1000
+                },
+                {
+                  "name": "boot.reentryBudget",
+                  "ms": 5000
+                }
+              ]
+            }
+          ]
+        }
       },
       {
         "id": "openwop.requirement.0158.duplicate-delivery",
@@ -966,13 +984,27 @@
         "id": "openwop.requirement.0158.kill-after-accept",
         "scenario": "v2-durability-recovery.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 1,
+        "evidence": {
+          "recovery": {
+            "class": "single-instance-restart",
+            "boundMs": 6000,
+            "observedMs": 1787
+          }
+        }
       },
       {
         "id": "openwop.requirement.0158.kill-during-execution",
         "scenario": "v2-durability-recovery.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 2,
+        "evidence": {
+          "recovery": {
+            "class": "single-instance-restart",
+            "boundMs": 6000,
+            "observedMs": 1883
+          }
+        }
       },
       {
         "id": "openwop.requirement.0158.poison-exhaustion",
@@ -1909,7 +1941,7 @@
       }
     ]
   },
-  "witnessSha256": "7f3d5089e8431e0df55309f70eab4a4b0eb8accf17c8ed29f87732bce0c7a600",
+  "witnessSha256": "cb45c96fd815f6040e1221b2fedc5422a314e0facc226c43e4db22fc0dd52bf0",
   "assertionCount": 2014,
   "detail": {
     "nonPass": [
@@ -1980,10 +2012,13 @@
       }
     ]
   },
+  "durability": {
+    "rung": "durable-single-instance"
+  },
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "j29kdH3LUoQVJNkqZkxG7TLyiz8jyENCAY8A78G1AsDb6DDIQojODNK3XoTXrM_dCgsUdRYcu-ftvXXexDpdCg",
+    "sig": "l1F-we1R8f2Q0rY1TrhU3dnIUVG_JD0gI0fRqaa4vXyTdS08CsjdRiOdsgXRlAQaak4u2e4NJIRAx_Rw6b9pCA",
     "over": [
       "witnessSha256",
       "host.build",
