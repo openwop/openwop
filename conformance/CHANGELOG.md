@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.33.1] — 2026-09-21 — a conformant host failed `kill-during-execution` on a race between two reads
+
+- **`v2-durability-recovery`: the "completed without re-execution" latch was decided from two non-atomic reads in the wrong order.** Each iteration read the LOG, then the STATUS, and latched when the status said `completed` and the — older — log showed no resumption. A host that re-dispatched between the two requests read as "completed un-re-executed" while being neither. `conformance-noop` re-executes in milliseconds, so the window is real: per run roughly (gap between the requests) / (500 ms poll), a few percent. **Measured on a tier-1 host:** after a genuine SIGKILL and a correct recovery by lease expiry (727 s inside a declared 750 s bound) the row failed with *"read status completed with 2 run.started"* — printing the re-execution it was denying, because the message used a later read than the latch. The same host and code had passed the two previous runs.
+- **Status first, log second.** A run's log is append-only, so a log read taken *after* a `completed` status can only show more than the status implied: if it still shows no resumption the defect is real, if it shows resumption nothing was wrong, if it is unreadable nothing is concluded. The loop moves to `src/lib/durability-watch.ts` with injected readers, and `durability-watch.test.ts` pins the ordering without a host — the race reproduced, the genuine defect still latching, the latch staying sticky, and an unreadable log concluding nothing.
+- **The defect only ever produced FALSE FAILS, never false passes** — the latch could be set wrongly, never cleared wrongly — so an `executed-pass` on this row under 2.32.0 or 2.33.0 stands. A host that saw this row fail on those versions should re-run on 2.33.1 before triaging it.
+- Found by the openwop-app host session reading the installed scenario after an unexplained red. Introduced in 2.32.0, by the same change that made the row assert both clauses of §E item 11.
+- Suite patch: corpus release stays `2.33.0`.
+
 ## [2.33.0] — 2026-09-21 — a declared relaxation denied nothing, an undeclared one was invisible, and two fakes made both unavoidable
 
 Step 2 of closing `docs/KNOWN-LIMITS.md` §"The reference host's certified bundles were cut under an undeclared relaxation". Three suite defects, all the corpus's.
