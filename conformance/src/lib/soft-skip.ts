@@ -43,7 +43,7 @@ export type SoftSkipKind = 'inapplicable' | 'skipped' | 'blocked';
 /** Detail marker the runner writes for a zero-assertion file that noted nothing. */
 export const UNCLASSIFIED_RETURN_DETAIL = 'every test returned early with zero assertions and no recorded reason — unclassified return; RFC 0148 §A resolves it to blocked (add softSkip(kind, reason) at the early return)';
 
-interface Note { readonly kind: SoftSkipKind; readonly reason: string; readonly seq: number }
+interface Note { readonly kind: SoftSkipKind; readonly reason: string; readonly seq: number; readonly conclusive?: true }
 
 const notes = new Map<string, Note[]>();
 let seq = 0;
@@ -83,15 +83,41 @@ export function seamAbsent(reason: string): undefined {
   return softSkip('blocked', reason);
 }
 
+/**
+ * `blocked` that STANDS even though the test already asserted something.
+ *
+ * A plain `softSkip` after an assertion records `executed-pass` with a
+ * `partial-witness:` detail (`resolveItRecord`): the acceptance predicate
+ * refuses such a row, but certification counts it as a pass. That is right for
+ * a leg that finished its requirement and skipped an optional extra. It is
+ * wrong for a leg whose REQUIREMENT went unobserved after setup assertions it
+ * could not avoid — a helper like `register()` asserts `201` before the leg has
+ * observed anything. Use this only there: the row records `blocked`, which
+ * denies certification (RFC 0168 §E.1) without convicting the host.
+ *
+ * Opt-in and per-call on purpose. Honouring every note-after-assertion as
+ * `blocked` would downgrade legs that legitimately completed; that is a suite-
+ * wide semantic change, not a patch. First use: `v2-webhook-durable-delivery`'s
+ * dead-letter leg when the retry window closes before exhaustion (2.34.1).
+ */
+export function blockedDespiteAssertions(reason: string): undefined {
+  const file = currentFile();
+  if (file === null) return undefined;
+  const arr = notes.get(file) ?? [];
+  arr.push({ kind: 'blocked', reason, seq: ++seq, conclusive: true });
+  notes.set(file, arr);
+  return undefined;
+}
+
 const RANK: Record<SoftSkipKind, number> = { blocked: 0, skipped: 1, inapplicable: 2 };
 
-function fold(arr: readonly Note[]): { kind: SoftSkipKind; reason: string } | null {
+function fold(arr: readonly Note[]): { kind: SoftSkipKind; reason: string; conclusive?: true } | null {
   if (arr.length === 0) return null;
   const uniq: Note[] = [];
   for (const n of arr) if (!uniq.some((u) => u.kind === n.kind && u.reason === n.reason)) uniq.push(n);
   const kind = [...uniq].sort((a, b) => RANK[a.kind] - RANK[b.kind])[0]!.kind;
   const reason = uniq.map((n) => (uniq.length > 1 ? `[${n.kind}] ${n.reason}` : n.reason)).join('; ');
-  return { kind, reason };
+  return uniq.some((n) => n.conclusive === true) ? { kind, reason, conclusive: true } : { kind, reason };
 }
 
 /**
@@ -113,7 +139,7 @@ export function softSkipMark(): number {
  * The noted disposition for a file counting only notes written AFTER `mark`
  * — the notes of the test that is ending. Same fold as the file rule.
  */
-export function softSkipDispositionSince(file: string, mark: number): { kind: SoftSkipKind; reason: string } | null {
+export function softSkipDispositionSince(file: string, mark: number): { kind: SoftSkipKind; reason: string; conclusive?: true } | null {
   return fold((notes.get(file) ?? []).filter((n) => n.seq > mark));
 }
 

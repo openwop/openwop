@@ -1,6 +1,6 @@
 # Persistence and Coexistence
 
-> **Status: Stable · RFC 0176 (§A–§B, §D–§E), 0171 §A, 0170 §A.3.**
+> **Status: Stable · RFC 0176 (§A–§B, §D–§E), 0171 §A, 0170 §A.3, 0158 §A–§D.**
 > **Normative home:** `eventLog`.
 
 ## Why this exists

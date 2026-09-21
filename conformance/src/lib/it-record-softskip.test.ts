@@ -95,3 +95,22 @@ describe('softSkip per-test window (rc.56)', () => {
     expect(softSkipDispositionSince(THIS_FILE, m2)?.kind).toBe('inapplicable');
   });
 });
+
+describe('blockedDespiteAssertions — a conclusive blocked survives setup assertions (2.34.1)', () => {
+  it('a conclusive blocked note after assertions records blocked, not a partial-witness pass', () => {
+    const r = resolveItRecord('pass', 3, undefined, { kind: 'blocked', reason: 'window closed before exhaustion', conclusive: true });
+    expect(r).toEqual({ disposition: 'blocked', detail: 'window closed before exhaustion' });
+  });
+  it('an ordinary blocked note after assertions is still a partial-witness pass — the convention is unchanged', () => {
+    const r = resolveItRecord('pass', 3, undefined, { kind: 'blocked', reason: 'optional extra leg' });
+    expect(r.disposition).toBe('executed-pass');
+    expect(r.detail).toBe('partial-witness: blocked: optional extra leg');
+  });
+  it('a failure still wins over a conclusive note', () => {
+    expect(resolveItRecord('fail', 3, undefined, { kind: 'blocked', reason: 'x', conclusive: true }, 'boom').disposition).toBe('executed-fail');
+  });
+  it('conclusive applies only to blocked — it cannot turn an assertion-bearing pass into inapplicable', () => {
+    const r = resolveItRecord('pass', 2, undefined, { kind: 'inapplicable', reason: 'x', conclusive: true } as never);
+    expect(r.disposition).toBe('executed-pass');
+  });
+});

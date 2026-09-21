@@ -116,6 +116,14 @@ The doc's table therefore **rejected `vendor.acme.my_tools.echo`, which the very
 
 The one behaviour a host must change is **emit** side: a host spelling `%2F` in its links must switch to the projection. That is the point of the RFC — a link is the spelling a host hands every client, and leaving it as `%2F` re-creates the outage for everyone who follows it.
 
+> **Host note (non-normative, added 2026-09-21 on host report).** "The existing one still MUST work" reaches
+> **every** bound-id kind in a path, not only runs. A host behind a front door that decodes `%2F` needs its
+> re-encode for `/webhooks/{webhookId}` (and every other tenant-bound path parameter) as much as for
+> `/runs/{runId}`: a client still sends `%2F` — the conformance suite does, on its `DELETE` calls — and the
+> projection only protects the requests that use it. Measured on a tier-1 host: a re-encode written for
+> `/runs/` alone made `DELETE /webhooks/<tenant>%2F<uuid>` answer `404` through the public origin and `204` on
+> the direct origin, and every certification cut leaked its subscriptions.
+
 ## Conformance
 
 - `conformance/src/scenarios/v2-bound-id-path-projection.test.ts` (new, major 2, unaided, no seam required). Creates one run and asserts: the projection contains only unreserved characters; `GET /runs/{projected}` is 200 **and returns the same run**; a link carrying the id uses the projection and not `%2F`; a malformed escape is refused `400`.
