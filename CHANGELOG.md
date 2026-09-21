@@ -76,6 +76,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
   Four of these were found by the openwop-app host **reading the scenario against its own sweeper before building the seam** — and it noted that a first witness on a host that re-enters runs at boot would have passed the single read and hidden the race. No host had witnessed these rows, so no bundle is invalidated.
 
+- **Security — `openwop-conformance --certify` leaked the bundle signing key into its child's environment.** The vitest child was spawned with `{ ...process.env }`, carrying `OPENWOP_BUNDLE_SIGNING_KEY` (the private key PEM) into a process that never uses it — the signer runs in the parent. A host operator found it during a production cut: a process listing on macOS printed the key in full. Fixed in 2.32.0 (`conformance/src/lib/child-env.ts`). Exposure is same-uid or root, on the operator's own machine; there is no remote vector. **Operators who listed processes during a `--certify` on any suite ≤ 2.31.1 should rotate the bundle key**, since a terminal transcript is a durable copy.
+
 - `spec/v2/facets/workflowChainPacks.schema.json` `$comment` said RFC 0124 was "still `Active`" (it is `Accepted`) and that "no v2 host bundle advertises" `deferredParameters` (one committed bundle does, and fails `capabilities-root-closed` for it). Neither changes the decision the comment records — v2.0 does not define the facet — so only the two facts are corrected.
 
 ## [2.31.0] — 2026-09-19 — the fifth rung row, and the projection helper three separate mistakes asked for

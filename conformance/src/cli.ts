@@ -55,6 +55,7 @@ import {
 } from './lib/profiles.js';
 import { setV2ProfileFloors, v2ProfileFloorFiles } from './lib/requirement-registry.js';
 import { v2ProfileIds } from './lib/v2-profiles.js';
+import { childEnv } from './lib/child-env.js';
 
 interface ParsedArgs {
   readonly baseUrl: string | undefined;
@@ -525,7 +526,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
   // (and assertion count) here; the runner reads it after the run so bundle v2
   // rows come from what scenarios RECORDED, not from per-file pass/fail/skip.
   const ledgerFile = join(reportDir, 'requirement-ledger.jsonl');
-  const env: NodeJS.ProcessEnv = { ...process.env };
+  const env: NodeJS.ProcessEnv = childEnv(process.env);
   env.OPENWOP_BASE_URL = baseUrl;
   env.OPENWOP_API_KEY = apiKey;
   env.OPENWOP_LEDGER_PATH = ledgerFile;
@@ -973,7 +974,7 @@ async function main(): Promise<never> {
 
   // Env vars OVERRIDE flags only when the flag was unset (consistent
   // with the rest of the harness — env wins on the absence of CLI input).
-  const env: NodeJS.ProcessEnv = { ...process.env };
+  const env: NodeJS.ProcessEnv = childEnv(process.env);
   if (args.baseUrl) env.OPENWOP_BASE_URL = args.baseUrl;
   if (args.apiKey) env.OPENWOP_API_KEY = args.apiKey;
   if (args.impl) env.OPENWOP_IMPLEMENTATION_NAME = args.impl;
