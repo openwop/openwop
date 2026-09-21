@@ -71,7 +71,7 @@ For an honest comparison of OpenWOP vs **Temporal, Airflow, Argo Workflows, AWS 
 >
 > **Status: v1.0 core locked (2026-05-12); v1.x extension surfaces in motion.** The v1.0 core spec corpus is locked and evolves additively per [`COMPATIBILITY.md`](./COMPATIBILITY.md); `Active` / `Draft` RFCs are gated behind capability advertisement, so a v1.0-only host passes the locked-core suite. Authoritative per-doc + per-RFC maturity: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
 >
-> **RFC status (190 RFCs excluding template):** RFCs that are `Accepted` (186), that are `Active` (2 — RFC 0111, RFC 0121), and that are `Draft` (1 — RFC 0038 Parked). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
+> **RFC status (193 RFCs excluding template):** RFCs that are `Accepted` (186), that are `Active` (2 — RFC 0111, RFC 0121), and that are `Draft` (4 — RFC 0038 Parked, RFC 0194, RFC 0195, RFC 0196). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
 >
 > **SECURITY surface:** 202 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 169 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 31 reference-impl-tier (verified by reference impls' CI), 2 advisory. Every protocol-tier MUST-NOT has at least one public conformance test. Strict-mode behavioral conformance runs under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 >

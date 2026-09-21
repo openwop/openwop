@@ -215,7 +215,7 @@
     "spec/v1/spec-gaps.json": "eb3bfcb9c7d05c9a6845d4a40ec9493cfaa5a671932daf1af561310136fdabe8",
     "spec/v2/README.md": "8dbfc17b10f373dba95bdd2e8fec0580f35b380a834d304be3e24e7498170185",
     "spec/v2/core/capabilities.md": "4c4e5577caf4ae20c84fe59d580de4c6599e76783471d3b59f9730fc3807de71",
-    "spec/v2/core/conformance.md": "f224d49c5376ad39ea8a972cf623d5212a5fe140fd46ee83f234f92f6548ee0e",
+    "spec/v2/core/conformance.md": "4889d52601ae09aa326bd8226a027b8b293823019e3eb459a5957355e265ddeb",
     "spec/v2/core/connection-packs.md": "466bdb9dde79d85615ad8281dacfb7bf923ca22d7fb3ed219749e59574c753ed",
     "spec/v2/core/conversation.md": "e425887c4ba199b8cdc5c99e792689f7bd7d46de492f28670de2e402fa6d9506",
     "spec/v2/core/errors.md": "0dff4a0ae102a86f6a17a9a3b16a203292588a0f422ed19d1c0d9213995aa01d",
@@ -282,5 +282,5 @@
     "spec/v2/release.json": "5b9a956506b011835f1bd2fec54064d9cc8657d8a45a371314850da377d69069",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "0dcfa5e0f7662bc6a1e9caa8cda784060eb4a9b0"
+  "corpusCommit": "2dae841503c5e7a5e9e79e82d3b18bd43c7ee7b8"
 }
