@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-19T20:21:26.019Z",
+  "generatedAt": "2026-09-21T12:14:36.234Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.25.0",
+    "version": "2.33.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.25.0",
-    "stampSha256": "240fb0a1cba70c2a5263b6ef5e150614de639d3cac668c4f7d7875780e0e0a49"
+    "specArtifactsVersion": "2.33.1",
+    "stampSha256": "132270b1cd8c97bed21d57a5b08c9abe89d10a56ff1aadf9ff3119edafb4d121"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "796b076623f6ecf55363ce200f96a6ea49f0fc20"
+      "id": "a08421847bc15e0d2470fc3af560a748454b2a22"
     },
-    "signingKeyId": "v2-reference-3"
+    "signingKeyId": "v2-reference-4"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "7a03e5c0dad355c69edb9d7a057e6e453f361eb6afb7038f60e6b8b54b16ba2e",
+    "sha256": "f120b4d69ac0b8da1ef6b71d512055d62dc9bf4b4fea22cfc1fbe8158e2cb951",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -42,9 +42,9 @@
       "eventLogSchemaVersion": 3,
       "signingKeys": [
         {
-          "keyId": "v2-reference-3",
+          "keyId": "v2-reference-4",
           "alg": "ed25519",
-          "publicKey": "AkFQZ3z07zJUF2TUU_XFhT9HdUv9eF33K7scxSF4Bt0",
+          "publicKey": "F588CksLq-PVrpqTFhYcweE4WFYOcj6-jyjz7KmKipU",
           "use": "certification-bundle"
         }
       ],
@@ -349,7 +349,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 233,
+      "executedPass": 242,
       "executedFail": 0,
       "skipped": 7,
       "inapplicable": 6,
@@ -460,6 +460,12 @@
         "scenario": "v2-dual-stack-negotiation.test.ts",
         "result": "executed-pass",
         "assertions": 15
+      },
+      {
+        "id": "openwop.scenario.v2-durability-recovery",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
@@ -595,7 +601,7 @@
         "id": "openwop.scenario.v2-minimum-version-refused",
         "scenario": "v2-minimum-version-refused.test.ts",
         "result": "executed-pass",
-        "assertions": 15
+        "assertions": 14
       },
       {
         "id": "openwop.scenario.v2-mrtr-rounds-ceiling",
@@ -607,7 +613,7 @@
         "id": "openwop.scenario.v2-negotiation-authenticated",
         "scenario": "v2-negotiation-authenticated.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 6
       },
       {
         "id": "openwop.scenario.v2-negotiation-decided-emitted",
@@ -699,7 +705,7 @@
         "id": "openwop.scenario.v2-relaxation-recorded",
         "scenario": "v2-relaxation-recorded.test.ts",
         "result": "executed-pass",
-        "assertions": 16
+        "assertions": 20
       },
       {
         "id": "openwop.scenario.v2-revocation-honored",
@@ -754,7 +760,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -834,6 +840,12 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 18
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-egress-refusal",
+        "scenario": "v2-webhook-egress-refusal.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -937,6 +949,36 @@
         "result": "skipped",
         "assertions": 0,
         "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+      },
+      {
+        "id": "openwop.requirement.0158.bound-is-derived",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0158.duplicate-delivery",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0158.kill-after-accept",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0158.kill-during-execution",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0158.poison-exhaustion",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0168.advertised-fixtures-exist",
@@ -1327,6 +1369,12 @@
         "assertions": 7
       },
       {
+        "id": "openwop.requirement.0171.webhook-egress-refused",
+        "scenario": "v2-webhook-egress-refusal.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0172.advertised-path-space-served",
         "scenario": "v2-advertised-path-space-served.test.ts",
         "result": "executed-pass",
@@ -1520,6 +1568,12 @@
         "assertions": 9
       },
       {
+        "id": "openwop.requirement.0173.relaxation-recorded.owned-by-registry",
+        "scenario": "v2-relaxation-recorded.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
@@ -1553,7 +1607,7 @@
         "id": "openwop.requirement.0175.minimum-version-refused.mcp",
         "scenario": "v2-minimum-version-refused.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0175.mrtr-rounds-ceiling",
@@ -1577,7 +1631,7 @@
         "id": "openwop.requirement.0175.negotiation-authenticated.mcp",
         "scenario": "v2-negotiation-authenticated.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0175.negotiation-decided-emitted",
@@ -1809,7 +1863,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -1855,8 +1909,8 @@
       }
     ]
   },
-  "witnessSha256": "c27516af1841a87ab6decc084a4f070027daa1e0ea925be0f898d537aa19c3ed",
-  "assertionCount": 1996,
+  "witnessSha256": "7f3d5089e8431e0df55309f70eab4a4b0eb8accf17c8ed29f87732bce0c7a600",
+  "assertionCount": 2014,
   "detail": {
     "nonPass": [
       {
@@ -1928,8 +1982,8 @@
   },
   "signature": {
     "alg": "ed25519",
-    "keyId": "v2-reference-3",
-    "sig": "k10cM1wVYuzRDC5QXffJAayhf3mae35Az8Yxqq1A8v7TpJypfFvL6_3oLapvl8Tpu3kvhbKzYpLrK_2a1CLxDQ",
+    "keyId": "v2-reference-4",
+    "sig": "j29kdH3LUoQVJNkqZkxG7TLyiz8jyENCAY8A78G1AsDb6DDIQojODNK3XoTXrM_dCgsUdRYcu-ftvXXexDpdCg",
     "over": [
       "witnessSha256",
       "host.build",
