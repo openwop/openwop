@@ -16,6 +16,7 @@
  * That is the whole mechanism. Everything else here is bookkeeping.
  */
 
+import type { RowEvidence } from './durability-evidence.js';
 import { appendFileSync, readFileSync, existsSync } from 'node:fs';
 
 /** RFC 0148 §A. Exactly one of these per requirement, per run. */
@@ -66,6 +67,10 @@ export interface LedgerEntry {
    *  the row to a file and drops it — which is how every explicit requirement id
    *  went missing from bundle v3 while the per-`it` ids came through. */
   readonly scenarioFile?: string;
+  /** RFC 0158 §E — structured evidence the scenario noted for this row
+   *  (`durability-evidence.ts`). Recorded for `executed-pass` only: a row that
+   *  failed, blocked or skipped witnessed nothing to describe. */
+  readonly evidence?: RowEvidence;
 }
 
 const ledger = new Map<string, LedgerEntry>();
@@ -87,7 +92,7 @@ export function recordRequirement(
   requirementId: string,
   disposition: Disposition,
   detail?: string,
-  extras?: { assertionCount?: number; scenarioFile?: string },
+  extras?: { assertionCount?: number; scenarioFile?: string; evidence?: RowEvidence },
 ): void {
   const prior = ledger.get(requirementId);
   if (prior !== undefined && prior.disposition !== disposition) {
@@ -108,6 +113,7 @@ export function recordRequirement(
     ...(detail === undefined ? {} : { detail }),
     ...(extras?.assertionCount === undefined ? {} : { assertionCount: extras.assertionCount }),
     ...(extras?.scenarioFile === undefined ? {} : { scenarioFile: extras.scenarioFile }),
+    ...(extras?.evidence === undefined || disposition !== 'executed-pass' ? {} : { evidence: extras.evidence }),
   };
   ledger.set(requirementId, entry);
   journal.push(entry);

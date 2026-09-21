@@ -281,6 +281,88 @@
               },
               "detail": {
                 "type": "string"
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "description": "RFC 0158 §E — structured evidence for this row. OPTIONAL, and carried on the ROW rather than at the bundle root because the attestation covers witnessSha256 and witnessSha256 digests the rows: a root-level block would be unsigned. It enters the witness digest only when present, so every bundle without it digests exactly as before. Closed: one optional member per kind of evidence. Recorded for an `executed-pass` row only.",
+                "properties": {
+                  "recovery": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "class",
+                      "boundMs",
+                      "observedMs"
+                    ],
+                    "description": "On a kill row (`0158.kill-after-accept`, `0158.kill-during-execution`): the recovery CLASS the exercise exercised, the bound it was judged against, and the kill → RESUMPTION interval observed (never kill → terminal, RFC 0158 §B.4). `class` MUST name an entry of `recoveryBounds[]` and `boundMs` MUST equal that entry's `bound`: That refuses an undeclared class, a bound label that disagrees with its class, and a resumption outside the bound. It does NOT refuse a host that names the wrong DECLARED class while resuming inside that class's longer bound — a seam that kills before the host holds its execution claim exercises an easier class than the one it labels, and no arithmetic separates that from a fast recovery. Recording the interval makes the mislabel visible to a reader; killing only once the claim is held remains the host's obligation (RFC 0158 §E).",
+                    "properties": {
+                      "class": {
+                        "type": "string",
+                        "pattern": "^[a-z][A-Za-z0-9._-]{0,63}$",
+                        "description": "Opaque and host-chosen — NOT an enum. \"leased\" / \"unleased\" name one host's mechanisms and boot re-entry another's; a closed vocabulary would select for an architecture."
+                      },
+                      "boundMs": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "observedMs": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "recoveryBounds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 16,
+                    "description": "On `0158.bound-is-derived`: the declared recovery bound PER WORK CLASS, each with the terms that produce it, so a reader can recompute it (RFC 0158 §B.5, §E). There is deliberately NO scalar overall bound: Unresolved Question 1 resolved per class, and a convenience total is the lie by aggregation that resolution rejects. This proves ARITHMETIC — that each bound follows from its stated mechanism — and MUST NOT be cited as evidence that the mechanism runs; only a kill row's `observedMs` witnesses that.",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "class",
+                        "bound",
+                        "terms"
+                      ],
+                      "properties": {
+                        "class": {
+                          "type": "string",
+                          "pattern": "^[a-z][A-Za-z0-9._-]{0,63}$"
+                        },
+                        "bound": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Milliseconds. MUST equal the sum of `terms[].ms`."
+                        },
+                        "terms": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 16,
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "name",
+                              "ms"
+                            ],
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "pattern": "^[a-z][A-Za-z0-9._-]{0,63}$"
+                              },
+                              "ms": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -329,6 +411,23 @@
         }
       },
       "description": "Required when any result is not executed-pass (allOf below). A DERIVED projection of `results.requirements[]` for readability — never an independent source of counts."
+    },
+    "durability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rung"
+      ],
+      "description": "RFC 0158 §D — the qualification rung this host CLAIMS. OPTIONAL; absent means no rung is claimed, which is every host's status by default (§E.10 mints no discovery capability, so this is the only place a rung is stated). It is a CLAIM and is outside the attestation: a verifier MUST re-derive it from the signed rows — every row of the rung `executed-pass`, each kill row's `evidence.recovery.class` naming a `recoveryBounds[]` entry whose `bound` equals its `boundMs` and is not exceeded by its `observedMs`, and each entry's terms summing to its bound — and MUST reject a bundle whose claim it cannot derive (`rung-not-derivable`). Only `durable-single-instance` is derivable in this revision: `peer-resume` is bundle-witnessed by evidence not yet carried, so a higher claim is refused, not assumed.",
+      "properties": {
+        "rung": {
+          "enum": [
+            "durable-single-instance",
+            "durable-multi-instance",
+            "multi-region-qualified"
+          ]
+        }
+      }
     },
     "signature": {
       "type": "object",

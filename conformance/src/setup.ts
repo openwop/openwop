@@ -43,6 +43,7 @@ import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-cohe
 import type { DiscoveryPayload } from './lib/profiles.js';
 import { targetMajor } from './lib/seams.js';
 import { softSkip } from './lib/soft-skip.js';
+import { takeNotedEvidence } from './lib/durability-evidence.js';
 
 // 20 s, not 5: a Cloud Run cold start routinely exceeds 5 s, and a discovery
 // fetch that aborted at init used to turn every fixture-gated scenario into a
@@ -457,7 +458,8 @@ afterEach(({ task }) => {
     detail = rec.detail;
   }
   try {
-    recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file });
+    const evidence = takeNotedEvidence();
+    recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file, ...(evidence === null ? {} : { evidence }) });
   } catch {
     /* never fail a test for bookkeeping */
   }

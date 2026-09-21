@@ -67,11 +67,24 @@ A certification bundle validates against `schemas/v2/certification-bundle.schema
 | `witnessSha256` | REQUIRED; covers the reporter record |
 | `assertionCount` | REQUIRED, ≥ 1 |
 | `detail.nonPass[]` | REQUIRED when any total other than `executedPass` is non-zero |
+| `results.requirements[].evidence` | OPTIONAL, closed; structured evidence on an `executed-pass` row (below) |
+| `durability.rung` | OPTIONAL; a claim the verifier re-derives (below) |
 | `signature` | REQUIRED |
 
 `signature` is an Ed25519 attestation over the canonical JSON of `{ witnessSha256, host.build, suite.version, discovery.sha256 }`; `over` MUST list exactly those four members. A host that signs bundles MUST publish the corresponding public keys as `signingKeys[]` in its discovery document, and `signature.keyId` MUST name one of them. A verifier MUST resolve `keyId` there — in the discovery document of the host the bundle is *about* — and MUST verify the attestation under the published key.
 
 A signature that cannot be resolved to a published key attests **integrity only**: it proves the bundle was not altered after signing, and proves nothing about who signed it, because a signer can mint a keypair and a key id at will. Such a bundle MUST NOT be read as attributable evidence, and a gate MUST distinguish three outcomes that a presence check collapses into one — *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*. A retired key MUST stay listed, because removing it silently invalidates every bundle it already signed. `evidenceTier: independent` MUST carry a `verifierKeyId` distinct from the host's signing key; the verifier MUST refuse, not warn, on a missing or self-signed independent claim. A bundle with `totals.blocked > 0` does not certify. A profile that carries an operator relaxation (`host.relaxations[]`) cannot certify. v1 and v2 bundles are never upgraded to v3; a bundle is evidence at its own version.
+
+### Recovery evidence
+
+RFC 0158 §E publishes a rung and its recovery bounds here instead of in discovery. The attestation covers `witnessSha256`, and `witnessSha256` digests the rows, so the evidence rides on rows: a row's `evidence` enters the digest only when present, and a bundle without it digests as it always did.
+
+| Row | `evidence` member |
+| --- | --- |
+| `0158.bound-is-derived` | `recoveryBounds[]` of `{ class, bound, terms[] }`, each term `{ name, ms }`; `bound` MUST equal the sum of its terms. One entry per recovery class; there is no aggregate bound. |
+| `0158.kill-after-accept`, `0158.kill-during-execution` | `recovery: { class, boundMs, observedMs }` — the class exercised, the bound it was judged against, and the observed kill-to-resumption interval. |
+
+`class` and `name` are opaque host-chosen identifiers, never a closed vocabulary. `durability.rung` is outside the attestation, so a verifier MUST re-derive it and MUST reject (`rung-not-derivable`) a claim it cannot derive: every row of the rung `executed-pass`, each kill row's `class` naming a declared entry whose `bound` equals its `boundMs` and is not exceeded by its `observedMs`. Only `durable-single-instance` is derivable in this revision; a higher claim is refused. This proves arithmetic and that recovery ran once inside the bound. It does not prove the kill landed in the class it names; killing only once the execution claim is held is the host's obligation.
 
 ## Corpus-gate evidence
 

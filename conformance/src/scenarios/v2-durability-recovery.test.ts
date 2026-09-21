@@ -74,6 +74,7 @@ import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
 import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 import { watchForResumption, type Observation, type Watch } from '../lib/durability-watch.js';
+import { noteEvidence, parseRecoveryBounds, EVIDENCE_NAME_PATTERN } from '../lib/durability-evidence.js';
 
 const FIXTURE = 'conformance-noop';
 const FAILURE_FIXTURE = 'conformance-failure';
@@ -187,6 +188,32 @@ const KILL_ROW_TIMEOUT_MS = OBSERVATION_CEILING_MS + 120_000;
 const UNDECLARED_BOUND_FALLBACK_MS = 60_000;
 
 /**
+ * The declared recovery bounds, PER CLASS, read off the seam and normalised.
+ *
+ * Three response shapes are accepted, because the seam is non-normative and two
+ * hosts built it before this was written down:
+ *   { classes: [{ class, bound, terms[] }] }          — the preferred shape
+ *   { classes: { <name>: { bound, terms[] } } }       — a map keyed by class
+ *   { bound, terms[], class? }                        — one class; named `class`
+ *                                                       or, absent that, `default`
+ * A top-level scalar `bound` beside `classes` is IGNORED: Unresolved Question 1
+ * resolved per class, and a convenience total is the aggregation it rejects.
+ * Only `{ name, ms }` survives from a term — free text a host attaches (the
+ * reference host's `enforcedBy`) never reaches a published bundle.
+ */
+function readClasses(json: unknown): unknown[] | null {
+  const body = (json as { classes?: unknown; class?: unknown; bound?: unknown; terms?: unknown } | null) ?? {};
+  const strip = (cls: unknown, e: { bound?: unknown; terms?: unknown }): unknown => ({
+    class: cls, bound: e.bound,
+    terms: Array.isArray(e.terms) ? (e.terms as Array<{ name?: unknown; ms?: unknown }>).map((t) => ({ name: t?.name, ms: t?.ms })) : e.terms,
+  });
+  if (Array.isArray(body.classes)) return (body.classes as Array<{ class?: unknown; bound?: unknown; terms?: unknown }>).map((e) => strip(e?.class, e ?? {}));
+  if (body.classes !== null && typeof body.classes === 'object') return Object.entries(body.classes as Record<string, { bound?: unknown; terms?: unknown }>).map(([k, e]) => strip(k, e ?? {}));
+  if (body.bound !== undefined || body.terms !== undefined) return [strip(typeof body.class === 'string' ? body.class : 'default', body)];
+  return null;
+}
+
+/**
  * How long to keep observing: the host's OWN declared recovery bound.
  *
  * §E item 11: resumption "MUST be observed on a subsequent observation within
@@ -199,19 +226,21 @@ const UNDECLARED_BOUND_FALLBACK_MS = 60_000;
  * bound is used as a CEILING FOR WAITING only; it is never asserted as a
  * scalar here (`bound-is-derived` owns the arithmetic).
  */
-async function declaredBoundMs(fired: unknown): Promise<{ ms: number; declared: boolean }> {
+async function declaredBoundMs(fired: unknown): Promise<{ ms: number; declared: boolean; recoveryClass: string | null }> {
+  const named = (fired as { recoveryClass?: unknown } | null)?.recoveryClass;
+  const recoveryClass = typeof named === 'string' && EVIDENCE_NAME_PATTERN.test(named) ? named : null;
   // A host whose bound is PER CLASS (Unresolved Question 1: unleased work waits
   // out an outbox lease, leased work a dispatch lease — 65 s against 750 s on
   // one measured host) names the figure that governs THIS work on the seam's
   // own response. The bare read below returns one class and would report the
   // interval against a bound that does not govern the staged run.
   const governing = (fired as { recoveryBoundMs?: unknown } | null)?.recoveryBoundMs;
-  if (typeof governing === 'number' && Number.isFinite(governing) && governing > 0) return { ms: governing, declared: true };
+  if (typeof governing === 'number' && Number.isFinite(governing) && governing > 0) return { ms: governing, declared: true, recoveryClass };
   const r = await driver.get('/host/durability/bound');
   const bound = (r.json as { bound?: unknown } | null)?.bound;
   return r.status === 200 && typeof bound === 'number' && Number.isFinite(bound) && bound > 0
-    ? { ms: bound, declared: true }
-    : { ms: UNDECLARED_BOUND_FALLBACK_MS, declared: false };
+    ? { ms: bound, declared: true, recoveryClass }
+    : { ms: UNDECLARED_BOUND_FALLBACK_MS, declared: false, recoveryClass };
 }
 
 /**
@@ -294,6 +323,15 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       w.resumedAfterMs !== null,
       req('openwop.requirement.0158.kill-after-accept', 'RFC 0158 §B.4', `work accepted before a real process death MUST dispatch on resume within the declared recovery bound — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.nodeStarted} node.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; dispatch first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
+    // RFC 0158 §E, 2.34.0: the interval this row MEASURED is evidence, and until
+    // now it existed only inside a failure message — a passing row recorded
+    // nothing, so a bundle could not show what was observed or against which
+    // class. Recorded only when the seam NAMED the class it exercised: without
+    // that the bundle cannot bind this exercise to a declared bound, the rung is
+    // not derivable, and saying so is more honest than guessing a class.
+    if (bound.declared && bound.recoveryClass !== null && w.resumedAfterMs !== null) {
+      noteEvidence({ recovery: { class: bound.recoveryClass, boundMs: Math.round(bound.ms), observedMs: backIn + w.resumedAfterMs } });
+    }
   }, KILL_ROW_TIMEOUT_MS);
 
   it('work executing at a real process death is never reported complete, and resumes', async () => {
@@ -341,6 +379,15 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       w.resumedAfterMs !== null,
       req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST resume within the declared recovery bound; §B.4 measures kill → RESUMPTION, never kill → terminal — service answered again after ${backIn}ms, then observed for ${w.waitedMs}ms against a ${bound.declared ? `declared ${bound.ms}ms bound` : `${bound.ms}ms fallback (the host serves no /host/durability/bound)`}: ${w.last.runStarted} run.started, ${w.last.restored} restored${w.resumedAfterMs !== null ? `; resumption first observed ${backIn + w.resumedAfterMs}ms after the kill` : ''}`),
     ).toBe(true);
+    // RFC 0158 §E, 2.34.0: the interval this row MEASURED is evidence, and until
+    // now it existed only inside a failure message — a passing row recorded
+    // nothing, so a bundle could not show what was observed or against which
+    // class. Recorded only when the seam NAMED the class it exercised: without
+    // that the bundle cannot bind this exercise to a declared bound, the rung is
+    // not derivable, and saying so is more honest than guessing a class.
+    if (bound.declared && bound.recoveryClass !== null && w.resumedAfterMs !== null) {
+      noteEvidence({ recovery: { class: bound.recoveryClass, boundMs: Math.round(bound.ms), observedMs: backIn + w.resumedAfterMs } });
+    }
   }, KILL_ROW_TIMEOUT_MS);
 
   it('the same accepted work delivered twice fires each effect exactly once', async () => {
@@ -427,24 +474,25 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     if (terms.status === 404 || terms.status === 405) {
       return softSkip('blocked', 'the host exposes the durability seam but serves no recovery-bound terms — §E puts the per-class arithmetic in the RFC 0148 evidence bundle where a reader can recompute it, and there is nothing here to recompute');
     }
-    const body = (terms.json as { bound?: unknown; terms?: unknown } | null) ?? {};
-    const bound = typeof body.bound === 'number' ? body.bound : null;
-    const parts = Array.isArray(body.terms) ? (body.terms as unknown[]) : null;
-    if (bound === null || parts === null || parts.length === 0) {
-      return softSkip('blocked', 'the recovery-bound response names no { bound, terms[] } — §E asks for the per-class arithmetic, not a single total (Unresolved Question 1), and a total alone cannot be recomputed');
+    const classes = readClasses(terms.json);
+    if (classes === null) {
+      return softSkip('blocked', 'the recovery-bound response names no classes and no { bound, terms[] } — §E asks for the per-class arithmetic, not a single total (Unresolved Question 1), and a total alone cannot be recomputed');
     }
-    const summed = parts.reduce<number>((acc, t) => acc + (typeof (t as { ms?: unknown }).ms === 'number' ? (t as { ms: number }).ms : Number.NaN), 0);
     // THIS ROW IS A PAPER CHECK BY CONSTRUCTION AND THE RFC SAYS SO. It checks
-    // that the declared number follows from the stated mechanism. It cannot
+    // that each declared number follows from the stated mechanism. It cannot
     // check that the mechanism RUNS: a host whose sweeper wedges has a
     // derivation that stays perfectly correct while the bound is not produced
     // at all — a run sat unclaimed for 16 minutes against a derived bound of
     // 12.5 with every isolated check of the mechanism passing. Only the kill
     // rows above witness liveness, and this row MUST NOT be cited for it.
+    const parsed = parseRecoveryBounds(classes);
     expect(
-      Number.isFinite(summed) && Math.abs(summed - bound) <= 1,
-      req('openwop.requirement.0158.bound-is-derived', 'RFC 0158 §B.5', `the declared recovery bound MUST follow from the per-class terms that produce it — declared ${bound}, terms sum to ${summed}. A host that states a bound it cannot produce fails; a host whose sweeper wedges still passes, which is why this row MUST NOT be read as evidence that the mechanism runs`),
+      parsed.ok,
+      req('openwop.requirement.0158.bound-is-derived', 'RFC 0158 §B.5', `every declared recovery bound MUST follow from the per-class terms that produce it, each term { name, ms } — ${parsed.ok ? '' : parsed.why}. A host that states a bound it cannot produce fails; this checks the ARITHMETIC only, never that the mechanism runs`),
     ).toBe(true);
+    // The derivation goes INTO THE BUNDLE, per class, where a reader can
+    // recompute it (§E) — until 2.34.0 it lived only on this seam route.
+    if (parsed.ok) noteEvidence({ recoveryBounds: parsed.bounds });
   }, 120_000);
 
   it('deterministically failing work reaches a terminal state and stops being retried', async () => {
