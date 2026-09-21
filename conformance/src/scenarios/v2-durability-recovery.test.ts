@@ -127,6 +127,12 @@ type SeamState =
  * would terminate a host that never claimed the rung.
  */
 async function probeSeam(): Promise<SeamState> {
+  // 2.34.2: the rows before this one KILLED the host. A row whose watch ran out
+  // its budget can hand over a host that is still restarting, and a bare GET
+  // then threw `fetch failed` and failed a row that never touched the kill -
+  // four rows of one measured cut were contaminated by the first. Wait for the
+  // service to answer at all (immediately, when it is up), then probe.
+  await waitBack(scaledTimeoutMs(RESUME_WINDOW_MS));
   const r = await driver.get(KILL_SEAM);
   if (r.status === 404 || r.status === 405) {
     return { kind: 'absent', why: `no RFC 0158 durability seam at ${KILL_SEAM} (HTTP ${r.status}) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung` };
@@ -236,7 +242,10 @@ async function declaredBoundMs(fired: unknown): Promise<{ ms: number; declared: 
   // interval against a bound that does not govern the staged run.
   const governing = (fired as { recoveryBoundMs?: unknown } | null)?.recoveryBoundMs;
   if (typeof governing === 'number' && Number.isFinite(governing) && governing > 0) return { ms: governing, declared: true, recoveryClass };
-  const r = await driver.get('/host/durability/bound');
+  // A seam may answer and THEN die (during-execution dies at the first
+  // node.started), so this read can meet a closed socket: wait the restart out
+  // once and read again rather than fail the row on transport (2.34.2).
+  const r = await driver.get('/host/durability/bound').catch(async () => { await waitBack(scaledTimeoutMs(RESUME_WINDOW_MS)); return driver.get('/host/durability/bound'); });
   const bound = (r.json as { bound?: unknown } | null)?.bound;
   return r.status === 200 && typeof bound === 'number' && Number.isFinite(bound) && bound > 0
     ? { ms: bound, declared: true, recoveryClass }
