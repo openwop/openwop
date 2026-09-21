@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-21T17:17:44.913Z",
+  "generatedAt": "2026-09-21T21:23:32.499Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.34.1",
+    "version": "2.34.2",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.34.1",
-    "stampSha256": "3f491c227a43a26ab8f77081df1443d066b404d3af64e50c5e9786d8f03462e5"
+    "specArtifactsVersion": "2.34.2",
+    "stampSha256": "f4c6cce1906546565c17cc8c80b081aea9aff2d0a3338ad45d92b4836875d979"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,7 +14,7 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "44c8d4e02f9fd6754f047285526f4204c29d9def"
+      "id": "9ce6969f618ec29309f34480407b4f08fcc4f7b3"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
@@ -1271,8 +1271,7 @@
         "id": "openwop.scenario.v2-min-client-version",
         "scenario": "v2-min-client-version.test.ts",
         "result": "executed-pass",
-        "assertions": 1,
-        "detail": "partial-witness: inapplicable: the host advertises minClientVersion 0.1 but served a client announcing 0.0.1 (200) — refusal is a MAY; nothing further is observable"
+        "assertions": 3
       },
       {
         "id": "openwop.scenario.v2-minimum-version-refused",
@@ -1758,7 +1757,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15371
+            "observedMs": 17056
           }
         }
       },
@@ -1771,7 +1770,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 70460
+            "observedMs": 70856
           }
         }
       },
@@ -2226,8 +2225,7 @@
         "id": "openwop.requirement.0172.min-client-version",
         "scenario": "v2-min-client-version.test.ts",
         "result": "executed-pass",
-        "assertions": 1,
-        "detail": "partial-witness: inapplicable: the host advertises minClientVersion 0.1 but served a client announcing 0.0.1 (200) — refusal is a MAY; nothing further is observable"
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0172.preferred-version-default.headerless",
@@ -2695,8 +2693,8 @@
       }
     ]
   },
-  "witnessSha256": "1c083bab5e4c7afac36b0152bfeda9d81bd6cc6d5c98f57ba4804e7ad3658f8d",
-  "assertionCount": 1830,
+  "witnessSha256": "3db6d0f627cd45ec9d20f991748eac9200b9826cf3e9c41d4284c02f73139a9f",
+  "assertionCount": 1834,
   "detail": {
     "nonPass": [
       {
@@ -3107,7 +3105,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "VmpkxdzsQoWf9labknVrwA7d8Cho6YDDaBsflQDj8_XvTGTKEMrZ0L_8IT8AXM3nBotFmT4aPe-ZwwKflpkjBw",
+    "sig": "z_nIJAJVzCNBnZlqcJ4KzFRWgLvOZqV0_B5V-uCvqieXpEEOqH0M3ev50jLn6E1LCd2zQpibjMbJOGef4YN_BQ",
     "over": [
       "witnessSha256",
       "host.build",
