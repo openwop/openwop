@@ -49,6 +49,9 @@
  * host that re-enters runs at boot would have passed the single read and hidden
  * it. `kill-during-execution` also asserted only the first clause of item 11
  * and so passed on a host that never resumed. See the RFC's 2026-09-20 note.
+ * `duplicate-delivery` counted rows per identity on an identity-keyed ledger,
+ * which cannot show a double-fire; the effect is now counted at a receiver the
+ * suite owns. All four were found by hosts reading this file, not by a run.
  *
  * ── What this file deliberately does not do ─────────────────────────────────
  * `durability/peer-resume` is the `durable-multi-instance` discriminator and is
@@ -61,6 +64,7 @@
  * @see RFCS/0158-durable-execution-and-disaster-recovery-qualification.md §B.4 §D.9 §E
  */
 
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
@@ -68,6 +72,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
+import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 
 const FIXTURE = 'conformance-noop';
 const FAILURE_FIXTURE = 'conformance-failure';
@@ -218,6 +223,28 @@ async function watchForResumption(runId: string, budgetMs: number, resumed: (o: 
   }
 }
 
+/**
+ * The suite's own destination for the one staged effect. Every request that
+ * reaches it is an INVOCATION — the thing §C says to count. Honours
+ * OPENWOP_WEBHOOK_RECEIVER_PORT so a tunnelled cut forwards here (the
+ * certification setting is already `--max-workers 1`, so the pinned port is
+ * not contended by the webhook files).
+ */
+async function startEffectReceiver(): Promise<{ server: Server; url: string; arrivals: Array<{ method: string; at: number }> }> {
+  const arrivals: Array<{ method: string; at: number }> = [];
+  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
+    request.on('data', () => { /* drain */ });
+    request.on('end', () => { arrivals.push({ method: request.method ?? '', at: Date.now() }); res.writeHead(204); res.end(); });
+  });
+  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
+  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
+  const addr = server.address();
+  const port = typeof addr === 'object' && addr ? addr.port : 0;
+  return { server, url: `http://${binding.advertise}:${port}/effect`, arrivals };
+}
+
 describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-single-instance rows)', () => {
   it('accepted work survives a kill before dispatch and dispatches on resume', async () => {
     const doc = await v2Discovery();
@@ -315,45 +342,73 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     const seam = await probeSeam();
     if (seam.kind === 'absent') return softSkip('inapplicable', seam.why);
 
-    // NO `workflowId` is sent. No canonical fixture is guaranteed to record an
-    // effect (`conformance-noop` records none, and the one effectful fixture is
-    // gated on a replay capability this rung does not require), so naming one
-    // made the row unpassable on a host whose noop is a true no-op: it could
-    // only ever record `blocked`, and `blocked` denies certification. The seam
-    // is host test infrastructure (§E) and knows what is effectful on its host:
-    // it MUST stage work that records at least one effect, and name its runId.
-    const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery' });
-    if (fired.status >= 400) {
-      return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery — the host exposes the route but could not stage a double delivery`);
-    }
-    const runId = (fired.json as { runId?: unknown } | null)?.runId;
-    if (typeof runId !== 'string') {
-      return softSkip('blocked', 'the seam staged a duplicate delivery but named no runId');
-    }
+    // THE EFFECT IS COUNTED WHERE IT LANDS, not where the host says it landed.
+    // Until 2.32.0 this row counted rows per identity on GET /runs/{id}/effects.
+    // A ledger keyed on effect identity admits AT MOST ONE ROW per identity by
+    // construction — a second fire at the same identity writes the same key —
+    // so `no identity appears twice` held whatever the effect did. Measured by
+    // the openwop-app host before it built to this row: with its dedup claim
+    // forced to always win, and then with the effect emitted twice per fire (an
+    // unambiguous double-fire), the per-identity count stayed 1 and the row
+    // stayed green. §C asks for INVOCATION counts; the projection exposes
+    // IDENTITIES. The only black-box oracle for "fired once" is a receiver the
+    // suite owns, so the seam aims the staged work's effect at `effectUrl`.
+    //
+    // NO `workflowId` is sent: no canonical fixture is guaranteed effectful
+    // (`conformance-noop` records none). The seam is host test infrastructure
+    // (§E) and chooses the work; it MUST stage work that performs EXACTLY ONE
+    // outbound effect, addressed to `effectUrl`, and deliver it twice.
+    const rx = await startEffectReceiver();
+    try {
+      const target = resolveRegistrationUrl(rx.url);
+      const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery', effectUrl: target.url });
+      if (fired.status >= 400) {
+        return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery with effectUrl ${target.tunnelled ? '(tunnelled)' : rx.url} — the host exposes the route but could not stage a double delivery; if its egress guard refused the receiver, the operator precondition is the webhook rows' own: a publicly-resolvable https front (OPENWOP_WEBHOOK_RECEIVER_URL) or a host run with its private-egress relaxation recorded`);
+      }
+      const runId = (fired.json as { runId?: unknown } | null)?.runId;
+      if (typeof runId !== 'string') {
+        return softSkip('blocked', 'the seam staged a duplicate delivery but named no runId');
+      }
 
-    const eff = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
-    if (eff.status !== 200) {
-      return softSkip('blocked', `GET /runs/{runId}/effects answered ${eff.status} — per-identity invocation counts are unobservable, so the assertion would be vacuous`);
+      await pollUntilTerminal(runId, { timeoutMs: scaledTimeoutMs(60_000) });
+      // A LONGER wait is a STRONGER claim: this is a wait for a second arrival
+      // that must not happen, and the second delivery may trail the first.
+      await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
+
+      const arrivals = rx.arrivals.length;
+      if (arrivals === 0 && !target.tunnelled) {
+        return softSkip('blocked', `the staged work's effect never reached the suite's receiver at ${rx.url} — for mode=duplicate-delivery the seam MUST aim exactly one outbound effect at the given effectUrl; with nothing landed there is no invocation to count, and the ledger alone cannot witness a double-fire`);
+      }
+      // With a tunnel declared, zero arrivals is a hard failure, never a skip
+      // (webhook-receiver.ts): a mis-wired tunnel must not read as a pass.
+      expect(
+        arrivals,
+        req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the same accepted work delivered twice MUST fire each effect exactly once, counted at the effect's destination — the suite's receiver observed ${arrivals} arrival(s) of the one staged effect for run ${runId}`),
+      ).toBe(1);
+
+      // Secondary, and labelled for what it is: the host's own account agrees
+      // with what landed. On an identity-keyed ledger this can never exceed one
+      // row per identity, so it witnesses that the PROJECTION IS CONSISTENT, not
+      // that no double-fire happened — the arrival count above owns that.
+      const eff = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
+      if (eff.status === 200) {
+        const effects = (eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? [];
+        const byIdentity = new Map<string, number>();
+        for (const e of effects) {
+          const id = String(e['effectId'] ?? e['keying'] ?? '');
+          if (id === '') continue;
+          byIdentity.set(id, (byIdentity.get(id) ?? 0) + 1);
+        }
+        const doubled = [...byIdentity.entries()].filter(([, n]) => n > 1);
+        expect(
+          doubled.length === 0,
+          req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the effect ledger MUST agree with the destination: no effect identity recorded more than once — ${byIdentity.size} identity/identities, ${doubled.length} recorded more than once${doubled.length ? ` (${doubled.map(([k, n]) => `${k}×${n}`).join(', ')})` : ''}`),
+        ).toBe(true);
+      }
+    } finally {
+      await new Promise<void>((r) => rx.server.close(() => r()));
     }
-    const effects = (eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? [];
-    if (effects.length === 0) {
-      return softSkip('blocked', 'the seam staged a run that recorded no effects — for mode=duplicate-delivery the seam chooses the work and MUST choose work that records at least one effect; with no identity to count invocations against, only an end-state assertion is left, and that is exactly what §C rules out');
-    }
-    // §C: assert INVOCATION COUNTS PER IDENTITY, not final state. A legal end
-    // state is precisely what a double-fire produces, so an end-state
-    // assertion passes on the defect it exists to catch.
-    const byIdentity = new Map<string, number>();
-    for (const e of effects) {
-      const id = String(e['effectId'] ?? e['keying'] ?? '');
-      if (id === '') continue;
-      byIdentity.set(id, (byIdentity.get(id) ?? 0) + 1);
-    }
-    const doubled = [...byIdentity.entries()].filter(([, n]) => n > 1);
-    expect(
-      doubled.length === 0,
-      req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the same accepted work delivered twice MUST fire each effect exactly once, asserted per effect identity — ${byIdentity.size} identity/identities recorded, ${doubled.length} fired more than once${doubled.length ? ` (${doubled.map(([k, n]) => `${k}×${n}`).join(', ')})` : ''}`),
-    ).toBe(true);
-  }, 120_000);
+  }, 180_000);
 
   it('the declared recovery bound is derived from the mechanism that enforces it', async () => {
     const doc = await v2Discovery();
