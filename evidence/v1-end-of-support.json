@@ -11,9 +11,9 @@
       "bundle": "evidence/v2-host-bundles/openwop-host-v2-reference.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.25.0",
+        "suiteVersion": "2.33.1",
         "targetMajor": 2,
-        "witnessSha256": "c27516af1841a87ab6decc084a4f070027daa1e0ea925be0f898d537aa19c3ed",
+        "witnessSha256": "7f3d5089e8431e0df55309f70eab4a4b0eb8accf17c8ed29f87732bce0c7a600",
         "evidenceTiers": [
           "self"
         ],

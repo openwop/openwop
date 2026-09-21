@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                                  |
 | **Author(s)**     | openwop-app-f4 (host maintainer, reference host)                         |
 | **Created**       | 2026-08-18                                                               |
-| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. · §Conformance note added: the recovery interval is measured kill → **resumption** (first re-execution observation, e.g. a second `run.started`), never kill → terminal — from a second tier-1 measured failure where time-to-terminal read as a false §B.5 violation. · 2026-09-20 — §"Witnessing the recovery rows" note: the kill rows observe until the host's declared recovery bound elapses (they read once, at the instant of return, and so mandated a fast bound); `kill-during-execution` asserts both clauses of item 11; the registry's recovery events count as resumption; `duplicate-delivery`'s seam chooses the effectful work **and the effect is counted at a receiver the suite owns**, because a ledger keyed on effect identity cannot show a double-fire. Scenario corrected in suite 2.32.0. No normative requirement changed. |
+| **Updated**       | 2026-08-20 — §Conformance witness discipline (revised on reference-host review): recovery rows worded on the observable property not the trigger, `kill-after-accept` is a hold-dispatch row, seam gated on an unnamed deployment-time flag (fail-closed) rather than a second env name, declared operator preconditions with `blocked`-not-`inapplicable` disposition, `peer-resume` bundle-witnessed via an opaque per-boot token (no discovery field, §E.10), and acceptance scoped per-claimed-rung so the `durable-single-instance` witness graduates the RFC. · **`Draft → Active`** 2026-08-20 (window-waived, additive per §Compatibility): witness discipline settled and reviewed by the openwop-app reference host, which is witnessing the `durable-single-instance` rung (`kill-during-execution` observed non-vacuously across a real `SIGKILL`); `Accepted` gates on the non-vacuous single-instance bundle. · §Conformance note added: the recovery interval is measured kill → **resumption** (first re-execution observation, e.g. a second `run.started`), never kill → terminal — from a second tier-1 measured failure where time-to-terminal read as a false §B.5 violation. · 2026-09-20 — §"Witnessing the recovery rows" note: the kill rows observe until the host's declared recovery bound elapses (they read once, at the instant of return, and so mandated a fast bound); `kill-during-execution` asserts both clauses of item 11; the registry's recovery events count as resumption; `duplicate-delivery`'s seam chooses the effectful work **and the effect is counted at a receiver the suite owns**, because a ledger keyed on effect identity cannot show a double-fire. Scenario corrected in suite 2.32.0. No normative requirement changed. · 2026-09-21 — **the `durable-single-instance` rung is witnessed and the status does NOT move.** Tier-1: the v2 reference host, suite 2.33.1, guard closed, nothing relaxed, five rows `executed-pass` under a real `SIGKILL` (criterion 2 ticked). The flip was prepared and then stopped on reading criterion 1: the evidence-bundle fields §E rests on do not exist, and two `Affects` documents carry no text. `Accepted` waits on those, then a re-cut that carries them. |
 | **Affects**       | `spec/v1/replay.md`, `spec/v1/idempotency.md`, `spec/v1/storage-adapters.md`, `capabilities.md`, conformance `durability/*` |
 | **Compatibility** | `additive`                                                               |
 | **Supersedes**    | —                                                                        |
@@ -358,14 +358,28 @@ second — and this RFC's §B is written so the reverse ordering is visibly non-
 
 ## Acceptance criteria
 
-- [ ] Spec text, conformance scenarios, and the evidence-bundle fields land.
-- [ ] At least one host executes, in strict mode, **every scenario applicable to the rung(s) it claims** (RFC
+- [ ] Spec text, conformance scenarios, and the evidence-bundle fields land. **Two of three, 2026-09-21 — and the
+      unmet one is this RFC's central decision, so the box stays empty.** *Conformance scenarios:* landed (five
+      `durable-single-instance` rows, suite 2.27.0–2.33.1). *Spec text:* landed in `idempotency.md` and
+      `storage-adapters.md` §"Expiry is authority…"; **absent from `replay.md` and `capabilities.md`**, both named
+      in this RFC's `Affects`. *Evidence-bundle fields:* **none exist.** §E publishes the rung and the recovery
+      bound in the bundle *instead of* advertising them, and says the derivation "is emitted into the host's RFC
+      0148 evidence bundle, where a reader can recompute it" — but `certification-bundle.schema.json` has no seat
+      for a rung, a bound, or its terms. A reader of today's bundle sees five pass/fail rows and cannot tell which
+      rung is claimed or recompute the bound; the terms live only on a non-normative seam route.
+- [x] At least one host executes, in strict mode, **every scenario applicable to the rung(s) it claims** (RFC
       0147 requirement 5 — shape-only evidence does not suffice). Witnessing the **`durable-single-instance`**
       rung — `kill-after-accept`, `kill-during-execution`, `duplicate-delivery`, `poison-exhaustion`, and
       `bound-is-derived` — is sufficient to accept this RFC. The higher rungs are **defined-but-unclaimed** until
       a host at that rung witnesses them; because §E.10 mints no capability field, an unwitnessed rung advertises
       nothing and so cannot be a vacuous claim.
+      **Met 2026-09-21 — tier-1, steward-verified.** `openwop-host-v2-reference` build `commit:a084218`, suite
+      2.33.1, strict, **egress guard closed and `host.relaxations` empty**: all five rows `executed-pass` with
+      empty detail, under a real `SIGKILL` — the restart supervisor itself counted 2 deaths for the 2 kill rows,
+      and `duplicate-delivery` is one arrival at a receiver the suite owns. Declared bound 6 000 ms = 1 000
+      (supervisor restart, the OPERATOR's term) + 5 000 (boot re-entry budget). A single-process SQLite reference
+      example: no production host has witnessed the rung.
 - [ ] **Gating the `durable-multi-instance` rung (not this RFC's acceptance):** no host claims that rung until
       `peer-resume` is witnessed by a host running **two processes**, not two workers in one. A host that cannot
       guarantee a second live instance at kill time marks the row `inapplicable` and holds only the lower rung.
-- [ ] `docs/KNOWN-LIMITS.md` and `INTEROP-MATRIX.md` updated with each host's declared rung and bound.
+- [x] `docs/KNOWN-LIMITS.md` and `INTEROP-MATRIX.md` updated with each host's declared rung and bound. *(2026-09-21.)*
