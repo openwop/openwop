@@ -34,8 +34,9 @@ import { v2Discovery, gateFamily } from '../lib/v2.js';
 import { projectBoundId } from '../lib/bound-id.js';
 import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
 
 const FIXTURE = 'conformance-noop';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
@@ -167,14 +168,14 @@ function advertisedRetryPolicy(doc: Record<string, unknown>): { maxAttempts?: nu
  * which covers a 30 s first attempt with room for the second. The cap is
  * deliberate: unbounded waiting would let a host that never retries hold the
  * suite open instead of failing.
+ *
+ * 2.34.1: and 90 s was the same defect again, one schedule further out — see
+ * `lib/webhook-retry-window.ts`. The cap is now operator-RAISABLE through
+ * `OPENWOP_WEBHOOK_RETRY_WAIT_MS` and never lowerable; still bounded.
  */
-const RETRY_WAIT_FLOOR_MS = 20_000;
-const RETRY_WAIT_CAP_MS = 90_000;
+const RETRY_WAIT_CAP_MS = retryWaitCapMs();
 function retryWaitMs(doc: Record<string, unknown>): number {
-  const policy = advertisedRetryPolicy(doc);
-  if (policy === null) return RETRY_WAIT_FLOOR_MS;
-  const backoff = String(policy.backoff ?? '');
-  return backoff === 'exponential' || backoff === 'fixed' ? RETRY_WAIT_CAP_MS : RETRY_WAIT_FLOOR_MS;
+  return retryWaitFor(advertisedRetryPolicy(doc), RETRY_WAIT_CAP_MS);
 }
 
 /**
@@ -330,8 +331,26 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const sub = await register(receiver.url);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
 
+    // The row id is the FIRST thing this leg names: `register()` asserts under
+    // the base `0173.webhook-durable-delivery` id, and a leg that returned before
+    // any `.dead-letter` req() ran recorded its outcome under THAT id, leaving
+    // `.dead-letter` with no row in the bundle at all (measured, 2.34.1 draft).
+    req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', 'an exhausted delivery MUST be routed to the sink, not dropped');
     const create = await driver.post('/runs', { workflowId: FIXTURE });
-    expect(create.status, req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
+    // 2.34.1 — NO OBLIGATION IS ASSERTED UNTIL THE WINDOW QUESTION IS ANSWERED. A leg
+    // that asserts and THEN soft-skips records `executed-pass` with a
+    // `partial-witness:` detail (`resolveItRecord`), which certifies. The first
+    // draft of this fix asserted `create.status` and the retry, then
+    // soft-skipped `blocked` on a closed window, and so turned a false FAIL into
+    // a pass that never looked at the sink — caught by measuring it: five rows
+    // `executed-pass`, 106 s, on a host whose first delivery exhausts at 225 s.
+    // So everything is OBSERVED first, the one inconclusive case returns with
+    // zero assertions (a real `blocked`, which denies certification), and only
+    // then are the obligations asserted, in their original order. A failure the
+    // observations already show still fails: the create check fires at once.
+    if (create.status !== 201) {
+      expect(create.status, req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
+    }
     const runId = (create.json as { runId: string }).runId;
     await waitTerminal(runId, 10_000);
     // Filter by the delivery's own SUBSCRIPTION, not just its run. A host that
@@ -344,19 +363,11 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const ours = () => receiver.attempts.filter((a) => a.runId === runId && a.webhookId === sub.webhookId);
     await waitFor(() => ours().length > 1, retryWaitMs(doc));
     const attempts = ours();
-    expect(
-      attempts.length,
-      req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', 'a delivery that keeps failing MUST be retried before it can be exhausted (one attempt is a drop)'),
-    ).toBeGreaterThan(1);
     const policy = advertisedRetryPolicy(doc);
-    if (policy?.maxAttempts !== undefined) {
+    if (policy?.maxAttempts !== undefined && attempts.length > 1) {
       // Give the policy time to exhaust, then the host MUST stop.
       await waitFor(() => ours().length >= policy.maxAttempts!, retryWaitMs(doc));
       await new Promise((r) => setTimeout(r, 1_000));
-      expect(
-        ours().length,
-        req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', `retries MUST stop at the advertised retryPolicy.maxAttempts (${policy.maxAttempts}) — exhaustion routes to the dead-letter sink, not to an unbounded loop`),
-      ).toBeLessThanOrEqual(policy.maxAttempts);
     }
     // The sink itself. Until RFC 0188 this was an UNCONDITIONAL soft-skip on
     // every host — `webhooks.md` §Durability said the sink was "inspectable for
@@ -364,14 +375,41 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     // every bundle recorded "exhaustion was observed, routing to the sink was
     // not". The read exists now; read it before deleting the subscription.
     const fam = await gateFamily('webhooks');
-    if (!fam?.['deadLetter']) {
-      await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
+    let inSink: boolean | null = null;
+    if (fam?.['deadLetter']) {
+      const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
+      inSink = sink.status === 200 && ((sink.json as { deliveries?: unknown[] } | null)?.deliveries ?? []).some((r) => (r as Record<string, unknown>)['runId'] === runId);
+    }
+    await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
+    // "Routed to the sink, not dropped" is a claim about an EXHAUSTED delivery,
+    // and until 2.34.1 it was asserted whether or not exhaustion had been
+    // observed: a host retrying at 15 / 30 / 60 / 120 s had made 4 of its 5
+    // attempts when the 90 s window closed, and this row said it had dropped a
+    // delivery still in flight. Retried, fewer attempts than advertised, and
+    // nothing in the sink is a window that closed early OR a host that stopped
+    // retrying — indistinguishable without an interval on the wire — so it is
+    // `blocked`, never a conviction. Reached maxAttempts with nothing in the
+    // sink still FAILS below; so does a delivery that was never retried.
+    const seen = ours().length;
+    if (inSink === false && policy?.maxAttempts !== undefined && attempts.length > 1 && seen < policy.maxAttempts) {
+      return blockedDespiteAssertions(windowClosedNote(seen, policy.maxAttempts, retryWaitMs(doc), RETRY_WAIT_CAP_MS));
+    }
+    expect(create.status, req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
+    expect(
+      attempts.length,
+      req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', 'a delivery that keeps failing MUST be retried before it can be exhausted (one attempt is a drop)'),
+    ).toBeGreaterThan(1);
+    if (policy?.maxAttempts !== undefined) {
+      expect(
+        ours().length,
+        req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', `retries MUST stop at the advertised retryPolicy.maxAttempts (${policy.maxAttempts}) — exhaustion routes to the dead-letter sink, not to an unbounded loop`),
+      ).toBeLessThanOrEqual(policy.maxAttempts);
+    }
+    if (inSink === null) {
       return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)');
     }
-    const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
-    await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
     expect(
-      sink.status === 200 && ((sink.json as { deliveries?: unknown[] } | null)?.deliveries ?? []).some((r) => (r as Record<string, unknown>)['runId'] === runId),
+      inSink,
       req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Durability', 'an exhausted delivery MUST be routed to the sink, not dropped — the half no bundle could witness before RFC 0188 served a read'),
     ).toBe(true);
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
@@ -424,10 +462,14 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     active = receiver.server;
     const sub = await register(receiver.url);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
+    // Same two traps as the leg above (2.34.1): `register()` asserts under the base
+    // id, so name this row first; and every `blocked` after it must STAND rather
+    // than fold into a partial-witness pass that certifies.
+    req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', 'a dead-letter record MUST NOT carry the delivered body, headers or subscription secret');
     const create = await driver.post('/runs', { workflowId: FIXTURE });
     if (create.status !== 201) {
       await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
-      return softSkip('blocked', `POST /runs answered ${create.status} — no delivery to exhaust`);
+      return blockedDespiteAssertions(`POST /runs answered ${create.status} — no delivery to exhaust`);
     }
     const runId = (create.json as { runId: string }).runId;
     await waitTerminal(runId, 10_000);
@@ -441,12 +483,16 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
 
     const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
     await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
-    if (sink.status !== 200) return softSkip('blocked', `the dead-letter read answered ${sink.status}`);
+    if (sink.status !== 200) return blockedDespiteAssertions(`the dead-letter read answered ${sink.status}`);
     const rows = ((sink.json as { deliveries?: Array<Record<string, unknown>> } | null)?.deliveries ?? []);
     // An empty sink is NOT a pass. Recording one as a pass is exactly the
     // vacuous witness this leg used to produce; say so instead.
     if (rows.length === 0) {
-      return softSkip('blocked', 'the exhausted delivery did not reach the sink inside the retry window — §B.1 is a claim about a real record and there is none here to read');
+      const seen = ours().length;
+      const why = policy?.maxAttempts !== undefined && seen < policy.maxAttempts
+        ? windowClosedNote(seen, policy.maxAttempts, retryWaitMs(doc), RETRY_WAIT_CAP_MS)
+        : `the delivery made ${seen} attempt(s) and is not in the sink`;
+      return blockedDespiteAssertions(`§B.1 is a claim about a real record and there is none here to read — ${why}`);
     }
     expect(
       rows.every((r) => r['body'] === undefined && r['headers'] === undefined && r['secret'] === undefined),

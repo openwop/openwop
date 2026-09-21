@@ -102,11 +102,14 @@ export function resolveItRecord(
   state: FileTestState,
   assertionCalls: number,
   gate: { disposition: 'inapplicable' | 'skipped'; detail?: string } | undefined,
-  noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string } | null,
+  noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string; conclusive?: true } | null,
   firstError?: string,
 ): { disposition: Disposition; detail?: string } {
   if (state === 'fail') return { disposition: 'executed-fail', detail: `the test executed and failed: ${(firstError ?? 'no message').slice(0, 300)}` };
   if (state === 'pass' && assertionCalls > 0) {
+    // `blockedDespiteAssertions` (soft-skip.ts): the leg says its setup
+    // assertions are not the requirement, and the requirement went unobserved.
+    if (noted !== null && noted.kind === 'blocked' && noted.conclusive === true) return { disposition: 'blocked', detail: noted.reason };
     // A leg that asserted AND THEN soft-skipped is only a partial witness, and
     // the file-level record has always said so (`resolveFileRecord` below).
     // This `it`-level record dropped the note — and the `it`-level rows are the

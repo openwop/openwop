@@ -29507,7 +29507,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-failed-attempt-is-retried-and-the-event-is-delivered-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 234,
+      "line": 235,
       "title": "a failed attempt is retried and the event is delivered at least once",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery",
       "citations": [
@@ -29538,10 +29538,18 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 322,
+      "line": 323,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
+        {
+          "section": "webhooks.md §Durability",
+          "requirement": "an exhausted delivery MUST be routed to the sink, not dropped"
+        },
+        {
+          "section": "runs.md §Create",
+          "requirement": "POST /runs MUST answer 201 for the noop fixture"
+        },
         {
           "section": "runs.md §Create",
           "requirement": "POST /runs MUST answer 201 for the noop fixture"
@@ -29564,7 +29572,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 379,
+      "line": 417,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -29577,10 +29585,14 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 400,
+      "line": 438,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
+        {
+          "section": "RFC 0188 §B.1",
+          "requirement": "a dead-letter record MUST NOT carry the delivered body, headers or subscription secret"
+        },
         {
           "section": "RFC 0188 §B.1",
           "requirement": null,
