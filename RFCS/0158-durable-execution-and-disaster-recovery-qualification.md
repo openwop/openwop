@@ -409,6 +409,8 @@ second — and this RFC's §B is written so the reverse ordering is visibly non-
       `workflow-runtime`, suite 2.34.1, build `commit:0259dc9e` (verified against its live `/readiness`), nothing
       relaxed: five rows `executed-pass`, bundle states the rung and the steward's verifier re-derives it. One class,
       `dispatch-lease`, 100 000 ms; observed 71 157 ms (`kill-during-execution`) and 16 376 ms (`kill-after-accept`).
+      Re-cut the same day (build `commit:44c8d4e0`) with the after-accept path in its own class, `dispatch-hold`
+      (45 000 ms): observed 15 371 ms against it, and 70 460 ms for `kill-during-execution` against `dispatch-lease`.
       **Re-witnessed the same day on suite 2.34.0** (build `commit:2e6e42d`, same posture), this time with the
       evidence in the bundle: resumption at 1 787 ms (`kill-after-accept`) and 1 883 ms (`kill-during-execution`)
       against the 6 000 ms bound of class `single-instance-restart`.
