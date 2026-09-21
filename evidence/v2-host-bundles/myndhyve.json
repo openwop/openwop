@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-21T16:09:54.389Z",
+  "generatedAt": "2026-09-21T17:17:44.913Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.34.1",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "0259dc9ed05abe79285fbc245ff2a4a956ddd850"
+      "id": "44c8d4e02f9fd6754f047285526f4204c29d9def"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "f7f598c8851030019874a19b654697d7205536f885dfab97f91c67d6ad4e01d7",
+    "sha256": "9b5a9f6386c5bfd0e92fe019f061c0879a68544b7ab4c152cf78da8502a64fb9",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -96,7 +96,8 @@
         "conformance-subworkflow-input-mapping-child",
         "conformance-agent-channel-dispatch",
         "conformance-phase4-nondet-tool",
-        "conformance-replay-side-effect"
+        "conformance-replay-side-effect",
+        "conformance-durability-effect"
       ],
       "signingKeys": [
         {
@@ -533,6 +534,10 @@
         "status": "stable",
         "since": "1.0",
         "witness": "witnessable-gated",
+        "deadLetter": {
+          "retentionDays": 30,
+          "maxPageSize": 100
+        },
         "retryPolicy": {
           "maxAttempts": 5,
           "backoff": "exponential"
@@ -1011,10 +1016,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 173,
+      "executedPass": 175,
       "executedFail": 0,
       "skipped": 20,
-      "inapplicable": 62,
+      "inapplicable": 60,
       "blocked": 0
     },
     "requirements": [
@@ -1060,8 +1065,8 @@
         "id": "openwop.scenario.v2-bound-id-kinds",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 7,
-        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] host does not advertise the webhooks.deadLetter facet — it serves no dead-letter read, and RFC 0188 §A.5 makes that a 404 rather than an obligation"
+        "assertions": 8,
+        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
       },
       {
         "id": "openwop.scenario.v2-bound-id-path-projection",
@@ -1522,8 +1527,7 @@
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 13,
-        "detail": "partial-witness: inapplicable: [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed); [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+        "assertions": 18
       },
       {
         "id": "openwop.scenario.v2-webhook-egress-refusal",
@@ -1721,6 +1725,20 @@
                   "ms": 30000
                 }
               ]
+            },
+            {
+              "class": "dispatch-hold",
+              "bound": 45000,
+              "terms": [
+                {
+                  "name": "scheduled-dispatch-hold",
+                  "ms": 15000
+                },
+                {
+                  "name": "reentry-slack",
+                  "ms": 30000
+                }
+              ]
             }
           ]
         }
@@ -1738,9 +1756,9 @@
         "assertions": 1,
         "evidence": {
           "recovery": {
-            "class": "dispatch-lease",
-            "boundMs": 100000,
-            "observedMs": 16376
+            "class": "dispatch-hold",
+            "boundMs": 45000,
+            "observedMs": 15371
           }
         }
       },
@@ -1753,7 +1771,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 71157
+            "observedMs": 70460
           }
         }
       },
@@ -2350,8 +2368,7 @@
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)"
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -2667,21 +2684,19 @@
       {
         "id": "openwop.requirement.0188.dead-letter-content-free",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+        "result": "executed-pass",
+        "assertions": 1
       }
     ]
   },
-  "witnessSha256": "2bec2971144763bb8554dc78ee8c2136ffd9f845fbd1c3d4f306f18f6f1923fd",
-  "assertionCount": 1819,
+  "witnessSha256": "1c083bab5e4c7afac36b0152bfeda9d81bd6cc6d5c98f57ba4804e7ad3658f8d",
+  "assertionCount": 1830,
   "detail": {
     "nonPass": [
       {
@@ -3083,16 +3098,6 @@
         "id": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
         "result": "inapplicable",
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
-      },
-      {
-        "id": "openwop.requirement.0188.dead-letter-content-free",
-        "result": "inapplicable",
-        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
-      },
-      {
-        "id": "openwop.requirement.0188.dead-letter-read",
-        "result": "inapplicable",
-        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
       }
     ]
   },
@@ -3102,7 +3107,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "9FhWkHq0_d4P1d8UMU3VsCFIy099OCjhRyruBd8lTY8GypmAjZfBIq53EdTfFDEkqmW0zGlBoMCQ8Nh6N91MAg",
+    "sig": "VmpkxdzsQoWf9labknVrwA7d8Cho6YDDaBsflQDj8_XvTGTKEMrZ0L_8IT8AXM3nBotFmT4aPe-ZwwKflpkjBw",
     "over": [
       "witnessSha256",
       "host.build",
