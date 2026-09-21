@@ -26650,7 +26650,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.accepted-work-survives-a-kill-before-dispatch-and-dispatches-on-resume",
       "file": "v2-durability-recovery.test.ts",
-      "line": 249,
+      "line": 262,
       "title": "accepted work survives a kill before dispatch and dispatches on resume",
       "explicitId": "openwop.requirement.0158.kill-after-accept",
       "citations": [
@@ -26664,7 +26664,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.work-executing-at-a-real-process-death-is-never-reported-complete-and-resumes",
       "file": "v2-durability-recovery.test.ts",
-      "line": 293,
+      "line": 307,
       "title": "work executing at a real process death is never reported complete, and resumes",
       "explicitId": "openwop.requirement.0158.kill-during-execution",
       "citations": [
@@ -26683,7 +26683,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-same-accepted-work-delivered-twice-fires-each-effect-exactly-once",
       "file": "v2-durability-recovery.test.ts",
-      "line": 339,
+      "line": 354,
       "title": "the same accepted work delivered twice fires each effect exactly once",
       "explicitId": "openwop.requirement.0158.duplicate-delivery",
       "citations": [
@@ -26702,7 +26702,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-declared-recovery-bound-is-derived-from-the-mechanism-that-enforces-it",
       "file": "v2-durability-recovery.test.ts",
-      "line": 413,
+      "line": 428,
       "title": "the declared recovery bound is derived from the mechanism that enforces it",
       "explicitId": "openwop.requirement.0158.bound-is-derived",
       "citations": [
@@ -26716,7 +26716,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.deterministically-failing-work-reaches-a-terminal-state-and-stops-being-retried",
       "file": "v2-durability-recovery.test.ts",
-      "line": 443,
+      "line": 458,
       "title": "deterministically failing work reaches a terminal state and stops being retried",
       "explicitId": "openwop.requirement.0158.poison-exhaustion",
       "citations": [

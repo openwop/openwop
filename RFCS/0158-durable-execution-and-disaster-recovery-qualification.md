@@ -253,6 +253,21 @@ fake it. What the suite observes is what is normative.
     >   what it is — that the projection is consistent with the destination, **not** that no double-fire occurred.
     >   Operator precondition, declared: the receiver must be reachable through the host's egress guard, exactly as
     >   for the webhook rows.
+    > - **The scenario read the run log from the wrong one of the corpus's own two operations.** At major 2
+    >   `GET /runs/{runId}/events` is `streamRunEvents`, `text/event-stream` only; the JSON read is
+    >   `GET /runs/{runId}/events/poll`. A host serving exactly what the OpenAPI states answered SSE, the JSON
+    >   parse came back null, and `poison-exhaustion` — having already asserted the terminal status —
+    >   soft-skipped its load-bearing clause and resolved **`executed-pass`** with the detail
+    >   `partial-witness: blocked`. Found on the v2 reference host's first run of these rows: a vacuous pass that
+    >   had been sitting in that host's bundle. An unreadable log is now `blocked` on the kill rows too, never
+    >   "nothing resumed".
+    > - **"During execution" means after the host holds its execution claim on the run.** A seam that kills at
+    >   `run.started` on a host that appends `run.started` *before* taking its dispatch lease kills work that is
+    >   still unclaimed — and then the easy recovery class (accepted, never claimed) is witnessed under the hard
+    >   one's name. Measured on a tier-1 host: the run was rescued by its outbox lane in 11.6 s while the seam
+    >   reported the 750 s leased class. The black-box suite cannot see which class recovered the work, so the
+    >   kill point is the **host's** obligation: the seam **MUST** kill only once the execution claim is held,
+    >   and a host with more than one recovery class **MUST** pin that host-side.
 
 12. **The seam MUST be gated on a deployment-time flag that is unset in production, and MUST be fail-closed.**
     This RFC names no specific environment variable — a host that already gates a test seam (e.g. a boot-read

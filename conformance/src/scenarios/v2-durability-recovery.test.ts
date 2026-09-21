@@ -10,7 +10,7 @@
  * v2 bundle could carry a durability row of any kind and the rung was
  * unwitnessable at major 2 even with the other four passing. The port is the
  * fifth `it` below, and it needs NO SEAM: at major 2 the canonical
- * `GET /runs/{runId}/events` answers the same question the v1 sample seam was
+ * `GET /runs/{runId}/events/poll` answers the same question the v1 sample seam was
  * invented to answer, so the row can never be `blocked` for want of a seam a
  * host did not wire. The v1 scenario stays where it is, unchanged.
  *
@@ -85,9 +85,23 @@ const ATTEMPT_TYPES = new Set(['node.started', 'node.retried']);
  *  it is a wait for something that must not happen. */
 const QUIET_WINDOW_MS = 4_000;
 
-/** The canonical major-2 run-event read. Null when it does not answer. */
+/**
+ * The canonical major-2 JSON read of a run's log. Null when it does not answer.
+ *
+ * `GET /runs/{runId}/events/poll` — NOT `/runs/{runId}/events`. At major 2 the
+ * latter is `streamRunEvents`, `text/event-stream` ONLY (api/v2/openapi.yaml);
+ * the JSON read is `pollRunEvents`. Until 2.32.0 this file parsed the STREAM
+ * path as JSON. A host that content-negotiates the stream path answered anyway;
+ * a host that serves exactly what the OpenAPI states answered SSE, the parse
+ * came back null, and `poison-exhaustion` — having already asserted the
+ * terminal status — soft-skipped its load-bearing clause and resolved
+ * `executed-pass` with the detail "partial-witness: blocked". Measured on the
+ * v2 reference host: a vacuous pass sitting in a bundle, from the suite reading
+ * the wrong one of the corpus's own two operations. `timeout=1`: existing
+ * events are returned at once; the wait only applies when there are none.
+ */
 async function runEvents(runId: string): Promise<Array<{ type: string }> | null> {
-  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events`);
+  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
   if (r.status !== 200) return null;
   const events = (r.json as { events?: Array<{ type?: unknown }> } | null)?.events;
   if (!Array.isArray(events)) return null;
@@ -144,10 +158,9 @@ async function waitBack(deadlineMs: number): Promise<number | null> {
 const RESTORED_TYPES = new Set(['workflow.restored', 'run.restored-from-snapshot']);
 interface Observation { readable: boolean; runStarted: number; nodeStarted: number; restored: number }
 async function observe(runId: string): Promise<Observation> {
-  const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events`);
-  if (r.status !== 200) return { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
-  const events = (r.json as { events?: Array<{ type?: string }> } | null)?.events ?? [];
-  const n = (pred: (t: string) => boolean): number => events.filter((e) => typeof e.type === 'string' && pred(e.type)).length;
+  const events = await runEvents(runId);
+  if (events === null) return { readable: false, runStarted: 0, nodeStarted: 0, restored: 0 };
+  const n = (pred: (t: string) => boolean): number => events.filter((e) => pred(e.type)).length;
   return { readable: true, runStarted: n((t) => t === 'run.started'), nodeStarted: n((t) => t === 'node.started'), restored: n((t) => RESTORED_TYPES.has(t)) };
 }
 
@@ -281,6 +294,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     const bound = await declaredBoundMs(fired.json);
     const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
     const w = await watchForResumption(runId, budget, (o) => o.runStarted >= 1 || o.nodeStarted >= 1 || o.restored >= 1);
+    if (!w.last.readable) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer after the restart — resumption is unobservable, and an unreadable log must not read as "nothing resumed"');
     if (w.resumedAfterMs === null && bound.ms > OBSERVATION_CEILING_MS) {
       return softSkip('blocked', `no dispatch observed in ${w.waitedMs}ms, but the host declares a ${bound.ms}ms recovery bound and this run observes for at most ${OBSERVATION_CEILING_MS}ms — a bound longer than the observation ceiling is conformant (§B.6) and is neither witnessed nor refuted here; the operator precondition for this row is OPENWOP_DURABILITY_OBSERVATION_CEILING_MS >= the declared bound`);
     }
@@ -323,6 +337,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     const bound = await declaredBoundMs(fired.json);
     const budget = Math.min(bound.ms, OBSERVATION_CEILING_MS);
     const w = await watchForResumption(runId, budget, (o) => o.runStarted > 1 || o.restored >= 1);
+    if (!w.last.readable) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer after the restart — resumption is unobservable, and an unreadable log must not read as "nothing resumed"');
     expect(
       w.completedUnresumed,
       req('openwop.requirement.0158.kill-during-execution', 'RFC 0158 §B.4 / §E item 11', `work executing at a real process death MUST NOT be observable as completed without having been re-executed — an observation after the kill read status completed with ${w.last.runStarted} run.started and ${w.last.restored} restored (service answered again after ${backIn}ms)`),
@@ -465,7 +480,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     ).toBe('failed');
 
     const before = await runEvents(runId);
-    if (before === null) return softSkip('blocked', 'GET /runs/{runId}/events did not answer — attempts are unobservable, so boundedness would be a vacuous claim');
+    if (before === null) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer — attempts are unobservable, so boundedness would be a vacuous claim');
     // Non-vacuity: the failure must actually be ON the log. Without this a host
     // returning an empty array sails through every count comparison below,
     // because 0 === 0 after any wait.
@@ -483,7 +498,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // reports a terminal status at some point. Count, wait, count again.
     await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
     const after = await runEvents(runId);
-    if (after === null) return softSkip('blocked', 'the second GET /runs/{runId}/events did not answer, so the stability comparison has one side');
+    if (after === null) return softSkip('blocked', 'the second GET /runs/{runId}/events/poll did not answer, so the stability comparison has one side');
     const attemptsAfter = after.filter((e) => ATTEMPT_TYPES.has(e.type)).length;
     expect(
       attemptsAfter,
