@@ -405,6 +405,10 @@ second — and this RFC's §B is written so the reverse ordering is visibly non-
       and `duplicate-delivery` is one arrival at a receiver the suite owns. Declared bound 6 000 ms = 1 000
       (supervisor restart, the OPERATOR's term) + 5 000 (boot re-entry budget). A single-process SQLite reference
       example: no production host has witnessed the rung.
+      **Second witness, 2026-09-21 — tier-2, production (not an acceptance input; recorded as evidence).** MyndHyve
+      `workflow-runtime`, suite 2.34.1, build `commit:0259dc9e` (verified against its live `/readiness`), nothing
+      relaxed: five rows `executed-pass`, bundle states the rung and the steward's verifier re-derives it. One class,
+      `dispatch-lease`, 100 000 ms; observed 71 157 ms (`kill-during-execution`) and 16 376 ms (`kill-after-accept`).
       **Re-witnessed the same day on suite 2.34.0** (build `commit:2e6e42d`, same posture), this time with the
       evidence in the bundle: resumption at 1 787 ms (`kill-after-accept`) and 1 883 ms (`kill-during-execution`)
       against the 6 000 ms bound of class `single-instance-restart`.
