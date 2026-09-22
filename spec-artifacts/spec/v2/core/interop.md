@@ -57,6 +57,16 @@ The event is content-free: `peer` MUST be a digest of the peer origin, never the
 
 **A2A multi-turn (A2A §3.4.3).** A message carrying `taskId` without `contextId` MUST be answered with the task's `contextId`. A message whose `contextId` is not its task's MUST be refused with its binding's invalid-parameters error and MUST NOT change the run. A message to a retained terminal task MUST be refused `UnsupportedOperationError`; `TaskNotFoundError` is for unknown, purged and unreadable tasks.
 
+## MCP tasks and cancellation (RFC 0198)
+
+A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revision `2026-07-28`) on its server mount. It advertises it in its `server/discover` `capabilities.extensions` and by listing `extensions` in `mcp.features[]`, and nowhere else. A host that advertises it MUST implement the extension as published and the map's `mcp.tasks` rows, and:
+
+- MUST answer a `tools/call` that declared the extension with `CreateTaskResult` whenever the run is not terminal when the host answers, never with `InputRequiredResult`;
+- MUST use the run's projected `runId` (identity.md §5) as `taskId`, with an opaque segment of at least 128 bits of entropy. A `taskId` is never a credential;
+- MUST NOT append to a run's log to answer `tasks/get`.
+
+**Cancellation.** Until the host has sent its whole response to a request that starts or continues a run, the run belongs to that request: a client disconnect on streamable HTTP, or a stdio `notifications/cancelled` naming the request, MUST cancel the run as `cancelRun` would, with `run.cancelled.reason` `mcp-request-cancelled`. Once the response is sent, a disconnect MUST NOT affect the run; a task ends through `tasks/cancel`, `cancelRun`, or its own terminal state. A host MUST NOT send `notifications/cancelled` except to end a `subscriptions/listen` stream.
+
 ## The MCP round ceiling
 
 `mcp.mrtr.maxRounds` (integer, 1–16) is the advertised ceiling on multi-round tool-result rounds. A host MUST refuse an `input_required` round beyond `maxRounds` with `mcp_mrtr_rounds_exceeded` (`spec/v2/errors.json`). The `requestState` rules are the map's `mcp.mrtr` rows.
