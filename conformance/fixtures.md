@@ -569,6 +569,30 @@ Negative cases (cross-source sub-objects, raw attachment URLs, `Authorization` h
 
 ---
 
+## Interrupt-payload fixtures
+
+The `fixtures/interrupt-payloads/` sub-directory (suite 2.36.0) holds canonical `InterruptPayload` documents — the `ctx.interrupt(payload)` wire shape — validated server-free against BOTH `../schemas/suspend-request.schema.json` and `../schemas/v2/suspend-request.schema.json` by the `fixtures-valid.test.ts` sweep. They are NOT seeded into a server. They pin the per-kind binding of `data` to `kind` (`spec/v1/interrupt.md` §Per-kind payloads; `spec/v2/core/interrupt.md`): before 2.36.0 the `data` union was an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (both `{ conversationId }`) matched two branches and failed, while a payload whose `data` belonged to another kind passed (COMPATIBILITY.md §3, 2026-09-22).
+
+Unlike the other sub-directories, this one also carries **deliberately-invalid** files, prefixed `negative-`. The sweep asserts each is refused, and that its `data` validates under the kind the file name says it belongs to (`negative-<kind>-with-<data-kind>-data`), so a negative can only fail for the binding and never for being malformed on its own. The top-level `fixtures-valid.test.ts` workflow sweep reads the top level only, so these files never reach it.
+
+| Fixture                                                   | Expect  | Purpose |
+| --------------------------------------------------------- | ------- | ------- |
+| `interrupt-payload-approval`                              | valid   | Minimal `kind:"approval"` — the four required `ApprovalData` fields. |
+| `interrupt-payload-clarification`                         | valid   | Minimal `kind:"clarification"` — one question. |
+| `interrupt-payload-external-event`                        | valid   | Minimal `kind:"external-event"` — `eventType` + `correlation`. |
+| `interrupt-payload-custom`                                | valid   | Minimal `kind:"custom"` — `customKind` only (`payload` is optional in the schema). |
+| `interrupt-payload-conversation-start`                    | valid   | Minimal `kind:"conversation.start"` — `{ conversationId }` only. **Failed before 2.36.0** (matched `ConversationStartData` and `ConversationCloseData`). |
+| `interrupt-payload-conversation-exchange`                 | valid   | Minimal `kind:"conversation.exchange"` — `conversationId` + `prompt`. |
+| `interrupt-payload-conversation-close`                    | valid   | Minimal `kind:"conversation.close"` — `{ conversationId }` only. **Failed before 2.36.0**, same double match. |
+| `interrupt-payload-low-confidence`                        | valid   | Minimal `kind:"low-confidence"` — `agentId` + `threshold` + `observed`. |
+| `negative-approval-with-clarification-data`               | refused | `kind:"approval"` carrying `ClarificationData`. Passed before 2.36.0. |
+| `negative-conversation-start-with-conversation-exchange-data` | refused | `kind:"conversation.start"` carrying `ConversationExchangeData`. Passed before 2.36.0. |
+| `negative-conversation-close-with-conversation-start-data`    | refused | `kind:"conversation.close"` carrying a `ConversationStartData`-only field (`title`). Passed before 2.36.0. |
+| `negative-custom-with-conversation-start-data`            | refused | `kind:"custom"` carrying `{ conversationId }`. Refused before 2.36.0 too, but for the double match rather than the kind. |
+| `negative-low-confidence-with-custom-data`                | refused | `kind:"low-confidence"` carrying `CustomData`. Passed before 2.36.0. |
+
+---
+
 ## OAuth provider fixtures
 
 The `fixtures/oauth-providers/` sub-directory holds synthetic OAuth provider definitions used to prove the RFC 0047 `host.oauth` authorization-code roundtrip end-to-end **without a live IdP**. They are NOT `WorkflowDefinition`s and are NOT seeded as workflows — they parameterize the behavioral roundtrip scenario, which drives the host's `POST /v1/host/sample/oauth/authorize-code-roundtrip` seam against the provider's `authUrl`/`tokenUrl` (served by a conformance test double).

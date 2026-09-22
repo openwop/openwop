@@ -328,3 +328,75 @@ describe('fixtures: prompt-template schema validity', () => {
     }
   });
 });
+
+describe('fixtures: interrupt-payload kind binding (v1 + v2 suspend-request)', () => {
+  // `fixtures/interrupt-payloads/` holds one minimal InterruptPayload per kind
+  // (`interrupt-payload-<kind>.json`) and mismatched kind/data pairs
+  // (`negative-<kind>-with-<data-kind>-data.json`). Suite 2.36.0: the `data`
+  // union was an unbound `oneOf`, so the minimal `conversation.start` and
+  // `conversation.close` payloads — both `{ conversationId }` — matched two
+  // branches and FAILED, while a payload whose `data` belonged to another kind
+  // passed. The schema now binds each kind to its own shape; every positive
+  // MUST validate and every negative MUST NOT, under v1 AND v2.
+  //
+  // A negative is load-bearing only if it fails for the binding and nothing
+  // else, so each one's `data` is also validated under the kind it actually
+  // belongs to — a negative that is malformed on its own would pass this test
+  // with or without the binding.
+  const KINDS = ['approval', 'clarification', 'external-event', 'custom', 'conversation.start', 'conversation.exchange', 'conversation.close', 'low-confidence'];
+  const slug = (k: string): string => k.replace('.', '-');
+  const dir = join(FIXTURES_DIR, 'interrupt-payloads');
+  const files = readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
+  const positives = files.filter((f) => f.startsWith('interrupt-payload-'));
+  const negatives = files.filter((f) => f.startsWith('negative-'));
+
+  function validator(version: 'v1' | 'v2'): (doc: unknown) => { ok: boolean; errors: string } {
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
+    const schemaDir = version === 'v1' ? SCHEMAS_DIR : join(SCHEMAS_DIR, 'v2');
+    for (const f of readdirSync(schemaDir).filter((n) => n.endsWith('.schema.json'))) {
+      const s = JSON.parse(readFileSync(join(schemaDir, f), 'utf8')) as { $id?: string };
+      if (s.$id && ajv.getSchema(s.$id)) continue;
+      ajv.addSchema(s);
+    }
+    const fn = ajv.getSchema(`https://openwop.dev/spec/${version}/suspend-request.schema.json`);
+    if (!fn) throw new Error(`suspend-request.schema.json (${version}) did not register`);
+    return (doc) => {
+      const ok = fn(doc) === true;
+      return { ok, errors: (fn.errors ?? []).map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`).join('\n') };
+    };
+  }
+  const load = (f: string): { kind: string; key: string; data: unknown } =>
+    JSON.parse(readFileSync(join(dir, f), 'utf8')) as { kind: string; key: string; data: unknown };
+
+
+  it('v1 + v2: one positive per kind, and every one validates — including the minimal conversation.start / conversation.close', () => {
+    expect(
+      positives.map((f) => f.slice('interrupt-payload-'.length, -'.json'.length)).sort(),
+      req('openwop.it.fixtures-valid.interrupt-payloads-positive-per-kind-validates', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', 'fixtures/interrupt-payloads/ MUST carry exactly one interrupt-payload-<kind>.json per InterruptPayload kind'),
+    ).toEqual(KINDS.map(slug).sort());
+    for (const version of ['v1', 'v2'] as const) {
+      const validate = validator(version);
+      for (const f of positives) {
+        const { ok, errors } = validate(load(f));
+        expect(ok, req('openwop.it.fixtures-valid.interrupt-payloads-positive-per-kind-validates', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', `${version}: interrupt-payloads/${f} MUST validate against suspend-request.schema.json:\n${errors}`)).toBe(true);
+      }
+    }
+  });
+
+  it('v1 + v2: every mismatched kind/data negative is refused, and only because of the binding', () => {
+    expect(negatives.length, req('openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', 'fixtures/interrupt-payloads/ MUST carry at least one mismatched kind/data negative')).toBeGreaterThan(0);
+    for (const version of ['v1', 'v2'] as const) {
+      const validate = validator(version);
+      for (const f of negatives) {
+        const doc = load(f);
+        const dataKind = KINDS.find((k) => f.endsWith(`-with-${slug(k)}-data.json`));
+        expect(dataKind, req('openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', `interrupt-payloads/${f} MUST be named negative-<kind>-with-<data-kind>-data.json`)).toBeDefined();
+        expect(dataKind === doc.kind, req('openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', `interrupt-payloads/${f}: the data kind MUST differ from the declared kind`)).toBe(false);
+        expect(validate(doc).ok, req('openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', `${version}: interrupt-payloads/${f} (kind ${doc.kind} carrying ${String(dataKind)} data) MUST NOT validate — data is bound to kind`)).toBe(false);
+        const rebound = validate({ ...doc, kind: dataKind });
+        expect(rebound.ok, req('openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused', 'spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md', `${version}: interrupt-payloads/${f}'s data MUST validate under its own kind ${String(dataKind)}, or the negative fails for a reason other than the binding:\n${rebound.errors}`)).toBe(true);
+      }
+    }
+  });
+});

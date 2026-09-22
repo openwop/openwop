@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 584,
-    "tests": 2213,
-    "withStableId": 2213,
+    "tests": 2215,
+    "withStableId": 2215,
     "interpolatedTitles": 0,
-    "explicitIds": 2167
+    "explicitIds": 2169
   },
   "records": [
     {
@@ -13342,6 +13342,57 @@
       "citations": [
         {
           "section": "fixtures-valid.test.ts (no spec citation in file)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.fixtures-valid.v1-v2-one-positive-per-kind-and-every-one-validates-including-the-minimal-conver",
+      "file": "fixtures-valid.test.ts",
+      "line": 373,
+      "title": "v1 + v2: one positive per kind, and every one validates — including the minimal conversation.start / conversation.close",
+      "explicitId": "openwop.it.fixtures-valid.interrupt-payloads-positive-per-kind-validates",
+      "citations": [
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
+          "requirement": "fixtures/interrupt-payloads/ MUST carry exactly one interrupt-payload-<kind>.json per InterruptPayload kind"
+        },
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.fixtures-valid.v1-v2-every-mismatched-kind-data-negative-is-refused-and-only-because-of-the-bin",
+      "file": "fixtures-valid.test.ts",
+      "line": 387,
+      "title": "v1 + v2: every mismatched kind/data negative is refused, and only because of the binding",
+      "explicitId": "openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused",
+      "citations": [
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
+          "requirement": "fixtures/interrupt-payloads/ MUST carry at least one mismatched kind/data negative"
+        },
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v1/interrupt.md §Per-kind payloads; spec/v2/core/interrupt.md",
           "requirement": null,
           "interpolated": true
         }
@@ -35678,7 +35729,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-fixture-id-mentioned-in-fixtures-md-has-a-corresponding-json",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1441,
+      "line": 1446,
       "title": "every fixture id mentioned in fixtures.md has a corresponding JSON",
       "explicitId": "openwop.it.spec-corpus-validity.every-fixture-id-mentioned-in-fixtures-md-has-a-corresponding-json",
       "citations": [
@@ -35692,7 +35743,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-fixture-json-file-is-referenced-by-fixtures-md",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1483,
+      "line": 1488,
       "title": "every fixture JSON file is referenced by fixtures.md",
       "explicitId": "openwop.it.spec-corpus-validity.every-fixture-json-file-is-referenced-by-fixtures-md",
       "citations": [
@@ -35706,7 +35757,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.a-sample-bundle-validates-against-conformance-certification-bundle-schema-json",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1536,
+      "line": 1541,
       "title": "a sample bundle validates against conformance-certification-bundle.schema.json",
       "explicitId": "openwop.it.spec-corpus-validity.a-sample-bundle-validates-against-conformance-certification-bundle-schema-json",
       "citations": [
@@ -35720,7 +35771,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-accepts-a-claim-that-is-discovery-derivable-and-floor-proven-b",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1542,
+      "line": 1547,
       "title": "verifyBundle ACCEPTS a claim that is discovery-derivable AND floor-proven (§B)",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-accepts-a-claim-that-is-discovery-derivable-and-floor-proven-b",
       "citations": [
@@ -35733,7 +35784,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-profile-its-discovery-document-does-not-derive-b-1",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1549,
+      "line": 1554,
       "title": "verifyBundle REJECTS a profile its discovery document does not derive (§B(1))",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-profile-its-discovery-document-does-not-derive-b-1",
       "citations": [
@@ -35746,7 +35797,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-bundle-missing-a-floor-scenario-b-2",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1559,
+      "line": 1564,
       "title": "verifyBundle REJECTS a bundle missing a floor scenario (§B(2))",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-bundle-missing-a-floor-scenario-b-2",
       "citations": [
@@ -35759,7 +35810,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-committed-bundle-file-exists-generated-by-certify",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1596,
+      "line": 1601,
       "title": "the committed bundle file exists (generated by --certify)",
       "explicitId": "openwop.it.spec-corpus-validity.the-committed-bundle-file-exists-generated-by-certify",
       "citations": [
@@ -35773,7 +35824,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-committed-reference-bundle-validates-against-the-bundle-schema-a",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1600,
+      "line": 1605,
       "title": "the committed reference bundle validates against the bundle schema (§A)",
       "explicitId": "openwop.it.spec-corpus-validity.the-committed-reference-bundle-validates-against-the-bundle-schema-a",
       "citations": [
@@ -35787,7 +35838,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-rejects-the-committed-reference-bundle-it-is-invalidated-rfc-0148-d",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1607,
+      "line": 1612,
       "title": "verifyBundle REJECTS the committed reference bundle — it is `invalidated` (RFC 0148 §D)",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-rejects-the-committed-reference-bundle-it-is-invalidated-rfc-0148-d",
       "citations": [
@@ -35808,7 +35859,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.discovery-sha256-is-the-canonical-json-sha-256-of-the-captured-discovery-documen",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1633,
+      "line": 1638,
       "title": "discovery.sha256 is the canonical-JSON SHA-256 of the captured discovery.document",
       "explicitId": "openwop.it.spec-corpus-validity.discovery-sha256-is-the-canonical-json-sha-256-of-the-captured-discovery-documen",
       "citations": [
@@ -35821,7 +35872,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-requestbody-closes-at-the-composition-unevaluatedproperties-not-inside-a-bra",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1694,
+      "line": 1699,
       "title": "the requestBody closes at the composition (unevaluatedProperties), not inside a branch",
       "explicitId": "openwop.it.spec-corpus-validity.the-requestbody-closes-at-the-composition-unevaluatedproperties-not-inside-a-bra",
       "citations": [
@@ -35834,7 +35885,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.canonical-createrun-bodies-pass-the-composed-schema-an-undeclared-property-fails",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1709,
+      "line": 1714,
       "title": "canonical createRun bodies PASS the composed schema; an undeclared property FAILS",
       "explicitId": "openwop.it.spec-corpus-validity.canonical-createrun-bodies-pass-the-composed-schema-an-undeclared-property-fails",
       "citations": [

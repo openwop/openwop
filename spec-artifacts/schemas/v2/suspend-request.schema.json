@@ -41,7 +41,8 @@
       "description": "Optional auto-reject after this duration. Engine throws InterruptTimeoutError when exceeded."
     },
     "data": {
-      "oneOf": [
+      "description": "Discriminated payload data. The union below lists every per-kind shape; the root `allOf` binds each `kind` to exactly one of them (`interrupt.md` §Per-kind payloads). `anyOf`, not `oneOf`: the shapes are not mutually exclusive by content — a minimal `conversation.start` and `conversation.close` payload are both `{ conversationId }` — so `kind`, not the data, is the discriminator. Before 2.36.0 this was an unbound `oneOf`, which rejected those two minimal payloads and accepted a payload whose `data` matched a different kind's shape (COMPATIBILITY.md §3, 2026-09-22).",
+      "anyOf": [
         {
           "$ref": "#/$defs/ApprovalData"
         },
@@ -70,6 +71,161 @@
     }
   },
   "additionalProperties": false,
+  "$comment": "Binds `data` to `kind`: one if/then per kind, so every kind accepts exactly its own per-kind shape and a payload whose `data` belongs to another kind fails.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "approval"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/ApprovalData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "clarification"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/ClarificationData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "external-event"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/ExternalEventData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "custom"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/CustomData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "conversation.start"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/ConversationStartData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "conversation.exchange"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/ConversationExchangeData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "conversation.close"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/ConversationCloseData"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "low-confidence"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/LowConfidenceData"
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "ApprovalData": {
       "type": "object",
