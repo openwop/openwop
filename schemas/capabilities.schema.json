@@ -2741,11 +2741,27 @@
             "type": "string"
           },
           "uniqueItems": true,
-          "description": "HMAC signature algorithm ids the host supports (e.g. `v1`)."
+          "description": "HMAC signature algorithm ids the host supports (e.g. `v1`). `standard-webhooks-1` (RFC 0201) names the Standard Webhooks 1.0.0 companion scheme a subscriber opts into per subscription; it is listed only beside `v1`."
         },
         "durable": {
           "type": "boolean",
           "description": "RFC 0083 §A — OPTIONAL opt-in. `true` ⇒ webhook delivery is durable (a trigger-bridge source); absent/`false` ⇒ the best-effort `webhooks.md` contract, unchanged. The best-effort default is NOT relaxed."
+        },
+        "secretRotation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "overlapSeconds"
+          ],
+          "description": "RFC 0201 §E — zero-downtime secret rotation for subscriptions opted into `standard-webhooks-1`. Advertised only by a host that serves `POST /v1/webhooks/{webhookId}/rotate-secret`.",
+          "properties": {
+            "overlapSeconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 604800,
+              "description": "How long after a rotation `webhook-signature` carries an entry under the previous secret beside the new one."
+            }
+          }
         }
       }
     },

@@ -210,17 +210,34 @@ def v2_openapi_and_seams():
     # v1's bare `type: string`: the kind had no HTTP surface and the HTTP
     # surface had no kind, so the §5 `403 id_tenant_mismatch` check had nothing
     # to read. Bind the path parameter and the response property.
-    wh = paths.get('/webhooks/{webhookId}', {})
-    for op in wh.values():
-        if not isinstance(op, dict):
-            continue
-        for p in op.get('parameters', []) or []:
-            if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
-                p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
-                p['description'] = (
-                    'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
-                    'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
-                )
+    for wh_key in ('/webhooks/{webhookId}', '/webhooks/{webhookId}/rotate-secret'):
+        wh = paths.get(wh_key, {})
+        for op in wh.values():
+            if not isinstance(op, dict):
+                continue
+            for p in op.get('parameters', []) or []:
+                if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
+                    p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
+                    p['description'] = (
+                        'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
+                        'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
+                    )
+    # RFC 0201 — the Standard Webhooks companion scheme. The v1 document is the source, so the
+    # v2 differences are applied by name: the opt-in's item vocabulary is the facet enum (v1 keeps
+    # free strings), and the rotate route is tenant-bound by its id, so v1's `tenantId` query
+    # parameter has no v2 meaning (the v2 register body is closed and carries none either).
+    try:
+        reg_body = paths['/webhooks']['post']['requestBody']['content']['application/json']['schema']['properties']
+        reg_body['signatureAlgorithms']['items'] = {'type': 'string', 'enum': ['v1', 'standard-webhooks-1']}
+    except (KeyError, TypeError):
+        pass
+    rot = paths.get('/webhooks/{webhookId}/rotate-secret', {}).get('post')
+    if isinstance(rot, dict):
+        rot['parameters'] = [p for p in rot.get('parameters', []) if not (isinstance(p, dict) and p.get('name') == 'tenantId' and p.get('in') == 'query')]
+        rot['description'] = rot.get('description', '').replace(
+            'Tenant checks are exactly those of `unregisterWebhook`.',
+            'Tenant checks are exactly those of `unregisterWebhook`: `403 id_tenant_mismatch` when the id\'s tenant '
+            'segment is not the caller\'s, checked before the lookup (`identity.md` §5); `404` when unknown.')
     try:
         reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
         reg.clear()
@@ -376,7 +393,7 @@ def headers_doc(doc):
     lines += ['', '## Response headers', '', '| Header | Operations | Meaning |', '| --- | --- | --- |']
     for n in sorted(resp):
         lines.append(f"| `{n}` | {len(resp[n]['ops'])} | {resp[n]['desc']} |")
-    lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`).', '',
+    lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`). On a subscription that opted into Standard Webhooks (webhooks.md), that standard\'s `webhook-id`, `webhook-timestamp` and `webhook-signature`, which keep their standard names (RFC 0201 §F).', '',
               '## Removed in v2', '', '`Capabilities-Etag` (the standard `ETag`/`If-None-Match` pair applies to the discovery document), `X-Dedup`, `X-Force-Engine-Version`, `X-Pack-Sha256`, `X-Pack-Signing-Method` (renamed under the one scheme), `X-openwop-*` (webhooks), `openwop-Webhook-Signature` (SDK-only). Each has a `spec/v1/deprecations.json` row with a removal trigger.', '']
     return '\n'.join(lines)
 

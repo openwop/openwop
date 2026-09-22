@@ -187,6 +187,16 @@ The delivery-time guard is what contains this: a host that correctly implements 
 
 **Control.** RFC 0188 §B.1 and `webhooks.md` §Durability: the record MUST NOT carry the delivered body, the delivery headers, or the subscription secret. `schemas/v2/webhook-dead-letter-page.schema.json` is `additionalProperties: false` over a closed field list — id, subscription, run, event, attempt count, timestamps, reason, last status — so a host cannot add one without failing validation.
 
+### 4.11 Flooding by registration, and the `whsec_` secret (RFC 0201) — `webhook-endpoint-verification-opt-in`, `webhook-message-id-stable`
+
+**Threat.** A webhook registration is a standing instruction for the host to POST, for every matching event and with the durable retries v2 §Durability requires, to a URL the caller chose. The egress guard (§4.8, §4.9) keeps that traffic off the host's own network; it does nothing for a legitimate public endpoint that never asked for it. A member of any tenant can aim a subscription at a victim, which then receives signed POSTs it cannot verify, amplified by every retry.
+
+**Control (opt-in only).** RFC 0201 §D: a registration that lists `standard-webhooks-1` is refused `400 webhook_endpoint_unverified`, and persists nothing, unless the endpoint echoes a fresh challenge to one signed verification request sent under the delivery egress rules (no redirect followed). A registration that does not opt in MUST NOT be verified — making verification unconditional would reject registrations that succeed today, which is a safety-fix (RFC 0201 UQ3). `webhook-endpoint-verification-opt-in` holds both halves.
+
+**The secret.** An opted-in subscriber supplies its own `whsec_` secret, because it must authenticate the verification request before any subscription exists. The host MUST NOT return it in any response (registration or rotation), and logs reference it only by `secretFingerprint`, as v1 `webhooks.md` §"Logging discipline" already requires. The signed `webhook-id` is not derived from the secret (`webhook-message-id-stable`), so a delivery id discloses nothing about the key.
+
+**Residual.** Subscriptions that do not opt in keep the flooding vector open; the RFC names it and defers the mandatory form.
+
 ## 6. Residual risks
 
 - **Host-internal memory.** A reference impl that holds decrypted secrets in process memory remains vulnerable to OS-level attacks (core dumps, swap, debug attach). Out of scope for protocol-level threat model; handled by host operator policy.
