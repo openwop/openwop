@@ -169,12 +169,12 @@ The first retirement this enables is connection-pack `sse`, filed as its own RFC
 ## Acceptance criteria
 
 - [x] `Active` — 2026-09-22, by steward override of RFC 0147 §A.6. The window was waived, not run (see `Updated`).
-- [ ] Spec text merged: `overview.md` §0/§0a, `capabilities.md` §8, `versioning.md` pointers; `COMPATIBILITY.md` banner "v1 and v2", §2.4, §3a, §7 v2 paragraph, §1 SDK row; `GOVERNANCE.md` breaking row; `RFCS/README.md` class row.
+- [x] Spec text merged (2026-09-22, the RFC 0197 prose PR; wave W2; core +165 words, 25,132 → 25,297 / 29,200 — the second `versioning.md` pointer has no target, because §1.5 no longer carries "the additive-change rules"; `COMPATIBILITY.md` §2.4 also carries the §C maturity ceiling as decided in D1): `overview.md` §0/§0a, `capabilities.md` §8, `versioning.md` pointers; `COMPATIBILITY.md` banner "v1 and v2", §2.4, §3a, §7 v2 paragraph, §1 SDK row; `GOVERNANCE.md` breaking row; `RFCS/README.md` class row.
 - [ ] Registers: `v2-minor` trigger and `retirement` block in `deprecations.schema.json`; `spec/v2/migrations.json` and its schema; `spec/v2/corrections.json` (seeded with P3); `spec/v2/surface-baseline.json`; `declaration.schema.json` `maturity.until` described.
 - [ ] Gates green on the clean tree and each sabotage in §Conformance proven to redden it: `check-v2-surface-monotone`, `check-v2-retirement`, minor-aware `check-removal-dates`, `check-bundle-maturity`.
 - [ ] `v2-capability-maturity-bounded` ships in a published suite and, **verified in the published tarball layout**, reads the shipped `spec/v2/declaration.json`.
 - [ ] **Evidence (never waived):** at least one committed v2 host bundle carries `openwop.requirement.0197.maturity-not-overstated` at `executed-pass` with nothing relaxed (the reference host or openwop-app, tier-1). A MyndHyve bundle cut on the first suite release that ships this RFC carries it at `executed-pass` (Unresolved 1, decided per D1).
-- [ ] `MAINTAINERS.md` waiver log carries the override row; RFC 0156 register row `not-reviewed`.
+- [x] `MAINTAINERS.md` waiver log carries the override row; RFC 0156 register row `not-reviewed` (both landed with the filing PR: `MAINTAINERS.md` 0197 row; `docs/WAIVER-RETROSPECTIVE-REGISTER.md` 0197 row, `not-reviewed`).
 - [ ] CHANGELOG entry.
 
 ## References

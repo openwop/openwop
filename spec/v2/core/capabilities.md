@@ -385,7 +385,7 @@ The `openwop-core` alias is deleted (row `C2.3`); the canonical discovery-only i
 
 | Axis | Values | Source |
 | --- | --- | --- |
-| `technical` | `experimental \| stable \| deprecated` | the record's `status` |
+| `technical` | `experimental \| stable \| deprecated` | the record's `status`, which MUST NOT exceed the declaration row (RFC 0197) |
 | `adoption` | `none \| single-witness \| multi-witness \| independent` | derived from INTEROP-MATRIX bundle evidence |
 
 `stable` does not require a tier-3 host; `independent` records whether one exists. The RFC 0155 numeric extension budget is repealed: a family MAY exist at any count if it declares its witness class. At the cut, `memory.injectionBudget`, `toolCatalog.compactView`, and `aiProviders.promptPrefixCache` keep their families with `adoption: single-witness` (RFC 0169 §C.5).
