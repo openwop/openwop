@@ -182,4 +182,5 @@ Because that denormalization is a SHOULD, a registry that validates a form-conte
 - [`host-capabilities.md`](./host-capabilities.md) §host.forms — the capability advertisement.
 - [`ai-envelope.md`](./ai-envelope.md) §"Trust boundary" — `meta.contentTrust` propagation.
 - [`positioning.md`](./positioning.md) — why layout, widgets, and theming are out of scope.
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) §2 — informative comparison of the field vocabulary and `format` set with MCP elicitation `requestedSchema`.
 - [`form-content-pack-manifest.schema.json`](../../schemas/form-content-pack-manifest.schema.json), [`registry-version-manifest.schema.json`](../../schemas/registry-version-manifest.schema.json).
