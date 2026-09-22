@@ -141,7 +141,7 @@ One new major-2 scenario, `v2-mcp-tasks.test.ts`. Its gate: `mcp.serverMount` is
 | §C.6 listen acknowledgement omits unreadable ids | `openwop.requirement.0198.listen-omits-unreadable`: B's `subscriptions/listen { taskIds: [A's] }` acknowledges no ids. Sabotage: acknowledging it | the suite with two credentials | witnessable — gated |
 | §D status projection | `openwop.requirement.0198.task-status-projection`: `input_required` keyed by the `interruptId` seen in `pollRunEvents`; `conformance-failure` ⇒ `completed` + `isError: true`. Sabotage: `failed` for a failed run | the suite, unaided | witnessable — gated |
 | §E.7 one resolution however often answered | `openwop.requirement.0198.task-update-resolves-once`: two identical `tasks/update` calls give two acks and exactly one `interrupt.resolved`. Sabotage: a second resolution, or a `409` surfaced as a JSON-RPC error | the suite, unaided | witnessable — gated |
-| §E.7 approver eligibility | the `conformance-approval-approvers` fixture: a `tasks/update` from a non-listed caller resolves nothing | the suite with a second credential | witnessable — gated |
+| §E.7 approver eligibility | `openwop.requirement.0198.task-update-approver-checked`: the `conformance-approval-approvers` fixture (whose `approversList` names a principal the suite's bearer is not): a `tasks/update` from that non-listed caller resolves nothing — the run stays `waiting-approval` and no `interrupt.resolved` is recorded. Sabotage: resolving without the eligibility check | the suite, unaided (the fixture makes the suite's own bearer the non-listed resolver) | witnessable — gated |
 | §E.8 replay does not re-issue | — (a host's replay of a tasked run is not reachable through the mount) | — | witnessable — gated, by the existing `v2-run-fork-prefix` / replay rows. No new witness is claimed here; the rule is restated, not new |
 | §F.9 `tasks/get` appends nothing | `openwop.requirement.0198.task-get-read-only`: the event count is unchanged across three polls of a suspended run (`heartbeat.*` excluded). Sabotage: a per-poll event | the suite, unaided | witnessable — gated |
 | §F.10 `tasks/cancel` cancels | `openwop.requirement.0198.task-cancel-cancels-run`: after the ack, `getRun` reaches `cancelling`/`cancelled` within 10 s, and `tasks/get` later reads `cancelled`. On a terminal task: ack, no new event. Sabotage: ack with no cancel | the suite, unaided | witnessable — gated |
@@ -193,10 +193,10 @@ RFC 0153 is an RFC 0147 child (SR-6), so this amendment carries the five-lens pa
 ## Acceptance criteria
 
 - [x] `Active` — 2026-09-22, by steward override of RFC 0147 §A.6. The window was waived, not run (see `Updated`).
-- [ ] RFC 0208's spec PR merged first. Then this RFC's `interop.md` section, `mcp.tasks` rows, the `runCancelled.reason` description and the invariant row merged, with `check-interop-map.mjs` green.
+- [x] RFC 0208's spec PR merged first (#1492). Then this RFC's `interop.md` section, `mcp.tasks` rows, the `runCancelled.reason` description and the invariant row merged, with `check-interop-map.mjs` green (and its two `mcp.tasks` sabotages, a deleted `waiting-external` row and `tasks/update → resolveInterrupt`, refused by `v2-interop-map-coherent`).
 - [ ] `v2-mcp-tasks.test.ts` ships in a published suite minor, and its tarball is verified.
 - [ ] A committed, certified v2 bundle from at least one host carries every witnessable row at `executed-pass` in strict mode, with nothing relaxed and no `partial-witness:` detail. `task-unreadable-not-found` and `listen-omits-unreadable` are exercised with the second credential.
-- [ ] `Amended by` row on RFC 0153; informative pointer in `spec/v1/mcp-integration.md` §D; CHANGELOG entry; RFC 0156 §B register row (`not-reviewed`).
+- [x] `Amended by` row on RFC 0153; informative pointer in `spec/v1/mcp-integration.md` §D; CHANGELOG entry; RFC 0156 §B register row (`not-reviewed`, filed with the RFC).
 
 ## References
 

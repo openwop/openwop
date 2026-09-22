@@ -12,7 +12,7 @@
 | **Compatibility** | `additive` current profile with legacy 2025-06-18 deprecation |
 | **Supersedes** | Unqualified MCP support and 2025-06-18 as the current composition profile |
 | **Superseded by** | — |
-| **Amended by** | [RFC 0208](./0208-v2-a2a-mcp-operation-mappings.md) — v2 home for §B–§E as `spec/v2/interop-map.json`, incorporated by `spec/v2/core/interop.md` §"The operation mappings". |
+| **Amended by** | [RFC 0208](./0208-v2-a2a-mcp-operation-mappings.md) — v2 home for §B–§E as `spec/v2/interop-map.json`, incorporated by `spec/v2/core/interop.md` §"The operation mappings". [RFC 0198](./0198-mcp-server-mount-tasks.md) — for v2, reverses UQ4's "tasks deliberately unmapped": the MCP Tasks extension maps to the v2 run (`taskId` = the projected `runId`), and a disconnect before the host answers cancels the run the request owns. |
 
 ## Summary
 
@@ -87,7 +87,7 @@ Acceptance requires a pinned real MCP 2026-07-28 peer plus fake-peer negative co
 1. Exact legacy adopter population and ~~deprecation date~~. **Date resolved 2026-08-16:** 2027-08-12 (`mcp-integration.md` §A). Population unknown (G1).
 2. Which official MCP implementation becomes the real-peer fixture?
 3. ~~Complete MRTR-to-run/interrupt mapping and timeout ownership.~~ **Resolved 2026-08-16:** `mcp-integration.md` §C — client and server tables; the OpenWOP node owns the timeout (node timeout / RFC 0058), the server owes nothing to a pending request; the retry chain is one RFC 0150 §B logical invocation; `requestState` is opaque to the client and HMAC-bound (principal, TTL, request digest, `runId`, interrupt token) by the server; replay never re-issues the retry.
-4. ~~Which extension identifiers receive first-class OpenWOP mappings?~~ **Resolved 2026-08-16: none first-class.** OTel `_meta` keys and `io.modelcontextprotocol/logLevel` are the only named mappings; `io.modelcontextprotocol/tasks` is deliberately unmapped (RFC 0100 owns durable interop). Promote only on evidence (`mcp-integration.md` §D, gap G5).
+4. ~~Which extension identifiers receive first-class OpenWOP mappings?~~ **Resolved 2026-08-16: none first-class.** OTel `_meta` keys and `io.modelcontextprotocol/logLevel` are the only named mappings; `io.modelcontextprotocol/tasks` is deliberately unmapped (RFC 0100 owns durable interop). Promote only on evidence (`mcp-integration.md` §D, gap G5). **Reversed for v2 by [RFC 0198](./0198-mcp-server-mount-tasks.md) (2026-09-22)**; v1 is unchanged.
 5. ~~Cache validator behavior when authorization scope changes.~~ **Resolved 2026-08-16:** a scope change makes cached `"private"` results for that principal stale regardless of `ttlMs`; `"private"` never crosses authorization contexts; keys include tenant/workspace/principal/origin/revision/discovery context (`mcp-integration.md` §D, gap G4 closed).
 
 ## Implementation notes (non-normative)

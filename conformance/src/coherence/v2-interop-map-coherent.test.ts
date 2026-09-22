@@ -8,7 +8,7 @@
  * carries the row the falsifiability table names.
  *
  * An exit-0 wrapper around a gate that is already green witnesses nothing, so
- * the same `it` also feeds the gate six sabotaged copies of the map — each one
+ * the same `it` also feeds the gate eight sabotaged copies of the map — each one
  * a defect the gate exists to catch — and asserts every one is REFUSED. The
  * copies are written to a scratch directory (`--map`); the tracked file is never
  * mutated.
@@ -31,7 +31,7 @@ const DOC = 'RFCS/0208 §A; spec/v2/core/interop.md §"The operation mappings"';
 const GATE = join(ROOT, 'scripts', 'check-interop-map.mjs');
 
 interface Row { runStatus?: string; v2Operation?: string | null; upstream?: string; clientProjection?: string; requires?: string[] }
-interface MapDoc { a2a: { operations: Row[]; taskState: Row[]; errors: Row[] } }
+interface MapDoc { a2a: { operations: Row[]; taskState: Row[]; errors: Row[] }; mcp: { tasks: { status: Row[]; methods: Row[] } } }
 
 const run = (args: string[] = []): { status: number | null; out: string } => {
   const r = spawnSync('node', [GATE, ...args], { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
@@ -44,6 +44,9 @@ const SABOTAGE: Array<[string, (m: MapDoc) => void, RegExp]> = [
   ['a clientProjection that is no errors.json code', (m) => { m.a2a.errors[0]!.clientProjection = 'nope'; }, /`nope` is not a code/],
   ['requires naming a facet the family does not have', (m) => { const sub = m.a2a.operations.find((r) => r.upstream === 'SubscribeToTask')!; sub.requires = ['a2a.durable']; }, /`durable` is not a property/],
   ['a tenth A2A error', (m) => { m.a2a.errors.push({ ...m.a2a.errors[0]!, upstream: 'BogusError' }); }, /`BogusError` is not one of the nine/],
+  // RFC 0198: the mcp.tasks rows are held to the same wire.
+  ['the waiting-external mcp.tasks.status row deleted', (m) => { m.mcp.tasks.status = m.mcp.tasks.status.filter((r) => r.runStatus !== 'waiting-external'); }, /mcp\.tasks\.status: run status `waiting-external` has 0 default row/],
+  ['tasks/update mapped to resolveInterrupt', (m) => { for (const r of m.mcp.tasks.methods) if (r.upstream === 'tasks/update') r.v2Operation = 'resolveInterrupt'; }, /tasks\/update: v2Operation `resolveInterrupt` is not an operationId/],
   ['ContentTypeNotSupportedError removed', (m) => { m.a2a.errors = m.a2a.errors.filter((e) => e.upstream !== 'ContentTypeNotSupportedError'); }, /`ContentTypeNotSupportedError` has 0 row/],
 ];
 
