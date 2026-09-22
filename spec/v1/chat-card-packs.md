@@ -138,4 +138,5 @@ A `WorkflowNode.cardType` value (and the `cardType` argument to `ctx.chat.emitCa
 - [`host-capabilities.md`](./host-capabilities.md) — §host.chat (cards + cardPacks), §host.aiEnvelope, the capability-identifier registry.
 - [`prompts.md`](./prompts.md) — prompt packs (the composable prompt-fragment kind a card MAY reference).
 - `schemas/chat-card-pack-manifest.schema.json`.
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) §2 — informative comparison of the input-field vocabulary with MCP elicitation `requestedSchema`.
 - Prior art: MyndHyve `CardTemplateDefinition`; openwop demo app `chat/registry/CardHost.tsx`. See `docs/OPENWOP-CANVAS-TYPE-PACKS-RESEARCH.md`.
