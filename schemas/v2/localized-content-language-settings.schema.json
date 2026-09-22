@@ -13,15 +13,15 @@
   "properties": {
     "baseLocale": {
       "type": "string",
-      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
       "description": "The locale section `data` is authored in. MUST equal `capabilities.i18n.defaultLocale`."
     },
     "supportedLocales": {
       "type": "array",
-      "description": "BCP-47 tags the tenant authors content translations for. MUST NOT contain `baseLocale`.",
+      "description": "Case-canonical BCP 47 tags (RFC 0206 §A) the tenant authors content translations for. MUST NOT contain `baseLocale`.",
       "items": {
         "type": "string",
-        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+        "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$"
       },
       "uniqueItems": true
     },
