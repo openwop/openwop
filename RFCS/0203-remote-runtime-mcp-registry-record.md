@@ -191,10 +191,10 @@ No known host loads `remote` packs today (`review/arch-P3.md`, ι row: "gap: no 
 ## Acceptance criteria
 
 - [x] `Active` — 2026-09-22 (window waived; routine, not an §A.6 override).
-- [ ] Spec text merged: `node-pack-runtimes.md`; schema `mcpServer` + `McpServerRecord`; declaration `normativeText`; `unsupported_runtime` registered; normative-home baseline lowered (`v1Dependent` −1, `nodePackRuntimes` out of `v1Carried`).
-- [ ] The coherence test ships, every row sabotage-proven, and `evidence/corpus-ledger.json` carries each requirement id.
+- [x] Spec text merged: `node-pack-runtimes.md`; schema `mcpServer` + `McpServerRecord`; declaration `normativeText`; `unsupported_runtime` registered; normative-home baseline lowered (`v1Dependent` −1, `nodePackRuntimes` out of `v1Carried`). — the implementation PR (`feat/rfc-0203-runtime-server-json`); `check-v2-normative-home` 30 resolved / 42 v1-dependent; `check-core-budget` 24,575 / 29,200.
+- [x] The coherence test ships, every row sabotage-proven, and `evidence/corpus-ledger.json` carries each requirement id. — `conformance/src/coherence/node-pack-mcp-server-record.test.ts` in the open 2.36.0 suite (not yet on npm); three `executed-pass` ledger rows; eight sabotage cases recorded in the PR and `conformance/CHANGELOG.md`.
 - [ ] The registry publish validator enforces §A.3.
-- [ ] CHANGELOG entry; `MAINTAINERS.md` waiver row.
+- [x] CHANGELOG entry; `MAINTAINERS.md` waiver row.
 
 ## References
 
