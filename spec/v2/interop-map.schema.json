@@ -1,0 +1,458 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/interop-map.schema.json",
+  "title": "OpenWOP v2 interop map",
+  "description": "RFC 0208 — shape of spec/v2/interop-map.json: the normative rows mapping A2A and MCP upstream operations, states, fields and errors onto the v2 wire. Data, not a wire artifact; kept out of schemas/ like event-codemap.schema.json. Checked by scripts/check-interop-map.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "$comment",
+    "version",
+    "updated",
+    "pins",
+    "a2a",
+    "mcp"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./interop-map.schema.json"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "version": {
+      "const": 1
+    },
+    "updated": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "a2a",
+        "mcp"
+      ],
+      "properties": {
+        "a2a": {
+          "$ref": "#/$defs/pin"
+        },
+        "mcp": {
+          "$ref": "#/$defs/pin"
+        },
+        "mcpTasks": {
+          "$ref": "#/$defs/pin",
+          "description": "RFC 0198."
+        }
+      }
+    },
+    "a2a": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operations",
+        "card",
+        "taskState",
+        "taskStateReverse",
+        "errors",
+        "fields"
+      ],
+      "properties": {
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "card": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "taskState": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stateRow"
+          },
+          "description": "Forward projection; a total function over RunSnapshot.status (gate-checked)."
+        },
+        "taskStateReverse": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reverseRow"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/errorRow"
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "features",
+        "methods",
+        "headers",
+        "meta",
+        "mrtr",
+        "cache",
+        "authorization"
+      ],
+      "properties": {
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/feature"
+          }
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "meta": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "mrtr": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "cache": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "authorization": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "tasks": {
+          "type": "object",
+          "description": "RFC 0198.",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "methods",
+            "fields"
+          ],
+          "properties": {
+            "status": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/taskStatusRow"
+              }
+            },
+            "methods": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/operation"
+              }
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/element"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "runStatus": {
+      "enum": [
+        "pending",
+        "running",
+        "paused",
+        "waiting-approval",
+        "waiting-input",
+        "waiting-external",
+        "completed",
+        "failed",
+        "cancelling",
+        "cancelled"
+      ],
+      "description": "Gate-checked equal to schemas/v2/run-snapshot.schema.json status.enum."
+    },
+    "pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec"
+      ],
+      "properties": {
+        "release": {
+          "type": "string"
+        },
+        "negotiated": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "extension": {
+          "type": "string"
+        },
+        "spec": {
+          "type": "string",
+          "format": "uri"
+        },
+        "proto": {
+          "type": "string",
+          "format": "uri"
+        },
+        "schema": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upstream",
+        "v2Operation",
+        "requires",
+        "rule"
+      ],
+      "properties": {
+        "upstream": {
+          "type": "string",
+          "minLength": 1
+        },
+        "http": {
+          "type": "string"
+        },
+        "when": {
+          "type": "string"
+        },
+        "v2Operation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "An operationId in api/v2/openapi.yaml (gate-checked), or null."
+        },
+        "requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]*\\.[a-z][A-Za-z0-9]*$"
+          },
+          "description": "<family>.<facet>, each a property of spec/v2/facets/<family>.schema.json (gate-checked)."
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "element",
+        "rule"
+      ],
+      "properties": {
+        "element": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requiredFor",
+        "meaning"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "requiredFor": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^mcp-[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          }
+        },
+        "meaning": {
+          "type": "string"
+        }
+      }
+    },
+    "stateRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runStatus",
+        "stored",
+        "wire"
+      ],
+      "properties": {
+        "runStatus": {
+          "$ref": "#/$defs/runStatus"
+        },
+        "stored": {
+          "enum": [
+            "submitted",
+            "working",
+            "input-required",
+            "auth-required",
+            "completed",
+            "failed",
+            "canceled",
+            "rejected"
+          ],
+          "description": "Gate-checked against schemas/v2/a2a-task-state.schema.json state.enum."
+        },
+        "wire": {
+          "type": "string",
+          "pattern": "^TASK_STATE_[A-Z_]+$"
+        },
+        "interruptKind": {
+          "type": "string",
+          "description": "Optional. A row with interruptKind overrides the default row for its runStatus when the open interrupt has that kind (RFC 0199 adds credential)."
+        },
+        "carrier": {
+          "type": "string"
+        }
+      }
+    },
+    "reverseRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wire",
+        "runStatus"
+      ],
+      "properties": {
+        "wire": {
+          "type": "string",
+          "pattern": "^TASK_STATE_[A-Z_]+$"
+        },
+        "runStatus": {
+          "$ref": "#/$defs/runStatus"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "errorRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upstream",
+        "jsonrpc",
+        "grpc",
+        "http",
+        "serverWhen",
+        "clientProjection"
+      ],
+      "properties": {
+        "upstream": {
+          "type": "string"
+        },
+        "jsonrpc": {
+          "type": "integer"
+        },
+        "grpc": {
+          "enum": [
+            "NOT_FOUND",
+            "FAILED_PRECONDITION",
+            "INVALID_ARGUMENT",
+            "INTERNAL",
+            "UNIMPLEMENTED"
+          ]
+        },
+        "http": {
+          "type": "integer",
+          "minimum": 400,
+          "maximum": 599
+        },
+        "serverWhen": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "clientProjection": {
+          "type": "string",
+          "description": "A code in spec/v2/errors.json (gate-checked)."
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "taskStatusRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runStatus",
+        "taskStatus"
+      ],
+      "properties": {
+        "runStatus": {
+          "$ref": "#/$defs/runStatus"
+        },
+        "taskStatus": {
+          "enum": [
+            "working",
+            "input_required",
+            "completed",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

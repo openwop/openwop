@@ -231,6 +231,8 @@ The six:
 ## MCP 2026-07-28 versioned composition (RFC 0153)
 
 > **Status: normative for any host that advertises `capabilities.mcp.protocolVersions` (2026-08-16, [RFC 0153](../../RFCS/0153-mcp-2026-07-28-versioned-composition.md) `Accepted`).** Everything above this heading was written against **MCP 2025-06-18** — the `initialize` / `notifications/initialized` handshake, `Mcp-Session-Id`, `resources/subscribe`, `ping`, `logging/setLevel`, and the two live callback bridges (`sampling/createMessage` → `ctx.callAI`, `elicitation/create` → `ctx.suspend`) — and is, from this date, the definition of the **`mcp-2025-06-18-legacy`** profile. This section defines the **`mcp-2026-07-28`** profile. Pinned to the upstream revision **2026-07-28**: `schema/2026-07-28/schema.ts` and `docs/specification/2026-07-28/**` in `modelcontextprotocol/modelcontextprotocol`, and its [changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog). Upstream field and method names are used verbatim; "→" marks an OpenWOP mapping. MCP's intermediate revision `2025-11-25` is **not** an OpenWOP composition profile: a host that speaks it lists the date in `protocolVersions` without a profile (§A).
+>
+> **v2 home (informative):** `spec/v2/core/interop.md` §"The operation mappings" and `spec/v2/interop-map.json` ([RFC 0208](../../RFCS/0208-v2-a2a-mcp-operation-mappings.md)) carry §A–§E for OpenWOP 2.x. This section stays the v1 text until v1 end-of-support.
 
 ### §A — Discovery and profiles
 

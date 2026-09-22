@@ -1,0 +1,517 @@
+{
+  "$schema": "./interop-map.schema.json",
+  "$comment": "RFC 0208 (RFC 0198 adds mcp.tasks). Normative: spec/v2/core/interop.md §\"The operation mappings\" incorporates every row. Hand-maintained; checked by scripts/check-interop-map.mjs against api/v2/openapi.yaml operationIds, spec/v2/errors.json codes, the RunSnapshot.status enum and the spec/v2/facets/ schemas. Upstream names are verbatim; `v2Operation` is an operationId in api/v2/openapi.yaml or null when no v2 operation serves the row. Ships in @openwop/spec-artifacts.",
+  "version": 1,
+  "updated": "2026-09-22",
+  "pins": {
+    "a2a": {
+      "release": "1.0.1",
+      "negotiated": "1.0",
+      "spec": "https://github.com/a2aproject/A2A/blob/v1.0.1/docs/specification.md",
+      "proto": "https://github.com/a2aproject/A2A/blob/v1.0.1/specification/a2a.proto"
+    },
+    "mcp": {
+      "revision": "2026-07-28",
+      "spec": "https://modelcontextprotocol.io/specification/2026-07-28",
+      "schema": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts"
+    }
+  },
+  "a2a": {
+    "operations": [
+      {
+        "upstream": "SendMessage",
+        "http": "POST /message:send",
+        "when": "no taskId",
+        "v2Operation": "createRun",
+        "requires": [],
+        "rule": "Starts a run of the workflow whose id is the resolved skill id. Blocks until terminal, INPUT_REQUIRED or the host's request timeout, then answers the current Task; with configuration.returnImmediately it answers once the run is accepted, which requires a2a.durableTasks (else UnsupportedOperationError). message.messageId is the idempotency seed: a repeat from the same peer principal MUST NOT create a second run."
+      },
+      {
+        "upstream": "SendMessage",
+        "http": "POST /message:send",
+        "when": "taskId, run waiting-approval | waiting-input | waiting-external",
+        "v2Operation": "resolveInterruptByRun",
+        "requires": [],
+        "rule": "The message resolves the open interrupt as its resumeValue (approval actions via metadata.openwop.interrupt), with the eligibility interrupt.md requires."
+      },
+      {
+        "upstream": "SendMessage",
+        "http": "POST /message:send",
+        "when": "taskId, run not suspended and not terminal",
+        "v2Operation": null,
+        "requires": [],
+        "rule": "Delivered through a declared input path, else UnsupportedOperationError. MUST NOT be silently dropped."
+      },
+      {
+        "upstream": "SendMessage",
+        "http": "POST /message:send",
+        "when": "taskId, run terminal and retained",
+        "v2Operation": null,
+        "requires": [],
+        "rule": "UnsupportedOperationError (A2A §3.1.1). No event is appended."
+      },
+      {
+        "upstream": "SendStreamingMessage",
+        "http": "POST /message:stream",
+        "when": "as SendMessage",
+        "v2Operation": "streamRunEvents",
+        "requires": [
+          "a2a.streaming"
+        ],
+        "rule": "As SendMessage, with the run's events projected as StreamResponse (the StreamResponse field row). Ends after the terminal statusUpdate."
+      },
+      {
+        "upstream": "GetTask",
+        "http": "GET /tasks/{id}",
+        "when": "",
+        "v2Operation": "getRun",
+        "requires": [],
+        "rule": "Task projected by taskState; historyLength truncates the response only."
+      },
+      {
+        "upstream": "ListTasks",
+        "http": "GET /tasks",
+        "when": "",
+        "v2Operation": "listRuns",
+        "requires": [],
+        "rule": "The result set is the set listRuns returns to the same Subject, whether or not runList is advertised, filtered by contextId (A2ATaskState.contextId), status (taskState inverse) and statusTimestampAfter; ordered by status timestamp, newest first; pageSize 1-100, default 50; nextPageToken always present, empty on the last page; artifacts omitted unless includeArtifacts."
+      },
+      {
+        "upstream": "CancelTask",
+        "http": "POST /tasks/{id}:cancel",
+        "when": "",
+        "v2Operation": "cancelRun",
+        "requires": [],
+        "rule": "Answers the Task at TASK_STATE_WORKING while cancelling, TASK_STATE_CANCELED once cancelled; a terminal run is TaskNotCancelableError."
+      },
+      {
+        "upstream": "SubscribeToTask",
+        "http": "POST /tasks/{id}:subscribe",
+        "when": "",
+        "v2Operation": "streamRunEvents",
+        "requires": [
+          "a2a.streaming",
+          "a2a.durableTasks"
+        ],
+        "rule": "First event is the current Task; read-only re-attachment that MUST NOT re-execute or re-accept a message; a terminal task is UnsupportedOperationError."
+      },
+      {
+        "upstream": "CreateTaskPushNotificationConfig",
+        "http": "POST /tasks/{id}/pushNotificationConfigs",
+        "when": "",
+        "v2Operation": null,
+        "requires": [
+          "a2a.pushNotifications"
+        ],
+        "rule": "Persists A2ATaskState.pushConfig. url MUST pass the webhooks.md egress guard, scheme and address arms both; token and authentication.credentials are secrets held by reference and MUST NOT enter the event log, the persisted A2ATaskState or a debug bundle. Unadvertised: PushNotificationNotSupportedError."
+      },
+      {
+        "upstream": "GetTaskPushNotificationConfig | ListTaskPushNotificationConfigs | DeleteTaskPushNotificationConfig",
+        "http": "GET | GET | DELETE /tasks/{id}/pushNotificationConfigs[/{configId}]",
+        "when": "",
+        "v2Operation": null,
+        "requires": [
+          "a2a.pushNotifications"
+        ],
+        "rule": "Reads or deletes the persisted configs of a task the caller can read; secrets are never returned."
+      },
+      {
+        "upstream": "GetExtendedAgentCard",
+        "http": "GET /extendedAgentCard",
+        "when": "",
+        "v2Operation": null,
+        "requires": [],
+        "rule": "Authorized at the OpenWOP boundary; MUST NOT disclose skills, interfaces or security requirements the caller cannot use. Not configured: ExtendedAgentCardNotConfiguredError."
+      }
+    ],
+    "card": [
+      {
+        "element": "supportedInterfaces[]",
+        "rule": "Only interfaces the host routes. The set of protocolVersion values equals a2a.versions; the preferredVersion interface is listed first. Claiming profile a2a-1.0 requires a JSONRPC interface at 1.0; HTTP+JSON and GRPC are optional."
+      },
+      {
+        "element": "capabilities",
+        "rule": "streaming and pushNotifications equal the a2a facets; extendedAgentCard is true iff GetExtendedAgentCard is served; extensions[] lists only extensions the host implements."
+      },
+      {
+        "element": "skills[]",
+        "rule": "One skill per invocable workflow from the registry runtime routing uses; skills[].id is the routed workflowId; no skill the host does not route."
+      },
+      {
+        "element": "securitySchemes | securityRequirements",
+        "rule": "Exactly the authentication the endpoint enforces; they describe how a peer authenticates, never what it may do."
+      },
+      {
+        "element": "provider",
+        "rule": "Names the organization operating the endpoint; its url SHOULD equal implementation.url when both are present."
+      },
+      {
+        "element": "supportedInterfaces[].tenant",
+        "rule": "A routing hint that never selects the tenant of record. Per-agent routing values (a2aTenant) are specified by interop.md §Per-agent cards (RFC 0202)."
+      },
+      {
+        "element": "signatures[]",
+        "rule": "A host SHOULD sign its card; a consuming host SHOULD verify before invoking and MAY refuse an unsigned card."
+      }
+    ],
+    "taskState": [
+      {
+        "runStatus": "pending",
+        "stored": "submitted",
+        "wire": "TASK_STATE_SUBMITTED"
+      },
+      {
+        "runStatus": "running",
+        "stored": "working",
+        "wire": "TASK_STATE_WORKING"
+      },
+      {
+        "runStatus": "paused",
+        "stored": "working",
+        "wire": "TASK_STATE_WORKING"
+      },
+      {
+        "runStatus": "cancelling",
+        "stored": "working",
+        "wire": "TASK_STATE_WORKING"
+      },
+      {
+        "runStatus": "waiting-approval",
+        "stored": "input-required",
+        "wire": "TASK_STATE_INPUT_REQUIRED",
+        "carrier": "metadata.openwop.interrupt.kind"
+      },
+      {
+        "runStatus": "waiting-input",
+        "stored": "input-required",
+        "wire": "TASK_STATE_INPUT_REQUIRED",
+        "carrier": "metadata.openwop.interrupt.kind"
+      },
+      {
+        "runStatus": "waiting-external",
+        "stored": "input-required",
+        "wire": "TASK_STATE_INPUT_REQUIRED",
+        "carrier": "metadata.openwop.interrupt.kind"
+      },
+      {
+        "runStatus": "completed",
+        "stored": "completed",
+        "wire": "TASK_STATE_COMPLETED"
+      },
+      {
+        "runStatus": "failed",
+        "stored": "failed",
+        "wire": "TASK_STATE_FAILED"
+      },
+      {
+        "runStatus": "cancelled",
+        "stored": "canceled",
+        "wire": "TASK_STATE_CANCELED"
+      }
+    ],
+    "taskStateReverse": [
+      {
+        "wire": "TASK_STATE_SUBMITTED",
+        "runStatus": "pending"
+      },
+      {
+        "wire": "TASK_STATE_WORKING",
+        "runStatus": "running"
+      },
+      {
+        "wire": "TASK_STATE_INPUT_REQUIRED",
+        "runStatus": "waiting-input"
+      },
+      {
+        "wire": "TASK_STATE_AUTH_REQUIRED",
+        "runStatus": "waiting-input",
+        "note": "reverse only until RFC 0199 lands: waiting-input with metadata.subkind auth; the forward source is RFC 0199's credential interrupt, whose override row RFC 0199 adds to a2a.taskState"
+      },
+      {
+        "wire": "TASK_STATE_COMPLETED",
+        "runStatus": "completed"
+      },
+      {
+        "wire": "TASK_STATE_FAILED",
+        "runStatus": "failed"
+      },
+      {
+        "wire": "TASK_STATE_CANCELED",
+        "runStatus": "cancelled"
+      },
+      {
+        "wire": "TASK_STATE_REJECTED",
+        "runStatus": "failed",
+        "note": "reason rejected_by_remote"
+      },
+      {
+        "wire": "TASK_STATE_UNSPECIFIED",
+        "runStatus": "pending",
+        "note": "never emitted; read with a warning"
+      }
+    ],
+    "errors": [
+      {
+        "upstream": "TaskNotFoundError",
+        "jsonrpc": -32001,
+        "grpc": "NOT_FOUND",
+        "http": 404,
+        "serverWhen": "unknown, purged, or not readable by the caller (identically, including a tenant mismatch)",
+        "clientProjection": "not_found"
+      },
+      {
+        "upstream": "TaskNotCancelableError",
+        "jsonrpc": -32002,
+        "grpc": "FAILED_PRECONDITION",
+        "http": 400,
+        "serverWhen": "CancelTask on a terminal run",
+        "clientProjection": "run_terminal"
+      },
+      {
+        "upstream": "PushNotificationNotSupportedError",
+        "jsonrpc": -32003,
+        "grpc": "FAILED_PRECONDITION",
+        "http": 400,
+        "serverWhen": "push config without a2a.pushNotifications",
+        "clientProjection": "capability_required"
+      },
+      {
+        "upstream": "UnsupportedOperationError",
+        "jsonrpc": -32004,
+        "grpc": "FAILED_PRECONDITION",
+        "http": 400,
+        "serverWhen": "an unimplemented operation or option; a message to a retained terminal task; SubscribeToTask on a terminal task",
+        "clientProjection": "capability_required"
+      },
+      {
+        "upstream": "ContentTypeNotSupportedError",
+        "jsonrpc": -32005,
+        "grpc": "INVALID_ARGUMENT",
+        "http": 400,
+        "serverWhen": "a part mediaType or acceptedOutputModes entry the skill cannot handle, at request time",
+        "clientProjection": "validation_error"
+      },
+      {
+        "upstream": "InvalidAgentResponseError",
+        "jsonrpc": -32006,
+        "grpc": "INTERNAL",
+        "http": 500,
+        "serverWhen": null,
+        "clientProjection": "validation_error",
+        "note": "the malformed body MUST NOT enter run state"
+      },
+      {
+        "upstream": "ExtendedAgentCardNotConfiguredError",
+        "jsonrpc": -32007,
+        "grpc": "FAILED_PRECONDITION",
+        "http": 400,
+        "serverWhen": "GetExtendedAgentCard with capabilities.extendedAgentCard not true",
+        "clientProjection": "not_found"
+      },
+      {
+        "upstream": "ExtensionSupportRequiredError",
+        "jsonrpc": -32008,
+        "grpc": "FAILED_PRECONDITION",
+        "http": 400,
+        "serverWhen": "only for a required:true extension the client did not declare",
+        "clientProjection": "validation_error"
+      },
+      {
+        "upstream": "VersionNotSupportedError",
+        "jsonrpc": -32009,
+        "grpc": "FAILED_PRECONDITION",
+        "http": 400,
+        "serverWhen": "an A2A-Version the interface does not serve",
+        "clientProjection": "interop_version_unsupported"
+      },
+      {
+        "upstream": "(invalid parameters)",
+        "jsonrpc": -32602,
+        "grpc": "INVALID_ARGUMENT",
+        "http": 400,
+        "serverWhen": "a message whose contextId is not its task's (A2A §3.4.3); no run state changes",
+        "clientProjection": "validation_error"
+      }
+    ],
+    "fields": [
+      {
+        "element": "Message.contextId",
+        "rule": "Opaque correlation key persisted as A2ATaskState.contextId. Inferred from the task when only taskId is given."
+      },
+      {
+        "element": "Message.role",
+        "rule": "Recorded; both roles enter the run contentTrust untrusted and confer no authority."
+      },
+      {
+        "element": "Message.extensions[]",
+        "rule": "Opaque unless the card lists the extension; a host listing none MUST NOT raise ExtensionSupportRequiredError."
+      },
+      {
+        "element": "Message.referenceTaskIds[]",
+        "rule": "Hints; grant no read access and are not dereferenced into prompt or tool context."
+      },
+      {
+        "element": "Part",
+        "rule": "Discriminated by member presence (text | raw | url | data), never a kind field. raw bytes are stored by reference, not inlined in the event log; a url is a reference and fetching it is an egress decision."
+      },
+      {
+        "element": "Artifact.artifactId",
+        "rule": "Stable across GetTask reads and across TaskArtifactUpdateEvent chunks of one artifact."
+      },
+      {
+        "element": "Task.history[]",
+        "rule": "Only the A2A Messages exchanged on the task; never run-internal model transcripts, tool I/O or agent.* events."
+      },
+      {
+        "element": "Task.metadata",
+        "rule": "metadata.openwop.interrupt and metadata.openwop.permittedPurposes are the only named keys."
+      },
+      {
+        "element": "StreamResponse",
+        "rule": "task first, then statusUpdate per status change and artifactUpdate per published artifact chunk; never agent.*, provider-usage or tool I/O events."
+      },
+      {
+        "element": "error message",
+        "rule": "Carries no stack trace, provider body, credential, or the other side's raw error body; relayed peer details reduce to the error type and, for version errors, supportedVersions[]."
+      }
+    ]
+  },
+  "mcp": {
+    "features": [
+      {
+        "id": "server-discover",
+        "requiredFor": [
+          "mcp-2026-07-28"
+        ],
+        "meaning": "The host serves server/discover."
+      },
+      {
+        "id": "mrtr",
+        "requiredFor": [
+          "mcp-2026-07-28"
+        ],
+        "meaning": "The host answers and consumes InputRequiredResult (mrtr rows)."
+      },
+      {
+        "id": "cacheable-lists",
+        "requiredFor": [
+          "mcp-2026-07-28"
+        ],
+        "meaning": "List and read results carry ttlMs and cacheScope."
+      },
+      {
+        "id": "extensions",
+        "requiredFor": [],
+        "meaning": "The host advertises and honours capabilities.extensions; the extensions it serves are listed in server/discover."
+      }
+    ],
+    "methods": [
+      {
+        "upstream": "server/discover",
+        "v2Operation": "getCapabilities",
+        "requires": [],
+        "rule": "supportedVersions[] MUST equal mcp.revisions; capabilities.extensions lists exactly the extensions served."
+      },
+      {
+        "upstream": "tools/list",
+        "v2Operation": null,
+        "requires": [
+          "mcp.serverMount"
+        ],
+        "rule": "The workflows the host exposes to the caller, from its tenant-scoped registry; identical for every connection of one caller; sorted by name; cacheScope private whenever the list depends on the caller."
+      },
+      {
+        "upstream": "tools/call",
+        "v2Operation": "createRun",
+        "requires": [
+          "mcp.serverMount"
+        ],
+        "rule": "arguments validated against the tool's inputSchema before any run is created (else -32602); the run starts with trust boundary untrusted and run.started.transport mcp. completed is CallToolResult isError false; failed and cancelled are CallToolResult isError true; waiting-approval and waiting-input are InputRequiredResult (mrtr rows)."
+      },
+      {
+        "upstream": "prompts/get | resources/read",
+        "v2Operation": null,
+        "requires": [
+          "mcp.serverMount"
+        ],
+        "rule": "Prompt arguments render as text without template evaluation; resource URIs are normalized with no traversal and no scheme outside the host allowlist."
+      },
+      {
+        "upstream": "initialize | Mcp-Session-Id",
+        "v2Operation": null,
+        "requires": [],
+        "rule": "MUST NOT be required for a current-profile request; cross-call state is an explicit server-minted tool argument, never a session."
+      }
+    ],
+    "headers": [
+      {
+        "element": "MCP-Protocol-Version",
+        "rule": "MUST equal the _meta io.modelcontextprotocol/protocolVersion; a mismatch is 400 HeaderMismatchError (-32020), checked before version selection."
+      },
+      {
+        "element": "Mcp-Method | Mcp-Name",
+        "rule": "MUST equal method and params.name (or params.uri, or params.taskId); a mismatch fails closed as MCP-Protocol-Version does."
+      },
+      {
+        "element": "(no MCP-Protocol-Version)",
+        "rule": "At most 2025-03-26 upstream; refused when mcp.revisions lists no such revision."
+      }
+    ],
+    "meta": [
+      {
+        "element": "io.modelcontextprotocol/clientCapabilities",
+        "rule": "Required on every request; a capability the request did not declare is MissingRequiredClientCapabilityError (-32021), never assumed."
+      },
+      {
+        "element": "io.modelcontextprotocol/logLevel",
+        "rule": "notifications/message flows on the request's own stream only when the request carried it."
+      },
+      {
+        "element": "traceparent | tracestate | baggage",
+        "rule": "Propagated per observability; never used for authorization. The carrier rule is interop.md §Trace context (RFC 0207 owns this row)."
+      },
+      {
+        "element": "io.modelcontextprotocol/clientInfo | serverInfo",
+        "rule": "Self-reported; never an authorization input."
+      }
+    ],
+    "mrtr": [
+      {
+        "element": "InputRequiredResult (host as server)",
+        "rule": "A run reaching waiting-approval or waiting-input answers the in-flight request with inputRequests { <interruptId>: elicitation/create } and a requestState. Form mode (requestedSchema from the interrupt payload) only for a flat object of primitive properties none of which is writeOnly or format password (MCP Elicitation, restated by RFC 0199 §D.2(d)); a credential interrupt, and any other schema, follow RFC 0199 §D.2 (URL mode when the request declared it, else CallToolResult isError; never form mode). RFC 0199 owns this row's credential and URL-mode clauses."
+      },
+      {
+        "element": "requestState (host as server)",
+        "rule": "Integrity-protected and bound to the authenticated principal, a TTL, the originating request digest, the runId and the interrupt; single use: a second retry with it MUST fail."
+      },
+      {
+        "element": "inputResponses[key] (host as server)",
+        "rule": "ElicitResult action accept resumes with content, decline takes the decline path, cancel cancels the interrupt; the resolver MUST be an eligible approver (interrupt.md); content never becomes authority."
+      },
+      {
+        "element": "InputRequiredResult (host as client)",
+        "rule": "The initial request and every retry are one logical invocation; requestState is persisted byte-exact and never parsed; the retry carries a new JSON-RPC id and every key; rounds are bounded by mcp.mrtr.maxRounds; replay MUST NOT re-issue a retry or re-prompt; an interim result is never cached."
+      },
+      {
+        "element": "sampling/createMessage | roots/list in inputRequests",
+        "rule": "Honoured only when the request declared the capability; sampling runs under the run's own provider policy and budget."
+      }
+    ],
+    "cache": [
+      {
+        "element": "cacheScope",
+        "rule": "private whenever the result depends on the caller's tenant, workspace, principal or authorization; public only when byte-identical for every caller."
+      },
+      {
+        "element": "client cache key",
+        "rule": "tenant, workspace, principal, server origin, revision and authorization context; a private result never crosses authorization contexts, and an authorization change stales it regardless of ttlMs."
+      }
+    ],
+    "authorization": [
+      {
+        "element": "every tools/*, prompts/*, resources/* request",
+        "rule": "Authenticated and authorized at the OpenWOP boundary before a run starts, a resource is read or a prompt renders; unauthenticated only where anonymousActor is advertised."
+      }
+    ]
+  }
+}

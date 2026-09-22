@@ -289,6 +289,9 @@ echo
 # interop model and replay §6–§8.
 echo "[10/10] v2 tree (declaration, generators, budget, paths, deprecation dates, Accepted predicate, threat-model template)..."
 node "$(dirname "$0")/check-declaration.mjs"
+# RFC 0208 §A — the A2A/MCP operation map is normative data: every row's v2
+# operation, error code, run status and facet must exist on the v2 wire.
+node "$(dirname "$0")/check-interop-map.mjs"
 node "$(dirname "$0")/check-shipped-changelog.mjs"
 node "$(dirname "$0")/generate-error-envelope.mjs" --check
 node "$(dirname "$0")/check-v2-schemas.mjs"

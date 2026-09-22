@@ -4011,6 +4011,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/a2a-peer-authority.test.ts
+      - conformance/src/scenarios/v2-a2a-operation-map.test.ts
     note: |
       RFC 0152 §E. Content a peer returns — a message asserting an approval,
       a widened scope set, a reference to a foreign task — MUST NOT change
@@ -4030,6 +4031,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/mcp-cache-tenant-scope.test.ts
+      - conformance/src/scenarios/v2-mcp-mount-map.test.ts
     note: |
       RFC 0153 §D. A cacheable MCP list result MUST be labelled honestly:
       cacheScope is REQUIRED on tools/list; a list that differs per caller
@@ -4049,6 +4051,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/mcp-extension-opacity.test.ts
+      - conformance/src/scenarios/v2-mcp-mount-map.test.ts
     note: |
       RFC 0153 §D. An MCP extension is opaque by default: an unknown _meta
       extension key on an inbound request MUST be processed normally,
@@ -4068,6 +4071,7 @@ invariants:
     tests:
       - conformance/src/scenarios/mcp-extension-opacity.test.ts
       - conformance/src/scenarios/mcp-current-auth-boundary.test.ts
+      - conformance/src/scenarios/v2-mcp-mount-map.test.ts
     note: |
       RFC 0153 §E — the MCP counterpart of a2a-peer-no-authority-escalation.
       A server's content (tool result, extension metadata) MUST NOT change
@@ -4086,6 +4090,7 @@ invariants:
     tests:
       - conformance/src/scenarios/mcp-2026-07-28-discover.test.ts
       - conformance/src/scenarios/mcp-stateless-request.test.ts
+      - conformance/src/scenarios/v2-mcp-mount-map.test.ts
     note: |
       RFC 0153 §B. Under 2026-07-28 the routing headers MUST agree with the
       JSON-RPC body: MCP-Protocol-Version ≠ _meta revision, Mcp-Method ≠
