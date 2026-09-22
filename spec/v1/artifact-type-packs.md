@@ -195,4 +195,5 @@ The RFC 0071 architect pass resolved the design questions this doc was drafted a
 - [`capabilities.md`](./capabilities.md) — `schemaVersions` integer-version precedent; the discovery document.
 - [`positioning.md`](./positioning.md) — the wire-contract / no-renderer boundary this doc respects.
 - `schemas/artifact-type-pack-manifest.schema.json`; `schemas/run-event-payloads.schema.json` (`artifact.created` `registered` field).
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) §4 — informative table of the reserved `exportFormats` identifiers beside IANA media types (no identifier value changes).
 - `docs/OPENWOP-CANVAS-TYPE-PACKS-RESEARCH.md` — prior-art analysis (MyndHyve Canvas Types, demo-app card registry).
