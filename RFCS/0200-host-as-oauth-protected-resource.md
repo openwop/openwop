@@ -214,7 +214,7 @@ Every row names the sabotage that makes it fail in the companion implementation 
 | §A.1–§A.2 PRM served at the path-inserted URI (`openwop.requirement.0200.prm-served`) | `200` JSON at the derived URL | the suite, unaided | witnessable-gated (on an `oauth2`/`oidc` lane) |
 | §A.3 derived, not declared (`.prm-consistent`) | `resource` identical; `authorization_servers` set-equal to lane issuers; no over-claimed binding | the suite, unaided | witnessable-gated |
 | §A.4 MCP mount discovery (`.mcp-mount-prm`) | `resource_metadata` in the mount's `401`, or PRM at the mount-path well-known | the suite, on a mount requiring OAuth | witnessable-gated (no committed host today) |
-| §A.5 v1 SHOULD | — | — | not a MUST; no row owed |
+| §A.5 v1 SHOULD | — | — | unwitnessable as a certification row — a SHOULD, not a MUST; no row owed |
 | §B.1 `401` challenge (`.challenge-401`) | `WWW-Authenticate` with `resource_metadata`; `invalid_token` only when a credential was sent | the suite, unaided | witnessable-gated |
 | §B.1 `403` scope challenge (`.challenge-403-scope`) | `insufficient_scope` + `scope` ⊇ the operation's scope | the suite, with a low-scope key | witnessable-gated (harness key) |
 | §B.1 no scope challenge on resource-binding `403` | a `run_forbidden` response has no `insufficient_scope` | the suite, with a second-workspace key | witnessable-gated (harness key) |
@@ -224,8 +224,8 @@ Every row names the sabotage that makes it fail in the companion implementation 
 | §E no passthrough (`.inbound-credential-no-passthrough`) | the suite key and cookie canaries are absent from every header and body captured at suite-owned receivers | the suite (it owns the receiver and knows its own credential) | witnessable-gated (webhooks); seam-gated (A2A/MCP/httpClient fixtures) |
 | §E covers body-borne credentials and DPoP proofs | — | — | **unwitnessable in general**: the suite cannot enumerate every body field a host might forward, and DPoP needs a sender-constrained lane no committed host advertises. The header canaries are the witnessed subset. |
 | §F OpenAPI declares the lanes (`.openapi-security-declared`) | `check-openapi-security.mjs` fails on a missing or mismatched operation | the corpus gate | claims-check |
-| §F.5 the card derivation (SHOULD) | — | — | not a MUST; no row owed |
-| §G `purposePropagation` restated | the existing RFC 0128 scenarios | unchanged | unchanged (homing moves no behaviour) |
+| §F.5 the card derivation (SHOULD) | — | — | unwitnessable as a certification row — a SHOULD, not a MUST; no row owed |
+| §G `purposePropagation` restated | the existing RFC 0128 scenarios | unchanged | witnessable — gated, by the existing RFC 0128 scenarios (homing moves no behaviour) |
 
 ## Alternatives considered
 
