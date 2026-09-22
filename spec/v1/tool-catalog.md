@@ -58,7 +58,7 @@ This subset is the stable structural core of the RFC 0030 Tier-1 universal subse
 
 ## §D — Tool-session lifecycle (optional, when `toolCatalog.sessionLifecycle: true`)
 
-Most tools are single-shot (one call → one result, already covered by RFC 0064's `agent.toolCalled`/`agent.toolReturned`). A _tool session_ models a multi-step interaction (an MCP server holding a stateful connection; a connector OAuth dance mid-call). The lifecycle is **content-free observability** over the existing call events:
+Most tools are single-shot (one call → one result, already covered by RFC 0064's `agent.toolCalled`/`agent.toolReturned`). A _tool session_ models a multi-step interaction (a connector OAuth dance mid-call; a multi-round MCP exchange — under the current MCP revision that is an MRTR `input_required` → retry sequence carried by `requestState`, since upstream removed protocol sessions and the stateful connection they implied; the legacy `mcp-2025-06-18-legacy` profile still has sessions). The lifecycle is **content-free observability** over the existing call events:
 
 ```text
 tool.session.opened  → (agent.toolCalled → [auth/approval interrupt?] → agent.toolReturned)+ → tool.session.closed
