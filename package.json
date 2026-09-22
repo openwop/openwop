@@ -9,6 +9,10 @@
     "protocol:status:check": "node scripts/generate-protocol-status.mjs --check",
     "openwop:check": "bash scripts/openwop-check.sh",
     "check": "bash scripts/openwop-check.sh",
-    "check:publish": "bash scripts/openwop-check-publish-metadata.sh && bash scripts/check-npm-pack-contents.sh"
+    "check:publish": "bash scripts/openwop-check-publish-metadata.sh && bash scripts/check-npm-pack-contents.sh",
+    "v2:retirement": "node scripts/check-v2-retirement.mjs",
+    "v2:surface-monotone": "node scripts/check-v2-surface-monotone.mjs",
+    "v2:surface-baseline": "node scripts/generate-v2-surface-baseline.mjs --write",
+    "v2:bundle-maturity": "node scripts/check-bundle-maturity.mjs"
   }
 }

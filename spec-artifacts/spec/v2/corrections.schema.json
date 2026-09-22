@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/corrections.schema.json",
+  "title": "OpenWOP v2 Class-3 corrections register",
+  "description": "Shape of spec/v2/corrections.json (RFC 0197 §A.4). A W3C Process Class 3 correction — one that MAY affect conformance but adds no feature — MAY change a v2 shape outside the §A.2 retirement predicate only when nothing conforming stops conforming AND R3 holds for the prior shape (no committed v2 host bundle and no published registry manifest carries it). This register is the machine-readable half of the COMPATIBILITY.md §3 entry: scripts/check-v2-retirement.mjs re-runs the bundle and registry scan over every row, so `priorShapeCensus` is a claim the gate falsifies rather than prose nobody re-reads. scripts/check-v2-surface-monotone.mjs admits a baseline removal whose pointer a row names. Data, not a wire artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "rows"],
+  "properties": {
+    "$schema": { "type": "string", "const": "./corrections.schema.json" },
+    "$comment": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "updated": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "rows": { "type": "array", "minItems": 0, "items": { "$ref": "#/$defs/row" } }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "date", "class", "pointers", "compatibilityEntry", "priorShapeCensus"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^openwop\\.correction\\.v2\\.[0-9]+$" },
+        "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "The date the correction landed, matching its COMPATIBILITY.md §3 entry." },
+        "class": { "type": "string", "const": "w3c-class-3", "description": "Only Class 3 belongs here. A Class 2 editorial change moves no shape and needs no row; anything that invalidates a conforming document is a major (§A.1), not a correction." },
+        "releasedIn": { "type": "string", "pattern": "^2\\.[0-9]+(\\.[0-9]+)?$", "description": "The corpus release that carried the correction." },
+        "rfc": { "type": ["string", "null"], "pattern": "^[0-9]{4}$", "description": "The RFC under which the correction landed, or null when it landed under an already-Accepted RFC with no new filing." },
+        "pointers": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Every schema pointer the correction moved, as `<repo-relative file>#<INSTANCE pointer>` \u2014 the document-shaped path scripts/generate-v2-surface-baseline.mjs prints (`#/signing`, `#/chains/[]/dag/nodes/[]/config`), never the schema-shaped one (`#/properties/signing`), because a `$defs` name is not a surface. scripts/check-v2-surface-monotone.mjs matches a baseline removal against this list, so a pointer left out is a removal the monotone gate refuses.",
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_./-]+#(/[^#|]*)?$" }
+        },
+        "compatibilityEntry": { "type": "string", "minLength": 1, "description": "A literal substring of the COMPATIBILITY.md §3 \"correction on record\" entry. The gate fails when it drifts — a register row whose prose entry has been reworded away is an unrecorded shape change." },
+        "priorShapeCensus": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bundles", "manifests", "note"],
+          "description": "RFC 0197 R3, evaluated for the PRIOR shape at the time of the correction. Both counts MUST be 0; `manifests: null` is not an absence of evidence that may be read as evidence of absence — the gate refuses it.",
+          "properties": {
+            "bundles": { "type": "integer", "minimum": 0, "description": "Committed evidence/v2-host-bundles/*.json whose discovery.document carried the prior shape." },
+            "manifests": { "type": ["integer", "null"], "minimum": 0, "description": "Published registry manifests that carried it. null means no census was run." },
+            "manifestsScanned": { "type": ["integer", "null"], "minimum": 0, "description": "How many manifests the census read. A count of 0 out of 0 witnesses nothing." },
+            "note": { "type": "string", "minLength": 1, "description": "How the census was taken and why nothing conforming stopped conforming." }
+          }
+        }
+      }
+    }
+  }
+}

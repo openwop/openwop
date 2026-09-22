@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/migrations.schema.json",
+  "title": "OpenWOP v2→v2 migration register",
+  "description": "Shape of spec/v2/migrations.json (RFC 0197 §A.2 R1). One row per surface a 2.x minor REPLACES or RETIRES inside the major: the old surface, the new one, the minor the new one shipped in, and the spec/v1/deprecations.json `v2-minor` row that schedules the removal. This is not the v1→v2 program: spec/v1/migrations.schema.json keeps its C1–C11 child grammar, which is that program's identity. `rows` may be EMPTY — an empty v2→v2 register is a legal state, and is the state at 2.36.0. Data, not a wire artifact; kept out of schemas/. Validated by scripts/check-migrations.mjs; read by scripts/check-v2-retirement.mjs (R1) and scripts/check-v2-surface-monotone.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "rows"],
+  "properties": {
+    "$schema": { "type": "string", "const": "./migrations.schema.json" },
+    "$comment": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "updated": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "rows": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "#/$defs/row" },
+      "description": "`minItems: 0`, unlike the v1 register: the v2→v2 program starts with nothing to say, and a register forced to carry a row would be filled with a fiction."
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "rfc", "kind", "from", "to", "deprecationId", "codemod", "persistedData", "requirementIds"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^openwop\\.migration\\.v2\\.[0-9]+$", "description": "openwop.migration.v2.<n>. The `v2` segment keeps these rows out of the C1–C11 id space scripts/check-migrations.mjs matches against child RFC tables." },
+        "rfc": { "type": "string", "pattern": "^[0-9]{4}$", "description": "The RFC that added the replacement and filed the row." },
+        "kind": { "type": "string", "enum": ["replace", "retire"], "description": "`replace` — a new surface shipped beside the old one and the old one is scheduled out (RFC 0197 §A.1: a new shape is a NEW surface, never a reshape). `retire` — no replacement; admitted only when R1 is satisfied some other way, and today that means it is not admitted at all (RFC 0197 Unresolved 3)." },
+        "from": { "$ref": "#/$defs/surface", "description": "The surface being retired." },
+        "to": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["surface", "addedIn"],
+          "properties": {
+            "surface": { "type": "string", "minLength": 1, "description": "The replacement's wire-visible name." },
+            "path": { "type": "string", "description": "Where the replacement lives: a JSON pointer or dotted path in a schema under schemas/v2/, or a spec/v2/ file path." },
+            "addedIn": { "type": "string", "pattern": "^2\\.[0-9]+$", "description": "RFC 0197 R1 — the 2.x minor the replacement SHIPPED in. It MUST be lower than the linked deprecation row's `removeIn` minor: a replacement that ships in the same minor as the removal gives no one a window to move." }
+          }
+        },
+        "deprecationId": { "type": "string", "pattern": "^openwop\\.deprecation\\.[a-z0-9]+(-[a-z0-9]+)*$", "description": "The spec/v1/deprecations.json row — `removalTrigger` containing `v2-minor` — that schedules the removal. Exactly one migration row per deprecation row (scripts/check-deprecations.mjs)." },
+        "codemod": { "type": ["string", "null"], "pattern": "^openwop\\.codemod\\.[a-z0-9]+(-[a-z0-9]+)*$", "description": "Id of the committed codemod under codemods/<id>/ that rewrites a persisted or emitted artifact, or null when nothing persisted carries the surface." },
+        "persistedData": { "type": "string", "enum": ["unchanged", "translated", "drained", "legacy-stamped", "never-upgraded", "not-persisted"], "description": "Same vocabulary as the v1 register: what happens to data already persisted under the retired surface. RFC 0197 §A.3 means a reader keeps accepting it for the life of the major, so `never-upgraded` and `unchanged` are the common answers." },
+        "requirementIds": { "type": "array", "items": { "type": "string", "pattern": "^openwop\\." }, "description": "conformance/requirements.json ids that witness the replacement." },
+        "note": { "type": "string" }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface"],
+      "properties": {
+        "surface": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "description": "A JSON pointer or dotted path locating it in the v2 tree, in the form scripts/check-v2-surface-monotone.mjs prints: `<file>#<pointer>`." }
+      }
+    }
+  }
+}

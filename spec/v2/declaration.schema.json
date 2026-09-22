@@ -212,7 +212,9 @@
                     ]
                   },
                   "until": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^2\\.[0-9]+$",
+                    "description": "RFC 0197 \u00a7C.8 \u2014 the CORPUS shape-hold: no surface of this family is retired before this 2.x minor. scripts/check-v2-retirement.mjs R5 refuses a removal whose `removeIn` is not later than it. This is NOT the wire record\u2019s `until` (spec/v2/core/capabilities.md \u00a72), which is the host\u2019s own timeline for its own offer \u2014 two fields with one name and different owners, which is why the distinction is written here. No declaration row sets it today."
                   }
                 }
               },

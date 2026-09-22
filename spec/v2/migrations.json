@@ -1,0 +1,7 @@
+{
+  "$schema": "./migrations.schema.json",
+  "$comment": "RFC 0197 §A.2 R1 — the v2→v2 migration register. EMPTY is the correct state at 2.36.0: no 2.x minor has yet replaced a v2 surface, and nothing is scheduled for removal inside the major. The register exists ahead of its first row because R1 cannot be checked without it — a retirement row with no migration row to point at is refused by scripts/check-deprecations.mjs rule 6. The first row this expects is connection-pack `transport: \"streamable-http\"` beside `\"sse\"` (RFC 0197 §\"What this RFC enables next\"), filed as its own RFC with a fresh registry census.",
+  "version": 1,
+  "updated": "2026-09-22",
+  "rows": []
+}

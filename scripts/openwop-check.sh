@@ -287,7 +287,7 @@ echo
 # tree; each is green-with-a-report while its input does not exist yet, never
 # green-by-silence. check-threat-model-template is strict since P3-D landed the
 # interop model and replay §6–§8.
-echo "[10/10] v2 tree (declaration, generators, budget, paths, deprecation dates, Accepted predicate, threat-model template)..."
+echo "[10/10] v2 tree (declaration, generators, budget, paths, deprecation dates, retirement + surface monotonicity + bundle maturity, Accepted predicate, threat-model template)..."
 node "$(dirname "$0")/check-declaration.mjs"
 # RFC 0208 §A — the A2A/MCP operation map is normative data: every row's v2
 # operation, error code, run status and facet must exist on the v2 wire.
@@ -318,6 +318,17 @@ node "$(dirname "$0")/check-id-kinds-bound.mjs"
 node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
 node "$(dirname "$0")/generate-v1-eos-clock.mjs" --check
 node "$(dirname "$0")/check-removal-dates.mjs"
+# RFC 0197 — v2 surfaces are retired, never reshaped. Four gates, and the order
+# matters: the baseline must be the tree before the monotone gate can trust it,
+# and the monotone gate consults the retirement predicate before it licenses a
+# removal. Until these run, no v2 surface is removed inside the major
+# (COMPATIBILITY.md §3a); that sentence is now discharged.
+node "$(dirname "$0")/check-v2-retirement.mjs"
+node "$(dirname "$0")/check-v2-surface-monotone.mjs"
+# §C.7 — a host's `status` may not exceed the corpus declaration. Bundles cut
+# before the first suite release that ships RFC 0197 are REPORTED, not failed
+# (decisions log D1); the report names them so "reported" stays visible.
+node "$(dirname "$0")/check-bundle-maturity.mjs"
 node "$(dirname "$0")/check-retention-floors.mjs"
 node "$(dirname "$0")/check-accepted-predicate.mjs"
 node "$(dirname "$0")/check-threat-model-template.mjs"
