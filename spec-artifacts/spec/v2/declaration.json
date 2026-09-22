@@ -1201,7 +1201,8 @@
         "agentCardUrl",
         "streaming",
         "pushNotifications",
-        "durableTasks"
+        "durableTasks",
+        "agentCards"
       ],
       "floorScenarios": [],
       "requirementIds": [],
