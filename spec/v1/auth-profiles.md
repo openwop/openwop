@@ -39,6 +39,7 @@ The host accepts OAuth2 client-credentials access tokens for machine-to-machine 
 - The token issuer, audience, and accepted signing algorithms are documented.
 - The token maps to the same `tenant`, `principal`, and `scopes` concepts defined in `auth.md`.
 - Missing, expired, malformed, wrong-audience, and insufficient-scope tokens use the canonical error envelope: `401 unauthenticated` for a missing, expired, malformed, or wrong-audience token.
+- The host **MUST** reject, with `401 unauthenticated`, an access token whose `aud` does not contain its advertised `capabilities.auth.oauth2.audience`, and MUST do so before any authorization decision (RFC 0200 §C). Upstream: MCP 2026-07-28 Authorization §"Token Handling" ("MCP servers MUST validate that access tokens were issued specifically for them as the intended audience").
 - Token introspection, if used, is an implementation detail; clients only depend on bearer-token semantics.
 - Scope strings for OpenWOP operations remain the operation scopes in `auth.md`, even when encoded inside OAuth claims.
 
@@ -235,6 +236,8 @@ As of RFC 0010 (2026-05-11), auth-profile metadata has a **formal schema locatio
   }
 }
 ```
+
+A host advertising `openwop-auth-oauth2-client-credentials` or `openwop-auth-oidc-user-bearer` SHOULD additionally serve RFC 9728 Protected Resource Metadata derived from these fields, so that a generic OAuth or MCP client can discover the authorization server without reading this document: [`auth.md`](./auth.md) §Challenges and [`spec/v2/core/identity.md`](../v2/core/identity.md) §2.5 (RFC 0200 §A.5). The metadata is a projection of the advertisement, never a second declaration.
 
 This advertisement is advisory. A host passes an auth profile only by satisfying the documented behavior and the corresponding conformance scenarios (`auth-api-key-rotation.test.ts`, `auth-oauth2-client-credentials.test.ts`, `auth-oidc-user-bearer.test.ts`, `auth-mtls.test.ts`).
 

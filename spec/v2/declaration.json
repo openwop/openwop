@@ -405,7 +405,7 @@
     {
       "key": "purposePropagation",
       "kind": "family",
-      "normativeText": ["spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/security-defaults.md"],
       "anchor": "core",
       "section": "core/capabilities.md#purposePropagation",
       "peerDependencyId": "purposePropagation",

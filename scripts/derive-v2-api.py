@@ -367,6 +367,31 @@ def v2_openapi_and_seams():
     for resp in comps.get('responses', {}).values():
         if isinstance(resp, dict) and 'headers' in resp:
             resp['headers'].pop('Capabilities-Etag', None)
+    # RFC 0200 §F.3 — the v2-only operations have no v1 ancestor to inherit a scope
+    # declaration from, so their scopes are named here. `scripts/check-openapi-security.mjs`
+    # fails when an operation in either document lacks `security`, so a new v2-only
+    # operation added above without a row here reds the gate rather than silently
+    # inheriting the global default.
+    V2_ONLY_SCOPES = {
+        'getEffectSeamManifest': ['runs:read'],
+        'getRunCompensation': ['runs:read'],
+        'getRunEffects': ['runs:read'],
+        'listRuns': ['runs:read'],
+        'listWebhookDeadLetters': ['webhooks:manage'],
+        'rotateWebhookSecret': ['webhooks:manage'],
+        'streamHostEvents': ['runs:read'],
+    }
+    for key, item in doc['paths'].items():
+        for method, op in item.items():
+            if method not in ('get', 'post', 'put', 'delete', 'patch'):
+                continue
+            if 'security' in op:
+                continue
+            oid = op.get('operationId')
+            scopes = V2_ONLY_SCOPES.get(oid)
+            if scopes is None:
+                raise SystemExit(f'derive-v2-api: operation {oid} ({method.upper()} {key}) declares no security and has no V2_ONLY_SCOPES row (RFC 0200 §F.3)')
+            op['security'] = [{'ApiKeyAuth': list(scopes)}, {'OAuth2': list(scopes)}, {'OpenIdConnect': list(scopes)}]
     doc = rewrite(doc)
     seams['security'] = copy.deepcopy(doc.get('security', []))
     seams = rewrite(seams, '../schemas/v2/')  # api/seams-v2.yaml lives one level up from api/v2/

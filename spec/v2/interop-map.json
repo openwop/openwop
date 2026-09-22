@@ -524,6 +524,14 @@
       {
         "element": "every tools/*, prompts/*, resources/* request",
         "rule": "Authenticated and authorized at the OpenWOP boundary before a run starts, a resource is read or a prompt renders; unauthenticated only where anonymousActor is advertised."
+      },
+      {
+        "element": "the mount as an OAuth protected resource (RFC 0200 §A.4)",
+        "rule": "A mount that requires oauth2/oidc-lane authentication MUST implement one of upstream's two discovery mechanisms for the mount URL as the resource: resource_metadata in the mount's 401 WWW-Authenticate challenge, or RFC 9728 Protected Resource Metadata at the well-known URI with the mount path inserted. identity.md §2.5 governs the document and the challenge."
+      },
+      {
+        "element": "the MCP client's token (RFC 0200 §E)",
+        "rule": "MUST NOT be attached to any outbound request the mount makes on the peer's behalf; outbound authentication uses only credentials the host holds for that destination (security-defaults.md §Onward hops, oauth.md)."
       }
     ],
     "tasks": {

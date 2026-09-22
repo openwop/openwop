@@ -4546,3 +4546,60 @@ invariants:
       Binds every host with an MCP server mount, not only oauth advertisers.
     witness: seam-gated
     witnessReview: reviewed-2026-09-22
+
+  - id: inbound-credential-no-passthrough
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/inbound-credential-no-passthrough.test.ts
+    note: |
+      RFC 0200 §E (spec/v1/auth.md §"Onward hops"; spec/v2/core/
+      security-defaults.md §"Onward hops"). A credential received on an inbound
+      request — an Authorization, Cookie or Proxy-Authorization value, a DPoP
+      proof, an interrupt resume token, an MCP or A2A peer's bearer, credential
+      material in a body — MUST NOT be attached to any outbound request (A2A,
+      MCP, webhook, callback, httpClient/safeFetch, connector, tool). Outbound
+      authentication uses only credentials the host holds for that destination.
+      Generalizes spec/v1/trigger-bridge.md §F.1 (inbound headers into run
+      data). Distinct from conformance/src/scenarios/identity-passthrough.
+      test.ts, which covers the unrelated core.identity echo fixture. Upstream:
+      MCP 2026-07-28 Security Considerations §"Access Token Privilege
+      Restriction" ("MUST NOT pass through the token it received from the MCP
+      client"); Tutorials › Security Best Practices §"Token Passthrough".
+      Witnessed at suite-owned receivers (webhook-receiver, a2a-fake-peer,
+      mcp-fake-server) against the suite's own API key and two random
+      cookie/proxy canaries, with a capture-count positive control so an
+      undelivered hop is `blocked`, never a pass. Body-borne credentials and
+      DPoP proofs are NOT witnessed: the suite cannot enumerate every body
+      field a host might forward, and DPoP needs a sender-constrained lane no
+      committed host advertises (RFC 0200 §Falsifiability, residual risk).
+      Reference-impl at Active; graduates to protocol only on a non-vacuous
+      executed-pass on two committed bundles.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-22
+
+  - id: auth-challenge-no-oracle
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/auth-challenge-no-oracle.test.ts
+    note: |
+      RFC 0200 §B.3 (spec/v2/core/identity.md §2.5; spec/v1/auth.md
+      §Challenges). A WWW-Authenticate challenge attaches only to a response
+      that is already 401 or 403; it never changes a status. A 404 this
+      specification requires for an unknown OR unauthorized resource —
+      tool-catalog.md §GET /v1/tools/{toolId} (v2 spec/v2/core/tool-catalog.md),
+      the RFC 0072/0074/0086/0087 inventory routes, capabilities-change-
+      detection.md — MUST NOT carry error="insufficient_scope" or a scope
+      parameter, and a resource-binding 403 (run_forbidden, id_tenant_mismatch)
+      MUST NOT carry insufficient_scope, because no scope would cure it.
+      Upstream challenges (MCP 2026-07-28 Authorization §"Runtime Insufficient
+      Scope Errors", RFC 6750 §3) say nothing about existence oracles;
+      OpenWOP's non-disclosure rule is stronger and wins. Each leg carries a
+      positive control that the silent 404 path is the one under test.
+      Reference-impl at Active; graduates to protocol at Accepted on a
+      non-vacuous executed-pass on a committed bundle.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-22
