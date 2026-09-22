@@ -1,0 +1,1 @@
+{ "kind": "conversation.start", "key": "run-1:conv:0", "data": { "conversationId": "conv-1", "prompt": "What should the headline say?" } }

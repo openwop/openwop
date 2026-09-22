@@ -1,0 +1,1 @@
+{ "kind": "approval", "key": "run-1:gate:0", "data": { "artifactId": "art-1", "artifactType": "document", "title": "Review the draft", "actions": ["accept", "reject"] } }

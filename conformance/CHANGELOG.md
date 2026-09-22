@@ -3,6 +3,7 @@
 ## [2.36.0] — unreleased — the 2.36.0 cycle is open
 
 - **Version moved ahead of publication, not with it.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.36.0` now, before any 2.36.0 content lands, because `2.35.1` is published and the published-identity gate refuses a tree whose shipped files differ from the tarball at the same version. The scenarios this minor adds are recorded here as they land. Not tagged, not published; npm still serves `2.35.1`.
+- **`fixtures/interrupt-payloads/` — the interrupt `data` kind binding (MCP/A2A review P3-H7).** One minimal `InterruptPayload` per kind plus five mismatched kind/data negatives, validated by `fixtures-valid.test.ts` against both `schemas/suspend-request.schema.json` and `schemas/v2/suspend-request.schema.json` (`openwop.it.fixtures-valid.interrupt-payloads-positive-per-kind-validates`, `…-mismatched-kind-data-refused`). Each negative's `data` is also checked valid under the kind it belongs to, so it can fail only for the binding. The positive `conversation.start` / `conversation.close` fixtures (`{ conversationId }`) were refused by the unbound `oneOf` before this cycle, and four of the five negatives were accepted; both directions sabotage-checked. `spec-corpus-validity`'s fixtures.md catalog check now covers the sub-directory. No scenario added to any profile floor.
 
 ## [2.35.1] — 2026-09-22 — the opt-out check could never fire on a real bundle
 
