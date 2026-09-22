@@ -46,6 +46,14 @@
         "null"
       ]
     },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "part.schema.json"
+      },
+      "description": "RFC 0205 §B. OPTIONAL. The turn's content as A2A `Part`s (A2A v1.0.1 `Message.parts`). PRESENCE IS THE DISCRIMINATOR: a turn carrying `parts` is A2A-shaped and projects to an A2A `Message` via `messageId`, `role` (user→ROLE_USER, agent→ROLE_AGENT) and `parts`. A producer SHOULD emit it and keep `content` displayable to readers that predate it. A turn without `parts` stays valid on emission, read, replay and fork for the life of the major. Kept in sync with `conversation-event.schema.json#/$defs/ConversationTurn/properties/parts`."
+    },
     "ts": {
       "type": "integer",
       "minimum": 0,
@@ -158,6 +166,5 @@
     }
   ],
   "$comment": "RFC 0101 NEGATIVE (covered by the `allOf`/`if` conditional + conversation scenarios, NOT validatable as an `examples[]` entry which must be VALID): a `{ role: 'agent', ... }` turn that OMITS `speakerId` MUST FAIL validation; see conformance/src/scenarios/multi-party-conversation-shape.test.ts.",
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

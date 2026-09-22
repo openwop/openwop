@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/artifact.schema.json",
+  "title": "Artifact",
+  "description": "RFC 0205 §A/§D. An A2A v1.0.1 `Artifact`, transcribed from `specification/a2a.proto` `message Artifact` at tag v1.0.1 (camelCase per A2A spec §5.5). The body of `getArtifact` when it is served as `application/a2a+json` (spec/v2/core/runs.md); `artifactId` equals the path segment. The same shape a2a-integration.md D.3 projects over A2A, so one decoder reads both.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactId",
+    "parts"
+  ],
+  "properties": {
+    "artifactId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "a2a.proto: \"Unique identifier (e.g. UUID) for the artifact. It must be unique within a task.\" On `getArtifact` it MUST equal the `{artifactId}` path segment."
+    },
+    "name": {
+      "type": "string",
+      "description": "a2a.proto: \"A human readable name for the artifact.\""
+    },
+    "description": {
+      "type": "string",
+      "description": "a2a.proto: \"Optional. A human readable description of the artifact.\""
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "part.schema.json"
+      },
+      "description": "a2a.proto: \"The content of the artifact. Must contain at least one part.\" A registered artifact's JSON payload is a `data` Part with `mediaType: application/json`."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "a2a.proto: \"Optional. Metadata included with the artifact.\" OpenWOP identity for a registered type SHOULD be carried as `metadata.openwop.artifactTypeId` and `metadata.openwop.schemaVersion` (RFC 0205 §A.2).",
+      "properties": {
+        "openwop": {
+          "type": "object",
+          "properties": {
+            "artifactTypeId": {
+              "$ref": "ids.schema.json#/$defs/typeId",
+              "description": "The registered artifact type (`artifact.created.artifactType`), bound to the `typeId` kind (identity.md §5)."
+            },
+            "schemaVersion": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": {}
+        }
+      },
+      "additionalProperties": {}
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "description": "a2a.proto: \"The URIs of extensions that are present or contributed to this Artifact.\""
+    }
+  },
+  "examples": [
+    {
+      "artifactId": "art-1",
+      "name": "Launch brief",
+      "parts": [
+        {
+          "data": {
+            "title": "Q3 launch"
+          },
+          "mediaType": "application/json"
+        }
+      ],
+      "metadata": {
+        "openwop": {
+          "artifactTypeId": "vendor.acme.brief",
+          "schemaVersion": 1
+        }
+      }
+    }
+  ]
+}
