@@ -28,7 +28,7 @@
     "schemas/ai-envelope.schema.json": "78167a5767809286071bfcfcdfeceed0ed04c8b9f8c13079019d70eff4f351c1",
     "schemas/annotation-create.schema.json": "567e8327777968e0ddab8e1547b4acd7beda734cf9d1fc6cde17037d8d9540d4",
     "schemas/annotation.schema.json": "b26d22f9a97e1ae7c195e8799964aca804e78452a079ca3a0d61ea013907ce91",
-    "schemas/artifact-type-pack-manifest.schema.json": "13932ea58e819e01b3a0cc7a65590b70683dd5fe9208fc06c64c339943d3c4ce",
+    "schemas/artifact-type-pack-manifest.schema.json": "67895666b7201bb82e846f3e1fb86ddd07aa3a6a89ece9f98462a7bc8f35ee96",
     "schemas/audit-verify-result.schema.json": "e8fd013fb610ba5db27ab0113ec2eb18e7da5f9310dd3de2dd3dc87a259c21fe",
     "schemas/budget-policy.schema.json": "3d4fe30ae129fe136ab9ece395f2a2a42a76360786b1b9a1d5f1cbc753eb5b39",
     "schemas/capabilities.schema.json": "b413e0235cad412081df09234237e0f322a85903b7411b91aaff54032e946671",
@@ -112,7 +112,7 @@
     "schemas/v2/ai-envelope.schema.json": "0dc7dfbf032a37239ffd81fc2d67f999a40782ff5074866a56e414164cdee809",
     "schemas/v2/annotation-create.schema.json": "ec32c22a243b343eeb6956a23be2d76ba5b50c8018ec3ec9d6efa5a1d9b0c792",
     "schemas/v2/annotation.schema.json": "eb4813cdaa8e325412cfcaeeee5c8a28f3751c946dec64e546c7ba0ad3aad8d4",
-    "schemas/v2/artifact-type-pack-manifest.schema.json": "f77d8dcc3112afec8b2a8e67e56752d5811deb2c2455b0d6d4c6489eb4c4a829",
+    "schemas/v2/artifact-type-pack-manifest.schema.json": "abb60653f2f29925fb430fa04fa03fa67e14af47c1f8c5c07db324576fc17fa9",
     "schemas/v2/audit-verify-result.schema.json": "a748dfadb5155adfde8a91045e76b0db6695005fe559035d71670fdd55edb3ba",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
     "schemas/v2/capabilities.schema.json": "e62d44f23c21c8f64b273fcdb083636e801c0de976cbd1f93333f99928dd1025",
@@ -282,5 +282,5 @@
     "spec/v2/release.json": "5b9a956506b011835f1bd2fec54064d9cc8657d8a45a371314850da377d69069",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "2dae841503c5e7a5e9e79e82d3b18bd43c7ee7b8"
+  "corpusCommit": "cb697efb32dbf69841b35752ee44f7be7a60e7b3"
 }
