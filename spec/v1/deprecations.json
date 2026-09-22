@@ -1,7 +1,7 @@
 {
   "$schema": "./deprecations.schema.json",
   "version": 1,
-  "updated": "2026-09-18",
+  "updated": "2026-09-22",
   "entries": [
     {
       "id": "openwop.deprecation.capabilities-wrapper",
@@ -958,6 +958,50 @@
         }
       ],
       "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "id": "openwop.deprecation.v2-a2ui-delta-frame",
+      "status": "deprecated",
+      "surface": "`schemas/v2/a2ui-surface-delta-frame.schema.json` — the RFC 0114 JSON-Patch transport frame, seeded into v2 and never contracted there",
+      "kind": "artifact",
+      "deprecatedIn": "2.36 (RFC 0209)",
+      "authority": "spec/v2/ext/a2uiSurface/README.md §\"`deltaTransport` (deprecated)\" (RFC 0209 §D.15)",
+      "removeIn": "3.0",
+      "replacement": "schema-version-2 `ui.a2ui-surface` envelopes carrying A2UI `updateComponents` / `updateDataModel`, folded per surface (RFC 0209 §C.9)",
+      "codemod": null,
+      "note": "v2 only; v1 RFC 0114 stands. Removal minor: 2.38 at the earliest (two released minors after the 2.36 deprecation, RFC 0197 §A.2 R2), and only once RFC 0197 is Accepted and its gates (check-v2-retirement.mjs, check-v2-surface-monotone.mjs, a minor-aware check-removal-dates.mjs) are in openwop:check; removeIn moves from 3.0 to that minor in the same PR. Until then 3.0. No committed v2 bundle carries the frame (checked 2026-09-22).",
+      "sources": [
+        {
+          "file": "schemas/v2/a2ui-surface-delta-frame.schema.json",
+          "token": "RFC 0114"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.v2-a2ui-delta-transport-facet",
+      "status": "deprecated",
+      "surface": "`extensions.<org>.a2uiSurface.deltaTransport` in v2 — the RFC 0114 delta-transport facet",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.36 (RFC 0209)",
+      "authority": "spec/v2/ext/a2uiSurface/README.md §\"`deltaTransport` (deprecated)\" (RFC 0209 §D.15)",
+      "removeIn": "3.0",
+      "replacement": "schema-version-2 `ui.a2ui-surface` envelopes carrying A2UI `updateComponents` / `updateDataModel` (RFC 0209 §C.9); a v2 host SHOULD NOT advertise the facet",
+      "codemod": null,
+      "note": "v2 only; v1 RFC 0114 stands. Removal minor: 2.38 at the earliest, on the same RFC 0197 conditions as openwop.deprecation.v2-a2ui-delta-frame; until then 3.0. No committed v2 bundle advertises the facet (checked 2026-09-22).",
+      "sources": [
+        {
+          "file": "RFCS/0209-v2-a2ui-surfaces-are-a2ui-v0-9.md",
+          "token": "`a2uiSurface.deltaTransport` facet are deprecated for major 2"
+        },
+        {
+          "file": "spec/v2/ext/a2uiSurface/README.md",
+          "token": "`deltaTransport` (deprecated)"
+        },
+        {
+          "file": "spec/v2/declaration.json",
+          "token": "deltaTransport"
+        }
+      ]
     }
   ]
 }

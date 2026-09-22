@@ -121,6 +121,13 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   'schemas/CORPUS-STAMP.json',
   'fixtures.md',
   'coverage.md',
+  // RFC 0209: the A2UI v0.9 surface fixtures the v2 emit-surface scenario sends, and the
+  // vendored upstream schemas (pinned by SHA-256) the positive is checked against.
+  'fixtures/a2ui-v09/positive-approve-brief.json',
+  'fixtures/upstream/a2ui-v0.9/server_to_client.json',
+  'fixtures/upstream/a2ui-v0.9/catalog.json',
+  'fixtures/upstream/a2ui-v0.9/common_types.json',
+  'fixtures/upstream/a2ui-v0.9/README.md',
 ]);
 
 // Suite 1.156.0 — what the tarball must NOT carry: the suite's own self-tests and

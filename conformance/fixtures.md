@@ -651,6 +651,26 @@ Prompt-template fixtures are exercised by the server-free `fixtures-valid.test.t
 
 ---
 
+## A2UI v0.9 surface fixtures (RFC 0209)
+
+The `fixtures/a2ui-v09/` sub-directory (suite 2.36.0) holds `ui.a2ui-surface` payloads at per-kind **schema version 2** — ordered runs of A2UI v0.9 server-to-client messages in the OpenWOP profile of the basic catalog (`schemas/v2/envelopes/ui.a2ui-surface.schema.json` `$defs/payloadV2`; `spec/v2/ext/a2uiSurface/README.md`). They are NOT `WorkflowDefinition`s and are NOT seeded into a server. The corpus gate (`src/coherence/a2ui-v09-profile.test.ts`) validates the positive against the profile and each of its messages against the vendored upstream schemas; each negative must fail the profile AND pass a copy of the profile with only the restriction under test removed, so it can fail for no other reason. `v2-a2ui-v09-surface.test.ts` emits the positive through the v2 emit-surface seam. Like `interrupt-payloads/`, this directory carries deliberately-invalid `negative-` files; the top-level workflow sweep never reads sub-directories.
+
+| Fixture | Expect | Upstream A2UI | Purpose |
+| --- | --- | --- | --- |
+| `positive-approve-brief` | valid | valid | `createSurface` + `updateComponents` (`Column` root, `Text`, `TextField` with a `required` check, `DateTimeInput`, `ChoicePicker`, `CheckBox`, `Button` → `resume` with a bound `context`) + `updateDataModel`. |
+| `negative-functioncall-openurl` | refused | accepted | `Button.action` is the `functionCall` arm calling `openUrl` (`a2ui-action-confinement`). |
+| `negative-event-name-deleteall` | refused | accepted | `event.name: "deleteAll"`, outside `resume` / `exchange`. |
+| `negative-textfield-obscured` | refused | accepted | `TextField.variant: "obscured"` (`a2ui-surface-no-secret-input`). |
+| `negative-image-component` | refused | accepted | an `Image` component (URL fetch; `a2ui-surface-no-network-egress`). |
+| `negative-theme-iconurl` | refused | accepted | `createSurface.theme.iconUrl`. |
+| `negative-formatstring-label` | refused | accepted | a `Text.text` that is a `formatString` FunctionCall (`a2ui-surface-no-code-exec`). |
+| `negative-extra-property` | refused | refused | an `onClick` property on a component (closed objects). |
+| `negative-foreign-catalog` | refused | n/a | a `catalogId` outside the pinned basic catalog. |
+
+The `fixtures/upstream/a2ui-v0.9/` sub-directory vendors `server_to_client.json`, `catalogs/basic/catalog.json` and `common_types.json` from a2ui.org byte for byte, pinned by SHA-256 (RFC 0209 §References; its `README.md` records the URLs, fetch date and the Apache-2.0 notice). They are read only by the corpus gate.
+
+---
+
 ## References
 
 - `README.md` — conformance suite operator docs

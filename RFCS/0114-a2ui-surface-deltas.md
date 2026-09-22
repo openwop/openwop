@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | RFC 0209 (major 2 only) |
 
 ## Summary
 

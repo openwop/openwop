@@ -1760,8 +1760,8 @@
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0114",
-      "reason": "RFC 0169 \u00a7C.5 (deltaTransport claims-check; ext/ unless a behavioral witness lands)"
+      "owningRfc": "0209",
+      "reason": "RFC 0169 \u00a7C.5 (claims-check; ext/); RFC 0209: the ext README is the v2 contract for `ui.a2ui-surface` schema version 2; facet `deltaTransport` deprecated for v2 (RFC 0197 retirement path)"
     },
     {
       "key": "brand",

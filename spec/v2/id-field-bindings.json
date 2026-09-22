@@ -59,6 +59,7 @@
     "artifactId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "auditCorrelationId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "callId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
+    "catalogId": "an A2UI v0.9 catalog URI (RFC 0209 §A.2), pinned by enum in ui.a2ui-surface $defs/catalogId — not an openwop id",
     "causationHostId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "changeId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "changelogId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
@@ -99,6 +100,7 @@
     "speakerId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "stepId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "suiteId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
+    "surfaceId": "an A2UI v0.9 surface id, scoped to (runId, surfaceId) by RFC 0209 §C.9; grammar in ui.a2ui-surface $defs/surfaceId — not an openwop id",
     "taskId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "toolId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "workerId": "no openwop id kind governs this surface; the grammar is the owning schema's own"

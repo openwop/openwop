@@ -1,0 +1,145 @@
+{
+  "version": "v0.9",
+  "catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",
+  "surfaceId": "approve-brief",
+  "messages": [
+    {
+      "version": "v0.9",
+      "createSurface": {
+        "surfaceId": "approve-brief",
+        "catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json"
+      }
+    },
+    {
+      "version": "v0.9",
+      "updateComponents": {
+        "surfaceId": "approve-brief",
+        "components": [
+          {
+            "id": "root",
+            "component": "Column",
+            "children": [
+              "h",
+              "name",
+              "when",
+              "region",
+              "agree",
+              "submit",
+              "img"
+            ]
+          },
+          {
+            "id": "h",
+            "component": "Text",
+            "text": "Launch brief",
+            "variant": "h2"
+          },
+          {
+            "id": "name",
+            "component": "TextField",
+            "label": "Product name",
+            "value": {
+              "path": "/name"
+            },
+            "checks": [
+              {
+                "condition": {
+                  "call": "required",
+                  "args": {
+                    "value": {
+                      "path": "/name"
+                    }
+                  }
+                },
+                "message": "Required"
+              }
+            ]
+          },
+          {
+            "id": "when",
+            "component": "DateTimeInput",
+            "label": "Launch date",
+            "value": {
+              "path": "/when"
+            },
+            "enableDate": true
+          },
+          {
+            "id": "region",
+            "component": "ChoicePicker",
+            "label": "Region",
+            "options": [
+              {
+                "label": "EU",
+                "value": "eu"
+              },
+              {
+                "label": "US",
+                "value": "us"
+              }
+            ],
+            "value": {
+              "path": "/region"
+            },
+            "variant": "mutuallyExclusive"
+          },
+          {
+            "id": "agree",
+            "component": "CheckBox",
+            "label": "I agree",
+            "value": {
+              "path": "/agree"
+            }
+          },
+          {
+            "id": "submit_label",
+            "component": "Text",
+            "text": "Submit"
+          },
+          {
+            "id": "submit",
+            "component": "Button",
+            "child": "submit_label",
+            "variant": "primary",
+            "action": {
+              "event": {
+                "name": "resume",
+                "context": {
+                  "name": {
+                    "path": "/name"
+                  },
+                  "when": {
+                    "path": "/when"
+                  },
+                  "region": {
+                    "path": "/region"
+                  },
+                  "agree": {
+                    "path": "/agree"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "img",
+            "component": "Image",
+            "url": "https://evil.example/p.png"
+          }
+        ]
+      }
+    },
+    {
+      "version": "v0.9",
+      "updateDataModel": {
+        "surfaceId": "approve-brief",
+        "value": {
+          "name": "",
+          "when": "",
+          "region": [],
+          "agree": false
+        }
+      }
+    }
+  ]
+}
