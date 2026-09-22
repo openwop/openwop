@@ -107,7 +107,7 @@ A run's log MUST contain exactly one terminal run event — `run.completed`, `ru
 
 ## Era-2 logs
 
-An `eventLogSchemaVersion` of `2` means v1-written. Every reader (poll, stream, fork, diff, debug bundle) MUST translate each event through `spec/v2/event-codemap.json` at storage — `type` is mapped, the payload projected; `sequence` (including `0`), `eventId`, `timestamp`, `causationId` pass through. A type the codemap does not name, carrying no vendor org, MUST fail the read `500 event_type_unmapped`. A host MUST NOT carry a private mapping, nor rewrite era-2 rows in place. **A projection MUST NOT silently drop a property**: carry or fail `500 payload_unprojectable` (hatch `^(openwop-|x-|vendor\.)`; RFC 0185). Fork and replay over an era-2 parent: replay.md.
+An `eventLogSchemaVersion` of `2` means v1-written; every reader, diff included, translates it per persistence.md §"The reader rule". **A projection MUST NOT silently drop a property**: carry or fail `500 payload_unprojectable` (hatch `^(openwop-|x-|vendor\.)`; RFC 0185). Fork and replay over an era-2 parent: replay.md.
 
 ## The envelope-kind catalog
 
