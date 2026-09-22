@@ -332,3 +332,32 @@ describe('mcp-tool-roundtrip: host-mediated tool invocation', () => {
     )).toBe(true);
   });
 });
+
+/**
+ * RFC 0204 §B — v1 `raw` (a MAY; major 1 only). When the fixture node's output
+ * carries `raw`, it MUST be the server's `CallToolResult` for the negotiated
+ * revision, unaltered, and `isError` MUST equal `raw.isError === true`. Absent
+ * ⇒ `inapplicable`. Non-gating: outside RFC 0204's Acceptance box, and no v2
+ * cut reaches a major-1 file. Sabotage: rebuild `raw` from `result`.
+ */
+describe('mcp-tool-roundtrip: v1 raw CallToolResult (RFC 0204 §B)', () => {
+  it('raw, when present, is the server CallToolResult unaltered and isError agrees', async () => {
+    const server = getMcpFakeServer();
+    if (!server) return softSkip('blocked', '[mcp-tool-roundtrip] fake server not started; the raw leg needs the host-mediated run');
+    if (!isFixtureAdvertised(ROUNDTRIP_FIXTURE)) return softSkip('inapplicable', `fixture ${ROUNDTRIP_FIXTURE} not advertised`);
+    server.reset();
+    const create = await driver.post('/v1/runs', { workflowId: ROUNDTRIP_FIXTURE, inputs: { text: 'raw-probe' } });
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status}`);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(runId, { timeoutMs: 30_000 });
+    const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+    const list = (events.json as { events?: Array<{ type: string; payload?: Record<string, unknown> }> }).events ?? [];
+    const done = list.find((e) => e.type === 'node.completed' && e.payload?.['nodeId'] === 'mcp-call');
+    const outputs = (done?.payload?.['outputs'] ?? {}) as { raw?: unknown; isError?: unknown };
+    if (outputs.raw === undefined) return softSkip('inapplicable', 'the node output carries no raw (RFC 0204 §B: a MAY)');
+    const sent = [...server.exchanges()].reverse().find((x) => x.method === 'tools/call');
+    if (!sent) return softSkip('blocked', 'the output carries raw but the suite fake server answered no tools/call in this run');
+    expect(outputs.raw, req('openwop.it.mcp-tool-roundtrip.raw-when-present-is-the-server-calltoolresult-unaltered-and-iserror-agrees', 'host-capabilities.md §host.mcp (RFC 0204 §B)', 'raw MUST be the server\'s CallToolResult unaltered')).toEqual(sent.result);
+    expect(outputs.isError === true, req('openwop.it.mcp-tool-roundtrip.raw-when-present-is-the-server-calltoolresult-unaltered-and-iserror-agrees', 'host-capabilities.md §host.mcp (RFC 0204 §B)', 'isError MUST equal raw.isError === true')).toBe((outputs.raw as { isError?: unknown }).isError === true);
+  });
+});

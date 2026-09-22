@@ -4460,6 +4460,29 @@ invariants:
       hook and not claimed by the scenario.
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-22
+
+  - id: tool-annotations-untrusted
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/v2-tool-catalog-annotations.test.ts
+      - conformance/src/coherence/tool-descriptor-annotations.test.ts
+    note: |
+      RFC 0204 §D.11–§D.12 (spec/v2/core/tool-catalog.md §The descriptor). A
+      host MUST NOT derive a tool's `safetyTier`, `replayPolicy` or `egress`
+      from an MCP server's `annotations`; an unclassified `source: "mcp"` tool
+      is `write`. The threat is exercised on the wire: the suite's fake MCP
+      server lists `conformance_readonly_claim_<nonce>` annotated
+      `readOnlyHint: true, destructiveHint: false`, with a per-process nonce so
+      no host can have classified it in advance, and
+      `.mcp-unclassified-write` fails a host that catalogues it below `write`.
+      Any `annotations` a host publishes are checked against the host's own
+      fields by `.annotations-derived` and refused by the descriptor schema's
+      `allOf` (corpus row `0204.annotations-schema`).
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-22
+
   - id: mcp-task-tenant-scoped
     tier: protocol
     severity: critical

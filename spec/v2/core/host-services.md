@@ -1,7 +1,7 @@
 # Host services
 
 > **Status: Stable · v2.0 · RFC 0144.** Normative contract for the advertised `host.*` service surfaces a node pack invokes through `ctx`.
-> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`.
+> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`, `mcp`.
 
 ## Why this exists
 
@@ -18,3 +18,7 @@ A host advertising `promptLibrary` MUST expose `ctx.promptLibrary.get`, MUST ret
 ## `agentRuntime`
 
 A host advertising `agentRuntime` MUST expose `spawn`, `delegate`, `consensus` and `messageSend`, and MUST satisfy `agents.manifestRuntime`, which advertising it implies.
+
+## `mcp`
+
+A host advertising `mcp.client` MUST expose to pack code `ctx.mcp.callTool`, `listTools`, `readResource` and `serverHealth`, each against a host-configured `serverId` at the revision `mcp` negotiates. Each rejects only for an unknown `serverId` (`not_found`), an MCP error response (carried unaltered), or a transport failure. `callTool` MUST resolve to the server's `CallToolResult` unaltered (`content[]`, `structuredContent`, `isError`, `_meta`), including when `isError` is true; the host handles an `InputRequiredResult` itself and never returns one. `listTools` MUST resolve to one `ListToolsResult` page unaltered, `outputSchema`, `annotations`, `nextCursor`, `ttlMs` and `cacheScope` included, and MUST forward a pack's `cursor`; `readResource` resolves to the `ReadResourceResult` unaltered. `serverHealth` MUST report `reachable`, `unreachable` or `incompatible` from a `server/discover` probe no older than its `ttlMs`, with the `DiscoverResult` when one was received; it MUST NOT report a connection or session state, which MCP 2026-07-28 does not have.
