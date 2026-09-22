@@ -30,6 +30,7 @@ RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header i
 | `OpenWOP-Idempotent-Replay` | 1 | Set when the response was served from the idempotency cache. |
 | `OpenWOP-Version` | 54 | RFC 0172 §A.4 — the contract that produced this response; MUST equal the one used. |
 | `Retry-After` | 1 | Seconds until the active claim is stale-eligible. |
+| `WWW-Authenticate` | 47 | RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an oauth2/oidc lane. Never on a non-disclosure 404. |
 
 ## Webhook delivery headers
 
