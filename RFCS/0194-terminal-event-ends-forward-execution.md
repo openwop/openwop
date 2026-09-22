@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0194                                                            |
 | **Title**         | a run's terminal event is emitted once and ends its forward execution |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-21                                                      |
-| **Updated**       | 2026-09-21 (filed `Draft`; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects replay, so bootstrap waiver language MUST NOT shorten its window) · 2026-09-21 (later) — `Draft → Active`; **comment window waived** by the steward on 2026-09-21 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects replay). |
+| **Updated**       | 2026-09-21 (filed `Draft`; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects replay, so bootstrap waiver language MUST NOT shorten its window) · 2026-09-21 (later) — `Draft → Active`; **comment window waived** by the steward on 2026-09-21 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects replay). · 2026-09-22 — **`Active → Accepted`, provisional pending RFC 0156 §B retrospective review** (it went `Active` under a waived window; RFC 0147 requires such cohorts to be reviewed cross-organization or held provisional — the register row stays `not-reviewed`). Evidence tier: tier-1 — the v2 reference host (openwop-examples), a reference example and not a production host; single witness, on the published suite 2.35.0, build `commit:8477d75`, nothing relaxed, all profiles certified: both `openwop.requirement.0194.terminal-once` (4 runs: completed ×2, failed, cancelled) and `.duplicate-delivery` `executed-pass`. |
 | **Affects**       | `spec/v2/core/events.md` (new §"The terminal event"), `spec/v2/core/runs.md` (by reference), `spec/v2/core/replay.md` (fork point), conformance (one new major-2 scenario) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |
@@ -95,9 +95,9 @@ The v2 reference host already conforms (openwop-examples#64 re-reads after a nod
 
 - [x] `Active` — 2026-09-21, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
 - [x] Spec text merged: `events.md` §"The terminal event", `replay.md` fork point (2026-09-21, 2.35.0). `runs.md` needs no pointer: `events.md` is the normative home for log shape.
-- [ ] The scenario ships in a published suite.
-- [ ] A committed host bundle carries both `openwop.requirement.0194.terminal-once` and `.duplicate-delivery` at `executed-pass`.
-- [ ] CHANGELOG entry.
+- [x] The scenario ships in a published suite (2.35.0, 2026-09-22).
+- [x] A committed host bundle carries both `openwop.requirement.0194.terminal-once` and `.duplicate-delivery` at `executed-pass` (`evidence/v2-host-bundles/openwop-host-v2-reference.json`, suite 2.35.0).
+- [x] CHANGELOG entry.
 
 ## References
 

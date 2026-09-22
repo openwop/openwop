@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-21T14:29:57.852Z",
+  "generatedAt": "2026-09-22T02:23:58.971Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.34.0",
+    "version": "2.35.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.34.0",
-    "stampSha256": "68cccf1a2b742ba8666acfa944d92ef209dd5cef3a7b067b06a5d36dbac31d03"
+    "specArtifactsVersion": "2.35.0",
+    "stampSha256": "164c05f7216f16c89a05636375b4e5eaebce3c461eb3c24fb5a992750633765e"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "2e6e42d657b9bcba2299f0fdc3679627ada6e57f"
+      "id": "8477d75fd4b465344cbe9e3b714108b341b6b3da"
     },
     "signingKeyId": "v2-reference-4"
   },
@@ -349,10 +349,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 242,
+      "executedPass": 246,
       "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 6,
+      "inapplicable": 8,
       "blocked": 0
     },
     "requirements": [
@@ -367,7 +367,7 @@
         "scenario": "memory-attribution-replay-stable.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -397,7 +397,7 @@
         "id": "openwop.scenario.v2-bound-id-kinds",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 8,
+        "assertions": 10,
         "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
       },
       {
@@ -411,6 +411,13 @@
         "scenario": "v2-bundle-v3-signed.test.ts",
         "result": "executed-pass",
         "assertions": 10
+      },
+      {
+        "id": "openwop.scenario.v2-callback-url-guarded",
+        "scenario": "v2-callback-url-guarded.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.floor.v2-capabilities-root-closed",
@@ -534,7 +541,7 @@
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-header-scheme",
@@ -693,7 +700,7 @@
         "scenario": "v2-provider-conflict.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-refresh-sla",
@@ -705,7 +712,7 @@
         "id": "openwop.scenario.v2-relaxation-recorded",
         "scenario": "v2-relaxation-recorded.test.ts",
         "result": "executed-pass",
-        "assertions": 20
+        "assertions": 21
       },
       {
         "id": "openwop.scenario.v2-revocation-honored",
@@ -801,6 +808,12 @@
       {
         "id": "openwop.scenario.v2-subject-link-record",
         "scenario": "v2-subject-link-record.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.scenario.v2-terminal-event-once",
+        "scenario": "v2-terminal-event-once.test.ts",
         "result": "executed-pass",
         "assertions": 6
       },
@@ -989,7 +1002,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1787
+            "observedMs": 1380
           }
         }
       },
@@ -1002,7 +1015,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1883
+            "observedMs": 1368
           }
         }
       },
@@ -1591,7 +1604,7 @@
         "id": "openwop.requirement.0173.relaxation-recorded",
         "scenario": "v2-relaxation-recorded.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded.durability-closed",
@@ -1928,6 +1941,12 @@
         "assertions": 5
       },
       {
+        "id": "openwop.requirement.0187.bound-id-kinds.webhook-emitted",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0188.dead-letter-content-free",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
@@ -1938,27 +1957,51 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0194.terminal-once",
+        "scenario": "v2-terminal-event-once.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0194.terminal-once.duplicate-delivery",
+        "scenario": "v2-terminal-event-once.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0196.callback-url-guarded",
+        "scenario": "v2-callback-url-guarded.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
       }
     ]
   },
-  "witnessSha256": "cb45c96fd815f6040e1221b2fedc5422a314e0facc226c43e4db22fc0dd52bf0",
-  "assertionCount": 2014,
+  "witnessSha256": "5562d7c57609e752ee9c8f1b57c5c806f1f4116d0470837c49829e472fb179b9",
+  "assertionCount": 2032,
   "detail": {
     "nonPass": [
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
         "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
+        "id": "openwop.scenario.v2-callback-url-guarded",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
         "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile out (OPENWOP_OPTED_OUT_PROFILES)"
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-run-diff-identical",
@@ -2009,6 +2052,11 @@
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+      },
+      {
+        "id": "openwop.requirement.0196.callback-url-guarded",
+        "result": "inapplicable",
+        "reason": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
       }
     ]
   },
@@ -2018,7 +2066,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "l1F-we1R8f2Q0rY1TrhU3dnIUVG_JD0gI0fRqaa4vXyTdS08CsjdRiOdsgXRlAQaak4u2e4NJIRAx_Rw6b9pCA",
+    "sig": "6ouHBozJgH7C5zDzZZ_raORat6bO-FWbD34qnuvsOxwqkunWDanh5VytmkOVqjwykSXOZZ-ggYm4PJPSmTD6CQ",
     "over": [
       "witnessSha256",
       "host.build",
