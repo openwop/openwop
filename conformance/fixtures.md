@@ -536,6 +536,15 @@ For `v2-tool-catalog-annotations`' unclassified-MCP leg, a host that advertises 
 
 ---
 
+## The per-agent card pack (RFC 0202)
+
+`v2-a2a-agent-cards` reads the caller's `GET /agents`; it needs no workflow fixture. Two suite requirements (COMPATIBILITY §2.3), not spec MUSTs:
+
+- **SR-1 canaries.** A host that installs the `core.conformance.agent-pack` agent pack (the pack `conformance-agent-pack-install` names in `metadata.requiresInstalledPack`) gives at least one of its agents a system-prompt body containing `OPENWOP-CONFORMANCE-CANARY-0202-PROMPT` and a handoff schema (`hasHandoffSchemas: true`) containing `OPENWOP-CONFORMANCE-CANARY-0202-HANDOFF`. The `card-sr1` leg asserts neither string reaches that agent's card; it is `inapplicable` when the caller's inventory carries no routed agent of the pack, `blocked` when the agent declares no handoff schema.
+- **A tenant-B-only agent.** The `identical-refusal` leg needs an agent with an `a2aTenant` in the inventory of the tenant `OPENWOP_TEST_TENANT_B_API_KEY` binds, that the caller's inventory lacks. The suite finds it as the set difference of the two inventories, or takes `OPENWOP_TEST_TENANT_B_AGENT_ID`; without one the leg records `blocked`.
+
+---
+
 ## Versioning
 
 Each fixture's JSON has its own `version` field. The OpenWOP v1.0 conformance suite targets fixture version 1.0. Fixture spec breaking changes MUST bump the major; the suite MUST refuse to run against an unrecognized fixture version with a clear error message.
