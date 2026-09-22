@@ -119,7 +119,7 @@
         "schemaRef": {
           "type": "string",
           "minLength": 1,
-          "description": "Path inside the pack tarball to the artifact's JSON Schema (Draft 2020-12). The target schema MUST set `additionalProperties: false` at its top level and declare an `$id` under `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json`, mirroring the envelope convention in `ai-envelope.md` \u00a7\"Canonical schema location\"."
+          "description": "Path inside the pack tarball to the artifact's JSON Schema (Draft 2020-12). The target schema SHOULD set `additionalProperties: false` at its top level when `validation` is `closed` (RFC 0075 relaxed this from MUST; an `open` schema tolerates extra fields), and MUST declare an `$id` under the publishing host's `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` namespace, mirroring the envelope convention in `ai-envelope.md` \u00a7\"Canonical schema location\". For a pack published through a registry, the publishing host is the registry: its origin is `{HostBase}`, and the `$id` carries no pack version \u2014 an artifact type's identity is stable across pack versions, and `schemaVersion` versions the schema."
         },
         "schemaVersion": {
           "type": "integer",
