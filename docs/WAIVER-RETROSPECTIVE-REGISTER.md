@@ -127,3 +127,16 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0194 | a run's terminal event is emitted once and ends its forward execution (replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` (certification; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0196 | `callbackUrl` refused or delivered under the egress guard; embedded IPv4 judged as IPv4 (external effects; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0197 | v2 surfaces are retired, never reshaped (certification; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0198 | the MCP server mount maps long runs to MCP Tasks, and a disconnect cancels only the run it owns (replay, external effects and isolation; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0199 | the host as an OAuth client, and the `credential` interrupt (identity and authorization; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0200 | the host as an OAuth protected resource (identity and authorization; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0201 | Standard Webhooks as an opt-in companion signature scheme, with a signed delivery id, multi-signature rotation and endpoint verification (external effects and idempotency; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0202 | each inventoried agent is published as an A2A Agent Card (isolation and authorization; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0203 | a remote node-pack runtime may name its MCP server by its registry record (routine waiver; §A.6 stated not to apply) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0204 | the v2 host MCP client returns MCP results (routine waiver; §A.6 stated not to apply) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0205 | run artifacts and conversation content speak A2A Parts (routine waiver; §A.6 stated not to apply) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0206 | locale keys accept the BCP 47 tags the host negotiates (routine waiver; §A.6 stated not to apply) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0207 | trace context across MCP and A2A, and debug-bundle spans that join the trace (routine waiver; §A.6 stated not to apply) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0208 | v2 homes the A2A and MCP operation mappings (isolation; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0209 | v2 A2UI surfaces are A2UI v0.9 (authorization and replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
