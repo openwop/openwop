@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/conversation-turn.schema.json",
   "title": "ConversationTurn",
-  "description": "One turn in a multi-turn conversation. Structural superset of `ConversationMessage` (RFC 0002 \u00a7G \u2014 append-only, idempotent on `messageId`, replay-deterministic). Adds `role`, optional `agent` reference, and `turnIndex` discriminators. Folds through the existing `applyMessage` reducer unchanged. See RFC 0005 \u00a7C.",
+  "description": "One turn in a multi-turn conversation. Structural superset of `ConversationMessage` (RFC 0002 §G — append-only, idempotent on `messageId`, replay-deterministic). Adds `role`, optional `agent` reference, and `turnIndex` discriminators. Folds through the existing `applyMessage` reducer unchanged. See RFC 0005 §C.",
   "type": "object",
   "required": [
     "messageId",
@@ -21,7 +21,7 @@
     },
     "from": {
       "type": "string",
-      "description": "Sender identity. Either an agent ID (RFC 0002 \u00a7A1) or the literal `'user'` for human-originated turns.",
+      "description": "Sender identity. Either an agent ID (RFC 0002 §A1) or the literal `'user'` for human-originated turns.",
       "minLength": 1,
       "maxLength": 256
     },
@@ -32,7 +32,7 @@
     },
     "groupId": {
       "type": "string",
-      "description": "Optional shared-agent group ID. When set, the turn is scoped to the `shared:<groupId>` agent context per RFC 0002 \u00a7A8.",
+      "description": "Optional shared-agent group ID. When set, the turn is scoped to the `shared:<groupId>` agent context per RFC 0002 §A8.",
       "maxLength": 256
     },
     "content": {
@@ -58,11 +58,11 @@
         "agent",
         "system"
       ],
-      "description": "Discriminator distinguishing human-originated turns (`'user'`), AI-agent-originated turns (`'agent'`), and host-emitted procedural turns (`'system'` \u2014 e.g., `'conversation timed out'`)."
+      "description": "Discriminator distinguishing human-originated turns (`'user'`), AI-agent-originated turns (`'agent'`), and host-emitted procedural turns (`'system'` — e.g., `'conversation timed out'`)."
     },
     "agent": {
       "type": "object",
-      "description": "Optional agent reference (RFC 0002 \u00a7A1 `AgentRef`) for `role: 'agent'` turns. The same shape RFC 0002 reserves on `RunSnapshot.agent` and `node.started.payload.agent` \u2014 propagated through inheritance.",
+      "description": "Optional agent reference (RFC 0002 §A1 `AgentRef`) for `role: 'agent'` turns. The same shape RFC 0002 reserves on `RunSnapshot.agent` and `node.started.payload.agent` — propagated through inheritance.",
       "properties": {
         "agentId": {
           "$ref": "ids.schema.json#/$defs/agentId"
@@ -74,15 +74,15 @@
             "shared",
             "shared:%shared%"
           ],
-          "description": "Per RFC 0002 \u00a7A8 \u2014 `shared:<groupId>` requires a `groupId` field on the message."
+          "description": "Per RFC 0002 §A8 — `shared:<groupId>` requires a `groupId` field on the message."
         },
         "memoryRef": {
           "type": "string",
-          "description": "Opaque memory reference per RFC 0002 \u00a7A + RFC 0004 \u00a7A. Resolves to `MemoryEntry[]` via host `MemoryAdapter` for cross-run conversation continuity."
+          "description": "Opaque memory reference per RFC 0002 §A + RFC 0004 §A. Resolves to `MemoryEntry[]` via host `MemoryAdapter` for cross-run conversation continuity."
         },
         "model": {
           "type": "object",
-          "description": "RFC 0109 \u2014 OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in \u2014 the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance.supported: true`. Absent \u21d2 no advertisement; clients MUST tolerate its absence.",
+          "description": "RFC 0109 — OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in — the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance.supported: true`. Absent ⇒ no advertisement; clients MUST tolerate its absence.",
           "additionalProperties": false,
           "required": [
             "provider",
@@ -115,12 +115,12 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "description": "RFC 0101. Stable speaker identity of this turn \u2014 the roster INSTANCE id of the agent that produced it (the `host:<id>` AgentRef agentId per `agent-roster-entry.schema.json` \u00a7A / RFC 0086), NOT the manifest/class `AgentRef.agentId`. REQUIRED when `role: 'agent'` (the conditional below) so that 'turn N was spoken by agent X' is an observable, replay-stable, cross-host-projectable fact in a multi-party transcript. When a `participants` roster is declared on `conversation.opened` (RFC 0101), `speakerId` MUST be a member of that roster; a turn whose `speakerId` is not a participant MUST be rejected (host-enforced, capability-gated on `multiPartyConversation.supported`). For `role: 'user'` / `role: 'system'` turns the field is OPTIONAL and carries no normative meaning. Additive-safe: pre-RFC-0101 `role: 'agent'` turns that omit it are accepted by hosts that do NOT advertise `multiPartyConversation`."
+      "description": "RFC 0101. Stable speaker identity of this turn — the roster INSTANCE id of the agent that produced it (the `host:<id>` AgentRef agentId per `agent-roster-entry.schema.json` §A / RFC 0086), NOT the manifest/class `AgentRef.agentId`. REQUIRED when `role: 'agent'` (the conditional below) so that 'turn N was spoken by agent X' is an observable, replay-stable, cross-host-projectable fact in a multi-party transcript. When a `participants` roster is declared on `conversation.opened` (RFC 0101), `speakerId` MUST be a member of that roster; a turn whose `speakerId` is not a participant MUST be rejected (host-enforced, capability-gated on `multiPartyConversation.supported`). For `role: 'user'` / `role: 'system'` turns the field is OPTIONAL and carries no normative meaning. Additive-safe: pre-RFC-0101 `role: 'agent'` turns that omit it are accepted by hosts that do NOT advertise `multiPartyConversation`."
     }
   },
   "allOf": [
     {
-      "$comment": "RFC 0101 \u2014 agent turns MUST carry speaker attribution. Conditional (not unconditional `required`) so the field is only mandatory for `role: 'agent'`; `user`/`system` turns and pre-RFC-0101 producers on non-multi-party hosts are unaffected. Capability-gated: hosts enforce this only when advertising `multiPartyConversation.supported` (capabilities.schema.json).",
+      "$comment": "RFC 0101 — agent turns MUST carry speaker attribution. Conditional (not unconditional `required`) so the field is only mandatory for `role: 'agent'`; `user`/`system` turns and pre-RFC-0101 producers on non-multi-party hosts are unaffected. Capability-gated: hosts enforce this only when advertising `multiPartyConversation.supported` (capabilities.schema.json).",
       "if": {
         "properties": {
           "role": {
