@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A retried request MUST NOT create a second run, and a retried node MUST NOT issue a second external effect. A host MUST implement Layer 1 for every mutating endpoint and Layer 2 for every node executor that performs an external side effect.
+A retried request MUST NOT create a second run, and a retried node MUST NOT issue a second external effect. A host MUST implement Layer 1 for every mutating endpoint; a host that advertises `idempotency` MUST implement Layer 2 for every node executor that performs an external side effect (security-defaults.md).
 
 ## Layer 1: `Idempotency-Key`
 
