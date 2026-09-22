@@ -1,0 +1,32 @@
+{
+  "$schema": "./corrections.schema.json",
+  "$comment": "RFC 0197 §A.4 — v2 Class-3 corrections. Seeded with P3 only. The 2.8.2 removal of `workflowChainPacks.deferredParameters` and `.hostExpansionSeam` (P1) is deliberately NOT seeded: a committed bundle carried `deferredParameters` and then failed `capabilities-root-closed`, so the row would fail R3 — which is the point. P1 is recorded as the motivating defect in COMPATIBILITY.md §3a, not laundered into this register.",
+  "version": 1,
+  "updated": "2026-09-22",
+  "rows": [
+    {
+      "id": "openwop.correction.v2.1",
+      "date": "2026-09-20",
+      "class": "w3c-class-3",
+      "releasedIn": "2.32.0",
+      "rfc": "0177",
+      "pointers": [
+        "schemas/v2/artifact-type-pack-manifest.schema.json#/signing",
+        "schemas/v2/chat-card-pack-manifest.schema.json#/signing",
+        "schemas/v2/connection-pack-manifest.schema.json#/signing",
+        "schemas/v2/form-content-pack-manifest.schema.json#/signing",
+        "schemas/v2/node-pack-manifest.schema.json#/signing",
+        "schemas/v2/prompt-pack-manifest.schema.json#/signing",
+        "schemas/v2/workflow-chain-pack-manifest.schema.json#/signing",
+        "schemas/v2/workflow-chain-pack-manifest.schema.json#/chains/[]/dag/nodes/[]/config"
+      ],
+      "compatibilityEntry": "the v2 bare pack-manifest `signing` block and `FragmentNode.config`",
+      "priorShapeCensus": {
+        "bundles": 0,
+        "manifests": 0,
+        "manifestsScanned": 190,
+        "note": "The prior shape is a manifest shape, not a discovery shape, so no bundle could carry it and the bundle leg is 0 by construction. The registry leg was measured at the correction: 0 of 190 published v2 pack.json documents validated against the schemas BEFORE the change and 185 of 190 after, so no published document carried the `{ publicKeyRef, signatureRef, method }` block the schemas described. `spec/v2/core/packs.md` §Signing, RFC 0177 §C.3 and migration row openwop.migration.C10.1 had already replaced it with `{ keyId, scheme }`; the schemas were the outlier against the prose, the Accepted RFC and the registry at once. `signing` stays OPTIONAL on a bare manifest, so no previously-valid unsigned document is invalidated. FragmentNode.config was closed by the v1→v2 seed against its own description, failing 73 of 81 published chain packs; reopening it narrows nothing."
+      }
+    }
+  ]
+}
