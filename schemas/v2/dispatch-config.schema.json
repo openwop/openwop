@@ -22,7 +22,7 @@
         "child-run"
       ],
       "default": "child-run",
-      "description": "How `kind: 'next-worker'` is dispatched. v1.x normates only `'child-run'` — each `nextWorkerIds[i]` resolves to a workflow id and is dispatched as a child run via the existing `core.subWorkflow` machinery. Same-run DAG navigation is OUT OF SCOPE for v1.x (deferred to RFC 0013 / v1.3+). Hosts MAY add vendor-extension dispatch models under `vendor.<host>.<model>`; conformance scenarios validate `'child-run'` only."
+      "description": "How `kind: 'next-worker'` is dispatched. v1.x normates only `'child-run'` — each `nextWorkerIds[i]` resolves to a workflow id and is dispatched as a child run via the existing `core.subWorkflow` machinery. Same-run DAG navigation is OUT OF SCOPE for v1.x (deferred to RFC 0013 / v1.3+). The enum is closed: any other value, including a `vendor.<host>.<model>` name, fails validation against this schema, so a host cannot add a dispatch model without an additive schema change. Conformance scenarios validate `'child-run'` only."
     },
     "fanOutPolicy": {
       "type": "string",

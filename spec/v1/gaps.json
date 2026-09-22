@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-19",
+  "updated": "2026-09-22",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -4624,7 +4624,7 @@
       "rfc": "0114",
       "local": "G4",
       "section": "Conformance",
-      "surface": "No host advertises `ui.a2ui-surface.deltaUpdates` yet",
+      "surface": "`a2uiSurface.deltaTransport` has one witness (openwop-app, 2026-07-06), now implemented behind an env flag and not advertised on the live host (observed 2026-09-22, INTEROP-MATRIX); no second host advertises it",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "carried",

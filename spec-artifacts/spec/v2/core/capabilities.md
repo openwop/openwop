@@ -51,7 +51,7 @@ The root of `schemas/v2/capabilities.schema.json` is `additionalProperties: fals
 
 ### 3.2 `extensions.<org>.<name>`
 
-Vendor and host extensions live under one key, `extensions`, whose members MUST match `^[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9]*(-[a-z0-9]+)*$` (short-form `<org>.<name>`). The orgs `openwop` and `vendor` are reserved: a host MUST NOT use either. An extension record's shape is the org's own (`additionalProperties: true` inside the record). The 11 v1 extension-class `host.*` families (§6) are advertised as `extensions.openwop-app.*` by the host that serves them.
+Vendor and host extensions live under one key, `extensions`, whose members MUST match `^[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9]*(-[a-z0-9]+)*$` (short-form `<org>.<name>`). The orgs in `spec/v2/declaration.json` `reservedOrgs` — `openwop`, `vendor`, `effect-seams` and `events` — are reserved: a host MUST NOT use any of them. An extension record's shape is the org's own (`additionalProperties: true` inside the record). The 11 v1 extension-class `host.*` families (§6) are advertised as `extensions.openwop-app.*` by the host that serves them.
 
 ## 4. Deleted keys (RFC 0169 §A.5, §B.3; RFC 0175)
 
