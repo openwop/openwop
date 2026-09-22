@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0207](./0207-trace-context-across-mcp-and-a2a.md) — extends §D's v0 `gen_ai.*` pattern to an optional, version-stamped `mcp.*` projection (`observability.md` §"MCP semantic-convention projection"). |
 
 ## Summary
 

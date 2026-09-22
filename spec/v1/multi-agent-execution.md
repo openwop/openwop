@@ -127,9 +127,9 @@ Affected payload types (additive): `coreWorkflowChainEvent`, `coreWorkflowChainC
 
 ### W3C tracecontext across MCP + A2A composition (normative)
 
-Hosts that dispatch MCP tool calls AND advertise `multiAgent.executionModel.version >= 3` MUST inject the parent run's W3C `traceparent` header into the outbound MCP request envelope. The MCP tool's host MUST honor the inbound `traceparent` as the parent trace for any spans it emits.
+Hosts that dispatch MCP tool calls AND advertise `multiAgent.executionModel.version >= 3` MUST inject the parent run's W3C trace context into every outbound MCP request, in its `params._meta` (`traceparent`, and `tracestate` when present, per MCP 2026-07-28 §"General fields › `_meta`", SEP-414) or, on Streamable HTTP, in the HTTP `traceparent` header. Hosts SHOULD use `params._meta`, which is the only carrier on stdio and the one that names the MCP request rather than the transport hop. A host acting as the MCP server MUST adopt `params._meta.traceparent`, when present, as the parent of the spans it emits for that request, and otherwise the transport header; it MAY record the transport context as a span link. A malformed value MUST be ignored (a new trace starts) and MUST NOT fail the request. Neither carrier is authority: a host MUST NOT derive tenant, principal or scope from it (RFC 0207 §A).
 
-The same rule applies symmetrically to A2A composition (`spec/v1/a2a-integration.md`): outbound A2A messages MUST carry the parent run's `traceparent`; inbound A2A handlers MUST adopt it as the trace parent.
+The same rule applies symmetrically to A2A composition (`spec/v1/a2a-integration.md`): outbound A2A messages MUST carry the parent run's trace context in `Message.metadata.openwop.traceparent` (and `.tracestate` when present) or in the HTTP `traceparent` header, and SHOULD use the metadata carrier; inbound A2A handlers MUST adopt it as the trace parent, preferring the metadata value when both are present. A malformed value is ignored, never a request failure, and neither carrier is authority (RFC 0207 §B).
 
 This extends the per-host trace propagation already covered by RFC 0023 (`otel-trace-propagation-subworkflow.test.ts`) to cross-host composition.
 

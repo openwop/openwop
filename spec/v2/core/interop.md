@@ -79,6 +79,10 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 
 gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none`; its requirements are SHOULDs of that extension. A host MUST NOT advertise a `grpc` capability block — an unwitnessable family is not advertisable — and `api/v2/openapi.yaml` and the AsyncAPI document are the only canonical API descriptions. The extension re-enters core only by a v2.x additive RFC that generates the proto from `spec/v2/declaration.json` and lands a suite client.
 
+## Trace context (RFC 0207)
+
+A host that propagates W3C Trace Context into an MCP request MUST carry it in that request's `params._meta` (unprefixed `traceparent`, and `tracestate` when present; MCP 2026-07-28 `_meta`, SEP-414) or in the HTTP `traceparent` header, and SHOULD use `_meta`, the only carrier on stdio. Into an A2A message it MUST carry it in `Message.metadata.openwop.traceparent` and `.tracestate` or in the HTTP header, and SHOULD use the metadata. A receiver prefers the in-message value, ignores a malformed one, and MUST NOT derive tenant, principal or scope from either.
+
 ## Threat model
 
 `SECURITY/threat-model-interop.md` is the threat model for this document; its invariants are rows of `SECURITY/invariants.yaml`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
