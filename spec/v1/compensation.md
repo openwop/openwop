@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Compensation and Partial-Failure Profile
 
-> **Status: Draft · v1.x · RFC 0151.** Capability-gated contract for persisted, retried compensation after partial failure.
+> **Status: Draft · v1.x · RFC 0151 `Accepted`; spec status Draft pending the open compensation gaps G5–G7 and G9 in `gaps.json` — this document covers only what has landed on the wire, there is no canonical operator-recovery endpoint, and §C/§E/§F are observable only through the §21 test seams.** Capability-gated contract for persisted, retried compensation after partial failure.
 
 ## Why this exists
 
