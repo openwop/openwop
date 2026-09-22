@@ -18,7 +18,7 @@ The request body is `{ mode, fromSeq?, runOptionsOverlay? }`, `mode ∈ replay |
 | `fromSeq` for `replay` | MAY be omitted; omission means `0` (full re-execution). |
 | `fromSeq` for `branch` | MUST be supplied. |
 | `runOptionsOverlay` | MUST be omitted or empty for `replay`; MAY be supplied for `branch`. |
-| `fromSeq` out of range | `400`; a sequence absent from the source log is `422`. |
+| `fromSeq` out of range | `400`; a sequence absent from the source log is `422`. A `fromSeq` greater than the sequence of the source run's terminal run event MUST be refused `422 fork_point_invalid` — the fork would inherit a terminal event and then execute (RFC 0194 §C; binds only where a compensation tail follows the terminal event). |
 | Source run not visible to the caller | `404`. |
 | Response | `201` `{ runId, sourceRunId, fromSeq, mode, status, eventsUrl }`; the fork is a new run with its own log. |
 

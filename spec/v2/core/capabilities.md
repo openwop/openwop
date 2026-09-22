@@ -359,7 +359,7 @@ Witness `witnessable-gated`; owner RFC 0098.
 
 ### § interrupt
 
-Witness `witnessable-gated`; owner RFC 0104; facets `refKinds`, `tokenAlgs`.
+Witness `witnessable-gated`; owner RFC 0104; facets `refKinds`, `tokenAlgs`, `callbackDelivery` (RFC 0196).
 
 ### § runList
 

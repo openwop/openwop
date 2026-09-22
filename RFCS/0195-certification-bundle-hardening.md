@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0195                                                            |
 | **Title**         | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-21                                                      |
-| **Updated**       | 2026-09-21 (filed `Draft` **after** its text and suite implementation were merged — see §Motivation "How this RFC came late"; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects certification, so bootstrap waiver language MUST NOT shorten its window; suite 2.35.0, which implements it, is not published before the window closes) |
+| **Updated**       | 2026-09-21 (filed `Draft` **after** its text and suite implementation were merged — see §Motivation "How this RFC came late"; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects certification, so bootstrap waiver language MUST NOT shorten its window; suite 2.35.0, which implements it, is not published before the window closes) · 2026-09-21 (later) — `Draft → Active`; **comment window waived** by the steward on 2026-09-21 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects certification). |
 | **Affects**       | `spec/v2/core/conformance.md` §Bundle v3; `conformance/src/lib/{certification-bundle-v3,scenario-disposition}.ts`; `v2-relaxation-recorded` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |
@@ -64,7 +64,7 @@ Merged in openwop#1462 (`2dae8415`), suite 2.35.0 — not published. Rule 1: `re
 
 ## Acceptance criteria
 
-- [ ] The public comment window has run in full (to 2026-09-28) and the RFC is `Active`.
+- [x] `Active` — 2026-09-21, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
 - [ ] `conformance.md` §Bundle v3 drops its "proposed" marker.
 - [ ] Suite 2.35.0 published.
 - [ ] A committed host bundle cut on 2.35.0 or later verifies under the new rules.

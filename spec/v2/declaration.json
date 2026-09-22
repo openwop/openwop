@@ -1712,7 +1712,8 @@
       },
       "facets": [
         "refKinds",
-        "tokenAlgs"
+        "tokenAlgs",
+        "callbackDelivery"
       ],
       "floorScenarios": [],
       "requirementIds": [],

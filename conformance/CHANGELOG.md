@@ -8,7 +8,7 @@
 
 ### Changed
 
-> **The three rules below are proposed by RFC 0195 (`Draft`, comment window to 2026-09-28).** They were merged before that RFC was filed; RFC 0147 §A.6 does not let a certification change skip its window, so this version is not published before the window closes.
+> **The three rules below are RFC 0195's.** They were merged before that RFC was filed; it was then made `Active` by steward override of RFC 0147 §A.6, whose full comment window it did not run.
 
 - **A `blocked` note stands at major 2 even after setup assertions.** A test that asserted something and then soft-skipped `blocked` recorded `executed-pass` with a `partial-witness:` detail — refused by the acceptance predicate, but counted by certification, so a profile could certify on a requirement nobody observed. At major 2 it now records `blocked`, which denies certification (`conformance.md` §Bundle v3). Swept first: every one of the 24 major-2 sites is "requirement unobserved" (unreachable, a control that did not answer, a window that closed), none an optional extra. Major 1 keeps its convention; the 146 v1-side sites were not measured and v1 bundles are read through its end of support. Measured on the committed bundles: the next cut changes 0 rows on the reference host and MyndHyve, 1 on openwop-app.
 - **`host.relaxations[]` is signed.** It sits outside the attestation, so a relaxation deleted after signing let the verifier re-derive the relaxed profile as certified on a bundle that still verified. `witnessSha256` now digests `{ rows, relaxations }` whenever relaxations are declared, and the rows alone otherwise — every committed bundle digests unchanged. An older verifier fails closed (`witness-digest`) on a 2.35.0 bundle that declares relaxations. `v2-relaxation-recorded` now strips a signed relaxation and requires the rejection.
@@ -16,6 +16,8 @@
 
 ### Added
 
+- **`v2-terminal-event-once` — RFC 0194 (`0194.terminal-once`, `0194.terminal-once.duplicate-delivery`).** A run's log carries exactly one terminal run event and no forward-execution event after it; `compensation.*` and `run.dead-lettered` may follow. The ordinary leg drives a noop run, and the failure and cancellable fixtures where advertised; the duplicate-delivery leg needs the RFC 0158 durability test hook (`inapplicable` without it). The log is read after it settles. Pure rule in `lib/terminal-shape.ts`, unit-tested against the two logs observed in openwop#1445.
+- **`v2-callback-url-guarded` — RFC 0196 §A.3 (`0196.callback-url-guarded`), invariant `callback-url-egress-guarded`.** A host advertising `interrupt.callbackDelivery` must refuse at `createRun` a loopback, cloud-metadata or hex-mapped-loopback `callbackUrl` with `400 validation_error`, `details.field: callbackUrl`. `inapplicable` where the facet is absent — no committed host advertises it today.
 - **`0187.bound-id-kinds.webhook-emitted` (openwop#1450).** The mint row reads the `webhookId` a host returns; a subscriber identifies its deliveries by the one it emits. A tier-2 host bound the 201 and left the delivery headers bare, and the mint row stayed green — the defect surfaced only as a durability failure elsewhere. The new leg drives one delivery, selects it by the run in the body (never by the header under test), and requires `OpenWOP-Webhook-Id` — and `X-openwop-Webhook-Id` on a host advertising both majors — to equal the minted id.
 
 ### Fixed

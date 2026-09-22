@@ -4246,3 +4246,28 @@ invariants:
       subscription, forever, without the tenant check that guards the run.
     witness: witnessable-unaided
     witnessReview: reviewed-2026-09-18
+  - id: callback-url-egress-guarded
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-callback-url-guarded.test.ts
+    note: |
+      RFC 0196 §A.3 / spec/v2/core/interrupt.md §Callback delivery. A host that
+      advertises `interrupt.callbackDelivery` MUST NOT accept, at createRun, a
+      `callbackUrl` that the webhooks.md §SSRF registration guard would refuse —
+      loopback, link-local and cloud metadata, RFC 1918, IPv6 ULA, `localhost`,
+      non-https — including those addresses written as IPv4-mapped IPv6.
+
+      Why this is an invariant: `callbackUrl` is an outbound request to a URL
+      the CALLER chooses, made by the host when an interrupt fires. Before RFC
+      0196 no clause reached it; one production host delivered to it with a
+      bare fetch and no guard. Any caller able to create a run could then make
+      the host POST to an internal address.
+
+      Witnessed only on a host advertising the facet; no committed host
+      advertises it today. Delivery-time re-validation and the no-redirect
+      rule are not visible on the wire (the reference-impl invariant
+      `webhook-delivery-egress-revalidation` states the same limit).
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-21

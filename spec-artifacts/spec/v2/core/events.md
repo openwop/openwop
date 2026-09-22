@@ -110,6 +110,10 @@ Each frame carries `id:`, `event:` and `data:`: `id:` is the `sequence`, `event:
 
 The response is `{ runId, events, lastSequence, status, isTerminal }` (closed): `lastSequence` is the highest sequence in the log at the time of the response, `-1` when the log is empty; `status` is the snapshot status; `isTerminal` is whether the run is terminal. A cursor past the end of the log MUST return `200` with an empty `events` array. The shape is declared here and generated into `api/v2/openapi.yaml` from one definition.
 
+## The terminal event
+
+A run's log MUST contain exactly one terminal run event — `run.completed`, `run.failed` or `run.cancelled` — and after it MUST NOT contain another terminal run event, `run.started`, `run.resumed`, `run.resume-started`, `run.paused`, `run.restored-from-snapshot`, any `node.*` event or any `interrupt.*` event. `compensation.*` events and `run.dead-lettered` MAY follow it (a compensating host unwinds after a cancelled parent); vendor-prefixed types are unconstrained. A host that receives work for a run whose terminal event is recorded — a duplicate delivery, a late worker — MUST NOT append forward-execution events for it, SHOULD record the refusal in its operational log, and MUST NOT surface the refusal as a run event (RFC 0194). No stream-closure rule changes.
+
 ## Era-2 logs
 
 An `eventLogSchemaVersion` of `2` means v1-written. Every reader (poll, stream, fork, diff, debug bundle) MUST translate each event through `spec/v2/event-codemap.json` at storage — `type` is mapped, the payload projected; `sequence` (including `0`), `eventId`, `timestamp`, `causationId` pass through. A type the codemap does not name, carrying no vendor org, MUST fail the read `500 event_type_unmapped`. A host MUST NOT carry a private mapping, nor rewrite era-2 rows in place. **A projection MUST NOT silently drop a property**: carry or fail `500 payload_unprojectable` (hatch `^(openwop-|x-|vendor\.)`; RFC 0185). Fork and replay over an era-2 parent: replay.md.

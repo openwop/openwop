@@ -1,5 +1,5 @@
 {
-  "$comment": "RFC 0173 §B — approver enforcement binds with the fields; refKinds stays a facet",
+  "$comment": "RFC 0173 \u00a7B \u2014 approver enforcement binds with the fields; refKinds stays a facet",
   "properties": {
     "refKinds": {
       "type": "array",
@@ -21,6 +21,10 @@
           "hs256"
         ]
       }
+    },
+    "callbackDelivery": {
+      "type": "boolean",
+      "description": "RFC 0196 \u00a7A.1 \u2014 true only if the host delivers to createRun.callbackUrl (interrupt.md \u00a7Callback delivery). A host advertising it MUST hold callbackUrl to the webhooks.md \u00a7SSRF guard at create time and at delivery."
     }
   },
   "required": [

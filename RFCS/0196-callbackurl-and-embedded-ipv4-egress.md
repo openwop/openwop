@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0196                                                            |
 | **Title**         | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-21                                                      |
-| **Updated**       | 2026-09-21 (filed `Draft`; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects external effects, so bootstrap waiver language MUST NOT shorten its window) |
+| **Updated**       | 2026-09-21 (filed `Draft`; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects external effects, so bootstrap waiver language MUST NOT shorten its window) · 2026-09-21 (later) — `Draft → Active`; **comment window waived** by the steward on 2026-09-21 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects external effects). |
 | **Affects**       | `spec/v2/core/runs.md` (`createRun.callbackUrl`), `spec/v2/core/interrupt.md`, `spec/v2/core/webhooks.md` §SSRF, the `interrupt` family's facets, `spec/v1/rest-endpoints.md` (a pointer only), conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |
@@ -88,8 +88,8 @@ The v2 reference host judges egress by address since openwop-examples#67 (bytes,
 
 ## Acceptance criteria
 
-- [ ] The public comment window has run in full (to 2026-09-28) and the RFC is `Active`.
-- [ ] Spec text merged: `runs.md`, `interrupt.md`, `webhooks.md` §SSRF, the facet in the `interrupt` family's declaration.
+- [x] `Active` — 2026-09-21, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
+- [x] Spec text merged: `runs.md`, `interrupt.md` §Callback delivery, `webhooks.md` §SSRF, the `interrupt.callbackDelivery` facet (2026-09-21, 2.35.0).
 - [ ] The §A.3 leg ships in a published suite.
 - [ ] A committed host bundle from a host advertising `interrupt.callbackDelivery: true` carries the §A.3 row at `executed-pass` — or the RFC records that no host advertises it.
 

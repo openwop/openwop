@@ -11,7 +11,7 @@
 | JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 524 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 526 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 193 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -68,8 +68,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 186 |
-| Active | 2 |
-| Draft | 4 |
+| Active | 5 |
+| Draft | 1 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -264,9 +264,9 @@
 | RFC 0191 | the reciprocal normative-home marker: why no regex over prose can decide a semantic claim, and what to do instead | Accepted |
 | RFC 0192 | the v2 facet advertisement semantic, the 26 descriptions that still gated on a retired field, and the generator that stops the 27th | Accepted |
 | RFC 0193 | the three envelope families whose payload the v2 generator dropped in silence, the live `stable` record with nothing in it, and the guard that stops the fourth | Accepted |
-| RFC 0194 | a run's terminal event is emitted once and ends its forward execution | Draft |
-| RFC 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` | Draft |
-| RFC 0196 | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 | Draft |
+| RFC 0194 | a run's terminal event is emitted once and ends its forward execution | Active |
+| RFC 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` | Active |
+| RFC 0196 | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 | Active |
 
 ## SDK Helper Coverage
 
@@ -288,8 +288,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 4 RFCs still `Draft` (RFC 0038, RFC 0194, RFC 0195, RFC 0196) — advance with schema/conformance proof or defer.
-- 2 RFCs `Active` (RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 5 RFCs `Active` (RFC 0111, RFC 0121, RFC 0194, RFC 0195, RFC 0196) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
