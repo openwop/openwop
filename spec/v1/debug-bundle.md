@@ -123,8 +123,8 @@ OTel-format spans per `spec/v1/observability.md` §"Span attributes" + §"Span n
 Each span includes:
 
 - `name` (canonical `openwop.*` per observability.md)
-- `spanId` (16-byte hex string)
-- `parentSpanId` (16-byte hex string or null)
+- `spanId` (16 lowercase hex characters, i.e. 8 bytes, per W3C Trace Context)
+- `parentSpanId` (16 lowercase hex characters, i.e. 8 bytes, per W3C Trace Context; or null)
 - `startedAt` / `endedAt` (ISO 8601)
 - `attributes` (record of attribute key → value)
 
